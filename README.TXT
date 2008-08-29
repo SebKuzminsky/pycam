@@ -48,6 +48,9 @@ For visualization, install
 
 
 TODO:
+    * Python code
+    ** clean up module/package use, being all "import" statements
+
     * Geometry
     ** intersect_torus_line
         -> try to find a better implementation
