@@ -36,7 +36,7 @@ def ImportModel(filename):
             m = normal.match(line)
             if m:
                 if AOI:
-                    n = Point(float(m.group('x')),-float(m.group('z')),float(m.group('y')))
+                    n = Point(float(m.group('x')),float(m.group('z')),float(m.group('y')))
                 else:
                     n = Point(float(m.group('x')),float(m.group('y')),float(m.group('z')))
             continue
@@ -46,7 +46,7 @@ def ImportModel(filename):
         m = vertex.match(line)
         if m:
             if AOI:
-                p = Point(float(m.group('x')),-float(m.group('z')),float(m.group('y')))
+                p = Point(float(m.group('x')),float(m.group('z')),float(m.group('y')))
             else:
                 p = Point(float(m.group('x')),float(m.group('y')),float(m.group('z')))
             # TODO: check for duplicate points (using kdtree?)
