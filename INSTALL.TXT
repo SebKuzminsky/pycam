@@ -1,0 +1,3 @@
+Currently it is not necessary to install the software,
+simply unpack the distribution archive, and run "python pycam.py"
+from the archive directory

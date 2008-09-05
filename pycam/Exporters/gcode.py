@@ -22,7 +22,7 @@ class gcode:
 
 	def begin(self):
 		return "G00 Z%.4f\n" % (self.safetyheight) + \
-			"G17 G21 G40 G49\n" + "G54 G80 G90 G94\n" + \
+			"G17 G40 G49\n" + "G54 G80 G90 G94\n" + \
 			"S1000 M3\n" + "G04 P3" + \
                         "T1 M6 F0.1\n"
 

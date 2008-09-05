@@ -162,7 +162,7 @@ class SimpleGui(Frame):
         if filename:
             self.OutputFileName.set(filename)
             if self.toolpath:
-                exporter = SimpleGCodeExporter.ExportPathList(filename, self.toolpath)
+                exporter = SimpleGCodeExporter.ExportPathList(filename, self.toolpath, self.Unit)
 
     def createWidgets(self):
         self.TopFrame = Frame(self).pack(side=TOP, expand=1, fill=X)
@@ -213,6 +213,12 @@ class SimpleGui(Frame):
         s = Spinbox(self.ConfigurationFrame, width=5, text='Toroid', from_=0.1, to=5.0, increment=0.1, format="%2.1f")
         s["textvariable"] = self.ToroidRadius
         s.pack(side=LEFT)
+
+        Label(self.ConfigurationFrame, text="Unit: ").pack(side=LEFT)
+        self.Unit = StringVar()
+        self.Unit.set("mm")
+        Radiobutton(self.ConfigurationFrame, text="mm", variable=self.Unit, value="mm").pack(side=LEFT)
+        Radiobutton(self.ConfigurationFrame, text="in", variable=self.Unit, value="in").pack(side=LEFT)
 
         self.MinX = StringVar()
         self.MinX.set("-7")

@@ -31,8 +31,12 @@ class SimpleGCodeExporter:
             self.AddPath(path)
 
 
-def ExportPathList(filename, pathlist):
+def ExportPathList(filename, pathlist, unit):
     exporter = SimpleGCodeExporter(filename)
+    if unit == "mm":
+        exporter.file.write("G20\n")
+    else:
+        exporter.file.write("G21\n")
     exporter.AddPathList(pathlist)
     exporter.close()
 
