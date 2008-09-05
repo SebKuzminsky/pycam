@@ -6,7 +6,7 @@ def ImportModel(filename):
     model = Model()
     f = file(filename,"r")
     solid = re.compile("\s*solid\s+(\w+)\s+.*")
-    solid_AOI = re.compile("\s*solid\s+\"(\w+)\"; Produced by Art of Illusion.*")
+    solid_AOI = re.compile("\s*solid\s+\"([\w\-]+)\"; Produced by Art of Illusion.*")
     endsolid = re.compile("\s*endsolid\s+")
     facet = re.compile("\s*facet\s+")
     normal = re.compile("\s*facet\s+normal\s+(?P<x>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<y>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<z>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+")
@@ -24,7 +24,6 @@ def ImportModel(filename):
     for line in f:
         m = solid_AOI.match(line)
         if m:
-            print "AOI"
             model.name = m.group(1)
             AOI = True
             continue
