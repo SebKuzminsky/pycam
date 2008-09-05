@@ -5,7 +5,8 @@ from pycam.Geometry import *
 def ImportModel(filename):
     model = Model()
     f = file(filename,"r")
-    solid = re.compile("\s*solid\s+(\w+)\s+")
+    solid = re.compile("\s*solid\s+(\w+)\s+.*")
+    solid_AOI = re.compile("\s*solid\s+\"(\w+)\"; Produced by Art of Illusion.*")
     endsolid = re.compile("\s*endsolid\s+")
     facet = re.compile("\s*facet\s+")
     normal = re.compile("\s*facet\s+normal\s+(?P<x>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<y>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<z>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+")
@@ -19,7 +20,14 @@ def ImportModel(filename):
     p1 = None
     p2 = None
     p3 = None
+    AOI = False
     for line in f:
+        m = solid_AOI.match(line)
+        if m:
+            print "AOI"
+            model.name = m.group(1)
+            AOI = True
+            continue
         m = solid.match(line)
         if m:
             model.name = m.group(1)
@@ -28,14 +36,20 @@ def ImportModel(filename):
         if m:
             m = normal.match(line)
             if m:
-                n = Point(float(m.group('x')),float(m.group('y')),float(m.group('z')))
+                if AOI:
+                    n = Point(float(m.group('x')),-float(m.group('z')),float(m.group('y')))
+                else:
+                    n = Point(float(m.group('x')),float(m.group('y')),float(m.group('z')))
             continue
         m = loop.match(line)
         if m:
             continue
         m = vertex.match(line)
         if m:
-            p = Point(float(m.group('x')),float(m.group('y')),float(m.group('z')))
+            if AOI:
+                p = Point(float(m.group('x')),-float(m.group('z')),float(m.group('y')))
+            else:
+                p = Point(float(m.group('x')),float(m.group('y')),float(m.group('z')))
             # TODO: check for duplicate points (using kdtree?)
             if p1 == None:
                 p1 = p
