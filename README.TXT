@@ -1,5 +1,3 @@
-
-
 pycam : Python CAM
 ------------------
 
@@ -32,7 +30,7 @@ Features:
       ** OpenGL
 
 
-For visualization, install
+INSTALL: 
 
     PyOpenGL :  http://pyopengl.sourceforge.net/
                         http://downloads.sourceforge.net/pyopengl/PyOpenGL-3.0.0b5.tar.gz
@@ -47,7 +45,26 @@ For visualization, install
 
 
 
+RUNNING:
+
+   extract the archive and run "python pycam.py"
+
+
+
+USAGE:
+
+   as a practical approach, you would probably: 
+ 
+   1) use the Cylindrical cutter with the PushCutter Pathgenerator and the Polygon PostProcessor to do the "rough" cutting 
+ 
+   2) use the Toroidal cutter with the ContourCutter Pathgenerator to do the "semifinish" cutting.
+      (it's not yet implemented, so you can skip this one for now :-)
+
+   3) use the Spherical cutter with the DropCutter Pathgenerator and the ZigZag PostProcessor to do the "finish" cutting. 
+
+
 TODO:
+
     * Python code
     ** clean up module/package use, being all "import" statements
 
@@ -59,12 +76,6 @@ TODO:
     * Cutters
     ** FiletCutter
 
-    * Gui
-    ** create something better than "SimpleGui"
-    ** move calculactions in separate thread
-    ** incremental visualization
-    ** add progress bar
-
     * PathGenerators
     ** ContourCutter
        -> waterlevel tracer
@@ -72,8 +83,15 @@ TODO:
     * PathProcessors
     ** Traveling Salesman
 
+    * Gui
+    ** create something better than "SimpleGui"
+    ** move calculactions in separate thread
+    ** incremental visualization
+    ** add progress bar
 
-OPTIMIZATIONS
+
+OPTIMIZATION:
+
     * short-circuit the plane/triangle/line/edge/point/vertex tests,
       so that when the result is known, no further intersections are calculated
 
@@ -86,3 +104,4 @@ OPTIMIZATIONS
     * make Cutters have a "color" so that for each x in plane/triangle/line/edge/point/vertex
       the result of an intersection (cutter,x,color) is cachable
       (i.e. each Cutter.moveto should change the color, just increasing an "int color" should be ok)
+
