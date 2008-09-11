@@ -42,32 +42,84 @@ class OpenglWidget(Opengl):
         glEnable(GL_LIGHT0)
         glDisable(GL_LIGHTING)
         glPopMatrix()
+        self.master.resetView()
 
 class SimpleGui(Frame):
 
     def Redraw(self, event=None):
         # default scale and orientation
-        glScalef(0.25, 0.25, 0.25)
-        glRotatef(110,1.0,0.0,0.0)
-        glRotatef(180,0.0,1.0,0.0)
-        glRotatef(160,0.0,0.0,1.0)
         glTranslatef(0,0,-2)
+
+        if self.Unit.get() == "mm":
+            size = 100
+        else:
+            size = 5
 
         # axes
         glBegin(GL_LINES)
         glColor3f(1,0,0)
         glVertex3f(0,0,0)
-        glVertex3f(5,0,0)
+        glVertex3f(size,0,0)
         glEnd()
         glBegin(GL_LINES)
         glColor3f(0,1,0)
         glVertex3f(0,0,0)
-        glVertex3f(0,5,0)
+        glVertex3f(0,size,0)
         glEnd()
         glBegin(GL_LINES)
         glColor3f(0,0,1)
         glVertex3f(0,0,0)
-        glVertex3f(0,0,5)
+        glVertex3f(0,0,size)
+        glEnd()
+
+        # stock model
+        minx = float(self.MinX.get())
+        maxx = float(self.MaxX.get())
+        miny = float(self.MinY.get())
+        maxy = float(self.MaxY.get())
+        minz = float(self.MinZ.get())
+        maxz = float(self.MaxZ.get())
+        glBegin(GL_LINES)
+        glColor3f(0.2,0.2,0.2)
+
+        glVertex3f(minx,miny,minz)
+        glVertex3f(maxx,miny,minz)
+
+        glVertex3f(minx,maxy,minz)
+        glVertex3f(maxx,maxy,minz)
+
+        glVertex3f(minx,miny,maxz)
+        glVertex3f(maxx,miny,maxz)
+
+        glVertex3f(minx,maxy,maxz)
+        glVertex3f(maxx,maxy,maxz)
+
+
+        glVertex3f(minx,miny,minz)
+        glVertex3f(minx,maxy,minz)
+
+        glVertex3f(maxx,miny,minz)
+        glVertex3f(maxx,maxy,minz)
+
+        glVertex3f(minx,miny,maxz)
+        glVertex3f(minx,maxy,maxz)
+
+        glVertex3f(maxx,miny,maxz)
+        glVertex3f(maxx,maxy,maxz)
+
+
+        glVertex3f(minx,miny,minz)
+        glVertex3f(minx,miny,maxz)
+
+        glVertex3f(maxx,miny,minz)
+        glVertex3f(maxx,miny,maxz)
+
+        glVertex3f(minx,maxy,minz)
+        glVertex3f(minx,maxy,maxz)
+
+        glVertex3f(maxx,maxy,minz)
+        glVertex3f(maxx,maxy,maxz)
+
         glEnd()
 
         if self.model:
@@ -98,6 +150,8 @@ class SimpleGui(Frame):
             self.InputFileName.set(filename)
             self.model = STLImporter.ImportModel(filename)
         self.toolpath = None
+        if self.model:
+            self.scale = 2.0/self.model.maxsize()
         self.ogl.tkRedraw()
 
     def generateToolpath(self):
@@ -165,6 +219,8 @@ class SimpleGui(Frame):
                 exporter = SimpleGCodeExporter.ExportPathList(filename, self.toolpath, self.Unit)
 
     def createWidgets(self):
+        self.ogl = OpenglWidget(self, width=600, height=500)
+
         self.TopFrame = Frame(self).pack(side=TOP, expand=1, fill=X)
 
         self.InputFileFrame = Frame(self.TopFrame)
@@ -217,8 +273,8 @@ class SimpleGui(Frame):
         Label(self.ConfigurationFrame, text="Unit: ").pack(side=LEFT)
         self.Unit = StringVar()
         self.Unit.set("mm")
-        Radiobutton(self.ConfigurationFrame, text="mm", variable=self.Unit, value="mm").pack(side=LEFT)
-        Radiobutton(self.ConfigurationFrame, text="in", variable=self.Unit, value="in").pack(side=LEFT)
+        Radiobutton(self.ConfigurationFrame, text="mm", variable=self.Unit, value="mm", command=self.ogl.tkRedraw).pack(side=LEFT)
+        Radiobutton(self.ConfigurationFrame, text="in", variable=self.Unit, value="in", command=self.ogl.tkRedraw).pack(side=LEFT)
 
         self.MinX = StringVar()
         self.MinX.set("-7")
@@ -274,7 +330,16 @@ class SimpleGui(Frame):
         self.OutputFileField = Entry(self.OutputFileFrame, textvariable=self.OutputFileName).pack(side=LEFT, expand=1, fill=X)
         self.OutputFileBrowse = Button(self.OutputFileFrame, text="Export...", command=self.browseSaveAs).pack(side=RIGHT)
 
-        self.ogl = OpenglWidget(self, width=600, height=500)
+        self.ViewFrame = Frame(self.TopFrame)
+        self.ViewFrame.pack(side=TOP, anchor=W, expand=0)
+        Label(self.ViewFrame, text="View: ").pack(side=LEFT)
+        Button(self.ViewFrame, text="Reset", command=self.resetView).pack(side=LEFT)
+        Button(self.ViewFrame, text="Front", command=self.frontView).pack(side=LEFT)
+        Button(self.ViewFrame, text="Back", command=self.backView).pack(side=LEFT)
+        Button(self.ViewFrame, text="Left", command=self.leftView).pack(side=LEFT)
+        Button(self.ViewFrame, text="Right", command=self.rightView).pack(side=LEFT)
+        Button(self.ViewFrame, text="Top", command=self.topView).pack(side=LEFT)
+
         self.ogl.pack(side='bottom', expand=1, fill=BOTH)
         self.ogl.set_background(0,0,0)
         self.ogl.bind('<Button-2>',self.ogl.tkRecordMouse)
@@ -292,6 +357,9 @@ class SimpleGui(Frame):
         self.model = None
         self.toolpath = None
         self.createWidgets()
+        self.scale = 0.2
+        self.ogl.tkRedraw()
+        self.resetView()
 
     def cutmodel(self, z):
         cutter = SphericalCutter(1, Point(0,0,7))
@@ -314,8 +382,55 @@ class SimpleGui(Frame):
 
         self.toolpath = pc.GenerateToolPath(x0,x1,y0,y1,z0,z1,dx,dy,dz)
 
+    def resetView(self):
+        glMatrixMode(GL_MODELVIEW)
+	glLoadIdentity()
+        glScalef(self.scale,self.scale,self.scale)
+        glRotatef(110,1.0,0.0,0.0)
+        glRotatef(180,0.0,1.0,0.0)
+        glRotatef(160,0.0,0.0,1.0)
+        self.ogl.tkRedraw()
+
+    def frontView(self):
+        glMatrixMode(GL_MODELVIEW)
+	glLoadIdentity()
+        glScalef(self.scale,self.scale,self.scale)
+        glRotatef(-90,1.0,0,0)
+        self.ogl.tkRedraw()
+
+    def backView(self):
+        glMatrixMode(GL_MODELVIEW)
+	glLoadIdentity()
+        glScalef(self.scale,self.scale,self.scale)
+        glRotatef(-90,1.0,0,0)
+        glRotatef(180,0,0,1.0)
+        self.ogl.tkRedraw()
+
+    def leftView(self):
+        glMatrixMode(GL_MODELVIEW)
+	glLoadIdentity()
+        glScalef(self.scale,self.scale,self.scale)
+        glRotatef(-90,1.0,0,0)
+        glRotatef(90,0,0,1.0)
+        self.ogl.tkRedraw()
+
+    def rightView(self):
+        glMatrixMode(GL_MODELVIEW)
+	glLoadIdentity()
+        glScalef(self.scale,self.scale,self.scale)
+        glRotatef(-90,1.0,0,0)
+        glRotatef(-90,0,0,1.0)
+        self.ogl.tkRedraw()
+
+    def topView(self):
+        glMatrixMode(GL_MODELVIEW)
+	glLoadIdentity()
+        glScalef(self.scale,self.scale,self.scale)
+        self.ogl.tkRedraw()
+
+
+        
 if __name__ == "__main__":
     app = SimpleGui()
     app.model = TestModel.TestModel()
-    app.cutmodel(3.0)
     app.mainloop()
