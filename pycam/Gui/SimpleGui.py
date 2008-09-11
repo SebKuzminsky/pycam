@@ -152,7 +152,7 @@ class SimpleGui(Frame):
         self.toolpath = None
         if self.model:
             self.scale = 2.0/self.model.maxsize()
-        self.ogl.tkRedraw()
+        self.resetView()
 
     def generateToolpath(self):
         radius = float(self.CutterRadius.get())
