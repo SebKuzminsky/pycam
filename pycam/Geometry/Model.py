@@ -48,7 +48,42 @@ class Model:
                 t.to_OpenGL()
 
     def append(self, t):
+        if not hasattr(self,"minx"):
+            self.minx = t.minx()
+        else:
+            self.minx = min(self.minx, t.minx())
+
+        if not hasattr(self,"miny"):
+            self.miny = t.miny()
+        else:
+            self.miny = min(self.miny, t.miny())
+
+        if not hasattr(self,"minz"):
+            self.minz = t.minz()
+        else:
+            self.minz = min(self.minz, t.minz())
+
+        if not hasattr(self,"maxx"):
+            self.maxx = t.maxx()
+        else:
+            self.maxx = max(self.maxx, t.maxx())
+
+        if not hasattr(self,"maxy"):
+            self.maxy = t.maxy()
+        else:
+            self.maxy = max(self.maxy, t.maxy())
+
+        if not hasattr(self,"maxz"):
+            self.maxz = t.maxz()
+        else:
+            self.maxz = max(self.maxz, t.maxz())
+
         self._triangles.append(t)
+
+    def maxsize(self):
+        if not hasattr(self,"_maxsize"):
+            self._maxsize = max3(max(abs(self.maxx),abs(self.minx)),max(abs(self.maxy),abs(self.miny)),max(abs(self.maxz),abs(self.minz)))
+        return self._maxsize
 
     def triangles(self):
         return self._triangles
