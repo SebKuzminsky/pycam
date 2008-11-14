@@ -164,12 +164,14 @@ class SimpleGui(Frame):
             toroid = float(self.ToroidRadius.get())
             self.cutter = ToroidalCutter(radius, toroid)
 
-        minx = float(self.MinX.get())
-        maxx = float(self.MaxX.get())
-        miny = float(self.MinY.get())
-        maxy = float(self.MaxY.get())
-        minz = float(self.MinZ.get())
-        maxz = float(self.MaxZ.get())
+        offset = radius/2
+
+        minx = float(self.MinX.get())-offset
+        maxx = float(self.MaxX.get())+offset
+        miny = float(self.MinY.get())-offset
+        maxy = float(self.MaxY.get())+offset
+        minz = float(self.MinZ.get())-offset
+        maxz = float(self.MaxZ.get())+offset
         samples = float(self.Samples.get())
         lines = float(self.Lines.get())
         layers = float(self.Layers.get())
@@ -216,7 +218,14 @@ class SimpleGui(Frame):
         if filename:
             self.OutputFileName.set(filename)
             if self.toolpath:
-                exporter = SimpleGCodeExporter.ExportPathList(filename, self.toolpath, self.Unit)
+                offset = float(self.CutterRadius.get())/2
+                minx = float(self.MinX.get())-offset
+                maxx = float(self.MaxX.get())+offset
+                miny = float(self.MinY.get())-offset
+                maxy = float(self.MaxY.get())+offset
+                minz = float(self.MinZ.get())-offset
+                maxz = float(self.MaxZ.get())+offset
+                exporter = SimpleGCodeExporter.ExportPathList(filename, self.toolpath, self.Unit, minx, miny, maxz)
 
     def createWidgets(self):
         self.ogl = OpenglWidget(self, width=600, height=500)
@@ -429,7 +438,7 @@ class SimpleGui(Frame):
         self.ogl.tkRedraw()
 
 
-        
+
 if __name__ == "__main__":
     app = SimpleGui()
     app.model = TestModel.TestModel()

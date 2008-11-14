@@ -16,15 +16,18 @@ class gcode:
 	lastx = lasty = lastz = lasta = lastgcode = None
 	lastfeed = None
 
-	def __init__(self, homeheight = 1.5, safetyheight = 0.04):
-		self.homeheight = homeheight
-		self.safetyheight = self.lastz = safetyheight
+	def __init__(self, startx, starty, startz, homeheight = 1.5, safetyheight = 0.04):
+                self.startx = startx
+                self.starty = starty
+                self.startz = startz
+		self.homeheight = max(startz,homeheight)
+		self.safetyheight = self.lastz = max(self.homeheight,safetyheight)
 
 	def begin(self):
-		return "G00 Z%.4f\n" % (self.safetyheight) + \
-			"G17 G40 G49\n" + "G54 G80 G90 G94\n" + \
-			"S1000 M3\n" + "G04 P3" + \
-                        "T1 M6 F0.1\n"
+		return "G40 G49 G54 G80 G90\n" + \
+        	       "S1000 F10\n" + \
+                       "G04 P3 T1 M6\n" + \
+                       "G00 X%.4f Y%.4f Z%.4f\n" % (self.startx, self.starty, self.startz)
 
 	def end(self):
 		return self.safety() + "\n" + "M2\n"

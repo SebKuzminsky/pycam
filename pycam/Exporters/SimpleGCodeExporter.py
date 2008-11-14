@@ -5,9 +5,15 @@ from gcode import gcode
 
 class SimpleGCodeExporter:
 
-    def __init__(self, filename, safetyheight=7.0, homeheight=7.0):
+    def __init__(self, filename, unit, x, y, z):
         self.file = file(filename,"w")
-        self.gcode = gcode(homeheight, safetyheight)
+        if unit == "mm":
+            self.file.write("G20\n")
+            z += 7.0
+        else:
+            self.file.write("G21\n")
+            z += 0.25
+        self.gcode = gcode(x,y,z)
         gc = self.gcode
         self.file.write(gc.begin()+"\n")
         self.file.write(gc.safety()+"\n")
@@ -31,12 +37,8 @@ class SimpleGCodeExporter:
             self.AddPath(path)
 
 
-def ExportPathList(filename, pathlist, unit):
-    exporter = SimpleGCodeExporter(filename)
-    if unit == "mm":
-        exporter.file.write("G20\n")
-    else:
-        exporter.file.write("G21\n")
+def ExportPathList(filename, pathlist, unit, x, y, z):
+    exporter = SimpleGCodeExporter(filename, unit, x, y, z)
     exporter.AddPathList(pathlist)
     exporter.close()
 
