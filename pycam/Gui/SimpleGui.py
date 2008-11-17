@@ -189,7 +189,11 @@ class SimpleGui(Frame):
                 dy = (maxy-miny)/(lines-1)
             else:
                 dy = INFINITE
-            self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy)
+            if self.Dir.get() == "x":
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, 0)
+            else:
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dx, 1)
+
         elif self.PathGeneratorName.get() == "PushCutter":
             if self.PathProcessorName.get() == "PathAccumulator":
                 self.option = PathAccumulator()
@@ -210,7 +214,10 @@ class SimpleGui(Frame):
                 dz = (maxz-minz)/(layers-1)
             else:
                 dz = INFINITE
-            self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, 0, dy, dz)
+            if self.Dir.get() == "x":
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, 0, dy, dz)
+            else:
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, 0, dz)
         self.ogl.tkRedraw()
 
     def browseSaveAs(self):
@@ -284,6 +291,12 @@ class SimpleGui(Frame):
         self.Unit.set("mm")
         Radiobutton(self.ConfigurationFrame, text="mm", variable=self.Unit, value="mm", command=self.ogl.tkRedraw).pack(side=LEFT)
         Radiobutton(self.ConfigurationFrame, text="in", variable=self.Unit, value="in", command=self.ogl.tkRedraw).pack(side=LEFT)
+
+        Label(self.ConfigurationFrame, text="Dir: ").pack(side=LEFT)
+        self.Dir = StringVar()
+        self.Dir.set("x")
+        Radiobutton(self.ConfigurationFrame, text="x", variable=self.Dir, value="x", command=self.ogl.tkRedraw).pack(side=LEFT)
+        Radiobutton(self.ConfigurationFrame, text="y", variable=self.Dir, value="y", command=self.ogl.tkRedraw).pack(side=LEFT)
 
         self.MinX = StringVar()
         self.MinX.set("-7")
