@@ -2,6 +2,8 @@
 import sys
 sys.path.insert(0,'.')
 
+from ConfigParser import ConfigParser
+
 from OpenGL.GL import *
 from OpenGL.Tk import *
 from OpenGL.GLUT import *
@@ -80,7 +82,7 @@ class SimpleGui(Frame):
         minz = float(self.MinZ.get())
         maxz = float(self.MaxZ.get())
         glBegin(GL_LINES)
-        glColor3f(0.2,0.2,0.2)
+        glColor3f(0.3,0.3,0.3)
 
         glVertex3f(minx,miny,minz)
         glVertex3f(maxx,miny,minz)
@@ -152,16 +154,50 @@ class SimpleGui(Frame):
         self.toolpath = None
         if self.model:
             self.scale = 2.0/self.model.maxsize()
+        config = ConfigParser();
+        if config.read(filename.replace(".stl",".cfg")):
+            if config.has_option("stock","Unit"):
+                self.Unit.set(config.get("stock","Unit"))
+            if config.has_option("stock","MinX"):
+                self.MinX.set(config.get("stock","MinX"))
+            if config.has_option("stock","MaxX"):
+                self.MaxX.set(config.get("stock","MaxX"))
+            if config.has_option("stock","MinY"):
+                self.MinY.set(config.get("stock","MinY"))
+            if config.has_option("stock","MaxY"):
+                self.MaxY.set(config.get("stock","MaxY"))
+            if config.has_option("stock","MinZ"):
+                self.MinZ.set(config.get("stock","MinZ"))
+            if config.has_option("stock","MaxZ"):
+                self.MaxZ.set(config.get("stock","MaxZ"))
+            if config.has_option("config","ToolRadius"):
+                self.ToolRadius.set(config.get("config","ToolRadius"))
+            if config.has_option("config","TorusRadius"):
+                self.ToolRadius.set(config.get("config","TorusRadius"))
+            if config.has_option("config","Samples"):
+                self.Samples.set(config.get("config","Samples"))
+            if config.has_option("config","Lines"):
+                self.Lines.set(config.get("config","Lines"))
+            if config.has_option("config","Layers"):
+                self.Layers.set(config.get("config","Layers"))
+            if config.has_option("config","Cutter"):
+                self.CutterName.set(config.get("config","Cutter"))
+            if config.has_option("config","PathGenerator"):
+                self.PathGeneratorName.set(config.get("config","PathGenerator"))
+            if config.has_option("config","PathProcessor"):
+                self.PathProcessorName.set(config.get("config","PathProcessor"))
+            if config.has_option("config","Direction"):
+                self.Direction.set(config.get("config","Direction"))
         self.resetView()
 
     def generateToolpath(self):
-        radius = float(self.CutterRadius.get())
+        radius = float(self.ToolRadius.get())
         if self.CutterName.get() == "SphericalCutter":
             self.cutter = SphericalCutter(radius)
         elif self.CutterName.get() == "CylindricalCutter":
             self.cutter = CylindricalCutter(radius)
         elif self.CutterName.get() == "ToroidalCutter":
-            toroid = float(self.ToroidRadius.get())
+            toroid = float(self.TorusRadius.get())
             self.cutter = ToroidalCutter(radius, toroid)
 
         offset = radius/2
@@ -189,7 +225,7 @@ class SimpleGui(Frame):
                 dy = (maxy-miny)/(lines-1)
             else:
                 dy = INFINITE
-            if self.Dir.get() == "x":
+            if self.Direction.get() == "x":
                 self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, 0)
             else:
                 self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dx, 1)
@@ -214,7 +250,7 @@ class SimpleGui(Frame):
                 dz = (maxz-minz)/(layers-1)
             else:
                 dz = INFINITE
-            if self.Dir.get() == "x":
+            if self.Direction.get() == "x":
                 self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, 0, dy, dz)
             else:
                 self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, 0, dz)
@@ -225,7 +261,7 @@ class SimpleGui(Frame):
         if filename:
             self.OutputFileName.set(filename)
             if self.toolpath:
-                offset = float(self.CutterRadius.get())/2
+                offset = float(self.ToolRadius.get())/2
                 minx = float(self.MinX.get())-offset
                 maxx = float(self.MaxX.get())+offset
                 miny = float(self.MinY.get())-offset
@@ -273,17 +309,17 @@ class SimpleGui(Frame):
         self.ConfigurationFrame = Frame(self.TopFrame)
         self.ConfigurationFrame.pack(side=TOP, anchor=W, expand=1, fill=X)
         Label(self.ConfigurationFrame, text="Tool Radius: ").pack(side=LEFT)
-        self.CutterRadius = StringVar()
-        self.CutterRadius.set("1.0")
+        self.ToolRadius = StringVar()
+        self.ToolRadius.set("1.0")
         s = Spinbox(self.ConfigurationFrame, width=5, text='Radius', from_=0.1, to=5.0, increment=0.1, format="%2.1f")
         s.pack(side=LEFT)
-        s["textvariable"] = self.CutterRadius
+        s["textvariable"] = self.ToolRadius
 
         Label(self.ConfigurationFrame, text="Torus Radius: ").pack(side=LEFT)
-        self.ToroidRadius = StringVar()
-        self.ToroidRadius.set("0.25")
+        self.TorusRadius = StringVar()
+        self.TorusRadius.set("0.25")
         s = Spinbox(self.ConfigurationFrame, width=5, text='Toroid', from_=0.1, to=5.0, increment=0.1, format="%2.1f")
-        s["textvariable"] = self.ToroidRadius
+        s["textvariable"] = self.TorusRadius
         s.pack(side=LEFT)
 
         Label(self.ConfigurationFrame, text="Unit: ").pack(side=LEFT)
@@ -293,10 +329,10 @@ class SimpleGui(Frame):
         Radiobutton(self.ConfigurationFrame, text="in", variable=self.Unit, value="in", command=self.ogl.tkRedraw).pack(side=LEFT)
 
         Label(self.ConfigurationFrame, text="Dir: ").pack(side=LEFT)
-        self.Dir = StringVar()
-        self.Dir.set("x")
-        Radiobutton(self.ConfigurationFrame, text="x", variable=self.Dir, value="x", command=self.ogl.tkRedraw).pack(side=LEFT)
-        Radiobutton(self.ConfigurationFrame, text="y", variable=self.Dir, value="y", command=self.ogl.tkRedraw).pack(side=LEFT)
+        self.Direction = StringVar()
+        self.Direction.set("x")
+        Radiobutton(self.ConfigurationFrame, text="x", variable=self.Direction, value="x", command=self.ogl.tkRedraw).pack(side=LEFT)
+        Radiobutton(self.ConfigurationFrame, text="y", variable=self.Direction, value="y", command=self.ogl.tkRedraw).pack(side=LEFT)
 
         self.MinX = StringVar()
         self.MinX.set("-7")
