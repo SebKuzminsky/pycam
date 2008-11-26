@@ -44,9 +44,9 @@ class DropCutter:
                         else:
                             pa.append(Point(cl_max.x,cl_max.y,cl_last.z))
                     elif (t_max and t_last and cl_last and cl_max ) and (t_max != t_last):
-                        nxl = t_last.normal().x
+                        nxl = -t_last.normal().x
                         nzl = t_last.normal().z
-                        nxm = t_max.normal().x
+                        nxm = -t_max.normal().x
                         nzm = t_max.normal().z
                         xl = cl_last.x
                         zl = cl_last.z
@@ -56,7 +56,7 @@ class DropCutter:
                             X = (zl-zm+(xm*nxm/nzm+xl*nxl/nzl))/(nxm/nzm+nxl/nzl)
                             Y = cl_last.y
                             Z = zl + (X-xl)*nxl/nzm
-                            if xl > X and X < xm:
+                            if xl < X and X < xm:
                                 pa.append(Point(X,Y,Z))
                         except:
                             pass
