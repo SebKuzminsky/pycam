@@ -6,6 +6,37 @@ from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Point import Point
 
+def isNear(a, b):
+    return abs(a-b)<1e-6
+
+def isZero(a):
+    return isNear(a,0)
+
+def intersect_lines(xl,zl,nxl,nzl,xm,zm,nxm,nzm):
+    X = None
+    Z = None
+#    print "xl=",xl,", zl=",zl,"nxl=",nxl,", nzl=",nzl,", X=", X, ", Z=",Z,", xm=",xm,",zm=",zm, ", nxm=",nxm,",nzm=",nzm
+    if isZero(nzl) and isZero(nzm):
+        pass
+    elif isZero(nzl) or isZero(nxl):
+        X = xl
+        Z = zm + (xm-xl)*nxm/nzm
+        return (X,Z)
+    elif isZero(nzm) or isZero(nxm):
+        X = xm
+        Z = zl - (xm-xl)*nxl/nzl
+        return (X,Z)
+    else:
+        try:
+            X = (zl-zm+(xm*nxm/nzm-xl*nxl/nzl))/(nxm/nzm-nxl/nzl)
+        except:
+            pass
+
+        if X and xl < X and X < xm:
+            Z = zl + (X-xl)*nxl/nzl
+            return (X,Z)
+    return (None,None)
+
 def intersect_plane_point(plane, direction, point):
     denom = plane.n.dot(direction)
     if denom == 0:

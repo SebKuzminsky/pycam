@@ -1,6 +1,7 @@
 from pycam.PathProcessors import *
 from pycam.Geometry import *
 from pycam.Geometry.utils import *
+from pycam.Geometry.intersection import intersect_lines
 
 class DropCutter:
 
@@ -52,14 +53,13 @@ class DropCutter:
                         zl = cl_last.z
                         xm = cl_max.x
                         zm = cl_max.z
-                        try:
-                            X = (zl-zm+(xm*nxm/nzm+xl*nxl/nzl))/(nxm/nzm+nxl/nzl)
+                        (X,Z) = intersect_lines(xl, zl, nxl, nzl, xm, zm, nxm, nzm)
+                        if X and xl < X and X < xm and (Z > zl or Z > zm):
                             Y = cl_last.y
-                            Z = zl + (X-xl)*nxl/nzm
-                            if xl < X and X < xm:
+                            if Z<z0 or Z>z1:
+                                print "^", "xl=",xl,", zl=",zl,"nxl=",nxl,", nzl=",nzl,", X=", X, ", Z=",Z,", xm=",xm,",zm=",zm, ", nxm=",nxm,",nzm=",nzm
+                            else:
                                 pa.append(Point(X,Y,Z))
-                        except:
-                            pass
                     pa.append(cl_max)
 
                     cl_last = cl_max
@@ -100,22 +100,21 @@ class DropCutter:
                         else:
                             pa.append(Point(cl_max.x,cl_max.y,cl_last.z))
                     elif (t_max and t_last and cl_last and cl_max ) and (t_max != t_last):
-                        nyl = t_last.normal().y
+                        nyl = -t_last.normal().y
                         nzl = t_last.normal().z
-                        nym = t_max.normal().y
+                        nym = -t_max.normal().y
                         nzm = t_max.normal().z
                         yl = cl_last.y
                         zl = cl_last.z
                         ym = cl_max.y
                         zm = cl_max.z
-                        try:
+                        (Y,Z) = intersect_lines(yl, zl, nyl, nzl, ym, zm, nym, nzm)
+                        if Y and yl < Y and Y < ym and (Z > zl or Z > zm):
                             X = cl_last.x
-                            Y = (zl-zm+(ym*nym/nzm+yl*nyl/nzl))/(nym/nzm+nyl/nzl)
-                            Z = zl + (Y-yl)*nyl/nzm
-                            if yl > Y and Y < ym:
+                            if Z<z0 or Z>z1:
+                                print "^", "yl=",yl,", zl=",zl,"nyl=",nyl,", nzl=",nzl,", Y=", Y, ", Z=",Z,", ym=",ym,",zm=",zm, ", nym=",nym,",nzm=",nzm
+                            else:
                                 pa.append(Point(X,Y,Z))
-                        except:
-                            pass
 
                     pa.append(cl_max)
 
