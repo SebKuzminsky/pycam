@@ -173,7 +173,7 @@ class SimpleGui(Frame):
             if config.has_option("config","ToolRadius"):
                 self.ToolRadius.set(config.get("config","ToolRadius"))
             if config.has_option("config","TorusRadius"):
-                self.ToolRadius.set(config.get("config","TorusRadius"))
+                self.TorusRadius.set(config.get("config","TorusRadius"))
             if config.has_option("config","Samples"):
                 self.Samples.set(config.get("config","Samples"))
             if config.has_option("config","Lines"):
