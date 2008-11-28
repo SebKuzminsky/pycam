@@ -29,3 +29,6 @@ The PolygonCutter extracts polygonial sections from the cutter scanlines,
 then cuts those in a zig-zag pattern
 it's usefull mainly in combination with the PushCutter
 
+The ContourCutter extracts contours from the cutter scanlines,
+it's usefull only in combination with the PushCutter
+
