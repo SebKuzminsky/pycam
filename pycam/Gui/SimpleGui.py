@@ -239,6 +239,8 @@ class SimpleGui(Frame):
                 self.option = ZigZagCutter()
             elif self.PathProcessorName.get() == "PolygonCutter":
                 self.option = PolygonCutter()
+            elif self.PathProcessorName.get() == "ContourCutter":
+                self.option = ContourCutter()
             else:
                 self.option = None
             self.pathgenerator = PushCutter(self.cutter, self.model, self.option);

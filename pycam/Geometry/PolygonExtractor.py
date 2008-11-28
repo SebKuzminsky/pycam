@@ -11,6 +11,11 @@ class PolygonExtractor:
     MONOTONE=2
     def __init__(self, policy=MONOTONE):
         self.policy = policy
+        self.hor_path_list = None
+        self.ver_path_list = None
+        self.merge_path_list = None
+        self.dx = 1
+        self.dy = 1
 
     def append(self, p):
         if (self.current_dir==0):
@@ -302,10 +307,11 @@ class PolygonExtractor:
         self.prev_line = self.curr_line
 
     def merge_path_lists(self):
-        self.merge_path_list = []
-        pass
-        dx = 1
-        dy = 1
+        if self.hor_path_list:
+            self.merge_path_list = self.hor_path_list
+        else:
+            self.merge_path_list = self.ver_path_list
+        return
         # find matching path to merge with */
         for s0 in self.hor_path_list:
 

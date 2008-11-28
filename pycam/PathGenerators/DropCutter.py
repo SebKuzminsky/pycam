@@ -56,7 +56,7 @@ class DropCutter:
                         (X,Z) = intersect_lines(xl, zl, nxl, nzl, xm, zm, nxm, nzm)
                         if X and xl < X and X < xm and (Z > zl or Z > zm):
                             Y = cl_last.y
-                            if Z<z0 or Z>z1:
+                            if Z<z0-10 or Z>z1+10:
                                 print "^", "xl=",xl,", zl=",zl,"nxl=",nxl,", nzl=",nzl,", X=", X, ", Z=",Z,", xm=",xm,",zm=",zm, ", nxm=",nxm,",nzm=",nzm
                             else:
                                 pa.append(Point(X,Y,Z))
@@ -111,7 +111,7 @@ class DropCutter:
                         (Y,Z) = intersect_lines(yl, zl, nyl, nzl, ym, zm, nym, nzm)
                         if Y and yl < Y and Y < ym and (Z > zl or Z > zm):
                             X = cl_last.x
-                            if Z<z0 or Z>z1:
+                            if Z<z0-10 or Z>z1+10:
                                 print "^", "yl=",yl,", zl=",zl,"nyl=",nyl,", nzl=",nzl,", Y=", Y, ", Z=",Z,", ym=",ym,",zm=",zm, ", nym=",nym,",nzm=",nzm
                             else:
                                 pa.append(Point(X,Y,Z))
