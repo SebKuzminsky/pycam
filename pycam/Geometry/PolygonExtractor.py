@@ -307,11 +307,8 @@ class PolygonExtractor:
         self.prev_line = self.curr_line
 
     def merge_path_lists(self):
-        if self.hor_path_list:
-            self.merge_path_list = self.hor_path_list
-        else:
-            self.merge_path_list = self.ver_path_list
-        return
+        self.merge_path_list = []
+
         # find matching path to merge with */
         for s0 in self.hor_path_list:
 
@@ -363,7 +360,7 @@ class PolygonExtractor:
 
                 if DEBUG_POLYGONEXTRACTOR: print "top1: x=", min_x1, "y=",min_y1, "p=",top1.peek().id
 
-                if (min_y1 >= min_y0-dy) and (min_y1 <= min_y0+dy) and (min_x1 >= min_x0-dx) and (min_x1 <= min_x0+dx):
+                if (min_y1 >= min_y0-self.dy) and (min_y1 <= min_y0+self.dy) and (min_x1 >= min_x0-self.dx) and (min_x1 <= min_x0+self.dx):
                     # we have a potential match
                     if DEBUG_POLYGONEXTRACTOR: print "matched %d" % s1.id
                     if DEBUG_POLYGONEXTRACTOR: print "i0=%d i1=%d" % (top0.peek().id, top1.peek().id)

@@ -3,7 +3,7 @@ BRLCAD=c:/Software/BRL-CAD/bin
 
 MGED=$(BRLCAD)/mged
 G-STL=$(BRLCAD)/g-stl
-VER=0.1.4
+VER=0.1.6
 
 all:
 
