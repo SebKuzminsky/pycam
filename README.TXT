@@ -89,6 +89,14 @@ TODO:
     ** incremental visualization
     ** add progress bar
 
+BUGS:
+    * The combination of PushCutter with PolygonCutter sometimes cuts accross
+      the model in between lines
+    * The combination of PushCutter with ContourCutter sometimes cuts accross
+      the model in between lines in "x" or "y" mode
+    * The combination of PushCutter with ContourCutter sometimes gives erratic
+      toolpaths in "xy" mode
+
 
 OPTIMIZATION:
 
