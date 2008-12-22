@@ -25,7 +25,6 @@ class gcode:
 
 	def begin(self):
 		return "G40 G49 G54 G80 G90\n" + \
-        	       "S1000 F10\n" + \
                        "G04 P3 T1 M6\n" + \
                        "G00 X%.4f Y%.4f Z%.4f\n" % (self.startx, self.starty, self.startz)
 

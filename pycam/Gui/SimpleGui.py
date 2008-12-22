@@ -265,7 +265,7 @@ class SimpleGui(Frame):
         self.ogl.tkRedraw()
 
     def browseSaveAs(self):
-        filename = tkFileDialog.SaveAs(self, filetypes=[("GCODE files", ".nc .gc")]).show()
+        filename = tkFileDialog.SaveAs(self, filetypes=[("GCODE files", ".nc .gc .ngc")]).show()
         if filename:
             self.OutputFileName.set(filename)
             if self.toolpath:
@@ -276,10 +276,10 @@ class SimpleGui(Frame):
                 maxy = float(self.MaxY.get())+offset
                 minz = float(self.MinZ.get())-offset
                 maxz = float(self.MaxZ.get())+offset
-                exporter = SimpleGCodeExporter.ExportPathList(filename, self.toolpath, self.Unit, minx, miny, maxz)
+                exporter = SimpleGCodeExporter.ExportPathList(filename, self.toolpath, self.Unit.get(), minx, miny, maxz, self.FeedRate.get(), self.Speed.get())
 
     def createWidgets(self):
-        self.ogl = OpenglWidget(self, width=600, height=500)
+        self.ogl = OpenglWidget(self, width=600, height=500, double=1)
 
         self.TopFrame = Frame(self).pack(side=TOP, expand=0, fill=X)
 
@@ -393,6 +393,17 @@ class SimpleGui(Frame):
         Label(self.OutputFileFrame, text= "Output File: ").pack(side=LEFT)
         self.OutputFileName = StringVar()
         self.OutputFileField = Entry(self.OutputFileFrame, textvariable=self.OutputFileName).pack(side=LEFT, expand=1, fill=X)
+
+        self.FeedRate = StringVar()
+        self.FeedRate.set("200")
+        Label(self.OutputFileFrame, text="FeedRate").pack(side=LEFT)
+        Entry(self.OutputFileFrame, textvariable=self.FeedRate, width=6).pack(side=LEFT)
+        self.Speed = StringVar()
+        self.Speed.set("1000")
+        Label(self.OutputFileFrame, text="Speed").pack(side=LEFT)
+        Entry(self.OutputFileFrame, textvariable=self.Speed, width=6).pack(side=LEFT)
+
+
         self.OutputFileBrowse = Button(self.OutputFileFrame, text="Export...", command=self.browseSaveAs).pack(side=RIGHT)
 
         self.ViewFrame = Frame(self.TopFrame)
