@@ -74,55 +74,56 @@ class SimpleGui(Frame):
         glVertex3f(0,0,size)
         glEnd()
 
-        # stock model
-        minx = float(self.MinX.get())
-        maxx = float(self.MaxX.get())
-        miny = float(self.MinY.get())
-        maxy = float(self.MaxY.get())
-        minz = float(self.MinZ.get())
-        maxz = float(self.MaxZ.get())
-        glBegin(GL_LINES)
-        glColor3f(0.3,0.3,0.3)
+        if True:
+            # stock model
+            minx = float(self.MinX.get())
+            maxx = float(self.MaxX.get())
+            miny = float(self.MinY.get())
+            maxy = float(self.MaxY.get())
+            minz = float(self.MinZ.get())
+            maxz = float(self.MaxZ.get())
+            glBegin(GL_LINES)
+            glColor3f(0.3,0.3,0.3)
 
-        glVertex3f(minx,miny,minz)
-        glVertex3f(maxx,miny,minz)
+            glVertex3f(minx,miny,minz)
+            glVertex3f(maxx,miny,minz)
 
-        glVertex3f(minx,maxy,minz)
-        glVertex3f(maxx,maxy,minz)
+            glVertex3f(minx,maxy,minz)
+            glVertex3f(maxx,maxy,minz)
 
-        glVertex3f(minx,miny,maxz)
-        glVertex3f(maxx,miny,maxz)
+            glVertex3f(minx,miny,maxz)
+            glVertex3f(maxx,miny,maxz)
 
-        glVertex3f(minx,maxy,maxz)
-        glVertex3f(maxx,maxy,maxz)
-
-
-        glVertex3f(minx,miny,minz)
-        glVertex3f(minx,maxy,minz)
-
-        glVertex3f(maxx,miny,minz)
-        glVertex3f(maxx,maxy,minz)
-
-        glVertex3f(minx,miny,maxz)
-        glVertex3f(minx,maxy,maxz)
-
-        glVertex3f(maxx,miny,maxz)
-        glVertex3f(maxx,maxy,maxz)
+            glVertex3f(minx,maxy,maxz)
+            glVertex3f(maxx,maxy,maxz)
 
 
-        glVertex3f(minx,miny,minz)
-        glVertex3f(minx,miny,maxz)
+            glVertex3f(minx,miny,minz)
+            glVertex3f(minx,maxy,minz)
 
-        glVertex3f(maxx,miny,minz)
-        glVertex3f(maxx,miny,maxz)
+            glVertex3f(maxx,miny,minz)
+            glVertex3f(maxx,maxy,minz)
 
-        glVertex3f(minx,maxy,minz)
-        glVertex3f(minx,maxy,maxz)
+            glVertex3f(minx,miny,maxz)
+            glVertex3f(minx,maxy,maxz)
 
-        glVertex3f(maxx,maxy,minz)
-        glVertex3f(maxx,maxy,maxz)
+            glVertex3f(maxx,miny,maxz)
+            glVertex3f(maxx,maxy,maxz)
 
-        glEnd()
+
+            glVertex3f(minx,miny,minz)
+            glVertex3f(minx,miny,maxz)
+
+            glVertex3f(maxx,miny,minz)
+            glVertex3f(maxx,miny,maxz)
+
+            glVertex3f(minx,maxy,minz)
+            glVertex3f(minx,maxy,maxz)
+
+            glVertex3f(maxx,maxy,minz)
+            glVertex3f(maxx,maxy,maxz)
+
+            glEnd()
 
         if self.model:
             glColor3f(0.5,.5,1)
@@ -147,6 +148,10 @@ class SimpleGui(Frame):
 
     def browseOpen(self):
         filename = tkFileDialog.Open(self, filetypes=[("STL files", ".stl")]).show()
+        if filename:
+            self.open(filename)
+
+    def open(self, filename):
         self.model = None
         if filename:
             self.InputFileName.set(filename)
@@ -206,8 +211,8 @@ class SimpleGui(Frame):
         maxx = float(self.MaxX.get())+offset
         miny = float(self.MinY.get())-offset
         maxy = float(self.MaxY.get())+offset
-        minz = float(self.MinZ.get())-offset
-        maxz = float(self.MaxZ.get())+offset
+        minz = float(self.MinZ.get())
+        maxz = float(self.MaxZ.get())
         samples = float(self.Samples.get())
         lines = float(self.Lines.get())
         layers = float(self.Layers.get())
@@ -261,22 +266,25 @@ class SimpleGui(Frame):
             elif self.Direction.get() == "y":
                 self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, 0, dz)
             elif self.Direction.get() == "xy":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, dz)
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz)
         self.ogl.tkRedraw()
 
     def browseSaveAs(self):
         filename = tkFileDialog.SaveAs(self, filetypes=[("GCODE files", ".nc .gc .ngc")]).show()
         if filename:
-            self.OutputFileName.set(filename)
-            if self.toolpath:
-                offset = float(self.ToolRadius.get())/2
-                minx = float(self.MinX.get())-offset
-                maxx = float(self.MaxX.get())+offset
-                miny = float(self.MinY.get())-offset
-                maxy = float(self.MaxY.get())+offset
-                minz = float(self.MinZ.get())-offset
-                maxz = float(self.MaxZ.get())+offset
-                exporter = SimpleGCodeExporter.ExportPathList(filename, self.toolpath, self.Unit.get(), minx, miny, maxz, self.FeedRate.get(), self.Speed.get())
+            save(self, filename)
+
+    def save(self, filename):
+        self.OutputFileName.set(filename)
+        if self.toolpath:
+            offset = float(self.ToolRadius.get())/2
+            minx = float(self.MinX.get())-offset
+            maxx = float(self.MaxX.get())+offset
+            miny = float(self.MinY.get())-offset
+            maxy = float(self.MaxY.get())+offset
+            minz = float(self.MinZ.get())-offset
+            maxz = float(self.MaxZ.get())+offset
+            exporter = SimpleGCodeExporter.ExportPathList(filename, self.toolpath, self.Unit.get(), minx, miny, maxz, self.FeedRate.get(), self.Speed.get())
 
     def createWidgets(self):
         self.ogl = OpenglWidget(self, width=600, height=500, double=1)
