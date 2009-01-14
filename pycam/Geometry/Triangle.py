@@ -36,9 +36,9 @@ class Triangle:
         s += " %f %f %f" % (self.p3.x,self.p3.y,self.p3.z)
         s += " 0 1 2"
         s += "\n"
-        if sphere and hasattr(self, "_center"):
+        if sphere and hasattr(self, "_middle"):
             s += "in %s_sph sph " % self.name()
-            s += " %f %f %f" % (self._center.x, self._center.y, self._center.z)
+            s += " %f %f %f" % (self._middle.x, self._middle.y, self._middle.z)
             s += " %f" % self._radius
             s += "\n"
         return s
@@ -49,9 +49,17 @@ class Triangle:
         glVertex3f(self.p2.x, self.p2.y, self.p2.z)
         glVertex3f(self.p3.x, self.p3.y, self.p3.z)
         glEnd()
-        if hasattr(self, "_center"):
+        if False:
+            n = self.normal()
+            c = self.center()
+            d = 0.5
+            glBegin(GL_LINES)
+            glVertex3f(c.x, c.y, c.z)
+            glVertex3f(c.x+n.x*d, c.y+n.y*d, c.z+n.z*d)
+            glEnd()
+        if False and hasattr(self, "_middle"):
             glPushMatrix()
-            glTranslate(self._center.x, self._center.y, self._center.z)
+            glTranslate(self._middle.x, self._middle.y, self._middle.z)
             if not hasattr(self,"_sphere"):
                 self._sphere = gluNewQuadric()
             gluSphere(self._sphere, self._radius, 10, 10)
@@ -69,10 +77,7 @@ class Triangle:
 
     def plane(self):
         if not hasattr(self, '_plane'):
-            if hasattr(self, '_center'):
-                self._plane=Plane(self._center, self.normal())
-            else:
-                self._plane=Plane(self.p1, self.normal())
+            self._plane=Plane(self.center(), self.normal())
         return self._plane
 
     def point_inside(self, p):
@@ -130,8 +135,13 @@ class Triangle:
 
     def center(self):
         if not hasattr(self, "_center"):
-            self.calc_circumcircle()
+            self._center = self.p1.add(self.p2).add(self.p3).mul(1.0/3)
         return self._center
+
+    def middle(self):
+        if not hasattr(self, "_middle"):
+            self.calc_circumcircle()
+        return self._middle
 
     def radius(self):
         if not hasattr(self, "_radius"):
@@ -152,7 +162,7 @@ class Triangle:
         alpha = self.p3.sub(self.p2).normsq()*(self.p1.sub(self.p2).dot(self.p1.sub(self.p3))) / (denom2)
         beta  = self.p1.sub(self.p3).normsq()*(self.p2.sub(self.p1).dot(self.p2.sub(self.p3))) / (denom2)
         gamma = self.p1.sub(self.p2).normsq()*(self.p3.sub(self.p1).dot(self.p3.sub(self.p2))) / (denom2)
-        self._center = Point(self.p1.x*alpha+self.p2.x*beta+self.p3.x*gamma,
+        self._middle = Point(self.p1.x*alpha+self.p2.x*beta+self.p3.x*gamma,
                              self.p1.y*alpha+self.p2.y*beta+self.p3.y*gamma,
                              self.p1.z*alpha+self.p2.z*beta+self.p3.z*gamma)
 
