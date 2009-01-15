@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
         pathlist = pg.GenerateToolPath(x0, x1, y0, y1, z0, z1, dx, dy, 0)
 
-        g = SimpleGCodeExporter("cutter2.nc", "mm", x1, y1, z1, 100, 7000)
+        g = SimpleGCodeExporter("cutter2.nc", "mm", x1, y1, z1, "100", "7000")
         g.AddPathList(pathlist)
         g.close()
 
