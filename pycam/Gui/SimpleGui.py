@@ -272,7 +272,7 @@ class SimpleGui(Frame):
     def browseSaveAs(self):
         filename = tkFileDialog.SaveAs(self, filetypes=[("GCODE files", ".nc .gc .ngc")]).show()
         if filename:
-            save(self, filename)
+            self.save(filename)
 
     def save(self, filename):
         self.OutputFileName.set(filename)
