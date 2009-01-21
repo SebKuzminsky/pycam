@@ -14,6 +14,7 @@ class Hit:
         self.t = t
         self.d = d
         self.dir = dir
+        self.z = -INFINITE
 
     def cmp(a,b):
         return cmp(a.d, b.d)
@@ -88,9 +89,13 @@ class PushCutter:
         if dx==0:
             forward = Point(1,0,0)
             backward = Point(-1,0,0)
+            forward_small = Point(epsilon,0,0)
+            backward_small = Point(-epsilon,0,0)
         elif dy == 0:
             forward = Point(0,1,0)
             backward = Point(0,-1,0)
+            forward_small = Point(0,epsilon,0)
+            backward_small = Point(0,-epsilon,0)
 
         x = minx
         y = miny
@@ -101,7 +106,7 @@ class PushCutter:
             self.pa.new_scanline()
             if False:
                 line += 1
-                if line == 13:
+                if line == 10:
                     DEBUG_PUSHCUTTER=True
                     DEBUG_PUSHCUTTER2=True
                     DEBUG_PUSHCUTTER3=True
@@ -120,14 +125,10 @@ class PushCutter:
 
 
             if DEBUG_PUSHCUTTER3:
-                self.svg.stroke('gray')
-                self.svg.AddLine(minx, z, maxx, z)
                 self.svg.fill('lightgreen')
                 p = Point(minx, y, 10)
                 for i in range(0,100):
                     p.x = minx + float(i)/100*float(maxx-minx)
-                    (zmax, tmax) = self.DropCutterTest(p, model)
-                    if DEBUG_PUSHCUTTER: print "v cl=",p,",zmax=",zmax
                     self.svg.AddDot(p.x, zmax)
 
                 self.svg.fill('black')
@@ -135,114 +136,102 @@ class PushCutter:
             # find all hits along scan line
             hits = []
             prev = Point(x,y,z)
-            c.moveto(prev)
+            hits.append(Hit(prev, None, 0, None))
 
             for t in model.triangles():
                 #if t.normal().z < 0: continue;
                 # normals point outward... and we want to approach the model from the outside!
                 n = t.normal().dot(forward)
+                c.moveto(prev)
                 if n>=0:
                     (cl,d) = c.intersect(backward, t)
                     if cl:
-                        #if DEBUG_PUSHCUTTER: print "< cl=",cl,",d=",-d,",t=",t
+                        if DEBUG_PUSHCUTTER: print "< cl=",cl,",d=",-d,",t=",t.id,",t.n=",t.normal(),",n=",n
                         hits.append(Hit(cl,t,-d,backward))
+                        hits.append(Hit(cl.sub(backward_small),t,-d+epsilon,backward))
                         if DEBUG_PUSHCUTTER3: self.svg.AddDot(cl.x, cl.z)
+                    else:
+                        if DEBUG_PUSHCUTTER: print "< cl=",cl,",0",",t=",t.id
                 if n<=0:
                     (cl,d) = c.intersect(forward, t)
                     if cl:
-                        #if DEBUG_PUSHCUTTER: print "> cl=",cl,",d=",d,",t=",t
+                        if DEBUG_PUSHCUTTER: print "> cl=",cl,",d=",d,",t=",t.id,",t.n=",t.normal(),",n=",n
                         hits.append(Hit(cl,t,d,forward))
+                        hits.append(Hit(cl.sub(forward_small),t,d-epsilon,forward))
                         if DEBUG_PUSHCUTTER3: self.svg.AddDot(cl.x, cl.z)
-
-            # sort along the scan direction
-            hits.sort(Hit.cmp)
-
-#            # remove duplicates (typically edges)
-#            i = 1
-#            while i < len(hits):
-#                while i<len(hits) and abs(hits[i].d - hits[i-1].d)<epsilon:
-#                    del hits[i]
-#                i += 1
-
-            if DEBUG_PUSHCUTTER or DEBUG_PUSHCUTTER3:
-                for h in hits:
-                    (zmax, tmax) = self.DropCutterTest(h.cl, model)
-                    if DEBUG_PUSHCUTTER: print "  cl=",h.cl,",d=",h.d,",zmax=",zmax
-                    if DEBUG_PUSHCUTTER3:
-                        self.svg.stroke('gray')
-                        self.svg.AddLine(h.cl.x, -1, h.cl.x, zmax)
-
-            # find parts of scanline where model is below z-level
-            i = 0
-            while i < len(hits):
-
-                # find next hit cutter location that is below z-level
-                while i < len(hits):
-                    (zmax, tmax) = self.DropCutterTest(prev, model)
-
-                    if DEBUG_PUSHCUTTER: print "1", prev, "z=",zmax
-
-                    if zmax <= z+epsilon:
-                        break
-
-                    if DEBUG_PUSHCUTTER3: 
-                        self.svg.stroke('lightred')
-                        self.svg.AddLine(prev.x, prev.z, prev.x, zmax)
-
-                    prev = hits[i].cl
-                    i += 1
-
-
-                if DEBUG_PUSHCUTTER3:
-                    self.svg.stroke('red')
-                    self.svg.AddLine(prev.x, prev.z, prev.x, zmax)
-
-                # find next hit cutter location that is above z-level
-                while i < len(hits):
-                    next = hits[i].cl
-                    (zmax, tmax) = self.DropCutterTest(next, model)
-
-                    if DEBUG_PUSHCUTTER: print "2", next, "z=",zmax
-
-                    i += 1
-
-                    if zmax >= z-epsilon:
-                        break
-
-                    if DEBUG_PUSHCUTTER3: 
-                        self.svg.stroke('lightblue')
-                        self.svg.AddLine(next.x, next.z, next.x, zmax)
-
-                if DEBUG_PUSHCUTTER3: 
-                    self.svg.stroke('blue')
-                    self.svg.AddLine(next.x, next.z, next.x, zmax)
-
-                if i < len(hits):
-                    self.pa.append(prev)
-                    self.pa.append(next)
-                    if DEBUG_PUSHCUTTER: print "C ", prev, next, "z=",zmax
-                    if DEBUG_PUSHCUTTER3: 
-                        self.svg.stroke('red')
-                        self.svg.AddLine(prev.x, z-0.1, next.x, z-0.1)
-
-                    prev = hits[i].cl
+                    else:
+                        if DEBUG_PUSHCUTTER: print "> cl=",cl,",0",",t=",t.id
 
             if dx == 0:
                 x = maxx
             if dy == 0:
                 y = maxy
 
-            next = Point(x,y,z)
-            (zmax, tmax) = self.DropCutterTest(next, model)
-            if DEBUG_PUSHCUTTER: print "3 ", next, "z=",zmax
+            next = Point(x, y, z)
+            hits.append(Hit(next, None, maxx-minx, None))
 
-            if zmax <= z+epsilon:
-                self.pa.append(prev)
-                self.pa.append(next)
-                if DEBUG_PUSHCUTTER: print "C ", prev, next, "z=",zmax
+
+            # sort along the scan direction
+            hits.sort(Hit.cmp)
+
+            # remove duplicates (typically shared edges)
+            i = 1
+            while i < len(hits):
+                while i<len(hits) and abs(hits[i].d - hits[i-1].d)<epsilon/2:
+                    del hits[i]
+                i += 1
+
+            # determine height at each interesting point
+            for h in hits:
+                (zmax, tmax) = self.DropCutterTest(h.cl, model)
+                h.z = zmax
+                if DEBUG_PUSHCUTTER: print "@ cl=",h.cl,",d=",h.d,",z=",h.z
+                if DEBUG_PUSHCUTTER3: self.svg.fill("blue"); self.svg.AddDot(h.cl.x, h.z)
+
+
+            if DEBUG_PUSHCUTTER or DEBUG_PUSHCUTTER3:
+                yt = -4
+                i = 0
+                for h in hits:
+                    if DEBUG_PUSHCUTTER3:
+                        self.svg.fill('black')
+                        self.svg.stroke('gray')
+                        self.svg.AddLine(h.cl.x, yt, h.cl.x, h.z)
+                        self.svg.AddText(h.cl.x, yt, str(h.cl.x))
+                        yt -= 0.5
+                    i += 1
+
+
+
+            # find first hit cutter location that is below z-level
+            begin = hits[0].cl
+            end = None
+            for h in hits:
+                if h.z >= z - epsilon/10:
+                    if begin and end:
+                        if DEBUG_PUSHCUTTER: 
+                            print "C ", begin, " - ", end
+                        self.pa.append(begin)
+                        self.pa.append(end)
+                        if DEBUG_PUSHCUTTER3: 
+                            self.svg.stroke("red' stroke-width='0.1")
+                            self.svg.AddLine(begin.x, z-0.1, end.x, z-0.1)
+                    begin = None
+                    end = None
+                if h.z <= z + epsilon/10:
+                    if not begin:
+                        begin = h.cl
+                    else:
+                        end = h.cl
+                
+            if begin and end:
+                if DEBUG_PUSHCUTTER: 
+                    print "C ", begin, " - ", end
+                self.pa.append(begin)
+                self.pa.append(end)
                 if DEBUG_PUSHCUTTER3: 
-                    self.svg.stroke('red')
-                    self.svg.AddLine(prev.x, z-0.1, next.x, z-0.1)
+                    self.svg.stroke("red' stroke-width='0.1")
+                    self.svg.AddLine(begin.x, z-0.1, end.x, z-0.1)
 
             if dx != 0:
                 x += dx
