@@ -12,12 +12,6 @@ class Line:
     def __repr__(self):
         return "Line<%g,%g,%g>-<%g,%g,%g>" % (self.p1.x,self.p1.y,self.p1.z,
                                               self.p2.x,self.p2.y,self.p2.z)
-    def to_mged(self):
-        s = ""
-        s += "in line%d rcc %f %f %f %f %f %f 0.01\n" % (self.id,
-                                                         self.p1.x,self.p1.y,self.p1.z,
-                                                         self.p2.x-self.p1.x,self.p2.y-self.p1.y,self.p2.z-self.p1.z)
-        return s
 
     def dir(self):
         if not hasattr(self,"_dir"):

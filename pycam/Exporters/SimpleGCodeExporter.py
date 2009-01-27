@@ -16,8 +16,8 @@ class SimpleGCodeExporter:
         self.gcode = gcode(x,y,z)
         gc = self.gcode
         self.file.write(gc.begin()+"\n")
-        self.file.write("F"+feedrate+"\n")
-        self.file.write("S"+speed+"\n")
+        self.file.write("F"+str(feedrate)+"\n")
+        self.file.write("S"+str(speed)+"\n")
         self.file.write(gc.safety()+"\n")
 
     def close(self):
@@ -29,10 +29,10 @@ class SimpleGCodeExporter:
     def AddPath(self, path):
         gc = self.gcode
         point = path.points[0]
-#        self.file.write(gc.rapid(point.x,point.y,gc.safetyheight)+"\n")
+        self.file.write(gc.rapid(point.x,point.y,gc.safetyheight)+"\n")
         for point in path.points:
             self.file.write(gc.cut(point.x,point.y,point.z)+"\n")
-#        self.file.write(gc.rapid(point.x,point.y,gc.safetyheight)+"\n")
+        self.file.write(gc.rapid(point.x,point.y,gc.safetyheight)+"\n")
 
     def AddPathList(self, pathlist):
         for path in pathlist:

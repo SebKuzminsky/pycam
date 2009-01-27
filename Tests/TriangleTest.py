@@ -33,7 +33,4 @@ if __name__ == "__main__":
     t.calc_circumcircle()
     print "circ(t) = %s@%s" % (t.radius,t.center())
 
-    f = file("triangle0.txt","w")
-    f.write(t.to_mged(sphere=True))
-    f.close()
 

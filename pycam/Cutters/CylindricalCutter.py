@@ -25,15 +25,6 @@ class CylindricalCutter(BaseCutter):
     def __repr__(self):
         return "CylindricalCutter<%s,%s>" % (self.location,self.radius)
 
-    def to_mged(self):
-        s = ""
-        s += "in cutter%d_cyl.s rcc"% (self.id)
-        s += " %f %f %f 0 0 %f %f" % (self.location.x, self.location.y, self.location.z, self.height, self.radius)
-        s += "\n"
-        s += "comb cutter%d_cyl.c u cutter%d_cyl.s\n" % (self.id, self.id)
-        s += "r cutter%d.r u cutter%d_cyl.c\n" % (self.id, self.id)
-        return s
-
     def to_OpenGL(self):
         glPushMatrix()
         glTranslate(self.center.x, self.center.y, self.center.z)

@@ -10,10 +10,6 @@ class Point:
         self.z = float(z)
     def __repr__(self):
         return "Point<%g,%g,%g>" % (self.x,self.y,self.z)
-    def to_mged(self):
-        s = ""
-        s += "in point%d sph %f %f %f 0.03\n" % (self.id,self.x,self.y,self.z)
-        return s
     def mul(self, c):
         return Point(self.x*c,self.y*c,self.z*c)
     def div(self, c):
@@ -41,4 +37,5 @@ class Point:
         self.z /= n
         self._norm = 1.0
         self._normsq = 1.0
+        return self
 

@@ -22,9 +22,6 @@ class BaseCutter:
     def __repr__(self):
         return "BaseCutter"
 
-    def to_mged(self):
-        return ""
-
     def moveto(self, location):
         self.location = location
         self.minx = location.x-self.radius

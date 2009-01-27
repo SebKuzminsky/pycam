@@ -19,22 +19,6 @@ class Model:
         self._triangles = []
         self.name = "model%d" % self.id
 
-    def to_mged(self): # TODO: optimize to not export points multiple times
-        s = "in %s bot" % self.name
-        s += " %d" % (len(self._triangles)*3)
-        s += " %d" % len(self._triangles)
-        s += " 1 3"
-        for t in self._triangles:
-            s += " %g %g %g" % (t.p1.x,t.p1.y,t.p1.z)
-            s += " %g %g %g" % (t.p2.x,t.p2.y,t.p2.z)
-            s += " %g %g %g" % (t.p3.x,t.p3.y,t.p3.z)
-        i = 0
-        for t in self._triangles:
-            s += " %d %d %d" % (i, i+1, i+2)
-            i += 3
-        s += "\n"
-        return s
-
     def to_OpenGL(self):
         if True:
             glBegin(GL_TRIANGLES)

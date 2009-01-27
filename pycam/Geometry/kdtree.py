@@ -40,36 +40,6 @@ class kd_tree:
         else:
             return "(%f<=%s,%d:%f,%s<=%f)" % (self.minval,self.lo, self.cutdim,self.cutval,self.hi,self.maxval)
 
-    def to_mged(self, minx, maxx, miny, maxy):
-        s = ""
-        if self.bucket:
-            s += "in kdtree_%d arb8 " % self.id
-            s += " %f %f %f " % (minx, miny, 0)
-            s += " %f %f %f " % (maxx, miny, 0)
-            s += " %f %f %f " % (maxx, maxy, 0)
-            s += " %f %f %f " % (minx, maxy, 0)
-            s += " %f %f %f " % (minx, miny, 10)
-            s += " %f %f %f " % (maxx, miny, 10)
-            s += " %f %f %f " % (maxx, maxy, 10)
-            s += " %f %f %f" % (minx, maxy, 10)
-            s += "\n"
-        else:
-            if True: # show bounding box
-                if self.cutdim == 0 or self.cutdim == 2:
-                    s += self.lo.to_mged(self.minval,self.cutval,miny,maxy)
-                    s += self.hi.to_mged(self.cutval,self.maxval,miny,maxy)
-                elif self.cutdim == 1 or self.cutdim == 3:
-                    s += self.lo.to_mged(minx,maxx,self.minval,self.cutval)
-                    s += self.hi.to_mged(minx,maxx,self.cutval,self.maxval)
-            else:    # show partitions
-                if self.cutdim == 0 or self.cutdim == 2:
-                    s += self.lo.to_mged(minx,self.cutval,miny,maxy)
-                    s += self.hi.to_mged(self.cutval,maxx,miny,maxy)
-                elif self.cutdim == 1 or self.cutdim == 3:
-                    s += self.lo.to_mged(minx,maxx,miny,self.cutval)
-                    s += self.hi.to_mged(minx,maxx,self.cutval,maxy)
-        return s
-
     def __init__(self, nodes, cutoff, cutoff_distance):
         self.id = kd_tree.id
         kd_tree.id += 1

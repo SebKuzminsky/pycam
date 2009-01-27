@@ -46,6 +46,7 @@ if __name__ == "__main__":
     t = Triangle(Point(-2,0,2), Point(2,1,3), Point(2,-1,4))
     #t = Triangle(Point(-2,0,2), Point(2,-1,4), Point(2,1,3))
     #t = Triangle(Point(2,0,4), Point(2,-1,2), Point(2,1,2))
+    #t = Triangle(Point(2,0,2), Point(-2,1,2), Point(-2,-1,2))
     print "t=", t
 
     if False:

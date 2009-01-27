@@ -11,11 +11,3 @@ class Plane:
     def __repr__(self):
         return "Plane<%s,%s>" % (self.p,self.n)
 
-    def to_mged(self):
-        s = ""
-        s += "in plane%d half"%(self.id)
-        s += " %f %f %f"% (self.n.x, self.n.y, self.n.z)
-        s += " %f "% (self.p.dot(self.n))
-        s += "\n"
-        return s
-

@@ -38,7 +38,9 @@ INSTALL:
 	(requires TOGL)
     TOGL: http://downloads.sourceforge.net/togl/Togl2.0-8.4-Windows.zip
           (just copy Togl2.0 into Python25/tcl)
-                        http://downloads.sourceforge.net/togl/Togl2.0-src.tar.gz
+
+          http://downloads.sourceforge.net/togl/Togl2.0-src.tar.gz
+          (download tcl-8.4-src.tgz and tk-8.4-src.tgz and compile and install togl)
 
 	(on windows, this also requires GLUT)
     GLUT :      http://www.cip.physik.uni-muenchen.de/~georg.hennig/downloads/glut-3.7.6-wheel_mingw.zip

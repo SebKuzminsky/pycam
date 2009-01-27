@@ -25,19 +25,6 @@ class SphericalCutter(BaseCutter):
     def __repr__(self):
         return "SphericalCutter<%s,%s>" % (self.location,self.radius)
 
-    def to_mged(self):
-        s = ""
-        s += "in cutter%d_sph.s sph" % (self.id)
-        s += " %f %f %f %f" % (self.center.x, self.center.y, self.center.z, self.radius)
-        s += "\n"
-        s += "in cutter%d_cyl.s rcc"% (self.id)
-        s += " %f %f %f 0 0 %f %f" % (self.center.x, self.center.y, self.center.z, self.height, self.radius)
-        s += "\n"
-        s += "comb cutter%d_sph.c u cutter%d_sph.s\n" % (self.id, self.id)
-        s += "comb cutter%d_cyl.c u cutter%d_cyl.s - cutter%d_sph.s\n" % (self.id, self.id, self.id)
-        s += "r cutter%d.r u cutter%d_cyl.c u cutter%d_sph.c\n" % (self.id, self.id, self.id)
-        return s
-
     def to_OpenGL(self):
         glPushMatrix()
         glTranslate(self.center.x, self.center.y, self.center.z)

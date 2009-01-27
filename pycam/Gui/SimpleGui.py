@@ -1,3 +1,4 @@
+
 #!/usr/bin/python
 import sys
 sys.path.insert(0,'.')
@@ -47,6 +48,22 @@ class OpenglWidget(Opengl):
         self.master.resetView()
 
 class SimpleGui(Frame):
+    def draw_string(self, x, y, z, p, s, scale=.01):
+        glPushMatrix()
+        glTranslatef(x,y,z)
+        if p == 'xy':
+            pass
+        elif p == 'yz':
+            glRotatef(90, 0, 1, 0)
+            glRotatef(90, 0, 0, 1)
+        elif p == 'xz':
+            glRotatef(90, 0, 1, 0)
+            glRotatef(90, 0, 0, 1)
+            glRotatef(-90, 0, 1, 0)
+        glScalef(scale,scale,scale)
+        for c in str(s):
+            glutStrokeCharacter(GLUT_STROKE_ROMAN, ord(c))
+        glPopMatrix()
 
     def Redraw(self, event=None):
         # default scale and orientation
@@ -63,16 +80,19 @@ class SimpleGui(Frame):
         glVertex3f(0,0,0)
         glVertex3f(size,0,0)
         glEnd()
+        self.draw_string(size,0,0,'xy',"X")
         glBegin(GL_LINES)
         glColor3f(0,1,0)
         glVertex3f(0,0,0)
         glVertex3f(0,size,0)
         glEnd()
+        self.draw_string(0,size,0,'yz',"Y")
         glBegin(GL_LINES)
         glColor3f(0,0,1)
         glVertex3f(0,0,0)
         glVertex3f(0,0,size)
         glEnd()
+        self.draw_string(0,0,size,'xz',"Z")
 
         if True:
             # stock model

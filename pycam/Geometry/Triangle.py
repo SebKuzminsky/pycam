@@ -28,28 +28,13 @@ class Triangle:
     def name(self):
         return "triangle%d" % self.id
 
-    def to_mged(self, sphere=False):
-        s = "in %s bot 3 1" % self.name()
-        s += " 1 3"
-        s += " %f %f %f" % (self.p1.x,self.p1.y,self.p1.z)
-        s += " %f %f %f" % (self.p2.x,self.p2.y,self.p2.z)
-        s += " %f %f %f" % (self.p3.x,self.p3.y,self.p3.z)
-        s += " 0 1 2"
-        s += "\n"
-        if sphere and hasattr(self, "_middle"):
-            s += "in %s_sph sph " % self.name()
-            s += " %f %f %f" % (self._middle.x, self._middle.y, self._middle.z)
-            s += " %f" % self._radius
-            s += "\n"
-        return s
-
     def to_OpenGL(self):
         glBegin(GL_TRIANGLES)
         glVertex3f(self.p1.x, self.p1.y, self.p1.z)
         glVertex3f(self.p2.x, self.p2.y, self.p2.z)
         glVertex3f(self.p3.x, self.p3.y, self.p3.z)
         glEnd()
-        if False:
+        if False: # display surface normals
             n = self.normal()
             c = self.center()
             d = 0.5
@@ -57,16 +42,64 @@ class Triangle:
             glVertex3f(c.x, c.y, c.z)
             glVertex3f(c.x+n.x*d, c.y+n.y*d, c.z+n.z*d)
             glEnd()
-        if False and hasattr(self, "_middle"):
+        if False and hasattr(self, "_middle"): # display bounding sphere
             glPushMatrix()
             glTranslate(self._middle.x, self._middle.y, self._middle.z)
             if not hasattr(self,"_sphere"):
                 self._sphere = gluNewQuadric()
             gluSphere(self._sphere, self._radius, 10, 10)
             glPopMatrix()
+        if False: # draw triangle id on triangle face
+            glPushMatrix()
+            cc = glGetFloatv(GL_CURRENT_COLOR)
+            c = self.center()
+            glTranslate(c.x,c.y,c.z)
+            p12=self.p1.add(self.p2).mul(0.5)
+            p3_12=self.p3.sub(p12).normalize()
+            p2_1=self.p1.sub(self.p2).normalize()
+            pn=p2_1.cross(p3_12)
+            glMultMatrixf((p2_1.x, p2_1.y, p2_1.z, 0, p3_12.x, p3_12.y, p3_12.z, 0, pn.x, pn.y, pn.z, 0, 0,0,0,1))
+            n = self.normal().mul(0.01)
+            glTranslatef(n.x,n.y,n.z)
+            glScalef(0.003,0.003,0.003)
+            w = 0
+            for ch in str(self.id):
+                w += glutStrokeWidth(GLUT_STROKE_ROMAN, ord(ch))
+            glTranslate(-w/2,0,0)
+            glColor4f(1,1,1,0)
+            for ch in str(self.id):
+                glutStrokeCharacter(GLUT_STROKE_ROMAN, ord(ch))
+            glPopMatrix()
+            glColor4f(cc[0],cc[1],cc[2],cc[3])
+
+        if False: # draw point id on triangle face
+            cc = glGetFloatv(GL_CURRENT_COLOR)
+            c = self.center()
+            p12=self.p1.add(self.p2).mul(0.5)
+            p3_12=self.p3.sub(p12).normalize()
+            p2_1=self.p1.sub(self.p2).normalize()
+            pn=p2_1.cross(p3_12)
+            n = self.normal().mul(0.01)
+            for p in (self.p1,self.p2,self.p3):
+                glPushMatrix()
+                pp = p.sub(p.sub(c).mul(0.3))
+                glTranslate(pp.x,pp.y,pp.z)
+                glMultMatrixf((p2_1.x, p2_1.y, p2_1.z, 0, p3_12.x, p3_12.y, p3_12.z, 0, pn.x, pn.y, pn.z, 0, 0,0,0,1))
+                glTranslatef(n.x,n.y,n.z)
+                glScalef(0.001,0.001,0.001)
+                w = 0
+                for ch in str(p.id):
+                    w += glutStrokeWidth(GLUT_STROKE_ROMAN, ord(ch))
+                    glTranslate(-w/2,0,0)
+                glColor4f(0.5,1,0.5,0)
+                for ch in str(p.id):
+                    glutStrokeCharacter(GLUT_STROKE_ROMAN, ord(ch))
+                glPopMatrix()
+            glColor4f(cc[0],cc[1],cc[2],cc[3])
 
     def normal(self):
         if not hasattr(self, '_normal'):
+            # calculate normal, if p1-p2-pe are in clockwise order
             self._normal = self.p3.sub(self.p1).cross(self.p2.sub(self.p1))
             denom = self._normal.norm()
 #            # TODO: fix kludge: make surface normal point up for now
