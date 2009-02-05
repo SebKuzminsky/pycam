@@ -22,6 +22,7 @@ from pycam.Exporters import *
 class OpenglWidget(Opengl):
     def __init__(self, master=None, cnf={}, **kw):
         Opengl.__init__(self, master, kw)
+        glutInit()
         glShadeModel(GL_FLAT)
 #        glShadeModel(GL_SMOOTH)
 
