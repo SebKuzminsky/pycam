@@ -91,7 +91,16 @@ TODO:
     ** incremental visualization
     ** add progress bar
 
-BUGS:
+
+FEATURE REQUESTS:
+
+    * climbing / conventional cutting paths
+
+    * diagonal paths
+
+
+KNOWN BUGS:
+
     * The combination of PushCutter with PolygonCutter sometimes cuts accross
       the model in between lines
     * The combination of PushCutter with ContourCutter sometimes cuts accross
@@ -114,4 +123,8 @@ OPTIMIZATION:
     * make Cutters have a "color" so that for each x in plane/triangle/line/edge/point/vertex
       the result of an intersection (cutter,x,color) is cachable
       (i.e. each Cutter.moveto should change the color, just increasing an "int color" should be ok)
+
+    * align z-levels with horizontal triangles when possible
+
+    * align x/y paths with vertical triangles when possible
 
