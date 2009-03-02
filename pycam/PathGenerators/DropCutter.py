@@ -83,6 +83,7 @@ class DropCutter:
                     z_max = -INFINITE
                     cl_max = None
                     t_max = None
+                    cl_last = None
                     self.cutter.moveto(p)
                     for t in self.model.triangles():
                         if t.normal().z < 0: continue;
@@ -93,9 +94,7 @@ class DropCutter:
                             t_max = t
                     if not cl_max or cl_max.z<z0:
                         cl_max = Point(x,y,z0)
-
-
-                    if (t_max and not t_last) or (t_last and not t_max):
+                    if cl_last and ((t_max and not t_last) or (t_last and not t_max)):
                         if cl_last.z < z_max:
                             pa.append(Point(cl_last.x,cl_last.y,cl_max.z))
                         else:
