@@ -66,7 +66,7 @@ def intersect_cylinder_line(center, axis, radius, radiussq, direction, edge):
     # take a plane throught the line and along the cylinder axis (1)
     n = d.cross(axis)
     if n.normsq()==0:
-        # no contact point, but should check here if torus *always* intersects line...
+        # no contact point, but should check here if cylinder *always* intersects line...
         return (None,None,INFINITE)
     n.normalize()
     # the contact line between the cylinder and this plane (1)
@@ -79,7 +79,7 @@ def intersect_cylinder_line(center, axis, radius, radiussq, direction, edge):
     # now extrude the contact line along the direction, this is a plane (2)
     n2 = direction.cross(axis)
     if n2.normsq()==0:
-        # no contact point, but should check here if torus *always* intersects line...
+        # no contact point, but should check here if cylinder *always* intersects line...
         return (None,None,INFINITE)
     n2.normalize()
     p = Plane(ccl, n2)
@@ -284,12 +284,12 @@ def intersect_torus_point(center, axis, majorradius, minorradius, majorradiussq,
         if (l_sq<minlsq) or (l_sq>maxlsq):
             return (None,None,INFINITE)
         l = sqrt(l_sq)
-        z_sq = minorradiussq - sqr(majorradiussq - l)
+        z_sq = minorradiussq - sqr(majorradius - l)
         if z_sq < 0:
             return (None,None,INFINITE)
         z = sqrt(z_sq)
         ccp=Point(point.x,point.y,center.z-z)
-        dist = center.z-z
+        dist = ccp.z-point.z
     elif direction.z==0: # push
         z = point.z - center.z
         if z<-minorradius or z>minorradius:
