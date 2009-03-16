@@ -168,18 +168,11 @@ class SimpleGui(Frame):
                 last = path.points[-1]
 
     def browseOpen(self):
-        filename = tkFileDialog.Open(self, filetypes=[("STL files", ".stl")]).show()
+        filename = tkFileDialog.Open(self, filetypes=[("STL files", ".stl"),("CFG files", ".cfg")]).show()
         if filename:
             self.open(filename)
 
     def open(self, filename):
-        self.model = None
-        if filename:
-            self.InputFileName.set(filename)
-            self.model = STLImporter.ImportModel(filename)
-        self.toolpath = None
-        if self.model:
-            self.scale = 2.0/self.model.maxsize()
         config = ConfigParser();
         if config.read(filename.replace(".stl",".cfg")):
             if config.has_option("stock","Unit"):
@@ -196,6 +189,10 @@ class SimpleGui(Frame):
                 self.MinZ.set(config.get("stock","MinZ"))
             if config.has_option("stock","MaxZ"):
                 self.MaxZ.set(config.get("stock","MaxZ"))
+            if config.has_option("stock","Model"):
+                if not os.path.isabs(config.get("stock","Model")):
+                    (path,ext) = os.path.split(filename)
+                    filename = path + '/' + config.get("stock","Model")
             if config.has_option("config","ToolRadius"):
                 self.ToolRadius.set(config.get("config","ToolRadius"))
             if config.has_option("config","TorusRadius"):
@@ -214,6 +211,16 @@ class SimpleGui(Frame):
                 self.PathProcessorName.set(config.get("config","PathProcessor"))
             if config.has_option("config","Direction"):
                 self.Direction.set(config.get("config","Direction"))
+        self.model = None
+        if filename:
+            self.InputFileName.set(filename)
+            try:
+                self.model = STLImporter.ImportModel(filename)
+            except:
+                self.model = None
+        self.toolpath = None
+        if self.model:
+            self.scale = 2.0/self.model.maxsize()
         self.resetView()
 
     def generateToolpath(self):
