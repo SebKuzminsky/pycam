@@ -32,10 +32,10 @@ class ToroidalCutter(BaseCutter):
     def to_OpenGL(self):
         glPushMatrix()
         glTranslate(self.center.x, self.center.y, self.center.z)
-        glutSolidTorus(self.majorradius, self.minorradius, 20, 10)
+        glutSolidTorus(self.minorradius, self.majorradius, 10, 20)
         if not hasattr(self,"_cylinder"):
             self._cylinder = gluNewQuadric()
-        gluCylinder(self._cylinder, self.radius, self.radius, self.height, 20, 10)
+        gluCylinder(self._cylinder, self.radius, self.radius, self.height, 10, 20)
         glPopMatrix()
         glPushMatrix()
         glTranslate(self.location.x, self.location.y, self.location.z)
