@@ -43,7 +43,7 @@ if __name__ == "__main__":
     #c = ToroidalCutter(1, 0.25, Point(-2.2,0.2,6))
     #c = ToroidalCutter(1, 0.25, Point(-1.7,0.5,6))
     dir = Point(1,0,0)
-    c = ToroidalCutter(1, 0.25, Point(-10,0.1,1.9))
+    c = ToroidalCutter(1, 0.4, Point(-10,0.1,1.9))
     print "c=", c
     t = Triangle(Point(-2,0,2), Point(2,1,3), Point(2,-1,4))
     print "t=", t
@@ -56,7 +56,7 @@ if __name__ == "__main__":
             print "cl=", cl_p
             print "d=", d_p
 
-        if False:
+        if True:
             p = t.p1
             (cl_v,ccp_v,cp_v,d_v) = c.intersect_torus_point(dir,p)
             print "ccp=", ccp_v
@@ -73,15 +73,21 @@ if __name__ == "__main__":
             print "d=", d_e
 
         if False:
+            e = Line(t.p1,t.p2)
+            (cl_e,d_e) = c.intersect_torus_edge(dir,e)
+            print "cl=", cl_e
+            print "d=", d_e
+
+        if False:
             (cl,d) = c.intersect(dir,t)
             print "cl=", cl
 
-    if False:
-        samples = 50
-        x0 = -5.0
-        x1 = +5.0
-        y0 = -5.0
-        y1 = +5.0
+    if True:
+        samples = 100
+        x0 = -3.0
+        x1 = +3.0
+        y0 = -3.0
+        y1 = +3.0
         z = 10
         pathlist = []
         for i in range(0,samples):
@@ -90,17 +96,22 @@ if __name__ == "__main__":
             for j in range(0,samples):
                 y = y0 + j * ((y1-y0) / samples)
                 c.moveto(Point(x,y,z))
-                cl = c.drop(t)
+                #cl = c.drop(t)
+                (cl,d) = c.intersect(Point(0,0,-1), t)
+                #(cl,d) = c.intersect_torus_triangle(Point(0,0,-1), t)
+                #(cl,d) = c.intersect_torus_vertex(Point(0,0,-1), t.p1)
+                #(cl,d) = c.intersect_torus_edge(Point(0,0,-1), Line(t.p1,t.p2))
                 if cl:
+                    #p.append(cl.sub(Point(0,0,-1).mul(d)))
                     p.append(cl)
-                else:
-                    p.append(Point(x,y,0))
+                #else:
+                    #p.append(Point(x,y,0))
             pathlist.append(p)
         c.moveto(Point(x0,y0,z))
         ShowTestScene(t, c, pathlist)
 
-    if True:
-        samples = 100
+    if False:
+        samples = 300
         layers = 10
         x0 = -5.0
         x1 = +5.0

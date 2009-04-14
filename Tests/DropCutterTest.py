@@ -17,16 +17,19 @@ from pycam.Exporters.SimpleGCodeExporter import SimpleGCodeExporter
 
 if __name__ == "__main__":
 
-    c = SphericalCutter(1, Point(0,0,7))
+    #c = SphericalCutter(1, Point(0,0,7))
     #c = CylindricalCutter(1, Point(0,0,7))
-    #c = ToroidalCutter(1, 0.25, Point(0,0,7))
+    c = ToroidalCutter(1, 0.1, Point(0,0,7))
     print "c=", c
 
-    model = TestModel()
+    #model = TestModel()
+    model = Model()
+    model.append(Triangle(Point(-3,-4,1),Point(-3,4,1),Point(3,0,1)))
+
 
     if True:
-        samples = 20
-        lines = 20
+        samples = 50
+        lines = 50
         x0 = -7.0
         x1 = +7.0
         y0 = -7.0
@@ -38,10 +41,6 @@ if __name__ == "__main__":
         pg = DropCutter(c, model)
 
         pathlist = pg.GenerateToolPath(x0, x1, y0, y1, z0, z1, dx, dy, 0)
-
-        g = SimpleGCodeExporter("cutter2.nc", "mm", x1, y1, z1, 100, 7000)
-        g.AddPathList(pathlist)
-        g.close()
 
         ShowTestScene(model, c, pathlist)
 
