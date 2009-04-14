@@ -19,6 +19,7 @@ Features:
       ** Linear
       ** ZigZag
       ** Polygon
+      ** Contour        (aka. waterline)
 
     * Importers:
       ** STL
@@ -28,23 +29,6 @@ Features:
 
     * Visualization:
       ** OpenGL
-
-
-INSTALL: 
-
-    PyOpenGL :  http://pyopengl.sourceforge.net/
-                        http://downloads.sourceforge.net/pyopengl/PyOpenGL-3.0.0b5.tar.gz
-
-	(requires TOGL)
-    TOGL: http://downloads.sourceforge.net/togl/Togl2.0-8.4-Windows.zip
-          (just copy Togl2.0 into Python25/tcl)
-
-          http://downloads.sourceforge.net/togl/Togl2.0-src.tar.gz
-          (download tcl-8.4-src.tgz and tk-8.4-src.tgz and compile and install togl)
-
-	(on windows, this also requires GLUT)
-    GLUT :      http://www.cip.physik.uni-muenchen.de/~georg.hennig/downloads/glut-3.7.6-wheel_mingw.zip
-
 
 
 RUNNING:
@@ -57,12 +41,21 @@ USAGE:
 
    as a practical approach, you would probably: 
  
-   1) use the Cylindrical cutter with the PushCutter Pathgenerator and the Polygon PostProcessor to do the "rough" cutting 
+   1) for "rough" cutting,
+      use the Cylindrical cutter 
+      with the PushCutter Pathgenerator 
+      and the Polygon PostProcessor in "x" or "y" mode 
+      
  
-   2) use the Toroidal cutter with the ContourCutter Pathgenerator to do the "semifinish" cutting.
-      (it's not yet implemented, so you can skip this one for now :-)
+   2) for "semifinish" cutting,
+      use the Cylindrical/Toroidal cutter 
+      with the PushCutter Pathgenerator 
+      and the Contour PostProcessor in "xy" mode 
 
-   3) use the Spherical cutter with the DropCutter Pathgenerator and the ZigZag PostProcessor to do the "finish" cutting. 
+   3) "finish" cutting
+      use the Spherical cutter 
+      with the DropCutter Pathgenerator 
+      and the ZigZag PostProcessor in "x" or "y" mode
 
 
 TODO:
@@ -78,12 +71,8 @@ TODO:
     * Cutters
     ** FiletCutter
 
-    * PathGenerators
-    ** ContourCutter
-       -> waterlevel tracer
-
     * PathProcessors
-    ** Traveling Salesman
+    ** Traveling Salesman for Polygon PostProcessor
 
     * Gui
     ** create something better than "SimpleGui"
@@ -98,15 +87,13 @@ FEATURE REQUESTS:
 
     * diagonal paths
 
+    * start at arbitrary corner
+
 
 KNOWN BUGS:
 
-    * The combination of PushCutter with PolygonCutter sometimes cuts accross
-      the model in between lines
-    * The combination of PushCutter with ContourCutter sometimes cuts accross
-      the model in between lines in "x" or "y" mode
-    * The combination of PushCutter with ContourCutter sometimes gives erratic
-      toolpaths in "xy" mode
+    * The combination of PushCutter with PolygonCutter and ContourCutter 
+      sometimes make tiny cuts accross the model in between lines
 
 
 OPTIMIZATION:
@@ -114,7 +101,7 @@ OPTIMIZATION:
     * short-circuit the plane/triangle/line/edge/point/vertex tests,
       so that when the result is known, no further intersections are calculated
 
-    * use kdtree
+    * use kdtree to speed up collision detection
 
     * make Model have unique points
 

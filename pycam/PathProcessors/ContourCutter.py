@@ -6,13 +6,16 @@ class ContourCutter:
         self.paths = []
         self.curr_path = None
         self.scanline = None
-        self.pe = PolygonExtractor(PolygonExtractor.CONTOUR)
+        self.pe = None
         self.points = []
 
     def append(self, p):
         self.points.append(p)
 
     def new_direction(self, dir):
+        if self.pe == None:
+            self.pe = PolygonExtractor(PolygonExtractor.CONTOUR)
+
         self.pe.new_direction(dir)
 
     def end_direction(self):
@@ -38,5 +41,5 @@ class ContourCutter:
                 self.paths = self.pe.ver_path_list
             for p in self.paths:
                 p.append(p.points[0])
-
+        self.pe = None
 

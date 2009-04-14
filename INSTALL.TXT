@@ -1,3 +1,59 @@
-Currently it is not necessary to install the software,
-simply unpack the distribution archive, and run "python pycam.py"
-from the archive directory
+
+DEPENDENCIES: 
+-------------
+
+
+Windows:
+--------
+
+    Python 2.5
+
+    PyOpenGL :  http://pyopengl.sourceforge.net/
+                http://downloads.sourceforge.net/pyopengl/PyOpenGL-3.0.0.win32.exe
+
+    TOGL: http://downloads.sourceforge.net/togl/Togl2.0-8.4-Windows.zip
+          (just copy the directory Togl2.0 into Python25/tcl)
+
+    GLUT :      http://www.cip.physik.uni-muenchen.de/~georg.hennig/downloads/glut-3.7.6-wheel_mingw.zip
+
+
+
+
+
+Unix:
+-----
+
+    Install PyOpenGL, Togl, Glut using your package manager.
+
+Or compile from source:
+          http://downloads.sourceforge.net/pyopengl/PyOpenGL-3.0.0.tar.gz
+
+In case Togl is not available or not working, I suggest to compile Togl yourself. 
+
+          http://downloads.sourceforge.net/togl/Togl2.0-src.tar.gz
+
+Install the source packages for tcl and tk using your package manager.
+
+	cd ~/Togl2.0 
+	./configure --prefix=/usr --exec-prefix=/usr --enable-threads 
+	make 
+	make install
+
+or, failing that, for download the sources for the same version of tcl and tk 
+as you have installed on your system:
+(http://sourceforge.net/project/showfiles.php?group_id=10894&package_id=10452) 
+ 
+Togl only needs access to a few header files that are not part of the 
+binary distributions... 
+ 
+I unpacked the tcl and tk sources next to the Togl sources in my home directory, then 
+        cd ~/tcl-8.5.5/unix; 
+	./configure 
+	cd ~/tk-8.5.5/unix; 
+	./configure 
+	cd ~/Togl2.0; 
+	./configure --with-tcl=$HOME/tcl-8.5.5 --with-tk=$HOME/tk-8.5.5 \
+                    --prefix=/usr --exec-prefix=/usr --enable-threads 
+        make 
+	make install
+
