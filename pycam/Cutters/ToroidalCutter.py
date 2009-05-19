@@ -181,26 +181,16 @@ class ToroidalCutter(BaseCutter):
 
     def intersect(self, direction, triangle):
         (cl_t,d_t) = self.intersect_torus_triangle(direction, triangle)
-        (cl_p1,d_p1) = self.intersect_torus_vertex(direction, triangle.p1)
-        (cl_p2,d_p2) = self.intersect_torus_vertex(direction, triangle.p2)
-        (cl_p3,d_p3) = self.intersect_torus_vertex(direction, triangle.p3)
-        (cl_e1,d_e1) = self.intersect_torus_edge(direction, Line(triangle.p1,triangle.p2))
-        (cl_e2,d_e2) = self.intersect_torus_edge(direction, Line(triangle.p2,triangle.p3))
-        (cl_e3,d_e3) = self.intersect_torus_edge(direction, Line(triangle.p3,triangle.p1))
         d = INFINITE
         cl = None
         if d_t < d:
             d = d_t
             cl = cl_t
-        if d_p1 < d:
-            d = d_p1
-            cl = cl_p1
-        if d_p2 < d:
-            d = d_p2
-            cl = cl_p2
-        if d_p3 < d:
-            d = d_p3
-            cl = cl_p3
+        if cl:
+            return (cl,d)
+        (cl_e1,d_e1) = self.intersect_torus_edge(direction, triangle.e1)
+        (cl_e2,d_e2) = self.intersect_torus_edge(direction, triangle.e2)
+        (cl_e3,d_e3) = self.intersect_torus_edge(direction, triangle.e3)
         if d_e1 < d:
             d = d_e1
             cl = cl_e1
@@ -210,13 +200,29 @@ class ToroidalCutter(BaseCutter):
         if d_e3 < d:
             d = d_e3
             cl = cl_e3
+        if cl:
+            return (cl,d)
+        (cl_p1,d_p1) = self.intersect_torus_vertex(direction, triangle.p1)
+        (cl_p2,d_p2) = self.intersect_torus_vertex(direction, triangle.p2)
+        (cl_p3,d_p3) = self.intersect_torus_vertex(direction, triangle.p3)
+        if d_p1 < d:
+            d = d_p1
+            cl = cl_p1
+        if d_p2 < d:
+            d = d_p2
+            cl = cl_p2
+        if d_p3 < d:
+            d = d_p3
+            cl = cl_p3
+        if cl:
+            return (cl,d)
         (cl_t,d_t) = self.intersect_circle_triangle(direction, triangle)
         (cl_p1,d_p1) = self.intersect_circle_vertex(direction, triangle.p1)
         (cl_p2,d_p2) = self.intersect_circle_vertex(direction, triangle.p2)
         (cl_p3,d_p3) = self.intersect_circle_vertex(direction, triangle.p3)
-        (cl_e1,d_e1) = self.intersect_circle_edge(direction, Line(triangle.p1,triangle.p2))
-        (cl_e2,d_e2) = self.intersect_circle_edge(direction, Line(triangle.p2,triangle.p3))
-        (cl_e3,d_e3) = self.intersect_circle_edge(direction, Line(triangle.p3,triangle.p1))
+        (cl_e1,d_e1) = self.intersect_circle_edge(direction, triangle.e1)
+        (cl_e2,d_e2) = self.intersect_circle_edge(direction, triangle.e2)
+        (cl_e3,d_e3) = self.intersect_circle_edge(direction, triangle.e3)
         if d_t < d:
             d = d_t
             cl = cl_t
@@ -242,9 +248,9 @@ class ToroidalCutter(BaseCutter):
             (cl_p1,d_p1) = self.intersect_cylinder_vertex(direction, triangle.p1)
             (cl_p2,d_p2) = self.intersect_cylinder_vertex(direction, triangle.p2)
             (cl_p3,d_p3) = self.intersect_cylinder_vertex(direction, triangle.p3)
-            (cl_e1,d_e1) = self.intersect_cylinder_edge(direction, Line(triangle.p1,triangle.p2))
-            (cl_e2,d_e2) = self.intersect_cylinder_edge(direction, Line(triangle.p2,triangle.p3))
-            (cl_e3,d_e3) = self.intersect_cylinder_edge(direction, Line(triangle.p3,triangle.p1))
+            (cl_e1,d_e1) = self.intersect_cylinder_edge(direction, triangle.e1)
+            (cl_e2,d_e2) = self.intersect_cylinder_edge(direction, triangle.e2)
+            (cl_e3,d_e3) = self.intersect_cylinder_edge(direction, triangle.e3)
             if d_p1 < d:
                 d = d_p1
                 cl = cl_p1

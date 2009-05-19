@@ -69,7 +69,11 @@ class Model:
             self._maxsize = max3(max(abs(self.maxx),abs(self.minx)),max(abs(self.maxy),abs(self.miny)),max(abs(self.maxz),abs(self.minz)))
         return self._maxsize
 
-    def triangles(self):
+    def triangles(self, minx=-INFINITE,miny=-INFINITE,minz=-INFINITE,maxx=+INFINITE,maxy=+INFINITE,maxz=+INFINITE):
+        if minx==-INFINITE and miny==-INFINITE and minz==-INFINITE and maxx==+INFINITE and maxy==+INFINITE and maxz==+INFINITE:
+            return self._triangles
+        if hasattr(self, "t_kdtree"):
+            return self.t_kdtree.Search(minx,maxx,miny,maxy)
         return self._triangles
 
     def subdivide(self, depth):

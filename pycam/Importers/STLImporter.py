@@ -1,9 +1,54 @@
 import re
 
 from pycam.Geometry import *
+from pycam.Geometry.PointKdtree import PointKdtree
+from pycam.Geometry.TriangleKdtree import TriangleKdtree
+
+vertices = 0
+edges = 0
+epsilon = 0.0001
+kdtree = None
+
+def UniqueVertex(x,y,z):
+    global vertices
+    if kdtree:
+        last = Point.id
+        p = kdtree.Point(x,y,z)
+        if p.id == last:
+#            print p
+            vertices += 1
+        return p
+    else:
+        vertices += 1
+        return Point(x,y,z)
+
+def UniqueEdge(p1, p2):
+    global edges
+    if hasattr(p1,"edges"):
+        for e in p1.edges:
+            if e.p1 == p1 and e.p2 == p2:
+                return e
+            if e.p2 == p1 and e.p1 == p2:
+                return e
+    edges += 1
+    e = Line(p1,p2)
+    if not hasattr(p1,"edges"):
+        p1.edges = [e]
+    else:
+        p1.edges.append(e)
+    if not hasattr(p2,"edges"):
+        p2.edges = [e]
+    else:
+        p2.edges.append(e)
+    return e
+
 
 def ImportModel(filename):
-    model = Model()
+    global vertices, edges, kdtree
+    vertices = 0
+    edges = 0
+    kdtree = None
+
     f = file(filename,"r")
     solid = re.compile("\s*solid\s+(\w+)\s+.*")
     solid_AOI = re.compile("\s*solid\s+\"([\w\-]+)\"; Produced by Art of Illusion.*")
@@ -15,12 +60,15 @@ def ImportModel(filename):
     endloop = re.compile("\s*endloop\s+")
     vertex = re.compile("\s*vertex\s+(?P<x>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<y>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<z>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+")
 
+    kdtree = PointKdtree([],3,1,epsilon)
     model = Model()
+
     t = None
     p1 = None
     p2 = None
     p3 = None
     AOI = False
+    
     for line in f:
         m = solid_AOI.match(line)
         if m:
@@ -31,6 +79,7 @@ def ImportModel(filename):
         if m:
             model.name = m.group(1)
             continue
+
         m = facet.match(line)
         if m:
             m = normal.match(line)
@@ -46,10 +95,9 @@ def ImportModel(filename):
         m = vertex.match(line)
         if m:
             if AOI:
-                p = Point(float(m.group('x')),float(m.group('z')),float(m.group('y')))
+                p = UniqueVertex(float(m.group('x')),float(m.group('z')),float(m.group('y')))
             else:
-                p = Point(float(m.group('x')),float(m.group('y')),float(m.group('z')))
-            # TODO: check for duplicate points (using kdtree?)
+                p = UniqueVertex(float(m.group('x')),float(m.group('y')),float(m.group('z')))
             if p1 == None:
                 p1 = p
             elif p2 == None:
@@ -66,17 +114,26 @@ def ImportModel(filename):
         if m:
             # make sure the points are in ClockWise order
             if n.dot(p3.sub(p1).cross(p2.sub(p1)))>0:
-                t = Triangle(p1, p2, p3)
+                t = Triangle(p1, p2, p3, UniqueEdge(p1,p2), UniqueEdge(p2,p3), UniqueEdge(p3,p1))
             else:
-                t = Triangle(p1, p3, p2)
+                t = Triangle(p1, p3, p2, UniqueEdge(p1,p3), UniqueEdge(p3,p2), UniqueEdge(p2,p1))
             t._normal = n
             n=p1=p2=p3=None
-#            if t.normal().z < 0:
-#                continue
+            if t.normal().z < 0:
+                continue
             model.append(t)
             continue
         m = endsolid.match(line)
         if m:
             continue
+
+    model.p_kdtree = kdtree
+    model.t_kdtree = TriangleKdtree(model.triangles())
+
+    print "Imported STL model: ", vertices, "vertices,", edges, "edges,", len(model.triangles()),"triangles"
+    vertices = 0
+    edges = 0
+    kdtree = None
+
     return model
     

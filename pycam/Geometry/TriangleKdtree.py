@@ -6,74 +6,42 @@ from Line import *
 from Triangle import *
 from kdtree import *
 
-def BuildKdtree2d(triangles, cutoff=3, cutoff_distance=1.0):
-    nodes = []
-    for t in triangles:
-        n = Node();
-        n.triangle = t
-        n.bound = []
-        n.bound.append(min(min(t.p1.x,t.p2.x),t.p3.x))
-        n.bound.append(min(min(t.p1.y,t.p2.y),t.p3.y))
-        n.bound.append(max(max(t.p1.x,t.p2.x),t.p3.x))
-        n.bound.append(max(max(t.p1.y,t.p2.y),t.p3.y))
-        nodes.append(n)
-    return kd_tree(nodes, cutoff, cutoff_distance)
-
-tests = 0
-hits = 0
 overlaptest=True
-
-def ResetKdtree2dStats(overlap=True):
-    global tests, hits, overlaptest
-    hits = 0
-    tests = 0
-    overlaptest = overlap
-
-def GetKdtree2dStats():
-    global tests, hits
-    return (hits, tests)
-
 
 def SearchKdtree2d(kdtree, minx, maxx, miny, maxy):
     if kdtree.bucket:
         triangles = []
         for n in kdtree.nodes:
             global tests, hits, overlaptest
-            tests += 1
             if not overlaptest:
-#                print "not testing overlap"
                 triangles.append(n.triangle)
-                hits += 1
             else:
                 if not (n.bound[0]>maxx
-                        or n.bound[1]>maxy
-                        or n.bound[2]<minx
+                        or n.bound[1]<minx
+                        or n.bound[2]>maxy
                         or n.bound[3]<miny):
                     triangles.append(n.triangle)
-                    hits += 1
         return triangles
     else:
-#        return SearchKdtree2d(kdtree.lo, minx, maxx, miny, maxy)+SearchKdtree2d(kdtree.hi, minx, maxx, miny, maxy)
-
         if kdtree.cutdim==0:
             if maxx<kdtree.minval:
                 return []
-            elif maxx<=kdtree.cutval:
+            elif maxx<kdtree.cutval:
                 return SearchKdtree2d(kdtree.lo, minx, maxx, miny, maxy)
             else:
                 return SearchKdtree2d(kdtree.lo, minx, maxx, miny, maxy)+SearchKdtree2d(kdtree.hi, minx, maxx, miny, maxy)
         elif kdtree.cutdim==1:
-            if maxy<kdtree.minval:
-                return []
-            elif maxy<=kdtree.cutval:
-                return SearchKdtree2d(kdtree.lo, minx, maxx, miny, maxy)
-            else:
-                return SearchKdtree2d(kdtree.lo, minx, maxx, miny, maxy)+SearchKdtree2d(kdtree.hi, minx, maxx, miny, maxy)
-        elif kdtree.cutdim==2:
             if minx>kdtree.maxval:
                 return []
             elif minx>kdtree.cutval:
                 return SearchKdtree2d(kdtree.hi, minx, maxx, miny, maxy)
+            else:
+                return SearchKdtree2d(kdtree.lo, minx, maxx, miny, maxy)+SearchKdtree2d(kdtree.hi, minx, maxx, miny, maxy)
+        elif kdtree.cutdim==2:
+            if maxy<kdtree.minval:
+                return []
+            elif maxy<kdtree.cutval:
+                return SearchKdtree2d(kdtree.lo, minx, maxx, miny, maxy)
             else:
                 return SearchKdtree2d(kdtree.lo, minx, maxx, miny, maxy)+SearchKdtree2d(kdtree.hi, minx, maxx, miny, maxy)
         elif kdtree.cutdim==3:
@@ -83,3 +51,21 @@ def SearchKdtree2d(kdtree, minx, maxx, miny, maxy):
                 return SearchKdtree2d(kdtree.hi, minx, maxx, miny, maxy)
             else:
                 return SearchKdtree2d(kdtree.lo, minx, maxx, miny, maxy)+SearchKdtree2d(kdtree.hi, minx, maxx, miny, maxy)
+
+
+class TriangleKdtree(kdtree):
+    def __init__(self, triangles, cutoff=3, cutoff_distance=1.0):
+        nodes = []
+        for t in triangles:
+            n = Node();
+            n.triangle = t
+            n.bound = []
+            n.bound.append(min(min(t.p1.x,t.p2.x),t.p3.x))
+            n.bound.append(max(max(t.p1.x,t.p2.x),t.p3.x))
+            n.bound.append(min(min(t.p1.y,t.p2.y),t.p3.y))
+            n.bound.append(max(max(t.p1.y,t.p2.y),t.p3.y))
+            nodes.append(n)
+        kdtree.__init__(self, nodes, cutoff, cutoff_distance)
+
+    def Search(self, minx, maxx, miny, maxy):
+        return SearchKdtree2d(self, minx, maxx, miny, maxy)

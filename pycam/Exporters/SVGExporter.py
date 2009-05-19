@@ -1,12 +1,10 @@
-from pycam.Geometry import *
-
 class SVGExporter:
 
     def __init__(self, filename):
         self.file = file(filename,"w")
         self.file.write("""<?xml version='1.0'?>
 <svg xmlns='http://www.w3.org/2000/svg' width='640' height='800'>
-<g transform='translate(320,320) scale(30)' stroke-width='0.01' font-size='0.4'>
+<g transform='translate(320,320) scale(60)' stroke-width='0.01' font-size='0.2'>
 """)
         self._fill = 'none'
         self._stroke = 'black'
@@ -29,11 +27,11 @@ class SVGExporter:
             x = -7
         if y < -1000:
             y = -7
-        l = "<circle fill='" + self._fill +"'" + (" cx='%g'" % x) + (" cy='%g'" % -y) + " r='0.1'/>\n"
+        l = "<circle fill='" + self._fill +"'" + (" cx='%g'" % x) + (" cy='%g'" % -y) + " r='0.04'/>\n"
         self.file.write(l)
 
     def AddText(self, x, y, text):
-        l = "<text fill='" + self._fill +"'" + (" x='%g'" % x) + (" y='%g'" % -y) + ">" + text + "</text>\n"
+        l = "<text fill='" + self._fill +"'" + (" x='%g'" % x) + (" y='%g'" % -y) + " dx='0.07'>" + text + "</text>\n"
         self.file.write(l)
         
 

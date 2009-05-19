@@ -30,7 +30,8 @@ class DropCutter:
                     t_max = None
                     cl_last = None
                     self.cutter.moveto(p)
-                    for t in self.model.triangles():
+                    triangles = self.model.triangles(p.x-self.cutter.radius,p.y-self.cutter.radius,z0,p.x+self.cutter.radius,p.y+self.cutter.radius,+INFINITE)
+                    for t in triangles:
                         if t.normal().z < 0: continue;
                         cl = self.cutter.drop(t)
                         if cl and (cl.z > z_max or cl_max is None):
@@ -85,7 +86,8 @@ class DropCutter:
                     t_max = None
                     cl_last = None
                     self.cutter.moveto(p)
-                    for t in self.model.triangles():
+                    triangles = self.model.triangles(p.x-self.cutter.radius,p.y-self.cutter.radius,z0,p.x+self.cutter.radius,p.y+self.cutter.radius,+INFINITE)
+                    for t in triangles:
                         if t.normal().z < 0: continue;
                         cl = self.cutter.drop(t)
                         if cl and (cl.z > z_max or cl_max is None):

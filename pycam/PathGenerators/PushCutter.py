@@ -138,7 +138,13 @@ class PushCutter:
             prev = Point(x,y,z)
             hits.append(Hit(prev, None, 0, None))
 
-            for t in model.triangles():
+            triangles = None
+            if dx==0:
+                triangles = model.triangles(minx-self.cutter.radius,y-self.cutter.radius,z,maxx+self.cutter.radius,y+self.cutter.radius,INFINITE)
+            else:
+                triangles = model.triangles(x-self.cutter.radius,miny-self.cutter.radius,z,x+self.cutter.radius,maxy+self.cutter.radius,INFINITE)
+
+            for t in triangles:
                 #if t.normal().z < 0: continue;
                 # normals point outward... and we want to approach the model from the outside!
                 n = t.normal().dot(forward)

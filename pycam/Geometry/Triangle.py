@@ -1,6 +1,7 @@
 from Point import *
 from Plane import *
 from utils import *
+from Line import *
 
 ORIENTATION_CCW = 2
 ORIENTATION_CW  = 3
@@ -15,15 +16,27 @@ except:
 class Triangle:
     id = 0
     # points are expected to be in ClockWise order
-    def __init__(self, p1=None, p2=None, p3=None):
+    def __init__(self, p1=None, p2=None, p3=None, e1=None, e2=None, e3=None):
         self.id = Triangle.id
         Triangle.id += 1
         self.p1 = p1
         self.p2 = p2
         self.p3 = p3
+        if (not e1) and p1 and p2:
+            self.e1 = Line(p1,p2)
+        else:
+            self.e1 = e1
+        if (not e2) and p2 and p3:
+            self.e2 = Line(p2,p3)
+        else:
+            self.e2 = e2
+        if (not e3) and p3 and p1:
+            self.e3 = Line(p3,p1)
+        else:
+            self.e3 = e3
 
     def __repr__(self):
-        return "Triangle<%s,%s,%s>" % (self.p1,self.p2,self.p3)
+        return "Triangle%d<%s,%s,%s>" % (self.id,self.p1,self.p2,self.p3)
 
     def name(self):
         return "triangle%d" % self.id
@@ -49,7 +62,7 @@ class Triangle:
                 self._sphere = gluNewQuadric()
             gluSphere(self._sphere, self._radius, 10, 10)
             glPopMatrix()
-        if False: # draw triangle id on triangle face
+        if True: # draw triangle id on triangle face
             glPushMatrix()
             cc = glGetFloatv(GL_CURRENT_COLOR)
             c = self.center()
@@ -102,9 +115,6 @@ class Triangle:
             # calculate normal, if p1-p2-pe are in clockwise order
             self._normal = self.p3.sub(self.p1).cross(self.p2.sub(self.p1))
             denom = self._normal.norm()
-#            # TODO: fix kludge: make surface normal point up for now
-#            if self._normal.z < 0:
-#                denom = -denom
             self._normal = self._normal.div(denom)
         return self._normal
 

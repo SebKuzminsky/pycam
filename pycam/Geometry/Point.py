@@ -9,7 +9,7 @@ class Point:
         self.y = float(y)
         self.z = float(z)
     def __repr__(self):
-        return "Point<%g,%g,%g>" % (self.x,self.y,self.z)
+        return "Point%d<%g,%g,%g>" % (self.id,self.x,self.y,self.z)
     def mul(self, c):
         return Point(self.x*c,self.y*c,self.z*c)
     def div(self, c):
