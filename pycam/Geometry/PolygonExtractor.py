@@ -4,8 +4,11 @@ from pycam.Geometry.utils import *
 from pycam.Geometry.Path import *
 from pycam.Geometry.Point import *
 
+from pycam.Exporters.SVGExporter import SVGExporter
+
 DEBUG_POLYGONEXTRACTOR=False
 DEBUG_POLYGONEXTRACTOR2=False
+DEBUG_POLYGONEXTRACTOR3=False
 
 class PolygonExtractor:
     CONTOUR=1
@@ -23,11 +26,20 @@ class PolygonExtractor:
         self.curr_path_list = []
         self.prev_line = []
         self.curr_line = []
-        
+
+        if DEBUG_POLYGONEXTRACTOR3:
+            self.svg = SVGExporter("test-%d.svg" % dir)
+            if dir == 0:
+                self.svg.fill("red")
+            else:
+                self.svg.fill("blue")
         if self.policy == PolygonExtractor.CONTOUR and dir == 1 and self.hor_path_list:
             self.last_x = -INFINITE
             self.delta_x = 0
             self.convert_hor_path_list()
+        if DEBUG_POLYGONEXTRACTOR3:
+            self.cont = SVGExporter("test-2.svg")
+            self.cont.fill("green")
 
     def end_direction(self):
         if self.policy == PolygonExtractor.CONTOUR and self.hor_path_list:
@@ -36,8 +48,12 @@ class PolygonExtractor:
         self.new_scanline()
         self.end_scanline()
 
+        if DEBUG_POLYGONEXTRACTOR3:
+            self.svg.close()
+
         if self.policy == PolygonExtractor.CONTOUR and self.hor_path_list:
             for path in self.all_path_list:
+                if DEBUG_POLYGONEXTRACTOR2: print "points=", path.points
                 i = 0
                 while i < len(path.points)-1:
                     if path.points[i].x > path.points[i+1].x:
@@ -93,10 +109,27 @@ class PolygonExtractor:
         if self.current_dir==0:
             self.hor_path_list = path_list
         elif self.current_dir==1:
-            if self.policy == PolygonExtractor.CONTOUR and self.hor_path_list and self.ver_path_list:
+            if self.policy == PolygonExtractor.CONTOUR and self.hor_path_list and path_list:
                 self.merge_path_list = path_list
             else:
                 self.ver_path_list = path_list
+
+        if DEBUG_POLYGONEXTRACTOR3:
+            self.svg = SVGExporter("test-3.svg")
+            for path in path_list:
+                prev = None
+                for p in path.points:
+                    if p.dir == 0:
+                        self.svg.fill("red")
+                    else:
+                        self.svg.fill("blue")
+                    self.svg.AddDot(p.x, p.y)
+                    self.svg.AddText(p.x, p.y, str(p.id))
+                    if prev:
+                        self.svg.AddLine(p.x, p.y, prev.x, prev.y)
+                    prev = p
+            self.svg.close()
+            self.cont.close()
 
     def finish(self):
         pass
@@ -105,6 +138,10 @@ class PolygonExtractor:
         self.curr_line = []
 
     def append(self, p):
+        if DEBUG_POLYGONEXTRACTOR3:
+            p.dir = self.current_dir
+            self.svg.AddDot(p.x, p.y)
+            self.svg.AddText(p.x, p.y, str(p.id))
         self.curr_line.append(p)
 
     def end_scanline(self):
@@ -112,14 +149,17 @@ class PolygonExtractor:
             self.process_hor_scanline(self.curr_line)
         elif self.current_dir==1:
             if self.policy == PolygonExtractor.CONTOUR and self.hor_path_list:
-                next_x = 0
+                next_x = -INFINITE
                 if len(self.curr_line)>0:
                     next_x = self.curr_line[0].x
                     self.delta_x = next_x - self.last_x
                     self.last_x = next_x
                 else:
                     next_x = self.last_x + self.delta_x
-                self.process_virtual_hor_scanline(next_x)
+                if next_x > -INFINITE:
+                    self.process_virtual_hor_scanline(next_x)
+            if DEBUG_POLYGONEXTRACTOR2: 
+                print "scanline =", self.curr_line
             self.process_ver_scanline(self.curr_line)
 
     def process_hor_scanline(self, scanline):
@@ -148,7 +188,7 @@ class PolygonExtractor:
 
         if DEBUG_POLYGONEXTRACTOR: print "active points: ",
         for point in scanline:
-            if DEBUG_POLYGONEXTRACTOR: print "(%g,%g)" % (point.x, point.y),
+            if DEBUG_POLYGONEXTRACTOR: print "%d(%g,%g)" % (point.id, point.x, point.y),
         if DEBUG_POLYGONEXTRACTOR: print
 
         prev_point = Iterator(self.prev_line)
@@ -332,19 +372,35 @@ class PolygonExtractor:
 
         self.prev_line = scanline
 
-    def process_ver_scanline(self, scanline, next_x=-INFINITE):
-        last = 0
-        inside = False
-        s = ""
-        for point in scanline:
-            next = point.y
-            if inside:
-                s += "*" * int(next-last)
-            else:
-                s += " " * int(next-last)
-            last = next
-            inside = not inside
-        if DEBUG_POLYGONEXTRACTOR: print s
+    def process_ver_scanline(self, scanline):
+        if DEBUG_POLYGONEXTRACTOR3:
+            prev = None
+            for p in scanline:
+                if p.dir == 0:
+                    self.cont.fill("red")
+                else:
+                    self.cont.fill("blue")
+                self.cont.AddDot(p.x,p.y)
+                self.cont.fill("black")
+                self.cont.AddText(p.x,p.y, str(p.id))
+                if prev:
+                    self.cont.AddLine(prev.x,prev.y,p.x,p.y)
+                prev = p
+                    
+
+        if DEBUG_POLYGONEXTRACTOR:
+            last = 0
+            inside = False
+            s = ""
+            for point in scanline:
+                next = point.y
+                if inside:
+                    s += "*" * int(next-last)
+                else:
+                    s += " " * int(next-last)
+                last = next
+                inside = not inside
+            print s
 
         if DEBUG_POLYGONEXTRACTOR: print "active paths: ",
         for path in self.curr_path_list:
@@ -358,7 +414,7 @@ class PolygonExtractor:
 
         if DEBUG_POLYGONEXTRACTOR: print "active points: ",
         for point in scanline:
-            if DEBUG_POLYGONEXTRACTOR: print "(%g,%g)" % (point.x, point.y),
+            if DEBUG_POLYGONEXTRACTOR: print "%d(%g,%g)" % (point.id, point.x, point.y),
         if DEBUG_POLYGONEXTRACTOR: print
 
         prev_point = Iterator(self.prev_line)
@@ -620,24 +676,31 @@ class PolygonExtractor:
 
     def process_virtual_hor_scanline(self, next_x):
 
-        if len(self.ver_hor_path_list)>0 and self.ver_hor_path_list[0].points[0].x < next_x:
-            next_x = self.ver_hor_path_list[0].points[0].x
+        _next_x = next_x
 
-        if len(self.act_hor_path_list)>0 and self.act_hor_path_list[0].points[0].x < next_x:
-            next_x = self.act_hor_path_list[0].points[0].x
+        while next_x <= _next_x:
+            next_x = INFINITE
 
-        if DEBUG_POLYGONEXTRACTOR2: 
-            print "ver_hor_path_list =", self.ver_hor_path_list
-            print "act_hor_path_list =", self.act_hor_path_list
-            print "next_x =", next_x
+            if len(self.ver_hor_path_list)>0 and self.ver_hor_path_list[0].points[0].x < next_x:
+                next_x = self.ver_hor_path_list[0].points[0].x
 
-        if len(self.ver_hor_path_list)>0 and self.ver_hor_path_list[0].points[0].x <= next_x:
-            while len(self.ver_hor_path_list)>0 and self.ver_hor_path_list[0].points[0].x <= next_x:
-                self.act_hor_path_list.append(self.ver_hor_path_list[0])
-                self.ver_hor_path_list = self.ver_hor_path_list[1:]
-            self.act_hor_path_list.sort(cmp=lambda a,b:cmp(a.points[0].x,b.points[0].x))
+            if len(self.act_hor_path_list)>0 and self.act_hor_path_list[0].points[0].x < next_x:
+                next_x = self.act_hor_path_list[0].points[0].x
 
-        while len(self.act_hor_path_list)>0 and self.act_hor_path_list[0].points[0].x <= next_x:
+            if next_x >= _next_x:
+                return
+
+            if DEBUG_POLYGONEXTRACTOR2: 
+                print "ver_hor_path_list =", self.ver_hor_path_list
+                print "act_hor_path_list =", self.act_hor_path_list
+                print "next_x =", next_x
+
+            if len(self.ver_hor_path_list)>0 and self.ver_hor_path_list[0].points[0].x <= next_x:
+                while len(self.ver_hor_path_list)>0 and self.ver_hor_path_list[0].points[0].x <= next_x:
+                    self.act_hor_path_list.append(self.ver_hor_path_list[0])
+                    self.ver_hor_path_list = self.ver_hor_path_list[1:]
+                self.act_hor_path_list.sort(cmp=lambda a,b:cmp(a.points[0].x,b.points[0].x))
+
             scanline = []
             i = 0
             while i < len(self.act_hor_path_list):
@@ -657,9 +720,12 @@ class PolygonExtractor:
                             repeat = True
                 i += 1
             self.act_hor_path_list.sort(cmp=lambda a,b:cmp(a.points[0].x,b.points[0].x))
+            if len(scanline)==0:
+                return
+
             scanline.sort(cmp=lambda a,b:cmp(a.y,b.y))
             if DEBUG_POLYGONEXTRACTOR2: 
-                print "scanline =", scanline
+                print "scanline' =", scanline
                 print "ver_hor_path_list =", self.ver_hor_path_list
                 print "act_hor_path_list =", self.act_hor_path_list
             self.process_ver_scanline(scanline)
