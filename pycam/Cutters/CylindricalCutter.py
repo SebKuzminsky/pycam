@@ -120,7 +120,7 @@ class CylindricalCutter(BaseCutter):
         if d_t < d:
             d = d_t
             cl = cl_t
-        if cl:
+        if cl and direction.x==0 and direction.y==0:
             return (cl,d)
         (cl_e1,d_e1) = self.intersect_circle_edge(direction, triangle.e1)
         (cl_e2,d_e2) = self.intersect_circle_edge(direction, triangle.e2)
@@ -134,7 +134,7 @@ class CylindricalCutter(BaseCutter):
         if d_e3 < d:
             d = d_e3
             cl = cl_e3
-        if cl:
+        if cl and direction.x==0 and direction.y==0:
             return (cl,d)
         (cl_p1,d_p1) = self.intersect_circle_vertex(direction, triangle.p1)
         (cl_p2,d_p2) = self.intersect_circle_vertex(direction, triangle.p2)
@@ -148,12 +148,12 @@ class CylindricalCutter(BaseCutter):
         if d_p3 < d:
             d = d_p3
             cl = cl_p3
-        if cl:
+        if cl and direction.x==0 and direction.y==0:
             return (cl,d)
         if direction.x != 0 or direction.y != 0:
-            (cl_e1,d_e1) = self.intersect_cylinder_edge(direction, triangle.e1)
-            (cl_e2,d_e2) = self.intersect_cylinder_edge(direction, triangle.e2)
-            (cl_e3,d_e3) = self.intersect_cylinder_edge(direction, triangle.e3)
+            (cl_p1,d_p1) = self.intersect_cylinder_vertex(direction, triangle.p1)
+            (cl_p2,d_p2) = self.intersect_cylinder_vertex(direction, triangle.p2)
+            (cl_p3,d_p3) = self.intersect_cylinder_vertex(direction, triangle.p3)
             if d_p1 < d:
                 d = d_p1
                 cl = cl_p1
@@ -163,11 +163,9 @@ class CylindricalCutter(BaseCutter):
             if d_p3 < d:
                 d = d_p3
                 cl = cl_p3
-            if cl:
-                return (cl,d)
-            (cl_p1,d_p1) = self.intersect_cylinder_vertex(direction, triangle.p1)
-            (cl_p2,d_p2) = self.intersect_cylinder_vertex(direction, triangle.p2)
-            (cl_p3,d_p3) = self.intersect_cylinder_vertex(direction, triangle.p3)
+            (cl_e1,d_e1) = self.intersect_cylinder_edge(direction, triangle.e1)
+            (cl_e2,d_e2) = self.intersect_cylinder_edge(direction, triangle.e2)
+            (cl_e3,d_e3) = self.intersect_cylinder_edge(direction, triangle.e3)
             if d_e1 < d:
                 d = d_e1
                 cl = cl_e1

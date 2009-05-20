@@ -43,7 +43,7 @@ def UniqueEdge(p1, p2):
     return e
 
 
-def ImportModel(filename):
+def ImportModel(filename, use_kdtree=True):
     global vertices, edges, kdtree
     vertices = 0
     edges = 0
@@ -60,7 +60,8 @@ def ImportModel(filename):
     endloop = re.compile("\s*endloop\s+")
     vertex = re.compile("\s*vertex\s+(?P<x>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<y>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<z>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+")
 
-    kdtree = PointKdtree([],3,1,epsilon)
+    if use_kdtree:
+        kdtree = PointKdtree([],3,1,epsilon)
     model = Model()
 
     t = None
@@ -127,8 +128,9 @@ def ImportModel(filename):
         if m:
             continue
 
-    model.p_kdtree = kdtree
-    model.t_kdtree = TriangleKdtree(model.triangles())
+    if use_kdtree:
+        model.p_kdtree = kdtree
+        model.t_kdtree = TriangleKdtree(model.triangles())
 
     print "Imported STL model: ", vertices, "vertices,", edges, "edges,", len(model.triangles()),"triangles"
     vertices = 0

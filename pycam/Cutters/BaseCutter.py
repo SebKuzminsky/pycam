@@ -7,6 +7,7 @@ from math import sqrt
 
 class BaseCutter:
     id = 0
+    vertical = Point(0,0,-1)
 
     def __init__(self, location, radius):
         self.location = location
@@ -48,7 +49,7 @@ class BaseCutter:
         if sqr(c.x-self.location.x)+sqr(c.y-self.location.y)>self.radiussq+self.radius*triangle.radius()+triangle.radiussq():
             return None
 
-        (cl,d)= self.intersect(Point(0,0,-1), triangle)
+        (cl,d)= self.intersect(BaseCutter.vertical, triangle)
         return cl
 
     def push(self, dx, dy, triangle):
