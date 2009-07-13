@@ -34,6 +34,8 @@ class ContourCutter:
         self.pe.finish()
         if self.pe.merge_path_list:
             self.paths = self.pe.merge_path_list
+            for p in self.paths:
+                p.append(p.points[0])
         else:
             if self.pe.hor_path_list:
                 self.paths = self.pe.hor_path_list

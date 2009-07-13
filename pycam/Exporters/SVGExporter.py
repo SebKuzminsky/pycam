@@ -4,7 +4,7 @@ class SVGExporter:
         self.file = file(filename,"w")
         self.file.write("""<?xml version='1.0'?>
 <svg xmlns='http://www.w3.org/2000/svg' width='640' height='800'>
-<g transform='translate(320,320) scale(60)' stroke-width='0.01' font-size='0.2'>
+<g transform='translate(320,320) scale(50)' stroke-width='0.01' font-size='0.2'>
 """)
         self._fill = 'none'
         self._stroke = 'black'

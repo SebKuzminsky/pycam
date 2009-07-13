@@ -118,6 +118,8 @@ class PolygonExtractor:
             self.svg = SVGExporter("test-3.svg")
             for path in path_list:
                 prev = None
+                if len(path.points)<=1:
+                    continue
                 for p in path.points:
                     if p.dir == 0:
                         self.svg.fill("red")
@@ -128,6 +130,9 @@ class PolygonExtractor:
                     if prev:
                         self.svg.AddLine(p.x, p.y, prev.x, prev.y)
                     prev = p
+                p = path.points[0]
+                self.svg.AddLine(p.x, p.y, prev.x, prev.y)
+
             self.svg.close()
             self.cont.close()
 
