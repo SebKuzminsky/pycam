@@ -101,7 +101,7 @@ class PushCutter:
         y = miny
         
         line = 0
-            
+
         while x<=maxx and y<=maxy:
             self.pa.new_scanline()
             if False:
@@ -129,7 +129,7 @@ class PushCutter:
                 p = Point(minx, y, 10)
                 for i in range(0,100):
                     p.x = minx + float(i)/100*float(maxx-minx)
-                    self.svg.AddDot(p.x, zmax)
+                    self.svg.AddDot(p.x, z)
 
                 self.svg.fill('black')
 
@@ -155,6 +155,7 @@ class PushCutter:
                         if DEBUG_PUSHCUTTER: print "< cl=",cl,",d=",-d,",t=",t.id,",t.n=",t.normal(),",n=",n
                         hits.append(Hit(cl,t,-d,backward))
                         hits.append(Hit(cl.sub(backward_small),t,-d+epsilon,backward))
+                        hits.append(Hit(cl.add(backward_small),t,-d-epsilon,backward))
                         if DEBUG_PUSHCUTTER3: self.svg.AddDot(cl.x, cl.z)
                     else:
                         if DEBUG_PUSHCUTTER: print "< cl=",cl,",0",",t=",t.id
@@ -163,6 +164,7 @@ class PushCutter:
                     if cl:
                         if DEBUG_PUSHCUTTER: print "> cl=",cl,",d=",d,",t=",t.id,",t.n=",t.normal(),",n=",n
                         hits.append(Hit(cl,t,d,forward))
+                        hits.append(Hit(cl.add(forward_small),t,d+epsilon,forward))
                         hits.append(Hit(cl.sub(forward_small),t,d-epsilon,forward))
                         if DEBUG_PUSHCUTTER3: self.svg.AddDot(cl.x, cl.z)
                     else:

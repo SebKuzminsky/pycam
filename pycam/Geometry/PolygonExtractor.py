@@ -163,18 +163,19 @@ class PolygonExtractor:
             self.process_ver_scanline(self.curr_line)
 
     def process_hor_scanline(self, scanline):
-        last = 0
-        inside = False
-        s = ""
-        for point in scanline:
-            next = point.x
-            if inside:
-                s += "*" * int(next-last)
-            else:
-                s += " " * int(next-last)
-            last = next
-            inside = not inside
-        if DEBUG_POLYGONEXTRACTOR: print s
+        if DEBUG_POLYGONEXTRACTOR: 
+            last = 0
+            inside = False
+            s = ""
+            for point in scanline:
+                next = point.x
+                if inside:
+                    s += "*" * int(next-last)
+                else:
+                    s += " " * int(next-last)
+                last = next
+                inside = not inside
+            print s
 
         if DEBUG_POLYGONEXTRACTOR: print "active paths: ",
         for path in self.curr_path_list:
