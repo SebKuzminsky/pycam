@@ -1,4 +1,4 @@
-import re
+import re, os
 from struct import unpack 
 
 from pycam.Geometry import *
@@ -52,12 +52,16 @@ def ImportModel(filename, use_kdtree=True):
 
     f = open(filename,"rb")
     header = f.read(80)
+    numfacets = unpack("<I",f.read(4))[0]
     binary = False
-    if header[0:5] == "solid":
+
+    if os.path.getsize(filename) == (84 + 50*numfacets):
+        binary = True
+    elif header.find("solid ")>=0:
         binary = False
         f.seek(0)
     else:
-        binary = True
+        binary = true
 
     if use_kdtree:
         kdtree = PointKdtree([],3,1,epsilon)
@@ -69,8 +73,6 @@ def ImportModel(filename, use_kdtree=True):
     p3 = None
 
     if binary:
-        numfacets = unpack("<I",f.read(4))[0]
-
         for i in range(1,numfacets): 
             a1 = unpack("<f",f.read(4))[0] 
             a2 = unpack("<f",f.read(4))[0] 
