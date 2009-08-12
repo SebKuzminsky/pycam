@@ -113,6 +113,9 @@ class CylindricalCutter(BaseCutter):
             return (None,INFINITE)
         return (cl,l)
 
+    def intersect_plane(self, direction, triangle):
+        return self.intersect_circle_plane(direction, triangle)
+
     def intersect(self, direction, triangle):
         (cl_t,d_t) = self.intersect_circle_triangle(direction, triangle)
         d = INFINITE

@@ -115,6 +115,9 @@ class SphericalCutter(BaseCutter):
             return (None,INFINITE)
         return (cl,l)
 
+    def intersect_point(self, direction, point):
+        return self.intersect_sphere_point(direction, point)
+
     def intersect(self, direction, triangle):
         (cl_t,d_t) = self.intersect_sphere_triangle(direction, triangle)
         d = INFINITE

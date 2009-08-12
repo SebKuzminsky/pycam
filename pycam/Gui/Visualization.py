@@ -12,6 +12,7 @@ GLUT_WHEEL_DOWN=Constant('GLUT_WHEEL_DOWN',4)
 from pycam.Geometry.utils import *
 
 _DrawCurrentSceneFunc = None
+_KeyHandlerFunc = None
 
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
@@ -31,7 +32,8 @@ zdist = -8.0
 
 texture_num = 2
 object = 0
-light = 0
+light = 1
+shade_model = GL_FLAT
 polygon_mode = GL_FILL
 width = 320
 height = 200
@@ -47,7 +49,8 @@ def InitGL(Width, Height):				# We call this right after our OpenGL window is cr
     glDepthFunc(GL_LESS)				# The Type Of Depth Test To Do
     glEnable(GL_DEPTH_TEST)				# Enables Depth Testing
 #    glShadeModel(GL_SMOOTH)				# Enables Smooth Color Shading
-    glShadeModel(GL_FLAT)				# Enables Flat Color Shading
+#    glShadeModel(GL_FLAT)				# Enables Flat Color Shading
+    glShadeModel(shade_model)
 
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()					# Reset The Projection Matrix
@@ -104,8 +107,10 @@ def DrawGLScene():
 
 # The function called whenever a key is pressed
 def keyPressed(key, x, y):
-    global light, polygon_mode
+    global light, polygon_mode, shade_model
     global xrot, yrot, zrot
+    global _KeyHandlerFunc
+
     key = string.upper(key)
     if key == ESCAPE or key=='Q':
         # If escape is pressed, kill everything.
@@ -114,6 +119,10 @@ def keyPressed(key, x, y):
         light = not light
     elif key == '=':
         print "rot=<%g,%g,%g>" % (xrot,yrot,zrot)
+    elif key == 'I':
+        xrot = 110
+        yrot = 180
+        zrot = 250
     elif key == 'T': # top
         xrot=0
         yrot=0
@@ -131,11 +140,19 @@ def keyPressed(key, x, y):
         yrot=0
         zrot=+90
     elif key == 'M':
+        if shade_model == GL_SMOOTH:
+            shade_model = GL_FLAT
+        else:
+            shade_model = GL_SMOOTH
+        glShadeModel(shade_model)
+    elif key == 'P':
         if polygon_mode == GL_FILL:
             polygon_mode = GL_LINE
         else:
             polygon_mode = GL_FILL
         glPolygonMode(GL_FRONT_AND_BACK, polygon_mode)
+    elif _KeyHandlerFunc:
+        _KeyHandlerFunc(key, x, y)
 
 class mouseState:
     button = None
@@ -188,11 +205,15 @@ def mouseMoved(x, y):
     mouseState.x=x
     mouseState.y=y
 
-def Visualization(title, drawScene=DrawGLScene, width=320, height=200):
-    global window, _DrawCurrentSceneFunc
+def Visualization(title, drawScene=DrawGLScene, width=320, height=200, handleKey=None):
+    global window, _DrawCurrentSceneFunc, _KeyHandlerFunc
     glutInit(sys.argv)
 
     _DrawCurrentSceneFunc = drawScene
+
+    if handleKey:
+        _KeyHandlerFunc = handleKey
+
     # Select type of Display mode:
     #  Double buffer
     #  RGBA color

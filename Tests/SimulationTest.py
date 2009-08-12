@@ -13,7 +13,7 @@ from OpenGL.GL import *
 
 model = TestModel()
 
-zbuffer = ZBuffer(-5,+5,30, -5,+5,30, 1,5)
+zbuffer = ZBuffer(-5,+5,150, -5,+5,150, 1,5)
 
 #zbuffer.add_wave()
 
@@ -21,7 +21,7 @@ zbuffer = ZBuffer(-5,+5,30, -5,+5,30, 1,5)
 
 c = SphericalCutter(0.25)
 
-p = Point(-5,-5,1)
+p = Point(-5,-5,2)
 c.moveto(p)
 
 zbuffer.add_triangles(model.triangles())
