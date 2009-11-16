@@ -61,7 +61,8 @@ def ImportModel(filename, use_kdtree=True):
         binary = False
         f.seek(0)
     else:
-        binary = True
+        print "STL binary/ascii detection failed"
+        return None
 
     if use_kdtree:
         kdtree = PointKdtree([],3,1,epsilon)
