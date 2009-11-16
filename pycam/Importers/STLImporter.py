@@ -57,11 +57,11 @@ def ImportModel(filename, use_kdtree=True):
 
     if os.path.getsize(filename) == (84 + 50*numfacets):
         binary = True
-    elif header.find("solid ")>=0:
+    elif header.find("solid")>=0 and header.find("facet")>=0:
         binary = False
         f.seek(0)
     else:
-        binary = true
+        binary = True
 
     if use_kdtree:
         kdtree = PointKdtree([],3,1,epsilon)
