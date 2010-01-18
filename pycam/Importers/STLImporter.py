@@ -166,10 +166,18 @@ def ImportModel(filename, use_kdtree=True):
             m = endfacet.match(line)
             if m:
                 # make sure the points are in ClockWise order
-                if n.dot(p3.sub(p1).cross(p2.sub(p1)))>0:
+                dotcross = n.dot(p3.sub(p1).cross(p2.sub(p1)))
+                if dotcross > 0:
                     t = Triangle(p1, p2, p3, UniqueEdge(p1,p2), UniqueEdge(p2,p3), UniqueEdge(p3,p1))
-                else:
+                elif dotcross < 0:
                     t = Triangle(p1, p3, p2, UniqueEdge(p1,p3), UniqueEdge(p3,p2), UniqueEdge(p2,p1))
+                else:
+                    # the three points are in a line - or two points are identical
+                    # usually this is caused by points, that are too close together
+                    # check the tolerance value in pycam/Geometry/PointKdtree.py
+                    print "ERROR: skipping irregular triangle: %s / %s / %s" % (p1, p2, p3)
+                    n=p1=p2=p3=None
+                    continue
                 t._normal = n
                 n=p1=p2=p3=None
                 if t.normal().z < 0:
