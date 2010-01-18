@@ -496,7 +496,7 @@ class SimpleGui(Frame):
 
     def resetView(self):
         glMatrixMode(GL_MODELVIEW)
-	glLoadIdentity()
+        glLoadIdentity()
         glScalef(self.scale,self.scale,self.scale)
         glRotatef(110,1.0,0.0,0.0)
         glRotatef(180,0.0,1.0,0.0)
@@ -505,14 +505,14 @@ class SimpleGui(Frame):
 
     def frontView(self):
         glMatrixMode(GL_MODELVIEW)
-	glLoadIdentity()
+        glLoadIdentity()
         glScalef(self.scale,self.scale,self.scale)
         glRotatef(-90,1.0,0,0)
         self.ogl.tkRedraw()
 
     def backView(self):
         glMatrixMode(GL_MODELVIEW)
-	glLoadIdentity()
+        glLoadIdentity()
         glScalef(self.scale,self.scale,self.scale)
         glRotatef(-90,1.0,0,0)
         glRotatef(180,0,0,1.0)
@@ -520,7 +520,7 @@ class SimpleGui(Frame):
 
     def leftView(self):
         glMatrixMode(GL_MODELVIEW)
-	glLoadIdentity()
+        glLoadIdentity()
         glScalef(self.scale,self.scale,self.scale)
         glRotatef(-90,1.0,0,0)
         glRotatef(90,0,0,1.0)
@@ -528,7 +528,7 @@ class SimpleGui(Frame):
 
     def rightView(self):
         glMatrixMode(GL_MODELVIEW)
-	glLoadIdentity()
+        glLoadIdentity()
         glScalef(self.scale,self.scale,self.scale)
         glRotatef(-90,1.0,0,0)
         glRotatef(-90,0,0,1.0)
@@ -536,7 +536,7 @@ class SimpleGui(Frame):
 
     def topView(self):
         glMatrixMode(GL_MODELVIEW)
-	glLoadIdentity()
+        glLoadIdentity()
         glScalef(self.scale,self.scale,self.scale)
         self.ogl.tkRedraw()
 
