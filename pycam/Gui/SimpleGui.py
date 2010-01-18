@@ -19,6 +19,9 @@ from pycam.Geometry.utils import *
 from pycam.Importers import *
 from pycam.Exporters import *
 
+# leave 10% margin around the model
+DEFAULT_MARGIN = 0.1
+
 class OpenglWidget(Opengl):
     def __init__(self, master=None, cnf={}, **kw):
         Opengl.__init__(self, master, kw)
@@ -173,6 +176,29 @@ class SimpleGui(Frame):
             self.open(filename)
 
     def open(self, filename):
+        # read the model data
+        self.model = None
+        if filename:
+            self.InputFileName.set(filename)
+            try:
+                self.model = STLImporter.ImportModel(filename)
+            except:
+                self.model = None
+        # guess suitable default dimensions
+        if self.model:
+            self.MinX.set(str(self.model.minx - (self.model.maxx - self.model.minx)*DEFAULT_MARGIN))
+            self.MaxX.set(str(self.model.maxx + (self.model.maxx - self.model.minx)*DEFAULT_MARGIN))
+            self.MinY.set(str(self.model.miny - (self.model.maxy - self.model.miny)*DEFAULT_MARGIN))
+            self.MaxY.set(str(self.model.maxy + (self.model.maxy - self.model.miny)*DEFAULT_MARGIN))
+            minz = self.model.minz - (self.model.maxz - self.model.minz)*DEFAULT_MARGIN
+            if self.model.minz > 0 and minz < 0:
+                # don't go below zero, if it is not necessary
+                self.MinZ.set("0")
+            else:
+                self.MinZ.set(str(minz))
+            self.MaxZ.set(str(self.model.maxz + (self.model.maxz - self.model.minz)*DEFAULT_MARGIN))
+        self.toolpath = None
+        # read a config file, if it exists
         config = ConfigParser();
         if config.read(filename.replace(".stl",".cfg")):
             if config.has_option("stock","Unit"):
@@ -211,14 +237,6 @@ class SimpleGui(Frame):
                 self.PathProcessorName.set(config.get("config","PathProcessor"))
             if config.has_option("config","Direction"):
                 self.Direction.set(config.get("config","Direction"))
-        self.model = None
-        if filename:
-            self.InputFileName.set(filename)
-            try:
-                self.model = STLImporter.ImportModel(filename)
-            except:
-                self.model = None
-        self.toolpath = None
         if self.model:
             self.scale = 2.0/self.model.maxsize()
         self.resetView()
