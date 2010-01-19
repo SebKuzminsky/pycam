@@ -13,7 +13,7 @@ if __name__ == "__main__":
     parser = OptionParser(usage="usage: %prog [--gui] [inputfile [outputfile]]")
     parser.add_option("", "--gui", dest="display",
             action="store_true", default=False,
-            help="ignore 'outputfile' and show the GUI window")
+            help="don't create the outputfile on the fly - just preset the output filename and show the GUI")
     (options, args) = parser.parse_args()
 
     if len(args) > 0:
@@ -27,13 +27,16 @@ if __name__ == "__main__":
 
     if not inputfile:
         gui.model = TestModel()
-        gui.mainloop()
     else:
         gui.open(inputfile)
-        if options.display:
-            gui.mainloop()
-        else:
-            gui.generateToolpath()
-            if outputfile:
-                gui.save(outputfile)
+    if outputfile and not options.display:
+        # an output filename is given and no gui is explicitly requested
+        gui.generateToolpath()
+        if outputfile:
+            gui.save(outputfile)
+    else:
+        # the gui should be shown
+        if outputfile:
+            gui.setOutputFilename(outputfile)
+        gui.mainloop()
 

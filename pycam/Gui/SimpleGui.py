@@ -320,6 +320,10 @@ class SimpleGui(Frame):
         if filename:
             self.save(filename)
 
+    def setOutputFilename(self, filename):
+        if filename:
+            self.OutputFileName.set(filename)
+
     def save(self, filename):
         self.OutputFileName.set(filename)
         if self.toolpath:
