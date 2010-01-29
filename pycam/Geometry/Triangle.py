@@ -139,12 +139,14 @@ class Triangle:
         dot12 = v1.dot(v2)
 
         # Compute barycentric coordinates
-        invDenom = 1 / (dot00 * dot11 - dot01 * dot01)
-        u = (dot11 * dot02 - dot01 * dot12) * invDenom
-        v = (dot00 * dot12 - dot01 * dot02) * invDenom
+        denom = dot00 * dot11 - dot01 * dot01
+        # originally, "u" and "v" are multiplied with "1/denom"
+        # we don't do this, to avoid division by zero (for triangles that are "almost" invalid)
+        u = dot11 * dot02 - dot01 * dot12
+        v = dot00 * dot12 - dot01 * dot02
 
         # Check if point is in triangle
-        return (u > 0) and (v > 0) and (u + v < 1)
+        return ((u * denom) > 0) and ((v * denom) > 0) and (u + v < denom)
 
     def minx(self):
         if not hasattr(self, "_minx"):
