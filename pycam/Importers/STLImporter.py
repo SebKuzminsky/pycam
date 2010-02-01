@@ -118,8 +118,8 @@ def ImportModel(filename, use_kdtree=True):
 
         solid = re.compile("\s*solid\s+(\w+)\s+.*")
         solid_AOI = re.compile("\s*solid\s+\"([\w\-]+)\"; Produced by Art of Illusion.*")
-        endsolid = re.compile("\s*endsolid\s+")
-        facet = re.compile("\s*facet\s+")
+        endsolid = re.compile("\s*endsolid\s*")
+        facet = re.compile("\s*facet\s*")
         normal = re.compile("\s*facet\s+normal\s+(?P<x>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<y>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<z>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+")
         endfacet = re.compile("\s*endfacet\s+")
         loop = re.compile("\s*outer\s+loop\s+")
@@ -145,6 +145,8 @@ def ImportModel(filename, use_kdtree=True):
                         n = Point(float(m.group('x')),float(m.group('z')),float(m.group('y')))
                     else:
                         n = Point(float(m.group('x')),float(m.group('y')),float(m.group('z')))
+                else:
+                    n = None
                 continue
             m = loop.match(line)
             if m:
@@ -169,6 +171,10 @@ def ImportModel(filename, use_kdtree=True):
                 continue
             m = endfacet.match(line)
             if m:
+                if not n:
+                    n = p3.sub(p1).cross(p2.sub(p1))
+                    n.normalize()
+
                 # make sure the points are in ClockWise order
                 dotcross = n.dot(p3.sub(p1).cross(p2.sub(p1)))
                 if dotcross > 0:
