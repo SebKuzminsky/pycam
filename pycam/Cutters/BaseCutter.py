@@ -44,9 +44,9 @@ class BaseCutter:
         if self.maxy < triangle.miny():
             return None
 
-        # check bounding sphere collision
+        # check bounding circle collision
         c = triangle.center()
-        if sqr(c.x-self.location.x)+sqr(c.y-self.location.y)>self.radiussq+self.radius*triangle.radius()+triangle.radiussq():
+        if sqr(c.x-self.location.x)+sqr(c.y-self.location.y)>(self.radiussq+2*self.radius*triangle.radius()+triangle.radiussq()):
             return None
 
         (cl,d)= self.intersect(BaseCutter.vertical, triangle)

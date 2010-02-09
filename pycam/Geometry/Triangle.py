@@ -146,7 +146,7 @@ class Triangle:
         v = dot00 * dot12 - dot01 * dot02
 
         # Check if point is in triangle
-        return ((u * denom) > 0) and ((v * denom) > 0) and (u + v < denom)
+        return ((u * denom) >= 0) and ((v * denom) >= 0) and (u + v <= denom)
 
     def minx(self):
         if not hasattr(self, "_minx"):

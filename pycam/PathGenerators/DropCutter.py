@@ -23,12 +23,12 @@ class DropCutter:
                 x = minx
                 pa.new_scanline()
                 t_last = None
+                cl_last = None
                 while x<=maxx:
                     p = Point(x,y,z1)
                     z_max = -INFINITE
                     cl_max = None
                     t_max = None
-                    cl_last = None
                     self.cutter.moveto(p)
                     triangles = self.model.triangles(p.x-self.cutter.radius,p.y-self.cutter.radius,z0,p.x+self.cutter.radius,p.y+self.cutter.radius,+INFINITE)
                     for t in triangles:
@@ -79,12 +79,12 @@ class DropCutter:
                 y = miny
                 pa.new_scanline()
                 t_last = None
+                cl_last = None
                 while y<=maxy:
                     p = Point(x,y,z1)
                     z_max = -INFINITE
                     cl_max = None
                     t_max = None
-                    cl_last = None
                     self.cutter.moveto(p)
                     triangles = self.model.triangles(p.x-self.cutter.radius,p.y-self.cutter.radius,z0,p.x+self.cutter.radius,p.y+self.cutter.radius,+INFINITE)
                     for t in triangles:

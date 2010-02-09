@@ -57,7 +57,9 @@ class SphericalCutter(BaseCutter):
     def intersect_sphere_point(self, direction, point):
         (ccp,cp,l) = intersect_sphere_point(self.center, self.radius, self.radiussq, direction, point)
         # offset intersection
-        cl = self.location.add(direction.mul(l))
+        cl = None
+        if cp:
+            cl = self.location.add(direction.mul(l))
         return (cl,ccp,cp,l)
 
     def intersect_sphere_vertex(self, direction, point):
