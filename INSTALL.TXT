@@ -47,7 +47,7 @@ Togl only needs access to a few header files that are not part of the
 binary distributions... 
  
 I unpacked the tcl and tk sources next to the Togl sources in my home directory, then 
-        cd ~/tcl-8.5.5/unix; 
+    cd ~/tcl-8.5.5/unix; 
 	./configure 
 	cd ~/tk-8.5.5/unix; 
 	./configure 
@@ -57,3 +57,11 @@ I unpacked the tcl and tk sources next to the Togl sources in my home directory,
         make 
 	make install
 
+
+For ubuntu:
+    (assuming you have tcl8.4, if not, replace 8.4 by 8.5 below)
+
+    install the packages "tcl8.4dev" and "tk8.4dev"
+    ./configure --with-tcl=/usr/share/tcltk/tcl8.4/ --with-tk=/usr/share/tcltk/tk8.4/ --enable-threads
+    make
+    sudo make install
