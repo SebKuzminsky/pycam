@@ -61,7 +61,7 @@ I unpacked the tcl and tk sources next to the Togl sources in my home directory,
 For ubuntu:
     (assuming you have tcl8.4, if not, replace 8.4 by 8.5 below)
 
-    install the packages "tcl8.4dev" and "tk8.4dev"
+    install the packages "tcl8.4dev" and "tk8.4dev" (and maybe "Freeglut3-Dev" and "libxmu-dev")
     ./configure --with-tcl=/usr/share/tcltk/tcl8.4/ --with-tk=/usr/share/tcltk/tk8.4/ --enable-threads
     make
     sudo make install
