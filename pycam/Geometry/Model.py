@@ -19,6 +19,8 @@ class Model:
         self.name = "model%d" % self.id
 
     def to_OpenGL(self):
+        if not GL_enabled:
+            return
         if True:
             GL.glBegin(GL.GL_TRIANGLES)
             for t in self._triangles:
