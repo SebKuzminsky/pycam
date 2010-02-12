@@ -32,6 +32,18 @@ class Triangle:
             self.e3 = Line(p3,p1)
         else:
             self.e3 = e3
+        self._minx = None
+        self._miny = None
+        self._minz = None
+        self._maxx = None
+        self._maxy = None
+        self._maxz = None
+        self._center = None
+        self._middle = None
+        self._radius = None
+        self._radiussq = None
+        self._normal = None
+        self._plane = None
 
     def __repr__(self):
         return "Triangle%d<%s,%s,%s>" % (self.id,self.p1,self.p2,self.p3)
@@ -111,7 +123,7 @@ class Triangle:
             GL.glColor4f(cc[0],cc[1],cc[2],cc[3])
 
     def normal(self):
-        if not hasattr(self, '_normal'):
+        if self._normal is None:
             # calculate normal, if p1-p2-pe are in clockwise order
             self._normal = self.p3.sub(self.p1).cross(self.p2.sub(self.p1))
             denom = self._normal.norm()
@@ -119,7 +131,7 @@ class Triangle:
         return self._normal
 
     def plane(self):
-        if not hasattr(self, '_plane'):
+        if self._plane is None:
             self._plane=Plane(self.center(), self.normal())
         return self._plane
 
@@ -149,64 +161,62 @@ class Triangle:
         return ((u * denom) >= 0) and ((v * denom) >= 0) and (u + v <= denom)
 
     def minx(self):
-        if not hasattr(self, "_minx"):
+        if self._minx is None:
             self._minx = min3(self.p1.x, self.p2.x, self.p3.x)
         return self._minx
 
     def miny(self):
-        if not hasattr(self, "_miny"):
+        if self._miny is None:
             self._miny = min3(self.p1.y, self.p2.y, self.p3.y)
         return self._miny
 
     def minz(self):
-        if not hasattr(self, "_minz"):
+        if self._minz is None:
             self._minz = min3(self.p1.z, self.p2.z, self.p3.z)
         return self._minz
 
     def maxx(self):
-        if not hasattr(self, "_maxx"):
+        if self._maxx is None:
             self._maxx = max3(self.p1.x, self.p2.x, self.p3.x)
         return self._maxx
 
     def maxy(self):
-        if not hasattr(self, "_maxy"):
+        if self._maxy is None:
             self._maxy = max3(self.p1.y, self.p2.y, self.p3.y)
         return self._maxy
 
     def maxz(self):
-        if not hasattr(self, "_maxz"):
+        if self._maxz is None:
             self._maxz = max3(self.p1.z, self.p2.z, self.p3.z)
         return self._maxz
 
     def center(self):
-        if not hasattr(self, "_center"):
+        if self._center is None:
             self._center = self.p1.add(self.p2).add(self.p3).mul(1.0/3)
         return self._center
 
     def middle(self):
-        if not hasattr(self, "_middle"):
+        if self._middle is None:
             self.calc_circumcircle()
         return self._middle
 
     def radius(self):
-        if not hasattr(self, "_radius"):
+        if self._radius is None:
             self.calc_circumcircle()
         return self._radius
 
     def radiussq(self):
-        if not hasattr(self, "_radiussq"):
+        if self._radiussq is None:
             self.calc_circumcircle()
         return self._radiussq
 
     def calc_circumcircle(self):
-        normal = self.p2.sub(self.p1).cross(self.p3.sub(self.p2))
-        denom = normal.norm()
-        self._radius = (self.p2.sub(self.p1).norm()*self.p3.sub(self.p2).norm()*self.p3.sub(self.p1).norm())/(2*denom)
+        normal = self.normal()
+        self._radius = (self.p2.sub(self.p1).norm()*self.p3.sub(self.p2).norm()*self.p3.sub(self.p1).norm())/(2)
         self._radiussq = self._radius*self._radius
-        denom2 = 2*denom*denom;
-        alpha = self.p3.sub(self.p2).normsq()*(self.p1.sub(self.p2).dot(self.p1.sub(self.p3))) / (denom2)
-        beta  = self.p1.sub(self.p3).normsq()*(self.p2.sub(self.p1).dot(self.p2.sub(self.p3))) / (denom2)
-        gamma = self.p1.sub(self.p2).normsq()*(self.p3.sub(self.p1).dot(self.p3.sub(self.p2))) / (denom2)
+        alpha = self.p3.sub(self.p2).normsq()*(self.p1.sub(self.p2).dot(self.p1.sub(self.p3))) / 2
+        beta  = self.p1.sub(self.p3).normsq()*(self.p2.sub(self.p1).dot(self.p2.sub(self.p3))) / 2
+        gamma = self.p1.sub(self.p2).normsq()*(self.p3.sub(self.p1).dot(self.p3.sub(self.p2))) / 2
         self._middle = Point(self.p1.x*alpha+self.p2.x*beta+self.p3.x*gamma,
                              self.p1.y*alpha+self.p2.y*beta+self.p3.y*gamma,
                              self.p1.z*alpha+self.p2.z*beta+self.p3.z*gamma)
@@ -225,3 +235,16 @@ class Triangle:
             sub += Triangle(p4,self.p2,p5).subdivide(depth-1)
         return sub
 
+    def reset_cache(self):
+        self._minx = None
+        self._miny = None
+        self._minz = None
+        self._maxx = None
+        self._maxy = None
+        self._maxz = None
+        self._center = None
+        self._middle = None
+        self._radius = None
+        self._radiussq = None
+        self._normal = None
+        self._plane = None
