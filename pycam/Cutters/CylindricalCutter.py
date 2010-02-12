@@ -8,11 +8,11 @@ from pycam.Cutters.BaseCutter import BaseCutter
 from math import sqrt
 
 try:
-    from OpenGL.GL import *
-    from OpenGL.GLU import *
-    from OpenGL.GLUT import *
+    import OpenGL.GL as GL
+    import OpenGL.GLU as GLU
+    GL_enabled = True
 except:
-    pass
+    GL_enabled = False
 
 class CylindricalCutter(BaseCutter):
 
@@ -26,15 +26,17 @@ class CylindricalCutter(BaseCutter):
         return "CylindricalCutter<%s,%s>" % (self.location,self.radius)
 
     def to_OpenGL(self):
-        glPushMatrix()
-        glTranslate(self.center.x, self.center.y, self.center.z)
+        if not GL_enabled:
+            return
+        GL.glPushMatrix()
+        GL.glTranslate(self.center.x, self.center.y, self.center.z)
         if not hasattr(self,"_cylinder"):
-            self._cylinder = gluNewQuadric()
-        gluCylinder(self._cylinder, self.radius, self.radius, self.height, 10, 10)
+            self._cylinder = GLU.gluNewQuadric()
+        GLU.gluCylinder(self._cylinder, self.radius, self.radius, self.height, 10, 10)
         if not hasattr(self,"_disk"):
-            self._disk = gluNewQuadric()
-        gluDisk(self._disk, 0, self.radius, 10, 10)
-        glPopMatrix()
+            self._disk = GLU.gluNewQuadric()
+        GLU.gluDisk(self._disk, 0, self.radius, 10, 10)
+        GL.glPopMatrix()
 
     def moveto(self, location):
         BaseCutter.moveto(self, location)

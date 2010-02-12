@@ -4,11 +4,10 @@ import math
 import pycam
 
 try:
-    from OpenGL.GL import *
-    from OpenGL.GLUT import *
-    from OpenGL.GLU import *
+    import OpenGL.GL as GL
+    GL_enabled = True
 except:
-    pass
+    GL_enabled = False
 
 class Node:
     def __repr__(self):
@@ -58,35 +57,37 @@ class kdtree:
             return "(%s,%d:%g,%s)" % (self.lo,self.cutdim,self.cutval,self.hi)
 
     def to_OpenGL(self,minx,maxx,miny,maxy,minz,maxz):
+        if not GL_enabled:
+            return
         if self.bucket:
-            glBegin(GL_LINES)
-            glVertex3d(minx,miny,minz)
-            glVertex3d(minx,miny,maxz)
-            glVertex3d(minx,maxy,minz)
-            glVertex3d(minx,maxy,maxz)
-            glVertex3d(maxx,miny,minz)
-            glVertex3d(maxx,miny,maxz)
-            glVertex3d(maxx,maxy,minz)
-            glVertex3d(maxx,maxy,maxz)
+            GL.glBegin(GL.GL_LINES)
+            GL.glVertex3d(minx,miny,minz)
+            GL.glVertex3d(minx,miny,maxz)
+            GL.glVertex3d(minx,maxy,minz)
+            GL.glVertex3d(minx,maxy,maxz)
+            GL.glVertex3d(maxx,miny,minz)
+            GL.glVertex3d(maxx,miny,maxz)
+            GL.glVertex3d(maxx,maxy,minz)
+            GL.glVertex3d(maxx,maxy,maxz)
 
-            glVertex3d(minx,miny,minz)
-            glVertex3d(maxx,miny,minz)
-            glVertex3d(minx,maxy,minz)
-            glVertex3d(maxx,maxy,minz)
-            glVertex3d(minx,miny,maxz)
-            glVertex3d(maxx,miny,maxz)
-            glVertex3d(minx,maxy,maxz)
-            glVertex3d(maxx,maxy,maxz)
+            GL.glVertex3d(minx,miny,minz)
+            GL.glVertex3d(maxx,miny,minz)
+            GL.glVertex3d(minx,maxy,minz)
+            GL.glVertex3d(maxx,maxy,minz)
+            GL.glVertex3d(minx,miny,maxz)
+            GL.glVertex3d(maxx,miny,maxz)
+            GL.glVertex3d(minx,maxy,maxz)
+            GL.glVertex3d(maxx,maxy,maxz)
 
-            glVertex3d(minx,miny,minz)
-            glVertex3d(minx,maxy,minz)
-            glVertex3d(maxx,miny,minz)
-            glVertex3d(maxx,maxy,minz)
-            glVertex3d(minx,miny,maxz)
-            glVertex3d(minx,maxy,maxz)
-            glVertex3d(maxx,miny,maxz)
-            glVertex3d(maxx,maxy,maxz)
-            glEnd()
+            GL.glVertex3d(minx,miny,minz)
+            GL.glVertex3d(minx,maxy,minz)
+            GL.glVertex3d(maxx,miny,minz)
+            GL.glVertex3d(maxx,maxy,minz)
+            GL.glVertex3d(minx,miny,maxz)
+            GL.glVertex3d(minx,maxy,maxz)
+            GL.glVertex3d(maxx,miny,maxz)
+            GL.glVertex3d(maxx,maxy,maxz)
+            GL.glEnd()
         elif self.dim==6:
             if self.cutdim == 0 or self.cutdim == 2:
                 self.lo.to_OpenGL(minx,self.cutval,miny,maxy,minz,maxz)

@@ -3,15 +3,13 @@ from Plane import *
 from utils import *
 from Line import *
 
-ORIENTATION_CCW = 2
-ORIENTATION_CW  = 3
-
 try:
-    from OpenGL.GL import *
-    from OpenGL.GLU import *
-    from OpenGL.GLUT import *
+    import OpenGL.GL as GL
+    import OpenGL.GLU as GLU
+    import OpenGL.GLUT as GLUT
+    GL_enabled = True
 except:
-    pass
+    GL_enabled = False
 
 class Triangle:
     id = 0
@@ -42,51 +40,53 @@ class Triangle:
         return "triangle%d" % self.id
 
     def to_OpenGL(self):
-        glBegin(GL_TRIANGLES)
-        glVertex3f(self.p1.x, self.p1.y, self.p1.z)
-        glVertex3f(self.p2.x, self.p2.y, self.p2.z)
-        glVertex3f(self.p3.x, self.p3.y, self.p3.z)
-        glEnd()
+        if not GL_enabled:
+            return
+        GL.glBegin(GL.GL_TRIANGLES)
+        GL.glVertex3f(self.p1.x, self.p1.y, self.p1.z)
+        GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
+        GL.glVertex3f(self.p3.x, self.p3.y, self.p3.z)
+        GL.glEnd()
         if False: # display surface normals
             n = self.normal()
             c = self.center()
             d = 0.5
-            glBegin(GL_LINES)
-            glVertex3f(c.x, c.y, c.z)
-            glVertex3f(c.x+n.x*d, c.y+n.y*d, c.z+n.z*d)
-            glEnd()
+            GL.glBegin(GL.GL_LINES)
+            GL.glVertex3f(c.x, c.y, c.z)
+            GL.glVertex3f(c.x+n.x*d, c.y+n.y*d, c.z+n.z*d)
+            GL.glEnd()
         if False and hasattr(self, "_middle"): # display bounding sphere
-            glPushMatrix()
-            glTranslate(self._middle.x, self._middle.y, self._middle.z)
+            GL.glPushMatrix()
+            GL.glTranslate(self._middle.x, self._middle.y, self._middle.z)
             if not hasattr(self,"_sphere"):
-                self._sphere = gluNewQuadric()
-            gluSphere(self._sphere, self._radius, 10, 10)
-            glPopMatrix()
+                self._sphere = GLU.gluNewQuadric()
+            GLU.gluSphere(self._sphere, self._radius, 10, 10)
+            GL.glPopMatrix()
         if True: # draw triangle id on triangle face
-            glPushMatrix()
-            cc = glGetFloatv(GL_CURRENT_COLOR)
+            GL.glPushMatrix()
+            cc = GL.glGetFloatv(GL.GL_CURRENT_COLOR)
             c = self.center()
-            glTranslate(c.x,c.y,c.z)
+            GL.glTranslate(c.x,c.y,c.z)
             p12=self.p1.add(self.p2).mul(0.5)
             p3_12=self.p3.sub(p12).normalize()
             p2_1=self.p1.sub(self.p2).normalize()
             pn=p2_1.cross(p3_12)
-            glMultMatrixf((p2_1.x, p2_1.y, p2_1.z, 0, p3_12.x, p3_12.y, p3_12.z, 0, pn.x, pn.y, pn.z, 0, 0,0,0,1))
+            GL.glMultMatrixf((p2_1.x, p2_1.y, p2_1.z, 0, p3_12.x, p3_12.y, p3_12.z, 0, pn.x, pn.y, pn.z, 0, 0,0,0,1))
             n = self.normal().mul(0.01)
-            glTranslatef(n.x,n.y,n.z)
-            glScalef(0.003,0.003,0.003)
+            GL.glTranslatef(n.x,n.y,n.z)
+            GL.glScalef(0.003,0.003,0.003)
             w = 0
             for ch in str(self.id):
-                w += glutStrokeWidth(GLUT_STROKE_ROMAN, ord(ch))
-            glTranslate(-w/2,0,0)
-            glColor4f(1,1,1,0)
+                w += GLUT.glutStrokeWidth(GLUT.GLUT_STROKE_ROMAN, ord(ch))
+            GL.glTranslate(-w/2,0,0)
+            GL.glColor4f(1,1,1,0)
             for ch in str(self.id):
-                glutStrokeCharacter(GLUT_STROKE_ROMAN, ord(ch))
-            glPopMatrix()
-            glColor4f(cc[0],cc[1],cc[2],cc[3])
+                GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(ch))
+            GL.glPopMatrix()
+            GL.glColor4f(cc[0],cc[1],cc[2],cc[3])
 
         if False: # draw point id on triangle face
-            cc = glGetFloatv(GL_CURRENT_COLOR)
+            cc = GL.glGetFloatv(GL.GL_CURRENT_COLOR)
             c = self.center()
             p12=self.p1.add(self.p2).mul(0.5)
             p3_12=self.p3.sub(p12).normalize()
@@ -94,21 +94,21 @@ class Triangle:
             pn=p2_1.cross(p3_12)
             n = self.normal().mul(0.01)
             for p in (self.p1,self.p2,self.p3):
-                glPushMatrix()
+                GL.glPushMatrix()
                 pp = p.sub(p.sub(c).mul(0.3))
-                glTranslate(pp.x,pp.y,pp.z)
-                glMultMatrixf((p2_1.x, p2_1.y, p2_1.z, 0, p3_12.x, p3_12.y, p3_12.z, 0, pn.x, pn.y, pn.z, 0, 0,0,0,1))
-                glTranslatef(n.x,n.y,n.z)
-                glScalef(0.001,0.001,0.001)
+                GL.glTranslate(pp.x,pp.y,pp.z)
+                GL.glMultMatrixf((p2_1.x, p2_1.y, p2_1.z, 0, p3_12.x, p3_12.y, p3_12.z, 0, pn.x, pn.y, pn.z, 0, 0,0,0,1))
+                GL.glTranslatef(n.x,n.y,n.z)
+                GL.glScalef(0.001,0.001,0.001)
                 w = 0
                 for ch in str(p.id):
-                    w += glutStrokeWidth(GLUT_STROKE_ROMAN, ord(ch))
-                    glTranslate(-w/2,0,0)
-                glColor4f(0.5,1,0.5,0)
+                    w += GLUT.glutStrokeWidth(GLUT.GLUT_STROKE_ROMAN, ord(ch))
+                    GL.glTranslate(-w/2,0,0)
+                GL.glColor4f(0.5,1,0.5,0)
                 for ch in str(p.id):
-                    glutStrokeCharacter(GLUT_STROKE_ROMAN, ord(ch))
-                glPopMatrix()
-            glColor4f(cc[0],cc[1],cc[2],cc[3])
+                    GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(ch))
+                GL.glPopMatrix()
+            GL.glColor4f(cc[0],cc[1],cc[2],cc[3])
 
     def normal(self):
         if not hasattr(self, '_normal'):

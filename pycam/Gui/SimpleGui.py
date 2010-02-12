@@ -1,14 +1,12 @@
-
 #!/usr/bin/python
 import sys
 sys.path.insert(0,'.')
 
 from ConfigParser import ConfigParser
 
-from OpenGL.GL import *
-from OpenGL.Tk import *
-from OpenGL.GLUT import *
-from OpenGL.GLU import *
+import OpenGL.GL as GL
+import OpenGL.Tk as Tk
+import OpenGL.GLUT as GLUT
 import tkFileDialog
 
 from pycam import *
@@ -22,56 +20,56 @@ from pycam.Exporters import *
 # leave 10% margin around the model
 DEFAULT_MARGIN = 0.1
 
-class OpenglWidget(Opengl):
+class OpenglWidget(Tk.Opengl):
     def __init__(self, master=None, cnf={}, **kw):
-        Opengl.__init__(self, master, kw)
-        glutInit()
-        glShadeModel(GL_FLAT)
-#        glShadeModel(GL_SMOOTH)
+        Tk.Opengl.__init__(self, master, kw)
+        GLUT.glutInit()
+        GL.glShadeModel(GL.GL_FLAT)
+#        GL.glShadeModel(GL.GL_SMOOTH)
 
-        glMatrixMode(GL_MODELVIEW)
-        glMaterial(GL_FRONT_AND_BACK, GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))
-        glMaterial(GL_FRONT_AND_BACK, GL_SPECULAR, (0.1, 0.1, 0.1, 1.0))
-        glMaterial(GL_FRONT_AND_BACK, GL_SHININESS, (0.5))
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))
+        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR, (0.1, 0.1, 0.1, 1.0))
+        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (0.5))
 
-#        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+#        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL_LINE)
+        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
 
     def basic_lighting(self):
-        Opengl.basic_lighting(self)
+        Tk.Opengl.basic_lighting(self)
         # "Let There Be Light"
-        glPushMatrix()
-        glLoadIdentity()
-        glLightfv(GL_LIGHT0, GL_AMBIENT, (0.5, 0.5, 0.5, 1.0))
-        glLightfv(GL_LIGHT0, GL_DIFFUSE, (1.0, 1.0, 1.0, 1.0))
-        glLightfv(GL_LIGHT0, GL_SPECULAR, (1.0, 1.0, 1.0, 1.0))
-        glLightfv(GL_LIGHT0, GL_POSITION, (2, 2, +10, 1.0))
-        glEnable(GL_LIGHT0)
-        glDisable(GL_LIGHTING)
-        glPopMatrix()
+        GL.glPushMatrix()
+        GL.glLoadIdentity()
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0.5, 0.5, 0.5, 1.0))
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, (1.0, 1.0, 1.0, 1.0))
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_SPECULAR, (1.0, 1.0, 1.0, 1.0))
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, (2, 2, +10, 1.0))
+        GL.glEnable(GL.GL_LIGHT0)
+        GL.glDisable(GL.GL_LIGHTING)
+        GL.glPopMatrix()
         self.master.resetView()
 
-class SimpleGui(Frame):
+class SimpleGui(Tk.Frame):
     def draw_string(self, x, y, z, p, s, scale=.01):
-        glPushMatrix()
-        glTranslatef(x,y,z)
+        GL.glPushMatrix()
+        GL.glTranslatef(x,y,z)
         if p == 'xy':
             pass
         elif p == 'yz':
-            glRotatef(90, 0, 1, 0)
-            glRotatef(90, 0, 0, 1)
+            GL.glRotatef(90, 0, 1, 0)
+            GL.glRotatef(90, 0, 0, 1)
         elif p == 'xz':
-            glRotatef(90, 0, 1, 0)
-            glRotatef(90, 0, 0, 1)
-            glRotatef(-90, 0, 1, 0)
-        glScalef(scale,scale,scale)
+            GL.glRotatef(90, 0, 1, 0)
+            GL.glRotatef(90, 0, 0, 1)
+            GL.glRotatef(-90, 0, 1, 0)
+        GL.glScalef(scale,scale,scale)
         for c in str(s):
-            glutStrokeCharacter(GLUT_STROKE_ROMAN, ord(c))
-        glPopMatrix()
+            GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(c))
+        GL.glPopMatrix()
 
     def Redraw(self, event=None):
         # default scale and orientation
-        glTranslatef(0,0,-2)
+        GL.glTranslatef(0,0,-2)
 
         if self.Unit.get() == "mm":
             size = 100
@@ -79,23 +77,23 @@ class SimpleGui(Frame):
             size = 5
 
         # axes
-        glBegin(GL_LINES)
-        glColor3f(1,0,0)
-        glVertex3f(0,0,0)
-        glVertex3f(size,0,0)
-        glEnd()
+        GL.glBegin(GL.GL_LINES)
+        GL.glColor3f(1,0,0)
+        GL.glVertex3f(0,0,0)
+        GL.glVertex3f(size,0,0)
+        GL.glEnd()
         self.draw_string(size,0,0,'xy',"X")
-        glBegin(GL_LINES)
-        glColor3f(0,1,0)
-        glVertex3f(0,0,0)
-        glVertex3f(0,size,0)
-        glEnd()
+        GL.glBegin(GL.GL_LINES)
+        GL.glColor3f(0,1,0)
+        GL.glVertex3f(0,0,0)
+        GL.glVertex3f(0,size,0)
+        GL.glEnd()
         self.draw_string(0,size,0,'yz',"Y")
-        glBegin(GL_LINES)
-        glColor3f(0,0,1)
-        glVertex3f(0,0,0)
-        glVertex3f(0,0,size)
-        glEnd()
+        GL.glBegin(GL.GL_LINES)
+        GL.glColor3f(0,0,1)
+        GL.glVertex3f(0,0,0)
+        GL.glVertex3f(0,0,size)
+        GL.glEnd()
         self.draw_string(0,0,size,'xz',"Z")
 
         if True:
@@ -106,68 +104,68 @@ class SimpleGui(Frame):
             maxy = float(self.MaxY.get())
             minz = float(self.MinZ.get())
             maxz = float(self.MaxZ.get())
-            glBegin(GL_LINES)
-            glColor3f(0.3,0.3,0.3)
+            GL.glBegin(GL.GL_LINES)
+            GL.glColor3f(0.3,0.3,0.3)
 
-            glVertex3f(minx,miny,minz)
-            glVertex3f(maxx,miny,minz)
+            GL.glVertex3f(minx,miny,minz)
+            GL.glVertex3f(maxx,miny,minz)
 
-            glVertex3f(minx,maxy,minz)
-            glVertex3f(maxx,maxy,minz)
+            GL.glVertex3f(minx,maxy,minz)
+            GL.glVertex3f(maxx,maxy,minz)
 
-            glVertex3f(minx,miny,maxz)
-            glVertex3f(maxx,miny,maxz)
+            GL.glVertex3f(minx,miny,maxz)
+            GL.glVertex3f(maxx,miny,maxz)
 
-            glVertex3f(minx,maxy,maxz)
-            glVertex3f(maxx,maxy,maxz)
-
-
-            glVertex3f(minx,miny,minz)
-            glVertex3f(minx,maxy,minz)
-
-            glVertex3f(maxx,miny,minz)
-            glVertex3f(maxx,maxy,minz)
-
-            glVertex3f(minx,miny,maxz)
-            glVertex3f(minx,maxy,maxz)
-
-            glVertex3f(maxx,miny,maxz)
-            glVertex3f(maxx,maxy,maxz)
+            GL.glVertex3f(minx,maxy,maxz)
+            GL.glVertex3f(maxx,maxy,maxz)
 
 
-            glVertex3f(minx,miny,minz)
-            glVertex3f(minx,miny,maxz)
+            GL.glVertex3f(minx,miny,minz)
+            GL.glVertex3f(minx,maxy,minz)
 
-            glVertex3f(maxx,miny,minz)
-            glVertex3f(maxx,miny,maxz)
+            GL.glVertex3f(maxx,miny,minz)
+            GL.glVertex3f(maxx,maxy,minz)
 
-            glVertex3f(minx,maxy,minz)
-            glVertex3f(minx,maxy,maxz)
+            GL.glVertex3f(minx,miny,maxz)
+            GL.glVertex3f(minx,maxy,maxz)
 
-            glVertex3f(maxx,maxy,minz)
-            glVertex3f(maxx,maxy,maxz)
+            GL.glVertex3f(maxx,miny,maxz)
+            GL.glVertex3f(maxx,maxy,maxz)
 
-            glEnd()
+
+            GL.glVertex3f(minx,miny,minz)
+            GL.glVertex3f(minx,miny,maxz)
+
+            GL.glVertex3f(maxx,miny,minz)
+            GL.glVertex3f(maxx,miny,maxz)
+
+            GL.glVertex3f(minx,maxy,minz)
+            GL.glVertex3f(minx,maxy,maxz)
+
+            GL.glVertex3f(maxx,maxy,minz)
+            GL.glVertex3f(maxx,maxy,maxz)
+
+            GL.glEnd()
 
         if self.model:
-            glColor3f(0.5,.5,1)
+            GL.glColor3f(0.5,.5,1)
             self.model.to_OpenGL()
 
         if self.toolpath:
             last = None
             for path in self.toolpath:
                 if last:
-                    glColor3f(.5,1,.5)
-                    glBegin(GL_LINES)
-                    glVertex3f(last.x,last.y,last.z)
+                    GL.glColor3f(.5,1,.5)
+                    GL.glBegin(GL.GL_LINES)
+                    GL.glVertex3f(last.x,last.y,last.z)
                     last = path.points[0]
-                    glVertex3f(last.x,last.y,last.z)
-                    glEnd()
-                glColor3f(1,.5,.5)
-                glBegin(GL_LINE_STRIP)
+                    GL.glVertex3f(last.x,last.y,last.z)
+                    GL.glEnd()
+                GL.glColor3f(1,.5,.5)
+                GL.glBegin(GL.GL_LINE_STRIP)
                 for point in path.points:
-                    glVertex3f(point.x,point.y,point.z)
-                glEnd()
+                    GL.glVertex3f(point.x,point.y,point.z)
+                GL.glEnd()
                 last = path.points[-1]
 
     def browseOpen(self):
@@ -339,142 +337,142 @@ class SimpleGui(Frame):
     def createWidgets(self):
         self.ogl = OpenglWidget(self, width=600, height=500, double=1)
 
-        self.TopFrame = Frame(self).pack(side=TOP, expand=0, fill=X)
+        self.TopFrame = Tk.Frame(self).pack(side=Tk.TOP, expand=0, fill=Tk.X)
 
-        self.InputFileFrame = Frame(self.TopFrame)
-        self.InputFileFrame.pack(side=TOP, anchor=W, expand=0, fill=X)
-        Label(self.InputFileFrame, text="Input File: ").pack(side=LEFT, anchor=W)
-        self.InputFileName = StringVar()
-        Entry(self.InputFileFrame, textvariable=self.InputFileName).pack(side=LEFT, expand=1, fill=X)
-        Button(self.InputFileFrame, text="Import...",command=self.browseOpen).pack(side=RIGHT)
+        self.InputFileFrame = Tk.Frame(self.TopFrame)
+        self.InputFileFrame.pack(side=Tk.TOP, anchor=Tk.W, expand=0, fill=Tk.X)
+        Tk.Label(self.InputFileFrame, text="Input File: ").pack(side=Tk.LEFT, anchor=Tk.W)
+        self.InputFileName = Tk.StringVar()
+        Tk.Entry(self.InputFileFrame, textvariable=self.InputFileName).pack(side=Tk.LEFT, expand=1, fill=Tk.X)
+        Tk.Button(self.InputFileFrame, text="Import...",command=self.browseOpen).pack(side=Tk.RIGHT)
 
-        self.CutterFrame = Frame(self.TopFrame)
-        self.CutterFrame.pack(side=TOP, anchor=W)
-        Label(self.CutterFrame, text="Tool: ").pack(side=LEFT)
-        self.CutterName = StringVar()
+        self.CutterFrame = Tk.Frame(self.TopFrame)
+        self.CutterFrame.pack(side=Tk.TOP, anchor=Tk.W)
+        Tk.Label(self.CutterFrame, text="Tool: ").pack(side=Tk.LEFT)
+        self.CutterName = Tk.StringVar()
         self.CutterName.set(Cutters.list[0])
         for cutter in Cutters.list:
-            Radiobutton(self.CutterFrame, text=cutter, variable=self.CutterName, value=cutter).pack(side=LEFT)
+            Tk.Radiobutton(self.CutterFrame, text=cutter, variable=self.CutterName, value=cutter).pack(side=Tk.LEFT)
 
-        self.PathGeneratorFrame = Frame(self.TopFrame)
-        self.PathGeneratorFrame.pack(side=TOP, expand=0, anchor=W)
-        Label(self.PathGeneratorFrame, text="PathGenerator: ").pack(side=LEFT)
-        self.PathGeneratorName = StringVar()
+        self.PathGeneratorFrame = Tk.Frame(self.TopFrame)
+        self.PathGeneratorFrame.pack(side=Tk.TOP, expand=0, anchor=Tk.W)
+        Tk.Label(self.PathGeneratorFrame, text="PathGenerator: ").pack(side=Tk.LEFT)
+        self.PathGeneratorName = Tk.StringVar()
         self.PathGeneratorName.set(PathGenerators.list[0])
         for PathGenerator in PathGenerators.list:
-            Radiobutton(self.PathGeneratorFrame, text=PathGenerator, variable=self.PathGeneratorName, value=PathGenerator).pack(side=LEFT)
+            Tk.Radiobutton(self.PathGeneratorFrame, text=PathGenerator, variable=self.PathGeneratorName, value=PathGenerator).pack(side=Tk.LEFT)
 
-        self.PathProcessorFrame = Frame(self.TopFrame)
-        self.PathProcessorFrame.pack(side=TOP, expand=0, anchor=W)
-        Label(self.PathProcessorFrame, text="Postprocessor: ").pack(side=LEFT)
-        self.PathProcessorName = StringVar()
+        self.PathProcessorFrame = Tk.Frame(self.TopFrame)
+        self.PathProcessorFrame.pack(side=Tk.TOP, expand=0, anchor=Tk.W)
+        Tk.Label(self.PathProcessorFrame, text="Postprocessor: ").pack(side=Tk.LEFT)
+        self.PathProcessorName = Tk.StringVar()
         self.PathProcessorName.set(PathProcessors.list[0])
         for option in PathProcessors.list:
-            Radiobutton(self.PathProcessorFrame, text=option, variable=self.PathProcessorName, value=option).pack(side=LEFT)
+            Tk.Radiobutton(self.PathProcessorFrame, text=option, variable=self.PathProcessorName, value=option).pack(side=Tk.LEFT)
 
-        self.ConfigurationFrame = Frame(self.TopFrame)
-        self.ConfigurationFrame.pack(side=TOP, anchor=W, expand=0, fill=X)
-        Label(self.ConfigurationFrame, text="Tool Radius: ").pack(side=LEFT)
-        self.ToolRadius = StringVar()
+        self.ConfigurationFrame = Tk.Frame(self.TopFrame)
+        self.ConfigurationFrame.pack(side=Tk.TOP, anchor=Tk.W, expand=0, fill=Tk.X)
+        Tk.Label(self.ConfigurationFrame, text="Tool Radius: ").pack(side=Tk.LEFT)
+        self.ToolRadius = Tk.StringVar()
         self.ToolRadius.set("1.0")
-        s = Spinbox(self.ConfigurationFrame, width=5, text='Radius', from_=0.1, to=5.0, increment=0.1, format="%2.1f")
-        s.pack(side=LEFT)
+        s = Tk.Spinbox(self.ConfigurationFrame, width=5, text='Radius', from_=0.1, to=5.0, increment=0.1, format="%2.1f")
+        s.pack(side=Tk.LEFT)
         s["textvariable"] = self.ToolRadius
 
-        Label(self.ConfigurationFrame, text="Torus Radius: ").pack(side=LEFT)
-        self.TorusRadius = StringVar()
+        Tk.Label(self.ConfigurationFrame, text="Torus Radius: ").pack(side=Tk.LEFT)
+        self.TorusRadius = Tk.StringVar()
         self.TorusRadius.set("0.25")
-        s = Spinbox(self.ConfigurationFrame, width=5, text='Toroid', from_=0.1, to=5.0, increment=0.1, format="%2.1f")
+        s = Tk.Spinbox(self.ConfigurationFrame, width=5, text='Toroid', from_=0.1, to=5.0, increment=0.1, format="%2.1f")
         s["textvariable"] = self.TorusRadius
-        s.pack(side=LEFT)
+        s.pack(side=Tk.LEFT)
 
-        Label(self.ConfigurationFrame, text="Unit: ").pack(side=LEFT)
-        self.Unit = StringVar()
+        Tk.Label(self.ConfigurationFrame, text="Unit: ").pack(side=Tk.LEFT)
+        self.Unit = Tk.StringVar()
         self.Unit.set("mm")
-        Radiobutton(self.ConfigurationFrame, text="mm", variable=self.Unit, value="mm", command=self.ogl.tkRedraw).pack(side=LEFT)
-        Radiobutton(self.ConfigurationFrame, text="in", variable=self.Unit, value="in", command=self.ogl.tkRedraw).pack(side=LEFT)
+        Tk.Radiobutton(self.ConfigurationFrame, text="mm", variable=self.Unit, value="mm", command=self.ogl.tkRedraw).pack(side=Tk.LEFT)
+        Tk.Radiobutton(self.ConfigurationFrame, text="in", variable=self.Unit, value="in", command=self.ogl.tkRedraw).pack(side=Tk.LEFT)
 
-        Label(self.ConfigurationFrame, text="Dir: ").pack(side=LEFT)
-        self.Direction = StringVar()
+        Tk.Label(self.ConfigurationFrame, text="Dir: ").pack(side=Tk.LEFT)
+        self.Direction = Tk.StringVar()
         self.Direction.set("x")
-        Radiobutton(self.ConfigurationFrame, text="x", variable=self.Direction, value="x", command=self.ogl.tkRedraw).pack(side=LEFT)
-        Radiobutton(self.ConfigurationFrame, text="y", variable=self.Direction, value="y", command=self.ogl.tkRedraw).pack(side=LEFT)
-        Radiobutton(self.ConfigurationFrame, text="xy", variable=self.Direction, value="xy", command=self.ogl.tkRedraw).pack(side=LEFT)
+        Tk.Radiobutton(self.ConfigurationFrame, text="x", variable=self.Direction, value="x", command=self.ogl.tkRedraw).pack(side=Tk.LEFT)
+        Tk.Radiobutton(self.ConfigurationFrame, text="y", variable=self.Direction, value="y", command=self.ogl.tkRedraw).pack(side=Tk.LEFT)
+        Tk.Radiobutton(self.ConfigurationFrame, text="xy", variable=self.Direction, value="xy", command=self.ogl.tkRedraw).pack(side=Tk.LEFT)
 
-        self.MinX = StringVar()
+        self.MinX = Tk.StringVar()
         self.MinX.set("-7")
-        self.MinY = StringVar()
+        self.MinY = Tk.StringVar()
         self.MinY.set("-7")
-        self.MinZ = StringVar()
+        self.MinZ = Tk.StringVar()
         self.MinZ.set("0")
-        self.MaxX = StringVar()
+        self.MaxX = Tk.StringVar()
         self.MaxX.set("+7")
-        self.MaxY = StringVar()
+        self.MaxY = Tk.StringVar()
         self.MaxY.set("+7")
-        self.MaxZ = StringVar()
+        self.MaxZ = Tk.StringVar()
         self.MaxZ.set("+3")
 
-        self.StockModelFrame = Frame(self.TopFrame)
-        self.StockModelFrame.pack(side=TOP, anchor=W, expand=0, fill=X)
-        Label(self.StockModelFrame, text="Min X").pack(side=LEFT)
-        Entry(self.StockModelFrame, textvariable=self.MinX, width=6).pack(side=LEFT)
-        Label(self.StockModelFrame, text="Min Y").pack(side=LEFT)
-        Entry(self.StockModelFrame, textvariable=self.MinY, width=6).pack(side=LEFT)
-        Label(self.StockModelFrame, text="Min Z").pack(side=LEFT)
-        Entry(self.StockModelFrame, textvariable=self.MinZ, width=6).pack(side=LEFT)
+        self.StockModelFrame = Tk.Frame(self.TopFrame)
+        self.StockModelFrame.pack(side=Tk.TOP, anchor=Tk.W, expand=0, fill=Tk.X)
+        Tk.Label(self.StockModelFrame, text="Min X").pack(side=Tk.LEFT)
+        Tk.Entry(self.StockModelFrame, textvariable=self.MinX, width=6).pack(side=Tk.LEFT)
+        Tk.Label(self.StockModelFrame, text="Min Y").pack(side=Tk.LEFT)
+        Tk.Entry(self.StockModelFrame, textvariable=self.MinY, width=6).pack(side=Tk.LEFT)
+        Tk.Label(self.StockModelFrame, text="Min Z").pack(side=Tk.LEFT)
+        Tk.Entry(self.StockModelFrame, textvariable=self.MinZ, width=6).pack(side=Tk.LEFT)
 
-        Label(self.StockModelFrame, text="Max X").pack(side=LEFT)
-        Entry(self.StockModelFrame, textvariable=self.MaxX, width=6).pack(side=LEFT)
-        Label(self.StockModelFrame, text="Max Y").pack(side=LEFT)
-        Entry(self.StockModelFrame, textvariable=self.MaxY, width=6).pack(side=LEFT)
-        Label(self.StockModelFrame, text="Max Z").pack(side=LEFT)
-        Entry(self.StockModelFrame, textvariable=self.MaxZ, width=6).pack(side=LEFT)
+        Tk.Label(self.StockModelFrame, text="Max X").pack(side=Tk.LEFT)
+        Tk.Entry(self.StockModelFrame, textvariable=self.MaxX, width=6).pack(side=Tk.LEFT)
+        Tk.Label(self.StockModelFrame, text="Max Y").pack(side=Tk.LEFT)
+        Tk.Entry(self.StockModelFrame, textvariable=self.MaxY, width=6).pack(side=Tk.LEFT)
+        Tk.Label(self.StockModelFrame, text="Max Z").pack(side=Tk.LEFT)
+        Tk.Entry(self.StockModelFrame, textvariable=self.MaxZ, width=6).pack(side=Tk.LEFT)
 
-        self.ConfigFrame = Frame(self.TopFrame)
-        self.ConfigFrame.pack(side=TOP, anchor=W, expand=0, fill=X)
-        self.Layers = StringVar()
+        self.ConfigFrame = Tk.Frame(self.TopFrame)
+        self.ConfigFrame.pack(side=Tk.TOP, anchor=Tk.W, expand=0, fill=Tk.X)
+        self.Layers = Tk.StringVar()
         self.Layers.set("1")
-        Label(self.ConfigFrame, text="Layers").pack(side=LEFT)
-        Entry(self.ConfigFrame, textvariable=self.Layers, width=6).pack(side=LEFT)
-        self.Samples = StringVar()
+        Tk.Label(self.ConfigFrame, text="Layers").pack(side=Tk.LEFT)
+        Tk.Entry(self.ConfigFrame, textvariable=self.Layers, width=6).pack(side=Tk.LEFT)
+        self.Samples = Tk.StringVar()
         self.Samples.set("50")
-        Label(self.ConfigFrame, text="Samples").pack(side=LEFT)
-        Entry(self.ConfigFrame, textvariable=self.Samples, width=6).pack(side=LEFT)
-        self.Lines = StringVar()
+        Tk.Label(self.ConfigFrame, text="Samples").pack(side=Tk.LEFT)
+        Tk.Entry(self.ConfigFrame, textvariable=self.Samples, width=6).pack(side=Tk.LEFT)
+        self.Lines = Tk.StringVar()
         self.Lines.set("20")
-        Label(self.ConfigFrame, text="Lines").pack(side=LEFT)
-        Entry(self.ConfigFrame, textvariable=self.Lines, width=6).pack(side=LEFT)
-        Button(self.ConfigFrame, text="Generate Toolpath", command=self.generateToolpath).pack(side=RIGHT)
+        Tk.Label(self.ConfigFrame, text="Lines").pack(side=Tk.LEFT)
+        Tk.Entry(self.ConfigFrame, textvariable=self.Lines, width=6).pack(side=Tk.LEFT)
+        Tk.Button(self.ConfigFrame, text="Generate Toolpath", command=self.generateToolpath).pack(side=Tk.RIGHT)
 
-        self.OutputFileFrame = Frame(self.TopFrame)
-        self.OutputFileFrame.pack(side=TOP, anchor=W, expand=0, fill=X)
-        Label(self.OutputFileFrame, text= "Output File: ").pack(side=LEFT)
-        self.OutputFileName = StringVar()
-        self.OutputFileField = Entry(self.OutputFileFrame, textvariable=self.OutputFileName).pack(side=LEFT, expand=1, fill=X)
+        self.OutputFileFrame = Tk.Frame(self.TopFrame)
+        self.OutputFileFrame.pack(side=Tk.TOP, anchor=Tk.W, expand=0, fill=Tk.X)
+        Tk.Label(self.OutputFileFrame, text= "Output File: ").pack(side=Tk.LEFT)
+        self.OutputFileName = Tk.StringVar()
+        self.OutputFileField = Tk.Entry(self.OutputFileFrame, textvariable=self.OutputFileName).pack(side=Tk.LEFT, expand=1, fill=Tk.X)
 
-        self.FeedRate = StringVar()
+        self.FeedRate = Tk.StringVar()
         self.FeedRate.set("200")
-        Label(self.OutputFileFrame, text="FeedRate").pack(side=LEFT)
-        Entry(self.OutputFileFrame, textvariable=self.FeedRate, width=6).pack(side=LEFT)
-        self.Speed = StringVar()
+        Tk.Label(self.OutputFileFrame, text="FeedRate").pack(side=Tk.LEFT)
+        Tk.Entry(self.OutputFileFrame, textvariable=self.FeedRate, width=6).pack(side=Tk.LEFT)
+        self.Speed = Tk.StringVar()
         self.Speed.set("1000")
-        Label(self.OutputFileFrame, text="Speed").pack(side=LEFT)
-        Entry(self.OutputFileFrame, textvariable=self.Speed, width=6).pack(side=LEFT)
+        Tk.Label(self.OutputFileFrame, text="Speed").pack(side=Tk.LEFT)
+        Tk.Entry(self.OutputFileFrame, textvariable=self.Speed, width=6).pack(side=Tk.LEFT)
 
 
-        self.OutputFileBrowse = Button(self.OutputFileFrame, text="Export...", command=self.browseSaveAs).pack(side=RIGHT)
+        self.OutputFileBrowse = Tk.Button(self.OutputFileFrame, text="Export...", command=self.browseSaveAs).pack(side=Tk.RIGHT)
 
-        self.ViewFrame = Frame(self.TopFrame)
-        self.ViewFrame.pack(side=TOP, anchor=W, expand=0)
-        Label(self.ViewFrame, text="View: ").pack(side=LEFT)
-        Button(self.ViewFrame, text="Reset", command=self.resetView).pack(side=LEFT)
-        Button(self.ViewFrame, text="Front", command=self.frontView).pack(side=LEFT)
-        Button(self.ViewFrame, text="Back", command=self.backView).pack(side=LEFT)
-        Button(self.ViewFrame, text="Left", command=self.leftView).pack(side=LEFT)
-        Button(self.ViewFrame, text="Right", command=self.rightView).pack(side=LEFT)
-        Button(self.ViewFrame, text="Top", command=self.topView).pack(side=LEFT)
+        self.ViewFrame = Tk.Frame(self.TopFrame)
+        self.ViewFrame.pack(side=Tk.TOP, anchor=Tk.W, expand=0)
+        Tk.Label(self.ViewFrame, text="View: ").pack(side=Tk.LEFT)
+        Tk.Button(self.ViewFrame, text="Reset", command=self.resetView).pack(side=Tk.LEFT)
+        Tk.Button(self.ViewFrame, text="Front", command=self.frontView).pack(side=Tk.LEFT)
+        Tk.Button(self.ViewFrame, text="Back", command=self.backView).pack(side=Tk.LEFT)
+        Tk.Button(self.ViewFrame, text="Left", command=self.leftView).pack(side=Tk.LEFT)
+        Tk.Button(self.ViewFrame, text="Right", command=self.rightView).pack(side=Tk.LEFT)
+        Tk.Button(self.ViewFrame, text="Top", command=self.topView).pack(side=Tk.LEFT)
 
-        self.ogl.pack(side='bottom', expand=1, fill=BOTH)
+        self.ogl.pack(side='bottom', expand=1, fill=Tk.BOTH)
         self.ogl.set_background(0,0,0)
         self.ogl.bind('<Button-2>',self.ogl.tkRecordMouse)
         self.ogl.bind('<B2-Motion>', self.ogl.tkTranslate)
@@ -484,10 +482,10 @@ class SimpleGui(Frame):
         self.ogl.bind('<B3-Motion>', self.ogl.tkScale)
 
         self.ogl.redraw = self.Redraw
-        self.pack(expand=1, fill=BOTH)
+        self.pack(expand=1, fill=Tk.BOTH)
 
     def __init__(self, master=None):
-        Frame.__init__(self, master)
+        Tk.Frame.__init__(self, master)
         self.model = None
         self.toolpath = None
         self.createWidgets()
@@ -517,49 +515,49 @@ class SimpleGui(Frame):
         self.toolpath = pc.GenerateToolPath(x0,x1,y0,y1,z0,z1,dx,dy,dz)
 
     def resetView(self):
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-        glScalef(self.scale,self.scale,self.scale)
-        glRotatef(110,1.0,0.0,0.0)
-        glRotatef(180,0.0,1.0,0.0)
-        glRotatef(160,0.0,0.0,1.0)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
+        GL.glScalef(self.scale,self.scale,self.scale)
+        GL.glRotatef(110,1.0,0.0,0.0)
+        GL.glRotatef(180,0.0,1.0,0.0)
+        GL.glRotatef(160,0.0,0.0,1.0)
         self.ogl.tkRedraw()
 
     def frontView(self):
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-        glScalef(self.scale,self.scale,self.scale)
-        glRotatef(-90,1.0,0,0)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
+        GL.glScalef(self.scale,self.scale,self.scale)
+        GL.glRotatef(-90,1.0,0,0)
         self.ogl.tkRedraw()
 
     def backView(self):
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-        glScalef(self.scale,self.scale,self.scale)
-        glRotatef(-90,1.0,0,0)
-        glRotatef(180,0,0,1.0)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
+        GL.glScalef(self.scale,self.scale,self.scale)
+        GL.glRotatef(-90,1.0,0,0)
+        GL.glRotatef(180,0,0,1.0)
         self.ogl.tkRedraw()
 
     def leftView(self):
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-        glScalef(self.scale,self.scale,self.scale)
-        glRotatef(-90,1.0,0,0)
-        glRotatef(90,0,0,1.0)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
+        GL.glScalef(self.scale,self.scale,self.scale)
+        GL.glRotatef(-90,1.0,0,0)
+        GL.glRotatef(90,0,0,1.0)
         self.ogl.tkRedraw()
 
     def rightView(self):
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-        glScalef(self.scale,self.scale,self.scale)
-        glRotatef(-90,1.0,0,0)
-        glRotatef(-90,0,0,1.0)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
+        GL.glScalef(self.scale,self.scale,self.scale)
+        GL.glRotatef(-90,1.0,0,0)
+        GL.glRotatef(-90,0,0,1.0)
         self.ogl.tkRedraw()
 
     def topView(self):
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-        glScalef(self.scale,self.scale,self.scale)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
+        GL.glScalef(self.scale,self.scale,self.scale)
         self.ogl.tkRedraw()
 
 

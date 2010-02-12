@@ -8,11 +8,12 @@ from pycam.Cutters.BaseCutter import BaseCutter
 from math import sqrt
 
 try:
-    from OpenGL.GL import *
-    from OpenGL.GLU import *
-    from OpenGL.GLUT import *
+    import OpenGL.GL as GL
+    import OpenGL.GLU as GLU
+    import OpenGL.GLUT as GLUT
+    GL_enabled = True
 except:
-    pass
+    GL_enabled = False
 
 class ToroidalCutter(BaseCutter):
 
@@ -30,19 +31,21 @@ class ToroidalCutter(BaseCutter):
         return "ToroidalCutter<%s,%f,R=%f,r=%f>" % (self.location,self.radius,self.majorradius,self.minorradius)
 
     def to_OpenGL(self):
-        glPushMatrix()
-        glTranslate(self.center.x, self.center.y, self.center.z)
-        glutSolidTorus(self.minorradius, self.majorradius, 10, 20)
+        if not GL_enabled:
+            return
+        GL.glPushMatrix()
+        GL.glTranslate(self.center.x, self.center.y, self.center.z)
+        GLUT.glutSolidTorus(self.minorradius, self.majorradius, 10, 20)
         if not hasattr(self,"_cylinder"):
-            self._cylinder = gluNewQuadric()
-        gluCylinder(self._cylinder, self.radius, self.radius, self.height, 10, 20)
-        glPopMatrix()
-        glPushMatrix()
-        glTranslate(self.location.x, self.location.y, self.location.z)
+            self._cylinder = GLU.gluNewQuadric()
+        GLU.gluCylinder(self._cylinder, self.radius, self.radius, self.height, 10, 20)
+        GL.glPopMatrix()
+        GL.glPushMatrix()
+        GL.glTranslate(self.location.x, self.location.y, self.location.z)
         if not hasattr(self,"_disk"):
-            self._disk = gluNewQuadric()
-        gluDisk(self._disk, 0, self.majorradius, 20, 10)
-        glPopMatrix()
+            self._disk = GLU.gluNewQuadric()
+        GLU.gluDisk(self._disk, 0, self.majorradius, 20, 10)
+        GL.glPopMatrix()
 
     def moveto(self, location):
         BaseCutter.moveto(self, location)

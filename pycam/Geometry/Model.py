@@ -4,11 +4,10 @@ from Line import *
 from Triangle import *
 
 try:
-    from OpenGL.GL import *
-    from OpenGL.GLUT import *
-    from OpenGL.GLU import *
+    import OpenGL.GL as GL
+    GL_enabled = True
 except:
-    pass
+    GL_enabled = False
 
 class Model:
     id = 0
@@ -21,12 +20,12 @@ class Model:
 
     def to_OpenGL(self):
         if True:
-            glBegin(GL_TRIANGLES)
+            GL.glBegin(GL.GL_TRIANGLES)
             for t in self._triangles:
-                glVertex3f(t.p1.x, t.p1.y, t.p1.z)
-                glVertex3f(t.p2.x, t.p2.y, t.p2.z)
-                glVertex3f(t.p3.x, t.p3.y, t.p3.z)
-            glEnd()
+                GL.glVertex3f(t.p1.x, t.p1.y, t.p1.z)
+                GL.glVertex3f(t.p2.x, t.p2.y, t.p2.z)
+                GL.glVertex3f(t.p3.x, t.p3.y, t.p3.z)
+            GL.glEnd()
         else:
             for t in self._triangles:
                 t.to_OpenGL()
