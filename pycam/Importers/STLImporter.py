@@ -105,10 +105,17 @@ def ImportModel(filename, use_kdtree=True):
 
             attribs = unpack("<H",f.read(2)) 
             
-            if n.dot(p3.sub(p1).cross(p2.sub(p1)))>0:
+            dotcross = n.dot(p3.sub(p1).cross(p2.sub(p1)))
+            if dotcross > 0:
                 t = Triangle(p1, p2, p3, UniqueEdge(p1,p2), UniqueEdge(p2,p3), UniqueEdge(p3,p1))
-            else:
+            elif dotcross < 0:
                 t = Triangle(p1, p3, p2, UniqueEdge(p1,p3), UniqueEdge(p3,p2), UniqueEdge(p2,p1))
+            else:
+                # the three points are in a line - or two points are identical
+                # usually this is caused by points, that are too close together
+                # check the tolerance value in pycam/Geometry/PointKdtree.py
+                print "ERROR: skipping invalid triangle: %s / %s / %s" % (p1, p2, p3)
+                continue
             t._normal = n
             if t.normal().z < 0:
                 continue
@@ -157,11 +164,11 @@ def ImportModel(filename, use_kdtree=True):
                     p = UniqueVertex(float(m.group('x')),float(m.group('z')),float(m.group('y')))
                 else:
                     p = UniqueVertex(float(m.group('x')),float(m.group('y')),float(m.group('z')))
-                if p1 == None:
+                if p1 is None:
                     p1 = p
-                elif p2 == None:
+                elif p2 is None:
                     p2 = p
-                elif p3 == None:
+                elif p3 is None:
                     p3 = p
                 else:
                     print "ERROR: more then 3 points in facet"
@@ -185,7 +192,7 @@ def ImportModel(filename, use_kdtree=True):
                     # the three points are in a line - or two points are identical
                     # usually this is caused by points, that are too close together
                     # check the tolerance value in pycam/Geometry/PointKdtree.py
-                    print "ERROR: skipping irregular triangle: %s / %s / %s" % (p1, p2, p3)
+                    print "ERROR: skipping invalid triangle: %s / %s / %s" % (p1, p2, p3)
                     n=p1=p2=p3=None
                     continue
                 t._normal = n
@@ -202,7 +209,7 @@ def ImportModel(filename, use_kdtree=True):
         model.p_kdtree = kdtree
         model.t_kdtree = TriangleKdtree(model.triangles())
 
-    print "Imported STL model: ", vertices, "vertices,", edges, "edges,", len(model.triangles()),"triangles"
+    print "Imported STL model: ", vertices, "vertices,", edges, "edges,", len(model.triangles()), "triangles"
     vertices = 0
     edges = 0
     kdtree = None
