@@ -41,7 +41,8 @@ class ContourCutter:
                 self.paths = self.pe.hor_path_list
             else:
                 self.paths = self.pe.ver_path_list
-            for p in self.paths:
-                p.append(p.points[0])
+            if self.paths:
+                for p in self.paths:
+                    p.append(p.points[0])
         self.pe = None
 
