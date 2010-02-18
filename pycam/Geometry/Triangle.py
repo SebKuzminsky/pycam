@@ -14,7 +14,7 @@ except:
 class Triangle:
     id = 0
     # points are expected to be in ClockWise order
-    def __init__(self, p1=None, p2=None, p3=None, e1=None, e2=None, e3=None):
+    def __init__(self, p1=None, p2=None, p3=None, e1=None, e2=None, e3=None, n=None):
         self.id = Triangle.id
         Triangle.id += 1
         self.p1 = p1
@@ -32,6 +32,7 @@ class Triangle:
             self.e3 = Line(p3,p1)
         else:
             self.e3 = e3
+        self._normal = n
         self._minx = None
         self._miny = None
         self._minz = None
@@ -42,7 +43,6 @@ class Triangle:
         self._middle = None
         self._radius = None
         self._radiussq = None
-        self._normal = None
         self._plane = None
 
     def __repr__(self):
