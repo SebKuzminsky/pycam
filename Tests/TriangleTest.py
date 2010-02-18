@@ -5,11 +5,20 @@ sys.path.insert(0,'.')
 import math
 
 from pycam.Geometry import *
+from pycam.Gui.Visualization import Visualization
+
+
+p1 = Point(1,0,0)
+p2 = Point(0,1,0)
+p3 = Point(0,0,1)
+t = Triangle(p1,p2,p3)
+t.id=1
+t.calc_circumcircle()
+
+def DrawScene():
+    t.to_OpenGL()
 
 if __name__ == "__main__":
-    p1 = Point(1,0,0)
-    p2 = Point(0,1,0)
-    p3 = Point(0,0,1)
 
     print "p1=" + str(p1);
     print "p2=" + str(p2);
@@ -27,10 +36,9 @@ if __name__ == "__main__":
     print "p2xp3=" + str(p2.cross(p3))
     print "p3xp1=" + str(p3.cross(p1))
 
-    t = Triangle(p1,p2,p3)
     print t
 
-    t.calc_circumcircle()
-    print "circ(t) = %s@%s" % (t.radius,t.center())
+    print "circ(t) = %s@%s" % (t.radius(),t.center())
 
 
+    Visualization("VisualizationTest", DrawScene)
