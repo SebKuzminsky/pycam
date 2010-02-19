@@ -213,17 +213,13 @@ class Triangle:
     def calc_circumcircle(self):
         # we can't use the cached value of "normal", since we don't want the normalized value
         normal = self.p2.sub(self.p1).cross(self.p3.sub(self.p2))
-        print "normal=",normal
         denom = normal.norm()
-        print "denom=",denom
         self._radius = (self.p2.sub(self.p1).norm()*self.p3.sub(self.p2).norm()*self.p3.sub(self.p1).norm())/(2*denom)
-        print "radius=",self._radius
         self._radiussq = self._radius*self._radius
         denom2 = 2*denom*denom
         alpha = self.p3.sub(self.p2).normsq()*(self.p1.sub(self.p2).dot(self.p1.sub(self.p3))) / (denom2)
         beta  = self.p1.sub(self.p3).normsq()*(self.p2.sub(self.p1).dot(self.p2.sub(self.p3))) / (denom2)
         gamma = self.p1.sub(self.p2).normsq()*(self.p3.sub(self.p1).dot(self.p3.sub(self.p2))) / (denom2)
-        print "alpha=",alpha,", beta=",beta,", gamma=",gamma
         self._middle = Point(self.p1.x*alpha+self.p2.x*beta+self.p3.x*gamma,
                              self.p1.y*alpha+self.p2.y*beta+self.p3.y*gamma,
                              self.p1.z*alpha+self.p2.z*beta+self.p3.z*gamma)
