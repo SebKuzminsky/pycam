@@ -26,8 +26,26 @@ MODEL_TRANSFORMATIONS = {
     "y_swap_z": ((1, 0, 0, 0), (0, 0, 1, 0), (0, 1, 0, 0)),
 }
 
+def keep_gl_mode(func):
+    def wrapper(*args, **kwargs):
+        prev_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
+        func(*args, **kwargs)
+        GL.glMatrixMode(prev_mode)
+    return wrapper
+
+def keep_matrix(func):
+    def wrapper(*args, **kwargs):
+        pushed_matrix_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
+        GL.glPushMatrix()
+        func(*args, **kwargs)
+        final_matrix_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
+        GL.glMatrixMode(pushed_matrix_mode)
+        GL.glPopMatrix()
+        GL.glMatrixMode(final_matrix_mode)
+    return wrapper
+
+@keep_matrix
 def draw_string(x, y, z, p, s, scale=.01):
-    GL.glPushMatrix()
     GL.glTranslatef(x, y, z)
     if p == 'xy':
         pass
@@ -41,9 +59,17 @@ def draw_string(x, y, z, p, s, scale=.01):
     GL.glScalef(scale, scale, scale)
     for c in str(s):
         GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(c))
-    GL.glPopMatrix()
 
-def draw_axes(size):
+@keep_gl_mode
+@keep_matrix
+def draw_axes(settings):
+    GL.glMatrixMode(GL.GL_MODELVIEW)
+    GL.glLoadIdentity()
+    GL.glTranslatef(0, 0, -2)
+    if settings.get("unit") == "mm":
+        size = 100
+    else:
+        size = 5
     GL.glBegin(GL.GL_LINES)
     GL.glColor3f(1, 0, 0)
     GL.glVertex3f(0, 0, 0)
@@ -63,6 +89,7 @@ def draw_axes(size):
     GL.glEnd()
     draw_string(0, 0, size, 'xz', "Z")
 
+@keep_matrix
 def draw_bounding_box(minx, miny, minz, maxx, maxy, maxz):
     color = [0.3, 0.3, 0.3]
     p1 = [minx, miny, minz]
@@ -84,14 +111,13 @@ def draw_bounding_box(minx, miny, minz, maxx, maxy, maxz):
         GL.glVertex3f(*(corner_pair[1]))
     GL.glEnd()
 
+@keep_gl_mode
+@keep_matrix
 def draw_complete_model_view(settings):
-    GL.glTranslatef(0, 0, -2)
-    if settings.get("unit") == "mm":
-        size = 100
-    else:
-        size = 5
+    GL.glMatrixMode(GL.GL_MODELVIEW)
+    GL.glLoadIdentity()
     # axes
-    draw_axes(size)
+    draw_axes(settings)
     # stock model
     draw_bounding_box(float(settings.get("minx")), float(settings.get("miny")),
             float(settings.get("minz")), float(settings.get("maxx")),
@@ -102,7 +128,11 @@ def draw_complete_model_view(settings):
     # draw the toolpath
     draw_toolpath(settings.get("toolpath"))
 
+@keep_gl_mode
+@keep_matrix
 def draw_toolpath(toolpath):
+    GL.glMatrixMode(GL.GL_MODELVIEW)
+    GL.glLoadIdentity()
     if toolpath:
         last = None
         for path in toolpath:
@@ -120,8 +150,9 @@ def draw_toolpath(toolpath):
             GL.glEnd()
             last = path.points[-1]
 
+@keep_gl_mode
 def rotate_view(scale, rotation=None):
-    GL.glMatrixMode(GL.GL_MODELVIEW)
+    GL.glMatrixMode(GL.GL_PROJECTION)
     GL.glLoadIdentity()
     GL.glScalef(scale, scale, scale)
     if rotation:
@@ -161,10 +192,10 @@ def scale_model(model, scale):
     model.transform(matrix)
 
 def generate_physics(settings):
-        physics = ode_objects.PhysicalWorld()
-        physics.reset()
-        physics.add_mesh((0, 0, 0), settings.get("model").triangles())
-        height = settings.get("maxz") - settings.get("minz")
-        physics.set_drill(ode_objects.ShapeCylinder(0.1, height), (settings.get("minx"), settings.get("miny"), settings.get("maxz")))
-        return physics
+    physics = ode_objects.PhysicalWorld()
+    physics.reset()
+    physics.add_mesh((0, 0, 0), settings.get("model").triangles())
+    height = settings.get("maxz") - settings.get("minz")
+    physics.set_drill(ode_objects.ShapeCylinder(0.1, height), (settings.get("minx"), settings.get("miny"), settings.get("maxz")))
+    return physics
 

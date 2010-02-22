@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import OpenGL.GL as GL
+import OpenGL.GLU as GLU
 import OpenGL.GLUT as GLUT
 import pycam.Importers.STLImporter
 import pycam.Exporters.STLExporter
@@ -34,6 +35,9 @@ def gtkgl_functionwrapper(function):
         glcontext=self.area.get_gl_context()
         if not gldrawable.gl_begin(glcontext):
             return
+        if not self.initialized:
+            self.glsetup()
+            self.initialized = True
         function(self, *args, **kwords)
         gldrawable.gl_end()
     return decorated # TODO: make this a well behaved decorator (keeping name, docstring etc)
@@ -47,7 +51,9 @@ class GLView:
             import gtk.gtkgl
         except ImportError:
             return
-        self.mouse = { "start_pos": None, "button": None }
+        self.initialized = False
+        self.busy = False
+        self.mouse = {"start_pos": None, "button": None, "timestamp": 0}
         self.enabled = True
         self.settings = settings
         self.gui = gui
@@ -67,9 +73,9 @@ class GLView:
         self.area = gtk.gtkgl.DrawingArea(glconfig)
         self.area.set_size_request(400, 400)
         # first run; might also be important when doing other fancy gtk/gdk stuff
-        self.area.connect_after('realize', self._realize)
+        self.area.connect_after('realize', self.init_view)
         # called when a part of the screen is uncovered
-        self.area.connect('expose_event', self._expose_event) 
+        self.area.connect('expose_event', self.paint) 
         # resize window
         self.area.connect('configure_event', self._resize_window)
         # catch mouse events
@@ -81,25 +87,41 @@ class GLView:
         self.container.show()
         self.window.show()
 
+    def check_busy(func):
+        def busy_wrapper(self, *args, **kwargs):
+            if self.busy:
+                return
+            self.busy = True
+            func(self, *args, **kwargs)
+            self.busy = False
+        return busy_wrapper
+
     def glsetup(self):
+        if self.initialized:
+            return
         GLUT.glutInit()
         GL.glShadeModel(GL.GL_FLAT)
+        GL.glClearColor(0., 0., 0., 0.)
+        GL.glClearDepth(1.)
+        GL.glEnable(GL.GL_DEPTH_TEST)
+        GL.glDepthFunc(GL.GL_LEQUAL)
+        GL.glHint(GL.GL_PERSPECTIVE_CORRECTION_HINT, GL.GL_NICEST)
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))
         GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR, (0.1, 0.1, 0.1, 1.0))
         GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (0.5))
-
-    def _gl_clear(self):
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
-
-    def _gl_finish(self):
-        self.area.get_gl_drawable().swap_buffers()
+        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
+        GL.glMatrixMode(GL.GL_PROJECTION)
+        self.store_view_setting()
 
     def destroy(self, widget=None):
         self.area.destroy()
         self.window.destroy()
 
+    @check_busy
+    @gtkgl_functionwrapper
     def mouse_handler(self, widget, event):
+        last_timestamp = self.mouse["timestamp"]
         x, y, state = event.x, event.y, event.state
         if self.mouse["button"] is None:
             if (state == BUTTON_ZOOM) or (state == BUTTON_ROTATE) or (state == BUTTON_MOVE):
@@ -115,56 +137,121 @@ class GLView:
             else:
                 return
         else:
+            if time.time() - last_timestamp < 0.5:
+                return
             # a button was pressed before
             if self.mouse["button"] == state:
                 if state == BUTTON_ZOOM:
                     # the start button is still active: update the view
                     current_scale = self.settings.get("scale")
-                    diff = x - self.mouse["start_pos"][0]
-                    if -10 <= diff <= 10:
-                        return
+                    diff = 0.2 * (x - self.mouse["start_pos"][0])
+                    if -1 <= diff <= 1:
+                        new_scale = current_scale
                     elif diff > 0:
-                        change = +math.log(diff/10)
+                        new_scale = current_scale * (1 + diff)
                     else:
-                        change = -math.log(-diff/10)
-                    new_scale = current_scale + change
+                        new_scale = current_scale / (1 - diff)
                     print "%f -> %f" % (current_scale, new_scale)
-                    GL.glMatrixMode(GL.GL_MODELVIEW)
-                    GL.glLoadIdentity()
-                    GL.glScalef(new_scale, new_scale, new_scale)
+                    self.scale_view(new_scale)
             else:
                 # button was released
                 self.mouse["button"] = None
+        self.mouse["timestamp"] = time.time()
+
+    def store_view_setting(self):
+        prev_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
+        GL.glMatrixMode(GL.GL_PROJECTION)
+        GL.glPushMatrix()
+        self.projection_matrix = GL.glGetDoublev(GL.GL_PROJECTION_MATRIX)[:]
+        GL.glPopMatrix()
+        GL.glMatrixMode(prev_mode)
+
+    def restore_view_setting(self):
+        prev_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
+        GL.glMatrixMode(GL.GL_PROJECTION)
+        GL.glLoadIdentity()
+        #print "Loaded %s" % str(self.projection_matrix)
+        GL.glLoadMatrixf(self.projection_matrix[:])
+        GL.glMatrixMode(prev_mode)
+
+    def gtkgl_refresh(func):
+        def refresh_wrapper(self, *args, **kwargs):
+            prev_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
+            GL.glMatrixMode(GL.GL_MODELVIEW)
+            GL.glLoadIdentity()
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
+            self._paint()
+            func(self, *args, **kwargs)
+            self.restore_view_setting()
+            GL.glMatrixMode(prev_mode)
+            GL.glFlush()
+            self.area.get_gl_drawable().swap_buffers()
+        return refresh_wrapper
+
+    def gtkgl_redraw(func):
+        def redraw_wrapper(self, *args, **kwargs):
+            prev_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
+            GL.glMatrixMode(GL.GL_MODELVIEW)
+            GL.glLoadIdentity()
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
+            self._paint()
+            func(self, *args, **kwargs)
+            self.store_view_setting()
+            GL.glMatrixMode(prev_mode)
+            GL.glFlush()
+            self.area.get_gl_drawable().swap_buffers()
+        return redraw_wrapper
 
     @gtkgl_functionwrapper
+    @gtkgl_redraw
+    def scale_view(self, zoom):
+        GL.glMatrixMode(GL.GL_PROJECTION)
+        GL.glLoadMatrixf(self.projection_matrix)
+        mult = [[zoom, 0, 0, 0], [0, zoom, 0, 0], [0, 0, zoom, 0], [0, 0, 0, 1]]
+        GL.glMultMatrixf(mult)
+
+    @check_busy
+    @gtkgl_functionwrapper
+    @gtkgl_redraw
     def rotate_view(self, widget, data=None):
-        self._gl_clear()
         GuiCommon.rotate_view(self.settings.get("scale"), data)
-        self.paint()
-        self._gl_finish()
 
     def reset_view(self):
         self.rotate_view(self.area, GuiCommon.VIEW_ROTATIONS["reset"])
 
+    @check_busy
     @gtkgl_functionwrapper
-    def _realize(self, widget):
-        self.glsetup()
-
-    def _expose_event(self, widget, event):
-        self.paint()
-
-    @gtkgl_functionwrapper
+    @gtkgl_refresh
     def _resize_window(self, widget, data=None):
-        GL.glViewport(0, 0, widget.allocation.width, widget.allocation.height)
+        GL.glViewport(0, 0, self.container.allocation.width, self.container.allocation.height - 50)
 
-    def paint(self):
-        self._gl_clear()
-        self._paint()
-        self._gl_finish()
-
+    @check_busy
     @gtkgl_functionwrapper
+    @gtkgl_refresh
+    def paint(self, widget=None, data=None):
+        # the decorators take core for redraw
+        pass
+        
+
     def _paint(self, widget=None):
         GuiCommon.draw_complete_model_view(self.settings)
+
+    @gtkgl_functionwrapper
+    def init_view(self, widget=None):
+        GL.glMatrixMode(GL.GL_PROJECTION)
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
+        GL.glLoadIdentity()
+        self._paint()
+        s = self.settings
+        scale = s.get("scale")
+        GL.glMatrixMode(GL.GL_PROJECTION)
+        GL.glScalef(scale, scale, scale)
+        GL.glTranslatef((s.get("maxx") + s.get("minx"))/2, (s.get("maxy") + s.get("miny"))/2, (s.get("maxz") + s.get("minz"))/2)
+        GL.glFlush()
+        GL.glPushMatrix()
+        self.store_view_setting()
+        GL.glPopMatrix()
+        self.area.get_gl_drawable().swap_buffers()
 
 
 class VisualThread(threading.Thread):
@@ -277,7 +364,6 @@ class ProjectGui:
         self.gui.get_object("GenerateToolPathButton").connect("clicked", self.generate_toolpath)
         self.gui.get_object("SaveToolPathButton").connect("clicked", self.save_toolpath)
         self.gui.get_object("Toggle3dView").connect("toggled", self.toggle_3d_view)
-        self.toggle_3d_view(True)
 
     def gui_activity_guard(func):
         def wrapper(self, *args, **kwargs):
@@ -423,7 +509,7 @@ class ProjectGui:
         if callable(filename):
             filename = filename()
         self.model = pycam.Importers.STLImporter.ImportModel(filename)
-        self.toggle_3d_view(value=True)
+        self.toggle_3d_view(True)
         self.reload_model()
 
     @gui_activity_guard
