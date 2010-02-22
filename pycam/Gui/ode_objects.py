@@ -11,6 +11,7 @@ def convert_triangles_to_vertices_faces(triangles):
     id_index_map = {}
     for t in triangles:
         coords = []
+        # TODO: check if we need to change the order of points for non-AOI models as well
         for p in (t.p1, t.p3, t.p2):
             # add the point to the id/index mapping, if necessary
             if not id_index_map.has_key(p.id):
