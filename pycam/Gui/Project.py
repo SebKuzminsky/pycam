@@ -177,7 +177,7 @@ class GLView:
                 dist = self.view["distance"]
                 self.view["distance"] = (dist[0] * scale, dist[1] * scale, dist[2] * scale)
                 self._paint_ignore_busy()
-            elif state == self.mouse["button"] == BUTTON_MOVE:
+            elif (state == self.mouse["button"] == BUTTON_MOVE) or (state == self.mouse["button"] == BUTTON_ROTATE):
                 start_x, start_y = self.mouse["start_pos"]
                 self.mouse["start_pos"] = [x, y]
                 height = self.area.allocation.height
@@ -199,14 +199,48 @@ class GLView:
                 # relation of x/y movement to the respective screen dimension
                 win_x_rel = (0.0 + x - start_x)/width
                 win_y_rel = (0.0 + y - start_y)/height
-                # update the model position that should be centered on the screen
-                old_center = self.view["center"]
-                new_center = []
-                for i in range(3):
-                    new_center.append(old_center[i] + max_dim * (win_x_rel * factors_x[i] + win_y_rel * factors_y[i]))
-                self.view["center"] = tuple(new_center)
-                self._paint_ignore_busy()
-            elif state == self.mouse["button"] == BUTTON_ROTATE:
+                if (state == BUTTON_MOVE):
+                    # update the model position that should be centered on the screen
+                    old_center = self.view["center"]
+                    new_center = []
+                    for i in range(3):
+                        new_center.append(old_center[i] + max_dim * (win_x_rel * factors_x[i] + win_y_rel * factors_y[i]))
+                    self.view["center"] = tuple(new_center)
+                else:
+                    # update the camera position according to the mouse movement
+                    # store original distance length ("rotation radius")
+                    distv = self.view["distance"]
+                    orig_distance = Point(distv[0], distv[1], distv[2])
+                    # calculate rotation factors - based on the distance to the center (between -1 and 1)
+                    rot_x_factor = (0.0 + start_x)/(width/2) - 1
+                    rot_y_factor = (0.0 + start_y)/(height/2) - 1
+                    # calculate rotation angles (between -90 and +90 degrees)
+                    rot_x_angle = rot_x_factor * math.pi/2 * (y - start_y)/height
+                    rot_y_angle = rot_y_factor * math.pi/2 * (x - start_x)/width
+                    # calculate sinus / cosinus
+                    rot_x_sin = math.sin(rot_x_angle)
+                    rot_x_cos = math.cos(rot_x_angle)
+                    rot_y_sin = math.sin(rot_y_angle)
+                    rot_y_cos = math.cos(rot_y_angle)
+                    # rotation of an original vector around a normalized "rot" vector
+                    # see http://mathworld.wolfram.com/RotationMatrix.html
+                    def rotate(orig, rot, sin, cos):
+                        rot_matrix = ((cos + rot[0]*rot[0]*(1-cos), rot[0]*rot[1]*(1-cos) - rot[2]*sin, rot[0]*rot[2]*(1-cos) + rot[1]*sin),
+                                (rot[1]*rot[0]*(1-cos) + rot[2]*sin, cos + rot[1]*rot[1]*(1-cos), rot[1]*rot[2]*(1-cos) - rot[0]*sin),
+                                (rot[2]*rot[0]*(1-cos) - rot[1]*sin, rot[2]*rot[1]*(1-cos) + rot[0]*sin, cos + rot[2]*rot[2]*(1-cos)))
+                        return (orig[0]*rot_matrix[0][0] + orig[1]*rot_matrix[0][1] + orig[2]*rot_matrix[0][2],
+                                orig[0]*rot_matrix[1][0] + orig[1]*rot_matrix[1][1] + orig[2]*rot_matrix[1][2],
+                                orig[0]*rot_matrix[2][0] + orig[1]*rot_matrix[2][1] + orig[2]*rot_matrix[2][2])
+                    # rotate around the "up" vector with the y-axis rotation
+                    original_distance = self.view["distance"]
+                    original_up = self.view["up"]
+                    new_distance = rotate(original_distance, factors_y, rot_y_sin, rot_y_cos)
+                    new_up = rotate(original_up, factors_y, rot_y_sin, rot_y_cos)
+                    # rotate around the cross vector with the x-axis rotation
+                    new_distance = rotate(new_distance, factors_x, rot_x_sin, rot_x_cos)
+                    new_up = rotate(new_up, factors_x, rot_x_sin, rot_x_cos)
+                    self.view["distance"] = new_distance
+                    self.view["up"] = new_up
                 self._paint_ignore_busy()
             else:
                 # button was released
