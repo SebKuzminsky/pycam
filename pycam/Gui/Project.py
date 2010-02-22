@@ -131,15 +131,28 @@ class GLView:
         GL.glDepthMask(GL.GL_TRUE)
         GL.glHint(GL.GL_PERSPECTIVE_CORRECTION_HINT, GL.GL_NICEST)
         GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))
+        #GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))
         GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR, (0.1, 0.1, 0.1, 1.0))
-        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (0.5))
+        #GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (0.5))
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glLoadIdentity()
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadIdentity()
         GL.glViewport(0, 0, self.area.allocation.width, self.area.allocation.height)
+        # lightning
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0., 0., 0., 1.))		# Setup The Ambient Light
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, (1., 1., 1., .0))		# Setup The Diffuse Light
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_SPECULAR, (.2, .2, .2, 1.0))		# Setup The SpecularLight
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, (3., -1., 3., 1.))	# Position The Light
+        GL.glEnable(GL.GL_LIGHT0)
+        # Enable Light One
+        GL.glEnable(GL.GL_LIGHTING)
+        GL.glEnable(GL.GL_NORMALIZE)
+        GL.glColorMaterial(GL.GL_FRONT_AND_BACK,GL.GL_AMBIENT_AND_DIFFUSE)
+        #GL.glColorMaterial(GL.GL_FRONT_AND_BACK,GL.GL_SPECULAR)
+        #GL.glColorMaterial(GL.GL_FRONT_AND_BACK,GL.GL_EMISSION)
+        GL.glEnable(GL.GL_COLOR_MATERIAL) 
 
     def destroy(self, widget=None, data=None):
         if self.notify_destroy_func:
