@@ -76,8 +76,11 @@ feedrate: 200
 material_allowance: 0
 overlap: 20
 step_down: 1.0
+# default sort weight is low (thus new items will appear above the defaults)
+sort_weight: 0
 
 [Rough]
+sort_weight: 90
 cutter_shape: CylindricalCutter
 path_generator: PushCutter
 path_postprocessor: PolygonCutter
@@ -85,12 +88,14 @@ tool_radius: 1.0
 
 
 [Semi-finish]
+sort_weight: 91
 cutter_shape: ToroidalCutter
 path_generator: PushCutter
 path_postprocessor: ContourCutter
 tool_radius: 0.5
 
 [Finish]
+sort_weight: 92
 cutter_shape: SphericalCutter
 path_generator: DropCutter
 path_postprocessor: ZigZagCutter
@@ -113,7 +118,7 @@ tool_radius: 0.1
             "speed": float,
             "feedrate": float,
             "material_allowance": float,
-            "overlap": int,
+            "overlap": float,
             "step_down": float,
     }
 
@@ -122,9 +127,13 @@ tool_radius: 0.1
         self.config = None
         self.reset()
 
-    def reset(self):
+    def reset(self, config_text=None):
         self.config = ConfigParser.SafeConfigParser()
-        self.config.readfp(StringIO.StringIO(self.DEFAULT_CONFIG))
+        if config_text is None:
+            config_text = StringIO.StringIO(self.DEFAULT_CONFIG)
+        else:
+            config_text = StringIO.StringIO(config_text)
+        self.config.readfp(config_text)
 
     def load_file(self, filename):
         try:
@@ -137,7 +146,7 @@ tool_radius: 0.1
     def load_from_string(self, config_text):
         input_text = StringIO.StringIO(config_text)
         try:
-            self.config.readfp(input_text)
+            self.reset(input_text)
         except ConfigParser.ParsingError, err_msg:
             print sys.stderr, "Failed to parse config data: %s" % str(err_msg)
             return False
@@ -170,7 +179,18 @@ tool_radius: 0.1
                 self.settings.set(key, value)
 
     def get_config_list(self):
-        return self.config.sections()
+        items = self.config.sections()[:]
+        # sort the list according to "sort_weight"
+        def cmp(sec1, sec2):
+            diff = int(self.config.get(sec1, "sort_weight")) - int(self.config.get(sec2, "sort_weight"))
+            if diff < 0:
+                return -1
+            elif diff == 0:
+                return 0
+            else:
+                return 1
+        items.sort(cmp)
+        return items
 
     def store_config(self, section="DEFAULT"):
         if not self.config.has_section(section):
