@@ -10,6 +10,7 @@ import pycam.Gui.common as GuiCommon
 import pycam.Cutters
 import pycam.PathGenerators
 import pycam.PathProcessors
+from pycam.Gui.ode_objects import PhysicalWorld
 from pycam.Geometry.utils import INFINITE
 import pygtk
 import gtk
@@ -111,6 +112,29 @@ class GLView:
     def _paint(self, widget=None):
         GuiCommon.draw_complete_model_view(self.settings)
 
+
+class VisualView:
+    def __init__(self, gui, settings):
+        self.enabled = True
+        self.gui = gui
+        self.settings = settings
+        self.world = None
+        if self.settings.get("model"):
+            self.init_view()
+
+    def init_view(self):
+        self.world = PhysicalWorld()
+        self.obstacle = self.world.add_mesh((0, 0, 0), self.settings.get("model").triangles())
+        self.drill = self.world.add_sphere((self.settings.get("minx"), self.settings.get("miny"), self.settings.get("maxz")), 0.5)
+        self.world.set_drill(self.drill)
+        self.world.set_drill_speed((0, 0.5, 0))
+
+    def advance(self):
+        self.world.calculate_step(0.1)
+
+    def paint(self):
+        if not self.world:
+            self.init_view()
 
 class ProjectGui:
 
@@ -263,6 +287,10 @@ class ProjectGui:
         if callable(filename):
             filename = filename()
         self.model = pycam.Importers.STLImporter.ImportModel(filename)
+        # use ode and vpython
+        if self.model:
+            self.view3d = VisualView(self.gui, self.settings)
+        return
         # do the gl initialization
         self.view3d = GLView(self.gui, self.settings)
         if self.model and self.view3d.enabled:
@@ -271,6 +299,9 @@ class ProjectGui:
             self.view3d.reset_view()
 
     def generate_toolpath(self, widget, data=None):
+        for i in range(100):
+            self.view3d.advance()
+        return
         radius = float(self.gui.get_object("ToolRadiusControl").get_value())
         cuttername = None
         for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
@@ -443,11 +474,15 @@ class ProjectGui:
                 self.show_error_dialog("Failed to save toolpath file")
 
     def mainloop(self):
+        import time
+        #time.sleep(3)
+        #self.view3d = VisualView(self.gui, self.settings)
+        time.sleep(3)
         gtk.main()
 
 if __name__ == "__main__":
     gui = ProjectGui()
     if len(sys.argv) > 1:
-        gui.open(None, sys.argv[1])
+        gui.open(sys.argv[1])
     gui.mainloop()
 
