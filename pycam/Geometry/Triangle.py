@@ -125,9 +125,9 @@ class Triangle:
     def normal(self):
         if self._normal is None:
             # calculate normal, if p1-p2-pe are in clockwise order
-            n = self.p3.sub(self.p1).cross(self.p2.sub(self.p1))
-            n.normalize()
-            self._normal = n
+            vector = self.p3.sub(self.p1).cross(self.p2.sub(self.p1))
+            denom = vector.norm()
+            self._normal = vector.div(denom)
         return self._normal
 
     def plane(self):
@@ -210,11 +210,9 @@ class Triangle:
             self.calc_circumcircle()
         return self._radiussq
 
-    def normal(self):
-        return self.p2.sub(self.p1).cross(self.p3.sub(self.p2))
-
     def calc_circumcircle(self):
-        normal = self.normal()
+        # we can't use the cached value of "normal", since we don't want the normalized value
+        normal = self.p2.sub(self.p1).cross(self.p3.sub(self.p2))
         denom = normal.norm()
         self._radius = (self.p2.sub(self.p1).norm()*self.p3.sub(self.p2).norm()*self.p3.sub(self.p1).norm())/(2*denom)
         self._radiussq = self._radius*self._radius
