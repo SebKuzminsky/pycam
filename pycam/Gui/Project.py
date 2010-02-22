@@ -14,12 +14,12 @@ GTKBUILD_FILE = os.path.join(os.path.dirname(__file__), "gtk-interface", "pycam-
 
 
 def gtkgl_functionwrapper(function):
-    def decorated(self, widget, *args, **kwords):
+    def decorated(self, *args, **kwords):
         gldrawable=self.area.get_gl_drawable()
         glcontext=self.area.get_gl_context()
         if not gldrawable.gl_begin(glcontext):
             return
-        function(self, widget, *args, **kwords)
+        function(self, *args, **kwords)
         gldrawable.gl_end()
     return decorated # TODO: make this a well behaved decorator (keeping name, docstring etc)
 
@@ -89,17 +89,20 @@ class GLView:
     def _realize(self, widget):
         self.glsetup()
 
-    @gtkgl_functionwrapper
     def _expose_event(self, widget, event):
-        self._gl_clear()
         self.paint()
-        self._gl_finish()
 
     @gtkgl_functionwrapper
     def _resize_window(self, widget, data=None):
         GL.glViewport(0, 0, widget.allocation.width, widget.allocation.height)
 
     def paint(self):
+        self._gl_clear()
+        self._paint()
+        self._gl_finish()
+
+    @gtkgl_functionwrapper
+    def _paint(self, widget=None):
         GuiCommon.draw_complete_model_view(self.settings)
 
 
@@ -141,6 +144,26 @@ class ProjectGui:
         # connect the "Bounds" action
         self.gui.get_object("Minimize bounds").connect("clicked", self.minimize_bounds)
         self.gui.get_object("Reset bounds").connect("clicked", self.reset_bounds)
+        # Transformations
+        self.gui.get_object("Rotate").connect("clicked", self.transform_model)
+        self.gui.get_object("Flip").connect("clicked", self.transform_model)
+        self.gui.get_object("Swap").connect("clicked", self.transform_model)
+
+    def transform_model(self, widget):
+        if widget.get_name() == "Rotate":
+            controls = (("x-axis", "x"), ("y-axis", "y"), ("z-axis", "z"))
+        elif widget.get_name() == "Flip":
+            controls = (("xy-plane", "xy"), ("xz-plane", "xz"), ("yz-plane", "yz"))
+        elif widget.get_name() == "Swap":
+            controls = (("x <-> y", "x_swap_y"), ("x <-> z", "x_swap_z"), ("y <-> z", "y_swap_z"))
+        else:
+            # broken gui
+            print sys.stderr, "Unknown button action: %s" % str(widget.get_name())
+            return
+        for obj, value in controls:
+            if self.gui.get_object(obj).get_active():
+                GuiCommon.transform_model(self.model, value)
+        self.view3d.paint()
 
     def minimize_bounds(self, widget, data=None):
         # be careful: this depends on equal names of "settings" keys and "model" variables

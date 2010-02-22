@@ -126,7 +126,7 @@
                             <property name="visible">True</property>
                             <property name="orientation">vertical</property>
                             <child>
-                              <object class="GtkRadioButton" id="xy">
+                              <object class="GtkRadioButton" id="xy-plane">
                                 <property name="label" translatable="yes">xy-plane</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
@@ -141,13 +141,13 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkRadioButton" id="xz">
+                              <object class="GtkRadioButton" id="xz-plane">
                                 <property name="label" translatable="yes">xz-plane</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
                                 <property name="draw_indicator">True</property>
-                                <property name="group">xy</property>
+                                <property name="group">xy-plane</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -156,13 +156,13 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkRadioButton" id="yz">
+                              <object class="GtkRadioButton" id="yz-plane">
                                 <property name="label" translatable="yes">yz-plane</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
                                 <property name="draw_indicator">True</property>
-                                <property name="group">xy</property>
+                                <property name="group">xy-plane</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>

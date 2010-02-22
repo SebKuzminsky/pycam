@@ -12,6 +12,18 @@ VIEW_ROTATIONS = {
     "bottom":    [(180, 1.0, 0, 0)],
 }
 
+MODEL_TRANSFORMATIONS = {
+    "normal": ((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0)),
+    "x": ((1, 0, 0, 0), (0, 0, 1, 0), (0, -1, 0, 0)),
+    "y": ((0, 0, -1, 0), (0, 1, 0, 0), (1, 0, 0, 0)),
+    "z": ((0, 1, 0, 0), (-1, 0, 0, 0), (0, 0, 1, 0)),
+    "xy": ((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, -1, 0)),
+    "xz": ((1, 0, 0, 0), (0, -1, 0, 0), (0, 0, 1, 0)),
+    "yz": ((-1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0)),
+    "x_swap_y": ((0, 1, 0, 0), (1, 0, 0, 0), (0, 0, 1, 0)),
+    "x_swap_z": ((0, 0, 1, 0), (0, 1, 0, 0), (1, 0, 0, 0)),
+    "y_swap_z": ((1, 0, 0, 0), (0, 0, 1, 0), (0, 1, 0, 0)),
+}
 
 def draw_string(x, y, z, p, s, scale=.01):
     GL.glPushMatrix()
@@ -136,4 +148,6 @@ def left_view(scale):
 def right_view(scale):
     rotate_view(scale, rotation=VIEW_ROTATIONS["right"])
 
+def transform_model(model, direction="normal"):
+    model.transform(MODEL_TRANSFORMATIONS[direction])
     
