@@ -493,27 +493,6 @@ class SimpleGui(Tk.Frame):
         self.ogl.tkRedraw()
         self.resetView()
 
-    def cutmodel(self, z):
-        cutter = SphericalCutter(1, Point(0,0,7))
-        pc = DropCutter(cutter, self.model, PathAccumulator())
-
-        x0 = -7.0
-        x1 = +7.0
-        y0 = -7.0
-        y1 = +7.0
-        z0 = 0.0
-        z1 = 4.0
-
-        samples = 20
-        lines = 20
-        layers = 10
-
-        dx = (x1-x0)/samples
-        dy = (y1-y0)/lines
-        dz = (z1-z0)/(layers+1)
-
-        self.toolpath = pc.GenerateToolPath(x0,x1,y0,y1,z0,z1,dx,dy,dz)
-
     def resetView(self):
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glLoadIdentity()
