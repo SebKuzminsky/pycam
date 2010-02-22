@@ -1,23 +1,20 @@
 #!/usr/bin/python
 
 from optparse import OptionParser
-
-from pycam.Gui.SimpleGui import SimpleGui
-from pycam.Gui.Project import ProjectGui
-from pycam.Importers.TestModel import TestModel
+import sys
 
 # check if we were started as a separate program
 if __name__ == "__main__":
     inputfile = None
     outputfile = None
 
-    parser = OptionParser(usage="usage: %prog [--gui] [inputfile [outputfile]]")
+    parser = OptionParser(usage="usage: %prog [options] [inputfile [outputfile]]")
     parser.add_option("", "--gui", dest="display",
             action="store_true", default=False,
             help="don't create the outputfile on the fly - just preset the output filename and show the GUI")
-    parser.add_option("", "--simple-gui", dest="simple_gui",
+    parser.add_option("", "--gtk", dest="gtk_gui",
             action="store_true", default=False,
-            help="use the obsolete old GUI (Tcl/Tk)")
+            help="use the new GTK interface")
     (options, args) = parser.parse_args()
 
     if len(args) > 0:
@@ -27,12 +24,23 @@ if __name__ == "__main__":
     if len(args) > 2:
         parser.error("too many arguments given (%d instead of %d)" % (len(args), 2))
 
-    if options.simple_gui:
-        gui = SimpleGui()
-    else:
+    if options.gtk_gui:
+        try:
+            from pycam.Gui.Project import ProjectGui
+        except ImportError, err_msg:
+            print sys.stderr, "Failed to load GTK bindings for python. Please install the package 'python-gtk2'."
+            print sys.stderr, "Details: %s" % str(err_msg)
         gui = ProjectGui()
+    else:
+        try:
+            from pycam.Gui.SimpleGui import SimpleGui
+        except ImportError, err_msg:
+            print sys.stderr, "Failed to load TkInter bindings for python. Please install the package 'python-tk'."
+            print sys.stderr, "Details: %s" % str(err_msg)
+        gui = SimpleGui()
 
     if not inputfile:
+        from pycam.Importers.TestModel import TestModel
         gui.model = TestModel()
     else:
         gui.open(inputfile)
