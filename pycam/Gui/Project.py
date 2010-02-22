@@ -279,6 +279,7 @@ class ProjectGui:
         for limit in ["minx", "miny", "minz", "maxx", "maxy", "maxz"]:
             obj = self.gui.get_object(limit)
             self.settings.add_item(limit, obj.get_value, obj.set_value)
+            obj.connect("value-changed", self.update_view)
         # connect the "Bounds" action
         self.gui.get_object("Minimize bounds").connect("clicked", self.minimize_bounds)
         self.gui.get_object("Reset bounds").connect("clicked", self.reset_bounds)
@@ -304,6 +305,9 @@ class ProjectGui:
         self.gui.get_object("GenerateToolPathButton").connect("clicked", self.generate_toolpath)
         self.gui.get_object("SaveToolPathButton").connect("clicked", self.save_toolpath)
         self.gui.get_object("Toggle3dView").connect("toggled", self.toggle_3d_view)
+        # add tool radius for experimental ODE collisions
+        obj = self.gui.get_object("ToolRadiusControl")
+        self.settings.add_item("tool_radius", obj.get_value, obj.set_value)
 
     def gui_activity_guard(func):
         def wrapper(self, *args, **kwargs):
@@ -318,12 +322,12 @@ class ProjectGui:
                 batch_func(*batch_args, **batch_kwargs)
         return wrapper
         
-    def update_view(self):
+    def update_view(self, widget=None, data=None):
         if self.view3d:
             self.view3d.paint()
 
-    def reload_model(self):
-        self.physics = GuiCommon.generate_physics(self.settings)
+    def reload_model(self, widget=None, data=None):
+        self.physics = GuiCommon.generate_physics(self.settings, self.physics)
         if self.view3d:
             self.update_view()
 
@@ -441,7 +445,13 @@ class ProjectGui:
         self.load_model_file(filename=filename)
         
     def append_to_queue(self, func, *args, **kwargs):
-        self._batch_queue.append((func, args, kwargs))
+        # check if gui is currently active
+        if self.gui_is_active:
+            # queue the function call
+            self._batch_queue.append((func, args, kwargs))
+        else:
+            # call the function right now
+            func(*args, **kwargs)
 
     @gui_activity_guard
     def load_model_file(self, widget=None, filename=None):
@@ -450,7 +460,10 @@ class ProjectGui:
         # evaluate "filename" after showing the dialog above - then we will get the new value
         if callable(filename):
             filename = filename()
-        self.model = pycam.Importers.STLImporter.ImportModel(filename)
+        self.load_model(pycam.Importers.STLImporter.ImportModel(filename))
+
+    def load_model(self, model):
+        self.model = model
         # do some initialization
         self.append_to_queue(self.reset_bounds)
         self.append_to_queue(self.toggle_3d_view, True)
@@ -459,6 +472,7 @@ class ProjectGui:
     @gui_activity_guard
     def generate_toolpath(self, widget, data=None):
         start_time = time.time()
+        self.reload_model()
         radius = float(self.gui.get_object("ToolRadiusControl").get_value())
         cuttername = None
         for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
@@ -500,7 +514,7 @@ class ProjectGui:
                 self.option = pycam.PathProcessors.PathAccumulator(zigzag=True)
             else:
                 self.option = None
-            self.pathgenerator = pycam.PathGenerators.DropCutter(self.cutter, self.model, self.option);
+            self.pathgenerator = pycam.PathGenerators.DropCutter(self.cutter, self.model, self.option, physics=self.physics);
             if samples>1:
                 dx = (maxx-minx)/(samples-1)
             else:

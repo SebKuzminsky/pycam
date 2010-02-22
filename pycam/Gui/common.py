@@ -162,11 +162,15 @@ def scale_model(model, scale):
     matrix = ((scale, 0, 0, 0), (0, scale, 0, 0), (0, 0, scale, 0))
     model.transform(matrix)
 
-def generate_physics(settings):
-    physics = ode_objects.PhysicalWorld()
+def generate_physics(settings, physics=None):
+    if physics is None:
+        physics = ode_objects.PhysicalWorld()
     physics.reset()
     physics.add_mesh((0, 0, 0), settings.get("model").triangles())
-    height = settings.get("maxz") - settings.get("minz")
-    physics.set_drill(ode_objects.ShapeCylinder(0.1, height), (settings.get("minx"), settings.get("miny"), settings.get("maxz")))
+    radius = settings.get("tool_radius")
+    # weird: the normal length of the drill causes the detection to fail at high points of the object
+    height = 2 * (settings.get("maxz") - settings.get("minz"))
+    #physics.set_drill(ode_objects.ShapeCylinder(radius, height), (settings.get("minx"), settings.get("miny"), settings.get("maxz")))
+    physics.set_drill(ode_objects.ShapeCylinder(radius, height), (0, 0,  height/2.0))
     return physics
 

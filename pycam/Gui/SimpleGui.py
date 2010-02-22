@@ -18,6 +18,7 @@ from pycam.Importers import *
 from pycam.Exporters import *
 import pycam.Gui.common as GuiCommon
 import pycam.Gui.Settings
+import time
 
 # leave 10% margin around the model
 DEFAULT_MARGIN = 0.1
@@ -68,6 +69,9 @@ class SimpleGui(Tk.Frame):
         for c in str(s):
             GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(c))
         GL.glPopMatrix()
+
+    def load_model(self, model):
+        self.model = model
 
     def Redraw(self, event=None):
         # default scale and orientation
@@ -243,6 +247,7 @@ class SimpleGui(Tk.Frame):
         self.resetView()
 
     def generateToolpath(self):
+        start_time = time.time()
         radius = float(self.ToolRadius.get())
         if self.CutterName.get() == "SphericalCutter":
             self.cutter = SphericalCutter(radius)
@@ -314,6 +319,7 @@ class SimpleGui(Tk.Frame):
                 self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, 0, dz)
             elif self.Direction.get() == "xy":
                 self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz)
+        print "Time elapsed: %f" % (time.time() - start_time)
         self.ogl.tkRedraw()
 
     def browseSaveAs(self):

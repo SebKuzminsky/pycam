@@ -11,7 +11,7 @@ def convert_triangles_to_vertices_faces(triangles):
     id_index_map = {}
     for t in triangles:
         coords = []
-        for p in (t.p1, t.p2, t.p3):
+        for p in (t.p1, t.p3, t.p2):
             # add the point to the id/index mapping, if necessary
             if not id_index_map.has_key(p.id):
                 corners.append((p.x, p.y, p.z))
@@ -29,6 +29,7 @@ class PhysicalWorld:
         self._geoms = []
         self._contacts = ode.JointGroup()
         self._drill = None
+        self._drill_offset = None
         self._collision_detected = False
 
     def reset(self):
@@ -37,6 +38,7 @@ class PhysicalWorld:
         self._geoms = []
         self._contacts = ode.JointGroup()
         self._drill = None
+        self._drill_offset = None
         self._collision_detected = False
 
     def _add_geom(self, geom, position, append=True):
@@ -44,7 +46,8 @@ class PhysicalWorld:
         body.setPosition(position)
         body.setGravityMode(False)
         geom.setBody(body)
-        self._geoms.append(geom)
+        if append:
+            self._geoms.append(geom)
 
     def add_mesh(self, position, triangles):
         mesh = ode.TriMeshData()
@@ -58,14 +61,19 @@ class PhysicalWorld:
         self._add_geom(geom, position)
 
     def set_drill(self, shape, position):
-        geom = ode.GeomTransform(self._space)
-        geom.setGeom(shape)
-        self._add_geom(geom, position, append=False)
-        self._drill = geom
+        #geom = ode.GeomTransform(self._space)
+        #geom.setOffset(position)
+        #geom.setGeom(shape)
+        #shape.setOffset(position)
+        self._space.add(shape)
+        self._add_geom(shape, position, append=False)
+        self._drill_offset = position
+        self._drill = shape
 
     def set_drill_position(self, position):
         if self._drill:
-            self._drill.getBody().setPosition(position)
+            position = (position[0] + self._drill_offset[0], position[1] + self._drill_offset[1], position[2] + self._drill_offset[2])
+            self._drill.setPosition(position)
 
     def _collision_callback(self, dummy, geom1, geom2):
         if geom1 is self._drill:

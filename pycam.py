@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     if not inputfile:
         from pycam.Importers.TestModel import TestModel
-        gui.model = TestModel()
+        gui.load_model(TestModel())
     else:
         gui.open(inputfile)
     if outputfile and not options.display:
