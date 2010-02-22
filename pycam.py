@@ -37,33 +37,38 @@ if __name__ == "__main__":
     if options.gtk_gui:
         try:
             from pycam.Gui.Project import ProjectGui
-            gui = ProjectGui()
+            gui_class = ProjectGui
         except ImportError, err_msg:
             print >> sys.stderr, "Failed to load GTK bindings for python. Please install the package 'python-gtk2'."
             print >> sys.stderr, "Details: %s" % str(err_msg)
             print >> sys.stderr, "I will try to use the alternative Tk interface now ..."
             try:
                 from pycam.Gui.SimpleGui import SimpleGui
-                gui = SimpleGui()
+                gui_class = SimpleGui()
             except ImportError:
-                gui = None
+                gui_class = None
     else:
         try:
             from pycam.Gui.SimpleGui import SimpleGui
-            gui = SimpleGui()
+            gui_class = SimpleGui
         except ImportError, err_msg:
             print >> sys.stderr, "Failed to load TkInter bindings for python. Please install the package 'python-tk'."
             print >> sys.stderr, "Details: %s" % str(err_msg)
             print >> sys.stderr, "I will try to use the alternative GTK interface now ..."
             try:
                 from pycam.Gui.Project import ProjectGui
-                gui = ProjectGui()
+                gui_class = ProjectGui
             except ImportError:
-                gui = None
+                gui_class = None
     # exit if no interface is found
-    if gui is None:
+    if gui_class is None:
         print >> sys.stderr, "Neither the GTK nor the Tk interface is available. Please install the corresponding packages!"
         sys.exit(1)
+    else:
+        if outputfile:
+            gui = gui_class(no_dialog=True)
+        else:
+            gui = gui_class()
 
     if not inputfile:
         from pycam.Importers.TestModel import TestModel
@@ -81,7 +86,7 @@ if __name__ == "__main__":
         # an output filename is given and no gui is explicitly requested
         gui.generateToolpath()
         if outputfile:
-            gui.save(outputfile)
+            gui.save_toolpath(outputfile)
     else:
         # the gui should be shown
         if outputfile:

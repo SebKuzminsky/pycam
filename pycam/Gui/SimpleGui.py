@@ -325,13 +325,13 @@ class SimpleGui(Tk.Frame):
     def browseSaveAs(self):
         filename = tkFileDialog.SaveAs(self, filetypes=[("GCODE files", ".nc .gc .ngc")]).show()
         if filename:
-            self.save(filename)
+            self.save_toolpath(filename)
 
     def setOutputFilename(self, filename):
         if filename:
             self.OutputFileName.set(filename)
 
-    def save(self, filename):
+    def save_toolpath(self, filename):
         self.OutputFileName.set(filename)
         if self.toolpath:
             offset = float(self.ToolRadius.get())/2
@@ -498,7 +498,7 @@ class SimpleGui(Tk.Frame):
         self.ogl.redraw = self.Redraw
         self.pack(expand=1, fill=Tk.BOTH)
 
-    def __init__(self, master=None):
+    def __init__(self, master=None, no_dialog=False):
         Tk.Frame.__init__(self, master)
         self.model = None
         self.toolpath = None

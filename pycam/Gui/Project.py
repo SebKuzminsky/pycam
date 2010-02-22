@@ -247,10 +247,12 @@ class GLView:
 
 class ProjectGui:
 
-    def __init__(self, master=None):
+    def __init__(self, master=None, no_dialog=False):
+        """ TODO: remove "master" above when the Tk interface is abandoned"""
         self.settings = pycam.Gui.Settings.Settings()
         self.gui_is_active = False
         self.view3d = None
+        self.no_dialog = no_dialog
         self._batch_queue = []
         self.gui = gtk.Builder()
         self.gui.add_from_file(GTKBUILD_FILE)
@@ -274,7 +276,6 @@ class ProjectGui:
         filter.add_pattern("*.stl")
         model_file_chooser.add_filter(filter)
         model_file_chooser.set_filter(filter)
-        self.window.show()
         self.model = None
         self.toolpath = None
         self.physics = None
@@ -420,6 +421,8 @@ class ProjectGui:
         self.processing_file_selector.set_filter(filter)
         # make sure that the toolpath settings are consistent
         self.disable_invalid_toolpath_settings()
+        if not self.no_dialog:
+            self.window.show()
 
     def gui_activity_guard(func):
         def wrapper(self, *args, **kwargs):
@@ -435,7 +438,7 @@ class ProjectGui:
         return wrapper
         
     def update_view(self, widget=None, data=None):
-        if self.view3d:
+        if self.view3d and self.view3d.is_visible and not self.no_dialog:
             self.view3d.paint()
 
     def update_physics(self):
@@ -472,6 +475,9 @@ class ProjectGui:
 
     @gui_activity_guard
     def toggle_3d_view(self, widget=None, value=None):
+        # no interactive mode
+        if self.no_dialog:
+            return
         if self.view3d and not self.view3d.enabled:
             # initialization failed - don't do anything
             return
@@ -688,7 +694,7 @@ class ProjectGui:
             show_error_dialog(self.window, "Failed to save processing settings file")
 
     @gui_activity_guard
-    def generate_toolpath(self, widget, data=None):
+    def generate_toolpath(self, widget=None, data=None):
         start_time = time.time()
         class UpdateView:
             def __init__(self, func, max_fps=1):
@@ -780,6 +786,10 @@ class ProjectGui:
         print "Time elapsed: %f" % (time.time() - start_time)
         self.update_view()
 
+    # for compatibility with old pycam GUI (see pycam.py)
+    # TODO: remove it in v0.2
+    generateToolpath = generate_toolpath
+
     def get_save_filename(self, title, type_filter=None):
         # we open a dialog
         dialog = gtk.FileChooserDialog(title=title,
@@ -824,7 +834,7 @@ class ProjectGui:
         return filename
 
     @gui_activity_guard
-    def save_toolpath(self, widget, data=None):
+    def save_toolpath(self, widget=None, data=None):
         if not self.toolpath:
             return
         offset = float(self.gui.get_object("ToolRadiusControl").get_value())/2
@@ -852,6 +862,8 @@ class ProjectGui:
                     self.gui.get_object("FeedrateControl").get_value(),
                     self.gui.get_object("SpeedControl").get_value())
             fi.close()
+            if self.no_dialog:
+                print "GCode file successfully written: %s" % str(filename)
         except IOError, err_msg:
             if not no_dialog:
                 show_error_dialog(self.window, "Failed to save toolpath file")
