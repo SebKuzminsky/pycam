@@ -1,0 +1,88 @@
+Version 0.2 - UNRELEASED
+ * added an alternative GTK interface with additional features:
+  * configurable 3D view settings: model / toolpath / axis / drill progress / frame skip
+  * manipulation of the model: rotation, flip, swap, scale, move
+  * saving the model to an ascii STL file
+  * load/save processing settings from/to a file
+  * handling of multiple processing templates (e.g. "Rough", "Semi-finish" and "Finish")
+  * configure "material allowance" for a minimum distance between drill and model
+  * based on GtkGlExt (for OpenGL)
+  * visualize conflicting processing settings
+  * configure "overlap" instead of "lines" and "samples"
+  * configure "maximum step down" instead of "layers"
+ * improved performance by (optionally) using the "Open Dynamics Engine" (ODE) for
+   collision detection
+ * added basic lightning to the OpenGL view
+
+Version 0.1.11 - 2010-02-19
+ * fix detection of binary STL
+ * added Simulation mode
+ * ignore invalid triangles (caused by high-resolotion models)
+ * automatic boundary fits to the model
+ * add ubuntu specific note
+ * code cleanups
+
+Version 0.1.10 - 2009-07-13
+ * support binary STL
+ * close contours
+
+Version 0.1.9 - 2009-06-18
+ * linux compatibility
+ * integrated kdtree
+ * fix speedup shortcuts
+
+Version 0.1.8 - 2009-04-14
+ * some feature requests
+ * fixes by Dan Falck
+ * fix bug in torus-point intersection
+ * specify model in cfg
+ * fixed opengl representation
+ * update tests
+
+Version 0.1.7b - 2009-02-10
+ * fix glutInit bug
+
+Version 0.1.7 - 2009-01-27
+ * another try at fixing PushCutter
+ * remove MGED exporter
+
+Version 0.1.6b - 2009-01-15
+ * fix save
+ * follow api updates
+ * fix gcode parameter strings
+
+Version 0.1.6 - 2009-01-14
+ * fix verticals intersection
+ * add ContourCutter
+ * guard against float division
+ * add x/y direction
+ * add ContourCutter
+ * minor layout improvements
+ * make speed configurable
+ * enable command line driven operation
+ * debug output
+ * SVG output
+
+Version 0.1.5 - 2008-11-26
+ * add direction switch
+ * add reading pre-model default values from config file
+ * fix verticals in DropCutter
+
+Version 0.1.4 - 2008-11-16
+ * make tool come outside the stock while cutting
+ * make safety height higher than stock
+
+Version 0.1.3 - 2008-09-17
+ * fix redraw
+
+Version 0.1.2 - 2008-09-11
+ * added unit option mm/in
+ * fix coordinate system for Art of Illusion exported STL files
+ * added view control buttons
+ * added bounding box calculation
+
+Version 0.1.1 - 2008-09-01
+ * second release
+
+Version 0.1 - 2008-08-29
+ * initial release
