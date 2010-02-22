@@ -205,7 +205,8 @@ class ProjectGui:
         zwidth = self.model.maxz - self.model.minz
         self.settings.set("minx", self.model.minx - 0.1 * xwidth)
         self.settings.set("miny", self.model.miny - 0.1 * ywidth)
-        self.settings.set("minz", self.model.minz - 0.1 * zwidth)
+        # don't go below ground
+        self.settings.set("minz", self.model.minz)
         self.settings.set("maxx", self.model.maxx + 0.1 * xwidth)
         self.settings.set("maxy", self.model.maxy + 0.1 * ywidth)
         self.settings.set("maxz", self.model.maxz + 0.1 * zwidth)
