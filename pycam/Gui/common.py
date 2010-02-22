@@ -124,18 +124,23 @@ def draw_complete_model_view(settings):
     GL.glMatrixMode(GL.GL_MODELVIEW)
     GL.glLoadIdentity()
     # axes
-    draw_axes(settings)
+    if settings.get("show_axes"):
+        draw_axes(settings)
     # stock model
-    draw_bounding_box(float(settings.get("minx")), float(settings.get("miny")),
-            float(settings.get("minz")), float(settings.get("maxx")),
-            float(settings.get("maxy")), float(settings.get("maxz")))
+    if settings.get("show_bounding_box"):
+        draw_bounding_box(float(settings.get("minx")), float(settings.get("miny")),
+                float(settings.get("minz")), float(settings.get("maxx")),
+                float(settings.get("maxy")), float(settings.get("maxz")))
     # draw the model
-    GL.glColor3f(*COLORS["model"])
-    settings.get("model").to_OpenGL()
+    if settings.get("show_model"):
+        GL.glColor3f(*COLORS["model"])
+        settings.get("model").to_OpenGL()
     # draw the toolpath
-    draw_toolpath(settings.get("toolpath"))
+    if settings.get("show_toolpath"):
+        draw_toolpath(settings.get("toolpath"))
     # draw the drill
-    draw_cutter(settings.get("cutter"))
+    if settings.get("show_drill_progress"):
+        draw_cutter(settings.get("cutter"))
 
 @keep_gl_mode
 @keep_matrix

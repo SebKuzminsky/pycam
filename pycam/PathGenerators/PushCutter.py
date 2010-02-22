@@ -47,11 +47,11 @@ class PushCutter:
         while z >= minz:
             if dy > 0:
                 self.pa.new_direction(0)
-                self.GenerateToolPathSlice(minx, maxx, miny, maxy, z, 0, dy)
+                self.GenerateToolPathSlice(minx, maxx, miny, maxy, z, 0, dy, draw_callback)
                 self.pa.end_direction()
             if dx > 0:
                 self.pa.new_direction(1)
-                self.GenerateToolPathSlice(minx, maxx, miny, maxy, z, dx, 0)
+                self.GenerateToolPathSlice(minx, maxx, miny, maxy, z, dx, 0, draw_callback)
                 self.pa.end_direction()
             self.pa.finish()
 
@@ -81,7 +81,7 @@ class PushCutter:
                 tmax = t
         return (zmax, tmax)
 
-    def GenerateToolPathSlice(self, minx, maxx, miny, maxy, z, dx, dy):
+    def GenerateToolPathSlice(self, minx, maxx, miny, maxy, z, dx, dy, draw_callback=None):
         global DEBUG_PUSHCUTTER, DEBUG_PUSHCUTTER2, DEBUG_PUSHCUTTER3
         c = self.cutter
         model = self.model

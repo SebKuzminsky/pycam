@@ -306,10 +306,27 @@ class ProjectGui:
         # connect buttons with activities
         self.gui.get_object("GenerateToolPathButton").connect("clicked", self.generate_toolpath)
         self.gui.get_object("SaveToolPathButton").connect("clicked", self.save_toolpath)
-        self.gui.get_object("Toggle3dView").connect("toggled", self.toggle_3d_view)
         # add tool radius for experimental ODE collisions
         obj = self.gui.get_object("ToolRadiusControl")
         self.settings.add_item("tool_radius", obj.get_value, obj.set_value)
+        # visual settings
+        self.gui.get_object("Toggle3dView").connect("toggled", self.toggle_3d_view)
+        for name, objname in (("show_model", "ShowModelCheckBox"),
+                ("show_axes", "ShowAxesCheckBox"),
+                ("show_bounding_box", "ShowBoundingCheckBox"),
+                ("show_toolpath", "ShowToolPathCheckBox"),
+                ("show_drill_progress", "ShowDrillProgressCheckBox")):
+            obj = self.gui.get_object(objname)
+            self.settings.add_item(name, obj.get_active, obj.set_active)
+            obj.connect("toggled", self.update_view)
+        # preconfigure some values
+        self.settings.set("show_model", True)
+        self.settings.set("show_toolpath", True)
+        self.settings.set("show_bounding_box", True)
+        self.settings.set("show_axes", True)
+        skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
+        self.settings.add_item("drill_progress_frame_skip", skip_obj.get_value, skip_obj.set_value)
+        self.settings.set("drill_progress_frame_skip", 20)
 
     def gui_activity_guard(func):
         def wrapper(self, *args, **kwargs):
@@ -475,13 +492,16 @@ class ProjectGui:
         class UpdateView:
             def __init__(self, func, skip=10):
                 self.count = 0
-                self.skip = skip
+                self.freq = skip + 1
                 self.func = func
             def update(self):
-                if self.count % self.skip == 0:
+                if self.count % self.freq == 0:
                     self.func()
                 self.count += 1
-        updater = UpdateView(self.update_view, 2)
+        if self.settings.get("show_drill_progress"):
+            draw_callback = UpdateView(self.update_view, self.settings.get("drill_progress_frame_skip")).update
+        else:
+            draw_callback = None
         radius = float(self.gui.get_object("ToolRadiusControl").get_value())
         cuttername = None
         for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
@@ -536,9 +556,9 @@ class ProjectGui:
             else:
                 dy = utils.INFINITE
             if direction == "x":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, 0, updater.update)
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, 0, draw_callback)
             elif direction == "y":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dx, 1, updater.update)
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dx, 1, draw_callback)
 
         elif pathgenerator == "PushCutter":
             if pathprocessor == "PathAccumulator":
@@ -567,11 +587,11 @@ class ProjectGui:
             else:
                 dz = utils.INFINITE
             if direction == "x":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, 0, dy, dz, updater.update)
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, 0, dy, dz, draw_callback)
             elif direction == "y":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, 0, dz, updater.update)
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, 0, dz, draw_callback)
             elif direction == "xy":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz, updater.update)
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz, draw_callback)
         print "Time elapsed: %f" % (time.time() - start_time)
         self.update_view()
 
