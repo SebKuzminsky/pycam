@@ -1706,6 +1706,10 @@ Only available for the Push Cutter.</property>
                               <object class="GtkSpinButton" id="MaterialAllowanceControl">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">Specify the amount of material that should remain around the model.
+This is useful for rough and semi-finish operations.
+ODE support is currently required for this feature.
+For now only the Drop Cutter respects this value.</property>
                                 <property name="invisible_char">&#x2022;</property>
                                 <property name="adjustment">MaterialAllowanceValue</property>
                                 <property name="digits">2</property>

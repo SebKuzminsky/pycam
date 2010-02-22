@@ -328,14 +328,19 @@ class ProjectGui:
                 ("enable_ode", "SettingEnableODE")):
             obj = self.gui.get_object(objname)
             self.settings.add_item(name, obj.get_active, obj.set_active)
-            obj.connect("toggled", self.update_view)
+            # all of the objects above should trigger redraw
+            if name != "enable_ode":
+                obj.connect("toggled", self.update_view)
         # set the availability of ODE
         if GuiCommon.is_ode_available():
             self.settings.set("enable_ode", True)
             self.gui.get_object("SettingEnableODE").set_sensitive(True)
+            self.gui.get_object("MaterialAllowanceControl").set_sensitive(True)
         else:
             self.settings.set("enable_ode", False)
             self.gui.get_object("SettingEnableODE").set_sensitive(False)
+            # TODO: remove this as soon as non-ODE toolpath generation respects material allowance
+            self.gui.get_object("MaterialAllowanceControl").set_sensitive(False)
         # preconfigure some values
         self.settings.set("show_model", True)
         self.settings.set("show_toolpath", True)
@@ -380,7 +385,7 @@ class ProjectGui:
         # connect the "consistency check" with all toolpath settings
         for objname in ("PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter", "ContourCutter",
                 "DropCutter", "PushCutter", "SphericalCutter", "CylindricalCutter", "ToroidalCutter",
-                "PathDirectionX", "PathDirectionY", "PathDirectionXY"):
+                "PathDirectionX", "PathDirectionY", "PathDirectionXY", "SettingEnableODE"):
             self.gui.get_object(objname).connect("toggled", self.disable_invalid_toolpath_settings)
         # load a processing configuration object
         self.processing_settings = pycam.Gui.Settings.ProcessingSettings(self.settings)
@@ -452,6 +457,12 @@ class ProjectGui:
         self.gui.get_object("TorusRadiusControl").set_sensitive(self.settings.get("cutter_shape") == "ToroidalCutter")
         # disable "step down" control, if PushCutter is not active
         self.gui.get_object("MaxStepDownControl").set_sensitive(self.settings.get("path_generator") == "PushCutter")
+        # TODO: remove this as soon as the PushCutter supports "material allowance"
+        if self.settings.get("enable_ode", True):
+            self.gui.get_object("MaterialAllowanceControl").set_sensitive(self.settings.get("path_generator") == "DropCutter")
+        else:
+            self.gui.get_object("MaterialAllowanceControl").set_sensitive(False)
+
 
     @gui_activity_guard
     def toggle_3d_view(self, widget=None, value=None):
