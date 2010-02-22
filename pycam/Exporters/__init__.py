@@ -1,2 +1,2 @@
-list = [ "SimpleGCodeExporter", "SVGExporter", "STLExporter" ]
+list = [ "SimpleGCodeExporter", "SVGExporter"]
 __all__ = list
