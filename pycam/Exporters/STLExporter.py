@@ -30,7 +30,7 @@ class STLExporter:
     def get_output_lines(self):
         date = datetime.date.today().isoformat()
         yield """solid "%s"; Produced by %s, %s""" % (self.name, self.created_by, date)
-        for tr in self.model._triangles:
+        for tr in self.model.triangles():
             norm = tr.normal().normalize()
             yield "facet normal %f %f %f" % (norm.x, norm.y, norm.z)
             yield "  outer loop"
