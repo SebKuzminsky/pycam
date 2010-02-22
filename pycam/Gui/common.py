@@ -155,3 +155,7 @@ def shift_model(model, shift_x, shift_y, shift_z):
     matrix = ((1, 0, 0, shift_x), (0, 1, 0, shift_y), (0, 0, 1, shift_z))
     model.transform(matrix)
     
+def scale_model(model, scale):
+    matrix = ((scale, 0, 0, 0), (0, scale, 0, 0), (0, 0, scale, 0))
+    model.transform(matrix)
+

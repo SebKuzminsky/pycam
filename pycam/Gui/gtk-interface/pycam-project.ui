@@ -350,7 +350,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkButton" id="scale down">
+                              <object class="GtkButton" id="Scale down">
                                 <property name="label" translatable="yes">Shrink</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
@@ -362,7 +362,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkButton" id="scale up">
+                              <object class="GtkButton" id="Scale up">
                                 <property name="label" translatable="yes">Enlage</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
@@ -880,8 +880,7 @@
     </child>
   </object>
   <object class="GtkAdjustment" id="scale factor">
-    <property name="value">10</property>
-    <property name="lower">0.001</property>
+    <property name="value">1</property>
     <property name="upper">1000</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>

@@ -124,6 +124,7 @@ class ProjectGui:
         self.settings = pycam.Gui.Settings.Settings()
         self.settings.add_item("model", lambda: getattr(self, "model"))
         self.settings.add_item("toolpath", lambda: getattr(self, "toolpath"))
+        self.settings.add_item("scale", lambda: 0.9/getattr(getattr(self, "model"), "maxsize")())
         # create the unit field (the default content can't be defined via glade)
         scale_box = self.gui.get_object("scale_box")
         unit_field = gtk.combo_box_new_text()
@@ -150,6 +151,10 @@ class ProjectGui:
         self.gui.get_object("Swap").connect("clicked", self.transform_model)
         self.gui.get_object("Shift Model").connect("clicked", self.shift_model, True)
         self.gui.get_object("Shift To Origin").connect("clicked", self.shift_model, False)
+        # scale model
+        self.gui.get_object("Scale up").connect("clicked", self.scale_model, True)
+        self.gui.get_object("Scale down").connect("clicked", self.scale_model, False)
+        self.gui.get_object("Scale factor").set_value(2)
 
     def transform_model(self, widget):
         if widget.get_name() == "Rotate":
@@ -177,6 +182,15 @@ class ProjectGui:
             shift_y = -self.model.miny
             shift_z = -self.model.minz
         GuiCommon.shift_model(self.model, shift_x, shift_y, shift_z)
+        self.view3d.paint()
+
+    def scale_model(self, widget, scale_up=True):
+        value = self.gui.get_object("Scale factor").get_value()
+        if (value == 0) or (value == 1):
+            return
+        if not scale_up:
+            value = 1/value
+        GuiCommon.scale_model(self.model, value)
         self.view3d.paint()
 
     def minimize_bounds(self, widget, data=None):
@@ -216,7 +230,6 @@ class ProjectGui:
         if self.model and self.view3d.enabled:
             self.reset_bounds(None)
             # why "2.0"?
-            self.settings.set("scale", 0.9/self.model.maxsize())
             self.view3d.reset_view()
 
     def mainloop(self):
