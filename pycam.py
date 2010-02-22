@@ -18,6 +18,12 @@ if __name__ == "__main__":
     parser.add_option("", "--tk", dest="gtk_gui",
             action="store_false",
             help="use the (old) Tk interface")
+    parser.add_option("-c", "--config", dest="config_file",
+            default=None, action="store", type="string",
+            help="load a file with processing settings")
+    parser.add_option("", "--template", dest="config_template",
+            default=None, action="store", type="string",
+            help="enable a specific processing settings template (e.g. 'Rough', 'Semi-finish' or 'Finish')")
     (options, args) = parser.parse_args()
 
     if len(args) > 0:
@@ -64,6 +70,13 @@ if __name__ == "__main__":
         gui.load_model(TestModel())
     else:
         gui.open(inputfile)
+    # load processing config file
+    # only available for the GTK interface
+    if options.gtk_gui:
+        if options.config_file:
+            gui.open_processing_settings_file(options.config_file)
+        if options.config_template:
+            gui.switch_processing_config(section=options.config_template)
     if outputfile and not options.display:
         # an output filename is given and no gui is explicitly requested
         gui.generateToolpath()

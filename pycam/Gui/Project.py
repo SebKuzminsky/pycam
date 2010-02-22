@@ -27,22 +27,33 @@ BUTTON_MOVE = gtk.gdk.BUTTON2_MASK
 BUTTON_ZOOM = gtk.gdk.BUTTON3_MASK
 
 
+def show_error_dialog(window, message):
+    warn_window = gtk.MessageDialog(window, type=gtk.MESSAGE_ERROR,
+            buttons=gtk.BUTTONS_OK, message_format=str(message))
+    warn_window.set_title("Error")
+    warn_window.run()
+    warn_window.destroy()
+
+
 class GLView:
     def __init__(self, gui, settings, notify_destroy=None):
         # assume, that initialization will fail
-        self.enabled = False
-        try:
-            import gtk.gtkgl
-        except ImportError:
-            return
+        self.gui = gui
+        self.window = self.gui.get_object("view3dwindow")
         self.initialized = False
         self.busy = False
-        self.mouse = {"start_pos": None, "button": None, "timestamp": 0}
-        self.enabled = True
         self.settings = settings
-        self.gui = gui
         self.is_visible = False
-        self.window = self.gui.get_object("view3dwindow")
+        # check if the 3D view is available
+        try:
+            import gtk.gtkgl
+            self.enabled = True
+        except ImportError:
+            show_error_dialog(self.window, "Failed to initialize the interactive 3D model view."
+                    + "\nPlease install 'python-gtkglext1' to enable it.")
+            self.enabled = False
+            return
+        self.mouse = {"start_pos": None, "button": None, "timestamp": 0}
         self.notify_destroy_func = notify_destroy
         self.window.connect("delete-event", self.destroy)
         self.window.set_default_size(560, 400)
@@ -87,7 +98,7 @@ class GLView:
 
     def check_busy(func):
         def busy_wrapper(self, *args, **kwargs):
-            if self.busy:
+            if not self.enabled or self.busy:
                 return
             self.busy = True
             func(self, *args, **kwargs)
@@ -398,16 +409,15 @@ class ProjectGui:
                 self.save_processing_config, self.processing_config_selection.get_active_text)
         self.load_processing_settings()
         self.gui.get_object("ProcessingSettingsSaveToFile").connect("clicked", self.save_processing_settings_file)
-        load_processing_settings_file_control = self.gui.get_object("ProcessingSettingsLoad")
         filter = gtk.FileFilter()
         filter.set_name("All files")
         filter.add_pattern("*")
-        load_processing_settings_file_control.add_filter(filter)
+        self.processing_file_selector.add_filter(filter)
         filter = gtk.FileFilter()
         filter.set_name("Config files")
         filter.add_pattern("*.conf")
-        load_processing_settings_file_control.add_filter(filter)
-        load_processing_settings_file_control.set_filter(filter)
+        self.processing_file_selector.add_filter(filter)
+        self.processing_file_selector.set_filter(filter)
         # make sure that the toolpath settings are consistent
         self.disable_invalid_toolpath_settings()
 
@@ -460,9 +470,11 @@ class ProjectGui:
         # "material allowance" requires ODE support
         self.gui.get_object("MaterialAllowanceControl").set_sensitive(self.settings.get("enable_ode"))
 
-
     @gui_activity_guard
     def toggle_3d_view(self, widget=None, value=None):
+        if self.view3d and not self.view3d.enabled:
+            # initialization failed - don't do anything
+            return
         current_state = not ((self.view3d is None) or (not self.view3d.is_visible))
         if value is None:
             new_state = not current_state
@@ -477,6 +489,8 @@ class ProjectGui:
                 if self.model and self.view3d.enabled:
                     self.reset_bounds()
                     self.view3d.reset_view()
+                # disable the "toggle" button, if the 3D view does not work
+                self.gui.get_object("Toggle3dView").set_sensitive(self.view3d.enabled)
             else:
                 # the window is just hidden
                 self.view3d.show()
@@ -520,7 +534,7 @@ class ProjectGui:
             fi.close()
         except IOError, err_msg:
             if not no_dialog:
-                self.show_error_dialog("Failed to save model file")
+                show_error_dialog(self.window, "Failed to save model file")
 
     @gui_activity_guard
     def shift_model(self, widget, use_form_values=True):
@@ -591,6 +605,10 @@ class ProjectGui:
             filename = filename()
         self.load_model(pycam.Importers.STLImporter.ImportModel(filename))
 
+    def open_processing_settings_file(self, filename):
+        self.processing_file_selector.set_filename(filename)
+        self.load_processing_file(filename=filename)
+
     @gui_activity_guard
     def load_processing_file(self, widget=None, filename=None):
         if not filename:
@@ -626,6 +644,7 @@ class ProjectGui:
             return
         if section in self.processing_settings.get_config_list():
             self.processing_settings.enable_config(section)
+        self._visually_enable_specific_processing_config(section)
 
     def delete_processing_config(self, widget=None, section=None):
         if callable(section):
@@ -643,15 +662,15 @@ class ProjectGui:
             return
         self.processing_settings.store_config(section)
         self.load_processing_settings()
-        # try to select the previously stored entry
-        index = 0
-        self.processing_config_selection.set_active(0)
-        while self.processing_config_selection.get_active() >= 0:
-            if self.processing_config_selection.get_active_text() == section:
-                # we found the right entry
-                break
-            index += 1
-            self.processing_config_selection.set_active(index)
+        self._visually_enable_specific_processing_config(section)
+
+    def _visually_enable_specific_processing_config(self, section):
+        # select the requested section in the drop-down list
+        # don't change the setting if not required - otherwise we will loop
+        if section != self.processing_config_selection.get_active_text():
+            config_list = self.processing_settings.get_config_list()
+            if section in config_list:
+                self.processing_config_selection.set_active(config_list.index(section))
 
     @gui_activity_guard
     def save_processing_settings_file(self, widget=None, section=None):
@@ -666,8 +685,7 @@ class ProjectGui:
         if not filename:
             return
         if not self.processing_settings.write_to_file(filename) and not no_dialog:
-            self.show_error_dialog("Failed to save processing settings file")
-
+            show_error_dialog(self.window, "Failed to save processing settings file")
 
     @gui_activity_guard
     def generate_toolpath(self, widget, data=None):
@@ -805,13 +823,6 @@ class ProjectGui:
         dialog.destroy()
         return filename
 
-    def show_error_dialog(self, message):
-        warn_window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_ERROR,
-                buttons=gtk.BUTTONS_OK, message_format=str(message))
-        warn_window.set_title("Failed to save model file")
-        warn_window.run()
-        warn_window.destroy()
-
     @gui_activity_guard
     def save_toolpath(self, widget, data=None):
         if not self.toolpath:
@@ -843,7 +854,7 @@ class ProjectGui:
             fi.close()
         except IOError, err_msg:
             if not no_dialog:
-                self.show_error_dialog("Failed to save toolpath file")
+                show_error_dialog(self.window, "Failed to save toolpath file")
 
     def mainloop(self):
         gtk.main()
