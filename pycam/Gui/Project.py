@@ -260,7 +260,7 @@ class GLView:
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadIdentity()
         v = self.view
-        GLU.gluPerspective(v["fovy"], self.area.allocation.width/self.area.allocation.height, v["znear"], v["zfar"])
+        GLU.gluPerspective(v["fovy"], (0.0 + self.area.allocation.width)/self.area.allocation.height, v["znear"], v["zfar"])
         GLU.gluLookAt(v["center"][0] + v["distance"][0], v["center"][1] + v["distance"][1], v["center"][2] + v["distance"][2],
                 v["center"][0], v["center"][1], v["center"][2], v["up"][0], v["up"][1], v["up"][2])
         GL.glMatrixMode(prev_mode)
