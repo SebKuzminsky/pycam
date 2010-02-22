@@ -97,7 +97,7 @@ class GLView:
 
     def gtkgl_refresh(func):
         def refresh_wrapper(self, *args, **kwargs):
-            prev_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
+            prev_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
             GL.glMatrixMode(GL.GL_MODELVIEW)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
             result = func(self, *args, **kwargs)

@@ -140,7 +140,7 @@ class Camera:
 
     def position_camera(self):
         width, height = self._get_screen_dimensions()
-        prev_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
+        prev_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadIdentity()
         v = self.view

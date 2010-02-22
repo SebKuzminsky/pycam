@@ -26,17 +26,17 @@ COLORS = {
 
 def keep_gl_mode(func):
     def wrapper(*args, **kwargs):
-        prev_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
+        prev_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
         func(*args, **kwargs)
         GL.glMatrixMode(prev_mode)
     return wrapper
 
 def keep_matrix(func):
     def wrapper(*args, **kwargs):
-        pushed_matrix_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
+        pushed_matrix_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
         GL.glPushMatrix()
         func(*args, **kwargs)
-        final_matrix_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
+        final_matrix_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
         GL.glMatrixMode(pushed_matrix_mode)
         GL.glPopMatrix()
         GL.glMatrixMode(final_matrix_mode)
