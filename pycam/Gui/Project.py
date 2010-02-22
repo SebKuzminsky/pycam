@@ -370,13 +370,18 @@ class ProjectGui:
         self.settings.add_item("path_postprocessor", get_path_postprocessor, set_path_postprocessor)
         # path direction (combined get/set function)
         def set_get_path_direction(input=None):
-            for obj, value in [("PathDirectionX", "x"), ("PathDirectionY", "y"), ("PathDirectionXY", "xy")]:
+            for obj, value in (("PathDirectionX", "x"), ("PathDirectionY", "y"), ("PathDirectionXY", "xy")):
                 if value == input:
                     self.gui.get_object(obj).set_active(True)
                     return
                 if self.gui.get_object(obj).get_active():
                     return value
         self.settings.add_item("path_direction", set_get_path_direction, set_get_path_direction)
+        # connect the "consistency check" with all toolpath settings
+        for objname in ("PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter", "ContourCutter",
+                "DropCutter", "PushCutter", "SphericalCutter", "CylindricalCutter", "ToroidalCutter",
+                "PathDirectionX", "PathDirectionY", "PathDirectionXY"):
+            self.gui.get_object(objname).connect("toggled", self.disable_invalid_toolpath_settings)
         # load a processing configuration object
         self.processing_settings = pycam.Gui.Settings.ProcessingSettings(self.settings)
         self.processing_config_selection = self.gui.get_object("ProcessingTemplatesList")
@@ -398,6 +403,8 @@ class ProjectGui:
         filter.add_pattern("*.conf")
         load_processing_settings_file_control.add_filter(filter)
         load_processing_settings_file_control.set_filter(filter)
+        # make sure that the toolpath settings are consistent
+        self.disable_invalid_toolpath_settings()
 
     def gui_activity_guard(func):
         def wrapper(self, *args, **kwargs):
@@ -421,6 +428,30 @@ class ProjectGui:
             self.physics = GuiCommon.generate_physics(self.settings, self.cutter, self.physics)
         else:
             self.physics = None
+
+    def disable_invalid_toolpath_settings(self, widget=None, data=None):
+        # possible dependencies of the DropCutter
+        if self.settings.get("path_generator") == "DropCutter":
+            if self.settings.get("path_direction") == "xy":
+                self.settings.set("path_direction", "x")
+            if not self.settings.get("path_postprocessor") in ("PathAccumulator", "ZigZagCutter"):
+                self.settings.set("path_postprocessor", "PathAccumulator")
+            dropcutter_active = True
+        else:
+            dropcutter_active = False
+        for objname in ("PathDirectionXY", "SimpleCutter", "PolygonCutter", "ContourCutter"):
+            self.gui.get_object(objname).set_sensitive(not dropcutter_active)
+        self.gui.get_object("PathDirectionXY").set_sensitive(not dropcutter_active)
+        # disable the dropcutter, if "xy" or one of "SimpleCutter", "PolygonCutter", "ContourCutter" is enabled
+        if (self.settings.get("path_postprocessor") in ("SimpleCutter", "PolygonCutter", "ContourCutter")) \
+                or (self.settings.get("path_direction") == "xy"):
+            self.gui.get_object("DropCutter").set_sensitive(False)
+        else:
+            self.gui.get_object("DropCutter").set_sensitive(True)
+        # disable the toroidal radius if the toroidal cutter is not enabled
+        self.gui.get_object("TorusRadiusControl").set_sensitive(self.settings.get("cutter_shape") == "ToroidalCutter")
+        # disable "step down" control, if PushCutter is not active
+        self.gui.get_object("MaxStepDownControl").set_sensitive(self.settings.get("path_generator") == "PushCutter")
 
     @gui_activity_guard
     def toggle_3d_view(self, widget=None, value=None):
@@ -651,6 +682,8 @@ class ProjectGui:
         pathgenerator = self.settings.get("path_generator")
         pathprocessor = self.settings.get("path_postprocessor")
         direction = self.settings.get("path_direction")
+        # Due to some weirdness the height of the drill must be bigger than the object's size.
+        # Otherwise some collisions are not detected.
         cutter_height = 2 * (self.settings.get("maxz") - self.settings.get("minz"))
         if cuttername == "SphericalCutter":
             self.cutter = pycam.Cutters.SphericalCutter(radius, height=cutter_height)

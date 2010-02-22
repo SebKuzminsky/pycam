@@ -25,13 +25,23 @@ class CylindricalCutter(BaseCutter):
     def __repr__(self):
         return "CylindricalCutter<%s,%s>" % (self.location,self.radius)
 
-    def get_shape(self, format="ODE"):
+    def get_shape(self, format="ODE", additional_distance=0.0):
         if format == "ODE":
             import ode
-            geom = ode.GeomCylinder(None, self.radius, self.height)
+            """ We don't handle the the "additional_distance" perfectly, since
+            the "right" shape would be a cylinder with a small flat cap that
+            grows to the full expanded radius through a partial sphere. The
+            following ascii art shows the idea:
+                  | |
+                  \_/
+            This slight incorrectness should be neglectable and causes no harm.
+            """
+            radius = self.radius + additional_distance
+            height = self.height + additional_distance
+            geom = ode.GeomCylinder(None, radius, height)
             def set_position(x, y, z):
                 geom.setPosition((x, y, z))
-            self.shape[format] = (geom, set_position, (0, 0, 0.5 * self.height))
+            self.shape[format] = (geom, set_position, (0, 0, 0.5 * height - additional_distance))
             return self.shape[format]
 
     def to_OpenGL(self):

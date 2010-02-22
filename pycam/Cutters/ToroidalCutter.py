@@ -30,14 +30,14 @@ class ToroidalCutter(BaseCutter):
     def __repr__(self):
         return "ToroidalCutter<%s,%f,R=%f,r=%f>" % (self.location,self.radius,self.majorradius,self.minorradius)
 
-    def get_shape(self, format="ODE"):
+    def get_shape(self, format="ODE", additional_distance=0.0):
         if format == "ODE":
             import ode
+            from pycam.Cutters.CylindricalCutter import CylindricalCutter
             # TODO: use an appromixated trimesh instead (ODE does not support toroidal shapes)
-            geom = ode.GeomCapsule(None, self.radius, self.height)
-            def set_position(x, y, z):
-                geom.setPosition((x, y, z))
-            self.shape[format] = (geom, set_position, (0, 0, 0.5 * self.height + self.minorradius))
+            # for now: use the simple cylinder shape - this should not do any harm
+            self.shape[format] = CylindricalCutter(self.radius, self.location,
+                    height=self.height).get_shape(format, additional_distance)
             return self.shape[format]
 
     def to_OpenGL(self):

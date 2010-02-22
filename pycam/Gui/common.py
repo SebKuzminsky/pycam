@@ -196,7 +196,7 @@ def generate_physics(settings, cutter, physics=None):
     #height = 2 * (settings.get("maxz") - settings.get("minz"))
     #physics.set_drill(ode_objects.ShapeCylinder(radius, height), (settings.get("minx"), settings.get("miny"), settings.get("maxz")))
     #physics.set_drill(ode_objects.ShapeCylinder(radius, height), (0, 0,  height/2.0))
-    shape_info = cutter.get_shape("ODE")
+    shape_info = cutter.get_shape("ODE", settings.get("material_allowance"))
     physics.set_drill(shape_info[0], shape_info[2])
     return physics
 

@@ -73,7 +73,7 @@ tool_radius: 1.0
 torus_radius: 0.25
 speed: 1000
 feedrate: 200
-material_allowance: 0
+material_allowance: 0.0
 overlap: 20
 step_down: 1.0
 # default sort weight is low (thus new items will appear above the defaults)
@@ -85,6 +85,7 @@ cutter_shape: CylindricalCutter
 path_generator: PushCutter
 path_postprocessor: PolygonCutter
 tool_radius: 1.0
+material_allowance: 1.0
 
 
 [Semi-finish]
@@ -93,6 +94,7 @@ cutter_shape: ToroidalCutter
 path_generator: PushCutter
 path_postprocessor: ContourCutter
 tool_radius: 0.5
+material_allowance: 0.3
 
 [Finish]
 sort_weight: 92
@@ -100,6 +102,7 @@ cutter_shape: SphericalCutter
 path_generator: DropCutter
 path_postprocessor: ZigZagCutter
 tool_radius: 0.1
+material_allowance: 0.0
 """
 
     SETTING_TYPES = {

@@ -3,6 +3,7 @@
   <!-- interface-requires gtk+ 2.12 -->
   <!-- interface-naming-policy project-wide -->
   <object class="GtkWindow" id="ProjectWindow">
+    <property name="title" translatable="yes">PyCAM Settings</property>
     <property name="destroy_with_parent">True</property>
     <child>
       <object class="GtkNotebook" id="Tasks">
@@ -1222,6 +1223,7 @@
                               <object class="GtkSpinButton" id="TorusRadiusControl">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">Radius of the "doughnut" top of a Toroidal Cutter.</property>
                                 <property name="invisible_char">&#x2022;</property>
                                 <property name="adjustment">torusradius</property>
                                 <property name="digits">3</property>
@@ -1386,6 +1388,8 @@
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">False</property>
+                                    <property name="tooltip_text" translatable="yes">The Drop Cutter abrades a limited slice of material in each step.
+It does not work with the "xy" direction and it requires the "Path Accumulator" or the "ZigZag Cutter".</property>
                                     <property name="active">True</property>
                                     <property name="draw_indicator">True</property>
                                   </object>
@@ -1481,6 +1485,8 @@
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">False</property>
+                                    <property name="tooltip_text" translatable="yes">Dynamic switching between x and y axis direction.
+Only available for the Push Cutter.</property>
                                     <property name="draw_indicator">True</property>
                                     <property name="group">PathDirectionX</property>
                                   </object>
@@ -1543,6 +1549,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes">Practically useless path processor for testing purposes.</property>
                                 <property name="active">True</property>
                                 <property name="draw_indicator">True</property>
                               </object>
@@ -1557,6 +1564,8 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes">Practically useless path processor for testing purposes.
+Only available for the Push Cutter.</property>
                                 <property name="draw_indicator">True</property>
                                 <property name="group">PathAccumulator</property>
                               </object>
@@ -1571,6 +1580,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes">Quite simple path processor for finishing operations.</property>
                                 <property name="draw_indicator">True</property>
                                 <property name="group">PathAccumulator</property>
                               </object>
@@ -1585,6 +1595,8 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes">Complex path processor for first rough operations.
+Only available for the Push Cutter.</property>
                                 <property name="draw_indicator">True</property>
                                 <property name="group">PathAccumulator</property>
                               </object>
@@ -1599,6 +1611,8 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes">Complex path processor for semi-finish operations.
+Only available for the Push Cutter.</property>
                                 <property name="draw_indicator">True</property>
                                 <property name="group">PathAccumulator</property>
                               </object>
@@ -1709,6 +1723,7 @@
                               <object class="GtkSpinButton" id="MaxStepDownControl">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">Height of each slice abraded by the Push Cutter.</property>
                                 <property name="invisible_char">&#x2022;</property>
                                 <property name="adjustment">MaxStepDownValue</property>
                                 <property name="digits">2</property>
@@ -2095,6 +2110,7 @@
     <property name="page_size">10</property>
   </object>
   <object class="GtkWindow" id="view3dwindow">
+    <property name="title" translatable="yes">PyCAM Visualization</property>
     <child>
       <object class="GtkVBox" id="view3dbox">
         <property name="visible">True</property>

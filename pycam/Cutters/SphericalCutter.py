@@ -25,13 +25,14 @@ class SphericalCutter(BaseCutter):
     def __repr__(self):
         return "SphericalCutter<%s,%s>" % (self.location,self.radius)
 
-    def get_shape(self, format="ODE"):
+    def get_shape(self, format="ODE", additional_distance=0.0):
         if format == "ODE":
             import ode
-            geom = ode.GeomCapsule(None, self.radius, self.height)
+            radius = self.radius + additional_distance
+            geom = ode.GeomCapsule(None, radius, self.height)
             def set_position(x, y, z):
                 geom.setPosition((x, y, z))
-            self.shape[format] = (geom, set_position, (0, 0, 0.5 * self.height + self.radius))
+            self.shape[format] = (geom, set_position, (0, 0, 0.5 * self.height + radius))
             return self.shape[format]
 
     def to_OpenGL(self):
