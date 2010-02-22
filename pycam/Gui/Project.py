@@ -115,7 +115,7 @@ class GLView:
             GL.glMatrixMode(GL.GL_MODELVIEW)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
             result = func(self, *args, **kwargs)
-            self.restore_view_setting()
+            self.position_camera()
             self._paint_raw()
             GL.glMatrixMode(prev_mode)
             GL.glFlush()
@@ -139,8 +139,10 @@ class GLView:
         GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR, (0.1, 0.1, 0.1, 1.0))
         GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (0.5))
         GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
         GL.glMatrixMode(GL.GL_PROJECTION)
-        self.store_view_setting()
+        GL.glLoadIdentity()
 
     def destroy(self, widget=None):
         self.area.destroy()
@@ -192,7 +194,7 @@ class GLView:
                 factors_y = (v_up[0], v_up[1], v_up[2])
                 # calculate the proportion of each model axis according to the x axis of the screen
                 distv = self.view["distance"]
-                distv = Point(v[0], v[1], v[2]).normalize()
+                distv = Point(distv[0], distv[1], distv[2]).normalize()
                 factors_x = distv.cross(Point(v_up[0], v_up[1], v_up[2])).normalize()
                 factors_x = (factors_x.x, factors_x.y, factors_x.z)
                 # determine the biggest dimension (x/y/z) for moving the screen's center in relation to this value
@@ -217,15 +219,7 @@ class GLView:
                 self._paint_ignore_busy()
         self.mouse["timestamp"] = time.time()
 
-    def store_view_setting(self):
-        prev_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
-        GL.glMatrixMode(GL.GL_PROJECTION)
-        GL.glPushMatrix()
-        self.projection_matrix = GL.glGetDoublev(GL.GL_PROJECTION_MATRIX)[:]
-        GL.glPopMatrix()
-        GL.glMatrixMode(prev_mode)
-
-    def restore_view_setting(self):
+    def position_camera(self):
         prev_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadIdentity()
@@ -239,7 +233,7 @@ class GLView:
     def get_current_projection_matrix(self):
         GL.glPushMatrix()
         prev_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
-        self.restore_view_setting()
+        self.position_camera()
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glPushMatrix()
         result = GL.glGetDoublev(GL.GL_PROJECTION_MATRIX)
