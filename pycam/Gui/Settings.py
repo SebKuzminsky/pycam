@@ -139,7 +139,7 @@ tool_radius: 0.1
         try:
             self.config.read([filename])
         except ConfigParser.ParsingError, err_msg:
-            print sys.stderr, "Failed to parse config file '%s': %s" % (filename, err_msg)
+            print >> sys.stderr, "Failed to parse config file '%s': %s" % (filename, err_msg)
             return False
         return True
 
@@ -148,7 +148,7 @@ tool_radius: 0.1
         try:
             self.reset(input_text)
         except ConfigParser.ParsingError, err_msg:
-            print sys.stderr, "Failed to parse config data: %s" % str(err_msg)
+            print >> sys.stderr, "Failed to parse config data: %s" % str(err_msg)
             return False
         return True
 
@@ -158,7 +158,7 @@ tool_radius: 0.1
             self.config.write(fi)
             fi.close()
         except IOError, err_msg:
-            print sys.stderr, "Failed to write configuration to file (%s): %s" % (filename, err_msg)
+            print >> sys.stderr, "Failed to write configuration to file (%s): %s" % (filename, err_msg)
             return False
         return True
 
@@ -173,7 +173,7 @@ tool_radius: 0.1
                 except ConfigParser.NoOptionError:
                     value = None
             except ValueError, err_msg:
-                print sys.stderr, "Invalid config value for '%s = %s': %s" % (key, self.config.get(section, key), err_msg)
+                print >> sys.stderr, "Invalid config value for '%s = %s': %s" % (key, self.config.get(section, key), err_msg)
                 value = None
             if not value is None:
                 self.settings.set(key, value)
