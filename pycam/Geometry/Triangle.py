@@ -210,9 +210,11 @@ class Triangle:
             self.calc_circumcircle()
         return self._radiussq
 
+    def normal(self):
+        return self.p2.sub(self.p1).cross(self.p3.sub(self.p2))
+
     def calc_circumcircle(self):
-        # we can't use the cached value of "normal", since we don't want the normalized value
-        normal = self.p2.sub(self.p1).cross(self.p3.sub(self.p2))
+        normal = self.normal()
         denom = normal.norm()
         self._radius = (self.p2.sub(self.p1).norm()*self.p3.sub(self.p2).norm()*self.p3.sub(self.p1).norm())/(2*denom)
         self._radiussq = self._radius*self._radius
