@@ -190,16 +190,16 @@ class GLView:
                 distv = Point(distv[0], distv[1], distv[2]).normalize()
                 factors_x = distv.cross(Point(v_up[0], v_up[1], v_up[2])).normalize()
                 factors_x = (factors_x.x, factors_x.y, factors_x.z)
-                # determine the biggest dimension (x/y/z) for moving the screen's center in relation to this value
-                obj_dim = []
-                obj_dim.append(self.settings.get("maxx") - self.settings.get("minx"))
-                obj_dim.append(self.settings.get("maxy") - self.settings.get("miny"))
-                obj_dim.append(self.settings.get("maxz") - self.settings.get("minz"))
-                max_dim = max(max(obj_dim[0], obj_dim[1]), obj_dim[2])
-                # relation of x/y movement to the respective screen dimension
-                win_x_rel = (0.0 + x - start_x)/width
-                win_y_rel = (0.0 + y - start_y)/height
                 if (state == BUTTON_MOVE):
+                    # determine the biggest dimension (x/y/z) for moving the screen's center in relation to this value
+                    obj_dim = []
+                    obj_dim.append(self.settings.get("maxx") - self.settings.get("minx"))
+                    obj_dim.append(self.settings.get("maxy") - self.settings.get("miny"))
+                    obj_dim.append(self.settings.get("maxz") - self.settings.get("minz"))
+                    max_dim = max(max(obj_dim[0], obj_dim[1]), obj_dim[2])
+                    # relation of x/y movement to the respective screen dimension
+                    win_x_rel = (2 * (0.0 + start_x - x)/width)/math.sin(self.view["fovy"])
+                    win_y_rel = (2 * (0.0 + start_y - y)/height)/math.sin(self.view["fovy"])
                     # update the model position that should be centered on the screen
                     old_center = self.view["center"]
                     new_center = []
@@ -215,8 +215,15 @@ class GLView:
                     rot_x_factor = (0.0 + start_x)/(width/2) - 1
                     rot_y_factor = (0.0 + start_y)/(height/2) - 1
                     # calculate rotation angles (between -90 and +90 degrees)
-                    rot_x_angle = rot_x_factor * math.pi/2 * (y - start_y)/height
-                    rot_y_angle = rot_y_factor * math.pi/2 * (x - start_x)/width
+                    xdiff = x - start_x
+                    ydiff = y - start_y
+                    # compensate inverse rotation left/right side (around x axis) and top/bottom (around y axis)
+                    if rot_x_factor < 0:
+                        ydiff = -ydiff
+                    if rot_y_factor > 0:
+                        xdiff = -xdiff
+                    rot_x_angle = rot_x_factor * math.pi * (ydiff)/height
+                    rot_y_angle = rot_y_factor * math.pi * (xdiff)/width
                     # calculate sinus / cosinus
                     rot_x_sin = math.sin(rot_x_angle)
                     rot_x_cos = math.cos(rot_x_angle)
