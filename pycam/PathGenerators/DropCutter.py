@@ -1,8 +1,8 @@
 from pycam.PathProcessors import *
 from pycam.Geometry import *
-from pycam.Geometry.utils import *
 from pycam.Geometry.intersection import intersect_lines
 import pycam.PathGenerators
+import sys
 
 
 class DropCutter:
@@ -15,6 +15,11 @@ class DropCutter:
         # used for the non-ode code
         self._triangle_last = None
         self._cut_last = None
+        # put the toolpath clearly above the model, if the model exceeds the
+        # bounding box at certain positions
+        self._safe_height = self.model.maxz + 4 * (self.model.maxz - self.model.minz)
+        # remember if we already reported an invalid boundary
+        self._boundary_warning_already_shown = False
 
     def GenerateToolPath(self, minx, maxx, miny, maxy, z0, z1, d0, d1, direction, draw_callback=None):
         if self.processor:
@@ -40,7 +45,10 @@ class DropCutter:
         dim_height.set(dim_height.start)
         pa.new_direction(direction)
         dims[1].set(dims[1].start)
+
         finished_plane = False
+        self._boundary_warning_already_shown = False
+
         while not finished_plane:
             finished_line = False
             dims[0].set(dims[0].start)
@@ -65,7 +73,7 @@ class DropCutter:
                 if dims[0].check_bounds(tolerance=d0):
                     # check if we are still within the strict limits
                     if not dims[0].check_bounds():
-                        # we crossed the maximum, but we are still within step width
+                        # we exceeded the maximum, but we are still within step width
                         dims[0].set(dims[0].end)
                 else:
                     finished_line = True
@@ -115,7 +123,12 @@ class DropCutter:
             self.physics.set_drill_position((x.get(), y.get(), dim_height.start))
             if self.physics.check_collision():
                 # the object fills the whole range of z0..z1 - we should issue a warning
-                next_point = Point(x.get(), y.get(), INFINITE)
+                next_point = Point(x.get(), y.get(), self._safe_height)
+                if not self._boundary_warning_already_shown:
+                    print >>sys.stderr, "WARNING: DropCutter exceed the height" \
+                            + " of the boundary box: using a safe height " \
+                            + "instead. This warning is reported only once."
+                    self._boundary_warning_already_shown = True
             else:
                 next_point = Point(x.get(), y.get(), dim_height.start)
         else:
@@ -127,7 +140,7 @@ class DropCutter:
         if order is None:
             order = ["x", "y"]
         p = Point(x.get(), y.get(), dim_height.get())
-        height_max = -INFINITE
+        height_max = -self._safe_height
         cut_max = None
         triangle_max = None
         self.cutter.moveto(p)
