@@ -500,7 +500,7 @@ class ProjectGui:
                 self.option = pycam.PathProcessors.PathAccumulator(zigzag=True)
             else:
                 self.option = None
-            self.pathgenerator = pycam.PathGenerators.DropCutter(self.cutter, self.model, self.option, physics=self.physics);
+            self.pathgenerator = pycam.PathGenerators.DropCutter(self.cutter, self.model, self.option);
             if samples>1:
                 dx = (maxx-minx)/(samples-1)
             else:
