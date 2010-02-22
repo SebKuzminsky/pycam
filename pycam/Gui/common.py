@@ -1,5 +1,6 @@
 import OpenGL.GL as GL
 import OpenGL.GLUT as GLUT
+import ode_objects
 
 
 VIEW_ROTATIONS = {
@@ -158,4 +159,12 @@ def shift_model(model, shift_x, shift_y, shift_z):
 def scale_model(model, scale):
     matrix = ((scale, 0, 0, 0), (0, scale, 0, 0), (0, 0, scale, 0))
     model.transform(matrix)
+
+def generate_physics(settings):
+        physics = ode_objects.PhysicalWorld()
+        physics.reset()
+        physics.add_mesh((0, 0, 0), settings.get("model").triangles())
+        height = settings.get("maxz") - settings.get("minz")
+        physics.set_drill(ode_objects.ShapeCylinder(0.1, height), (settings.get("minx"), settings.get("miny"), settings.get("maxz")))
+        return physics
 
