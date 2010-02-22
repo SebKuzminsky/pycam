@@ -248,11 +248,24 @@ class ProjectGui:
         self.gui.add_from_file(GTKBUILD_FILE)
         self.window = self.gui.get_object("ProjectWindow")
         # file loading
-        self.file_selector = self.gui.get_object("File chooser")
-        self.file_selector.connect("file-set",
-                self.load_model_file, self.file_selector.get_filename)
+        self.model_file_selector = self.gui.get_object("ModelFileChooser")
+        self.model_file_selector.connect("file-set",
+                self.load_model_file, self.model_file_selector.get_filename)
+        self.processing_file_selector = self.gui.get_object("ProcessingSettingsLoad")
+        self.processing_file_selector.connect("file-set",
+                self.load_processing_file, self.processing_file_selector.get_filename)
         self.window.connect("destroy", self.destroy)
         self.gui.get_object("SaveModel").connect("clicked", self.save_model)
+        model_file_chooser = self.gui.get_object("ModelFileChooser")
+        filter = gtk.FileFilter()
+        filter.set_name("All files")
+        filter.add_pattern("*")
+        model_file_chooser.add_filter(filter)
+        filter = gtk.FileFilter()
+        filter.set_name("STL files")
+        filter.add_pattern("*.stl")
+        model_file_chooser.add_filter(filter)
+        model_file_chooser.set_filter(filter)
         self.window.show()
         self.model = None
         self.toolpath = None
@@ -309,6 +322,8 @@ class ProjectGui:
         # add tool radius for experimental ODE collisions
         obj = self.gui.get_object("ToolRadiusControl")
         self.settings.add_item("tool_radius", obj.get_value, obj.set_value)
+        obj = self.gui.get_object("TorusRadiusControl")
+        self.settings.add_item("torus_radius", obj.get_value, obj.set_value)
         # visual settings
         self.gui.get_object("Toggle3dView").connect("toggled", self.toggle_3d_view)
         for name, objname in (("show_model", "ShowModelCheckBox"),
@@ -327,6 +342,60 @@ class ProjectGui:
         skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
         self.settings.add_item("drill_progress_frame_skip", skip_obj.get_value, skip_obj.set_value)
         self.settings.set("drill_progress_frame_skip", 20)
+        # cutter shapes
+        def get_cutter_shape_name():
+            for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
+                if self.gui.get_object(name).get_active():
+                    return name
+        def set_cutter_shape_name(value):
+            self.gui.get_object(value).set_active(True)
+        self.settings.add_item("cutter_shape", get_cutter_shape_name, set_cutter_shape_name)
+        # path generator
+        def get_path_generator():
+            for name in ("DropCutter", "PushCutter"):
+                if self.gui.get_object(name).get_active():
+                    return name
+        def set_path_generator(value):
+            self.gui.get_object(value).set_active(True)
+        self.settings.add_item("path_generator", get_path_generator, set_path_generator)
+        # path postprocessor
+        def get_path_postprocessor():
+            for name in ("PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter", "ContourCutter"):
+                if self.gui.get_object(name).get_active():
+                    return name
+        def set_path_postprocessor(value):
+            self.gui.get_object(value).set_active(True)
+        self.settings.add_item("path_postprocessor", get_path_postprocessor, set_path_postprocessor)
+        # path direction (combined get/set function)
+        def set_get_path_direction(input=None):
+            for obj, value in [("PathDirectionX", "x"), ("PathDirectionY", "y"), ("PathDirectionXY", "xy")]:
+                if value == input:
+                    self.gui.get_object(obj).set_active(True)
+                    return
+                if self.gui.get_object(obj).get_active():
+                    return value
+        self.settings.add_item("path_direction", set_get_path_direction, set_get_path_direction)
+        # load a processing configuration object
+        self.processing_settings = pycam.Gui.Settings.ProcessingSettings(self.settings)
+        self.processing_config_selection = self.gui.get_object("ProcessingTemplatesList")
+        self.processing_config_selection.connect("changed",
+                self.switch_processing_config, self.processing_config_selection.get_active_text)
+        self.gui.get_object("ProcessingTemplateDelete").connect("clicked",
+                self.delete_processing_config, self.processing_config_selection.get_active_text)
+        self.gui.get_object("ProcessingTemplateSave").connect("clicked",
+                self.save_processing_config, self.processing_config_selection.get_active_text)
+        self.load_processing_settings()
+        self.gui.get_object("ProcessingSettingsSaveToFile").connect("clicked", self.save_processing_settings_file)
+        load_processing_settings_file_control = self.gui.get_object("ProcessingSettingsLoad")
+        filter = gtk.FileFilter()
+        filter.set_name("All files")
+        filter.add_pattern("*")
+        load_processing_settings_file_control.add_filter(filter)
+        filter = gtk.FileFilter()
+        filter.set_name("Config files")
+        filter.add_pattern("*.conf")
+        load_processing_settings_file_control.add_filter(filter)
+        load_processing_settings_file_control.set_filter(filter)
 
     def gui_activity_guard(func):
         def wrapper(self, *args, **kwargs):
@@ -458,7 +527,7 @@ class ProjectGui:
         gtk.main_quit()
         
     def open(self, filename):
-        self.file_selector.set_filename(filename)
+        self.model_file_selector.set_filename(filename)
         self.load_model_file(filename=filename)
         
     def append_to_queue(self, func, *args, **kwargs):
@@ -474,10 +543,17 @@ class ProjectGui:
     def load_model_file(self, widget=None, filename=None):
         if not filename:
             return
-        # evaluate "filename" after showing the dialog above - then we will get the new value
         if callable(filename):
             filename = filename()
         self.load_model(pycam.Importers.STLImporter.ImportModel(filename))
+
+    @gui_activity_guard
+    def load_processing_file(self, widget=None, filename=None):
+        if not filename:
+            return
+        if callable(filename):
+            filename = filename()
+        self.load_processing_settings(filename)
 
     def load_model(self, model):
         self.model = model
@@ -485,6 +561,69 @@ class ProjectGui:
         self.append_to_queue(self.reset_bounds)
         self.append_to_queue(self.toggle_3d_view, True)
         self.append_to_queue(self.update_view)
+
+    def load_processing_settings(self, filename=None):
+        if not filename is None:
+            self.processing_settings.load_file(filename)
+        # load the default config
+        self.processing_settings.enable_config()
+        # reset the combobox
+        self.processing_config_selection.set_active(0)
+        while self.processing_config_selection.get_active() >= 0:
+            self.processing_config_selection.remove_text(0)
+            self.processing_config_selection.set_active(0)
+        for config_name in self.processing_settings.get_config_list():
+            self.processing_config_selection.append_text(config_name)
+
+    def switch_processing_config(self, widget=None, section=None):
+        if callable(section):
+            section = section()
+        if not section:
+            return
+        if section in self.processing_settings.get_config_list():
+            self.processing_settings.enable_config(section)
+
+    def delete_processing_config(self, widget=None, section=None):
+        if callable(section):
+            section = section()
+        if not section:
+            return
+        if section in self.processing_settings.get_config_list():
+            self.processing_settings.delete_config(section)
+            self.load_processing_settings()
+
+    def save_processing_config(self, widget=None, section=None):
+        if callable(section):
+            section = section()
+        if not section:
+            return
+        self.processing_settings.store_config(section)
+        self.load_processing_settings()
+        # try to select the previously stored entry
+        index = 0
+        self.processing_config_selection.set_active(0)
+        while self.processing_config_selection.get_active() >= 0:
+            if self.processing_config_selection.get_active_text() == section:
+                # we found the right entry
+                break
+            index += 1
+            self.processing_config_selection.set_active(index)
+
+    @gui_activity_guard
+    def save_processing_settings_file(self, widget=None, section=None):
+        no_dialog = False
+        if isinstance(widget, basestring):
+            filename = widget
+            no_dialog = True
+        else:
+            # we open a dialog
+            filename = self.get_save_filename("Save processing settings to ...", ("Config files", "*.conf"))
+        # no filename given -> exit
+        if not filename:
+            return
+        if not self.processing_settings.write_to_file(filename) and not no_dialog:
+            self.show_error_dialog("Failed to save processing settings file")
+
 
     @gui_activity_guard
     def generate_toolpath(self, widget, data=None):
@@ -502,30 +641,18 @@ class ProjectGui:
             draw_callback = UpdateView(self.update_view, self.settings.get("drill_progress_frame_skip")).update
         else:
             draw_callback = None
-        radius = float(self.gui.get_object("ToolRadiusControl").get_value())
-        cuttername = None
-        for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
-            if self.gui.get_object(name).get_active():
-                cuttername = name
-        pathgenerator = None
-        for name in ("DropCutter", "PushCutter"):
-            if self.gui.get_object(name).get_active():
-                pathgenerator = name
-        pathprocessor = None
-        for name in ("PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter", "ContourCutter"):
-            if self.gui.get_object(name).get_active():
-                pathprocessor = name
-        direction = None
-        for obj, value in [("PathDirectionX", "x"), ("PathDirectionY", "y"), ("PathDirectionXY", "xy")]:
-            if self.gui.get_object(obj).get_active():
-                direction = value
+        radius = self.settings.get("tool_radius")
+        cuttername = self.settings.get("cutter_shape")
+        pathgenerator = self.settings.get("path_generator")
+        pathprocessor = self.settings.get("path_postprocessor")
+        direction = self.settings.get("path_direction")
         cutter_height = 2 * (self.settings.get("maxz") - self.settings.get("minz"))
         if cuttername == "SphericalCutter":
             self.cutter = pycam.Cutters.SphericalCutter(radius, height=cutter_height)
         elif cuttername == "CylindricalCutter":
             self.cutter = pycam.Cutters.CylindricalCutter(radius, height=cutter_height)
         elif cuttername == "ToroidalCutter":
-            toroid = float(self.gui.get_object("TorusRadiusControl").get_value())
+            toroid = self.settings.get("torus_radius")
             self.cutter = pycam.Cutters.ToroidalCutter(radius, toroid, height=cutter_height)
 
         self.update_physics()
