@@ -3,6 +3,7 @@
 import OpenGL.GL as GL
 import OpenGL.GLUT as GLUT
 import pycam.Importers.STLImporter
+import pycam.Exporters.STLExporter
 import pycam.Gui.Settings
 import pycam.Gui.common as GuiCommon
 import pygtk
@@ -117,6 +118,7 @@ class ProjectGui:
         self.file_selector.connect("file-set",
                 self.load_model_file, self.file_selector.get_filename)
         self.window.connect("destroy", self.destroy)
+        self.gui.get_object("SaveModel").connect("clicked", self.save_model)
         self.window.show()
         self.model = None
         self.toolpath = None
@@ -171,6 +173,61 @@ class ProjectGui:
             if self.gui.get_object(obj).get_active():
                 GuiCommon.transform_model(self.model, value)
         self.view3d.paint()
+
+    def save_model(self, widget):
+        no_dialog = False
+        if isinstance(widget, basestring):
+            filename = widget
+            no_dialog = True
+        else:
+            # we open a dialog
+            dialog = gtk.FileChooserDialog(title="Save model to ...",
+                    parent=self.window, action=gtk.FILE_CHOOSER_ACTION_SAVE,
+                    buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                        gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+            # add filter for stl files
+            filter = gtk.FileFilter()
+            filter.set_name("STL models")
+            filter.add_pattern("*.stl")
+            dialog.add_filter(filter)
+            # add filter for all files
+            filter = gtk.FileFilter()
+            filter.set_name("All files")
+            filter.add_pattern("*")
+            dialog.add_filter(filter)
+            done = False
+            while not done:
+                response = dialog.run()
+                filename = dialog.get_filename()
+                dialog.hide()
+                if response == gtk.RESPONSE_CANCEL:
+                    dialog.destroy()
+                    return
+                if os.path.exists(filename):
+                    overwrite_window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_WARNING,
+                            buttons=gtk.BUTTONS_YES_NO,
+                            message_format="This file exists. Do you want to overwrite it?")
+                    overwrite_window.set_title("Confirm overwriting existing file")
+                    response = overwrite_window.run()
+                    overwrite_window.destroy()
+                    done = (response == gtk.RESPONSE_YES)
+                else:
+                    done = True
+            dialog.destroy()
+        # no filename given -> exit
+        if not filename:
+            return
+        try:
+            fi = open(filename, "w")
+            pycam.Exporters.STLExporter.STLExporter(self.model).write(fi)
+            fi.close()
+        except IOError, err_msg:
+            if not no_dialog:
+                warn_window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_ERROR,
+                        buttons=gtk.BUTTONS_OK, message_format=str(err_msg))
+                warn_window.set_title("Failed to save model file")
+                warn_window.run()
+                warn_window.destroy()
 
     def shift_model(self, widget, use_form_values=True):
         if use_form_values:
