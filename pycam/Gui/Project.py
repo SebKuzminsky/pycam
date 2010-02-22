@@ -12,7 +12,8 @@ import pycam.Cutters
 import pycam.PathGenerators
 import pycam.PathProcessors
 import pycam.Gui.ode_objects as ode_objects
-from pycam.Geometry.utils import INFINITE
+import pycam.Geometry.utils as utils
+from pycam.Geometry.Point import Point
 import threading
 import pygtk
 import gtk
@@ -28,7 +29,7 @@ BUTTON_ZOOM = gtk.gdk.BUTTON2_MASK
 BUTTON_MOVE = gtk.gdk.BUTTON3_MASK
 
 VIEWS = {
-    "reset": {"distance": (0.0, 5.0, 5.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "reset": {"distance": (4.0, 4.0, 4.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
     "top": {"distance": (0.0, 0.0, 10.0), "center": (0.0, 0.0, 0.0), "up": (1.0, 0.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
     "bottom": {"distance": (0.0, 0.0, -10.0), "center": (0.0, 0.0, 0.0), "up": (1.0, 0.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
     "left": {"distance": (-10.0, 0.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
@@ -131,6 +132,7 @@ class GLView:
         GL.glClearDepth(1.)
         GL.glEnable(GL.GL_DEPTH_TEST)
         GL.glDepthFunc(GL.GL_LEQUAL)
+        GL.glDepthMask(GL.GL_TRUE)
         GL.glHint(GL.GL_PERSPECTIVE_CORRECTION_HINT, GL.GL_NICEST)
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))
@@ -163,6 +165,7 @@ class GLView:
             else:
                 return
         else:
+            # not more than 25 frames per second (enough for decent visualization)
             if time.time() - last_timestamp < 0.04:
                 return
             # a button was pressed before
@@ -182,23 +185,36 @@ class GLView:
             elif state == self.mouse["button"] == BUTTON_MOVE:
                 start_x, start_y = self.mouse["start_pos"]
                 self.mouse["start_pos"] = [x, y]
-                self.restore_view_setting()
-                prev_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
-                GL.glMatrixMode(GL.GL_MODELVIEW)
-                GL.glPushMatrix()
-                #GL.glLoadIdentity()
                 height = self.area.allocation.height
-                start_z = GL.glReadPixelsf(start_x, height - start_y, 1, 1, GL.GL_DEPTH_COMPONENT)[0][0]
-                z = GL.glReadPixelsf(x, height - y, 1, 1, GL.GL_DEPTH_COMPONENT)[0][0]
-                print "%d / %d / %d" % (x, y, z)
-                print self.get_current_projection_matrix()
-                #print "%f / %f / %f" % (x, y, z)
-                print GLU.gluUnProject(x, y, z)
-                GL.glPopMatrix()
-                GL.glMatrixMode(prev_mode)
+                width = self.area.allocation.width
+                # the "up" vector defines, in what proportion each axis of the model is in line with the screen's y axis
+                v_up = self.view["up"]
+                factors_y = (v_up[0], v_up[1], v_up[2])
+                # calculate the proportion of each model axis according to the x axis of the screen
+                distv = self.view["distance"]
+                distv = Point(v[0], v[1], v[2]).normalize()
+                factors_x = distv.cross(Point(v_up[0], v_up[1], v_up[2])).normalize()
+                factors_x = (factors_x.x, factors_x.y, factors_x.z)
+                # determine the biggest dimension (x/y/z) for moving the screen's center in relation to this value
+                obj_dim = []
+                obj_dim.append(self.settings.get("maxx") - self.settings.get("minx"))
+                obj_dim.append(self.settings.get("maxy") - self.settings.get("miny"))
+                obj_dim.append(self.settings.get("maxz") - self.settings.get("minz"))
+                max_dim = max(max(obj_dim[0], obj_dim[1]), obj_dim[2])
+                # relation of x/y movement to the respective screen dimension
+                win_x_rel = (0.0 + x - start_x)/width
+                win_y_rel = (0.0 + y - start_y)/height
+                # update the model position that should be centered on the screen
+                old_center = self.view["center"]
+                new_center = []
+                for i in range(3):
+                    new_center.append(old_center[i] + max_dim * (win_x_rel * factors_x[i] + win_y_rel * factors_y[i]))
+                self.view["center"] = tuple(new_center)
+                self._paint_ignore_busy()
             else:
                 # button was released
                 self.mouse["button"] = None
+                self._paint_ignore_busy()
         self.mouse["timestamp"] = time.time()
 
     def store_view_setting(self):
@@ -351,7 +367,7 @@ class ProjectGui:
             self.notify_visual.acquire()
             self.notify_visual.notify()
             self.notify_visual.release()
-            self.view3d.reset_view()
+            self.view3d.paint()
 
     def reload_model(self):
         self.physics = GuiCommon.generate_physics(self.settings)
@@ -373,7 +389,7 @@ class ProjectGui:
             # do the gl initialization
             self.view3d = GLView(self.gui, self.settings)
             if self.model and self.view3d.enabled:
-                self.reset_bounds(None)
+                self.reset_bounds()
                 self.view3d.reset_view()
             #self.thread3d = VisualThread(self.notify_visual, self.settings)
             #self.thread3d.start()
@@ -452,7 +468,7 @@ class ProjectGui:
         self.update_view()
 
     @gui_activity_guard
-    def reset_bounds(self, widget, data=None):
+    def reset_bounds(self, widget=None, data=None):
         xwidth = self.model.maxx - self.model.minx
         ywidth = self.model.maxy - self.model.miny
         zwidth = self.model.maxz - self.model.minz
@@ -485,6 +501,8 @@ class ProjectGui:
         if callable(filename):
             filename = filename()
         self.model = pycam.Importers.STLImporter.ImportModel(filename)
+        # do some initialization
+        self.append_to_queue(self.reset_bounds)
         self.append_to_queue(self.toggle_3d_view, True)
         self.append_to_queue(self.reload_model)
 
@@ -536,11 +554,11 @@ class ProjectGui:
             if samples>1:
                 dx = (maxx-minx)/(samples-1)
             else:
-                dx = INFINITE
+                dx = utils.INFINITE
             if lines>1:
                 dy = (maxy-miny)/(lines-1)
             else:
-                dy = INFINITE
+                dy = utils.INFINITE
             if direction == "x":
                 self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, 0)
             elif direction == "y":
@@ -563,15 +581,15 @@ class ProjectGui:
             if pathprocessor == "ContourCutter" and samples>1:
                 dx = (maxx-minx)/(samples-1)
             else:
-                dx = INFINITE
+                dx = utils.INFINITE
             if lines>1:
                 dy = (maxy-miny)/(lines-1)
             else:
-                dy = INFINITE
+                dy = utils.INFINITE
             if layers>1:
                 dz = (maxz-minz)/(layers-1)
             else:
-                dz = INFINITE
+                dz = utils.INFINITE
             if direction == "x":
                 self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, 0, dy, dz)
             elif direction == "y":
