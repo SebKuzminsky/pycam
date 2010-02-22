@@ -67,6 +67,9 @@ class PhysicalWorld:
         #geom.setGeom(shape)
         #shape.setOffset(position)
         self._space.add(shape)
+        # sadly PyODE forgets to update the "space" attribute that we need in
+        # the cutters' "extend" functions
+        shape.space = self._space
         self._add_geom(shape, position, append=False)
         self._drill_offset = position
         self._drill = shape

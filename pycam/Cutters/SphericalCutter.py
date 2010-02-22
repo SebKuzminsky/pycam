@@ -42,13 +42,13 @@ class SphericalCutter(BaseCutter):
             def extend_shape(diff_x, diff_y, diff_z):
                 # diff_z is assumed to be zero
                 reset_shape()
-                geom_end_transform = ode.GeomTransform(geom.getSpace())
+                geom_end_transform = ode.GeomTransform(geom.space)
                 geom_end_transform.setBody(geom.getBody())
                 geom_end = ode.GeomCapsule(None, radius, self.height)
                 geom_end.setPosition((diff_x, diff_y, center_height))
                 geom_end_transform.setGeom(geom_end)
                 # create the block that connects the two cylinders at the end
-                geom_connect_transform = ode.GeomTransform(geom.getSpace())
+                geom_connect_transform = ode.GeomTransform(geom.space)
                 geom_connect_transform.setBody(geom.getBody())
                 hypotenuse = sqrt(diff_x * diff_x + diff_y * diff_y)
                 cosinus = diff_x/hypotenuse
@@ -60,7 +60,7 @@ class SphericalCutter(BaseCutter):
                 geom_connect.setPosition((diff_x/2.0, diff_y/2.0, center_height))
                 geom_connect_transform.setGeom(geom_connect)
                 # create a cylinder, that connects the two half spheres at the lower end of both drills
-                geom_cyl_transform = ode.GeomTransform(geom.getSpace())
+                geom_cyl_transform = ode.GeomTransform(geom.space)
                 geom_cyl_transform.setBody(geom.getBody())
                 geom_cyl = ode.GeomCylinder(None, radius, hypotenuse)
                 # switch x and z axis of the cylinder and then rotate it according to diff_x/diff_y
