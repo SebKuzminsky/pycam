@@ -13,47 +13,19 @@ import pycam.PathGenerators
 import pycam.PathProcessors
 import pycam.Gui.ode_objects as ode_objects
 import pycam.Geometry.utils as utils
-from pycam.Geometry.Point import Point
+import pycam.Gui.OpenGLTools as ogl_tools
 import threading
 import pygtk
 import gtk
 import os
 import sys
 import time
-import math
 
 GTKBUILD_FILE = os.path.join(os.path.dirname(__file__), "gtk-interface", "pycam-project.ui")
 
 BUTTON_ROTATE = gtk.gdk.BUTTON1_MASK
-BUTTON_ZOOM = gtk.gdk.BUTTON2_MASK
-BUTTON_MOVE = gtk.gdk.BUTTON3_MASK
-
-# the length of the distance vector does not matter - it will be normalized and multiplied later anyway
-VIEWS = {
-    "reset": {"distance": (1.0, 1.0, 1.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "top": {"distance": (0.0, 0.0, 1.0), "center": (0.0, 0.0, 0.0), "up": (1.0, 0.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "bottom": {"distance": (0.0, 0.0, -1.0), "center": (0.0, 0.0, 0.0), "up": (1.0, 0.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "left": {"distance": (-1.0, 0.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "right": {"distance": (1.0, 0.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "front": {"distance": (0.0, -1.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "back": {"distance": (0.0, 1.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-}
-
-def gtkgl_functionwrapper(function):
-    def decorated(self, *args, **kwords):
-        gldrawable=self.area.get_gl_drawable()
-        if not gldrawable:
-            return
-        glcontext=self.area.get_gl_context()
-        if not gldrawable.gl_begin(glcontext):
-            return
-        if not self.initialized:
-            self.glsetup()
-            self.initialized = True
-        result = function(self, *args, **kwords)
-        gldrawable.gl_end()
-        return result
-    return decorated # TODO: make this a well behaved decorator (keeping name, docstring etc)
+BUTTON_MOVE = gtk.gdk.BUTTON2_MASK
+BUTTON_ZOOM = gtk.gdk.BUTTON3_MASK
 
 
 class GLView:
@@ -67,25 +39,23 @@ class GLView:
         self.initialized = False
         self.busy = False
         self.mouse = {"start_pos": None, "button": None, "timestamp": 0}
-        self.view = VIEWS["reset"].copy()
         self.enabled = True
         self.settings = settings
         self.gui = gui
         self.window = self.gui.get_object("view3dwindow")
-        self.window.set_size_request(400,400)
         self.window.connect("destroy", self.destroy)
+        self.window.set_default_size(560, 400)
         self.container = self.gui.get_object("view3dbox")
-        self.gui.get_object("Reset View").connect("clicked", self.rotate_view, VIEWS["reset"])
-        self.gui.get_object("Left View").connect("clicked", self.rotate_view, VIEWS["left"])
-        self.gui.get_object("Right View").connect("clicked", self.rotate_view, VIEWS["right"])
-        self.gui.get_object("Front View").connect("clicked", self.rotate_view, VIEWS["front"])
-        self.gui.get_object("Back View").connect("clicked", self.rotate_view, VIEWS["back"])
-        self.gui.get_object("Top View").connect("clicked", self.rotate_view, VIEWS["top"])
-        self.gui.get_object("Bottom View").connect("clicked", self.rotate_view, VIEWS["bottom"])
+        self.gui.get_object("Reset View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["reset"])
+        self.gui.get_object("Left View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["left"])
+        self.gui.get_object("Right View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["right"])
+        self.gui.get_object("Front View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["front"])
+        self.gui.get_object("Back View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["back"])
+        self.gui.get_object("Top View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["top"])
+        self.gui.get_object("Bottom View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["bottom"])
         # OpenGL stuff
         glconfig = gtk.gdkgl.Config(mode=gtk.gdkgl.MODE_RGB|gtk.gdkgl.MODE_DEPTH|gtk.gdkgl.MODE_DOUBLE)
         self.area = gtk.gtkgl.DrawingArea(glconfig)
-        self.area.set_size_request(400, 400)
         # first run; might also be important when doing other fancy gtk/gdk stuff
         self.area.connect_after('realize', self.paint)
         # called when a part of the screen is uncovered
@@ -97,6 +67,7 @@ class GLView:
         self.area.connect("button-press-event", self.mouse_handler)
         self.area.connect('motion-notify-event', self.mouse_handler)
         self.area.show()
+        self.camera = ogl_tools.Camera(self.settings, lambda: (self.area.allocation.width, self.area.allocation.height))
         self.container.add(self.area)
         self.container.show()
         self.window.show()
@@ -116,7 +87,7 @@ class GLView:
             GL.glMatrixMode(GL.GL_MODELVIEW)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
             result = func(self, *args, **kwargs)
-            self.position_camera()
+            self.camera.position_camera()
             self._paint_raw()
             GL.glMatrixMode(prev_mode)
             GL.glFlush()
@@ -144,10 +115,27 @@ class GLView:
         GL.glLoadIdentity()
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadIdentity()
+        GL.glViewport(0, 0, self.area.allocation.width, self.area.allocation.height)
 
     def destroy(self, widget=None):
         self.area.destroy()
         self.window.destroy()
+
+    def gtkgl_functionwrapper(function):
+        def decorated(self, *args, **kwords):
+            gldrawable=self.area.get_gl_drawable()
+            if not gldrawable:
+                return
+            glcontext=self.area.get_gl_context()
+            if not gldrawable.gl_begin(glcontext):
+                return
+            if not self.initialized:
+                self.glsetup()
+                self.initialized = True
+            result = function(self, *args, **kwords)
+            gldrawable.gl_end()
+            return result
+        return decorated # TODO: make this a well behaved decorator (keeping name, docstring etc)
 
     @check_busy
     @gtkgl_functionwrapper
@@ -174,22 +162,11 @@ class GLView:
                     scale = 0.01
                 elif scale > 100:
                     scale = 100
-                dist = self.view["distance"]
-                self.view["distance"] = (dist[0] * scale, dist[1] * scale, dist[2] * scale)
+                self.camera.scale_distance(scale)
                 self._paint_ignore_busy()
             elif (state == self.mouse["button"] == BUTTON_MOVE) or (state == self.mouse["button"] == BUTTON_ROTATE):
                 start_x, start_y = self.mouse["start_pos"]
                 self.mouse["start_pos"] = [x, y]
-                height = self.area.allocation.height
-                width = self.area.allocation.width
-                # the "up" vector defines, in what proportion each axis of the model is in line with the screen's y axis
-                v_up = self.view["up"]
-                factors_y = (v_up[0], v_up[1], v_up[2])
-                # calculate the proportion of each model axis according to the x axis of the screen
-                distv = self.view["distance"]
-                distv = Point(distv[0], distv[1], distv[2]).normalize()
-                factors_x = distv.cross(Point(v_up[0], v_up[1], v_up[2])).normalize()
-                factors_x = (factors_x.x, factors_x.y, factors_x.z)
                 if (state == BUTTON_MOVE):
                     # determine the biggest dimension (x/y/z) for moving the screen's center in relation to this value
                     obj_dim = []
@@ -197,57 +174,11 @@ class GLView:
                     obj_dim.append(self.settings.get("maxy") - self.settings.get("miny"))
                     obj_dim.append(self.settings.get("maxz") - self.settings.get("minz"))
                     max_dim = max(max(obj_dim[0], obj_dim[1]), obj_dim[2])
-                    # relation of x/y movement to the respective screen dimension
-                    win_x_rel = (2 * (0.0 + start_x - x)/width)/math.sin(self.view["fovy"])
-                    win_y_rel = (2 * (0.0 + start_y - y)/height)/math.sin(self.view["fovy"])
-                    # update the model position that should be centered on the screen
-                    old_center = self.view["center"]
-                    new_center = []
-                    for i in range(3):
-                        new_center.append(old_center[i] + max_dim * (win_x_rel * factors_x[i] + win_y_rel * factors_y[i]))
-                    self.view["center"] = tuple(new_center)
+                    self.camera.move_camera_by_screen(x - start_x, y - start_y, max_dim)
                 else:
+                    # BUTTON_ROTATE
                     # update the camera position according to the mouse movement
-                    # store original distance length ("rotation radius")
-                    distv = self.view["distance"]
-                    orig_distance = Point(distv[0], distv[1], distv[2])
-                    # calculate rotation factors - based on the distance to the center (between -1 and 1)
-                    rot_x_factor = (0.0 + start_x)/(width/2) - 1
-                    rot_y_factor = (0.0 + start_y)/(height/2) - 1
-                    # calculate rotation angles (between -90 and +90 degrees)
-                    xdiff = x - start_x
-                    ydiff = y - start_y
-                    # compensate inverse rotation left/right side (around x axis) and top/bottom (around y axis)
-                    if rot_x_factor < 0:
-                        ydiff = -ydiff
-                    if rot_y_factor > 0:
-                        xdiff = -xdiff
-                    rot_x_angle = rot_x_factor * math.pi * (ydiff)/height
-                    rot_y_angle = rot_y_factor * math.pi * (xdiff)/width
-                    # calculate sinus / cosinus
-                    rot_x_sin = math.sin(rot_x_angle)
-                    rot_x_cos = math.cos(rot_x_angle)
-                    rot_y_sin = math.sin(rot_y_angle)
-                    rot_y_cos = math.cos(rot_y_angle)
-                    # rotation of an original vector around a normalized "rot" vector
-                    # see http://mathworld.wolfram.com/RotationMatrix.html
-                    def rotate(orig, rot, sin, cos):
-                        rot_matrix = ((cos + rot[0]*rot[0]*(1-cos), rot[0]*rot[1]*(1-cos) - rot[2]*sin, rot[0]*rot[2]*(1-cos) + rot[1]*sin),
-                                (rot[1]*rot[0]*(1-cos) + rot[2]*sin, cos + rot[1]*rot[1]*(1-cos), rot[1]*rot[2]*(1-cos) - rot[0]*sin),
-                                (rot[2]*rot[0]*(1-cos) - rot[1]*sin, rot[2]*rot[1]*(1-cos) + rot[0]*sin, cos + rot[2]*rot[2]*(1-cos)))
-                        return (orig[0]*rot_matrix[0][0] + orig[1]*rot_matrix[0][1] + orig[2]*rot_matrix[0][2],
-                                orig[0]*rot_matrix[1][0] + orig[1]*rot_matrix[1][1] + orig[2]*rot_matrix[1][2],
-                                orig[0]*rot_matrix[2][0] + orig[1]*rot_matrix[2][1] + orig[2]*rot_matrix[2][2])
-                    # rotate around the "up" vector with the y-axis rotation
-                    original_distance = self.view["distance"]
-                    original_up = self.view["up"]
-                    new_distance = rotate(original_distance, factors_y, rot_y_sin, rot_y_cos)
-                    new_up = rotate(original_up, factors_y, rot_y_sin, rot_y_cos)
-                    # rotate around the cross vector with the x-axis rotation
-                    new_distance = rotate(new_distance, factors_x, rot_x_sin, rot_x_cos)
-                    new_up = rotate(new_up, factors_x, rot_x_sin, rot_x_cos)
-                    self.view["distance"] = new_distance
-                    self.view["up"] = new_up
+                    self.camera.rotate_camera_by_screen(start_x, start_y, x, y)
                 self._paint_ignore_busy()
             else:
                 # button was released
@@ -255,58 +186,14 @@ class GLView:
                 self._paint_ignore_busy()
         self.mouse["timestamp"] = time.time()
 
-    def position_camera(self):
-        prev_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
-        GL.glMatrixMode(GL.GL_PROJECTION)
-        GL.glLoadIdentity()
-        v = self.view
-        GLU.gluPerspective(v["fovy"], (0.0 + self.area.allocation.width)/self.area.allocation.height, v["znear"], v["zfar"])
-        GLU.gluLookAt(v["center"][0] + v["distance"][0], v["center"][1] + v["distance"][1], v["center"][2] + v["distance"][2],
-                v["center"][0], v["center"][1], v["center"][2], v["up"][0], v["up"][1], v["up"][2])
-        GL.glMatrixMode(prev_mode)
-
-    @gtkgl_functionwrapper
-    def get_current_projection_matrix(self):
-        GL.glPushMatrix()
-        prev_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
-        self.position_camera()
-        GL.glMatrixMode(GL.GL_PROJECTION)
-        GL.glPushMatrix()
-        result = GL.glGetDoublev(GL.GL_PROJECTION_MATRIX)
-        GL.glPopMatrix()
-        GL.glMatrixMode(prev_mode)
-        GL.glPopMatrix()
-        return result
-
     @check_busy
     @gtkgl_functionwrapper
     @gtkgl_refresh
-    def rotate_view(self, widget, data=None):
-        self.view = data.copy()
-        self.center_view()
-        self.auto_adjust_distance()
-
-    def center_view(self):
-        s = self.settings
-        # center the view on the object
-        self.view["center"] = ((s.get("maxx") + s.get("minx"))/2, (s.get("maxy") + s.get("miny"))/2, (s.get("maxz") + s.get("minz"))/2)
-
-    def auto_adjust_distance(self):
-        s = self.settings
-        v = self.view
-        # adjust the distance to get a view of the whole object
-        dimx = s.get("maxx") - s.get("minx")
-        dimy = s.get("maxy") - s.get("miny")
-        dimz = s.get("maxz") - s.get("minz")
-        max_dim = max(max(dimx, dimy), dimz)
-        win_size = min(self.area.allocation.height, self.area.allocation.width)
-        distv = Point(v["distance"][0], v["distance"][1], v["distance"][2]).normalize()
-        # the multiplier "2.0" is based on: sqrt(2) + margin  -- the squre root makes sure, that the the diagonal fits
-        distv = distv.mul((max_dim * 2.0) / math.sin(v["fovy"]/2))
-        self.view["distance"] = (distv.x, distv.y, distv.z)
+    def rotate_view(self, widget=None, view=None):
+        self.camera.set_view(view)
 
     def reset_view(self):
-        self.rotate_view(None, VIEWS["reset"].copy())
+        self.rotate_view(None, None)
 
     @check_busy
     @gtkgl_functionwrapper
