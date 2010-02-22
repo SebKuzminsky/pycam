@@ -347,8 +347,8 @@ class ProjectGui:
         self.settings.set("show_bounding_box", True)
         self.settings.set("show_axes", True)
         skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
-        self.settings.add_item("drill_progress_frame_skip", skip_obj.get_value, skip_obj.set_value)
-        self.settings.set("drill_progress_frame_skip", 20)
+        self.settings.add_item("drill_progress_max_fps", skip_obj.get_value, skip_obj.set_value)
+        self.settings.set("drill_progress_max_fps", 2)
         # cutter shapes
         def get_cutter_shape_name():
             for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
@@ -639,16 +639,16 @@ class ProjectGui:
     def generate_toolpath(self, widget, data=None):
         start_time = time.time()
         class UpdateView:
-            def __init__(self, func, skip=10):
-                self.count = 0
-                self.freq = skip + 1
+            def __init__(self, func, max_fps=1):
+                self.last_update = time.time()
+                self.max_fps = max_fps
                 self.func = func
             def update(self):
-                if self.count % self.freq == 0:
+                if (time.time() - self.last_update) > 1.0/self.max_fps:
+                    self.last_update = time.time()
                     self.func()
-                self.count += 1
         if self.settings.get("show_drill_progress"):
-            draw_callback = UpdateView(self.update_view, self.settings.get("drill_progress_frame_skip")).update
+            draw_callback = UpdateView(self.update_view, self.settings.get("drill_progress_max_fps")).update
         else:
             draw_callback = None
         radius = self.settings.get("tool_radius")
