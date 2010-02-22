@@ -71,6 +71,11 @@ path_postprocessor: PathAccumulator
 #maxz: 3
 tool_radius: 1.0
 torus_radius: 0.25
+speed: 1000
+feedrate: 200
+material_allowance: 0
+overlap: 20
+step_down: 1.0
 
 [Rough]
 cutter_shape: CylindricalCutter
@@ -105,6 +110,11 @@ tool_radius: 0.1
             "maxz": float,
             "tool_radius": float,
             "torus_radius": float,
+            "speed": float,
+            "feedrate": float,
+            "material_allowance": float,
+            "overlap": int,
+            "step_down": float,
     }
 
     def __init__(self, settings):

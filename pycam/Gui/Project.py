@@ -306,22 +306,19 @@ class ProjectGui:
         self.gui.get_object("Scale up").connect("clicked", self.scale_model, True)
         self.gui.get_object("Scale down").connect("clicked", self.scale_model, False)
         self.gui.get_object("Scale factor").set_value(2)
-        # preset the numbers
-        self.gui.get_object("LayersControl").set_value(1)
-        self.gui.get_object("SamplesControl").set_value(50)
-        self.gui.get_object("LinesControl").set_value(20)
-        self.gui.get_object("ToolRadiusControl").set_value(1.0)
-        self.gui.get_object("TorusRadiusControl").set_value(0.25)
-        self.gui.get_object("FeedrateControl").set_value(200)
-        self.gui.get_object("SpeedControl").set_value(1000)
+        # drill, path and processing settings
+        for objname, key in (("MaterialAllowanceControl", "material_allowance"),
+                ("MaxStepDownControl", "step_down"),
+                ("OverlapPercentControl", "overlap"),
+                ("ToolRadiusControl", "tool_radius"),
+                ("TorusRadiusControl", "torus_radius"),
+                ("FeedrateControl", "feedrate"),
+                ("SpeedControl", "speed")):
+            obj = self.gui.get_object(objname)
+            self.settings.add_item(key, obj.get_value, obj.set_value)
         # connect buttons with activities
         self.gui.get_object("GenerateToolPathButton").connect("clicked", self.generate_toolpath)
         self.gui.get_object("SaveToolPathButton").connect("clicked", self.save_toolpath)
-        # add tool radius for experimental ODE collisions
-        obj = self.gui.get_object("ToolRadiusControl")
-        self.settings.add_item("tool_radius", obj.get_value, obj.set_value)
-        obj = self.gui.get_object("TorusRadiusControl")
-        self.settings.add_item("torus_radius", obj.get_value, obj.set_value)
         # visual and general settings
         self.gui.get_object("Toggle3dView").connect("toggled", self.toggle_3d_view)
         for name, objname in (("show_model", "ShowModelCheckBox"),
@@ -674,23 +671,19 @@ class ProjectGui:
         maxy = float(self.settings.get("maxy"))+offset
         minz = float(self.settings.get("minz"))
         maxz = float(self.settings.get("maxz"))
-        samples = float(self.gui.get_object("SamplesControl").get_value())
-        lines = float(self.gui.get_object("LinesControl").get_value())
-        layers = float(self.gui.get_object("LayersControl").get_value())
+
+        effective_toolradius = self.settings.get("tool_radius") * (1.0 - self.settings.get("overlap")/200.0)
+        x_shift = effective_toolradius
+        y_shift = effective_toolradius
+
         if pathgenerator == "DropCutter":
             if pathprocessor == "ZigZagCutter":
                 self.option = pycam.PathProcessors.PathAccumulator(zigzag=True)
             else:
                 self.option = None
             self.pathgenerator = pycam.PathGenerators.DropCutter(self.cutter, self.model, self.option, physics=self.physics);
-            if samples>1:
-                dx = (maxx-minx)/(samples-1)
-            else:
-                dx = utils.INFINITE
-            if lines>1:
-                dy = (maxy-miny)/(lines-1)
-            else:
-                dy = utils.INFINITE
+            dx = x_shift
+            dy = y_shift
             if direction == "x":
                 self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, 0, draw_callback)
             elif direction == "y":
@@ -710,16 +703,13 @@ class ProjectGui:
             else:
                 self.option = None
             self.pathgenerator = pycam.PathGenerators.PushCutter(self.cutter, self.model, self.option);
-            if pathprocessor == "ContourCutter" and samples>1:
-                dx = (maxx-minx)/(samples-1)
+            if pathprocessor == "ContourCutter":
+                dx = x_shift
             else:
                 dx = utils.INFINITE
-            if lines>1:
-                dy = (maxy-miny)/(lines-1)
-            else:
-                dy = utils.INFINITE
-            if layers>1:
-                dz = (maxz-minz)/(layers-1)
+            dy = y_shift
+            if self.settings.get("step_down") > 0:
+                dz = self.settings.get("step_down")
             else:
                 dz = utils.INFINITE
             if direction == "x":
