@@ -148,6 +148,8 @@ class ProjectGui:
         self.gui.get_object("Rotate").connect("clicked", self.transform_model)
         self.gui.get_object("Flip").connect("clicked", self.transform_model)
         self.gui.get_object("Swap").connect("clicked", self.transform_model)
+        self.gui.get_object("Shift Model").connect("clicked", self.shift_model, True)
+        self.gui.get_object("Shift To Origin").connect("clicked", self.shift_model, False)
 
     def transform_model(self, widget):
         if widget.get_name() == "Rotate":
@@ -165,10 +167,23 @@ class ProjectGui:
                 GuiCommon.transform_model(self.model, value)
         self.view3d.paint()
 
+    def shift_model(self, widget, use_form_values=True):
+        if use_form_values:
+            shift_x = self.gui.get_object("shift_x").get_value()
+            shift_y = self.gui.get_object("shift_y").get_value()
+            shift_z = self.gui.get_object("shift_z").get_value()
+        else:
+            shift_x = -self.model.minx
+            shift_y = -self.model.miny
+            shift_z = -self.model.minz
+        GuiCommon.shift_model(self.model, shift_x, shift_y, shift_z)
+        self.view3d.paint()
+
     def minimize_bounds(self, widget, data=None):
         # be careful: this depends on equal names of "settings" keys and "model" variables
         for limit in ["minx", "miny", "minz", "maxx", "maxy", "maxz"]:
             self.settings.set(limit, getattr(self.model, limit))
+        self.view3d.paint()
 
     def reset_bounds(self, widget, data=None):
         xwidth = self.model.maxx - self.model.minx
@@ -180,6 +195,7 @@ class ProjectGui:
         self.settings.set("maxx", self.model.maxx + 0.1 * xwidth)
         self.settings.set("maxy", self.model.maxy + 0.1 * ywidth)
         self.settings.set("maxz", self.model.maxz + 0.1 * zwidth)
+        self.view3d.paint()
 
     def destroy(self, widget, data=None):
         gtk.main_quit()

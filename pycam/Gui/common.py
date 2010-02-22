@@ -150,4 +150,8 @@ def right_view(scale):
 
 def transform_model(model, direction="normal"):
     model.transform(MODEL_TRANSFORMATIONS[direction])
+
+def shift_model(model, shift_x, shift_y, shift_z):
+    matrix = ((1, 0, 0, shift_x), (0, 1, 0, shift_y), (0, 0, 1, shift_z))
+    model.transform(matrix)
     

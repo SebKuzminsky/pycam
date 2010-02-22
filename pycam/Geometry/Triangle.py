@@ -251,3 +251,4 @@ class Triangle:
         self._radiussq = None
         self._normal = None
         self._plane = None
+

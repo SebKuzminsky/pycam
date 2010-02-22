@@ -78,7 +78,7 @@ class Model:
                 model.append(s)
         return model
 
-    def _reset_cache(self):
+    def reset_cache(self):
         self.minx = None
         self.miny = None
         self.minz = None
@@ -101,5 +101,6 @@ class Model:
                     point.x = x
                     point.y = y
                     point.z = z
-        self._reset_cache()
+            tr.reset_cache()
+        self.reset_cache()
 
