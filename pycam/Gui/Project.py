@@ -238,7 +238,6 @@ class GLView:
 class ProjectGui:
 
     def __init__(self, master=None):
-        gtk.gdk.threads_init()
         self.settings = pycam.Gui.Settings.Settings()
         self.gui_is_active = False
         self.view3d = None
