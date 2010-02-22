@@ -16,6 +16,7 @@ from pycam.PathProcessors import *
 from pycam.Geometry.utils import *
 from pycam.Importers import *
 from pycam.Exporters import *
+import pycam.Gui.common as GuiCommon
 
 # leave 10% margin around the model
 DEFAULT_MARGIN = 0.1

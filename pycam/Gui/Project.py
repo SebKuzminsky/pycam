@@ -1,27 +1,16 @@
 #!/usr/bin/env python
 
-from OpenGL.GL import *
-from OpenGL.GLUT import *
-from OpenGL.GLU import *
+import OpenGL.GL as GL
+import OpenGL.GLUT as GLUT
 import pycam.Importers.STLImporter
 import pycam.Gui.Settings
+import pycam.Gui.common as GuiCommon
 import pygtk
 import gtk
 import os
 import sys
 
 GTKBUILD_FILE = os.path.join(os.path.dirname(__file__), "gtk-interface", "pycam-project.ui")
-
-#class OpenglWidget(Opengl):
-#    def __init__(self, master=None, cnf={}, **kw):
-#        Opengl.__init__(self, master, kw)
-#        glutInit()
-#        glShadeModel(GL_FLAT)
-#        glMatrixMode(GL_MODELVIEW)
-#        glMaterial(GL_FRONT_AND_BACK, GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))
-#        glMaterial(GL_FRONT_AND_BACK, GL_SPECULAR, (0.1, 0.1, 0.1, 1.0))
-#        glMaterial(GL_FRONT_AND_BACK, GL_SHININESS, (0.5))
-#        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
 VIEW_ROTATIONS = {
     "reset":    [(110, 1.0, 0.0, 0.0), (180, 0.0, 1.0, 0.0), (160, 0.0, 0.0, 1.0)],
@@ -89,55 +78,38 @@ class GLView:
         #glEnable(GL_TEXTURE_2D)
         #glEnable(GL_BLEND)
         #glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glutInit()
-        glShadeModel(GL_FLAT)
-        glMatrixMode(GL_MODELVIEW)
-        glMaterial(GL_FRONT_AND_BACK, GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))
-        glMaterial(GL_FRONT_AND_BACK, GL_SPECULAR, (0.1, 0.1, 0.1, 1.0))
-        glMaterial(GL_FRONT_AND_BACK, GL_SHININESS, (0.5))
-
-    def draw_string(self, x, y, z, p, s, scale=.01):
-        glPushMatrix()
-        glTranslatef(x,y,z)
-        if p == 'xy':
-            pass
-        elif p == 'yz':
-            glRotatef(90, 0, 1, 0)
-            glRotatef(90, 0, 0, 1)
-        elif p == 'xz':
-            glRotatef(90, 0, 1, 0)
-            glRotatef(90, 0, 0, 1)
-            glRotatef(-90, 0, 1, 0)
-        glScalef(scale,scale,scale)
-        for c in str(s):
-            glutStrokeCharacter(GLUT_STROKE_ROMAN, ord(c))
-        glPopMatrix()
+        GLUT.glutInit()
+        GL.glShadeModel(GL.GL_FLAT)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))
+        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR, (0.1, 0.1, 0.1, 1.0))
+        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (0.5))
 
     def paint(self):
-        glTranslatef(0,0,-2)
+        GL.glTranslatef(0,0,-2)
         if self.settings.get("unit") == "mm":
             size = 100
         else:
             size = 5
         # axes
-        glBegin(GL_LINES)
-        glColor3f(1,0,0)
-        glVertex3f(0,0,0)
-        glVertex3f(size,0,0)
-        glEnd()
-        self.draw_string(size,0,0,'xy',"X")
-        glBegin(GL_LINES)
-        glColor3f(0,1,0)
-        glVertex3f(0,0,0)
-        glVertex3f(0,size,0)
-        glEnd()
-        self.draw_string(0,size,0,'yz',"Y")
-        glBegin(GL_LINES)
-        glColor3f(0,0,1)
-        glVertex3f(0,0,0)
-        glVertex3f(0,0,size)
-        glEnd()
-        self.draw_string(0,0,size,'xz',"Z")
+        GL.glBegin(GL.GL_LINES)
+        GL.glColor3f(1,0,0)
+        GL.glVertex3f(0,0,0)
+        GL.glVertex3f(size,0,0)
+        GL.glEnd()
+        GuiCommon.draw_string(size,0,0,'xy',"X")
+        GL.glBegin(GL.GL_LINES)
+        GL.glColor3f(0,1,0)
+        GL.glVertex3f(0,0,0)
+        GL.glVertex3f(0,size,0)
+        GL.glEnd()
+        GuiCommon.draw_string(0,size,0,'yz',"Y")
+        GL.glBegin(GL.GL_LINES)
+        GL.glColor3f(0,0,1)
+        GL.glVertex3f(0,0,0)
+        GL.glVertex3f(0,0,size)
+        GL.glEnd()
+        GuiCommon.draw_string(0,0,size,'xz',"Z")
         # stock model
         minx = float(self.settings.get("minx"))
         miny = float(self.settings.get("miny"))
@@ -145,41 +117,41 @@ class GLView:
         maxx = float(self.settings.get("maxx"))
         maxy = float(self.settings.get("maxy"))
         maxz = float(self.settings.get("maxz"))
-        glBegin(GL_LINES)
-        glColor3f(0.3,0.3,0.3)
-        glVertex3f(minx, miny, minz)
-        glVertex3f(maxx, miny, minz)
-        glVertex3f(minx, maxy, minz)
-        glVertex3f(maxx, maxy, minz)
-        glVertex3f(minx, miny, maxz)
-        glVertex3f(maxx, miny, maxz)
-        glVertex3f(minx, maxy, maxz)
-        glVertex3f(maxx, maxy, maxz)
-        glVertex3f(minx, miny, minz)
-        glVertex3f(minx, maxy, minz)
-        glVertex3f(maxx, miny, minz)
-        glVertex3f(maxx, maxy, minz)
-        glVertex3f(minx, miny, maxz)
-        glVertex3f(minx, maxy, maxz)
-        glVertex3f(maxx, miny, maxz)
-        glVertex3f(maxx, maxy, maxz)
-        glVertex3f(minx, miny, minz)
-        glVertex3f(minx, miny, maxz)
-        glVertex3f(maxx, miny, minz)
-        glVertex3f(maxx, miny, maxz)
-        glVertex3f(minx, maxy, minz)
-        glVertex3f(minx, maxy, maxz)
-        glVertex3f(maxx, maxy, minz)
-        glVertex3f(maxx, maxy, maxz)
-        glEnd()
+        GL.glBegin(GL.GL_LINES)
+        GL.glColor3f(0.3,0.3,0.3)
+        GL.glVertex3f(minx, miny, minz)
+        GL.glVertex3f(maxx, miny, minz)
+        GL.glVertex3f(minx, maxy, minz)
+        GL.glVertex3f(maxx, maxy, minz)
+        GL.glVertex3f(minx, miny, maxz)
+        GL.glVertex3f(maxx, miny, maxz)
+        GL.glVertex3f(minx, maxy, maxz)
+        GL.glVertex3f(maxx, maxy, maxz)
+        GL.glVertex3f(minx, miny, minz)
+        GL.glVertex3f(minx, maxy, minz)
+        GL.glVertex3f(maxx, miny, minz)
+        GL.glVertex3f(maxx, maxy, minz)
+        GL.glVertex3f(minx, miny, maxz)
+        GL.glVertex3f(minx, maxy, maxz)
+        GL.glVertex3f(maxx, miny, maxz)
+        GL.glVertex3f(maxx, maxy, maxz)
+        GL.glVertex3f(minx, miny, minz)
+        GL.glVertex3f(minx, miny, maxz)
+        GL.glVertex3f(maxx, miny, minz)
+        GL.glVertex3f(maxx, miny, maxz)
+        GL.glVertex3f(minx, maxy, minz)
+        GL.glVertex3f(minx, maxy, maxz)
+        GL.glVertex3f(maxx, maxy, minz)
+        GL.glVertex3f(maxx, maxy, maxz)
+        GL.glEnd()
         # draw the model
-        glColor3f(0.5,.5,1)
+        GL.glColor3f(0.5,.5,1)
         self.model_paint_func()
         # draw the toolpath
         self.draw_toolpath(self.settings.get("toolpath"))
 
     def _gl_clear(self):
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
 
     def _gl_finish(self):
         self.area.get_gl_drawable().swap_buffers()
@@ -196,12 +168,12 @@ class GLView:
 
     def rotate_view(self, widget=None, rotation=None):
         self._gl_clear()
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-        glScalef(self.scale,self.scale,self.scale)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
+        GL.glScalef(self.scale,self.scale,self.scale)
         if rotation:
             for one_rot in rotation:
-                glRotatef(*one_rot)
+                GL.glRotatef(*one_rot)
         self.paint()
         self._gl_finish()
 
@@ -216,24 +188,24 @@ class GLView:
 
     @gtkgl_functionwrapper
     def _resize_window(self, widget, data=None):
-        glViewport(0, 0, widget.allocation.width, widget.allocation.height)
+        GL.glViewport(0, 0, widget.allocation.width, widget.allocation.height)
 
     def draw_toolpath(self, toolpath):
         if toolpath:
             last = None
             for path in toolpath:
                 if last:
-                    glColor3f(.5,1,.5)
-                    glBegin(GL_LINES)
-                    glVertex3f(last.x,last.y,last.z)
+                    GL.glColor3f(.5,1,.5)
+                    GL.glBegin(GL.GL_LINES)
+                    GL.glVertex3f(last.x,last.y,last.z)
                     last = path.points[0]
-                    glVertex3f(last.x,last.y,last.z)
-                    glEnd()
-                glColor3f(1,.5,.5)
-                glBegin(GL_LINE_STRIP)
+                    GL.glVertex3f(last.x,last.y,last.z)
+                    GL.glEnd()
+                GL.glColor3f(1,.5,.5)
+                GL.glBegin(GL.GL_LINE_STRIP)
                 for point in path.points:
-                    glVertex3f(point.x,point.y,point.z)
-                glEnd()
+                    GL.glVertex3f(point.x,point.y,point.z)
+                GL.glEnd()
                 last = path.points[-1]
 
 
