@@ -1,6 +1,7 @@
 import OpenGL.GL as GL
 import OpenGL.GLUT as GLUT
-import ode_objects
+# "ode" is imported later, if required
+#import ode_objects
 
 
 MODEL_TRANSFORMATIONS = {
@@ -185,6 +186,7 @@ def scale_model(model, scale):
     model.transform(matrix)
 
 def generate_physics(settings, cutter, physics=None):
+    import ode_objects
     if physics is None:
         physics = ode_objects.PhysicalWorld()
     physics.reset()
@@ -197,4 +199,11 @@ def generate_physics(settings, cutter, physics=None):
     shape_info = cutter.get_shape("ODE")
     physics.set_drill(shape_info[0], shape_info[2])
     return physics
+
+def is_ode_available():
+    try:
+        import ode
+        return True
+    except ImportError:
+        return False
 

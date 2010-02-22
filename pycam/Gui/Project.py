@@ -11,7 +11,6 @@ import pycam.Gui.common as GuiCommon
 import pycam.Cutters
 import pycam.PathGenerators
 import pycam.PathProcessors
-import pycam.Gui.ode_objects as ode_objects
 import pycam.Geometry.utils as utils
 import pycam.Gui.OpenGLTools as ogl_tools
 import threading
@@ -324,16 +323,24 @@ class ProjectGui:
         self.settings.add_item("tool_radius", obj.get_value, obj.set_value)
         obj = self.gui.get_object("TorusRadiusControl")
         self.settings.add_item("torus_radius", obj.get_value, obj.set_value)
-        # visual settings
+        # visual and general settings
         self.gui.get_object("Toggle3dView").connect("toggled", self.toggle_3d_view)
         for name, objname in (("show_model", "ShowModelCheckBox"),
                 ("show_axes", "ShowAxesCheckBox"),
                 ("show_bounding_box", "ShowBoundingCheckBox"),
                 ("show_toolpath", "ShowToolPathCheckBox"),
-                ("show_drill_progress", "ShowDrillProgressCheckBox")):
+                ("show_drill_progress", "ShowDrillProgressCheckBox"),
+                ("enable_ode", "SettingEnableODE")):
             obj = self.gui.get_object(objname)
             self.settings.add_item(name, obj.get_active, obj.set_active)
             obj.connect("toggled", self.update_view)
+        # set the availability of ODE
+        if GuiCommon.is_ode_available():
+            self.settings.set("enable_ode", True)
+            self.gui.get_object("SettingEnableODE").set_sensitive(True)
+        else:
+            self.settings.set("enable_ode", False)
+            self.gui.get_object("SettingEnableODE").set_sensitive(False)
         # preconfigure some values
         self.settings.set("show_model", True)
         self.settings.set("show_toolpath", True)
@@ -415,7 +422,10 @@ class ProjectGui:
             self.view3d.paint()
 
     def update_physics(self):
-        self.physics = GuiCommon.generate_physics(self.settings, self.cutter, self.physics)
+        if self.settings.get("enable_ode"):
+            self.physics = GuiCommon.generate_physics(self.settings, self.cutter, self.physics)
+        else:
+            self.physics = None
 
     @gui_activity_guard
     def toggle_3d_view(self, widget=None, value=None):
@@ -749,7 +759,7 @@ class ProjectGui:
             response = dialog.run()
             filename = dialog.get_filename()
             dialog.hide()
-            if response == gtk.RESPONSE_CANCEL:
+            if response != gtk.RESPONSE_OK:
                 dialog.destroy()
                 return None
             if os.path.exists(filename):
