@@ -1,7 +1,68 @@
+IMPORTANT NOTICE: please read the following lines before continuing with installation
 
-DEPENDENCIES: 
--------------
 
+pycam currently offers two GUI versions:
+ 1) Tk interface:
+    This version was the only option up to v0.1.x. It implements almost all
+    available features, but it is not very convenient. The Tk interface will
+    probably be removed in future versions of pycam.
+ 2) GTK interface:
+    The GTK interface is a recent development. It will replace the Tk interface
+    in the long term. All features are available.
+
+Add the commandline switch "--gtk" if you want to use the GTK interface instead
+of the default Tk interface.
+Please verify below, that you install the specific requirements for the GUI of
+your choice.
+
+
+Dependencies of the GTK interface:
+==================================
+
+Windows:
+--------
+
+    Python 2.5:
+                http://www.python.org/download/releases/2.5.4/
+                Please note that some of the GTK packages below require
+                specifically v2.5 (thus v2.6 will not help).
+
+    GTK v2.12 and GtkGlExt:
+                http://www.bonifazi.eu/appunti/ (Blog)
+                http://www.bonifazi.eu/appunti/gtk_installer.exe
+
+    PyGTK v2.12:
+                http://ftp.gnome.org/pub/GNOME/binaries/win32/pygtk/2.12/pygtk-2.12.1-3.win32-py2.5.exe
+
+    PyODE (optional):
+                http://downloads.sourceforge.net/pyode/PyODE-1.2.0.win32-py2.5.exe?use_mirror=osdn
+
+
+Notes:
+ - you will probably need to add some paths manually to your search PATH setting:
+        C:\Programs\Common Files\GTK\bin;C:\Programs\Python25;C:\Programs\GtkGLExt\1.0\bin
+   (this is just an example - adjust it to your specific installation paths)
+ - run a python console and check if the following commands work:
+        import gtk
+        import gtk.gtkgl
+        import OpenGL
+        import ode       # this is optional
+
+Unix:
+-----
+
+Install the following packages with your package manager:
+    python
+    python-gtk2
+    python-gtkglext1
+    python-pyode    (optional)
+
+On a debian or ubuntu system you would just type the following in a root console:
+    apt-get install python-gtkglext1 python-pyode
+
+
+Dependencies of the Tk interface: 
+=================================
 
 Windows:
 --------
