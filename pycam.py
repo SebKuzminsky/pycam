@@ -3,6 +3,7 @@
 from optparse import OptionParser
 
 from pycam.Gui.SimpleGui import SimpleGui
+from pycam.Gui.Project import ProjectGui
 from pycam.Importers.TestModel import TestModel
 
 # check if we were started as a separate program
@@ -14,6 +15,9 @@ if __name__ == "__main__":
     parser.add_option("", "--gui", dest="display",
             action="store_true", default=False,
             help="don't create the outputfile on the fly - just preset the output filename and show the GUI")
+    parser.add_option("", "--simple-gui", dest="simple_gui",
+            action="store_true", default=False,
+            help="use the obsolete old GUI (Tcl/Tk)")
     (options, args) = parser.parse_args()
 
     if len(args) > 0:
@@ -23,7 +27,10 @@ if __name__ == "__main__":
     if len(args) > 2:
         parser.error("too many arguments given (%d instead of %d)" % (len(args), 2))
 
-    gui = SimpleGui()
+    if options.simple_gui:
+        gui = SimpleGui()
+    else:
+        gui = ProjectGui()
 
     if not inputfile:
         gui.model = TestModel()
