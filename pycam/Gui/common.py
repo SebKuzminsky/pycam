@@ -191,13 +191,8 @@ def generate_physics(settings, cutter, physics=None):
         physics = ode_objects.PhysicalWorld()
     physics.reset()
     physics.add_mesh((0, 0, 0), settings.get("model").triangles())
-    #radius = settings.get("tool_radius")
-    # weird: the normal length of the drill causes the detection to fail at high points of the object
-    #height = 2 * (settings.get("maxz") - settings.get("minz"))
-    #physics.set_drill(ode_objects.ShapeCylinder(radius, height), (settings.get("minx"), settings.get("miny"), settings.get("maxz")))
-    #physics.set_drill(ode_objects.ShapeCylinder(radius, height), (0, 0,  height/2.0))
-    shape_info = cutter.get_shape("ODE", settings.get("material_allowance"))
-    physics.set_drill(shape_info[0], shape_info[2])
+    shape_info = cutter.get_shape("ODE", additional_distance=settings.get("material_allowance"))
+    physics.set_drill(shape_info[0], (0.0, 0.0, 0.0))
     return physics
 
 def is_ode_available():

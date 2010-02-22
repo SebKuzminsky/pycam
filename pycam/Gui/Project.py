@@ -695,7 +695,7 @@ class ProjectGui:
         direction = self.settings.get("path_direction")
         # Due to some weirdness the height of the drill must be bigger than the object's size.
         # Otherwise some collisions are not detected.
-        cutter_height = 2 * (self.settings.get("maxz") - self.settings.get("minz"))
+        cutter_height = 4 * max((self.settings.get("maxz") - self.settings.get("minz")), (self.model.maxz - self.model.minz))
         if cuttername == "SphericalCutter":
             self.cutter = pycam.Cutters.SphericalCutter(radius, height=cutter_height)
         elif cuttername == "CylindricalCutter":
@@ -746,7 +746,7 @@ class ProjectGui:
                 self.option = pycam.PathProcessors.ContourCutter()
             else:
                 self.option = None
-            self.pathgenerator = pycam.PathGenerators.PushCutter(self.cutter, self.model, self.option);
+            self.pathgenerator = pycam.PathGenerators.PushCutter(self.cutter, self.model, self.option, physics=self.physics);
             if pathprocessor == "ContourCutter":
                 dx = x_shift
             else:
