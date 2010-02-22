@@ -4,6 +4,7 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import pycam.Importers.STLImporter
+import pycam.Gui.Settings
 import pygtk
 import gtk
 import os
@@ -114,11 +115,10 @@ class GLView:
 
     def paint(self):
         glTranslatef(0,0,-2)
-        if self.settings["Unit"]() == "mm":
+        if self.settings.get("unit") == "mm":
             size = 100
         else:
             size = 5
-        bounds = self.settings["bounds"]
         # axes
         glBegin(GL_LINES)
         glColor3f(1,0,0)
@@ -139,12 +139,12 @@ class GLView:
         glEnd()
         self.draw_string(0,0,size,'xz',"Z")
         # stock model
-        minx = float(bounds["minx"])
-        maxx = float(bounds["maxx"])
-        miny = float(bounds["miny"])
-        maxy = float(bounds["maxy"])
-        minz = float(bounds["minz"])
-        maxz = float(bounds["maxz"])
+        minx = float(self.settings.get("minx"))
+        miny = float(self.settings.get("miny"))
+        minz = float(self.settings.get("minz"))
+        maxx = float(self.settings.get("maxx"))
+        maxy = float(self.settings.get("maxy"))
+        maxz = float(self.settings.get("maxz"))
         glBegin(GL_LINES)
         glColor3f(0.3,0.3,0.3)
         glVertex3f(minx, miny, minz)
@@ -176,7 +176,7 @@ class GLView:
         glColor3f(0.5,.5,1)
         self.model_paint_func()
         # draw the toolpath
-        self.settings["toolpath_repaint_func"]()
+        self.draw_toolpath(self.settings.get("toolpath"))
 
     def _gl_clear(self):
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
@@ -218,6 +218,24 @@ class GLView:
     def _resize_window(self, widget, data=None):
         glViewport(0, 0, widget.allocation.width, widget.allocation.height)
 
+    def draw_toolpath(self, toolpath):
+        if toolpath:
+            last = None
+            for path in toolpath:
+                if last:
+                    glColor3f(.5,1,.5)
+                    glBegin(GL_LINES)
+                    glVertex3f(last.x,last.y,last.z)
+                    last = path.points[0]
+                    glVertex3f(last.x,last.y,last.z)
+                    glEnd()
+                glColor3f(1,.5,.5)
+                glBegin(GL_LINE_STRIP)
+                for point in path.points:
+                    glVertex3f(point.x,point.y,point.z)
+                glEnd()
+                last = path.points[-1]
+
 
 class ProjectGui:
 
@@ -234,39 +252,51 @@ class ProjectGui:
         self.model = None
         self.toolpath = None
         # add some dummies - to be implemented later ...
-        self.settings = {
-            "bounds": {
-                "minx": 0,
-                "miny": 0,
-                "minz": 0,
-                "maxx": 7,
-                "maxy": 7,
-                "maxz": 2,
-            },
-            "Unit": lambda: "mm",
-            "toolpath_repaint_func": self.draw_toolpath,
-        }
+        self.settings = pycam.Gui.Settings.Settings()
+        self.settings.add_item("model", lambda: getattr(self, "model"))
+        self.settings.add_item("toolpath", lambda: getattr(self, "toolpath"))
+        # create the unit field (can't be defined via glade)
+        scale_box = self.gui.get_object("scale_box")
+        unit_field = gtk.combo_box_new_text()
+        unit_field.append_text("mm")
+        unit_field.append_text("inch")
+        unit_field.set_active(0)
+        unit_field.show()
+        scale_box.add(unit_field)
+        # move it to the top
+        scale_box.reorder_child(unit_field, 0)
+        def set_unit(text):
+            unit_field.set_active((text == "mm") and 0 or 1)
+        self.settings.add_item("unit", unit_field.get_active_text, set_unit)
+        # define the limit callback functions
+        for limit in ["minx", "miny", "minz", "maxx", "maxy", "maxz"]:
+            obj = self.gui.get_object(limit)
+            self.settings.add_item(limit, obj.get_value, obj.set_value)
+        # connect the "Bounds" action
+        self.gui.get_object("Minimize bounds").connect("clicked", self.minimize_bounds)
+        self.gui.get_object("Reset bounds").connect("clicked", self.reset_bounds)
 
-    def draw_toolpath(self):
-        if self.toolpath:
-            last = None
-            for path in self.toolpath:
-                if last:
-                    glColor3f(.5,1,.5)
-                    glBegin(GL_LINES)
-                    glVertex3f(last.x,last.y,last.z)
-                    last = path.points[0]
-                    glVertex3f(last.x,last.y,last.z)
-                    glEnd()
-                glColor3f(1,.5,.5)
-                glBegin(GL_LINE_STRIP)
-                for point in path.points:
-                    glVertex3f(point.x,point.y,point.z)
-                glEnd()
-                last = path.points[-1]
+    def minimize_bounds(self, widget, data=None):
+        for limit in ["minx", "miny", "minz", "maxx", "maxy", "maxz"]:
+            self.settings.set(limit, getattr(self.model, limit))
+
+    def reset_bounds(self, widget, data=None):
+        xwidth = self.model.maxx - self.model.minx
+        ywidth = self.model.maxy - self.model.miny
+        zwidth = self.model.maxz - self.model.minz
+        self.settings.set("minx", self.model.minx - 0.1 * xwidth)
+        self.settings.set("miny", self.model.miny - 0.1 * ywidth)
+        self.settings.set("minz", self.model.minz - 0.1 * zwidth)
+        self.settings.set("maxx", self.model.maxx + 0.1 * xwidth)
+        self.settings.set("maxy", self.model.maxy + 0.1 * ywidth)
+        self.settings.set("maxz", self.model.maxz + 0.1 * zwidth)
 
     def destroy(self, widget, data=None):
         gtk.main_quit()
+        
+    def open(self, filename):
+        self.file_selector.set_filename(filename)
+        self.load_model_file(filename=filename)
         
     def load_model_file(self, widget=None, filename=None):
         if not filename:
@@ -278,17 +308,18 @@ class ProjectGui:
         # do the gl initialization
         self.view3d = GLView(self.gui, self.settings)
         if self.model and self.view3d.enabled:
+            self.reset_bounds(None)
             # why "2.0"?
             self.view3d.set_scale(2.0/self.model.maxsize())
             self.view3d.set_model_paint_func(self.model.to_OpenGL)
             self.view3d.reset_view()
 
-    def main(self):
+    def mainloop(self):
         gtk.main()
 
 if __name__ == "__main__":
     gui = ProjectGui()
     if len(sys.argv) > 1:
-        gui.load_model_file(None, sys.argv[1])
-    gui.main()
+        gui.open(None, sys.argv[1])
+    gui.mainloop()
 
