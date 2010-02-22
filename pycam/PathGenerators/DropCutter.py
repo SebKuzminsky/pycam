@@ -149,7 +149,7 @@ class DropCutter:
         box_y_min = p.y - self.cutter.radius
         box_y_max = p.y + self.cutter.radius
         box_z_min = dim_height.end
-        box_z_max = +INFINITE
+        box_z_max = self._safe_height
         triangles = self.model.triangles(box_x_min, box_y_min, box_z_min, box_x_max, box_y_max, box_z_max)
         for t in triangles:
             if t.normal().z < 0: continue;
