@@ -17,6 +17,7 @@ from pycam.Geometry.utils import *
 from pycam.Importers import *
 from pycam.Exporters import *
 import pycam.Gui.common as GuiCommon
+import pycam.Gui.Settings
 
 # leave 10% margin around the model
 DEFAULT_MARGIN = 0.1
@@ -69,105 +70,7 @@ class SimpleGui(Tk.Frame):
         GL.glPopMatrix()
 
     def Redraw(self, event=None):
-        # default scale and orientation
-        GL.glTranslatef(0,0,-2)
-
-        if self.Unit.get() == "mm":
-            size = 100
-        else:
-            size = 5
-
-        # axes
-        GL.glBegin(GL.GL_LINES)
-        GL.glColor3f(1,0,0)
-        GL.glVertex3f(0,0,0)
-        GL.glVertex3f(size,0,0)
-        GL.glEnd()
-        self.draw_string(size,0,0,'xy',"X")
-        GL.glBegin(GL.GL_LINES)
-        GL.glColor3f(0,1,0)
-        GL.glVertex3f(0,0,0)
-        GL.glVertex3f(0,size,0)
-        GL.glEnd()
-        self.draw_string(0,size,0,'yz',"Y")
-        GL.glBegin(GL.GL_LINES)
-        GL.glColor3f(0,0,1)
-        GL.glVertex3f(0,0,0)
-        GL.glVertex3f(0,0,size)
-        GL.glEnd()
-        self.draw_string(0,0,size,'xz',"Z")
-
-        if True:
-            # stock model
-            minx = float(self.MinX.get())
-            maxx = float(self.MaxX.get())
-            miny = float(self.MinY.get())
-            maxy = float(self.MaxY.get())
-            minz = float(self.MinZ.get())
-            maxz = float(self.MaxZ.get())
-            GL.glBegin(GL.GL_LINES)
-            GL.glColor3f(0.3,0.3,0.3)
-
-            GL.glVertex3f(minx,miny,minz)
-            GL.glVertex3f(maxx,miny,minz)
-
-            GL.glVertex3f(minx,maxy,minz)
-            GL.glVertex3f(maxx,maxy,minz)
-
-            GL.glVertex3f(minx,miny,maxz)
-            GL.glVertex3f(maxx,miny,maxz)
-
-            GL.glVertex3f(minx,maxy,maxz)
-            GL.glVertex3f(maxx,maxy,maxz)
-
-
-            GL.glVertex3f(minx,miny,minz)
-            GL.glVertex3f(minx,maxy,minz)
-
-            GL.glVertex3f(maxx,miny,minz)
-            GL.glVertex3f(maxx,maxy,minz)
-
-            GL.glVertex3f(minx,miny,maxz)
-            GL.glVertex3f(minx,maxy,maxz)
-
-            GL.glVertex3f(maxx,miny,maxz)
-            GL.glVertex3f(maxx,maxy,maxz)
-
-
-            GL.glVertex3f(minx,miny,minz)
-            GL.glVertex3f(minx,miny,maxz)
-
-            GL.glVertex3f(maxx,miny,minz)
-            GL.glVertex3f(maxx,miny,maxz)
-
-            GL.glVertex3f(minx,maxy,minz)
-            GL.glVertex3f(minx,maxy,maxz)
-
-            GL.glVertex3f(maxx,maxy,minz)
-            GL.glVertex3f(maxx,maxy,maxz)
-
-            GL.glEnd()
-
-        if self.model:
-            GL.glColor3f(0.5,.5,1)
-            self.model.to_OpenGL()
-
-        if self.toolpath:
-            last = None
-            for path in self.toolpath:
-                if last:
-                    GL.glColor3f(.5,1,.5)
-                    GL.glBegin(GL.GL_LINES)
-                    GL.glVertex3f(last.x,last.y,last.z)
-                    last = path.points[0]
-                    GL.glVertex3f(last.x,last.y,last.z)
-                    GL.glEnd()
-                GL.glColor3f(1,.5,.5)
-                GL.glBegin(GL.GL_LINE_STRIP)
-                for point in path.points:
-                    GL.glVertex3f(point.x,point.y,point.z)
-                GL.glEnd()
-                last = path.points[-1]
+        GuiCommon.draw_complete_model_view(self.settings)
 
     def browseOpen(self):
         filename = tkFileDialog.Open(self, filetypes=[("STL files", ".stl"),("CFG files", ".cfg")]).show()
@@ -185,35 +88,35 @@ class SimpleGui(Tk.Frame):
                 self.model = None
         # guess suitable default dimensions
         if self.model:
-            self.MinX.set(str(self.model.minx - (self.model.maxx - self.model.minx)*DEFAULT_MARGIN))
-            self.MaxX.set(str(self.model.maxx + (self.model.maxx - self.model.minx)*DEFAULT_MARGIN))
-            self.MinY.set(str(self.model.miny - (self.model.maxy - self.model.miny)*DEFAULT_MARGIN))
-            self.MaxY.set(str(self.model.maxy + (self.model.maxy - self.model.miny)*DEFAULT_MARGIN))
+            self.settings.set("minx", str(self.model.minx - (self.model.maxx - self.model.minx)*DEFAULT_MARGIN))
+            self.settings.set("maxx", str(self.model.maxx + (self.model.maxx - self.model.minx)*DEFAULT_MARGIN))
+            self.settings.set("miny", str(self.model.miny - (self.model.maxy - self.model.miny)*DEFAULT_MARGIN))
+            self.settings.set("maxy", str(self.model.maxy + (self.model.maxy - self.model.miny)*DEFAULT_MARGIN))
             minz = self.model.minz - (self.model.maxz - self.model.minz)*DEFAULT_MARGIN
             if self.model.minz > 0 and minz < 0:
                 # don't go below zero, if it is not necessary
-                self.MinZ.set("0")
+                self.settings.set("minz", "0")
             else:
-                self.MinZ.set(str(minz))
-            self.MaxZ.set(str(self.model.maxz + (self.model.maxz - self.model.minz)*DEFAULT_MARGIN))
+                self.settings.set("minz", str(minz))
+            self.settings.set("maxz", str(self.model.maxz + (self.model.maxz - self.model.minz)*DEFAULT_MARGIN))
         self.toolpath = None
         # read a config file, if it exists
         config = ConfigParser();
         if config.read(filename.replace(".stl",".cfg")):
             if config.has_option("stock","Unit"):
-                self.Unit.set(config.get("stock","Unit"))
+                self.settings.set("unit", config.get("stock","Unit"))
             if config.has_option("stock","MinX"):
-                self.MinX.set(config.get("stock","MinX"))
+                self.settings.set("minx", config.get("stock","MinX"))
             if config.has_option("stock","MaxX"):
-                self.MaxX.set(config.get("stock","MaxX"))
+                self.settings.set("maxx", config.get("stock","MaxX"))
             if config.has_option("stock","MinY"):
-                self.MinY.set(config.get("stock","MinY"))
+                self.settings.set("miny", config.get("stock","MinY"))
             if config.has_option("stock","MaxY"):
-                self.MaxY.set(config.get("stock","MaxY"))
+                self.settings.set("maxy", config.get("stock","MaxY"))
             if config.has_option("stock","MinZ"):
-                self.MinZ.set(config.get("stock","MinZ"))
+                self.settings.set("minz", config.get("stock","MinZ"))
             if config.has_option("stock","MaxZ"):
-                self.MaxZ.set(config.get("stock","MaxZ"))
+                self.settings.set("maxz", config.get("stock","MaxZ"))
             if config.has_option("stock","Model"):
                 if not os.path.isabs(config.get("stock","Model")):
                     (path,ext) = os.path.split(filename)
@@ -252,12 +155,12 @@ class SimpleGui(Tk.Frame):
 
         offset = radius/2
 
-        minx = float(self.MinX.get())-offset
-        maxx = float(self.MaxX.get())+offset
-        miny = float(self.MinY.get())-offset
-        maxy = float(self.MaxY.get())+offset
-        minz = float(self.MinZ.get())
-        maxz = float(self.MaxZ.get())
+        minx = float(self.settings.get("minx"))-offset
+        maxx = float(self.settings.get("maxx"))+offset
+        miny = float(self.settings.get("miny"))-offset
+        maxy = float(self.settings.get("maxy"))+offset
+        minz = float(self.settings.get("minz"))
+        maxz = float(self.settings.get("maxz"))
         samples = float(self.Samples.get())
         lines = float(self.Lines.get())
         layers = float(self.Layers.get())
@@ -327,13 +230,13 @@ class SimpleGui(Tk.Frame):
         self.OutputFileName.set(filename)
         if self.toolpath:
             offset = float(self.ToolRadius.get())/2
-            minx = float(self.MinX.get())-offset
-            maxx = float(self.MaxX.get())+offset
-            miny = float(self.MinY.get())-offset
-            maxy = float(self.MaxY.get())+offset
-            minz = float(self.MinZ.get())-offset
-            maxz = float(self.MaxZ.get())+offset
-            exporter = SimpleGCodeExporter.ExportPathList(filename, self.toolpath, self.Unit.get(), minx, miny, maxz, self.FeedRate.get(), self.Speed.get())
+            minx = float(self.settings.get("minx"))-offset
+            maxx = float(self.settings.get("maxx"))+offset
+            miny = float(self.settings.get("miny"))-offset
+            maxy = float(self.settings.get("maxy"))+offset
+            minz = float(self.settings.get("minz"))-offset
+            maxz = float(self.settings.get("maxz"))+offset
+            exporter = SimpleGCodeExporter.ExportPathList(filename, self.toolpath, self.settings.get("unit"), minx, miny, maxz, self.FeedRate.get(), self.Speed.get())
 
     def createWidgets(self):
         self.ogl = OpenglWidget(self, width=600, height=500, double=1)
@@ -388,10 +291,11 @@ class SimpleGui(Tk.Frame):
         s.pack(side=Tk.LEFT)
 
         Tk.Label(self.ConfigurationFrame, text="Unit: ").pack(side=Tk.LEFT)
-        self.Unit = Tk.StringVar()
-        self.Unit.set("mm")
-        Tk.Radiobutton(self.ConfigurationFrame, text="mm", variable=self.Unit, value="mm", command=self.ogl.tkRedraw).pack(side=Tk.LEFT)
-        Tk.Radiobutton(self.ConfigurationFrame, text="in", variable=self.Unit, value="in", command=self.ogl.tkRedraw).pack(side=Tk.LEFT)
+        unit = Tk.StringVar()
+        unit.set("mm")
+        Tk.Radiobutton(self.ConfigurationFrame, text="mm", variable=unit, value="mm", command=self.ogl.tkRedraw).pack(side=Tk.LEFT)
+        Tk.Radiobutton(self.ConfigurationFrame, text="in", variable=unit, value="in", command=self.ogl.tkRedraw).pack(side=Tk.LEFT)
+        self.settings.add_item("unit", unit.get, unit.set)
 
         Tk.Label(self.ConfigurationFrame, text="Dir: ").pack(side=Tk.LEFT)
         self.Direction = Tk.StringVar()
@@ -400,34 +304,38 @@ class SimpleGui(Tk.Frame):
         Tk.Radiobutton(self.ConfigurationFrame, text="y", variable=self.Direction, value="y", command=self.ogl.tkRedraw).pack(side=Tk.LEFT)
         Tk.Radiobutton(self.ConfigurationFrame, text="xy", variable=self.Direction, value="xy", command=self.ogl.tkRedraw).pack(side=Tk.LEFT)
 
-        self.MinX = Tk.StringVar()
-        self.MinX.set("-7")
-        self.MinY = Tk.StringVar()
-        self.MinY.set("-7")
-        self.MinZ = Tk.StringVar()
-        self.MinZ.set("0")
-        self.MaxX = Tk.StringVar()
-        self.MaxX.set("+7")
-        self.MaxY = Tk.StringVar()
-        self.MaxY.set("+7")
-        self.MaxZ = Tk.StringVar()
-        self.MaxZ.set("+3")
+        minx = Tk.StringVar()
+        minx.set("-7")
+        miny = Tk.StringVar()
+        miny.set("-7")
+        minz = Tk.StringVar()
+        minz.set("0")
+        maxx = Tk.StringVar()
+        maxx.set("+7")
+        maxy = Tk.StringVar()
+        maxy.set("+7")
+        maxz = Tk.StringVar()
+        maxz.set("+3")
+        # define the limit callback functions
+        for name, obj in [("minx", minx), ("miny", miny), ("minz", minz),
+                ("maxx", maxx), ("maxy", maxy), ("maxz", maxz)]:
+            self.settings.add_item(name, obj.get, obj.set)
 
         self.StockModelFrame = Tk.Frame(self.TopFrame)
         self.StockModelFrame.pack(side=Tk.TOP, anchor=Tk.W, expand=0, fill=Tk.X)
         Tk.Label(self.StockModelFrame, text="Min X").pack(side=Tk.LEFT)
-        Tk.Entry(self.StockModelFrame, textvariable=self.MinX, width=6).pack(side=Tk.LEFT)
+        Tk.Entry(self.StockModelFrame, textvariable=minx, width=6).pack(side=Tk.LEFT)
         Tk.Label(self.StockModelFrame, text="Min Y").pack(side=Tk.LEFT)
-        Tk.Entry(self.StockModelFrame, textvariable=self.MinY, width=6).pack(side=Tk.LEFT)
+        Tk.Entry(self.StockModelFrame, textvariable=miny, width=6).pack(side=Tk.LEFT)
         Tk.Label(self.StockModelFrame, text="Min Z").pack(side=Tk.LEFT)
-        Tk.Entry(self.StockModelFrame, textvariable=self.MinZ, width=6).pack(side=Tk.LEFT)
+        Tk.Entry(self.StockModelFrame, textvariable=minz, width=6).pack(side=Tk.LEFT)
 
         Tk.Label(self.StockModelFrame, text="Max X").pack(side=Tk.LEFT)
-        Tk.Entry(self.StockModelFrame, textvariable=self.MaxX, width=6).pack(side=Tk.LEFT)
+        Tk.Entry(self.StockModelFrame, textvariable=maxx, width=6).pack(side=Tk.LEFT)
         Tk.Label(self.StockModelFrame, text="Max Y").pack(side=Tk.LEFT)
-        Tk.Entry(self.StockModelFrame, textvariable=self.MaxY, width=6).pack(side=Tk.LEFT)
+        Tk.Entry(self.StockModelFrame, textvariable=maxy, width=6).pack(side=Tk.LEFT)
         Tk.Label(self.StockModelFrame, text="Max Z").pack(side=Tk.LEFT)
-        Tk.Entry(self.StockModelFrame, textvariable=self.MaxZ, width=6).pack(side=Tk.LEFT)
+        Tk.Entry(self.StockModelFrame, textvariable=maxz, width=6).pack(side=Tk.LEFT)
 
         self.ConfigFrame = Tk.Frame(self.TopFrame)
         self.ConfigFrame.pack(side=Tk.TOP, anchor=Tk.W, expand=0, fill=Tk.X)
@@ -489,57 +397,38 @@ class SimpleGui(Tk.Frame):
         Tk.Frame.__init__(self, master)
         self.model = None
         self.toolpath = None
+        # connect GUI elements with the "settings" dict
+        self.settings = pycam.Gui.Settings.Settings()
+        self.settings.add_item("model", lambda: getattr(self, "model"))
+        self.settings.add_item("toolpath", lambda: getattr(self, "toolpath"))
         self.createWidgets()
         self.scale = 0.2
         self.ogl.tkRedraw()
         self.resetView()
 
     def resetView(self):
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glLoadIdentity()
-        GL.glScalef(self.scale,self.scale,self.scale)
-        GL.glRotatef(110,1.0,0.0,0.0)
-        GL.glRotatef(180,0.0,1.0,0.0)
-        GL.glRotatef(160,0.0,0.0,1.0)
+        GuiCommon.reset_view(self.scale)
         self.ogl.tkRedraw()
 
     def frontView(self):
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glLoadIdentity()
-        GL.glScalef(self.scale,self.scale,self.scale)
-        GL.glRotatef(-90,1.0,0,0)
+        GuiCommon.front_view(self.scale)
         self.ogl.tkRedraw()
 
     def backView(self):
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glLoadIdentity()
-        GL.glScalef(self.scale,self.scale,self.scale)
-        GL.glRotatef(-90,1.0,0,0)
-        GL.glRotatef(180,0,0,1.0)
+        GuiCommon.back_view(self.scale)
         self.ogl.tkRedraw()
 
     def leftView(self):
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glLoadIdentity()
-        GL.glScalef(self.scale,self.scale,self.scale)
-        GL.glRotatef(-90,1.0,0,0)
-        GL.glRotatef(90,0,0,1.0)
+        GuiCommon.left_view(self.scale)
         self.ogl.tkRedraw()
 
     def rightView(self):
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glLoadIdentity()
-        GL.glScalef(self.scale,self.scale,self.scale)
-        GL.glRotatef(-90,1.0,0,0)
-        GL.glRotatef(-90,0,0,1.0)
+        GuiCommon.right_view(self.scale)
         self.ogl.tkRedraw()
 
     def topView(self):
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glLoadIdentity()
-        GL.glScalef(self.scale,self.scale,self.scale)
+        GuiCommon.top_view(self.scale)
         self.ogl.tkRedraw()
-
 
 
 if __name__ == "__main__":
