@@ -131,7 +131,6 @@ class GLView:
         GL.glViewport(0, 0, self.area.allocation.width, self.area.allocation.height)
 
     def destroy(self, widget=None, data=None):
-        print "destroy"
         if self.notify_destroy_func:
             self.notify_destroy_func()
         # don't close the window
@@ -457,7 +456,7 @@ class ProjectGui:
             controls = (("x <-> y", "x_swap_y"), ("x <-> z", "x_swap_z"), ("y <-> z", "y_swap_z"))
         else:
             # broken gui
-            print sys.stderr, "Unknown button action: %s" % str(widget.get_name())
+            print >> sys.stderr, "Unknown button action: %s" % str(widget.get_name())
             return
         for obj, value in controls:
             if self.gui.get_object(obj).get_active():
