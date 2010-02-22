@@ -2250,13 +2250,14 @@
   </object>
   <object class="GtkAdjustment" id="toolradius">
     <property name="upper">100</property>
-    <property name="step_increment">1</property>
+    <property name="step_increment">0.10000000000000001</property>
     <property name="page_increment">10</property>
     <property name="page_size">10</property>
   </object>
   <object class="GtkAdjustment" id="torusradius">
+    <property name="lower">9.9999999999999995e-07</property>
     <property name="upper">100</property>
-    <property name="step_increment">1</property>
+    <property name="step_increment">0.10000000000000001</property>
     <property name="page_increment">10</property>
     <property name="page_size">10</property>
   </object>
