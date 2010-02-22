@@ -3,16 +3,6 @@ import OpenGL.GLUT as GLUT
 import ode_objects
 
 
-VIEW_ROTATIONS = {
-    "reset":    [(110, 1.0, 0.0, 0.0), (180, 0.0, 1.0, 0.0), (160, 0.0, 0.0, 1.0)],
-    "front":    [(-90, 1.0, 0, 0)],
-    "back":     [(-90, 1.0, 0, 0), (180, 0, 0, 1.0)],
-    "left":     [(-90, 1.0, 0, 0), (90, 0, 0, 1.0)],
-    "right":    [(-90, 1.0, 0, 0), (-90, 0, 0, 1.0)],
-    "top":      [],
-    "bottom":    [(180, 1.0, 0, 0)],
-}
-
 MODEL_TRANSFORMATIONS = {
     "normal": ((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0)),
     "x": ((1, 0, 0, 0), (0, 0, 1, 0), (0, -1, 0, 0)),
@@ -160,27 +150,6 @@ def rotate_view(scale, rotation=None):
     if rotation:
         for one_rot in rotation:
             GL.glRotatef(*one_rot)
-
-def reset_view(scale):
-    rotate_view(scale, rotation=VIEW_ROTATIONS["reset"])
-
-def front_view(scale):
-    rotate_view(scale, rotation=VIEW_ROTATIONS["front"])
-
-def back_view(scale):
-    rotate_view(scale, rotation=VIEW_ROTATIONS["back"])
-
-def top_view(scale):
-    rotate_view(scale, rotation=VIEW_ROTATIONS["top"])
-
-def bottom_view(scale):
-    rotate_view(scale, rotation=VIEW_ROTATIONS["bottom"])
-
-def left_view(scale):
-    rotate_view(scale, rotation=VIEW_ROTATIONS["left"])
-
-def right_view(scale):
-    rotate_view(scale, rotation=VIEW_ROTATIONS["right"])
 
 def transform_model(model, direction="normal"):
     model.transform(MODEL_TRANSFORMATIONS[direction])

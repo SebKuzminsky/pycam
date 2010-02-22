@@ -29,7 +29,7 @@ BUTTON_ZOOM = gtk.gdk.BUTTON3_MASK
 
 
 class GLView:
-    def __init__(self, gui, settings):
+    def __init__(self, gui, settings, notify_destroy=None):
         # assume, that initialization will fail
         self.enabled = False
         try:
@@ -42,9 +42,13 @@ class GLView:
         self.enabled = True
         self.settings = settings
         self.gui = gui
+        self.is_visible = False
         self.window = self.gui.get_object("view3dwindow")
-        self.window.connect("destroy", self.destroy)
+        self.notify_destroy_func = notify_destroy
+        self.window.connect("delete-event", self.destroy)
         self.window.set_default_size(560, 400)
+        self._position = self.gui.get_object("ProjectWindow").get_position()
+        self._position = (self._position[0] + 100, self._position[1] + 100)
         self.container = self.gui.get_object("view3dbox")
         self.gui.get_object("Reset View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["reset"])
         self.gui.get_object("Left View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["left"])
@@ -70,7 +74,17 @@ class GLView:
         self.camera = ogl_tools.Camera(self.settings, lambda: (self.area.allocation.width, self.area.allocation.height))
         self.container.add(self.area)
         self.container.show()
+        self.show()
+
+    def show(self):
+        self.is_visible = True
+        self.window.move(*self._position)
         self.window.show()
+
+    def hide(self):
+        self.is_visible = False
+        self._position = self.window.get_position()
+        self.window.hide()
 
     def check_busy(func):
         def busy_wrapper(self, *args, **kwargs):
@@ -117,9 +131,12 @@ class GLView:
         GL.glLoadIdentity()
         GL.glViewport(0, 0, self.area.allocation.width, self.area.allocation.height)
 
-    def destroy(self, widget=None):
-        self.area.destroy()
-        self.window.destroy()
+    def destroy(self, widget=None, data=None):
+        print "destroy"
+        if self.notify_destroy_func:
+            self.notify_destroy_func()
+        # don't close the window
+        return True
 
     def gtkgl_functionwrapper(function):
         def decorated(self, *args, **kwords):
@@ -154,8 +171,10 @@ class GLView:
             # a button was pressed before
             if state == self.mouse["button"] == BUTTON_ZOOM:
                 # the start button is still active: update the view
-                scale = 1 - 0.01 * (x - self.mouse["start_pos"][0])
-                self.mouse["start_pos"][0] = x
+                start_x, start_y = self.mouse["start_pos"]
+                self.mouse["start_pos"] = [x, y]
+                # move the mouse from lower left to top right corner for scale up
+                scale = 1 - 0.01 * ((x - start_x) + (start_y - y))
                 # do some sanity checks, scale no more than
                 # 1:100 on any given click+drag
                 if scale < 0.01:
@@ -222,7 +241,6 @@ class ProjectGui:
     def __init__(self, master=None):
         gtk.gdk.threads_init()
         self.settings = pycam.Gui.Settings.Settings()
-        self.notify_visual = threading.Condition()
         self.gui_is_active = False
         self.view3d = None
         self._batch_queue = []
@@ -302,20 +320,16 @@ class ProjectGui:
         
     def update_view(self):
         if self.view3d:
-            self.notify_visual.acquire()
-            self.notify_visual.notify()
-            self.notify_visual.release()
             self.view3d.paint()
 
     def reload_model(self):
         self.physics = GuiCommon.generate_physics(self.settings)
         if self.view3d:
-            self.settings.set("model_view_request_reset", True)
             self.update_view()
 
     @gui_activity_guard
     def toggle_3d_view(self, widget=None, value=None):
-        current_state = not (self.view3d is None)
+        current_state = not ((self.view3d is None) or (not self.view3d.is_visible))
         if value is None:
             new_state = not current_state
         else:
@@ -323,19 +337,18 @@ class ProjectGui:
         if new_state == current_state:
             return
         elif new_state:
-            self.settings.set("model_view_request_quit", False)
-            # do the gl initialization
-            self.view3d = GLView(self.gui, self.settings)
-            if self.model and self.view3d.enabled:
-                self.reset_bounds()
-                self.view3d.reset_view()
-            #self.thread3d = VisualThread(self.notify_visual, self.settings)
-            #self.thread3d.start()
+            if self.view3d is None:
+                # do the gl initialization
+                self.view3d = GLView(self.gui, self.settings, notify_destroy=self.toggle_3d_view)
+                if self.model and self.view3d.enabled:
+                    self.reset_bounds()
+                    self.view3d.reset_view()
+            else:
+                # the window is just hidden
+                self.view3d.show()
             self.update_view()
         else:
-            self.settings.set("model_view_request_quit", True)
-            self.view3d.destroy()
-            self.view3d = None
+            self.view3d.hide()
         self.gui.get_object("Toggle3dView").set_active(new_state)
 
     @gui_activity_guard
@@ -420,7 +433,6 @@ class ProjectGui:
         self.update_view()
 
     def destroy(self, widget=None, data=None):
-        self.settings.set("model_view_request_quit", True)
         self.update_view()
         gtk.main_quit()
         
