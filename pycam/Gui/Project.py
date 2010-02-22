@@ -28,14 +28,15 @@ BUTTON_ROTATE = gtk.gdk.BUTTON1_MASK
 BUTTON_ZOOM = gtk.gdk.BUTTON2_MASK
 BUTTON_MOVE = gtk.gdk.BUTTON3_MASK
 
+# the length of the distance vector does not matter - it will be normalized and multiplied later anyway
 VIEWS = {
-    "reset": {"distance": (4.0, 4.0, 4.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "top": {"distance": (0.0, 0.0, 10.0), "center": (0.0, 0.0, 0.0), "up": (1.0, 0.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "bottom": {"distance": (0.0, 0.0, -10.0), "center": (0.0, 0.0, 0.0), "up": (1.0, 0.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "left": {"distance": (-10.0, 0.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "right": {"distance": (10.0, 0.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "front": {"distance": (0.0, -10.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "back": {"distance": (0.0, 10.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "reset": {"distance": (1.0, 1.0, 1.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "top": {"distance": (0.0, 0.0, 1.0), "center": (0.0, 0.0, 0.0), "up": (1.0, 0.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "bottom": {"distance": (0.0, 0.0, -1.0), "center": (0.0, 0.0, 0.0), "up": (1.0, 0.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "left": {"distance": (-1.0, 0.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "right": {"distance": (1.0, 0.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "front": {"distance": (0.0, -1.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "back": {"distance": (0.0, 1.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
 }
 
 def gtkgl_functionwrapper(function):
@@ -158,14 +159,6 @@ class GLView:
                 self.mouse["button"] = state
                 self.mouse["start_pos"] = [x, y]
                 self.area.set_events(gtk.gdk.MOUSE | gtk.gdk.BUTTON_PRESS_MASK)
-            if state == BUTTON_ZOOM:
-                print "Zoom button pressed"
-            elif state == BUTTON_ROTATE:
-                print "Rotate button pressed"
-            elif state == BUTTON_MOVE:
-                print "Move button pressed"
-            else:
-                return
         else:
             # not more than 25 frames per second (enough for decent visualization)
             if time.time() - last_timestamp < 0.04:
@@ -213,6 +206,8 @@ class GLView:
                     new_center.append(old_center[i] + max_dim * (win_x_rel * factors_x[i] + win_y_rel * factors_y[i]))
                 self.view["center"] = tuple(new_center)
                 self._paint_ignore_busy()
+            elif state == self.mouse["button"] == BUTTON_ROTATE:
+                self._paint_ignore_busy()
             else:
                 # button was released
                 self.mouse["button"] = None
@@ -247,6 +242,27 @@ class GLView:
     @gtkgl_refresh
     def rotate_view(self, widget, data=None):
         self.view = data.copy()
+        self.center_view()
+        self.auto_adjust_distance()
+
+    def center_view(self):
+        s = self.settings
+        # center the view on the object
+        self.view["center"] = ((s.get("maxx") + s.get("minx"))/2, (s.get("maxy") + s.get("miny"))/2, (s.get("maxz") + s.get("minz"))/2)
+
+    def auto_adjust_distance(self):
+        s = self.settings
+        v = self.view
+        # adjust the distance to get a view of the whole object
+        dimx = s.get("maxx") - s.get("minx")
+        dimy = s.get("maxy") - s.get("miny")
+        dimz = s.get("maxz") - s.get("minz")
+        max_dim = max(max(dimx, dimy), dimz)
+        win_size = min(self.area.allocation.height, self.area.allocation.width)
+        distv = Point(v["distance"][0], v["distance"][1], v["distance"][2]).normalize()
+        # the multiplier "2.0" is based on: sqrt(2) + margin  -- the squre root makes sure, that the the diagonal fits
+        distv = distv.mul((max_dim * 2.0) / math.sin(v["fovy"]/2))
+        self.view["distance"] = (distv.x, distv.y, distv.z)
 
     def reset_view(self):
         self.rotate_view(None, VIEWS["reset"].copy())
