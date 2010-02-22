@@ -70,7 +70,106 @@ class SimpleGui(Tk.Frame):
         GL.glPopMatrix()
 
     def Redraw(self, event=None):
-        GuiCommon.draw_complete_model_view(self.settings)
+        # default scale and orientation
+        GL.glTranslatef(0,0,-2)
+
+        if self.settings.get("unit") == "mm":
+            size = 100
+        else:
+            size = 5
+
+        # axes
+        GL.glBegin(GL.GL_LINES)
+        GL.glColor3f(1,0,0)
+        GL.glVertex3f(0,0,0)
+        GL.glVertex3f(size,0,0)
+        GL.glEnd()
+        GuiCommon.draw_string(size,0,0,'xy',"X")
+        GL.glBegin(GL.GL_LINES)
+        GL.glColor3f(0,1,0)
+        GL.glVertex3f(0,0,0)
+        GL.glVertex3f(0,size,0)
+        GL.glEnd()
+        GuiCommon.draw_string(0,size,0,'yz',"Y")
+        GL.glBegin(GL.GL_LINES)
+        GL.glColor3f(0,0,1)
+        GL.glVertex3f(0,0,0)
+        GL.glVertex3f(0,0,size)
+        GL.glEnd()
+        GuiCommon.draw_string(0,0,size,'xz',"Z")
+
+        if True:
+            # stock model
+            minx = float(self.settings.get("minx"))
+            maxx = float(self.settings.get("maxx"))
+            miny = float(self.settings.get("miny"))
+            maxy = float(self.settings.get("maxy"))
+            minz = float(self.settings.get("minz"))
+            maxz = float(self.settings.get("maxz"))
+            GL.glBegin(GL.GL_LINES)
+            GL.glColor3f(0.3,0.3,0.3)
+
+            GL.glVertex3f(minx,miny,minz)
+            GL.glVertex3f(maxx,miny,minz)
+
+            GL.glVertex3f(minx,maxy,minz)
+            GL.glVertex3f(maxx,maxy,minz)
+
+            GL.glVertex3f(minx,miny,maxz)
+            GL.glVertex3f(maxx,miny,maxz)
+
+            GL.glVertex3f(minx,maxy,maxz)
+            GL.glVertex3f(maxx,maxy,maxz)
+
+
+            GL.glVertex3f(minx,miny,minz)
+            GL.glVertex3f(minx,maxy,minz)
+
+            GL.glVertex3f(maxx,miny,minz)
+            GL.glVertex3f(maxx,maxy,minz)
+
+            GL.glVertex3f(minx,miny,maxz)
+            GL.glVertex3f(minx,maxy,maxz)
+
+            GL.glVertex3f(maxx,miny,maxz)
+            GL.glVertex3f(maxx,maxy,maxz)
+
+
+            GL.glVertex3f(minx,miny,minz)
+            GL.glVertex3f(minx,miny,maxz)
+
+            GL.glVertex3f(maxx,miny,minz)
+            GL.glVertex3f(maxx,miny,maxz)
+
+            GL.glVertex3f(minx,maxy,minz)
+            GL.glVertex3f(minx,maxy,maxz)
+
+            GL.glVertex3f(maxx,maxy,minz)
+            GL.glVertex3f(maxx,maxy,maxz)
+
+            GL.glEnd()
+
+        if self.model:
+            GL.glColor3f(0.5,.5,1)
+            self.model.to_OpenGL()
+
+        if self.toolpath:
+            last = None
+            for path in self.toolpath:
+                if last:
+                    GL.glColor3f(.5,1,.5)
+                    GL.glBegin(GL.GL_LINES)
+                    GL.glVertex3f(last.x,last.y,last.z)
+                    last = path.points[0]
+                    GL.glVertex3f(last.x,last.y,last.z)
+                    GL.glEnd()
+                GL.glColor3f(1,.5,.5)
+                GL.glBegin(GL.GL_LINE_STRIP)
+                for point in path.points:
+                    GL.glVertex3f(point.x,point.y,point.z)
+                GL.glEnd()
+                last = path.points[-1]
+
 
     def browseOpen(self):
         filename = tkFileDialog.Open(self, filetypes=[("STL files", ".stl"),("CFG files", ".cfg")]).show()
@@ -407,27 +506,49 @@ class SimpleGui(Tk.Frame):
         self.resetView()
 
     def resetView(self):
-        GuiCommon.reset_view(self.scale)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
+        GL.glScalef(self.scale,self.scale,self.scale)
+        GL.glRotatef(110,1.0,0.0,0.0)
+        GL.glRotatef(180,0.0,1.0,0.0)
+        GL.glRotatef(160,0.0,0.0,1.0)
         self.ogl.tkRedraw()
 
     def frontView(self):
-        GuiCommon.front_view(self.scale)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
+        GL.glScalef(self.scale,self.scale,self.scale)
+        GL.glRotatef(-90,1.0,0,0)
         self.ogl.tkRedraw()
 
     def backView(self):
-        GuiCommon.back_view(self.scale)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
+        GL.glScalef(self.scale,self.scale,self.scale)
+        GL.glRotatef(-90,1.0,0,0)
+        GL.glRotatef(180,0,0,1.0)
         self.ogl.tkRedraw()
 
     def leftView(self):
-        GuiCommon.left_view(self.scale)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
+        GL.glScalef(self.scale,self.scale,self.scale)
+        GL.glRotatef(-90,1.0,0,0)
+        GL.glRotatef(90,0,0,1.0)
         self.ogl.tkRedraw()
 
     def rightView(self):
-        GuiCommon.right_view(self.scale)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
+        GL.glScalef(self.scale,self.scale,self.scale)
+        GL.glRotatef(-90,1.0,0,0)
+        GL.glRotatef(-90,0,0,1.0)
         self.ogl.tkRedraw()
 
     def topView(self):
-        GuiCommon.top_view(self.scale)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
+        GL.glScalef(self.scale,self.scale,self.scale)
         self.ogl.tkRedraw()
 
 
