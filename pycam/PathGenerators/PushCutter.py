@@ -144,6 +144,7 @@ class PushCutter:
         """
         # max_deviation_x = dx/accuracy
         accuracy = 20
+        max_depth = 20
         x = minx
         y = miny
 
@@ -151,10 +152,13 @@ class PushCutter:
         if dx > 0:
             depth_x = math.log(accuracy * (maxx-minx) / dx) / math.log(2)
             depth_x = max(math.ceil(int(depth_x)), 4)
+            depth_x = min(depth_x, max_depth)
         else:
             depth_y = math.log(accuracy * (maxy-miny) / dy) / math.log(2)
             depth_y = max(math.ceil(int(depth_y)), 4)
+            depth_y = min(depth_y, max_depth)
 
+        last_loop = False
         while (x <= maxx) and (y <= maxy):
             points = []
             self.pa.new_scanline()
@@ -174,11 +178,13 @@ class PushCutter:
 
             if dx > 0:
                 x += dx
-                if (x > maxx) and (x - dx < maxx):
+                if (x > maxx) and not last_loop:
+                    last_loop = True
                     x = maxx
             else:
                 y += dy
-                if (y > maxy) and (y - dy < maxy):
+                if (y > maxy) and not last_loop:
+                    last_loop = True
                     y = maxy
 
     def DropCutterTest(self, point, model):
@@ -215,6 +221,7 @@ class PushCutter:
         
         line = 0
 
+        last_loop = False
         while x<=maxx and y<=maxy:
             self.pa.new_scanline()
             if False:
@@ -361,15 +368,17 @@ class PushCutter:
             if dx != 0:
                 x += dx
                 # never skip the outermost bounding limit - reduce the step size if required
-                if (x > maxx) and (x - dx < maxx):
+                if (x > maxx) and not last_loop:
                     x = maxx
+                    last_loop = True
             else:
                 x = minx
             if dy != 0:
                 y += dy
                 # never skip the outermost bounding limit - reduce the step size if required
-                if (y > maxy) and (y - dy < maxy):
+                if (y > maxy) and not last_loop:
                     y = maxy
+                    last_loop = True
             else:
                 y = miny
 

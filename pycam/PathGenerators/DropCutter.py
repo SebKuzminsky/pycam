@@ -48,8 +48,10 @@ class DropCutter:
 
         finished_plane = False
         self._boundary_warning_already_shown = False
+        last_outer_loop = False
 
         while not finished_plane:
+            last_inner_loop = False
             finished_line = False
             dims[0].set(dims[0].start)
             pa.new_scanline()
@@ -71,10 +73,9 @@ class DropCutter:
 
                 # make sure, that the we also handle the outmost border of the bounding box
                 if dims[0].check_bounds(tolerance=d0):
-                    # check if we are still within the strict limits
-                    if not dims[0].check_bounds():
-                        # we exceeded the maximum, but we are still within step width
+                    if not dims[0].check_bounds() and not last_inner_loop:
                         dims[0].set(dims[0].end)
+                        last_inner_loop = True
                 else:
                     finished_line = True
 
@@ -83,10 +84,9 @@ class DropCutter:
 
             # make sure, that the we also handle the outmost border of the bounding box
             if dims[1].check_bounds(tolerance=d1):
-                # check if we are still within the strict limits
-                if not dims[1].check_bounds():
-                    # we crossed the maximum, but we are still within step width
+                if not dims[1].check_bounds() and not last_outer_loop:
                     dims[1].set(dims[1].end)
+                    last_outer_loop = True
             else:
                 finished_plane = True
 
