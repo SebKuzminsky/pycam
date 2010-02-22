@@ -12,10 +12,13 @@ class Dimension:
         self.downward = start > end
         self.value = 0.0
 
-    def check_bounds(self, value=None):
+    def check_bounds(self, value=None, tolerance=None):
         if value is None:
             value = self.value
-        return (value >= self._min) and (value <= self._max)
+        if tolerance is None:
+            return (value >= self._min) and (value <= self._max)
+        else:
+            return (value > self._min - tolerance) and (value < self._max + tolerance)
 
     def shift(self, distance):
         if self.downward:
@@ -64,12 +67,14 @@ class DropCutter:
         dim_height.set(dim_height.start)
         pa.new_direction(direction)
         dims[1].set(dims[1].start)
-        while dims[1].check_bounds():
+        finished_plane = False
+        while not finished_plane:
+            finished_line = False
             dims[0].set(dims[0].start)
             pa.new_scanline()
             self._triangle_last = None
             self._cut_last = None
-            while dims[0].check_bounds():
+            while not finished_line:
                 if self.physics:
                     points = self.get_max_height_with_ode(dims[x], dims[y], dim_height, order=dim_attrs[:])
                 else:
@@ -83,8 +88,26 @@ class DropCutter:
 
                 dims[0].shift(d0)
 
+                # make sure, that the we also handle the outmost border of the bounding box
+                if dims[0].check_bounds(tolerance=d0):
+                    # check if we are still within the strict limits
+                    if not dims[0].check_bounds():
+                        # we crossed the maximum, but we are still within step width
+                        dims[0].set(dims[0].end)
+                else:
+                    finished_line = True
+
             pa.end_scanline()
             dims[1].shift(d1)
+
+            # make sure, that the we also handle the outmost border of the bounding box
+            if dims[1].check_bounds(tolerance=d1):
+                # check if we are still within the strict limits
+                if not dims[1].check_bounds():
+                    # we crossed the maximum, but we are still within step width
+                    dims[1].set(dims[1].end)
+            else:
+                finished_plane = True
 
         pa.end_direction()
 

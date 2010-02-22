@@ -663,6 +663,7 @@ class ProjectGui:
 
         self.update_physics()
 
+        # TODO: check, why this offset is used
         offset = radius/2
 
         minx = float(self.settings.get("minx"))-offset

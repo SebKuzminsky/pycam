@@ -59,6 +59,10 @@ class PushCutter:
                 paths += self.pa.paths
             z -= dz
 
+            if (z < minz) and (z + dz > minz):
+                # never skip the outermost bounding limit - reduce the step size if required
+                z = minz
+
         if DEBUG_PUSHCUTTER2:
             self.svg.fill('none')
             self.svg.stroke('black')
@@ -247,10 +251,16 @@ class PushCutter:
 
             if dx != 0:
                 x += dx
+                # never skip the outermost bounding limit - reduce the step size if required
+                if (x > maxx) and (x - dx < maxx):
+                    x = maxx
             else:
                 x = minx
             if dy != 0:
                 y += dy
+                # never skip the outermost bounding limit - reduce the step size if required
+                if (y > maxy) and (y - dy < maxy):
+                    y = maxy
             else:
                 y = miny
 
