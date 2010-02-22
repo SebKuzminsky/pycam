@@ -46,6 +46,7 @@ def keep_matrix(func):
 
 @keep_matrix
 def draw_string(x, y, z, p, s, scale=.01):
+    GL.glPushMatrix()
     GL.glTranslatef(x, y, z)
     if p == 'xy':
         pass
@@ -59,13 +60,14 @@ def draw_string(x, y, z, p, s, scale=.01):
     GL.glScalef(scale, scale, scale)
     for c in str(s):
         GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(c))
+    GL.glPopMatrix()
 
 @keep_gl_mode
 @keep_matrix
 def draw_axes(settings):
     GL.glMatrixMode(GL.GL_MODELVIEW)
     GL.glLoadIdentity()
-    GL.glTranslatef(0, 0, -2)
+    #GL.glTranslatef(0, 0, -2)
     if settings.get("unit") == "mm":
         size = 100
     else:
