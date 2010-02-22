@@ -457,11 +457,8 @@ class ProjectGui:
         self.gui.get_object("TorusRadiusControl").set_sensitive(self.settings.get("cutter_shape") == "ToroidalCutter")
         # disable "step down" control, if PushCutter is not active
         self.gui.get_object("MaxStepDownControl").set_sensitive(self.settings.get("path_generator") == "PushCutter")
-        # TODO: remove this as soon as the PushCutter supports "material allowance"
-        if self.settings.get("enable_ode", True):
-            self.gui.get_object("MaterialAllowanceControl").set_sensitive(self.settings.get("path_generator") == "DropCutter")
-        else:
-            self.gui.get_object("MaterialAllowanceControl").set_sensitive(False)
+        # "material allowance" requires ODE support
+        self.gui.get_object("MaterialAllowanceControl").set_sensitive(self.settings.get("enable_ode"))
 
 
     @gui_activity_guard

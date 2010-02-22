@@ -1559,13 +1559,12 @@ Only available for the Push Cutter.</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkRadioButton" id="SimpleCutter">
-                                <property name="label" translatable="yes">Simple Cutter</property>
+                              <object class="GtkRadioButton" id="ZigZagCutter">
+                                <property name="label" translatable="yes">ZigZag Cutter</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes">Practically useless path processor for testing purposes.
-Only available for the Push Cutter.</property>
+                                <property name="tooltip_text" translatable="yes">Quite simple path processor for finishing operations.</property>
                                 <property name="draw_indicator">True</property>
                                 <property name="group">PathAccumulator</property>
                               </object>
@@ -1575,12 +1574,13 @@ Only available for the Push Cutter.</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkRadioButton" id="ZigZagCutter">
-                                <property name="label" translatable="yes">ZigZag Cutter</property>
+                              <object class="GtkRadioButton" id="SimpleCutter">
+                                <property name="label" translatable="yes">Simple Cutter</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes">Quite simple path processor for finishing operations.</property>
+                                <property name="tooltip_text" translatable="yes">Practically useless path processor for testing purposes.
+Only available for the Push Cutter.</property>
                                 <property name="draw_indicator">True</property>
                                 <property name="group">PathAccumulator</property>
                               </object>
@@ -1708,8 +1708,7 @@ Only available for the Push Cutter.</property>
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">Specify the amount of material that should remain around the model.
 This is useful for rough and semi-finish operations.
-ODE support is currently required for this feature.
-For now only the Drop Cutter respects this value.</property>
+ODE support is currently required for this feature.</property>
                                 <property name="invisible_char">&#x2022;</property>
                                 <property name="adjustment">MaterialAllowanceValue</property>
                                 <property name="digits">2</property>
@@ -1858,7 +1857,8 @@ For now only the Drop Cutter respects this value.</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes">Requires the Python Bindings for ODE. Install the python-pyode package to enable this feature.</property>
+                                <property name="tooltip_text" translatable="yes">Requires the Python bindings for ODE (Open Dynamics Engine).
+Install the "python-pyode" package to enable this feature.</property>
                                 <property name="draw_indicator">True</property>
                               </object>
                               <packing>

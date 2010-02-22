@@ -30,7 +30,7 @@ class BaseCutter:
         self.maxx = location.x+self.radius
         self.miny = location.y-self.radius
         self.maxy = location.y+self.radius
-        for shape, set_pos_func, offset in self.shape.values():
+        for shape, set_pos_func in self.shape.values():
             set_pos_func(location.x, location.y, location.z)
 
     def intersect(self, direction, triangle):

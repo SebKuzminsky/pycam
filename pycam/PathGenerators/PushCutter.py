@@ -1,8 +1,9 @@
 from pycam.PathProcessors import *
 from pycam.Geometry import *
 from pycam.Geometry.utils import *
-
+import pycam.PathGenerators
 from pycam.Exporters.SVGExporter import SVGExporter
+import math
 
 DEBUG_PUSHCUTTER = False
 DEBUG_PUSHCUTTER2 = False
@@ -21,10 +22,11 @@ class Hit:
 
 class PushCutter:
 
-    def __init__(self, cutter, model, pathextractor=None):
+    def __init__(self, cutter, model, pathextractor=None, physics=None):
         self.cutter = cutter
         self.model = model
         self.pa = pathextractor
+        self.physics = physics
 
     def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, dx, dy, dz, draw_callback=None):
         if dx != 0:
@@ -44,14 +46,19 @@ class PushCutter:
 
         paths = []
 
+        if self.physics is None:
+            GenerateToolPathSlice = self.GenerateToolPathSlice_triangles
+        else:
+            GenerateToolPathSlice = self.GenerateToolPathSlice_ode
+
         while z >= minz:
             if dy > 0:
                 self.pa.new_direction(0)
-                self.GenerateToolPathSlice(minx, maxx, miny, maxy, z, 0, dy, draw_callback)
+                GenerateToolPathSlice(minx, maxx, miny, maxy, z, 0, dy, draw_callback)
                 self.pa.end_direction()
             if dx > 0:
                 self.pa.new_direction(1)
-                self.GenerateToolPathSlice(minx, maxx, miny, maxy, z, dx, 0, draw_callback)
+                GenerateToolPathSlice(minx, maxx, miny, maxy, z, dx, 0, draw_callback)
                 self.pa.end_direction()
             self.pa.finish()
 
@@ -72,6 +79,108 @@ class PushCutter:
 
         return paths
 
+    def get_free_paths_ode(self, minx, maxx, miny, maxy, z, depth=8):
+        """ Recursive function for splitting a line (usually along x or y) into
+        small pieces to gather connected paths for the PushCutter.
+        Strategy: check if the whole line is free (without collisions). Do a
+        recursive call (for the first and second half), if there was a
+        collision.
+
+        Usually either minx/maxx or miny/maxy should be equal, unless you want
+        to do a diagonal cut.
+        @param minx: lower limit of x
+        @type minx: float
+        @param maxx: upper limit of x; should equal minx for a cut along the x axis
+        @type maxx: float
+        @param miny: lower limit of y
+        @type miny: float
+        @param maxy: upper limit of y; should equal miny for a cut along the y axis
+        @type maxy: float
+        @param z: the fixed z level
+        @type z: float
+        @param depth: number of splits to be calculated via recursive calls; the
+            accuracy can be calculated as (maxx-minx)/(2^depth)
+        @type depth: int
+        @returns: a list of points that describe the tool path of the PushCutter;
+            each pair of points defines a collision-free path
+        @rtype: list(pycam.Geometry.Point.Point)
+        """
+        points = []
+        # "resize" the drill along the while x/y range and check for a collision
+        self.physics.extend_drill(maxx-minx, maxy-miny, 0.0)
+        self.physics.set_drill_position((minx, miny, z))
+        if self.physics.check_collision():
+            # collision detected
+            if depth > 0:
+                middle_x = (minx + maxx)/2.0
+                middle_y = (miny + maxy)/2.0
+                group1 = self.get_free_paths_ode(minx, middle_x, miny, middle_y, z, depth-1)
+                group2 = self.get_free_paths_ode(middle_x, maxx, middle_y, maxy, z, depth-1)
+                if group1 and group2 and (group1[-1].x == group2[0].x) and (group1[-1].y == group2[0].y):
+                    # the last couple of the first group ends where the first couple of the second group starts
+                    # we will combine them into one couple
+                    last = group1[-2]
+                    first = group2[1]
+                    combined = [last, first]
+                    points.extend(group1[:-2])
+                    points.extend(combined)
+                    points.extend(group2[2:])
+                else:
+                    # the two groups are not connected - just add both
+                    points.extend(group1)
+                    points.extend(group2)
+            else:
+                # no points to be added
+                pass
+        else:
+            # no collision - the line is free
+            points.append(Point(minx, miny, z))
+            points.append(Point(maxx, maxy, z))
+        self.physics.reset_drill()
+        return points
+
+    def GenerateToolPathSlice_ode(self, minx, maxx, miny, maxy, z, dx, dy, draw_callback=None):
+        """ only dx or (exclusive!) dy may be bigger than zero
+        """
+        # max_deviation_x = dx/accuracy
+        accuracy = 20
+        x = minx
+        y = miny
+
+        # calculate the required number of steps in each direction
+        if dx > 0:
+            depth_x = math.log(accuracy * (maxx-minx) / dx) / math.log(2)
+            depth_x = max(math.ceil(int(depth_x)), 4)
+        else:
+            depth_y = math.log(accuracy * (maxy-miny) / dy) / math.log(2)
+            depth_y = max(math.ceil(int(depth_y)), 4)
+
+        while (x <= maxx) and (y <= maxy):
+            points = []
+            self.pa.new_scanline()
+
+            if dx > 0:
+                points = self.get_free_paths_ode(x, x, miny, maxy, z, depth=depth_x)
+            else:
+                points = self.get_free_paths_ode(minx, maxx, y, y, z, depth=depth_y)
+
+            for p in points:
+                self.pa.append(p)
+            if points:
+                self.cutter.moveto(points[-1])
+            if draw_callback:
+                draw_callback()
+            self.pa.end_scanline()
+
+            if dx > 0:
+                x += dx
+                if (x > maxx) and (x - dx < maxx):
+                    x = maxx
+            else:
+                y += dy
+                if (y > maxy) and (y - dy < maxy):
+                    y = maxy
+
     def DropCutterTest(self, point, model):
         zmax = -INFINITE
         tmax = None
@@ -85,7 +194,7 @@ class PushCutter:
                 tmax = t
         return (zmax, tmax)
 
-    def GenerateToolPathSlice(self, minx, maxx, miny, maxy, z, dx, dy, draw_callback=None):
+    def GenerateToolPathSlice_triangles(self, minx, maxx, miny, maxy, z, dx, dy, draw_callback=None):
         global DEBUG_PUSHCUTTER, DEBUG_PUSHCUTTER2, DEBUG_PUSHCUTTER3
         c = self.cutter
         model = self.model

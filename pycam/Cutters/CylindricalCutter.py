@@ -38,10 +38,39 @@ class CylindricalCutter(BaseCutter):
             """
             radius = self.radius + additional_distance
             height = self.height + additional_distance
-            geom = ode.GeomCylinder(None, radius, height)
+            center_height = 0.5 * height - additional_distance
+            geom = ode.GeomTransform(None)
+            geom_drill = ode.GeomCylinder(None, radius, height)
+            geom_drill.setPosition((0, 0, center_height))
+            geom.setGeom(geom_drill)
+            geom.children = []
+            def reset_shape():
+                geom.children = []
             def set_position(x, y, z):
                 geom.setPosition((x, y, z))
-            self.shape[format] = (geom, set_position, (0, 0, 0.5 * height - additional_distance))
+            def extend_shape(diff_x, diff_y, diff_z):
+                # diff_z is assumed to be zero
+                reset_shape()
+                geom_end_transform = ode.GeomTransform(None)
+                geom_end_transform.setBody(geom.getBody())
+                geom_end = ode.GeomCylinder(None, radius, height)
+                geom_end.setPosition((diff_x, diff_y, center_height))
+                geom_end_transform.setGeom(geom_end)
+                # create the block that connects to two cylinders at the end
+                geom_connect_transform = ode.GeomTransform(None)
+                geom_connect_transform.setBody(geom.getBody())
+                hypotenuse = sqrt(diff_x * diff_x + diff_y * diff_y)
+                cosinus = diff_x/hypotenuse
+                sinus = diff_y/hypotenuse
+                geom_connect = ode.GeomBox(None, (hypotenuse, 2.0 * radius, height))
+                # see http://mathworld.wolfram.com/RotationMatrix.html
+                geom_connect.setRotation((cosinus, sinus, 0.0, -sinus, cosinus, 0.0, 0.0, 0.0, 1.0))
+                geom_connect.setPosition((diff_x/2.0, diff_y/2.0, center_height))
+                geom_connect_transform.setGeom(geom_connect)
+                geom.children = [geom_connect_transform, geom_end_transform]
+            geom.extend_shape = extend_shape
+            geom.reset_shape = reset_shape
+            self.shape[format] = (geom, set_position)
             return self.shape[format]
 
     def to_OpenGL(self):

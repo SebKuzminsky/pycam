@@ -29,11 +29,54 @@ class SphericalCutter(BaseCutter):
         if format == "ODE":
             import ode
             radius = self.radius + additional_distance
-            geom = ode.GeomCapsule(None, radius, self.height)
+            center_height = 0.5 * self.height + radius - additional_distance
+            geom = ode.GeomTransform(None)
+            geom_drill = ode.GeomCapsule(None, radius, self.height)
+            geom_drill.setPosition((0, 0, center_height))
+            geom.setGeom(geom_drill)
+            geom.children = []
+            def reset_shape():
+                geom.children = []
             def set_position(x, y, z):
                 geom.setPosition((x, y, z))
-            self.shape[format] = (geom, set_position, (0, 0, 0.5 * self.height + radius))
+            def extend_shape(diff_x, diff_y, diff_z):
+                # diff_z is assumed to be zero
+                reset_shape()
+                geom_end_transform = ode.GeomTransform(geom.getSpace())
+                geom_end_transform.setBody(geom.getBody())
+                geom_end = ode.GeomCapsule(None, radius, self.height)
+                geom_end.setPosition((diff_x, diff_y, center_height))
+                geom_end_transform.setGeom(geom_end)
+                # create the block that connects the two cylinders at the end
+                geom_connect_transform = ode.GeomTransform(geom.getSpace())
+                geom_connect_transform.setBody(geom.getBody())
+                hypotenuse = sqrt(diff_x * diff_x + diff_y * diff_y)
+                cosinus = diff_x/hypotenuse
+                sinus = diff_y/hypotenuse
+                geom_connect = ode.GeomBox(None, (2.0 * radius, hypotenuse, self.height))
+                # see http://mathworld.wolfram.com/RotationMatrix.html
+                rot_matrix_box = (cosinus, sinus, 0.0, -sinus, cosinus, 0.0, 0.0, 0.0, 1.0)
+                geom_connect.setRotation(rot_matrix_box)
+                geom_connect.setPosition((diff_x/2.0, diff_y/2.0, center_height))
+                geom_connect_transform.setGeom(geom_connect)
+                # create a cylinder, that connects the two half spheres at the lower end of both drills
+                geom_cyl_transform = ode.GeomTransform(geom.getSpace())
+                geom_cyl_transform.setBody(geom.getBody())
+                geom_cyl = ode.GeomCylinder(None, radius, hypotenuse)
+                # switch x and z axis of the cylinder and then rotate it according to diff_x/diff_y
+                rot_matrix_cyl = (rot_matrix_box[2], rot_matrix_box[1], rot_matrix_box[0],
+                        rot_matrix_box[5], rot_matrix_box[4], rot_matrix_box[3],
+                        rot_matrix_box[8], rot_matrix_box[7], rot_matrix_box[6])
+                geom_cyl.setRotation(rot_matrix_cyl)
+                geom_cyl.setPosition((diff_x/2.0, diff_y/2.0, radius - additional_distance))
+                geom_cyl_transform.setGeom(geom_cyl)
+                # sort the geoms in order or collision probability
+                geom.children = [geom_connect_transform, geom_cyl_transform, geom_end_transform]
+            geom.extend_shape = extend_shape
+            geom.reset_shape = reset_shape
+            self.shape[format] = (geom, set_position)
             return self.shape[format]
+
 
     def to_OpenGL(self):
         if not GL_enabled:

@@ -71,30 +71,53 @@ class PhysicalWorld:
         self._drill_offset = position
         self._drill = shape
 
+    def extend_drill(self, diff_x, diff_y, diff_z):
+        try:
+            func = self._drill.extend_shape
+        except ValueError:
+            return
+        func(diff_x, diff_y, diff_z)
+
+    def reset_drill(self):
+        try:
+            func = self._drill.reset_shape
+        except ValueError:
+            return
+        func()
+
     def set_drill_position(self, position):
         if self._drill:
             position = (position[0] + self._drill_offset[0], position[1] + self._drill_offset[1], position[2] + self._drill_offset[2])
             self._drill.setPosition(position)
 
     def _collision_callback(self, dummy, geom1, geom2):
-        if geom1 is self._drill:
+        drill_body = self._drill.getBody()
+        if geom1.getBody() is drill_body:
             obstacle = geom2
-        elif geom2 is self._drill:
+        elif geom2.getBody() is drill_body:
             obstacle = geom1
         else:
             return
-        contacts = ode.collide(self._drill, obstacle)
+        # check if the drill is made up of multiple geoms
+        try:
+            children = self._drill.children[:]
+        except AttributeError:
+            children = []
+        contacts = []
+        for shape in children + [self._drill]:
+            contacts.extend(ode.collide(shape, obstacle))
+            # break early to improve performance
+            if contacts:
+                break
         if contacts:
             self._collision_detected = True
-        return
-        for c in contacts:
-            # no bounce effect
-            c.setBounce(0)
-            ode.ContactJoint(self._world, self._contacts, c).attach(self._drill.getBody(), obstacle.getBody())
 
     def check_collision(self):
         self._collision_detected = False
         self._space.collide(None, self._collision_callback)
         self._contacts.empty()
         return self._collision_detected
+
+    def get_space(self):
+        return self._space
 
