@@ -52,8 +52,8 @@ def ImportModel(filename, use_kdtree=True):
 
     f = open(filename,"rb")
     # read the first two lines of (potentially non-binary) input - they should contain "solid" and "facet"
-    header = f.readline(100)
-    header += f.readline(100)
+    header = f.readline(200)
+    header += f.readline(200)
     # read byte 80 to 83 - they contain the "numfacets" value in binary format
     f.seek(80)
     numfacets = unpack("<I",f.read(4))[0]
