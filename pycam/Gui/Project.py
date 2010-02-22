@@ -4,8 +4,13 @@ import OpenGL.GL as GL
 import OpenGL.GLUT as GLUT
 import pycam.Importers.STLImporter
 import pycam.Exporters.STLExporter
+import pycam.Exporters.SimpleGCodeExporter
 import pycam.Gui.Settings
 import pycam.Gui.common as GuiCommon
+import pycam.Cutters
+import pycam.PathGenerators
+import pycam.PathProcessors
+from pycam.Geometry.utils import INFINITE
 import pygtk
 import gtk
 import os
@@ -157,6 +162,17 @@ class ProjectGui:
         self.gui.get_object("Scale up").connect("clicked", self.scale_model, True)
         self.gui.get_object("Scale down").connect("clicked", self.scale_model, False)
         self.gui.get_object("Scale factor").set_value(2)
+        # preset the numbers
+        self.gui.get_object("LayersControl").set_value(1)
+        self.gui.get_object("SamplesControl").set_value(50)
+        self.gui.get_object("LinesControl").set_value(20)
+        self.gui.get_object("ToolRadiusControl").set_value(1.0)
+        self.gui.get_object("TorusRadiusControl").set_value(0.25)
+        self.gui.get_object("FeedrateControl").set_value(200)
+        self.gui.get_object("SpeedControl").set_value(1000)
+        # connect buttons with activities
+        self.gui.get_object("GenerateToolPathButton").connect("clicked", self.generate_toolpath)
+        self.gui.get_object("SaveToolPathButton").connect("clicked", self.save_toolpath)
 
     def transform_model(self, widget):
         if widget.get_name() == "Rotate":
@@ -181,39 +197,7 @@ class ProjectGui:
             no_dialog = True
         else:
             # we open a dialog
-            dialog = gtk.FileChooserDialog(title="Save model to ...",
-                    parent=self.window, action=gtk.FILE_CHOOSER_ACTION_SAVE,
-                    buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                        gtk.STOCK_SAVE, gtk.RESPONSE_OK))
-            # add filter for stl files
-            filter = gtk.FileFilter()
-            filter.set_name("STL models")
-            filter.add_pattern("*.stl")
-            dialog.add_filter(filter)
-            # add filter for all files
-            filter = gtk.FileFilter()
-            filter.set_name("All files")
-            filter.add_pattern("*")
-            dialog.add_filter(filter)
-            done = False
-            while not done:
-                response = dialog.run()
-                filename = dialog.get_filename()
-                dialog.hide()
-                if response == gtk.RESPONSE_CANCEL:
-                    dialog.destroy()
-                    return
-                if os.path.exists(filename):
-                    overwrite_window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_WARNING,
-                            buttons=gtk.BUTTONS_YES_NO,
-                            message_format="This file exists. Do you want to overwrite it?")
-                    overwrite_window.set_title("Confirm overwriting existing file")
-                    response = overwrite_window.run()
-                    overwrite_window.destroy()
-                    done = (response == gtk.RESPONSE_YES)
-                else:
-                    done = True
-            dialog.destroy()
+            filename = self.get_save_filename("Save model to ...", ("STL models", "*.stl"))
         # no filename given -> exit
         if not filename:
             return
@@ -223,11 +207,7 @@ class ProjectGui:
             fi.close()
         except IOError, err_msg:
             if not no_dialog:
-                warn_window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_ERROR,
-                        buttons=gtk.BUTTONS_OK, message_format=str(err_msg))
-                warn_window.set_title("Failed to save model file")
-                warn_window.run()
-                warn_window.destroy()
+                self.show_error_dialog("Failed to save model file")
 
     def shift_model(self, widget, use_form_values=True):
         if use_form_values:
@@ -289,6 +269,178 @@ class ProjectGui:
             self.reset_bounds(None)
             # why "2.0"?
             self.view3d.reset_view()
+
+    def generate_toolpath(self, widget, data=None):
+        radius = float(self.gui.get_object("ToolRadiusControl").get_value())
+        cuttername = None
+        for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
+            if self.gui.get_object(name).get_active():
+                cuttername = name
+        pathgenerator = None
+        for name in ("DropCutter", "PushCutter"):
+            if self.gui.get_object(name).get_active():
+                pathgenerator = name
+        pathprocessor = None
+        for name in ("PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter", "ContourCutter"):
+            if self.gui.get_object(name).get_active():
+                pathprocessor = name
+        direction = None
+        for obj, value in [("PathDirectionX", "x"), ("PathDirectionY", "y"), ("PathDirectionXY", "xy")]:
+            if self.gui.get_object(obj).get_active():
+                direction = value
+        if cuttername == "SphericalCutter":
+            self.cutter = pycam.Cutters.SphericalCutter(radius)
+        elif cuttername == "CylindricalCutter":
+            self.cutter = pycam.Cutters.CylindricalCutter(radius)
+        elif cuttername == "ToroidalCutter":
+            toroid = float(self.gui.get_object("TorusRadiusControl").get_value())
+            self.cutter = pycam.Cutters.ToroidalCutter(radius, toroid)
+
+        offset = radius/2
+
+        minx = float(self.settings.get("minx"))-offset
+        maxx = float(self.settings.get("maxx"))+offset
+        miny = float(self.settings.get("miny"))-offset
+        maxy = float(self.settings.get("maxy"))+offset
+        minz = float(self.settings.get("minz"))
+        maxz = float(self.settings.get("maxz"))
+        samples = float(self.gui.get_object("SamplesControl").get_value())
+        lines = float(self.gui.get_object("LinesControl").get_value())
+        layers = float(self.gui.get_object("LayersControl").get_value())
+        if pathgenerator == "DropCutter":
+            if pathprocessor == "ZigZagCutter":
+                self.option = pycam.PathProcessors.PathAccumulator(zigzag=True)
+            else:
+                self.option = None
+            self.pathgenerator = pycam.PathGenerators.DropCutter(self.cutter, self.model, self.option);
+            if samples>1:
+                dx = (maxx-minx)/(samples-1)
+            else:
+                dx = INFINITE
+            if lines>1:
+                dy = (maxy-miny)/(lines-1)
+            else:
+                dy = INFINITE
+            if direction == "x":
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, 0)
+            elif direction == "y":
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dx, 1)
+
+        elif pathgenerator == "PushCutter":
+            if pathprocessor == "PathAccumulator":
+                self.option = pycam.PathProcessors.PathAccumulator()
+            elif pathprocessor == "SimpleCutter":
+                self.option = pycam.PathProcessors.SimpleCutter()
+            elif pathprocessor == "ZigZagCutter":
+                self.option = pycam.PathProcessors.ZigZagCutter()
+            elif pathprocessor == "PolygonCutter":
+                self.option = pycam.PathProcessors.PolygonCutter()
+            elif pathprocessor == "ContourCutter":
+                self.option = pycam.PathProcessors.ContourCutter()
+            else:
+                self.option = None
+            self.pathgenerator = pycam.PathGenerators.PushCutter(self.cutter, self.model, self.option);
+            if pathprocessor == "ContourCutter" and samples>1:
+                dx = (maxx-minx)/(samples-1)
+            else:
+                dx = INFINITE
+            if lines>1:
+                dy = (maxy-miny)/(lines-1)
+            else:
+                dy = INFINITE
+            if layers>1:
+                dz = (maxz-minz)/(layers-1)
+            else:
+                dz = INFINITE
+            if direction == "x":
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, 0, dy, dz)
+            elif direction == "y":
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, 0, dz)
+            elif direction == "xy":
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz)
+        self.view3d.paint()
+
+    def get_save_filename(self, title, type_filter=None):
+        # we open a dialog
+        dialog = gtk.FileChooserDialog(title=title,
+                parent=self.window, action=gtk.FILE_CHOOSER_ACTION_SAVE,
+                buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                    gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+        # add filter for stl files
+        if type_filter:
+            filter = gtk.FileFilter()
+            filter.set_name(type_filter[0])
+            file_extensions = type_filter[1]
+            if not isinstance(file_extensions, list):
+                file_extensions = [file_extensions]
+            for ext in file_extensions:
+                filter.add_pattern(ext)
+            dialog.add_filter(filter)
+        # add filter for all files
+        filter = gtk.FileFilter()
+        filter.set_name("All files")
+        filter.add_pattern("*")
+        dialog.add_filter(filter)
+        done = False
+        while not done:
+            dialog.set_filter(dialog.list_filters()[0])
+            response = dialog.run()
+            filename = dialog.get_filename()
+            dialog.hide()
+            if response == gtk.RESPONSE_CANCEL:
+                dialog.destroy()
+                return None
+            if os.path.exists(filename):
+                overwrite_window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_WARNING,
+                        buttons=gtk.BUTTONS_YES_NO,
+                        message_format="This file exists. Do you want to overwrite it?")
+                overwrite_window.set_title("Confirm overwriting existing file")
+                response = overwrite_window.run()
+                overwrite_window.destroy()
+                done = (response == gtk.RESPONSE_YES)
+            else:
+                done = True
+        dialog.destroy()
+        return filename
+
+    def show_error_dialog(self, message):
+        warn_window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_ERROR,
+                buttons=gtk.BUTTONS_OK, message_format=str(message))
+        warn_window.set_title("Failed to save model file")
+        warn_window.run()
+        warn_window.destroy()
+
+    def save_toolpath(self, widget, data=None):
+        if not self.toolpath:
+            return
+        offset = float(self.gui.get_object("ToolRadiusControl").get_value())/2
+        minx = float(self.settings.get("minx"))-offset
+        maxx = float(self.settings.get("maxx"))+offset
+        miny = float(self.settings.get("miny"))-offset
+        maxy = float(self.settings.get("maxy"))+offset
+        minz = float(self.settings.get("minz"))-offset
+        maxz = float(self.settings.get("maxz"))+offset
+        no_dialog = False
+        if isinstance(widget, basestring):
+            filename = widget
+            no_dialog = True
+        else:
+            # we open a dialog
+            filename = self.get_save_filename("Save toolpath to ...", ("GCode files", ["*.gcode", "*.nc", "*.gc", "*.ngc"]))
+        # no filename given -> exit
+        if not filename:
+            return
+        try:
+            fi = open(filename, "w")
+            exporter = pycam.Exporters.SimpleGCodeExporter.ExportPathList(
+                    filename, self.toolpath, self.settings.get("unit"),
+                    minx, miny, maxz,
+                    self.gui.get_object("FeedrateControl").get_value(),
+                    self.gui.get_object("SpeedControl").get_value())
+            fi.close()
+        except IOError, err_msg:
+            if not no_dialog:
+                self.show_error_dialog("Failed to save toolpath file")
 
     def mainloop(self):
         gtk.main()
