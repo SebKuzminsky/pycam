@@ -18,6 +18,7 @@ import gtk
 import os
 import sys
 import time
+import math
 
 GTKBUILD_FILE = os.path.join(os.path.dirname(__file__), "gtk-interface", "pycam-project.ui")
 
@@ -116,8 +117,21 @@ class GLView:
         else:
             # a button was pressed before
             if self.mouse["button"] == state:
-                # the start button is still active: update the view
-                pass
+                if state == BUTTON_ZOOM:
+                    # the start button is still active: update the view
+                    current_scale = self.settings.get("scale")
+                    diff = x - self.mouse["start_pos"][0]
+                    if -10 <= diff <= 10:
+                        return
+                    elif diff > 0:
+                        change = +math.log(diff/10)
+                    else:
+                        change = -math.log(-diff/10)
+                    new_scale = current_scale + change
+                    print "%f -> %f" % (current_scale, new_scale)
+                    GL.glMatrixMode(GL.GL_MODELVIEW)
+                    GL.glLoadIdentity()
+                    GL.glScalef(new_scale, new_scale, new_scale)
             else:
                 # button was released
                 self.mouse["button"] = None
