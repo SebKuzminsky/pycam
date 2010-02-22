@@ -10,19 +10,26 @@ import pycam.Gui.common as GuiCommon
 import pycam.Cutters
 import pycam.PathGenerators
 import pycam.PathProcessors
-from pycam.Gui.ode_objects import PhysicalWorld
+import pycam.Gui.ode_objects as ode_objects
 from pycam.Geometry.utils import INFINITE
+import threading
 import pygtk
 import gtk
 import os
 import sys
+import time
 
 GTKBUILD_FILE = os.path.join(os.path.dirname(__file__), "gtk-interface", "pycam-project.ui")
 
+BUTTON_ROTATE = gtk.gdk.BUTTON1_MASK
+BUTTON_ZOOM = gtk.gdk.BUTTON2_MASK
+BUTTON_MOVE = gtk.gdk.BUTTON3_MASK
 
 def gtkgl_functionwrapper(function):
     def decorated(self, *args, **kwords):
         gldrawable=self.area.get_gl_drawable()
+        if not gldrawable:
+            return
         glcontext=self.area.get_gl_context()
         if not gldrawable.gl_begin(glcontext):
             return
@@ -39,12 +46,13 @@ class GLView:
             import gtk.gtkgl
         except ImportError:
             return
+        self.mouse = { "start_pos": None, "button": None }
         self.enabled = True
         self.settings = settings
         self.gui = gui
         self.window = self.gui.get_object("view3dwindow")
         self.window.set_size_request(400,400)
-        self.window.connect("destroy", lambda widget, data=None: self.window.destroy())
+        self.window.connect("destroy", self.destroy)
         self.container = self.gui.get_object("view3dbox")
         self.gui.get_object("Reset View").connect("clicked", self.rotate_view, GuiCommon.VIEW_ROTATIONS["reset"])
         self.gui.get_object("Left View").connect("clicked", self.rotate_view, GuiCommon.VIEW_ROTATIONS["left"])
@@ -63,6 +71,10 @@ class GLView:
         self.area.connect('expose_event', self._expose_event) 
         # resize window
         self.area.connect('configure_event', self._resize_window)
+        # catch mouse events
+        self.area.set_events(gtk.gdk.MOUSE | gtk.gdk.BUTTON_PRESS_MASK)
+        self.area.connect("button-press-event", self.mouse_handler)
+        self.area.connect('motion-notify-event', self.mouse_handler)
         self.area.show()
         self.container.add(self.area)
         self.container.show()
@@ -81,6 +93,34 @@ class GLView:
 
     def _gl_finish(self):
         self.area.get_gl_drawable().swap_buffers()
+
+    def destroy(self, widget=None):
+        self.area.destroy()
+        self.window.destroy()
+
+    def mouse_handler(self, widget, event):
+        x, y, state = event.x, event.y, event.state
+        if self.mouse["button"] is None:
+            if (state == BUTTON_ZOOM) or (state == BUTTON_ROTATE) or (state == BUTTON_MOVE):
+                self.mouse["button"] = state
+                self.mouse["start_pos"] = x, y
+                self.area.set_events(gtk.gdk.MOUSE | gtk.gdk.BUTTON_PRESS_MASK)
+            if state == BUTTON_ZOOM:
+                print "Zoom button pressed"
+            elif state == BUTTON_ROTATE:
+                print "Rotate button pressed"
+            elif state == BUTTON_MOVE:
+                print "Move button pressed"
+            else:
+                return
+        else:
+            # a button was pressed before
+            if self.mouse["button"] == state:
+                # the start button is still active: update the view
+                pass
+            else:
+                # button was released
+                self.mouse["button"] = None
 
     @gtkgl_functionwrapper
     def rotate_view(self, widget, data=None):
@@ -113,32 +153,56 @@ class GLView:
         GuiCommon.draw_complete_model_view(self.settings)
 
 
-class VisualView:
-    def __init__(self, gui, settings):
-        self.enabled = True
-        self.gui = gui
+class VisualThread(threading.Thread):
+
+    def __init__(self, condition, settings):
         self.settings = settings
-        self.world = None
-        if self.settings.get("model"):
-            self.init_view()
+        self.view3d = None
+        self.condition = condition
+        threading.Thread.__init__(self)
+
+    def run(self):
+        self.view3d = VisualView(self.settings)
+        self.condition.acquire()
+        first = True
+        while not self.settings.get("model_view_request_quit"):
+            if self.settings.get("model_view_request_reset"):
+                self.settings.set("model_view_request_reset", False)
+                first = True
+            if first and self.model:
+                first = False
+                if True:
+                    import gobject
+                    gobject.idle_add(self.view3d.init_view)
+                else:
+                    self.view3d.init_view()
+            self.condition.wait()
+        self.condition.release()
+
+
+class VisualView():
+    def __init__(self, settings):
+        self.enabled = True
+        self.settings = settings
+        self.world = ode_objects.PhysicalWorld()
 
     def init_view(self):
-        self.world = PhysicalWorld()
-        self.obstacle = self.world.add_mesh((0, 0, 0), self.settings.get("model").triangles())
-        self.drill = self.world.add_sphere((self.settings.get("minx"), self.settings.get("miny"), self.settings.get("maxz")), 0.5)
-        self.world.set_drill(self.drill)
-        self.world.set_drill_speed((0, 0.5, 0))
-
-    def advance(self):
-        self.world.calculate_step(0.1)
+        self.world.reset()
+        self.obstacle = self.world.add_mesh((0, 0, 0), self.model.triangles())
+        height = self.settings.get("maxz") - self.settings.get("minz")
+        self.world.set_drill(ode_objects.ShapeCylinder(0.1, height), (self.settings.get("minx"), self.settings.get("miny"), self.settings.get("maxz")))
 
     def paint(self):
-        if not self.world:
-            self.init_view()
+        pass
 
 class ProjectGui:
 
     def __init__(self, master=None):
+        gtk.gdk.threads_init()
+        self.settings = pycam.Gui.Settings.Settings()
+        self.notify_visual = threading.Condition()
+        self.gui_is_active = False
+        self.view3d = None
         self.gui = gtk.Builder()
         self.gui.add_from_file(GTKBUILD_FILE)
         self.window = self.gui.get_object("ProjectWindow")
@@ -151,10 +215,11 @@ class ProjectGui:
         self.window.show()
         self.model = None
         self.toolpath = None
+        self.physics = None
         # add some dummies - to be implemented later ...
-        self.settings = pycam.Gui.Settings.Settings()
         self.settings.add_item("model", lambda: getattr(self, "model"))
         self.settings.add_item("toolpath", lambda: getattr(self, "toolpath"))
+        # TODO: replace hard-coded scale
         self.settings.add_item("scale", lambda: 0.9/getattr(getattr(self, "model"), "maxsize")())
         # create the unit field (the default content can't be defined via glade)
         scale_box = self.gui.get_object("scale_box")
@@ -197,7 +262,56 @@ class ProjectGui:
         # connect buttons with activities
         self.gui.get_object("GenerateToolPathButton").connect("clicked", self.generate_toolpath)
         self.gui.get_object("SaveToolPathButton").connect("clicked", self.save_toolpath)
+        self.gui.get_object("Toggle3dView").connect("toggled", self.toggle_3d_view)
+        self.toggle_3d_view(True)
 
+    def gui_activity_guard(func):
+        def wrapper(self, *args, **kwargs):
+            if self.gui_is_active:
+                return
+            self.gui_is_active = True
+            func(self, *args, **kwargs)
+            self.gui_is_active = False
+        return wrapper
+        
+    def update_view(self):
+        if self.view3d:
+            self.notify_visual.acquire()
+            self.notify_visual.notify()
+            self.notify_visual.release()
+
+    def reload_model(self):
+        self.physics = GuiCommon.generate_physics(self.settings)
+        if self.view3d:
+            self.settings.set("model_view_request_reset", True)
+            self.update_view()
+
+    @gui_activity_guard
+    def toggle_3d_view(self, widget=None, value=None):
+        current_state = not (self.view3d is None)
+        if value is None:
+            new_state = not current_state
+        else:
+            new_state = value
+        if new_state == current_state:
+            return
+        elif new_state:
+            self.settings.set("model_view_request_quit", False)
+            # do the gl initialization
+            self.view3d = GLView(self.gui, self.settings)
+            if self.model and self.view3d.enabled:
+                self.reset_bounds(None)
+                self.view3d.reset_view()
+            #self.thread3d = VisualThread(self.notify_visual, self.settings)
+            #self.thread3d.start()
+            self.update_view()
+        else:
+            self.settings.set("model_view_request_quit", True)
+            self.view3d.destroy()
+            self.view3d = None
+        self.gui.get_object("Toggle3dView").set_active(new_state)
+
+    @gui_activity_guard
     def transform_model(self, widget):
         if widget.get_name() == "Rotate":
             controls = (("x-axis", "x"), ("y-axis", "y"), ("z-axis", "z"))
@@ -212,8 +326,9 @@ class ProjectGui:
         for obj, value in controls:
             if self.gui.get_object(obj).get_active():
                 GuiCommon.transform_model(self.model, value)
-        self.view3d.paint()
+        self.update_view()
 
+    @gui_activity_guard
     def save_model(self, widget):
         no_dialog = False
         if isinstance(widget, basestring):
@@ -233,6 +348,7 @@ class ProjectGui:
             if not no_dialog:
                 self.show_error_dialog("Failed to save model file")
 
+    @gui_activity_guard
     def shift_model(self, widget, use_form_values=True):
         if use_form_values:
             shift_x = self.gui.get_object("shift_x").get_value()
@@ -243,8 +359,9 @@ class ProjectGui:
             shift_y = -self.model.miny
             shift_z = -self.model.minz
         GuiCommon.shift_model(self.model, shift_x, shift_y, shift_z)
-        self.view3d.paint()
+        self.update_view()
 
+    @gui_activity_guard
     def scale_model(self, widget, scale_up=True):
         value = self.gui.get_object("Scale factor").get_value()
         if (value == 0) or (value == 1):
@@ -252,14 +369,16 @@ class ProjectGui:
         if not scale_up:
             value = 1/value
         GuiCommon.scale_model(self.model, value)
-        self.view3d.paint()
+        self.update_view()
 
+    @gui_activity_guard
     def minimize_bounds(self, widget, data=None):
         # be careful: this depends on equal names of "settings" keys and "model" variables
         for limit in ["minx", "miny", "minz", "maxx", "maxy", "maxz"]:
             self.settings.set(limit, getattr(self.model, limit))
-        self.view3d.paint()
+        self.update_view()
 
+    @gui_activity_guard
     def reset_bounds(self, widget, data=None):
         xwidth = self.model.maxx - self.model.minx
         ywidth = self.model.maxy - self.model.miny
@@ -271,15 +390,18 @@ class ProjectGui:
         self.settings.set("maxx", self.model.maxx + 0.1 * xwidth)
         self.settings.set("maxy", self.model.maxy + 0.1 * ywidth)
         self.settings.set("maxz", self.model.maxz + 0.1 * zwidth)
-        self.view3d.paint()
+        self.update_view()
 
-    def destroy(self, widget, data=None):
+    def destroy(self, widget=None, data=None):
+        self.settings.set("model_view_request_quit", True)
+        self.update_view()
         gtk.main_quit()
         
     def open(self, filename):
         self.file_selector.set_filename(filename)
         self.load_model_file(filename=filename)
         
+    @gui_activity_guard
     def load_model_file(self, widget=None, filename=None):
         if not filename:
             return
@@ -287,21 +409,12 @@ class ProjectGui:
         if callable(filename):
             filename = filename()
         self.model = pycam.Importers.STLImporter.ImportModel(filename)
-        # use ode and vpython
-        if self.model:
-            self.view3d = VisualView(self.gui, self.settings)
-        return
-        # do the gl initialization
-        self.view3d = GLView(self.gui, self.settings)
-        if self.model and self.view3d.enabled:
-            self.reset_bounds(None)
-            # why "2.0"?
-            self.view3d.reset_view()
+        self.toggle_3d_view(value=True)
+        self.reload_model()
 
+    @gui_activity_guard
     def generate_toolpath(self, widget, data=None):
-        for i in range(100):
-            self.view3d.advance()
-        return
+        start_time = time.time()
         radius = float(self.gui.get_object("ToolRadiusControl").get_value())
         cuttername = None
         for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
@@ -343,7 +456,7 @@ class ProjectGui:
                 self.option = pycam.PathProcessors.PathAccumulator(zigzag=True)
             else:
                 self.option = None
-            self.pathgenerator = pycam.PathGenerators.DropCutter(self.cutter, self.model, self.option);
+            self.pathgenerator = pycam.PathGenerators.DropCutter(self.cutter, self.model, self.option, physics=self.physics);
             if samples>1:
                 dx = (maxx-minx)/(samples-1)
             else:
@@ -389,7 +502,8 @@ class ProjectGui:
                 self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, 0, dz)
             elif direction == "xy":
                 self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz)
-        self.view3d.paint()
+        print "Time elapsed: %f" % (time.time() - start_time)
+        self.update_view()
 
     def get_save_filename(self, title, type_filter=None):
         # we open a dialog
@@ -441,6 +555,7 @@ class ProjectGui:
         warn_window.run()
         warn_window.destroy()
 
+    @gui_activity_guard
     def save_toolpath(self, widget, data=None):
         if not self.toolpath:
             return
@@ -474,10 +589,6 @@ class ProjectGui:
                 self.show_error_dialog("Failed to save toolpath file")
 
     def mainloop(self):
-        import time
-        #time.sleep(3)
-        #self.view3d = VisualView(self.gui, self.settings)
-        time.sleep(3)
         gtk.main()
 
 if __name__ == "__main__":
