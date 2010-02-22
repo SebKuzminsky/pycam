@@ -16,6 +16,14 @@ MODEL_TRANSFORMATIONS = {
     "y_swap_z": ((1, 0, 0, 0), (0, 0, 1, 0), (0, 1, 0, 0)),
 }
 
+COLORS = {
+    "model": (0.5, 0.5, 1.0),
+    "bounding": (0.3, 0.3, 0.3),
+    "cutter": (1.0, 0.2, 0.2),
+    "toolpath_way": (1.0, 0.5, 0.5),
+    "toolpath_back": (0.5, 1.0, 0.5),
+}
+
 def keep_gl_mode(func):
     def wrapper(*args, **kwargs):
         prev_mode = GL.glGetDoublev(GL.GL_MATRIX_MODE)
@@ -83,7 +91,7 @@ def draw_axes(settings):
 
 @keep_matrix
 def draw_bounding_box(minx, miny, minz, maxx, maxy, maxz):
-    color = [0.3, 0.3, 0.3]
+    color = COLORS["bounding"]
     p1 = [minx, miny, minz]
     p2 = [minx, maxy, minz]
     p3 = [maxx, maxy, minz]
@@ -105,6 +113,13 @@ def draw_bounding_box(minx, miny, minz, maxx, maxy, maxz):
 
 @keep_gl_mode
 @keep_matrix
+def draw_cutter(cutter):
+    if not cutter is None:
+        GL.glColor3f(*COLORS["cutter"])
+        cutter.to_OpenGL()
+
+@keep_gl_mode
+@keep_matrix
 def draw_complete_model_view(settings):
     GL.glMatrixMode(GL.GL_MODELVIEW)
     GL.glLoadIdentity()
@@ -115,10 +130,12 @@ def draw_complete_model_view(settings):
             float(settings.get("minz")), float(settings.get("maxx")),
             float(settings.get("maxy")), float(settings.get("maxz")))
     # draw the model
-    GL.glColor3f(0.5, 0.5, 1)
+    GL.glColor3f(*COLORS["model"])
     settings.get("model").to_OpenGL()
     # draw the toolpath
     draw_toolpath(settings.get("toolpath"))
+    # draw the drill
+    draw_cutter(settings.get("cutter"))
 
 @keep_gl_mode
 @keep_matrix
@@ -129,13 +146,13 @@ def draw_toolpath(toolpath):
         last = None
         for path in toolpath:
             if last:
-                GL.glColor3f(0.5, 1, 0.5)
+                GL.glColor3f(*COLORS["toolpath_back"])
                 GL.glBegin(GL.GL_LINES)
                 GL.glVertex3f(last.x, last.y, last.z)
                 last = path.points[0]
                 GL.glVertex3f(last.x, last.y, last.z)
                 GL.glEnd()
-            GL.glColor3f(1, 0.5, 0.5)
+            GL.glColor3f(*COLORS["toolpath_way"])
             GL.glBegin(GL.GL_LINE_STRIP)
             for point in path.points:
                 GL.glVertex3f(point.x, point.y, point.z)
@@ -162,15 +179,17 @@ def scale_model(model, scale):
     matrix = ((scale, 0, 0, 0), (0, scale, 0, 0), (0, 0, scale, 0))
     model.transform(matrix)
 
-def generate_physics(settings, physics=None):
+def generate_physics(settings, cutter, physics=None):
     if physics is None:
         physics = ode_objects.PhysicalWorld()
     physics.reset()
     physics.add_mesh((0, 0, 0), settings.get("model").triangles())
-    radius = settings.get("tool_radius")
+    #radius = settings.get("tool_radius")
     # weird: the normal length of the drill causes the detection to fail at high points of the object
-    height = 2 * (settings.get("maxz") - settings.get("minz"))
+    #height = 2 * (settings.get("maxz") - settings.get("minz"))
     #physics.set_drill(ode_objects.ShapeCylinder(radius, height), (settings.get("minx"), settings.get("miny"), settings.get("maxz")))
-    physics.set_drill(ode_objects.ShapeCylinder(radius, height), (0, 0,  height/2.0))
+    #physics.set_drill(ode_objects.ShapeCylinder(radius, height), (0, 0,  height/2.0))
+    shape_info = cutter.get_shape("ODE")
+    physics.set_drill(shape_info[0], shape_info[2])
     return physics
 

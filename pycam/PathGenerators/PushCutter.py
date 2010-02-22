@@ -26,7 +26,7 @@ class PushCutter:
         self.model = model
         self.pa = pathextractor
 
-    def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, dx, dy, dz):
+    def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, dx, dy, dz, draw_callback=None):
         if dx != 0:
             self.pa.dx = dx
         else:
@@ -237,6 +237,10 @@ class PushCutter:
                     print "C ", begin, " - ", end
                 self.pa.append(begin)
                 self.pa.append(end)
+                self.cutter.moveto(begin)
+                self.cutter.moveto(end)
+                if draw_callback:
+                    draw_callback()
                 if DEBUG_PUSHCUTTER3: 
                     self.svg.stroke("red' stroke-width='0.1")
                     self.svg.AddLine(begin.x, z-0.1, end.x, z-0.1)

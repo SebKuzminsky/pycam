@@ -25,6 +25,15 @@ class CylindricalCutter(BaseCutter):
     def __repr__(self):
         return "CylindricalCutter<%s,%s>" % (self.location,self.radius)
 
+    def get_shape(self, format="ODE"):
+        if format == "ODE":
+            import ode
+            geom = ode.GeomCylinder(None, self.radius, self.height)
+            def set_position(x, y, z):
+                geom.setPosition((x, y, z))
+            self.shape[format] = (geom, set_position, (0, 0, 0.5 * self.height))
+            return self.shape[format]
+
     def to_OpenGL(self):
         if not GL_enabled:
             return

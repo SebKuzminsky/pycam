@@ -257,9 +257,11 @@ class ProjectGui:
         self.model = None
         self.toolpath = None
         self.physics = None
+        self.cutter = None
         # add some dummies - to be implemented later ...
         self.settings.add_item("model", lambda: getattr(self, "model"))
         self.settings.add_item("toolpath", lambda: getattr(self, "toolpath"))
+        self.settings.add_item("cutter", lambda: getattr(self, "cutter"))
         # TODO: replace hard-coded scale
         self.settings.add_item("scale", lambda: 0.9/getattr(getattr(self, "model"), "maxsize")())
         # create the unit field (the default content can't be defined via glade)
@@ -326,10 +328,8 @@ class ProjectGui:
         if self.view3d:
             self.view3d.paint()
 
-    def reload_model(self, widget=None, data=None):
-        self.physics = GuiCommon.generate_physics(self.settings, self.physics)
-        if self.view3d:
-            self.update_view()
+    def update_physics(self):
+        self.physics = GuiCommon.generate_physics(self.settings, self.cutter, self.physics)
 
     @gui_activity_guard
     def toggle_3d_view(self, widget=None, value=None):
@@ -467,12 +467,21 @@ class ProjectGui:
         # do some initialization
         self.append_to_queue(self.reset_bounds)
         self.append_to_queue(self.toggle_3d_view, True)
-        self.append_to_queue(self.reload_model)
+        self.append_to_queue(self.update_view)
 
     @gui_activity_guard
     def generate_toolpath(self, widget, data=None):
         start_time = time.time()
-        self.reload_model()
+        class UpdateView:
+            def __init__(self, func, skip=10):
+                self.count = 0
+                self.skip = skip
+                self.func = func
+            def update(self):
+                if self.count % self.skip == 0:
+                    self.func()
+                self.count += 1
+        updater = UpdateView(self.update_view, 2)
         radius = float(self.gui.get_object("ToolRadiusControl").get_value())
         cuttername = None
         for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
@@ -490,13 +499,16 @@ class ProjectGui:
         for obj, value in [("PathDirectionX", "x"), ("PathDirectionY", "y"), ("PathDirectionXY", "xy")]:
             if self.gui.get_object(obj).get_active():
                 direction = value
+        cutter_height = 2 * (self.settings.get("maxz") - self.settings.get("minz"))
         if cuttername == "SphericalCutter":
-            self.cutter = pycam.Cutters.SphericalCutter(radius)
+            self.cutter = pycam.Cutters.SphericalCutter(radius, height=cutter_height)
         elif cuttername == "CylindricalCutter":
-            self.cutter = pycam.Cutters.CylindricalCutter(radius)
+            self.cutter = pycam.Cutters.CylindricalCutter(radius, height=cutter_height)
         elif cuttername == "ToroidalCutter":
             toroid = float(self.gui.get_object("TorusRadiusControl").get_value())
-            self.cutter = pycam.Cutters.ToroidalCutter(radius, toroid)
+            self.cutter = pycam.Cutters.ToroidalCutter(radius, toroid, height=cutter_height)
+
+        self.update_physics()
 
         offset = radius/2
 
@@ -524,9 +536,9 @@ class ProjectGui:
             else:
                 dy = utils.INFINITE
             if direction == "x":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, 0)
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, 0, updater.update)
             elif direction == "y":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dx, 1)
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dx, 1, updater.update)
 
         elif pathgenerator == "PushCutter":
             if pathprocessor == "PathAccumulator":
@@ -555,11 +567,11 @@ class ProjectGui:
             else:
                 dz = utils.INFINITE
             if direction == "x":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, 0, dy, dz)
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, 0, dy, dz, updater.update)
             elif direction == "y":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, 0, dz)
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, 0, dz, updater.update)
             elif direction == "xy":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz)
+                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz, updater.update)
         print "Time elapsed: %f" % (time.time() - start_time)
         self.update_view()
 

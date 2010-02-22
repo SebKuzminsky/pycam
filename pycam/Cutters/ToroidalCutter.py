@@ -30,6 +30,16 @@ class ToroidalCutter(BaseCutter):
     def __repr__(self):
         return "ToroidalCutter<%s,%f,R=%f,r=%f>" % (self.location,self.radius,self.majorradius,self.minorradius)
 
+    def get_shape(self, format="ODE"):
+        if format == "ODE":
+            import ode
+            # TODO: use an appromixated trimesh instead (ODE does not support toroidal shapes)
+            geom = ode.GeomCapsule(None, self.radius, self.height)
+            def set_position(x, y, z):
+                geom.setPosition((x, y, z))
+            self.shape[format] = (geom, set_position, (0, 0, 0.5 * self.height + self.minorradius))
+            return self.shape[format]
+
     def to_OpenGL(self):
         if not GL_enabled:
             return

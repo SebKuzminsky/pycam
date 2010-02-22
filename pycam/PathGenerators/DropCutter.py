@@ -37,7 +37,7 @@ class DropCutter:
         self.processor = PathProcessor
         self.physics = physics
 
-    def GenerateToolPath(self, minx, maxx, miny, maxy, z0, z1, d0, d1, direction):
+    def GenerateToolPath(self, minx, maxx, miny, maxy, z0, z1, d0, d1, direction, draw_callback=None):
         if self.processor:
             pa = self.processor
         else:
@@ -68,8 +68,6 @@ class DropCutter:
             while dims[0].check_bounds():
                 p = Point(dims[x].get(), dims[y].get(), dim_height.get())
 
-                self.cutter.moveto(p)
-
                 low, high = z0, z1
                 trip_start = 20
                 safe_z = None
@@ -97,11 +95,16 @@ class DropCutter:
                     self.physics.set_drill_position((dims[x].get(), dims[y].get(), z1))
                     if self.physics.check_collision():
                         # the object fills the whole range of z0..z1 - we should issue a warning
-                        pa.append(Point(dims[x].get(), dims[y].get(), INFINITE))
+                        next_point = Point(dims[x].get(), dims[y].get(), INFINITE)
                     else:
-                        pa.append(Point(dims[x].get(), dims[y].get(), z1))
+                        next_point = Point(dims[x].get(), dims[y].get(), z1)
                 else:
-                    pa.append(Point(dims[x].get(), dims[y].get(), safe_z))
+                    next_point = Point(dims[x].get(), dims[y].get(), safe_z)
+
+                pa.append(next_point)
+                self.cutter.moveto(next_point)
+                if draw_callback:
+                    draw_callback()
 
                 """
                 height_max = -INFINITE
