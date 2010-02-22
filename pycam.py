@@ -20,10 +20,10 @@ if __name__ == "__main__":
             help="use the (old) Tk interface")
     parser.add_option("-c", "--config", dest="config_file",
             default=None, action="store", type="string",
-            help="load a file with processing settings")
+            help="load a file with processing settings (requires the GTK interface)")
     parser.add_option("", "--template", dest="config_template",
             default=None, action="store", type="string",
-            help="enable a specific processing settings template (e.g. 'Rough', 'Semi-finish' or 'Finish')")
+            help="enable a specific processing settings template - e.g. 'Rough', 'Semi-finish' or 'Finish' (requires the GTK interface)")
     (options, args) = parser.parse_args()
 
     if len(args) > 0:
