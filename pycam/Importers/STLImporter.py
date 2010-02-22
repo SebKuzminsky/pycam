@@ -117,8 +117,6 @@ def ImportModel(filename, use_kdtree=True):
                 print "ERROR: skipping invalid triangle: %s / %s / %s" % (p1, p2, p3)
                 continue
             t._normal = n
-            if t.normal().z < 0:
-                continue
             model.append(t)
     else:
         AOI = False
