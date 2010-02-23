@@ -144,8 +144,17 @@ class Camera:
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadIdentity()
         v = self.view
+        # position the light according to the current bounding box
+        light_pos = range(3)
+        light_pos[0] = 2 * self.settings.get("maxx") - self.settings.get("minx")
+        light_pos[1] = 2 * self.settings.get("maxy") - self.settings.get("miny")
+        light_pos[2] = 2 * self.settings.get("maxz") - self.settings.get("minz")
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, (light_pos[0], light_pos[1], light_pos[2], 1.0))
+        # position the camera
+        camera_position = (v["center"][0] + v["distance"][0],
+                v["center"][1] + v["distance"][1], v["center"][2] + v["distance"][2])
         GLU.gluPerspective(v["fovy"], (0.0 + width) / height, v["znear"], v["zfar"])
-        GLU.gluLookAt(v["center"][0] + v["distance"][0], v["center"][1] + v["distance"][1], v["center"][2] + v["distance"][2],
+        GLU.gluLookAt(camera_position[0], camera_position[1], camera_position[2],
                 v["center"][0], v["center"][1], v["center"][2], v["up"][0], v["up"][1], v["up"][2])
         GL.glMatrixMode(prev_mode)
 

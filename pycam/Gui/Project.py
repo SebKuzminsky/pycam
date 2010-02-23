@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-import OpenGL.GL as GL
-import OpenGL.GLU as GLU
-import OpenGL.GLUT as GLUT
 import pycam.Importers.STLImporter
 import pycam.Exporters.STLExporter
 import pycam.Exporters.SimpleGCodeExporter
@@ -13,12 +10,16 @@ import pycam.PathGenerators
 import pycam.PathProcessors
 import pycam.Geometry.utils as utils
 import pycam.Gui.OpenGLTools as ogl_tools
-import threading
+import OpenGL.GL as GL
+import OpenGL.GLU as GLU
+import OpenGL.GLUT as GLUT
+# gtk.gtkgl is imported in the constructor of "GLView" below
+#import gtk.gtkgl
 import pygtk
 import gtk
+import time
 import os
 import sys
-import time
 
 GTKBUILD_FILE = os.path.join(os.path.dirname(__file__), "gtk-interface", "pycam-project.ui")
 
@@ -141,10 +142,9 @@ class GLView:
         GL.glLoadIdentity()
         GL.glViewport(0, 0, self.area.allocation.width, self.area.allocation.height)
         # lightning
-        GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0., 0., 0., 1.))		# Setup The Ambient Light
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0.3, 0.3, 0.3, 3.))		# Setup The Ambient Light
         GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, (1., 1., 1., .0))		# Setup The Diffuse Light
-        GL.glLightfv(GL.GL_LIGHT0, GL.GL_SPECULAR, (.2, .2, .2, 1.0))		# Setup The SpecularLight
-        GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, (3., -1., 3., 1.))	# Position The Light
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_SPECULAR, (.3, .3, .3, 1.0))		# Setup The SpecularLight
         GL.glEnable(GL.GL_LIGHT0)
         # Enable Light One
         GL.glEnable(GL.GL_LIGHTING)
