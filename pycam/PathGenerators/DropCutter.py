@@ -157,7 +157,9 @@ class DropCutter:
                 height_max = cut.z
                 cut_max = cut
                 triangle_max = t
-        if not cut_max or not dim_height.check_bounds(cut_max.z):
+        # don't do a complete boundary check for the height
+        # this avoids zero-cuts for models that exceed the bounding box height
+        if not cut_max or cut_max.z < dim_height.min:
             cut_max = Point(x.get(), y.get(), dim_height.end)
         if self._cut_last and ((triangle_max and not self._triangle_last) or (self._triangle_last and not triangle_max)):
             if dim_height.check_bounds(self._cut_last.z):
