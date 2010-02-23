@@ -140,7 +140,7 @@ class DropCutter:
         if order is None:
             order = ["x", "y"]
         p = Point(x.get(), y.get(), dim_height.get())
-        height_max = -self._safe_height
+        height_max = None
         cut_max = None
         triangle_max = None
         self.cutter.moveto(p)
@@ -158,7 +158,6 @@ class DropCutter:
                 height_max = cut.z
                 cut_max = cut
                 triangle_max = t
-                self._cut_last = cut
         if not cut_max or not dim_height.check_bounds(cut_max.z):
             cut_max = Point(x.get(), y.get(), dim_height.end)
         if self._cut_last and ((triangle_max and not self._triangle_last) or (self._triangle_last and not triangle_max)):
