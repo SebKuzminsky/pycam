@@ -341,7 +341,14 @@ class SimpleGui(Tk.Frame):
             maxy = float(self.settings.get("maxy"))+offset
             minz = float(self.settings.get("minz"))-offset
             maxz = float(self.settings.get("maxz"))+offset
-            exporter = SimpleGCodeExporter.ExportPathList(filename, self.toolpath, self.settings.get("unit"), minx, miny, maxz, self.FeedRate.get(), self.Speed.get())
+            if self.settings.get("unit") == 'mm':
+                start_offset = 7.0
+            else:
+                start_offset = 0.25
+            exporter = SimpleGCodeExporter.ExportPathList(filename,
+                    self.toolpath, self.settings.get("unit"),
+                    minx, miny, maxz + start_offset,
+                    self.FeedRate.get(), self.Speed.get())
 
     def createWidgets(self):
         self.ogl = OpenglWidget(self, width=600, height=500, double=1)

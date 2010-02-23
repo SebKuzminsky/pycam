@@ -337,7 +337,8 @@ class ProjectGui:
                 ("ToolRadiusControl", "tool_radius"),
                 ("TorusRadiusControl", "torus_radius"),
                 ("FeedrateControl", "feedrate"),
-                ("SpeedControl", "speed")):
+                ("SpeedControl", "speed"),
+                ("SafetyHeightControl", "safety_height")):
             obj = self.gui.get_object(objname)
             self.settings.add_item(key, obj.get_value, obj.set_value)
         # connect buttons with activities
@@ -638,6 +639,8 @@ class ProjectGui:
 
     def load_model(self, model):
         self.model = model
+        # place the "safe height" clearly above the model's peak
+        self.settings.set("safety_height", (2 * self.model.maxz - self.model.minz))
         # do some initialization
         self.append_to_queue(self.reset_bounds)
         self.append_to_queue(self.toggle_3d_view, True)
@@ -759,7 +762,9 @@ class ProjectGui:
                 self.option = pycam.PathProcessors.PathAccumulator(zigzag=True)
             else:
                 self.option = None
-            self.pathgenerator = pycam.PathGenerators.DropCutter(self.cutter, self.model, self.option, physics=self.physics);
+            self.pathgenerator = pycam.PathGenerators.DropCutter(self.cutter,
+                    self.model, self.option, physics=self.physics,
+                    safety_height=self.settings.get("safety_height"))
             dx = x_shift
             dy = y_shift
             if direction == "x":
@@ -780,7 +785,8 @@ class ProjectGui:
                 self.option = pycam.PathProcessors.ContourCutter()
             else:
                 self.option = None
-            self.pathgenerator = pycam.PathGenerators.PushCutter(self.cutter, self.model, self.option, physics=self.physics);
+            self.pathgenerator = pycam.PathGenerators.PushCutter(self.cutter,
+                    self.model, self.option, physics=self.physics)
             if pathprocessor == "ContourCutter":
                 dx = x_shift
             else:
@@ -869,11 +875,17 @@ class ProjectGui:
             return
         try:
             fi = open(filename, "w")
+            # TODO: fix these hard-coded offsets
+            if self.settings.get("unit") == 'mm':
+                start_offset = 7.0
+            else:
+                start_offset = 0.25
             exporter = pycam.Exporters.SimpleGCodeExporter.ExportPathList(
                     filename, self.toolpath, self.settings.get("unit"),
-                    minx, miny, maxz,
+                    minx, miny, maxz + start_offset,
                     self.gui.get_object("FeedrateControl").get_value(),
-                    self.gui.get_object("SpeedControl").get_value())
+                    self.gui.get_object("SpeedControl").get_value(),
+                    safety_height=self.settings.get("safety_height"))
             fi.close()
             if self.no_dialog:
                 print "GCode file successfully written: %s" % str(filename)

@@ -2,22 +2,21 @@ from pycam.PathProcessors import *
 from pycam.Geometry import *
 from pycam.Geometry.intersection import intersect_lines
 import pycam.PathGenerators
+from pycam.Geometry.utils import INFINITE
 import sys
 
 
 class DropCutter:
 
-    def __init__(self, cutter, model, PathProcessor=None, physics=None):
+    def __init__(self, cutter, model, PathProcessor=None, physics=None, safety_height=INFINITE):
         self.cutter = cutter
         self.model = model
         self.processor = PathProcessor
         self.physics = physics
+        self.safety_height = safety_height
         # used for the non-ode code
         self._triangle_last = None
         self._cut_last = None
-        # put the toolpath clearly above the model, if the model exceeds the
-        # bounding box at certain positions
-        self._safe_height = self.model.maxz + 4 * (self.model.maxz - self.model.minz)
         # remember if we already reported an invalid boundary
         self._boundary_warning_already_shown = False
 
@@ -123,7 +122,7 @@ class DropCutter:
             self.physics.set_drill_position((x.get(), y.get(), dim_height.start))
             if self.physics.check_collision():
                 # the object fills the whole range of z0..z1 - we should issue a warning
-                next_point = Point(x.get(), y.get(), self._safe_height)
+                next_point = Point(x.get(), y.get(), self.safety_height)
                 if not self._boundary_warning_already_shown:
                     print >>sys.stderr, "WARNING: DropCutter exceed the height" \
                             + " of the boundary box: using a safe height " \
@@ -149,7 +148,7 @@ class DropCutter:
         box_y_min = p.y - self.cutter.radius
         box_y_max = p.y + self.cutter.radius
         box_z_min = dim_height.end
-        box_z_max = self._safe_height
+        box_z_max = self.safety_height
         triangles = self.model.triangles(box_x_min, box_y_min, box_z_min, box_x_max, box_y_max, box_z_max)
         for t in triangles:
             if t.normal().z < 0: continue;
