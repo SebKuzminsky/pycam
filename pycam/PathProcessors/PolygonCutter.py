@@ -26,29 +26,21 @@ class PolygonCutter:
     def finish(self):
         self.pe.finish()
         paths = []
+        source_paths = []
         if self.pe.hor_path_list:
-            for path in self.pe.hor_path_list:
-                points = path.points
-                for i in range(0, (len(points)+1)/2):
-                    p = Path()
-                    if i % 2 == 0:
-                        p.append(points[i])
-                        p.append(points[-i-1])
-                    else:
-                        p.append(points[-i-1])
-                        p.append(points[i])
-                    paths.append(p)
+            source_paths.extend(self.pe.hor_path_list)
         if self.pe.ver_path_list:
-            for path in self.pe.ver_path_list:
-                points = path.points
-                for i in range(0, (len(points)+1)/2):
-                    p = Path()
-                    if i % 2 == 0:
-                        p.append(points[i])
-                        p.append(points[-i-1])
-                    else:
-                        p.append(points[-i-1])
-                        p.append(points[i])
-                    paths.append(p)
+            source_paths.extend(self.pe.ver_path_list)
+        for path in source_paths:
+            points = path.points
+            for i in range(0, (len(points)+1)/2):
+                p = Path()
+                if i % 2 == 0:
+                    p.append(points[i])
+                    p.append(points[-i-1])
+                else:
+                    p.append(points[-i-1])
+                    p.append(points[i])
+                paths.append(p)
         self.paths = paths
 
