@@ -624,6 +624,12 @@ class ProjectGui:
 
     def destroy(self, widget=None, data=None):
         self.update_view()
+        # check if there is a running process
+        if self._progress_running:
+            self.cancel_progress()
+            # wait until if is finished
+            while self._progress_running:
+                time.sleep(0.5)
         gtk.main_quit()
         
     def open(self, filename):
@@ -665,7 +671,7 @@ class ProjectGui:
         self.settings.set("safety_height", (2 * self.model.maxz - self.model.minz))
         # do some initialization
         self.append_to_queue(self.reset_bounds)
-        self.append_to_queue(self.toggle_3d_view, True)
+        self.append_to_queue(self.toggle_3d_view, value=True)
         self.append_to_queue(self.update_view)
 
     def load_processing_settings(self, filename=None):
