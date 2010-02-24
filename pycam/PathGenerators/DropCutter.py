@@ -3,6 +3,7 @@ from pycam.Geometry import *
 from pycam.Geometry.intersection import intersect_lines
 import pycam.PathGenerators
 from pycam.Geometry.utils import INFINITE
+import math
 import sys
 
 
@@ -49,6 +50,9 @@ class DropCutter:
         self._boundary_warning_already_shown = False
         last_outer_loop = False
 
+        num_of_lines = math.ceil((dims[1].max - dims[1].min) / d1)
+        current_line = 0
+
         while not finished_plane:
             last_inner_loop = False
             finished_line = False
@@ -56,6 +60,13 @@ class DropCutter:
             pa.new_scanline()
             self._triangle_last = None
             self._cut_last = None
+
+            if draw_callback and draw_callback(text="DropCutter: processing line %d/%d" \
+                        % (current_line, num_of_lines),
+                        percent=(100.0 * current_line / num_of_lines)):
+                # cancel requested
+                finished_plane = True
+
             while not finished_line:
                 if self.physics:
                     points = self.get_max_height_with_ode(dims[x], dims[y], dim_height, order=dim_attrs[:])
@@ -65,8 +76,8 @@ class DropCutter:
                 for next_point in points:
                     pa.append(next_point)
                 self.cutter.moveto(next_point)
-                if draw_callback:
-                    draw_callback()
+                if draw_callback and draw_callback():
+                    finished_line = True
 
                 dims[0].shift(d0)
 
@@ -88,6 +99,9 @@ class DropCutter:
                     last_outer_loop = True
             else:
                 finished_plane = True
+
+            # update progress
+            current_line += 1
 
         pa.end_direction()
 

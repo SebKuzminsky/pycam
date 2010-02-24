@@ -17,6 +17,8 @@ import OpenGL.GLUT as GLUT
 #import gtk.gtkgl
 import pygtk
 import gtk
+import gobject
+import threading
 import time
 import os
 import sys
@@ -262,11 +264,14 @@ class ProjectGui:
 
     def __init__(self, master=None, no_dialog=False):
         """ TODO: remove "master" above when the Tk interface is abandoned"""
+        gtk.gdk.threads_init()
         self.settings = pycam.Gui.Settings.Settings()
         self.gui_is_active = False
         self.view3d = None
         self.no_dialog = no_dialog
         self._batch_queue = []
+        self._progress_running = False
+        self._progress_cancel_requested = threading.Event()
         self.gui = gtk.Builder()
         self.gui.add_from_file(GTKBUILD_FILE)
         self.window = self.gui.get_object("ProjectWindow")
@@ -433,10 +438,27 @@ class ProjectGui:
         filter.add_pattern("*.conf")
         self.processing_file_selector.add_filter(filter)
         self.processing_file_selector.set_filter(filter)
+        # progress bar and task pane
+        self.progress_bar = self.gui.get_object("ProgressBar")
+        self.progress_widget = self.gui.get_object("ProgressWidget")
+        self.task_pane = self.gui.get_object("Tasks")
+        self.gui.get_object("ProgressCancelButton").connect("clicked", self.cancel_progress)
         # make sure that the toolpath settings are consistent
         self.disable_invalid_toolpath_settings()
         if not self.no_dialog:
             self.window.show()
+
+    def progress_activity_guard(func):
+        def wrapper(self, *args, **kwargs):
+            if self._progress_running:
+                return
+            self._progress_running = True
+            self._progress_cancel_requested.clear()
+            self.toggle_progress_bar(True)
+            func(self, *args, **kwargs)
+            self.toggle_progress_bar(False)
+            self._progress_running = False
+        return wrapper
 
     def gui_activity_guard(func):
         def wrapper(self, *args, **kwargs):
@@ -709,22 +731,55 @@ class ProjectGui:
         if not self.processing_settings.write_to_file(filename) and not no_dialog:
             show_error_dialog(self.window, "Failed to save processing settings file")
 
+    def toggle_progress_bar(self, status):
+        if status:
+            self.task_pane.set_sensitive(False)
+            self.update_progress_bar()
+            self.progress_widget.show()
+        else:
+            self.progress_widget.hide()
+            self.task_pane.set_sensitive(True)
+
+    def update_progress_bar(self, text=None, percent=None):
+        if not percent is None:
+            percent = min(max(percent, 0.0), 100.0)
+            self.progress_bar.set_fraction(percent/100.0)
+        if not text is None:
+            self.progress_bar.set_text(text)
+
+    def cancel_progress(self, widget=None):
+        self._progress_cancel_requested.set()
+
     @gui_activity_guard
     def generate_toolpath(self, widget=None, data=None):
+        thread = threading.Thread(target=self.generate_toolpath_threaded)
+        thread.start()
+
+    @progress_activity_guard
+    def generate_toolpath_threaded(self):
         start_time = time.time()
+        parent = self
         class UpdateView:
-            def __init__(self, func, max_fps=1):
+            def __init__(self, func, max_fps=1, event=None):
                 self.last_update = time.time()
                 self.max_fps = max_fps
                 self.func = func
-            def update(self):
+                self.event = event
+            def update(self, text=None, percent=None):
+                gobject.idle_add(parent.update_progress_bar, text, percent)
                 if (time.time() - self.last_update) > 1.0/self.max_fps:
                     self.last_update = time.time()
-                    self.func()
+                    if self.func:
+                        gobject.idle_add(self.func)
+                # return if the shared event was set
+                return self.event and self.event.isSet()
         if self.settings.get("show_drill_progress"):
-            draw_callback = UpdateView(self.update_view, self.settings.get("drill_progress_max_fps")).update
+            callback = self.update_view
         else:
-            draw_callback = None
+            callback = None
+        draw_callback = UpdateView(callback,
+                max_fps=self.settings.get("drill_progress_max_fps"),
+                event=self._progress_cancel_requested).update
         radius = self.settings.get("tool_radius")
         cuttername = self.settings.get("cutter_shape")
         pathgenerator = self.settings.get("path_generator")
@@ -743,7 +798,7 @@ class ProjectGui:
 
         self.update_physics()
 
-        # TODO: check, why this offset is used
+        # this offset allows to cut a model with a minimal boundary box correctly
         offset = radius/2
 
         minx = float(self.settings.get("minx"))-offset
@@ -803,7 +858,7 @@ class ProjectGui:
             elif direction == "xy":
                 self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz, draw_callback)
         print "Time elapsed: %f" % (time.time() - start_time)
-        self.update_view()
+        gobject.idle_add(self.update_view)
 
     # for compatibility with old pycam GUI (see pycam.py)
     # TODO: remove it in v0.2

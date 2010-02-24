@@ -46,12 +46,22 @@ class PushCutter:
 
         paths = []
 
+        current_layer = 0
+        num_of_layers = math.ceil((maxz - minz) / dz)
+
         if self.physics is None:
             GenerateToolPathSlice = self.GenerateToolPathSlice_triangles
         else:
             GenerateToolPathSlice = self.GenerateToolPathSlice_ode
 
         while z >= minz:
+            # update the progress bar and check, if we should cancel the process
+            if draw_callback and draw_callback(text="PushCutter: processing layer %d/%d" \
+                        % (current_layer, num_of_layers),
+                        percent=(100.0 * current_layer / num_of_layers)):
+                # cancel immediately
+                z = minz - 1
+
             if dy > 0:
                 self.pa.new_direction(0)
                 GenerateToolPathSlice(minx, maxx, miny, maxy, z, 0, dy, draw_callback)
@@ -69,6 +79,8 @@ class PushCutter:
             if (z < minz) and (z + dz > minz):
                 # never skip the outermost bounding limit - reduce the step size if required
                 z = minz
+
+            current_layer += 1
 
         if DEBUG_PUSHCUTTER2:
             self.svg.fill('none')
