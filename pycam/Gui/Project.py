@@ -17,8 +17,6 @@ import OpenGL.GLUT as GLUT
 #import gtk.gtkgl
 import pygtk
 import gtk
-import gobject
-import threading
 import time
 import os
 import sys
@@ -279,14 +277,13 @@ class ProjectGui:
 
     def __init__(self, master=None, no_dialog=False):
         """ TODO: remove "master" above when the Tk interface is abandoned"""
-        gtk.gdk.threads_init()
         self.settings = pycam.Gui.Settings.Settings()
         self.gui_is_active = False
         self.view3d = None
         self.no_dialog = no_dialog
         self._batch_queue = []
         self._progress_running = False
-        self._progress_cancel_requested = threading.Event()
+        self._progress_cancel_requested = False
         self.gui = gtk.Builder()
         self.gui.add_from_file(GTKBUILD_FILE)
         self.window = self.gui.get_object("ProjectWindow")
@@ -468,7 +465,7 @@ class ProjectGui:
             if self._progress_running:
                 return
             self._progress_running = True
-            self._progress_cancel_requested.clear()
+            self._progress_cancel_requested = False
             self.toggle_progress_bar(True)
             func(self, *args, **kwargs)
             self.toggle_progress_bar(False)
@@ -755,7 +752,7 @@ class ProjectGui:
     def toggle_progress_bar(self, status):
         if status:
             self.task_pane.set_sensitive(False)
-            self.update_progress_bar()
+            self.update_progress_bar("", 0)
             self.progress_widget.show()
         else:
             self.progress_widget.hide()
@@ -769,38 +766,36 @@ class ProjectGui:
             self.progress_bar.set_text(text)
 
     def cancel_progress(self, widget=None):
-        self._progress_cancel_requested.set()
+        self._progress_cancel_requested = True
 
     @gui_activity_guard
-    def generate_toolpath(self, widget=None, data=None):
-        thread = threading.Thread(target=self.generate_toolpath_threaded)
-        thread.start()
-
     @progress_activity_guard
-    def generate_toolpath_threaded(self):
+    def generate_toolpath(self, widget=None, data=None):
         start_time = time.time()
+        self.update_progress_bar("Preparing toolpath generation")
         parent = self
         class UpdateView:
-            def __init__(self, func, max_fps=1, event=None):
+            def __init__(self, func, max_fps=1):
                 self.last_update = time.time()
                 self.max_fps = max_fps
                 self.func = func
-                self.event = event
             def update(self, text=None, percent=None):
-                gobject.idle_add(parent.update_progress_bar, text, percent)
+                parent.update_progress_bar(text, percent)
                 if (time.time() - self.last_update) > 1.0/self.max_fps:
                     self.last_update = time.time()
                     if self.func:
-                        gobject.idle_add(self.func)
-                # return if the shared event was set
-                return self.event and self.event.isSet()
+                        self.func()
+                # update the GUI
+                while gtk.events_pending():
+                    gtk.main_iteration()
+                # break the loop if someone clicked the "cancel" button
+                return parent._progress_cancel_requested
         if self.settings.get("show_drill_progress"):
             callback = self.update_view
         else:
             callback = None
         draw_callback = UpdateView(callback,
-                max_fps=self.settings.get("drill_progress_max_fps"),
-                event=self._progress_cancel_requested).update
+                max_fps=self.settings.get("drill_progress_max_fps")).update
         radius = self.settings.get("tool_radius")
         cuttername = self.settings.get("cutter_shape")
         pathgenerator = self.settings.get("path_generator")
@@ -817,6 +812,7 @@ class ProjectGui:
             toroid = self.settings.get("torus_radius")
             self.cutter = pycam.Cutters.ToroidalCutter(radius, toroid, height=cutter_height)
 
+        self.update_progress_bar("Generating collision model")
         self.update_physics()
 
         # this offset allows to cut a model with a minimal boundary box correctly
@@ -832,6 +828,8 @@ class ProjectGui:
         effective_toolradius = self.settings.get("tool_radius") * (1.0 - self.settings.get("overlap")/200.0)
         x_shift = effective_toolradius
         y_shift = effective_toolradius
+
+        self.update_progress_bar("Starting the toolpath generation")
 
         if pathgenerator == "DropCutter":
             if pathprocessor == "ZigZagCutter":
@@ -879,7 +877,7 @@ class ProjectGui:
             elif direction == "xy":
                 self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz, draw_callback)
         print "Time elapsed: %f" % (time.time() - start_time)
-        gobject.idle_add(self.update_view)
+        self.update_view()
 
     # for compatibility with old pycam GUI (see pycam.py)
     # TODO: remove it in v0.2
