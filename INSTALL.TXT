@@ -10,8 +10,8 @@ pycam currently offers two GUI versions:
     The GTK interface is a recent development. It will replace the Tk interface
     in the long term. All features are available.
 
-Add the commandline switch "--gtk" if you want to use the GTK interface instead
-of the default Tk interface.
+Add the commandline switch "--tk" if you want to use the Tk interface instead
+of the default GTK interface.
 Please verify below, that you install the specific requirements for the GUI of
 your choice.
 

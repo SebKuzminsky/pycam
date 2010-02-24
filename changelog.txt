@@ -6,10 +6,12 @@ Version 0.2 - UNRELEASED
   * load/save processing settings from/to a file
   * handling of multiple processing templates (e.g. "Rough", "Semi-finish" and "Finish")
   * configure "material allowance" for a minimum distance between drill and model
+  * configure the "safety height" for the machine
   * based on GtkGlExt (for OpenGL)
   * visualize conflicting processing settings
   * configure "overlap" instead of "lines" and "samples"
   * configure "maximum step down" instead of "layers"
+  * show a progress bar during calculations
  * improved performance by (optionally) using the "Open Dynamics Engine" (ODE) for
    collision detection
  * added basic lightning to the OpenGL view

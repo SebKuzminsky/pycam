@@ -70,6 +70,8 @@ class GLView:
         self.gui.get_object("Back View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["back"])
         self.gui.get_object("Top View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["top"])
         self.gui.get_object("Bottom View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["bottom"])
+        # key binding
+        self.window.connect("key-press-event", self.key_handler)
         # OpenGL stuff
         glconfig = gtk.gdkgl.Config(mode=gtk.gdkgl.MODE_RGB|gtk.gdkgl.MODE_DEPTH|gtk.gdkgl.MODE_DOUBLE)
         self.area = gtk.gtkgl.DrawingArea(glconfig)
@@ -98,6 +100,19 @@ class GLView:
         self.is_visible = False
         self._position = self.window.get_position()
         self.window.hide()
+
+    def key_handler(self, widget=None, event=None):
+        if event is None:
+            return
+        try:
+            keyval = getattr(event, "keyval")
+            get_state = getattr(event, "get_state")
+        except AttributeError:
+            return
+        if not (0 <= keyval <= 255):
+            # e.g. "shift" key
+            return
+        print "Key pressed: %s (%s)" % (chr(keyval), get_state())
 
     def check_busy(func):
         def busy_wrapper(self, *args, **kwargs):
