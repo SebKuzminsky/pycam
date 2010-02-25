@@ -16,10 +16,11 @@ class gcode:
 	lastx = lasty = lastz = lasta = lastgcode = None
 	lastfeed = None
 
-	def __init__(self, startx, starty, startz, homeheight=1.5, safetyheight=None):
+	def __init__(self, startx, starty, startz, homeheight=1.5, safetyheight=None, tool_id=1):
 		self.startx = startx
 		self.starty = starty
 		self.startz = startz
+		self.tool_id = tool_id
 		if safetyheight is None:
 			safetyheight = max(max(startz, homeheight), 0.04)
 		self.homeheight = max(startz, homeheight)
@@ -28,7 +29,7 @@ class gcode:
 
 	def begin(self):
 		return "G40 G49 G54 G80 G90\n" + \
-				"G04 P3 T1 M6\n" + \
+				"G04 P3 T%d M6\n" % self.tool_id + \
 				"G00 X%.4f Y%.4f Z%.4f\n" % (self.startx, self.starty, self.startz)
 
 	def end(self):

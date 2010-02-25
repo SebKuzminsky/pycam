@@ -5,13 +5,13 @@ from gcode import gcode
 
 class SimpleGCodeExporter:
 
-    def __init__(self, filename, unit, startx, starty, startz, feedrate, speed, safety_height=None):
+    def __init__(self, filename, unit, startx, starty, startz, feedrate, speed, safety_height=None, tool_id=1):
         self.file = file(filename,"w")
         if unit == "mm":
             self.file.write("G21\n")
         else:
             self.file.write("G20\n")
-        self.gcode = gcode(startx, starty, startz, safetyheight=safety_height)
+        self.gcode = gcode(startx, starty, startz, safetyheight=safety_height, tool_id=tool_id)
         gc = self.gcode
         self.file.write(gc.begin() + "\n")
         self.file.write("F" + str(feedrate) + "\n")

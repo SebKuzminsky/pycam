@@ -520,6 +520,8 @@ class ProjectGui:
         self.gui.get_object("MaxStepDownControl").set_sensitive(self.settings.get("path_generator") == "PushCutter")
         # "material allowance" requires ODE support
         self.gui.get_object("MaterialAllowanceControl").set_sensitive(self.settings.get("enable_ode"))
+        # toolpath table
+        self.toolpath_table = self.gui.get_object("ToolPathTable")
 
     @gui_activity_guard
     def toggle_3d_view(self, widget=None, value=None):
@@ -734,6 +736,14 @@ class ProjectGui:
             if section in config_list:
                 self.processing_config_selection.set_active(config_list.index(section))
 
+    def update_toolpath_table(self):
+        toolpath_tab = self.gui.get_object("ToolPathTab")
+        if self.toolpath is None:
+            toolpath_tab.hide()
+        else:
+            toolpath_tab.show()
+        #print dir(self.toolpath_table)
+
     @gui_activity_guard
     def save_processing_settings_file(self, widget=None, section=None):
         no_dialog = False
@@ -877,6 +887,7 @@ class ProjectGui:
             elif direction == "xy":
                 self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz, draw_callback)
         print "Time elapsed: %f" % (time.time() - start_time)
+        self.update_toolpath_table()
         self.update_view()
 
     # for compatibility with old pycam GUI (see pycam.py)
