@@ -307,9 +307,8 @@ class ProjectGui:
         model_file_chooser.add_filter(filter)
         model_file_chooser.set_filter(filter)
         self.model = None
-        self.toolpath = None
+        self.toolpath = GuiCommon.ToolPathList()
         self.physics = None
-        self.cutter = None
         # add some dummies - to be implemented later ...
         self.settings.add_item("model", lambda: getattr(self, "model"))
         self.settings.add_item("toolpath", lambda: getattr(self, "toolpath"))
@@ -317,7 +316,7 @@ class ProjectGui:
         # TODO: replace hard-coded scale
         self.settings.add_item("scale", lambda: 0.9/getattr(getattr(self, "model"), "maxsize")())
         # create the unit field (the default content can't be defined via glade)
-        scale_box = self.gui.get_object("scale_box")
+        scale_box = self.gui.get_object("unit_box")
         unit_field = gtk.combo_box_new_text()
         unit_field.append_text("mm")
         unit_field.append_text("inch")
@@ -325,7 +324,7 @@ class ProjectGui:
         unit_field.show()
         scale_box.add(unit_field)
         # move it to the top
-        scale_box.reorder_child(unit_field, 0)
+        scale_box.reorder_child(unit_field, 1)
         def set_unit(text):
             unit_field.set_active((text == "mm") and 0 or 1)
         self.settings.add_item("unit", unit_field.get_active_text, set_unit)
@@ -457,6 +456,12 @@ class ProjectGui:
         self.gui.get_object("ProgressCancelButton").connect("clicked", self.cancel_progress)
         # make sure that the toolpath settings are consistent
         self.disable_invalid_toolpath_settings()
+        self.gui.get_object("toolpath_visible").connect("toggled", self.toolpath_table_event)
+        # speed and feedrate controls
+        speed_control = self.gui.get_object("SpeedControl")
+        self.settings.add_item("speed", speed_control.get_value, speed_control.set_value)
+        feedrate_control = self.gui.get_object("FeedrateControl")
+        self.settings.add_item("feedrate", feedrate_control.get_value, feedrate_control.set_value)
         if not self.no_dialog:
             self.window.show()
 
@@ -489,9 +494,9 @@ class ProjectGui:
         if self.view3d and self.view3d.is_visible and not self.no_dialog:
             self.view3d.paint()
 
-    def update_physics(self):
+    def update_physics(self, cutter):
         if self.settings.get("enable_ode"):
-            self.physics = GuiCommon.generate_physics(self.settings, self.cutter, self.physics)
+            self.physics = GuiCommon.generate_physics(self.settings, cutter, self.physics)
         else:
             self.physics = None
 
@@ -522,6 +527,7 @@ class ProjectGui:
         self.gui.get_object("MaterialAllowanceControl").set_sensitive(self.settings.get("enable_ode"))
         # toolpath table
         self.toolpath_table = self.gui.get_object("ToolPathTable")
+        self.toolpath_model = self.gui.get_object("ToolPathListModel")
 
     @gui_activity_guard
     def toggle_3d_view(self, widget=None, value=None):
@@ -736,12 +742,34 @@ class ProjectGui:
             if section in config_list:
                 self.processing_config_selection.set_active(config_list.index(section))
 
+    @gui_activity_guard
+    def toolpath_table_event(self, widget, path):
+        if isinstance(widget, gtk.CellRendererToggle):
+            try:
+                path = int(path)
+            except ValueError:
+                path = None
+            if (not path is None) and (path < len(self.toolpath)):
+                self.toolpath[path].visible = not self.toolpath[path].visible
+                # hide/show toolpaths according to the new setting
+                self.update_view()
+        self.update_toolpath_table()
+
     def update_toolpath_table(self):
+        # show or hide the "toolpath" tab
         toolpath_tab = self.gui.get_object("ToolPathTab")
         if self.toolpath is None:
             toolpath_tab.hide()
         else:
             toolpath_tab.show()
+        # update the TreeModel data
+        self.toolpath_model.clear()
+        # columns: name, visible, drill_size, drill_id, allowance, speed, feedrate
+        for tp in self.toolpath:
+            items = (tp.name, tp.visible, tp.drill_size,
+                    tp.drill_id, tp.material_allowance, tp.speed, tp.feedrate)
+            print items
+            self.toolpath_model.append(items)
         #print dir(self.toolpath_table)
 
     @gui_activity_guard
@@ -815,15 +843,15 @@ class ProjectGui:
         # Otherwise some collisions are not detected.
         cutter_height = 4 * max((self.settings.get("maxz") - self.settings.get("minz")), (self.model.maxz - self.model.minz))
         if cuttername == "SphericalCutter":
-            self.cutter = pycam.Cutters.SphericalCutter(radius, height=cutter_height)
+            cutter = pycam.Cutters.SphericalCutter(radius, height=cutter_height)
         elif cuttername == "CylindricalCutter":
-            self.cutter = pycam.Cutters.CylindricalCutter(radius, height=cutter_height)
+            cutter = pycam.Cutters.CylindricalCutter(radius, height=cutter_height)
         elif cuttername == "ToroidalCutter":
             toroid = self.settings.get("torus_radius")
-            self.cutter = pycam.Cutters.ToroidalCutter(radius, toroid, height=cutter_height)
+            cutter = pycam.Cutters.ToroidalCutter(radius, toroid, height=cutter_height)
 
         self.update_progress_bar("Generating collision model")
-        self.update_physics()
+        self.update_physics(cutter)
 
         # this offset allows to cut a model with a minimal boundary box correctly
         offset = radius/2
@@ -846,15 +874,15 @@ class ProjectGui:
                 self.option = pycam.PathProcessors.PathAccumulator(zigzag=True)
             else:
                 self.option = None
-            self.pathgenerator = pycam.PathGenerators.DropCutter(self.cutter,
+            self.pathgenerator = pycam.PathGenerators.DropCutter(cutter,
                     self.model, self.option, physics=self.physics,
                     safety_height=self.settings.get("safety_height"))
             dx = x_shift
             dy = y_shift
             if direction == "x":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, 0, draw_callback)
+                toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, 0, draw_callback)
             elif direction == "y":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dx, 1, draw_callback)
+                toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dx, 1, draw_callback)
 
         elif pathgenerator == "PushCutter":
             if pathprocessor == "PathAccumulator":
@@ -869,7 +897,7 @@ class ProjectGui:
                 self.option = pycam.PathProcessors.ContourCutter()
             else:
                 self.option = None
-            self.pathgenerator = pycam.PathGenerators.PushCutter(self.cutter,
+            self.pathgenerator = pycam.PathGenerators.PushCutter(cutter,
                     self.model, self.option, physics=self.physics)
             if pathprocessor == "ContourCutter":
                 dx = x_shift
@@ -881,12 +909,17 @@ class ProjectGui:
             else:
                 dz = utils.INFINITE
             if direction == "x":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, 0, dy, dz, draw_callback)
+                toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, 0, dy, dz, draw_callback)
             elif direction == "y":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, 0, dz, draw_callback)
+                toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, 0, dz, draw_callback)
             elif direction == "xy":
-                self.toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz, draw_callback)
+                toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz, draw_callback)
         print "Time elapsed: %f" % (time.time() - start_time)
+        self.toolpath.add_toolpath(toolpath,
+                self.processing_config_selection.get_active_text(), cutter,
+                self.settings.get("speed"),
+                self.settings.get("feedrate"),
+                self.settings.get("material_allowance"))
         self.update_toolpath_table()
         self.update_view()
 
@@ -941,7 +974,7 @@ class ProjectGui:
     def save_toolpath(self, widget=None, data=None):
         if not self.toolpath:
             return
-        offset = float(self.gui.get_object("ToolRadiusControl").get_value())/2
+        offset = float(self.settings.get("tool_radius"))/2
         minx = float(self.settings.get("minx"))-offset
         maxx = float(self.settings.get("maxx"))+offset
         miny = float(self.settings.get("miny"))-offset
@@ -966,10 +999,10 @@ class ProjectGui:
             else:
                 start_offset = 0.25
             exporter = pycam.Exporters.SimpleGCodeExporter.ExportPathList(
-                    filename, self.toolpath, self.settings.get("unit"),
+                    filename, self.toolpath[0].get_path, self.settings.get("unit"),
                     minx, miny, maxz + start_offset,
-                    self.gui.get_object("FeedrateControl").get_value(),
-                    self.gui.get_object("SpeedControl").get_value(),
+                    self.settings.get("feedrate"),
+                    self.settings.get("speed"),
                     safety_height=self.settings.get("safety_height"))
             fi.close()
             if self.no_dialog:

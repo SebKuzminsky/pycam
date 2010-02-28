@@ -2,6 +2,8 @@ import OpenGL.GL as GL
 import OpenGL.GLUT as GLUT
 # "ode" is imported later, if required
 #import ode_objects
+import random
+import gtk
 
 
 MODEL_TRANSFORMATIONS = {
@@ -138,7 +140,9 @@ def draw_complete_model_view(settings):
         settings.get("model").to_OpenGL()
     # draw the toolpath
     if settings.get("show_toolpath"):
-        draw_toolpath(settings.get("toolpath"))
+        for toolpath_obj in settings.get("toolpath"):
+            if toolpath_obj.visible:
+                draw_toolpath(toolpath_obj.get_path())
     # draw the drill
     if settings.get("show_drill_progress"):
         draw_cutter(settings.get("cutter"))
@@ -201,4 +205,53 @@ def is_ode_available():
         return True
     except ImportError:
         return False
+
+
+class ToolPathList(list):
+
+    def add_toolpath(self, toolpath, name, cutter, speed, feedrate, material_allowance):
+        drill_id = self._get_drill_id(cutter)
+        self.append(ToolPathInfo(toolpath, name, drill_id, cutter, speed, feedrate, material_allowance))
+
+    def _get_drill_id(self, cutter):
+        used_ids = []
+        # check if a drill with the same dimensions was used before
+        for tp in self:
+            if tp.drill == cutter:
+                return tp.drill_id
+            else:
+                used_ids.append(tp.drill_id)
+        # find the smallest unused drill id
+        index = 1
+        while index in used_ids:
+            index += 1
+        return index
+
+
+class ToolPathInfo:
+
+    def __init__(self, toolpath, name, drill_id, cutter, speed, feedrate, material_allowance):
+        self.toolpath = toolpath
+        self.name = name
+        self.visible = True
+        self.drill_id = drill_id
+        self.drill = cutter
+        self.drill_size = cutter.radius
+        self.speed = speed
+        self.feedrate = feedrate
+        self.material_allowance = material_allowance
+        self.color = None
+        # generate random color
+        self.set_color()
+
+    def get_path(self):
+        return self.toolpath
+
+    def set_color(self, color=None):
+        color_max = 65535
+        if color is None:
+            self.color = gtk.gdk.Color(random.randint(0, color_max),
+                    random.randint(0, color_max), random.randint(0, color_max))
+        else:
+            self.color = color
 
