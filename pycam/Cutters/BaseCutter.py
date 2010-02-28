@@ -24,6 +24,18 @@ class BaseCutter:
     def __repr__(self):
         return "BaseCutter"
 
+    def __cmp__(self, other):
+        """ Compare Cutters by shape and size (ignoring the location)
+        This function should be overridden by subclasses, if they describe
+        cutters with a shape depending on more than just the radius.
+        See the ToroidalCutter for an example.
+        """
+        if isinstance(other, BaseCutter):
+            return cmp(self.radius, other.radius)
+        else:
+            # just return a string comparison
+            return cmp(str(self), str(other))
+
     def moveto(self, location):
         self.location = location
         self.minx = location.x-self.radius

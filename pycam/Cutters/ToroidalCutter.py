@@ -30,6 +30,16 @@ class ToroidalCutter(BaseCutter):
     def __repr__(self):
         return "ToroidalCutter<%s,%f,R=%f,r=%f>" % (self.location,self.radius,self.majorradius,self.minorradius)
 
+    def __cmp__(self, other):
+        """ Compare Cutters by shape and size (ignoring the location) """
+        if isinstance(other, ToroidalCutter):
+            # compare the relevant attributes
+            return cmp((self.radius, self.majorradius, self.minorradius),
+                    (other.radius, other.majorradius, other.minorradius))
+        else:
+            # just return a string comparison
+            return cmp(str(self), str(other))
+
     def get_shape(self, format="ODE", additional_distance=0.0):
         if format == "ODE":
             import ode
