@@ -768,9 +768,7 @@ class ProjectGui:
         for tp in self.toolpath:
             items = (tp.name, tp.visible, tp.drill_size,
                     tp.drill_id, tp.material_allowance, tp.speed, tp.feedrate)
-            print items
             self.toolpath_model.append(items)
-        #print dir(self.toolpath_table)
 
     @gui_activity_guard
     def save_processing_settings_file(self, widget=None, section=None):
@@ -915,11 +913,21 @@ class ProjectGui:
             elif direction == "xy":
                 toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz, draw_callback)
         print "Time elapsed: %f" % (time.time() - start_time)
+        # calculate the z offset for the starting position
+        # TODO: fix these hard-coded offsets; maybe use the safety height instead?
+        if self.settings.get("unit") == 'mm':
+            start_offset = 7.0
+        else:
+            start_offset = 0.25
         self.toolpath.add_toolpath(toolpath,
-                self.processing_config_selection.get_active_text(), cutter,
+                self.processing_config_selection.get_active_text(),
+                cutter,
                 self.settings.get("speed"),
                 self.settings.get("feedrate"),
-                self.settings.get("material_allowance"))
+                self.settings.get("material_allowance"),
+                self.settings.get("safety_height"),
+                self.settings.get("unit"),
+                minx, miny, maxz + start_offset)
         self.update_toolpath_table()
         self.update_view()
 
@@ -974,37 +982,34 @@ class ProjectGui:
     def save_toolpath(self, widget=None, data=None):
         if not self.toolpath:
             return
-        offset = float(self.settings.get("tool_radius"))/2
-        minx = float(self.settings.get("minx"))-offset
-        maxx = float(self.settings.get("maxx"))+offset
-        miny = float(self.settings.get("miny"))-offset
-        maxy = float(self.settings.get("maxy"))+offset
-        minz = float(self.settings.get("minz"))-offset
-        maxz = float(self.settings.get("maxz"))+offset
-        no_dialog = False
         if isinstance(widget, basestring):
             filename = widget
             no_dialog = True
         else:
             # we open a dialog
             filename = self.get_save_filename("Save toolpath to ...", ("GCode files", ["*.gcode", "*.nc", "*.gc", "*.ngc"]))
+            no_dialog = False
         # no filename given -> exit
         if not filename:
             return
         try:
-            fi = open(filename, "w")
-            # TODO: fix these hard-coded offsets
-            if self.settings.get("unit") == 'mm':
-                start_offset = 7.0
-            else:
-                start_offset = 0.25
-            exporter = pycam.Exporters.SimpleGCodeExporter.ExportPathList(
-                    filename, self.toolpath[0].get_path, self.settings.get("unit"),
-                    minx, miny, maxz + start_offset,
-                    self.settings.get("feedrate"),
-                    self.settings.get("speed"),
-                    safety_height=self.settings.get("safety_height"))
-            fi.close()
+            destination = open(filename, "w")
+            index = 0
+            for index in range(len(self.toolpath)):
+                tp = self.toolpath[index]
+                # check if this is the last loop iteration
+                # only the last toolpath of the list should contain the "M2"
+                # ("end program") G-code
+                if index + 1 == len(self.toolpath):
+                    is_last_loop = True
+                else:
+                    is_last_loop = False
+                pycam.Exporters.SimpleGCodeExporter.ExportPathList(destination,
+                        tp.toolpath, tp.unit,
+                        tp.start_x, tp.start_y, tp.start_z,
+                        tp.feedrate, tp.speed, tp.safety_height, tp.drill_id,
+                        finish_program=is_last_loop)
+            destination.close()
             if self.no_dialog:
                 print "GCode file successfully written: %s" % str(filename)
         except IOError, err_msg:

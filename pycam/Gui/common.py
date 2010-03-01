@@ -209,9 +209,9 @@ def is_ode_available():
 
 class ToolPathList(list):
 
-    def add_toolpath(self, toolpath, name, cutter, speed, feedrate, material_allowance):
+    def add_toolpath(self, toolpath, name, cutter, *args):
         drill_id = self._get_drill_id(cutter)
-        self.append(ToolPathInfo(toolpath, name, drill_id, cutter, speed, feedrate, material_allowance))
+        self.append(ToolPathInfo(toolpath, name, drill_id, cutter, *args))
 
     def _get_drill_id(self, cutter):
         used_ids = []
@@ -230,7 +230,8 @@ class ToolPathList(list):
 
 class ToolPathInfo:
 
-    def __init__(self, toolpath, name, drill_id, cutter, speed, feedrate, material_allowance):
+    def __init__(self, toolpath, name, drill_id, cutter, speed, feedrate,
+            material_allowance, safety_height, unit, start_x, start_y, start_z):
         self.toolpath = toolpath
         self.name = name
         self.visible = True
@@ -240,6 +241,11 @@ class ToolPathInfo:
         self.speed = speed
         self.feedrate = feedrate
         self.material_allowance = material_allowance
+        self.safety_height = safety_height
+        self.unit = unit
+        self.start_x = start_x
+        self.start_y = start_y
+        self.start_z = start_z
         self.color = None
         # generate random color
         self.set_color()
