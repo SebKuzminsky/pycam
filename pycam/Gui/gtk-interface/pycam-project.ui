@@ -51,7 +51,7 @@
     </data>
   </object>
   <object class="GtkWindow" id="ProjectWindow">
-    <property name="title" translatable="yes">PyCAM Settings</property>
+    <property name="title" translatable="yes">PyCAM</property>
     <property name="destroy_with_parent">True</property>
     <child>
       <object class="GtkVBox" id="WindowBox">
@@ -938,204 +938,6 @@
               </packing>
             </child>
             <child>
-              <object class="GtkVBox" id="vbox7">
-                <property name="visible">True</property>
-                <property name="orientation">vertical</property>
-                <property name="spacing">3</property>
-                <child>
-                  <object class="GtkFrame" id="GeneralSettingsFrame">
-                    <property name="visible">True</property>
-                    <property name="label_xalign">0</property>
-                    <property name="shadow_type">none</property>
-                    <child>
-                      <object class="GtkAlignment" id="alignment6">
-                        <property name="visible">True</property>
-                        <property name="left_padding">12</property>
-                        <child>
-                          <object class="GtkVBox" id="vbox14">
-                            <property name="visible">True</property>
-                            <property name="orientation">vertical</property>
-                            <child>
-                              <object class="GtkCheckButton" id="SettingEnableODE">
-                                <property name="label" translatable="yes">Enable experimental ODE calculations</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child type="label">
-                      <object class="GtkLabel" id="GeneralSettingsFrameLabel">
-                        <property name="visible">True</property>
-                        <property name="label" translatable="yes">&lt;b&gt;General Settings&lt;/b&gt;</property>
-                        <property name="use_markup">True</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkHSeparator" id="hseparator5">
-                    <property name="visible">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkFrame" id="frame13">
-                    <property name="visible">True</property>
-                    <property name="label_xalign">0</property>
-                    <property name="shadow_type">none</property>
-                    <child>
-                      <object class="GtkAlignment" id="alignment21">
-                        <property name="visible">True</property>
-                        <property name="left_padding">12</property>
-                        <child>
-                          <object class="GtkVBox" id="vbox13">
-                            <property name="visible">True</property>
-                            <property name="orientation">vertical</property>
-                            <property name="spacing">2</property>
-                            <child>
-                              <object class="GtkCheckButton" id="ShowModelCheckBox">
-                                <property name="label" translatable="yes">Show Model</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="ShowToolPathCheckBox">
-                                <property name="label" translatable="yes">Show Toolpath</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="ShowBoundingCheckBox">
-                                <property name="label" translatable="yes">Show Bounding Box</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">2</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="ShowAxesCheckBox">
-                                <property name="label" translatable="yes">Show Coordinate System</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">3</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="ShowDrillProgressCheckBox">
-                                <property name="label" translatable="yes">Show Drill Progress</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">4</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkHBox" id="hbox7">
-                                <property name="visible">True</property>
-                                <property name="spacing">2</property>
-                                <child>
-                                  <object class="GtkLabel" id="DrillUpdateFPSLabel">
-                                    <property name="visible">True</property>
-                                    <property name="label" translatable="yes">Maximum Frames per Second:</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkSpinButton" id="DrillProgressFrameSkipControl">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x2022;</property>
-                                    <property name="adjustment">DrillProgressMaxFPS</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">5</property>
-                              </packing>
-                            </child>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child type="label">
-                      <object class="GtkLabel" id="VisualSettingsFrameLabel">
-                        <property name="visible">True</property>
-                        <property name="label" translatable="yes">&lt;b&gt;Display settings&lt;/b&gt;</property>
-                        <property name="use_markup">True</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="position">2</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child type="tab">
-              <object class="GtkLabel" id="SettingsTabLabel">
-                <property name="visible">True</property>
-                <property name="label" translatable="yes">Settings</property>
-              </object>
-              <packing>
-                <property name="position">1</property>
-                <property name="tab_fill">False</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkVBox" id="ProcessingTab">
                 <property name="visible">True</property>
                 <property name="orientation">vertical</property>
@@ -1989,7 +1791,7 @@
                 </child>
               </object>
               <packing>
-                <property name="position">2</property>
+                <property name="position">1</property>
               </packing>
             </child>
             <child type="tab">
@@ -1998,7 +1800,7 @@
                 <property name="label" translatable="yes">Processing</property>
               </object>
               <packing>
-                <property name="position">2</property>
+                <property name="position">1</property>
                 <property name="tab_fill">False</property>
               </packing>
             </child>
@@ -2188,7 +1990,7 @@
                 </child>
               </object>
               <packing>
-                <property name="position">3</property>
+                <property name="position">2</property>
               </packing>
             </child>
             <child type="tab">
@@ -2197,7 +1999,7 @@
                 <property name="label" translatable="yes">Toolpaths</property>
               </object>
               <packing>
-                <property name="position">3</property>
+                <property name="position">2</property>
                 <property name="tab_fill">False</property>
               </packing>
             </child>
@@ -2602,8 +2404,6 @@
     <property name="label">Preferences</property>
     <property name="tooltip">Configure PyCAM</property>
     <property name="stock_id">gtk-preferences</property>
-    <property name="sensitive">False</property>
-    <property name="visible">False</property>
   </object>
   <object class="GtkAction" id="Quit">
     <property name="label">Quit</property>
@@ -2627,5 +2427,237 @@
     <property name="short_label">Save Model as ...</property>
     <property name="tooltip">Save the current model to a new STL file.</property>
     <property name="stock_id">gtk-save-as</property>
+  </object>
+  <object class="GtkDialog" id="GeneralSettingsWindow">
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">PyCAM Settings</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="type_hint">normal</property>
+    <child internal-child="vbox">
+      <object class="GtkVBox" id="dialog-vbox1">
+        <property name="visible">True</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child>
+          <object class="GtkVBox" id="vbox7">
+            <property name="visible">True</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">3</property>
+            <child>
+              <object class="GtkFrame" id="GeneralSettingsFrame">
+                <property name="visible">True</property>
+                <property name="label_xalign">0</property>
+                <property name="shadow_type">none</property>
+                <child>
+                  <object class="GtkAlignment" id="alignment6">
+                    <property name="visible">True</property>
+                    <property name="left_padding">12</property>
+                    <child>
+                      <object class="GtkVBox" id="vbox14">
+                        <property name="visible">True</property>
+                        <property name="orientation">vertical</property>
+                        <child>
+                          <object class="GtkCheckButton" id="SettingEnableODE">
+                            <property name="label" translatable="yes">Enable experimental ODE calculations</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel" id="GeneralSettingsFrameLabel">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">&lt;b&gt;General Settings&lt;/b&gt;</property>
+                    <property name="use_markup">True</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHSeparator" id="hseparator5">
+                <property name="visible">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkFrame" id="frame13">
+                <property name="visible">True</property>
+                <property name="label_xalign">0</property>
+                <property name="shadow_type">none</property>
+                <child>
+                  <object class="GtkAlignment" id="alignment21">
+                    <property name="visible">True</property>
+                    <property name="left_padding">12</property>
+                    <child>
+                      <object class="GtkVBox" id="vbox13">
+                        <property name="visible">True</property>
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">2</property>
+                        <child>
+                          <object class="GtkCheckButton" id="ShowModelCheckBox">
+                            <property name="label" translatable="yes">Show Model</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="ShowToolPathCheckBox">
+                            <property name="label" translatable="yes">Show Toolpath</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="ShowBoundingCheckBox">
+                            <property name="label" translatable="yes">Show Bounding Box</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="ShowAxesCheckBox">
+                            <property name="label" translatable="yes">Show Coordinate System</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="ShowDrillProgressCheckBox">
+                            <property name="label" translatable="yes">Show Drill Progress</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">4</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkHBox" id="hbox7">
+                            <property name="visible">True</property>
+                            <property name="spacing">2</property>
+                            <child>
+                              <object class="GtkLabel" id="DrillUpdateFPSLabel">
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes">Maximum Frames per Second:</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkSpinButton" id="DrillProgressFrameSkipControl">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="invisible_char">&#x2022;</property>
+                                <property name="adjustment">DrillProgressMaxFPS</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">5</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel" id="VisualSettingsFrameLabel">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">&lt;b&gt;Display settings&lt;/b&gt;</property>
+                    <property name="use_markup">True</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child internal-child="action_area">
+          <object class="GtkHButtonBox" id="dialog-action_area1">
+            <property name="visible">True</property>
+            <property name="layout_style">end</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <object class="GtkButton" id="CloseSettingsWindow">
+                <property name="label">gtk-close</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="0">CloseSettingsWindow</action-widget>
+    </action-widgets>
   </object>
 </interface>

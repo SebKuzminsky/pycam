@@ -308,13 +308,20 @@ class ProjectGui:
         self.gui.get_object("Quit").connect("activate", self.destroy)
         self.window.connect("destroy", self.destroy)
         self.gui.get_object("GenerateToolPathButton").connect("clicked", self.generate_toolpath)
+        # the settings window
+        self.gui.get_object("GeneralSettings").connect("activate", self.toggle_settings_window, True)
+        self.gui.get_object("CloseSettingsWindow").connect("clicked", self.toggle_settings_window, False)
+        self.settings_window = self.gui.get_object("GeneralSettingsWindow")
+        self.settings_window.connect("delete-event", self.toggle_settings_window, False)
+        self._settings_window_position = None
         self.model = None
         self.toolpath = GuiCommon.ToolPathList()
         self.physics = None
+        self.cutter = None
         # add some dummies - to be implemented later ...
-        self.settings.add_item("model", lambda: getattr(self, "model"))
-        self.settings.add_item("toolpath", lambda: getattr(self, "toolpath"))
-        self.settings.add_item("cutter", lambda: getattr(self, "cutter"))
+        self.settings.add_item("model", lambda: self.model)
+        self.settings.add_item("toolpath", lambda: self.toolpath)
+        self.settings.add_item("cutter", lambda: self.cutter)
         # create the unit field (the default content can't be defined via glade)
         scale_box = self.gui.get_object("unit_box")
         unit_field = gtk.combo_box_new_text()
@@ -494,12 +501,13 @@ class ProjectGui:
             if self.gui_is_active:
                 return
             self.gui_is_active = True
-            func(self, *args, **kwargs)
+            result = func(self, *args, **kwargs)
             self.gui_is_active = False
             while self._batch_queue:
                 batch_func, batch_args, batch_kwargs = self._batch_queue[0]
                 del self._batch_queue[0]
                 batch_func(*batch_args, **batch_kwargs)
+            return result
         return wrapper
         
     def update_view(self, widget=None, data=None):
@@ -541,6 +549,21 @@ class ProjectGui:
         self.gui.get_object("MaxStepDownControl").set_sensitive(self.settings.get("path_generator") == "PushCutter")
         # "material allowance" requires ODE support
         self.gui.get_object("MaterialAllowanceControl").set_sensitive(self.settings.get("enable_ode"))
+
+    @gui_activity_guard
+    def toggle_settings_window(self, widget=None, event=None, state=None):
+        if state is None:
+            # the "delete-event" issues the additional "event" argument
+            state = event
+        if state:
+            if self._settings_window_position:
+                self.settings_window.move(*self._settings_window_position)
+            self.settings_window.show()
+        else:
+            self._settings_window_position = self.settings_window.get_position()
+            self.settings_window.hide()
+        # don't close the window - just hide it
+        return True
 
     @gui_activity_guard
     def toggle_3d_view(self, widget=None, value=None):
@@ -954,6 +977,7 @@ class ProjectGui:
 
         self.update_progress_bar("Generating collision model")
         self.update_physics(cutter)
+        self.cutter = cutter
 
         # this offset allows to cut a model with a minimal boundary box correctly
         offset = radius/2
