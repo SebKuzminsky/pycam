@@ -307,6 +307,7 @@ class ProjectGui:
         self.gui.get_object("ExportGCode").connect("activate", self.save_toolpath)
         self.gui.get_object("Quit").connect("activate", self.destroy)
         self.window.connect("destroy", self.destroy)
+        self.gui.get_object("GenerateToolPathButton").connect("clicked", self.generate_toolpath)
         self.model = None
         self.toolpath = GuiCommon.ToolPathList()
         self.physics = None
@@ -356,9 +357,6 @@ class ProjectGui:
                 ("SafetyHeightControl", "safety_height")):
             obj = self.gui.get_object(objname)
             self.settings.add_item(key, obj.get_value, obj.set_value)
-        # connect buttons with activities
-        self.gui.get_object("GenerateToolPathButton").connect("clicked", self.generate_toolpath)
-        self.gui.get_object("SaveToolPathButton").connect("clicked", self.save_toolpath)
         # visual and general settings
         self.gui.get_object("Toggle3DView").connect("toggled", self.toggle_3d_view)
         for name, objname in (("show_model", "ShowModelCheckBox"),
