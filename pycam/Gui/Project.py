@@ -314,6 +314,14 @@ class ProjectGui:
         self.settings_window = self.gui.get_object("GeneralSettingsWindow")
         self.settings_window.connect("delete-event", self.toggle_settings_window, False)
         self._settings_window_position = None
+        # "about" window
+        self.about_window = self.gui.get_object("AboutWindow")
+        self.gui.get_object("About").connect("activate", self.toggle_about_window, True)
+        # we assume, that the last child of the window is the "close" button
+        # TODO: fix this ugly hack!
+        self.gui.get_object("AboutWindowButtons").get_children()[-1].connect("clicked", self.toggle_about_window, False)
+        self.about_window.connect("delete-event", self.toggle_about_window, False)
+        # set defaults
         self.model = None
         self.toolpath = GuiCommon.ToolPathList()
         self.physics = None
@@ -549,6 +557,18 @@ class ProjectGui:
         self.gui.get_object("MaxStepDownControl").set_sensitive(self.settings.get("path_generator") == "PushCutter")
         # "material allowance" requires ODE support
         self.gui.get_object("MaterialAllowanceControl").set_sensitive(self.settings.get("enable_ode"))
+
+    @gui_activity_guard
+    def toggle_about_window(self, widget=None, event=None, state=None):
+        if state is None:
+            # the "delete-event" issues the additional "event" argument
+            state = event
+        if state:
+            self.about_window.show()
+        else:
+            self.about_window.hide()
+        # don't close the window - just hide it
+        return True
 
     @gui_activity_guard
     def toggle_settings_window(self, widget=None, event=None, state=None):

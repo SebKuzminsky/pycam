@@ -18,6 +18,8 @@
     </menu>
     <menu action="WindowMenu">
       <menuitem action="Toggle3DView"/>
+      <separator />
+      <menuitem action="About"/>
     </menu>
   </menubar>
 </ui>
