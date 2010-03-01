@@ -10,6 +10,8 @@
   </object>
   <object class="GtkListStore" id="ToolPathListModel">
     <columns>
+      <!-- column-name index -->
+      <column type="guint"/>
       <!-- column-name name -->
       <column type="gchararray"/>
       <!-- column-name visible -->
@@ -27,22 +29,24 @@
     </columns>
     <data>
       <row>
-        <col id="0" translatable="yes">Rough</col>
-        <col id="1">True</col>
-        <col id="2">12</col>
-        <col id="3">0</col>
+        <col id="0">0</col>
+        <col id="1" translatable="yes">Rough</col>
+        <col id="2">True</col>
+        <col id="3">12</col>
         <col id="4">0</col>
         <col id="5">0</col>
         <col id="6">0</col>
+        <col id="7">0</col>
       </row>
       <row>
-        <col id="0" translatable="yes">test</col>
-        <col id="1">False</col>
-        <col id="2">0</col>
+        <col id="0">0</col>
+        <col id="1" translatable="yes">test</col>
+        <col id="2">False</col>
         <col id="3">0</col>
         <col id="4">0</col>
         <col id="5">0</col>
         <col id="6">0</col>
+        <col id="7">0</col>
       </row>
     </data>
   </object>
@@ -2214,7 +2218,7 @@
                                         <child>
                                           <object class="GtkCellRendererToggle" id="toolpath_visible"/>
                                           <attributes>
-                                            <attribute name="active">1</attribute>
+                                            <attribute name="active">2</attribute>
                                           </attributes>
                                         </child>
                                       </object>
@@ -2225,7 +2229,7 @@
                                         <child>
                                           <object class="GtkCellRendererText" id="name"/>
                                           <attributes>
-                                            <attribute name="text">0</attribute>
+                                            <attribute name="text">1</attribute>
                                           </attributes>
                                         </child>
                                       </object>
@@ -2236,13 +2240,13 @@
                                         <child>
                                           <object class="GtkCellRendererText" id="drill_id"/>
                                           <attributes>
-                                            <attribute name="text">3</attribute>
+                                            <attribute name="text">4</attribute>
                                           </attributes>
                                         </child>
                                         <child>
                                           <object class="GtkCellRendererText" id="drill_size"/>
                                           <attributes>
-                                            <attribute name="text">2</attribute>
+                                            <attribute name="text">3</attribute>
                                           </attributes>
                                         </child>
                                       </object>
@@ -2253,13 +2257,13 @@
                                         <child>
                                           <object class="GtkCellRendererText" id="speed-speed"/>
                                           <attributes>
-                                            <attribute name="text">5</attribute>
+                                            <attribute name="text">6</attribute>
                                           </attributes>
                                         </child>
                                         <child>
                                           <object class="GtkCellRendererText" id="speed-feedrate"/>
                                           <attributes>
-                                            <attribute name="text">6</attribute>
+                                            <attribute name="text">7</attribute>
                                           </attributes>
                                         </child>
                                       </object>
@@ -2270,7 +2274,7 @@
                                         <child>
                                           <object class="GtkCellRendererText" id="allowance"/>
                                           <attributes>
-                                            <attribute name="text">6</attribute>
+                                            <attribute name="text">5</attribute>
                                           </attributes>
                                         </child>
                                       </object>
@@ -2297,7 +2301,6 @@
                                       <object class="GtkButton" id="toolpath_up">
                                         <property name="label">gtk-go-up</property>
                                         <property name="visible">True</property>
-                                        <property name="sensitive">False</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
                                         <property name="use_stock">True</property>
@@ -2312,7 +2315,6 @@
                                       <object class="GtkButton" id="toolpath_delete">
                                         <property name="label">gtk-delete</property>
                                         <property name="visible">True</property>
-                                        <property name="sensitive">False</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
                                         <property name="use_stock">True</property>
@@ -2327,7 +2329,6 @@
                                       <object class="GtkButton" id="toolpath_down">
                                         <property name="label">gtk-go-down</property>
                                         <property name="visible">True</property>
-                                        <property name="sensitive">False</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
                                         <property name="use_stock">True</property>

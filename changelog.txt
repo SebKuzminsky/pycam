@@ -7,6 +7,7 @@ Version 0.2 - UNRELEASED
   * handling of multiple processing templates (e.g. "Rough", "Semi-finish" and "Finish")
   * configure "material allowance" for a minimum distance between drill and model
   * configure the "safety height" for the machine
+  * allow to manage and export (gcode) multiple toolpaths
   * based on GtkGlExt (for OpenGL)
   * visualize conflicting processing settings
   * configure "overlap" instead of "lines" and "samples"

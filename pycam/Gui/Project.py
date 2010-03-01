@@ -455,8 +455,14 @@ class ProjectGui:
         self.task_pane = self.gui.get_object("Tasks")
         self.gui.get_object("ProgressCancelButton").connect("clicked", self.cancel_progress)
         # make sure that the toolpath settings are consistent
+        self.toolpath_table = self.gui.get_object("ToolPathTable")
+        self.toolpath_model = self.gui.get_object("ToolPathListModel")
         self.disable_invalid_toolpath_settings()
-        self.gui.get_object("toolpath_visible").connect("toggled", self.toolpath_table_event)
+        self.toolpath_table.get_selection().connect("changed", self.toolpath_table_event, "update_buttons")
+        self.gui.get_object("toolpath_visible").connect("toggled", self.toolpath_table_event, "toggle_visibility")
+        self.gui.get_object("toolpath_up").connect("clicked", self.toolpath_table_event, "move_up")
+        self.gui.get_object("toolpath_delete").connect("clicked", self.toolpath_table_event, "delete")
+        self.gui.get_object("toolpath_down").connect("clicked", self.toolpath_table_event, "move_down")
         # speed and feedrate controls
         speed_control = self.gui.get_object("SpeedControl")
         self.settings.add_item("speed", speed_control.get_value, speed_control.set_value)
@@ -525,9 +531,6 @@ class ProjectGui:
         self.gui.get_object("MaxStepDownControl").set_sensitive(self.settings.get("path_generator") == "PushCutter")
         # "material allowance" requires ODE support
         self.gui.get_object("MaterialAllowanceControl").set_sensitive(self.settings.get("enable_ode"))
-        # toolpath table
-        self.toolpath_table = self.gui.get_object("ToolPathTable")
-        self.toolpath_model = self.gui.get_object("ToolPathListModel")
 
     @gui_activity_guard
     def toggle_3d_view(self, widget=None, value=None):
@@ -742,33 +745,100 @@ class ProjectGui:
             if section in config_list:
                 self.processing_config_selection.set_active(config_list.index(section))
 
-    @gui_activity_guard
-    def toolpath_table_event(self, widget, path):
-        if isinstance(widget, gtk.CellRendererToggle):
+    def _toolpath_table_get_active_index(self):
+        if len(self.toolpath) == 0:
+            result = None
+        else:
+            treeselection = self.toolpath_table.get_selection()
+            (model, iteration) = treeselection.get_selected()
+            # the first item in the model is the index within the toolpath list
             try:
-                path = int(path)
+                result = model[iteration][0]
+            except TypeError:
+                result = None
+        return result
+
+    def _toolpath_table_set_active_index(self, index):
+        treeselection = self.toolpath_table.get_selection()
+        treeselection.select_path((index,))
+
+    @gui_activity_guard
+    def toolpath_table_event(self, widget, data, action=None):
+        # "toggle" uses two parameters - all other actions have only one
+        if action is None:
+            action = data
+        future_selection_index = None
+        skip_model_update = False
+        if action == "toggle_visibility":
+            try:
+                path = int(data)
             except ValueError:
                 path = None
             if (not path is None) and (path < len(self.toolpath)):
                 self.toolpath[path].visible = not self.toolpath[path].visible
                 # hide/show toolpaths according to the new setting
                 self.update_view()
-        self.update_toolpath_table()
+        elif action == "update_buttons":
+            skip_model_update = True
+        elif action in ("move_up", "move_down", "delete"):
+            index = self._toolpath_table_get_active_index()
+            if action == "move_up":
+                if index > 0:
+                    # move a toolpath one position up the list
+                    selected = self.toolpath[index]
+                    above = self.toolpath[index-1]
+                    self.toolpath[index] = above
+                    self.toolpath[index-1] = selected
+                    future_selection_index = index - 1
+            elif action == "move_down":
+                if index + 1 < len(self.toolpath):
+                    # move a toolpath one position down the list
+                    selected = self.toolpath[index]
+                    below = self.toolpath[index+1]
+                    self.toolpath[index] = below
+                    self.toolpath[index+1] = selected
+                    future_selection_index = index + 1
+            else:
+                # delete one toolpath from the list
+                self.toolpath.remove(self.toolpath[index])
+                # don't set a new index, if the list emptied
+                if len(self.toolpath) > 0:
+                    if index < len(self.toolpath):
+                        future_selection_index = index
+                    else:
+                        # the last item was removed
+                        future_selection_index = len(self.toolpath) - 1
+                # hide the deleted toolpath immediately
+                self.update_view()
+        self.update_toolpath_table(new_index=future_selection_index, skip_model_update=skip_model_update)
 
-    def update_toolpath_table(self):
+    def update_toolpath_table(self, new_index=None, skip_model_update=False):
         # show or hide the "toolpath" tab
         toolpath_tab = self.gui.get_object("ToolPathTab")
         if self.toolpath is None:
             toolpath_tab.hide()
         else:
             toolpath_tab.show()
-        # update the TreeModel data
-        self.toolpath_model.clear()
-        # columns: name, visible, drill_size, drill_id, allowance, speed, feedrate
-        for tp in self.toolpath:
-            items = (tp.name, tp.visible, tp.drill_size,
-                    tp.drill_id, tp.material_allowance, tp.speed, tp.feedrate)
-            self.toolpath_model.append(items)
+        # reset the model data and the selection
+        if new_index is None:
+            # keep the old selection - this may return "None" if nothing is selected
+            new_index = self._toolpath_table_get_active_index()
+        if not skip_model_update:
+            # update the TreeModel data
+            model = self.toolpath_model
+            model.clear()
+            # columns: name, visible, drill_size, drill_id, allowance, speed, feedrate
+            for index in range(len(self.toolpath)):
+                tp = self.toolpath[index]
+                items = (index, tp.name, tp.visible, tp.drill_size,
+                        tp.drill_id, tp.material_allowance, tp.speed, tp.feedrate)
+                model.append(items)
+            if not new_index is None:
+                self._toolpath_table_set_active_index(new_index)
+        # enable/disable the modification buttons
+        self.gui.get_object("toolpath_up").set_sensitive((not new_index is None) and (new_index > 0))
+        self.gui.get_object("toolpath_delete").set_sensitive(not new_index is None)
+        self.gui.get_object("toolpath_down").set_sensitive((not new_index is None) and (new_index + 1 < len(self.toolpath)))
 
     @gui_activity_guard
     def save_processing_settings_file(self, widget=None, section=None):
