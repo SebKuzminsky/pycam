@@ -1,0 +1,24 @@
+<ui>
+  <menubar name="MenuBar">
+    <menu action="FileMenu">
+      <menuitem action="LoadModel"/>
+      <menuitem action="SaveModel"/>
+      <menuitem action="SaveAsModel"/>
+      <separator />
+      <menuitem action="ExportGCode"/>
+      <separator />
+      <menuitem action="Quit"/>
+    </menu>
+    <menu action="SettingsMenu">
+      <menuitem action="LoadProcessingTemplates"/>
+      <menuitem action="SaveProcessingTemplates"/>
+      <menuitem action="SaveAsProcessingTemplates"/>
+      <separator />
+      <menuitem action="GeneralSettings"/>
+    </menu>
+    <menu action="WindowMenu">
+      <menuitem action="Toggle3DView"/>
+    </menu>
+  </menubar>
+</ui>
+

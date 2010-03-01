@@ -21,7 +21,13 @@ import time
 import os
 import sys
 
-GTKBUILD_FILE = os.path.join(os.path.dirname(__file__), "gtk-interface", "pycam-project.ui")
+GTK_DATA_DIR = os.path.join(os.path.dirname(__file__), "gtk-interface")
+GTKBUILD_FILE = os.path.join(GTK_DATA_DIR, "pycam-project.ui")
+GTKMENU_FILE = os.path.join(GTK_DATA_DIR, "menubar.xml")
+
+FILTER_GCODE = ("GCode files", ["*.gcode", "*.nc", "*.gc", "*.ngc"])
+FILTER_MODEL = ("STL models", "*.stl")
+FILTER_CONFIG = ("Config files", "*.conf")
 
 BUTTON_ROTATE = gtk.gdk.BUTTON1_MASK
 BUTTON_MOVE = gtk.gdk.BUTTON2_MASK
@@ -288,24 +294,19 @@ class ProjectGui:
         self.gui.add_from_file(GTKBUILD_FILE)
         self.window = self.gui.get_object("ProjectWindow")
         # file loading
+        self.last_config_file = None
+        self.last_model_file = None
+        self.last_toolpath_file = None
         self.model_file_selector = self.gui.get_object("ModelFileChooser")
-        self.model_file_selector.connect("file-set",
-                self.load_model_file, self.model_file_selector.get_filename)
-        self.processing_file_selector = self.gui.get_object("ProcessingSettingsLoad")
-        self.processing_file_selector.connect("file-set",
-                self.load_processing_file, self.processing_file_selector.get_filename)
+        self.gui.get_object("LoadProcessingTemplates").connect("activate", self.load_processing_file)
+        self.gui.get_object("SaveProcessingTemplates").connect("activate", self.save_processing_settings_file, lambda: self.last_config_file)
+        self.gui.get_object("SaveAsProcessingTemplates").connect("activate", self.save_processing_settings_file)
+        self.gui.get_object("LoadModel").connect("activate", self.load_model_file)
+        self.gui.get_object("SaveModel").connect("activate", self.save_model, lambda: self.last_model_file)
+        self.gui.get_object("SaveAsModel").connect("activate", self.save_model)
+        self.gui.get_object("ExportGCode").connect("activate", self.save_toolpath)
+        self.gui.get_object("Quit").connect("activate", self.destroy)
         self.window.connect("destroy", self.destroy)
-        self.gui.get_object("SaveModel").connect("clicked", self.save_model)
-        model_file_chooser = self.gui.get_object("ModelFileChooser")
-        filter = gtk.FileFilter()
-        filter.set_name("All files")
-        filter.add_pattern("*")
-        model_file_chooser.add_filter(filter)
-        filter = gtk.FileFilter()
-        filter.set_name("STL files")
-        filter.add_pattern("*.stl")
-        model_file_chooser.add_filter(filter)
-        model_file_chooser.set_filter(filter)
         self.model = None
         self.toolpath = GuiCommon.ToolPathList()
         self.physics = None
@@ -313,8 +314,6 @@ class ProjectGui:
         self.settings.add_item("model", lambda: getattr(self, "model"))
         self.settings.add_item("toolpath", lambda: getattr(self, "toolpath"))
         self.settings.add_item("cutter", lambda: getattr(self, "cutter"))
-        # TODO: replace hard-coded scale
-        self.settings.add_item("scale", lambda: 0.9/getattr(getattr(self, "model"), "maxsize")())
         # create the unit field (the default content can't be defined via glade)
         scale_box = self.gui.get_object("unit_box")
         unit_field = gtk.combo_box_new_text()
@@ -361,7 +360,7 @@ class ProjectGui:
         self.gui.get_object("GenerateToolPathButton").connect("clicked", self.generate_toolpath)
         self.gui.get_object("SaveToolPathButton").connect("clicked", self.save_toolpath)
         # visual and general settings
-        self.gui.get_object("Toggle3dView").connect("toggled", self.toggle_3d_view)
+        self.gui.get_object("Toggle3DView").connect("toggled", self.toggle_3d_view)
         for name, objname in (("show_model", "ShowModelCheckBox"),
                 ("show_axes", "ShowAxesCheckBox"),
                 ("show_bounding_box", "ShowBoundingCheckBox"),
@@ -438,17 +437,6 @@ class ProjectGui:
                 self.delete_processing_config, self.processing_config_selection.get_active_text)
         self.gui.get_object("ProcessingTemplateSave").connect("clicked",
                 self.save_processing_config, self.processing_config_selection.get_active_text)
-        self.load_processing_settings()
-        self.gui.get_object("ProcessingSettingsSaveToFile").connect("clicked", self.save_processing_settings_file)
-        filter = gtk.FileFilter()
-        filter.set_name("All files")
-        filter.add_pattern("*")
-        self.processing_file_selector.add_filter(filter)
-        filter = gtk.FileFilter()
-        filter.set_name("Config files")
-        filter.add_pattern("*.conf")
-        self.processing_file_selector.add_filter(filter)
-        self.processing_file_selector.set_filter(filter)
         # progress bar and task pane
         self.progress_bar = self.gui.get_object("ProgressBar")
         self.progress_widget = self.gui.get_object("ProgressWidget")
@@ -457,7 +445,6 @@ class ProjectGui:
         # make sure that the toolpath settings are consistent
         self.toolpath_table = self.gui.get_object("ToolPathTable")
         self.toolpath_model = self.gui.get_object("ToolPathListModel")
-        self.disable_invalid_toolpath_settings()
         self.toolpath_table.get_selection().connect("changed", self.toolpath_table_event, "update_buttons")
         self.gui.get_object("toolpath_visible").connect("toggled", self.toolpath_table_event, "toggle_visibility")
         self.gui.get_object("toolpath_up").connect("clicked", self.toolpath_table_event, "move_up")
@@ -468,6 +455,27 @@ class ProjectGui:
         self.settings.add_item("speed", speed_control.get_value, speed_control.set_value)
         feedrate_control = self.gui.get_object("FeedrateControl")
         self.settings.add_item("feedrate", feedrate_control.get_value, feedrate_control.set_value)
+        # menu bar
+        uimanager = gtk.UIManager()
+        accelgroup = uimanager.get_accel_group()
+        self.window.add_accel_group(accelgroup)
+        # load menu data
+        uimanager.add_ui_from_file(GTKMENU_FILE)
+        # make the actions defined in the GTKBUILD file available in the menu
+        actiongroup = gtk.ActionGroup("menubar")
+        for action in [action for action in self.gui.get_objects() if isinstance(action, gtk.Action)]:
+            actiongroup.add_action(action)
+        uimanager.insert_action_group(actiongroup)
+        # load the menubar and connect functions to its items
+        self.menubar = uimanager.get_widget("/MenuBar")
+        window_box = self.gui.get_object("WindowBox")
+        window_box.pack_start(self.menubar, False)
+        window_box.reorder_child(self.menubar, 0)
+        # some more initialization
+        self.update_toolpath_table()
+        self.disable_invalid_toolpath_settings()
+        self.load_processing_settings()
+        self.update_save_actions()
         if not self.no_dialog:
             self.window.show()
 
@@ -505,6 +513,10 @@ class ProjectGui:
             self.physics = GuiCommon.generate_physics(self.settings, cutter, self.physics)
         else:
             self.physics = None
+
+    def update_save_actions(self):
+        self.gui.get_object("SaveProcessingTemplates").set_sensitive(not self.last_config_file is None)
+        self.gui.get_object("SaveModel").set_sensitive(not self.last_model_file is None)
 
     def disable_invalid_toolpath_settings(self, widget=None, data=None):
         # possible dependencies of the DropCutter
@@ -555,14 +567,14 @@ class ProjectGui:
                     self.reset_bounds()
                     self.view3d.reset_view()
                 # disable the "toggle" button, if the 3D view does not work
-                self.gui.get_object("Toggle3dView").set_sensitive(self.view3d.enabled)
+                self.gui.get_object("Toggle3DView").set_sensitive(self.view3d.enabled)
             else:
                 # the window is just hidden
                 self.view3d.show()
             self.update_view()
         else:
             self.view3d.hide()
-        self.gui.get_object("Toggle3dView").set_active(new_state)
+        self.gui.get_object("Toggle3DView").set_active(new_state)
 
     @gui_activity_guard
     def transform_model(self, widget):
@@ -582,14 +594,19 @@ class ProjectGui:
         self.update_view()
 
     @gui_activity_guard
-    def save_model(self, widget):
+    def save_model(self, widget=None, filename=None):
         no_dialog = False
-        if isinstance(widget, basestring):
-            filename = widget
+        if callable(filename):
+            filename = filename()
+        if isinstance(filename, basestring):
             no_dialog = True
         else:
             # we open a dialog
-            filename = self.get_save_filename("Save model to ...", ("STL models", "*.stl"))
+            filename = self.get_filename_via_dialog("Save model to ...",
+                    mode_load=False, type_filter=FILTER_MODEL)
+            if filename:
+                self.last_model_file = filename
+                self.update_save_actions()
         # no filename given -> exit
         if not filename:
             return
@@ -656,7 +673,8 @@ class ProjectGui:
         gtk.main_quit()
         
     def open(self, filename):
-        self.model_file_selector.set_filename(filename)
+        """ This function is used by the commandline handler """
+        self.last_model_file = filename
         self.load_model_file(filename=filename)
         
     def append_to_queue(self, func, *args, **kwargs):
@@ -670,23 +688,34 @@ class ProjectGui:
 
     @gui_activity_guard
     def load_model_file(self, widget=None, filename=None):
-        if not filename:
-            return
         if callable(filename):
             filename = filename()
-        self.load_model(pycam.Importers.STLImporter.ImportModel(filename))
+        if not filename:
+            filename = self.get_filename_via_dialog("Loading model ...",
+                    mode_load=True, type_filter=FILTER_MODEL)
+            if filename:
+                self.last_model_file = filename
+                self.update_save_actions()
+        if filename:
+            self.load_model(pycam.Importers.STLImporter.ImportModel(filename))
 
     def open_processing_settings_file(self, filename):
-        self.processing_file_selector.set_filename(filename)
+        """ This function is used by the commandline handler """
+        self.last_toolpath_file = filename
         self.load_processing_file(filename=filename)
 
     @gui_activity_guard
     def load_processing_file(self, widget=None, filename=None):
-        if not filename:
-            return
         if callable(filename):
             filename = filename()
-        self.load_processing_settings(filename)
+        if not filename:
+            filename = self.get_filename_via_dialog("Loading processing settings ...",
+                    mode_load=True, type_filter=FILTER_CONFIG)
+            if filename:
+                self.last_config_file = filename
+                self.update_save_actions()
+        if filename:
+            self.load_processing_settings(filename)
 
     def load_model(self, model):
         self.model = model
@@ -815,10 +844,12 @@ class ProjectGui:
     def update_toolpath_table(self, new_index=None, skip_model_update=False):
         # show or hide the "toolpath" tab
         toolpath_tab = self.gui.get_object("ToolPathTab")
-        if self.toolpath is None:
+        if not self.toolpath:
             toolpath_tab.hide()
         else:
             toolpath_tab.show()
+        # enable/disable the export menu item
+        self.gui.get_object("ExportGCode").set_sensitive(len(self.toolpath) > 0)
         # reset the model data and the selection
         if new_index is None:
             # keep the old selection - this may return "None" if nothing is selected
@@ -841,14 +872,19 @@ class ProjectGui:
         self.gui.get_object("toolpath_down").set_sensitive((not new_index is None) and (new_index + 1 < len(self.toolpath)))
 
     @gui_activity_guard
-    def save_processing_settings_file(self, widget=None, section=None):
+    def save_processing_settings_file(self, widget=None, filename=None):
         no_dialog = False
-        if isinstance(widget, basestring):
-            filename = widget
+        if callable(filename):
+            filename = filename()
+        if isinstance(filename, basestring):
             no_dialog = True
         else:
             # we open a dialog
-            filename = self.get_save_filename("Save processing settings to ...", ("Config files", "*.conf"))
+            filename = self.get_filename_via_dialog("Save processing settings to ...",
+                    mode_load=False, type_filter=FILTER_CONFIG)
+            if filename:
+                self.last_config_file = filename
+                self.update_save_actions()
         # no filename given -> exit
         if not filename:
             return
@@ -1005,13 +1041,19 @@ class ProjectGui:
     # TODO: remove it in v0.2
     generateToolpath = generate_toolpath
 
-    def get_save_filename(self, title, type_filter=None):
+    def get_filename_via_dialog(self, title, mode_load=False, type_filter=None):
         # we open a dialog
-        dialog = gtk.FileChooserDialog(title=title,
-                parent=self.window, action=gtk.FILE_CHOOSER_ACTION_SAVE,
-                buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                    gtk.STOCK_SAVE, gtk.RESPONSE_OK))
-        # add filter for stl files
+        if mode_load:
+            dialog = gtk.FileChooserDialog(title=title,
+                    parent=self.window, action=gtk.FILE_CHOOSER_ACTION_OPEN,
+                    buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                        gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        else:
+            dialog = gtk.FileChooserDialog(title=title,
+                    parent=self.window, action=gtk.FILE_CHOOSER_ACTION_SAVE,
+                    buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                        gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+        # add filter for files
         if type_filter:
             filter = gtk.FileFilter()
             filter.set_name(type_filter[0])
@@ -1035,7 +1077,7 @@ class ProjectGui:
             if response != gtk.RESPONSE_OK:
                 dialog.destroy()
                 return None
-            if os.path.exists(filename):
+            if not mode_load and os.path.exists(filename):
                 overwrite_window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_WARNING,
                         buttons=gtk.BUTTONS_YES_NO,
                         message_format="This file exists. Do you want to overwrite it?")
@@ -1052,12 +1094,18 @@ class ProjectGui:
     def save_toolpath(self, widget=None, data=None):
         if not self.toolpath:
             return
+        if callable(widget):
+            widget = widget()
         if isinstance(widget, basestring):
             filename = widget
             no_dialog = True
         else:
             # we open a dialog
-            filename = self.get_save_filename("Save toolpath to ...", ("GCode files", ["*.gcode", "*.nc", "*.gc", "*.ngc"]))
+            filename = self.get_filename_via_dialog("Save toolpath to ...",
+                    mode_load=False, type_filter=FILTER_GCODE)
+            if filename:
+                self.last_toolpath_file = filename
+                self.update_save_actions()
             no_dialog = False
         # no filename given -> exit
         if not filename:
