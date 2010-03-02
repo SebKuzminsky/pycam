@@ -844,7 +844,7 @@
                                     <property name="visible">True</property>
                                     <child>
                                       <object class="GtkButton" id="Reset bounds">
-                                        <property name="label" translatable="yes">Reset</property>
+                                        <property name="label" translatable="yes">Small margin</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
@@ -855,7 +855,7 @@
                                     </child>
                                     <child>
                                       <object class="GtkButton" id="Minimize bounds">
-                                        <property name="label" translatable="yes">Minimize</property>
+                                        <property name="label" translatable="yes">No Margin</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
@@ -2133,98 +2133,118 @@
           <object class="GtkHBox" id="view3ddimension">
             <property name="visible">True</property>
             <property name="spacing">6</property>
-            <property name="homogeneous">True</property>
             <child>
-              <object class="GtkHBox" id="hbox10">
+              <object class="GtkLabel" id="DimensionLabel">
                 <property name="visible">True</property>
-                <child>
-                  <object class="GtkLabel" id="model_dim_x_label">
-                    <property name="visible">True</property>
-                    <property name="xalign">0</property>
-                    <property name="xpad">3</property>
-                    <property name="label" translatable="yes">&#x394;x:</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="model_dim_x">
-                    <property name="visible">True</property>
-                    <property name="xalign">0</property>
-                    <property name="label" translatable="yes">x</property>
-                    <property name="single_line_mode">True</property>
-                  </object>
-                  <packing>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
+                <property name="label" translatable="yes">Bounding Box:</property>
               </object>
               <packing>
+                <property name="expand">False</property>
+                <property name="padding">3</property>
                 <property name="position">0</property>
               </packing>
             </child>
             <child>
-              <object class="GtkHBox" id="hbox14">
+              <object class="GtkHBox" id="hbox8">
                 <property name="visible">True</property>
+                <property name="spacing">12</property>
                 <child>
-                  <object class="GtkLabel" id="model_dim_y_label">
+                  <object class="GtkHBox" id="hbox10">
                     <property name="visible">True</property>
-                    <property name="xalign">0</property>
-                    <property name="xpad">3</property>
-                    <property name="label" translatable="yes">&#x394;y:</property>
+                    <child>
+                      <object class="GtkLabel" id="model_dim_x_label">
+                        <property name="visible">True</property>
+                        <property name="xalign">0</property>
+                        <property name="xpad">3</property>
+                        <property name="label" translatable="yes">&#x394;x:</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="model_dim_x">
+                        <property name="visible">True</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">x</property>
+                        <property name="single_line_mode">True</property>
+                      </object>
+                      <packing>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
                   </object>
                   <packing>
-                    <property name="expand">False</property>
                     <property name="position">0</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="model_dim_y">
+                  <object class="GtkHBox" id="hbox14">
                     <property name="visible">True</property>
-                    <property name="xalign">0</property>
-                    <property name="label" translatable="yes">y</property>
-                    <property name="single_line_mode">True</property>
+                    <child>
+                      <object class="GtkLabel" id="model_dim_y_label">
+                        <property name="visible">True</property>
+                        <property name="xalign">0</property>
+                        <property name="xpad">3</property>
+                        <property name="label" translatable="yes">&#x394;y:</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="model_dim_y">
+                        <property name="visible">True</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">y</property>
+                        <property name="single_line_mode">True</property>
+                      </object>
+                      <packing>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
                   </object>
                   <packing>
                     <property name="position">1</property>
                   </packing>
                 </child>
+                <child>
+                  <object class="GtkHBox" id="hbox15">
+                    <property name="visible">True</property>
+                    <child>
+                      <object class="GtkLabel" id="model_dim_z_label">
+                        <property name="visible">True</property>
+                        <property name="xalign">0</property>
+                        <property name="xpad">3</property>
+                        <property name="label" translatable="yes">&#x394;z:</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="model_dim_z">
+                        <property name="visible">True</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">z</property>
+                        <property name="single_line_mode">True</property>
+                      </object>
+                      <packing>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
               </object>
               <packing>
+                <property name="expand">False</property>
                 <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkHBox" id="hbox15">
-                <property name="visible">True</property>
-                <child>
-                  <object class="GtkLabel" id="model_dim_z_label">
-                    <property name="visible">True</property>
-                    <property name="xalign">0</property>
-                    <property name="xpad">3</property>
-                    <property name="label" translatable="yes">&#x394;z:</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="model_dim_z">
-                    <property name="visible">True</property>
-                    <property name="xalign">0</property>
-                    <property name="label" translatable="yes">z</property>
-                    <property name="single_line_mode">True</property>
-                  </object>
-                  <packing>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="position">2</property>
               </packing>
             </child>
           </object>

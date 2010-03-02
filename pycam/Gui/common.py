@@ -73,7 +73,7 @@ def draw_axes(settings):
     size_x = abs(settings.get("maxx"))
     size_y = abs(settings.get("maxy"))
     size_z = abs(settings.get("maxz"))
-    size = 2.0 * max(max(size_x, size_y), size_z)
+    size = 1.5 * max(max(size_x, size_y), size_z)
     # the divider is just based on playing with numbers
     scale = size/1500.0
     string_distance = 1.1 * size
