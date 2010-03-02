@@ -34,6 +34,15 @@ BUTTON_ROTATE = gtk.gdk.BUTTON1_MASK
 BUTTON_MOVE = gtk.gdk.BUTTON2_MASK
 BUTTON_ZOOM = gtk.gdk.BUTTON3_MASK
 
+COLORS = {
+    "color_background": (0.0, 0.0, 0.0),
+    "color_model": (0.5, 0.5, 1.0),
+    "color_bounding_box": (0.3, 0.3, 0.3),
+    "color_cutter": (1.0, 0.2, 0.2),
+    "color_toolpath_cut": (1.0, 0.5, 0.5),
+    "color_toolpath_return": (0.5, 1.0, 0.5),
+}
+
 
 def show_error_dialog(window, message):
     warn_window = gtk.MessageDialog(window, type=gtk.MESSAGE_ERROR,
@@ -141,6 +150,9 @@ class GLView:
         def refresh_wrapper(self, *args, **kwargs):
             prev_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
             GL.glMatrixMode(GL.GL_MODELVIEW)
+            # clear the background with the configured color
+            bg_col = self.settings.get("color_background")
+            GL.glClearColor(bg_col[0], bg_col[1], bg_col[2], 0.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
             result = func(self, *args, **kwargs)
             self.camera.position_camera()
@@ -156,7 +168,8 @@ class GLView:
             return
         GLUT.glutInit()
         GL.glShadeModel(GL.GL_FLAT)
-        GL.glClearColor(0., 0., 0., 0.)
+        bg_col = self.settings.get("color_background")
+        GL.glClearColor(bg_col[0], bg_col[1], bg_col[2], 0.0)
         GL.glClearDepth(1.)
         GL.glEnable(GL.GL_DEPTH_TEST)
         GL.glDepthFunc(GL.GL_LEQUAL)
@@ -286,6 +299,7 @@ class GLView:
         pass
 
     def _paint_raw(self, widget=None):
+        # draw the model
         GuiCommon.draw_complete_model_view(self.settings)
         # update the dimension display
         s = self.settings
@@ -409,6 +423,29 @@ class ProjectGui:
             # all of the objects above should trigger redraw
             if name != "enable_ode":
                 obj.connect("toggled", self.update_view)
+        # color selectors
+        def get_color_wrapper(obj):
+            def gtk_color_to_float():
+                gtk_color = obj.get_color()
+                return (gtk_color.red_float, gtk_color.green_float, gtk_color.blue_float)
+            return gtk_color_to_float
+        def set_color_wrapper(obj):
+            def set_gtk_color_by_float((red, green, blue)):
+                obj.set_color(gtk.gdk.Color(red, green, blue))
+            return set_gtk_color_by_float
+        for name, objname in (("color_background", "ColorBackground"),
+                ("color_model", "ColorModel"),
+                ("color_bounding_box", "ColorBoundingBox"),
+                ("color_cutter", "ColorDrill"),
+                ("color_toolpath_return", "ColorToolpathReturn")):
+            obj = self.gui.get_object(objname)
+            self.settings.add_item(name, get_color_wrapper(obj), set_color_wrapper(obj))
+            # repaint the 3d view after a color change
+            obj.connect("color-set", self.update_view)
+        # pre-define the colors
+        for name in COLORS.keys():
+            print "Set: %s / %s" % (name, COLORS[name])
+            self.settings.set(name, COLORS[name])
         # set the availability of ODE
         if GuiCommon.is_ode_available():
             self.settings.set("enable_ode", True)

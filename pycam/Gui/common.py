@@ -19,14 +19,6 @@ MODEL_TRANSFORMATIONS = {
     "y_swap_z": ((1, 0, 0, 0), (0, 0, 1, 0), (0, 1, 0, 0)),
 }
 
-COLORS = {
-    "model": (0.5, 0.5, 1.0),
-    "bounding": (0.3, 0.3, 0.3),
-    "cutter": (1.0, 0.2, 0.2),
-    "toolpath_way": (1.0, 0.5, 0.5),
-    "toolpath_back": (0.5, 1.0, 0.5),
-}
-
 def keep_gl_mode(func):
     def wrapper(*args, **kwargs):
         prev_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
@@ -97,8 +89,7 @@ def draw_axes(settings):
     draw_string(0, 0, string_distance, 'xz', "Z", scale=scale)
 
 @keep_matrix
-def draw_bounding_box(minx, miny, minz, maxx, maxy, maxz):
-    color = COLORS["bounding"]
+def draw_bounding_box(minx, miny, minz, maxx, maxy, maxz, color):
     p1 = [minx, miny, minz]
     p2 = [minx, maxy, minz]
     p3 = [maxx, maxy, minz]
@@ -120,9 +111,9 @@ def draw_bounding_box(minx, miny, minz, maxx, maxy, maxz):
 
 @keep_gl_mode
 @keep_matrix
-def draw_cutter(cutter):
+def draw_cutter(cutter, color):
     if not cutter is None:
-        GL.glColor3f(*COLORS["cutter"])
+        GL.glColor3f(*color)
         cutter.to_OpenGL()
 
 @keep_gl_mode
@@ -137,36 +128,39 @@ def draw_complete_model_view(settings):
     if settings.get("show_bounding_box"):
         draw_bounding_box(float(settings.get("minx")), float(settings.get("miny")),
                 float(settings.get("minz")), float(settings.get("maxx")),
-                float(settings.get("maxy")), float(settings.get("maxz")))
+                float(settings.get("maxy")), float(settings.get("maxz")),
+                settings.get("color_bounding_box"))
     # draw the model
     if settings.get("show_model"):
-        GL.glColor3f(*COLORS["model"])
+        GL.glColor3f(*settings.get("color_model"))
         settings.get("model").to_OpenGL()
     # draw the toolpath
     if settings.get("show_toolpath"):
         for toolpath_obj in settings.get("toolpath"):
             if toolpath_obj.visible:
-                draw_toolpath(toolpath_obj.get_path())
+                draw_toolpath(toolpath_obj.get_path(),
+                        settings.get("color_toolpath_cut"),
+                        settings.get("color_toolpath_return"))
     # draw the drill
     if settings.get("show_drill_progress"):
-        draw_cutter(settings.get("cutter"))
+        draw_cutter(settings.get("cutter"), settings.get("color_cutter"))
 
 @keep_gl_mode
 @keep_matrix
-def draw_toolpath(toolpath):
+def draw_toolpath(toolpath, color_forward, color_backward):
     GL.glMatrixMode(GL.GL_MODELVIEW)
     GL.glLoadIdentity()
     if toolpath:
         last = None
         for path in toolpath:
             if last:
-                GL.glColor3f(*COLORS["toolpath_back"])
+                GL.glColor3f(*color_backward)
                 GL.glBegin(GL.GL_LINES)
                 GL.glVertex3f(last.x, last.y, last.z)
                 last = path.points[0]
                 GL.glVertex3f(last.x, last.y, last.z)
                 GL.glEnd()
-            GL.glColor3f(*COLORS["toolpath_way"])
+            GL.glColor3f(*color_forward)
             GL.glBegin(GL.GL_LINE_STRIP)
             for point in path.points:
                 GL.glVertex3f(point.x, point.y, point.z)
