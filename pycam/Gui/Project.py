@@ -26,7 +26,7 @@ GTK_DATA_DIR = os.path.join(os.path.dirname(__file__), "gtk-interface")
 GTKBUILD_FILE = os.path.join(GTK_DATA_DIR, "pycam-project.ui")
 GTKMENU_FILE = os.path.join(GTK_DATA_DIR, "menubar.xml")
 
-FILTER_GCODE = ("GCode files", ["*.gcode", "*.nc", "*.gc", "*.ngc"])
+FILTER_GCODE = ("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode"))
 FILTER_MODEL = ("STL models", "*.stl")
 FILTER_CONFIG = ("Config files", "*.conf")
 
@@ -697,6 +697,25 @@ class ProjectGui:
                 GuiCommon.transform_model(self.model, value)
         self.update_view()
 
+    def get_filename_with_suffix(self, filename, type_filter):
+        # use the first extension provided by the filter as the default
+        filter_ext = type_filter[1]
+        if isinstance(filter_ext, (list, tuple)):
+            filter_ext = filter_ext[0]
+        if not filter_ext.startswith("*"):
+            # weird filter content
+            return filename
+        else:
+            filter_ext = filter_ext[1:]
+        basename = os.path.basename(filename)
+        splitted = basename.split(".")
+        if len(splitted) > 1:
+            # contains at least one dot
+            return filename
+        else:
+            # the filename does not contain a dot
+            return filename + filter_ext
+
     @gui_activity_guard
     def save_model(self, widget=None, filename=None):
         no_dialog = False
@@ -780,6 +799,7 @@ class ProjectGui:
         """ This function is used by the commandline handler """
         self.last_model_file = filename
         self.load_model_file(filename=filename)
+        self.update_save_actions()
         
     def append_to_queue(self, func, *args, **kwargs):
         # check if gui is currently active
@@ -807,6 +827,7 @@ class ProjectGui:
         """ This function is used by the commandline handler """
         self.last_toolpath_file = filename
         self.load_processing_file(filename=filename)
+        self.update_save_actions()
 
     @gui_activity_guard
     def load_processing_file(self, widget=None, filename=None):
@@ -1170,7 +1191,7 @@ class ProjectGui:
             filter = gtk.FileFilter()
             filter.set_name(type_filter[0])
             file_extensions = type_filter[1]
-            if not isinstance(file_extensions, list):
+            if not isinstance(file_extensions, (list, tuple)):
                 file_extensions = [file_extensions]
             for ext in file_extensions:
                 filter.add_pattern(ext)
@@ -1189,6 +1210,9 @@ class ProjectGui:
             if response != gtk.RESPONSE_OK:
                 dialog.destroy()
                 return None
+            if not mode_load and filename:
+                # check if we want to add a default suffix
+                filename = self.get_filename_with_suffix(filename, type_filter)
             if not mode_load and os.path.exists(filename):
                 overwrite_window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_WARNING,
                         buttons=gtk.BUTTONS_YES_NO,
