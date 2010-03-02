@@ -1846,6 +1846,7 @@
                                     </child>
                                     <child>
                                       <object class="GtkTreeViewColumn" id="Speed">
+                                        <property name="visible">False</property>
                                         <property name="title">Speed</property>
                                         <child>
                                           <object class="GtkCellRendererText" id="speed-speed"/>
@@ -2528,6 +2529,7 @@
                       <object class="GtkVBox" id="vbox14">
                         <property name="visible">True</property>
                         <property name="orientation">vertical</property>
+                        <property name="spacing">2</property>
                         <child>
                           <object class="GtkCheckButton" id="SettingEnableODE">
                             <property name="label" translatable="yes">Enable experimental ODE calculations</property>
