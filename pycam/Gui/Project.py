@@ -524,6 +524,8 @@ class ProjectGui:
         self.gui.get_object("toolpath_up").connect("clicked", self.toolpath_table_event, "move_up")
         self.gui.get_object("toolpath_delete").connect("clicked", self.toolpath_table_event, "delete")
         self.gui.get_object("toolpath_down").connect("clicked", self.toolpath_table_event, "move_down")
+        # store the original content (for adding the number of current toolpaths in "update_toolpath_table")
+        self._original_toolpath_tab_label = self.gui.get_object("ToolPathTabLabel").get_text()
         # speed and feedrate controls
         speed_control = self.gui.get_object("SpeedControl")
         self.settings.add_item("speed", speed_control.get_value, speed_control.set_value)
@@ -949,6 +951,8 @@ class ProjectGui:
         if not self.toolpath:
             toolpath_tab.hide()
         else:
+            self.gui.get_object("ToolPathTabLabel").set_text(
+                    "%s (%d)" % (self._original_toolpath_tab_label, len(self.toolpath)))
             toolpath_tab.show()
         # enable/disable the export menu item
         self.gui.get_object("ExportGCode").set_sensitive(len(self.toolpath) > 0)
@@ -1128,6 +1132,11 @@ class ProjectGui:
             start_offset = 7.0
         else:
             start_offset = 0.25
+        # hide the previous toolpath if it is the only visible one (automatic mode)
+        if (len([True for path in self.toolpath if path.visible]) == 1) \
+                and self.toolpath[-1].visible:
+            self.toolpath[-1].visible = False
+        # add the new toolpath
         self.toolpath.add_toolpath(toolpath,
                 self.processing_config_selection.get_active_text(),
                 cutter,
