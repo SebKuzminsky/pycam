@@ -50,6 +50,7 @@ def draw_string(x, y, z, p, s, scale=.01):
     GL.glPushMatrix()
     GL.glTranslatef(x, y, z)
     if p == 'xy':
+        GL.glRotatef(90, 1, 0, 0)
         pass
     elif p == 'yz':
         GL.glRotatef(90, 0, 1, 0)
@@ -57,7 +58,7 @@ def draw_string(x, y, z, p, s, scale=.01):
     elif p == 'xz':
         GL.glRotatef(90, 0, 1, 0)
         GL.glRotatef(90, 0, 0, 1)
-        GL.glRotatef(-90, 0, 1, 0)
+        GL.glRotatef(45, 0, 1, 0)
     GL.glScalef(scale, scale, scale)
     for c in str(s):
         GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(c))
@@ -69,28 +70,31 @@ def draw_axes(settings):
     GL.glMatrixMode(GL.GL_MODELVIEW)
     GL.glLoadIdentity()
     #GL.glTranslatef(0, 0, -2)
-    if settings.get("unit") == "mm":
-        size = 100
-    else:
-        size = 5
+    size_x = abs(settings.get("maxx"))
+    size_y = abs(settings.get("maxy"))
+    size_z = abs(settings.get("maxz"))
+    size = 2.0 * max(max(size_x, size_y), size_z)
+    # the divider is just based on playing with numbers
+    scale = size/1500.0
+    string_distance = 1.1 * size
     GL.glBegin(GL.GL_LINES)
     GL.glColor3f(1, 0, 0)
     GL.glVertex3f(0, 0, 0)
     GL.glVertex3f(size, 0, 0)
     GL.glEnd()
-    draw_string(size, 0, 0, 'xy', "X")
+    draw_string(string_distance, 0, 0, 'xy', "X", scale=scale)
     GL.glBegin(GL.GL_LINES)
     GL.glColor3f(0, 1, 0)
     GL.glVertex3f(0, 0, 0)
     GL.glVertex3f(0, size, 0)
     GL.glEnd()
-    draw_string(0, size, 0, 'yz', "Y")
+    draw_string(0, string_distance, 0, 'yz', "Y", scale=scale)
     GL.glBegin(GL.GL_LINES)
     GL.glColor3f(0, 0, 1)
     GL.glVertex3f(0, 0, 0)
     GL.glVertex3f(0, 0, size)
     GL.glEnd()
-    draw_string(0, 0, size, 'xz', "Z")
+    draw_string(0, 0, string_distance, 'xz', "Z", scale=scale)
 
 @keep_matrix
 def draw_bounding_box(minx, miny, minz, maxx, maxy, maxz):
