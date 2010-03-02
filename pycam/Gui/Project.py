@@ -17,6 +17,7 @@ import OpenGL.GLUT as GLUT
 #import gtk.gtkgl
 import pygtk
 import gtk
+import pango
 import time
 import os
 import sys
@@ -82,15 +83,24 @@ class GLView:
         # first run; might also be important when doing other fancy gtk/gdk stuff
         self.area.connect_after('realize', self.paint)
         # called when a part of the screen is uncovered
-        self.area.connect('expose_event', self.paint) 
+        self.area.connect('expose-event', self.paint) 
         # resize window
-        self.area.connect('configure_event', self._resize_window)
+        self.area.connect('configure-event', self._resize_window)
         # catch mouse events
         self.area.set_events(gtk.gdk.MOUSE | gtk.gdk.BUTTON_PRESS_MASK)
         self.area.connect("button-press-event", self.mouse_handler)
         self.area.connect('motion-notify-event', self.mouse_handler)
         self.area.show()
         self.camera = ogl_tools.Camera(self.settings, lambda: (self.area.allocation.width, self.area.allocation.height))
+        # color the dimension value according to the axes
+        for color, names in (
+                (pango.AttrForeground(65535, 0, 0, 0, 100), ("model_dim_x_label", "model_dim_x")),
+                (pango.AttrForeground(0, 65535, 0, 0, 100), ("model_dim_y_label", "model_dim_y")),
+                (pango.AttrForeground(0, 0, 65535, 0, 100), ("model_dim_z_label", "model_dim_z"))):
+            attributes = pango.AttrList()
+            attributes.insert(color)
+            for name in names:
+                self.gui.get_object(name).set_attributes(attributes)
         self.container.add(self.area)
         self.container.show()
         self.show()
@@ -277,6 +287,11 @@ class GLView:
 
     def _paint_raw(self, widget=None):
         GuiCommon.draw_complete_model_view(self.settings)
+        # update the dimension display
+        s = self.settings
+        self.gui.get_object("model_dim_x").set_text("%.3f %s" % (s.get("maxx") - s.get("minx"), s.get("unit")))
+        self.gui.get_object("model_dim_y").set_text("%.3f %s" % (s.get("maxy") - s.get("miny"), s.get("unit")))
+        self.gui.get_object("model_dim_z").set_text("%.3f %s" % (s.get("maxz") - s.get("minz"), s.get("unit")))
 
 
 class ProjectGui:
@@ -337,6 +352,7 @@ class ProjectGui:
         unit_field.append_text("inch")
         unit_field.set_active(0)
         unit_field.show()
+        unit_field.connect("changed", self.update_view)
         scale_box.add(unit_field)
         # move it to the top
         scale_box.reorder_child(unit_field, 1)
