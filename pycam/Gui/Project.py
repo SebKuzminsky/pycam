@@ -289,9 +289,14 @@ class GLView:
         GuiCommon.draw_complete_model_view(self.settings)
         # update the dimension display
         s = self.settings
-        self.gui.get_object("model_dim_x").set_text("%.3f %s" % (s.get("maxx") - s.get("minx"), s.get("unit")))
-        self.gui.get_object("model_dim_y").set_text("%.3f %s" % (s.get("maxy") - s.get("miny"), s.get("unit")))
-        self.gui.get_object("model_dim_z").set_text("%.3f %s" % (s.get("maxz") - s.get("minz"), s.get("unit")))
+        dimension_bar = self.gui.get_object("view3ddimension")
+        if s.get("show_dimensions"):
+            self.gui.get_object("model_dim_x").set_text("%.3f %s" % (s.get("maxx") - s.get("minx"), s.get("unit")))
+            self.gui.get_object("model_dim_y").set_text("%.3f %s" % (s.get("maxy") - s.get("miny"), s.get("unit")))
+            self.gui.get_object("model_dim_z").set_text("%.3f %s" % (s.get("maxz") - s.get("minz"), s.get("unit")))
+            dimension_bar.show()
+        else:
+            dimension_bar.hide()
 
 
 class ProjectGui:
@@ -392,6 +397,7 @@ class ProjectGui:
         self.gui.get_object("Toggle3DView").connect("toggled", self.toggle_3d_view)
         for name, objname in (("show_model", "ShowModelCheckBox"),
                 ("show_axes", "ShowAxesCheckBox"),
+                ("show_dimensions", "ShowDimensionsCheckBox"),
                 ("show_bounding_box", "ShowBoundingCheckBox"),
                 ("show_toolpath", "ShowToolPathCheckBox"),
                 ("show_drill_progress", "ShowDrillProgressCheckBox"),
@@ -416,6 +422,7 @@ class ProjectGui:
         self.settings.set("show_toolpath", True)
         self.settings.set("show_bounding_box", True)
         self.settings.set("show_axes", True)
+        self.settings.set("show_dimensions", True)
         skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
         self.settings.add_item("drill_progress_max_fps", skip_obj.get_value, skip_obj.set_value)
         self.settings.set("drill_progress_max_fps", 2)

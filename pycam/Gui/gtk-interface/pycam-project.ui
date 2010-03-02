@@ -393,39 +393,6 @@
                                 <property name="orientation">vertical</property>
                                 <property name="spacing">3</property>
                                 <child>
-                                  <object class="GtkHBox" id="unit_box">
-                                    <property name="visible">True</property>
-                                    <child>
-                                      <object class="GtkLabel" id="UnitLabel">
-                                        <property name="visible">True</property>
-                                        <property name="xalign">0</property>
-                                        <property name="label" translatable="yes">Unit:</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="padding">3</property>
-                                        <property name="position">0</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <placeholder/>
-                                    </child>
-                                  </object>
-                                  <packing>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkHSeparator" id="hseparator3">
-                                    <property name="visible">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="padding">10</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                                <child>
                                   <object class="GtkHBox" id="hbox6">
                                     <property name="visible">True</property>
                                     <child>
@@ -457,7 +424,7 @@
                                     </child>
                                   </object>
                                   <packing>
-                                    <property name="position">2</property>
+                                    <property name="position">0</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -469,7 +436,7 @@
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
-                                    <property name="position">3</property>
+                                    <property name="position">1</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -482,7 +449,7 @@
                                   <packing>
                                     <property name="expand">False</property>
                                     <property name="fill">False</property>
-                                    <property name="position">4</property>
+                                    <property name="position">2</property>
                                   </packing>
                                 </child>
                               </object>
@@ -2574,6 +2541,29 @@
                             <property name="position">0</property>
                           </packing>
                         </child>
+                        <child>
+                          <object class="GtkHBox" id="unit_box">
+                            <property name="visible">True</property>
+                            <child>
+                              <object class="GtkLabel" id="UnitLabel">
+                                <property name="visible">True</property>
+                                <property name="xalign">0</property>
+                                <property name="label" translatable="yes">Unit:</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="padding">3</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
                       </object>
                     </child>
                   </object>
@@ -2666,6 +2656,19 @@
                           </packing>
                         </child>
                         <child>
+                          <object class="GtkCheckButton" id="ShowDimensionsCheckBox">
+                            <property name="label" translatable="yes">Show Dimensions</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">4</property>
+                          </packing>
+                        </child>
+                        <child>
                           <object class="GtkCheckButton" id="ShowDrillProgressCheckBox">
                             <property name="label" translatable="yes">Show Drill Progress</property>
                             <property name="visible">True</property>
@@ -2675,7 +2678,7 @@
                           </object>
                           <packing>
                             <property name="expand">False</property>
-                            <property name="position">4</property>
+                            <property name="position">5</property>
                           </packing>
                         </child>
                         <child>
@@ -2707,7 +2710,7 @@
                           </object>
                           <packing>
                             <property name="expand">False</property>
-                            <property name="position">5</property>
+                            <property name="position">6</property>
                           </packing>
                         </child>
                       </object>
