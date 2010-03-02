@@ -291,9 +291,11 @@ class GLView:
         s = self.settings
         dimension_bar = self.gui.get_object("view3ddimension")
         if s.get("show_dimensions"):
-            self.gui.get_object("model_dim_x").set_text("%.3f %s" % (s.get("maxx") - s.get("minx"), s.get("unit")))
-            self.gui.get_object("model_dim_y").set_text("%.3f %s" % (s.get("maxy") - s.get("miny"), s.get("unit")))
-            self.gui.get_object("model_dim_z").set_text("%.3f %s" % (s.get("maxz") - s.get("minz"), s.get("unit")))
+            for name, size in (
+                    ("model_dim_x", s.get("maxx") - s.get("minx")),
+                    ("model_dim_y", s.get("maxy") - s.get("miny")),
+                    ("model_dim_z", s.get("maxz") - s.get("minz"))):
+                self.gui.get_object(name).set_text("%.3f %s" % (size, s.get("unit")))
             dimension_bar.show()
         else:
             dimension_bar.hide()
