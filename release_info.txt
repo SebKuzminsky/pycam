@@ -1,0 +1,25 @@
+svn co http://... pycam-0.1.11
+cd pycam-0.1.11
+
+1) Update the version numbers
+ - in "Makefile"
+ - in "pycam/Gui/gtk-interface/pycam-project.ui" ("version" in "GtkAboutDialog")
+ - in "changelog.txt" (including a summary of changes)
+
+2) commit & tag
+ - svn commit trunk
+ - svn cp trunk tags/release-0.x.y && svn commit
+
+3) create the archives
+ - "make dist-ver"
+
+4) upload files to sourceforge
+ - https://sourceforge.net/project/admin/explorer.php?group_id=237831
+ - "Upload File"
+
+5) announcements
+ - create a project news items at sourceforge
+ - create a new release at http://freshmeat.net
+ - post the new release at http://www.cnczone.com/forums/showthread.php?t=63716
+ - ?
+

@@ -1,21 +1,24 @@
 Version 0.2 - UNRELEASED
  * added an alternative GTK interface with additional features:
-  * configurable 3D view settings: model / toolpath / axis / drill progress / frame skip
+  * configurable 3D view settings: model / toolpath / axis / drill progress / frame rate / colors
   * manipulation of the model: rotation, flip, swap, scale, move
   * saving the model to an ascii STL file
   * load/save processing settings from/to a file
   * handling of multiple processing templates (e.g. "Rough", "Semi-finish" and "Finish")
   * configure "material allowance" for a minimum distance between drill and model
   * configure the "safety height" for the machine
-  * allow to manage and export (gcode) multiple toolpaths
+  * allow to manage and export (gcode) multiple toolpaths at once
   * based on GtkGlExt (for OpenGL)
-  * visualize conflicting processing settings
+  * visualize invalid processing setting combinations
   * configure "overlap" instead of "lines" and "samples"
   * configure "maximum step down" instead of "layers"
   * show a progress bar during calculations
+  * basic lightning for the OpenGL view
  * improved performance by (optionally) using the "Open Dynamics Engine" (ODE) for
    collision detection
- * added basic lightning to the OpenGL view
+
+Version 0.1.11b - 2010-02-25
+ * fix minor release mistake (missing "STLExporter")
 
 Version 0.1.11 - 2010-02-19
  * fix detection of binary STL

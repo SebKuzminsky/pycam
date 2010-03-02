@@ -444,7 +444,6 @@ class ProjectGui:
             obj.connect("color-set", self.update_view)
         # pre-define the colors
         for name in COLORS.keys():
-            print "Set: %s / %s" % (name, COLORS[name])
             self.settings.set(name, COLORS[name])
         # set the availability of ODE
         if GuiCommon.is_ode_available():
