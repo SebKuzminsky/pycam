@@ -50,6 +50,20 @@
       </row>
     </data>
   </object>
+  <object class="GtkListStore" id="unit_model">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">mm</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">inch</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkWindow" id="ProjectWindow">
     <property name="title" translatable="yes">PyCAM</property>
     <property name="destroy_with_parent">True</property>
@@ -2463,60 +2477,60 @@
     <property name="page_size">10</property>
   </object>
   <object class="GtkAction" id="LoadModel">
-    <property name="label">Load Model</property>
+    <property name="label">_Load Model</property>
     <property name="tooltip">Loads an STL model file.</property>
     <property name="stock_id">gtk-open</property>
   </object>
   <object class="GtkAction" id="FileMenu">
-    <property name="label">File</property>
+    <property name="label">_File</property>
   </object>
   <object class="GtkAction" id="SettingsMenu">
-    <property name="label">Settings</property>
+    <property name="label">_Settings</property>
   </object>
   <object class="GtkAction" id="ExportGCode">
-    <property name="label">Export Toolpaths</property>
+    <property name="label">_Export Toolpaths</property>
     <property name="tooltip">Write all current toolpaths to a file.</property>
     <property name="stock_id">gtk-execute</property>
   </object>
   <object class="GtkAction" id="LoadProcessingTemplates">
-    <property name="label">Load Processing Settings</property>
+    <property name="label">_Load Processing Settings</property>
     <property name="tooltip">Loads a set of processing templates from a file.</property>
     <property name="stock_id">gtk-open</property>
   </object>
   <object class="GtkAction" id="SaveProcessingTemplates">
-    <property name="label">Save Processing Settings</property>
+    <property name="label">_Save Processing Settings</property>
     <property name="tooltip">Save the currently visible set of processing templates to a file.</property>
     <property name="stock_id">gtk-save</property>
   </object>
   <object class="GtkAction" id="SaveAsProcessingTemplates">
-    <property name="label">Save Processing Settings as ...</property>
+    <property name="label">Save Processing Settings _as ...</property>
     <property name="tooltip">Save the currently visible set of processing templates to a new file.</property>
     <property name="stock_id">gtk-save-as</property>
   </object>
   <object class="GtkAction" id="GeneralSettings">
-    <property name="label">Preferences</property>
+    <property name="label">_Preferences</property>
     <property name="tooltip">Configure PyCAM</property>
     <property name="stock_id">gtk-preferences</property>
   </object>
   <object class="GtkAction" id="Quit">
-    <property name="label">Quit</property>
+    <property name="label">_Quit</property>
     <property name="tooltip">Exit PyCAM</property>
     <property name="stock_id">gtk-quit</property>
   </object>
   <object class="GtkAction" id="SaveModel">
-    <property name="label">Save Model</property>
+    <property name="label">_Save Model</property>
     <property name="tooltip">Save the current model to the STL file.</property>
     <property name="stock_id">gtk-save</property>
   </object>
   <object class="GtkAction" id="WindowMenu">
-    <property name="label">Windows</property>
+    <property name="label">_Windows</property>
   </object>
   <object class="GtkToggleAction" id="Toggle3DView">
-    <property name="label">3D View Window</property>
+    <property name="label">3D _View Window</property>
     <property name="tooltip">Display the model in the 3D view window.</property>
   </object>
   <object class="GtkAction" id="SaveAsModel">
-    <property name="label">Save Model as ...</property>
+    <property name="label">Save Model _as ...</property>
     <property name="short_label">Save Model as ...</property>
     <property name="tooltip">Save the current model to a new STL file.</property>
     <property name="stock_id">gtk-save-as</property>
@@ -2579,10 +2593,26 @@
                               </packing>
                             </child>
                             <child>
-                              <placeholder/>
+                              <object class="GtkComboBox" id="unit_control">
+                                <property name="visible">True</property>
+                                <property name="model">unit_model</property>
+                                <property name="active">0</property>
+                                <child>
+                                  <object class="GtkCellRendererText" id="unit_name"/>
+                                  <attributes>
+                                    <attribute name="text">0</attribute>
+                                  </attributes>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="position">1</property>
+                              </packing>
                             </child>
                           </object>
                           <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
                             <property name="position">1</property>
                           </packing>
                         </child>
@@ -3019,7 +3049,7 @@ You should have received a copy of the GNU General Public License along with thi
     </child>
   </object>
   <object class="GtkAction" id="About">
-    <property name="label">About</property>
+    <property name="label">_About</property>
     <property name="stock_id">gtk-about</property>
   </object>
 </interface>
