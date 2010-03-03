@@ -70,12 +70,12 @@ Windows:
     Python 2.5
 
     PyOpenGL :  http://pyopengl.sourceforge.net/
-                http://downloads.sourceforge.net/pyopengl/PyOpenGL-3.0.0.win32.exe
+                http://downloads.sourceforge.net/pyopengl/PyOpenGL-3.0.1.win32.exe
 
     TOGL: http://downloads.sourceforge.net/togl/Togl2.0-8.4-Windows.zip
           (just copy the directory Togl2.0 into Python25/tcl)
 
-    GLUT :      http://www.cip.physik.uni-muenchen.de/~georg.hennig/downloads/glut-3.7.6-wheel_mingw.zip
+    GLUT :      http://www.hennigbuam.de/georg/downloads/glut-3.7.6-wheel_mingw.zip
 
 
 
