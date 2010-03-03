@@ -102,9 +102,10 @@ class GLView:
         self.area.show()
         self.camera = ogl_tools.Camera(self.settings, lambda: (self.area.allocation.width, self.area.allocation.height))
         # color the dimension value according to the axes
+        # for "y" axis: 100% green is too bright on light background - we reduce it a bit
         for color, names in (
                 (pango.AttrForeground(65535, 0, 0, 0, 100), ("model_dim_x_label", "model_dim_x")),
-                (pango.AttrForeground(0, 65535, 0, 0, 100), ("model_dim_y_label", "model_dim_y")),
+                (pango.AttrForeground(0, 50000, 0, 0, 100), ("model_dim_y_label", "model_dim_y")),
                 (pango.AttrForeground(0, 0, 65535, 0, 100), ("model_dim_z_label", "model_dim_z"))):
             attributes = pango.AttrList()
             attributes.insert(color)
