@@ -5,8 +5,9 @@
 
 2) create the archives
  - VERSION=0.2 make dist
+ - carefully check the resulting content of the archives
 
-3) create an svn tag for the release
+3) create an svn tag for the release (includes uploading the archive files)
  - VERSION=0.2 make tag
 
 4) upload files to sourceforge
