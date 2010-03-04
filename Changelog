@@ -1,4 +1,7 @@
-Version 0.2 - UNRELEASED
+Version 0.2.1 - UNRELEASED
+ * 
+
+Version 0.2 - 2010-03-04
  * added an alternative GTK interface with additional features:
   * configurable 3D view settings: model / toolpath / axis / drill progress / frame rate / colors
   * manipulation of the model: rotation, flip, swap, scale, move

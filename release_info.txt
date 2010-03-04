@@ -1,6 +1,7 @@
-1) update the version
+1) update the version and the changelog
  - in "pycam/Gui/gtk-interface/pycam-project.ui" ("version" in "GtkAboutDialog")
- - in "changelog.txt" (including a summary of changes)
+ - in "Changelog"
+ - update the release date and the list of changes in "Changelog"
  - commit the changes
 
 2) create the archives
@@ -12,7 +13,11 @@
 
 4) upload files to sourceforge
  - https://sourceforge.net/project/admin/explorer.php?group_id=237831
- - "Upload File"
+ - create a directory for the new release
+ - click at the icon to the left of the new directory and upload the new archives
+ - create a file called "release-notes-0.x" and upload it to the same directory
+ - mark the release notes files as "Release notes" (see "Properties")
+ - set the release notes and the target operating systems for the archives
 
 5) announcements
  - create a project news items at sourceforge
