@@ -96,22 +96,6 @@ KNOWN BUGS:
       sometimes make tiny cuts accross the model in between lines
 
 
-OPTIMIZATION:
-
-    * short-circuit the plane/triangle/line/edge/point/vertex tests,
-      so that when the result is known, no further intersections are calculated
-
-    * use kdtree to speed up collision detection
-
-    * make Model have unique points
-
-    * make Model have unique edges
-
-    * make Cutters have a "color" so that for each x in plane/triangle/line/edge/point/vertex
-      the result of an intersection (cutter,x,color) is cachable
-      (i.e. each Cutter.moveto should change the color, just increasing an "int color" should be ok)
-
-    * align z-levels with horizontal triangles when possible
-
-    * align x/y paths with vertical triangles when possible
+OPEN ISSUES:
+see the list at https://sourceforge.net/apps/mediawiki/pycam/index.php?title=TODO
 
