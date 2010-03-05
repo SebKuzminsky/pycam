@@ -27,12 +27,9 @@ Windows:
                 Please note that some of the GTK packages below require
                 specifically v2.5 (thus v2.6 will not help).
 
-    GTK v2.12 and GtkGlExt:
+    GTK v2.12 and GtkGlExt and PyGTK:
                 http://www.bonifazi.eu/appunti/ (Blog)
-                http://www.bonifazi.eu/appunti/gtk_installer.exe
-
-    PyGTK v2.12:
-                http://ftp.gnome.org/pub/GNOME/binaries/win32/pygtk/2.12/pygtk-2.12.1-3.win32-py2.5.exe
+                http://www.bonifazi.eu/appunti/pygtk_windows_installer.exe
 
     PyODE (optional):
                 http://downloads.sourceforge.net/pyode/PyODE-1.2.0.win32-py2.5.exe?use_mirror=osdn
