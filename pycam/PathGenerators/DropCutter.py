@@ -1,10 +1,39 @@
 from pycam.PathProcessors import *
 from pycam.Geometry import *
 from pycam.Geometry.intersection import intersect_lines
-import pycam.PathGenerators
 from pycam.Geometry.utils import INFINITE
 import math
 import sys
+
+
+class Dimension:
+    def __init__(self, start, end):
+        self.start = float(start)
+        self.end = float(end)
+        self.min = float(min(start, end))
+        self.max = float(max(start, end))
+        self.downward = start > end
+        self.value = 0.0
+
+    def check_bounds(self, value=None, tolerance=None):
+        if value is None:
+            value = self.value
+        if tolerance is None:
+            return (value >= self.min) and (value <= self.max)
+        else:
+            return (value > self.min - tolerance) and (value < self.max + tolerance)
+
+    def shift(self, distance):
+        if self.downward:
+            self.value -= distance
+        else:
+            self.value += distance
+
+    def set(self, value):
+        self.value = float(value)
+
+    def get(self):
+        return self.value
 
 
 class DropCutter:
@@ -27,9 +56,9 @@ class DropCutter:
         else:
             pa = PathAccumulator()
 
-        dim_x = pycam.PathGenerators.Dimension(minx, maxx)
-        dim_y = pycam.PathGenerators.Dimension(miny, maxy)
-        dim_height = pycam.PathGenerators.Dimension(z1, z0)
+        dim_x = Dimension(minx, maxx)
+        dim_y = Dimension(miny, maxy)
+        dim_height = Dimension(z1, z0)
         dims = [None, None, None]
         # map the scales according to the order of direction
         if direction == 0:
