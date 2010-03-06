@@ -43,6 +43,9 @@ COLORS = {
     "color_toolpath_return": (0.5, 1.0, 0.5),
 }
 
+# floating point color values are only available since gtk 2.16
+GTK_COLOR_MAX = 65535
+
 
 def show_error_dialog(window, message):
     warn_window = gtk.MessageDialog(window, type=gtk.MESSAGE_ERROR,
@@ -420,11 +423,12 @@ class ProjectGui:
         def get_color_wrapper(obj):
             def gtk_color_to_float():
                 gtk_color = obj.get_color()
-                return (gtk_color.red_float, gtk_color.green_float, gtk_color.blue_float)
+                return (gtk_color.red / GTK_COLOR_MAX, gtk_color.green / GTK_COLOR_MAX, gtk_color.blue / GTK_COLOR_MAX)
             return gtk_color_to_float
         def set_color_wrapper(obj):
             def set_gtk_color_by_float((red, green, blue)):
-                obj.set_color(gtk.gdk.Color(red, green, blue))
+                obj.set_color(gtk.gdk.Color(int(red * GTK_COLOR_MAX),
+                        int(green * GTK_COLOR_MAX), int(blue * GTK_COLOR_MAX)))
             return set_gtk_color_by_float
         for name, objname in (("color_background", "ColorBackground"),
                 ("color_model", "ColorModel"),
@@ -534,7 +538,8 @@ class ProjectGui:
         actiongroup = gtk.ActionGroup("menubar")
         for action in [action for action in self.gui.get_objects() if isinstance(action, gtk.Action)]:
             actiongroup.add_action(action)
-        uimanager.insert_action_group(actiongroup)
+        # the "pos" parameter is optional since 2.12 - we can remove it later
+        uimanager.insert_action_group(actiongroup, pos=-1)
         # load the menubar and connect functions to its items
         self.menubar = uimanager.get_widget("/MenuBar")
         window_box = self.gui.get_object("WindowBox")
