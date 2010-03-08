@@ -55,7 +55,12 @@ Install the following packages with your package manager:
     python-pyode    (optional)
 
 On a debian or ubuntu system you would just type the following in a root console:
-    apt-get install python-gtkglext1 python-pyode
+    apt-get install python-gtkglext1 python-pyode python-opengl python-gtk2
+
+BEWARE: Debian Lenny sadly contains a broken "python-opengl" package. You need to
+switch to "squeeze" and run "apt-get install python-opengl" to fix this. Afterwards
+you should go back to "Lenny". This may also be relevant for certain versions of
+Ubuntu.
 
 
 Dependencies of the Tk interface: 

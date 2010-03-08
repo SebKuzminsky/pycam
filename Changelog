@@ -1,5 +1,6 @@
 Version 0.2.1 - UNRELEASED
  * fixed code that depended on GTK 2.16 (instead of 2.12)
+ * view settings "light", "shadow" and "polygon fill" are now configurable
 
 Version 0.2 - 2010-03-04
  * added an alternative GTK interface with additional features:

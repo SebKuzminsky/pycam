@@ -44,7 +44,7 @@ COLORS = {
 }
 
 # floating point color values are only available since gtk 2.16
-GTK_COLOR_MAX = 65535
+GTK_COLOR_MAX = 65535.0
 
 
 def show_error_dialog(window, message):
@@ -402,6 +402,7 @@ class ProjectGui:
         def set_unit(text):
             unit_field.set_active((text == "mm") and 0 or 1)
         self.settings.add_item("unit", unit_field.get_active_text, set_unit)
+        unit_field.set_active(0)
         # define the limit callback functions
         for limit in ["minx", "miny", "minz", "maxx", "maxy", "maxz"]:
             obj = self.gui.get_object(limit)
