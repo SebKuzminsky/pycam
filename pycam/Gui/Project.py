@@ -95,7 +95,7 @@ class GLView:
         # first run; might also be important when doing other fancy gtk/gdk stuff
         self.area.connect_after('realize', self.paint)
         # called when a part of the screen is uncovered
-        self.area.connect('expose-event', self.paint) 
+        self.area.connect('expose-event', self.paint)
         # resize window
         self.area.connect('configure-event', self._resize_window)
         # catch mouse events
@@ -103,6 +103,7 @@ class GLView:
         self.area.connect("button-press-event", self.mouse_handler)
         self.area.connect('motion-notify-event', self.mouse_handler)
         self.area.show()
+        self.container.add(self.area)
         self.camera = ogl_tools.Camera(self.settings, lambda: (self.area.allocation.width, self.area.allocation.height))
         # color the dimension value according to the axes
         # for "y" axis: 100% green is too bright on light background - we reduce it a bit
@@ -114,7 +115,7 @@ class GLView:
             attributes.insert(color)
             for name in names:
                 self.gui.get_object(name).set_attributes(attributes)
-        self.container.add(self.area)
+        # show the window
         self.container.show()
         self.show()
 
@@ -139,7 +140,22 @@ class GLView:
         if not (0 <= keyval <= 255):
             # e.g. "shift" key
             return
-        print "Key pressed: %s (%s)" % (chr(keyval), get_state())
+        if chr(keyval) in ('l', 'm', 's'):
+            if (chr(keyval) == 'l'):
+                key = "view_light"
+            elif (chr(keyval) == 'm'):
+                key = "view_polygon"
+            elif (chr(keyval) == 's'):
+                key = "view_shadow"
+            else:
+                key = None
+            # toggle setting
+            self.settings.set(key, not self.settings.get(key))
+            # re-init gl settings
+            self.glsetup()
+            self.paint()
+        else:
+            print "Key pressed: %s (%s)" % (chr(keyval), get_state())
 
     def check_busy(func):
         def busy_wrapper(self, *args, **kwargs):
@@ -168,10 +184,11 @@ class GLView:
         return refresh_wrapper
 
     def glsetup(self):
-        if self.initialized:
-            return
         GLUT.glutInit()
-        GL.glShadeModel(GL.GL_FLAT)
+        if self.settings.get("view_shadow"):
+            GL.glShadeModel(GL.GL_FLAT)
+        else:
+            GL.glShadeModel(GL.GL_SMOOTH)
         bg_col = self.settings.get("color_background")
         GL.glClearColor(bg_col[0], bg_col[1], bg_col[2], 0.0)
         GL.glClearDepth(1.)
@@ -183,7 +200,10 @@ class GLView:
         #GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))
         GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR, (0.1, 0.1, 0.1, 1.0))
         #GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (0.5))
-        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
+        if self.settings.get("view_polygon"):
+            GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
+        else:
+            GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glLoadIdentity()
         GL.glMatrixMode(GL.GL_PROJECTION)
@@ -195,12 +215,15 @@ class GLView:
         GL.glLightfv(GL.GL_LIGHT0, GL.GL_SPECULAR, (.3, .3, .3, 1.0))		# Setup The SpecularLight
         GL.glEnable(GL.GL_LIGHT0)
         # Enable Light One
-        GL.glEnable(GL.GL_LIGHTING)
+        if self.settings.get("view_light"):
+            GL.glEnable(GL.GL_LIGHTING)
+        else:
+            GL.glDisable(GL.GL_LIGHTING)
         GL.glEnable(GL.GL_NORMALIZE)
         GL.glColorMaterial(GL.GL_FRONT_AND_BACK,GL.GL_AMBIENT_AND_DIFFUSE)
         #GL.glColorMaterial(GL.GL_FRONT_AND_BACK,GL.GL_SPECULAR)
         #GL.glColorMaterial(GL.GL_FRONT_AND_BACK,GL.GL_EMISSION)
-        GL.glEnable(GL.GL_COLOR_MATERIAL) 
+        GL.glEnable(GL.GL_COLOR_MATERIAL)
 
     def destroy(self, widget=None, data=None):
         if self.notify_destroy_func:
@@ -223,6 +246,9 @@ class GLView:
             gldrawable.gl_end()
             return result
         return decorated # TODO: make this a well behaved decorator (keeping name, docstring etc)
+
+    def keyboard_handler(self, widget, event):
+        print "KEY:", event
 
     @check_busy
     @gtkgl_functionwrapper
@@ -419,6 +445,14 @@ class ProjectGui:
             # all of the objects above should trigger redraw
             if name != "enable_ode":
                 obj.connect("toggled", self.update_view)
+        for name, objname in (
+                ("view_light", "OpenGLLight"),
+                ("view_shadow", "OpenGLShadow"),
+                ("view_polygon", "OpenGLPolygon")):
+            obj = self.gui.get_object(objname)
+            self.settings.add_item(name, obj.get_active, obj.set_active)
+            # send "True" to trigger a re-setup of GL settings
+            obj.connect("toggled", self.update_view, True)
         # color selectors
         def get_color_wrapper(obj):
             def gtk_color_to_float():
@@ -458,6 +492,9 @@ class ProjectGui:
         self.settings.set("show_bounding_box", True)
         self.settings.set("show_axes", True)
         self.settings.set("show_dimensions", True)
+        self.settings.set("view_light", True)
+        self.settings.set("view_shadow", True)
+        self.settings.set("view_polygon", True)
         skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
         self.settings.add_item("drill_progress_max_fps", skip_obj.get_value, skip_obj.set_value)
         self.settings.set("drill_progress_max_fps", 2)
@@ -578,9 +615,11 @@ class ProjectGui:
                 batch_func(*batch_args, **batch_kwargs)
             return result
         return wrapper
-        
+
     def update_view(self, widget=None, data=None):
         if self.view3d and self.view3d.is_visible and not self.no_dialog:
+            if data:
+                self.view3d.glsetup()
             self.view3d.paint()
 
     def update_physics(self, cutter):
@@ -792,13 +831,13 @@ class ProjectGui:
             while self._progress_running:
                 time.sleep(0.5)
         gtk.main_quit()
-        
+
     def open(self, filename):
         """ This function is used by the commandline handler """
         self.last_model_file = filename
         self.load_model_file(filename=filename)
         self.update_save_actions()
-        
+
     def append_to_queue(self, func, *args, **kwargs):
         # check if gui is currently active
         if self.gui_is_active:
