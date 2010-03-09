@@ -51,6 +51,7 @@ Unix:
 Install the following packages with your package manager:
     python
     python-gtk2
+    python-opengl
     python-gtkglext1
     python-pyode    (optional)
 
