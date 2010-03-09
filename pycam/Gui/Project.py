@@ -541,11 +541,11 @@ class ProjectGui:
         self.processing_settings = pycam.Gui.Settings.ProcessingSettings(self.settings)
         self.processing_config_selection = self.gui.get_object("ProcessingTemplatesList")
         self.processing_config_selection.connect("changed",
-                self.switch_processing_config, self.processing_config_selection.get_active_text)
+                self.switch_processing_config, self.processing_config_selection.get_active)
         self.gui.get_object("ProcessingTemplateDelete").connect("clicked",
-                self.delete_processing_config, self.processing_config_selection.get_active_text)
+                self.delete_processing_config, lambda: self.processing_config_selection.get_child().get_text())
         self.gui.get_object("ProcessingTemplateSave").connect("clicked",
-                self.save_processing_config, self.processing_config_selection.get_active_text)
+                self.save_processing_config, lambda: self.processing_config_selection.get_child().get_text())
         # progress bar and task pane
         self.progress_bar = self.gui.get_object("ProgressBar")
         self.progress_widget = self.gui.get_object("ProgressWidget")
@@ -891,39 +891,39 @@ class ProjectGui:
 
     def load_processing_settings(self, filename=None):
         if not filename is None:
+            self.processing_settings.reset("")
             self.processing_settings.load_file(filename)
-        # load the default config
-        self.processing_settings.enable_config()
+            # load the default config
+            self.processing_settings.enable_config()
         # reset the combobox
-        self.processing_config_selection.set_active(0)
-        while self.processing_config_selection.get_active() >= 0:
-            self.processing_config_selection.remove_text(0)
-            self.processing_config_selection.set_active(0)
+        self.processing_config_selection.get_model().clear()
         for config_name in self.processing_settings.get_config_list():
             self.processing_config_selection.append_text(config_name)
 
-    def switch_processing_config(self, widget=None, section=None):
-        if callable(section):
-            section = section()
-        if not section:
+    def switch_processing_config(self, widget=None, index=None):
+        if callable(index):
+            index = index()
+        if index is None:
             return
-        if section in self.processing_settings.get_config_list():
+        if index >= 0:
+            section = self.processing_settings.get_config_list()[index]
             self.processing_settings.enable_config(section)
-        self._visually_enable_specific_processing_config(section)
+            self._visually_enable_specific_processing_config(section)
 
     def delete_processing_config(self, widget=None, section=None):
         if callable(section):
             section = section()
-        if not section:
+        if section is None:
             return
         if section in self.processing_settings.get_config_list():
             self.processing_settings.delete_config(section)
             self.load_processing_settings()
+            self._visually_enable_specific_processing_config("")
 
     def save_processing_config(self, widget=None, section=None):
         if callable(section):
             section = section()
-        if not section:
+        if section is None:
             return
         self.processing_settings.store_config(section)
         self.load_processing_settings()
@@ -932,10 +932,9 @@ class ProjectGui:
     def _visually_enable_specific_processing_config(self, section):
         # select the requested section in the drop-down list
         # don't change the setting if not required - otherwise we will loop
-        if section != self.processing_config_selection.get_active_text():
-            config_list = self.processing_settings.get_config_list()
-            if section in config_list:
-                self.processing_config_selection.set_active(config_list.index(section))
+        current_text = self.processing_config_selection.get_child().get_text()
+        if section != current_text:
+            self.processing_config_selection.get_child().set_text(section)
 
     def _toolpath_table_get_active_index(self):
         if len(self.toolpath) == 0:

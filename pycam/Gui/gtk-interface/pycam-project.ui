@@ -2,12 +2,6 @@
 <interface>
   <!-- interface-requires gtk+ 2.12 -->
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkListStore" id="ProcessingConfigs">
-    <columns>
-      <!-- column-name Name -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
   <object class="GtkListStore" id="ToolPathListModel">
     <columns>
       <!-- column-name index -->
@@ -63,6 +57,12 @@
         <col id="0" translatable="yes">inch</col>
       </row>
     </data>
+  </object>
+  <object class="GtkListStore" id="ProcessingConfigs">
+    <columns>
+      <!-- column-name Name -->
+      <column type="gchararray"/>
+    </columns>
   </object>
   <object class="GtkWindow" id="ProjectWindow">
     <property name="title" translatable="yes">PyCAM</property>
@@ -955,6 +955,12 @@
                                     <property name="visible">True</property>
                                     <property name="model">ProcessingConfigs</property>
                                     <property name="text_column">0</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="name1"/>
+                                      <attributes>
+                                        <attribute name="text">0</attribute>
+                                      </attributes>
+                                    </child>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
