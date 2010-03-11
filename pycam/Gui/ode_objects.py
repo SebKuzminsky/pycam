@@ -27,7 +27,7 @@ class PhysicalWorld:
     def __init__(self):
         self._world = ode.World()
         self._space = ode.Space()
-        self._geoms = []
+        self._obstacles = []
         self._contacts = ode.JointGroup()
         self._drill = None
         self._drill_offset = None
@@ -36,7 +36,7 @@ class PhysicalWorld:
     def reset(self):
         self._world = ode.World()
         self._space = ode.Space()
-        self._geoms = []
+        self._obstacles = []
         self._contacts = ode.JointGroup()
         self._drill = None
         self._drill_offset = None
@@ -48,17 +48,13 @@ class PhysicalWorld:
         body.setGravityMode(False)
         geom.setBody(body)
         if append:
-            self._geoms.append(geom)
+            self._obstacles.append(geom)
 
     def add_mesh(self, position, triangles):
         mesh = ode.TriMeshData()
         vertices, faces = convert_triangles_to_vertices_faces(triangles)
         mesh.build(vertices, faces)
         geom = ode.GeomTriMesh(mesh, self._space)
-        self._add_geom(geom, position)
-
-    def add_sphere(self, position, radius):
-        geom = ode.GeomSphere(self._space, radius)
         self._add_geom(geom, position)
 
     def set_drill(self, shape, position):
@@ -93,33 +89,21 @@ class PhysicalWorld:
             position = (position[0] + self._drill_offset[0], position[1] + self._drill_offset[1], position[2] + self._drill_offset[2])
             self._drill.setPosition(position)
 
-    def _collision_callback(self, dummy, geom1, geom2):
-        drill_body = self._drill.getBody()
-        if geom1.getBody() is drill_body:
-            obstacle = geom2
-        elif geom2.getBody() is drill_body:
-            obstacle = geom1
-        else:
-            return
-        # check if the drill is made up of multiple geoms
-        try:
-            children = self._drill.children[:]
-        except AttributeError:
-            children = []
-        contacts = []
-        for shape in children + [self._drill]:
-            contacts.extend(ode.collide(shape, obstacle))
-            # break early to improve performance
-            if contacts:
-                break
-        if contacts:
-            self._collision_detected = True
-
     def check_collision(self):
         self._collision_detected = False
-        self._space.collide(None, self._collision_callback)
-        self._contacts.empty()
-        return self._collision_detected
+        contacts = []
+        # get all drill shapes
+        try:
+            drill_shapes = self._drill.children[:]
+        except AttributeError:
+            drill_shapes = []
+        drill_shapes.append(self._drill)
+        # go through all obstacles and check for collisions with a drill shape
+        for body in self._obstacles:
+            for drill_shape in drill_shapes:
+                if ode.collide(drill_shape, body):
+                    return True
+        return False
 
     def get_space(self):
         return self._space
