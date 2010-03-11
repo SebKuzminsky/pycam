@@ -89,18 +89,31 @@ class PhysicalWorld:
             position = (position[0] + self._drill_offset[0], position[1] + self._drill_offset[1], position[2] + self._drill_offset[2])
             self._drill.setPosition(position)
 
+    def _get_rays_for_geom(self, geom):
+        """ TODO: this is necessary due to a bug in the trimesh collision
+        detection code of ODE v0.11.1. Remove this as soon as the code is fixed.
+        """
+        minz, maxz = geom.getAABB()[-2:]
+        currx, curry, currz = geom.getPosition()
+        ray = ode.GeomRay(self._space, maxz-minz)
+        ray.set((currx, curry, maxz), (0.0, 0.0, -1.0))
+        return [ray]
+
     def check_collision(self):
-        self._collision_detected = False
-        contacts = []
         # get all drill shapes
         try:
             drill_shapes = self._drill.children[:]
         except AttributeError:
             drill_shapes = []
         drill_shapes.append(self._drill)
+        # add a ray to each shape
+        collision_shapes = []
+        for drill_shape in drill_shapes:
+            collision_shapes.extend(self._get_rays_for_geom(drill_shape))
+            collision_shapes.append(drill_shape)
         # go through all obstacles and check for collisions with a drill shape
         for body in self._obstacles:
-            for drill_shape in drill_shapes:
+            for drill_shape in collision_shapes:
                 if ode.collide(drill_shape, body):
                     return True
         return False
