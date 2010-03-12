@@ -19,6 +19,9 @@ MODEL_TRANSFORMATIONS = {
     "y_swap_z": ((1, 0, 0, 0), (0, 0, 1, 0), (0, 1, 0, 0)),
 }
 
+_ode_override_state = None
+
+
 def keep_gl_mode(func):
     def wrapper(*args, **kwargs):
         prev_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
@@ -198,11 +201,19 @@ def generate_physics(settings, cutter, physics=None):
     return physics
 
 def is_ode_available():
-    try:
-        import ode
-        return True
-    except ImportError:
-        return False
+    global _ode_override_state
+    if not _ode_override_state is None:
+        return _ode_override_state
+    else:
+        try:
+            import ode
+            return True
+        except ImportError:
+            return False
+
+def override_ode_availability(state):
+    global _ode_override_state
+    _ode_override_state = state
 
 
 class ToolPathList(list):

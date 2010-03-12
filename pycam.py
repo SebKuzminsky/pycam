@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from pycam.Gui.common import override_ode_availability
 from optparse import OptionParser
 import sys
 
@@ -24,6 +25,8 @@ if __name__ == "__main__":
     parser.add_option("", "--template", dest="config_template",
             default=None, action="store", type="string",
             help="enable a specific processing settings template - e.g. 'Rough', 'Semi-finish' or 'Finish' (requires the GTK interface)")
+    parser.add_option("", "--disable-ode", dest="ode_disabled",
+            default=False, action="store_true", help="disable experimental ODE collision detection")
     (options, args) = parser.parse_args()
 
     if len(args) > 0:
@@ -64,11 +67,14 @@ if __name__ == "__main__":
     if gui_class is None:
         print >> sys.stderr, "Neither the GTK nor the Tk interface is available. Please install the corresponding packages!"
         sys.exit(1)
+
+    if options.ode_disabled:
+        override_ode_availability(False)
+
+    if outputfile:
+        gui = gui_class(no_dialog=True)
     else:
-        if outputfile:
-            gui = gui_class(no_dialog=True)
-        else:
-            gui = gui_class()
+        gui = gui_class()
 
     if not inputfile:
         from pycam.Importers.TestModel import TestModel
