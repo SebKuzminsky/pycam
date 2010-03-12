@@ -900,13 +900,20 @@ class ProjectGui:
         for config_name in self.processing_settings.get_config_list():
             self.processing_config_selection.append_text(config_name)
 
-    def switch_processing_config(self, widget=None, index=None):
-        if callable(index):
-            index = index()
-        if index is None:
+    def switch_processing_config(self, widget=None, section=None):
+        if callable(section):
+            section = section()
+        if section is None:
             return
-        if index >= 0:
-            section = self.processing_settings.get_config_list()[index]
+        if isinstance(section, basestring):
+            # a template may be choosen as a string via the commandline
+            if not section in self.processing_settings.get_config_list():
+                section = None
+        elif section == -1:
+            section = None
+        else:
+            section = self.processing_settings.get_config_list()[section]
+        if not section is None:
             self.processing_settings.enable_config(section)
             self._visually_enable_specific_processing_config(section)
 
