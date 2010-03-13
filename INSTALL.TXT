@@ -57,9 +57,11 @@ Install the following packages with your package manager:
 
 On a debian or ubuntu system you would just type the following in a root console:
     apt-get install python-gtkglext1 python-pyode python-opengl python-gtk2
+Please note that you need to enable the "universe" repository in Ubuntu.
 
-BEWARE: Debian "Lenny" and Ubuntu "Dapper/Hardy/Intrepid/Jaunty" contain older
-"python-opengl" and "python-pyode" packages, that expose problems with PyCAM.
+BEWARE: Debian "Lenny" and Ubuntu "Jaunty" (maybe also Dapper/Hardy/Intrepid)
+contain older "python-opengl" and "python-pyode" packages, that expose problems
+with PyCAM.
 You need to add "Squeeze" (for Debian) or "Karmic/Lucid" (for Ubuntu) to your
 package repository list and run the following:
     apt-get update
