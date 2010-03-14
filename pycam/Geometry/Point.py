@@ -47,7 +47,7 @@ class Point:
             self.x /= n
             self.y /= n
             self.z /= n
-        self._norm = 1.0
-        self._normsq = 1.0
+            self._norm = 1.0
+            self._normsq = 1.0
         return self
 
