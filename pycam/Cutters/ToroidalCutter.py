@@ -162,7 +162,7 @@ class ToroidalCutter(BaseCutter):
         return (cl,l)
 
     def intersect_circle_plane(self, direction, triangle):
-        (ccp,cp,l) = intersect_circle_plane(self.center, self.majorradius, direction, triangle)
+        (ccp,cp,l) = intersect_circle_plane(self.location, self.majorradius, direction, triangle)
         # offset intersection
         if ccp:
             cl = cp.sub(ccp.sub(self.location))
