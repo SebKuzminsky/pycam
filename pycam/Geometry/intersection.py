@@ -143,10 +143,10 @@ def intersect_circle_line(center, axis, radius, radiussq, direction, edge):
         cp = None
         if d1>-a and d1<a:
             ccp = p1
-            cp = p1
+            cp = p1.sub(direction.mul(l))
         elif d2>-a and d2<a:
             ccp = p2
-            cp = p2
+            cp = p2.sub(direction.mul(l))
         elif (d1<-a and d2>a) or (d2<-a and d1>a):
             ccp = pc
             cp = pc.sub(direction.mul(l))
