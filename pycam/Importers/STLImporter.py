@@ -78,7 +78,7 @@ def ImportModel(filename, use_kdtree=True):
     p3 = None
 
     if binary:
-        for i in range(1,numfacets): 
+        for i in range(1,numfacets+1): 
             a1 = unpack("<f",f.read(4))[0] 
             a2 = unpack("<f",f.read(4))[0] 
             a3 = unpack("<f",f.read(4))[0] 
