@@ -106,6 +106,10 @@ def ImportModel(filename, use_kdtree=True):
             attribs = unpack("<H",f.read(2)) 
             
             dotcross = n.dot(p3.sub(p1).cross(p2.sub(p1)))
+            if a1==0 and a2==0 and a3==0:
+                dotcross = p3.sub(p1).cross(p2.sub(p1)).z
+                n = None
+
             if dotcross > 0:
                 t = Triangle(p1, p2, p3, UniqueEdge(p1,p2), UniqueEdge(p2,p3), UniqueEdge(p3,p1))
             elif dotcross < 0:
@@ -116,7 +120,9 @@ def ImportModel(filename, use_kdtree=True):
                 # check the tolerance value in pycam/Geometry/PointKdtree.py
                 print "ERROR: skipping invalid triangle: %s / %s / %s" % (p1, p2, p3)
                 continue
-            t._normal = n
+            if n:
+                t._normal = n
+
             model.append(t)
     else:
         AOI = False
