@@ -1,9 +1,11 @@
 Version 0.2.2 - UNRELEASED
+ * added a graphical installer for Windows (via distutils)
  * fixed broken commandline parameter "--template"
  * added workaround for ODE collision detection, that is broken under specific circumstances
  * fixed "division by zero" error in non-ODE mode
  * allow to disable ODE via commandline option
  * bugs fixed in cylindrical and toroidal cutter when using dropcutter on horizontal triangles
+ * fixed "setup.py" for distutils packaging (contributed by Arthur Magill)
 
 Version 0.2.1 - 2010-03-09
  * fixed code that depended on GTK 2.16 (instead of 2.12)

@@ -6,11 +6,11 @@
  - commit the changes
 
 2) create the archives
- - VERSION=0.2 make dist
+ - "make dist" (the release version is extracted from "setup.py")
  - carefully check the resulting content of the archives
 
 3) create an svn tag for the release (includes uploading the archive files)
- - VERSION=0.2 make tag
+ - "make upload"
 
 4) upload files to sourceforge
  - https://sourceforge.net/project/admin/explorer.php?group_id=237831
