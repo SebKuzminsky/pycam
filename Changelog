@@ -3,6 +3,7 @@ Version 0.2.2 - UNRELEASED
  * added workaround for ODE collision detection, that is broken under specific circumstances
  * fixed "division by zero" error in non-ODE mode
  * allow to disable ODE via commandline option
+ * bugs fixed in cylindrical and toroidal cutter when using dropcutter on horizontal triangles
 
 Version 0.2.1 - 2010-03-09
  * fixed code that depended on GTK 2.16 (instead of 2.12)
