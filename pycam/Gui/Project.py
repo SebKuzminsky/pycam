@@ -22,7 +22,11 @@ import time
 import os
 import sys
 
+DATA_DIR_ENVIRON_KEY = "PYCAM_DATA_DIR"
 DATA_BASE_DIRS = [os.path.join(os.path.dirname(__file__), "gtk-interface"), os.path.join(sys.prefix, "share", "python-pycam", "ui")]
+if DATA_DIR_ENVIRON_KEY in os.environ:
+    DATA_BASE_DIRS.insert(0, os.environ[DATA_DIR_ENVIRON_KEY])
+
 GTKBUILD_FILE = "pycam-project.ui"
 GTKMENU_FILE = "menubar.xml"
 
@@ -53,6 +57,7 @@ def get_data_file_location(filename):
             return test_path
     else:
         print >>sys.stderr, "Failed to locate a resource file (%s) in %s!" % (filename, DATA_BASE_DIRS)
+        print >>sys.stderr, "You can extend the search path by setting the environment variable '%s'." % str(DATA_DIR_ENVIRON_KEY)
         return None
 
 
