@@ -22,9 +22,9 @@ import time
 import os
 import sys
 
-GTK_DATA_DIR = os.path.join(os.path.dirname(__file__), "gtk-interface")
-GTKBUILD_FILE = os.path.join(GTK_DATA_DIR, "pycam-project.ui")
-GTKMENU_FILE = os.path.join(GTK_DATA_DIR, "menubar.xml")
+DATA_BASE_DIRS = [os.path.join(os.path.dirname(__file__), "gtk-interface"), os.path.join(sys.prefix, "share", "python-pycam", "ui")]
+GTKBUILD_FILE = "pycam-project.ui"
+GTKMENU_FILE = "menubar.xml"
 
 FILTER_GCODE = ("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode"))
 FILTER_MODEL = ("STL models", "*.stl")
@@ -45,6 +45,15 @@ COLORS = {
 
 # floating point color values are only available since gtk 2.16
 GTK_COLOR_MAX = 65535.0
+
+def get_data_file_location(filename):
+    for base_dir in DATA_BASE_DIRS:
+        test_path = os.path.join(base_dir, filename)
+        if os.path.exists(test_path):
+            return test_path
+    else:
+        print >>sys.stderr, "Failed to locate a resource file (%s) in %s!" % (filename, DATA_BASE_DIRS)
+        return None
 
 
 def show_error_dialog(window, message):
@@ -357,7 +366,10 @@ class ProjectGui:
         self._progress_running = False
         self._progress_cancel_requested = False
         self.gui = gtk.Builder()
-        self.gui.add_from_file(GTKBUILD_FILE)
+        gtk_build_file = get_data_file_location(GTKBUILD_FILE)
+        if gtk_build_file is None:
+            sys.exit(1)
+        self.gui.add_from_file(gtk_build_file)
         self.window = self.gui.get_object("ProjectWindow")
         # file loading
         self.last_config_file = None
@@ -571,7 +583,10 @@ class ProjectGui:
         accelgroup = uimanager.get_accel_group()
         self.window.add_accel_group(accelgroup)
         # load menu data
-        uimanager.add_ui_from_file(GTKMENU_FILE)
+        gtk_menu_file = get_data_file_location(GTKMENU_FILE)
+        if gtk_menu_file is None:
+            sys.exit(1)
+        uimanager.add_ui_from_file(gtk_menu_file)
         # make the actions defined in the GTKBUILD file available in the menu
         actiongroup = gtk.ActionGroup("menubar")
         for action in [action for action in self.gui.get_objects() if isinstance(action, gtk.Action)]:
