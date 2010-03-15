@@ -1229,7 +1229,7 @@ class ProjectGui:
         self.update_toolpath_table()
         self.update_view()
 
-    # for compatibility with old pycam GUI (see pycam.py)
+    # for compatibility with old pycam GUI (see pycam_start.py)
     # TODO: remove it in v0.2
     generateToolpath = generate_toolpath
 
