@@ -1,6 +1,7 @@
 1) update the version and the changelog
  - in "pycam/Gui/gtk-interface/pycam-project.ui" ("version" in "GtkAboutDialog")
  - in "Changelog"
+ - in "setup.py" and "setup.cfg"
  - update the release date and the list of changes in "Changelog"
  - commit the changes
 
