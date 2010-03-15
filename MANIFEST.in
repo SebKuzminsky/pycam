@@ -1,0 +1,10 @@
+include LICENSE.TXT
+include HOWTO.TXT
+include COPYING.TXT
+include README.TXT
+include Changelog
+include release_info.txt
+include pycam_start.py
+recursive-include pycam *
+recursive-include Samples *
+recursive-include Tests *
