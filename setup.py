@@ -13,6 +13,7 @@ setup(
     author="Lode Leroy",
     #author_email="",
     provides=["pycam"],
+    requires=["PyODE", "PyOpenGL", "GTKGLext"],
     url="http://sourceforge.net/projects/pycam",
     download_url="http://sourceforge.net/projects/pycam/files/pycam/0.2.1/pycam-0.2.1.tgz/download",
     keywords=["3-axis", "cnc", "cam", "toolpath", "machining", "g-code"],

@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
+<svg width="49cm" height="15cm" viewBox="99 259 970 282" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g>
+    <rect style="fill: #a3c1f9" x="110" y="260" width="100" height="40"/>
+    <path style="fill: #a3c1f9" d="M 110,260 A 10,10 0 0 0 100,270 L 110,270 z"/>
+    <path style="fill: #a3c1f9" d="M 220,270 A 10,10 0 0 0 210,260 L 210,270 z"/>
+    <rect style="fill: #a3c1f9" x="100" y="270" width="120" height="20"/>
+    <path style="fill: #a3c1f9" d="M 100,290 A 10,10 0 0 0 110,300 L 110,290 z"/>
+    <path style="fill: #a3c1f9" d="M 210,300 A 10,10 0 0 0 220,290 L 210,290 z"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="110" y1="260" x2="210" y2="260"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="110" y1="300" x2="210" y2="300"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 110,260 A 10,10 0 0 0 100,270"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 220,270 A 10,10 0 0 0 210,260"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="100" y1="270" x2="100" y2="290"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="220" y1="270" x2="220" y2="290"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 100,290 A 10,10 0 0 0 110,300"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 210,300 A 10,10 0 0 0 220,290"/>
+    <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="160" y="283.9">
+      <tspan x="160" y="283.9">Art of Illusion</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: #a3c1f9" x="110" y="320" width="100" height="40"/>
+    <path style="fill: #a3c1f9" d="M 110,320 A 10,10 0 0 0 100,330 L 110,330 z"/>
+    <path style="fill: #a3c1f9" d="M 220,330 A 10,10 0 0 0 210,320 L 210,330 z"/>
+    <rect style="fill: #a3c1f9" x="100" y="330" width="120" height="20"/>
+    <path style="fill: #a3c1f9" d="M 100,350 A 10,10 0 0 0 110,360 L 110,350 z"/>
+    <path style="fill: #a3c1f9" d="M 210,360 A 10,10 0 0 0 220,350 L 210,350 z"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="110" y1="320" x2="210" y2="320"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="110" y1="360" x2="210" y2="360"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 110,320 A 10,10 0 0 0 100,330"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 220,330 A 10,10 0 0 0 210,320"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="100" y1="330" x2="100" y2="350"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="220" y1="330" x2="220" y2="350"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 100,350 A 10,10 0 0 0 110,360"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 210,360 A 10,10 0 0 0 220,350"/>
+    <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="160" y="343.9">
+      <tspan x="160" y="343.9">Blender</tspan>
+    </text>
+  </g>
+  <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="160" y="340">
+    <tspan x="160" y="340"></tspan>
+  </text>
+  <g>
+    <rect style="fill: #a3c1f9" x="110" y="380" width="100" height="40"/>
+    <path style="fill: #a3c1f9" d="M 110,380 A 10,10 0 0 0 100,390 L 110,390 z"/>
+    <path style="fill: #a3c1f9" d="M 220,390 A 10,10 0 0 0 210,380 L 210,390 z"/>
+    <rect style="fill: #a3c1f9" x="100" y="390" width="120" height="20"/>
+    <path style="fill: #a3c1f9" d="M 100,410 A 10,10 0 0 0 110,420 L 110,410 z"/>
+    <path style="fill: #a3c1f9" d="M 210,420 A 10,10 0 0 0 220,410 L 210,410 z"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="110" y1="380" x2="210" y2="380"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="110" y1="420" x2="210" y2="420"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 110,380 A 10,10 0 0 0 100,390"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 220,390 A 10,10 0 0 0 210,380"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="100" y1="390" x2="100" y2="410"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="220" y1="390" x2="220" y2="410"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 100,410 A 10,10 0 0 0 110,420"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 210,420 A 10,10 0 0 0 220,410"/>
+    <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="160" y="403.9">
+      <tspan x="160" y="403.9">OpenSCAD</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: #a3c1f9" x="110" y="440" width="100" height="40"/>
+    <path style="fill: #a3c1f9" d="M 110,440 A 10,10 0 0 0 100,450 L 110,450 z"/>
+    <path style="fill: #a3c1f9" d="M 220,450 A 10,10 0 0 0 210,440 L 210,450 z"/>
+    <rect style="fill: #a3c1f9" x="100" y="450" width="120" height="20"/>
+    <path style="fill: #a3c1f9" d="M 100,470 A 10,10 0 0 0 110,480 L 110,470 z"/>
+    <path style="fill: #a3c1f9" d="M 210,480 A 10,10 0 0 0 220,470 L 210,470 z"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="110" y1="440" x2="210" y2="440"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="110" y1="480" x2="210" y2="480"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 110,440 A 10,10 0 0 0 100,450"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 220,450 A 10,10 0 0 0 210,440"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="100" y1="450" x2="100" y2="470"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="220" y1="450" x2="220" y2="470"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 100,470 A 10,10 0 0 0 110,480"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 210,480 A 10,10 0 0 0 220,470"/>
+    <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="160" y="463.9">
+      <tspan x="160" y="463.9">Meshlab</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: #a3c1f9" x="110" y="500" width="100" height="40"/>
+    <path style="fill: #a3c1f9" d="M 110,500 A 10,10 0 0 0 100,510 L 110,510 z"/>
+    <path style="fill: #a3c1f9" d="M 220,510 A 10,10 0 0 0 210,500 L 210,510 z"/>
+    <rect style="fill: #a3c1f9" x="100" y="510" width="120" height="20"/>
+    <path style="fill: #a3c1f9" d="M 100,530 A 10,10 0 0 0 110,540 L 110,530 z"/>
+    <path style="fill: #a3c1f9" d="M 210,540 A 10,10 0 0 0 220,530 L 210,530 z"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="110" y1="500" x2="210" y2="500"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="110" y1="540" x2="210" y2="540"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 110,500 A 10,10 0 0 0 100,510"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 220,510 A 10,10 0 0 0 210,500"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="100" y1="510" x2="100" y2="530"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="220" y1="510" x2="220" y2="530"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 100,530 A 10,10 0 0 0 110,540"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 210,540 A 10,10 0 0 0 220,530"/>
+    <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="160" y="523.9">
+      <tspan x="160" y="523.9">FreeCAD</tspan>
+    </text>
+  </g>
+  <g>
+    <polygon style="fill: #f6f689" points="309.118,360 420,360 390.882,440 280,440 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f6f689" points="309.118,360 420,360 390.882,440 280,440 "/>
+    <text style="fill: #000000;text-anchor:middle;font-size:12.7998;font-family:sanserif;font-style:normal;font-weight:normal" x="350" y="395.9">
+      <tspan x="350" y="395.9">STL</tspan>
+      <tspan x="350" y="411.9">3D Model</tspan>
+    </text>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="192.378" y1="300.449" x2="302.778" y2="370.176"/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="292.598,369.66 303.723,370.773 297.938,361.205 "/>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="220.5" y1="359.105" x2="297.851" y2="383.532"/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="287.876,385.625 298.917,383.869 290.887,376.089 "/>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="220.5" y1="400" x2="292.001" y2="400"/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="283.119,405 293.119,400 283.119,395 "/>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="220.5" y1="440.895" x2="284.863" y2="420.57"/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="277.899,428.012 285.929,420.233 274.888,418.476 "/>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="192.378" y1="499.551" x2="283.98" y2="441.697"/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="279.14,450.667 284.925,441.1 273.8,442.212 "/>
+  </g>
+  <g>
+    <rect style="fill: #00ff00" x="460" y="340" width="80" height="120"/>
+    <path style="fill: #00ff00" d="M 460,340 A 20,20 0 0 0 440,360 L 460,360 z"/>
+    <path style="fill: #00ff00" d="M 560,360 A 20,20 0 0 0 540,340 L 540,360 z"/>
+    <rect style="fill: #00ff00" x="440" y="360" width="120" height="80"/>
+    <path style="fill: #00ff00" d="M 440,440 A 20,20 0 0 0 460,460 L 460,440 z"/>
+    <path style="fill: #00ff00" d="M 540,460 A 20,20 0 0 0 560,440 L 540,440 z"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #00ff00" x1="460" y1="340" x2="540" y2="340"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #00ff00" x1="460" y1="460" x2="540" y2="460"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #00ff00" d="M 460,340 A 20,20 0 0 0 440,360"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #00ff00" d="M 560,360 A 20,20 0 0 0 540,340"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #00ff00" x1="440" y1="360" x2="440" y2="440"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #00ff00" x1="560" y1="360" x2="560" y2="440"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #00ff00" d="M 440,440 A 20,20 0 0 0 460,460"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #00ff00" d="M 540,460 A 20,20 0 0 0 560,440"/>
+    <text style="fill: #000000;text-anchor:middle;font-size:18.0622;font-family:sanserif;font-style:normal;font-weight:normal" x="500" y="405.511">
+      <tspan x="500" y="405.511">PyCAM</tspan>
+    </text>
+  </g>
+  <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="500" y="400">
+    <tspan x="500" y="400"></tspan>
+  </text>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="405.756" y1="400" x2="437.257" y2="400"/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="428.375,405 438.375,400 428.375,395 "/>
+  </g>
+  <g>
+    <rect style="fill: #a3c1f9" x="770" y="380" width="100" height="40"/>
+    <path style="fill: #a3c1f9" d="M 770,380 A 10,10 0 0 0 760,390 L 770,390 z"/>
+    <path style="fill: #a3c1f9" d="M 880,390 A 10,10 0 0 0 870,380 L 870,390 z"/>
+    <rect style="fill: #a3c1f9" x="760" y="390" width="120" height="20"/>
+    <path style="fill: #a3c1f9" d="M 760,410 A 10,10 0 0 0 770,420 L 770,410 z"/>
+    <path style="fill: #a3c1f9" d="M 870,420 A 10,10 0 0 0 880,410 L 870,410 z"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="770" y1="380" x2="870" y2="380"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="770" y1="420" x2="870" y2="420"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 770,380 A 10,10 0 0 0 760,390"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 880,390 A 10,10 0 0 0 870,380"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="760" y1="390" x2="760" y2="410"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" x1="880" y1="390" x2="880" y2="410"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 760,410 A 10,10 0 0 0 770,420"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #a3c1f9" d="M 870,420 A 10,10 0 0 0 880,410"/>
+    <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="820" y="403.9">
+      <tspan x="820" y="403.9">EMC2</tspan>
+    </text>
+  </g>
+  <g>
+    <polygon style="fill: #f6f689" points="609.118,360 726.132,360 697.015,440 580,440 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f6f689" points="609.118,360 726.132,360 697.015,440 580,440 "/>
+    <text style="fill: #000000;text-anchor:middle;font-size:12.7998;font-family:sanserif;font-style:normal;font-weight:normal" x="653.066" y="403.9">
+      <tspan x="653.066" y="403.9">G-Code</tspan>
+    </text>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="560.483" y1="400" x2="592.001" y2="400"/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="583.119,405 593.119,400 583.119,395 "/>
+  </g>
+  <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="653.066" y="400">
+    <tspan x="653.066" y="400"></tspan>
+  </text>
+  <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="350" y="400">
+    <tspan x="350" y="400"></tspan>
+  </text>
+  <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="653.066" y="400">
+    <tspan x="653.066" y="400"></tspan>
+  </text>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="711.886" y1="400" x2="757.273" y2="400"/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="748.391,405 758.391,400 748.391,395 "/>
+  </g>
+  <g>
+    <rect style="fill: #f67716" x="930" y="300" width="128.95" height="80"/>
+    <path style="fill: #f67716" d="M 930,300 A 10,10 0 0 0 920,310 L 930,310 z"/>
+    <path style="fill: #f67716" d="M 1068.95,310 A 10,10 0 0 0 1058.95,300 L 1058.95,310 z"/>
+    <rect style="fill: #f67716" x="920" y="310" width="148.95" height="60"/>
+    <path style="fill: #f67716" d="M 920,370 A 10,10 0 0 0 930,380 L 930,370 z"/>
+    <path style="fill: #f67716" d="M 1058.95,380 A 10,10 0 0 0 1068.95,370 L 1058.95,370 z"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" x1="930" y1="300" x2="1058.95" y2="300"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" x1="930" y1="380" x2="1058.95" y2="380"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" d="M 930,300 A 10,10 0 0 0 920,310"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" d="M 1068.95,310 A 10,10 0 0 0 1058.95,300"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" x1="920" y1="310" x2="920" y2="370"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" x1="1068.95" y1="310" x2="1068.95" y2="370"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" d="M 920,370 A 10,10 0 0 0 930,380"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" d="M 1058.95,380 A 10,10 0 0 0 1068.95,370"/>
+    <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="994.475" y="327.9">
+      <tspan x="994.475" y="327.9">Controller</tspan>
+      <tspan x="994.475" y="343.9">for a Mill, Lathe</tspan>
+      <tspan x="994.475" y="359.9">or other machines</tspan>
+    </text>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="879.465" y1="379.551" x2="917.38" y2="366.512"/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="910.607,374.129 918.437,366.148 907.355,364.672 "/>
+  </g>
+  <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="994.475" y="340">
+    <tspan x="994.475" y="340"></tspan>
+  </text>
+  <g>
+    <rect style="fill: #f67716" x="930" y="420" width="128.95" height="80"/>
+    <path style="fill: #f67716" d="M 930,420 A 10,10 0 0 0 920,430 L 930,430 z"/>
+    <path style="fill: #f67716" d="M 1068.95,430 A 10,10 0 0 0 1058.95,420 L 1058.95,430 z"/>
+    <rect style="fill: #f67716" x="920" y="430" width="148.95" height="60"/>
+    <path style="fill: #f67716" d="M 920,490 A 10,10 0 0 0 930,500 L 930,490 z"/>
+    <path style="fill: #f67716" d="M 1058.95,500 A 10,10 0 0 0 1068.95,490 L 1058.95,490 z"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" x1="930" y1="420" x2="1058.95" y2="420"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" x1="930" y1="500" x2="1058.95" y2="500"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" d="M 930,420 A 10,10 0 0 0 920,430"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" d="M 1068.95,430 A 10,10 0 0 0 1058.95,420"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" x1="920" y1="430" x2="920" y2="490"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" x1="1068.95" y1="430" x2="1068.95" y2="490"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" d="M 920,490 A 10,10 0 0 0 930,500"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #f67716" d="M 1058.95,500 A 10,10 0 0 0 1068.95,490"/>
+    <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="994.475" y="463.9">
+      <tspan x="994.475" y="463.9">Visual Simulation</tspan>
+    </text>
+  </g>
+  <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="994.475" y="460">
+    <tspan x="994.475" y="460"></tspan>
+  </text>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="879.465" y1="420.449" x2="917.38" y2="433.488"/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="907.355,435.328 918.437,433.852 910.607,425.871 "/>
+  </g>
+</svg>
