@@ -416,6 +416,7 @@ class ProjectGui:
         # unit control (mm/inch)
         unit_field = self.gui.get_object("unit_control")
         unit_field.connect("changed", self.update_view)
+        unit_field.connect("changed", self.update_unit_labels)
         def set_unit(text):
             unit_field.set_active((text == "mm") and 0 or 1)
         self.settings.add_item("unit", unit_field.get_active_text, set_unit)
@@ -608,6 +609,7 @@ class ProjectGui:
         self.disable_invalid_toolpath_settings()
         self.load_processing_settings()
         self.update_save_actions()
+        self.update_unit_labels()
         if not self.no_dialog:
             self.window.show()
 
@@ -754,6 +756,14 @@ class ProjectGui:
             if self.gui.get_object(obj).get_active():
                 GuiCommon.transform_model(self.model, value)
         self.update_view()
+
+    def update_unit_labels(self, widget=None, data=None):
+        # we can't just use the "unit" setting, since we need the plural of "inch"
+        if self.settings.get("unit") == "mm":
+            base_unit = "mm"
+        else:
+            base_unit = "inches"
+        self.gui.get_object("SpeedLimitsUnitValue").set_text("%s/minute" % base_unit)
 
     def get_filename_with_suffix(self, filename, type_filter):
         # use the first extension provided by the filter as the default
