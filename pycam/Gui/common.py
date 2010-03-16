@@ -3,7 +3,6 @@ import OpenGL.GLUT as GLUT
 # "ode" is imported later, if required
 #import ode_objects
 import random
-import gtk
 
 
 MODEL_TRANSFORMATIONS = {
@@ -263,10 +262,8 @@ class ToolPathInfo:
         return self.toolpath
 
     def set_color(self, color=None):
-        color_max = 65535
         if color is None:
-            self.color = gtk.gdk.Color(random.randint(0, color_max),
-                    random.randint(0, color_max), random.randint(0, color_max))
+            self.color = (random.random(), random.random(), random.random())
         else:
             self.color = color
 
