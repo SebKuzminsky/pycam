@@ -70,10 +70,12 @@ def show_error_dialog(window, message):
 
 
 class GLView:
-    def __init__(self, gui, settings, notify_destroy=None):
+    def __init__(self, gui, settings, notify_destroy=None, accel_group=None):
         # assume, that initialization will fail
         self.gui = gui
         self.window = self.gui.get_object("view3dwindow")
+        if not accel_group is None:
+            self.window.add_accel_group(accel_group)
         self.initialized = False
         self.busy = False
         self.settings = settings
@@ -169,7 +171,8 @@ class GLView:
             self.glsetup()
             self.paint()
         else:
-            print "Key pressed: %s (%s)" % (chr(keyval), get_state())
+            #print "Key pressed: %s (%s)" % (chr(keyval), get_state())
+            pass
 
     def check_busy(func):
         def busy_wrapper(self, *args, **kwargs):
@@ -380,23 +383,37 @@ class ProjectGui:
         self.last_config_file = None
         self.last_model_file = None
         self.last_toolpath_file = None
-        self.model_file_selector = self.gui.get_object("ModelFileChooser")
-        self.gui.get_object("LoadProcessingTemplates").connect("activate", self.load_processing_file)
-        self.gui.get_object("SaveProcessingTemplates").connect("activate", self.save_processing_settings_file, lambda: self.last_config_file)
-        self.gui.get_object("SaveAsProcessingTemplates").connect("activate", self.save_processing_settings_file)
-        self.gui.get_object("LoadModel").connect("activate", self.load_model_file)
-        self.gui.get_object("SaveModel").connect("activate", self.save_model, lambda: self.last_model_file)
-        self.gui.get_object("SaveAsModel").connect("activate", self.save_model)
-        self.gui.get_object("ExportGCode").connect("activate", self.save_toolpath)
-        self.gui.get_object("Quit").connect("activate", self.destroy)
+        # define callbacks and accelerator keys for the menu actions
+        for objname, callback, data, accel_key in (
+                ("LoadProcessingTemplates", self.load_processing_file, None, "<Control>t"),
+                ("SaveProcessingTemplates", self.save_processing_settings_file, lambda: self.last_config_file, None),
+                ("LoadModel", self.load_model_file, None, "<Control>l"),
+                ("SaveModel", self.save_model, lambda: self.last_model_file, "<Control>s"),
+                ("SaveAsModel", self.save_model, None, "<Control><Shift>s"),
+                ("ExportGCode", self.save_toolpath, None, "<Control><Shift>e"),
+                ("Quit", self.destroy, None, "<Control>q"),
+                ("GeneralSettings", self.toggle_settings_window, None, "<Control>p"),
+                ("Toggle3DView", self.toggle_3d_view, None, "<Control>v")):
+            item = self.gui.get_object(objname)
+            if objname == "Toggle3DView":
+                action = "toggled"
+            else:
+                action = "activate"
+            item.connect(action, callback, data)
+            if accel_key:
+                key, mod = gtk.accelerator_parse(accel_key)
+                accel_path = "<pycam>/%s" % objname
+                item.set_accel_path(accel_path)
+                gtk.accel_map_change_entry(accel_path, key, mod, True)
+        # other events
         self.window.connect("destroy", self.destroy)
         self.gui.get_object("GenerateToolPathButton").connect("clicked", self.generate_toolpath)
         # the settings window
-        self.gui.get_object("GeneralSettings").connect("activate", self.toggle_settings_window, True)
         self.gui.get_object("CloseSettingsWindow").connect("clicked", self.toggle_settings_window, False)
         self.settings_window = self.gui.get_object("GeneralSettingsWindow")
         self.settings_window.connect("delete-event", self.toggle_settings_window, False)
         self._settings_window_position = None
+        self._settings_window_visible = False
         # "about" window
         self.about_window = self.gui.get_object("AboutWindow")
         self.gui.get_object("About").connect("activate", self.toggle_about_window, True)
@@ -451,7 +468,6 @@ class ProjectGui:
             obj = self.gui.get_object(objname)
             self.settings.add_item(key, obj.get_value, obj.set_value)
         # visual and general settings
-        self.gui.get_object("Toggle3DView").connect("toggled", self.toggle_3d_view)
         for name, objname in (("show_model", "ShowModelCheckBox"),
                 ("show_axes", "ShowAxesCheckBox"),
                 ("show_dimensions", "ShowDimensionsCheckBox"),
@@ -586,8 +602,10 @@ class ProjectGui:
         self.settings.add_item("feedrate", feedrate_control.get_value, feedrate_control.set_value)
         # menu bar
         uimanager = gtk.UIManager()
-        accelgroup = uimanager.get_accel_group()
-        self.window.add_accel_group(accelgroup)
+        self._accel_group = uimanager.get_accel_group()
+        self.window.add_accel_group(self._accel_group)
+        self.about_window.add_accel_group(self._accel_group)
+        self.settings_window.add_accel_group(self._accel_group)
         # load menu data
         gtk_menu_file = get_data_file_location(GTKMENU_FILE)
         if gtk_menu_file is None:
@@ -698,6 +716,8 @@ class ProjectGui:
         if state is None:
             # the "delete-event" issues the additional "event" argument
             state = event
+        if state is None:
+           state = not self._settings_window_visible
         if state:
             if self._settings_window_position:
                 self.settings_window.move(*self._settings_window_position)
@@ -705,6 +725,7 @@ class ProjectGui:
         else:
             self._settings_window_position = self.settings_window.get_position()
             self.settings_window.hide()
+        self._settings_window_visible = state
         # don't close the window - just hide it
         return True
 
@@ -726,7 +747,9 @@ class ProjectGui:
         elif new_state:
             if self.view3d is None:
                 # do the gl initialization
-                self.view3d = GLView(self.gui, self.settings, notify_destroy=self.toggle_3d_view)
+                self.view3d = GLView(self.gui, self.settings,
+                        notify_destroy=self.toggle_3d_view,
+                        accel_group=self._accel_group)
                 if self.model and self.view3d.enabled:
                     self.reset_bounds()
                     self.view3d.reset_view()
