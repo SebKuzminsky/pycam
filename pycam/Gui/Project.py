@@ -15,7 +15,6 @@ import OpenGL.GLU as GLU
 import OpenGL.GLUT as GLUT
 # gtk.gtkgl is imported in the constructor of "GLView" below
 #import gtk.gtkgl
-import pygtk
 import gtk
 import pango
 import time
