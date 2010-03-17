@@ -7,7 +7,7 @@ import os.path
 
 setup(
     name="pycam",
-    version="0.2.1",
+    version="0.2.2",
     license="GPL v3",
     description="Open Source CAM - Toolpath Generation for 3-Axis CNC machining",
     author="Lode Leroy",
@@ -15,7 +15,7 @@ setup(
     provides=["pycam"],
     requires=["ode", "gtk", "gtk.gtkgl", "OpenGL"],
     url="http://sourceforge.net/projects/pycam",
-    download_url="http://sourceforge.net/projects/pycam/files/pycam/0.2.1/pycam-0.2.1.tgz/download",
+    download_url="http://sourceforge.net/projects/pycam/files/pycam/0.2.2/pycam-0.2.2.tgz/download",
     keywords=["3-axis", "cnc", "cam", "toolpath", "machining", "g-code"],
     # full list of classifiers at:
     #   http://pypi.python.org/pypi?:action=list_classifiers

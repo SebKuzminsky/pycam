@@ -1,4 +1,4 @@
-Version 0.2.2 - UNRELEASED
+Version 0.2.2 - 2010-03-17
  * added a graphical installer for Windows (via distutils)
  * fixed broken commandline parameter "--template"
  * added workaround for ODE collision detection, that is broken under specific circumstances
