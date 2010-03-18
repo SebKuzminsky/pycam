@@ -40,8 +40,8 @@ win32: create_archive_dir svn_export
 	cd "$(EXPORT_DIR)"; python setup.py bdist --format wininst --dist-dir "$(ARCHIVE_DIR)"
 
 upload:
-	@echo svn cp "$(SVN_BASE)/trunk" "$(SVN_BASE)/tags/release-$(VERSION)" -m "tag release $(VERSION)"
-	@echo svn import "$(ARCHIVE_DIR)/$(EXPORT_ZIP)" "$(SVN_BASE)/tags/archives/$(EXPORT_ZIP)" -m "added released zip file for version $(VERSION)"
-	@echo svn import "$(ARCHIVE_DIR)/$(EXPORT_TGZ)" "$(SVN_BASE)/tags/archives/$(EXPORT_TGZ)" -m "added released tgz file for version $(VERSION)"
-	@echo svn import "$(ARCHIVE_DIR)/$(EXPORT_WIN32)" "$(SVN_BASE)/tags/archives/$(EXPORT_WIN32)" -m "added released win32 installer for version $(VERSION)"
+	svn cp "$(SVN_BASE)/trunk" "$(SVN_BASE)/tags/release-$(VERSION)" -m "tag release $(VERSION)"
+	svn import "$(ARCHIVE_DIR)/$(EXPORT_ZIP)" "$(SVN_BASE)/tags/archives/$(EXPORT_ZIP)" -m "added released zip file for version $(VERSION)"
+	svn import "$(ARCHIVE_DIR)/$(EXPORT_TGZ)" "$(SVN_BASE)/tags/archives/$(EXPORT_TGZ)" -m "added released tgz file for version $(VERSION)"
+	svn import "$(ARCHIVE_DIR)/$(EXPORT_WIN32)" "$(SVN_BASE)/tags/archives/$(EXPORT_WIN32)" -m "added released win32 installer for version $(VERSION)"
 
