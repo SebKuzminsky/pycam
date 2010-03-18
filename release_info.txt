@@ -17,8 +17,14 @@
  - create a directory for the new release
  - click at the icon to the left of the new directory and upload the new archives
  - create a file called "release-notes-0.x" and upload it to the same directory
+  - first line: "PyCAM v0.x release notes:"
+  - second line: empty
+  - further lines: summary of changes (complete sentences)
  - mark the release notes files as "Release notes" (see "Properties")
  - set the release notes and the target operating systems for the archives
+  - zip: others
+  - exe: Windows
+  - tar.gz: Linux, Mac, BSD, Solaris
 
 5) announcements
  - create a project news items at sourceforge
