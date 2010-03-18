@@ -7,9 +7,9 @@ RELEASE_PREFIX ?= pycam-
 ARCHIVE_DIR_RELATIVE ?= release-archives
 EXPORT_DIR = $(RELEASE_PREFIX)$(VERSION)
 EXPORT_FILE_PREFIX = $(EXPORT_DIR)
-EXPORT_ZIP = $(ARCHIVE_DIR)/$(EXPORT_FILE_PREFIX).zip
-EXPORT_TGZ = $(ARCHIVE_DIR)/$(EXPORT_FILE_PREFIX).tar.gz
-EXPORT_WIN32 = $(ARCHIVE_DIR)/$(EXPORT_FILE_PREFIX).win32.exe
+EXPORT_ZIP = $(EXPORT_FILE_PREFIX).zip
+EXPORT_TGZ = $(EXPORT_FILE_PREFIX).tar.gz
+EXPORT_WIN32 = $(EXPORT_FILE_PREFIX).win32.exe
 
 # turn the destination directory into an absolute path
 ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
@@ -40,8 +40,8 @@ win32: create_archive_dir svn_export
 	cd "$(EXPORT_DIR)"; python setup.py bdist --format wininst --dist-dir "$(ARCHIVE_DIR)"
 
 upload:
-	svn cp "$(SVN_BASE)/trunk" "$(SVN_BASE)/tags/release-$(VERSION)" -m "tag release $(VERSION)"
-	svn import "$(EXPORT_ZIP)" "$(SVN_BASE)/tags/archives/$(EXPORT_ZIP)" -m "added released zip file for version $(VERSION)"
-	svn import "$(EXPORT_TGZ)" "$(SVN_BASE)/tags/archives/$(EXPORT_TGZ)" -m "added released tgz file for version $(VERSION)"
-	svn import "$(EXPORT_WIN32)" "$(SVN_BASE)/tags/archives/$(EXPORT_WIN32)" -m "added released win32 installer for version $(VERSION)"
+	@echo svn cp "$(SVN_BASE)/trunk" "$(SVN_BASE)/tags/release-$(VERSION)" -m "tag release $(VERSION)"
+	@echo svn import "$(ARCHIVE_DIR)/$(EXPORT_ZIP)" "$(SVN_BASE)/tags/archives/$(EXPORT_ZIP)" -m "added released zip file for version $(VERSION)"
+	@echo svn import "$(ARCHIVE_DIR)/$(EXPORT_TGZ)" "$(SVN_BASE)/tags/archives/$(EXPORT_TGZ)" -m "added released tgz file for version $(VERSION)"
+	@echo svn import "$(ARCHIVE_DIR)/$(EXPORT_WIN32)" "$(SVN_BASE)/tags/archives/$(EXPORT_WIN32)" -m "added released win32 installer for version $(VERSION)"
 
