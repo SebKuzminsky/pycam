@@ -1,3 +1,5 @@
+Version 0.2.3 - UNRELEASED
+
 Version 0.2.2 - 2010-03-17
  * added a graphical installer for Windows (via distutils)
  * fixed broken commandline parameter "--template"

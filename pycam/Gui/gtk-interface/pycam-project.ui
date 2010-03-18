@@ -524,6 +524,7 @@
                                         <property name="width_chars">5</property>
                                         <property name="adjustment">shift-x</property>
                                         <property name="digits">2</property>
+                                        <property name="numeric">True</property>
                                       </object>
                                       <packing>
                                         <property name="left_attach">1</property>
@@ -539,6 +540,7 @@
                                         <property name="width_chars">5</property>
                                         <property name="adjustment">shift-y</property>
                                         <property name="digits">2</property>
+                                        <property name="numeric">True</property>
                                       </object>
                                       <packing>
                                         <property name="left_attach">1</property>
@@ -556,6 +558,7 @@
                                         <property name="width_chars">5</property>
                                         <property name="adjustment">shift-z</property>
                                         <property name="digits">2</property>
+                                        <property name="numeric">True</property>
                                       </object>
                                       <packing>
                                         <property name="left_attach">1</property>
