@@ -30,7 +30,7 @@ class BaseCutter:
         cutters with a shape depending on more than just the radius.
         See the ToroidalCutter for an example.
         """
-        if isinstance(other, BaseCutter):
+        if self.__class__ == other.__class__:
             return cmp(self.radius, other.radius)
         else:
             # just return a string comparison
