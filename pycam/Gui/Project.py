@@ -18,6 +18,7 @@ import OpenGL.GLUT as GLUT
 import gtk
 import pango
 import time
+import re
 import os
 import sys
 
@@ -423,7 +424,7 @@ class ProjectGui:
         # set defaults
         self.model = None
         self.toolpath = GuiCommon.ToolPathList()
-        self.physics = None
+        self._physics_cache = None
         self.cutter = None
         # add some dummies - to be implemented later ...
         self.settings.add_item("model", lambda: self.model)
@@ -567,9 +568,12 @@ class ProjectGui:
         self.settings.add_item("path_direction", set_get_path_direction, set_get_path_direction)
         # connect the "consistency check" with all toolpath settings
         for objname in ("PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter", "ContourCutter",
-                "DropCutter", "PushCutter", "SphericalCutter", "CylindricalCutter", "ToroidalCutter",
-                "PathDirectionX", "PathDirectionY", "PathDirectionXY", "SettingEnableODE"):
+                "DropCutter", "PushCutter", "PathDirectionX", "PathDirectionY", "PathDirectionXY", "SettingEnableODE"):
             self.gui.get_object(objname).connect("toggled", self.disable_invalid_toolpath_settings)
+        for objname in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
+            self.gui.get_object(objname).connect("toggled", self.update_tool_selector)
+        for objname in ("ToolRadiusControl", "TorusRadiusControl"):
+            self.gui.get_object(objname).connect("value-changed", self.update_tool_selector)
         # load a processing configuration object
         self.processing_settings = pycam.Gui.Settings.ProcessingSettings(self.settings)
         self.processing_config_selection = self.gui.get_object("ProcessingTemplatesList")
@@ -586,7 +590,6 @@ class ProjectGui:
         self.gui.get_object("ProgressCancelButton").connect("clicked", self.cancel_progress)
         # make sure that the toolpath settings are consistent
         self.toolpath_table = self.gui.get_object("ToolPathTable")
-        self.toolpath_model = self.gui.get_object("ToolPathListModel")
         self.toolpath_table.get_selection().connect("changed", self.toolpath_table_event, "update_buttons")
         self.gui.get_object("toolpath_visible").connect("toggled", self.toolpath_table_event, "toggle_visibility")
         self.gui.get_object("toolpath_up").connect("clicked", self.toolpath_table_event, "move_up")
@@ -594,6 +597,20 @@ class ProjectGui:
         self.gui.get_object("toolpath_down").connect("clicked", self.toolpath_table_event, "move_down")
         # store the original content (for adding the number of current toolpaths in "update_toolpath_table")
         self._original_toolpath_tab_label = self.gui.get_object("ToolPathTabLabel").get_text()
+        # tool editor
+        self.tool_list = []
+        self.tool_editor_table = self.gui.get_object("ToolListTable")
+        self.tool_selector = self.gui.get_object("ToolSelector")
+        self.tool_selector.connect("changed", self._tool_selector_changed_event)
+        self.gui.get_object("ToolProperties").connect("clicked", self.toggle_tool_editor_window, True)
+        self.gui.get_object("ToolEditorWindowClose").connect("clicked", self.toggle_tool_editor_window, False)
+        self.tool_editor_table.get_selection().connect("changed", self._tool_editor_button_event, "update_buttons")
+        self.gui.get_object("ToolEditorDelete").connect("clicked", self._tool_editor_button_event, "delete")
+        self.gui.get_object("ToolEditorImport").connect("clicked", self._tool_editor_button_event, "import")
+        self.gui.get_object("ToolEditorExport").connect("clicked", self._tool_editor_button_event, "export")
+        self.gui.get_object("ToolEditorMoveUp").connect("clicked", self._tool_editor_button_event, "move_up")
+        self.gui.get_object("ToolEditorMoveDown").connect("clicked", self._tool_editor_button_event, "move_down")
+        self.gui.get_object("ToolEditorAdd").connect("clicked", self._tool_editor_button_event, "add")
         # speed and feedrate controls
         speed_control = self.gui.get_object("SpeedControl")
         self.settings.add_item("speed", speed_control.get_value, speed_control.set_value)
@@ -623,6 +640,8 @@ class ProjectGui:
         window_box.reorder_child(self.menubar, 0)
         # some more initialization
         self.update_toolpath_table()
+        self.update_tool_editor()
+        self.update_tool_selector()
         self.disable_invalid_toolpath_settings()
         self.load_processing_settings()
         self.update_save_actions()
@@ -662,11 +681,12 @@ class ProjectGui:
                 self.view3d.glsetup()
             self.view3d.paint()
 
-    def update_physics(self, cutter):
+    def get_physics(self, cutter):
         if self.settings.get("enable_ode"):
-            self.physics = GuiCommon.generate_physics(self.settings, cutter, self.physics)
+            self._physics_cache = GuiCommon.generate_physics(self.settings, cutter, self._physics_cache)
         else:
-            self.physics = None
+            self._physics_cache = None
+        return self._physics_cache
 
     def update_save_actions(self):
         self.gui.get_object("SaveProcessingTemplates").set_sensitive(not self.last_config_file is None)
@@ -691,12 +711,14 @@ class ProjectGui:
             self.gui.get_object("DropCutter").set_sensitive(False)
         else:
             self.gui.get_object("DropCutter").set_sensitive(True)
-        # disable the toroidal radius if the toroidal cutter is not enabled
-        self.gui.get_object("TorusRadiusControl").set_sensitive(self.settings.get("cutter_shape") == "ToroidalCutter")
         # disable "step down" control, if PushCutter is not active
         self.gui.get_object("MaxStepDownControl").set_sensitive(self.settings.get("path_generator") == "PushCutter")
         # "material allowance" requires ODE support
         self.gui.get_object("MaterialAllowanceControl").set_sensitive(self.settings.get("enable_ode"))
+
+    def update_tool_controls(self, widget=None, data=None):
+        # disable the toroidal radius if the toroidal cutter is not enabled
+        self.gui.get_object("TorusRadiusControl").set_sensitive(self.settings.get("cutter_shape") == "ToroidalCutter")
 
     @gui_activity_guard
     def toggle_about_window(self, widget=None, event=None, state=None):
@@ -778,6 +800,153 @@ class ProjectGui:
             if self.gui.get_object(obj).get_active():
                 GuiCommon.transform_model(self.model, value)
         self.update_view()
+
+    def toggle_tool_editor_window(self, widget=None, state=False):
+        if state:
+            self.gui.get_object("ToolWindow").show()
+        else:
+            self.gui.get_object("ToolWindow").hide()
+
+    def _treeview_get_active_index(self, table, datalist):
+        if len(datalist) == 0:
+            result = None
+        else:
+            treeselection = table.get_selection()
+            (model, iteration) = treeselection.get_selected()
+            # the first item in the model is the index within the list
+            try:
+                result = model[iteration][0]
+            except TypeError:
+                result = None
+        return result
+
+    def _treeview_set_active_index(self, table, index):
+        treeselection = table.get_selection()
+        treeselection.select_path((index,))
+
+    def _treeview_button_event(self, table, datalist, action, update_func):
+        future_selection_index = None
+        index = self._treeview_get_active_index(table, datalist)
+        skip_model_update = False
+        if action == "update_buttons":
+            skip_model_update = True
+        elif action == "move_up":
+            if index > 0:
+                # move an item one position up the list
+                selected = datalist[index]
+                above = datalist[index-1]
+                datalist[index] = above
+                datalist[index-1] = selected
+                future_selection_index = index - 1
+        elif action == "move_down":
+            if index + 1 < len(datalist):
+                # move an item one position down the list
+                selected = datalist[index]
+                below = datalist[index+1]
+                datalist[index] = below
+                datalist[index+1] = selected
+                future_selection_index = index + 1
+        elif action == "delete":
+            # delete one item from the list
+            datalist.remove(datalist[index])
+            # don't set a new index, if the list emptied
+            if len(datalist) > 0:
+                if index < len(datalist):
+                    future_selection_index = index
+                else:
+                    # the last item was removed
+                    future_selection_index = len(datalist) - 1
+        else:
+            pass
+        update_func(new_index=future_selection_index, skip_model_update=skip_model_update)
+
+    @gui_activity_guard
+    def _tool_editor_button_event(self, widget, data, action=None):
+        # "toggle" uses two parameters - all other actions have only one
+        if action is None:
+            action = data
+        current_index = self._treeview_get_active_index(self.tool_editor_table, self.tool_list)
+        override_index = None
+        if action == "export":
+            if (not current_index is None) and (0 <= current_index < len(self.tool_list)):
+                tool = self.tool_list[current_index]
+                # transfer the cutter attributes to the current session
+                self.set_current_tool(tool)
+        elif (action == "import") or (action == "add"):
+            cutter = self.get_current_tool()
+            if action == "add":
+                if (current_index is None) or (current_index + 1 >= len(self.tool_list)):
+                    self.tool_list.append(cutter)
+                    current_index = len(self.tool_list) - 1
+                else:
+                    current_index += 1
+                    self.tool_list.insert(current_index, cutter)
+                override_index = current_index
+            else:
+                if (not current_index is None) and (0 <= current_index < len(self.tool_list)):
+                    self.tool_list[current_index] = cutter
+        else:
+            pass
+        length_before = len(self.tool_list)
+        self._treeview_button_event(self.tool_editor_table, self.tool_list, action, self.update_tool_editor)
+        length_after = len(self.tool_list)
+        current_index = self._treeview_get_active_index(self.tool_editor_table, self.tool_list)
+        if not override_index is None:
+            self._treeview_set_active_index(self.tool_editor_table, override_index)
+            # update the button states - especially after adding the first tool
+            self.update_tool_editor(new_index=None, skip_model_update=True)
+        self.update_tool_selector()
+
+    def _tool_selector_changed_event(self, widget=None, data=None):
+        index = self.tool_selector.get_active()
+        if index >= 0:
+            self.set_current_tool(self.tool_list[index])
+        self.update_tool_controls()
+
+    def update_tool_selector(self, widget=None, data=None):
+        selector_index = self.tool_selector.get_active()
+        current_tool = self.get_current_tool()
+        if (selector_index < 0) or (current_tool != self.tool_list[selector_index]):
+            # invalid index for "no selection"
+            result = -1
+            # look for the next suitable tool
+            for one_tool in self.tool_list:
+                if one_tool == current_tool:
+                    result = self.tool_list.index(one_tool)
+                    break
+            self.tool_selector.set_active(result)
+        self.update_tool_controls()
+
+    def update_tool_editor(self, new_index=None, skip_model_update=False):
+        tool_model = self.gui.get_object("ToolList")
+        if new_index is None:
+            # keep the old selection - this may return "None" if nothing is selected
+            new_index = self._treeview_get_active_index(self.tool_editor_table, self.tool_list)
+        if not skip_model_update:
+            tool_model.clear()
+            counter = 0
+            for tool in self.tool_list:
+                # the drill string is something like: "ToroidalCutter<%s,%f,R=%f,r=%f>"
+                # we want to omit the location and improve the formatting
+                # remove the location ("Point<...>")
+                short_name = re.sub("<[^>]*>", "", str(tool))
+                try:
+                    name, attribs = short_name.split(",", 1)
+                except ValueError:
+                    name, attribs = short_name, ""
+                attribs = attribs.rstrip(">").replace(",", " / ")
+                description = "%s (%s)" % (name, attribs)
+                tool_model.append((counter, counter + 1, description))
+                counter += 1
+            if not new_index is None:
+                self._treeview_set_active_index(self.tool_editor_table, new_index)
+        # en/disable some buttons
+        selection_active = not new_index is None
+        self.gui.get_object("ToolEditorDelete").set_sensitive(selection_active)
+        self.gui.get_object("ToolEditorImport").set_sensitive(selection_active)
+        self.gui.get_object("ToolEditorExport").set_sensitive(selection_active)
+        self.gui.get_object("ToolEditorMoveUp").set_sensitive(selection_active and new_index > 0)
+        self.gui.get_object("ToolEditorMoveDown").set_sensitive(selection_active and new_index < len(self.tool_list) - 1)
 
     def update_unit_labels(self, widget=None, data=None):
         # we can't just use the "unit" setting, since we need the plural of "inch"
@@ -995,30 +1164,11 @@ class ProjectGui:
         if section != current_text:
             self.processing_config_selection.get_child().set_text(section)
 
-    def _toolpath_table_get_active_index(self):
-        if len(self.toolpath) == 0:
-            result = None
-        else:
-            treeselection = self.toolpath_table.get_selection()
-            (model, iteration) = treeselection.get_selected()
-            # the first item in the model is the index within the toolpath list
-            try:
-                result = model[iteration][0]
-            except TypeError:
-                result = None
-        return result
-
-    def _toolpath_table_set_active_index(self, index):
-        treeselection = self.toolpath_table.get_selection()
-        treeselection.select_path((index,))
-
     @gui_activity_guard
     def toolpath_table_event(self, widget, data, action=None):
         # "toggle" uses two parameters - all other actions have only one
         if action is None:
             action = data
-        future_selection_index = None
-        skip_model_update = False
         if action == "toggle_visibility":
             try:
                 path = int(data)
@@ -1028,39 +1178,11 @@ class ProjectGui:
                 self.toolpath[path].visible = not self.toolpath[path].visible
                 # hide/show toolpaths according to the new setting
                 self.update_view()
-        elif action == "update_buttons":
-            skip_model_update = True
-        elif action in ("move_up", "move_down", "delete"):
-            index = self._toolpath_table_get_active_index()
-            if action == "move_up":
-                if index > 0:
-                    # move a toolpath one position up the list
-                    selected = self.toolpath[index]
-                    above = self.toolpath[index-1]
-                    self.toolpath[index] = above
-                    self.toolpath[index-1] = selected
-                    future_selection_index = index - 1
-            elif action == "move_down":
-                if index + 1 < len(self.toolpath):
-                    # move a toolpath one position down the list
-                    selected = self.toolpath[index]
-                    below = self.toolpath[index+1]
-                    self.toolpath[index] = below
-                    self.toolpath[index+1] = selected
-                    future_selection_index = index + 1
-            else:
-                # delete one toolpath from the list
-                self.toolpath.remove(self.toolpath[index])
-                # don't set a new index, if the list emptied
-                if len(self.toolpath) > 0:
-                    if index < len(self.toolpath):
-                        future_selection_index = index
-                    else:
-                        # the last item was removed
-                        future_selection_index = len(self.toolpath) - 1
-                # hide the deleted toolpath immediately
-                self.update_view()
-        self.update_toolpath_table(new_index=future_selection_index, skip_model_update=skip_model_update)
+        self._treeview_button_event(self.toolpath_table, self.toolpath, action, self.update_toolpath_table)
+        # do some post-processing ...
+        if action == "delete":
+            # hide the deleted toolpath immediately
+            self.update_view()
 
     def update_toolpath_table(self, new_index=None, skip_model_update=False):
         # show or hide the "toolpath" tab
@@ -1076,10 +1198,10 @@ class ProjectGui:
         # reset the model data and the selection
         if new_index is None:
             # keep the old selection - this may return "None" if nothing is selected
-            new_index = self._toolpath_table_get_active_index()
+            new_index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
         if not skip_model_update:
             # update the TreeModel data
-            model = self.toolpath_model
+            model = self.gui.get_object("ToolPathListModel")
             model.clear()
             # columns: name, visible, drill_size, drill_id, allowance, speed, feedrate
             for index in range(len(self.toolpath)):
@@ -1088,7 +1210,7 @@ class ProjectGui:
                         tp.drill_id, tp.material_allowance, tp.speed, tp.feedrate)
                 model.append(items)
             if not new_index is None:
-                self._toolpath_table_set_active_index(new_index)
+                self._treeview_set_active_index(self.toolpath_table, new_index)
         # enable/disable the modification buttons
         self.gui.get_object("toolpath_up").set_sensitive((not new_index is None) and (new_index > 0))
         self.gui.get_object("toolpath_delete").set_sensitive(not new_index is None)
@@ -1113,6 +1235,72 @@ class ProjectGui:
             return
         if not self.processing_settings.write_to_file(filename) and not no_dialog:
             show_error_dialog(self.window, "Failed to save processing settings file")
+
+    def set_current_tool(self, tool):
+        # transfer the cutter attributes to the current session
+        if isinstance(tool, pycam.Cutters.SphericalCutter):
+            cutter_shape = "SphericalCutter"
+        elif isinstance(tool, pycam.Cutters.CylindricalCutter):
+            cutter_shape = "CylindricalCutter"
+        elif isinstance(tool, pycam.Cutters.ToroidalCutter):
+            cutter_shape = "ToroidalCutter"
+            self.settings.set("torus_radius", tool.minorradius)
+        else:
+            cutter_shape = None
+        if cutter_shape:
+            self.settings.set("cutter_shape", cutter_shape)
+            self.settings.set("tool_radius", tool.radius)
+
+    def get_current_tool(self):
+        cutter_height = self.settings.get("maxz") - self.settings.get("minz")
+        if self.model:
+            cutter_height = max(cutter_height, self.model.maxz - self.model.minz)
+        # Due to some weirdness the height of the drill must be bigger than the object's size.
+        # Otherwise some collisions are not detected.
+        cutter_height *= 4
+        cuttername = self.settings.get("cutter_shape")
+        radius = self.settings.get("tool_radius")
+        if cuttername == "SphericalCutter":
+            cutter = pycam.Cutters.SphericalCutter(radius, height=cutter_height)
+        elif cuttername == "CylindricalCutter":
+            cutter = pycam.Cutters.CylindricalCutter(radius, height=cutter_height)
+        elif cuttername == "ToroidalCutter":
+            toroid = self.settings.get("torus_radius")
+            cutter = pycam.Cutters.ToroidalCutter(radius, toroid, height=cutter_height)
+        else:
+            pass
+        return cutter
+
+    def get_current_pathgenerator(self, cutter):
+        pathgenerator = self.settings.get("path_generator")
+        pathprocessor = self.settings.get("path_postprocessor")
+        physics = self.get_physics(cutter)
+        if pathgenerator == "DropCutter":
+            if pathprocessor == "ZigZagCutter":
+                processor = pycam.PathProcessors.PathAccumulator(zigzag=True)
+            else:
+                processor = None
+            result = pycam.PathGenerators.DropCutter(cutter,
+                    self.model, processor, physics=physics,
+                    safety_height=self.settings.get("safety_height"))
+        elif pathgenerator == "PushCutter":
+            if pathprocessor == "PathAccumulator":
+                processor = pycam.PathProcessors.PathAccumulator()
+            elif pathprocessor == "SimpleCutter":
+                processor = pycam.PathProcessors.SimpleCutter()
+            elif pathprocessor == "ZigZagCutter":
+                processor = pycam.PathProcessors.ZigZagCutter()
+            elif pathprocessor == "PolygonCutter":
+                processor = pycam.PathProcessors.PolygonCutter()
+            elif pathprocessor == "ContourCutter":
+                processor = pycam.PathProcessors.ContourCutter()
+            else:
+                processor = None
+            result = pycam.PathGenerators.PushCutter(cutter,
+                    self.model, processor, physics=physics)
+        else:
+            result = None
+        return result
 
     def toggle_progress_bar(self, status):
         if status:
@@ -1161,28 +1349,13 @@ class ProjectGui:
             callback = None
         draw_callback = UpdateView(callback,
                 max_fps=self.settings.get("drill_progress_max_fps")).update
-        radius = self.settings.get("tool_radius")
-        cuttername = self.settings.get("cutter_shape")
-        pathgenerator = self.settings.get("path_generator")
-        pathprocessor = self.settings.get("path_postprocessor")
         direction = self.settings.get("path_direction")
-        # Due to some weirdness the height of the drill must be bigger than the object's size.
-        # Otherwise some collisions are not detected.
-        cutter_height = 4 * max((self.settings.get("maxz") - self.settings.get("minz")), (self.model.maxz - self.model.minz))
-        if cuttername == "SphericalCutter":
-            cutter = pycam.Cutters.SphericalCutter(radius, height=cutter_height)
-        elif cuttername == "CylindricalCutter":
-            cutter = pycam.Cutters.CylindricalCutter(radius, height=cutter_height)
-        elif cuttername == "ToroidalCutter":
-            toroid = self.settings.get("torus_radius")
-            cutter = pycam.Cutters.ToroidalCutter(radius, toroid, height=cutter_height)
 
         self.update_progress_bar("Generating collision model")
-        self.update_physics(cutter)
-        self.cutter = cutter
+        self.cutter = self.get_current_tool()
 
         # this offset allows to cut a model with a minimal boundary box correctly
-        offset = radius/2
+        offset = self.settings.get("tool_radius") / 2.0
 
         minx = float(self.settings.get("minx"))-offset
         maxx = float(self.settings.get("maxx"))+offset
@@ -1197,37 +1370,19 @@ class ProjectGui:
 
         self.update_progress_bar("Starting the toolpath generation")
 
-        if pathgenerator == "DropCutter":
-            if pathprocessor == "ZigZagCutter":
-                self.option = pycam.PathProcessors.PathAccumulator(zigzag=True)
-            else:
-                self.option = None
-            self.pathgenerator = pycam.PathGenerators.DropCutter(cutter,
-                    self.model, self.option, physics=self.physics,
-                    safety_height=self.settings.get("safety_height"))
+        pathgenerator = self.get_current_pathgenerator(self.cutter)
+
+        pathgenerator_name = self.settings.get("path_generator")
+        if pathgenerator_name == "DropCutter":
             dx = x_shift
             dy = y_shift
             if direction == "x":
-                toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, 0, draw_callback)
+                toolpath = pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, 0, draw_callback)
             elif direction == "y":
-                toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dx, 1, draw_callback)
+                toolpath = pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dx, 1, draw_callback)
 
-        elif pathgenerator == "PushCutter":
-            if pathprocessor == "PathAccumulator":
-                self.option = pycam.PathProcessors.PathAccumulator()
-            elif pathprocessor == "SimpleCutter":
-                self.option = pycam.PathProcessors.SimpleCutter()
-            elif pathprocessor == "ZigZagCutter":
-                self.option = pycam.PathProcessors.ZigZagCutter()
-            elif pathprocessor == "PolygonCutter":
-                self.option = pycam.PathProcessors.PolygonCutter()
-            elif pathprocessor == "ContourCutter":
-                self.option = pycam.PathProcessors.ContourCutter()
-            else:
-                self.option = None
-            self.pathgenerator = pycam.PathGenerators.PushCutter(cutter,
-                    self.model, self.option, physics=self.physics)
-            if pathprocessor == "ContourCutter":
+        elif pathgenerator_name == "PushCutter":
+            if self.settings.get("path_postprocessor") == "ContourCutter":
                 dx = x_shift
             else:
                 dx = utils.INFINITE
@@ -1237,11 +1392,11 @@ class ProjectGui:
             else:
                 dz = utils.INFINITE
             if direction == "x":
-                toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, 0, dy, dz, draw_callback)
+                toolpath = pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, 0, dy, dz, draw_callback)
             elif direction == "y":
-                toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, 0, dz, draw_callback)
+                toolpath = pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, 0, dz, draw_callback)
             elif direction == "xy":
-                toolpath = self.pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz, draw_callback)
+                toolpath = pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz, draw_callback)
         print "Time elapsed: %f" % (time.time() - start_time)
         # calculate the z offset for the starting position
         # TODO: fix these hard-coded offsets; maybe use the safety height instead?
@@ -1256,7 +1411,7 @@ class ProjectGui:
         # add the new toolpath
         self.toolpath.add_toolpath(toolpath,
                 self.processing_config_selection.get_active_text(),
-                cutter,
+                self.cutter,
                 self.settings.get("speed"),
                 self.settings.get("feedrate"),
                 self.settings.get("material_allowance"),
