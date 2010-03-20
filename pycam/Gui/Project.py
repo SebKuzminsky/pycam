@@ -1364,7 +1364,7 @@ class ProjectGui:
         minz = float(self.settings.get("minz"))
         maxz = float(self.settings.get("maxz"))
 
-        effective_toolradius = self.settings.get("tool_radius") * (1.0 - self.settings.get("overlap")/200.0)
+        effective_toolradius = self.settings.get("tool_radius") * (1.0 - self.settings.get("overlap")/100.0)
         x_shift = effective_toolradius
         y_shift = effective_toolradius
 

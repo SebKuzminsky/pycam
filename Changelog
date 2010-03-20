@@ -1,4 +1,5 @@
 Version 0.2.3 - UNRELEASED
+ * fixed "overlap" calculation
 
 Version 0.2.2 - 2010-03-17
  * added a graphical installer for Windows (via distutils)
