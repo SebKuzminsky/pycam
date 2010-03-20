@@ -1,0 +1,5 @@
+pycam (0.2.2-1) unstable; urgency=low
+
+  * Initial debianization of r243 of the SVN repo on sourceforge
+
+ -- Sebastian Kuzminsky <seb@highlab.com>  Tue, 16 Mar 2010 22:14:56 -0600

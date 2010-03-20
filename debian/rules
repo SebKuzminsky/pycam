@@ -1,0 +1,24 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+
+export DEB_PYTHON_SYSTEM=pysupport
+
+# Debhelper must be included before python-distutils to use
+# dh_python / dh_pycentral / dh_pysupport
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/python-distutils.mk
+include /usr/share/cdbs/1/rules/simple-patchsys.mk
+
+# install the .desktop file
+install/python-pycam::
+	cp -v desktop/pycam.desktop `pwd`/debian/python-pycam/usr/share/applications/
+
