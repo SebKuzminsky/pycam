@@ -4,7 +4,9 @@ include COPYING.TXT
 include README.TXT
 include Changelog
 include release_info.txt
-include pycam_start.py
+include pycamGUI
+recursive-include desktop *
+recursive-include man *
 recursive-include pycam *
 recursive-include Samples *
 recursive-include Tests *

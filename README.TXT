@@ -33,7 +33,7 @@ Features:
 
 RUNNING:
 
-   extract the archive and run "python pycam_start.py"
+   extract the archive and run "python pycamGUI"
 
 
 

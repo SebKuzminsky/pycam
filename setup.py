@@ -43,8 +43,8 @@ setup(
         "pycam.PathGenerators", 
         "pycam.Simulation"
     ],
-    scripts = ['pycam_start.py', 'pycam_win32_postinstall.py'],
-    data_files=[("share/python-pycam",[
+    scripts = ['pycamGUI', 'pycam_win32_postinstall.py'],
+    data_files=[("share/doc/python-pycam",[
             "COPYING.TXT",
             "HOWTO.TXT",
             "INSTALL.TXT",
