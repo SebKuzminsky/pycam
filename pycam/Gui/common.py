@@ -2,6 +2,8 @@ import Tkinter
 # "ode" is imported later, if required
 #import ode_objects
 import random
+import sys
+import os
 
 
 MODEL_TRANSFORMATIONS = {
@@ -17,6 +19,23 @@ MODEL_TRANSFORMATIONS = {
     "y_swap_z": ((1, 0, 0, 0), (0, 0, 1, 0), (0, 1, 0, 0)),
 }
 
+DEPENDENCY_DESCRIPTION = {
+    "gtk": ("Python bindings for GTK+",
+        "Install the package 'python-gtk2'",
+        "see http://www.bonifazi.eu/appunti/pygtk_windows_installer.exe"),
+    "opengl": ("Python bindings for OpenGL",
+        "Install the package 'python-opengl'",
+        "see http://www.bonifazi.eu/appunti/pygtk_windows_installer.exe"),
+    "gtkgl": ("GTK extension for OpenGL",
+        "Install the package 'python-gtkglext1'",
+        "see http://www.bonifazi.eu/appunti/pygtk_windows_installer.exe"),
+    "togl": ("Tk for OpenGL",
+        "see http://downloads.sourceforge.net/togl/",
+        "see http://downloads.sourceforge.net/togl/"),
+}
+
+REQUIREMENTS_LINK = "https://sourceforge.net/apps/mediawiki/pycam/index.php?title=Requirements"
+
 
 def transform_model(model, direction="normal"):
     model.transform(MODEL_TRANSFORMATIONS[direction])
@@ -29,8 +48,64 @@ def scale_model(model, scale):
     matrix = ((scale, 0, 0, 0), (0, scale, 0, 0), (0, 0, scale, 0))
     model.transform(matrix)
 
+def dependency_details_gtk():
+    result = {}
+    try:
+        import gtk
+        result["gtk"] = True
+    except ImportError:
+        result["gtk"] = False
+    try:
+        import gtk.gtkgl
+        result["gtkgl"] = True
+    except ImportError:
+        result["gtkgl"] = False
+    try:
+        import OpenGL
+        result["opengl"] = True
+    except ImportError:
+        result["opengl"] = False
+    return result
 
-class EmergencyDialog(Tkinter.Frame):
+def dependency_details_tk():
+    result = {}
+    try:
+        import OpenGL
+        result["opengl"] = True
+    except ImportError:
+        result["opengl"] = False
+    try:
+        import OpenGL.Tk
+        result["togl"] = True
+    except (ImportError, Tkinter.TclError):
+        result["togl"] = False
+    return result
+
+def check_dependencies(details):
+    """you can feed this function with the output of "dependency_details_gtk" or "..._tk".
+    The result is True if all dependencies are met.
+    """
+    failed = [key for (key, state) in details.items() if not state]
+    return len(failed) == 0
+
+def get_dependency_report(details, prefix=""):
+    result = []
+    DESC_COL = 0
+    if sys.platform.startswith("win"):
+        ADVICE_COL = 2
+    else:
+        ADVICE_COL = 1
+    for key, state in details.items():
+        text = "%s%s: " % (prefix, DEPENDENCY_DESCRIPTION[key][DESC_COL])
+        if state:
+            text += "OK"
+        else:
+            text += "MISSING (%s)" % DEPENDENCY_DESCRIPTION[key][ADVICE_COL]
+        result.append(text)
+    return os.linesep.join(result)
+
+
+class EmergencyDialog:
     """ This graphical message window requires no external dependencies.
     The Tk interface package is part of the main python distribution.
     Use this class for displaying dependency errors (especially on Windows).
@@ -47,20 +122,22 @@ class EmergencyDialog(Tkinter.Frame):
         root.bind("<Return>", self.finish)
         root.bind("<Escape>", self.finish)
         root.minsize(300, 100)
-        Tkinter.Frame.__init__(self, root, width=400)
-        self.pack()
+        self.root = root
+        frame = Tkinter.Frame(root)
+        frame.pack()
         # add text output as label
-        message = Tkinter.Message(self, text=message, width=200)
-        message["width"] = 200
+        message = Tkinter.Message(root, text=message)
+        # we need some space for the dependency report
+        message["width"] = 800
         message.pack()
         # add the "close" button
         close = Tkinter.Button(root, text="Close")
         close["command"] = self.finish
         close.pack(side=Tkinter.BOTTOM)
-        self.mainloop()
+        root.mainloop()
 
     def finish(self, *args):
-        self.quit()
+        self.root.quit()
 
 
 class ToolPathList(list):

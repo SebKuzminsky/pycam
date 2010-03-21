@@ -1,5 +1,6 @@
 Version 0.2.3 - UNRELEASED
  * fixed "overlap" calculation
+ * added a warning dialog (GUI) for missing dependencies during startup (especially useful for Windows)
 
 Version 0.2.2 - 2010-03-17
  * added a graphical installer for Windows (via distutils)

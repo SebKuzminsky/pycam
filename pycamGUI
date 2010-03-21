@@ -1,8 +1,10 @@
 #!/usr/bin/python
 
-from pycam.Gui.common import override_ode_availability
+from pycam.Gui.ode_objects import override_ode_availability
+import pycam.Gui.common as GuiCommon
 from optparse import OptionParser
 import sys
+import os
 
 # check if we were started as a separate program
 if __name__ == "__main__":
@@ -37,35 +39,52 @@ if __name__ == "__main__":
         parser.error("too many arguments given (%d instead of %d)" % (len(args), 2))
 
     # try the configured interface first and then try to fall back to the alternative, if necessary
+    deps_gtk = GuiCommon.dependency_details_gtk()
+    deps_tk = GuiCommon.dependency_details_tk()
+    report_gtk = GuiCommon.get_dependency_report(deps_gtk, prefix="\t")
+    report_tk = GuiCommon.get_dependency_report(deps_tk, prefix="\t")
     if options.gtk_gui:
-        try:
+        if GuiCommon.check_dependencies(deps_gtk):
             from pycam.Gui.Project import ProjectGui
             gui_class = ProjectGui
-        except ImportError, err_msg:
-            print >> sys.stderr, "Failed to load GTK bindings for python. Please install the package 'python-gtk2'."
-            print >> sys.stderr, "Details: %s" % str(err_msg)
+        else:
+            print >> sys.stderr, "Error: Failed to load the GTK interface."
+            print >> sys.stderr, "Details:"
+            print >> sys.stderr, report_gtk
             print >> sys.stderr, "I will try to use the alternative Tk interface now ..."
-            try:
+            if GuiCommon.check_dependencies(deps_tk):
                 from pycam.Gui.SimpleGui import SimpleGui
-                gui_class = SimpleGui()
-            except ImportError:
+                gui_class = SimpleGui
+            else:
                 gui_class = None
     else:
-        try:
+        if GuiCommon.check_dependencies(deps_tk):
             from pycam.Gui.SimpleGui import SimpleGui
             gui_class = SimpleGui
-        except ImportError, err_msg:
-            print >> sys.stderr, "Failed to load TkInter bindings for python. Please install the package 'python-tk'."
-            print >> sys.stderr, "Details: %s" % str(err_msg)
+        else:
+            print >> sys.stderr, "Error: Failed to load the Tk interface."
+            print >> sys.stderr, "Details:"
+            print >> sys.stderr, report_tk
             print >> sys.stderr, "I will try to use the alternative GTK interface now ..."
-            try:
+            if GuiCommon.check_dependencies(deps_gtk):
                 from pycam.Gui.Project import ProjectGui
                 gui_class = ProjectGui
-            except ImportError:
+            else:
                 gui_class = None
     # exit if no interface is found
     if gui_class is None:
-        print >> sys.stderr, "Neither the GTK nor the Tk interface is available. Please install the corresponding packages!"
+        full_report = []
+        full_report.append("Neither the GTK nor the Tk interface is available. Please install the corresponding packages!")
+        full_report.append("")
+        full_report.append("Dependency report for GTK interface:")
+        full_report.append(report_gtk)
+        full_report.append("")
+        full_report.append("Dependency report for Tk interface:")
+        full_report.append(report_tk)
+        full_report.append("")
+        full_report.append("Detailed list of requirements: %s" % GuiCommon.REQUIREMENTS_LINK)
+        full_report.append("")
+        GuiCommon.EmergencyDialog("PyCAM dependency problem", os.linesep.join(full_report))
         sys.exit(1)
 
     if options.ode_disabled:
