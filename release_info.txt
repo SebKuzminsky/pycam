@@ -32,3 +32,7 @@
  - post the new release at http://www.cnczone.com/forums/showthread.php?t=63716
  - ?
 
+6) other stuff
+ - create a new release tag for the bug tracker:
+   https://sourceforge.net/tracker/admin/index.php?group_id=237831&atid=1104176&add_group=1
+

@@ -58,27 +58,8 @@ USAGE:
       and the ZigZag PostProcessor in "x" or "y" mode
 
 
-TODO:
-
-    * Python code
-    ** clean up module/package use, being all "import" statements
-
-    * Geometry
-    ** intersect_torus_line
-        -> try to find a better implementation
-    ** intersect_cone_*
-
-    * Cutters
-    ** FiletCutter
-
-    * PathProcessors
-    ** Traveling Salesman for Polygon PostProcessor
-
-    * Gui
-    ** create something better than "SimpleGui"
-    ** move calculactions in separate thread
-    ** incremental visualization
-    ** add progress bar
+TODO / OPEN ISSUES:
+    see http://sourceforge.net/apps/mediawiki/pycam/index.php?title=TODO
 
 
 FEATURE REQUESTS:
@@ -95,7 +76,22 @@ KNOWN BUGS:
     * The combination of PushCutter with PolygonCutter and ContourCutter 
       sometimes make tiny cuts accross the model in between lines
 
+    * The ODE collision detection sometimes fails at the corners of a
+      model.
+      http://sourceforge.net/tracker/?func=detail&aid=2973876&group_id=24884&atid=382799
 
-OPEN ISSUES:
-see the list at https://sourceforge.net/apps/mediawiki/pycam/index.php?title=TODO
+    * Bugs in the sourceforge bug tracker:
+      http://sourceforge.net/tracker/?group_id=237831&atid=1104176
+
+
+CONTRIBUTORS:
+
+    * Lode Leroy: initiated the project; developed the toolpath generation,
+      collision detection, geometry, Tk interface, ...
+
+    * Lars Kruse: developed the GTK interface; added ODE support
+
+    * Arthur Magill: distutils packaging
+
+    * Sebastian Kuzminsky: debian packaging
 
