@@ -2,9 +2,9 @@ Source: pycam
 Section: python
 Priority: extra
 Maintainer: Sebastian Kuzminsky <seb@highlab.com>
-Build-Depends: python-dev, debhelper (>= 7), cdbs, patchutils
+Build-Depends: python, debhelper (>= 7), cdbs, patchutils
 Build-Depends-Indep: python-support
-Standards-Version: 3.8.3
+Standards-Version: 3.8.4
 Homepage: http://sourceforge.net/projects/pycam/
 
 Package: python-pycam
