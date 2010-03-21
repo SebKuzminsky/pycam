@@ -639,6 +639,7 @@ class ProjectGui:
         window_box.pack_start(self.menubar, False)
         window_box.reorder_child(self.menubar, 0)
         # some more initialization
+        self.processing_settings.enable_config()
         self.update_toolpath_table()
         self.update_tool_editor()
         self.update_tool_selector()
@@ -1084,7 +1085,7 @@ class ProjectGui:
 
     def open_processing_settings_file(self, filename):
         """ This function is used by the commandline handler """
-        self.last_toolpath_file = filename
+        self.last_config_file = filename
         self.load_processing_file(filename=filename)
         self.update_save_actions()
 
@@ -1477,6 +1478,9 @@ class ProjectGui:
         dialog.destroy()
         return filename
 
+    def setOutputFilename(self, filename):
+        self.last_toolpath_file = filename
+
     @gui_activity_guard
     def save_toolpath(self, widget=None, data=None):
         if not self.toolpath:
@@ -1485,6 +1489,9 @@ class ProjectGui:
             widget = widget()
         if isinstance(widget, basestring):
             filename = widget
+            no_dialog = True
+        elif self.no_dialog:
+            filename = self.last_toolpath_file
             no_dialog = True
         else:
             # we open a dialog
@@ -1522,7 +1529,9 @@ class ProjectGui:
                 show_error_dialog(self.window, "Failed to save toolpath file")
 
     def mainloop(self):
-        gtk.main()
+        # run the mainloop only if a GUI was requested
+        if not self.no_dialog:
+            gtk.main()
 
 if __name__ == "__main__":
     gui = ProjectGui()

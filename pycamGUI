@@ -71,7 +71,7 @@ if __name__ == "__main__":
     if options.ode_disabled:
         override_ode_availability(False)
 
-    if outputfile:
+    if outputfile and not options.display:
         gui = gui_class(no_dialog=True)
     else:
         gui = gui_class()
