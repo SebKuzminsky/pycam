@@ -1487,6 +1487,10 @@ class ProjectGui:
             else:
                 done = True
         dialog.destroy()
+        # add the file to the list of recently used ones
+        if filename:
+            recent = gtk.RecentManager()
+            recent.add_item("file://%s" % str(filename))
         return filename
 
     def setOutputFilename(self, filename):
