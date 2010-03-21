@@ -10,6 +10,7 @@ import pycam.PathGenerators
 import pycam.PathProcessors
 import pycam.Geometry.utils as utils
 import pycam.Gui.OpenGLTools as ogl_tools
+import pycam.Gui.ode_objects as ode_objects
 import OpenGL.GL as GL
 import OpenGL.GLU as GLU
 import OpenGL.GLUT as GLUT
@@ -347,7 +348,7 @@ class GLView:
 
     def _paint_raw(self, widget=None):
         # draw the model
-        GuiCommon.draw_complete_model_view(self.settings)
+        ogl_tools.draw_complete_model_view(self.settings)
         # update the dimension display
         s = self.settings
         dimension_bar = self.gui.get_object("view3ddimension")
@@ -512,7 +513,7 @@ class ProjectGui:
         for name in COLORS.keys():
             self.settings.set(name, COLORS[name])
         # set the availability of ODE
-        if GuiCommon.is_ode_available():
+        if ode_objects.is_ode_available():
             self.settings.set("enable_ode", True)
             self.gui.get_object("SettingEnableODE").set_sensitive(True)
             self.gui.get_object("MaterialAllowanceControl").set_sensitive(True)
@@ -684,7 +685,7 @@ class ProjectGui:
 
     def get_physics(self, cutter):
         if self.settings.get("enable_ode"):
-            self._physics_cache = GuiCommon.generate_physics(self.settings, cutter, self._physics_cache)
+            self._physics_cache = ode_objects.generate_physics(self.settings, cutter, self._physics_cache)
         else:
             self._physics_cache = None
         return self._physics_cache

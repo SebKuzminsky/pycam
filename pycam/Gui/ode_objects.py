@@ -1,9 +1,37 @@
-import ode
+try:
+    import ode
+except ImportError:
+    ode = None
 
 
 ShapeCylinder = lambda radius, height: ode.GeomCylinder(None, radius, height)
 ShapeCapsule = lambda radius, height: ode.GeomCapsule(None, radius, height - (2 * radius))
 
+_ode_override_state = None
+
+
+def generate_physics(settings, cutter, physics=None):
+    if physics is None:
+        physics = PhysicalWorld()
+    physics.reset()
+    physics.add_mesh((0, 0, 0), settings.get("model").triangles())
+    shape_info = cutter.get_shape("ODE", additional_distance=settings.get("material_allowance"))
+    physics.set_drill(shape_info[0], (0.0, 0.0, 0.0))
+    return physics
+
+def is_ode_available():
+    global _ode_override_state
+    if not _ode_override_state is None:
+        return _ode_override_state
+    else:
+        if ode is None:
+            return False
+        else:
+            return True
+
+def override_ode_availability(state):
+    global _ode_override_state
+    _ode_override_state = state
 
 def convert_triangles_to_vertices_faces(triangles):
     corners = []

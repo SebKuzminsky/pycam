@@ -1,5 +1,4 @@
-import OpenGL.GL as GL
-import OpenGL.GLUT as GLUT
+import Tkinter
 # "ode" is imported later, if required
 #import ode_objects
 import random
@@ -18,165 +17,6 @@ MODEL_TRANSFORMATIONS = {
     "y_swap_z": ((1, 0, 0, 0), (0, 0, 1, 0), (0, 1, 0, 0)),
 }
 
-_ode_override_state = None
-
-
-def keep_gl_mode(func):
-    def wrapper(*args, **kwargs):
-        prev_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
-        func(*args, **kwargs)
-        GL.glMatrixMode(prev_mode)
-    return wrapper
-
-def keep_matrix(func):
-    def wrapper(*args, **kwargs):
-        pushed_matrix_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
-        GL.glPushMatrix()
-        func(*args, **kwargs)
-        final_matrix_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
-        GL.glMatrixMode(pushed_matrix_mode)
-        GL.glPopMatrix()
-        GL.glMatrixMode(final_matrix_mode)
-    return wrapper
-
-@keep_matrix
-def draw_string(x, y, z, p, s, scale=.01):
-    GL.glPushMatrix()
-    GL.glTranslatef(x, y, z)
-    if p == 'xy':
-        GL.glRotatef(90, 1, 0, 0)
-        pass
-    elif p == 'yz':
-        GL.glRotatef(90, 0, 1, 0)
-        GL.glRotatef(90, 0, 0, 1)
-    elif p == 'xz':
-        GL.glRotatef(90, 0, 1, 0)
-        GL.glRotatef(90, 0, 0, 1)
-        GL.glRotatef(45, 0, 1, 0)
-    GL.glScalef(scale, scale, scale)
-    for c in str(s):
-        GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(c))
-    GL.glPopMatrix()
-
-@keep_gl_mode
-@keep_matrix
-def draw_axes(settings):
-    GL.glMatrixMode(GL.GL_MODELVIEW)
-    GL.glLoadIdentity()
-    #GL.glTranslatef(0, 0, -2)
-    size_x = abs(settings.get("maxx"))
-    size_y = abs(settings.get("maxy"))
-    size_z = abs(settings.get("maxz"))
-    size = 1.5 * max(max(size_x, size_y), size_z)
-    # the divider is just based on playing with numbers
-    scale = size/1500.0
-    string_distance = 1.1 * size
-    GL.glBegin(GL.GL_LINES)
-    GL.glColor3f(1, 0, 0)
-    GL.glVertex3f(0, 0, 0)
-    GL.glVertex3f(size, 0, 0)
-    GL.glEnd()
-    draw_string(string_distance, 0, 0, 'xy', "X", scale=scale)
-    GL.glBegin(GL.GL_LINES)
-    GL.glColor3f(0, 1, 0)
-    GL.glVertex3f(0, 0, 0)
-    GL.glVertex3f(0, size, 0)
-    GL.glEnd()
-    draw_string(0, string_distance, 0, 'yz', "Y", scale=scale)
-    GL.glBegin(GL.GL_LINES)
-    GL.glColor3f(0, 0, 1)
-    GL.glVertex3f(0, 0, 0)
-    GL.glVertex3f(0, 0, size)
-    GL.glEnd()
-    draw_string(0, 0, string_distance, 'xz', "Z", scale=scale)
-
-@keep_matrix
-def draw_bounding_box(minx, miny, minz, maxx, maxy, maxz, color):
-    p1 = [minx, miny, minz]
-    p2 = [minx, maxy, minz]
-    p3 = [maxx, maxy, minz]
-    p4 = [maxx, miny, minz]
-    p5 = [minx, miny, maxz]
-    p6 = [minx, maxy, maxz]
-    p7 = [maxx, maxy, maxz]
-    p8 = [maxx, miny, maxz]
-    # lower rectangle
-    GL.glBegin(GL.GL_LINES)
-    GL.glColor3f(*color)
-    # all combinations of neighbouring corners
-    for corner_pair in [(p1, p2), (p1, p5), (p1, p4), (p2, p3),
-                (p2, p6), (p3, p4), (p3, p7), (p4, p8), (p5, p6),
-                (p6, p7), (p7, p8), (p8, p5)]:
-        GL.glVertex3f(*(corner_pair[0]))
-        GL.glVertex3f(*(corner_pair[1]))
-    GL.glEnd()
-
-@keep_gl_mode
-@keep_matrix
-def draw_cutter(cutter, color):
-    if not cutter is None:
-        GL.glColor3f(*color)
-        cutter.to_OpenGL()
-
-@keep_gl_mode
-@keep_matrix
-def draw_complete_model_view(settings):
-    GL.glMatrixMode(GL.GL_MODELVIEW)
-    GL.glLoadIdentity()
-    # axes
-    if settings.get("show_axes"):
-        draw_axes(settings)
-    # stock model
-    if settings.get("show_bounding_box"):
-        draw_bounding_box(float(settings.get("minx")), float(settings.get("miny")),
-                float(settings.get("minz")), float(settings.get("maxx")),
-                float(settings.get("maxy")), float(settings.get("maxz")),
-                settings.get("color_bounding_box"))
-    # draw the model
-    if settings.get("show_model"):
-        GL.glColor3f(*settings.get("color_model"))
-        settings.get("model").to_OpenGL()
-    # draw the toolpath
-    if settings.get("show_toolpath"):
-        for toolpath_obj in settings.get("toolpath"):
-            if toolpath_obj.visible:
-                draw_toolpath(toolpath_obj.get_path(),
-                        settings.get("color_toolpath_cut"),
-                        settings.get("color_toolpath_return"))
-    # draw the drill
-    if settings.get("show_drill_progress"):
-        draw_cutter(settings.get("cutter"), settings.get("color_cutter"))
-
-@keep_gl_mode
-@keep_matrix
-def draw_toolpath(toolpath, color_forward, color_backward):
-    GL.glMatrixMode(GL.GL_MODELVIEW)
-    GL.glLoadIdentity()
-    if toolpath:
-        last = None
-        for path in toolpath:
-            if last:
-                GL.glColor3f(*color_backward)
-                GL.glBegin(GL.GL_LINES)
-                GL.glVertex3f(last.x, last.y, last.z)
-                last = path.points[0]
-                GL.glVertex3f(last.x, last.y, last.z)
-                GL.glEnd()
-            GL.glColor3f(*color_forward)
-            GL.glBegin(GL.GL_LINE_STRIP)
-            for point in path.points:
-                GL.glVertex3f(point.x, point.y, point.z)
-            GL.glEnd()
-            last = path.points[-1]
-
-@keep_gl_mode
-def rotate_view(scale, rotation=None):
-    GL.glMatrixMode(GL.GL_PROJECTION)
-    GL.glLoadIdentity()
-    GL.glScalef(scale, scale, scale)
-    if rotation:
-        for one_rot in rotation:
-            GL.glRotatef(*one_rot)
 
 def transform_model(model, direction="normal"):
     model.transform(MODEL_TRANSFORMATIONS[direction])
@@ -189,30 +29,38 @@ def scale_model(model, scale):
     matrix = ((scale, 0, 0, 0), (0, scale, 0, 0), (0, 0, scale, 0))
     model.transform(matrix)
 
-def generate_physics(settings, cutter, physics=None):
-    import ode_objects
-    if physics is None:
-        physics = ode_objects.PhysicalWorld()
-    physics.reset()
-    physics.add_mesh((0, 0, 0), settings.get("model").triangles())
-    shape_info = cutter.get_shape("ODE", additional_distance=settings.get("material_allowance"))
-    physics.set_drill(shape_info[0], (0.0, 0.0, 0.0))
-    return physics
 
-def is_ode_available():
-    global _ode_override_state
-    if not _ode_override_state is None:
-        return _ode_override_state
-    else:
+class EmergencyDialog(Tkinter.Frame):
+    """ This graphical message window requires no external dependencies.
+    The Tk interface package is part of the main python distribution.
+    Use this class for displaying dependency errors (especially on Windows).
+    """
+
+    def __init__(self, title, message):
         try:
-            import ode
-            return True
-        except ImportError:
-            return False
+            root = Tkinter.Tk()
+        except Tkinter.TclError, err_msg:
+            print >>sys.stderr, "Warning: Failed to create error dialog window (%s). Probably you are running PyCAM from a terminal." % str(err_msg)
+            print >>sys.stderr, "%s: %s" % (title, message)
+            return
+        root.title(title)
+        root.bind("<Return>", self.finish)
+        root.bind("<Escape>", self.finish)
+        root.minsize(300, 100)
+        Tkinter.Frame.__init__(self, root, width=400)
+        self.pack()
+        # add text output as label
+        message = Tkinter.Message(self, text=message, width=200)
+        message["width"] = 200
+        message.pack()
+        # add the "close" button
+        close = Tkinter.Button(root, text="Close")
+        close["command"] = self.finish
+        close.pack(side=Tkinter.BOTTOM)
+        self.mainloop()
 
-def override_ode_availability(state):
-    global _ode_override_state
-    _ode_override_state = state
+    def finish(self, *args):
+        self.quit()
 
 
 class ToolPathList(list):

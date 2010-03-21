@@ -16,7 +16,7 @@ from pycam.PathProcessors import *
 from pycam.Geometry.utils import *
 from pycam.Importers import *
 from pycam.Exporters import *
-import pycam.Gui.common as GuiCommon
+import pycam.Gui.OpenGLTools as ogl_tools
 import pycam.Gui.Settings
 import time
 
@@ -53,22 +53,6 @@ class OpenglWidget(Tk.Opengl):
         self.master.resetView()
 
 class SimpleGui(Tk.Frame):
-    def draw_string(self, x, y, z, p, s, scale=.01):
-        GL.glPushMatrix()
-        GL.glTranslatef(x,y,z)
-        if p == 'xy':
-            pass
-        elif p == 'yz':
-            GL.glRotatef(90, 0, 1, 0)
-            GL.glRotatef(90, 0, 0, 1)
-        elif p == 'xz':
-            GL.glRotatef(90, 0, 1, 0)
-            GL.glRotatef(90, 0, 0, 1)
-            GL.glRotatef(-90, 0, 1, 0)
-        GL.glScalef(scale,scale,scale)
-        for c in str(s):
-            GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(c))
-        GL.glPopMatrix()
 
     def load_model(self, model):
         self.model = model
@@ -88,19 +72,19 @@ class SimpleGui(Tk.Frame):
         GL.glVertex3f(0,0,0)
         GL.glVertex3f(size,0,0)
         GL.glEnd()
-        GuiCommon.draw_string(size,0,0,'xy',"X")
+        ogl_tools.draw_string(size,0,0,'xy',"X")
         GL.glBegin(GL.GL_LINES)
         GL.glColor3f(0,1,0)
         GL.glVertex3f(0,0,0)
         GL.glVertex3f(0,size,0)
         GL.glEnd()
-        GuiCommon.draw_string(0,size,0,'yz',"Y")
+        ogl_tools.draw_string(0,size,0,'yz',"Y")
         GL.glBegin(GL.GL_LINES)
         GL.glColor3f(0,0,1)
         GL.glVertex3f(0,0,0)
         GL.glVertex3f(0,0,size)
         GL.glEnd()
-        GuiCommon.draw_string(0,0,size,'xz',"Z")
+        ogl_tools.draw_string(0,0,size,'xz',"Z")
 
         if True:
             # stock model
