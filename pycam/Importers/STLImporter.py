@@ -1,9 +1,11 @@
-import re, os
-from struct import unpack 
-
 from pycam.Geometry import *
 from pycam.Geometry.PointKdtree import PointKdtree
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
+
+from struct import unpack 
+import re
+import os
+import sys
 
 vertices = 0
 edges = 0
@@ -50,7 +52,11 @@ def ImportModel(filename, use_kdtree=True):
     edges = 0
     kdtree = None
 
-    f = open(filename,"rb")
+    try:
+        f = open(filename,"rb")
+    except IOError, err_msg:
+        print >>sys.stderr, "Failed to read file (%s): %s" % (filename, err_msg)
+        return None
     # read the first two lines of (potentially non-binary) input - they should contain "solid" and "facet"
     header = f.readline(200)
     header += f.readline(200)

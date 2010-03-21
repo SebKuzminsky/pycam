@@ -1104,13 +1104,15 @@ class ProjectGui:
             self.load_processing_settings(filename)
 
     def load_model(self, model):
-        self.model = model
-        # place the "safe height" clearly above the model's peak
-        self.settings.set("safety_height", (2 * self.model.maxz - self.model.minz))
-        # do some initialization
-        self.append_to_queue(self.reset_bounds)
-        self.append_to_queue(self.toggle_3d_view, value=True)
-        self.append_to_queue(self.update_view)
+        # load the new model only if the import worked
+        if not model is None:
+            self.model = model
+            # place the "safe height" clearly above the model's peak
+            self.settings.set("safety_height", (2 * self.model.maxz - self.model.minz))
+            # do some initialization
+            self.append_to_queue(self.reset_bounds)
+            self.append_to_queue(self.toggle_3d_view, value=True)
+            self.append_to_queue(self.update_view)
 
     def load_processing_settings(self, filename=None):
         if not filename is None:
@@ -1474,6 +1476,14 @@ class ProjectGui:
                 response = overwrite_window.run()
                 overwrite_window.destroy()
                 done = (response == gtk.RESPONSE_YES)
+            elif mode_load and not os.path.isfile(filename):
+                not_found_window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_ERROR,
+                        buttons=gtk.BUTTONS_OK,
+                        message_format="This file does not exist. Please choose a different filename.")
+                not_found_window.set_title("Invalid filename selected")
+                response = not_found_window.run()
+                not_found_window.destroy()
+                done = False
             else:
                 done = True
         dialog.destroy()
