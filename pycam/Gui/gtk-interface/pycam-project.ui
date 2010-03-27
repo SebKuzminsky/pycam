@@ -2113,6 +2113,7 @@
   </object>
   <object class="GtkAdjustment" id="scale factor">
     <property name="value">1</property>
+    <property name="lower">1</property>
     <property name="upper">1000</property>
     <property name="step_increment">1</property>
   </object>
@@ -2459,18 +2460,22 @@
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="feedrate">
+    <property name="lower">1</property>
     <property name="upper">1000</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="speed">
+    <property name="lower">1</property>
     <property name="upper">10000</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="toolradius">
+    <property name="lower">0.0001</property>
     <property name="upper">100</property>
     <property name="step_increment">0.10000000000000001</property>
   </object>
   <object class="GtkAdjustment" id="torusradius">
+    <property name="lower">0.0001</property>
     <property name="upper">100</property>
     <property name="step_increment">0.050000000000000003</property>
   </object>
@@ -2484,6 +2489,7 @@
     <property name="step_increment">0.10000000000000001</property>
   </object>
   <object class="GtkAdjustment" id="MaxStepDownValue">
+    <property name="lower">0.01</property>
     <property name="upper">100</property>
     <property name="step_increment">1</property>
   </object>
