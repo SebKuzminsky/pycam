@@ -549,8 +549,10 @@ class ProjectGui:
             self.gui.get_object(objname).connect("changed", self.handle_process_settings_change)
         self.gui.get_object("ProcessSettingName").connect("changed", self.handle_process_settings_change)
         # load a processing configuration object
-        self.processing_settings = pycam.Gui.Settings.ProcessingSettings(self.settings)
-        self.process_settings_list = []
+        default_settings = pycam.Gui.Settings.SettingsManager()
+        self.tool_list.extend(default_settings.get_tools())
+        self.process_settings_list.extend(default_settings.get_processes())
+        self.task_list.extend(default_settings.get_tasks())
         self.process_table = self.gui.get_object("ProcessListTable")
         self.process_editor_table = self.gui.get_object("ProcessEditorWindowTable")
         self.process_editor_table.get_selection().connect("changed", self.switch_process_table_selection)
@@ -626,7 +628,6 @@ class ProjectGui:
         window_box.pack_start(self.menubar, False)
         window_box.reorder_child(self.menubar, 0)
         # some more initialization
-        self.processing_settings.enable_config()
         self.update_toolpath_table()
         self.update_tool_table()
         self.update_tool_controls()
@@ -673,9 +674,10 @@ class ProjectGui:
                 self.view3d.glsetup()
             self.view3d.paint()
 
-    def get_physics(self, cutter):
+    def get_physics(self, cutter, material_allowance):
         if self.settings.get("enable_ode"):
-            self._physics_cache = ode_objects.generate_physics(self.settings, cutter, self._physics_cache)
+            self._physics_cache = ode_objects.generate_physics(self.model, cutter,
+                    self._physics_cache, material_allowance)
         else:
             self._physics_cache = None
         return self._physics_cache
@@ -1033,9 +1035,13 @@ class ProjectGui:
     @gui_activity_guard
     def switch_tool_editor_table_selection(self, widget=None, data=None):
         new_index = self._treeview_get_active_index(self.tool_editor_table, self.tool_list)
+        # hide all controls if no process is defined
         if not new_index is None:
+            self.gui.get_object("ToolSettingsControlsBox").show()
             self._put_tool_settings_to_gui(self.tool_list[new_index])
             self.update_tool_controls()
+        else:
+            self.gui.get_object("ToolSettingsControlsBox").hide()
         
     @gui_activity_guard
     def _tool_editor_button_event(self, widget, data, action=None):
@@ -1373,8 +1379,11 @@ class ProjectGui:
     def switch_process_table_selection(self, widget=None, data=None):
         new_index = self._treeview_get_active_index(self.process_editor_table, self.process_settings_list)
         if not new_index is None:
+            self.gui.get_object("ProcessSettingsControlsBox").show()
             self._put_process_settings_to_gui(self.process_settings_list[new_index])
             self.update_process_table()
+        else:
+            self.gui.get_object("ProcessSettingsControlsBox").hide()
         
     @gui_activity_guard
     def handle_process_table_event(self, widget, data, action=None):
@@ -1491,7 +1500,7 @@ class ProjectGui:
     def get_pathgenerator_instance(self, cutter, process_settings):
         pathgenerator = process_settings["path_generator"]
         pathprocessor = process_settings["path_postprocessor"]
-        physics = self.get_physics(cutter)
+        physics = self.get_physics(cutter, process_settings["material_allowance"])
         if pathgenerator == "DropCutter":
             if pathprocessor == "ZigZagCutter":
                 processor = pycam.PathProcessors.PathAccumulator(zigzag=True)

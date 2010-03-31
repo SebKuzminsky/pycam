@@ -54,83 +54,119 @@ class Settings:
         return str(result)
 
 
-class ProcessingSettings:
+class SettingsManager:
 
     DEFAULT_CONFIG = """
-[DEFAULT]
-cutter_shape: SphericalCutter
-path_direction: x
-path_generator: DropCutter
-path_postprocessor: PathAccumulator
-# the dimensions of the bounding box are disabled to keep the previous values
-#minx: -7
-#miny: -7
-#minz: 0
-#maxx: 7
-#maxy: 7
-#maxz: 3
-tool_radius: 1.0
+[ToolDefault]
 torus_radius: 0.25
-speed: 1000
-feedrate: 200
-material_allowance: 0.0
-overlap: 20
-step_down: 1.0
-# default sort weight is low (thus new items will appear above the defaults)
-sort_weight: 0
+feedrate: 1000
+speed: 200
 
-[Rough]
-sort_weight: 90
-cutter_shape: CylindricalCutter
+[Tool0]
+name: Cylindrical (3 inch)
+shape: CylindricalCutter
+tool_radius: 3
+
+[Tool1]
+name: Spherical (0.1 inch)
+shape: SphericalCutter
+tool_radius: 1
+
+[Tool2]
+name: Toroidal (2 inch)
+shape: ToroidalCutter
+tool_radius: 2
+torus_radius: 0.2
+
+[ProcessDefault]
+path_direction: x
+safety_height: 5
+step_down: 1
+
+[Process0]
+name: Rough
 path_generator: PushCutter
 path_postprocessor: PolygonCutter
-tool_radius: 1.0
-material_allowance: 1.0
+material_allowance: 0.5
+step_down: 0.8
+overlap: 0
 
-
-[Semi-finish]
-sort_weight: 91
-cutter_shape: ToroidalCutter
+[Process1]
+name: Semi-finish
 path_generator: PushCutter
 path_postprocessor: ContourCutter
-tool_radius: 0.5
-material_allowance: 0.3
+material_allowance: 0.2
+step_down: 0.5
+overlap: 20
 
-[Finish]
-sort_weight: 92
-cutter_shape: SphericalCutter
+[Process2]
+name: Finish
 path_generator: DropCutter
 path_postprocessor: ZigZagCutter
-tool_radius: 0.1
 material_allowance: 0.0
+overlap: 60
+
+[TaskDefault]
+enabled: 1
+
+[Task0]
+tool: 0
+process: 0
+
+[Task1]
+tool: 2
+process: 1
+
+[Task2]
+tool: 1
+process: 2
 """
 
     SETTING_TYPES = {
-            "cutter_shape": str,
+            "name": str,
+            "shape": str,
+            "tool_radius": float,
+            "torus_radius": float,
+            "speed": float,
+            "feedrate": float,
             "path_direction": str,
             "path_generator": str,
             "path_postprocessor": str,
+            "safety_height": float,
+            "material_allowance": float,
+            "overlap": float,
+            "step_down": float,
+            "tool": object,
+            "process": object,
+            "enabled": bool,
             "minx": float,
             "miny": float,
             "minz": float,
             "maxx": float,
             "maxy": float,
             "maxz": float,
-            "tool_radius": float,
-            "torus_radius": float,
-            "speed": float,
-            "feedrate": float,
-            "material_allowance": float,
-            "overlap": float,
-            "step_down": float,
     }
 
-    def __init__(self, settings):
-        self.settings = settings
+    CATEGORY_KEYS = {
+            "tool": ("name", "shape", "tool_radius", "torus_radius", "feedrate", "speed"),
+            "process": ("name", "path_generator", "path_postprocessor", "path_direction",
+                    "safety_height", "material_allowance", "overlap", "step_down"),
+            "task": ("tool", "process", "enabled"),
+    }
+
+    SECTION_PREFIXES = {
+        "tool": "Tool",
+        "process": "Process",
+        "task": "Task",
+    }
+
+    def __init__(self):
         self.config = None
+        self._cache = {}
         self.reset()
 
     def reset(self, config_text=None):
+        self._cache = {}
         self.config = ConfigParser.SafeConfigParser()
         if config_text is None:
             config_text = StringIO.StringIO(self.DEFAULT_CONFIG)
@@ -165,43 +201,47 @@ material_allowance: 0.0
             return False
         return True
 
-    def enable_config(self, section="DEFAULT"):
-        for key, value_type in self.SETTING_TYPES.items():
-            try:
-                value = value_type(self.config.get(section, key))
-            except ConfigParser.NoOptionError:
-                # we can safely ignore it and keep the original
-                try:
-                    value = value_type(self.config.get("DEFAULT", key))
-                except ConfigParser.NoOptionError:
-                    value = None
-            except ValueError, err_msg:
-                print >> sys.stderr, "Invalid config value for '%s = %s': %s" % (key, self.config.get(section, key), err_msg)
-                value = None
-            if not value is None:
-                self.settings.set(key, value)
+    def get_tools(self):
+        return self._get_category_items("tool")
 
-    def get_config_list(self):
-        items = self.config.sections()[:]
-        # sort the list according to "sort_weight"
-        def cmp(sec1, sec2):
-            diff = int(self.config.get(sec1, "sort_weight")) - int(self.config.get(sec2, "sort_weight"))
-            if diff < 0:
-                return -1
-            elif diff == 0:
-                return 0
-            else:
-                return 1
-        items.sort(cmp)
-        return items
+    def get_processes(self):
+        return self._get_category_items("process")
 
-    def store_config(self, section="DEFAULT"):
-        if not self.config.has_section(section):
-            self.config.add_section(section)
-        for key, value_type in self.SETTING_TYPES.items():
-            self.config.set(section, key, str(self.settings.get(key)))
+    def get_tasks(self):
+        return self._get_category_items("task")
 
-    def delete_config(self, section=None):
-        if self.config.has_section(section):
-            self.config.remove_section(section)
+    def _get_category_items(self, type_name):
+        if not self._cache.has_key(type_name):
+            item_list = []
+            index = 0
+            prefix = self.SECTION_PREFIXES[type_name]
+            current_section_name = "%s%d" % (prefix, index)
+            while current_section_name in self.config.sections():
+                item = {}
+                for key in self.CATEGORY_KEYS[type_name]:
+                    value_type = self.SETTING_TYPES[key]
+                    try:
+                        value_raw = self.config.get(current_section_name, key)
+                    except ConfigParser.NoOptionError:
+                        try:
+                            value_raw = self.config.get(prefix + "Default", key)
+                        except ConfigParser.NoOptionError:
+                            value_raw = None
+                    if not value_raw is None:
+                        try:
+                            if value_type == object:
+                                # try to get the referenced object
+                                value = self._get_category_items(key)[int(value_raw)]
+                            else:
+                                # just do a simple type cast
+                                value = value_type(value_raw)
+                        except (ValueError, IndexError):
+                            value = None
+                        if not value is None:
+                            item[key] = value
+                item_list.append(item)
+                index += 1
+                current_section_name = "%s%d" % (prefix, index)
+            self._cache[type_name] = item_list
+        return self._cache[type_name][:]
 
