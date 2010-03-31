@@ -1,6 +1,9 @@
 Version 0.2.3 - UNRELEASED
+ * GUI change: tool and process settings can be combined into tasks
  * fixed "overlap" calculation
  * added a warning dialog (GUI) for missing dependencies during startup (especially useful for Windows)
+ * prevent invalid input values (zero tool radius, ...)
+ * reduced memory consumption of toolpaths for python 2.6 or above
 
 Version 0.2.2 - 2010-03-17
  * added a graphical installer for Windows (via distutils)

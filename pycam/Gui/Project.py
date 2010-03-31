@@ -408,7 +408,6 @@ class ProjectGui:
                 gtk.accel_map_change_entry(accel_path, key, mod, True)
         # other events
         self.window.connect("destroy", self.destroy)
-        self.gui.get_object("GenerateToolPathButton").connect("clicked", self.generate_toolpath)
         # the settings window
         self.gui.get_object("CloseSettingsWindow").connect("clicked", self.toggle_settings_window, False)
         self.settings_window = self.gui.get_object("GeneralSettingsWindow")
@@ -427,6 +426,9 @@ class ProjectGui:
         self.toolpath = GuiCommon.ToolPathList()
         self._physics_cache = None
         self.cutter = None
+        self.process_settings_list = []
+        self.tool_list = []
+        self.task_list = []
         # add some dummies - to be implemented later ...
         self.settings.add_item("model", lambda: self.model)
         self.settings.add_item("toolpath", lambda: self.toolpath)
@@ -457,17 +459,6 @@ class ProjectGui:
         self.gui.get_object("Scale up").connect("clicked", self.scale_model, True)
         self.gui.get_object("Scale down").connect("clicked", self.scale_model, False)
         self.gui.get_object("Scale factor").set_value(2)
-        # drill, path and processing settings
-        for objname, key in (("MaterialAllowanceControl", "material_allowance"),
-                ("MaxStepDownControl", "step_down"),
-                ("OverlapPercentControl", "overlap"),
-                ("ToolRadiusControl", "tool_radius"),
-                ("TorusRadiusControl", "torus_radius"),
-                ("FeedrateControl", "feedrate"),
-                ("SpeedControl", "speed"),
-                ("SafetyHeightControl", "safety_height")):
-            obj = self.gui.get_object(objname)
-            self.settings.add_item(key, obj.get_value, obj.set_value)
         # visual and general settings
         for name, objname in (("show_model", "ShowModelCheckBox"),
                 ("show_axes", "ShowAxesCheckBox"),
@@ -534,89 +525,84 @@ class ProjectGui:
         skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
         self.settings.add_item("drill_progress_max_fps", skip_obj.get_value, skip_obj.set_value)
         self.settings.set("drill_progress_max_fps", 2)
-        # cutter shapes
-        def get_cutter_shape_name():
-            for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
-                if self.gui.get_object(name).get_active():
-                    return name
-        def set_cutter_shape_name(value):
-            self.gui.get_object(value).set_active(True)
-        self.settings.add_item("cutter_shape", get_cutter_shape_name, set_cutter_shape_name)
-        # path generator
-        def get_path_generator():
-            for name in ("DropCutter", "PushCutter"):
-                if self.gui.get_object(name).get_active():
-                    return name
-        def set_path_generator(value):
-            self.gui.get_object(value).set_active(True)
-        self.settings.add_item("path_generator", get_path_generator, set_path_generator)
-        # path postprocessor
-        def get_path_postprocessor():
-            for name in ("PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter", "ContourCutter"):
-                if self.gui.get_object(name).get_active():
-                    return name
-        def set_path_postprocessor(value):
-            self.gui.get_object(value).set_active(True)
-        self.settings.add_item("path_postprocessor", get_path_postprocessor, set_path_postprocessor)
-        # path direction (combined get/set function)
-        def set_get_path_direction(input=None):
-            for obj, value in (("PathDirectionX", "x"), ("PathDirectionY", "y"), ("PathDirectionXY", "xy")):
-                if value == input:
-                    self.gui.get_object(obj).set_active(True)
-                    return
-                if self.gui.get_object(obj).get_active():
-                    return value
-        self.settings.add_item("path_direction", set_get_path_direction, set_get_path_direction)
-        # connect the "consistency check" with all toolpath settings
+        # drill settings
+        for objname, key in (
+                ("ToolRadiusControl", "tool_radius"),
+                ("TorusRadiusControl", "torus_radius"),
+                ("FeedrateControl", "feedrate"),
+                ("SpeedControl", "speed")):
+            self.gui.get_object(objname).connect("changed", self.handle_tool_settings_change)
+        for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
+            self.gui.get_object(name).connect("clicked", self.handle_tool_settings_change)
+        self.gui.get_object("ToolName").connect("changed", self.handle_tool_settings_change)
+        # speed and feedrate controls
+        speed_control = self.gui.get_object("SpeedControl")
+        feedrate_control = self.gui.get_object("FeedrateControl")
+        # connect the "consistency check" and the update-handler with all toolpath settings
         for objname in ("PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter", "ContourCutter",
                 "DropCutter", "PushCutter", "PathDirectionX", "PathDirectionY", "PathDirectionXY", "SettingEnableODE"):
-            self.gui.get_object(objname).connect("toggled", self.disable_invalid_toolpath_settings)
-        for objname in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
-            self.gui.get_object(objname).connect("toggled", self.update_tool_selector)
-        for objname in ("ToolRadiusControl", "TorusRadiusControl"):
-            self.gui.get_object(objname).connect("value-changed", self.update_tool_selector)
+            self.gui.get_object(objname).connect("toggled", self.disable_invalid_process_settings)
+            if objname != "SettingEnableODE":
+                self.gui.get_object(objname).connect("toggled", self.handle_process_settings_change)
+        for objname in ("SafetyHeightControl", "OverlapPercentControl",
+                "MaterialAllowanceControl", "MaxStepDownControl"):
+            self.gui.get_object(objname).connect("changed", self.handle_process_settings_change)
+        self.gui.get_object("ProcessSettingName").connect("changed", self.handle_process_settings_change)
         # load a processing configuration object
         self.processing_settings = pycam.Gui.Settings.ProcessingSettings(self.settings)
-        self.processing_config_selection = self.gui.get_object("ProcessingTemplatesList")
-        self.processing_config_selection.connect("changed",
-                self.switch_processing_config, self.processing_config_selection.get_active)
-        self.gui.get_object("ProcessingTemplateDelete").connect("clicked",
-                self.delete_processing_config, lambda: self.processing_config_selection.get_child().get_text())
-        self.gui.get_object("ProcessingTemplateSave").connect("clicked",
-                self.save_processing_config, lambda: self.processing_config_selection.get_child().get_text())
+        self.process_settings_list = []
+        self.process_table = self.gui.get_object("ProcessListTable")
+        self.process_editor_table = self.gui.get_object("ProcessEditorWindowTable")
+        self.process_editor_table.get_selection().connect("changed", self.switch_process_table_selection)
+        process_editor_window = self.gui.get_object("ProcessEditorWindow")
+        process_editor_window.connect("delete-event", self.toggle_process_editor_window, False)
+        # set a minimum size - otherwise the window is too small for an empty table
+        process_editor_window.set_default_size(400, -1)
+        self.gui.get_object("ProcessEditorWindowOpen").connect("clicked", self.toggle_process_editor_window, True)
+        self.gui.get_object("ProcessEditorWindowClose").connect("clicked", self.toggle_process_editor_window, False)
+        self.gui.get_object("ProcessListMoveUp").connect("clicked", self.handle_process_table_event, "move_up")
+        self.gui.get_object("ProcessListMoveDown").connect("clicked", self.handle_process_table_event, "move_down")
+        self.gui.get_object("ProcessListAdd").connect("clicked", self.handle_process_table_event, "add")
+        self.gui.get_object("ProcessListDelete").connect("clicked", self.handle_process_table_event, "delete")
         # progress bar and task pane
         self.progress_bar = self.gui.get_object("ProgressBar")
         self.progress_widget = self.gui.get_object("ProgressWidget")
-        self.task_pane = self.gui.get_object("Tasks")
+        self.task_pane = self.gui.get_object("MainTabs")
         self.gui.get_object("ProgressCancelButton").connect("clicked", self.cancel_progress)
         # make sure that the toolpath settings are consistent
         self.toolpath_table = self.gui.get_object("ToolPathTable")
         self.toolpath_table.get_selection().connect("changed", self.toolpath_table_event, "update_buttons")
         self.gui.get_object("toolpath_visible").connect("toggled", self.toolpath_table_event, "toggle_visibility")
         self.gui.get_object("toolpath_up").connect("clicked", self.toolpath_table_event, "move_up")
-        self.gui.get_object("toolpath_delete").connect("clicked", self.toolpath_table_event, "delete")
         self.gui.get_object("toolpath_down").connect("clicked", self.toolpath_table_event, "move_down")
+        self.gui.get_object("toolpath_delete").connect("clicked", self.toolpath_table_event, "delete")
         # store the original content (for adding the number of current toolpaths in "update_toolpath_table")
         self._original_toolpath_tab_label = self.gui.get_object("ToolPathTabLabel").get_text()
         # tool editor
-        self.tool_list = []
-        self.tool_editor_table = self.gui.get_object("ToolListTable")
-        self.tool_selector = self.gui.get_object("ToolSelector")
-        self.tool_selector.connect("changed", self._tool_selector_changed_event)
-        self.gui.get_object("ToolProperties").connect("clicked", self.toggle_tool_editor_window, True)
+        self.tool_table = self.gui.get_object("ToolListTable")
+        self.tool_editor_table = self.gui.get_object("ToolEditorWindowTable")
+        self.tool_editor_table.get_selection().connect("changed", self.switch_tool_editor_table_selection)
+        tool_editor_window = self.gui.get_object("ToolEditorWindow")
+        tool_editor_window.set_default_size(400, -1)
+        tool_editor_window.connect("delete-event", self.toggle_tool_editor_window, False)
+        self.gui.get_object("ToolEditorWindowOpen").connect("clicked", self.toggle_tool_editor_window, True)
         self.gui.get_object("ToolEditorWindowClose").connect("clicked", self.toggle_tool_editor_window, False)
-        self.tool_editor_table.get_selection().connect("changed", self._tool_editor_button_event, "update_buttons")
-        self.gui.get_object("ToolEditorDelete").connect("clicked", self._tool_editor_button_event, "delete")
-        self.gui.get_object("ToolEditorImport").connect("clicked", self._tool_editor_button_event, "import")
-        self.gui.get_object("ToolEditorExport").connect("clicked", self._tool_editor_button_event, "export")
         self.gui.get_object("ToolEditorMoveUp").connect("clicked", self._tool_editor_button_event, "move_up")
         self.gui.get_object("ToolEditorMoveDown").connect("clicked", self._tool_editor_button_event, "move_down")
         self.gui.get_object("ToolEditorAdd").connect("clicked", self._tool_editor_button_event, "add")
-        # speed and feedrate controls
-        speed_control = self.gui.get_object("SpeedControl")
-        self.settings.add_item("speed", speed_control.get_value, speed_control.set_value)
-        feedrate_control = self.gui.get_object("FeedrateControl")
-        self.settings.add_item("feedrate", feedrate_control.get_value, feedrate_control.set_value)
+        self.gui.get_object("ToolEditorDelete").connect("clicked", self._tool_editor_button_event, "delete")
+        # the task list manager
+        self.tasklist_table = self.gui.get_object("TaskListTable")
+        self.tasklist_table.get_selection().connect("changed", self.update_tasklist_controls)
+        self.tool_table.get_selection().connect("changed", self.update_tasklist_controls)
+        self.process_table.get_selection().connect("changed", self.update_tasklist_controls)
+        self.gui.get_object("tasklist_enabled").connect("toggled", self._handle_tasklist_button_event, "toggle_enabled")
+        self.gui.get_object("TaskListMoveUp").connect("clicked", self._handle_tasklist_button_event, "move_up")
+        self.gui.get_object("TaskListMoveDown").connect("clicked", self._handle_tasklist_button_event, "move_down")
+        self.gui.get_object("TaskListAdd").connect("clicked", self._handle_tasklist_button_event, "add")
+        self.gui.get_object("TaskListDelete").connect("clicked", self._handle_tasklist_button_event, "delete")
+        self.gui.get_object("GenerateToolPathButton").connect("clicked", self._handle_tasklist_button_event, "generate_one_toolpath")
+        self.gui.get_object("GenerateAllToolPathsButton").connect("clicked", self._handle_tasklist_button_event, "generate_all_toolpaths")
         # menu bar
         uimanager = gtk.UIManager()
         self._accel_group = uimanager.get_accel_group()
@@ -642,9 +628,12 @@ class ProjectGui:
         # some more initialization
         self.processing_settings.enable_config()
         self.update_toolpath_table()
-        self.update_tool_editor()
-        self.update_tool_selector()
-        self.disable_invalid_toolpath_settings()
+        self.update_tool_table()
+        self.update_tool_controls()
+        self.disable_invalid_process_settings()
+        self.update_process_table()
+        self.update_tasklist_table()
+        self.update_tasklist_controls()
         self.load_processing_settings()
         self.update_save_actions()
         self.update_unit_labels()
@@ -658,9 +647,10 @@ class ProjectGui:
             self._progress_running = True
             self._progress_cancel_requested = False
             self.toggle_progress_bar(True)
-            func(self, *args, **kwargs)
+            result = func(self, *args, **kwargs)
             self.toggle_progress_bar(False)
             self._progress_running = False
+            return result
         return wrapper
 
     def gui_activity_guard(func):
@@ -694,44 +684,162 @@ class ProjectGui:
         self.gui.get_object("SaveProcessingTemplates").set_sensitive(not self.last_config_file is None)
         self.gui.get_object("SaveModel").set_sensitive(not self.last_model_file is None)
 
-    def disable_invalid_toolpath_settings(self, widget=None, data=None):
+    def update_tasklist_controls(self, widget=None, data=None):
+        # check if both the tool and the process table have a selected row
+        all_are_active = True
+        for control in (self.tool_table, self.process_table):
+            if control.get_selection().get_selected()[1] is None:
+                all_are_active = False
+        self.gui.get_object("TaskListAdd").set_sensitive(all_are_active)
+        # en/disable some buttons
+        index = self._treeview_get_active_index(self.tasklist_table, self.task_list)
+        selection_active = not index is None
+        self.gui.get_object("TaskListDelete").set_sensitive(selection_active)
+        self.gui.get_object("TaskListMoveUp").set_sensitive(selection_active and index > 0)
+        self.gui.get_object("TaskListMoveDown").set_sensitive(selection_active and index < len(self.task_list) - 1)
+        self.gui.get_object("GenerateToolPathButton").set_sensitive(selection_active)
+        # check if any of the tasks is marked as "enabled"
+        enabled_count = len([True for task in self.task_list if task["enabled"]])
+        self.gui.get_object("GenerateAllToolPathsButton").set_sensitive(enabled_count > 0)
+        # update the task description
+        lines = []
+        task_index = self._treeview_get_active_index(self.tasklist_table, self.task_list)
+        if not task_index is None:
+            task = self.task_list[task_index]
+            tool = task["tool"]
+            process = task["process"]
+            unit = self.settings.get("unit")
+            tool_desc = "Tool: %s " % tool["shape"]
+            if tool["shape"] != "ToroidalCutter":
+                tool_desc += "(%.4f%s)" % (tool["tool_radius"], unit)
+            else:
+                tool_desc += "(%.4f%s / %.4f%s)" % (tool["tool_radius"], unit, tool["torus_radius"], unit)
+            lines.append(tool_desc)
+            lines.append("Speed: %d/minute / Feedrate: %d%s/minute" % (tool["speed"], tool["feedrate"], unit))
+            lines.append("Path: %s / %s" % (process["path_generator"], process["path_postprocessor"]))
+            lines.append("Overlap: %d%%" % process["overlap"])
+            lines.append("Material allowance: %.2f%s" % (process["material_allowance"], unit))
+            if process["path_generator"] == "PushCutter":
+                lines.append("Maximum step down: %.2f%s" % (process["step_down"], unit))
+        else:
+            lines.append("No task selected")
+        self.gui.get_object("CurrentTaskSummary").set_text(os.linesep.join(lines))
+
+
+    def update_tasklist_table(self, new_index=None, skip_model_update=False):
+        tasklist_model = self.gui.get_object("TaskList")
+        if new_index is None:
+            # keep the old selection - this may return "None" if nothing is selected
+            new_index = self._treeview_get_active_index(self.tasklist_table, self.task_list)
+        if not skip_model_update:
+            tasklist_model.clear()
+            # remove broken tasks from the list (tool or process was deleted)
+            self.task_list = [task for task in self.task_list
+                    if (task["tool"] in self.tool_list) and (task["process"] in self.process_settings_list)]
+            counter = 0
+            for task in self.task_list:
+                tasklist_model.append((counter, task["tool"]["name"], task["process"]["name"], task["enabled"]))
+                counter += 1
+            if not new_index is None:
+                self._treeview_set_active_index(self.tasklist_table, new_index)
+        self.update_tasklist_controls()
+
+    @gui_activity_guard
+    def _handle_tasklist_button_event(self, widget, data, action=None):
+        # "toggle" uses two parameters - all other actions have only one
+        if action is None:
+            action = data
+        # get the index of the currently selected task
+        try:
+            current_task_index = self._treeview_get_active_index(self.tasklist_table, self.task_list)
+        except ValueError:
+            current_task_index = None
+        self._treeview_button_event(self.tasklist_table, self.task_list, action, self.update_tasklist_table)
+        if action == "add":
+            tool_index = self._treeview_get_active_index(self.tool_table, self.tool_list)
+            process_index = self._treeview_get_active_index(self.process_table, self.process_settings_list)
+            new_task = {}
+            new_task["tool"] = self.tool_list[tool_index]
+            new_task["process"] = self.process_settings_list[process_index]
+            new_task["enabled"] = True
+            self.task_list.append(new_task)
+            self.update_tasklist_table(self.task_list.index(new_task))
+        elif action == "toggle_enabled":
+            if (not current_task_index is None) and (current_task_index < len(self.task_list)):
+                self.task_list[current_task_index]["enabled"] = not self.task_list[current_task_index]["enabled"]
+            # update the table values
+            self.update_tasklist_table(current_task_index)
+        elif action == "generate_all_toolpaths":
+            enabled_tasks = []
+            for index in range(len(self.task_list)):
+                task = self.task_list[index]
+                if task["enabled"]:
+                    enabled_tasks.append(task)
+            progress_bar = self.gui.get_object("MultipleProgressBar")
+            progress_bar.show()
+            for index in range(len(enabled_tasks)):
+                progress_bar.set_fraction(float(index) / len(enabled_tasks))
+                progress_bar.set_text("Toolpath %d/%d" % (index, len(enabled_tasks)))
+                task = enabled_tasks[index]
+                if not self.generate_toolpath(task["tool"], task["process"]):
+                    # break out of the loop, if cancel was requested
+                    break
+            progress_bar.hide()
+        elif action == "generate_one_toolpath":
+            task = self.task_list[current_task_index]
+            self.generate_toolpath(task["tool"], task["process"])
+        else:
+            pass
+
+    def disable_invalid_process_settings(self, widget=None, data=None):
         # possible dependencies of the DropCutter
-        if self.settings.get("path_generator") == "DropCutter":
-            if self.settings.get("path_direction") == "xy":
-                self.settings.set("path_direction", "x")
-            if not self.settings.get("path_postprocessor") in ("PathAccumulator", "ZigZagCutter"):
-                self.settings.set("path_postprocessor", "PathAccumulator")
+        get_obj = lambda name: self.gui.get_object(name)
+        if get_obj("DropCutter").get_active():
+            if get_obj("PathDirectionXY").get_active():
+                get_obj("PathDirectionX").set_active(True)
+            if not (get_obj("PathAccumulator").get_active() or get_obj("ZigZagCutter").get_active()):
+                get_obj("PathAccumulator").set_active(True)
             dropcutter_active = True
         else:
+            # PushCutter
+            if not (get_obj("SimpleCutter").get_active() \
+                    or get_obj("PolygonCutter").get_active() \
+                    or get_obj("ContourCutter").get_active()):
+                get_obj("SimpleCutter").set_active(True)
             dropcutter_active = False
         for objname in ("PathDirectionXY", "SimpleCutter", "PolygonCutter", "ContourCutter"):
             self.gui.get_object(objname).set_sensitive(not dropcutter_active)
-        self.gui.get_object("PathDirectionXY").set_sensitive(not dropcutter_active)
-        # disable the dropcutter, if "xy" or one of "SimpleCutter", "PolygonCutter", "ContourCutter" is enabled
-        if (self.settings.get("path_postprocessor") in ("SimpleCutter", "PolygonCutter", "ContourCutter")) \
-                or (self.settings.get("path_direction") == "xy"):
-            self.gui.get_object("DropCutter").set_sensitive(False)
-        else:
-            self.gui.get_object("DropCutter").set_sensitive(True)
+        for objname in ("PathAccumulator", "ZigZagCutter"):
+            self.gui.get_object(objname).set_sensitive(dropcutter_active)
         # disable "step down" control, if PushCutter is not active
-        self.gui.get_object("MaxStepDownControl").set_sensitive(self.settings.get("path_generator") == "PushCutter")
+        self.gui.get_object("MaxStepDownControl").set_sensitive(get_obj("PushCutter").get_active())
         # "material allowance" requires ODE support
         self.gui.get_object("MaterialAllowanceControl").set_sensitive(self.settings.get("enable_ode"))
 
     def update_tool_controls(self, widget=None, data=None):
         # disable the toroidal radius if the toroidal cutter is not enabled
-        self.gui.get_object("TorusRadiusControl").set_sensitive(self.settings.get("cutter_shape") == "ToroidalCutter")
+        is_torus_shape = self.gui.get_object("ToroidalCutter").get_active()
+        self.gui.get_object("TorusRadiusControl").set_sensitive(is_torus_shape)
+        for objname, default_value in (("ToolRadiusControl", 1.0),
+                ("TorusRadiusControl", 0.25),
+                ("SpeedControl", 1000),
+                ("FeedrateControl", 200)):
+            obj = self.gui.get_object(objname)
+            if obj.get_value() == 0:
+                # set the value to the configured minimum
+                obj.set_value(default_value)
 
     @gui_activity_guard
     def toggle_about_window(self, widget=None, event=None, state=None):
+        # only "delete-event" uses four arguments
+        # TODO: unify all these "toggle" functions for different windows into one single function (including storing the position)
         if state is None:
-            # the "delete-event" issues the additional "event" argument
             state = event
         if state:
             self.about_window.show()
         else:
             self.about_window.hide()
-        # don't close the window - just hide it
+        # don't close the window - just hide it (for "delete-event")
         return True
 
     @gui_activity_guard
@@ -749,7 +857,35 @@ class ProjectGui:
             self._settings_window_position = self.settings_window.get_position()
             self.settings_window.hide()
         self._settings_window_visible = state
-        # don't close the window - just hide it
+        # don't close the window - just hide it (for "delete-event")
+        return True
+
+    def toggle_tool_editor_window(self, widget=None, event=None, state=None):
+        # only "delete-event" uses four arguments
+        if state is None:
+            state = event
+        if state:
+            tool_index = self._treeview_get_active_index(self.tool_table, self.tool_list)
+            if not tool_index is None:
+                self._treeview_set_active_index(self.tool_editor_table, tool_index)
+            self.gui.get_object("ToolEditorWindow").show()
+        else:
+            self.gui.get_object("ToolEditorWindow").hide()
+        # don't close the window - just hide it (for "delete-event")
+        return True
+
+    def toggle_process_editor_window(self, widget=None, event=None, state=None):
+        # only "delete-event" uses four arguments
+        if state is None:
+            state = event
+        if state:
+            process_index = self._treeview_get_active_index(self.process_table, self.process_settings_list)
+            if not process_index is None:
+                self._treeview_set_active_index(self.process_editor_table, process_index)
+            self.gui.get_object("ProcessEditorWindow").show()
+        else:
+            self.gui.get_object("ProcessEditorWindow").hide()
+        # don't close the window - just hide it (for "delete-event")
         return True
 
     @gui_activity_guard
@@ -802,12 +938,6 @@ class ProjectGui:
             if self.gui.get_object(obj).get_active():
                 GuiCommon.transform_model(self.model, value)
         self.update_view()
-
-    def toggle_tool_editor_window(self, widget=None, state=False):
-        if state:
-            self.gui.get_object("ToolWindow").show()
-        else:
-            self.gui.get_object("ToolWindow").hide()
 
     def _treeview_get_active_index(self, table, datalist):
         if len(datalist) == 0:
@@ -862,64 +992,72 @@ class ProjectGui:
             pass
         update_func(new_index=future_selection_index, skip_model_update=skip_model_update)
 
+    def _put_tool_settings_to_gui(self, settings):
+        self.gui.get_object("ToolName").set_text(settings["name"])
+        # cutter shapes
+        def set_cutter_shape_name(value):
+            self.gui.get_object(value).set_active(True)
+        set_cutter_shape_name(settings["shape"])
+        for objname, key in (
+                ("ToolRadiusControl", "tool_radius"),
+                ("TorusRadiusControl", "torus_radius"),
+                ("FeedrateControl", "feedrate"),
+                ("SpeedControl", "speed")):
+            self.gui.get_object(objname).set_value(settings[key])
+
+    def _load_tool_settings_from_gui(self, settings=None):
+        if settings is None:
+            settings = {}
+        settings["name"] = self.gui.get_object("ToolName").get_text()
+        def get_cutter_shape_name():
+            for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
+                if self.gui.get_object(name).get_active():
+                    return name
+        settings["shape"] = get_cutter_shape_name()
+        for objname, key in (
+                ("ToolRadiusControl", "tool_radius"),
+                ("TorusRadiusControl", "torus_radius"),
+                ("FeedrateControl", "feedrate"),
+                ("SpeedControl", "speed")):
+            settings[key] = self.gui.get_object(objname).get_value()
+        return settings
+
+    @gui_activity_guard
+    def handle_tool_settings_change(self, widget=None, data=None):
+        current_index = self._treeview_get_active_index(self.tool_editor_table, self.tool_list)
+        if not current_index is None:
+            self._load_tool_settings_from_gui(self.tool_list[current_index])
+            self.update_tool_table()
+        self.update_tool_controls()
+
+    @gui_activity_guard
+    def switch_tool_editor_table_selection(self, widget=None, data=None):
+        new_index = self._treeview_get_active_index(self.tool_editor_table, self.tool_list)
+        if not new_index is None:
+            self._put_tool_settings_to_gui(self.tool_list[new_index])
+            self.update_tool_controls()
+        
     @gui_activity_guard
     def _tool_editor_button_event(self, widget, data, action=None):
         # "toggle" uses two parameters - all other actions have only one
         if action is None:
             action = data
-        current_index = self._treeview_get_active_index(self.tool_editor_table, self.tool_list)
+        self._treeview_button_event(self.tool_editor_table, self.tool_list, action, self.update_tool_table)
         override_index = None
-        if action == "export":
-            if (not current_index is None) and (0 <= current_index < len(self.tool_list)):
-                tool = self.tool_list[current_index]
-                # transfer the cutter attributes to the current session
-                self.set_current_tool(tool)
-        elif (action == "import") or (action == "add"):
-            cutter = self.get_current_tool()
-            if action == "add":
-                if (current_index is None) or (current_index + 1 >= len(self.tool_list)):
-                    self.tool_list.append(cutter)
-                    current_index = len(self.tool_list) - 1
-                else:
-                    current_index += 1
-                    self.tool_list.insert(current_index, cutter)
-                override_index = current_index
-            else:
-                if (not current_index is None) and (0 <= current_index < len(self.tool_list)):
-                    self.tool_list[current_index] = cutter
-        else:
-            pass
-        length_before = len(self.tool_list)
-        self._treeview_button_event(self.tool_editor_table, self.tool_list, action, self.update_tool_editor)
-        length_after = len(self.tool_list)
-        current_index = self._treeview_get_active_index(self.tool_editor_table, self.tool_list)
-        if not override_index is None:
-            self._treeview_set_active_index(self.tool_editor_table, override_index)
-            # update the button states - especially after adding the first tool
-            self.update_tool_editor(new_index=None, skip_model_update=True)
-        self.update_tool_selector()
+        if action == "add":
+            # look for the first unused default name
+            prefix = "New Tool "
+            index = 1
+            # loop while the current name is in use
+            while [True for process in self.tool_list if process["name"] == "%s%d" % (prefix, index)]:
+                index += 1
+            new_settings = self._load_tool_settings_from_gui()
+            new_settings["name"] = "%s%d" % (prefix, index)
+            self.tool_list.append(new_settings)
+            self.update_tool_table(self.tool_list.index(new_settings))
+            self._put_tool_settings_to_gui(new_settings)
 
-    def _tool_selector_changed_event(self, widget=None, data=None):
-        index = self.tool_selector.get_active()
-        if index >= 0:
-            self.set_current_tool(self.tool_list[index])
-        self.update_tool_controls()
-
-    def update_tool_selector(self, widget=None, data=None):
-        selector_index = self.tool_selector.get_active()
-        current_tool = self.get_current_tool()
-        if (selector_index < 0) or (current_tool != self.tool_list[selector_index]):
-            # invalid index for "no selection"
-            result = -1
-            # look for the next suitable tool
-            for one_tool in self.tool_list:
-                if one_tool == current_tool:
-                    result = self.tool_list.index(one_tool)
-                    break
-            self.tool_selector.set_active(result)
-        self.update_tool_controls()
-
-    def update_tool_editor(self, new_index=None, skip_model_update=False):
+    def update_tool_table(self, new_index=None, skip_model_update=False):
         tool_model = self.gui.get_object("ToolList")
         if new_index is None:
             # keep the old selection - this may return "None" if nothing is selected
@@ -928,27 +1066,22 @@ class ProjectGui:
             tool_model.clear()
             counter = 0
             for tool in self.tool_list:
-                # the drill string is something like: "ToroidalCutter<%s,%f,R=%f,r=%f>"
-                # we want to omit the location and improve the formatting
-                # remove the location ("Point<...>")
-                short_name = re.sub("<[^>]*>", "", str(tool))
-                try:
-                    name, attribs = short_name.split(",", 1)
-                except ValueError:
-                    name, attribs = short_name, ""
-                attribs = attribs.rstrip(">").replace(",", " / ")
-                description = "%s (%s)" % (name, attribs)
-                tool_model.append((counter, counter + 1, description))
+                tool_model.append((counter, counter + 1, tool["name"]))
                 counter += 1
             if not new_index is None:
                 self._treeview_set_active_index(self.tool_editor_table, new_index)
         # en/disable some buttons
         selection_active = not new_index is None
         self.gui.get_object("ToolEditorDelete").set_sensitive(selection_active)
-        self.gui.get_object("ToolEditorImport").set_sensitive(selection_active)
-        self.gui.get_object("ToolEditorExport").set_sensitive(selection_active)
         self.gui.get_object("ToolEditorMoveUp").set_sensitive(selection_active and new_index > 0)
         self.gui.get_object("ToolEditorMoveDown").set_sensitive(selection_active and new_index < len(self.tool_list) - 1)
+        # hide all controls if no process is defined
+        if new_index is None:
+            self.gui.get_object("ToolSettingsControlsBox").hide()
+        else:
+            self.gui.get_object("ToolSettingsControlsBox").show()
+        # remove any broken tasks and update changed names
+        self.update_tasklist_table()
 
     def update_unit_labels(self, widget=None, data=None):
         # we can't just use the "unit" setting, since we need the plural of "inch"
@@ -1121,26 +1254,9 @@ class ProjectGui:
             # load the default config
             self.processing_settings.enable_config()
         # reset the combobox
-        self.processing_config_selection.get_model().clear()
-        for config_name in self.processing_settings.get_config_list():
-            self.processing_config_selection.append_text(config_name)
-
-    def switch_processing_config(self, widget=None, section=None):
-        if callable(section):
-            section = section()
-        if section is None:
-            return
-        if isinstance(section, basestring):
-            # a template may be choosen as a string via the commandline
-            if not section in self.processing_settings.get_config_list():
-                section = None
-        elif section == -1:
-            section = None
-        else:
-            section = self.processing_settings.get_config_list()[section]
-        if not section is None:
-            self.processing_settings.enable_config(section)
-            self._visually_enable_specific_processing_config(section)
+        #self.processing_config_selection.get_model().clear()
+        #for config_name in self.processing_settings.get_config_list():
+        #    self.processing_config_selection.append_text(config_name)
 
     def delete_processing_config(self, widget=None, section=None):
         if callable(section):
@@ -1167,6 +1283,118 @@ class ProjectGui:
         current_text = self.processing_config_selection.get_child().get_text()
         if section != current_text:
             self.processing_config_selection.get_child().set_text(section)
+
+    def _load_process_settings_from_gui(self, settings=None):
+        if settings is None:
+            settings = {}
+        settings["name"] = self.gui.get_object("ProcessSettingName").get_text()
+        # path generator
+        def get_path_generator():
+            for name in ("DropCutter", "PushCutter"):
+                if self.gui.get_object(name).get_active():
+                    return name
+        settings["path_generator"] = get_path_generator()
+        # path direction
+        def get_path_direction():
+            for obj, value in (("PathDirectionX", "x"), ("PathDirectionY", "y"), ("PathDirectionXY", "xy")):
+                if self.gui.get_object(obj).get_active():
+                    return value
+        settings["path_direction"] = get_path_direction()
+        def get_path_postprocessor():
+            for name in ("PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter", "ContourCutter"):
+                if self.gui.get_object(name).get_active():
+                    return name
+        settings["path_postprocessor"] = get_path_postprocessor()
+        for objname, key in (("SafetyHeightControl", "safety_height"),
+                ("OverlapPercentControl", "overlap"),
+                ("MaterialAllowanceControl", "material_allowance"),
+                ("MaxStepDownControl", "step_down")):
+            settings[key] = self.gui.get_object(objname).get_value()
+        return settings
+
+    def _put_process_settings_to_gui(self, settings):
+        self.gui.get_object("ProcessSettingName").set_text(settings["name"])
+        def set_path_generator(value):
+            self.gui.get_object(value).set_active(True)
+        set_path_generator(settings["path_generator"])
+        # path direction
+        def set_path_direction(input):
+            for obj, value in (("PathDirectionX", "x"), ("PathDirectionY", "y"), ("PathDirectionXY", "xy")):
+                if value == input:
+                    self.gui.get_object(obj).set_active(True)
+                    return
+        set_path_direction(settings["path_direction"])
+        # path postprocessor
+        def set_path_postprocessor(value):
+            self.gui.get_object(value).set_active(True)
+        set_path_postprocessor(settings["path_postprocessor"])
+        for objname, key in (("SafetyHeightControl", "safety_height"),
+                ("OverlapPercentControl", "overlap"),
+                ("MaterialAllowanceControl", "material_allowance"),
+                ("MaxStepDownControl", "step_down")):
+            self.gui.get_object(objname).set_value(settings[key])
+
+    @gui_activity_guard
+    def handle_process_settings_change(self, widget=None, data=None):
+        current_index = self._treeview_get_active_index(self.process_editor_table, self.process_settings_list)
+        if not current_index is None:
+            self._load_process_settings_from_gui(self.process_settings_list[current_index])
+            self.update_process_table()
+
+    def update_process_table(self, new_index=None, skip_model_update=False):
+        # reset the model data and the selection
+        if new_index is None:
+            # keep the old selection - this may return "None" if nothing is selected
+            new_index = self._treeview_get_active_index(self.process_editor_table, self.process_settings_list)
+        if not skip_model_update:
+            # update the TreeModel data
+            model = self.gui.get_object("ProcessList")
+            model.clear()
+            # columns: index, description
+            for index in range(len(self.process_settings_list)):
+                process = self.process_settings_list[index]
+                items = (index, process["name"])
+                model.append(items)
+            if not new_index is None:
+                self._treeview_set_active_index(self.process_editor_table, new_index)
+        # enable/disable the modification buttons
+        self.gui.get_object("ProcessListMoveUp").set_sensitive((not new_index is None) and (new_index > 0))
+        self.gui.get_object("ProcessListDelete").set_sensitive(not new_index is None)
+        self.gui.get_object("ProcessListMoveDown").set_sensitive((not new_index is None) and (new_index + 1 < len(self.process_settings_list)))
+        # hide all controls if no process is defined
+        if new_index is None:
+            self.gui.get_object("ProcessSettingsControlsBox").hide()
+        else:
+            self.gui.get_object("ProcessSettingsControlsBox").show()
+        # remove any broken tasks and update changed names
+        self.update_tasklist_table()
+
+    @gui_activity_guard
+    def switch_process_table_selection(self, widget=None, data=None):
+        new_index = self._treeview_get_active_index(self.process_editor_table, self.process_settings_list)
+        if not new_index is None:
+            self._put_process_settings_to_gui(self.process_settings_list[new_index])
+            self.update_process_table()
+        
+    @gui_activity_guard
+    def handle_process_table_event(self, widget, data, action=None):
+        # "toggle" uses two parameters - all other actions have only one
+        if action is None:
+            action = data
+        self._treeview_button_event(self.process_editor_table, self.process_settings_list, action, self.update_process_table)
+        # do some post-processing ...
+        if action == "add":
+            # look for the first unused default name
+            prefix = "New Process "
+            index = 1
+            # loop while the current name is in use
+            while [True for process in self.process_settings_list if process["name"] == "%s%d" % (prefix, index)]:
+                index += 1
+            new_settings = self._load_process_settings_from_gui()
+            new_settings["name"] = "%s%d" % (prefix, index)
+            self.process_settings_list.append(new_settings)
+            self.update_process_table(self.process_settings_list.index(new_settings))
+            self._put_process_settings_to_gui(new_settings)
 
     @gui_activity_guard
     def toolpath_table_event(self, widget, data, action=None):
@@ -1240,44 +1468,29 @@ class ProjectGui:
         if not self.processing_settings.write_to_file(filename) and not no_dialog:
             show_error_dialog(self.window, "Failed to save processing settings file")
 
-    def set_current_tool(self, tool):
-        # transfer the cutter attributes to the current session
-        if isinstance(tool, pycam.Cutters.SphericalCutter):
-            cutter_shape = "SphericalCutter"
-        elif isinstance(tool, pycam.Cutters.CylindricalCutter):
-            cutter_shape = "CylindricalCutter"
-        elif isinstance(tool, pycam.Cutters.ToroidalCutter):
-            cutter_shape = "ToroidalCutter"
-            self.settings.set("torus_radius", tool.minorradius)
-        else:
-            cutter_shape = None
-        if cutter_shape:
-            self.settings.set("cutter_shape", cutter_shape)
-            self.settings.set("tool_radius", tool.radius)
-
-    def get_current_tool(self):
+    def get_tool_instance(self, tool_settings):
         cutter_height = self.settings.get("maxz") - self.settings.get("minz")
         if self.model:
             cutter_height = max(cutter_height, self.model.maxz - self.model.minz)
         # Due to some weirdness the height of the drill must be bigger than the object's size.
         # Otherwise some collisions are not detected.
         cutter_height *= 4
-        cuttername = self.settings.get("cutter_shape")
-        radius = self.settings.get("tool_radius")
+        cuttername = tool_settings["shape"]
+        radius = tool_settings["tool_radius"]
         if cuttername == "SphericalCutter":
             cutter = pycam.Cutters.SphericalCutter(radius, height=cutter_height)
         elif cuttername == "CylindricalCutter":
             cutter = pycam.Cutters.CylindricalCutter(radius, height=cutter_height)
         elif cuttername == "ToroidalCutter":
-            toroid = self.settings.get("torus_radius")
+            toroid = tool_settings["torus_radius"]
             cutter = pycam.Cutters.ToroidalCutter(radius, toroid, height=cutter_height)
         else:
             pass
         return cutter
 
-    def get_current_pathgenerator(self, cutter):
-        pathgenerator = self.settings.get("path_generator")
-        pathprocessor = self.settings.get("path_postprocessor")
+    def get_pathgenerator_instance(self, cutter, process_settings):
+        pathgenerator = process_settings["path_generator"]
+        pathprocessor = process_settings["path_postprocessor"]
         physics = self.get_physics(cutter)
         if pathgenerator == "DropCutter":
             if pathprocessor == "ZigZagCutter":
@@ -1325,9 +1538,8 @@ class ProjectGui:
     def cancel_progress(self, widget=None):
         self._progress_cancel_requested = True
 
-    @gui_activity_guard
     @progress_activity_guard
-    def generate_toolpath(self, widget=None, data=None):
+    def generate_toolpath(self, tool_settings, process_settings):
         start_time = time.time()
         self.update_progress_bar("Preparing toolpath generation")
         parent = self
@@ -1353,13 +1565,13 @@ class ProjectGui:
             callback = None
         draw_callback = UpdateView(callback,
                 max_fps=self.settings.get("drill_progress_max_fps")).update
-        direction = self.settings.get("path_direction")
+        direction = process_settings["path_direction"]
 
         self.update_progress_bar("Generating collision model")
-        self.cutter = self.get_current_tool()
+        self.cutter = self.get_tool_instance(tool_settings)
 
         # this offset allows to cut a model with a minimal boundary box correctly
-        offset = self.settings.get("tool_radius") / 2.0
+        offset = tool_settings["tool_radius"] / 2.0
 
         minx = float(self.settings.get("minx"))-offset
         maxx = float(self.settings.get("maxx"))+offset
@@ -1368,15 +1580,15 @@ class ProjectGui:
         minz = float(self.settings.get("minz"))
         maxz = float(self.settings.get("maxz"))
 
-        effective_toolradius = self.settings.get("tool_radius") * (1.0 - self.settings.get("overlap")/100.0)
+        effective_toolradius = tool_settings["tool_radius"] * (1.0 - process_settings["overlap"] / 100.0)
         x_shift = effective_toolradius
         y_shift = effective_toolradius
 
         self.update_progress_bar("Starting the toolpath generation")
 
-        pathgenerator = self.get_current_pathgenerator(self.cutter)
+        pathgenerator = self.get_pathgenerator_instance(self.cutter, process_settings)
 
-        pathgenerator_name = self.settings.get("path_generator")
+        pathgenerator_name = process_settings["path_generator"]
         if pathgenerator_name == "DropCutter":
             dx = x_shift
             dy = y_shift
@@ -1386,13 +1598,13 @@ class ProjectGui:
                 toolpath = pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dx, 1, draw_callback)
 
         elif pathgenerator_name == "PushCutter":
-            if self.settings.get("path_postprocessor") == "ContourCutter":
+            if process_settings["path_postprocessor"] == "ContourCutter":
                 dx = x_shift
             else:
                 dx = utils.INFINITE
             dy = y_shift
-            if self.settings.get("step_down") > 0:
-                dz = self.settings.get("step_down")
+            if process_settings["step_down"] > 0:
+                dz = process_settings["step_down"]
             else:
                 dz = utils.INFINITE
             if direction == "x":
@@ -1413,20 +1625,23 @@ class ProjectGui:
                 and self.toolpath[-1].visible:
             self.toolpath[-1].visible = False
         # add the new toolpath
+        description = "%s / %s" % (tool_settings["name"], process_settings["name"])
         self.toolpath.add_toolpath(toolpath,
-                self.processing_config_selection.get_active_text(),
+                description,
                 self.cutter,
-                self.settings.get("speed"),
-                self.settings.get("feedrate"),
-                self.settings.get("material_allowance"),
-                self.settings.get("safety_height"),
+                tool_settings["speed"],
+                tool_settings["feedrate"],
+                process_settings["material_allowance"],
+                process_settings["safety_height"],
                 self.settings.get("unit"),
                 minx, miny, maxz + start_offset)
         self.update_toolpath_table()
         self.update_view()
+        # return "False" if the action was cancelled
+        return not self._progress_cancel_requested
 
-    # for compatibility with old pycam GUI (see pycam_start.py)
-    # TODO: remove it in v0.2
+    # for compatibility with old pycam GUI (see pycamGUI)
+    # TODO: remove it in v0.3
     generateToolpath = generate_toolpath
 
     def get_filename_via_dialog(self, title, mode_load=False, type_filter=None):
