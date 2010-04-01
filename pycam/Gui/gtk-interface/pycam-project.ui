@@ -2068,18 +2068,18 @@ This combination is added to the above task list.</property>
     <property name="tooltip">Write all current toolpaths to a file.</property>
     <property name="stock_id">gtk-execute</property>
   </object>
-  <object class="GtkAction" id="LoadProcessingTemplates">
-    <property name="label">_Load Processing Settings</property>
+  <object class="GtkAction" id="LoadSettings">
+    <property name="label">_Load Settings</property>
     <property name="tooltip">Loads a set of processing templates from a file.</property>
     <property name="stock_id">gtk-open</property>
   </object>
-  <object class="GtkAction" id="SaveProcessingTemplates">
-    <property name="label">_Save Processing Settings</property>
+  <object class="GtkAction" id="SaveSettings">
+    <property name="label">_Save Settings</property>
     <property name="tooltip">Save the currently visible set of processing templates to a file.</property>
     <property name="stock_id">gtk-save</property>
   </object>
-  <object class="GtkAction" id="SaveAsProcessingTemplates">
-    <property name="label">Save Processing Settings _as ...</property>
+  <object class="GtkAction" id="SaveAsSettings">
+    <property name="label">Save Settings _as ...</property>
     <property name="tooltip">Save the currently visible set of processing templates to a new file.</property>
     <property name="stock_id">gtk-save-as</property>
   </object>
@@ -3739,6 +3739,8 @@ You should have received a copy of the GNU General Public License along with thi
                                           <object class="GtkSpinButton" id="OverlapPercentControl">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
+                                            <property name="tooltip_text" translatable="yes">The distance between two neighbouring drill positions is based on the overlap value.
+Use high values for fine-grained toolpaths.</property>
                                             <property name="invisible_char">&#x2022;</property>
                                             <property name="adjustment">OverlapPercentValue</property>
                                             <property name="numeric">True</property>
@@ -3769,6 +3771,11 @@ You should have received a copy of the GNU General Public License along with thi
                                           <object class="GtkSpinButton" id="MaterialAllowanceControl">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
+                                            <property name="tooltip_text" translatable="yes">Material allowance determines the minimum distance that should be preserved between the tool and the model.
+This value should be greater than zero for the first roughing operation.
+The last finishing operation should have zero material allowance.
+
+ODE is required for this setting.</property>
                                             <property name="invisible_char">&#x2022;</property>
                                             <property name="adjustment">MaterialAllowanceValue</property>
                                             <property name="digits">2</property>
@@ -3787,6 +3794,7 @@ You should have received a copy of the GNU General Public License along with thi
                                           <object class="GtkSpinButton" id="MaxStepDownControl">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
+                                            <property name="tooltip_text" translatable="yes">This value determines the maximum height of each PushCutter slice.</property>
                                             <property name="invisible_char">&#x2022;</property>
                                             <property name="adjustment">MaxStepDownValue</property>
                                             <property name="digits">2</property>
@@ -3829,6 +3837,7 @@ You should have received a copy of the GNU General Public License along with thi
                                           <object class="GtkSpinButton" id="SafetyHeightControl">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
+                                            <property name="tooltip_text" translatable="yes">The drill will return between lines and slices to the safe height.</property>
                                             <property name="invisible_char">&#x2022;</property>
                                             <property name="adjustment">SafetyHeightValue</property>
                                             <property name="digits">1</property>

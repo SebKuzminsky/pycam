@@ -10,9 +10,9 @@
       <menuitem action="Quit"/>
     </menu>
     <menu action="SettingsMenu">
-      <menuitem action="LoadProcessingTemplates"/>
-      <menuitem action="SaveProcessingTemplates"/>
-      <menuitem action="SaveAsProcessingTemplates"/>
+      <menuitem action="LoadSettings"/>
+      <menuitem action="SaveSettings"/>
+      <menuitem action="SaveAsSettings"/>
       <separator />
       <menuitem action="GeneralSettings"/>
     </menu>

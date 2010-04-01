@@ -381,13 +381,14 @@ class ProjectGui:
         self.gui.add_from_file(gtk_build_file)
         self.window = self.gui.get_object("ProjectWindow")
         # file loading
-        self.last_config_file = None
+        self.last_settings_file = None
         self.last_model_file = None
         self.last_toolpath_file = None
         # define callbacks and accelerator keys for the menu actions
         for objname, callback, data, accel_key in (
-                ("LoadProcessingTemplates", self.load_processing_file, None, "<Control>t"),
-                ("SaveProcessingTemplates", self.save_processing_settings_file, lambda: self.last_config_file, None),
+                ("LoadSettings", self.load_settings_file, None, "<Control>t"),
+                ("SaveSettings", self.save_settings_file, lambda: self.last_settings_file, None),
+                ("SaveAsSettings", self.save_settings_file, None, None),
                 ("LoadModel", self.load_model_file, None, "<Control>l"),
                 ("SaveModel", self.save_model, lambda: self.last_model_file, "<Control>s"),
                 ("SaveAsModel", self.save_model, None, "<Control><Shift>s"),
@@ -426,7 +427,7 @@ class ProjectGui:
         self.toolpath = GuiCommon.ToolPathList()
         self._physics_cache = None
         self.cutter = None
-        self.process_settings_list = []
+        self.process_list = []
         self.tool_list = []
         self.task_list = []
         # add some dummies - to be implemented later ...
@@ -548,11 +549,7 @@ class ProjectGui:
                 "MaterialAllowanceControl", "MaxStepDownControl"):
             self.gui.get_object(objname).connect("changed", self.handle_process_settings_change)
         self.gui.get_object("ProcessSettingName").connect("changed", self.handle_process_settings_change)
-        # load a processing configuration object
-        default_settings = pycam.Gui.Settings.SettingsManager()
-        self.tool_list.extend(default_settings.get_tools())
-        self.process_settings_list.extend(default_settings.get_processes())
-        self.task_list.extend(default_settings.get_tasks())
+        # the process manager
         self.process_table = self.gui.get_object("ProcessListTable")
         self.process_editor_table = self.gui.get_object("ProcessEditorWindowTable")
         self.process_editor_table.get_selection().connect("changed", self.switch_process_table_selection)
@@ -628,6 +625,7 @@ class ProjectGui:
         window_box.pack_start(self.menubar, False)
         window_box.reorder_child(self.menubar, 0)
         # some more initialization
+        self.load_settings()
         self.update_toolpath_table()
         self.update_tool_table()
         self.update_tool_controls()
@@ -635,7 +633,6 @@ class ProjectGui:
         self.update_process_table()
         self.update_tasklist_table()
         self.update_tasklist_controls()
-        self.load_processing_settings()
         self.update_save_actions()
         self.update_unit_labels()
         if not self.no_dialog:
@@ -683,7 +680,7 @@ class ProjectGui:
         return self._physics_cache
 
     def update_save_actions(self):
-        self.gui.get_object("SaveProcessingTemplates").set_sensitive(not self.last_config_file is None)
+        self.gui.get_object("SaveSettings").set_sensitive(not self.last_settings_file is None)
         self.gui.get_object("SaveModel").set_sensitive(not self.last_model_file is None)
 
     def update_tasklist_controls(self, widget=None, data=None):
@@ -706,7 +703,7 @@ class ProjectGui:
         # update the task description
         lines = []
         task_index = self._treeview_get_active_index(self.tasklist_table, self.task_list)
-        if not task_index is None:
+        if (not task_index is None) and (task_index < len(self.task_list)):
             task = self.task_list[task_index]
             tool = task["tool"]
             process = task["process"]
@@ -737,7 +734,7 @@ class ProjectGui:
             tasklist_model.clear()
             # remove broken tasks from the list (tool or process was deleted)
             self.task_list = [task for task in self.task_list
-                    if (task["tool"] in self.tool_list) and (task["process"] in self.process_settings_list)]
+                    if (task["tool"] in self.tool_list) and (task["process"] in self.process_list)]
             counter = 0
             for task in self.task_list:
                 tasklist_model.append((counter, task["tool"]["name"], task["process"]["name"], task["enabled"]))
@@ -759,10 +756,10 @@ class ProjectGui:
         self._treeview_button_event(self.tasklist_table, self.task_list, action, self.update_tasklist_table)
         if action == "add":
             tool_index = self._treeview_get_active_index(self.tool_table, self.tool_list)
-            process_index = self._treeview_get_active_index(self.process_table, self.process_settings_list)
+            process_index = self._treeview_get_active_index(self.process_table, self.process_list)
             new_task = {}
             new_task["tool"] = self.tool_list[tool_index]
-            new_task["process"] = self.process_settings_list[process_index]
+            new_task["process"] = self.process_list[process_index]
             new_task["enabled"] = True
             self.task_list.append(new_task)
             self.update_tasklist_table(self.task_list.index(new_task))
@@ -881,7 +878,7 @@ class ProjectGui:
         if state is None:
             state = event
         if state:
-            process_index = self._treeview_get_active_index(self.process_table, self.process_settings_list)
+            process_index = self._treeview_get_active_index(self.process_table, self.process_list)
             if not process_index is None:
                 self._treeview_set_active_index(self.process_editor_table, process_index)
             self.gui.get_object("ProcessEditorWindow").show()
@@ -1223,24 +1220,24 @@ class ProjectGui:
         if filename:
             self.load_model(pycam.Importers.STLImporter.ImportModel(filename))
 
-    def open_processing_settings_file(self, filename):
+    def open_settings_file(self, filename):
         """ This function is used by the commandline handler """
-        self.last_config_file = filename
-        self.load_processing_file(filename=filename)
+        self.last_settings_file = filename
+        self.load_settings_file(filename=filename)
         self.update_save_actions()
 
     @gui_activity_guard
-    def load_processing_file(self, widget=None, filename=None):
+    def load_settings_file(self, widget=None, filename=None):
         if callable(filename):
             filename = filename()
         if not filename:
-            filename = self.get_filename_via_dialog("Loading processing settings ...",
+            filename = self.get_filename_via_dialog("Loading settings ...",
                     mode_load=True, type_filter=FILTER_CONFIG)
             if filename:
-                self.last_config_file = filename
+                self.last_settings_file = filename
                 self.update_save_actions()
         if filename:
-            self.load_processing_settings(filename)
+            self.load_settings(filename)
 
     def load_model(self, model):
         # load the new model only if the import worked
@@ -1253,42 +1250,16 @@ class ProjectGui:
             self.append_to_queue(self.toggle_3d_view, value=True)
             self.append_to_queue(self.update_view)
 
-    def load_processing_settings(self, filename=None):
+    def load_settings(self, filename=None):
+        settings = pycam.Gui.Settings.SettingsFileManager()
         if not filename is None:
-            self.processing_settings.reset("")
-            self.processing_settings.load_file(filename)
-            # load the default config
-            self.processing_settings.enable_config()
-        # reset the combobox
-        #self.processing_config_selection.get_model().clear()
-        #for config_name in self.processing_settings.get_config_list():
-        #    self.processing_config_selection.append_text(config_name)
-
-    def delete_processing_config(self, widget=None, section=None):
-        if callable(section):
-            section = section()
-        if section is None:
-            return
-        if section in self.processing_settings.get_config_list():
-            self.processing_settings.delete_config(section)
-            self.load_processing_settings()
-            self._visually_enable_specific_processing_config("")
-
-    def save_processing_config(self, widget=None, section=None):
-        if callable(section):
-            section = section()
-        if section is None:
-            return
-        self.processing_settings.store_config(section)
-        self.load_processing_settings()
-        self._visually_enable_specific_processing_config(section)
-
-    def _visually_enable_specific_processing_config(self, section):
-        # select the requested section in the drop-down list
-        # don't change the setting if not required - otherwise we will loop
-        current_text = self.processing_config_selection.get_child().get_text()
-        if section != current_text:
-            self.processing_config_selection.get_child().set_text(section)
+            settings.load_file(filename)
+        self.tool_list = settings.get_tools()
+        self.process_list = settings.get_processes()
+        self.task_list = settings.get_tasks()
+        self.update_tool_table()
+        self.update_process_table()
+        self.update_tasklist_table()
 
     def _load_process_settings_from_gui(self, settings=None):
         if settings is None:
@@ -1342,23 +1313,23 @@ class ProjectGui:
 
     @gui_activity_guard
     def handle_process_settings_change(self, widget=None, data=None):
-        current_index = self._treeview_get_active_index(self.process_editor_table, self.process_settings_list)
+        current_index = self._treeview_get_active_index(self.process_editor_table, self.process_list)
         if not current_index is None:
-            self._load_process_settings_from_gui(self.process_settings_list[current_index])
+            self._load_process_settings_from_gui(self.process_list[current_index])
             self.update_process_table()
 
     def update_process_table(self, new_index=None, skip_model_update=False):
         # reset the model data and the selection
         if new_index is None:
             # keep the old selection - this may return "None" if nothing is selected
-            new_index = self._treeview_get_active_index(self.process_editor_table, self.process_settings_list)
+            new_index = self._treeview_get_active_index(self.process_editor_table, self.process_list)
         if not skip_model_update:
             # update the TreeModel data
             model = self.gui.get_object("ProcessList")
             model.clear()
             # columns: index, description
-            for index in range(len(self.process_settings_list)):
-                process = self.process_settings_list[index]
+            for index in range(len(self.process_list)):
+                process = self.process_list[index]
                 items = (index, process["name"])
                 model.append(items)
             if not new_index is None:
@@ -1366,7 +1337,7 @@ class ProjectGui:
         # enable/disable the modification buttons
         self.gui.get_object("ProcessListMoveUp").set_sensitive((not new_index is None) and (new_index > 0))
         self.gui.get_object("ProcessListDelete").set_sensitive(not new_index is None)
-        self.gui.get_object("ProcessListMoveDown").set_sensitive((not new_index is None) and (new_index + 1 < len(self.process_settings_list)))
+        self.gui.get_object("ProcessListMoveDown").set_sensitive((not new_index is None) and (new_index + 1 < len(self.process_list)))
         # hide all controls if no process is defined
         if new_index is None:
             self.gui.get_object("ProcessSettingsControlsBox").hide()
@@ -1377,10 +1348,10 @@ class ProjectGui:
 
     @gui_activity_guard
     def switch_process_table_selection(self, widget=None, data=None):
-        new_index = self._treeview_get_active_index(self.process_editor_table, self.process_settings_list)
+        new_index = self._treeview_get_active_index(self.process_editor_table, self.process_list)
         if not new_index is None:
             self.gui.get_object("ProcessSettingsControlsBox").show()
-            self._put_process_settings_to_gui(self.process_settings_list[new_index])
+            self._put_process_settings_to_gui(self.process_list[new_index])
             self.update_process_table()
         else:
             self.gui.get_object("ProcessSettingsControlsBox").hide()
@@ -1390,19 +1361,19 @@ class ProjectGui:
         # "toggle" uses two parameters - all other actions have only one
         if action is None:
             action = data
-        self._treeview_button_event(self.process_editor_table, self.process_settings_list, action, self.update_process_table)
+        self._treeview_button_event(self.process_editor_table, self.process_list, action, self.update_process_table)
         # do some post-processing ...
         if action == "add":
             # look for the first unused default name
             prefix = "New Process "
             index = 1
             # loop while the current name is in use
-            while [True for process in self.process_settings_list if process["name"] == "%s%d" % (prefix, index)]:
+            while [True for process in self.process_list if process["name"] == "%s%d" % (prefix, index)]:
                 index += 1
             new_settings = self._load_process_settings_from_gui()
             new_settings["name"] = "%s%d" % (prefix, index)
-            self.process_settings_list.append(new_settings)
-            self.update_process_table(self.process_settings_list.index(new_settings))
+            self.process_list.append(new_settings)
+            self.update_process_table(self.process_list.index(new_settings))
             self._put_process_settings_to_gui(new_settings)
 
     @gui_activity_guard
@@ -1458,7 +1429,7 @@ class ProjectGui:
         self.gui.get_object("toolpath_down").set_sensitive((not new_index is None) and (new_index + 1 < len(self.toolpath)))
 
     @gui_activity_guard
-    def save_processing_settings_file(self, widget=None, filename=None):
+    def save_settings_file(self, widget=None, filename=None):
         no_dialog = False
         if callable(filename):
             filename = filename()
@@ -1466,16 +1437,17 @@ class ProjectGui:
             no_dialog = True
         else:
             # we open a dialog
-            filename = self.get_filename_via_dialog("Save processing settings to ...",
+            filename = self.get_filename_via_dialog("Save settings to ...",
                     mode_load=False, type_filter=FILTER_CONFIG)
             if filename:
-                self.last_config_file = filename
+                self.last_settings_file = filename
                 self.update_save_actions()
         # no filename given -> exit
         if not filename:
             return
-        if not self.processing_settings.write_to_file(filename) and not no_dialog:
-            show_error_dialog(self.window, "Failed to save processing settings file")
+        settings = pycam.Gui.Settings.SettingsFileManager()
+        if not settings.write_to_file(filename, self.tool_list, self.process_list, self.task_list) and not no_dialog:
+            show_error_dialog(self.window, "Failed to save settings file")
 
     def get_tool_instance(self, tool_settings):
         cutter_height = self.settings.get("maxz") - self.settings.get("minz")

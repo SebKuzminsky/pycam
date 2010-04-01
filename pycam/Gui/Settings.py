@@ -54,7 +54,7 @@ class Settings:
         return str(result)
 
 
-class SettingsManager:
+class SettingsFileManager:
 
     DEFAULT_CONFIG = """
 [ToolDefault]
@@ -81,7 +81,6 @@ torus_radius: 0.2
 [ProcessDefault]
 path_direction: x
 safety_height: 5
-step_down: 1
 
 [Process0]
 name: Rough
@@ -104,6 +103,7 @@ name: Finish
 path_generator: DropCutter
 path_postprocessor: ZigZagCutter
 material_allowance: 0.0
+step_down: 1.0
 overlap: 60
 
 [TaskDefault]
@@ -134,7 +134,7 @@ process: 2
             "path_postprocessor": str,
             "safety_height": float,
             "material_allowance": float,
-            "overlap": float,
+            "overlap": int,
             "step_down": float,
             "tool": object,
             "process": object,
@@ -159,6 +159,8 @@ process: 2
         "process": "Process",
         "task": "Task",
     }
+
+    DEFAULT_SUFFIX = "Default"
 
     def __init__(self):
         self.config = None
@@ -191,10 +193,11 @@ process: 2
             return False
         return True
 
-    def write_to_file(self, filename):
+    def write_to_file(self, filename, tools=None, processes=None, tasks=None):
+        text = self.get_config_text(tools, processes, tasks)
         try:
             fi = open(filename, "w")
-            self.config.write(fi)
+            fi.write(text)
             fi.close()
         except IOError, err_msg:
             print >> sys.stderr, "Failed to write configuration to file (%s): %s" % (filename, err_msg)
@@ -224,7 +227,7 @@ process: 2
                         value_raw = self.config.get(current_section_name, key)
                     except ConfigParser.NoOptionError:
                         try:
-                            value_raw = self.config.get(prefix + "Default", key)
+                            value_raw = self.config.get(prefix + self.DEFAULT_SUFFIX, key)
                         except ConfigParser.NoOptionError:
                             value_raw = None
                     if not value_raw is None:
@@ -244,4 +247,71 @@ process: 2
                 current_section_name = "%s%d" % (prefix, index)
             self._cache[type_name] = item_list
         return self._cache[type_name][:]
+
+    def _value_to_string(self, lists, key, value):
+        value_type = self.SETTING_TYPES[key]
+        if value_type == bool:
+            if value:
+                return "1"
+            else:
+                return "0"
+        elif value_type == object:
+            try:
+                return lists[key].index(value)
+            except IndexError:
+                return None
+        else:
+            return str(value)
+
+    def get_config_text(self, tools=None, processes=None, tasks=None):
+        result = []
+        if tools is None:
+            tools = []
+        if processes is None:
+            processes = []
+        if tasks is None:
+            tasks = []
+        lists = {}
+        lists["tool"] = tools
+        lists["process"] = processes
+        lists["task"] = tasks
+        for type_name in lists.keys():
+            type_list = lists[type_name]
+            # generate "Default" section
+            common_keys = []
+            for key in self.CATEGORY_KEYS[type_name]:
+                try:
+                    values = [item[key] for item in type_list]
+                except KeyError, err_msg:
+                    values = None
+                # check if there are values and if they all have the same value
+                if values and (values.count(values[0]) == len(values)):
+                    common_keys.append(key)
+            if common_keys:
+                section = "[%s%s]" % (self.SECTION_PREFIXES[type_name], self.DEFAULT_SUFFIX)
+                result.append(section)
+                for key in common_keys:
+                    value = type_list[0][key]
+                    value_string = self._value_to_string(lists, key, value)
+                    if not value_string is None:
+                        result.append("%s: %s" % (key, value_string))
+                # add an empty line to separate sections
+                result.append("")
+            # generate individual sections
+            for index in range(len(type_list)):
+                section = "[%s%d]" % (self.SECTION_PREFIXES[type_name], index)
+                result.append(section)
+                item = type_list[index]
+                for key in self.CATEGORY_KEYS[type_name]:
+                    if key in common_keys:
+                        # skip keys, that are listed in the "Default" section
+                        continue
+                    if item.has_key(key):
+                        value = item[key]
+                        value_string = self._value_to_string(lists, key, value)
+                        if not value_string is None:
+                            result.append("%s: %s" % (key, value_string))
+                # add an empty line to separate sections
+                result.append("")
+        return os.linesep.join(result)
 
