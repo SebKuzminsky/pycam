@@ -71,6 +71,8 @@ class Camera:
         # the multiplier "2.0" is based on: sqrt(2) + margin  -- the squre root makes sure, that the the diagonal fits
         distv = distv.mul((max_dim * 2.0) / math.sin(v["fovy"]/2))
         self.view["distance"] = (distv.x, distv.y, distv.z)
+        # adjust the "far" distance for the camera to make sure, that huge models (e.g. x=1000) are still visible
+        self.view["zfar"] = 100 * max_dim
 
     def scale_distance(self, scale):
         if scale != 0:
