@@ -1014,7 +1014,6 @@
                                         <property name="can_focus">True</property>
                                         <property name="model">TaskList</property>
                                         <property name="headers_clickable">False</property>
-                                        <property name="expander_column">Material Allowance</property>
                                         <property name="enable_search">False</property>
                                         <child>
                                           <object class="GtkTreeViewColumn" id="task_enabled">

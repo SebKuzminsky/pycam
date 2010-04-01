@@ -75,7 +75,17 @@ def dependency_details_tk():
     except ImportError:
         result["opengl"] = False
     try:
+        import logging
+        try:
+            # temporarily disable debug output of the logging module
+            # the error message is: No handlers could be found for logger "OpenGL.Tk"
+            previous = logging.raiseExceptions
+            logging.raiseExceptions = 0
+        except AttributeError:
+            previous = None
         import OpenGL.Tk
+        if not previous is None:
+            logging.raiseExceptions = previous
         result["togl"] = True
     except (ImportError, Tkinter.TclError):
         result["togl"] = False
