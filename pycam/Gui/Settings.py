@@ -68,9 +68,9 @@ shape: CylindricalCutter
 tool_radius: 3
 
 [Tool1]
-name: Spherical (0.1 inch)
+name: Spherical (0.5 inch)
 shape: SphericalCutter
-tool_radius: 1
+tool_radius: 0.5
 
 [Tool2]
 name: Toroidal (2 inch)

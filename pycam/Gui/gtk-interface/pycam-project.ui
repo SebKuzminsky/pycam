@@ -3987,4 +3987,8 @@ ODE is required for this setting.</property>
     <property name="visible">True</property>
     <property name="stock">gtk-execute</property>
   </object>
+  <object class="GtkAction" id="ExportEMCToolDefinition">
+    <property name="label">_Export EMC tools</property>
+    <property name="stock_id">gtk-execute</property>
+  </object>
 </interface>

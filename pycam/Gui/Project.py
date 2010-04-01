@@ -3,6 +3,7 @@
 import pycam.Importers.STLImporter
 import pycam.Exporters.STLExporter
 import pycam.Exporters.SimpleGCodeExporter
+import pycam.Exporters.EMCToolExporter
 import pycam.Gui.Settings
 import pycam.Gui.common as GuiCommon
 import pycam.Cutters
@@ -34,6 +35,7 @@ GTKMENU_FILE = "menubar.xml"
 FILTER_GCODE = ("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode"))
 FILTER_MODEL = ("STL models", "*.stl")
 FILTER_CONFIG = ("Config files", "*.conf")
+FILTER_EMC_TOOL = ("EMC tool files", "*.tbl")
 
 BUTTON_ROTATE = gtk.gdk.BUTTON1_MASK
 BUTTON_MOVE = gtk.gdk.BUTTON2_MASK
@@ -393,6 +395,7 @@ class ProjectGui:
                 ("SaveModel", self.save_model, lambda: self.last_model_file, "<Control>s"),
                 ("SaveAsModel", self.save_model, None, "<Control><Shift>s"),
                 ("ExportGCode", self.save_toolpath, None, "<Control><Shift>e"),
+                ("ExportEMCToolDefinition", self.export_emc_tools, None, None),
                 ("Quit", self.destroy, None, "<Control>q"),
                 ("GeneralSettings", self.toggle_settings_window, None, "<Control>p"),
                 ("Toggle3DView", self.toggle_3d_view, None, "<Control>v")):
@@ -628,7 +631,6 @@ class ProjectGui:
         self.load_settings()
         self.update_toolpath_table()
         self.update_tool_table()
-        self.update_tool_controls()
         self.disable_invalid_process_settings()
         self.update_process_table()
         self.update_tasklist_table()
@@ -840,6 +842,7 @@ class ProjectGui:
             if obj.get_value() == 0:
                 # set the value to the configured minimum
                 obj.set_value(default_value)
+        self.gui.get_object("ExportEMCToolDefinition").set_sensitive(len(self.tool_list) > 0)
 
     @gui_activity_guard
     def toggle_about_window(self, widget=None, event=None, state=None):
@@ -1049,7 +1052,7 @@ class ProjectGui:
         if not new_index is None:
             self.gui.get_object("ToolSettingsControlsBox").show()
             self._put_tool_settings_to_gui(self.tool_list[new_index])
-            self.update_tool_controls()
+            self.update_tool_table()
         else:
             self.gui.get_object("ToolSettingsControlsBox").hide()
         
@@ -1097,6 +1100,7 @@ class ProjectGui:
         else:
             self.gui.get_object("ToolSettingsControlsBox").show()
         # remove any broken tasks and update changed names
+        self.update_tool_controls()
         self.update_tasklist_table()
 
     def update_unit_labels(self, widget=None, data=None):
@@ -1232,6 +1236,24 @@ class ProjectGui:
                 self.update_save_actions()
         if filename:
             self.load_model(pycam.Importers.STLImporter.ImportModel(filename))
+
+    @gui_activity_guard
+    def export_emc_tools(self, widget=None, filename=None):
+        if callable(filename):
+            filename = filename()
+        if not filename:
+            filename = self.get_filename_via_dialog("Exporting EMC tool definition ...",
+                    mode_load=False, type_filter=FILTER_EMC_TOOL)
+        if filename:
+            export = pycam.Exporters.EMCToolExporter.EMCToolExporter(self.tool_list)
+            text = export.get_tool_definition_string()
+            try:
+                out = file(filename, "w")
+                out.write(text)
+                out.close()
+            except IOError, err_msg:
+                if not no_dialog:
+                    show_error_dialog(self.window, "Failed to save EMC tool file")
 
     def open_settings_file(self, filename):
         """ This function is used by the commandline handler """
@@ -1620,9 +1642,10 @@ class ProjectGui:
             self.toolpath[-1].visible = False
         # add the new toolpath
         description = "%s / %s" % (tool_settings["name"], process_settings["name"])
+        # the tool id numbering should start with 1 instead of zero
+        tool_id = self.tool_list.index(tool_settings) + 1
         self.toolpath.add_toolpath(toolpath,
-                description,
-                self.cutter,
+                description, self.cutter, tool_id,
                 tool_settings["speed"],
                 tool_settings["feedrate"],
                 process_settings["material_allowance"],
@@ -1633,10 +1656,6 @@ class ProjectGui:
         self.update_view()
         # return "False" if the action was cancelled
         return not self._progress_cancel_requested
-
-    # for compatibility with old pycam GUI (see pycamGUI)
-    # TODO: remove it in v0.3
-    generateToolpath = generate_toolpath
 
     def get_filename_via_dialog(self, title, mode_load=False, type_filter=None):
         # we open a dialog

@@ -14,6 +14,8 @@
       <menuitem action="SaveSettings"/>
       <menuitem action="SaveAsSettings"/>
       <separator />
+      <menuitem action="ExportEMCToolDefinition"/>
+      <separator />
       <menuitem action="GeneralSettings"/>
     </menu>
     <menu action="WindowMenu">

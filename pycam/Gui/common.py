@@ -153,27 +153,11 @@ class EmergencyDialog:
 class ToolPathList(list):
 
     def add_toolpath(self, toolpath, name, cutter, *args):
-        drill_id = self._get_drill_id(cutter)
-        self.append(ToolPathInfo(toolpath, name, drill_id, cutter, *args))
-
-    def _get_drill_id(self, cutter):
-        used_ids = []
-        # check if a drill with the same dimensions was used before
-        for tp in self:
-            if tp.drill == cutter:
-                return tp.drill_id
-            else:
-                used_ids.append(tp.drill_id)
-        # find the smallest unused drill id
-        index = 1
-        while index in used_ids:
-            index += 1
-        return index
-
+        self.append(ToolPathInfo(toolpath, name, cutter, *args))
 
 class ToolPathInfo:
 
-    def __init__(self, toolpath, name, drill_id, cutter, speed, feedrate,
+    def __init__(self, toolpath, name, cutter, drill_id, speed, feedrate,
             material_allowance, safety_height, unit, start_x, start_y, start_z):
         self.toolpath = toolpath
         self.name = name
