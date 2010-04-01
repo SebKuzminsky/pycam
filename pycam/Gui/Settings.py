@@ -63,17 +63,17 @@ feedrate: 1000
 speed: 200
 
 [Tool0]
-name: Cylindrical (3 inch)
+name: Cylindrical (r=3)
 shape: CylindricalCutter
 tool_radius: 3
 
 [Tool1]
-name: Spherical (0.5 inch)
+name: Spherical (r=0.5)
 shape: SphericalCutter
 tool_radius: 0.5
 
 [Tool2]
-name: Toroidal (2 inch)
+name: Toroidal (r=2)
 shape: ToroidalCutter
 tool_radius: 2
 torus_radius: 0.2
