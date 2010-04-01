@@ -776,7 +776,12 @@ class ProjectGui:
             pass
 
     def process_one_task(self, task_index):
-        task = self.task_list[task_index]
+        try:
+            task = self.task_list[task_index]
+        except IndexError:
+            # this shoudl only happen, if we were called in batch mode (command line)
+            print >>sys.stderr, "The given task ID (%d) does not exist. Valid values are: %s." % (task_index, range(len(self.task_list)))
+            return
         self.generate_toolpath(task["tool"], task["process"])
 
     def process_multiple_tasks(self, task_list=None):

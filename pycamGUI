@@ -23,10 +23,10 @@ if __name__ == "__main__":
             help="use the (old) Tk interface")
     parser.add_option("-c", "--config", dest="config_file",
             default=None, action="store", type="string",
-            help="load a file with processing settings (requires the GTK interface)")
-    parser.add_option("", "--template", dest="config_template",
-            default=None, action="store", type="string",
-            help="enable a specific processing settings template - e.g. 'Rough', 'Semi-finish' or 'Finish' (requires the GTK interface)")
+            help="load a settings file (requires the GTK interface)")
+    parser.add_option("", "--task", dest="task",
+            default=None, action="store", type="int",
+            help="choose a specific task from settings by number (requires the GTK interface)")
     parser.add_option("", "--disable-ode", dest="ode_disabled",
             default=False, action="store_true", help="disable experimental ODE collision detection")
     (options, args) = parser.parse_args()
@@ -55,6 +55,7 @@ if __name__ == "__main__":
             if GuiCommon.check_dependencies(deps_tk):
                 from pycam.Gui.SimpleGui import SimpleGui
                 gui_class = SimpleGui
+                options.gtk_gui = False
             else:
                 gui_class = None
     else:
@@ -69,6 +70,7 @@ if __name__ == "__main__":
             if GuiCommon.check_dependencies(deps_gtk):
                 from pycam.Gui.Project import ProjectGui
                 gui_class = ProjectGui
+                options.gtk_gui = True
             else:
                 gui_class = None
     # exit if no interface is found
@@ -100,16 +102,20 @@ if __name__ == "__main__":
         gui.load_model(TestModel())
     else:
         gui.open(inputfile)
-    # load processing config file
+    # load settings file
     # only available for the GTK interface
     if options.gtk_gui:
         if options.config_file:
-            gui.open_processing_settings_file(options.config_file)
-        if options.config_template:
-            gui.switch_processing_config(section=options.config_template)
+            gui.open_settings_file(options.config_file)
     if outputfile and not options.display:
         # an output filename is given and no gui is explicitly requested
-        gui.generateToolpath()
+        if options.gtk_gui:
+            if not options.task is None:
+                gui.process_one_task(options.task)
+            else:
+                gui.process_multiple_tasks()
+        else:
+            gui.generateToolpath()
         if outputfile:
             gui.save_toolpath(outputfile)
     else:
