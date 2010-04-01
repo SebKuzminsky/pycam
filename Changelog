@@ -1,7 +1,9 @@
 Version 0.2.3 - UNRELEASED
  * GUI change: tool and process settings can be combined into tasks
+ * added export of EMC tool definitions
  * fixed "overlap" calculation
  * added a warning dialog (GUI) for missing dependencies during startup (especially useful for Windows)
+ * improved GUI for model scaling
  * prevent invalid input values (zero tool radius, ...)
  * reduced memory consumption of toolpaths for python 2.6 or above
 

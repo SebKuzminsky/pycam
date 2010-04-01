@@ -460,9 +460,12 @@ class ProjectGui:
         self.gui.get_object("Shift Model").connect("clicked", self.shift_model, True)
         self.gui.get_object("Shift To Origin").connect("clicked", self.shift_model, False)
         # scale model
-        self.gui.get_object("Scale up").connect("clicked", self.scale_model, True)
-        self.gui.get_object("Scale down").connect("clicked", self.scale_model, False)
-        self.gui.get_object("Scale factor").set_value(2)
+        self.gui.get_object("ScalePercent").set_value(100)
+        self.gui.get_object("ScaleModelButton").connect("clicked", self.scale_model)
+        # scale model to an axis dimension
+        self.gui.get_object("ScaleDimensionAxis").connect("changed", self.switch_scale_axis)
+        self.gui.get_object("ScaleDimensionButton").connect("clicked", self.scale_model_axis_fit)
+        self.gui.get_object("ScaleDimensionsProportionally").set_active(True)
         # visual and general settings
         for name, objname in (("show_model", "ShowModelCheckBox"),
                 ("show_axes", "ShowAxesCheckBox"),
@@ -629,6 +632,11 @@ class ProjectGui:
         window_box.reorder_child(self.menubar, 0)
         # some more initialization
         self.load_settings()
+        self.update_all_controls()
+        if not self.no_dialog:
+            self.window.show()
+
+    def update_all_controls(self):
         self.update_toolpath_table()
         self.update_tool_table()
         self.disable_invalid_process_settings()
@@ -637,8 +645,7 @@ class ProjectGui:
         self.update_tasklist_controls()
         self.update_save_actions()
         self.update_unit_labels()
-        if not self.no_dialog:
-            self.window.show()
+        self.switch_scale_axis()
 
     def progress_activity_guard(func):
         def wrapper(self, *args, **kwargs):
@@ -1168,14 +1175,74 @@ class ProjectGui:
         GuiCommon.shift_model(self.model, shift_x, shift_y, shift_z)
         self.update_view()
 
+    def _get_model_center(self):
+        if self.model is None:
+            return None
+        else:
+            return ((self.model.maxx + self.model.minx) / 2,
+                    (self.model.maxy + self.model.miny) / 2,
+                    (self.model.maxz + self.model.minz) / 2)
+
+    def _set_model_center(self, center):
+        new_x, new_y, new_z = center
+        old_x, old_y, old_z = self._get_model_center()
+        GuiCommon.shift_model(self.model, new_x - old_x, new_y - old_y, new_z - old_z)
+
     @gui_activity_guard
-    def scale_model(self, widget, scale_up=True):
-        value = self.gui.get_object("Scale factor").get_value()
-        if (value == 0) or (value == 1):
+    def scale_model(self, widget=None, percent=None):
+        if percent is None:
+            percent = self.gui.get_object("ScalePercent").get_value()
+        factor = percent / 100.0
+        if (factor <= 0) or (factor == 1):
             return
-        if not scale_up:
-            value = 1/value
-        GuiCommon.scale_model(self.model, value)
+        old_center = self._get_model_center()
+        GuiCommon.scale_model(self.model, factor)
+        self._set_model_center(old_center)
+        self.update_view()
+
+    @gui_activity_guard
+    def switch_scale_axis(self, widget=None):
+        if self.model is None:
+            return
+        index = self.gui.get_object("ScaleDimensionAxis").get_active()
+        if index == 0:
+            # x axis
+            value = self.model.maxx - self.model.minx
+        elif index == 1:
+            # y axis
+            value = self.model.maxy - self.model.miny
+        elif index == 2:
+            # z axis
+            value = self.model.maxz - self.model.minz
+        else:
+            return
+        self.gui.get_object("ScaleDimensionValue").set_value(value)
+
+    @gui_activity_guard
+    def scale_model_axis_fit(self, widget):
+        proportionally = self.gui.get_object("ScaleDimensionsProportionally").get_active()
+        value = self.gui.get_object("ScaleDimensionValue").get_value()
+        index = self.gui.get_object("ScaleDimensionAxis").get_active()
+        axes = "xyz"
+        axis_suffix = axes[index]
+        factor = value / (getattr(self.model, "max" + axis_suffix) - getattr(self.model, "min" + axis_suffix))
+        # store the original center of the model
+        old_center = self._get_model_center()
+        if proportionally:
+            GuiCommon.scale_model(self.model, factor)
+        else:
+            factor_x, factor_y, factor_z = (1, 1, 1)
+            if index == 0:
+                factor_x = factor
+            elif index == 1:
+                factor_y = factor
+            elif index == 2:
+                factor_z = factor
+            else:
+                return
+            GuiCommon.scale_model(self.model, factor_x, factor_y, factor_z)
+        # move the model to its previous center
+        self._set_model_center(old_center)
         self.update_view()
 
     @gui_activity_guard
@@ -1282,6 +1349,7 @@ class ProjectGui:
             self.settings.set("safety_height", (2 * self.model.maxz - self.model.minz))
             # do some initialization
             self.append_to_queue(self.reset_bounds)
+            self.append_to_queue(self.update_all_controls)
             self.append_to_queue(self.toggle_3d_view, value=True)
             self.append_to_queue(self.update_view)
 

@@ -125,6 +125,23 @@
       </row>
     </data>
   </object>
+  <object class="GtkListStore" id="ScaleDimensionAxisValue">
+    <columns>
+      <!-- column-name value -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">x</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">y</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">z</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkWindow" id="ProjectWindow">
     <property name="title" translatable="yes">PyCAM</property>
     <property name="destroy_with_parent">True</property>
@@ -467,6 +484,7 @@
                                 <child>
                                   <object class="GtkHBox" id="hbox6">
                                     <property name="visible">True</property>
+                                    <property name="spacing">1</property>
                                     <child>
                                       <object class="GtkLabel" id="ScaleFactorLabel">
                                         <property name="visible">True</property>
@@ -479,19 +497,25 @@
                                       </packing>
                                     </child>
                                     <child>
-                                      <object class="GtkSpinButton" id="Scale factor">
+                                      <object class="GtkSpinButton" id="ScalePercent">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="invisible_char">&#x2022;</property>
-                                        <property name="width_chars">4</property>
-                                        <property name="adjustment">scale factor</property>
-                                        <property name="climb_rate">1</property>
+                                        <property name="adjustment">scale_percent_value</property>
                                         <property name="numeric">True</property>
-                                        <property name="update_policy">if-valid</property>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
                                         <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="ScalePercentUnitLabel">
+                                        <property name="visible">True</property>
+                                        <property name="label" translatable="yes">%</property>
+                                      </object>
+                                      <packing>
+                                        <property name="position">2</property>
                                       </packing>
                                     </child>
                                   </object>
@@ -500,20 +524,8 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkButton" id="Scale down">
-                                    <property name="label" translatable="yes">Shrink</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="Scale up">
-                                    <property name="label" translatable="yes">Enlarge</property>
+                                  <object class="GtkButton" id="ScaleModelButton">
+                                    <property name="label" translatable="yes">Scale Model</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
@@ -521,7 +533,80 @@
                                   <packing>
                                     <property name="expand">False</property>
                                     <property name="fill">False</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkHSeparator" id="hseparator6">
+                                    <property name="visible">True</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="padding">2</property>
                                     <property name="position">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkHBox" id="hbox18">
+                                    <property name="visible">True</property>
+                                    <property name="spacing">3</property>
+                                    <child>
+                                      <object class="GtkComboBox" id="ScaleDimensionAxis">
+                                        <property name="visible">True</property>
+                                        <property name="model">ScaleDimensionAxisValue</property>
+                                        <property name="active">0</property>
+                                        <child>
+                                          <object class="GtkCellRendererText" id="ScaleDimensionColumn"/>
+                                          <attributes>
+                                            <attribute name="text">0</attribute>
+                                          </attributes>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkSpinButton" id="ScaleDimensionControl">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="invisible_char">&#x2022;</property>
+                                        <property name="adjustment">ScaleDimensionValue</property>
+                                        <property name="digits">2</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="position">3</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkCheckButton" id="ScaleDimensionsProportionally">
+                                    <property name="label" translatable="yes">proportionally</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">False</property>
+                                    <property name="tooltip_text" translatable="yes">Scale the model along all axes proportionally.</property>
+                                    <property name="draw_indicator">True</property>
+                                  </object>
+                                  <packing>
+                                    <property name="position">4</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="ScaleDimensionButton">
+                                    <property name="label" translatable="yes">Fit Dimension</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                  </object>
+                                  <packing>
+                                    <property name="position">5</property>
                                   </packing>
                                 </child>
                               </object>
@@ -531,7 +616,7 @@
                         <child type="label">
                           <object class="GtkLabel" id="Scale frame">
                             <property name="visible">True</property>
-                            <property name="label" translatable="yes">&lt;b&gt;Scale Model&lt;/b&gt;</property>
+                            <property name="label" translatable="yes">&lt;b&gt;Model Dimensions&lt;/b&gt;</property>
                             <property name="use_markup">True</property>
                           </object>
                         </child>
@@ -566,6 +651,7 @@
                               <object class="GtkVBox" id="vbox3">
                                 <property name="visible">True</property>
                                 <property name="orientation">vertical</property>
+                                <property name="spacing">3</property>
                                 <child>
                                   <object class="GtkTable" id="table1">
                                     <property name="visible">True</property>
@@ -720,18 +806,21 @@
                         <child>
                           <object class="GtkAlignment" id="alignment5">
                             <property name="visible">True</property>
+                            <property name="yalign">1</property>
+                            <property name="yscale">0</property>
                             <property name="left_padding">8</property>
                             <child>
                               <object class="GtkVBox" id="vbox6">
                                 <property name="visible">True</property>
                                 <property name="orientation">vertical</property>
+                                <property name="spacing">3</property>
                                 <child>
                                   <object class="GtkTable" id="table2">
                                     <property name="visible">True</property>
                                     <property name="n_rows">4</property>
                                     <property name="n_columns">3</property>
                                     <property name="column_spacing">1</property>
-                                    <property name="row_spacing">1</property>
+                                    <property name="row_spacing">3</property>
                                     <child>
                                       <object class="GtkSpinButton" id="minx">
                                         <property name="visible">True</property>
@@ -1660,25 +1749,25 @@ This combination is added to the above task list.</property>
       </object>
     </child>
   </object>
-  <object class="GtkAdjustment" id="scale factor">
-    <property name="value">1</property>
+  <object class="GtkAdjustment" id="scale_percent_value">
+    <property name="value">100</property>
     <property name="lower">1</property>
     <property name="upper">1000</property>
-    <property name="step_increment">1</property>
+    <property name="step_increment">25</property>
   </object>
   <object class="GtkAdjustment" id="shift-x">
-    <property name="lower">-1000</property>
-    <property name="upper">1000</property>
+    <property name="lower">-2000</property>
+    <property name="upper">2000</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="shift-y">
-    <property name="lower">-1000</property>
-    <property name="upper">1000</property>
+    <property name="lower">-2000</property>
+    <property name="upper">2000</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="shift-z">
-    <property name="lower">-1000</property>
-    <property name="upper">1000</property>
+    <property name="lower">-2000</property>
+    <property name="upper">2000</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkWindow" id="view3dwindow">
@@ -1979,38 +2068,38 @@ This combination is added to the above task list.</property>
     </child>
   </object>
   <object class="GtkAdjustment" id="min-x">
-    <property name="lower">-1000</property>
-    <property name="upper">1000</property>
+    <property name="lower">-2000</property>
+    <property name="upper">2000</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="min-y">
-    <property name="lower">-1000</property>
-    <property name="upper">1000</property>
+    <property name="lower">-2000</property>
+    <property name="upper">2000</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="min-z">
-    <property name="lower">-1000</property>
-    <property name="upper">1000</property>
+    <property name="lower">-2000</property>
+    <property name="upper">2000</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="max-x">
-    <property name="lower">-1000</property>
-    <property name="upper">1000</property>
+    <property name="lower">-2000</property>
+    <property name="upper">2000</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="max-y">
-    <property name="lower">-1000</property>
-    <property name="upper">1000</property>
+    <property name="lower">-2000</property>
+    <property name="upper">2000</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="max-z">
-    <property name="lower">-1000</property>
-    <property name="upper">1000</property>
+    <property name="lower">-2000</property>
+    <property name="upper">2000</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="feedrate">
     <property name="lower">1</property>
-    <property name="upper">1000</property>
+    <property name="upper">10000</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="speed">
@@ -2020,12 +2109,12 @@ This combination is added to the above task list.</property>
   </object>
   <object class="GtkAdjustment" id="toolradius">
     <property name="lower">0.0001</property>
-    <property name="upper">100</property>
+    <property name="upper">500</property>
     <property name="step_increment">0.10000000000000001</property>
   </object>
   <object class="GtkAdjustment" id="torusradius">
     <property name="lower">0.0001</property>
-    <property name="upper">100</property>
+    <property name="upper">500</property>
     <property name="step_increment">0.050000000000000003</property>
   </object>
   <object class="GtkAdjustment" id="DrillProgressMaxFPS">
@@ -2047,8 +2136,8 @@ This combination is added to the above task list.</property>
     <property name="step_increment">5</property>
   </object>
   <object class="GtkAdjustment" id="SafetyHeightValue">
-    <property name="lower">-1000</property>
-    <property name="upper">1000</property>
+    <property name="lower">-2000</property>
+    <property name="upper">2000</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAction" id="LoadModel">
@@ -3990,5 +4079,11 @@ ODE is required for this setting.</property>
   <object class="GtkAction" id="ExportEMCToolDefinition">
     <property name="label">_Export EMC tools</property>
     <property name="stock_id">gtk-execute</property>
+  </object>
+  <object class="GtkAdjustment" id="ScaleDimensionValue">
+    <property name="lower">0.01</property>
+    <property name="upper">2000</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
   </object>
 </interface>
