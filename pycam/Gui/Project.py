@@ -769,26 +769,34 @@ class ProjectGui:
             # update the table values
             self.update_tasklist_table(current_task_index)
         elif action == "generate_all_toolpaths":
-            enabled_tasks = []
-            for index in range(len(self.task_list)):
-                task = self.task_list[index]
-                if task["enabled"]:
-                    enabled_tasks.append(task)
-            progress_bar = self.gui.get_object("MultipleProgressBar")
-            progress_bar.show()
-            for index in range(len(enabled_tasks)):
-                progress_bar.set_fraction(float(index) / len(enabled_tasks))
-                progress_bar.set_text("Toolpath %d/%d" % (index, len(enabled_tasks)))
-                task = enabled_tasks[index]
-                if not self.generate_toolpath(task["tool"], task["process"]):
-                    # break out of the loop, if cancel was requested
-                    break
-            progress_bar.hide()
+            self.process_multiple_tasks()
         elif action == "generate_one_toolpath":
-            task = self.task_list[current_task_index]
-            self.generate_toolpath(task["tool"], task["process"])
+            self.process_one_task(current_task_index)
         else:
             pass
+
+    def process_one_task(self, task_index):
+        task = self.task_list[task_index]
+        self.generate_toolpath(task["tool"], task["process"])
+
+    def process_multiple_tasks(self, task_list=None):
+        if task_list is None:
+            task_list = self.task_list[:]
+        enabled_tasks = []
+        for index in range(len(task_list)):
+            task = task_list[index]
+            if task["enabled"]:
+                enabled_tasks.append(task)
+        progress_bar = self.gui.get_object("MultipleProgressBar")
+        progress_bar.show()
+        for index in range(len(enabled_tasks)):
+            progress_bar.set_fraction(float(index) / len(enabled_tasks))
+            progress_bar.set_text("Toolpath %d/%d" % (index, len(enabled_tasks)))
+            task = enabled_tasks[index]
+            if not self.generate_toolpath(task["tool"], task["process"]):
+                # break out of the loop, if cancel was requested
+                break
+        progress_bar.hide()
 
     def disable_invalid_process_settings(self, widget=None, data=None):
         # possible dependencies of the DropCutter
