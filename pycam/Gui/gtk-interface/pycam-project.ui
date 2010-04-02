@@ -125,7 +125,7 @@
       </row>
     </data>
   </object>
-  <object class="GtkListStore" id="ScaleDimensionAxisValue">
+  <object class="GtkListStore" id="ScaleDimensionAxesList">
     <columns>
       <!-- column-name value -->
       <column type="gchararray"/>
@@ -139,6 +139,28 @@
       </row>
       <row>
         <col id="0" translatable="yes">z</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkListStore" id="BoundaryModeList">
+    <columns>
+      <!-- column-name offset -->
+      <column type="gint"/>
+      <!-- column-name description -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">-1</col>
+        <col id="1" translatable="yes">move inside limits</col>
+      </row>
+      <row>
+        <col id="0">0</col>
+        <col id="1" translatable="yes">move along limits</col>
+      </row>
+      <row>
+        <col id="0">1</col>
+        <col id="1" translatable="yes">move around limits</col>
       </row>
     </data>
   </object>
@@ -553,7 +575,7 @@
                                     <child>
                                       <object class="GtkComboBox" id="ScaleDimensionAxis">
                                         <property name="visible">True</property>
-                                        <property name="model">ScaleDimensionAxisValue</property>
+                                        <property name="model">ScaleDimensionAxesList</property>
                                         <property name="active">0</property>
                                         <child>
                                           <object class="GtkCellRendererText" id="ScaleDimensionColumn"/>
@@ -2246,8 +2268,12 @@ This combination is added to the above task list.</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkHBox" id="unit_box">
+                              <object class="GtkTable" id="table8">
                                 <property name="visible">True</property>
+                                <property name="n_rows">2</property>
+                                <property name="n_columns">2</property>
+                                <property name="column_spacing">3</property>
+                                <property name="row_spacing">3</property>
                                 <child>
                                   <object class="GtkLabel" id="UnitLabel">
                                     <property name="visible">True</property>
@@ -2255,9 +2281,8 @@ This combination is added to the above task list.</property>
                                     <property name="label" translatable="yes">Unit (for all dimensions):</property>
                                   </object>
                                   <packing>
-                                    <property name="expand">False</property>
-                                    <property name="padding">3</property>
-                                    <property name="position">0</property>
+                                    <property name="top_attach">1</property>
+                                    <property name="bottom_attach">2</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -2273,15 +2298,49 @@ This combination is added to the above task list.</property>
                                     </child>
                                   </object>
                                   <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">1</property>
+                                    <property name="left_attach">1</property>
+                                    <property name="right_attach">2</property>
+                                    <property name="top_attach">1</property>
+                                    <property name="bottom_attach">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="BoundaryModeLabel">
+                                    <property name="visible">True</property>
+                                    <property name="xalign">0</property>
+                                    <property name="label" translatable="yes">Boundary mode:</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkComboBox" id="BoundaryModeControl">
+                                    <property name="visible">True</property>
+                                    <property name="model">BoundaryModeList</property>
+                                    <property name="active">0</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="BoundaryModeColumn"/>
+                                      <attributes>
+                                        <attribute name="text">1</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">1</property>
+                                    <property name="right_attach">2</property>
                                   </packing>
                                 </child>
                               </object>
                               <packing>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkHBox" id="unit_box">
+                                <property name="visible">True</property>
+                              </object>
+                              <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">False</property>
-                                <property name="position">1</property>
+                                <property name="position">2</property>
                               </packing>
                             </child>
                           </object>

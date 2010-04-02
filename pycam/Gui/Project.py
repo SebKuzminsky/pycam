@@ -63,7 +63,6 @@ def get_data_file_location(filename):
         print >>sys.stderr, "You can extend the search path by setting the environment variable '%s'." % str(DATA_DIR_ENVIRON_KEY)
         return None
 
-
 def show_error_dialog(window, message):
     warn_window = gtk.MessageDialog(window, type=gtk.MESSAGE_ERROR,
             buttons=gtk.BUTTONS_OK, message_format=str(message))
@@ -367,6 +366,11 @@ class GLView:
 
 class ProjectGui:
 
+    BOUNDARY_MODES = {
+            "inside": -1,
+            "along": 0,
+            "around": 1}
+
     def __init__(self, master=None, no_dialog=False):
         """ TODO: remove "master" above when the Tk interface is abandoned"""
         self.settings = pycam.Gui.Settings.Settings()
@@ -444,7 +448,15 @@ class ProjectGui:
         def set_unit(text):
             unit_field.set_active((text == "mm") and 0 or 1)
         self.settings.add_item("unit", unit_field.get_active_text, set_unit)
-        unit_field.set_active(0)
+        self.settings.set("unit", "mm")
+        # boundary mode (move inside/along/around the boundaries)
+        boundary_mode_control = self.gui.get_object("BoundaryModeControl")
+        def set_boundary_mode(value):
+            # we assume, that the items in the list are (-1, 0, +1)
+            boundary_mode_control.set_active(value + 1)
+        def get_boundary_mode():
+            return boundary_mode_control.get_active() - 1
+        self.settings.add_item("boundary_mode", get_boundary_mode, set_boundary_mode)
         # define the limit callback functions
         for limit in ["minx", "miny", "minz", "maxx", "maxy", "maxz"]:
             obj = self.gui.get_object(limit)
@@ -538,7 +550,7 @@ class ProjectGui:
                 ("TorusRadiusControl", "torus_radius"),
                 ("FeedrateControl", "feedrate"),
                 ("SpeedControl", "speed")):
-            self.gui.get_object(objname).connect("changed", self.handle_tool_settings_change)
+            self.gui.get_object(objname).connect("value-changed", self.handle_tool_settings_change)
         for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
             self.gui.get_object(name).connect("clicked", self.handle_tool_settings_change)
         self.gui.get_object("ToolName").connect("changed", self.handle_tool_settings_change)
@@ -553,7 +565,7 @@ class ProjectGui:
                 self.gui.get_object(objname).connect("toggled", self.handle_process_settings_change)
         for objname in ("SafetyHeightControl", "OverlapPercentControl",
                 "MaterialAllowanceControl", "MaxStepDownControl"):
-            self.gui.get_object(objname).connect("changed", self.handle_process_settings_change)
+            self.gui.get_object(objname).connect("value-changed", self.handle_process_settings_change)
         self.gui.get_object("ProcessSettingName").connect("changed", self.handle_process_settings_change)
         # the process manager
         self.process_table = self.gui.get_object("ProcessListTable")
@@ -1159,7 +1171,7 @@ class ProjectGui:
             pycam.Exporters.STLExporter.STLExporter(self.model).write(fi)
             fi.close()
         except IOError, err_msg:
-            if not no_dialog:
+            if not no_dialog and not self.no_dialog:
                 show_error_dialog(self.window, "Failed to save model file")
 
     @gui_activity_guard
@@ -1319,7 +1331,7 @@ class ProjectGui:
                 out.write(text)
                 out.close()
             except IOError, err_msg:
-                if not no_dialog:
+                if not no_dialog and not self.no_dialog:
                     show_error_dialog(self.window, "Failed to save EMC tool file")
 
     def open_settings_file(self, filename):
@@ -1549,7 +1561,7 @@ class ProjectGui:
         if not filename:
             return
         settings = pycam.Gui.Settings.SettingsFileManager()
-        if not settings.write_to_file(filename, self.tool_list, self.process_list, self.task_list) and not no_dialog:
+        if not settings.write_to_file(filename, self.tool_list, self.process_list, self.task_list) and not no_dialog and not self.no_dialog:
             show_error_dialog(self.window, "Failed to save settings file")
 
     def get_tool_instance(self, tool_settings):
@@ -1656,6 +1668,19 @@ class ProjectGui:
 
         # this offset allows to cut a model with a minimal boundary box correctly
         offset = tool_settings["tool_radius"] / 2.0
+        # check the configured direction of the offset (boundary mode)
+        if self.settings.get("boundary_mode") == self.BOUNDARY_MODES["inside"]:
+            # use the negative offset to stay inside the boundaries
+            offset *= -1
+        elif self.settings.get("boundary_mode") == self.BOUNDARY_MODES["along"]:
+            # don't use any offset
+            offset = 0
+        elif self.settings.get("boundary_mode") == self.BOUNDARY_MODES["around"]:
+            # just use the positive offset - no change required
+            pass
+        else:
+            # this should never happen
+            print >>sys.stderr, "Assertion failed: invalid boundary_mode (%s)" % str(self.settings.get("boundary_mode"))
 
         minx = float(self.settings.get("minx"))-offset
         maxx = float(self.settings.get("maxx"))+offset
@@ -1663,6 +1688,13 @@ class ProjectGui:
         maxy = float(self.settings.get("maxy"))+offset
         minz = float(self.settings.get("minz"))
         maxz = float(self.settings.get("maxz"))
+
+        # check if the boundary limits are valid
+        if (minx > maxx) or (miny > maxy) or (minz > maxz):
+            # don't generate a toolpath if the area is too small (e.g. due to the tool size)
+            if not self.no_dialog:
+                show_error_dialog(self.window, "Processing boundaries are too small for this tool size.")
+            return True
 
         effective_toolradius = tool_settings["tool_radius"] * (1.0 - process_settings["overlap"] / 100.0)
         x_shift = effective_toolradius
@@ -1836,7 +1868,7 @@ class ProjectGui:
             if self.no_dialog:
                 print "GCode file successfully written: %s" % str(filename)
         except IOError, err_msg:
-            if not no_dialog:
+            if not no_dialog and not self.no_dialog:
                 show_error_dialog(self.window, "Failed to save toolpath file")
 
     def mainloop(self):

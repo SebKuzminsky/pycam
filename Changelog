@@ -4,6 +4,7 @@ Version 0.2.3 - UNRELEASED
  * fixed "overlap" calculation
  * added a warning dialog (GUI) for missing dependencies during startup (especially useful for Windows)
  * improved GUI for model scaling
+ * allow to configure if the tool should move inside/along/around the boundary limits
  * prevent invalid input values (zero tool radius, ...)
  * reduced memory consumption of toolpaths for python 2.6 or above
 
