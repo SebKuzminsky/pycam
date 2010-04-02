@@ -507,13 +507,11 @@ class ProjectGui:
                 ("show_dimensions", "ShowDimensionsCheckBox"),
                 ("show_bounding_box", "ShowBoundingCheckBox"),
                 ("show_toolpath", "ShowToolPathCheckBox"),
-                ("show_drill_progress", "ShowDrillProgressCheckBox"),
-                ("enable_ode", "SettingEnableODE")):
+                ("show_drill_progress", "ShowDrillProgressCheckBox")):
             obj = self.gui.get_object(objname)
             self.settings.add_item(name, obj.get_active, obj.set_active)
             # all of the objects above should trigger redraw
-            if name != "enable_ode":
-                obj.connect("toggled", self.update_view)
+            obj.connect("toggled", self.update_view)
         for name, objname in (
                 ("view_light", "OpenGLLight"),
                 ("view_shadow", "OpenGLShadow"),
@@ -544,14 +542,14 @@ class ProjectGui:
             obj.connect("color-set", self.update_view)
         # set the availability of ODE
         if ode_objects.is_ode_available():
-            self.settings.set("enable_ode", True)
-            self.gui.get_object("SettingEnableODE").set_sensitive(True)
-            self.gui.get_object("MaterialAllowanceControl").set_sensitive(True)
+            obj = self.gui.get_object("SettingEnableODE")
+            self.settings.add_item("enable_ode", obj.get_active, obj.set_active)
         else:
-            self.settings.set("enable_ode", False)
             self.gui.get_object("SettingEnableODE").set_sensitive(False)
             # TODO: remove this as soon as non-ODE toolpath generation respects material allowance
             self.gui.get_object("MaterialAllowanceControl").set_sensitive(False)
+            # bind dummy get/set functions to "enable_ode" (always return False)
+            self.settings.add_item("enable_ode", lambda: False, lambda state: None)
         skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
         self.settings.add_item("drill_progress_max_fps", skip_obj.get_value, skip_obj.set_value)
         # drill settings
