@@ -614,6 +614,7 @@
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">False</property>
                                     <property name="tooltip_text" translatable="yes">Scale the model along all axes proportionally.</property>
+                                    <property name="active">True</property>
                                     <property name="draw_indicator">True</property>
                                   </object>
                                   <packing>
@@ -2178,19 +2179,19 @@ This combination is added to the above task list.</property>
     <property name="tooltip">Write all current toolpaths to a file.</property>
     <property name="stock_id">gtk-execute</property>
   </object>
-  <object class="GtkAction" id="LoadSettings">
-    <property name="label">_Load Settings</property>
-    <property name="tooltip">Loads a set of processing templates from a file.</property>
+  <object class="GtkAction" id="LoadTaskSettings">
+    <property name="label">_Load Task Settings</property>
+    <property name="tooltip">Load tool, process and task definitions from a file.</property>
     <property name="stock_id">gtk-open</property>
   </object>
-  <object class="GtkAction" id="SaveSettings">
-    <property name="label">_Save Settings</property>
-    <property name="tooltip">Save the currently visible set of processing templates to a file.</property>
+  <object class="GtkAction" id="SaveTaskSettings">
+    <property name="label">_Save Task Settings</property>
+    <property name="tooltip">Save the tool, process and task definitions.</property>
     <property name="stock_id">gtk-save</property>
   </object>
-  <object class="GtkAction" id="SaveAsSettings">
-    <property name="label">Save Settings _as ...</property>
-    <property name="tooltip">Save the currently visible set of processing templates to a new file.</property>
+  <object class="GtkAction" id="SaveAsTaskSettings">
+    <property name="label">Save Task Settings _as ...</property>
+    <property name="tooltip">Save the tool, process and task definitions to a new file.</property>
     <property name="stock_id">gtk-save-as</property>
   </object>
   <object class="GtkAction" id="GeneralSettings">
@@ -2223,7 +2224,7 @@ This combination is added to the above task list.</property>
   </object>
   <object class="GtkDialog" id="GeneralSettingsWindow">
     <property name="border_width">5</property>
-    <property name="title" translatable="yes">PyCAM Settings</property>
+    <property name="title" translatable="yes">PyCAM Preferences</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">normal</property>
     <child internal-child="vbox">
@@ -2796,7 +2797,18 @@ This combination is added to the above task list.</property>
             <property name="visible">True</property>
             <property name="layout_style">end</property>
             <child>
-              <placeholder/>
+              <object class="GtkButton" id="ResetPreferencesButton">
+                <property name="label">gtk-revert-to-saved</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
             </child>
             <child>
               <object class="GtkButton" id="CloseSettingsWindow">
@@ -2822,6 +2834,7 @@ This combination is added to the above task list.</property>
       </object>
     </child>
     <action-widgets>
+      <action-widget response="0">ResetPreferencesButton</action-widget>
       <action-widget response="0">CloseSettingsWindow</action-widget>
     </action-widgets>
   </object>

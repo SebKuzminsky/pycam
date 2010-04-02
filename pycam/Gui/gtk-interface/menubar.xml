@@ -10,9 +10,9 @@
       <menuitem action="Quit"/>
     </menu>
     <menu action="SettingsMenu">
-      <menuitem action="LoadSettings"/>
-      <menuitem action="SaveSettings"/>
-      <menuitem action="SaveAsSettings"/>
+      <menuitem action="LoadTaskSettings"/>
+      <menuitem action="SaveTaskSettings"/>
+      <menuitem action="SaveAsTaskSettings"/>
       <separator />
       <menuitem action="ExportEMCToolDefinition"/>
       <separator />

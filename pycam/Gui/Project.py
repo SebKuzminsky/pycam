@@ -19,6 +19,7 @@ import OpenGL.GLUT as GLUT
 #import gtk.gtkgl
 import gtk
 import pango
+import ConfigParser
 import time
 import re
 import os
@@ -49,6 +50,29 @@ COLORS = {
     "color_toolpath_cut": (1.0, 0.5, 0.5),
     "color_toolpath_return": (0.5, 1.0, 0.5),
 }
+
+PREFERENCES_DEFAULTS = {
+        "enable_ode": True,
+        "boundary_mode": -1,
+        "unit": "mm",
+        "show_model": True,
+        "show_axes": True,
+        "show_dimensions": True,
+        "show_bounding_box": True,
+        "show_toolpath": True,
+        "show_drill_progress": False,
+        "color_background": COLORS["color_background"],
+        "color_model": COLORS["color_model"],
+        "color_bounding_box": COLORS["color_bounding_box"],
+        "color_cutter": COLORS["color_cutter"],
+        "color_toolpath_return": COLORS["color_toolpath_return"],
+        "view_light": True,
+        "view_shadow": True,
+        "view_polygon": True,
+        "drill_progress_max_fps": 2,
+}
+""" the listed items will be loaded/saved via the preferences file in the
+user's home directory on startup/shutdown"""
 
 # floating point color values are only available since gtk 2.16
 GTK_COLOR_MAX = 65535.0
@@ -387,21 +411,21 @@ class ProjectGui:
         self.gui.add_from_file(gtk_build_file)
         self.window = self.gui.get_object("ProjectWindow")
         # file loading
-        self.last_settings_file = None
+        self.last_task_settings_file = None
         self.last_model_file = None
         self.last_toolpath_file = None
         # define callbacks and accelerator keys for the menu actions
         for objname, callback, data, accel_key in (
-                ("LoadSettings", self.load_settings_file, None, "<Control>t"),
-                ("SaveSettings", self.save_settings_file, lambda: self.last_settings_file, None),
-                ("SaveAsSettings", self.save_settings_file, None, None),
+                ("LoadTaskSettings", self.load_task_settings_file, None, "<Control>t"),
+                ("SaveTaskSettings", self.save_task_settings_file, lambda: self.last_task_settings_file, None),
+                ("SaveAsTaskSettings", self.save_task_settings_file, None, None),
                 ("LoadModel", self.load_model_file, None, "<Control>l"),
                 ("SaveModel", self.save_model, lambda: self.last_model_file, "<Control>s"),
                 ("SaveAsModel", self.save_model, None, "<Control><Shift>s"),
                 ("ExportGCode", self.save_toolpath, None, "<Control><Shift>e"),
                 ("ExportEMCToolDefinition", self.export_emc_tools, None, None),
                 ("Quit", self.destroy, None, "<Control>q"),
-                ("GeneralSettings", self.toggle_settings_window, None, "<Control>p"),
+                ("GeneralSettings", self.toggle_preferences_window, None, "<Control>p"),
                 ("Toggle3DView", self.toggle_3d_view, None, "<Control>v")):
             item = self.gui.get_object(objname)
             if objname == "Toggle3DView":
@@ -417,11 +441,12 @@ class ProjectGui:
         # other events
         self.window.connect("destroy", self.destroy)
         # the settings window
-        self.gui.get_object("CloseSettingsWindow").connect("clicked", self.toggle_settings_window, False)
-        self.settings_window = self.gui.get_object("GeneralSettingsWindow")
-        self.settings_window.connect("delete-event", self.toggle_settings_window, False)
-        self._settings_window_position = None
-        self._settings_window_visible = False
+        self.gui.get_object("CloseSettingsWindow").connect("clicked", self.toggle_preferences_window, False)
+        self.gui.get_object("ResetPreferencesButton").connect("clicked", self.reset_preferences)
+        self.preferences_window = self.gui.get_object("GeneralSettingsWindow")
+        self.preferences_window.connect("delete-event", self.toggle_preferences_window, False)
+        self._preferences_window_position = None
+        self._preferences_window_visible = False
         # "about" window
         self.about_window = self.gui.get_object("AboutWindow")
         self.gui.get_object("About").connect("activate", self.toggle_about_window, True)
@@ -446,9 +471,8 @@ class ProjectGui:
         unit_field.connect("changed", self.update_view)
         unit_field.connect("changed", self.update_unit_labels)
         def set_unit(text):
-            unit_field.set_active((text == "mm") and 0 or 1)
+            unit_field.set_active(0 if text == "mm" else 1)
         self.settings.add_item("unit", unit_field.get_active_text, set_unit)
-        self.settings.set("unit", "mm")
         # boundary mode (move inside/along/around the boundaries)
         boundary_mode_control = self.gui.get_object("BoundaryModeControl")
         def set_boundary_mode(value):
@@ -477,7 +501,6 @@ class ProjectGui:
         # scale model to an axis dimension
         self.gui.get_object("ScaleDimensionAxis").connect("changed", self.switch_scale_axis)
         self.gui.get_object("ScaleDimensionButton").connect("clicked", self.scale_model_axis_fit)
-        self.gui.get_object("ScaleDimensionsProportionally").set_active(True)
         # visual and general settings
         for name, objname in (("show_model", "ShowModelCheckBox"),
                 ("show_axes", "ShowAxesCheckBox"),
@@ -519,9 +542,6 @@ class ProjectGui:
             self.settings.add_item(name, get_color_wrapper(obj), set_color_wrapper(obj))
             # repaint the 3d view after a color change
             obj.connect("color-set", self.update_view)
-        # pre-define the colors
-        for name in COLORS.keys():
-            self.settings.set(name, COLORS[name])
         # set the availability of ODE
         if ode_objects.is_ode_available():
             self.settings.set("enable_ode", True)
@@ -532,18 +552,8 @@ class ProjectGui:
             self.gui.get_object("SettingEnableODE").set_sensitive(False)
             # TODO: remove this as soon as non-ODE toolpath generation respects material allowance
             self.gui.get_object("MaterialAllowanceControl").set_sensitive(False)
-        # preconfigure some values
-        self.settings.set("show_model", True)
-        self.settings.set("show_toolpath", True)
-        self.settings.set("show_bounding_box", True)
-        self.settings.set("show_axes", True)
-        self.settings.set("show_dimensions", True)
-        self.settings.set("view_light", True)
-        self.settings.set("view_shadow", True)
-        self.settings.set("view_polygon", True)
         skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
         self.settings.add_item("drill_progress_max_fps", skip_obj.get_value, skip_obj.set_value)
-        self.settings.set("drill_progress_max_fps", 2)
         # drill settings
         for objname, key in (
                 ("ToolRadiusControl", "tool_radius"),
@@ -625,7 +635,7 @@ class ProjectGui:
         self._accel_group = uimanager.get_accel_group()
         self.window.add_accel_group(self._accel_group)
         self.about_window.add_accel_group(self._accel_group)
-        self.settings_window.add_accel_group(self._accel_group)
+        self.preferences_window.add_accel_group(self._accel_group)
         # load menu data
         gtk_menu_file = get_data_file_location(GTKMENU_FILE)
         if gtk_menu_file is None:
@@ -643,7 +653,9 @@ class ProjectGui:
         window_box.pack_start(self.menubar, False)
         window_box.reorder_child(self.menubar, 0)
         # some more initialization
-        self.load_settings()
+        self.reset_preferences()
+        self.load_preferences()
+        self.load_task_settings()
         self.update_all_controls()
         if not self.no_dialog:
             self.window.show()
@@ -701,7 +713,7 @@ class ProjectGui:
         return self._physics_cache
 
     def update_save_actions(self):
-        self.gui.get_object("SaveSettings").set_sensitive(not self.last_settings_file is None)
+        self.gui.get_object("SaveTaskSettings").set_sensitive(not self.last_task_settings_file is None)
         self.gui.get_object("SaveModel").set_sensitive(not self.last_model_file is None)
 
     def update_tasklist_controls(self, widget=None, data=None):
@@ -877,20 +889,20 @@ class ProjectGui:
         return True
 
     @gui_activity_guard
-    def toggle_settings_window(self, widget=None, event=None, state=None):
+    def toggle_preferences_window(self, widget=None, event=None, state=None):
         if state is None:
             # the "delete-event" issues the additional "event" argument
             state = event
         if state is None:
-           state = not self._settings_window_visible
+           state = not self._preferences_window_visible
         if state:
-            if self._settings_window_position:
-                self.settings_window.move(*self._settings_window_position)
-            self.settings_window.show()
+            if self._preferences_window_position:
+                self.preferences_window.move(*self._preferences_window_position)
+            self.preferences_window.show()
         else:
-            self._settings_window_position = self.settings_window.get_position()
-            self.settings_window.hide()
-        self._settings_window_visible = state
+            self._preferences_window_position = self.preferences_window.get_position()
+            self.preferences_window.hide()
+        self._preferences_window_visible = state
         # don't close the window - just hide it (for "delete-event")
         return True
 
@@ -1175,6 +1187,59 @@ class ProjectGui:
                 show_error_dialog(self.window, "Failed to save model file")
 
     @gui_activity_guard
+    def reset_preferences(self, widget=None):
+        """ reset all preferences to their default values """
+        for key, value in PREFERENCES_DEFAULTS.items():
+            self.settings.set(key, value)
+
+    def load_preferences(self):
+        """ load all settings that are available in the Preferences window from
+        a file in the user's home directory """
+        config_filename = pycam.Gui.Settings.get_config_filename()
+        if config_filename is None:
+            # failed to create the personal preferences directory
+            return
+        config = ConfigParser.ConfigParser()
+        if not config.read(config_filename):
+            # no config file was read
+            return
+        # report any ignored (obsolete) preference keys present in the file
+        for item, value in config.items("DEFAULT"):
+            if not item in PREFERENCES_DEFAULTS.keys():
+                print "Warning: skipping obsolete preference item: %s" % str(item)
+        for item in PREFERENCES_DEFAULTS.keys():
+            if not config.has_option("DEFAULT", item):
+                # a new preference setting is missing in the (old) file
+                continue
+            value_raw = config.get("DEFAULT", item)
+            old_value = self.settings.get(item)
+            if isinstance(old_value, basestring):
+                # keep strings as they are
+                value = value_raw
+            else:
+                # parse tuples, integers, bools, ...
+                value = eval(value_raw)
+            self.settings.set(item, value)
+
+    def save_preferences(self):
+        """ save all settings that are available in the Preferences window to
+        a file in the user's home directory """
+        config_filename = pycam.Gui.Settings.get_config_filename()
+        if config_filename is None:
+            # failed to create the personal preferences directory
+            print >>sys.stderr, "Warning: Failed to create a preferences directory your user home directory." 
+            return
+        config = ConfigParser.ConfigParser()
+        for item in PREFERENCES_DEFAULTS.keys():
+            config.set("DEFAULT", item, self.settings.get(item))
+        try:
+            config_file = file(config_filename, "w")
+            config.write(config_file)
+            config_file.close()
+        except IOError, err_msg:
+            print >>sys.stderr, "Warning: Failed to write preferences file (%s): %s" % (config_filename, err_msg)
+
+    @gui_activity_guard
     def shift_model(self, widget, use_form_values=True):
         if use_form_values:
             shift_x = self.gui.get_object("shift_x").get_value()
@@ -1286,6 +1351,7 @@ class ProjectGui:
             # wait until if is finished
             while self._progress_running:
                 time.sleep(0.5)
+        self.save_preferences()
         gtk.main_quit()
 
     def open(self, filename):
@@ -1334,24 +1400,24 @@ class ProjectGui:
                 if not no_dialog and not self.no_dialog:
                     show_error_dialog(self.window, "Failed to save EMC tool file")
 
-    def open_settings_file(self, filename):
+    def open_task_settings_file(self, filename):
         """ This function is used by the commandline handler """
-        self.last_settings_file = filename
-        self.load_settings_file(filename=filename)
+        self.last_task_settings_file = filename
+        self.load_task_settings_file(filename=filename)
         self.update_save_actions()
 
     @gui_activity_guard
-    def load_settings_file(self, widget=None, filename=None):
+    def load_task_settings_file(self, widget=None, filename=None):
         if callable(filename):
             filename = filename()
         if not filename:
             filename = self.get_filename_via_dialog("Loading settings ...",
                     mode_load=True, type_filter=FILTER_CONFIG)
             if filename:
-                self.last_settings_file = filename
+                self.last_task_settings_file = filename
                 self.update_save_actions()
         if filename:
-            self.load_settings(filename)
+            self.load_task_settings(filename)
 
     def load_model(self, model):
         # load the new model only if the import worked
@@ -1365,8 +1431,8 @@ class ProjectGui:
             self.append_to_queue(self.toggle_3d_view, value=True)
             self.append_to_queue(self.update_view)
 
-    def load_settings(self, filename=None):
-        settings = pycam.Gui.Settings.SettingsFileManager()
+    def load_task_settings(self, filename=None):
+        settings = pycam.Gui.Settings.ProcessSettings()
         if not filename is None:
             settings.load_file(filename)
         self.tool_list = settings.get_tools()
@@ -1544,7 +1610,7 @@ class ProjectGui:
         self.gui.get_object("toolpath_down").set_sensitive((not new_index is None) and (new_index + 1 < len(self.toolpath)))
 
     @gui_activity_guard
-    def save_settings_file(self, widget=None, filename=None):
+    def save_task_settings_file(self, widget=None, filename=None):
         no_dialog = False
         if callable(filename):
             filename = filename()
@@ -1555,12 +1621,12 @@ class ProjectGui:
             filename = self.get_filename_via_dialog("Save settings to ...",
                     mode_load=False, type_filter=FILTER_CONFIG)
             if filename:
-                self.last_settings_file = filename
+                self.last_task_settings_file = filename
                 self.update_save_actions()
         # no filename given -> exit
         if not filename:
             return
-        settings = pycam.Gui.Settings.SettingsFileManager()
+        settings = pycam.Gui.Settings.ProcessSettings()
         if not settings.write_to_file(filename, self.tool_list, self.process_list, self.task_list) and not no_dialog and not self.no_dialog:
             show_error_dialog(self.window, "Failed to save settings file")
 

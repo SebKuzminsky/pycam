@@ -3,11 +3,39 @@ import StringIO
 import sys
 import os
 
-GET_INDEX = 0
-SET_INDEX = 1
-VALUE_INDEX = 2
+CONFIG_DIR = "pycam"
+
+def get_config_dirname():
+    try:
+        from win32com.shell import shellcon, shell            
+        homedir = shell.SHGetFolderPath(0, shellcon.CSIDL_APPDATA, 0, 0)
+        config_dir = os.path.join(homedir, CONFIG_DIR)
+    except ImportError: # quick semi-nasty fallback for non-windows/win32com case
+        homedir = os.path.expanduser("~")
+        # hide the config directory for unixes
+        config_dir = os.path.join(homedir, "." + CONFIG_DIR)
+    if not os.path.isdir(config_dir):
+        try:
+            os.makedirs(config_dir)
+        except OSError:
+            config_dir = None
+    return config_dir
+
+def get_config_filename(filename=None):
+    if filename is None:
+        filename = "preferences.conf"
+    config_dir = get_config_dirname()
+    if config_dir is None:
+        return None
+    else:
+        return os.path.join(config_dir, filename)
+
 
 class Settings:
+
+    GET_INDEX = 0
+    SET_INDEX = 1
+    VALUE_INDEX = 2
     
     def __init__(self):
         self.items = {}
@@ -17,35 +45,39 @@ class Settings:
         self.items[key] = [None, None, None]
         self.define_get_func(key, get_func)
         self.define_set_func(key, set_func)
-        self.items[key][VALUE_INDEX] = None
+        self.items[key][self.VALUE_INDEX] = None
 
     def define_get_func(self, key, get_func=None):
         if not self.items.has_key(key):
             return
         if get_func is None:
-            get_func = lambda: self.items[key][VALUE_INDEX]
-        self.items[key][GET_INDEX] = get_func
+            get_func = lambda: self.items[key][self.VALUE_INDEX]
+        self.items[key][self.GET_INDEX] = get_func
 
     def define_set_func(self, key, set_func=None):
         if not self.items.has_key(key):
             return
         def default_set_func(value):
-            self.items[key][VALUE_INDEX] = value
+            self.items[key][self.VALUE_INDEX] = value
         if set_func is None:
             set_func = default_set_func
-        self.items[key][SET_INDEX] = set_func
+        self.items[key][self.SET_INDEX] = set_func
 
     def get(self, key, default=None):
         if self.items.has_key(key):
-            return self.items[key][GET_INDEX]()
+            return self.items[key][self.GET_INDEX]()
         else:
             return default
 
     def set(self, key, value):
         if not self.items.has_key(key):
             self.add_item(key)
-        self.items[key][SET_INDEX](value)
-        self.items[key][VALUE_INDEX] = value
+        self.items[key][self.SET_INDEX](value)
+        self.items[key][self.VALUE_INDEX] = value
+
+    def has_key(self, key):
+        """ expose the "has_key" function of the items list """
+        return self.items.has_key(key)
 
     def __str__(self):
         result = {}
@@ -54,7 +86,7 @@ class Settings:
         return str(result)
 
 
-class SettingsFileManager:
+class ProcessSettings:
 
     DEFAULT_CONFIG = """
 [ToolDefault]
