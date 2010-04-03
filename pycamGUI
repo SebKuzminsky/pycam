@@ -23,10 +23,10 @@ if __name__ == "__main__":
             help="use the (old) Tk interface")
     parser.add_option("-c", "--config", dest="config_file",
             default=None, action="store", type="string",
-            help="load a settings file (requires the GTK interface)")
+            help="load a task settings file (requires the GTK interface)")
     parser.add_option("", "--task", dest="task",
             default=None, action="store", type="int",
-            help="choose a specific task from settings by number (requires the GTK interface)")
+            help="choose a specific task from task settings by number (requires the GTK interface)")
     parser.add_option("", "--disable-ode", dest="ode_disabled",
             default=False, action="store_true", help="disable experimental ODE collision detection")
     (options, args) = parser.parse_args()
@@ -102,11 +102,11 @@ if __name__ == "__main__":
         gui.load_model(TestModel())
     else:
         gui.open(inputfile)
-    # load settings file
+    # load task settings file
     # only available for the GTK interface
     if options.gtk_gui:
         if options.config_file:
-            gui.open_settings_file(options.config_file)
+            gui.open_task_settings_file(options.config_file)
     if outputfile and not options.display:
         # an output filename is given and no gui is explicitly requested
         if options.gtk_gui:
