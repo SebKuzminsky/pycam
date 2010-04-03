@@ -25,9 +25,10 @@ class SphericalCutter(BaseCutter):
     def __repr__(self):
         return "SphericalCutter<%s,%s>" % (self.location,self.radius)
 
-    def get_shape(self, format="ODE", additional_distance=0.0):
+    def get_shape(self, format="ODE"):
         if format == "ODE":
             import ode
+            additional_distance = self.get_required_distance()
             radius = self.radius + additional_distance
             center_height = 0.5 * self.height + radius - additional_distance
             geom = ode.GeomTransform(None)
@@ -96,7 +97,7 @@ class SphericalCutter(BaseCutter):
         self.center = Point(location.x, location.y, location.z+self.radius)
 
     def intersect_sphere_plane(self, direction, triangle):
-        (ccp,cp,d) = intersect_sphere_plane(self.center, self.radius, direction, triangle)
+        (ccp,cp,d) = intersect_sphere_plane(self.center, self.distance_radius, direction, triangle)
         # offset intersection
         if ccp:
             cl = cp.add(self.location.sub(ccp))
@@ -110,7 +111,7 @@ class SphericalCutter(BaseCutter):
         return (None,INFINITE)
 
     def intersect_sphere_point(self, direction, point):
-        (ccp,cp,l) = intersect_sphere_point(self.center, self.radius, self.radiussq, direction, point)
+        (ccp,cp,l) = intersect_sphere_point(self.center, self.distance_radius, self.distance_radiussq, direction, point)
         # offset intersection
         cl = None
         if cp:
@@ -122,7 +123,7 @@ class SphericalCutter(BaseCutter):
         return (cl,l)
 
     def intersect_sphere_line(self, direction, edge):
-        (ccp,cp,l) = intersect_sphere_line(self.center, self.radius, self.radiussq, direction, edge)
+        (ccp,cp,l) = intersect_sphere_line(self.center, self.distance_radius, self.distance_radiussq, direction, edge)
         # offset intersection
         if ccp:
             cl = cp.sub(ccp.sub(self.location))
@@ -140,7 +141,7 @@ class SphericalCutter(BaseCutter):
         return (cl,l)
 
     def intersect_cylinder_point(self, direction, point):
-        (ccp,cp,l)=intersect_cylinder_point(self.center, self.axis, self.radius, self.radiussq, direction, point)
+        (ccp,cp,l)=intersect_cylinder_point(self.center, self.axis, self.distance_radius, self.distance_radiussq, direction, point)
         # offset intersection
         if ccp:
             cl = cp.add(self.location.sub(ccp))
@@ -154,7 +155,7 @@ class SphericalCutter(BaseCutter):
         return (cl, l)
 
     def intersect_cylinder_line(self, direction, edge):
-        (ccp,cp,l) = intersect_cylinder_line(self.center, self.axis, self.radius, self.radiussq, direction, edge)
+        (ccp,cp,l) = intersect_cylinder_line(self.center, self.axis, self.distance_radius, self.distance_radiussq, direction, edge)
         # offset intersection
         if ccp:
             cl = self.location.add(cp.sub(ccp))
@@ -240,6 +241,7 @@ class SphericalCutter(BaseCutter):
         return (cl,d)
 
     def drop_bis(self, triangle):
+        """ TODO: this function is never called - remove it? """
         n = triangle.normal()
         if abs(n.dot(self.axis))<epsilon:
             d = triangle.p1.sub(self.center).dot(n)

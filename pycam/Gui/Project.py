@@ -543,13 +543,11 @@ class ProjectGui:
             # repaint the 3d view after a color change
             obj.connect("color-set", self.update_view)
         # set the availability of ODE
+        enable_ode_control = self.gui.get_object("SettingEnableODE")
         if ode_objects.is_ode_available():
-            obj = self.gui.get_object("SettingEnableODE")
-            self.settings.add_item("enable_ode", obj.get_active, obj.set_active)
+            self.settings.add_item("enable_ode", enable_ode_control.get_active, enable_ode_control.set_active)
         else:
-            self.gui.get_object("SettingEnableODE").set_sensitive(False)
-            # TODO: remove this as soon as non-ODE toolpath generation respects material allowance
-            self.gui.get_object("MaterialAllowanceControl").set_sensitive(False)
+            enable_ode_control.set_sensitive(False)
             # bind dummy get/set functions to "enable_ode" (always return False)
             self.settings.add_item("enable_ode", lambda: False, lambda state: None)
         skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
@@ -704,10 +702,10 @@ class ProjectGui:
                 self.view3d.glsetup()
             self.view3d.paint()
 
-    def get_physics(self, cutter, material_allowance):
+    def get_physics(self, cutter):
         if self.settings.get("enable_ode"):
-            self._physics_cache = ode_objects.generate_physics(self.model, cutter,
-                    self._physics_cache, material_allowance)
+            self._physics_cache = ode_objects.generate_physics(self.model,
+                    cutter, self._physics_cache)
         else:
             self._physics_cache = None
         return self._physics_cache
@@ -858,8 +856,6 @@ class ProjectGui:
             self.gui.get_object(objname).set_sensitive(dropcutter_active)
         # disable "step down" control, if PushCutter is not active
         self.gui.get_object("MaxStepDownControl").set_sensitive(get_obj("PushCutter").get_active())
-        # "material allowance" requires ODE support
-        self.gui.get_object("MaterialAllowanceControl").set_sensitive(self.settings.get("enable_ode"))
 
     def update_tool_controls(self, widget=None, data=None):
         # disable the toroidal radius if the toroidal cutter is not enabled
@@ -1655,7 +1651,8 @@ class ProjectGui:
     def get_pathgenerator_instance(self, cutter, process_settings):
         pathgenerator = process_settings["path_generator"]
         pathprocessor = process_settings["path_postprocessor"]
-        physics = self.get_physics(cutter, process_settings["material_allowance"])
+        cutter.set_required_distance(process_settings["material_allowance"])
+        physics = self.get_physics(cutter)
         if pathgenerator == "DropCutter":
             if pathprocessor == "ZigZagCutter":
                 processor = pycam.PathProcessors.PathAccumulator(zigzag=True)

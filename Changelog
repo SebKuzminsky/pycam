@@ -1,5 +1,6 @@
 Version 0.2.3 - UNRELEASED
  * GUI change: tool and process settings can be combined into tasks
+ * added "material allowance" support for non-ODE calculations
  * added export of EMC tool definitions
  * store configured settings to a file in the user's home directory
  * fixed "overlap" calculation

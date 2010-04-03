@@ -26,6 +26,19 @@ class ToroidalCutter(BaseCutter):
         self.center = Point(location.x, location.y, location.z+minorradius)
         self.majorradiussq = sqr(self.majorradius)
         self.minorradiussq = sqr(self.minorradius)
+        self.distance_majorradius = self.majorradius + self.get_required_distance()
+        self.distance_minorradius = self.minorradius + self.get_required_distance()
+        self.distance_majorradiussq = sqr(self.distance_majorradius)
+        self.distance_minorradiussq = sqr(self.distance_minorradius)
+
+    def set_required_distance(self, value):
+        """ trigger the update of "self.distance_major/minorradius" """
+        BaseCutter.set_required_distance(self, value)
+        if value >= 0:
+            self.distance_majorradius = self.majorradius + self.get_required_distance()
+            self.distance_minorradius = self.minorradius + self.get_required_distance()
+            self.distance_majorradiussq = sqr(self.distance_majorradius)
+            self.distance_minorradiussq = sqr(self.distance_minorradius)
 
     def __repr__(self):
         return "ToroidalCutter<%s,%f,R=%f,r=%f>" % (self.location,self.radius,self.majorradius,self.minorradius)
@@ -40,14 +53,15 @@ class ToroidalCutter(BaseCutter):
             # just return a string comparison
             return cmp(str(self), str(other))
 
-    def get_shape(self, format="ODE", additional_distance=0.0):
+    def get_shape(self, format="ODE"):
         if format == "ODE":
             import ode
             from pycam.Cutters.CylindricalCutter import CylindricalCutter
             # TODO: use an appromixated trimesh instead (ODE does not support toroidal shapes)
             # for now: use the simple cylinder shape - this should not do any harm
-            self.shape[format] = CylindricalCutter(self.radius, self.location,
-                    height=self.height).get_shape(format, additional_distance)
+            cylinder = CylindricalCutter(self.radius, self.location, height=self.height)
+            cylinder.set_required_distance(self.get_required_distance())
+            self.shape[format] = cylinder.get_shape(format)
             return self.shape[format]
 
     def to_OpenGL(self):
@@ -72,7 +86,7 @@ class ToroidalCutter(BaseCutter):
         self.center = Point(location.x, location.y, location.z+self.minorradius)
 
     def intersect_torus_plane(self, direction, triangle):
-        (ccp,cp,l) = intersect_torus_plane(self.center, self.axis, self.majorradius, self.minorradius, direction, triangle)
+        (ccp,cp,l) = intersect_torus_plane(self.center, self.axis, self.distance_majorradius, self.distance_minorradius, direction, triangle)
         if cp:
             cl = cp.add(self.location.sub(ccp))
             return (cl,ccp,cp,l)
@@ -85,7 +99,7 @@ class ToroidalCutter(BaseCutter):
         return (None,INFINITE)
 
     def intersect_torus_point(self, direction, point):
-        (ccp,cp,l) = intersect_torus_point(self.center, self.axis, self.majorradius, self.minorradius, self.majorradiussq, self.minorradiussq, direction, point)
+        (ccp,cp,l) = intersect_torus_point(self.center, self.axis, self.distance_majorradius, self.distance_minorradius, self.distance_majorradiussq, self.distance_minorradiussq, direction, point)
         if ccp:
             cl = point.add(self.location.sub(ccp))
             return (cl, ccp, point, l)
@@ -100,7 +114,7 @@ class ToroidalCutter(BaseCutter):
         min_m = 0
         min_l = INFINITE
         min_cl = None
-        scale = int(edge.len()/self.minorradius*2)
+        scale = int(edge.len()/self.distance_minorradius*2)
         if scale<3:
             scale = 3
         for i in range(0,scale+1):
@@ -130,7 +144,7 @@ class ToroidalCutter(BaseCutter):
         return (min_cl, min_l)
 
     def intersect_cylinder_point(self, direction, point):
-        (ccp,cp,l) = intersect_cylinder_point(self.center, self.axis, self.radius, self.radiussq, direction, point)
+        (ccp,cp,l) = intersect_cylinder_point(self.center, self.axis, self.distance_radius, self.distance_radiussq, direction, point)
         # offset intersection
         if ccp:
             cl = self.location.add(direction.mul(l))
@@ -144,7 +158,7 @@ class ToroidalCutter(BaseCutter):
         return (cl, l)
 
     def intersect_cylinder_line(self, direction, edge):
-        (ccp,cp,l) = intersect_cylinder_line(self.center, self.axis, self.radius, self.radiussq, direction, edge)
+        (ccp,cp,l) = intersect_cylinder_line(self.center, self.axis, self.distance_radius, self.distance_radiussq, direction, edge)
         # offset intersection
         if ccp:
             cl = self.location.add(cp.sub(ccp))
@@ -162,7 +176,7 @@ class ToroidalCutter(BaseCutter):
         return (cl,l)
 
     def intersect_circle_plane(self, direction, triangle):
-        (ccp,cp,l) = intersect_circle_plane(self.location, self.majorradius, direction, triangle)
+        (ccp,cp,l) = intersect_circle_plane(self.location, self.distance_majorradius, direction, triangle)
         # offset intersection
         if ccp:
             cl = cp.sub(ccp.sub(self.location))
@@ -176,7 +190,7 @@ class ToroidalCutter(BaseCutter):
         return (None,INFINITE)
 
     def intersect_circle_point(self, direction, point):
-        (ccp, cp, l) = intersect_circle_point(self.location, self.axis, self.majorradius, self.majorradiussq, direction, point)
+        (ccp, cp, l) = intersect_circle_point(self.location, self.axis, self.distance_majorradius, self.distance_majorradiussq, direction, point)
         if ccp:
             cl = cp.sub(ccp.sub(self.location))
             return (cl,ccp,point,l)
@@ -187,7 +201,7 @@ class ToroidalCutter(BaseCutter):
         return (cl,l)
 
     def intersect_circle_line(self, direction, edge):
-        (ccp,cp,l) = intersect_circle_line(self.location, self.axis, self.majorradius, self.majorradiussq, direction, edge)
+        (ccp,cp,l) = intersect_circle_line(self.location, self.axis, self.distance_majorradius, self.distance_majorradiussq, direction, edge)
         if ccp:
             cl = cp.sub(ccp.sub(self.location))
             return (cl,ccp,cp,l)

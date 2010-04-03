@@ -15,11 +15,27 @@ class BaseCutter:
         BaseCutter.id += 1
         self.radius = radius
         self.radiussq = radius*radius
-        self.minx = location.x-radius
-        self.maxx = location.x+radius
-        self.miny = location.y-radius
-        self.maxy = location.y+radius
+        self.required_distance = 0
+        self.distance_radius = self.radius
+        self.distance_radiussq = self.distance_radius * self.distance_radius
+        # self.minx, self.maxx, self.miny and self.maxy are defined as properties below
         self.shape = {}
+
+    def _get_minx(self):
+        return self.location.x - self.distance_radius
+    minx = property(_get_minx)
+
+    def _get_maxx(self):
+        return self.location.x + self.distance_radius
+    maxx = property(_get_maxx)
+
+    def _get_miny(self):
+        return self.location.y - self.distance_radius
+    miny = property(_get_miny)
+
+    def _get_maxy(self):
+        return self.location.y + self.distance_radius
+    maxy = property(_get_maxy)
 
     def __repr__(self):
         return "BaseCutter"
@@ -36,12 +52,17 @@ class BaseCutter:
             # just return a string comparison
             return cmp(str(self), str(other))
 
+    def set_required_distance(self, value):
+        if value >= 0:
+            self.required_distance = value
+            self.distance_radius = self.radius + self.get_required_distance()
+            self.distance_radiussq = self.distance_radius * self.distance_radius
+
+    def get_required_distance(self):
+        return self.required_distance
+
     def moveto(self, location):
         self.location = location
-        self.minx = location.x-self.radius
-        self.maxx = location.x+self.radius
-        self.miny = location.y-self.radius
-        self.maxy = location.y+self.radius
         for shape, set_pos_func in self.shape.values():
             set_pos_func(location.x, location.y, location.z)
 
@@ -61,13 +82,14 @@ class BaseCutter:
 
         # check bounding circle collision
         c = triangle.center()
-        if sqr(c.x-self.location.x)+sqr(c.y-self.location.y)>(self.radiussq+2*self.radius*triangle.radius()+triangle.radiussq()):
+        if sqr(c.x-self.location.x)+sqr(c.y-self.location.y)>(self.distance_radiussq+2*self.distance_radius*triangle.radius()+triangle.radiussq()):
             return None
 
         (cl,d)= self.intersect(BaseCutter.vertical, triangle)
         return cl
 
     def push(self, dx, dy, triangle):
+        """ TODO: this function is never used - remove it? """
         # check bounding box collision
         if dx == 0:
             if self.miny > triangle.maxy():

@@ -10,12 +10,12 @@ ShapeCapsule = lambda radius, height: ode.GeomCapsule(None, radius, height - (2 
 _ode_override_state = None
 
 
-def generate_physics(model, cutter, physics=None, material_allowance=0.0):
+def generate_physics(model, cutter, physics=None):
     if physics is None:
         physics = PhysicalWorld()
     physics.reset()
     physics.add_mesh((0, 0, 0), model.triangles())
-    shape_info = cutter.get_shape("ODE", additional_distance=material_allowance)
+    shape_info = cutter.get_shape("ODE")
     physics.set_drill(shape_info[0], (0.0, 0.0, 0.0))
     return physics
 

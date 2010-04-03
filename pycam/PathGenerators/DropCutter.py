@@ -186,10 +186,10 @@ class DropCutter:
         cut_max = None
         triangle_max = None
         self.cutter.moveto(p)
-        box_x_min = p.x - self.cutter.radius
-        box_x_max = p.x + self.cutter.radius
-        box_y_min = p.y - self.cutter.radius
-        box_y_max = p.y + self.cutter.radius
+        box_x_min = self.cutter.minx
+        box_x_max = self.cutter.maxx
+        box_y_min = self.cutter.miny
+        box_y_max = self.cutter.maxy
         box_z_min = dim_height.end
         box_z_max = self.safety_height
         triangles = self.model.triangles(box_x_min, box_y_min, box_z_min, box_x_max, box_y_max, box_z_max)

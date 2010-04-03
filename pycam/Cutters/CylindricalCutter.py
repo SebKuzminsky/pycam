@@ -20,12 +20,12 @@ class CylindricalCutter(BaseCutter):
         BaseCutter.__init__(self, location, radius)
         self.height = height
         self.axis = Point(0,0,1)
-        self.center = location
+        self.center = location.sub(Point(0, 0, self.get_required_distance()))
 
     def __repr__(self):
         return "CylindricalCutter<%s,%s>" % (self.location,self.radius)
 
-    def get_shape(self, format="ODE", additional_distance=0.0):
+    def get_shape(self, format="ODE"):
         if format == "ODE":
             import ode
             """ We don't handle the the "additional_distance" perfectly, since
@@ -36,7 +36,8 @@ class CylindricalCutter(BaseCutter):
                   \_/
             This slight incorrectness should be neglectable and causes no harm.
             """
-            radius = self.radius + additional_distance
+            additional_distance = self.get_required_distance()
+            radius = self.distance_radius
             height = self.height + additional_distance
             center_height = 0.5 * height - additional_distance
             geom = ode.GeomTransform(None)
@@ -88,10 +89,10 @@ class CylindricalCutter(BaseCutter):
 
     def moveto(self, location):
         BaseCutter.moveto(self, location)
-        self.center = location
+        self.center = location.sub(Point(0, 0, self.get_required_distance()))
 
     def intersect_circle_plane(self, direction, triangle):
-        (ccp,cp,d) = intersect_circle_plane(self.center, self.radius, direction, triangle)
+        (ccp,cp,d) = intersect_circle_plane(self.center, self.distance_radius, direction, triangle)
         if ccp:
             cl = cp.add(self.location.sub(ccp))
             return (cl,ccp,cp,d)
@@ -104,7 +105,7 @@ class CylindricalCutter(BaseCutter):
         return (None,INFINITE)
 
     def intersect_circle_point(self, direction, point):
-        (ccp,cp,l) = intersect_circle_point(self.center, self.axis, self.radius, self.radiussq, direction, point)
+        (ccp,cp,l) = intersect_circle_point(self.center, self.axis, self.distance_radius, self.distance_radiussq, direction, point)
         if ccp:
             cl = cp.add(self.location.sub(ccp))
             return (cl,ccp,cp,l)
@@ -115,7 +116,7 @@ class CylindricalCutter(BaseCutter):
         return (cl,l)
 
     def intersect_circle_line(self, direction, edge):
-        (ccp,cp,l) = intersect_circle_line(self.center, self.axis, self.radius, self.radiussq, direction, edge)
+        (ccp,cp,l) = intersect_circle_line(self.center, self.axis, self.distance_radius, self.distance_radiussq, direction, edge)
         if ccp:
             cl = cp.add(self.location.sub(ccp))
             return (cl,ccp,cp,l)
@@ -131,7 +132,7 @@ class CylindricalCutter(BaseCutter):
         return (cl,l)
 
     def intersect_cylinder_point(self, direction, point):
-        (ccp,cp,l) = intersect_cylinder_point(self.center, self.axis, self.radius, self.radiussq, direction, point)
+        (ccp,cp,l) = intersect_cylinder_point(self.center, self.axis, self.distance_radius, self.distance_radiussq, direction, point)
         # offset intersection
         if ccp:
             cl = cp.add(self.location.sub(ccp))
@@ -145,7 +146,7 @@ class CylindricalCutter(BaseCutter):
         return (cl, l)
 
     def intersect_cylinder_line(self, direction, edge):
-        (ccp,cp,l) = intersect_cylinder_line(self.center, self.axis, self.radius, self.radiussq, direction, edge)
+        (ccp,cp,l) = intersect_cylinder_line(self.center, self.axis, self.distance_radius, self.distance_radiussq, direction, edge)
         # offset intersection
         if ccp:
             cl = cp.add(self.location.sub(ccp))
