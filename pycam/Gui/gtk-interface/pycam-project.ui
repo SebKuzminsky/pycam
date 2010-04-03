@@ -2858,6 +2858,7 @@ PyCAM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANT
 See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</property>
+    <property name="logo">logo_gui.png</property>
     <property name="wrap_license">True</property>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox2">
