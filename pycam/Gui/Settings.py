@@ -293,7 +293,7 @@ process: 2
             except IndexError:
                 return None
         else:
-            return str(value)
+            return str(value_type(value))
 
     def get_config_text(self, tools=None, processes=None, tasks=None):
         result = []
