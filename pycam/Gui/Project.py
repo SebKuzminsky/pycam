@@ -1189,6 +1189,8 @@ class ProjectGui:
         """ reset all preferences to their default values """
         for key, value in PREFERENCES_DEFAULTS.items():
             self.settings.set(key, value)
+        # redraw the model due to changed colors, display items ...
+        self.update_view()
 
     def load_preferences(self):
         """ load all settings that are available in the Preferences window from
