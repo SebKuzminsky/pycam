@@ -65,6 +65,7 @@ PREFERENCES_DEFAULTS = {
         "color_model": COLORS["color_model"],
         "color_bounding_box": COLORS["color_bounding_box"],
         "color_cutter": COLORS["color_cutter"],
+        "color_toolpath_cut": COLORS["color_toolpath_cut"],
         "color_toolpath_return": COLORS["color_toolpath_return"],
         "view_light": True,
         "view_shadow": True,
@@ -535,6 +536,7 @@ class ProjectGui:
                 ("color_model", "ColorModel"),
                 ("color_bounding_box", "ColorBoundingBox"),
                 ("color_cutter", "ColorDrill"),
+                ("color_toolpath_cut", "ColorToolpathCut"),
                 ("color_toolpath_return", "ColorToolpathReturn")):
             obj = self.gui.get_object(objname)
             self.settings.add_item(name, get_color_wrapper(obj), set_color_wrapper(obj))
