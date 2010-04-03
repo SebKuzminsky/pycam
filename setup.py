@@ -55,6 +55,7 @@ setup(
         ("share/python-pycam/ui", [
             os.path.join("pycam", "Gui", "gtk-interface", "pycam-project.ui"),
             os.path.join("pycam", "Gui", "gtk-interface", "menubar.xml"),
+            os.path.join("pycam", "Gui", "gtk-interface", "logo_gui.png"),
             ]),
         ("share/python-pycam/samples", 
             glob.glob(os.path.join("Samples","STL","*.stl"))),
