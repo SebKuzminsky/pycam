@@ -795,10 +795,13 @@ class ProjectGui:
             self.task_list.append(new_task)
             self.update_tasklist_table(self.task_list.index(new_task))
         elif action == "toggle_enabled":
-            if (not current_task_index is None) and (current_task_index < len(self.task_list)):
-                self.task_list[current_task_index]["enabled"] = not self.task_list[current_task_index]["enabled"]
-            # update the table values
-            self.update_tasklist_table(current_task_index)
+            # "data" contains the row of the clicked checkbox
+            if not data is None:
+                current_task_index = int(data)
+                if (not current_task_index is None) and (current_task_index < len(self.task_list)):
+                    self.task_list[current_task_index]["enabled"] = not self.task_list[current_task_index]["enabled"]
+                # update the table values
+                self.update_tasklist_table(current_task_index)
         elif action == "generate_all_toolpaths":
             self.process_multiple_tasks()
         elif action == "generate_one_toolpath":
