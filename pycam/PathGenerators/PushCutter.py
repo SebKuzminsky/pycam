@@ -54,6 +54,7 @@ class PushCutter:
         else:
             GenerateToolPathSlice = self.GenerateToolPathSlice_ode
 
+        last_loop = False
         while z >= minz:
             # update the progress bar and check, if we should cancel the process
             if draw_callback and draw_callback(text="PushCutter: processing layer %d/%d" \
@@ -76,9 +77,11 @@ class PushCutter:
                 paths += self.pa.paths
             z -= dz
 
-            if (z < minz) and (z + dz > minz):
+            if (z < minz) and not last_loop:
                 # never skip the outermost bounding limit - reduce the step size if required
                 z = minz
+                # stop after the next loop
+                last_loop = True
 
             current_layer += 1
 
