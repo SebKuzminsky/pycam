@@ -7,7 +7,7 @@ import os.path
 
 setup(
     name="pycam",
-    version="0.2.3",
+    version="0.2.4",
     license="GPL v3",
     description="Open Source CAM - Toolpath Generation for 3-Axis CNC machining",
     author="Lode Leroy",
@@ -17,6 +17,10 @@ setup(
     url="http://sourceforge.net/projects/pycam",
     download_url="http://sourceforge.net/projects/pycam/files/pycam/0.2.2/pycam-0.2.2.tgz/download",
     keywords=["3-axis", "cnc", "cam", "toolpath", "machining", "g-code"],
+    long_description="""IMPORTANT NOTE: Please read the list of requirements:
+http://sourceforge.net/apps/mediawiki/pycam/index.php?title=Requirements
+Basically you will need Python, GTK and OpenGL.
+""",
     # full list of classifiers at:
     #   http://pypi.python.org/pypi?:action=list_classifiers
     classifiers=[
