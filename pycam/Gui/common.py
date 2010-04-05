@@ -1,4 +1,5 @@
-import Tkinter
+# Tkinter is used for "EmergencyDialog" below - but we will try to import it carefully
+#import Tkinter
 # "ode" is imported later, if required
 #import ode_objects
 import random
@@ -126,6 +127,13 @@ class EmergencyDialog:
     """
 
     def __init__(self, title, message):
+        try:
+            import Tkinter
+        except ImportError:
+            # tk is not installed
+            print >>sys.stderr, "Warning: %s" % str(title)
+            print >>sys.stderr, message
+            return
         try:
             root = Tkinter.Tk()
         except Tkinter.TclError, err_msg:
