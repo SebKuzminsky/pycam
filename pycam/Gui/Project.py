@@ -52,7 +52,7 @@ COLORS = {
 }
 
 PREFERENCES_DEFAULTS = {
-        "enable_ode": True,
+        "enable_ode": False,
         "boundary_mode": -1,
         "unit": "mm",
         "show_model": True,

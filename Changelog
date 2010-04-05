@@ -1,15 +1,17 @@
-Version 0.2.3 - UNRELEASED
+Version 0.2.3 - 2010-04-05
  * GUI change: tool and process settings can be combined into tasks
- * added "material allowance" support for non-ODE calculations
- * added export of EMC tool definitions
  * store configured settings to a file in the user's home directory
- * fixed "overlap" calculation
+ * added "material allowance" support for non-ODE calculations
+ * added export of EMC2 tool definitions
  * added a warning dialog (GUI) for missing dependencies during startup (especially useful for Windows)
  * improved GUI for model scaling
  * allow to configure if the tool should move inside/along/around the boundary limits
+ * fixed "overlap" calculation
  * prevent invalid input values (zero tool radius, ...)
  * fixed a bug that could rarely cause eternal loops of the PushCutter
  * reduced memory consumption of toolpaths for python 2.6 or above
+ * disabled ODE as the default computation backend (due to this bug:
+   http://sourceforge.net/tracker/?func=detail&aid=2973876&group_id=24884&atid=382799)
 
 Version 0.2.2 - 2010-03-17
  * added a graphical installer for Windows (via distutils)

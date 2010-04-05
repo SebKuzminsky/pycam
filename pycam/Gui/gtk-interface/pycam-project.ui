@@ -2261,6 +2261,9 @@ This combination is added to the above task list.</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes">The toolpath generation is based on detecting collisions.
+The Open-Dynamic-Engine (ODE) is an alternative to the manual computation of these collisions.
+It is significantly faster, but the current release of ODE contains a nasty bug that rarely causes erroneous toolpaths at the corner of the model. Thus ODE is disabled by default.</property>
                                 <property name="draw_indicator">True</property>
                               </object>
                               <packing>
@@ -2875,7 +2878,7 @@ This combination is added to the above task list.</property>
     <property name="gravity">center</property>
     <property name="has_separator">False</property>
     <property name="program_name">PyCAM</property>
-    <property name="version">0.2.2</property>
+    <property name="version">0.2.3</property>
     <property name="copyright" translatable="yes">Copyright &#xA9; 2008-2010 Lode Leroy
 Copyright &#xA9; 2010 Lars Kruse</property>
     <property name="comments" translatable="yes">Toolpath Generation for 3-Axis CNC machining</property>

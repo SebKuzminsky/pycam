@@ -25,7 +25,9 @@ Features:
       ** STL
 
     * Exporters:
+      ** STL
       ** GCODE
+      ** EMC2 tool defintion (tbl)
 
     * Visualization:
       ** OpenGL
