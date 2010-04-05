@@ -13,6 +13,28 @@ class Point:
     def __repr__(self):
         return "Point%d<%g,%g,%g>" % (self.id,self.x,self.y,self.z)
 
+    def __cmp__(self, other):
+        """ Two points are equal if all dimensions are identical.
+        Otherwise the result is based on the individual x/y/z comparisons.
+        """
+        if self.__class__ == other.__class__:
+            if (self.x == other.x) and (self.y == other.y) and (self.z == other.y):
+                return 0
+            elif self.x < other.y:
+                return -1
+            elif self.x > other.y:
+                return 1
+            elif self.y < other.y:
+                return -1
+            elif self.y > other.y:
+                return 1
+            elif self.z < other.z:
+                return -1
+            else:
+                return 1
+        else:
+            return cmp(str(self), str(other))
+
     def mul(self, c):
         return Point(self.x*c,self.y*c,self.z*c)
 

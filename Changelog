@@ -1,3 +1,6 @@
+Version 0.2.4 - UNRELEASED
+ * join tangential moves (removes the inner points in a colinear set of adjacent path points)
+
 Version 0.2.3 - 2010-04-05
  * GUI change: tool and process settings can be combined into tasks
  * store configured settings to a file in the user's home directory
