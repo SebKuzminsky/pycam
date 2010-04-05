@@ -1885,8 +1885,14 @@ class ProjectGui:
         dialog.destroy()
         # add the file to the list of recently used ones
         if filename:
-            recent = gtk.RecentManager()
-            recent.add_item("file://%s" % str(filename))
+            try:
+                recent = gtk.RecentManager()
+                recent.add_item("file://%s" % str(filename))
+            except AttributeError:
+                # GTK 2.12.1 seems to have problems with "RecentManager" on Windows.
+                # Sadly this is the version, that is shipped with the "appunti" GTK
+                # packages for Windows (April 2010).
+                pass
         return filename
 
     def setOutputFilename(self, filename):
