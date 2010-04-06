@@ -1,6 +1,7 @@
 Version 0.2.4 - UNRELEASED
  * join tangential moves (removes the inner points in a colinear set of adjacent path points)
  * fixed careless import of Tkinter
+ * fixed typo that breaks PyCAM for Python 2.6
 
 Version 0.2.3 - 2010-04-05
  * GUI change: tool and process settings can be combined into tasks

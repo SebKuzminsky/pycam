@@ -5,7 +5,7 @@ This reduces the memory consumption of a toolpath down to 1/3.
 """
 try:
     # this works for python 2.6 or above (saves memory)
-    from collections import namedtuple
+    import collections.namedtuple
     tuple_point = collections.namedtuple("TuplePoint", "x y z")
     get_point_object = lambda point: tuple_point(point.x, point.y, point.z)
 except ImportError:
