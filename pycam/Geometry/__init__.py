@@ -1,5 +1,6 @@
 __all__ = ["utils", "Line", "Model", "Path", "Plane", "Point", "Triangle",
-           "PolygonExtractor", "TriangleKdtree", "intersection", "kdtree"]
+           "PolygonExtractor", "TriangleKdtree", "intersection", "kdtree",
+           "Matrix"]
 
 from Point import Point
 from Line import Line
