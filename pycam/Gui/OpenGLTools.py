@@ -269,13 +269,6 @@ def draw_bounding_box(minx, miny, minz, maxx, maxy, maxz, color):
 
 @keep_gl_mode
 @keep_matrix
-def draw_cutter(cutter, color):
-    if not cutter is None:
-        GL.glColor3f(*color)
-        cutter.to_OpenGL()
-
-@keep_gl_mode
-@keep_matrix
 def draw_complete_model_view(settings):
     GL.glMatrixMode(GL.GL_MODELVIEW)
     GL.glLoadIdentity()
@@ -288,6 +281,12 @@ def draw_complete_model_view(settings):
                 float(settings.get("minz")), float(settings.get("maxx")),
                 float(settings.get("maxy")), float(settings.get("maxz")),
                 settings.get("color_bounding_box"))
+    # draw the material (for simulation mode)
+    if settings.get("show_simulation"):
+        obj = settings.get("simulation_object")
+        if not obj is None:
+            GL.glColor3f(*settings.get("color_material"))
+            obj.to_OpenGL()
     # draw the model
     if settings.get("show_model"):
         GL.glColor3f(*settings.get("color_model"))
@@ -301,7 +300,10 @@ def draw_complete_model_view(settings):
                         settings.get("color_toolpath_return"))
     # draw the drill
     if settings.get("show_drill_progress"):
-        draw_cutter(settings.get("cutter"), settings.get("color_cutter"))
+        cutter = settings.get("cutter")
+        if not cutter is None:
+            GL.glColor3f(*settings.get("color_cutter"))
+            cutter.to_OpenGL()
 
 @keep_gl_mode
 @keep_matrix

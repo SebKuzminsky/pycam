@@ -10,6 +10,8 @@ import pycam.Cutters
 import pycam.PathGenerators
 import pycam.PathProcessors
 import pycam.Geometry.utils as utils
+# this requires ODE - we import it later, if necessary
+#import pycam.Simulation.ODEBlocks
 import pycam.Gui.OpenGLTools as ogl_tools
 import pycam.Gui.ode_objects as ode_objects
 import OpenGL.GL as GL
@@ -20,6 +22,7 @@ import OpenGL.GLUT as GLUT
 import gtk
 import pango
 import ConfigParser
+import math
 import time
 import re
 import os
@@ -49,6 +52,7 @@ COLORS = {
     "color_cutter": (1.0, 0.2, 0.2),
     "color_toolpath_cut": (1.0, 0.5, 0.5),
     "color_toolpath_return": (0.5, 1.0, 0.5),
+    "color_material": (1.0, 0.5, 0.0),
 }
 
 PREFERENCES_DEFAULTS = {
@@ -67,9 +71,11 @@ PREFERENCES_DEFAULTS = {
         "color_cutter": COLORS["color_cutter"],
         "color_toolpath_cut": COLORS["color_toolpath_cut"],
         "color_toolpath_return": COLORS["color_toolpath_return"],
+        "color_material": COLORS["color_material"],
         "view_light": True,
         "view_shadow": True,
         "view_polygon": True,
+        "simulation_details_level": 3,
         "drill_progress_max_fps": 2,
 }
 """ the listed items will be loaded/saved via the preferences file in the
@@ -537,7 +543,8 @@ class ProjectGui:
                 ("color_bounding_box", "ColorBoundingBox"),
                 ("color_cutter", "ColorDrill"),
                 ("color_toolpath_cut", "ColorToolpathCut"),
-                ("color_toolpath_return", "ColorToolpathReturn")):
+                ("color_toolpath_return", "ColorToolpathReturn"),
+                ("color_material", "ColorMaterial")):
             obj = self.gui.get_object(objname)
             self.settings.add_item(name, get_color_wrapper(obj), set_color_wrapper(obj))
             # repaint the 3d view after a color change
@@ -552,6 +559,8 @@ class ProjectGui:
             self.settings.add_item("enable_ode", lambda: False, lambda state: None)
         skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
         self.settings.add_item("drill_progress_max_fps", skip_obj.get_value, skip_obj.set_value)
+        sim_detail_obj = self.gui.get_object("SimulationDetailsValue")
+        self.settings.add_item("simulation_details_level", sim_detail_obj.get_value, sim_detail_obj.set_value)
         # drill settings
         for objname, key in (
                 ("ToolRadiusControl", "tool_radius"),
@@ -601,6 +610,9 @@ class ProjectGui:
         self.gui.get_object("toolpath_up").connect("clicked", self.toolpath_table_event, "move_up")
         self.gui.get_object("toolpath_down").connect("clicked", self.toolpath_table_event, "move_down")
         self.gui.get_object("toolpath_delete").connect("clicked", self.toolpath_table_event, "delete")
+        self.gui.get_object("toolpath_simulate").connect("clicked", self.toolpath_table_event, "simulate")
+        self.gui.get_object("ExitSimulationButton").connect("clicked", self.hide_toolpath_simulation)
+        self.gui.get_object("UpdateSimulationButton").connect("clicked", self.update_toolpath_simulation)
         # store the original content (for adding the number of current toolpaths in "update_toolpath_table")
         self._original_toolpath_tab_label = self.gui.get_object("ToolPathTabLabel").get_text()
         # tool editor
@@ -1347,13 +1359,22 @@ class ProjectGui:
     def destroy(self, widget=None, data=None):
         self.update_view()
         # check if there is a running process
+        # BEWARE: this is useless without threading - but we keep it for now
         if self._progress_running:
             self.cancel_progress()
+            # wait steps
+            delay = 0.5
+            # timeout in seconds
+            timeout = 5
             # wait until if is finished
-            while self._progress_running:
-                time.sleep(0.5)
-        self.save_preferences()
+            while self._progress_running and (timeout > 0):
+                time.sleep(delay)
+                timeout -= delay
         gtk.main_quit()
+        self.quit()
+
+    def quit(self):
+        self.save_preferences()
 
     def open(self, filename):
         """ This function is used by the commandline handler """
@@ -1564,6 +1585,7 @@ class ProjectGui:
         if action is None:
             action = data
         if action == "toggle_visibility":
+            # get the id of the currently selected toolpath
             try:
                 path = int(data)
             except ValueError:
@@ -1572,6 +1594,10 @@ class ProjectGui:
                 self.toolpath[path].visible = not self.toolpath[path].visible
                 # hide/show toolpaths according to the new setting
                 self.update_view()
+        elif action == "simulate":
+            index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
+            if not index is None:
+                self.show_toolpath_simulation(self.toolpath[index])
         self._treeview_button_event(self.toolpath_table, self.toolpath, action, self.update_toolpath_table)
         # do some post-processing ...
         if action == "delete":
@@ -1609,6 +1635,7 @@ class ProjectGui:
         self.gui.get_object("toolpath_up").set_sensitive((not new_index is None) and (new_index > 0))
         self.gui.get_object("toolpath_delete").set_sensitive(not new_index is None)
         self.gui.get_object("toolpath_down").set_sensitive((not new_index is None) and (new_index + 1 < len(self.toolpath)))
+        self.gui.get_object("toolpath_simulate").set_sensitive((not new_index is None) and (self.settings.get("enable_ode")))
 
     @gui_activity_guard
     def save_task_settings_file(self, widget=None, filename=None):
@@ -1701,6 +1728,78 @@ class ProjectGui:
 
     def cancel_progress(self, widget=None):
         self._progress_cancel_requested = True
+
+    def hide_toolpath_simulation(self, widget=None):
+        self.gui.get_object("SimulationWidget").hide()
+        self.task_pane.set_sensitive(True)
+        self.settings.set("simulate_object", None)
+        self.settings.set("show_simulation", False)
+        self.update_view()
+
+    @progress_activity_guard
+    def update_toolpath_simulation(self, widget=None, toolpath=None):
+        import pycam.Simulation.ODEBlocks
+        # get the currently selected toolpath, if none is give
+        if toolpath is None:
+            toolpath_index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
+            if toolpath_index is None:
+                return
+            else:
+                toolpath = self.toolpath[toolpath_index]
+        paths = toolpath.get_path()
+        # calculate steps
+        detail_level = self.gui.get_object("SimulationDetailsValue").get_value()
+        grid_size = 100 * pow(2, detail_level - 1)
+        proportion = (self.settings.get("maxx") - self.settings.get("minx")) \
+                / (self.settings.get("maxy") - self.settings.get("miny"))
+        x_steps = int(math.sqrt(grid_size) * proportion)
+        y_steps = int(math.sqrt(grid_size) / proportion)
+        simulation_backend = pycam.Simulation.ODEBlocks.ODEBlocks(
+                toolpath.drill, toolpath.bounding_box,
+                x_steps=x_steps, y_steps=y_steps)
+        self.settings.set("simulation_object", simulation_backend)
+        # disable the simulation widget (avoids confusion regarding "cancel")
+        if not widget is None:
+            self.gui.get_object("SimulationWidget").set_sensitive(False)
+        # update the view
+        self.update_view()
+        # calculate the simulation and show it simulteneously
+        for path_index, path in enumerate(paths):
+            progress_text = "Simulating path %d/%d" % (path_index, len(paths))
+            progress_value_percent = 100.0 * path_index / len(paths)
+            self.update_progress_bar(progress_text, progress_value_percent)
+            for index in range(len(path.points)):
+                self.cutter.moveto(path.points[index])
+                if index != 0:
+                    start = path.points[index - 1]
+                    end = path.points[index]
+                    if start != end:
+                        simulation_backend.process_cutter_movement(start, end)
+                self.update_view()
+                # update the GUI
+                while gtk.events_pending():
+                    gtk.main_iteration()
+                # break the loop if someone clicked the "cancel" button
+                if self._progress_cancel_requested:
+                    break
+            if self._progress_cancel_requested:
+                break
+        # enable the simulation widget again (if we were started from the GUI)
+        if not widget is None:
+            self.gui.get_object("SimulationWidget").set_sensitive(True)
+
+    def show_toolpath_simulation(self, toolpath):
+        # disable the main controls
+        self.settings.set("show_simulation", True)
+        self.update_toolpath_simulation(toolpath=toolpath)
+        # disable the task pane _after_ the simulation - the progress bar
+        # decorator code would reset it otherwise
+        self.task_pane.set_sensitive(False)
+        # show the simulation controls
+        self.gui.get_object("SimulationWidget").show()
+        # hide the controls immediately, if the simulation was cancelled
+        if self._progress_cancel_requested:
+            self.hide_toolpath_simulation()
 
     @progress_activity_guard
     def generate_toolpath(self, tool_settings, process_settings):
@@ -1812,6 +1911,9 @@ class ProjectGui:
         description = "%s / %s" % (tool_settings["name"], process_settings["name"])
         # the tool id numbering should start with 1 instead of zero
         tool_id = self.tool_list.index(tool_settings) + 1
+        bounding_box = (self.settings.get("minx"), self.settings.get("maxx"),
+                self.settings.get("miny"), self.settings.get("maxy"),
+                self.settings.get("minz"), self.settings.get("maxz"))
         self.toolpath.add_toolpath(toolpath,
                 description, self.cutter, tool_id,
                 tool_settings["speed"],
@@ -1819,7 +1921,8 @@ class ProjectGui:
                 process_settings["material_allowance"],
                 process_settings["safety_height"],
                 self.settings.get("unit"),
-                minx, miny, maxz + start_offset)
+                minx, miny, maxz + start_offset,
+                bounding_box)
         self.update_toolpath_table()
         self.update_view()
         # return "False" if the action was cancelled
@@ -1948,7 +2051,10 @@ class ProjectGui:
     def mainloop(self):
         # run the mainloop only if a GUI was requested
         if not self.no_dialog:
-            gtk.main()
+            try:
+                gtk.main()
+            except KeyboardInterrupt:
+                self.quit()
 
 if __name__ == "__main__":
     gui = ProjectGui()
