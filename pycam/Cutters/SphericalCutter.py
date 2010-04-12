@@ -1,11 +1,12 @@
 import pycam.Geometry
 
+from pycam.Geometry import Matrix
 from pycam.Geometry import *
 from pycam.Geometry.utils import *
 from pycam.Geometry.intersection import *
 from pycam.Cutters.BaseCutter import BaseCutter
 
-from math import sqrt
+import math
 
 try:
     import OpenGL.GL as GL
@@ -16,9 +17,8 @@ except:
 
 class SphericalCutter(BaseCutter):
 
-    def __init__(self, radius, location=Point(0,0,0), height=10):
-        BaseCutter.__init__(self, location, radius)
-        self.height = height
+    def __init__(self, radius, location=Point(0,0,0), **kwargs):
+        BaseCutter.__init__(self, location, radius, **kwargs)
         self.axis = Point(0,0,1)
         self.center = Point(location.x, location.y, location.z+radius)
 
@@ -28,6 +28,7 @@ class SphericalCutter(BaseCutter):
     def get_shape(self, format="ODE"):
         if format == "ODE":
             import ode
+            import pycam.Gui.ode_objects
             additional_distance = self.get_required_distance()
             radius = self.radius + additional_distance
             center_height = 0.5 * self.height + radius - additional_distance
@@ -41,43 +42,51 @@ class SphericalCutter(BaseCutter):
             def set_position(x, y, z):
                 geom.setPosition((x, y, z))
             def extend_shape(diff_x, diff_y, diff_z):
-                # diff_z is assumed to be zero
                 reset_shape()
+                # see http://mathworld.wolfram.com/RotationMatrix.html
+                hypotenuse = math.sqrt(diff_x * diff_x + diff_y * diff_y)
+                # some paths contain two identical points (e.g. a "touch" of the PushCutter)
+                # we don't need any extension for these
+                if hypotenuse == 0:
+                    return
+                cosinus = diff_x / hypotenuse
+                sinus = diff_y / hypotenuse
+                # create the cyclinder at the other end
                 geom_end_transform = ode.GeomTransform(geom.space)
                 geom_end_transform.setBody(geom.getBody())
                 geom_end = ode.GeomCapsule(None, radius, self.height)
-                geom_end.setPosition((diff_x, diff_y, center_height))
+                geom_end.setPosition((diff_x, diff_y, diff_z + center_height))
                 geom_end_transform.setGeom(geom_end)
                 # create the block that connects the two cylinders at the end
+                rot_matrix_box = (cosinus, sinus, 0.0, -sinus, cosinus, 0.0, 0.0, 0.0, 1.0)
                 geom_connect_transform = ode.GeomTransform(geom.space)
                 geom_connect_transform.setBody(geom.getBody())
-                hypotenuse = sqrt(diff_x * diff_x + diff_y * diff_y)
-                cosinus = diff_x/hypotenuse
-                sinus = diff_y/hypotenuse
-                geom_connect = ode.GeomBox(None, (2.0 * radius, hypotenuse, self.height))
-                # see http://mathworld.wolfram.com/RotationMatrix.html
-                rot_matrix_box = (cosinus, sinus, 0.0, -sinus, cosinus, 0.0, 0.0, 0.0, 1.0)
+                geom_connect = pycam.Gui.ode_objects.get_parallelepiped_geom(
+                        (Point(-hypotenuse / 2.0, radius, -diff_z / 2.0), Point(hypotenuse / 2.0, radius, diff_z / 2.0),
+                        Point(hypotenuse / 2.0, -radius, diff_z / 2.0), Point(-hypotenuse / 2.0, -radius, -diff_z / 2.0)),
+                        (Point(-hypotenuse / 2.0, radius, self.height - diff_z / 2.0), Point(hypotenuse / 2.0, radius, self.height + diff_z / 2.0),
+                        Point(hypotenuse / 2.0, -radius, self.height + diff_z / 2.0), Point(-hypotenuse / 2.0, -radius, self.height - diff_z / 2.0)))
                 geom_connect.setRotation(rot_matrix_box)
-                geom_connect.setPosition((diff_x/2.0, diff_y/2.0, center_height))
+                geom_connect.setPosition((hypotenuse / 2.0, 0, radius))
                 geom_connect_transform.setGeom(geom_connect)
                 # create a cylinder, that connects the two half spheres at the lower end of both drills
                 geom_cyl_transform = ode.GeomTransform(geom.space)
                 geom_cyl_transform.setBody(geom.getBody())
-                geom_cyl = ode.GeomCylinder(None, radius, hypotenuse)
-                # switch x and z axis of the cylinder and then rotate it according to diff_x/diff_y
-                rot_matrix_cyl = (rot_matrix_box[2], rot_matrix_box[1], rot_matrix_box[0],
-                        rot_matrix_box[5], rot_matrix_box[4], rot_matrix_box[3],
-                        rot_matrix_box[8], rot_matrix_box[7], rot_matrix_box[6])
-                geom_cyl.setRotation(rot_matrix_cyl)
-                geom_cyl.setPosition((diff_x/2.0, diff_y/2.0, radius - additional_distance))
+                hypotenuse_3d = Matrix.get_length((diff_x, diff_y, diff_z))
+                geom_cyl = ode.GeomCylinder(None, radius, hypotenuse_3d)
+                # rotate cylinder vector
+                cyl_original_vector = (0, 0, hypotenuse_3d)
+                cyl_destination_vector = (diff_x, diff_y, diff_z)
+                geom_cyl.setRotation(Matrix.get_rotation_matrix(cyl_original_vector, cyl_destination_vector))
+                # the rotation is around the center - thus we ignore negative diff values
+                geom_cyl.setPosition((abs(diff_x / 2.0), abs(diff_y / 2.0), radius - additional_distance))
                 geom_cyl_transform.setGeom(geom_cyl)
-                # sort the geoms in order or collision probability
-                geom.children = [geom_connect_transform, geom_cyl_transform, geom_end_transform]
+                # sort the geoms in order of collision probability
+                geom.children.extend([geom_connect_transform, geom_cyl_transform, geom_end_transform])
             geom.extend_shape = extend_shape
             geom.reset_shape = reset_shape
             self.shape[format] = (geom, set_position)
             return self.shape[format]
-
 
     def to_OpenGL(self):
         if not GL_enabled:

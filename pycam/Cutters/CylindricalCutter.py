@@ -1,11 +1,12 @@
 import pycam.Geometry
 
+from pycam.Geometry import Matrix
 from pycam.Geometry import *
 from pycam.Geometry.utils import *
 from pycam.Geometry.intersection import *
 from pycam.Cutters.BaseCutter import BaseCutter
 
-from math import sqrt
+import math
 
 try:
     import OpenGL.GL as GL
@@ -16,9 +17,8 @@ except:
 
 class CylindricalCutter(BaseCutter):
 
-    def __init__(self, radius, location=Point(0,0,0), height=10):
-        BaseCutter.__init__(self, location, radius)
-        self.height = height
+    def __init__(self, radius, location=Point(0,0,0), **kwargs):
+        BaseCutter.__init__(self, location, radius, **kwargs)
         self.axis = Point(0,0,1)
         self.center = location.sub(Point(0, 0, self.get_required_distance()))
 
@@ -28,6 +28,7 @@ class CylindricalCutter(BaseCutter):
     def get_shape(self, format="ODE"):
         if format == "ODE":
             import ode
+            import pycam.Gui.ode_objects
             """ We don't handle the the "additional_distance" perfectly, since
             the "right" shape would be a cylinder with a small flat cap that
             grows to the full expanded radius through a partial sphere. The
@@ -50,25 +51,35 @@ class CylindricalCutter(BaseCutter):
             def set_position(x, y, z):
                 geom.setPosition((x, y, z))
             def extend_shape(diff_x, diff_y, diff_z):
-                # diff_z is assumed to be zero
                 reset_shape()
+                # see http://mathworld.wolfram.com/RotationMatrix.html
+                hypotenuse = math.sqrt(diff_x * diff_x + diff_y * diff_y)
+                # some paths contain two identical points (e.g. a "touch" of the PushCutter)
+                # we don't need any extension for these
+                if hypotenuse == 0:
+                    return
+                cosinus = diff_x / hypotenuse
+                sinus = diff_y / hypotenuse
+                # create the cyclinder at the other end
                 geom_end_transform = ode.GeomTransform(geom.space)
                 geom_end_transform.setBody(geom.getBody())
                 geom_end = ode.GeomCylinder(None, radius, height)
-                geom_end.setPosition((diff_x, diff_y, center_height))
+                geom_end.setPosition((diff_x, diff_y, diff_z + center_height))
                 geom_end_transform.setGeom(geom_end)
                 # create the block that connects to two cylinders at the end
+                rot_matrix_box = (cosinus, sinus, 0.0, -sinus, cosinus, 0.0, 0.0, 0.0, 1.0)
                 geom_connect_transform = ode.GeomTransform(geom.space)
                 geom_connect_transform.setBody(geom.getBody())
-                hypotenuse = sqrt(diff_x * diff_x + diff_y * diff_y)
-                cosinus = diff_x/hypotenuse
-                sinus = diff_y/hypotenuse
-                geom_connect = ode.GeomBox(None, (hypotenuse, 2.0 * radius, height))
-                # see http://mathworld.wolfram.com/RotationMatrix.html
-                geom_connect.setRotation((cosinus, sinus, 0.0, -sinus, cosinus, 0.0, 0.0, 0.0, 1.0))
-                geom_connect.setPosition((diff_x/2.0, diff_y/2.0, center_height))
+                geom_connect = pycam.Gui.ode_objects.get_parallelepiped_geom(
+                        (Point(-hypotenuse / 2.0, radius, -diff_z / 2.0), Point(hypotenuse / 2.0, radius, diff_z / 2.0),
+                        Point(hypotenuse / 2.0, -radius, diff_z / 2.0), Point(-hypotenuse / 2.0, -radius, -diff_z / 2.0)),
+                        (Point(-hypotenuse / 2.0, radius, self.height - diff_z / 2.0), Point(hypotenuse / 2.0, radius, self.height + diff_z / 2.0),
+                        Point(hypotenuse / 2.0, -radius, self.height + diff_z / 2.0), Point(-hypotenuse / 2.0, -radius, self.height - diff_z / 2.0)))
+                geom_connect.setRotation(rot_matrix_box)
+                geom_connect.setPosition((hypotenuse / 2.0, 0, radius))
                 geom_connect_transform.setGeom(geom_connect)
-                geom.children = [geom_connect_transform, geom_end_transform]
+                # sort the geoms in order of collision probability
+                geom.children.extend([geom_connect_transform, geom_end_transform])
             geom.extend_shape = extend_shape
             geom.reset_shape = reset_shape
             self.shape[format] = (geom, set_position)

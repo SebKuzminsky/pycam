@@ -9,12 +9,13 @@ class BaseCutter:
     id = 0
     vertical = Point(0,0,-1)
 
-    def __init__(self, location, radius):
+    def __init__(self, location, radius, height=10):
         self.location = location
         self.id = BaseCutter.id
         BaseCutter.id += 1
         self.radius = radius
         self.radiussq = radius*radius
+        self.height = height
         self.required_distance = 0
         self.distance_radius = self.radius
         self.distance_radiussq = self.distance_radius * self.distance_radius

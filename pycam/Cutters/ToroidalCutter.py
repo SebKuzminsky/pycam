@@ -17,11 +17,10 @@ except:
 
 class ToroidalCutter(BaseCutter):
 
-    def __init__(self, radius, minorradius, location=Point(0,0,0), height=10):
-        BaseCutter.__init__(self, location, radius)
+    def __init__(self, radius, minorradius, location=Point(0,0,0), **kwargs):
+        BaseCutter.__init__(self, location, radius, **kwargs)
         self.majorradius = radius-minorradius
         self.minorradius = minorradius
-        self.height = height
         self.axis = Point(0,0,1)
         self.center = Point(location.x, location.y, location.z+minorradius)
         self.majorradiussq = sqr(self.majorradius)
