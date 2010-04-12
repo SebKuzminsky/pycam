@@ -1,3 +1,4 @@
+from pycam.Geometry.Triangle import Triangle
 try:
     import ode
 except ImportError:
@@ -49,6 +50,33 @@ def convert_triangles_to_vertices_faces(triangles):
         faces.append(coords)
     return corners, faces
 
+def get_parallelepiped_geom(low_points, high_points, space=None):
+    triangles = (
+            # front side
+            Triangle(low_points[0], low_points[1], high_points[0]),
+            Triangle(low_points[1], high_points[1], high_points[0]),
+            # right side
+            Triangle(low_points[1], low_points[2], high_points[1]),
+            Triangle(low_points[2], high_points[2], high_points[1]),
+            # back side
+            Triangle(low_points[2], low_points[3], high_points[2]),
+            Triangle(low_points[3], high_points[3], high_points[2]),
+            # left side
+            Triangle(low_points[3], low_points[0], high_points[3]),
+            Triangle(low_points[0], high_points[0], high_points[3]),
+            # bottom side
+            Triangle(low_points[1], low_points[0], low_points[2]),
+            Triangle(low_points[3], low_points[2], low_points[0]),
+            # high side
+            Triangle(high_points[0], high_points[1], high_points[2]),
+            Triangle(high_points[2], high_points[3], high_points[0]),
+    )
+    mesh = ode.TriMeshData()
+    vertices, faces = convert_triangles_to_vertices_faces(triangles)
+    mesh.build(vertices, faces)
+    geom = ode.GeomTriMesh(mesh, space)
+    return geom
+
 
 class PhysicalWorld:
 
@@ -97,6 +125,7 @@ class PhysicalWorld:
         self._add_geom(shape, position, append=False)
         self._drill_offset = position
         self._drill = shape
+        self.reset_drill()
 
     def extend_drill(self, diff_x, diff_y, diff_z):
         try:
@@ -120,6 +149,7 @@ class PhysicalWorld:
     def _get_rays_for_geom(self, geom):
         """ TODO: this is necessary due to a bug in the trimesh collision
         detection code of ODE v0.11.1. Remove this as soon as the code is fixed.
+        http://sourceforge.net/tracker/index.php?func=detail&aid=2973876&group_id=24884&atid=382799
         """
         minz, maxz = geom.getAABB()[-2:]
         currx, curry, currz = geom.getPosition()
