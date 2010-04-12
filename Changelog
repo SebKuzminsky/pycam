@@ -1,4 +1,5 @@
 Version 0.2.4 - UNRELEASED
+ * added a simple simulation mode for visualizing the material penetration of a toolpath
  * join tangential moves (removes the inner points in a colinear set of adjacent path points)
  * fixed careless import of Tkinter
  * fixed typo that breaks PyCAM for Python 2.6

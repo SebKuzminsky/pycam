@@ -1635,7 +1635,7 @@ class ProjectGui:
         self.gui.get_object("toolpath_up").set_sensitive((not new_index is None) and (new_index > 0))
         self.gui.get_object("toolpath_delete").set_sensitive(not new_index is None)
         self.gui.get_object("toolpath_down").set_sensitive((not new_index is None) and (new_index + 1 < len(self.toolpath)))
-        self.gui.get_object("toolpath_simulate").set_sensitive((not new_index is None) and (self.settings.get("enable_ode")))
+        self.gui.get_object("toolpath_simulate").set_sensitive((not new_index is None) and ode_objects.is_ode_available())
 
     @gui_activity_guard
     def save_task_settings_file(self, widget=None, filename=None):
