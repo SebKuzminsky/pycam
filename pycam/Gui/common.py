@@ -33,6 +33,9 @@ DEPENDENCY_DESCRIPTION = {
     "togl": ("Tk for OpenGL",
         "see http://downloads.sourceforge.net/togl/",
         "see http://downloads.sourceforge.net/togl/"),
+    "tkinter": ("Tk interface for Python",
+        "Install the package 'python-tk'",
+        "see http://tkinter.unpythonic.net/wiki/"),
 }
 
 REQUIREMENTS_LINK = "https://sourceforge.net/apps/mediawiki/pycam/index.php?title=Requirements"
@@ -80,19 +83,30 @@ def dependency_details_tk():
     except ImportError:
         result["opengl"] = False
     try:
-        import logging
+        import Tkinter
+        result["tkinter"] = True
+    except ImportError:
+        result["tkinter"] = False
+    # Don't try to import OpenGL.Tk if Tkinter itself is missing.
+    # Otherwise the "except" statement below fails due to the unknown
+    # Tkinter.TclError exception.
+    if result["tkinter"]:
         try:
-            # temporarily disable debug output of the logging module
-            # the error message is: No handlers could be found for logger "OpenGL.Tk"
-            previous = logging.raiseExceptions
-            logging.raiseExceptions = 0
-        except AttributeError:
-            previous = None
-        import OpenGL.Tk
-        if not previous is None:
-            logging.raiseExceptions = previous
-        result["togl"] = True
-    except (ImportError, Tkinter.TclError):
+            import logging
+            try:
+                # temporarily disable debug output of the logging module
+                # the error message is: No handlers could be found for logger "OpenGL.Tk"
+                previous = logging.raiseExceptions
+                logging.raiseExceptions = 0
+            except AttributeError:
+                previous = None
+            import OpenGL.Tk
+            if not previous is None:
+                logging.raiseExceptions = previous
+            result["togl"] = True
+        except (ImportError, Tkinter.TclError):
+            result["togl"] = False
+    else:
         result["togl"] = False
     return result
 
@@ -170,7 +184,7 @@ class ToolPathList(list):
 class ToolPathInfo:
 
     def __init__(self, toolpath, name, cutter, drill_id, speed, feedrate,
-            material_allowance, safety_height, unit, start_x, start_y, start_z):
+            material_allowance, safety_height, unit, start_x, start_y, start_z, bounding_box):
         self.toolpath = toolpath
         self.name = name
         self.visible = True
@@ -185,6 +199,7 @@ class ToolPathInfo:
         self.start_x = start_x
         self.start_y = start_y
         self.start_z = start_z
+        self.bounding_box = bounding_box
         self.color = None
         # generate random color
         self.set_color()
