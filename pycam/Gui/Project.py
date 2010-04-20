@@ -9,11 +9,12 @@ import pycam.Gui.common as GuiCommon
 import pycam.Cutters
 import pycam.PathGenerators
 import pycam.PathProcessors
+import pycam.Toolpath
 import pycam.Geometry.utils as utils
+from pycam.Gui.OpenGLTools import ModelViewWindowGL
+import pycam.Physics.ode_physics
 # this requires ODE - we import it later, if necessary
 #import pycam.Simulation.ODEBlocks
-import pycam.Gui.OpenGLTools as ogl_tools
-import pycam.Physics.ode_physics
 import gtk
 import ConfigParser
 import math
@@ -150,7 +151,7 @@ class ProjectGui:
         self.about_window.connect("delete-event", self.toggle_about_window, False)
         # set defaults
         self.model = None
-        self.toolpath = GuiCommon.ToolPathList()
+        self.toolpath = pycam.Toolpath.ToolPathList()
         self._physics_cache = None
         self.cutter = None
         self.process_list = []
@@ -650,7 +651,7 @@ class ProjectGui:
         elif new_state:
             if self.view3d is None:
                 # do the gl initialization
-                self.view3d = ogl_tools.ModelViewWindowGL(self.gui, self.settings,
+                self.view3d = ModelViewWindowGL(self.gui, self.settings,
                         notify_destroy=self.toggle_3d_view,
                         accel_group=self._accel_group)
                 if self.model and self.view3d.enabled:
