@@ -17,10 +17,10 @@ except:
 
 class SphericalCutter(BaseCutter):
 
-    def __init__(self, radius, location=Point(0,0,0), **kwargs):
-        BaseCutter.__init__(self, location, radius, **kwargs)
+    def __init__(self, radius, **kwargs):
+        BaseCutter.__init__(self, radius, **kwargs)
         self.axis = Point(0,0,1)
-        self.center = Point(location.x, location.y, location.z+radius)
+        self.center = Point(self.location.x, self.location.y, self.location.z + radius)
 
     def __repr__(self):
         return "SphericalCutter<%s,%s>" % (self.location,self.radius)

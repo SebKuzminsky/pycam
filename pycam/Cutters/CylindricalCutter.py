@@ -17,10 +17,10 @@ except:
 
 class CylindricalCutter(BaseCutter):
 
-    def __init__(self, radius, location=Point(0,0,0), **kwargs):
-        BaseCutter.__init__(self, location, radius, **kwargs)
-        self.axis = Point(0,0,1)
-        self.center = location.sub(Point(0, 0, self.get_required_distance()))
+    def __init__(self, radius, **kwargs):
+        BaseCutter.__init__(self, radius, **kwargs)
+        self.axis = Point(0, 0, 1)
+        self.center = self.location.sub(Point(0, 0, self.get_required_distance()))
 
     def __repr__(self):
         return "CylindricalCutter<%s,%s>" % (self.location,self.radius)

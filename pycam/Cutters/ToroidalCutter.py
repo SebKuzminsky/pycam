@@ -17,12 +17,12 @@ except:
 
 class ToroidalCutter(BaseCutter):
 
-    def __init__(self, radius, minorradius, location=Point(0,0,0), **kwargs):
-        BaseCutter.__init__(self, location, radius, **kwargs)
+    def __init__(self, radius, minorradius, **kwargs):
+        BaseCutter.__init__(self, radius, **kwargs)
         self.majorradius = radius-minorradius
         self.minorradius = minorradius
         self.axis = Point(0,0,1)
-        self.center = Point(location.x, location.y, location.z+minorradius)
+        self.center = Point(self.location.x, self.location.y, self.location.z + minorradius)
         self.majorradiussq = sqr(self.majorradius)
         self.minorradiussq = sqr(self.minorradius)
         self.distance_majorradius = self.majorradius + self.get_required_distance()
@@ -58,7 +58,7 @@ class ToroidalCutter(BaseCutter):
             from pycam.Cutters.CylindricalCutter import CylindricalCutter
             # TODO: use an appromixated trimesh instead (ODE does not support toroidal shapes)
             # for now: use the simple cylinder shape - this should not do any harm
-            cylinder = CylindricalCutter(self.radius, self.location, height=self.height)
+            cylinder = CylindricalCutter(self.radius, location=self.location, height=self.height)
             cylinder.set_required_distance(self.get_required_distance())
             self.shape[format] = cylinder.get_shape(format)
             return self.shape[format]

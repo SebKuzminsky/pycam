@@ -9,7 +9,9 @@ class BaseCutter:
     id = 0
     vertical = Point(0,0,-1)
 
-    def __init__(self, location, radius, height=10):
+    def __init__(self, radius, location=None, height=10):
+        if location is None:
+            location = Point(0, 0, 0)
         self.location = location
         self.id = BaseCutter.id
         BaseCutter.id += 1
