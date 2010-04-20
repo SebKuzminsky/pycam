@@ -28,7 +28,7 @@ class SphericalCutter(BaseCutter):
     def get_shape(self, format="ODE"):
         if format == "ODE":
             import ode
-            import pycam.Gui.ode_objects
+            import pycam.Physics.ode_physics
             additional_distance = self.get_required_distance()
             radius = self.radius + additional_distance
             center_height = 0.5 * self.height + radius - additional_distance
@@ -61,7 +61,7 @@ class SphericalCutter(BaseCutter):
                 rot_matrix_box = (cosinus, sinus, 0.0, -sinus, cosinus, 0.0, 0.0, 0.0, 1.0)
                 geom_connect_transform = ode.GeomTransform(geom.space)
                 geom_connect_transform.setBody(geom.getBody())
-                geom_connect = pycam.Gui.ode_objects.get_parallelepiped_geom(
+                geom_connect = pycam.Physics.ode_physics.get_parallelepiped_geom(
                         (Point(-hypotenuse / 2.0, radius, -diff_z / 2.0), Point(hypotenuse / 2.0, radius, diff_z / 2.0),
                         Point(hypotenuse / 2.0, -radius, diff_z / 2.0), Point(-hypotenuse / 2.0, -radius, -diff_z / 2.0)),
                         (Point(-hypotenuse / 2.0, radius, self.height - diff_z / 2.0), Point(hypotenuse / 2.0, radius, self.height + diff_z / 2.0),
@@ -77,7 +77,7 @@ class SphericalCutter(BaseCutter):
                 # rotate cylinder vector
                 cyl_original_vector = (0, 0, hypotenuse_3d)
                 cyl_destination_vector = (diff_x, diff_y, diff_z)
-                geom_cyl.setRotation(Matrix.get_rotation_matrix(cyl_original_vector, cyl_destination_vector))
+                geom_cyl.setRotation(Matrix.get_rotation_matrix_from_to(cyl_original_vector, cyl_destination_vector))
                 # the rotation is around the center - thus we ignore negative diff values
                 geom_cyl.setPosition((abs(diff_x / 2.0), abs(diff_y / 2.0), radius - additional_distance))
                 geom_cyl_transform.setGeom(geom_cyl)

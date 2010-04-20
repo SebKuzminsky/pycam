@@ -13,14 +13,8 @@ import pycam.Geometry.utils as utils
 # this requires ODE - we import it later, if necessary
 #import pycam.Simulation.ODEBlocks
 import pycam.Gui.OpenGLTools as ogl_tools
-import pycam.Gui.ode_objects as ode_objects
-import OpenGL.GL as GL
-import OpenGL.GLU as GLU
-import OpenGL.GLUT as GLUT
-# gtk.gtkgl is imported in the constructor of "GLView" below
-#import gtk.gtkgl
+import pycam.Physics.ode_physics
 import gtk
-import pango
 import ConfigParser
 import math
 import time
@@ -40,10 +34,6 @@ FILTER_GCODE = ("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode"))
 FILTER_MODEL = ("STL models", "*.stl")
 FILTER_CONFIG = ("Config files", "*.conf")
 FILTER_EMC_TOOL = ("EMC tool files", "*.tbl")
-
-BUTTON_ROTATE = gtk.gdk.BUTTON1_MASK
-BUTTON_MOVE = gtk.gdk.BUTTON2_MASK
-BUTTON_ZOOM = gtk.gdk.BUTTON3_MASK
 
 COLORS = {
     "color_background": (0.0, 0.0, 0.0),
@@ -65,13 +55,13 @@ PREFERENCES_DEFAULTS = {
         "show_bounding_box": True,
         "show_toolpath": True,
         "show_drill_progress": False,
-        "color_background": COLORS["color_background"],
-        "color_model": COLORS["color_model"],
-        "color_bounding_box": COLORS["color_bounding_box"],
-        "color_cutter": COLORS["color_cutter"],
-        "color_toolpath_cut": COLORS["color_toolpath_cut"],
-        "color_toolpath_return": COLORS["color_toolpath_return"],
-        "color_material": COLORS["color_material"],
+        "color_background": (0.0, 0.0, 0.0),
+        "color_model": (0.5, 0.5, 1.0),
+        "color_bounding_box": (0.3, 0.3, 0.3),
+        "color_cutter": (1.0, 0.2, 0.2),
+        "color_toolpath_cut": (1.0, 0.5, 0.5),
+        "color_toolpath_return": (0.5, 1.0, 0.5),
+        "color_material": (1.0, 0.5, 0.0),
         "view_light": True,
         "view_shadow": True,
         "view_polygon": True,
@@ -100,299 +90,6 @@ def show_error_dialog(window, message):
     warn_window.set_title("Error")
     warn_window.run()
     warn_window.destroy()
-
-
-class GLView:
-    def __init__(self, gui, settings, notify_destroy=None, accel_group=None):
-        # assume, that initialization will fail
-        self.gui = gui
-        self.window = self.gui.get_object("view3dwindow")
-        if not accel_group is None:
-            self.window.add_accel_group(accel_group)
-        self.initialized = False
-        self.busy = False
-        self.settings = settings
-        self.is_visible = False
-        # check if the 3D view is available
-        try:
-            import gtk.gtkgl
-            self.enabled = True
-        except ImportError:
-            show_error_dialog(self.window, "Failed to initialize the interactive 3D model view."
-                    + "\nPlease install 'python-gtkglext1' to enable it.")
-            self.enabled = False
-            return
-        self.mouse = {"start_pos": None, "button": None, "timestamp": 0}
-        self.notify_destroy_func = notify_destroy
-        self.window.connect("delete-event", self.destroy)
-        self.window.set_default_size(560, 400)
-        self._position = self.gui.get_object("ProjectWindow").get_position()
-        self._position = (self._position[0] + 100, self._position[1] + 100)
-        self.container = self.gui.get_object("view3dbox")
-        self.gui.get_object("Reset View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["reset"])
-        self.gui.get_object("Left View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["left"])
-        self.gui.get_object("Right View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["right"])
-        self.gui.get_object("Front View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["front"])
-        self.gui.get_object("Back View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["back"])
-        self.gui.get_object("Top View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["top"])
-        self.gui.get_object("Bottom View").connect("clicked", self.rotate_view, ogl_tools.VIEWS["bottom"])
-        # key binding
-        self.window.connect("key-press-event", self.key_handler)
-        # OpenGL stuff
-        glconfig = gtk.gdkgl.Config(mode=gtk.gdkgl.MODE_RGB|gtk.gdkgl.MODE_DEPTH|gtk.gdkgl.MODE_DOUBLE)
-        self.area = gtk.gtkgl.DrawingArea(glconfig)
-        # first run; might also be important when doing other fancy gtk/gdk stuff
-        self.area.connect_after('realize', self.paint)
-        # called when a part of the screen is uncovered
-        self.area.connect('expose-event', self.paint)
-        # resize window
-        self.area.connect('configure-event', self._resize_window)
-        # catch mouse events
-        self.area.set_events(gtk.gdk.MOUSE | gtk.gdk.BUTTON_PRESS_MASK)
-        self.area.connect("button-press-event", self.mouse_handler)
-        self.area.connect('motion-notify-event', self.mouse_handler)
-        self.area.show()
-        self.container.add(self.area)
-        self.camera = ogl_tools.Camera(self.settings, lambda: (self.area.allocation.width, self.area.allocation.height))
-        # color the dimension value according to the axes
-        # for "y" axis: 100% green is too bright on light background - we reduce it a bit
-        for color, names in (
-                (pango.AttrForeground(65535, 0, 0, 0, 100), ("model_dim_x_label", "model_dim_x")),
-                (pango.AttrForeground(0, 50000, 0, 0, 100), ("model_dim_y_label", "model_dim_y")),
-                (pango.AttrForeground(0, 0, 65535, 0, 100), ("model_dim_z_label", "model_dim_z"))):
-            attributes = pango.AttrList()
-            attributes.insert(color)
-            for name in names:
-                self.gui.get_object(name).set_attributes(attributes)
-        # show the window
-        self.container.show()
-        self.show()
-
-    def show(self):
-        self.is_visible = True
-        self.window.move(*self._position)
-        self.window.show()
-
-    def hide(self):
-        self.is_visible = False
-        self._position = self.window.get_position()
-        self.window.hide()
-
-    def key_handler(self, widget=None, event=None):
-        if event is None:
-            return
-        try:
-            keyval = getattr(event, "keyval")
-            get_state = getattr(event, "get_state")
-        except AttributeError:
-            return
-        if not (0 <= keyval <= 255):
-            # e.g. "shift" key
-            return
-        if chr(keyval) in ('l', 'm', 's'):
-            if (chr(keyval) == 'l'):
-                key = "view_light"
-            elif (chr(keyval) == 'm'):
-                key = "view_polygon"
-            elif (chr(keyval) == 's'):
-                key = "view_shadow"
-            else:
-                key = None
-            # toggle setting
-            self.settings.set(key, not self.settings.get(key))
-            # re-init gl settings
-            self.glsetup()
-            self.paint()
-        else:
-            #print "Key pressed: %s (%s)" % (chr(keyval), get_state())
-            pass
-
-    def check_busy(func):
-        def busy_wrapper(self, *args, **kwargs):
-            if not self.enabled or self.busy:
-                return
-            self.busy = True
-            func(self, *args, **kwargs)
-            self.busy = False
-        return busy_wrapper
-
-    def gtkgl_refresh(func):
-        def refresh_wrapper(self, *args, **kwargs):
-            prev_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
-            GL.glMatrixMode(GL.GL_MODELVIEW)
-            # clear the background with the configured color
-            bg_col = self.settings.get("color_background")
-            GL.glClearColor(bg_col[0], bg_col[1], bg_col[2], 0.0)
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
-            result = func(self, *args, **kwargs)
-            self.camera.position_camera()
-            self._paint_raw()
-            GL.glMatrixMode(prev_mode)
-            GL.glFlush()
-            self.area.get_gl_drawable().swap_buffers()
-            return result
-        return refresh_wrapper
-
-    def glsetup(self):
-        GLUT.glutInit()
-        if self.settings.get("view_shadow"):
-            GL.glShadeModel(GL.GL_FLAT)
-        else:
-            GL.glShadeModel(GL.GL_SMOOTH)
-        bg_col = self.settings.get("color_background")
-        GL.glClearColor(bg_col[0], bg_col[1], bg_col[2], 0.0)
-        GL.glClearDepth(1.)
-        GL.glEnable(GL.GL_DEPTH_TEST)
-        GL.glDepthFunc(GL.GL_LEQUAL)
-        GL.glDepthMask(GL.GL_TRUE)
-        GL.glHint(GL.GL_PERSPECTIVE_CORRECTION_HINT, GL.GL_NICEST)
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        #GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))
-        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR, (0.1, 0.1, 0.1, 1.0))
-        #GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (0.5))
-        if self.settings.get("view_polygon"):
-            GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
-        else:
-            GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glLoadIdentity()
-        GL.glMatrixMode(GL.GL_PROJECTION)
-        GL.glLoadIdentity()
-        GL.glViewport(0, 0, self.area.allocation.width, self.area.allocation.height)
-        # lightning
-        GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0.3, 0.3, 0.3, 3.))		# Setup The Ambient Light
-        GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, (1., 1., 1., .0))		# Setup The Diffuse Light
-        GL.glLightfv(GL.GL_LIGHT0, GL.GL_SPECULAR, (.3, .3, .3, 1.0))		# Setup The SpecularLight
-        GL.glEnable(GL.GL_LIGHT0)
-        # Enable Light One
-        if self.settings.get("view_light"):
-            GL.glEnable(GL.GL_LIGHTING)
-        else:
-            GL.glDisable(GL.GL_LIGHTING)
-        GL.glEnable(GL.GL_NORMALIZE)
-        GL.glColorMaterial(GL.GL_FRONT_AND_BACK,GL.GL_AMBIENT_AND_DIFFUSE)
-        #GL.glColorMaterial(GL.GL_FRONT_AND_BACK,GL.GL_SPECULAR)
-        #GL.glColorMaterial(GL.GL_FRONT_AND_BACK,GL.GL_EMISSION)
-        GL.glEnable(GL.GL_COLOR_MATERIAL)
-
-    def destroy(self, widget=None, data=None):
-        if self.notify_destroy_func:
-            self.notify_destroy_func()
-        # don't close the window
-        return True
-
-    def gtkgl_functionwrapper(function):
-        def decorated(self, *args, **kwords):
-            gldrawable=self.area.get_gl_drawable()
-            if not gldrawable:
-                return
-            glcontext=self.area.get_gl_context()
-            if not gldrawable.gl_begin(glcontext):
-                return
-            if not self.initialized:
-                self.glsetup()
-                self.initialized = True
-            result = function(self, *args, **kwords)
-            gldrawable.gl_end()
-            return result
-        return decorated # TODO: make this a well behaved decorator (keeping name, docstring etc)
-
-    def keyboard_handler(self, widget, event):
-        print "KEY:", event
-
-    @check_busy
-    @gtkgl_functionwrapper
-    def mouse_handler(self, widget, event):
-        last_timestamp = self.mouse["timestamp"]
-        x, y, state = event.x, event.y, event.state
-        if self.mouse["button"] is None:
-            if (state == BUTTON_ZOOM) or (state == BUTTON_ROTATE) or (state == BUTTON_MOVE):
-                self.mouse["button"] = state
-                self.mouse["start_pos"] = [x, y]
-                self.area.set_events(gtk.gdk.MOUSE | gtk.gdk.BUTTON_PRESS_MASK)
-        else:
-            # not more than 25 frames per second (enough for decent visualization)
-            if time.time() - last_timestamp < 0.04:
-                return
-            # a button was pressed before
-            if state == self.mouse["button"] == BUTTON_ZOOM:
-                # the start button is still active: update the view
-                start_x, start_y = self.mouse["start_pos"]
-                self.mouse["start_pos"] = [x, y]
-                # move the mouse from lower left to top right corner for scale up
-                scale = 1 - 0.01 * ((x - start_x) + (start_y - y))
-                # do some sanity checks, scale no more than
-                # 1:100 on any given click+drag
-                if scale < 0.01:
-                    scale = 0.01
-                elif scale > 100:
-                    scale = 100
-                self.camera.scale_distance(scale)
-                self._paint_ignore_busy()
-            elif (state == self.mouse["button"] == BUTTON_MOVE) or (state == self.mouse["button"] == BUTTON_ROTATE):
-                start_x, start_y = self.mouse["start_pos"]
-                self.mouse["start_pos"] = [x, y]
-                if (state == BUTTON_MOVE):
-                    # determine the biggest dimension (x/y/z) for moving the screen's center in relation to this value
-                    obj_dim = []
-                    obj_dim.append(self.settings.get("maxx") - self.settings.get("minx"))
-                    obj_dim.append(self.settings.get("maxy") - self.settings.get("miny"))
-                    obj_dim.append(self.settings.get("maxz") - self.settings.get("minz"))
-                    max_dim = max(max(obj_dim[0], obj_dim[1]), obj_dim[2])
-                    self.camera.move_camera_by_screen(x - start_x, y - start_y, max_dim)
-                else:
-                    # BUTTON_ROTATE
-                    # update the camera position according to the mouse movement
-                    self.camera.rotate_camera_by_screen(start_x, start_y, x, y)
-                self._paint_ignore_busy()
-            else:
-                # button was released
-                self.mouse["button"] = None
-                self._paint_ignore_busy()
-        self.mouse["timestamp"] = time.time()
-
-    @check_busy
-    @gtkgl_functionwrapper
-    @gtkgl_refresh
-    def rotate_view(self, widget=None, view=None):
-        self.camera.set_view(view)
-
-    def reset_view(self):
-        self.rotate_view(None, None)
-
-    @check_busy
-    @gtkgl_functionwrapper
-    @gtkgl_refresh
-    def _resize_window(self, widget, data=None):
-        GL.glViewport(0, 0, self.area.allocation.width, self.area.allocation.height)
-
-    @check_busy
-    @gtkgl_functionwrapper
-    @gtkgl_refresh
-    def paint(self, widget=None, data=None):
-        # the decorators take core for redraw
-        pass
-
-    @gtkgl_functionwrapper
-    @gtkgl_refresh
-    def _paint_ignore_busy(self, widget=None):
-        pass
-
-    def _paint_raw(self, widget=None):
-        # draw the model
-        ogl_tools.draw_complete_model_view(self.settings)
-        # update the dimension display
-        s = self.settings
-        dimension_bar = self.gui.get_object("view3ddimension")
-        if s.get("show_dimensions"):
-            for name, size in (
-                    ("model_dim_x", s.get("maxx") - s.get("minx")),
-                    ("model_dim_y", s.get("maxy") - s.get("miny")),
-                    ("model_dim_z", s.get("maxz") - s.get("minz"))):
-                self.gui.get_object(name).set_text("%.3f %s" % (size, s.get("unit")))
-            dimension_bar.show()
-        else:
-            dimension_bar.hide()
 
 
 class ProjectGui:
@@ -551,7 +248,7 @@ class ProjectGui:
             obj.connect("color-set", self.update_view)
         # set the availability of ODE
         enable_ode_control = self.gui.get_object("SettingEnableODE")
-        if ode_objects.is_ode_available():
+        if pycam.Physics.ode_physics.is_ode_available():
             self.settings.add_item("enable_ode", enable_ode_control.get_active, enable_ode_control.set_active)
         else:
             enable_ode_control.set_sensitive(False)
@@ -716,7 +413,7 @@ class ProjectGui:
 
     def get_physics(self, cutter):
         if self.settings.get("enable_ode"):
-            self._physics_cache = ode_objects.generate_physics(self.model,
+            self._physics_cache = pycam.Physics.ode_physics.generate_physics(self.model,
                     cutter, self._physics_cache)
         else:
             self._physics_cache = None
@@ -963,7 +660,7 @@ class ProjectGui:
         elif new_state:
             if self.view3d is None:
                 # do the gl initialization
-                self.view3d = GLView(self.gui, self.settings,
+                self.view3d = ogl_tools.ModelViewWindowGL(self.gui, self.settings,
                         notify_destroy=self.toggle_3d_view,
                         accel_group=self._accel_group)
                 if self.model and self.view3d.enabled:
@@ -1635,7 +1332,7 @@ class ProjectGui:
         self.gui.get_object("toolpath_up").set_sensitive((not new_index is None) and (new_index > 0))
         self.gui.get_object("toolpath_delete").set_sensitive(not new_index is None)
         self.gui.get_object("toolpath_down").set_sensitive((not new_index is None) and (new_index + 1 < len(self.toolpath)))
-        self.gui.get_object("toolpath_simulate").set_sensitive((not new_index is None) and ode_objects.is_ode_available())
+        self.gui.get_object("toolpath_simulate").set_sensitive((not new_index is None) and pycam.Physics.ode_physics.is_ode_available())
 
     @gui_activity_guard
     def save_task_settings_file(self, widget=None, filename=None):

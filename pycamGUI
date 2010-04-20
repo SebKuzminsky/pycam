@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from pycam.Gui.ode_objects import override_ode_availability
+from pycam.Physics.ode_physics import override_ode_availability
 import pycam.Gui.common as GuiCommon
 from optparse import OptionParser
 import sys

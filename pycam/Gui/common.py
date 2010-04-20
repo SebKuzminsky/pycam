@@ -1,7 +1,5 @@
 # Tkinter is used for "EmergencyDialog" below - but we will try to import it carefully
 #import Tkinter
-# "ode" is imported later, if required
-#import ode_objects
 import random
 import sys
 import os

@@ -28,7 +28,7 @@ class CylindricalCutter(BaseCutter):
     def get_shape(self, format="ODE"):
         if format == "ODE":
             import ode
-            import pycam.Gui.ode_objects
+            import pycam.Physics.ode_physics
             """ We don't handle the the "additional_distance" perfectly, since
             the "right" shape would be a cylinder with a small flat cap that
             grows to the full expanded radius through a partial sphere. The
@@ -70,7 +70,7 @@ class CylindricalCutter(BaseCutter):
                 rot_matrix_box = (cosinus, sinus, 0.0, -sinus, cosinus, 0.0, 0.0, 0.0, 1.0)
                 geom_connect_transform = ode.GeomTransform(geom.space)
                 geom_connect_transform.setBody(geom.getBody())
-                geom_connect = pycam.Gui.ode_objects.get_parallelepiped_geom(
+                geom_connect = pycam.Physics.ode_physics.get_parallelepiped_geom(
                         (Point(-hypotenuse / 2.0, radius, -diff_z / 2.0), Point(hypotenuse / 2.0, radius, diff_z / 2.0),
                         Point(hypotenuse / 2.0, -radius, diff_z / 2.0), Point(-hypotenuse / 2.0, -radius, -diff_z / 2.0)),
                         (Point(-hypotenuse / 2.0, radius, self.height - diff_z / 2.0), Point(hypotenuse / 2.0, radius, self.height + diff_z / 2.0),
