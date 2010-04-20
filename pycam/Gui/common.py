@@ -36,7 +36,7 @@ DEPENDENCY_DESCRIPTION = {
         "see http://tkinter.unpythonic.net/wiki/"),
 }
 
-REQUIREMENTS_LINK = "https://sourceforge.net/apps/mediawiki/pycam/index.php?title=Requirements"
+REQUIREMENTS_LINK = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=Requirements"
 
 
 def transform_model(model, direction="normal"):
