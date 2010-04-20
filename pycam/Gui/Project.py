@@ -35,16 +35,6 @@ FILTER_MODEL = ("STL models", "*.stl")
 FILTER_CONFIG = ("Config files", "*.conf")
 FILTER_EMC_TOOL = ("EMC tool files", "*.tbl")
 
-COLORS = {
-    "color_background": (0.0, 0.0, 0.0),
-    "color_model": (0.5, 0.5, 1.0),
-    "color_bounding_box": (0.3, 0.3, 0.3),
-    "color_cutter": (1.0, 0.2, 0.2),
-    "color_toolpath_cut": (1.0, 0.5, 0.5),
-    "color_toolpath_return": (0.5, 1.0, 0.5),
-    "color_material": (1.0, 0.5, 0.0),
-}
-
 PREFERENCES_DEFAULTS = {
         "enable_ode": False,
         "boundary_mode": -1,
@@ -379,7 +369,7 @@ class ProjectGui:
         self.switch_scale_axis()
 
     def progress_activity_guard(func):
-        def wrapper(self, *args, **kwargs):
+        def progress_activity_guard_wrapper(self, *args, **kwargs):
             if self._progress_running:
                 return
             self._progress_running = True
@@ -389,10 +379,10 @@ class ProjectGui:
             self.toggle_progress_bar(False)
             self._progress_running = False
             return result
-        return wrapper
+        return progress_activity_guard_wrapper
 
     def gui_activity_guard(func):
-        def wrapper(self, *args, **kwargs):
+        def gui_activity_guard_wrapper(self, *args, **kwargs):
             if self.gui_is_active:
                 return
             self.gui_is_active = True
@@ -403,7 +393,7 @@ class ProjectGui:
                 del self._batch_queue[0]
                 batch_func(*batch_args, **batch_kwargs)
             return result
-        return wrapper
+        return gui_activity_guard_wrapper
 
     def update_view(self, widget=None, data=None):
         if self.view3d and self.view3d.is_visible and not self.no_dialog:
