@@ -3,7 +3,7 @@
 """
 $Id$
 
-Copyright 2010 Lars Kruse <devel@sumpfralle>
+Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
 
