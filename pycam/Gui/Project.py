@@ -297,7 +297,7 @@ class ProjectGui:
         self.gui.get_object("toolpath_down").connect("clicked", self.toolpath_table_event, "move_down")
         self.gui.get_object("toolpath_delete").connect("clicked", self.toolpath_table_event, "delete")
         self.gui.get_object("toolpath_simulate").connect("clicked", self.toolpath_table_event, "simulate")
-        self.gui.get_object("ExitSimulationButton").connect("clicked", self.hide_toolpath_simulation)
+        self.gui.get_object("ExitSimulationButton").connect("clicked", self.finish_toolpath_simulation)
         self.gui.get_object("UpdateSimulationButton").connect("clicked", self.update_toolpath_simulation)
         # store the original content (for adding the number of current toolpaths in "update_toolpath_table")
         self._original_toolpath_tab_label = self.gui.get_object("ToolPathTabLabel").get_text()
@@ -1355,9 +1355,12 @@ class ProjectGui:
     def cancel_progress(self, widget=None):
         self._progress_cancel_requested = True
 
-    def hide_toolpath_simulation(self, widget=None):
-        self.gui.get_object("SimulationWidget").hide()
-        self.task_pane.set_sensitive(True)
+    def finish_toolpath_simulation(self, widget=None):
+        # hide the simulation tab
+        self.gui.get_object("SimulationTab").hide()
+        # enable all other tabs again
+        for objname in ("ModelTab", "ModelTabLabel", "TasksTab", "TasksTabLabel", "ToolPathTab", "ToolPathTabLabel"):
+            self.gui.get_object(objname).set_sensitive(True)
         self.settings.set("simulate_object", None)
         self.settings.set("show_simulation", False)
         self.update_view()
@@ -1388,7 +1391,7 @@ class ProjectGui:
         self.settings.set("simulation_object", simulation_backend)
         # disable the simulation widget (avoids confusion regarding "cancel")
         if not widget is None:
-            self.gui.get_object("SimulationWidget").set_sensitive(False)
+            self.gui.get_object("SimulationTab").set_sensitive(False)
         # update the view
         self.update_view()
         # calculate the simulation and show it simulteneously
@@ -1414,20 +1417,22 @@ class ProjectGui:
                 break
         # enable the simulation widget again (if we were started from the GUI)
         if not widget is None:
-            self.gui.get_object("SimulationWidget").set_sensitive(True)
+            self.gui.get_object("SimulationTab").set_sensitive(True)
 
     def show_toolpath_simulation(self, toolpath):
         # disable the main controls
+        for objname in ("ModelTab", "ModelTabLabel", "TasksTab", "TasksTabLabel", "ToolPathTab", "ToolPathTabLabel"):
+            self.gui.get_object(objname).set_sensitive(False)
+        # show the simulation controls
+        self.gui.get_object("SimulationTab").show()
+        # switch to the simulation tab
+        self.gui.get_object("MainTabs").set_current_page(3)
+        # start the simulation
         self.settings.set("show_simulation", True)
         self.update_toolpath_simulation(toolpath=toolpath)
-        # disable the task pane _after_ the simulation - the progress bar
-        # decorator code would reset it otherwise
-        self.task_pane.set_sensitive(False)
-        # show the simulation controls
-        self.gui.get_object("SimulationWidget").show()
         # hide the controls immediately, if the simulation was cancelled
         if self._progress_cancel_requested:
-            self.hide_toolpath_simulation()
+            self.finish_toolpath_simulation()
 
     @progress_activity_guard
     def generate_toolpath(self, tool_settings, process_settings):
