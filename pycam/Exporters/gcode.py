@@ -11,6 +11,8 @@
 ##
 ## gcode.py is Copyright (C) 2005 Chris Radek
 ## chris@timeguy.com
+#
+# $Id$
 
 class gcode:
 	lastx = lasty = lastz = lasta = lastgcode = None
