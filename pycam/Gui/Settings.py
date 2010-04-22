@@ -120,7 +120,7 @@ path_generator: PushCutter
 path_postprocessor: PolygonCutter
 material_allowance: 0.5
 step_down: 0.8
-overlap: 0
+overlap_percent: 0
 
 [Process1]
 name: Semi-finish
@@ -128,7 +128,7 @@ path_generator: PushCutter
 path_postprocessor: ContourCutter
 material_allowance: 0.2
 step_down: 0.5
-overlap: 20
+overlap_percent: 20
 
 [Process2]
 name: Finish
@@ -136,7 +136,7 @@ path_generator: DropCutter
 path_postprocessor: ZigZagCutter
 material_allowance: 0.0
 step_down: 1.0
-overlap: 60
+overlap_percent: 60
 
 [TaskDefault]
 enabled: 1
@@ -166,7 +166,7 @@ process: 2
             "path_postprocessor": str,
             "safety_height": float,
             "material_allowance": float,
-            "overlap": int,
+            "overlap_percent": int,
             "step_down": float,
             "tool": object,
             "process": object,
@@ -182,7 +182,7 @@ process: 2
     CATEGORY_KEYS = {
             "tool": ("name", "shape", "tool_radius", "torus_radius", "feedrate", "speed"),
             "process": ("name", "path_generator", "path_postprocessor", "path_direction",
-                    "safety_height", "material_allowance", "overlap", "step_down"),
+                    "safety_height", "material_allowance", "overlap_percent", "step_down"),
             "task": ("tool", "process", "enabled"),
     }
 

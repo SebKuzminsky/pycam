@@ -7,8 +7,7 @@ import pycam.Exporters.EMCToolExporter
 import pycam.Gui.Settings
 import pycam.Gui.common as GuiCommon
 import pycam.Cutters
-import pycam.PathGenerators
-import pycam.PathProcessors
+import pycam.Toolpath.Generator
 import pycam.Toolpath
 import pycam.Geometry.utils as utils
 from pycam.Gui.OpenGLTools import ModelViewWindowGL
@@ -152,7 +151,6 @@ class ProjectGui:
         # set defaults
         self.model = None
         self.toolpath = pycam.Toolpath.ToolPathList()
-        self._physics_cache = None
         self.cutter = None
         self.process_list = []
         self.tool_list = []
@@ -402,14 +400,6 @@ class ProjectGui:
                 self.view3d.glsetup()
             self.view3d.paint()
 
-    def get_physics(self, cutter):
-        if self.settings.get("enable_ode"):
-            self._physics_cache = pycam.Physics.ode_physics.generate_physics(self.model,
-                    cutter, self._physics_cache)
-        else:
-            self._physics_cache = None
-        return self._physics_cache
-
     def update_save_actions(self):
         self.gui.get_object("SaveTaskSettings").set_sensitive(not self.last_task_settings_file is None)
         self.gui.get_object("SaveModel").set_sensitive(not self.last_model_file is None)
@@ -447,7 +437,7 @@ class ProjectGui:
             lines.append(tool_desc)
             lines.append("Speed: %d/minute / Feedrate: %d%s/minute" % (tool["speed"], tool["feedrate"], unit))
             lines.append("Path: %s / %s" % (process["path_generator"], process["path_postprocessor"]))
-            lines.append("Overlap: %d%%" % process["overlap"])
+            lines.append("Overlap: %d%%" % process["overlap_percent"])
             lines.append("Material allowance: %.2f%s" % (process["material_allowance"], unit))
             if process["path_generator"] == "PushCutter":
                 lines.append("Maximum step down: %.2f%s" % (process["step_down"], unit))
@@ -1174,7 +1164,7 @@ class ProjectGui:
                     return name
         settings["path_postprocessor"] = get_path_postprocessor()
         for objname, key in (("SafetyHeightControl", "safety_height"),
-                ("OverlapPercentControl", "overlap"),
+                ("OverlapPercentControl", "overlap_percent"),
                 ("MaterialAllowanceControl", "material_allowance"),
                 ("MaxStepDownControl", "step_down")):
             settings[key] = self.gui.get_object(objname).get_value()
@@ -1197,7 +1187,7 @@ class ProjectGui:
             self.gui.get_object(value).set_active(True)
         set_path_postprocessor(settings["path_postprocessor"])
         for objname, key in (("SafetyHeightControl", "safety_height"),
-                ("OverlapPercentControl", "overlap"),
+                ("OverlapPercentControl", "overlap_percent"),
                 ("MaterialAllowanceControl", "material_allowance"),
                 ("MaxStepDownControl", "step_down")):
             self.gui.get_object(objname).set_value(settings[key])
@@ -1314,8 +1304,8 @@ class ProjectGui:
             # columns: name, visible, drill_size, drill_id, allowance, speed, feedrate
             for index in range(len(self.toolpath)):
                 tp = self.toolpath[index]
-                items = (index, tp.name, tp.visible, tp.drill_size,
-                        tp.drill_id, tp.material_allowance, tp.speed, tp.feedrate)
+                items = (index, tp.name, tp.visible, tp.tool_settings["radius"],
+                        tp.tool_id, tp.material_allowance, tp.speed, tp.feedrate)
                 model.append(items)
             if not new_index is None:
                 self._treeview_set_active_index(self.toolpath_table, new_index)
@@ -1345,58 +1335,6 @@ class ProjectGui:
         settings = pycam.Gui.Settings.ProcessSettings()
         if not settings.write_to_file(filename, self.tool_list, self.process_list, self.task_list) and not no_dialog and not self.no_dialog:
             show_error_dialog(self.window, "Failed to save settings file")
-
-    def get_tool_instance(self, tool_settings):
-        cutter_height = self.settings.get("maxz") - self.settings.get("minz")
-        if self.model:
-            cutter_height = max(cutter_height, self.model.maxz - self.model.minz)
-        # Due to some weirdness the height of the drill must be bigger than the object's size.
-        # Otherwise some collisions are not detected.
-        cutter_height *= 4
-        cuttername = tool_settings["shape"]
-        radius = tool_settings["tool_radius"]
-        if cuttername == "SphericalCutter":
-            cutter = pycam.Cutters.SphericalCutter(radius, height=cutter_height)
-        elif cuttername == "CylindricalCutter":
-            cutter = pycam.Cutters.CylindricalCutter(radius, height=cutter_height)
-        elif cuttername == "ToroidalCutter":
-            toroid = tool_settings["torus_radius"]
-            cutter = pycam.Cutters.ToroidalCutter(radius, toroid, height=cutter_height)
-        else:
-            pass
-        return cutter
-
-    def get_pathgenerator_instance(self, cutter, process_settings):
-        pathgenerator = process_settings["path_generator"]
-        pathprocessor = process_settings["path_postprocessor"]
-        cutter.set_required_distance(process_settings["material_allowance"])
-        physics = self.get_physics(cutter)
-        if pathgenerator == "DropCutter":
-            if pathprocessor == "ZigZagCutter":
-                processor = pycam.PathProcessors.PathAccumulator(zigzag=True)
-            else:
-                processor = None
-            result = pycam.PathGenerators.DropCutter(cutter,
-                    self.model, processor, physics=physics,
-                    safety_height=self.settings.get("safety_height"))
-        elif pathgenerator == "PushCutter":
-            if pathprocessor == "PathAccumulator":
-                processor = pycam.PathProcessors.PathAccumulator()
-            elif pathprocessor == "SimpleCutter":
-                processor = pycam.PathProcessors.SimpleCutter()
-            elif pathprocessor == "ZigZagCutter":
-                processor = pycam.PathProcessors.ZigZagCutter()
-            elif pathprocessor == "PolygonCutter":
-                processor = pycam.PathProcessors.PolygonCutter()
-            elif pathprocessor == "ContourCutter":
-                processor = pycam.PathProcessors.ContourCutter()
-            else:
-                processor = None
-            result = pycam.PathGenerators.PushCutter(cutter,
-                    self.model, processor, physics=physics)
-        else:
-            result = None
-        return result
 
     def toggle_progress_bar(self, status):
         if status:
@@ -1435,6 +1373,8 @@ class ProjectGui:
             else:
                 toolpath = self.toolpath[toolpath_index]
         paths = toolpath.get_path()
+        # set the current cutter
+        self.cutter = pycam.Cutters.get_tool_from_settings(toolpath.tool_settings)
         # calculate steps
         detail_level = self.gui.get_object("SimulationDetailsValue").get_value()
         grid_size = 100 * pow(2, detail_level - 1)
@@ -1443,7 +1383,7 @@ class ProjectGui:
         x_steps = int(math.sqrt(grid_size) * proportion)
         y_steps = int(math.sqrt(grid_size) / proportion)
         simulation_backend = pycam.Simulation.ODEBlocks.ODEBlocks(
-                toolpath.drill, toolpath.bounding_box,
+                toolpath.tool_settings, toolpath.bounding_box,
                 x_steps=x_steps, y_steps=y_steps)
         self.settings.set("simulation_object", simulation_backend)
         # disable the simulation widget (avoids confusion regarding "cancel")
@@ -1516,10 +1456,13 @@ class ProjectGui:
             callback = None
         draw_callback = UpdateView(callback,
                 max_fps=self.settings.get("drill_progress_max_fps")).update
-        direction = process_settings["path_direction"]
 
         self.update_progress_bar("Generating collision model")
-        self.cutter = self.get_tool_instance(tool_settings)
+
+        if self.settings.get("enable_ode"):
+            calculation_backend = "ODE"
+        else:
+            calculation_backend = None
 
         # this offset allows to cut a model with a minimal boundary box correctly
         offset = tool_settings["tool_radius"] / 2.0
@@ -1543,6 +1486,7 @@ class ProjectGui:
         maxy = float(self.settings.get("maxy"))+offset
         minz = float(self.settings.get("minz"))
         maxz = float(self.settings.get("maxz"))
+        bounds = (minx, maxx, miny, maxy, minz, maxz)
 
         # check if the boundary limits are valid
         if (minx > maxx) or (miny > maxy) or (minz > maxz):
@@ -1551,70 +1495,57 @@ class ProjectGui:
                 show_error_dialog(self.window, "Processing boundaries are too small for this tool size.")
             return True
 
-        effective_toolradius = tool_settings["tool_radius"] * (1.0 - process_settings["overlap"] / 100.0)
-        x_shift = effective_toolradius
-        y_shift = effective_toolradius
-
         self.update_progress_bar("Starting the toolpath generation")
+        # put the tool settings together
+        tool_dict = {"shape": tool_settings["shape"],
+                "radius": tool_settings["tool_radius"],
+                "torus_radius": tool_settings["torus_radius"],
+        }
+        # run the toolpath generation
+        toolpath = pycam.Toolpath.Generator.generate_toolpath(self.model,
+                tool_dict, bounds=bounds,
+                direction=process_settings["path_direction"],
+                path_generator=process_settings["path_generator"],
+                path_postprocessor=process_settings["path_postprocessor"],
+                material_allowance=process_settings["material_allowance"],
+                safety_height=process_settings["safety_height"],
+                overlap=process_settings["overlap_percent"] / 100.0,
+                step_down=process_settings["step_down"],
+                calculation_backend=calculation_backend, callback=draw_callback)
 
-        pathgenerator = self.get_pathgenerator_instance(self.cutter, process_settings)
-
-        pathgenerator_name = process_settings["path_generator"]
-        if pathgenerator_name == "DropCutter":
-            dx = x_shift
-            dy = y_shift
-            if direction == "x":
-                toolpath = pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, 0, draw_callback)
-            elif direction == "y":
-                toolpath = pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dx, 1, draw_callback)
-
-        elif pathgenerator_name == "PushCutter":
-            if process_settings["path_postprocessor"] == "ContourCutter":
-                dx = x_shift
-            else:
-                dx = utils.INFINITE
-            dy = y_shift
-            if process_settings["step_down"] > 0:
-                dz = process_settings["step_down"]
-            else:
-                dz = utils.INFINITE
-            if direction == "x":
-                toolpath = pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, 0, dy, dz, draw_callback)
-            elif direction == "y":
-                toolpath = pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, 0, dz, draw_callback)
-            elif direction == "xy":
-                toolpath = pathgenerator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dy, dy, dz, draw_callback)
         print "Time elapsed: %f" % (time.time() - start_time)
-        # calculate the z offset for the starting position
-        # TODO: fix these hard-coded offsets; maybe use the safety height instead?
-        if self.settings.get("unit") == 'mm':
-            start_offset = 7.0
+
+        if isinstance(toolpath, basestring):
+            # an error occoured - "toolpath" contains the error message
+            message = "Failed to generate toolpath: %s" % toolpath
+            if not self.no_dialog:
+                show_error_dialog(self.window, message)
+            else:
+                print >>sys.stderr, message
+            # we were not successful (similar to a "cancel" request)
+            return False
         else:
-            start_offset = 0.25
-        # hide the previous toolpath if it is the only visible one (automatic mode)
-        if (len([True for path in self.toolpath if path.visible]) == 1) \
-                and self.toolpath[-1].visible:
-            self.toolpath[-1].visible = False
-        # add the new toolpath
-        description = "%s / %s" % (tool_settings["name"], process_settings["name"])
-        # the tool id numbering should start with 1 instead of zero
-        tool_id = self.tool_list.index(tool_settings) + 1
-        bounding_box = (self.settings.get("minx"), self.settings.get("maxx"),
-                self.settings.get("miny"), self.settings.get("maxy"),
-                self.settings.get("minz"), self.settings.get("maxz"))
-        self.toolpath.add_toolpath(toolpath,
-                description, self.cutter, tool_id,
-                tool_settings["speed"],
-                tool_settings["feedrate"],
-                process_settings["material_allowance"],
-                process_settings["safety_height"],
-                self.settings.get("unit"),
-                minx, miny, maxz + start_offset,
-                bounding_box)
-        self.update_toolpath_table()
-        self.update_view()
-        # return "False" if the action was cancelled
-        return not self._progress_cancel_requested
+            # hide the previous toolpath if it is the only visible one (automatic mode)
+            if (len([True for path in self.toolpath if path.visible]) == 1) \
+                    and self.toolpath[-1].visible:
+                self.toolpath[-1].visible = False
+            # add the new toolpath
+            description = "%s / %s" % (tool_settings["name"], process_settings["name"])
+            # the tool id numbering should start with 1 instead of zero
+            tool_id = self.tool_list.index(tool_settings) + 1
+            self.toolpath.add_toolpath(toolpath,
+                    description, tool_dict, tool_id,
+                    tool_settings["speed"],
+                    tool_settings["feedrate"],
+                    process_settings["material_allowance"],
+                    process_settings["safety_height"],
+                    self.settings.get("unit"),
+                    minx, miny, process_settings["safety_height"],
+                    bounds)
+            self.update_toolpath_table()
+            self.update_view()
+            # return "False" if the action was cancelled
+            return not self._progress_cancel_requested
 
     def get_filename_via_dialog(self, title, mode_load=False, type_filter=None):
         # we open a dialog
@@ -1727,7 +1658,7 @@ class ProjectGui:
                 pycam.Exporters.SimpleGCodeExporter.ExportPathList(destination,
                         tp.toolpath, tp.unit,
                         tp.start_x, tp.start_y, tp.start_z,
-                        tp.feedrate, tp.speed, tp.safety_height, tp.drill_id,
+                        tp.feedrate, tp.speed, tp.safety_height, tp.tool_id,
                         finish_program=is_last_loop)
             destination.close()
             if self.no_dialog:

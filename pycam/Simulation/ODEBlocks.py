@@ -1,3 +1,4 @@
+import pycam.Cutters
 from pycam.Geometry.Point import Point
 import ode
 try:
@@ -8,8 +9,8 @@ except:
 
 class ODEBlocks:
 
-    def __init__(self, cutter, (minx, maxx, miny, maxy, minz, maxz), x_steps=None, y_steps=None):
-        self.cutter = cutter
+    def __init__(self, tool_settings, (minx, maxx, miny, maxy, minz, maxz), x_steps=None, y_steps=None):
+        self.cutter = pycam.Cutters.get_tool_from_settings(tool_settings)
         # we don't want to use the "material allowance" distance
         self.cutter.set_required_distance(0)
         dimx = maxx - minx
