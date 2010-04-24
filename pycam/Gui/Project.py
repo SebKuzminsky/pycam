@@ -27,7 +27,6 @@ import pycam.Exporters.STLExporter
 import pycam.Exporters.SimpleGCodeExporter
 import pycam.Exporters.EMCToolExporter
 import pycam.Gui.Settings
-import pycam.Gui.common as GuiCommon
 import pycam.Cutters
 import pycam.Toolpath.Generator
 import pycam.Toolpath
@@ -681,11 +680,11 @@ class ProjectGui:
 
     @gui_activity_guard
     def transform_model(self, widget):
-        if widget.get_name() == "Rotate":
+        if widget is self.gui.get_object("Rotate"):
             controls = (("x-axis", "x"), ("y-axis", "y"), ("z-axis", "z"))
-        elif widget.get_name() == "Flip":
+        elif widget is self.gui.get_object("Flip"):
             controls = (("xy-plane", "xy"), ("xz-plane", "xz"), ("yz-plane", "yz"))
-        elif widget.get_name() == "Swap":
+        elif widget is self.gui.get_object("Swap"):
             controls = (("x <-> y", "x_swap_y"), ("x <-> z", "x_swap_z"), ("y <-> z", "y_swap_z"))
         else:
             # broken gui
@@ -693,7 +692,7 @@ class ProjectGui:
             return
         for obj, value in controls:
             if self.gui.get_object(obj).get_active():
-                GuiCommon.transform_model(self.model, value)
+                self.model.transform_by_template(value)
         self.update_view()
 
     def _treeview_get_active_index(self, table, datalist):
@@ -962,7 +961,7 @@ class ProjectGui:
             shift_x = -self.model.minx
             shift_y = -self.model.miny
             shift_z = -self.model.minz
-        GuiCommon.shift_model(self.model, shift_x, shift_y, shift_z)
+        self.model.shift(shift_x, shift_y, shift_z)
         self.update_view()
 
     def _get_model_center(self):
@@ -976,7 +975,7 @@ class ProjectGui:
     def _set_model_center(self, center):
         new_x, new_y, new_z = center
         old_x, old_y, old_z = self._get_model_center()
-        GuiCommon.shift_model(self.model, new_x - old_x, new_y - old_y, new_z - old_z)
+        self.model.shift(new_x - old_x, new_y - old_y, new_z - old_z)
 
     @gui_activity_guard
     def scale_model(self, widget=None, percent=None):
@@ -986,7 +985,7 @@ class ProjectGui:
         if (factor <= 0) or (factor == 1):
             return
         old_center = self._get_model_center()
-        GuiCommon.scale_model(self.model, factor)
+        self.model.scale(factor)
         self._set_model_center(old_center)
         self.update_view()
 
@@ -1019,7 +1018,7 @@ class ProjectGui:
         # store the original center of the model
         old_center = self._get_model_center()
         if proportionally:
-            GuiCommon.scale_model(self.model, factor)
+            self.model.scale(factor)
         else:
             factor_x, factor_y, factor_z = (1, 1, 1)
             if index == 0:
@@ -1030,7 +1029,7 @@ class ProjectGui:
                 factor_z = factor
             else:
                 return
-            GuiCommon.scale_model(self.model, factor_x, factor_y, factor_z)
+            self.model.scale(factor_x, factor_y, factor_z)
         # move the model to its previous center
         self._set_model_center(old_center)
         self.update_view()

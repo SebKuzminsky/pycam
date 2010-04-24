@@ -32,6 +32,21 @@ try:
 except:
     GL_enabled = False
 
+
+MODEL_TRANSFORMATIONS = {
+    "normal": ((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0)),
+    "x": ((1, 0, 0, 0), (0, 0, 1, 0), (0, -1, 0, 0)),
+    "y": ((0, 0, -1, 0), (0, 1, 0, 0), (1, 0, 0, 0)),
+    "z": ((0, 1, 0, 0), (-1, 0, 0, 0), (0, 0, 1, 0)),
+    "xy": ((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, -1, 0)),
+    "xz": ((1, 0, 0, 0), (0, -1, 0, 0), (0, 0, 1, 0)),
+    "yz": ((-1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0)),
+    "x_swap_y": ((0, 1, 0, 0), (1, 0, 0, 0), (0, 0, 1, 0)),
+    "x_swap_z": ((0, 0, 1, 0), (0, 1, 0, 0), (1, 0, 0, 0)),
+    "y_swap_z": ((1, 0, 0, 0), (0, 0, 1, 0), (0, 1, 0, 0)),
+}
+
+
 class Model:
     id = 0
 
@@ -112,7 +127,7 @@ class Model:
             self._update_limits(t)
         self._maxsize = None
 
-    def transform(self, matrix):
+    def transform_by_matrix(self, matrix):
         processed = []
         for tr in self._triangles:
             for point in (tr.p1, tr.p2, tr.p3):
@@ -126,4 +141,20 @@ class Model:
                     point.z = z
             tr.reset_cache()
         self.reset_cache()
+
+    def transform_by_template(self, direction="normal"):
+        if direction in MODEL_TRANSFORMATIONS.keys():
+            self.transform_by_matrix(MODEL_TRANSFORMATIONS[direction])
+
+    def shift(self, shift_x, shift_y, shift_z):
+        matrix = ((1, 0, 0, shift_x), (0, 1, 0, shift_y), (0, 0, 1, shift_z))
+        self.transform_by_matrix(matrix)
+        
+    def scale(self, scale_x, scale_y=None, scale_z=None):
+        if scale_y is None:
+            scale_y = scale_x
+        if scale_z is None:
+            scale_z = scale_x
+        matrix = ((scale_x, 0, 0, 0), (0, scale_y, 0, 0), (0, 0, scale_z, 0))
+        self.transform_by_matrix(matrix)
 

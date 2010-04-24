@@ -26,19 +26,6 @@ import sys
 import os
 
 
-MODEL_TRANSFORMATIONS = {
-    "normal": ((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0)),
-    "x": ((1, 0, 0, 0), (0, 0, 1, 0), (0, -1, 0, 0)),
-    "y": ((0, 0, -1, 0), (0, 1, 0, 0), (1, 0, 0, 0)),
-    "z": ((0, 1, 0, 0), (-1, 0, 0, 0), (0, 0, 1, 0)),
-    "xy": ((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, -1, 0)),
-    "xz": ((1, 0, 0, 0), (0, -1, 0, 0), (0, 0, 1, 0)),
-    "yz": ((-1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0)),
-    "x_swap_y": ((0, 1, 0, 0), (1, 0, 0, 0), (0, 0, 1, 0)),
-    "x_swap_z": ((0, 0, 1, 0), (0, 1, 0, 0), (1, 0, 0, 0)),
-    "y_swap_z": ((1, 0, 0, 0), (0, 0, 1, 0), (0, 1, 0, 0)),
-}
-
 DEPENDENCY_DESCRIPTION = {
     "gtk": ("Python bindings for GTK+",
         "Install the package 'python-gtk2'",
@@ -59,21 +46,6 @@ DEPENDENCY_DESCRIPTION = {
 
 REQUIREMENTS_LINK = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=Requirements"
 
-
-def transform_model(model, direction="normal"):
-    model.transform(MODEL_TRANSFORMATIONS[direction])
-
-def shift_model(model, shift_x, shift_y, shift_z):
-    matrix = ((1, 0, 0, shift_x), (0, 1, 0, shift_y), (0, 0, 1, shift_z))
-    model.transform(matrix)
-    
-def scale_model(model, scale_x, scale_y=None, scale_z=None):
-    if scale_y is None:
-        scale_y = scale_x
-    if scale_z is None:
-        scale_z = scale_x
-    matrix = ((scale_x, 0, 0, 0), (0, scale_y, 0, 0), (0, 0, scale_z, 0))
-    model.transform(matrix)
 
 def dependency_details_gtk():
     result = {}
