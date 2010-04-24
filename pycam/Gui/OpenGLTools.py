@@ -157,9 +157,10 @@ class Camera:
         v = self.view
         # position the light according to the current bounding box
         light_pos = range(3)
-        light_pos[0] = 2 * self.settings.get("maxx") - self.settings.get("minx")
-        light_pos[1] = 2 * self.settings.get("maxy") - self.settings.get("miny")
-        light_pos[2] = 2 * self.settings.get("maxz") - self.settings.get("minz")
+        model = self.settings.get("model")
+        light_pos[0] = 2 * model.maxx - model.minx
+        light_pos[1] = 2 * model.maxy - model.miny
+        light_pos[2] = 2 * model.maxz - model.minz
         GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, (light_pos[0], light_pos[1], light_pos[2], 1.0))
         # position the camera
         camera_position = (v["center"][0] + v["distance"][0],

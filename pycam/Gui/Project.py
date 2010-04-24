@@ -918,6 +918,8 @@ class ProjectGui:
         self._last_unit = new_unit
         # update all labels containing the unit size
         self.update_unit_labels()
+        # redraw the model
+        self.update_view()
 
     def update_unit_labels(self, widget=None, data=None):
         # we can't just use the "unit" setting, since we need the plural of "inch"
