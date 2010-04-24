@@ -29,7 +29,10 @@ from gcode import gcode
 class SimpleGCodeExporter:
 
     def __init__(self, destination, unit, startx, starty, startz, feedrate,
-            speed, safety_height=None, tool_id=1, finish_program=False):
+            speed, safety_height=None, tool_id=1, finish_program=False,
+            max_skip_safety_distance=None):
+        self._last_path_point = None
+        self._max_skip_safety_distance = max_skip_safety_distance
         if isinstance(destination, basestring):
             # open the file
             self.destination = file(destination,"w")
@@ -60,24 +63,41 @@ class SimpleGCodeExporter:
         if self._close_stream_on_exit:
             self.destination.close()
 
+    def _check_distance_for_skipping_safety_height(self, new_point):
+        if (self._last_path_point is None) or (self._max_skip_safety_distance is None):
+            return False
+        distance = new_point.sub(self._last_path_point).norm()
+        return distance <= self._max_skip_safety_distance
+
     def AddPath(self, path):
         gc = self.gcode
         point = path.points[0]
-        self.destination.write(gc.rapid(point.x, point.y, gc.safetyheight) + "\n")
+        # first move to the safety height if the distance to the last point
+        # does not exceed the given maximum
+        if not self._check_distance_for_skipping_safety_height(point):
+            # move to safety height at the end of the previous path
+            if not self._last_path_point is None:
+                self.destination.write(gc.rapid(self._last_path_point.x,
+                        self._last_path_point.y, gc.safetyheight) + "\n")
+            # move to safety height for the start of the current path
+            self.destination.write(gc.rapid(point.x, point.y, gc.safetyheight) + "\n")
         for point in path.points:
             self.destination.write(gc.cut(point.x, point.y, point.z) + "\n")
-        self.destination.write(gc.rapid(point.x, point.y, gc.safetyheight) + "\n")
+        self._last_path_point = point
 
     def AddPathList(self, pathlist):
         for path in pathlist:
             self.AddPath(path)
+        # add the move to safety height to the last path
+        if not self._last_path_point is None:
+            self.destination.write(self.gcode.rapid(self._last_path_point.x,
+                    self._last_path_point.y, self.gcode.safetyheight) + "\n")
 
 
 def ExportPathList(destination, pathlist, unit, startx, starty, startz,
-        feedrate, speed, safety_height=None, tool_id=1, finish_program=False):
+        feedrate, speed, **kwargs):
     exporter = SimpleGCodeExporter(destination, unit, startx, starty, startz,
-            feedrate, speed, safety_height=safety_height, tool_id=tool_id,
-            finish_program=finish_program)
+            feedrate, speed, **kwargs)
     exporter.AddPathList(pathlist)
     exporter.close()
 

@@ -1761,8 +1761,9 @@ class ProjectGui:
                 pycam.Exporters.SimpleGCodeExporter.ExportPathList(destination,
                         tp.toolpath, tp.unit,
                         tp.start_x, tp.start_y, tp.start_z,
-                        tp.feedrate, tp.speed, tp.safety_height, tp.tool_id,
-                        finish_program=is_last_loop)
+                        tp.feedrate, tp.speed, safety_height=tp.safety_height, tool_id=tp.tool_id,
+                        finish_program=is_last_loop,
+                        max_skip_safety_distance=2*tp.tool_settings["radius"])
             destination.close()
             if self.no_dialog:
                 print "GCode file successfully written: %s" % str(filename)
