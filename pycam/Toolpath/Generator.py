@@ -94,6 +94,8 @@ def generate_toolpath(model, tool_settings=None, bounds=None, direction="x",
             direction_param = 1
         else:
             return "Invalid direction value (%s): not one of %s" % (direction, DIRECTIONS)
+        if safety_height < maxz:
+            return "Safety height (%.4f) is within the bounding box height (%.4f) - this can cause collisions of the tool with the material." % (safety_height, maxz)
         toolpath = generator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz,
                 effective_toolradius, effective_toolradius, direction_param, callback)
     else:
