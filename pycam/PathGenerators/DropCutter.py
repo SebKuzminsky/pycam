@@ -128,7 +128,7 @@ class DropCutter:
                 for next_point in points:
                     pa.append(next_point)
                 self.cutter.moveto(next_point)
-                if draw_callback and draw_callback():
+                if draw_callback and draw_callback(tool_position=next_point):
                     finished_line = True
 
                 dims[0].shift(d0)

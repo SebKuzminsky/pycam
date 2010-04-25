@@ -1542,7 +1542,9 @@ class ProjectGui:
                 self.last_update = time.time()
                 self.max_fps = max_fps
                 self.func = func
-            def update(self, text=None, percent=None):
+            def update(self, text=None, percent=None, tool_position=None):
+                if not tool_position is None:
+                    parent.cutter.moveto(tool_position)
                 parent.update_progress_bar(text, percent)
                 if (time.time() - self.last_update) > 1.0/self.max_fps:
                     self.last_update = time.time()
@@ -1604,6 +1606,7 @@ class ProjectGui:
                 "radius": tool_settings["tool_radius"],
                 "torus_radius": tool_settings["torus_radius"],
         }
+        self.cutter = pycam.Cutters.get_tool_from_settings(tool_dict)
         # run the toolpath generation
         toolpath = pycam.Toolpath.Generator.generate_toolpath(self.model,
                 tool_dict, bounds=bounds,

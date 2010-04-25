@@ -211,7 +211,7 @@ class PushCutter:
             if points:
                 self.cutter.moveto(points[-1])
             if draw_callback:
-                draw_callback()
+                draw_callback(tool_position=points[-1])
             self.pa.end_scanline()
 
             if dx > 0:
@@ -398,7 +398,7 @@ class PushCutter:
                 self.cutter.moveto(begin)
                 self.cutter.moveto(end)
                 if draw_callback:
-                    draw_callback()
+                    draw_callback(tool_position=end)
                 if DEBUG_PUSHCUTTER3: 
                     self.svg.stroke("red' stroke-width='0.1")
                     self.svg.AddLine(begin.x, z-0.1, end.x, z-0.1)
