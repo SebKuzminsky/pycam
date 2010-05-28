@@ -2,48 +2,6 @@
 <interface>
   <!-- interface-requires gtk+ 2.12 -->
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkListStore" id="ToolPathListModel">
-    <columns>
-      <!-- column-name index -->
-      <column type="guint"/>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-      <!-- column-name visible -->
-      <column type="gboolean"/>
-      <!-- column-name drill_size -->
-      <column type="gfloat"/>
-      <!-- column-name drill_id -->
-      <column type="guint"/>
-      <!-- column-name allowance -->
-      <column type="gfloat"/>
-      <!-- column-name speed -->
-      <column type="gfloat"/>
-      <!-- column-name feedrate -->
-      <column type="gfloat"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0">0</col>
-        <col id="1" translatable="yes">Rough</col>
-        <col id="2">True</col>
-        <col id="3">12</col>
-        <col id="4">0</col>
-        <col id="5">0</col>
-        <col id="6">0</col>
-        <col id="7">0</col>
-      </row>
-      <row>
-        <col id="0">0</col>
-        <col id="1" translatable="yes">test</col>
-        <col id="2">False</col>
-        <col id="3">0</col>
-        <col id="4">0</col>
-        <col id="5">0</col>
-        <col id="6">0</col>
-        <col id="7">0</col>
-      </row>
-    </data>
-  </object>
   <object class="GtkListStore" id="unit_model">
     <columns>
       <!-- column-name name -->
@@ -161,6 +119,52 @@
       <row>
         <col id="0">1</col>
         <col id="1" translatable="yes">move around limits</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkListStore" id="ToolPathListModel">
+    <columns>
+      <!-- column-name index -->
+      <column type="guint"/>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name visible -->
+      <column type="gboolean"/>
+      <!-- column-name drill_size -->
+      <column type="gfloat"/>
+      <!-- column-name drill_id -->
+      <column type="guint"/>
+      <!-- column-name allowance -->
+      <column type="gfloat"/>
+      <!-- column-name speed -->
+      <column type="gfloat"/>
+      <!-- column-name feedrate -->
+      <column type="gfloat"/>
+      <!-- column-name machine_time -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">0</col>
+        <col id="1" translatable="yes">Rough</col>
+        <col id="2">True</col>
+        <col id="3">12</col>
+        <col id="4">0</col>
+        <col id="5">0</col>
+        <col id="6">0</col>
+        <col id="7">0</col>
+        <col id="8">0</col>
+      </row>
+      <row>
+        <col id="0">0</col>
+        <col id="1" translatable="yes">test</col>
+        <col id="2">False</col>
+        <col id="3">0</col>
+        <col id="4">0</col>
+        <col id="5">0</col>
+        <col id="6">0</col>
+        <col id="7">0</col>
+        <col id="8">0</col>
       </row>
     </data>
   </object>
@@ -1577,6 +1581,17 @@ This combination is added to the above task list.</property>
                                           <object class="GtkCellRendererText" id="name"/>
                                           <attributes>
                                             <attribute name="text">1</attribute>
+                                          </attributes>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkTreeViewColumn" id="Machine Time">
+                                        <property name="title">Machine Time</property>
+                                        <child>
+                                          <object class="GtkCellRendererText" id="machine_time"/>
+                                          <attributes>
+                                            <attribute name="text">8</attribute>
                                           </attributes>
                                         </child>
                                       </object>

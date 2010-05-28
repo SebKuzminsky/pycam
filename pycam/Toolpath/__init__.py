@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = ["ToolPathList", "ToolPath", "Generator"]
 
+from pycam.Geometry.Point import Point
 import random
 
 class ToolPathList(list):
@@ -61,4 +62,34 @@ class ToolPath:
         else:
             self.color = color
 
+    def get_machine_time(self, start_position=None):
+        """ calculate an estimation of the time required for processing the
+        toolpath with the machine
+
+        @value start_position: (optional) the position of the tool before the
+                start
+        @type start_position: pycam.Geometry.Point.Point
+        @rtype: float
+        @returns: the machine time used for processing the toolpath in minutes
+        """
+        if start_position is None:
+            start_position = Point(0, 0, 0)
+        def move(new_pos):
+            move.result_time += new_pos.sub(move.current_position).norm() / self.feedrate
+            move.current_position = new_pos
+        move.current_position = start_position
+        move.result_time = 0
+        # move to safey height at the starting position
+        move(Point(start_position.x, start_position.y, self.safety_height))
+        for path in self.get_path():
+            # go to safety height (horizontally from the previous x/y location)
+            if len(path.points) > 0:
+                move(Point(path.points[0].x, path.points[0].y, self.safety_height))
+            # go through all points of the path
+            for point in path.points:
+                move(point)
+            # go to safety height (vertically up from the current x/y location)
+            if len(path.points) > 0:
+                move(Point(path.points[-1].x, path.points[-1].y, self.safety_height))
+        return move.result_time
 

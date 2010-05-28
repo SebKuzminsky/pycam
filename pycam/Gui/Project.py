@@ -1381,6 +1381,13 @@ class ProjectGui:
             self.update_view()
 
     def update_toolpath_table(self, new_index=None, skip_model_update=False):
+        def get_time_string(minutes):
+            if minutes > 180:
+                return "%d hours" % int(round(minutes / 60))
+            elif minutes > 3:
+                return "%d minutes" % int(round(minutes))
+            else:
+                return "%d seconds" % int(round(minutes * 60))
         # show or hide the "toolpath" tab
         toolpath_tab = self.gui.get_object("ToolPathTab")
         if not self.toolpath:
@@ -1403,7 +1410,8 @@ class ProjectGui:
             for index in range(len(self.toolpath)):
                 tp = self.toolpath[index]
                 items = (index, tp.name, tp.visible, tp.tool_settings["radius"],
-                        tp.tool_id, tp.material_allowance, tp.speed, tp.feedrate)
+                        tp.tool_id, tp.material_allowance, tp.speed,
+                        tp.feedrate, get_time_string(tp.get_machine_time()))
                 model.append(items)
             if not new_index is None:
                 self._treeview_set_active_index(self.toolpath_table, new_index)
