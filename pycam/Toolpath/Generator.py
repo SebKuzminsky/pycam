@@ -78,7 +78,7 @@ def generate_toolpath(model, tool_settings=None, bounds=None, direction="x",
     if isinstance(cutter, basestring):
         return cutter
     cutter.set_required_distance(material_allowance)
-    physics = _get_physics(cutter, calculation_backend)
+    physics = _get_physics(model, cutter, calculation_backend)
     if isinstance(physics, basestring):
         return physics
     generator = _get_pathgenerator_instance(model, cutter, path_generator, path_postprocessor, material_allowance, safety_height, physics)
@@ -144,7 +144,7 @@ def _get_pathgenerator_instance(model, cutter, pathgenerator, pathprocessor,
     else:
         return "Invalid path generator (%s): not one of %s" % (pathgenerator, PATH_GENERATORS)
 
-def _get_physics(cutter, calculation_backend):
+def _get_physics(model, cutter, calculation_backend):
     if calculation_backend is None:
         # triangular collision detection does not need any physical model
         return None
