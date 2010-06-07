@@ -210,8 +210,8 @@ class PushCutter:
                 self.pa.append(p)
             if points:
                 self.cutter.moveto(points[-1])
-            if draw_callback:
-                draw_callback(tool_position=points[-1])
+                if draw_callback:
+                    draw_callback(tool_position=points[-1])
             self.pa.end_scanline()
 
             if dx > 0:
