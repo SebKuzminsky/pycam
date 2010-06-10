@@ -1110,6 +1110,12 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
+                                <property name="tooltip_text" translatable="yes">A support grid (also called "live bridges") is additional material that
+is left behind around the model. This material is supposed to keep
+the object at its current position during the machining process.
+This is especially useful for very small objects or if you don't use a
+vacuum table.
+</property>
                                 <property name="draw_indicator">True</property>
                               </object>
                               <packing>

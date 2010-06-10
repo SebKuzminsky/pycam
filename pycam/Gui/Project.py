@@ -229,9 +229,11 @@ class ProjectGui:
         # support grid
         self.gui.get_object("SupportGridEnable").connect("clicked", self.update_support_grid_controls)
         grid_distance = self.gui.get_object("SupportGridDistance")
+        grid_distance.connect("value-changed", self.update_support_grid_controls)
         self.settings.add_item("support_grid_distance",
                 grid_distance.get_value, grid_distance.set_value)
         grid_thickness = self.gui.get_object("SupportGridThickness")
+        grid_thickness.connect("value-changed", self.update_support_grid_controls)
         self.settings.add_item("support_grid_thickness",
                 grid_thickness.get_value, grid_thickness.set_value)
         self.settings.set("support_grid_distance", 5.0)
@@ -450,11 +452,14 @@ class ProjectGui:
         self.gui.get_object("SaveTaskSettings").set_sensitive(not self.last_task_settings_file is None)
         self.gui.get_object("SaveModel").set_sensitive(not self.last_model_file is None)
 
+    @gui_activity_guard
     def update_support_grid_controls(self, widget=None):
         is_enabled = self.gui.get_object("SupportGridEnable").get_active()
-        self.gui.get_object("SupportGridDetailsBox").set_visible(is_enabled)
-        if is_enabled:
-            s = self.settings
+        details_box = self.gui.get_object("SupportGridDetailsBox")
+        s = self.settings
+        if is_enabled \
+                and (s.get("support_grid_thickness") > 0) \
+                and (s.get("support_grid_distance") > s.get("support_grid_thickness")):
             s.set("support_grid",
                     pycam.Toolpath.SupportGrid.get_support_grid(s.get("minx"),
                             s.get("maxx"), s.get("miny"), s.get("maxy"),
@@ -463,6 +468,10 @@ class ProjectGui:
                             s.get("support_grid_thickness")))
         else:
             self.settings.set("support_grid", None)
+        if is_enabled:
+            details_box.show()
+        else:
+            details_box.hide()
         self.update_view()
 
     def update_tasklist_controls(self, widget=None, data=None):
