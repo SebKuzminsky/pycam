@@ -97,7 +97,7 @@ class Triangle:
                 self._sphere = GLU.gluNewQuadric()
             GLU.gluSphere(self._sphere, self._radius, 10, 10)
             GL.glPopMatrix()
-        if True: # draw triangle id on triangle face
+        if False: # draw triangle id on triangle face
             GL.glPushMatrix()
             cc = GL.glGetFloatv(GL.GL_CURRENT_COLOR)
             c = self.center()
@@ -274,4 +274,7 @@ class Triangle:
         self._radiussq = None
         self._normal = None
         self._plane = None
+
+    def get_points(self):
+        return (self.p1, self.p2, self.p3)
 

@@ -20,7 +20,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import *
+from pycam.Geometry import Triangle, Line, Point
+from pycam.Geometry.Model import Model
 
 def TestModel():
     points = []

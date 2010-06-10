@@ -20,6 +20,13 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+try:
+    import OpenGL.GL as GL
+    GL_enabled = True
+except:
+    GL_enabled = False
+
+
 import math
 
 
@@ -59,3 +66,32 @@ class Line:
 
     def dist_to_point(self, p):
         return sqrt(self.dist_to_point_sq(p))
+    
+    def minx(self):
+        return min(self.p1.x, self.p2.x)
+
+    def miny(self):
+        return min(self.p1.y, self.p2.y)
+
+    def minz(self):
+        return min(self.p1.z, self.p2.z)
+
+    def maxx(self):
+        return max(self.p1.x, self.p2.x)
+
+    def maxy(self):
+        return max(self.p1.y, self.p2.y)
+
+    def maxz(self):
+        return max(self.p1.z, self.p2.z)
+
+    def to_OpenGL(self):
+        if GL_enabled:
+            GL.glBegin(GL.GL_LINES)
+            GL.glVertex3f(p1.x, p1.y, p1.z)
+            GL.glVertex3f(p2.x, p2.y, p2.z)
+            GL.glEnd()
+
+    def get_points(self):
+        return (self.p1, self.p2)
+

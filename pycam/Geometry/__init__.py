@@ -28,7 +28,6 @@ __all__ = ["utils", "Line", "Model", "Path", "Plane", "Point", "Triangle",
 from Point import Point
 from Line import Line
 from Triangle import Triangle
-from Model import Model
 from Path import Path
 from Plane import Plane
 from utils import *

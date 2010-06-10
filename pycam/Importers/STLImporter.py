@@ -21,9 +21,10 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import *
+from pycam.Geometry import Point, Line, Triangle
 from pycam.Geometry.PointKdtree import PointKdtree
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
+from pycam.Geometry.Model import Model
 
 from struct import unpack 
 import re
