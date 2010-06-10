@@ -63,6 +63,15 @@ class Model:
         self.maxz = None
         self._maxsize = None
 
+    def __add__(self, other_model):
+        """ combine two models """
+        result = Model()
+        for t in self._triangles:
+            result.append(t)
+        for t in other_model._triangles:
+            result.append(t)
+        return result
+
     def to_OpenGL(self):
         if not GL_enabled:
             return
