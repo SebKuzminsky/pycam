@@ -210,7 +210,7 @@ class ProjectGui:
         for limit in ["minx", "miny", "minz", "maxx", "maxy", "maxz"]:
             obj = self.gui.get_object(limit)
             self.settings.add_item(limit, obj.get_value, obj.set_value)
-            obj.connect("value-changed", self.update_view)
+            obj.connect("value-changed", self.update_boundary_limits)
         # connect the "Bounds" action
         self.gui.get_object("Minimize bounds").connect("clicked", self.minimize_bounds)
         self.gui.get_object("Reset bounds").connect("clicked", self.reset_bounds)
@@ -456,6 +456,15 @@ class ProjectGui:
     def update_support_grid_controls(self, widget=None):
         is_enabled = self.gui.get_object("SupportGridEnable").get_active()
         details_box = self.gui.get_object("SupportGridDetailsBox")
+        if is_enabled:
+            details_box.show()
+        else:
+            details_box.hide()
+        self.update_support_grid_model()
+        self.update_view()
+
+    def update_support_grid_model(self):
+        is_enabled = self.gui.get_object("SupportGridEnable").get_active()
         s = self.settings
         if is_enabled \
                 and (s.get("support_grid_thickness") > 0) \
@@ -468,10 +477,10 @@ class ProjectGui:
                             s.get("support_grid_thickness")))
         else:
             self.settings.set("support_grid", None)
-        if is_enabled:
-            details_box.show()
-        else:
-            details_box.hide()
+
+    def update_boundary_limits(self, widget=None):
+        # the support grid depends on the boundary
+        self.update_support_grid_model()
         self.update_view()
 
     def update_tasklist_controls(self, widget=None, data=None):
