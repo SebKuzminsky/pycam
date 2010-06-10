@@ -1,12 +1,12 @@
 1) update the version and the changelog
  - in "pycam/Gui/gtk-interface/pycam-project.ui" ("version" in "GtkAboutDialog")
  - in "Changelog"
- - in "setup.py" and "setup.cfg"
+ - in "setup.py"
  - update the release date and the list of changes in "Changelog"
  - commit the changes
 
 2) create the archives
- - "make dist" (the release version is extracted from "setup.py")
+ - "make dist"
  - carefully check the resulting content of the archives
 
 3) create an svn tag for the release (includes uploading the archive files)

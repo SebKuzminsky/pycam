@@ -29,7 +29,7 @@ import os.path
 
 setup(
     name="pycam",
-    version="0.2.4",
+    version="0.2.5",
     license="GPL v3",
     description="Open Source CAM - Toolpath Generation for 3-Axis CNC machining",
     author="Lode Leroy",
