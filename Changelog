@@ -1,4 +1,5 @@
 Version 0.2.5 - NOT RELEASED
+ * added support bridges for holding the object during cutting
  * calculate the estimated machine time for each toolpath
  * changing the unit (mm/inch) now opens a dialog for scaling the model,
    processing dimensions or tool dimensions accordingly

@@ -61,6 +61,7 @@ PREFERENCES_DEFAULTS = {
         "boundary_mode": -1,
         "unit": "mm",
         "show_model": True,
+        "show_support_grid": True,
         "show_axes": True,
         "show_dimensions": True,
         "show_bounding_box": True,
@@ -68,6 +69,7 @@ PREFERENCES_DEFAULTS = {
         "show_drill_progress": False,
         "color_background": (0.0, 0.0, 0.0),
         "color_model": (0.5, 0.5, 1.0),
+        "color_support_grid": (0.8, 0.8, 0.3),
         "color_bounding_box": (0.3, 0.3, 0.3),
         "color_cutter": (1.0, 0.2, 0.2),
         "color_toolpath_cut": (1.0, 0.5, 0.5),
@@ -224,8 +226,19 @@ class ProjectGui:
         # scale model to an axis dimension
         self.gui.get_object("ScaleDimensionAxis").connect("changed", self.switch_scale_axis)
         self.gui.get_object("ScaleDimensionButton").connect("clicked", self.scale_model_axis_fit)
+        # support grid
+        self.gui.get_object("SupportGridEnable").connect("clicked", self.update_support_grid_controls)
+        grid_distance = self.gui.get_object("SupportGridDistance")
+        self.settings.add_item("support_grid_distance",
+                grid_distance.get_value, grid_distance.set_value)
+        grid_thickness = self.gui.get_object("SupportGridThickness")
+        self.settings.add_item("support_grid_thickness",
+                grid_thickness.get_value, grid_thickness.set_value)
+        self.settings.set("support_grid_distance", 5.0)
+        self.settings.set("support_grid_thickness", 0.5)
         # visual and general settings
         for name, objname in (("show_model", "ShowModelCheckBox"),
+                ("show_support_grid", "ShowSupportGridCheckBox"),
                 ("show_axes", "ShowAxesCheckBox"),
                 ("show_dimensions", "ShowDimensionsCheckBox"),
                 ("show_bounding_box", "ShowBoundingCheckBox"),
@@ -256,6 +269,7 @@ class ProjectGui:
             return set_gtk_color_by_float
         for name, objname in (("color_background", "ColorBackground"),
                 ("color_model", "ColorModel"),
+                ("color_support_grid", "ColorSupportGrid"),
                 ("color_bounding_box", "ColorBoundingBox"),
                 ("color_cutter", "ColorDrill"),
                 ("color_toolpath_cut", "ColorToolpathCut"),
@@ -396,6 +410,7 @@ class ProjectGui:
         self.update_tasklist_controls()
         self.update_save_actions()
         self.update_unit_labels()
+        self.update_support_grid_controls()
         self.switch_scale_axis()
 
     def progress_activity_guard(func):
@@ -434,6 +449,21 @@ class ProjectGui:
     def update_save_actions(self):
         self.gui.get_object("SaveTaskSettings").set_sensitive(not self.last_task_settings_file is None)
         self.gui.get_object("SaveModel").set_sensitive(not self.last_model_file is None)
+
+    def update_support_grid_controls(self, widget=None):
+        is_enabled = self.gui.get_object("SupportGridEnable").get_active()
+        self.gui.get_object("SupportGridDetailsBox").set_visible(is_enabled)
+        if is_enabled:
+            s = self.settings
+            s.set("support_grid",
+                    pycam.Toolpath.SupportGrid.get_support_grid(s.get("minx"),
+                            s.get("maxx"), s.get("miny"), s.get("maxy"),
+                            s.get("minz"), s.get("support_grid_distance"),
+                            s.get("support_grid_distance"),
+                            s.get("support_grid_thickness")))
+        else:
+            self.settings.set("support_grid", None)
+        self.update_view()
 
     def update_tasklist_controls(self, widget=None, data=None):
         # check if both the tool and the process table have a selected row
@@ -475,7 +505,6 @@ class ProjectGui:
         else:
             lines.append("No task selected")
         self.gui.get_object("CurrentTaskSummary").set_text(os.linesep.join(lines))
-
 
     def update_tasklist_table(self, new_index=None, skip_model_update=False):
         tasklist_model = self.gui.get_object("TaskList")
@@ -1615,6 +1644,13 @@ class ProjectGui:
                 "torus_radius": tool_settings["torus_radius"],
         }
         self.cutter = pycam.Cutters.get_tool_from_settings(tool_dict)
+        # get the support grid options
+        if self.gui.get_object("SupportGridEnable").get_active():
+            support_grid_distance = self.settings.get("support_grid_distance")
+            support_grid_thickness = self.settings.get("support_grid_thickness")
+        else:
+            support_grid_distance = None
+            support_grid_thickness = None
         # run the toolpath generation
         toolpath = pycam.Toolpath.Generator.generate_toolpath(self.model,
                 tool_dict, bounds=bounds,
@@ -1625,6 +1661,8 @@ class ProjectGui:
                 safety_height=process_settings["safety_height"],
                 overlap=process_settings["overlap_percent"] / 100.0,
                 step_down=process_settings["step_down"],
+                support_grid_distance=support_grid_distance,
+                support_grid_thickness=support_grid_thickness,
                 calculation_backend=calculation_backend, callback=draw_callback)
 
         print "Time elapsed: %f" % (time.time() - start_time)

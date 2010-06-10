@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import pycam.PathGenerators
 import pycam.PathProcessors
 import pycam.Cutters
+import pycam.Toolpath.SupportGrid
 import sys
 
 DIRECTIONS = frozenset(("x", "y", "xy"))
@@ -32,8 +33,9 @@ CALCULATION_BACKENDS = frozenset((None, "ODE"))
 
 def generate_toolpath(model, tool_settings=None, bounds=None, direction="x",
         path_generator="DropCutter", path_postprocessor="ZigZagCutter",
-        material_allowance=0.0, safety_height=None, overlap=0.0,
-        step_down=0.0, calculation_backend=None, callback=None):
+        material_allowance=0.0, safety_height=None, overlap=0.0, step_down=0.0,
+        support_grid_distance=None, support_grid_thickness=None,
+        calculation_backend=None, callback=None):
     """ abstract interface for generating a toolpath
 
     @type model: pycam.Geometry.Model.Model
@@ -57,6 +59,12 @@ def generate_toolpath(model, tool_settings=None, bounds=None, direction="x",
     @value material_allowance: the minimum distance between the tool and the model
     @type overlap: float
     @value overlap: the overlap between two adjacent tool paths (0 <= overlap < 1)
+    @type step_down: float
+    @value step_down: maximum height of each layer (for PushCutter)
+    @type support_grid_distance: float
+    @value support_grid_distance: grid size of remaining support material
+    @type support_grid_thickness: float
+    @value support_grid_thickness: thickness of the support grid
     @type calculation_backend: str | None
     @value calculation_backend: any member of the CALCULATION_BACKENDS set
         The default is the triangular collision detection.
@@ -71,6 +79,17 @@ def generate_toolpath(model, tool_settings=None, bounds=None, direction="x",
         minz, maxz = model.minz, model.maxz
     else:
         minx, maxx, miny, maxy, minz, maxz = bounds
+    # create the grid model if requested
+    if (not support_grid_distance is None) \
+            and (not support_grid_thickness is None):
+        if support_grid_distance <= 0:
+            return "The distance of the support grid must be a positive value"
+        if support_grid_thickness <= 0:
+            return "The thickness of the support grid must be a positive value"
+        support_grid_model = pycam.Toolpath.SupportGrid.get_support_grid(
+                minx, maxx, miny, maxy, minz, support_grid_distance,
+                support_grid_distance, support_grid_thickness)
+        model += support_grid_model
     # Due to some weirdness the height of the drill must be bigger than the object's size.
     # Otherwise some collisions are not detected.
     cutter_height = 4 * (maxy - miny)

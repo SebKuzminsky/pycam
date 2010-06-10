@@ -593,6 +593,10 @@ def draw_complete_model_view(settings):
     if settings.get("show_model"):
         GL.glColor3f(*settings.get("color_model"))
         settings.get("model").to_OpenGL()
+    # draw the support grid
+    if settings.get("show_support_grid") and settings.get("support_grid"):
+        GL.glColor3f(*settings.get("color_support_grid"))
+        settings.get("support_grid").to_OpenGL()
     # draw the toolpath
     if settings.get("show_toolpath"):
         for toolpath_obj in settings.get("toolpath"):
