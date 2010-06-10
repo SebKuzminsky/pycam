@@ -43,6 +43,19 @@ class Hit:
     def cmp(a,b):
         return cmp(a.d, b.d)
 
+class ProgressCounter:
+
+    def __init__(self, max_value):
+        self.max_value = max_value
+        self.current_value = 0
+
+    def next(self):
+        self.current_value += 1
+
+    def get_percent(self):
+        return 100.0 * self.current_value / self.max_value
+
+
 class PushCutter:
 
     def __init__(self, cutter, model, pathextractor=None, physics=None):
@@ -52,15 +65,23 @@ class PushCutter:
         self.physics = physics
 
     def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, dx, dy, dz, draw_callback=None):
+        # calculate the number of steps
+        num_of_layers = 1 + math.ceil((maxz - minz) / dz)
+        lines_per_layer = 0
+
         if dx != 0:
+            lines_per_layer += 1 + math.ceil((maxx - minx) / dx)
             self.pa.dx = dx
         else:
             self.pa.dx = dy
 
         if dy != 0:
+            lines_per_layer += 1 + math.ceil((maxy - miny) / dy)
             self.pa.dy = dy
         else:
             self.pa.dy = dx
+
+        progress_counter = ProgressCounter(num_of_layers * lines_per_layer)
 
         if DEBUG_PUSHCUTTER2 or DEBUG_PUSHCUTTER3:
             self.svg = SVGExporter("test.svg")
@@ -70,7 +91,6 @@ class PushCutter:
         paths = []
 
         current_layer = 0
-        num_of_layers = math.ceil((maxz - minz) / dz)
 
         if self.physics is None:
             GenerateToolPathSlice = self.GenerateToolPathSlice_triangles
@@ -80,19 +100,20 @@ class PushCutter:
         last_loop = False
         while z >= minz:
             # update the progress bar and check, if we should cancel the process
-            if draw_callback and draw_callback(text="PushCutter: processing layer %d/%d" \
-                        % (current_layer, num_of_layers),
-                        percent=(100.0 * current_layer / num_of_layers)):
+            if draw_callback and draw_callback(text="PushCutter: processing" \
+                        + " layer %d/%d" % (current_layer, num_of_layers)):
                 # cancel immediately
                 z = minz - 1
 
             if dy > 0:
                 self.pa.new_direction(0)
-                GenerateToolPathSlice(minx, maxx, miny, maxy, z, 0, dy, draw_callback)
+                GenerateToolPathSlice(minx, maxx, miny, maxy, z, 0, dy,
+                        draw_callback, progress_counter)
                 self.pa.end_direction()
             if dx > 0:
                 self.pa.new_direction(1)
-                GenerateToolPathSlice(minx, maxx, miny, maxy, z, dx, 0, draw_callback)
+                GenerateToolPathSlice(minx, maxx, miny, maxy, z, dx, 0,
+                        draw_callback, progress_counter)
                 self.pa.end_direction()
             self.pa.finish()
 
@@ -177,7 +198,8 @@ class PushCutter:
         self.physics.reset_drill()
         return points
 
-    def GenerateToolPathSlice_ode(self, minx, maxx, miny, maxy, z, dx, dy, draw_callback=None):
+    def GenerateToolPathSlice_ode(self, minx, maxx, miny, maxy, z, dx, dy,
+            draw_callback=None, progress_counter=None):
         """ only dx or (exclusive!) dy may be bigger than zero
         """
         # max_deviation_x = dx/accuracy
@@ -225,6 +247,13 @@ class PushCutter:
                     last_loop = True
                     y = maxy
 
+            # update the progress counter
+            if not progress_counter is None:
+                progress_counter.next()
+                if draw_callback:
+                    draw_callback(percent=progress_counter.get_percent())
+
+
     def DropCutterTest(self, point, model):
         zmax = -INFINITE
         tmax = None
@@ -238,7 +267,8 @@ class PushCutter:
                 tmax = t
         return (zmax, tmax)
 
-    def GenerateToolPathSlice_triangles(self, minx, maxx, miny, maxy, z, dx, dy, draw_callback=None):
+    def GenerateToolPathSlice_triangles(self, minx, maxx, miny, maxy, z, dx, dy,
+            draw_callback=None, progress_counter=None):
         global DEBUG_PUSHCUTTER, DEBUG_PUSHCUTTER2, DEBUG_PUSHCUTTER3
         c = self.cutter
         model = self.model
@@ -422,5 +452,11 @@ class PushCutter:
 
             self.pa.end_scanline()
             if DEBUG_PUSHCUTTER: print 
+
+            # update the progress counter
+            if not progress_counter is None:
+                progress_counter.next()
+                if draw_callback:
+                    draw_callback(percent=progress_counter.get_percent())
 
         if DEBUG_PUSHCUTTER: print 
