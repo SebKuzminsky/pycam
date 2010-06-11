@@ -160,8 +160,16 @@ material_allowance: 0.0
 step_down: 1.0
 overlap_percent: 60
 
+[Process3]
+name: Gravure
+path_generator: EngraveCutter
+path_postprocessor: SimpleCutter
+material_allowance: 0.0
+step_down: 1.0
+overlap_percent: 50
+
 [TaskDefault]
-enabled: 1
+enabled: yes
 
 [Task0]
 tool: 0
@@ -174,6 +182,12 @@ process: 1
 [Task2]
 tool: 1
 process: 2
+
+[Task3]
+enabled: no
+tool: 2
+process: 3
+
 """
 
     SETTING_TYPES = {
@@ -289,6 +303,11 @@ process: 2
                             if value_type == object:
                                 # try to get the referenced object
                                 value = self._get_category_items(key)[int(value_raw)]
+                            elif value_type == bool:
+                                if value_raw.lower() in ("1", "true", "yes", "on"):
+                                    value = True
+                                else:
+                                    value = False
                             else:
                                 # just do a simple type cast
                                 value = value_type(value_raw)
