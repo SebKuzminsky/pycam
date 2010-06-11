@@ -21,9 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.PathProcessors import *
-from pycam.Geometry import *
-from pycam.Geometry.intersection import intersect_lines
+from pycam.Geometry import Point
 from pycam.Geometry.utils import INFINITE
 from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode
 import math
@@ -62,21 +60,16 @@ class Dimension:
 
 class DropCutter:
 
-    def __init__(self, cutter, model, PathProcessor=None, physics=None, safety_height=INFINITE):
+    def __init__(self, cutter, model, path_processor, physics=None, safety_height=INFINITE):
         self.cutter = cutter
         self.model = model
-        self.processor = PathProcessor
+        self.pa = path_processor
         self.physics = physics
         self.safety_height = safety_height
         # remember if we already reported an invalid boundary
         self._boundary_warning_already_shown = False
 
     def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, d0, d1, direction, draw_callback=None):
-        if self.processor:
-            pa = self.processor
-        else:
-            pa = PathAccumulator()
-
         dim_x = Dimension(minx, maxx)
         dim_y = Dimension(miny, maxy)
         dims = [None, None, None]
@@ -92,7 +85,7 @@ class DropCutter:
         dims[y] = dim_y
 
         z = maxz
-        pa.new_direction(direction)
+        self.pa.new_direction(direction)
         dims[1].set(dims[1].start)
 
         finished_plane = False
@@ -106,7 +99,7 @@ class DropCutter:
             last_inner_loop = False
             finished_line = False
             dims[0].set(dims[0].start)
-            pa.new_scanline()
+            self.pa.new_scanline()
             last_position = None
 
             if draw_callback and draw_callback(text="DropCutter: processing line %d/%d" \
@@ -126,10 +119,10 @@ class DropCutter:
 
                 if points:
                     for p in points:
-                        pa.append(p)
+                        self.pa.append(p)
                 else:
                     p = Point(dims[x].get(), dims[y].get(), self.safety_height)
-                    pa.append(p)
+                    self.pa.append(p)
                     if not self._boundary_warning_already_shown:
                         print >>sys.stderr, "WARNING: DropCutter exceed the height" \
                                 + " of the boundary box: using a safe height " \
@@ -150,7 +143,7 @@ class DropCutter:
                 else:
                     finished_line = True
 
-            pa.end_scanline()
+            self.pa.end_scanline()
             dims[1].shift(d1)
 
             # make sure, that the we also handle the outmost border of the bounding box
@@ -164,8 +157,8 @@ class DropCutter:
             # update progress
             current_line += 1
 
-        pa.end_direction()
+        self.pa.end_direction()
 
-        pa.finish()
-        return pa.paths
+        self.pa.finish()
+        return self.pa.paths
 
