@@ -135,5 +135,7 @@ class PushCutter:
 
             # update the progress counter
             if not progress_counter is None:
-                progress_counter.increment()
+                if progress_counter.increment():
+                    # quit requested
+                    break
 
