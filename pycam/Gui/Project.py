@@ -626,8 +626,8 @@ class ProjectGui:
             dropcutter_active = False
         else:
             # engraving
-            if not get_obj("PathAccumulator").get_active():
-                get_obj("PathAccumulator").set_active(True)
+            if not get_obj("SimpleCutter").get_active():
+                get_obj("SimpleCutter").set_active(True)
         all_controls = ("PathDirectionX", "PathDirectionY", "PathDirectionXY",
                 "SimpleCutter", "PolygonCutter", "ContourCutter",
                 "PathAccumulator", "ZigZagCutter", "MaxStepDownControl",
@@ -640,7 +640,7 @@ class ProjectGui:
                     "PathDirectionX", "PathDirectionY", "PathDirectionXY",
                     "MaxStepDownControl", "MaterialAllowanceControl",
                     "OverlapPercentControl"),
-            "EngraveCutter": ("PathAccumulator", "MaxStepDownControl"),
+            "EngraveCutter": ("SimpleCutter", "MaxStepDownControl"),
         }
         for one_control in all_controls:
             get_obj(one_control).set_sensitive(one_control in active_controls[cutter_name])
@@ -1317,7 +1317,7 @@ class ProjectGui:
         settings["name"] = self.gui.get_object("ProcessSettingName").get_text()
         # path generator
         def get_path_generator():
-            for name in ("DropCutter", "PushCutter"):
+            for name in ("DropCutter", "PushCutter", "EngraveCutter"):
                 if self.gui.get_object(name).get_active():
                     return name
         settings["path_generator"] = get_path_generator()
@@ -1695,7 +1695,7 @@ class ProjectGui:
             support_grid_thickness = None
         # run the toolpath generation
         toolpath = pycam.Toolpath.Generator.generate_toolpath(self.model,
-                tool_dict, bounds=bounds,
+                tool_settings=tool_dict, bounds=bounds,
                 direction=process_settings["path_direction"],
                 path_generator=process_settings["path_generator"],
                 path_postprocessor=process_settings["path_postprocessor"],
