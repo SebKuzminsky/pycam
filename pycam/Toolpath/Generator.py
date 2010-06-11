@@ -83,11 +83,15 @@ def generate_toolpath(model, tool_settings=None,
         minx, maxx, miny, maxy, minz, maxz = bounds
     # trimesh model or contour model?
     if isinstance(model, pycam.Geometry.Model.Model):
+        # trimesh model
         trimesh_model = model
         contour_model = None
     else:
+        # contour model
         trimesh_model = pycam.Geometry.Model.Model()
         contour_model = model
+        # material allowance is ignored for engraving
+        material_allowance = 0.0
     # create the grid model if requested
     if (not support_grid_distance is None) \
             and (not support_grid_thickness is None):
