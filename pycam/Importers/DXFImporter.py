@@ -48,9 +48,57 @@ class DXFParser:
         self.lines = []
         self._input_stack = []
         self.parse_content()
+        self.optimize_line_order()
 
     def get_model(self):
         return {"lines": self.lines}
+
+    def optimize_line_order(self):
+        groups = []
+        current_group = []
+        groups.append(current_group)
+        remaining_lines = self.lines[:]
+        while remaining_lines:
+            if not current_group:
+                current_group.append(remaining_lines.pop(0))
+            else:
+                first_line = current_group[0]
+                last_line = current_group[-1]
+                for line in remaining_lines:
+                    if last_line.p2 == line.p1:
+                        current_group.append(line)
+                        remaining_lines.remove(line)
+                        break
+                    if first_line.p1 == line.p2:
+                        current_group.insert(0, line)
+                        remaining_lines.remove(line)
+                        break
+                else:
+                    current_group = []
+                    groups.append(current_group)
+        def get_distance_between_groups(group1, group2):
+            forward = group1[-1].p2.sub(group2[0].p1).norm()
+            backward = group2[-1].p2.sub(group1[0].p1).norm()
+            return min(forward, backward)
+        remaining_groups = groups[:]
+        ordered_groups = []
+        while remaining_groups:
+            if not ordered_groups:
+                ordered_groups.append(remaining_groups.pop(0))
+            else:
+                current_group = ordered_groups[-1]
+                closest_distance = None
+                for cmp_group in remaining_groups:
+                    cmp_distance = get_distance_between_groups(current_group, cmp_group)
+                    if (closest_distance is None) or (cmp_distance < closest_distance):
+                        closest_distance = cmp_distance
+                        closest_group = cmp_group
+                ordered_groups.append(closest_group)
+                remaining_groups.remove(closest_group)
+        result = []
+        for group in ordered_groups:
+            result.extend(group)
+        self.lines = result
 
     def _push_on_stack(self, key, value):
         self._input_stack.append((key, value))
