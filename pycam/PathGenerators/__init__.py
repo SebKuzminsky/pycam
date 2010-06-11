@@ -22,8 +22,100 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = ["DropCutter", "PushCutter"]
 
-from pycam.Geometry.utils import INFINITE
+from pycam.Geometry.utils import INFINITE, epsilon
 from pycam.Geometry import Point
+import math
+
+
+class Hit:
+    def __init__(self, cl, t, d, dir):
+        self.cl = cl
+        self.t = t
+        self.d = d
+        self.dir = dir
+        self.z = -INFINITE
+
+    def cmp(a,b):
+        return cmp(a.d, b.d)
+
+def get_free_horizontal_paths_triangles(model, cutter, minx, maxx, miny, maxy, z):
+    points = []
+    x_dist = abs(maxx - minx)
+    y_dist = abs(maxy - miny)
+    xy_dist = math.sqrt(x_dist * x_dist + y_dist * y_dist)
+    x_frac = x_dist / xy_dist
+    y_frac = y_dist / xy_dist
+    forward = Point(x_frac, y_frac, 0)
+    backward = Point(-x_frac, -y_frac, 0)
+    forward_small = Point(epsilon * x_frac, epsilon * y_frac, 0)
+    backward_small = Point(-epsilon * x_frac, -epsilon * y_frac, 0)
+
+    # find all hits along scan line
+    hits = []
+    prev = Point(minx, miny, z)
+    hits.append(Hit(prev, None, 0, None))
+
+    triangles = model.triangles(minx - cutter.radius, miny - cutter.radius, z,
+            maxx + cutter.radius, maxy + cutter.radius, INFINITE)
+
+    for t in triangles:
+        # normals point outward... and we want to approach the model from the outside!
+        n = t.normal().dot(forward)
+        cutter.moveto(prev)
+        if n >= 0:
+            (cl, d) = cutter.intersect(backward, t)
+            if cl:
+                hits.append(Hit(cl, t, -d, backward))
+                hits.append(Hit(cl.sub(backward_small), t, -d + epsilon, backward))
+                hits.append(Hit(cl.add(backward_small), t, -d - epsilon, backward))
+        if n <= 0:
+            (cl, d) = cutter.intersect(forward, t)
+            if cl:
+                hits.append(Hit(cl, t, d, forward))
+                hits.append(Hit(cl.add(forward_small), t, d + epsilon, forward))
+                hits.append(Hit(cl.sub(forward_small), t, d - epsilon, forward))
+
+    next = Point(maxx, maxy, z)
+    hits.append(Hit(next, None, xy_dist, None))
+
+
+    # sort along the scan direction
+    hits.sort(Hit.cmp)
+
+    # remove duplicates (typically shared edges)
+    i = 1
+    while i < len(hits):
+        while i<len(hits) and abs(hits[i].d - hits[i-1].d)<epsilon/2:
+            del hits[i]
+        i += 1
+
+    # determine height at each interesting point
+    for h in hits:
+        (zmax, tmax) = drop_cutter_test(cutter, h.cl, model)
+        h.z = zmax
+
+    # find first hit cutter location that is below z-level
+    begin = hits[0].cl
+    end = None
+    for h in hits:
+        if h.z >= z - epsilon/10:
+            if begin and end:
+                points.append(begin)
+                points.append(end)
+            begin = None
+            end = None
+        if h.z <= z + epsilon/10:
+            if not begin:
+                begin = h.cl
+            else:
+                end = h.cl
+        
+    # add add possibly remaining couple from the previous loop
+    if begin and end:
+        points.append(begin)
+        points.append(end)
+
+    return points
 
 
 def get_free_horizontal_paths_ode(physics, minx, maxx, miny, maxy, z, depth=8):
@@ -91,11 +183,10 @@ def get_free_horizontal_paths_ode(physics, minx, maxx, miny, maxy, z, depth=8):
 def drop_cutter_test(cutter, point, model):
     zmax = -INFINITE
     tmax = None
-    c = cutter
-    c.moveto(point)
+    cutter.moveto(point)
     for t in model.triangles():
         if t.normal().z < 0: continue
-        cl = c.drop(t)
+        cl = cutter.drop(t)
         if cl and cl.z > zmax and cl.z < INFINITE:
             zmax = cl.z
             tmax = t

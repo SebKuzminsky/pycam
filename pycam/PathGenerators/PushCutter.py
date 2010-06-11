@@ -23,20 +23,9 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry import Point
 from pycam.Geometry.utils import INFINITE, epsilon
-from pycam.PathGenerators import drop_cutter_test, get_free_horizontal_paths_ode
+from pycam.PathGenerators import drop_cutter_test, get_free_horizontal_paths_ode, get_free_horizontal_paths_triangles
 import math
 
-
-class Hit:
-    def __init__(self, cl, t, d, dir):
-        self.cl = cl
-        self.t = t
-        self.d = d
-        self.dir = dir
-        self.z = -INFINITE
-
-    def cmp(a,b):
-        return cmp(a.d, b.d)
 
 class ProgressCounter:
 
@@ -181,106 +170,25 @@ class PushCutter:
 
     def GenerateToolPathSlice_triangles(self, minx, maxx, miny, maxy, z, dx, dy,
             draw_callback=None, progress_counter=None):
-        c = self.cutter
-        model = self.model
-
-        if dx==0:
-            forward = Point(1,0,0)
-            backward = Point(-1,0,0)
-            forward_small = Point(epsilon,0,0)
-            backward_small = Point(-epsilon,0,0)
-        elif dy == 0:
-            forward = Point(0,1,0)
-            backward = Point(0,-1,0)
-            forward_small = Point(0,epsilon,0)
-            backward_small = Point(0,-epsilon,0)
 
         x = minx
         y = miny
-        
-        line = 0
 
         last_loop = False
-        while x<=maxx and y<=maxy:
+        while x <= maxx and y <= maxy:
             self.pa.new_scanline()
 
-            # find all hits along scan line
-            hits = []
-            prev = Point(x,y,z)
-            hits.append(Hit(prev, None, 0, None))
-
-            triangles = None
-            if dx==0:
-                triangles = model.triangles(minx-self.cutter.radius,y-self.cutter.radius,z,maxx+self.cutter.radius,y+self.cutter.radius,INFINITE)
+            if dx > 0:
+                points = get_free_horizontal_paths_triangles(self.model, self.cutter, x, x, miny, maxy, z)
             else:
-                triangles = model.triangles(x-self.cutter.radius,miny-self.cutter.radius,z,x+self.cutter.radius,maxy+self.cutter.radius,INFINITE)
-
-            for t in triangles:
-                #if t.normal().z < 0: continue;
-                # normals point outward... and we want to approach the model from the outside!
-                n = t.normal().dot(forward)
-                c.moveto(prev)
-                if n>=0:
-                    (cl,d) = c.intersect(backward, t)
-                    if cl:
-                        hits.append(Hit(cl,t,-d,backward))
-                        hits.append(Hit(cl.sub(backward_small),t,-d+epsilon,backward))
-                        hits.append(Hit(cl.add(backward_small),t,-d-epsilon,backward))
-                if n<=0:
-                    (cl,d) = c.intersect(forward, t)
-                    if cl:
-                        hits.append(Hit(cl,t,d,forward))
-                        hits.append(Hit(cl.add(forward_small),t,d+epsilon,forward))
-                        hits.append(Hit(cl.sub(forward_small),t,d-epsilon,forward))
-
-            if dx == 0:
-                x = maxx
-            if dy == 0:
-                y = maxy
-
-            next = Point(x, y, z)
-            hits.append(Hit(next, None, maxx-minx, None))
-
-
-            # sort along the scan direction
-            hits.sort(Hit.cmp)
-
-            # remove duplicates (typically shared edges)
-            i = 1
-            while i < len(hits):
-                while i<len(hits) and abs(hits[i].d - hits[i-1].d)<epsilon/2:
-                    del hits[i]
-                i += 1
-
-            # determine height at each interesting point
-            for h in hits:
-                (zmax, tmax) = drop_cutter_test(self.cutter, h.cl, model)
-                h.z = zmax
-
-
-            # find first hit cutter location that is below z-level
-            begin = hits[0].cl
-            end = None
-            for h in hits:
-                if h.z >= z - epsilon/10:
-                    if begin and end:
-                        self.pa.append(begin)
-                        self.pa.append(end)
-                    begin = None
-                    end = None
-                if h.z <= z + epsilon/10:
-                    if not begin:
-                        begin = h.cl
-                    else:
-                        end = h.cl
-                
-            if begin and end:
-                self.pa.append(begin)
-                self.pa.append(end)
-                self.cutter.moveto(begin)
-                self.cutter.moveto(end)
+                points = get_free_horizontal_paths_triangles(self.model, self.cutter, minx, maxx, y, y, z)
+             
+            if points:
+                for p in points:
+                    self.pa.append(p)
+                self.cutter.moveto(p)
                 if draw_callback:
-                    draw_callback(tool_position=end)
+                    draw_callback(tool_position=p)
 
             if dx != 0:
                 x += dx
