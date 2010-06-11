@@ -52,7 +52,7 @@ GTKBUILD_FILE = "pycam-project.ui"
 GTKMENU_FILE = "menubar.xml"
 
 FILTER_GCODE = ("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode"))
-FILTER_MODEL = ("STL models", "*.stl")
+FILTER_MODEL = (("STL models", "*.stl"), ("DXF contours", "*.dxf"))
 FILTER_CONFIG = ("Config files", "*.conf")
 FILTER_EMC_TOOL = ("EMC tool files", "*.tbl")
 
@@ -309,7 +309,7 @@ class ProjectGui:
         # connect the "consistency check" and the update-handler with all toolpath settings
         for objname in ("PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter", "ContourCutter",
                 "DropCutter", "PushCutter", "PathDirectionX", "PathDirectionY", "PathDirectionXY", "SettingEnableODE"):
-            self.gui.get_object(objname).connect("toggled", self.disable_invalid_process_settings)
+            self.gui.get_object(objname).connect("toggled", self.update_process_controls)
             if objname != "SettingEnableODE":
                 self.gui.get_object(objname).connect("toggled", self.handle_process_settings_change)
         for objname in ("SafetyHeightControl", "OverlapPercentControl",
@@ -406,7 +406,7 @@ class ProjectGui:
     def update_all_controls(self):
         self.update_toolpath_table()
         self.update_tool_table()
-        self.disable_invalid_process_settings()
+        self.update_process_controls()
         self.update_process_table()
         self.update_tasklist_table()
         self.update_tasklist_controls()
@@ -605,28 +605,45 @@ class ProjectGui:
                 break
         progress_bar.hide()
 
-    def disable_invalid_process_settings(self, widget=None, data=None):
+    def update_process_controls(self, widget=None, data=None):
         # possible dependencies of the DropCutter
         get_obj = lambda name: self.gui.get_object(name)
-        if get_obj("DropCutter").get_active():
+        cutter_name = None
+        for one_cutter in ("DropCutter", "PushCutter", "EngraveCutter"):
+            if get_obj(one_cutter).get_active():
+                cutter_name = one_cutter
+        if cutter_name == "DropCutter":
             if get_obj("PathDirectionXY").get_active():
                 get_obj("PathDirectionX").set_active(True)
             if not (get_obj("PathAccumulator").get_active() or get_obj("ZigZagCutter").get_active()):
                 get_obj("PathAccumulator").set_active(True)
             dropcutter_active = True
-        else:
-            # PushCutter
+        elif cutter_name == "PushCutter":
             if not (get_obj("SimpleCutter").get_active() \
                     or get_obj("PolygonCutter").get_active() \
                     or get_obj("ContourCutter").get_active()):
                 get_obj("SimpleCutter").set_active(True)
             dropcutter_active = False
-        for objname in ("PathDirectionXY", "SimpleCutter", "PolygonCutter", "ContourCutter"):
-            self.gui.get_object(objname).set_sensitive(not dropcutter_active)
-        for objname in ("PathAccumulator", "ZigZagCutter"):
-            self.gui.get_object(objname).set_sensitive(dropcutter_active)
-        # disable "step down" control, if PushCutter is not active
-        self.gui.get_object("MaxStepDownControl").set_sensitive(get_obj("PushCutter").get_active())
+        else:
+            # engraving
+            if not get_obj("PathAccumulator").get_active():
+                get_obj("PathAccumulator").set_active(True)
+        all_controls = ("PathDirectionX", "PathDirectionY", "PathDirectionXY",
+                "SimpleCutter", "PolygonCutter", "ContourCutter",
+                "PathAccumulator", "ZigZagCutter", "MaxStepDownControl",
+                "MaterialAllowanceControl", "OverlapPercentControl")
+        active_controls = {
+            "DropCutter": ("PathAccumulator", "ZigZagCutter", "PathDirectionX",
+                    "PathDirectionY", "MaterialAllowanceControl",
+                    "OverlapPercentControl"),
+            "PushCutter": ("SimpleCutter", "PolygonCutter", "ContourCutter",
+                    "PathDirectionX", "PathDirectionY", "PathDirectionXY",
+                    "MaxStepDownControl", "MaterialAllowanceControl",
+                    "OverlapPercentControl"),
+            "EngraveCutter": ("PathAccumulator", "MaxStepDownControl"),
+        }
+        for one_control in all_controls:
+            get_obj(one_control).set_sensitive(one_control in active_controls[cutter_name])
 
     def update_tool_controls(self, widget=None, data=None):
         # disable the toroidal radius if the toroidal cutter is not enabled
@@ -978,7 +995,10 @@ class ProjectGui:
 
     def get_filename_with_suffix(self, filename, type_filter):
         # use the first extension provided by the filter as the default
-        filter_ext = type_filter[1]
+        if isinstance(type_filter[0], (tuple, list)):
+            filter_ext = type_filter[0][1]
+        else:
+            filter_ext = type_filter[1]
         if isinstance(filter_ext, (list, tuple)):
             filter_ext = filter_ext[0]
         if not filter_ext.startswith("*"):
@@ -1225,7 +1245,11 @@ class ProjectGui:
                 self.last_model_file = filename
                 self.update_save_actions()
         if filename:
-            self.load_model(pycam.Importers.STLImporter.ImportModel(filename))
+            file_type, importer = pycam.Importers.detect_file_type(filename)
+            if file_type and callable(importer):
+                self.load_model(importer(filename))
+            else:
+                show_error_dialog(self.window, "Failed to detect filetype!")
 
     @gui_activity_guard
     def export_emc_tools(self, widget=None, filename=None):
@@ -1731,14 +1755,17 @@ class ProjectGui:
                         gtk.STOCK_SAVE, gtk.RESPONSE_OK))
         # add filter for files
         if type_filter:
-            filter = gtk.FileFilter()
-            filter.set_name(type_filter[0])
-            file_extensions = type_filter[1]
-            if not isinstance(file_extensions, (list, tuple)):
-                file_extensions = [file_extensions]
-            for ext in file_extensions:
-                filter.add_pattern(ext)
-            dialog.add_filter(filter)
+            if not isinstance(type_filter[0], (list, tuple)):
+                type_filter = [type_filter]
+            for one_filter in type_filter:
+                file_filter = gtk.FileFilter()
+                file_filter.set_name(one_filter[0])
+                file_extensions = one_filter[1]
+                if not isinstance(file_extensions, (list, tuple)):
+                    file_extensions = [file_extensions]
+                for ext in file_extensions:
+                    file_filter.add_pattern(ext)
+                dialog.add_filter(file_filter)
         # add filter for all files
         filter = gtk.FileFilter()
         filter.set_name("All files")

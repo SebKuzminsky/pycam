@@ -3,6 +3,7 @@
 $Id$
 
 Copyright 2008 Lode Leroy
+Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
 
@@ -20,6 +21,27 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-list = ["STLImporter"]
-__all__ = ["TestModel"] + list
+__all__ = ["STLImporter", "DXFImporter", "TestModel"]
+
+import DXFImporter
+import STLImporter
+
+import os
+import sys
+
+def detect_file_type(filename):
+    failure = (None, None)
+    if not os.path.isfile(filename):
+        return failure
+    else:
+        # check all listed importers
+        # TODO: this should be done by evaluating the header of the file
+        if filename.endswith(".stl"):
+            return ("stl", STLImporter.ImportModel)
+        elif filename.endswith(".dxf"):
+            return ("dxf", DXFImporter.import_model)
+        else:
+            print >>sys.stderr, "Failed to detect the model type of '%s'." \
+                    % filename + " Is the file extension (.stl/.dxf) correct?"
+            failure
 
