@@ -53,7 +53,7 @@ def _add_cuboid_to_model(minx, maxx, miny, maxy, minz, maxz):
     # left face
     triangles.extend(get_triangles_for_face((points[3], points[0], points[4], points[7])))
     # add all triangles to the model
-    model = Model()
+    model = Model.Model()
     for t in triangles:
         model.append(t)
     return model
@@ -65,7 +65,7 @@ def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness)
     start_x = ((maxx - minx) - (lines_x - 1) * dist_x) / 2.0 + minx
     start_y = ((maxy - miny) - (lines_y - 1) * dist_y) / 2.0 + miny
     # create all x grid lines
-    grid_model = Model()
+    grid_model = Model.Model()
     radius = thickness / 2.0
     for i in range(lines_x):
         x = start_x + i * dist_x
