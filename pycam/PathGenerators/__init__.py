@@ -192,3 +192,118 @@ def drop_cutter_test(cutter, point, model):
             tmax = t
     return (zmax, tmax)
 
+def get_max_height_ode(physics, x, y, minz, maxz, order=None):
+    low, high = minz, maxz
+    trip_start = 20
+    safe_z = None
+    # check if the full step-down would be ok
+    physics.set_drill_position((x, y, minz))
+    if physics.check_collision():
+        # there is an object between z1 and z0 - we need more=None loops
+        trips = trip_start
+    else:
+        # no need for further collision detection - we can go down the whole range z1..z0
+        trips = 0
+        safe_z = minz
+    while trips > 0:
+        current_z = (low + high) / 2.0
+        physics.set_drill_position((x, y, current_z))
+        if physics.check_collision():
+            low = current_z
+        else:
+            high = current_z
+            safe_z = current_z
+        trips -= 1
+    if safe_z is None:
+        # no safe position was found - let's check the upper bound
+        physics.set_drill_position((x, y, maxz))
+        if physics.check_collision():
+            # the object fills the whole range of z0..z1 -> no safe height
+            pass
+        else:
+            # at least the upper bound is collision free
+            safe_z = maxz
+    if safe_z is None:
+        return []
+    else:
+        return [Point(x, y, safe_z)]
+
+def get_max_height_triangles(model, cutter, x, y, minz, maxz, order=None, last_pos=None):
+    result = []
+    if last_pos is None:
+        last_pos = {}
+    for key in ("triangle", "cut"):
+        if not key in last_pos:
+            last_pos[key] = None
+    if order is None:
+        order = ["x", "y"]
+    p = Point(x, y, maxz)
+    height_max = None
+    cut_max = None
+    triangle_max = None
+    cutter.moveto(p)
+    box_x_min = cutter.minx
+    box_x_max = cutter.maxx
+    box_y_min = cutter.miny
+    box_y_max = cutter.maxy
+    box_z_min = minz
+    box_z_max = maxz
+    triangles = model.triangles(box_x_min, box_y_min, box_z_min, box_x_max, box_y_max, box_z_max)
+    for t in triangles:
+        if t.normal().z < 0: continue;
+        cut = cutter.drop(t)
+        if cut and (cut.z > height_max or height_max is None):
+            height_max = cut.z
+            cut_max = cut
+            triangle_max = t
+    # don't do a complete boundary check for the height
+    # this avoids zero-cuts for models that exceed the bounding box height
+    if not cut_max or cut_max.z < minz:
+        cut_max = Point(x, y, minz)
+    if last_pos["cut"] and \
+            ((triangle_max and not last_pos["triangle"]) \
+            or (last_pos["triangle"] and not triangle_max)):
+        if minz <= last_pos["cut"].z <= maxz:
+            result.append(Point(last_pos["cut"].x, last_pos["cut"].y, cut_max.z))
+        else:
+            result.append(Point(cut_max.x, cut_max.y, last_pos["cut"].z))
+    elif (triangle_max and last_pos["triangle"] and last_pos["cut"] and cut_max) and (triangle_max != last_pos["triangle"]):
+        nl = range(3)
+        nl[0] = -getattr(last_pos["triangle"].normal(), order[0])
+        nl[2] = last_pos["triangle"].normal().z
+        nm = range(3)
+        nm[0] = -getattr(triangle_max.normal(), order[0])
+        nm[2] = triangle_max.normal().z
+        last = range(3)
+        last[0] = getattr(last_pos["cut"], order[0])
+        last[2] = last_pos["cut"].z
+        mx = range(3)
+        mx[0] = getattr(cut_max, order[0])
+        mx[2] = cut_max.z
+        c = range(3)
+        (c[0], c[2]) = intersect_lines(last[0], last[2], nl[0], nl[2], mx[0], mx[2], nm[0], nm[2])
+        if c[0] and last[0] < c[0] and c[0] < mx[0] and (c[2] > last[2] or c[2] > mx[2]):
+            c[1] = getattr(last_pos["cut"], order[1])
+            if c[2]<minz-10 or c[2]>maxz+10:
+                print "^", "%sl=%s" % (order[0], last[0]), \
+                        ", %sl=%s" % ("z", last[2]), \
+                        ", n%sl=%s" % (order[0], nl[0]), \
+                        ", n%sl=%s" % ("z", nl[2]), \
+                        ", %s=%s" % (order[0].upper(), c[0]), \
+                        ", %s=%s" % ("z".upper(), c[2]), \
+                        ", %sm=%s" % (order[0], mx[0]), \
+                        ", %sm=%s" % ("z", mx[2]), \
+                        ", n%sm=%s" % (order[0], nm[0]), \
+                        ", n%sm=%s" % ("z", nm[2])
+
+            else:
+                if order[0] == "x":
+                    result.append(Point(c[0], c[1], c[2]))
+                else:
+                    result.append(Point(c[1], c[0], c[2]))
+    result.append(cut_max)
+
+    last_pos["cut"] = cut_max
+    last_pos["triangle"] = triangle_max
+    return result
+
