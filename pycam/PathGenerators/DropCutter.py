@@ -73,7 +73,7 @@ class DropCutter:
         # remember if we already reported an invalid boundary
         self._boundary_warning_already_shown = False
 
-    def GenerateToolPath(self, minx, maxx, miny, maxy, z0, z1, d0, d1, direction, draw_callback=None):
+    def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, d0, d1, direction, draw_callback=None):
         if self.processor:
             pa = self.processor
         else:
@@ -81,7 +81,6 @@ class DropCutter:
 
         dim_x = Dimension(minx, maxx)
         dim_y = Dimension(miny, maxy)
-        dim_height = Dimension(z1, z0)
         dims = [None, None, None]
         # map the scales according to the order of direction
         if direction == 0:
@@ -94,7 +93,7 @@ class DropCutter:
         dims[x] = dim_x
         dims[y] = dim_y
 
-        dim_height.set(dim_height.start)
+        z = maxz
         pa.new_direction(direction)
         dims[1].set(dims[1].start)
 
@@ -121,14 +120,24 @@ class DropCutter:
 
             while not finished_line:
                 if self.physics:
-                    points = self.get_max_height_with_ode(dims[x], dims[y], dim_height, order=dim_attrs[:])
+                    points = self.get_max_height_with_ode(dims[x].get(), dims[y].get(), minz, maxz, order=dim_attrs[:])
                 else:
-                    points = self.get_max_height_manually(dims[x], dims[y], dim_height, order=dim_attrs[:])
+                    points = self.get_max_height_manually(dims[x].get(), dims[y].get(), minz, maxz, order=dim_attrs[:])
 
-                for next_point in points:
-                    pa.append(next_point)
-                self.cutter.moveto(next_point)
-                if draw_callback and draw_callback(tool_position=next_point):
+                if points:
+                    for p in points:
+                        pa.append(p)
+                else:
+                    p = Point(dims[x].get(), dims[y].get(), self.safety_height)
+                    pa.append(p)
+                    if not self._boundary_warning_already_shown:
+                        print >>sys.stderr, "WARNING: DropCutter exceed the height" \
+                                + " of the boundary box: using a safe height " \
+                                + "instead. This warning is reported only once."
+                    self._boundary_warning_already_shown = True
+                self.cutter.moveto(p)
+                # "draw_callback" returns true, if the user requested a break via the GUI
+                if draw_callback and draw_callback(tool_position=p):
                     finished_line = True
 
                 dims[0].shift(d0)
@@ -160,51 +169,47 @@ class DropCutter:
         pa.finish()
         return pa.paths
 
-    def get_max_height_with_ode(self, x, y, dim_height, order=None):
-        low, high = dim_height.end, dim_height.start
+    def get_max_height_with_ode(self, x, y, minz, maxz, order=None):
+        low, high = minz, maxz
         trip_start = 20
         safe_z = None
         # check if the full step-down would be ok
-        self.physics.set_drill_position((x.get(), y.get(), dim_height.end))
+        self.physics.set_drill_position((x, y, minz))
         if self.physics.check_collision():
             # there is an object between z1 and z0 - we need more=None loops
             trips = trip_start
         else:
             # no need for further collision detection - we can go down the whole range z1..z0
             trips = 0
-            safe_z = dim_height.end
+            safe_z = minz
         while trips > 0:
-            current_z = (low + high)/2.0
-            self.physics.set_drill_position((x.get(), y.get(), current_z))
+            current_z = (low + high) / 2.0
+            self.physics.set_drill_position((x, y, current_z))
             if self.physics.check_collision():
                 low = current_z
             else:
                 high = current_z
                 safe_z = current_z
             trips -= 1
-            #current_z -= dz
         if safe_z is None:
             # no safe position was found - let's check the upper bound
-            self.physics.set_drill_position((x.get(), y.get(), dim_height.start))
+            self.physics.set_drill_position((x, y, maxz))
             if self.physics.check_collision():
-                # the object fills the whole range of z0..z1 - we should issue a warning
-                next_point = Point(x.get(), y.get(), self.safety_height)
-                if not self._boundary_warning_already_shown:
-                    print >>sys.stderr, "WARNING: DropCutter exceed the height" \
-                            + " of the boundary box: using a safe height " \
-                            + "instead. This warning is reported only once."
-                    self._boundary_warning_already_shown = True
+                # the object fills the whole range of z0..z1 -> no safe height
+                pass
             else:
-                next_point = Point(x.get(), y.get(), dim_height.start)
+                # at least the upper bound is collision free
+                safe_z = maxz
+        if safe_z is None:
+            return []
         else:
-            next_point = Point(x.get(), y.get(), safe_z)
-        return [next_point]
+            return [Point(x, y, safe_z)]
 
-    def get_max_height_manually(self, x, y, dim_height, order=None):
+    def get_max_height_manually(self, x, y, minz, maxz, order=None):
         result = []
         if order is None:
             order = ["x", "y"]
-        p = Point(x.get(), y.get(), dim_height.get())
+        p = Point(x, y, maxz)
         height_max = None
         cut_max = None
         triangle_max = None
@@ -213,7 +218,7 @@ class DropCutter:
         box_x_max = self.cutter.maxx
         box_y_min = self.cutter.miny
         box_y_max = self.cutter.maxy
-        box_z_min = dim_height.end
+        box_z_min = minz
         box_z_max = self.safety_height
         triangles = self.model.triangles(box_x_min, box_y_min, box_z_min, box_x_max, box_y_max, box_z_max)
         for t in triangles:
@@ -225,10 +230,10 @@ class DropCutter:
                 triangle_max = t
         # don't do a complete boundary check for the height
         # this avoids zero-cuts for models that exceed the bounding box height
-        if not cut_max or cut_max.z < dim_height.min:
-            cut_max = Point(x.get(), y.get(), dim_height.end)
+        if not cut_max or cut_max.z < minz:
+            cut_max = Point(x, y, minz)
         if self._cut_last and ((triangle_max and not self._triangle_last) or (self._triangle_last and not triangle_max)):
-            if dim_height.check_bounds(self._cut_last.z):
+            if minz <= self._cut_last.z <= maxz:
                 result.append(Point(self._cut_last.x, self._cut_last.y, cut_max.z))
             else:
                 result.append(Point(cut_max.x, cut_max.y, self._cut_last.z))
@@ -249,7 +254,7 @@ class DropCutter:
             (c[0], c[2]) = intersect_lines(last[0], last[2], nl[0], nl[2], mx[0], mx[2], nm[0], nm[2])
             if c[0] and last[0] < c[0] and c[0] < mx[0] and (c[2] > last[2] or c[2] > mx[2]):
                 c[1] = getattr(self._cut_last, order[1])
-                if c[2]<dim_height.end-10 or c[2]>dim_height.start+10:
+                if c[2]<minz-10 or c[2]>maxz+10:
                     print "^", "%sl=%s" % (order[0], last[0]), \
                             ", %sl=%s" % ("z", last[2]), \
                             ", n%sl=%s" % (order[0], nl[0]), \
