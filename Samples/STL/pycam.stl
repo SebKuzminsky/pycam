@@ -1,320 +1,320 @@
 solid pycam
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 470.000000 12.362180 10.000000
       vertex 420.000000 12.362180 10.000000
       vertex 420.000000 42.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 470.000000 12.362180 10.000000
       vertex 470.000000 42.362180 10.000000
       vertex 420.000000 42.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 420.000000 12.362180 10.000000
       vertex 420.000000 72.362180 10.000000
       vertex 390.000000 42.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 390.000000 42.362180 10.000000
       vertex 390.000000 87.362180 10.000000
       vertex 420.000000 72.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 420.000000 72.362180 10.000000
       vertex 430.000000 112.362180 10.000000
       vertex 390.000000 87.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 470.000000 82.362180 10.000000
       vertex 423.000000 82.362180 10.000000
       vertex 430.000000 112.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 470.000000 82.362180 10.000000
       vertex 430.000000 112.362180 10.000000
       vertex 470.000000 112.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 470.000000 12.362180 10.000000
       vertex 500.000000 12.362180 10.000000
       vertex 500.000000 42.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 470.000000 12.362180 10.000000
       vertex 470.000000 62.362180 10.000000
       vertex 500.000000 42.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 500.000000 42.362180 10.000000
       vertex 500.000000 82.362180 10.000000
       vertex 470.000000 62.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 470.000000 62.362180 10.000000
       vertex 470.000000 112.362180 10.000000
       vertex 500.000000 82.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 470.000000 112.362180 10.000000
       vertex 500.000000 82.362180 10.000000
       vertex 500.000000 202.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 470.000000 112.362180 10.000000
       vertex 470.000000 202.362180 10.000000
       vertex 500.000000 202.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 375.000000 62.362180 10.000000
       vertex 355.000000 117.362180 10.000000
       vertex 355.000000 62.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 355.000000 62.362180 10.000000
       vertex 345.000000 97.362180 10.000000
       vertex 355.000000 117.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 325.000000 97.362180 10.000000
       vertex 300.000000 62.362180 10.000000
       vertex 320.000000 127.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 335.000000 117.362180 10.000000
       vertex 355.000000 202.362180 10.000000
       vertex 335.000000 202.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 335.000000 117.362180 10.000000
       vertex 320.000000 127.362180 10.000000
       vertex 335.000000 202.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 320.000000 62.362180 10.000000
       vertex 325.000000 97.362180 10.000000
       vertex 300.000000 62.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 345.000000 97.362180 10.000000
       vertex 335.000000 117.362180 10.000000
       vertex 355.000000 117.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 345.000000 97.362180 10.000000
       vertex 325.000000 97.362180 10.000000
       vertex 335.000000 117.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 335.000000 117.362180 10.000000
       vertex 325.000000 97.362180 10.000000
       vertex 320.000000 127.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 280.000000 62.362180 10.000000
       vertex 295.000000 92.362180 10.000000
       vertex 280.000000 92.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 295.000000 92.362180 10.000000
       vertex 280.000000 122.362180 10.000000
       vertex 280.000000 92.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 280.000000 62.362180 10.000000
       vertex 280.000000 82.362180 10.000000
       vertex 240.000000 62.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 260.000000 72.362180 10.000000
       vertex 245.000000 82.362180 10.000000
       vertex 240.000000 62.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 280.000000 122.362180 10.000000
       vertex 280.000000 102.362180 10.000000
       vertex 240.000000 122.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 260.000000 112.362180 10.000000
       vertex 240.000000 122.362180 10.000000
       vertex 245.000000 102.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 220.000000 62.362190 10.000000
       vertex 235.000000 92.362190 10.000000
       vertex 220.000000 92.362190 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 235.000000 92.362190 10.000000
       vertex 220.000000 92.362190 10.000000
       vertex 220.000000 122.362190 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 220.000000 102.362180 10.000000
       vertex 220.000000 122.362180 10.000000
       vertex 190.000000 117.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 200.000000 112.362180 10.000000
       vertex 180.000000 102.362180 10.000000
       vertex 180.000000 122.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 220.000000 62.362180 10.000000
       vertex 220.000000 82.362180 10.000000
       vertex 190.000000 67.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 200.000000 72.362180 10.000000
       vertex 180.000000 62.362180 10.000000
       vertex 180.000000 87.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 180.000000 62.362180 10.000000
       vertex 180.000000 122.362180 10.000000
       vertex 170.000000 122.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 180.000000 62.362180 10.000000
       vertex 170.000000 62.362180 10.000000
       vertex 170.000000 122.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 155.000000 62.362180 10.000000
       vertex 155.000000 122.362180 10.000000
       vertex 140.000000 122.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 155.000000 62.362180 10.000000
       vertex 140.000000 62.362180 10.000000
       vertex 140.000000 122.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 140.000000 67.362180 10.000000
       vertex 120.000000 62.362180 10.000000
       vertex 140.000000 82.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 130.000000 72.362180 10.000000
       vertex 120.000000 82.362180 10.000000
       vertex 120.000000 62.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 120.000000 62.362180 10.000000
       vertex 120.000000 122.362180 10.000000
       vertex 105.000000 122.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 120.000000 62.362180 10.000000
       vertex 105.000000 67.362180 10.000000
       vertex 105.000000 122.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 105.000000 82.362180 10.000000
       vertex 85.000000 62.362180 10.000000
       vertex 105.000000 67.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 95.000000 72.362180 10.000000
       vertex 85.000000 82.362180 10.000000
       vertex 85.000000 62.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 85.000000 62.362180 10.000000
       vertex 85.000000 122.362180 10.000000
       vertex 70.000000 122.362180 10.000000
     endloop
   endfacet
-  facet
+  facet normal 0.0 0.0 1.0
     outer loop
       vertex 85.000000 62.362180 10.000000
       vertex 70.000000 67.362180 10.000000
