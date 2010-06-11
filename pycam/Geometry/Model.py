@@ -62,7 +62,7 @@ class BaseModel(object):
 
     def __add__(self, other_model):
         """ combine two models """
-        result = self.__cls__()
+        result = self.__class__()
         for item_group in self._item_groups + other_model._item_groups:
             for item in item_group:
                 result.append(item)
@@ -97,7 +97,7 @@ class BaseModel(object):
                 abs(self.miny), abs(self.maxz), abs(self.minz))
 
     def subdivide(self, depth):
-        model = self.__cls__()
+        model = self.__class__()
         for item_group in self._item_groups:
             for item in item_group:
                 for s in item.subdivide(depth):
@@ -181,4 +181,7 @@ class ContourModel(BaseModel):
         super(ContourModel, self).append(item)
         if isinstance(item, Line):
             self._lines.append(item)
+
+    def get_lines(self):
+        return self._lines[:]
 
