@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import pycam.PathGenerators
+from pycam.PathGenerators import DropCutter, PushCutter
 import pycam.PathProcessors
 import pycam.Cutters
 import pycam.Toolpath.SupportGrid
@@ -142,8 +142,7 @@ def _get_pathgenerator_instance(model, cutter, pathgenerator, pathprocessor,
             processor = pycam.PathProcessors.PathAccumulator()
         else:
             return "Invalid postprocessor (%s) for 'DropCutter': only 'ZigZagCutter' or 'PathAccumulator' are allowed" % str(pathprocessor)
-        return pycam.PathGenerators.DropCutter(cutter,
-                model, processor, physics=physics,
+        return DropCutter.DropCutter(cutter, model, processor, physics=physics,
                 safety_height=safety_height)
     elif pathgenerator == "PushCutter":
         if pathprocessor == "PathAccumulator":
@@ -158,8 +157,7 @@ def _get_pathgenerator_instance(model, cutter, pathgenerator, pathprocessor,
             processor = pycam.PathProcessors.ContourCutter()
         else:
             return "Invalid postprocessor (%s) for 'PushCutter' - it should be one of these: %s" % (processor, PATH_POSTPROCESSORS)
-        return pycam.PathGenerators.PushCutter(cutter,
-                model, processor, physics=physics)
+        return PushCutter.PushCutter(cutter, model, processor, physics=physics)
     else:
         return "Invalid path generator (%s): not one of %s" % (pathgenerator, PATH_GENERATORS)
 
