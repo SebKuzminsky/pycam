@@ -41,11 +41,11 @@ class Point:
         Otherwise the result is based on the individual x/y/z comparisons.
         """
         if self.__class__ == other.__class__:
-            if (self.x == other.x) and (self.y == other.y) and (self.z == other.y):
+            if (self.x == other.x) and (self.y == other.y) and (self.z == other.z):
                 return 0
-            elif self.x < other.y:
+            elif self.x < other.x:
                 return -1
-            elif self.x > other.y:
+            elif self.x > other.x:
                 return 1
             elif self.y < other.y:
                 return -1
