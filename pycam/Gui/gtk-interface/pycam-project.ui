@@ -4350,7 +4350,7 @@ Use high values for fine-grained toolpaths.</property>
 This value should be greater than zero for the first roughing operation.
 The last finishing operation should have zero material allowance.
 
-ODE is required for this setting.</property>
+This operation is not available for engraving.</property>
                                             <property name="invisible_char">&#x2022;</property>
                                             <property name="adjustment">MaterialAllowanceValue</property>
                                             <property name="digits">2</property>
