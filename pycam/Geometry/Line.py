@@ -88,8 +88,8 @@ class Line:
     def to_OpenGL(self):
         if GL_enabled:
             GL.glBegin(GL.GL_LINES)
-            GL.glVertex3f(p1.x, p1.y, p1.z)
-            GL.glVertex3f(p2.x, p2.y, p2.z)
+            GL.glVertex3f(self.p1.x, self.p1.y, self.p1.z)
+            GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
             GL.glEnd()
 
     def get_points(self):
