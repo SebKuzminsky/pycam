@@ -37,7 +37,10 @@ class ProgressCounter:
     def increment(self):
         self.current_value += 1
         if self.update_callback:
-            self.update_callback(percent=self.get_percent())
+            # "True" means: "quit requested via GUI"
+            return self.update_callback(percent=self.get_percent())
+        else:
+            return False
 
     def get_percent(self):
         return 100.0 * self.current_value / self.max_value
