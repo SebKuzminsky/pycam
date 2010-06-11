@@ -174,14 +174,29 @@ class ContourModel(BaseModel):
     def __init__(self):
         super(ContourModel, self).__init__()
         self.name = "contourmodel%d" % self.id
-        self._lines = []
+        self._line_groups = []
         self._item_groups.append(self._lines)
+    _lines = property(lambda self: sum(self._line_groups, []))
 
     def append(self, item):
         super(ContourModel, self).append(item)
         if isinstance(item, Line):
-            self._lines.append(item)
+            for line_group in self._line_groups:
+                if item.p2 == line_group[0].p1:
+                    # the line fits to the start of this group
+                    line_group.insert(0, item)
+                    break
+                elif item.p1 == line_group[-1].p2:
+                    # the line fits to the end of this group
+                    line_group.append(item)
+                    break
+            else:
+                # add a new group with this single item
+                self._line_groups.append([item])
 
     def get_lines(self):
-        return self._lines[:]
+        return self._lines
+
+    def get_line_groups(self):
+        return self._line_groups
 
