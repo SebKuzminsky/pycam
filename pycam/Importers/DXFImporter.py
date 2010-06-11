@@ -46,12 +46,18 @@ class DXFParser:
         self.inputstream = inputstream
         self.line_number = 0
         self.lines = []
+        self._input_stack = []
         self.parse_content()
 
     def get_model(self):
         return {"lines": self.lines}
 
+    def _push_on_stack(self, key, value):
+        self._input_stack.append((key, value))
+
     def _read_key_value(self):
+        if self._input_stack:
+            return self._input_stack.pop()
         try:
             line1 = self.inputstream.readline(self.MAX_CHARS_PER_LINE).strip()
             line2 = self.inputstream.readline(self.MAX_CHARS_PER_LINE).strip()
@@ -126,6 +132,9 @@ class DXFParser:
                 pass
             key, value = self._read_key_value()
         end_line = self.line_number
+        # the last lines were not used - they are just the marker for the next item
+        if not key is None:
+            self._push_on_stack(key, value)
         if (None in p1) or (None in p2):
             print >>sys.stderr, "Incomplete LINE definition between line " \
                     + "%d and %d" % (start_line, end_line)
