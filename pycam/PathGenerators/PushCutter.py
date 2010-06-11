@@ -21,16 +21,11 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.PathProcessors import *
-from pycam.Geometry import *
-from pycam.Geometry.utils import *
+from pycam.Geometry import Point
+from pycam.Geometry.utils import INFINITE, epsilon
 from pycam.PathGenerators import drop_cutter_test, get_free_horizontal_paths_ode
-from pycam.Exporters.SVGExporter import SVGExporter
 import math
 
-DEBUG_PUSHCUTTER = False
-DEBUG_PUSHCUTTER2 = False
-DEBUG_PUSHCUTTER3 = False
 
 class Hit:
     def __init__(self, cl, t, d, dir):
@@ -83,9 +78,6 @@ class PushCutter:
 
         progress_counter = ProgressCounter(num_of_layers * lines_per_layer)
 
-        if DEBUG_PUSHCUTTER2 or DEBUG_PUSHCUTTER3:
-            self.svg = SVGExporter("test.svg")
-
         z = maxz
 
         paths = []
@@ -128,13 +120,6 @@ class PushCutter:
                 last_loop = True
 
             current_layer += 1
-
-        if DEBUG_PUSHCUTTER2:
-            self.svg.fill('none')
-            self.svg.stroke('black')
-            self.svg.AddPathList(paths)
-        if hasattr(self,"svg"):
-            self.svg.close()
 
         return paths
 
@@ -196,7 +181,6 @@ class PushCutter:
 
     def GenerateToolPathSlice_triangles(self, minx, maxx, miny, maxy, z, dx, dy,
             draw_callback=None, progress_counter=None):
-        global DEBUG_PUSHCUTTER, DEBUG_PUSHCUTTER2, DEBUG_PUSHCUTTER3
         c = self.cutter
         model = self.model
 
@@ -219,34 +203,6 @@ class PushCutter:
         last_loop = False
         while x<=maxx and y<=maxy:
             self.pa.new_scanline()
-            if False:
-                line += 1
-                if line == 10:
-                    DEBUG_PUSHCUTTER=True
-                    DEBUG_PUSHCUTTER2=True
-                    DEBUG_PUSHCUTTER3=True
-                    p = Path()
-                    self.svg.stroke('orange')
-                    p.append(Point(minx,y-0.05,z))
-                    p.append(Point(maxx,y-0.05,z))
-                    p.append(Point(maxx,y+0.05,z))
-                    p.append(Point(minx,y+0.05,z))
-                    p.append(Point(minx,y-0.05,z))
-                    self.svg.AddPath(p)
-                else:
-                    DEBUG_PUSHCUTTER=False
-                    DEBUG_PUSHCUTTER2=True
-                    DEBUG_PUSHCUTTER3=False
-
-
-            if DEBUG_PUSHCUTTER3:
-                self.svg.fill('lightgreen')
-                p = Point(minx, y, 10)
-                for i in range(0,100):
-                    p.x = minx + float(i)/100*float(maxx-minx)
-                    self.svg.AddDot(p.x, z)
-
-                self.svg.fill('black')
 
             # find all hits along scan line
             hits = []
@@ -267,23 +223,15 @@ class PushCutter:
                 if n>=0:
                     (cl,d) = c.intersect(backward, t)
                     if cl:
-                        if DEBUG_PUSHCUTTER: print "< cl=",cl,",d=",-d,",t=",t.id,",t.n=",t.normal(),",n=",n
                         hits.append(Hit(cl,t,-d,backward))
                         hits.append(Hit(cl.sub(backward_small),t,-d+epsilon,backward))
                         hits.append(Hit(cl.add(backward_small),t,-d-epsilon,backward))
-                        if DEBUG_PUSHCUTTER3: self.svg.AddDot(cl.x, cl.z)
-                    else:
-                        if DEBUG_PUSHCUTTER: print "< cl=",cl,",0",",t=",t.id
                 if n<=0:
                     (cl,d) = c.intersect(forward, t)
                     if cl:
-                        if DEBUG_PUSHCUTTER: print "> cl=",cl,",d=",d,",t=",t.id,",t.n=",t.normal(),",n=",n
                         hits.append(Hit(cl,t,d,forward))
                         hits.append(Hit(cl.add(forward_small),t,d+epsilon,forward))
                         hits.append(Hit(cl.sub(forward_small),t,d-epsilon,forward))
-                        if DEBUG_PUSHCUTTER3: self.svg.AddDot(cl.x, cl.z)
-                    else:
-                        if DEBUG_PUSHCUTTER: print "> cl=",cl,",0",",t=",t.id
 
             if dx == 0:
                 x = maxx
@@ -308,22 +256,6 @@ class PushCutter:
             for h in hits:
                 (zmax, tmax) = drop_cutter_test(self.cutter, h.cl, model)
                 h.z = zmax
-                if DEBUG_PUSHCUTTER: print "@ cl=",h.cl,",d=",h.d,",z=",h.z
-                if DEBUG_PUSHCUTTER3: self.svg.fill("blue"); self.svg.AddDot(h.cl.x, h.z)
-
-
-            if DEBUG_PUSHCUTTER or DEBUG_PUSHCUTTER3:
-                yt = -4
-                i = 0
-                for h in hits:
-                    if DEBUG_PUSHCUTTER3:
-                        self.svg.fill('black')
-                        self.svg.stroke('gray')
-                        self.svg.AddLine(h.cl.x, yt, h.cl.x, h.z)
-                        self.svg.AddText(h.cl.x, yt, str(h.cl.x))
-                        yt -= 0.5
-                    i += 1
-
 
 
             # find first hit cutter location that is below z-level
@@ -332,13 +264,8 @@ class PushCutter:
             for h in hits:
                 if h.z >= z - epsilon/10:
                     if begin and end:
-                        if DEBUG_PUSHCUTTER: 
-                            print "C ", begin, " - ", end
                         self.pa.append(begin)
                         self.pa.append(end)
-                        if DEBUG_PUSHCUTTER3: 
-                            self.svg.stroke("red' stroke-width='0.1")
-                            self.svg.AddLine(begin.x, z-0.1, end.x, z-0.1)
                     begin = None
                     end = None
                 if h.z <= z + epsilon/10:
@@ -348,17 +275,12 @@ class PushCutter:
                         end = h.cl
                 
             if begin and end:
-                if DEBUG_PUSHCUTTER: 
-                    print "C ", begin, " - ", end
                 self.pa.append(begin)
                 self.pa.append(end)
                 self.cutter.moveto(begin)
                 self.cutter.moveto(end)
                 if draw_callback:
                     draw_callback(tool_position=end)
-                if DEBUG_PUSHCUTTER3: 
-                    self.svg.stroke("red' stroke-width='0.1")
-                    self.svg.AddLine(begin.x, z-0.1, end.x, z-0.1)
 
             if dx != 0:
                 x += dx
@@ -378,7 +300,6 @@ class PushCutter:
                 y = miny
 
             self.pa.end_scanline()
-            if DEBUG_PUSHCUTTER: print 
 
             # update the progress counter
             if not progress_counter is None:
@@ -386,4 +307,3 @@ class PushCutter:
                 if draw_callback:
                     draw_callback(percent=progress_counter.get_percent())
 
-        if DEBUG_PUSHCUTTER: print 
