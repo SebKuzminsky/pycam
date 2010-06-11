@@ -20,11 +20,27 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = ["DropCutter", "PushCutter"]
+__all__ = ["DropCutter", "PushCutter", "EngraveCutter"]
 
 from pycam.Geometry.utils import INFINITE, epsilon
 from pycam.Geometry import Point
 import math
+
+
+class ProgressCounter:
+
+    def __init__(self, max_value, update_callback):
+        self.max_value = max_value
+        self.current_value = 0
+        self.update_callback = update_callback
+
+    def increment(self):
+        self.current_value += 1
+        if self.update_callback:
+            self.update_callback(percent=self.get_percent())
+
+    def get_percent(self):
+        return 100.0 * self.current_value / self.max_value
 
 
 class Hit:
@@ -229,6 +245,7 @@ def get_max_height_ode(physics, x, y, minz, maxz, order=None):
         return [Point(x, y, safe_z)]
 
 def get_max_height_triangles(model, cutter, x, y, minz, maxz, order=None, last_pos=None):
+    # TODO: "order" should be replaced with a direction vector
     result = []
     if last_pos is None:
         last_pos = {}

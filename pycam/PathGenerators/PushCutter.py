@@ -23,29 +23,16 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry import Point
 from pycam.Geometry.utils import INFINITE, epsilon
-from pycam.PathGenerators import drop_cutter_test, get_free_horizontal_paths_ode, get_free_horizontal_paths_triangles
+from pycam.PathGenerators import drop_cutter_test, get_free_horizontal_paths_ode, get_free_horizontal_paths_triangles, ProgressCounter
 import math
-
-
-class ProgressCounter:
-
-    def __init__(self, max_value):
-        self.max_value = max_value
-        self.current_value = 0
-
-    def next(self):
-        self.current_value += 1
-
-    def get_percent(self):
-        return 100.0 * self.current_value / self.max_value
 
 
 class PushCutter:
 
-    def __init__(self, cutter, model, pathextractor=None, physics=None):
+    def __init__(self, cutter, model, path_processor, physics=None):
         self.cutter = cutter
         self.model = model
-        self.pa = pathextractor
+        self.pa = path_processor
         self.physics = physics
 
     def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, dx, dy, dz, draw_callback=None):
@@ -63,9 +50,8 @@ class PushCutter:
             dy = abs(maxy - miny) / (y_lines_per_layer - 1)
             lines_per_layer += y_lines_per_layer
 
-        progress_counter = ProgressCounter(num_of_layers * lines_per_layer)
-
-        z = maxz
+        progress_counter = ProgressCounter(num_of_layers * lines_per_layer,
+                draw_callback)
 
         paths = []
 
@@ -91,6 +77,7 @@ class PushCutter:
                 self.pa.end_direction()
             self.pa.finish()
 
+            # the path accumulator will be reset for each slice - we need to store the result
             if self.pa.paths:
                 paths += self.pa.paths
 
@@ -148,7 +135,5 @@ class PushCutter:
 
             # update the progress counter
             if not progress_counter is None:
-                progress_counter.next()
-                if draw_callback:
-                    draw_callback(percent=progress_counter.get_percent())
+                progress_counter.increment()
 
