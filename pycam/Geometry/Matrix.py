@@ -95,7 +95,13 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
     v_orig_length = get_length(v_orig)
     v_dest_length = get_length(v_dest)
     cross_product = get_length(get_cross_product(v_orig, v_dest))
-    rot_angle = math.asin(cross_product / (v_orig_length * v_dest_length))
+    arcsin = cross_product / (v_orig_length * v_dest_length)
+    # prevent float inaccuracies to crash the calculation (within limits)
+    if arcsin > 1.0001:
+        arcsin = 1.0
+    elif arcsin < 1.001:
+        arcsin = -1.0
+    rot_angle = math.asin(arcsin)
     # calculate the rotation axis
     # the rotation axis is equal to the cross product of the original and destination vectors
     rot_axis = Point(v_orig[1] * v_dest[2] - v_orig[2] * v_dest[1],
