@@ -207,13 +207,16 @@ def import_model(filename):
     result = DXFParser(f)
 
     lines = result.get_model()["lines"]
-    model = pycam.Geometry.Model.ContourModel()
-    for l in lines:
-        model.append(l)
 
-    print "Imported DXF model: %d lines" % len(lines)
-
-    return model
+    if lines:
+        model = pycam.Geometry.Model.ContourModel()
+        for l in lines:
+            model.append(l)
+        print "Imported DXF model: %d lines" % len(lines)
+        return model
+    else:
+        print >>sys.stderr, "No supported elements found in DXF file!"
+        return None
 
 
 if __name__ == "__main__":
