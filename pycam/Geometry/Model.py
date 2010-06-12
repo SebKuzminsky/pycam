@@ -63,15 +63,27 @@ class BaseModel(object):
     def __add__(self, other_model):
         """ combine two models """
         result = self.__class__()
-        for item_group in self._item_groups + other_model._item_groups:
-            for item in item_group:
-                result.append(item)
+        for item in self.next():
+            result.append(item)
+        for item in other_model.next():
+            result.append(item)
         return result
 
-    def to_OpenGL(self):
+    def __iter__(self):
+        return self
+
+    def next(self):
         for item_group in self._item_groups:
             for item in item_group:
-                item.to_OpenGL()
+                if isinstance(item, list):
+                    for subitem in item:
+                        yield subitem
+                else:
+                    yield item
+
+    def to_OpenGL(self):
+        for item in self.next():
+            item.to_OpenGL()
 
     def _update_limits(self, item):
         if self.minx is None:
@@ -98,10 +110,9 @@ class BaseModel(object):
 
     def subdivide(self, depth):
         model = self.__class__()
-        for item_group in self._item_groups:
-            for item in item_group:
-                for s in item.subdivide(depth):
-                    model.append(s)
+        for item in self.next():
+            for s in item.subdivide(depth):
+                model.append(s)
         return model
 
     def reset_cache(self):
@@ -111,25 +122,23 @@ class BaseModel(object):
         self.maxx = None
         self.maxy = None
         self.maxz = None
-        for item_group in self._item_groups:
-            for item in item_group:
-                self._update_limits(item)
+        for item in self.next():
+            self._update_limits(item)
 
     def transform_by_matrix(self, matrix):
         processed = []
-        for item_group in self._item_groups:
-            for item in item_group:
-                for point in item.get_points():
-                    if not point.id in processed:
-                        processed.append(point.id)
-                        x = point.x * matrix[0][0] + point.y * matrix[0][1] + point.z * matrix[0][2] + matrix[0][3]
-                        y = point.x * matrix[1][0] + point.y * matrix[1][1] + point.z * matrix[1][2] + matrix[1][3]
-                        z = point.x * matrix[2][0] + point.y * matrix[2][1] + point.z * matrix[2][2] + matrix[2][3]
-                        point.x = x
-                        point.y = y
-                        point.z = z
-                if hasattr(item, "reset_cache"):
-                    item.reset_cache()
+        for item in self.next():
+            for point in item.get_points():
+                if not point.id in processed:
+                    processed.append(point.id)
+                    x = point.x * matrix[0][0] + point.y * matrix[0][1] + point.z * matrix[0][2] + matrix[0][3]
+                    y = point.x * matrix[1][0] + point.y * matrix[1][1] + point.z * matrix[1][2] + matrix[1][3]
+                    z = point.x * matrix[2][0] + point.y * matrix[2][1] + point.z * matrix[2][2] + matrix[2][3]
+                    point.x = x
+                    point.y = y
+                    point.z = z
+            if hasattr(item, "reset_cache"):
+                item.reset_cache()
         self.reset_cache()
 
     def transform_by_template(self, direction="normal"):
@@ -175,8 +184,7 @@ class ContourModel(BaseModel):
         super(ContourModel, self).__init__()
         self.name = "contourmodel%d" % self.id
         self._line_groups = []
-        self._item_groups.append(self._lines)
-    _lines = property(lambda self: sum(self._line_groups, []))
+        self._item_groups.append(self._line_groups)
 
     def append(self, item):
         super(ContourModel, self).append(item)
@@ -191,11 +199,12 @@ class ContourModel(BaseModel):
                     line_group.append(item)
                     break
             else:
-                # add a new group with this single item
-                self._line_groups.append([item])
+                if len(self._line_groups) <= 2:
+                    # add a new group with this single item
+                    self._line_groups.append([item])
 
     def get_lines(self):
-        return self._lines
+        return sum(self._line_groups, [])
 
     def get_line_groups(self):
         return self._line_groups
