@@ -199,9 +199,8 @@ class ContourModel(BaseModel):
                     line_group.append(item)
                     break
             else:
-                if len(self._line_groups) <= 2:
-                    # add a new group with this single item
-                    self._line_groups.append([item])
+                # add a new group with this single item
+                self._line_groups.append([item])
 
     def get_lines(self):
         return sum(self._line_groups, [])
