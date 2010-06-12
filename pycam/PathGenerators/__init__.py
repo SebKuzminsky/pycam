@@ -57,30 +57,38 @@ class Hit:
     def cmp(a,b):
         return cmp(a.d, b.d)
 
-def get_free_horizontal_paths_triangles(model, cutter, minx, maxx, miny, maxy, z):
+def get_free_paths_triangles(model, cutter, p1, p2):
     points = []
-    x_dist = abs(maxx - minx)
-    y_dist = abs(maxy - miny)
-    xy_dist = math.sqrt(x_dist * x_dist + y_dist * y_dist)
-    x_frac = x_dist / xy_dist
-    y_frac = y_dist / xy_dist
-    forward = Point(x_frac, y_frac, 0)
-    backward = Point(-x_frac, -y_frac, 0)
-    forward_small = Point(epsilon * x_frac, epsilon * y_frac, 0)
-    backward_small = Point(-epsilon * x_frac, -epsilon * y_frac, 0)
+    x_dist = p2.x - p1.x
+    y_dist = p2.y - p1.y
+    z_dist = p2.z - p1.z
+    xyz_dist = math.sqrt(x_dist * x_dist + y_dist * y_dist + z_dist * z_dist)
+    x_frac = x_dist / xyz_dist
+    y_frac = y_dist / xyz_dist
+    z_frac = z_dist / xyz_dist
+    forward = Point(x_frac, y_frac, z_frac)
+    backward = Point(-x_frac, -y_frac, -z_frac)
+    forward_small = Point(epsilon * x_frac, epsilon * y_frac, epsilon * z_frac)
+    backward_small = Point(-epsilon * x_frac, -epsilon * y_frac, -epsilon * z_frac)
+
+    minx = min(p1.x, p2.x)
+    maxx = max(p1.x, p2.x)
+    miny = min(p1.y, p2.y)
+    maxy = max(p1.y, p2.y)
+    minz = min(p1.z, p2.z)
+    maxz = max(p1.z, p2.z)
 
     # find all hits along scan line
     hits = []
-    prev = Point(minx, miny, z)
-    hits.append(Hit(prev, None, 0, None))
+    hits.append(Hit(p1, None, 0, None))
 
-    triangles = model.triangles(minx - cutter.radius, miny - cutter.radius, z,
+    triangles = model.triangles(minx - cutter.radius, miny - cutter.radius, minz,
             maxx + cutter.radius, maxy + cutter.radius, INFINITE)
 
     for t in triangles:
         # normals point outward... and we want to approach the model from the outside!
         n = t.normal().dot(forward)
-        cutter.moveto(prev)
+        cutter.moveto(p1)
         if n >= 0:
             (cl, d) = cutter.intersect(backward, t)
             if cl:
@@ -94,19 +102,30 @@ def get_free_horizontal_paths_triangles(model, cutter, minx, maxx, miny, maxy, z
                 hits.append(Hit(cl.add(forward_small), t, d + epsilon, forward))
                 hits.append(Hit(cl.sub(forward_small), t, d - epsilon, forward))
 
-    next = Point(maxx, maxy, z)
-    hits.append(Hit(next, None, xy_dist, None))
+    hits.append(Hit(p2, None, xyz_dist, None))
 
 
     # sort along the scan direction
     hits.sort(Hit.cmp)
 
-    # remove duplicates (typically shared edges)
-    i = 1
-    while i < len(hits):
-        while i<len(hits) and abs(hits[i].d - hits[i-1].d)<epsilon/2:
-            del hits[i]
-        i += 1
+    # Remove duplicates (typically shared edges)
+    # Remove hits outside the min/max area of x/y/z (especially useful for the
+    # short-line cuts of the EngraveCutter
+    filtered_hits = []
+    previous_hit = None
+    for one_hit in hits:
+        if not ((minx - epsilon) < one_hit.cl.x < (maxx + epsilon)):
+            continue
+        elif not ((miny - epsilon) < one_hit.cl.y < (maxy + epsilon)):
+            continue
+        elif not ((minz - epsilon) < one_hit.cl.z < (maxz + epsilon)):
+            continue
+        elif previous_hit and (abs(previous_hit.d - one_hit.d) < epsilon / 2):
+            continue
+        else:
+            previous_hit = one_hit
+            filtered_hits.append(one_hit)
+    hits = filtered_hits
 
     # determine height at each interesting point
     for h in hits:
@@ -117,13 +136,13 @@ def get_free_horizontal_paths_triangles(model, cutter, minx, maxx, miny, maxy, z
     begin = hits[0].cl
     end = None
     for h in hits:
-        if h.z >= z - epsilon/10:
+        if h.z >= minz - epsilon / 10:
             if begin and end:
                 points.append(begin)
                 points.append(end)
             begin = None
             end = None
-        if h.z <= z + epsilon/10:
+        if h.z <= maxz + epsilon / 10:
             if not begin:
                 begin = h.cl
             else:
@@ -137,7 +156,7 @@ def get_free_horizontal_paths_triangles(model, cutter, minx, maxx, miny, maxy, z
     return points
 
 
-def get_free_horizontal_paths_ode(physics, minx, maxx, miny, maxy, z, depth=8):
+def get_free_paths_ode(physics, p1, p2, depth=8):
     """ Recursive function for splitting a line (usually along x or y) into
     small pieces to gather connected paths for the PushCutter.
     Strategy: check if the whole line is free (without collisions). Do a
@@ -165,26 +184,22 @@ def get_free_horizontal_paths_ode(physics, minx, maxx, miny, maxy, z, depth=8):
     """
     points = []
     # "resize" the drill along the while x/y range and check for a collision
-    physics.extend_drill(maxx-minx, maxy-miny, 0.0)
-    physics.set_drill_position((minx, miny, z))
+    physics.extend_drill(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z)
+    physics.set_drill_position((p1.x, p1.y, p1.z))
     if physics.check_collision():
         # collision detected
         if depth > 0:
-            middle_x = (minx + maxx)/2.0
-            middle_y = (miny + maxy)/2.0
-            group1 = get_free_horizontal_paths_ode(physics, minx, middle_x,
-                    miny, middle_y, z, depth-1)
-            group2 = get_free_horizontal_paths_ode(physics, middle_x, maxx,
-                    middle_y, maxy, z, depth-1)
-            if group1 and group2 and (group1[-1].x == group2[0].x) and (group1[-1].y == group2[0].y):
+            middle_x = (p1.x + p2.x) / 2.0
+            middle_y = (p1.y + p2.y) / 2.0
+            middle_z = (p1.z + p2.z) / 2.0
+            p_middle = Point(middle_x, middle_y, middle_z)
+            group1 = get_free_paths_ode(physics, p1, p_middle, depth - 1)
+            group2 = get_free_paths_ode(physics, p_middle, p2, depth - 1)
+            if group1 and group2 and (group1[-1] == group2[0]):
                 # the last couple of the first group ends where the first couple of the second group starts
                 # we will combine them into one couple
-                last = group1[-2]
-                first = group2[1]
-                combined = [last, first]
-                points.extend(group1[:-2])
-                points.extend(combined)
-                points.extend(group2[2:])
+                points.extend(group1[:-1])
+                points.extend(group2[1:])
             else:
                 # the two groups are not connected - just add both
                 points.extend(group1)
@@ -194,8 +209,8 @@ def get_free_horizontal_paths_ode(physics, minx, maxx, miny, maxy, z, depth=8):
             pass
     else:
         # no collision - the line is free
-        points.append(Point(minx, miny, z))
-        points.append(Point(maxx, maxy, z))
+        points.append(p1)
+        points.append(p2)
     physics.reset_drill()
     return points
 

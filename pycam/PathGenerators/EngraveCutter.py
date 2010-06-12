@@ -24,7 +24,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import pycam.PathProcessors.PathAccumulator
 from pycam.Geometry import Point
 from pycam.Geometry.utils import INFINITE
-from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode, get_free_horizontal_paths_ode, get_free_horizontal_paths_triangles, ProgressCounter
+from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode, get_free_paths_ode, get_free_paths_triangles, ProgressCounter
 import math
 import sys
 
@@ -129,11 +129,9 @@ class EngraveCutter:
         if not self.model or (self.model.maxz < z):
             points = [p1, p2]
         elif self.physics:
-            points = get_free_horizontal_paths_ode(self.physics, p1.x, p2.x,
-                    p1.y, p2.y, z)
+            points = get_free_paths_ode(self.physics, p1, p2)
         else:
-            points = get_free_horizontal_paths_triangles(self.model,
-                    self.cutter, p1.x, p2.x, p1.y, p2.y, z)
+            points = get_free_paths_triangles(self.model, self.cutter, p1, p2)
         if points:
             for p in points:
                 pa.append(p)
