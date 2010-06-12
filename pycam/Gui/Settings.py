@@ -185,7 +185,7 @@ process: 2
 
 [Task3]
 enabled: no
-tool: 2
+tool: 1
 process: 3
 
 """
