@@ -138,7 +138,7 @@ class ProjectGui:
                 ("LoadTaskSettings", self.load_task_settings_file, None, "<Control>t"),
                 ("SaveTaskSettings", self.save_task_settings_file, lambda: self.last_task_settings_file, None),
                 ("SaveAsTaskSettings", self.save_task_settings_file, None, None),
-                ("LoadModel", self.load_model_file, None, "<Control>l"),
+                ("LoadModel", self.load_model_file, None, "<Control>o"),
                 ("SaveModel", self.save_model, lambda: self.last_model_file, "<Control>s"),
                 ("SaveAsModel", self.save_model, None, "<Control><Shift>s"),
                 ("ExportGCode", self.save_toolpath, None, "<Control><Shift>e"),
