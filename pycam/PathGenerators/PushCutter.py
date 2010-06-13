@@ -68,12 +68,12 @@ class PushCutter:
                 # cancel immediately
                 break
 
-            if y_step > 0:
+            if dy > 0:
                 self.pa.new_direction(0)
                 self.GenerateToolPathSlice(minx, maxx, miny, maxy, z, 0, y_step,
                         draw_callback, progress_counter)
                 self.pa.end_direction()
-            if x_step > 0:
+            if dx > 0:
                 self.pa.new_direction(1)
                 self.GenerateToolPathSlice(minx, maxx, miny, maxy, z, x_step, 0,
                         draw_callback, progress_counter)

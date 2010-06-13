@@ -23,7 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry import Point
 from pycam.Geometry.utils import INFINITE
-from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode
+from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode, ProgressCounter
 import math
 import sys
 
@@ -70,58 +70,63 @@ class DropCutter:
         self._boundary_warning_already_shown = False
 
     def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, d0, d1, direction, draw_callback=None):
-        dim_x = Dimension(minx, maxx)
-        dim_y = Dimension(miny, maxy)
-        dims = [None, None, None]
+        quit_requested = False
+        # determine step size
+        num_of_x_lines = 1 + int(math.ceil(abs(maxx - minx) / d0))
+        num_of_y_lines = 1 + int(math.ceil(abs(maxy - miny) / d0))
+        x_step = abs(maxx - minx) / (num_of_x_lines - 1)
+        y_step = abs(maxy - miny) / (num_of_y_lines - 1)
+        x_steps = [(minx + i * x_step) for i in range(num_of_x_lines)]
+        y_steps = [(miny + i * y_step) for i in range(num_of_y_lines)]
+
         # map the scales according to the order of direction
+        grid = []
         if direction == 0:
-            x, y = 0, 1
+            # first x, then y
+            for x in x_steps:
+                grid.append(zip([x] * (len(y_steps) + 1), y_steps))
             dim_attrs = ["x", "y"]
         else:
-            y, x = 0, 1
+            # first y, then x
+            for y in y_steps:
+                grid.append(zip(x_steps, [y] * (len(y_steps) + 1)))
             dim_attrs = ["y", "x"]
-        # order of the "dims" array: first dimension, second dimension
-        dims[x] = dim_x
-        dims[y] = dim_y
 
-        z = maxz
-        self.pa.new_direction(direction)
-        dims[1].set(dims[1].start)
-
-        finished_plane = False
-        self._boundary_warning_already_shown = False
-        last_outer_loop = False
-
-        num_of_lines = math.ceil((dims[1].max - dims[1].min) / d1)
+        num_of_lines = len(grid) + 1
+        num_of_grid_positions = num_of_x_lines * num_of_y_lines
+        progress_counter = ProgressCounter(num_of_grid_positions, draw_callback)
         current_line = 0
 
-        while not finished_plane:
-            last_inner_loop = False
-            finished_line = False
-            dims[0].set(dims[0].start)
+        self.pa.new_direction(direction)
+
+        self._boundary_warning_already_shown = False
+
+        for one_grid_line in grid:
             self.pa.new_scanline()
+            # for now only used for triangular collision detection
             last_position = None
 
             if draw_callback and draw_callback(text="DropCutter: processing line %d/%d" \
                         % (current_line, num_of_lines),
                         percent=(100.0 * current_line / num_of_lines)):
                 # cancel requested
-                finished_plane = True
+                quit_requested = True
+                break
 
-            while not finished_line:
+            for x, y in one_grid_line:
                 if self.physics:
-                    points = get_max_height_ode(self.physics, dims[x].get(),
-                            dims[y].get(), minz, maxz, order=dim_attrs[:])
+                    points = get_max_height_ode(self.physics, x, y, minz, maxz,
+                            order=dim_attrs[:])
                 else:
                     points = get_max_height_triangles(self.model, self.cutter,
-                            dims[x].get(), dims[y].get(), minz, maxz,
-                            order=dim_attrs[:], last_pos=last_position)
+                            x, y, minz, maxz, order=dim_attrs[:],
+                            last_pos=last_position)
 
                 if points:
                     for p in points:
                         self.pa.append(p)
                 else:
-                    p = Point(dims[x].get(), dims[y].get(), self.safety_height)
+                    p = Point(x, y, self.safety_height)
                     self.pa.append(p)
                     if not self._boundary_warning_already_shown:
                         print >>sys.stderr, "WARNING: DropCutter exceed the height" \
@@ -132,30 +137,20 @@ class DropCutter:
                 # "draw_callback" returns true, if the user requested quitting via the GUI
                 if draw_callback and draw_callback(tool_position=p):
                     finished_line = True
+                    break
 
-                dims[0].shift(d0)
-
-                # make sure, that the we also handle the outmost border of the bounding box
-                if dims[0].check_bounds(tolerance=d0):
-                    if not dims[0].check_bounds() and not last_inner_loop:
-                        dims[0].set(dims[0].end)
-                        last_inner_loop = True
-                else:
+                # the progress counter may return True, if cancel was requested
+                if progress_counter.increment():
                     finished_line = True
+                    break
 
             self.pa.end_scanline()
-            dims[1].shift(d1)
-
-            # make sure, that the we also handle the outmost border of the bounding box
-            if dims[1].check_bounds(tolerance=d1):
-                if not dims[1].check_bounds() and not last_outer_loop:
-                    dims[1].set(dims[1].end)
-                    last_outer_loop = True
-            else:
-                finished_plane = True
 
             # update progress
             current_line += 1
+
+            if quit_requested:
+                break
 
         self.pa.end_direction()
 
