@@ -413,10 +413,11 @@ class ToolpathSettings:
             "thickness": float,
             "height": float,
         },
-        "General": {
-            "calculation_backend": str,
+        "Program": {
+            "unit": str,
+            "enable_ode": bool,
         },
-        "ProcessSettings": {
+        "Process": {
             "generator": str,
             "postprocessor": str,
             "path_direction": str,
@@ -431,7 +432,7 @@ class ToolpathSettings:
     META_MARKER_END = "PYCAM_TOOLPATH_SETTINGS: END"
 
     def __init__(self):
-        self.general = {}
+        self.program = {}
         self.bounds = {}
         self.tool_settings = {}
         self.support_grid = {}
@@ -477,20 +478,23 @@ class ToolpathSettings:
             return {"distance": None, "thickness": None, "height": None}
 
     def set_calculation_backend(self, backend=None):
-        self.general["calculation_backend"] = None
+        self.program["enable_ode"] = (backend.upper() == "ODE")
 
     def get_calculation_backend(self):
-        if self.general.has_key("calculation_backend"):
-            return self.general["calculation_backend"]
+        if self.program.has_key("enable_ode"):
+            if self.program["enable_ode"]:
+                return "ODE"
+            else:
+                return None
         else:
             return None
 
     def set_unit_size(self, unit_size):
-        self.general["unit_size"] = unit_size
+        self.program["unit"] = unit_size
 
     def get_unit_size(self):
-        if self.general.has_key("unit_size"):
-            return self.general["unit_size"]
+        if self.program.has_key("unit"):
+            return self.program["unit"]
         else:
             return "mm"
 
@@ -517,22 +521,29 @@ class ToolpathSettings:
         for config_dict, section in ((self.bounds, "Bounds"),
                 (self.tool_settings, "Tool"),
                 (self.support_grid, "SupportGrid"),
-                (self.process_settings, "ProcessSettings")):
+                (self.process_settings, "Process")):
             for key, value_type in self.SECTIONS[section].items():
                 raw_value = config.get(section, key, None)
-                if not raw_value is None:
+                if raw_value is None:
+                    continue
+                elif value_type == bool:
+                    value = value_raw.lower() in ("1", "true", "yes", "on")
+                else:
                     try:
                         value = value_type(raw_value)
-                        config_dict[key] = value
                     except ValueError:
                         print >>sys.stderr, "Ignored invalid setting (%s -> %s): %s" % (section, key, value_raw)
+                config_dict[key] = value
 
     def get_string(self):
         result = []
         for config_dict, section in ((self.bounds, "Bounds"),
                 (self.tool_settings, "Tool"),
                 (self.support_grid, "SupportGrid"),
-                (self.process_settings, "ProcessSettings")):
+                (self.process_settings, "Process")):
+            # skip empty sections
+            if not config_dict:
+                continue
             result.append("[%s]" % section)
             for key, value_type in self.SECTIONS[section].items():
                 if config_dict.has_key(key):
