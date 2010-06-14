@@ -122,15 +122,15 @@ shape: CylindricalCutter
 tool_radius: 3
 
 [Tool1]
-name: Spherical (r=0.5)
-shape: SphericalCutter
-tool_radius: 0.5
-
-[Tool2]
 name: Toroidal (r=2)
 shape: ToroidalCutter
 tool_radius: 2
 torus_radius: 0.2
+
+[Tool2]
+name: Spherical (r=1.0)
+shape: SphericalCutter
+tool_radius: 1.0
 
 [ProcessDefault]
 path_direction: x
@@ -141,7 +141,7 @@ name: Rough
 path_generator: PushCutter
 path_postprocessor: PolygonCutter
 material_allowance: 0.5
-step_down: 0.8
+step_down: 3.0
 overlap_percent: 0
 
 [Process1]
@@ -149,7 +149,7 @@ name: Semi-finish
 path_generator: PushCutter
 path_postprocessor: ContourCutter
 material_allowance: 0.2
-step_down: 0.5
+step_down: 1.5
 overlap_percent: 20
 
 [Process2]
@@ -176,16 +176,16 @@ tool: 0
 process: 0
 
 [Task1]
-tool: 2
+tool: 1
 process: 1
 
 [Task2]
-tool: 1
+tool: 2
 process: 2
 
 [Task3]
 enabled: no
-tool: 1
+tool: 2
 process: 3
 
 """
