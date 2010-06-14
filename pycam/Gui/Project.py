@@ -232,12 +232,23 @@ class ProjectGui:
         grid_distance.connect("value-changed", self.update_support_grid_controls)
         self.settings.add_item("support_grid_distance",
                 grid_distance.get_value, grid_distance.set_value)
+        grid_square_profile = self.gui.get_object("SupportGridSquare")
+        grid_square_profile.connect("toggled", self.update_support_grid_controls)
         grid_thickness = self.gui.get_object("SupportGridThickness")
         grid_thickness.connect("value-changed", self.update_support_grid_controls)
         self.settings.add_item("support_grid_thickness",
                 grid_thickness.get_value, grid_thickness.set_value)
+        grid_height = self.gui.get_object("SupportGridHeight")
+        def get_support_grid_height():
+            if grid_square_profile.get_active():
+                return self.settings.get("support_grid_thickness")
+            else:
+                return grid_height.get_value()
+        self.settings.add_item("support_grid_height", get_support_grid_height, grid_height.set_value)
+        grid_height.connect("value-changed", self.update_support_grid_controls)
         self.settings.set("support_grid_distance", 5.0)
         self.settings.set("support_grid_thickness", 0.5)
+        self.settings.set("support_grid_height", 0.5)
         # visual and general settings
         for name, objname in (("show_model", "ShowModelCheckBox"),
                 ("show_support_grid", "ShowSupportGridCheckBox"),
@@ -455,9 +466,19 @@ class ProjectGui:
     @gui_activity_guard
     def update_support_grid_controls(self, widget=None):
         is_enabled = self.gui.get_object("SupportGridEnable").get_active()
+        grid_square = self.gui.get_object("SupportGridSquare")
         details_box = self.gui.get_object("SupportGridDetailsBox")
+        grid_height_box = self.gui.get_object("SupportGridHeightBox")
         if is_enabled:
             details_box.show()
+            if grid_square.get_active():
+                grid_height_box.hide()
+            else:
+                if widget == grid_square:
+                    # reset the current height to the thickness, if the
+                    # "square" checkbox was just de-activated
+                    self.settings.set("support_grid_height", self.settings.get("support_grid_thickness"))
+                grid_height_box.show()
         else:
             details_box.hide()
         self.update_support_grid_model()
@@ -468,13 +489,15 @@ class ProjectGui:
         s = self.settings
         if is_enabled \
                 and (s.get("support_grid_thickness") > 0) \
-                and (s.get("support_grid_distance") > s.get("support_grid_thickness")):
+                and (s.get("support_grid_distance") > s.get("support_grid_thickness")) \
+                and (s.get("support_grid_height") > 0):
             s.set("support_grid",
                     pycam.Toolpath.SupportGrid.get_support_grid(s.get("minx"),
                             s.get("maxx"), s.get("miny"), s.get("maxy"),
                             s.get("minz"), s.get("support_grid_distance"),
                             s.get("support_grid_distance"),
-                            s.get("support_grid_thickness")))
+                            s.get("support_grid_thickness"),
+                            s.get("support_grid_height")))
         else:
             self.settings.set("support_grid", None)
 
@@ -1690,9 +1713,11 @@ class ProjectGui:
         if self.gui.get_object("SupportGridEnable").get_active():
             support_grid_distance = self.settings.get("support_grid_distance")
             support_grid_thickness = self.settings.get("support_grid_thickness")
+            support_grid_height = self.settings.get("support_grid_height")
         else:
             support_grid_distance = None
             support_grid_thickness = None
+            support_grid_height = None
         # run the toolpath generation
         toolpath = pycam.Toolpath.Generator.generate_toolpath(self.model,
                 tool_settings=tool_dict, bounds=bounds,
@@ -1705,6 +1730,7 @@ class ProjectGui:
                 step_down=process_settings["step_down"],
                 support_grid_distance=support_grid_distance,
                 support_grid_thickness=support_grid_thickness,
+                support_grid_height=support_grid_height,
                 calculation_backend=calculation_backend, callback=draw_callback)
 
         print "Time elapsed: %f" % (time.time() - start_time)

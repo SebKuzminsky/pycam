@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry import Point, Line, Triangle, Model
+import math
 
 
 def _add_cuboid_to_model(minx, maxx, miny, maxy, minz, maxz):
@@ -58,24 +59,28 @@ def _add_cuboid_to_model(minx, maxx, miny, maxy, minz, maxz):
         model.append(t)
     return model
 
-def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness):
-    lines_x = 1 + int((maxx - minx) / dist_x)
-    lines_y = 1 + int((maxy - miny) / dist_y)
+def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness, height):
+    lines_x = int(math.ceil((maxx - minx) / dist_x))
+    lines_y = int(math.ceil((maxy - miny) / dist_y))
     # we center the grid
     start_x = ((maxx - minx) - (lines_x - 1) * dist_x) / 2.0 + minx
     start_y = ((maxy - miny) - (lines_y - 1) * dist_y) / 2.0 + miny
     # create all x grid lines
     grid_model = Model.Model()
-    radius = thickness / 2.0
+    # helper variables
+    thick_half = thickness / 2.0
+    length_extension = max(thickness, height)
     for i in range(lines_x):
         x = start_x + i * dist_x
         # we make the grid slightly longer (by thickness) than necessary
-        grid_model += _add_cuboid_to_model(x - radius, x + radius,
-                miny - thickness, maxy + thickness, z_plane, z_plane + thickness)
+        grid_model += _add_cuboid_to_model(x - thick_half, x + thick_half,
+                miny - length_extension, maxy + length_extension, z_plane,
+                z_plane + height)
     for i in range(lines_y):
         y = start_y + i * dist_y
         # we make the grid slightly longer (by thickness) than necessary
-        grid_model += _add_cuboid_to_model(minx - thickness, maxx + thickness,
-                y - radius, y + radius, z_plane, z_plane + thickness)
+        grid_model += _add_cuboid_to_model(minx - length_extension,
+                maxx + length_extension, y - thick_half, y + thick_half,
+                z_plane, z_plane + height)
     return grid_model
 

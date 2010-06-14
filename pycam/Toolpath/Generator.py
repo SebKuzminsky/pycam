@@ -37,7 +37,7 @@ def generate_toolpath(model, tool_settings=None,
         path_postprocessor="ZigZagCutter", material_allowance=0.0,
         safety_height=None, overlap=0.0, step_down=0.0,
         support_grid_distance=None, support_grid_thickness=None,
-        calculation_backend=None, callback=None):
+        support_grid_height=None, calculation_backend=None, callback=None):
     """ abstract interface for generating a toolpath
 
     @type model: pycam.Geometry.Model.Model
@@ -67,6 +67,8 @@ def generate_toolpath(model, tool_settings=None,
     @value support_grid_distance: grid size of remaining support material
     @type support_grid_thickness: float
     @value support_grid_thickness: thickness of the support grid
+    @type support_grid_height: float
+    @value support_grid_height: height of the support grid
     @type calculation_backend: str | None
     @value calculation_backend: any member of the CALCULATION_BACKENDS set
         The default is the triangular collision detection.
@@ -95,13 +97,19 @@ def generate_toolpath(model, tool_settings=None,
     # create the grid model if requested
     if (not support_grid_distance is None) \
             and (not support_grid_thickness is None):
+        # grid height defaults to the thickness
+        if support_grid_height is None:
+            support_grid_height = support_grid_thickness
         if support_grid_distance <= 0:
             return "The distance of the support grid must be a positive value"
         if support_grid_thickness <= 0:
             return "The thickness of the support grid must be a positive value"
+        if support_grid_height <= 0:
+            return "The height of the support grid must be a positive value"
         support_grid_model = pycam.Toolpath.SupportGrid.get_support_grid(
                 minx, maxx, miny, maxy, minz, support_grid_distance,
-                support_grid_distance, support_grid_thickness)
+                support_grid_distance, support_grid_thickness,
+                support_grid_height)
         trimesh_model += support_grid_model
     # Due to some weirdness the height of the drill must be bigger than the object's size.
     # Otherwise some collisions are not detected.
