@@ -172,6 +172,7 @@ class ProjectGui:
         self._preferences_window_visible = False
         # "about" window
         self.about_window = self.gui.get_object("AboutWindow")
+        self.about_window.set_version(VERSION)
         self.gui.get_object("About").connect("activate", self.toggle_about_window, True)
         # "unit change" window
         self.unit_change_window = self.gui.get_object("UnitChangeDialog")

@@ -3306,7 +3306,7 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
     <property name="gravity">center</property>
     <property name="has_separator">False</property>
     <property name="program_name">PyCAM</property>
-    <property name="version">0.2.5</property>
+    <property name="version">0.1</property>
     <property name="copyright" translatable="yes">Copyright &#xA9; 2008-2010 Lode Leroy
 Copyright &#xA9; 2010 Lars Kruse</property>
     <property name="comments" translatable="yes">Toolpath Generation for 3-Axis CNC machining</property>

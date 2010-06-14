@@ -24,12 +24,13 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from distutils.core import setup
 import distutils.sysconfig
+from pycam import VERSION
 import glob
 import os.path
 
 setup(
     name="pycam",
-    version="0.2.5",
+    version=VERSION,
     license="GPL v3",
     description="Open Source CAM - Toolpath Generation for 3-Axis CNC machining",
     author="Lode Leroy",
