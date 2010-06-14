@@ -49,7 +49,7 @@ class EngraveCutter:
         num_of_layers = 1 + int(math.ceil(abs(maxz - minz) / dz))
         if num_of_layers > 1:
             z_step = abs(maxz - minz) / (num_of_layers - 1)
-            z_steps = [(maxz - i * dz) for i in range(num_of_layers)]
+            z_steps = [(maxz - i * z_step) for i in range(num_of_layers)]
             # the top layer is treated as the surface - thus it does not require engraving
             z_steps = z_steps[1:]
         else:
