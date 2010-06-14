@@ -26,10 +26,11 @@ import os
 
 class STLExporter:
 
-    def __init__(self, model, name="model", created_by="pycam", linesep=None):
+    def __init__(self, model, name="model", created_by="pycam", linesep=None, comment=None):
         self.model = model
         self.name = name
         self.created_by = created_by
+        self.comment = comment
         if linesep is None:
             self.linesep = os.linesep
         else:
@@ -46,6 +47,9 @@ class STLExporter:
     def get_output_lines(self):
         date = datetime.date.today().isoformat()
         yield """solid "%s"; Produced by %s, %s""" % (self.name, self.created_by, date)
+        if self.comment:
+            for line in self.comment.split(self.linesep):
+                yield(";%s" % line)
         for tr in self.model.triangles():
             norm = tr.normal().normalize()
             yield "facet normal %f %f %f" % (norm.x, norm.y, norm.z)

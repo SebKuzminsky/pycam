@@ -32,6 +32,7 @@ import pycam.Toolpath.Generator
 import pycam.Toolpath
 import pycam.Geometry.utils as utils
 from pycam.Gui.OpenGLTools import ModelViewWindowGL
+from pycam import VERSION
 import pycam.Physics.ode_physics
 # this requires ODE - we import it later, if necessary
 #import pycam.Simulation.ODEBlocks
@@ -39,6 +40,7 @@ import gtk
 import ConfigParser
 import math
 import time
+import datetime
 import re
 import os
 import sys
@@ -111,6 +113,8 @@ class ProjectGui:
             "inside": -1,
             "along": 0,
             "around": 1}
+
+    META_DATA_PREFIX = "PYCAM-META-DATA:"
 
     def __init__(self, master=None, no_dialog=False):
         """ TODO: remove "master" above when the Tk interface is abandoned"""
@@ -1057,7 +1061,7 @@ class ProjectGui:
             return
         try:
             fi = open(filename, "w")
-            pycam.Exporters.STLExporter.STLExporter(self.model).write(fi)
+            pycam.Exporters.STLExporter.STLExporter(self.model, comment=self.get_meta_data()).write(fi)
             fi.close()
         except IOError, err_msg:
             if not no_dialog and not self.no_dialog:
@@ -1503,9 +1507,13 @@ class ProjectGui:
             # columns: name, visible, drill_size, drill_id, allowance, speed, feedrate
             for index in range(len(self.toolpath)):
                 tp = self.toolpath[index]
-                items = (index, tp.name, tp.visible, tp.tool_settings["radius"],
-                        tp.tool_id, tp.material_allowance, tp.speed,
-                        tp.feedrate, get_time_string(tp.get_machine_time()))
+                toolpath_settings = tp.get_toolpath_settings()
+                tool = toolpath_settings.get_tool_settings()
+                process = toolpath_settings.get_process_settings()
+                items = (index, tp.name, tp.visible, tool["tool_radius"],
+                        tool["id"], process["material_allowance"],
+                        tool["speed"], tool["feedrate"],
+                        get_time_string(tp.get_machine_time()))
                 model.append(items)
             if not new_index is None:
                 self._treeview_set_active_index(self.toolpath_table, new_index)
@@ -1577,7 +1585,8 @@ class ProjectGui:
                 toolpath = self.toolpath[toolpath_index]
         paths = toolpath.get_path()
         # set the current cutter
-        self.cutter = pycam.Cutters.get_tool_from_settings(toolpath.tool_settings)
+        self.cutter = pycam.Cutters.get_tool_from_settings(
+                toolpath.get_tool_settings())
         # calculate steps
         detail_level = self.gui.get_object("SimulationDetailsValue").get_value()
         grid_size = 100 * pow(2, detail_level - 1)
@@ -1586,7 +1595,7 @@ class ProjectGui:
         x_steps = int(math.sqrt(grid_size) * proportion)
         y_steps = int(math.sqrt(grid_size) / proportion)
         simulation_backend = pycam.Simulation.ODEBlocks.ODEBlocks(
-                toolpath.tool_settings, toolpath.bounding_box,
+                toolpath.get_tool_settings(), toolpath.get_bounding_box(),
                 x_steps=x_steps, y_steps=y_steps)
         self.settings.set("simulation_object", simulation_backend)
         # disable the simulation widget (avoids confusion regarding "cancel")
@@ -1666,10 +1675,47 @@ class ProjectGui:
 
         self.update_progress_bar("Generating collision model")
 
-        if self.settings.get("enable_ode"):
-            calculation_backend = "ODE"
+        # turn the toolpath settings into a dict
+        toolpath_settings = self.get_toolpath_settings(tool_settings, process_settings)
+        if toolpath_settings is None:
+            # behave as if "cancel" was requested
+            return True
+
+        self.cutter = toolpath_settings.get_tool()
+
+        # run the toolpath generation
+        self.update_progress_bar("Starting the toolpath generation")
+        toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(
+                self.model, toolpath_settings, callback=draw_callback)
+
+        print "Time elapsed: %f" % (time.time() - start_time)
+
+        if isinstance(toolpath, basestring):
+            # an error occoured - "toolpath" contains the error message
+            message = "Failed to generate toolpath: %s" % toolpath
+            if not self.no_dialog:
+                show_error_dialog(self.window, message)
+            else:
+                print >>sys.stderr, message
+            # we were not successful (similar to a "cancel" request)
+            return False
         else:
-            calculation_backend = None
+            # hide the previous toolpath if it is the only visible one (automatic mode)
+            if (len([True for path in self.toolpath if path.visible]) == 1) \
+                    and self.toolpath[-1].visible:
+                self.toolpath[-1].visible = False
+            # add the new toolpath
+            description = "%s / %s" % (tool_settings["name"],
+                    process_settings["name"])
+            # the tool id numbering should start with 1 instead of zero
+            self.toolpath.add_toolpath(toolpath, description, toolpath_settings)
+            self.update_toolpath_table()
+            self.update_view()
+            # return "False" if the action was cancelled
+            return not self._progress_cancel_requested
+
+    def get_toolpath_settings(self, tool_settings, process_settings):
+        toolpath_settings = pycam.Gui.Settings.ToolpathSettings()
 
         # this offset allows to cut a model with a minimal boundary box correctly
         offset = tool_settings["tool_radius"] / 2.0
@@ -1693,79 +1739,46 @@ class ProjectGui:
         maxy = float(self.settings.get("maxy"))+offset
         minz = float(self.settings.get("minz"))
         maxz = float(self.settings.get("maxz"))
-        bounds = (minx, maxx, miny, maxy, minz, maxz)
+        toolpath_settings.set_bounds(minx, maxx, miny, maxy, minz, maxz)
 
         # check if the boundary limits are valid
         if (minx > maxx) or (miny > maxy) or (minz > maxz):
             # don't generate a toolpath if the area is too small (e.g. due to the tool size)
             if not self.no_dialog:
                 show_error_dialog(self.window, "Processing boundaries are too small for this tool size.")
-            return True
+            return None
 
-        self.update_progress_bar("Starting the toolpath generation")
         # put the tool settings together
-        tool_dict = {"shape": tool_settings["shape"],
-                "radius": tool_settings["tool_radius"],
-                "torus_radius": tool_settings["torus_radius"],
-        }
-        self.cutter = pycam.Cutters.get_tool_from_settings(tool_dict)
+        tool_id = self.tool_list.index(tool_settings) + 1
+        toolpath_settings.set_tool(tool_id, tool_settings["shape"],
+                tool_settings["tool_radius"], tool_settings["torus_radius"],
+                tool_settings["speed"], tool_settings["feedrate"])
+
         # get the support grid options
         if self.gui.get_object("SupportGridEnable").get_active():
-            support_grid_distance = self.settings.get("support_grid_distance")
-            support_grid_thickness = self.settings.get("support_grid_thickness")
-            support_grid_height = self.settings.get("support_grid_height")
-        else:
-            support_grid_distance = None
-            support_grid_thickness = None
-            support_grid_height = None
-        # run the toolpath generation
-        toolpath = pycam.Toolpath.Generator.generate_toolpath(self.model,
-                tool_settings=tool_dict, bounds=bounds,
-                direction=process_settings["path_direction"],
-                path_generator=process_settings["path_generator"],
-                path_postprocessor=process_settings["path_postprocessor"],
-                material_allowance=process_settings["material_allowance"],
-                safety_height=process_settings["safety_height"],
-                overlap=process_settings["overlap_percent"] / 100.0,
-                step_down=process_settings["step_down"],
-                support_grid_distance=support_grid_distance,
-                support_grid_thickness=support_grid_thickness,
-                support_grid_height=support_grid_height,
-                calculation_backend=calculation_backend, callback=draw_callback)
+            toolpath_settings.set_support_grid(
+                    self.settings.get("support_grid_distance"),
+                    self.settings.get("support_grid_thickness"),
+                    self.settings.get("support_grid_height"))
+        
+        # calculation backend: ODE / None
+        if self.settings.get("enable_ode"):
+            toolpath_settings.set_calculation_backend("ODE")
 
-        print "Time elapsed: %f" % (time.time() - start_time)
+        # unit size
+        toolpath_settings.set_unit_size(self.settings.get("unit"))
 
-        if isinstance(toolpath, basestring):
-            # an error occoured - "toolpath" contains the error message
-            message = "Failed to generate toolpath: %s" % toolpath
-            if not self.no_dialog:
-                show_error_dialog(self.window, message)
-            else:
-                print >>sys.stderr, message
-            # we were not successful (similar to a "cancel" request)
-            return False
-        else:
-            # hide the previous toolpath if it is the only visible one (automatic mode)
-            if (len([True for path in self.toolpath if path.visible]) == 1) \
-                    and self.toolpath[-1].visible:
-                self.toolpath[-1].visible = False
-            # add the new toolpath
-            description = "%s / %s" % (tool_settings["name"], process_settings["name"])
-            # the tool id numbering should start with 1 instead of zero
-            tool_id = self.tool_list.index(tool_settings) + 1
-            self.toolpath.add_toolpath(toolpath,
-                    description, tool_dict, tool_id,
-                    tool_settings["speed"],
-                    tool_settings["feedrate"],
-                    process_settings["material_allowance"],
-                    process_settings["safety_height"],
-                    self.settings.get("unit"),
-                    minx, miny, process_settings["safety_height"],
-                    bounds)
-            self.update_toolpath_table()
-            self.update_view()
-            # return "False" if the action was cancelled
-            return not self._progress_cancel_requested
+        # process settings
+        toolpath_settings.set_process_settings(
+                process_settings["path_generator"],
+                process_settings["path_postprocessor"],
+                process_settings["path_direction"],
+                process_settings["material_allowance"],
+                process_settings["safety_height"],
+                process_settings["overlap_percent"] / 100.0,
+                process_settings["step_down"])
+
+        return toolpath_settings
 
     def get_filename_via_dialog(self, title, mode_load=False, type_filter=None):
         # we open a dialog
@@ -1878,18 +1891,35 @@ class ProjectGui:
                     is_last_loop = True
                 else:
                     is_last_loop = False
+                start_pos = tp.get_start_position()
+                settings = tp.get_toolpath_settings()
+                process = settings.get_process_settings()
+                tool = settings.get_tool_settings()
+                meta_data = []
+                meta_data.append(self.get_meta_data())
+                meta_data.append(tp.get_meta_data())
                 pycam.Exporters.SimpleGCodeExporter.ExportPathList(destination,
-                        tp.toolpath, tp.unit,
-                        tp.start_x, tp.start_y, tp.start_z,
-                        tp.feedrate, tp.speed, safety_height=tp.safety_height, tool_id=tp.tool_id,
-                        finish_program=is_last_loop,
-                        max_skip_safety_distance=2*tp.tool_settings["radius"])
+                        tp.get_path(), settings.get_unit_size(), start_pos.x,
+                        start_pos.y, start_pos.z, tool["feedrate"],
+                        tool["speed"], safety_height=process["safety_height"],
+                        tool_id=tool["id"], finish_program=is_last_loop,
+                        max_skip_safety_distance=2*tool["tool_radius"],
+                        comment=os.linesep.join(meta_data))
             destination.close()
             if self.no_dialog:
                 print "GCode file successfully written: %s" % str(filename)
         except IOError, err_msg:
             if not no_dialog and not self.no_dialog:
                 show_error_dialog(self.window, "Failed to save toolpath file")
+
+    def get_meta_data(self):
+        filename = "Filename: %s" % str(self.last_model_file)
+        timestamp = "Timestamp: %s" % str(datetime.datetime.now())
+        version = "Version: %s" % VERSION
+        result = []
+        for text in (filename, timestamp, version):
+            result.append("%s %s" % (self.META_DATA_PREFIX, text))
+        return os.linesep.join(result)
 
     def mainloop(self):
         # run the mainloop only if a GUI was requested

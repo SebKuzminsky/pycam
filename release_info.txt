@@ -2,6 +2,7 @@
  - in "pycam/Gui/gtk-interface/pycam-project.ui" ("version" in "GtkAboutDialog")
  - in "Changelog"
  - in "setup.py"
+ - in "pycam/__init__.py"
  - update the release date and the list of changes in "Changelog"
  - commit the changes
 

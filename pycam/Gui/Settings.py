@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import pycam.Cutters
 import ConfigParser
 import StringIO
 import sys
@@ -386,5 +387,159 @@ process: 3
                             result.append("%s: %s" % (key, value_string))
                 # add an empty line to separate sections
                 result.append("")
+        return os.linesep.join(result)
+
+
+class ToolpathSettings:
+
+    SECTIONS = {
+        "Bounds": {
+            "minx": float,
+            "maxx": float,
+            "miny": float,
+            "maxy": float,
+            "minz": float,
+            "maxz": float,
+        },
+        "Tool": {
+            "shape": str,
+            "tool_radius": float,
+            "torus_radius": float,
+            "speed": float,
+            "feedrate": float,
+        },
+        "SupportGrid": {
+            "distance": float,
+            "thickness": float,
+            "height": float,
+        },
+        "General": {
+            "calculation_backend": str,
+        },
+        "ProcessSettings": {
+            "generator": str,
+            "postprocessor": str,
+            "path_direction": str,
+            "material_allowance": float,
+            "safety_height": float,
+            "overlap": float,
+            "step_down": float,
+        },
+    }
+
+    META_MARKER_START = "PYCAM_TOOLPATH_SETTINGS: START"
+    META_MARKER_END = "PYCAM_TOOLPATH_SETTINGS: END"
+
+    def __init__(self):
+        self.general = {}
+        self.bounds = {}
+        self.tool_settings = {}
+        self.support_grid = {}
+        self.process_settings = {}
+
+    def set_bounds(self, minx, maxx, miny, maxy, minz, maxz):
+        self.bounds = {
+                "minx": minx,
+                "maxx": maxx,
+                "miny": miny,
+                "maxy": maxy,
+                "minz": minz,
+                "maxz": maxz,
+        }
+
+    def get_bounds(self):
+        return self.bounds
+
+    def set_tool(self, index, shape, tool_radius, torus_radius=None, speed=0.0, feedrate=0.0):
+        self.tool_settings = {"id": index,
+                "shape": shape,
+                "tool_radius": tool_radius,
+                "torus_radius": torus_radius,
+                "speed": speed,
+                "feedrate": feedrate,
+        }
+
+    def get_tool(self):
+        return pycam.Cutters.get_tool_from_settings(self.tool_settings)
+
+    def get_tool_settings(self):
+        return self.tool_settings
+
+    def set_support_grid(self, distance, thickness, height):
+        self.support_grid["distance"] = distance
+        self.support_grid["thickness"] = thickness
+        self.support_grid["height"] = height
+
+    def get_support_grid(self):
+        if self.support_grid:
+            return self.support_grid
+        else:
+            return {"distance": None, "thickness": None, "height": None}
+
+    def set_calculation_backend(self, backend=None):
+        self.general["calculation_backend"] = None
+
+    def get_calculation_backend(self):
+        if self.general.has_key("calculation_backend"):
+            return self.general["calculation_backend"]
+        else:
+            return None
+
+    def set_unit_size(self, unit_size):
+        self.general["unit_size"] = unit_size
+
+    def get_unit_size(self):
+        if self.general.has_key("unit_size"):
+            return self.general["unit_size"]
+        else:
+            return "mm"
+
+    def set_process_settings(self, generator, postprocessor, path_direction,
+            material_allowance=0.0, safety_height=0.0, overlap=0.0,
+            step_down=1.0):
+        self.process_settings = {
+                "generator": generator,
+                "postprocessor": postprocessor,
+                "path_direction": path_direction,
+                "material_allowance": material_allowance,
+                "safety_height": safety_height,
+                "overlap": overlap,
+                "step_down": step_down,
+        }
+
+    def get_process_settings(self):
+        return self.process_settings
+
+    def parse(self, text):
+        text_stream = StringIO.StringIO(text)
+        config = ConfigParser.SafeConfigParser()
+        config.readfp(text_stream)
+        for config_dict, section in ((self.bounds, "Bounds"),
+                (self.tool_settings, "Tool"),
+                (self.support_grid, "SupportGrid"),
+                (self.process_settings, "ProcessSettings")):
+            for key, value_type in self.SECTIONS[section].items():
+                raw_value = config.get(section, key, None)
+                if not raw_value is None:
+                    try:
+                        value = value_type(raw_value)
+                        config_dict[key] = value
+                    except ValueError:
+                        print >>sys.stderr, "Ignored invalid setting (%s -> %s): %s" % (section, key, value_raw)
+
+    def get_string(self):
+        result = []
+        for config_dict, section in ((self.bounds, "Bounds"),
+                (self.tool_settings, "Tool"),
+                (self.support_grid, "SupportGrid"),
+                (self.process_settings, "ProcessSettings")):
+            result.append("[%s]" % section)
+            for key, value_type in self.SECTIONS[section].items():
+                if config_dict.has_key(key):
+                    value = config_dict[key]
+                    if type(value) == value_type:
+                        result.append("%s = %s" % (key, value))
+                # add one empty line after each section
+            result.append("")
         return os.linesep.join(result)
 

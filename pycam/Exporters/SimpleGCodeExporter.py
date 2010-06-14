@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from gcode import gcode
+import os
 
 # simplistic GCode exporter
 # does each run, and moves the tool to the safetyheight in between
@@ -30,7 +31,7 @@ class SimpleGCodeExporter:
 
     def __init__(self, destination, unit, startx, starty, startz, feedrate,
             speed, safety_height=None, tool_id=1, finish_program=False,
-            max_skip_safety_distance=None):
+            max_skip_safety_distance=None, comment=None):
         self._last_path_point = None
         self._max_skip_safety_distance = max_skip_safety_distance
         if isinstance(destination, basestring):
@@ -43,6 +44,8 @@ class SimpleGCodeExporter:
             self.destination = destination
             # don't close the stream if we did not open it on our own
             self._close_stream_on_exit = False
+        if comment:
+            self.add_comment(comment)
         if unit == "mm":
             self.destination.write("G21\n")
         else:
@@ -68,6 +71,10 @@ class SimpleGCodeExporter:
             return False
         distance = new_point.sub(self._last_path_point).norm()
         return distance <= self._max_skip_safety_distance
+
+    def add_comment(self, comment):
+        for line in comment.split(os.linesep):
+            self.destination.write(";%s\n" % line)
 
     def AddPath(self, path):
         gc = self.gcode

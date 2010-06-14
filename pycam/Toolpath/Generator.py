@@ -32,6 +32,22 @@ PATH_GENERATORS = frozenset(("DropCutter", "PushCutter", "EngraveCutter"))
 PATH_POSTPROCESSORS = frozenset(("ContourCutter", "PathAccumulator", "PolygonCutter", "SimpleCutter", "ZigZagCutter"))
 CALCULATION_BACKENDS = frozenset((None, "ODE"))
 
+
+def generate_toolpath_from_settings(model, tp_settings, callback=None):
+    process = tp_settings.get_process_settings()
+    grid = tp_settings.get_support_grid()
+    backend = tp_settings.get_calculation_backend()
+    bounds = []
+    bounds_dict = tp_settings.get_bounds()
+    for key in ("minx", "maxx", "miny", "maxy", "minz", "maxz"):
+        bounds.append(bounds_dict[key])
+    return generate_toolpath(model, tp_settings.get_tool_settings(),
+            bounds, process["path_direction"], process["generator"],
+            process["postprocessor"], process["material_allowance"],
+            process["safety_height"], process["overlap"],
+            process["step_down"], grid["distance"], grid["thickness"],
+            grid["height"], backend, callback)
+
 def generate_toolpath(model, tool_settings=None,
         bounds=None, direction="x", path_generator="DropCutter",
         path_postprocessor="ZigZagCutter", material_allowance=0.0,
@@ -46,7 +62,7 @@ def generate_toolpath(model, tool_settings=None,
     @value tool_settings: contains at least the following keys (depending on
         the tool type):
         "shape": any of possible cutter shape (see "pycam.Cutters")
-        "radius": main radius of the tools
+        "tool_radius": main radius of the tools
         "torus_radius": (only for ToroidalCutter) second toroidal radius
     @type bounds: tuple(float) | list(float)
     @value bounds: the processing boundary (relative to the center of the tool)
@@ -126,7 +142,7 @@ def generate_toolpath(model, tool_settings=None,
         return generator
     if (overlap < 0) or (overlap >= 1):
         return "Invalid overlap value (%f): should be greater or equal 0 and lower than 1"
-    effective_toolradius = tool_settings["radius"] * (1.0 - overlap)
+    effective_toolradius = tool_settings["tool_radius"] * (1.0 - overlap)
     if path_generator == "DropCutter":
         if direction == "x":
             direction_param = 0

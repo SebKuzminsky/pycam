@@ -47,7 +47,7 @@ def get_tool_from_settings(tool_settings, height=None):
     @return: a tool object or an error string
     """
     cuttername = tool_settings["shape"]
-    radius = tool_settings["radius"]
+    radius = tool_settings["tool_radius"]
     if cuttername == "SphericalCutter":
         return SphericalCutter(radius, height=height)
     elif cuttername == "CylindricalCutter":

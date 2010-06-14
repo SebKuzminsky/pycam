@@ -23,38 +23,56 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 __all__ = ["ToolPathList", "ToolPath", "Generator"]
 
 from pycam.Geometry.Point import Point
+import pycam.Gui.Settings
 import random
+import os
+
 
 class ToolPathList(list):
 
-    def add_toolpath(self, toolpath, name, tool_settings, *args):
-        self.append(ToolPath(toolpath, name, tool_settings, *args))
+    def add_toolpath(self, toolpath, name, tool_settings):
+        self.append(ToolPath(toolpath, name, tool_settings))
+
 
 class ToolPath:
 
-    def __init__(self, toolpath, name, tool_settings, tool_id, speed,
-            feedrate, material_allowance, safety_height, unit, start_x,
-            start_y, start_z, bounding_box):
+    def __init__(self, toolpath, name, toolpath_settings):
         self.toolpath = toolpath
         self.name = name
+        self.toolpath_settings = toolpath_settings
         self.visible = True
-        self.tool_id = tool_id
-        self.tool_settings = tool_settings
-        self.speed = speed
-        self.feedrate = feedrate
-        self.material_allowance = material_allowance
-        self.safety_height = safety_height
-        self.unit = unit
-        self.start_x = start_x
-        self.start_y = start_y
-        self.start_z = start_z
-        self.bounding_box = bounding_box
         self.color = None
         # generate random color
         self.set_color()
 
     def get_path(self):
         return self.toolpath
+
+    def get_start_position(self):
+        safety_height = self.toolpath_settings.get_process_settings()["safety_height"]
+        for path in self.toolpath:
+            if path.points:
+                p = path.points[0]
+                return Point(p.x, p.y, safety_height)
+        else:
+            return Point(0, 0, safety_height)
+
+    def get_bounding_box(self):
+        box = self.toolpath_settings.get_bounding_box()
+        return (box["minx"], box["maxx"], box["miny"], box["maxy"], box["minz"],
+                box["maxz"])
+
+    def get_tool_settings(self):
+        return self.toolpath_settings.get_tool_settings()
+
+    def get_toolpath_settings(self):
+        return self.toolpath_settings
+
+    def get_meta_data(self):
+        meta = self.toolpath_settings.get_string()
+        start_marker = self.toolpath_settings.META_MARKER_START
+        end_marker = self.toolpath_settings.META_MARKER_END
+        return os.linesep.join((start_marker, meta, end_marker))
 
     def set_color(self, color=None):
         if color is None:
@@ -74,22 +92,24 @@ class ToolPath:
         """
         if start_position is None:
             start_position = Point(0, 0, 0)
+        feedrate = self.toolpath_settings.get_tool_settings()["feedrate"]
         def move(new_pos):
-            move.result_time += new_pos.sub(move.current_position).norm() / self.feedrate
+            move.result_time += new_pos.sub(move.current_position).norm() / feedrate
             move.current_position = new_pos
         move.current_position = start_position
         move.result_time = 0
         # move to safey height at the starting position
-        move(Point(start_position.x, start_position.y, self.safety_height))
+        safety_height = self.toolpath_settings.get_process_settings()["safety_height"]
+        move(Point(start_position.x, start_position.y, safety_height))
         for path in self.get_path():
             # go to safety height (horizontally from the previous x/y location)
             if len(path.points) > 0:
-                move(Point(path.points[0].x, path.points[0].y, self.safety_height))
+                move(Point(path.points[0].x, path.points[0].y, safety_height))
             # go through all points of the path
             for point in path.points:
                 move(point)
             # go to safety height (vertically up from the current x/y location)
             if len(path.points) > 0:
-                move(Point(path.points[-1].x, path.points[-1].y, self.safety_height))
+                move(Point(path.points[-1].x, path.points[-1].y, safety_height))
         return move.result_time
 
