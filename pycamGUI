@@ -28,6 +28,12 @@ from optparse import OptionParser
 import sys
 import os
 
+EXAMPLE_MODEL_LOCATIONS = (
+        os.path.join(os.path.dirname(__file__), "Samples", "STL"),
+        "/usr/share/pycam/Samples/STL")
+DEFAULT_MODEL_FILE = "pycam.stl"
+
+
 # check if we were started as a separate program
 if __name__ == "__main__":
     inputfile = None
@@ -119,9 +125,17 @@ if __name__ == "__main__":
     else:
         gui = gui_class()
 
+    # try to load the default model file ("pycam" logo)
     if not inputfile:
-        from pycam.Importers.TestModel import TestModel
-        gui.load_model(TestModel())
+        for inputdir in EXAMPLE_MODEL_LOCATIONS:
+            inputfile = os.path.join(inputdir, DEFAULT_MODEL_FILE)
+            if os.path.isfile(inputfile):
+                gui.open(inputfile)
+                break
+            else:
+                # fall back to the simple test model
+                from pycam.Importers.TestModel import TestModel
+                gui.load_model(TestModel())
     else:
         gui.open(inputfile)
     # load task settings file
