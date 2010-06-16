@@ -38,8 +38,8 @@ BUTTON_ZOOM = gtk.gdk.BUTTON3_MASK
 # the length of the distance vector does not matter - it will be normalized and multiplied later anyway
 VIEWS = {
     "reset": {"distance": (1.0, 1.0, 1.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "top": {"distance": (0.0, 0.0, 1.0), "center": (0.0, 0.0, 0.0), "up": (1.0, 0.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "bottom": {"distance": (0.0, 0.0, -1.0), "center": (0.0, 0.0, 0.0), "up": (1.0, 0.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "top": {"distance": (0.0, 0.0, 1.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 1.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "bottom": {"distance": (0.0, 0.0, -1.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 1.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
     "left": {"distance": (-1.0, 0.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
     "right": {"distance": (1.0, 0.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
     "front": {"distance": (0.0, -1.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
