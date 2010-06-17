@@ -80,7 +80,6 @@ def get_free_paths_triangles(model, cutter, p1, p2):
 
     # find all hits along scan line
     hits = []
-    hits.append(Hit(p1, None, 0, None))
 
     triangles = model.triangles(minx - cutter.radius, miny - cutter.radius, minz,
             maxx + cutter.radius, maxy + cutter.radius, INFINITE)
@@ -89,69 +88,39 @@ def get_free_paths_triangles(model, cutter, p1, p2):
         # normals point outward... and we want to approach the model from the outside!
         n = t.normal().dot(forward)
         cutter.moveto(p1)
-        if n >= 0:
-            (cl, d) = cutter.intersect(backward, t)
-            if cl:
-                hits.append(Hit(cl, t, -d, backward))
-                hits.append(Hit(cl.sub(backward_small), t, -d + epsilon, backward))
-                hits.append(Hit(cl.add(backward_small), t, -d - epsilon, backward))
-        if n <= 0:
-            (cl, d) = cutter.intersect(forward, t)
-            if cl:
-                hits.append(Hit(cl, t, d, forward))
-                hits.append(Hit(cl.add(forward_small), t, d + epsilon, forward))
-                hits.append(Hit(cl.sub(forward_small), t, d - epsilon, forward))
-
-    hits.append(Hit(p2, None, xyz_dist, None))
-
+        (cl, d) = cutter.intersect(backward, t)
+        if cl:
+            hits.append(Hit(cl, t, -d, backward))
+        (cl, d) = cutter.intersect(forward, t)
+        if cl:
+            hits.append(Hit(cl, t, d, forward))
 
     # sort along the scan direction
     hits.sort(Hit.cmp)
 
-    # Remove duplicates (typically shared edges)
-    # Remove hits outside the min/max area of x/y/z (especially useful for the
-    # short-line cuts of the EngraveCutter
-    filtered_hits = []
-    previous_hit = None
-    for one_hit in hits:
-        if not ((minx - epsilon) < one_hit.cl.x < (maxx + epsilon)):
-            continue
-        elif not ((miny - epsilon) < one_hit.cl.y < (maxy + epsilon)):
-            continue
-        elif not ((minz - epsilon) < one_hit.cl.z < (maxz + epsilon)):
-            continue
-        elif previous_hit and (abs(previous_hit.d - one_hit.d) < epsilon / 2):
-            continue
+    c = None
+    t = []
+    points = []
+    for h in hits:
+        if h.dir == forward:
+            if len(t)==0:
+                if h.d >= 0:
+                    if len(points) == 0:
+                        points.append(p1)
+                    points.append(h.cl)
+            t.append(h.t)
         else:
-            previous_hit = one_hit
-            filtered_hits.append(one_hit)
-    hits = filtered_hits
+            t.remove(h.t)
+            if len(t)==0:
+                if h.d <= xyz_dist:
+                    points.append(h.cl)
 
-    # determine height at each interesting point
-    for h in hits:
-        (zmax, tmax) = drop_cutter_test(cutter, h.cl, model)
-        h.z = zmax
+    if len(points)%2 == 1:
+        points.append(p2)
 
-    # find first hit cutter location that is below z-level
-    begin = hits[0].cl
-    end = None
-    for h in hits:
-        if h.z >= minz - epsilon / 10:
-            if begin and end:
-                points.append(begin)
-                points.append(end)
-            begin = None
-            end = None
-        if h.z <= maxz + epsilon / 10:
-            if not begin:
-                begin = h.cl
-            else:
-                end = h.cl
-        
-    # add add possibly remaining couple from the previous loop
-    if begin and end:
-        points.append(begin)
-        points.append(end)
+    if len(hits)==0:
+        points.append(p1)
+        points.append(p2)
 
     return points
 
