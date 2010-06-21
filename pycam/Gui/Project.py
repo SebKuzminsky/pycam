@@ -133,6 +133,15 @@ class ProjectGui:
             sys.exit(1)
         self.gui.add_from_file(gtk_build_file)
         self.window = self.gui.get_object("ProjectWindow")
+        # initialize the RecentManager
+        try:
+            self.recent_manager = gtk.RecentManager()
+        except AttributeError:
+            # GTK 2.12.1 seems to have problems with "RecentManager" on Windows.
+            # Sadly this is the version, that is shipped with the "appunti" GTK
+            # packages for Windows (April 2010).
+            # see http://www.daa.com.au/pipermail/pygtk/2009-May/017052.html
+            self.recent_manager = None
         # file loading
         self.last_task_settings_file = None
         self.last_model_file = None
@@ -1139,6 +1148,8 @@ class ProjectGui:
         except IOError, err_msg:
             if not no_dialog and not self.no_dialog:
                 show_error_dialog(self.window, "Failed to save model file")
+        else:
+            self.add_to_recent_file_list(filename)
 
     @gui_activity_guard
     def reset_preferences(self, widget=None):
@@ -1347,6 +1358,8 @@ class ProjectGui:
             except IOError, err_msg:
                 if not no_dialog and not self.no_dialog:
                     show_error_dialog(self.window, "Failed to save EMC tool file")
+            else:
+                self.add_to_recent_file_list(filename)
 
     def open_task_settings_file(self, filename):
         """ This function is used by the commandline handler """
@@ -1683,6 +1696,8 @@ class ProjectGui:
                 self.process_list, self.bounds_list, self.task_list) \
                 and not no_dialog and not self.no_dialog:
             show_error_dialog(self.window, "Failed to save settings file")
+        else:
+            self.add_to_recent_file_list(filename)
 
     def toggle_progress_bar(self, status):
         if status:
@@ -1983,15 +1998,16 @@ class ProjectGui:
         dialog.destroy()
         # add the file to the list of recently used ones
         if filename:
-            try:
-                recent = gtk.RecentManager()
-                recent.add_item("file://%s" % str(filename))
-            except AttributeError:
-                # GTK 2.12.1 seems to have problems with "RecentManager" on Windows.
-                # Sadly this is the version, that is shipped with the "appunti" GTK
-                # packages for Windows (April 2010).
-                pass
+            if os.path.isfile(filename):
+                # Add the item to the recent files list - if it already exists.
+                # Otherwise it will be added later after writing the file.
+                self.add_to_recent_file_list(filename)
         return filename
+
+    def add_to_recent_file_list(self, filename):
+        # skip this, if the recent manager is not available (e.g. GTK 2.12.1 on Windows)
+        if self.recent_manager:
+            self.recent_manager.add_item("file://%s" % str(filename))
 
     def setOutputFilename(self, filename):
         self.last_toolpath_file = filename
@@ -2051,6 +2067,8 @@ class ProjectGui:
         except IOError, err_msg:
             if not no_dialog and not self.no_dialog:
                 show_error_dialog(self.window, "Failed to save toolpath file")
+        else:
+            self.add_to_recent_file_list(filename)
 
     def get_meta_data(self):
         filename = "Filename: %s" % str(self.last_model_file)
