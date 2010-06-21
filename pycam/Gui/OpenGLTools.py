@@ -391,7 +391,6 @@ class ModelViewWindowGL:
             if (state == BUTTON_ZOOM) or (state == BUTTON_ROTATE) or (state == BUTTON_MOVE):
                 self.mouse["button"] = state
                 self.mouse["start_pos"] = [x, y]
-                self.area.set_events(gtk.gdk.MOUSE | gtk.gdk.BUTTON_PRESS_MASK)
         else:
             # not more than 25 frames per second (enough for decent visualization)
             if time.time() - last_timestamp < 0.04:
