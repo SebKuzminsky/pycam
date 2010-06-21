@@ -381,8 +381,18 @@ class ProjectGui:
                 if self.gui.get_object(objname).get_active():
                     return key
         self.settings.add_item("boundary_type", get_boundary_type, set_boundary_type)
+        # connect change handler for boundary settings
+        self.gui.get_object("BoundsName").connect("changed",
+                self.handle_bounds_settings_change)
+        for objname in ("BoundsTypeRelativeMargin", "BoundsTypeFixedMargin",
+                "BoundsTypeCustom"):
+            self.gui.get_object(objname).connect("toggled",
+                    self.handle_bounds_settings_change)
+        for objname in ("boundary_x_low", "boundary_x_high", "boundary_y_low",
+                "boundary_y_high", "boundary_z_low", "boundary_z_high"):
+            self.gui.get_object(objname).connect("value-changed",
+                    self.handle_bounds_settings_change)
         # the process manager
-        self.process_table = self.gui.get_object("ProcessListTable")
         self.process_editor_table = self.gui.get_object("ProcessEditorTable")
         self.process_editor_table.get_selection().connect("changed", self.switch_process_table_selection)
         self.gui.get_object("ProcessListMoveUp").connect("clicked", self.handle_process_table_event, "move_up")
@@ -407,7 +417,6 @@ class ProjectGui:
         # store the original content (for adding the number of current toolpaths in "update_toolpath_table")
         self._original_toolpath_tab_label = self.gui.get_object("ToolPathTabLabel").get_text()
         # tool editor
-        self.tool_table = self.gui.get_object("ToolListTable")
         self.tool_editor_table = self.gui.get_object("ToolEditorTable")
         self.tool_editor_table.get_selection().connect("changed", self.switch_tool_editor_table_selection)
         self.gui.get_object("ToolListMoveUp").connect("clicked", self._tool_editor_button_event, "move_up")
@@ -417,8 +426,6 @@ class ProjectGui:
         # the task list manager
         self.tasklist_table = self.gui.get_object("TaskListTable")
         self.tasklist_table.get_selection().connect("changed", self.update_tasklist_controls)
-        self.tool_table.get_selection().connect("changed", self.update_tasklist_controls)
-        self.process_table.get_selection().connect("changed", self.update_tasklist_controls)
         self.gui.get_object("tasklist_enabled").connect("toggled", self._handle_tasklist_button_event, "toggle_enabled")
         self.gui.get_object("TaskListMoveUp").connect("clicked", self._handle_tasklist_button_event, "move_up")
         self.gui.get_object("TaskListMoveDown").connect("clicked", self._handle_tasklist_button_event, "move_down")
@@ -426,6 +433,16 @@ class ProjectGui:
         self.gui.get_object("TaskListDelete").connect("clicked", self._handle_tasklist_button_event, "delete")
         self.gui.get_object("GenerateToolPathButton").connect("clicked", self._handle_tasklist_button_event, "generate_one_toolpath")
         self.gui.get_object("GenerateAllToolPathsButton").connect("clicked", self._handle_tasklist_button_event, "generate_all_toolpaths")
+        # We need to collect the signal handles to block them during
+        # programmatical changes.
+        self._task_property_signals = []
+        for objname, signal in (("TaskNameControl", "focus-out-event"),
+                ("TaskToolSelector", "changed"),
+                ("TaskProcessSelector", "changed"),
+                ("TaskBoundsSelector", "changed")):
+            obj = self.gui.get_object(objname)
+            self._task_property_signals.append((obj,
+                    obj.connect(signal, self._handle_task_setting_change)))
         # menu bar
         uimanager = gtk.UIManager()
         self._accel_group = uimanager.get_accel_group()
@@ -551,12 +568,6 @@ class ProjectGui:
         self.update_view()
 
     def update_tasklist_controls(self, widget=None, data=None):
-        # check if both the tool and the process table have a selected row
-        all_are_active = True
-        for control in (self.tool_table, self.process_table):
-            if control.get_selection().get_selected()[1] is None:
-                all_are_active = False
-        self.gui.get_object("TaskListAdd").set_sensitive(all_are_active)
         # en/disable some buttons
         index = self._treeview_get_active_index(self.tasklist_table, self.task_list)
         selection_active = not index is None
@@ -564,6 +575,16 @@ class ProjectGui:
         self.gui.get_object("TaskListMoveUp").set_sensitive(selection_active and index > 0)
         self.gui.get_object("TaskListMoveDown").set_sensitive(selection_active and index < len(self.task_list) - 1)
         self.gui.get_object("GenerateToolPathButton").set_sensitive(selection_active)
+        # "add" is only allowed, if there are any tools, processes and bounds
+        self.gui.get_object("TaskListAdd").set_sensitive(
+                (len(self.tool_list) > 0) \
+                and (len(self.process_list) > 0) \
+                and (len(self.bounds_list) > 0))
+        details_box = self.gui.get_object("TaskDetails")
+        if selection_active:
+            details_box.show()
+        else:
+            details_box.hide()
         # check if any of the tasks is marked as "enabled"
         enabled_count = len([True for task in self.task_list if task["enabled"]])
         self.gui.get_object("GenerateAllToolPathsButton").set_sensitive(enabled_count > 0)
@@ -572,8 +593,19 @@ class ProjectGui:
         task_index = self._treeview_get_active_index(self.tasklist_table, self.task_list)
         if (not task_index is None) and (task_index < len(self.task_list)):
             task = self.task_list[task_index]
+            # block all "change" signals for the task controls
+            for obj, signal_handler in self._task_property_signals:
+                obj.handler_block(signal_handler)
+            self.gui.get_object("TaskNameControl").set_text(task["name"])
             tool = task["tool"]
+            self.gui.get_object("TaskToolSelector").set_active(self.tool_list.index(tool))
             process = task["process"]
+            self.gui.get_object("TaskProcessSelector").set_active(self.process_list.index(process))
+            bounds = task["bounds"]
+            self.gui.get_object("TaskBoundsSelector").set_active(self.bounds_list.index(bounds))
+            # unblock the signals again
+            for obj, signal_handler in self._task_property_signals:
+                obj.handler_unblock(signal_handler)
             unit = self.settings.get("unit")
             tool_desc = "Tool: %s " % tool["shape"]
             if tool["shape"] != "ToroidalCutter":
@@ -600,14 +632,36 @@ class ProjectGui:
             tasklist_model.clear()
             # remove broken tasks from the list (tool or process was deleted)
             self.task_list = [task for task in self.task_list
-                    if (task["tool"] in self.tool_list) and (task["process"] in self.process_list)]
+                    if (task["tool"] in self.tool_list) \
+                            and (task["process"] in self.process_list) \
+                            and (task["bounds"] in self.bounds_list)]
             counter = 0
             for task in self.task_list:
-                tasklist_model.append((counter, task["tool"]["name"], task["process"]["name"], task["enabled"]))
+                tasklist_model.append((counter, task["name"], task["enabled"]))
                 counter += 1
             if not new_index is None:
                 self._treeview_set_active_index(self.tasklist_table, new_index)
         self.update_tasklist_controls()
+
+    @gui_activity_guard
+    def _handle_task_setting_change(self, widget, data=None):
+        # get the index of the currently selected task
+        try:
+            current_task_index = self._treeview_get_active_index(self.tasklist_table, self.task_list)
+        except ValueError:
+            current_task_index = None
+        if current_task_index is None:
+            return
+        task = self.task_list[current_task_index]
+        task["name"] = self.gui.get_object("TaskNameControl").get_text()
+        tool_id = self.gui.get_object("TaskToolSelector").get_active()
+        task["tool"] = self.tool_list[tool_id]
+        process_id = self.gui.get_object("TaskProcessSelector").get_active()
+        task["process"] = self.process_list[process_id]
+        bounds_id = self.gui.get_object("TaskBoundsSelector").get_active()
+        task["bounds"] = self.bounds_list[bounds_id]
+        # update the tasklist table (especially for name changes)
+        self.update_tasklist_table()
 
     @gui_activity_guard
     def _handle_tasklist_button_event(self, widget, data, action=None):
@@ -621,11 +675,17 @@ class ProjectGui:
             current_task_index = None
         self._treeview_button_event(self.tasklist_table, self.task_list, action, self.update_tasklist_table)
         if action == "add":
-            tool_index = self._treeview_get_active_index(self.tool_table, self.tool_list)
-            process_index = self._treeview_get_active_index(self.process_table, self.process_list)
             new_task = {}
-            new_task["tool"] = self.tool_list[tool_index]
-            new_task["process"] = self.process_list[process_index]
+            # look for the first unused default name
+            prefix = "New Task "
+            index = 1
+            # loop while the current name is in use
+            while [True for task in self.task_list if task["name"] == "%s%d" % (prefix, index)]:
+                index += 1
+            new_task["name"] = "%s%d" % (prefix, index)
+            new_task["tool"] = self.tool_list[0]
+            new_task["process"] = self.process_list[0]
+            new_task["bounds"] = self.bounds_list[0]
             new_task["enabled"] = True
             self.task_list.append(new_task)
             self.update_tasklist_table(self.task_list.index(new_task))
@@ -1326,9 +1386,11 @@ class ProjectGui:
             settings.load_file(filename)
         self.tool_list = settings.get_tools()
         self.process_list = settings.get_processes()
+        self.bounds_list = settings.get_bounds()
         self.task_list = settings.get_tasks()
         self.update_tool_table()
         self.update_process_table()
+        self.update_bounds_table()
         self.update_tasklist_table()
 
     def _put_bounds_settings_to_gui(self, settings):
@@ -1343,7 +1405,7 @@ class ProjectGui:
     def _load_bounds_settings_from_gui(self, settings=None):
         if settings is None:
             settings = {}
-        settings["name"] = self.gui.get_object("ToolName").get_text()
+        settings["name"] = self.gui.get_object("BoundsName").get_text()
         settings["type"] = self.settings.get("boundary_type")
         for key in ("x_low", "x_high", "y_low", "y_high", "z_low", "z_high"):
             settings[key] = self.settings.get("boundary_%s" % key)
@@ -1617,7 +1679,9 @@ class ProjectGui:
         if not filename:
             return
         settings = pycam.Gui.Settings.ProcessSettings()
-        if not settings.write_to_file(filename, self.tool_list, self.process_list, self.task_list) and not no_dialog and not self.no_dialog:
+        if not settings.write_to_file(filename, self.tool_list,
+                self.process_list, self.bounds_list, self.task_list) \
+                and not no_dialog and not self.no_dialog:
             show_error_dialog(self.window, "Failed to save settings file")
 
     def toggle_progress_bar(self, status):
