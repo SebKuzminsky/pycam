@@ -138,7 +138,7 @@ path_direction: x
 safety_height: 5
 
 [Process0]
-name: Rough
+name: Remove material
 path_generator: PushCutter
 path_postprocessor: PolygonCutter
 material_allowance: 0.5
@@ -146,7 +146,7 @@ step_down: 3.0
 overlap_percent: 0
 
 [Process1]
-name: Semi-finish
+name: Carve contour
 path_generator: PushCutter
 path_postprocessor: ContourCutter
 material_allowance: 0.2
@@ -154,7 +154,7 @@ step_down: 1.5
 overlap_percent: 20
 
 [Process2]
-name: Finish
+name: Cleanup
 path_generator: DropCutter
 path_postprocessor: ZigZagCutter
 material_allowance: 0.0
@@ -169,22 +169,46 @@ material_allowance: 0.0
 step_down: 1.0
 overlap_percent: 50
 
+[BoundsDefault]
+type: relative_margin
+x_low: 0.0
+x_high: 0.0
+y_low: 0.0
+y_high: 0.0
+z_low: 0.0
+z_high: 0.0
+
+[Bounds0]
+name: Minimum
+
+[Bounds1]
+name: 10% margin
+x_low: 10.0
+x_high: 10.0
+y_low: 10.0
+y_high: 10.0
+
 [TaskDefault]
 enabled: yes
+bounds: 1
 
 [Task0]
+name: Rough
 tool: 0
 process: 0
 
 [Task1]
+name: Semi-finish
 tool: 1
 process: 1
 
 [Task2]
+name: Finish
 tool: 2
 process: 2
 
 [Task3]
+name: Gravure
 enabled: no
 tool: 2
 process: 3
@@ -207,26 +231,33 @@ process: 3
             "step_down": float,
             "tool": object,
             "process": object,
+            "bounds": object,
             "enabled": bool,
-            "minx": float,
-            "miny": float,
-            "minz": float,
-            "maxx": float,
-            "maxy": float,
-            "maxz": float,
+            "type": str,
+            "x_low": float,
+            "x_high": float,
+            "y_low": float,
+            "y_high": float,
+            "z_low": float,
+            "z_high": float,
     }
 
     CATEGORY_KEYS = {
-            "tool": ("name", "shape", "tool_radius", "torus_radius", "feedrate", "speed"),
-            "process": ("name", "path_generator", "path_postprocessor", "path_direction",
-                    "safety_height", "material_allowance", "overlap_percent", "step_down"),
-            "task": ("tool", "process", "enabled"),
+            "tool": ("name", "shape", "tool_radius", "torus_radius", "feedrate",
+                    "speed"),
+            "process": ("name", "path_generator", "path_postprocessor",
+                    "path_direction", "safety_height", "material_allowance",
+                    "overlap_percent", "step_down"),
+            "bounds": ("name", "type", "x_low", "x_high", "y_low",
+                    "y_high", "z_low", "z_high"),
+            "task": ("name", "tool", "process", "bounds", "enabled"),
     }
 
     SECTION_PREFIXES = {
         "tool": "Tool",
         "process": "Process",
         "task": "Task",
+        "bounds": "Bounds",
     }
 
     DEFAULT_SUFFIX = "Default"
@@ -262,8 +293,8 @@ process: 3
             return False
         return True
 
-    def write_to_file(self, filename, tools=None, processes=None, tasks=None):
-        text = self.get_config_text(tools, processes, tasks)
+    def write_to_file(self, filename, tools=None, processes=None, bounds=None, tasks=None):
+        text = self.get_config_text(tools, processes, bounds, tasks)
         try:
             fi = open(filename, "w")
             fi.write(text)
@@ -279,6 +310,9 @@ process: 3
     def get_processes(self):
         return self._get_category_items("process")
 
+    def get_bounds(self):
+        return self._get_category_items("bounds")
+
     def get_tasks(self):
         return self._get_category_items("task")
 
@@ -292,11 +326,12 @@ process: 3
                 item = {}
                 for key in self.CATEGORY_KEYS[type_name]:
                     value_type = self.SETTING_TYPES[key]
+                    raw = value_type == str
                     try:
-                        value_raw = self.config.get(current_section_name, key)
+                        value_raw = self.config.get(current_section_name, key, raw=raw)
                     except ConfigParser.NoOptionError:
                         try:
-                            value_raw = self.config.get(prefix + self.DEFAULT_SUFFIX, key)
+                            value_raw = self.config.get(prefix + self.DEFAULT_SUFFIX, key, raw=raw)
                         except ConfigParser.NoOptionError:
                             value_raw = None
                     if not value_raw is None:
@@ -337,17 +372,20 @@ process: 3
         else:
             return str(value_type(value))
 
-    def get_config_text(self, tools=None, processes=None, tasks=None):
+    def get_config_text(self, tools=None, processes=None, bounds=None, tasks=None):
         result = []
         if tools is None:
             tools = []
         if processes is None:
             processes = []
+        if bounds is None:
+            bounds = []
         if tasks is None:
             tasks = []
         lists = {}
         lists["tool"] = tools
         lists["process"] = processes
+        lists["bounds"] = bounds
         lists["task"] = tasks
         for type_name in lists.keys():
             type_list = lists[type_name]
