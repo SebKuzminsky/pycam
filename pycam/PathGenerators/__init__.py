@@ -99,19 +99,19 @@ def get_free_paths_triangles(model, cutter, p1, p2):
     hits.sort(Hit.cmp)
 
     c = None
-    t = []
+    count = 0
     points = []
     for h in hits:
         if h.dir == forward:
-            if len(t)==0:
+            if count == 0:
                 if h.d >= 0:
                     if len(points) == 0:
                         points.append(p1)
                     points.append(h.cl)
-            t.append(h.t)
+            count += 1
         else:
-            t.remove(h.t)
-            if len(t)==0:
+            count -= 1
+            if count == 0:
                 if h.d <= xyz_dist:
                     points.append(h.cl)
 
