@@ -2530,7 +2530,7 @@ This operation is not available for engraving.</property>
                                           <object class="GtkTable" id="table2">
                                             <property name="visible">True</property>
                                             <property name="n_rows">4</property>
-                                            <property name="n_columns">5</property>
+                                            <property name="n_columns">6</property>
                                             <property name="column_spacing">3</property>
                                             <property name="row_spacing">3</property>
                                             <child>
@@ -2538,7 +2538,7 @@ This operation is not available for engraving.</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="invisible_char">&#x25CF;</property>
-                                                <property name="width_chars">5</property>
+                                                <property name="width_chars">6</property>
                                                 <property name="adjustment">min-x</property>
                                                 <property name="digits">2</property>
                                                 <property name="numeric">True</property>
@@ -2557,7 +2557,7 @@ This operation is not available for engraving.</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="invisible_char">&#x25CF;</property>
-                                                <property name="width_chars">5</property>
+                                                <property name="width_chars">6</property>
                                                 <property name="adjustment">max-y</property>
                                                 <property name="digits">2</property>
                                                 <property name="numeric">True</property>
@@ -2576,7 +2576,7 @@ This operation is not available for engraving.</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="invisible_char">&#x25CF;</property>
-                                                <property name="width_chars">5</property>
+                                                <property name="width_chars">6</property>
                                                 <property name="adjustment">min-z</property>
                                                 <property name="digits">2</property>
                                                 <property name="numeric">True</property>
@@ -2595,7 +2595,7 @@ This operation is not available for engraving.</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="invisible_char">&#x25CF;</property>
-                                                <property name="width_chars">5</property>
+                                                <property name="width_chars">6</property>
                                                 <property name="adjustment">max-z</property>
                                                 <property name="digits">2</property>
                                                 <property name="numeric">True</property>
@@ -2614,7 +2614,7 @@ This operation is not available for engraving.</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="invisible_char">&#x25CF;</property>
-                                                <property name="width_chars">5</property>
+                                                <property name="width_chars">6</property>
                                                 <property name="adjustment">min-y</property>
                                                 <property name="digits">2</property>
                                                 <property name="numeric">True</property>
@@ -2633,7 +2633,7 @@ This operation is not available for engraving.</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="invisible_char">&#x25CF;</property>
-                                                <property name="width_chars">5</property>
+                                                <property name="width_chars">6</property>
                                                 <property name="adjustment">max-x</property>
                                                 <property name="digits">2</property>
                                                 <property name="numeric">True</property>
@@ -2739,7 +2739,7 @@ This operation is not available for engraving.</property>
                                               </packing>
                                             </child>
                                             <child>
-                                              <object class="GtkButton" id="BoundsMarginIncreaseX1">
+                                              <object class="GtkButton" id="BoundsMarginIncreaseY">
                                                 <property name="label" translatable="yes">+</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
@@ -2755,7 +2755,7 @@ This operation is not available for engraving.</property>
                                               </packing>
                                             </child>
                                             <child>
-                                              <object class="GtkButton" id="BoundsMarginIncreaseX2">
+                                              <object class="GtkButton" id="BoundsMarginIncreaseZ">
                                                 <property name="label" translatable="yes">+</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
@@ -2772,7 +2772,7 @@ This operation is not available for engraving.</property>
                                             </child>
                                             <child>
                                               <object class="GtkAlignment" id="alignment35">
-                                                <property name="width_request">40</property>
+                                                <property name="width_request">30</property>
                                                 <property name="visible">True</property>
                                                 <child>
                                                   <placeholder/>
@@ -2787,15 +2787,15 @@ This operation is not available for engraving.</property>
                                             </child>
                                             <child>
                                               <object class="GtkAlignment" id="alignment36">
-                                                <property name="width_request">40</property>
+                                                <property name="width_request">30</property>
                                                 <property name="visible">True</property>
                                                 <child>
                                                   <placeholder/>
                                                 </child>
                                               </object>
                                               <packing>
-                                                <property name="left_attach">4</property>
-                                                <property name="right_attach">5</property>
+                                                <property name="left_attach">5</property>
+                                                <property name="right_attach">6</property>
                                                 <property name="x_options">GTK_FILL</property>
                                                 <property name="y_options">GTK_FILL</property>
                                               </packing>
@@ -2803,6 +2803,54 @@ This operation is not available for engraving.</property>
                                             <child>
                                               <object class="GtkButton" id="BoundsMarginDecreaseX">
                                                 <property name="label" translatable="yes">-</property>
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="receives_default">True</property>
+                                              </object>
+                                              <packing>
+                                                <property name="left_attach">5</property>
+                                                <property name="right_attach">6</property>
+                                                <property name="top_attach">1</property>
+                                                <property name="bottom_attach">2</property>
+                                                <property name="x_options">GTK_FILL</property>
+                                                <property name="y_options">GTK_FILL</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkButton" id="BoundsMarginDecreaseY">
+                                                <property name="label" translatable="yes">-</property>
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="receives_default">True</property>
+                                              </object>
+                                              <packing>
+                                                <property name="left_attach">5</property>
+                                                <property name="right_attach">6</property>
+                                                <property name="top_attach">2</property>
+                                                <property name="bottom_attach">3</property>
+                                                <property name="x_options">GTK_FILL</property>
+                                                <property name="y_options">GTK_FILL</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkButton" id="BoundsMarginDecreaseZ">
+                                                <property name="label" translatable="yes">-</property>
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="receives_default">True</property>
+                                              </object>
+                                              <packing>
+                                                <property name="left_attach">5</property>
+                                                <property name="right_attach">6</property>
+                                                <property name="top_attach">3</property>
+                                                <property name="bottom_attach">4</property>
+                                                <property name="x_options">GTK_FILL</property>
+                                                <property name="y_options">GTK_FILL</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkButton" id="BoundsMarginResetX">
+                                                <property name="label" translatable="yes">0</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">True</property>
@@ -2817,8 +2865,8 @@ This operation is not available for engraving.</property>
                                               </packing>
                                             </child>
                                             <child>
-                                              <object class="GtkButton" id="BoundsMarginDecreaseX1">
-                                                <property name="label" translatable="yes">-</property>
+                                              <object class="GtkButton" id="BoundsMarginResetY">
+                                                <property name="label" translatable="yes">0</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">True</property>
@@ -2833,8 +2881,8 @@ This operation is not available for engraving.</property>
                                               </packing>
                                             </child>
                                             <child>
-                                              <object class="GtkButton" id="BoundsMarginDecreaseX2">
-                                                <property name="label" translatable="yes">-</property>
+                                              <object class="GtkButton" id="BoundsMarginResetZ">
+                                                <property name="label" translatable="yes">0</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">True</property>
@@ -2844,6 +2892,21 @@ This operation is not available for engraving.</property>
                                                 <property name="right_attach">5</property>
                                                 <property name="top_attach">3</property>
                                                 <property name="bottom_attach">4</property>
+                                                <property name="x_options">GTK_FILL</property>
+                                                <property name="y_options">GTK_FILL</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkAlignment" id="alignment16">
+                                                <property name="width_request">30</property>
+                                                <property name="visible">True</property>
+                                                <child>
+                                                  <placeholder/>
+                                                </child>
+                                              </object>
+                                              <packing>
+                                                <property name="left_attach">4</property>
+                                                <property name="right_attach">5</property>
                                                 <property name="x_options">GTK_FILL</property>
                                                 <property name="y_options">GTK_FILL</property>
                                               </packing>

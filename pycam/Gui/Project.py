@@ -381,6 +381,15 @@ class ProjectGui:
         self.gui.get_object("BoundsListMoveDown").connect("clicked", self.handle_bounds_table_event, "move_down")
         self.gui.get_object("BoundsListAdd").connect("clicked", self.handle_bounds_table_event, "add")
         self.gui.get_object("BoundsListDelete").connect("clicked", self.handle_bounds_table_event, "delete")
+        self.gui.get_object("BoundsMarginIncreaseX").connect("clicked", self.adjust_bounds, "x", "+")
+        self.gui.get_object("BoundsMarginIncreaseY").connect("clicked", self.adjust_bounds, "y", "+")
+        self.gui.get_object("BoundsMarginIncreaseZ").connect("clicked", self.adjust_bounds, "z", "+")
+        self.gui.get_object("BoundsMarginDecreaseX").connect("clicked", self.adjust_bounds, "x", "-")
+        self.gui.get_object("BoundsMarginDecreaseY").connect("clicked", self.adjust_bounds, "y", "-")
+        self.gui.get_object("BoundsMarginDecreaseZ").connect("clicked", self.adjust_bounds, "z", "-")
+        self.gui.get_object("BoundsMarginResetX").connect("clicked", self.adjust_bounds, "x", "0")
+        self.gui.get_object("BoundsMarginResetY").connect("clicked", self.adjust_bounds, "y", "0")
+        self.gui.get_object("BoundsMarginResetZ").connect("clicked", self.adjust_bounds, "z", "0")
         # connect change handler for boundary settings
         self.gui.get_object("BoundsName").connect("changed",
                 self.handle_bounds_settings_change)
@@ -567,6 +576,42 @@ class ProjectGui:
         else:
             self.settings.set("support_grid", None)
 
+    @gui_activity_guard
+    def adjust_bounds(self, widget, axis, change):
+        bounds = self.settings.get("current_bounds")
+        abs_bounds = self._get_bounds_limits_absolute(bounds)
+        # calculate the "change" for +/- (10% of this axis' model dimension)
+        if bounds is None:
+            return
+        if axis == "x":
+            change_value = (self.model.maxx - self.model.minx) * 0.1
+        elif axis == "y":
+            change_value = (self.model.maxy - self.model.miny) * 0.1
+        elif axis == "z":
+            change_value = (self.model.maxz - self.model.minz) * 0.1
+        else:
+            # not allowed
+            return
+        # calculate the new bounds
+        if change == "0":
+            abs_bounds["%s_low" % axis] = getattr(self.model, "min%s" % axis)
+            abs_bounds["%s_high" % axis] = getattr(self.model, "max%s" % axis)
+        elif change == "+":
+            abs_bounds["%s_low" % axis] -= change_value
+            abs_bounds["%s_high" % axis] += change_value
+        elif change == "-":
+            abs_bounds["%s_low" % axis] += change_value
+            abs_bounds["%s_high" % axis] -= change_value
+        else:
+            # not allowed
+            return
+        # transfer the new bounds values to the old settings
+        self._change_bounds_by_absolute_values(bounds, abs_bounds)
+        # update the controls
+        self._put_bounds_settings_to_gui(bounds)
+        # update the visualization
+        self.append_to_queue(self.update_boundary_limits)
+
     def _get_bounds_limits_absolute(self, bounds):
         minx, maxx, miny, maxy, minz, maxz = self.model.minx, self.model.maxx, \
                 self.model.miny, self.model.maxy, self.model.minz, \
@@ -609,27 +654,33 @@ class ProjectGui:
         if new_type == bounds["type"]:
             # no change
             return
+        # calculate the absolute bounds of the previous configuration
+        abs_bounds = self._get_bounds_limits_absolute(bounds)
+        bounds["type"] = new_type
+        self._change_bounds_by_absolute_values(bounds, abs_bounds)
+        self._put_bounds_settings_to_gui(bounds)
+        self.append_to_queue(self.update_boundary_limits)
+
+    def _change_bounds_by_absolute_values(self, bounds, abs_bounds):
         minx, maxx, miny, maxy, minz, maxz = self.model.minx, self.model.maxx, \
                 self.model.miny, self.model.maxy, self.model.minz, \
                 self.model.maxz
-        # calculate the absolute bounds of the previous configuration
-        abs_bounds = self._get_bounds_limits_absolute(bounds)
         # calculate the new settings
-        if new_type == "relative_margin":
+        if bounds["type"] == "relative_margin":
             bounds["x_low"] = (minx - abs_bounds["x_low"]) / (maxx - minx) * 100.0
             bounds["x_high"] = (abs_bounds["x_high"] - maxx) / (maxx - minx) * 100.0
             bounds["y_low"] = (miny - abs_bounds["y_low"]) / (maxy - miny) * 100.0
             bounds["y_high"] = (abs_bounds["y_high"] - maxy) / (maxy - miny) * 100.0
             bounds["z_low"] = (minz - abs_bounds["z_low"]) / (maxz - minz) * 100.0
             bounds["z_high"] = (abs_bounds["z_high"] - maxz) / (maxz - minz) * 100.0
-        elif new_type == "fixed_margin":
+        elif bounds["type"] == "fixed_margin":
             bounds["x_low"] = minx - abs_bounds["x_low"]
             bounds["x_high"] = abs_bounds["x_high"] - maxx
             bounds["y_low"] = miny - abs_bounds["y_low"]
             bounds["y_high"] = abs_bounds["y_high"] - maxy
             bounds["z_low"] = minz - abs_bounds["z_low"]
             bounds["z_high"] = abs_bounds["z_high"] - maxz
-        elif new_type == "custom":
+        elif bounds["type"] == "custom":
             bounds["x_low"] = abs_bounds["x_low"]
             bounds["x_high"] = abs_bounds["x_high"]
             bounds["y_low"] = abs_bounds["y_low"]
@@ -639,9 +690,6 @@ class ProjectGui:
         else:
             # this should not happen
             return
-        bounds["type"] = new_type
-        self._put_bounds_settings_to_gui(bounds)
-        self.append_to_queue(self.update_boundary_limits)
 
     @gui_activity_guard
     def update_boundary_limits(self, widget=None):
