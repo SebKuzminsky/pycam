@@ -137,6 +137,8 @@ class ProjectGui:
             sys.exit(1)
         self.gui.add_from_file(gtk_build_file)
         self.window = self.gui.get_object("ProjectWindow")
+        # increase the initial width of the window (due to hidden elements)
+        self.window.set_default_size(400, -1)
         # initialize the RecentManager
         try:
             self.recent_manager = gtk.RecentManager()
