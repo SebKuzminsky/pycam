@@ -113,6 +113,10 @@ class ProjectGui:
             "inside": -1,
             "along": 0,
             "around": 1}
+    BOUNDARY_TYPES = {
+            "relative_margin": "BoundsTypeRelativeMargin",
+            "fixed_margin": "BoundsTypeFixedMargin",
+            "custom": "BoundsTypeCustom"}
 
     META_DATA_PREFIX = "PYCAM-META-DATA:"
 
@@ -211,8 +215,10 @@ class ProjectGui:
             unit_field.set_active(0 if text == "mm" else 1)
             self._last_unit = text
         self.settings.add_item("unit", unit_field.get_active_text, set_unit)
-        self.gui.get_object("UnitChangeSelectAll").connect("clicked", self.change_unit_set_selection, True)
-        self.gui.get_object("UnitChangeSelectNone").connect("clicked", self.change_unit_set_selection, False)
+        self.gui.get_object("UnitChangeSelectAll").connect("clicked",
+                self.change_unit_set_selection, True)
+        self.gui.get_object("UnitChangeSelectNone").connect("clicked",
+                self.change_unit_set_selection, False)
         # boundary mode (move inside/along/around the boundaries)
         boundary_mode_control = self.gui.get_object("BoundaryModeControl")
         def set_boundary_mode(value):
@@ -220,41 +226,22 @@ class ProjectGui:
             boundary_mode_control.set_active(value + 1)
         def get_boundary_mode():
             return boundary_mode_control.get_active() - 1
-        self.settings.add_item("boundary_mode", get_boundary_mode, set_boundary_mode)
-        # define the limit callback functions
-        for control in ("boundary_x_low", "boundary_y_low", "boundary_z_low",
-                "boundary_x_high", "boundary_y_high", "boundary_z_high"):
-            obj = self.gui.get_object(control)
-            self.settings.add_item(control, obj.get_value, obj.set_value)
-            obj.connect("value-changed", self.update_boundary_limits)
+        self.settings.add_item("boundary_mode", get_boundary_mode,
+                set_boundary_mode)
+        # Trigger a re-calculation of the bounds values after changing its type.
+        for objname in ("BoundsTypeRelativeMargin", "BoundsTypeFixedMargin",
+                "BoundsTypeCustom"):
+            self.gui.get_object(objname).connect("toggled",
+                    self.switch_bounds_type)
+        # Calculate the "minx, ..." settings based on a (potentially) selected
+        # bounds setting.
         def get_absolute_limit(key):
-            if key in ("minx", "maxx"):
-                dim_low, dim_high = self.model.minx, self.model.maxx
-                margin_low, margin_high = self.settings.get("boundary_x_low"), self.settings.get("boundary_x_high")
-            elif key in ("miny", "maxy"):
-                dim_low, dim_high = self.model.miny, self.model.maxy
-                margin_low, margin_high = self.settings.get("boundary_y_low"), self.settings.get("boundary_y_high")
-            elif key in ("minz", "maxz"):
-                dim_low, dim_high = self.model.minz, self.model.maxz
-                margin_low, margin_high = self.settings.get("boundary_z_low"), self.settings.get("boundary_z_high")
-            else:
-                return None
-            if key in ("minx", "miny", "minz"):
-                this_dim, other_dim = dim_low, dim_high
-                margin = - margin_low
-            else:
-                this_dim, other_dim = dim_high, dim_low
-                margin = margin_high
-            mode = self.settings.get("boundary_type")
-            if mode == "relative_margin":
-                result = this_dim + abs(other_dim - this_dim) * (margin / 100.0)
-            elif mode == "fixed_margin":
-                result = this_dim + margin
-            elif mode == "custom":
-                result = margin
-            else:
-                return None
-            return result
+            bounds = self.settings.get("current_bounds")
+            if bounds is None:
+                return getattr(self.model, key)
+            mapping = {"minx": "x_low", "maxx": "x_high", "miny": "y_low",
+                    "maxy": "y_high", "minz": "z_low", "maxz": "z_high"}
+            return self._get_bounds_limits_absolute(bounds)[mapping[key]]
         for key in ("minx", "maxx", "miny", "maxy", "minz", "maxz"):
             # use a new variable "j" to avoid re-using the same object "key"
             self.settings.add_item(key, lambda j=key: get_absolute_limit(j))
@@ -371,37 +358,40 @@ class ProjectGui:
                 "MaterialAllowanceControl", "MaxStepDownControl"):
             self.gui.get_object(objname).connect("value-changed", self.handle_process_settings_change)
         self.gui.get_object("ProcessSettingName").connect("changed", self.handle_process_settings_change)
+        # get/set functions for the current tool/process/bounds/task
+        def get_current_item(table, item_list):
+            index = self._treeview_get_active_index(table, item_list)
+            if index is None:
+                return None
+            else:
+                return item_list[index]
+        def set_current_item(table, item_list, item):
+            try:
+                new_index = item_list.index(item)
+            except ValueError:
+                return
+            self._treeview_set_active_index(table, new_index)
         # the boundary manager
-        self.bounds_table = self.gui.get_object("BoundsListTable")
+        self.settings.add_item("current_bounds",
+                lambda: get_current_item(self.bounds_editor_table, self.bounds_list),
+                lambda bounds: set_current_item(self.bounds_editor_table, self.bounds_list, bounds))
         self.bounds_editor_table = self.gui.get_object("BoundsEditorTable")
         self.bounds_editor_table.get_selection().connect("changed", self.switch_bounds_table_selection)
         self.gui.get_object("BoundsListMoveUp").connect("clicked", self.handle_bounds_table_event, "move_up")
         self.gui.get_object("BoundsListMoveDown").connect("clicked", self.handle_bounds_table_event, "move_down")
         self.gui.get_object("BoundsListAdd").connect("clicked", self.handle_bounds_table_event, "add")
         self.gui.get_object("BoundsListDelete").connect("clicked", self.handle_bounds_table_event, "delete")
-        # boundary types
-        boundary_mappings = {"relative_margin": "BoundsTypeRelativeMargin",
-                "fixed_margin": "BoundsTypeFixedMargin",
-                "custom": "BoundsTypeCustom"}
-        def set_boundary_type(value):
-            self.gui.get_object(boundary_mappings[value]).set_active(True)
-        def get_boundary_type():
-            for key, objname in boundary_mappings.items():
-                if self.gui.get_object(objname).get_active():
-                    return key
-        self.settings.add_item("boundary_type", get_boundary_type, set_boundary_type)
         # connect change handler for boundary settings
         self.gui.get_object("BoundsName").connect("changed",
                 self.handle_bounds_settings_change)
-        for objname in ("BoundsTypeRelativeMargin", "BoundsTypeFixedMargin",
-                "BoundsTypeCustom"):
-            self.gui.get_object(objname).connect("toggled",
-                    self.handle_bounds_settings_change)
         for objname in ("boundary_x_low", "boundary_x_high", "boundary_y_low",
                 "boundary_y_high", "boundary_z_low", "boundary_z_high"):
             self.gui.get_object(objname).connect("value-changed",
                     self.handle_bounds_settings_change)
         # the process manager
+        self.settings.add_item("current_process",
+                lambda: get_current_item(self.process_editor_table, self.process_list),
+                lambda process: set_current_item(self.process_editor_table, self.process_list, process))
         self.process_editor_table = self.gui.get_object("ProcessEditorTable")
         self.process_editor_table.get_selection().connect("changed", self.switch_process_table_selection)
         self.gui.get_object("ProcessListMoveUp").connect("clicked", self.handle_process_table_event, "move_up")
@@ -426,6 +416,9 @@ class ProjectGui:
         # store the original content (for adding the number of current toolpaths in "update_toolpath_table")
         self._original_toolpath_tab_label = self.gui.get_object("ToolPathTabLabel").get_text()
         # tool editor
+        self.settings.add_item("current_tool",
+                lambda: get_current_item(self.tool_editor_table, self.tool_list),
+                lambda tool: set_current_item(self.tool_editor_table, self.tool_list, tool))
         self.tool_editor_table = self.gui.get_object("ToolEditorTable")
         self.tool_editor_table.get_selection().connect("changed", self.switch_tool_editor_table_selection)
         self.gui.get_object("ToolListMoveUp").connect("clicked", self._tool_editor_button_event, "move_up")
@@ -433,8 +426,11 @@ class ProjectGui:
         self.gui.get_object("ToolListAdd").connect("clicked", self._tool_editor_button_event, "add")
         self.gui.get_object("ToolListDelete").connect("clicked", self._tool_editor_button_event, "delete")
         # the task list manager
+        self.settings.add_item("current_task",
+                lambda: get_current_item(self.tasklist_table, self.task_list),
+                lambda task: set_current_item(self.tasklist_table, self.task_list, task))
         self.tasklist_table = self.gui.get_object("TaskListTable")
-        self.tasklist_table.get_selection().connect("changed", self.update_tasklist_controls)
+        self.tasklist_table.get_selection().connect("changed", self.switch_tasklist_table_selection)
         self.gui.get_object("tasklist_enabled").connect("toggled", self._handle_tasklist_button_event, "toggle_enabled")
         self.gui.get_object("TaskListMoveUp").connect("clicked", self._handle_tasklist_button_event, "move_up")
         self.gui.get_object("TaskListMoveDown").connect("clicked", self._handle_tasklist_button_event, "move_down")
@@ -571,6 +567,83 @@ class ProjectGui:
         else:
             self.settings.set("support_grid", None)
 
+    def _get_bounds_limits_absolute(self, bounds):
+        minx, maxx, miny, maxy, minz, maxz = self.model.minx, self.model.maxx, \
+                self.model.miny, self.model.maxy, self.model.minz, \
+                self.model.maxz
+        # copy the original dict
+        abs_bounds = dict(bounds.items())
+        # "custom" is used for absolute limits
+        abs_bounds["type"] = "custom"
+        # calculate the absolute limits
+        if bounds["type"] == "relative_margin":
+            abs_bounds["x_low"] = minx - bounds["x_low"] / 100.0 * (maxx - minx)
+            abs_bounds["x_high"] = maxx + bounds["x_high"] / 100.0 * (maxx - minx)
+            abs_bounds["y_low"] = miny - bounds["y_low"] / 100.0 * (maxy - miny)
+            abs_bounds["y_high"] = maxy + bounds["y_high"] / 100.0 * (maxy - miny)
+            abs_bounds["z_low"] = minz - bounds["z_low"] / 100.0 * (maxz - minz)
+            abs_bounds["z_high"] = maxz + bounds["z_high"] / 100.0 * (maxz - minz)
+        elif bounds["type"] == "fixed_margin":
+            abs_bounds["x_low"] = minx - bounds["x_low"]
+            abs_bounds["x_high"] = maxx + bounds["x_high"]
+            abs_bounds["y_low"] = miny - bounds["y_low"]
+            abs_bounds["y_high"] = maxy + bounds["y_high"]
+            abs_bounds["z_low"] = minz - bounds["z_low"]
+            abs_bounds["z_high"] = maxz + bounds["z_high"]
+        elif bounds["type"] == "custom":
+            abs_bounds["x_low"] = bounds["x_low"]
+            abs_bounds["x_high"] = bounds["x_high"]
+            abs_bounds["y_low"] = bounds["y_low"]
+            abs_bounds["y_high"] = bounds["y_high"]
+            abs_bounds["z_low"] = bounds["z_low"]
+            abs_bounds["z_high"] = bounds["z_high"]
+        else:
+            # this should not happen
+            return None
+        return abs_bounds
+
+    @gui_activity_guard
+    def switch_bounds_type(self, widget=None):
+        bounds = self.settings.get("current_bounds")
+        new_type = self._load_bounds_settings_from_gui()["type"]
+        if new_type == bounds["type"]:
+            # no change
+            return
+        minx, maxx, miny, maxy, minz, maxz = self.model.minx, self.model.maxx, \
+                self.model.miny, self.model.maxy, self.model.minz, \
+                self.model.maxz
+        # calculate the absolute bounds of the previous configuration
+        abs_bounds = self._get_bounds_limits_absolute(bounds)
+        # calculate the new settings
+        if new_type == "relative_margin":
+            bounds["x_low"] = (minx - abs_bounds["x_low"]) / (maxx - minx) * 100.0
+            bounds["x_high"] = (abs_bounds["x_high"] - maxx) / (maxx - minx) * 100.0
+            bounds["y_low"] = (miny - abs_bounds["y_low"]) / (maxy - miny) * 100.0
+            bounds["y_high"] = (abs_bounds["y_high"] - maxy) / (maxy - miny) * 100.0
+            bounds["z_low"] = (minz - abs_bounds["z_low"]) / (maxz - minz) * 100.0
+            bounds["z_high"] = (abs_bounds["z_high"] - maxz) / (maxz - minz) * 100.0
+        elif new_type == "fixed_margin":
+            bounds["x_low"] = minx - abs_bounds["x_low"]
+            bounds["x_high"] = abs_bounds["x_high"] - maxx
+            bounds["y_low"] = miny - abs_bounds["y_low"]
+            bounds["y_high"] = abs_bounds["y_high"] - maxy
+            bounds["z_low"] = minz - abs_bounds["z_low"]
+            bounds["z_high"] = abs_bounds["z_high"] - maxz
+        elif new_type == "custom":
+            bounds["x_low"] = abs_bounds["x_low"]
+            bounds["x_high"] = abs_bounds["x_high"]
+            bounds["y_low"] = abs_bounds["y_low"]
+            bounds["y_high"] = abs_bounds["y_high"]
+            bounds["z_low"] = abs_bounds["z_low"]
+            bounds["z_high"] = abs_bounds["z_high"]
+        else:
+            # this should not happen
+            return
+        bounds["type"] = new_type
+        self._put_bounds_settings_to_gui(bounds)
+        self.append_to_queue(self.update_boundary_limits)
+
+    @gui_activity_guard
     def update_boundary_limits(self, widget=None):
         # the support grid depends on the boundary
         self.update_support_grid_model()
@@ -597,6 +670,10 @@ class ProjectGui:
         # check if any of the tasks is marked as "enabled"
         enabled_count = len([True for task in self.task_list if task["enabled"]])
         self.gui.get_object("GenerateAllToolPathsButton").set_sensitive(enabled_count > 0)
+        # update the summary description of the currently active task
+        self.update_task_description()
+
+    def update_task_description(self):
         # update the task description
         lines = []
         task_index = self._treeview_get_active_index(self.tasklist_table, self.task_list)
@@ -652,16 +729,20 @@ class ProjectGui:
                 self._treeview_set_active_index(self.tasklist_table, new_index)
         self.update_tasklist_controls()
 
+    def switch_tasklist_table_selection(self, widget):
+        current_task = self.settings.get("current_task")
+        if not current_task is None:
+            self.settings.set("current_tool", current_task["tool"])
+            self.settings.set("current_process", current_task["process"])
+            self.settings.set("current_bounds", current_task["bounds"])
+        self.update_tasklist_controls()
+
     @gui_activity_guard
     def _handle_task_setting_change(self, widget, data=None):
         # get the index of the currently selected task
-        try:
-            current_task_index = self._treeview_get_active_index(self.tasklist_table, self.task_list)
-        except ValueError:
-            current_task_index = None
-        if current_task_index is None:
+        task = self.settings.get("current_task")
+        if task is None:
             return
-        task = self.task_list[current_task_index]
         task["name"] = self.gui.get_object("TaskNameControl").get_text()
         tool_id = self.gui.get_object("TaskToolSelector").get_active()
         task["tool"] = self.tool_list[tool_id]
@@ -963,19 +1044,19 @@ class ProjectGui:
 
     @gui_activity_guard
     def handle_tool_settings_change(self, widget=None, data=None):
-        current_index = self._treeview_get_active_index(self.tool_editor_table, self.tool_list)
-        if not current_index is None:
-            self._load_tool_settings_from_gui(self.tool_list[current_index])
+        current_tool = self.settings.get("current_tool")
+        if not current_tool is None:
+            self._load_tool_settings_from_gui(current_tool)
             self.update_tool_table()
         self.update_tool_controls()
 
     @gui_activity_guard
     def switch_tool_editor_table_selection(self, widget=None, data=None):
-        new_index = self._treeview_get_active_index(self.tool_editor_table, self.tool_list)
+        current_tool = self.settings.get("current_tool")
         # hide all controls if no process is defined
-        if not new_index is None:
+        if not current_tool is None:
             self.gui.get_object("ToolSettingsControlsBox").show()
-            self._put_tool_settings_to_gui(self.tool_list[new_index])
+            self._put_tool_settings_to_gui(current_tool)
             self.update_tool_table()
         else:
             self.gui.get_object("ToolSettingsControlsBox").hide()
@@ -1025,7 +1106,7 @@ class ProjectGui:
             self.gui.get_object("ToolSettingsControlsBox").show()
         # remove any broken tasks and update changed names
         self.update_tool_controls()
-        self.update_tasklist_table()
+        self.update_task_description()
 
     def change_unit_init(self, widget=None):
         new_unit = self.gui.get_object("unit_control").get_active_text()
@@ -1408,20 +1489,21 @@ class ProjectGui:
 
     def _put_bounds_settings_to_gui(self, settings):
         self.gui.get_object("BoundsName").set_text(settings["name"])
-        # bound limits
-        def set_bounds_type(value):
-            self.gui.get_object(value).set_active(True)
-        self.settings.set("boundary_type", settings["type"])
+        self.gui.get_object(self.BOUNDARY_TYPES[settings["type"]]).set_active(True)
         for key in ("x_low", "x_high", "y_low", "y_high", "z_low", "z_high"):
-            self.settings.set("boundary_%s" % key, settings[key])
+            self.gui.get_object("boundary_%s" % key).set_value(settings[key])
 
     def _load_bounds_settings_from_gui(self, settings=None):
+        def get_boundary_type_from_gui():
+            for key, objname in self.BOUNDARY_TYPES.items():
+                if self.gui.get_object(objname).get_active():
+                    return key
         if settings is None:
             settings = {}
         settings["name"] = self.gui.get_object("BoundsName").get_text()
-        settings["type"] = self.settings.get("boundary_type")
+        settings["type"] = get_boundary_type_from_gui()
         for key in ("x_low", "x_high", "y_low", "y_high", "z_low", "z_high"):
-            settings[key] = self.settings.get("boundary_%s" % key)
+            settings[key] = self.gui.get_object("boundary_%s" % key).get_value()
         return settings
 
     @gui_activity_guard
@@ -1430,6 +1512,7 @@ class ProjectGui:
         if not current_index is None:
             self._load_bounds_settings_from_gui(self.bounds_list[current_index])
             self.update_bounds_table()
+        self.append_to_queue(self.update_boundary_limits)
 
     def update_bounds_table(self, new_index=None, skip_model_update=False):
         # reset the model data and the selection
@@ -1457,17 +1540,18 @@ class ProjectGui:
         else:
             self.gui.get_object("BoundsSettingsControlsBox").show()
         # remove any broken tasks and update changed names
-        self.update_tasklist_table()
+        self.update_task_description()
 
     @gui_activity_guard
     def switch_bounds_table_selection(self, widget=None, data=None):
-        new_index = self._treeview_get_active_index(self.bounds_editor_table, self.bounds_list)
-        if not new_index is None:
+        bounds = self.settings.get("current_bounds")
+        if not bounds is None:
             self.gui.get_object("BoundsSettingsControlsBox").show()
-            self._put_bounds_settings_to_gui(self.bounds_list[new_index])
+            self._put_bounds_settings_to_gui(bounds)
             self.update_bounds_table()
         else:
             self.gui.get_object("BoundsSettingsControlsBox").hide()
+        self.append_to_queue(self.update_boundary_limits)
 
     @gui_activity_guard
     def handle_bounds_table_event(self, widget, data, action=None):
@@ -1541,9 +1625,9 @@ class ProjectGui:
 
     @gui_activity_guard
     def handle_process_settings_change(self, widget=None, data=None):
-        current_index = self._treeview_get_active_index(self.process_editor_table, self.process_list)
-        if not current_index is None:
-            self._load_process_settings_from_gui(self.process_list[current_index])
+        current_process = self.settings.get("current_process")
+        if not current_process is None:
+            self._load_process_settings_from_gui(current_process)
             self.update_process_table()
 
     def update_process_table(self, new_index=None, skip_model_update=False):
@@ -1572,14 +1656,14 @@ class ProjectGui:
         else:
             self.gui.get_object("ProcessSettingsControlsBox").show()
         # remove any broken tasks and update changed names
-        self.update_tasklist_table()
+        self.update_task_description()
 
     @gui_activity_guard
     def switch_process_table_selection(self, widget=None, data=None):
-        new_index = self._treeview_get_active_index(self.process_editor_table, self.process_list)
-        if not new_index is None:
+        current_process = self.settings.get("current_process")
+        if not current_process is None:
             self.gui.get_object("ProcessSettingsControlsBox").show()
-            self._put_process_settings_to_gui(self.process_list[new_index])
+            self._put_process_settings_to_gui(current_process)
             self.update_process_table()
         else:
             self.gui.get_object("ProcessSettingsControlsBox").hide()
