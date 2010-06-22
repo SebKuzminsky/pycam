@@ -851,7 +851,7 @@ class ProjectGui:
             # this shoudl only happen, if we were called in batch mode (command line)
             print >>sys.stderr, "The given task ID (%d) does not exist. Valid values are: %s." % (task_index, range(len(self.task_list)))
             return
-        self.generate_toolpath(task["tool"], task["process"])
+        self.generate_toolpath(task["tool"], task["process"], task["bounds"])
 
     def process_multiple_tasks(self, task_list=None):
         if task_list is None:
@@ -867,7 +867,8 @@ class ProjectGui:
             progress_bar.set_fraction(float(index) / len(enabled_tasks))
             progress_bar.set_text("Toolpath %d/%d" % (index, len(enabled_tasks)))
             task = enabled_tasks[index]
-            if not self.generate_toolpath(task["tool"], task["process"]):
+            if not self.generate_toolpath(task["tool"], task["process"],
+                    task["bounds"]):
                 # break out of the loop, if cancel was requested
                 break
         progress_bar.hide()
@@ -1879,8 +1880,10 @@ class ProjectGui:
         # calculate steps
         detail_level = self.gui.get_object("SimulationDetailsValue").get_value()
         grid_size = 100 * pow(2, detail_level - 1)
-        proportion = (self.settings.get("maxx") - self.settings.get("minx")) \
-                / (self.settings.get("maxy") - self.settings.get("miny"))
+        bounding_box = toolpath.get_toolpath_settings().get_bounds()
+        # proportion = dimension_x / dimension_y
+        proportion = (bounding_box["maxx"] - bounding_box["minx"]) \
+                / (bounding_box["maxy"] - bounding_box["miny"])
         x_steps = int(math.sqrt(grid_size) * proportion)
         y_steps = int(math.sqrt(grid_size) / proportion)
         simulation_backend = pycam.Simulation.ODEBlocks.ODEBlocks(
@@ -1933,7 +1936,7 @@ class ProjectGui:
             self.finish_toolpath_simulation()
 
     @progress_activity_guard
-    def generate_toolpath(self, tool_settings, process_settings):
+    def generate_toolpath(self, tool_settings, process_settings, bounds):
         start_time = time.time()
         self.update_progress_bar("Preparing toolpath generation")
         parent = self
@@ -1965,7 +1968,8 @@ class ProjectGui:
         self.update_progress_bar("Generating collision model")
 
         # turn the toolpath settings into a dict
-        toolpath_settings = self.get_toolpath_settings(tool_settings, process_settings)
+        toolpath_settings = self.get_toolpath_settings(tool_settings,
+                process_settings, bounds)
         if toolpath_settings is None:
             # behave as if "cancel" was requested
             return True
@@ -2003,7 +2007,7 @@ class ProjectGui:
             # return "False" if the action was cancelled
             return not self._progress_cancel_requested
 
-    def get_toolpath_settings(self, tool_settings, process_settings):
+    def get_toolpath_settings(self, tool_settings, process_settings, bounds):
         toolpath_settings = pycam.Gui.Settings.ToolpathSettings()
 
         # this offset allows to cut a model with a minimal boundary box correctly
@@ -2022,12 +2026,14 @@ class ProjectGui:
             # this should never happen
             print >>sys.stderr, "Assertion failed: invalid boundary_mode (%s)" % str(self.settings.get("boundary_mode"))
 
-        minx = float(self.settings.get("minx"))-offset
-        maxx = float(self.settings.get("maxx"))+offset
-        miny = float(self.settings.get("miny"))-offset
-        maxy = float(self.settings.get("maxy"))+offset
-        minz = float(self.settings.get("minz"))
-        maxz = float(self.settings.get("maxz"))
+        abs_bounds = self._get_bounds_limits_absolute(bounds)
+
+        minx = float(abs_bounds["x_low"])-offset
+        maxx = float(abs_bounds["x_high"])+offset
+        miny = float(abs_bounds["y_low"])-offset
+        maxy = float(abs_bounds["y_high"])+offset
+        minz = float(abs_bounds["z_low"])
+        maxz = float(abs_bounds["z_high"])
         toolpath_settings.set_bounds(minx, maxx, miny, maxy, minz, maxz)
 
         # check if the boundary limits are valid
