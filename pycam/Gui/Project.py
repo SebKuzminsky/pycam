@@ -431,7 +431,7 @@ class ProjectGui:
                 lambda: get_current_item(self.tool_editor_table, self.tool_list),
                 lambda tool: set_current_item(self.tool_editor_table, self.tool_list, tool))
         self.tool_editor_table = self.gui.get_object("ToolEditorTable")
-        self.tool_editor_table.get_selection().connect("changed", self.switch_tool_editor_table_selection)
+        self.tool_editor_table.get_selection().connect("changed", self.switch_tool_table_selection)
         self.gui.get_object("ToolListMoveUp").connect("clicked", self._tool_editor_button_event, "move_up")
         self.gui.get_object("ToolListMoveDown").connect("clicked", self._tool_editor_button_event, "move_down")
         self.gui.get_object("ToolListAdd").connect("clicked", self._tool_editor_button_event, "add")
@@ -779,7 +779,7 @@ class ProjectGui:
                 self._treeview_set_active_index(self.tasklist_table, new_index)
         self.update_tasklist_controls()
 
-    def switch_tasklist_table_selection(self, widget):
+    def switch_tasklist_table_selection(self, widget=None):
         current_task = self.settings.get("current_task")
         if not current_task is None:
             self.settings.set("current_tool", current_task["tool"])
@@ -1102,7 +1102,7 @@ class ProjectGui:
         self.update_tool_controls()
 
     @gui_activity_guard
-    def switch_tool_editor_table_selection(self, widget=None, data=None):
+    def switch_tool_table_selection(self, widget=None, data=None):
         current_tool = self.settings.get("current_tool")
         # hide all controls if no process is defined
         if not current_tool is None:
@@ -1175,7 +1175,8 @@ class ProjectGui:
         self.unit_change_window.show()
 
     def change_unit_set_selection(self, widget, state):
-        for key in ("UnitChangeModel", "UnitChangeProcesses", "UnitChangeTools"):
+        for key in ("UnitChangeModel", "UnitChangeProcesses", "UnitChangeTools",
+                "UnitChangeBounds"):
             self.gui.get_object(key).set_active(state)
 
     def change_unit_apply(self, widget=None, data=None, apply_scale=True):
@@ -1198,21 +1199,33 @@ class ProjectGui:
                     self.model.scale(factor)
                     self._set_model_center(old_center)
                 if self.gui.get_object("UnitChangeProcesses").get_active():
-                    # scale the boundaries and keep their center
-                    s = self.settings
-                    center_x = (s.get("maxx") + s.get("minx")) / 2.0
-                    center_y = (s.get("maxy") + s.get("miny")) / 2.0
-                    center_z = (s.get("maxz") + s.get("minz")) / 2.0
-                    s.set("minx", center_x + (s.get("minx") - center_x) * factor)
-                    s.set("maxx", center_x + (s.get("maxx") - center_x) * factor)
-                    s.set("miny", center_y + (s.get("miny") - center_y) * factor)
-                    s.set("maxy", center_y + (s.get("maxy") - center_y) * factor)
-                    s.set("minz", center_z + (s.get("minz") - center_z) * factor)
-                    s.set("maxz", center_z + (s.get("maxz") - center_z) * factor)
                     # scale the process settings
                     for process in self.process_list:
                         for key in ("safety_height", "material_allowance", "step_down"):
                             process[key] *= factor
+                if self.gui.get_object("UnitChangeBounds").get_active():
+                    # scale the boundaries and keep their center
+                    for bounds in self.bounds_list:
+                        if bounds["type"] == "fixed_margin":
+                            bounds["x_low"] *= factor
+                            bounds["x_high"] *= factor
+                            bounds["y_low"] *= factor
+                            bounds["y_high"] *= factor
+                            bounds["z_low"] *= factor
+                            bounds["z_high"] *= factor
+                        elif bounds["type"] == "custom":
+                            center_x = (bounds["x_high"] + bounds["x_low"]) / 2.0
+                            center_y = (bounds["y_high"] + bounds["y_low"]) / 2.0
+                            center_z = (bounds["z_high"] + bounds["z_low"]) / 2.0
+                            bounds["x_low"] = center_x + (bounds["x_low"] - center_x) * factor
+                            bounds["x_high"] = center_x + (bounds["x_high"] - center_x) * factor
+                            bounds["y_low"] = center_y + (bounds["y_low"] - center_y) * factor
+                            bounds["y_high"] = center_y + (bounds["y_high"] - center_y) * factor
+                            bounds["z_low"] = center_z + (bounds["z_low"] - center_z) * factor
+                            bounds["z_high"] = center_z + (bounds["z_high"] - center_z) * factor
+                        elif bounds["type"] == "relative_margin":
+                            # no need to change relative margins
+                            pass
                 if self.gui.get_object("UnitChangeTools").get_active():
                     # scale all tool dimensions
                     for tool in self.tool_list:
@@ -1223,6 +1236,11 @@ class ProjectGui:
         self._last_unit = new_unit
         # update all labels containing the unit size
         self.update_unit_labels()
+        # update all controls and redraw the boundaries
+        self.switch_tool_table_selection()
+        self.switch_process_table_selection()
+        self.switch_bounds_table_selection()
+        self.switch_tasklist_table_selection()
         # redraw the model
         self.update_view()
 
