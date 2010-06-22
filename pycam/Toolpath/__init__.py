@@ -30,8 +30,8 @@ import os
 
 class ToolPathList(list):
 
-    def add_toolpath(self, toolpath, name, tool_settings):
-        self.append(ToolPath(toolpath, name, tool_settings))
+    def add_toolpath(self, toolpath, name, toolpath_settings):
+        self.append(ToolPath(toolpath, name, toolpath_settings))
 
 
 class ToolPath:
