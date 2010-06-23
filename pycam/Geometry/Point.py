@@ -22,6 +22,9 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import math
+def _is_near(x, y):
+    return abs(x - y) < 1e-6
+
 
 class Point:
     id=0
@@ -41,20 +44,15 @@ class Point:
         Otherwise the result is based on the individual x/y/z comparisons.
         """
         if self.__class__ == other.__class__:
-            if (self.x == other.x) and (self.y == other.y) and (self.z == other.z):
+            if (_is_near(self.x, other.x)) and (_is_near(self.y, other.y)) \
+                    and (_is_near(self.z, other.z)):
                 return 0
-            elif self.x < other.x:
-                return -1
-            elif self.x > other.x:
-                return 1
-            elif self.y < other.y:
-                return -1
-            elif self.y > other.y:
-                return 1
-            elif self.z < other.z:
-                return -1
+            elif not _is_near(self.x, other.x):
+                return cmp(self.x, other.x)
+            elif not _is_near(self.y, other.y):
+                return cmp(self.y, other.y)
             else:
-                return 1
+                return cmp(self.z, other.z)
         else:
             return cmp(str(self), str(other))
 
