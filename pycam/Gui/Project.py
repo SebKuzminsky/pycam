@@ -357,7 +357,8 @@ class ProjectGui:
             if objname != "SettingEnableODE":
                 self.gui.get_object(objname).connect("toggled", self.handle_process_settings_change)
         for objname in ("SafetyHeightControl", "OverlapPercentControl",
-                "MaterialAllowanceControl", "MaxStepDownControl"):
+                "MaterialAllowanceControl", "MaxStepDownControl",
+                "EngraveOffsetControl"):
             self.gui.get_object(objname).connect("value-changed", self.handle_process_settings_change)
         self.gui.get_object("ProcessSettingName").connect("changed", self.handle_process_settings_change)
         # get/set functions for the current tool/process/bounds/task
@@ -899,7 +900,8 @@ class ProjectGui:
         all_controls = ("PathDirectionX", "PathDirectionY", "PathDirectionXY",
                 "SimpleCutter", "PolygonCutter", "ContourCutter",
                 "PathAccumulator", "ZigZagCutter", "MaxStepDownControl",
-                "MaterialAllowanceControl", "OverlapPercentControl")
+                "MaterialAllowanceControl", "OverlapPercentControl",
+                "EngraveOffsetControl")
         active_controls = {
             "DropCutter": ("PathAccumulator", "ZigZagCutter", "PathDirectionX",
                     "PathDirectionY", "MaterialAllowanceControl",
@@ -908,7 +910,8 @@ class ProjectGui:
                     "PathDirectionX", "PathDirectionY", "PathDirectionXY",
                     "MaxStepDownControl", "MaterialAllowanceControl",
                     "OverlapPercentControl"),
-            "EngraveCutter": ("SimpleCutter", "MaxStepDownControl"),
+            "EngraveCutter": ("SimpleCutter", "MaxStepDownControl",
+                    "EngraveOffsetControl"),
         }
         for one_control in all_controls:
             get_obj(one_control).set_sensitive(one_control in active_controls[cutter_name])
@@ -1201,7 +1204,8 @@ class ProjectGui:
                 if self.gui.get_object("UnitChangeProcesses").get_active():
                     # scale the process settings
                     for process in self.process_list:
-                        for key in ("safety_height", "material_allowance", "step_down"):
+                        for key in ("safety_height", "material_allowance",
+                                "step_down", "engrave_offset"):
                             process[key] *= factor
                 if self.gui.get_object("UnitChangeBounds").get_active():
                     # scale the boundaries and keep their center
@@ -1666,7 +1670,8 @@ class ProjectGui:
         for objname, key in (("SafetyHeightControl", "safety_height"),
                 ("OverlapPercentControl", "overlap_percent"),
                 ("MaterialAllowanceControl", "material_allowance"),
-                ("MaxStepDownControl", "step_down")):
+                ("MaxStepDownControl", "step_down"),
+                ("EngraveOffsetControl", "engrave_offset")):
             settings[key] = self.gui.get_object(objname).get_value()
         return settings
 
@@ -1689,7 +1694,8 @@ class ProjectGui:
         for objname, key in (("SafetyHeightControl", "safety_height"),
                 ("OverlapPercentControl", "overlap_percent"),
                 ("MaterialAllowanceControl", "material_allowance"),
-                ("MaxStepDownControl", "step_down")):
+                ("MaxStepDownControl", "step_down"),
+                ("EngraveOffsetControl", "engrave_offset")):
             self.gui.get_object(objname).set_value(settings[key])
 
     @gui_activity_guard
@@ -2089,7 +2095,8 @@ class ProjectGui:
                 process_settings["material_allowance"],
                 process_settings["safety_height"],
                 process_settings["overlap_percent"] / 100.0,
-                process_settings["step_down"])
+                process_settings["step_down"],
+                process_settings["engrave_offset"])
 
         return toolpath_settings
 

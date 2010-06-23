@@ -45,13 +45,13 @@ def generate_toolpath_from_settings(model, tp_settings, callback=None):
             bounds, process["path_direction"], process["generator"],
             process["postprocessor"], process["material_allowance"],
             process["safety_height"], process["overlap"],
-            process["step_down"], grid["distance"], grid["thickness"],
-            grid["height"], backend, callback)
+            process["step_down"], process["engrave_offset"], grid["distance"],
+            grid["thickness"], grid["height"], backend, callback)
 
 def generate_toolpath(model, tool_settings=None,
         bounds=None, direction="x", path_generator="DropCutter",
         path_postprocessor="ZigZagCutter", material_allowance=0.0,
-        safety_height=None, overlap=0.0, step_down=0.0,
+        safety_height=None, overlap=0.0, step_down=0.0, engrave_offset=0.0,
         support_grid_distance=None, support_grid_thickness=None,
         support_grid_height=None, calculation_backend=None, callback=None):
     """ abstract interface for generating a toolpath
@@ -79,6 +79,8 @@ def generate_toolpath(model, tool_settings=None,
     @value overlap: the overlap between two adjacent tool paths (0 <= overlap < 1)
     @type step_down: float
     @value step_down: maximum height of each layer (for PushCutter)
+    @type engrave_offset: float
+    @value engrave_offset: toolpath distance to the contour model
     @type support_grid_distance: float
     @value support_grid_distance: grid size of remaining support material
     @type support_grid_thickness: float
@@ -127,6 +129,10 @@ def generate_toolpath(model, tool_settings=None,
                 support_grid_distance, support_grid_thickness,
                 support_grid_height)
         trimesh_model += support_grid_model
+    # Adapt the contour_model to the engraving offset. This offset is
+    # considered to be part of the material_allowance.
+    if (not contour_model is None) and (engrave_offset > 0):
+        contour_model = contour_model.get_offset_model(engrave_offset)
     # Due to some weirdness the height of the drill must be bigger than the object's size.
     # Otherwise some collisions are not detected.
     cutter_height = 4 * (maxy - miny)
@@ -137,7 +143,9 @@ def generate_toolpath(model, tool_settings=None,
     physics = _get_physics(trimesh_model, cutter, calculation_backend)
     if isinstance(physics, basestring):
         return physics
-    generator = _get_pathgenerator_instance(trimesh_model, contour_model, cutter, path_generator, path_postprocessor, material_allowance, safety_height, physics)
+    generator = _get_pathgenerator_instance(trimesh_model, contour_model,
+            cutter, path_generator, path_postprocessor, material_allowance,
+            safety_height, physics)
     if isinstance(generator, basestring):
         return generator
     if (overlap < 0) or (overlap >= 1):
@@ -209,7 +217,8 @@ def _get_pathgenerator_instance(trimesh_model, contour_model, cutter, pathgenera
             return "Invalid postprocessor (%s) for 'EngraveCutter' - it should be one of these: %s" % (processor, PATH_POSTPROCESSORS)
         if not contour_model:
             return "The EngraveCutter requires a contour model (e.g. from a DXF file)."
-        return EngraveCutter.EngraveCutter(cutter, trimesh_model, contour_model, processor, physics=physics)
+        return EngraveCutter.EngraveCutter(cutter, trimesh_model,
+                contour_model, processor, physics=physics)
     else:
         return "Invalid path generator (%s): not one of %s" % (pathgenerator, PATH_GENERATORS)
 

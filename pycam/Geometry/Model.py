@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import Triangle, Line
+from pycam.Geometry import Triangle, Line, Point
 from utils import INFINITE
 
 try:
@@ -207,4 +207,89 @@ class ContourModel(BaseModel):
 
     def get_line_groups(self):
         return self._line_groups
+
+    def get_offset_model(self, offset):
+        """ calculate a contour model that surrounds the current model with
+        a given offset.
+        This is mainly useful for engravings that should not proceed _on_ the
+        lines but besides these.
+        """
+        def get_parallel_line(line, offset):
+            if offset == 0:
+                return Line(line.p1, line.p2)
+            else:
+                cross = line.p2.sub(line.p1).cross(Point(0, 0, 1))
+                cross_offset = cross.mul(offset / cross.norm())
+                in_line = line.p2.sub(line.p1).normalize().mul(offset)
+                return Line(line.p1.add(cross_offset).sub(in_line),
+                        line.p2.add(cross_offset).add(in_line))
+        def do_lines_intersection(l1, l2):
+            """ calculate the new intersection between two neighbouring lines
+            """
+            if l1.p2 == l2.p1:
+                # intersection is already fine
+                return
+            if (l1.p1 is None) or (l2.p1 is None):
+                # one line was already marked as obsolete
+                return
+            x1, x2, x3, x4 = l2.p1, l2.p2, l1.p1, l1.p2
+            a = x2.sub(x1)
+            b = x4.sub(x3)
+            c = x3.sub(x1)
+            # see http://mathworld.wolfram.com/Line-LineIntersection.html (24)
+            factor = c.cross(b).dot(a.cross(b)) / a.cross(b).normsq()
+            if not (0 <= factor < 1):
+                # The intersection is always supposed to be within p1 and p2.
+                l2.p1 = None
+            else:
+                intersection = x1.add(a.mul(factor))
+                if Line(l1.p1, intersection).dir() != l1.dir():
+                    # Remove lines that would change their direction due to the
+                    # new intersection. These are usually lines that become
+                    # obsolete due to a more favourable intersection of the two
+                    # neighbouring lines. This appears at small corners.
+                    l1.p1 = None
+                elif Line(intersection, l2.p2).dir() != l2.dir():
+                    # see comment above
+                    l2.p1 = None
+                elif l1.p1 == intersection:
+                    # remove invalid lines (zero length)
+                    l1.p1 = None
+                elif l2.p2 == intersection:
+                    # remove invalid lines (zero length)
+                    l2.p1 = None
+                else:
+                    # shorten both lines according to the new intersection
+                    l1.p2 = intersection
+                    l2.p1 = intersection
+        result = ContourModel()
+        for group in self._line_groups:
+            closed_group = (len(group) > 1) and (group[-1].p2 == group[0].p1)
+            new_group = []
+            for line in group:
+                new_group.append(get_parallel_line(line, offset))
+            finished = False
+            while not finished:
+                if len(new_group) > 1:
+                    # calculate new intersections for each pair of adjacent lines
+                    for index in range(len(new_group)):
+                        if (index == 0) and (not closed_group):
+                            # skip the first line if the group is not closed
+                            continue
+                        # this also works for index==0 (closed groups)
+                        l1 = new_group[index - 1]
+                        l2 = new_group[index]
+                        do_lines_intersection(l1, l2)
+                # Remove all lines that were marked as obsolete during
+                # intersection calculation.
+                clean_group = [line for line in new_group if not line.p1 is None]
+                finished = len(new_group) == len(clean_group)
+                if (len(clean_group) == 1) and closed_group:
+                    new_group = []
+                    finished = True
+                else:
+                    new_group = clean_group
+            for line in new_group:
+                result.append(line)
+        return result
 

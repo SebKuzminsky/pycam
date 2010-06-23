@@ -136,6 +136,7 @@ tool_radius: 1.0
 [ProcessDefault]
 path_direction: x
 safety_height: 5
+engrave_offset: 0.0
 
 [Process0]
 name: Remove material
@@ -229,6 +230,7 @@ process: 3
             "material_allowance": float,
             "overlap_percent": int,
             "step_down": float,
+            "engrave_offset": float,
             "tool": object,
             "process": object,
             "bounds": object,
@@ -247,7 +249,7 @@ process: 3
                     "speed"),
             "process": ("name", "path_generator", "path_postprocessor",
                     "path_direction", "safety_height", "material_allowance",
-                    "overlap_percent", "step_down"),
+                    "overlap_percent", "step_down", "engrave_offset"),
             "bounds": ("name", "type", "x_low", "x_high", "y_low",
                     "y_high", "z_low", "z_high"),
             "task": ("name", "tool", "process", "bounds", "enabled"),
@@ -463,6 +465,7 @@ class ToolpathSettings:
             "safety_height": float,
             "overlap": float,
             "step_down": float,
+            "engrave_offset": float,
         },
     }
 
@@ -538,7 +541,7 @@ class ToolpathSettings:
 
     def set_process_settings(self, generator, postprocessor, path_direction,
             material_allowance=0.0, safety_height=0.0, overlap=0.0,
-            step_down=1.0):
+            step_down=1.0, engrave_offset=0.0):
         self.process_settings = {
                 "generator": generator,
                 "postprocessor": postprocessor,
@@ -547,6 +550,7 @@ class ToolpathSettings:
                 "safety_height": safety_height,
                 "overlap": overlap,
                 "step_down": step_down,
+                "engrave_offset": engrave_offset,
         }
 
     def get_process_settings(self):
