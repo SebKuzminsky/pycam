@@ -113,6 +113,13 @@ class Camera:
         # relation of x/y movement to the respective screen dimension
         win_x_rel = ((-2.0 * x_move) / width) / math.sin(self.view["fovy"])
         win_y_rel = ((-2.0 * y_move) / height) / math.sin(self.view["fovy"])
+        # This code is completely arbitrarily based on trial-and-error for
+        # finding a nice movement speed for all distances.
+        # Anyone with a better approach should just fix this.
+        distance_vector = self.get("distance")
+        distance = math.sqrt(sum([dim ** 2 for dim in distance_vector]))
+        win_x_rel *= math.cos(win_x_rel / distance) ** 20
+        win_y_rel *= math.cos(win_y_rel / distance) ** 20
         # update the model position that should be centered on the screen
         old_center = self.view["center"]
         new_center = []
@@ -419,7 +426,7 @@ class ModelViewWindowGL:
                     obj_dim.append(self.settings.get("maxx") - self.settings.get("minx"))
                     obj_dim.append(self.settings.get("maxy") - self.settings.get("miny"))
                     obj_dim.append(self.settings.get("maxz") - self.settings.get("minz"))
-                    max_dim = max(max(obj_dim[0], obj_dim[1]), obj_dim[2])
+                    max_dim = max(obj_dim)
                     self.camera.move_camera_by_screen(x - start_x, y - start_y, max_dim)
                 else:
                     # BUTTON_ROTATE
