@@ -41,6 +41,21 @@ class Line:
     def __repr__(self):
         return "Line<%g,%g,%g>-<%g,%g,%g>" % (self.p1.x,self.p1.y,self.p1.z,
                                               self.p2.x,self.p2.y,self.p2.z)
+    def __cmp__(self, other):
+        """ Two lines are equal if both pairs of points are at the same
+        locations.
+        Otherwise the result is based on the comparison of the first and then
+        the second point.
+        """
+        if self.__class__ == other.__class__:
+            if (self.p1 == other.p1) and (self.p2 == other.p2):
+                return 0
+            elif self.p1 != other.p1:
+                return cmp(self.p1, other.p1)
+            else:
+                return cmp(self.p2, other.p2)
+        else:
+            return cmp(str(self), str(other))
 
     def dir(self):
         if not hasattr(self,"_dir"):
