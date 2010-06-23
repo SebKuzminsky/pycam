@@ -90,6 +90,26 @@ class Line:
             GL.glBegin(GL.GL_LINES)
             GL.glVertex3f(self.p1.x, self.p1.y, self.p1.z)
             GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
+            # (optional) draw arrows for visualizing the direction of each line
+            if False:
+                line = (self.p2.x - self.p1.x, self.p2.y - self.p1.y)
+                if line[0] == 0:
+                    ortho = (1.0, 0.0)
+                elif line[1] == 0:
+                    ortho = (0.0, 1.0)
+                else:
+                    ortho = (1.0 / line[0], -1.0 / line[1])
+                line_size = math.sqrt((line[0] ** 2) + (line[1] ** 2))
+                ortho_size = math.sqrt((ortho[0] ** 2) + (ortho[1] ** 2))
+                ortho_dest_size = line_size / 10.0
+                ortho = (ortho[0] * ortho_dest_size / ortho_size, ortho[1] * ortho_dest_size / ortho_size)
+                line_back = (-line[0] * ortho_dest_size / line_size, -line[1] * ortho_dest_size / line_size)
+                p3 = (self.p2.x + ortho[0] + line_back[0], self.p2.y + ortho[1] + line_back[1], self.p2.z)
+                p4 = (self.p2.x - ortho[0] + line_back[0], self.p2.y - ortho[1] + line_back[1], self.p2.z)
+                GL.glVertex3f(p3[0], p3[1], p3[2])
+                GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
+                GL.glVertex3f(p4[0], p4[1], p4[2])
+                GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
             GL.glEnd()
 
     def get_points(self):
