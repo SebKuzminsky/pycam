@@ -293,3 +293,44 @@ class ContourModel(BaseModel):
                 result.append(line)
         return result
 
+    def check_for_collisions(self):
+        def get_bounds_of_group(group):
+            minx, maxx, miny, maxy = None, None, None, None
+            for line in group:
+                lminx = min(line.p1.x, line.p2.x)
+                lmaxx = max(line.p1.x, line.p2.x)
+                lminy = min(line.p1.y, line.p2.y)
+                lmaxy = max(line.p1.y, line.p2.y)
+                if (minx is None) or (minx > lminx):
+                    minx = lminx
+                if (maxx is None) or (maxx > lmaxx):
+                    maxx = lmaxx
+                if (miny is None) or (miny > lminy):
+                    miny = lminy
+                if (maxy is None) or (maxy > lmaxy):
+                    maxy = lmaxy
+            return (minx, maxx, miny, maxy)
+        def check_bounds_of_groups(group1, group2):
+            bound1 = get_bounds_of_group(group1)
+            bound2 = get_bounds_of_group(group2)
+            if ((bound1[0] < bound2[0]) and not (bound1[1] > bound2[1])) or \
+                    ((bound2[0] < bound1[0]) and not (bound2[1] > bound1[1])):
+                # the x boundaries overlap
+                if ((bound1[2] < bound2[2]) and not (bound1[3] > bound2[3])) \
+                        or ((bound2[2] < bound1[2]) \
+                        and not (bound2[3] > bound1[3])):
+                    # y also overlap
+                    return True
+            return False
+        # check each pair of line groups for intersections
+        for group1 in self._line_groups:
+            for group2 in self._line_groups:
+                # check if both groups overlap - otherwise skip this pair
+                if check_bounds_of_groups(group1, group2):
+                    # check each pair of lines for intersections
+                    for line1 in group1:
+                        for line2 in group2:
+                            if line1.get_intersection(line2):
+                                return True
+        return False
+

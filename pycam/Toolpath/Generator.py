@@ -124,6 +124,8 @@ def generate_toolpath(model, tool_settings=None,
             return "The thickness of the support grid must be a positive value"
         if support_grid_height <= 0:
             return "The height of the support grid must be a positive value"
+        if not callback is None:
+            callback(text="Preparing support grid model ...")
         support_grid_model = pycam.Toolpath.SupportGrid.get_support_grid(
                 minx, maxx, miny, maxy, minz, support_grid_distance,
                 support_grid_distance, support_grid_thickness,
@@ -132,7 +134,15 @@ def generate_toolpath(model, tool_settings=None,
     # Adapt the contour_model to the engraving offset. This offset is
     # considered to be part of the material_allowance.
     if (not contour_model is None) and (engrave_offset > 0):
+        if not callback is None:
+            callback(text="Preparing contour model with offset ...")
         contour_model = contour_model.get_offset_model(engrave_offset)
+        if not callback is None:
+            callback(text="Checking contour model with offset for collisions ...")
+        if contour_model.check_for_collisions():
+            return "The contour model contains colliding line groups." \
+                    + " This is not allowed in combination with an" \
+                    + " engraving offset."
     # Due to some weirdness the height of the drill must be bigger than the object's size.
     # Otherwise some collisions are not detected.
     cutter_height = 4 * (maxy - miny)

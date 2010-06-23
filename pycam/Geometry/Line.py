@@ -130,3 +130,32 @@ class Line:
     def get_points(self):
         return (self.p1, self.p2)
 
+    def get_intersection(self, line):
+        """ Get the point of intersection between two lines. Intersections
+        outside the length of these lines are ignored.
+        Returns None if no valid intersection was found.
+        """
+        x1, x2, x3, x4 = self.p1, self.p2, line.p1, line.p2
+        a = x2.sub(x1)
+        b = x4.sub(x3)
+        c = x3.sub(x1)
+        # see http://mathworld.wolfram.com/Line-LineIntersection.html (24)
+        try:
+            factor = c.cross(b).dot(a.cross(b)) / a.cross(b).normsq()
+        except ZeroDivisionError:
+            # lines are parallel
+            return None
+        if 0 <= factor <= 1:
+            intersection = x1.add(a.mul(factor))
+            # check if the intersection is between x3 and x4
+            if (min(x3.x, x4.x) <= intersection.x <= max(x3.x, x4.x)) \
+                    and (min(x3.y, x4.y) <= intersection.y <= max(x3.y, x4.y)) \
+                    and (min(x3.z, x4.z) <= intersection.z <= max(x3.z, x4.z)):
+                return intersection
+            else:
+                # intersection outside of the length of line(x3, x4)
+                return None
+        else:
+            # intersection outside of the length of line(x1, x2)
+            return None
+
