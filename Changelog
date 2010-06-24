@@ -1,6 +1,7 @@
 Version 0.3.0 - UNRELEASED
  * added basic support for importing DXF contour files
  * added basic support for engravings
+ * integrated "help" links pointing to the wiki
  * allow non-square profiles for the support grid
  * fixed PushCutter
 

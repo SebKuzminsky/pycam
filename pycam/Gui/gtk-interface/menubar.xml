@@ -20,6 +20,24 @@
     </menu>
     <menu action="WindowMenu">
       <menuitem action="Toggle3DView"/>
+    </menu>
+    <menu action="HelpMenu">
+      <menuitem action="HelpIntroduction"/>
+      <menuitem action="HelpSupportedFormats"/>
+      <menuitem action="HelpModelTransformations"/>
+      <menuitem action="HelpGCodeExport"/>
+      <menuitem action="HelpSimulation"/>
+      <menuitem action="HelpCommandLine"/>
+      <separator />
+      <menuitem action="HelpToolTypes"/>
+      <menuitem action="HelpProcessSettings"/>
+      <menuitem action="HelpBoundsSettings"/>
+      <menuitem action="HelpTaskSetup"/>
+      <separator />
+      <menuitem action="ProjectWebsite"/>
+      <menuitem action="Forum"/>
+      <menuitem action="FeatureRequest"/>
+      <menuitem action="BugTracker"/>
       <separator />
       <menuitem action="About"/>
     </menu>

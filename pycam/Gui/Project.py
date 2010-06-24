@@ -37,6 +37,7 @@ import pycam.Physics.ode_physics
 # this requires ODE - we import it later, if necessary
 #import pycam.Simulation.ODEBlocks
 import gtk
+import webbrowser
 import ConfigParser
 import math
 import time
@@ -52,6 +53,8 @@ if DATA_DIR_ENVIRON_KEY in os.environ:
 
 GTKBUILD_FILE = "pycam-project.ui"
 GTKMENU_FILE = "menubar.xml"
+
+HELP_WIKI_URL = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=%s"
 
 FILTER_GCODE = ("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode"))
 FILTER_MODEL = (("STL models", "*.stl"), ("DXF contours", "*.dxf"))
@@ -164,7 +167,21 @@ class ProjectGui:
                 ("ExportEMCToolDefinition", self.export_emc_tools, None, None),
                 ("Quit", self.destroy, None, "<Control>q"),
                 ("GeneralSettings", self.toggle_preferences_window, None, "<Control>p"),
-                ("Toggle3DView", self.toggle_3d_view, None, "<Control>v")):
+                ("Toggle3DView", self.toggle_3d_view, None, "<Control>v"),
+                ("HelpIntroduction", self.show_help, "Introduction", "F1"),
+                ("HelpSupportedFormats", self.show_help, "SupportedFormats", None),
+                ("HelpModelTransformations", self.show_help, "ModelTransformations", None),
+                ("HelpToolTypes", self.show_help, "ToolTypes", None),
+                ("HelpProcessSettings", self.show_help, "ProcessSettings", None),
+                ("HelpBoundsSettings", self.show_help, "BoundsSettings", None),
+                ("HelpTaskSetup", self.show_help, "TaskSetup", None),
+                ("HelpGCodeExport", self.show_help, "GCodeExport", None),
+                ("HelpSimulation", self.show_help, "Simulation", None),
+                ("HelpCommandLine", self.show_help, "CommandLine", None),
+                ("ProjectWebsite", self.show_help, "http://sourceforge.net/projects/pycam", None),
+                ("Forum", self.show_help, "http://sourceforge.net/projects/pycam/forums", None),
+                ("BugTracker", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104176", None),
+                ("FeatureRequest", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104179", None)):
             item = self.gui.get_object(objname)
             if objname == "Toggle3DView":
                 action = "toggled"
@@ -530,6 +547,13 @@ class ProjectGui:
                 batch_func(*batch_args, **batch_kwargs)
             return result
         return gui_activity_guard_wrapper
+
+    def show_help(self, widget=None, page="Main_Page"):
+        if not page.startswith("http"):
+            url = HELP_WIKI_URL % page
+        else:
+            url = page
+        webbrowser.open(url)
 
     def update_view(self, widget=None, data=None):
         if self.view3d and self.view3d.is_visible and not self.no_dialog:

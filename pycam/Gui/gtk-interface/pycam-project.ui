@@ -5216,4 +5216,49 @@ Any selected group of dimensions will be scaled accordingly.</property>
   <object class="GtkAdjustment" id="EngraveOffsetValue">
     <property name="upper">1000</property>
   </object>
+  <object class="GtkAction" id="HelpMenu">
+    <property name="label">_Help</property>
+  </object>
+  <object class="GtkAction" id="HelpIntroduction">
+    <property name="label">_Introduction</property>
+  </object>
+  <object class="GtkAction" id="HelpSupportedFormats">
+    <property name="label">Supported _Formats</property>
+  </object>
+  <object class="GtkAction" id="HelpModelTransformations">
+    <property name="label">_Model Transformations</property>
+  </object>
+  <object class="GtkAction" id="HelpToolTypes">
+    <property name="label">T_ool Types</property>
+  </object>
+  <object class="GtkAction" id="HelpProcessSettings">
+    <property name="label">_Process Settings</property>
+  </object>
+  <object class="GtkAction" id="HelpBoundsSettings">
+    <property name="label">_Bounds Settings</property>
+  </object>
+  <object class="GtkAction" id="HelpTaskSetup">
+    <property name="label">_Task Setup</property>
+  </object>
+  <object class="GtkAction" id="HelpGCodeExport">
+    <property name="label">_GCode Export</property>
+  </object>
+  <object class="GtkAction" id="HelpSimulation">
+    <property name="label">_Simulation</property>
+  </object>
+  <object class="GtkAction" id="HelpCommandLine">
+    <property name="label">_Command Line Usage</property>
+  </object>
+  <object class="GtkAction" id="ProjectWebsite">
+    <property name="label">Project _Website</property>
+  </object>
+  <object class="GtkAction" id="Forum">
+    <property name="label">Forum</property>
+  </object>
+  <object class="GtkAction" id="BugTracker">
+    <property name="label">Report a Bug</property>
+  </object>
+  <object class="GtkAction" id="FeatureRequest">
+    <property name="label">Request a Feature</property>
+  </object>
 </interface>
