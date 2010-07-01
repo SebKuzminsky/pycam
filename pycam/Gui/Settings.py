@@ -150,6 +150,7 @@ overlap_percent: 0
 name: Carve contour
 path_generator: PushCutter
 path_postprocessor: ContourCutter
+path_direction: xy
 material_allowance: 0.2
 step_down: 1.5
 overlap_percent: 20
