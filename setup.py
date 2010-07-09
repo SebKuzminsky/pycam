@@ -24,9 +24,12 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from distutils.core import setup
 import distutils.sysconfig
-from pycam import VERSION
 import glob
 import os.path
+import sys
+# add the local pycam source directory to the PYTHONPATH
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+from pycam import VERSION
 
 setup(
     name="pycam",
@@ -38,7 +41,7 @@ setup(
     provides=["pycam"],
     requires=["ode", "gtk", "gtk.gtkgl", "OpenGL"],
     url="http://sourceforge.net/projects/pycam",
-    download_url="http://sourceforge.net/projects/pycam/files/pycam/0.2.2/pycam-0.2.2.tgz/download",
+    download_url="http://sourceforge.net/projects/pycam/files",
     keywords=["3-axis", "cnc", "cam", "toolpath", "machining", "g-code"],
     long_description="""IMPORTANT NOTE: Please read the list of requirements:
 http://sourceforge.net/apps/mediawiki/pycam/index.php?title=Requirements
@@ -60,15 +63,17 @@ Basically you will need Python, GTK and OpenGL.
     ],
     packages=[
         "pycam",
-        "pycam.Cutters", 
-        "pycam.Geometry", 
+        "pycam.Cutters",
+        "pycam.Geometry",
         "pycam.Importers",
-        "pycam.PathProcessors", 
-        "pycam.Utils", 
+        "pycam.PathProcessors",
+        "pycam.Utils",
         "pycam.Exporters",
-        "pycam.Gui", 
-        "pycam.PathGenerators", 
-        "pycam.Simulation"
+        "pycam.Gui",
+        "pycam.PathGenerators",
+        "pycam.Simulation",
+        "pycam.Toolpath",
+        "pycam.Physics",
     ],
     scripts = ['pycamGUI', 'pycam_win32_postinstall.py'],
     data_files=[("share/doc/python-pycam",[
@@ -80,9 +85,9 @@ Basically you will need Python, GTK and OpenGL.
             "Changelog",
             "release_info.txt"]),
         ("share/python-pycam/ui", [
-            os.path.join("pycam", "Gui", "gtk-interface", "pycam-project.ui"),
-            os.path.join("pycam", "Gui", "gtk-interface", "menubar.xml"),
-            os.path.join("pycam", "Gui", "gtk-interface", "logo_gui.png"),
+            os.path.join("src", "pycam", "Gui", "gtk-interface", "pycam-project.ui"),
+            os.path.join("src", "pycam", "Gui", "gtk-interface", "menubar.xml"),
+            os.path.join("src", "pycam", "Gui", "gtk-interface", "logo_gui.png"),
             ]),
         ("share/python-pycam/samples", 
             glob.glob(os.path.join("Samples","STL","*.stl"))),
