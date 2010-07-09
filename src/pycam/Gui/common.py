@@ -36,6 +36,9 @@ DEPENDENCY_DESCRIPTION = {
     "gtkgl": ("GTK extension for OpenGL",
         "Install the package 'python-gtkglext1'",
         "see http://www.bonifazi.eu/appunti/pygtk_windows_installer.exe"),
+    "gl": ("OpenGL support of graphic driver",
+        "Your current graphic driver does not support OpenGL. Please consult " \
+        + "'glxgears' to locate this problem."),
     "togl": ("Tk for OpenGL",
         "see http://downloads.sourceforge.net/togl/",
         "see http://downloads.sourceforge.net/togl/"),
@@ -57,8 +60,11 @@ def dependency_details_gtk():
     try:
         import gtk.gtkgl
         result["gtkgl"] = True
+        result["gl"] = True
     except ImportError:
         result["gtkgl"] = False
+    except RuntimeError:
+        result["gl"] = False
     try:
         import OpenGL
         result["opengl"] = True
