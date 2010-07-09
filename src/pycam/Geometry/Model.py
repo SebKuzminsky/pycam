@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry import Triangle, Line, Point
+from pycam.Toolpath import Bounds
 from utils import INFINITE
 
 try:
@@ -156,6 +157,10 @@ class BaseModel(object):
             scale_z = scale_x
         matrix = ((scale_x, 0, 0, 0), (0, scale_y, 0, 0), (0, 0, scale_z, 0))
         self.transform_by_matrix(matrix)
+
+    def get_bounds(self):
+        return Bounds(Bounds.TYPE_CUSTOM, (self.minx, self.miny, self.minz),
+                (self.maxx, self.maxy, self.maxz))
 
 
 class Model(BaseModel):

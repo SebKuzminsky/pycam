@@ -120,8 +120,7 @@ class Bounds:
     TYPE_FIXED_MARGIN = 1
     TYPE_CUSTOM = 2
 
-    def __init__(self, bounds_type=None, bounds_low=None, bounds_high=None,
-            ref_low=None, ref_high=None):
+    def __init__(self, bounds_type=None, bounds_low=None, bounds_high=None):
         """ create a new Bounds instance
 
         @value bounds_type: any of TYPE_RELATIVE_MARGIN | TYPE_FIXED_MARGIN | TYPE_CUSTOM
@@ -133,44 +132,13 @@ class Bounds:
         @type bounds_low: (tuple|list) of float
         @value bounds_high: see 'bounds_low'
         @type bounds_high: (tuple|list) of float
-        @value ref_low: a reference object described by a tuple (or list) of
-            three item. These three values describe only the lower boundary of
-            this object (for the x, y and z axes). Each item must be callable
-            or a float value. In case of a callable reference, the up-to-date
-            result of this callable is used whenever a value is calculated.
-            Thus there is no need to trigger a boundary update manually when
-            using callables as references. A mixed tuple of float values and
-            callables is allowed.
-            This argument is ignored for the boundary type "TYPE_CUSTOM".
-        @type ref_low: (tuple|list) of (float|callable)
-        @value ref_high: see 'ref_low'
-        @type ref_high: (tuple|list) of (float|callable)
         """
         self.name = "No name"
-        if ref_low is None or ref_high is None:
-            # only the "custom" bounds model does not depend on a reference
-            bounds_type = self.TYPE_CUSTOM
         # set type
         if bounds_type is None:
-            self.set_type(self.TYPE_RELATIVE_MARGIN)
+            self.set_type(Bounds.TYPE_CUSTOM)
         else:
             self.set_type(bounds_type)
-        # store all reference values as callables (to simplify later usage)
-        self.ref_low = []
-        self.ref_high = []
-        for in_values, out in ((ref_low, self.ref_low), (ref_high, self.ref_high)):
-            if not in_values is None:
-                for index in range(3):
-                    if callable(in_values[index]):
-                        out.append(in_values[index])
-                    else:
-                        # Create new variables within the scope of the lambda
-                        # function.
-                        # The lambda function just returns the float value.
-                        out.append(lambda in_values=in_values, index=index:
-                                in_values[index])
-            else:
-                out.extend([0, 0, 0])
         # store the bounds values
         if bounds_low is None:
             bounds_low = [0, 0, 0]
@@ -214,28 +182,41 @@ class Bounds:
             else:
                 self.bounds_high = list(high[:])
 
-    def get_absolute_limits(self):
+    def get_absolute_limits(self, reference=None):
         """ calculate the current absolute limits of the Bounds instance
 
+        @value reference: a reference object described by a tuple (or list) of
+            three item. These three values describe only the lower boundary of
+            this object (for the x, y and z axes). Each item must be a float
+            value. This argument is ignored for the boundary type "TYPE_CUSTOM".
+        @type reference: (tuple|list) of float
         @returns: a tuple of two lists containg the low and high limits
         @rvalue: tuple(list)
         """
-        # copy the original dict
+        # check if a reference is given (if necessary)
+        if self.bounds_type \
+                in (Bounds.TYPE_RELATIVE_MARGIN, Bounds.TYPE_FIXED_MARGIN):
+            if reference is None:
+                raise ValueError, "any non-custom boundary definition " \
+                        + "requires an a reference object for caluclating " \
+                        + "absolute limits"
+            else:
+                ref_low, ref_high = reference.get_absolute_limits(reference)
         low = [None] * 3
         high = [None] * 3
         # calculate the absolute limits
-        if self.bounds_type == self.TYPE_RELATIVE_MARGIN:
+        if self.bounds_type == Bounds.TYPE_RELATIVE_MARGIN:
             for index in range(3):
-                dim_width = self.ref_high[index]() - self.ref_low[index]()
-                low[index] = self.ref_low[index]() \
+                dim_width = ref_high[index] - ref_low[index]
+                low[index] = ref_low[index] \
                         - self.bounds_low[index] * dim_width
-                high[index] = self.ref_high[index]() \
+                high[index] = ref_high[index] \
                         + self.bounds_high[index] * dim_width
-        elif self.bounds_type == self.TYPE_FIXED_MARGIN:
+        elif self.bounds_type == Bounds.TYPE_FIXED_MARGIN:
             for index in range(3):
-                low[index] = self.ref_low[index]() - self.bounds_low[index]
-                high[index] = self.ref_high[index]() + self.bounds_high[index]
-        elif self.bounds_type == self.TYPE_CUSTOM:
+                low[index] = ref_low[index] - self.bounds_low[index]
+                high[index] = ref_high[index] + self.bounds_high[index]
+        elif self.bounds_type == Bounds.TYPE_CUSTOM:
             for index in range(3):
                 low[index] = self.bounds_low[index]
                 high[index] = self.bounds_high[index]
@@ -246,7 +227,7 @@ class Bounds:
                     + "'%s'" % str(self.bounds_type)
         return low, high
 
-    def adjust_bounds_to_absolute_limits(self, limits_low, limits_high):
+    def adjust_bounds_to_absolute_limits(self, limits_low, limits_high, reference=None):
         """ change the current bounds settings according to some absolute values
 
         This does not change the type of this bounds instance (e.g. relative).
@@ -254,21 +235,34 @@ class Bounds:
         @type limits_low: (tuple|list) of float
         @value limits_high: a tuple describing the new lower absolute boundary
         @type limits_high: (tuple|list) of float
+        @value reference: a reference object described by a tuple (or list) of
+            three item. These three values describe only the lower boundary of
+            this object (for the x, y and z axes). Each item must be a float
+            value. This argument is ignored for the boundary type "TYPE_CUSTOM".
+        @type reference: (tuple|list) of float
         """
+        # check if a reference is given (if necessary)
+        if self.bounds_type \
+                in (Bounds.TYPE_RELATIVE_MARGIN, Bounds.TYPE_FIXED_MARGIN):
+            if reference is None:
+                raise ValueError, "any non-custom boundary definition " \
+                        + "requires an a reference object for caluclating " \
+                        + "absolute limits"
+            else:
+                ref_low, ref_high = reference.get_absolute_limits(reference)
         # calculate the new settings
-        if self.bounds_type == self.TYPE_RELATIVE_MARGIN:
+        if self.bounds_type == Bounds.TYPE_RELATIVE_MARGIN:
             for index in range(3):
+                dim_width = ref_high[index] - ref_low[index]
                 self.bounds_low[index] = \
-                        (self.ref_low[index]() - limits_low[index]) \
-                        / (self.ref_high[index]() - self.ref_low[index]())
+                        (ref_low[index] - limits_low[index]) / dim_width
                 self.bounds_high[index] = \
-                        (limits_high[index] - self.ref_high[index]()) \
-                        / (self.ref_high[index]() - self.ref_low[index]())
-        elif self.bounds_type == self.TYPE_FIXED_MARGIN:
+                        (limits_high[index] - ref_high[index]) / dim_width
+        elif self.bounds_type == Bounds.TYPE_FIXED_MARGIN:
             for index in range(3):
-                self.bounds_low[index] = self.ref_low[index]() - limits_low[index]
-                self.bounds_high[index] = limits_high[index] - self.ref_high[index]()
-        elif self.bounds_type == self.TYPE_CUSTOM:
+                self.bounds_low[index] = ref_low[index] - limits_low[index]
+                self.bounds_high[index] = limits_high[index] - ref_high[index]
+        elif self.bounds_type == Bounds.TYPE_CUSTOM:
             for index in range(3):
                 self.bounds_low[index] = limits_low[index]
                 self.bounds_high[index] = limits_high[index]

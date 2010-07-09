@@ -319,7 +319,7 @@ process: 3
     def get_processes(self):
         return self._get_category_items("process")
 
-    def _get_bounds_instance_from_dict(self):
+    def _get_bounds_instance_from_dict(self, indict):
         """ get Bounds instances for each bounds definition
         @value model: the model that should be used for relative margins
         @type model: pycam.Geometry.Model.Model or callable
@@ -381,7 +381,7 @@ process: 3
                             item[key] = value
                 if type_name == "bounds":
                     # don't add the pure dictionary, but the "bounds" instance
-                    item_list.append(self.get_bounds_instance_from_dict(item))
+                    item_list.append(self._get_bounds_instance_from_dict(item))
                 else:
                     item_list.append(item)
                 index += 1
@@ -406,7 +406,8 @@ process: 3
 
     def get_config_text(self, tools=None, processes=None, bounds=None, tasks=None):
         def get_dictinary_of_bounds(b):
-            """ this function should be the reverse operation of "get_bounds"
+            """ this function should be the inverse operation of 
+            '_get_bounds_instance_from_dict'
             """
             result = {}
             result["name"] = b.get_name()

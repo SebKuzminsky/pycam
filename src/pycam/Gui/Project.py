@@ -258,7 +258,7 @@ class ProjectGui:
             bounds = self.settings.get("current_bounds")
             if bounds is None:
                 return getattr(self.model, key)
-            low, high = bounds.get_absolute_limits()
+            low, high = bounds.get_absolute_limits(reference=self.model.get_bounds())
             index = "xyz".index(key[-1])
             if key.startswith("min"):
                 return low[index]
@@ -612,7 +612,8 @@ class ProjectGui:
     @gui_activity_guard
     def adjust_bounds(self, widget, axis, change):
         bounds = self.settings.get("current_bounds")
-        abs_bounds_low, abs_bounds_high = bounds.get_absolute_limits()
+        abs_bounds_low, abs_bounds_high = bounds.get_absolute_limits(
+                reference=self.model.get_bounds())
         # calculate the "change" for +/- (10% of this axis' model dimension)
         if bounds is None:
             return
@@ -640,7 +641,8 @@ class ProjectGui:
             # not allowed
             return
         # transfer the new bounds values to the old settings
-        bounds.adjust_bounds_to_absolute_limits(abs_bounds_low, abs_bounds_high)
+        bounds.adjust_bounds_to_absolute_limits(abs_bounds_low, abs_bounds_high,
+                reference=self.model.get_bounds())
         # update the controls
         self._put_bounds_settings_to_gui(bounds)
         # update the visualization
@@ -654,9 +656,11 @@ class ProjectGui:
             # no change
             return
         # calculate the absolute bounds of the previous configuration
-        abs_bounds_low, abs_bounds_high = bounds.get_absolute_limits()
+        abs_bounds_low, abs_bounds_high = bounds.get_absolute_limits(
+                reference=self.model.get_bounds())
         bounds.set_type(new_type)
-        bounds.adjust_bounds_to_absolute_limits(abs_bounds_low, abs_bounds_high)
+        bounds.adjust_bounds_to_absolute_limits(abs_bounds_low, abs_bounds_high,
+                reference=self.model.get_bounds())
         self._put_bounds_settings_to_gui(bounds)
         self.append_to_queue(self.update_boundary_limits)
 
@@ -954,7 +958,6 @@ class ProjectGui:
                     #self.append_to_queue(self.reset_bounds)
                     self.view3d.reset_view()
                 # disable the "toggle" button, if the 3D view does not work
-                toggle_3d_checkbox.set_active(False)
                 toggle_3d_checkbox.set_sensitive(self.view3d.enabled)
             else:
                 # the window is just hidden
@@ -962,7 +965,9 @@ class ProjectGui:
             self.update_view()
         else:
             self.view3d.hide()
-        toggle_3d_checkbox.set_active(new_state)
+        # enable the toggle button only, if the 3d view is available
+        # (e.g. disabled if no OpenGL support is available)
+        toggle_3d_checkbox.set_active(self.view3d.enabled and new_state)
 
     @gui_activity_guard
     def transform_model(self, widget):
@@ -1520,7 +1525,7 @@ class ProjectGui:
             settings.load_file(filename)
         self.tool_list = settings.get_tools()
         self.process_list = settings.get_processes()
-        self.bounds_list = settings.get_bounds(lambda: self.model)
+        self.bounds_list = settings.get_bounds()
         self.task_list = settings.get_tasks()
         self.update_tool_table()
         self.update_process_table()
@@ -2028,7 +2033,8 @@ class ProjectGui:
             # this should never happen
             log.error("Assertion failed: invalid boundary_mode (%s)" % str(self.settings.get("boundary_mode")))
 
-        abs_bounds_low, abs_bounds_high = bounds.get_absolute_limits()
+        abs_bounds_low, abs_bounds_high = bounds.get_absolute_limits(
+                reference=self.model.get_bounds())
 
         minx = float(abs_bounds_low[0])-offset
         miny = float(abs_bounds_low[1])-offset
