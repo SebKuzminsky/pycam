@@ -113,3 +113,169 @@ class ToolPath:
                 move(Point(path.points[-1].x, path.points[-1].y, safety_height))
         return move.result_time
 
+
+class Bounds:
+
+    TYPE_RELATIVE_MARGIN = 0
+    TYPE_FIXED_MARGIN = 1
+    TYPE_CUSTOM = 2
+
+    def __init__(self, bounds_type=None, bounds_low=None, bounds_high=None,
+            ref_low=None, ref_high=None):
+        """ create a new Bounds instance
+
+        @value bounds_type: any of TYPE_RELATIVE_MARGIN | TYPE_FIXED_MARGIN | TYPE_CUSTOM
+        @type bounds_type: int
+        @value bounds_low: the lower margin of the boundary compared to the
+            reference object (for TYPE_RELATIVE_MARGIN | TYPE_FIXED_MARGIN) or
+            the specific boundary values (for TYPE_CUSTOM). Only the lower
+            values of the three axes (x, y and z) are given.
+        @type bounds_low: (tuple|list) of float
+        @value bounds_high: see 'bounds_low'
+        @type bounds_high: (tuple|list) of float
+        @value ref_low: a reference object described by a tuple (or list) of
+            three item. These three values describe only the lower boundary of
+            this object (for the x, y and z axes). Each item must be callable
+            or a float value. In case of a callable reference, the up-to-date
+            result of this callable is used whenever a value is calculated.
+            Thus there is no need to trigger a boundary update manually when
+            using callables as references. A mixed tuple of float values and
+            callables is allowed.
+            This argument is ignored for the boundary type "TYPE_CUSTOM".
+        @type ref_low: (tuple|list) of (float|callable)
+        @value ref_high: see 'ref_low'
+        @type ref_high: (tuple|list) of (float|callable)
+        """
+        self.name = "No name"
+        if ref_low is None or ref_high is None:
+            # only the "custom" bounds model does not depend on a reference
+            bounds_type = self.TYPE_CUSTOM
+        # set type
+        if bounds_type is None:
+            self.set_type(self.TYPE_RELATIVE_MARGIN)
+        else:
+            self.set_type(bounds_type)
+        # store all reference values as callables (to simplify later usage)
+        self.ref_low = []
+        self.ref_high = []
+        for in_values, out in ((ref_low, self.ref_low), (ref_high, self.ref_high)):
+            if not in_values is None:
+                for index in range(3):
+                    if callable(in_values[index]):
+                        out.append(in_values[index])
+                    else:
+                        # Create new variables within the scope of the lambda
+                        # function.
+                        # The lambda function just returns the float value.
+                        out.append(lambda in_values=in_values, index=index:
+                                in_values[index])
+            else:
+                out.extend([0, 0, 0])
+        # store the bounds values
+        if bounds_low is None:
+            bounds_low = [0, 0, 0]
+        if bounds_high is None:
+            bounds_high = [0, 0, 0]
+        self.set_bounds(bounds_low, bounds_high)
+
+    def set_name(self, name):
+        self.name = name
+
+    def get_name(self):
+        return self.name
+
+    def get_type(self):
+        return self.bounds_type
+
+    def set_type(self, bounds_type):
+        # complain if an unknown bounds_type value was given
+        if not bounds_type in (Bounds.TYPE_RELATIVE_MARGIN,
+                Bounds.TYPE_FIXED_MARGIN, Bounds.TYPE_CUSTOM):
+            raise ValueError, "failed to create an instance of " \
+                    + "pycam.Toolpath.Bounds due to an invalid value of " \
+                    + "'bounds_type': %s" % repr(bounds_type)
+        else:
+            self.bounds_type = bounds_type
+
+    def get_bounds(self):
+        return self.bounds_low[:], self.bounds_high[:]
+
+    def set_bounds(self, low=None, high=None):
+        if not low is None:
+            if len(low) != 3:
+                raise ValueError, "lower bounds should be supplied as a " \
+                        + "tuple/list of 3 items - but %d were given" % len(low)
+            else:
+                self.bounds_low = list(low[:])
+        if not high is None:
+            if len(high) != 3:
+                raise ValueError, "upper bounds should be supplied as a " \
+                        + "tuple/list of 3 items - but %d were given" % len(high)
+            else:
+                self.bounds_high = list(high[:])
+
+    def get_absolute_limits(self):
+        """ calculate the current absolute limits of the Bounds instance
+
+        @returns: a tuple of two lists containg the low and high limits
+        @rvalue: tuple(list)
+        """
+        # copy the original dict
+        low = [None] * 3
+        high = [None] * 3
+        # calculate the absolute limits
+        if self.bounds_type == self.TYPE_RELATIVE_MARGIN:
+            for index in range(3):
+                dim_width = self.ref_high[index]() - self.ref_low[index]()
+                low[index] = self.ref_low[index]() \
+                        - self.bounds_low[index] * dim_width
+                high[index] = self.ref_high[index]() \
+                        + self.bounds_high[index] * dim_width
+        elif self.bounds_type == self.TYPE_FIXED_MARGIN:
+            for index in range(3):
+                low[index] = self.ref_low[index]() - self.bounds_low[index]
+                high[index] = self.ref_high[index]() + self.bounds_high[index]
+        elif self.bounds_type == self.TYPE_CUSTOM:
+            for index in range(3):
+                low[index] = self.bounds_low[index]
+                high[index] = self.bounds_high[index]
+        else:
+            # this should not happen
+            raise NotImplementedError, "the function 'get_absolute_limits' is" \
+                    + " currently not implemented for the bounds_type " \
+                    + "'%s'" % str(self.bounds_type)
+        return low, high
+
+    def adjust_bounds_to_absolute_limits(self, limits_low, limits_high):
+        """ change the current bounds settings according to some absolute values
+
+        This does not change the type of this bounds instance (e.g. relative).
+        @value limits_low: a tuple describing the new lower absolute boundary
+        @type limits_low: (tuple|list) of float
+        @value limits_high: a tuple describing the new lower absolute boundary
+        @type limits_high: (tuple|list) of float
+        """
+        # calculate the new settings
+        if self.bounds_type == self.TYPE_RELATIVE_MARGIN:
+            for index in range(3):
+                self.bounds_low[index] = \
+                        (self.ref_low[index]() - limits_low[index]) \
+                        / (self.ref_high[index]() - self.ref_low[index]())
+                self.bounds_high[index] = \
+                        (limits_high[index] - self.ref_high[index]()) \
+                        / (self.ref_high[index]() - self.ref_low[index]())
+        elif self.bounds_type == self.TYPE_FIXED_MARGIN:
+            for index in range(3):
+                self.bounds_low[index] = self.ref_low[index]() - limits_low[index]
+                self.bounds_high[index] = limits_high[index] - self.ref_high[index]()
+        elif self.bounds_type == self.TYPE_CUSTOM:
+            for index in range(3):
+                self.bounds_low[index] = limits_low[index]
+                self.bounds_high[index] = limits_high[index]
+        else:
+            # this should not happen
+            raise NotImplementedError, "the function " \
+                    + "'adjust_bounds_to_absolute_limits' is currently not " \
+                    + "implemented for the bounds_type '%s'" \
+                    % str(self.bounds_type)
+

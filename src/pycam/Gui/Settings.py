@@ -20,8 +20,10 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Toolpath import Bounds
 import pycam.Cutters
 import pycam.Utils.log
+import pycam.Toolpath
 import ConfigParser
 import StringIO
 import os
@@ -186,10 +188,10 @@ name: Minimum
 
 [Bounds1]
 name: 10% margin
-x_low: 10.0
-x_high: 10.0
-y_low: 10.0
-y_high: 10.0
+x_low: 0.10
+x_high: 0.10
+y_low: 0.10
+y_high: 0.10
 
 [TaskDefault]
 enabled: yes
@@ -317,6 +319,25 @@ process: 3
     def get_processes(self):
         return self._get_category_items("process")
 
+    def _get_bounds_instance_from_dict(self):
+        """ get Bounds instances for each bounds definition
+        @value model: the model that should be used for relative margins
+        @type model: pycam.Geometry.Model.Model or callable
+        @returns: list of Bounds instances
+        @rtype: list(Bounds)
+        """
+        low_bounds = (indict["x_low"], indict["y_low"], indict["z_low"])
+        high_bounds = (indict["x_high"], indict["y_high"], indict["z_high"])
+        if indict["type"] == "relative_margin":
+            bounds_type = Bounds.TYPE_RELATIVE_MARGIN
+        elif indict["type"] == "fixed_margin":
+            bounds_type = Bounds.TYPE_FIXED_MARGIN
+        else:
+            bounds_type = Bounds.TYPE_CUSTOM
+        new_bound = Bounds(bounds_type, low_bounds, high_bounds)
+        new_bound.set_name(indict["name"])
+        return new_bound
+
     def get_bounds(self):
         return self._get_category_items("bounds")
 
@@ -358,7 +379,11 @@ process: 3
                             value = None
                         if not value is None:
                             item[key] = value
-                item_list.append(item)
+                if type_name == "bounds":
+                    # don't add the pure dictionary, but the "bounds" instance
+                    item_list.append(self.get_bounds_instance_from_dict(item))
+                else:
+                    item_list.append(item)
                 index += 1
                 current_section_name = "%s%d" % (prefix, index)
             self._cache[type_name] = item_list
@@ -380,6 +405,24 @@ process: 3
             return str(value_type(value))
 
     def get_config_text(self, tools=None, processes=None, bounds=None, tasks=None):
+        def get_dictinary_of_bounds(b):
+            """ this function should be the reverse operation of "get_bounds"
+            """
+            result = {}
+            result["name"] = b.get_name()
+            bounds_type_num = b.get_type()
+            if bounds_type_num == Bounds.TYPE_RELATIVE_MARGIN:
+                bounds_type_name = "relative_margin"
+            elif bounds_type_num == Bounds.TYPE_FIXED_MARGIN:
+                bounds_type_name = "fixed_margin"
+            else:
+                bounds_type_name = "custom"
+            result["type"] = bounds_type_name
+            low, high = b.get_bounds()
+            for index, axis in enumerate("xyz"):
+                result["%s_low"] = low[index]
+                result["%s_high"] = high[index]
+            return result
         result = []
         if tools is None:
             tools = []
@@ -392,7 +435,7 @@ process: 3
         lists = {}
         lists["tool"] = tools
         lists["process"] = processes
-        lists["bounds"] = bounds
+        lists["bounds"] = [get_dictionary_of_bounds(b) for b in bounds]
         lists["task"] = tasks
         for type_name in lists.keys():
             type_list = lists[type_name]

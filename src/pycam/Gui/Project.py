@@ -30,9 +30,9 @@ import pycam.Gui.Settings
 import pycam.Cutters
 import pycam.Toolpath.Generator
 import pycam.Toolpath
-import pycam.Geometry.utils as utils
 import pycam.Utils.log
 from pycam.Gui.OpenGLTools import ModelViewWindowGL
+from pycam.Toolpath import Bounds
 from pycam import VERSION
 import pycam.Physics.ode_physics
 # this requires ODE - we import it later, if necessary
@@ -42,6 +42,7 @@ import webbrowser
 import ConfigParser
 import math
 import time
+import logging
 import datetime
 import re
 import os
@@ -107,14 +108,6 @@ def get_data_file_location(filename):
         log.error(os.linesep.join(lines))
         return None
 
-def show_error_dialog(window, message):
-    # TODO: move this to the log handler
-    warn_window = gtk.MessageDialog(window, type=gtk.MESSAGE_ERROR,
-            buttons=gtk.BUTTONS_OK, message_format=str(message))
-    warn_window.set_title("Error")
-    warn_window.run()
-    warn_window.destroy()
-
 
 class ProjectGui:
 
@@ -122,10 +115,11 @@ class ProjectGui:
             "inside": -1,
             "along": 0,
             "around": 1}
+    # mapping of boundary types and GUI control elements
     BOUNDARY_TYPES = {
-            "relative_margin": "BoundsTypeRelativeMargin",
-            "fixed_margin": "BoundsTypeFixedMargin",
-            "custom": "BoundsTypeCustom"}
+            Bounds.TYPE_RELATIVE_MARGIN: "BoundsTypeRelativeMargin",
+            Bounds.TYPE_FIXED_MARGIN: "BoundsTypeFixedMargin",
+            Bounds.TYPE_CUSTOM: "BoundsTypeCustom"}
 
     META_DATA_PREFIX = "PYCAM-META-DATA:"
 
@@ -264,12 +258,16 @@ class ProjectGui:
             bounds = self.settings.get("current_bounds")
             if bounds is None:
                 return getattr(self.model, key)
-            mapping = {"minx": "x_low", "maxx": "x_high", "miny": "y_low",
-                    "maxy": "y_high", "minz": "z_low", "maxz": "z_high"}
-            return self._get_bounds_limits_absolute(bounds)[mapping[key]]
+            low, high = bounds.get_absolute_limits()
+            index = "xyz".index(key[-1])
+            if key.startswith("min"):
+                return low[index]
+            else:
+                return high[index]
         for key in ("minx", "maxx", "miny", "maxy", "minz", "maxz"):
-            # use a new variable "j" to avoid re-using the same object "key"
-            self.settings.add_item(key, lambda j=key: get_absolute_limit(j))
+            # create a new variable "key" to avoid re-using the same object "key"
+            # (due to the lambda name scope)
+            self.settings.add_item(key, lambda key=key: get_absolute_limit(key))
         # Transformations
         self.gui.get_object("Rotate").connect("clicked", self.transform_model)
         self.gui.get_object("Flip").connect("clicked", self.transform_model)
@@ -512,6 +510,8 @@ class ProjectGui:
         self.update_all_controls()
         self.no_dialog = no_dialog
         if not self.no_dialog:
+            # register a logging handler for displaying error messages
+            pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
             self.window.show()
 
     def update_all_controls(self):
@@ -612,7 +612,7 @@ class ProjectGui:
     @gui_activity_guard
     def adjust_bounds(self, widget, axis, change):
         bounds = self.settings.get("current_bounds")
-        abs_bounds = self._get_bounds_limits_absolute(bounds)
+        abs_bounds_low, abs_bounds_high = bounds.get_absolute_limits()
         # calculate the "change" for +/- (10% of this axis' model dimension)
         if bounds is None:
             return
@@ -626,103 +626,39 @@ class ProjectGui:
             # not allowed
             return
         # calculate the new bounds
+        axis_index = "xyz".index(axis)
         if change == "0":
-            abs_bounds["%s_low" % axis] = getattr(self.model, "min%s" % axis)
-            abs_bounds["%s_high" % axis] = getattr(self.model, "max%s" % axis)
+            abs_bounds_low[axis_index] = getattr(self.model, "min%s" % axis)
+            abs_bounds_high[axis_index] = getattr(self.model, "max%s" % axis)
         elif change == "+":
-            abs_bounds["%s_low" % axis] -= change_value
-            abs_bounds["%s_high" % axis] += change_value
+            abs_bounds_low[axis_index] -= change_value
+            abs_bounds_high[axis_index] += change_value
         elif change == "-":
-            abs_bounds["%s_low" % axis] += change_value
-            abs_bounds["%s_high" % axis] -= change_value
+            abs_bounds_low[axis_index] += change_value
+            abs_bounds_high[axis_index] -= change_value
         else:
             # not allowed
             return
         # transfer the new bounds values to the old settings
-        self._change_bounds_by_absolute_values(bounds, abs_bounds)
+        bounds.adjust_bounds_to_absolute_limits(abs_bounds_low, abs_bounds_high)
         # update the controls
         self._put_bounds_settings_to_gui(bounds)
         # update the visualization
         self.append_to_queue(self.update_boundary_limits)
 
-    def _get_bounds_limits_absolute(self, bounds):
-        minx, maxx, miny, maxy, minz, maxz = self.model.minx, self.model.maxx, \
-                self.model.miny, self.model.maxy, self.model.minz, \
-                self.model.maxz
-        # copy the original dict
-        abs_bounds = dict(bounds.items())
-        # "custom" is used for absolute limits
-        abs_bounds["type"] = "custom"
-        # calculate the absolute limits
-        if bounds["type"] == "relative_margin":
-            abs_bounds["x_low"] = minx - bounds["x_low"] / 100.0 * (maxx - minx)
-            abs_bounds["x_high"] = maxx + bounds["x_high"] / 100.0 * (maxx - minx)
-            abs_bounds["y_low"] = miny - bounds["y_low"] / 100.0 * (maxy - miny)
-            abs_bounds["y_high"] = maxy + bounds["y_high"] / 100.0 * (maxy - miny)
-            abs_bounds["z_low"] = minz - bounds["z_low"] / 100.0 * (maxz - minz)
-            abs_bounds["z_high"] = maxz + bounds["z_high"] / 100.0 * (maxz - minz)
-        elif bounds["type"] == "fixed_margin":
-            abs_bounds["x_low"] = minx - bounds["x_low"]
-            abs_bounds["x_high"] = maxx + bounds["x_high"]
-            abs_bounds["y_low"] = miny - bounds["y_low"]
-            abs_bounds["y_high"] = maxy + bounds["y_high"]
-            abs_bounds["z_low"] = minz - bounds["z_low"]
-            abs_bounds["z_high"] = maxz + bounds["z_high"]
-        elif bounds["type"] == "custom":
-            abs_bounds["x_low"] = bounds["x_low"]
-            abs_bounds["x_high"] = bounds["x_high"]
-            abs_bounds["y_low"] = bounds["y_low"]
-            abs_bounds["y_high"] = bounds["y_high"]
-            abs_bounds["z_low"] = bounds["z_low"]
-            abs_bounds["z_high"] = bounds["z_high"]
-        else:
-            # this should not happen
-            return None
-        return abs_bounds
-
     @gui_activity_guard
     def switch_bounds_type(self, widget=None):
         bounds = self.settings.get("current_bounds")
-        new_type = self._load_bounds_settings_from_gui()["type"]
-        if new_type == bounds["type"]:
+        new_type = self._load_bounds_settings_from_gui().get_type()
+        if new_type == bounds.get_type():
             # no change
             return
         # calculate the absolute bounds of the previous configuration
-        abs_bounds = self._get_bounds_limits_absolute(bounds)
-        bounds["type"] = new_type
-        self._change_bounds_by_absolute_values(bounds, abs_bounds)
+        abs_bounds_low, abs_bounds_high = bounds.get_absolute_limits()
+        bounds.set_type(new_type)
+        bounds.adjust_bounds_to_absolute_limits(abs_bounds_low, abs_bounds_high)
         self._put_bounds_settings_to_gui(bounds)
         self.append_to_queue(self.update_boundary_limits)
-
-    def _change_bounds_by_absolute_values(self, bounds, abs_bounds):
-        minx, maxx, miny, maxy, minz, maxz = self.model.minx, self.model.maxx, \
-                self.model.miny, self.model.maxy, self.model.minz, \
-                self.model.maxz
-        # calculate the new settings
-        if bounds["type"] == "relative_margin":
-            bounds["x_low"] = (minx - abs_bounds["x_low"]) / (maxx - minx) * 100.0
-            bounds["x_high"] = (abs_bounds["x_high"] - maxx) / (maxx - minx) * 100.0
-            bounds["y_low"] = (miny - abs_bounds["y_low"]) / (maxy - miny) * 100.0
-            bounds["y_high"] = (abs_bounds["y_high"] - maxy) / (maxy - miny) * 100.0
-            bounds["z_low"] = (minz - abs_bounds["z_low"]) / (maxz - minz) * 100.0
-            bounds["z_high"] = (abs_bounds["z_high"] - maxz) / (maxz - minz) * 100.0
-        elif bounds["type"] == "fixed_margin":
-            bounds["x_low"] = minx - abs_bounds["x_low"]
-            bounds["x_high"] = abs_bounds["x_high"] - maxx
-            bounds["y_low"] = miny - abs_bounds["y_low"]
-            bounds["y_high"] = abs_bounds["y_high"] - maxy
-            bounds["z_low"] = minz - abs_bounds["z_low"]
-            bounds["z_high"] = abs_bounds["z_high"] - maxz
-        elif bounds["type"] == "custom":
-            bounds["x_low"] = abs_bounds["x_low"]
-            bounds["x_high"] = abs_bounds["x_high"]
-            bounds["y_low"] = abs_bounds["y_low"]
-            bounds["y_high"] = abs_bounds["y_high"]
-            bounds["z_low"] = abs_bounds["z_low"]
-            bounds["z_high"] = abs_bounds["z_high"]
-        else:
-            # this should not happen
-            return
 
     @gui_activity_guard
     def update_boundary_limits(self, widget=None):
@@ -993,6 +929,7 @@ class ProjectGui:
 
     @gui_activity_guard
     def toggle_3d_view(self, widget=None, value=None):
+        toggle_3d_checkbox = self.gui.get_object("Toggle3DView")
         # no interactive mode
         if self.no_dialog:
             return
@@ -1017,14 +954,15 @@ class ProjectGui:
                     #self.append_to_queue(self.reset_bounds)
                     self.view3d.reset_view()
                 # disable the "toggle" button, if the 3D view does not work
-                self.gui.get_object("Toggle3DView").set_sensitive(self.view3d.enabled)
+                toggle_3d_checkbox.set_active(False)
+                toggle_3d_checkbox.set_sensitive(self.view3d.enabled)
             else:
                 # the window is just hidden
                 self.view3d.show()
             self.update_view()
         else:
             self.view3d.hide()
-        self.gui.get_object("Toggle3DView").set_active(new_state)
+        toggle_3d_checkbox.set_active(new_state)
 
     @gui_activity_guard
     def transform_model(self, widget):
@@ -1330,8 +1268,7 @@ class ProjectGui:
             pycam.Exporters.STLExporter.STLExporter(self.model, comment=self.get_meta_data()).write(fi)
             fi.close()
         except IOError, err_msg:
-            if not no_dialog and not self.no_dialog:
-                show_error_dialog(self.window, "Failed to save model file")
+            log.error("Failed to save model file")
         else:
             self.add_to_recent_file_list(filename)
 
@@ -1524,7 +1461,7 @@ class ProjectGui:
             if file_type and callable(importer):
                 self.load_model(importer(filename))
             else:
-                show_error_dialog(self.window, "Failed to detect filetype!")
+                log.error("Failed to detect filetype!")
 
     @gui_activity_guard
     def export_emc_tools(self, widget=None, filename=None):
@@ -1541,8 +1478,7 @@ class ProjectGui:
                 out.write(text)
                 out.close()
             except IOError, err_msg:
-                if not no_dialog and not self.no_dialog:
-                    show_error_dialog(self.window, "Failed to save EMC tool file")
+                log.error("Failed to save EMC tool file")
             else:
                 self.add_to_recent_file_list(filename)
 
@@ -1584,7 +1520,7 @@ class ProjectGui:
             settings.load_file(filename)
         self.tool_list = settings.get_tools()
         self.process_list = settings.get_processes()
-        self.bounds_list = settings.get_bounds()
+        self.bounds_list = settings.get_bounds(lambda: self.model)
         self.task_list = settings.get_tasks()
         self.update_tool_table()
         self.update_process_table()
@@ -1592,10 +1528,17 @@ class ProjectGui:
         self.update_tasklist_table()
 
     def _put_bounds_settings_to_gui(self, settings):
-        self.gui.get_object("BoundsName").set_text(settings["name"])
-        self.gui.get_object(self.BOUNDARY_TYPES[settings["type"]]).set_active(True)
-        for key in ("x_low", "x_high", "y_low", "y_high", "z_low", "z_high"):
-            self.gui.get_object("boundary_%s" % key).set_value(settings[key])
+        self.gui.get_object("BoundsName").set_text(settings.get_name())
+        self.gui.get_object(self.BOUNDARY_TYPES[settings.get_type()]).set_active(True)
+        low, high = settings.get_bounds()
+        # relative margins are given in percent
+        if settings.get_type() == pycam.Toolpath.Bounds.TYPE_RELATIVE_MARGIN:
+            factor = 100
+        else:
+            factor = 1
+        for index, axis in enumerate("xyz"):
+            self.gui.get_object("boundary_%s_low" % axis).set_value(low[index] * factor)
+            self.gui.get_object("boundary_%s_high" % axis).set_value(high[index] * factor)
 
     def _load_bounds_settings_from_gui(self, settings=None):
         def get_boundary_type_from_gui():
@@ -1603,11 +1546,20 @@ class ProjectGui:
                 if self.gui.get_object(objname).get_active():
                     return key
         if settings is None:
-            settings = {}
-        settings["name"] = self.gui.get_object("BoundsName").get_text()
-        settings["type"] = get_boundary_type_from_gui()
-        for key in ("x_low", "x_high", "y_low", "y_high", "z_low", "z_high"):
-            settings[key] = self.gui.get_object("boundary_%s" % key).get_value()
+            settings = pycam.Toolpath.Bounds()
+        settings.set_name(self.gui.get_object("BoundsName").get_text())
+        settings.set_type(get_boundary_type_from_gui())
+        low = [None] * 3
+        high = [None] * 3
+        # relative margins are given in percent
+        if settings.get_type() == pycam.Toolpath.Bounds.TYPE_RELATIVE_MARGIN:
+            factor = 0.01
+        else:
+            factor = 1
+        for index, axis in enumerate("xyz"):
+            low[index] = self.gui.get_object("boundary_%s_low" % axis).get_value() * factor
+            high[index] = self.gui.get_object("boundary_%s_high" % axis).get_value() * factor
+        settings.set_bounds(low, high)
         return settings
 
     @gui_activity_guard
@@ -1628,9 +1580,8 @@ class ProjectGui:
             model = self.gui.get_object("BoundsList")
             model.clear()
             # columns: index, description
-            for index in range(len(self.bounds_list)):
-                bounds = self.bounds_list[index]
-                items = (index, bounds["name"])
+            for index, bounds in enumerate(self.bounds_list):
+                items = (index, bounds.get_name())
                 model.append(items)
             if not new_index is None:
                 self._treeview_set_active_index(self.bounds_editor_table, new_index)
@@ -1669,10 +1620,11 @@ class ProjectGui:
             prefix = "New Bounds "
             index = 1
             # loop while the current name is in use
-            while [True for bounds in self.bounds_list if bounds["name"] == "%s%d" % (prefix, index)]:
+            while [True for bounds in self.bounds_list
+                    if bounds.get_name() == "%s%d" % (prefix, index)]:
                 index += 1
             new_settings = self._load_bounds_settings_from_gui()
-            new_settings["name"] = "%s%d" % (prefix, index)
+            new_settings.set_name("%s%d" % (prefix, index))
             self.bounds_list.append(new_settings)
             self.update_bounds_table(self.bounds_list.index(new_settings))
             self._put_bounds_settings_to_gui(new_settings)
@@ -1883,9 +1835,8 @@ class ProjectGui:
             return
         settings = pycam.Gui.Settings.ProcessSettings()
         if not settings.write_to_file(filename, self.tool_list,
-                self.process_list, self.bounds_list, self.task_list) \
-                and not no_dialog and not self.no_dialog:
-            show_error_dialog(self.window, "Failed to save settings file")
+                self.process_list, self.bounds_list, self.task_list):
+            log.error("Failed to save settings file")
         else:
             self.add_to_recent_file_list(filename)
 
@@ -2040,11 +1991,7 @@ class ProjectGui:
 
         if isinstance(toolpath, basestring):
             # an error occoured - "toolpath" contains the error message
-            message = "Failed to generate toolpath: %s" % toolpath
-            if not self.no_dialog:
-                show_error_dialog(self.window, message)
-            else:
-                log.warn("Toolpath generation failed: %s" % str(message))
+            log.error("Failed to generate toolpath: %s" % toolpath)
             # we were not successful (similar to a "cancel" request)
             return False
         else:
@@ -2081,21 +2028,20 @@ class ProjectGui:
             # this should never happen
             log.error("Assertion failed: invalid boundary_mode (%s)" % str(self.settings.get("boundary_mode")))
 
-        abs_bounds = self._get_bounds_limits_absolute(bounds)
+        abs_bounds_low, abs_bounds_high = bounds.get_absolute_limits()
 
-        minx = float(abs_bounds["x_low"])-offset
-        maxx = float(abs_bounds["x_high"])+offset
-        miny = float(abs_bounds["y_low"])-offset
-        maxy = float(abs_bounds["y_high"])+offset
-        minz = float(abs_bounds["z_low"])
-        maxz = float(abs_bounds["z_high"])
+        minx = float(abs_bounds_low[0])-offset
+        miny = float(abs_bounds_low[1])-offset
+        minz = float(abs_bounds_low[2])
+        maxx = float(abs_bounds_high[0])+offset
+        maxy = float(abs_bounds_high[1])+offset
+        maxz = float(abs_bounds_high[2])
         toolpath_settings.set_bounds(minx, maxx, miny, maxy, minz, maxz)
 
         # check if the boundary limits are valid
         if (minx > maxx) or (miny > maxy) or (minz > maxz):
             # don't generate a toolpath if the area is too small (e.g. due to the tool size)
-            if not self.no_dialog:
-                show_error_dialog(self.window, "Processing boundaries are too small for this tool size.")
+            log.error("Processing boundaries are too small for this tool size.")
             return None
 
         # put the tool settings together
@@ -2260,8 +2206,7 @@ class ProjectGui:
             destination.close()
             log.info("GCode file successfully written: %s" % str(filename))
         except IOError, err_msg:
-            if not no_dialog and not self.no_dialog:
-                show_error_dialog(self.window, "Failed to save toolpath file")
+            log.error("Failed to save toolpath file")
         else:
             self.add_to_recent_file_list(filename)
 
