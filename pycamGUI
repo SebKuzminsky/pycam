@@ -40,90 +40,37 @@ if __name__ == "__main__":
     outputfile = None
 
     parser = OptionParser(usage="usage: %prog [options] [inputfile [outputfile]]")
-    parser.add_option("", "--gui", dest="display",
-            action="store_true", default=False,
-            help="don't create the outputfile on the fly - just preset the output filename and show the GUI")
-    parser.add_option("", "--gtk", dest="gtk_gui",
-            action="store_true", default=True,
-            help="use the new GTK interface (default)")
-    parser.add_option("", "--tk", dest="gtk_gui",
-            action="store_false",
-            help="use the (old) Tk interface")
     parser.add_option("-c", "--config", dest="config_file",
             default=None, action="store", type="string",
-            help="load a task settings file (requires the GTK interface)")
-    parser.add_option("", "--task", dest="task",
-            default=None, action="store", type="int",
-            help="choose a specific task from task settings by number (requires the GTK interface)")
+            help="load a task settings file")
     parser.add_option("", "--disable-ode", dest="ode_disabled",
             default=False, action="store_true", help="disable experimental ODE collision detection")
     (options, args) = parser.parse_args()
 
     if len(args) > 0:
         inputfile = args[0]
-    if len(args) > 1:
-        outputfile = args[1]
-    if len(args) > 2:
-        parser.error("too many arguments given (%d instead of %d)" % (len(args), 2))
 
     # try the configured interface first and then try to fall back to the alternative, if necessary
     deps_gtk = GuiCommon.dependency_details_gtk()
-    deps_tk = GuiCommon.dependency_details_tk()
     report_gtk = GuiCommon.get_dependency_report(deps_gtk, prefix="\t")
-    report_tk = GuiCommon.get_dependency_report(deps_tk, prefix="\t")
-    if options.gtk_gui:
-        if GuiCommon.check_dependencies(deps_gtk):
-            from pycam.Gui.Project import ProjectGui
-            gui_class = ProjectGui
-        else:
-            print >> sys.stderr, "Error: Failed to load the GTK interface."
-            print >> sys.stderr, "Details:"
-            print >> sys.stderr, report_gtk
-            print >> sys.stderr, "I will try to use the alternative Tk interface now ..."
-            if GuiCommon.check_dependencies(deps_tk):
-                from pycam.Gui.SimpleGui import SimpleGui
-                gui_class = SimpleGui
-                options.gtk_gui = False
-            else:
-                gui_class = None
+    if GuiCommon.check_dependencies(deps_gtk):
+        from pycam.Gui.Project import ProjectGui
+        gui_class = ProjectGui
     else:
-        if GuiCommon.check_dependencies(deps_tk):
-            from pycam.Gui.SimpleGui import SimpleGui
-            gui_class = SimpleGui
-        else:
-            print >> sys.stderr, "Error: Failed to load the Tk interface."
-            print >> sys.stderr, "Details:"
-            print >> sys.stderr, report_tk
-            print >> sys.stderr, "I will try to use the alternative GTK interface now ..."
-            if GuiCommon.check_dependencies(deps_gtk):
-                from pycam.Gui.Project import ProjectGui
-                gui_class = ProjectGui
-                options.gtk_gui = True
-            else:
-                gui_class = None
-    # exit if no interface is found
-    if gui_class is None:
         full_report = []
-        full_report.append("Neither the GTK nor the Tk interface is available. Please install the corresponding packages!")
-        full_report.append("")
-        full_report.append("Dependency report for GTK interface:")
+        full_report.append("Error: Failed to load the GTK interface.")
+        full_report.append("Details:")
         full_report.append(report_gtk)
         full_report.append("")
-        full_report.append("Dependency report for Tk interface:")
-        full_report.append(report_tk)
-        full_report.append("")
         full_report.append("Detailed list of requirements: %s" % GuiCommon.REQUIREMENTS_LINK)
-        full_report.append("")
+        gui_class = None
         GuiCommon.EmergencyDialog("PyCAM dependency problem", os.linesep.join(full_report))
         sys.exit(1)
 
     if options.ode_disabled:
         override_ode_availability(False)
 
-    if outputfile and not options.display:
-        gui = gui_class(no_dialog=True)
-    else:
-        gui = gui_class()
+    gui = gui_class()
 
     # try to load the default model file ("pycam" logo)
     if not inputfile:
@@ -140,23 +87,9 @@ if __name__ == "__main__":
         gui.open(inputfile)
     # load task settings file
     # only available for the GTK interface
-    if options.gtk_gui:
-        if options.config_file:
-            gui.open_task_settings_file(options.config_file)
-    if outputfile and not options.display:
-        # an output filename is given and no gui is explicitly requested
-        if options.gtk_gui:
-            if not options.task is None:
-                gui.process_one_task(options.task)
-            else:
-                gui.process_multiple_tasks()
-        else:
-            gui.generateToolpath()
-        if outputfile:
-            gui.save_toolpath(outputfile)
-    else:
-        # the gui should be shown
-        if outputfile:
-            gui.setOutputFilename(outputfile)
-        gui.mainloop()
+    if options.config_file:
+        gui.open_task_settings_file(options.config_file)
+
+    # open the GUI
+    gui.mainloop()
 
