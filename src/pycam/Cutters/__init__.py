@@ -56,5 +56,5 @@ def get_tool_from_settings(tool_settings, height=None):
         toroid = tool_settings["torus_radius"]
         return ToroidalCutter(radius, toroid, height=height)
     else:
-        return "Invalid cutter shape: '%s' is not one of %s" % (cuttername, TOOL_SHAPES)
+        return "Invalid cutter shape: '%s' is not known" % str(cuttername)
 
