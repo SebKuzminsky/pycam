@@ -22,8 +22,9 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry import Point, Line
 import pycam.Geometry.Model
+import pycam.Utils.log
 
-import sys
+log = pycam.Utils.log.get_logger()
 
 
 class DXFParser:
@@ -116,8 +117,8 @@ class DXFParser:
         try:
             line1 = int(line1)
         except ValueError:
-            print >>sys.stderr, "Invalid key in line " \
-                    + "%d (int expected): %s" % (self.line_number, line1)
+            log.warn("DXFImporter: Invalid key in line " \
+                    + "%d (int expected): %s" % (self.line_number, line1))
             return None, None
         if line1 in (self.KEYS["START_X"], self.KEYS["START_Y"],
                 self.KEYS["START_Z"], self.KEYS["END_X"], self.KEYS["END_Y"],
@@ -125,16 +126,16 @@ class DXFParser:
             try:
                 line2 = float(line2)
             except ValueError:
-                print >>sys.stderr, "Invalid input in line " \
-                        + "%d (float expected): %s" % (self.line_number, line2)
+                log.warn("DXFImporter: Invalid input in line " \
+                        + "%d (float expected): %s" % (self.line_number, line2))
                 line1 = None
                 line2 = None
         elif line1 in (self.KEYS["COLOR"],):
             try:
                 line2 = int(line2)
             except ValueError:
-                print >>sys.stderr, "Invalid input in line " \
-                        + "%d (float expected): %s" % (self.line_number, line2)
+                log.warn("DXFImporter: Invalid input in line " \
+                        + "%d (float expected): %s" % (self.line_number, line2))
                 line1 = None
                 line2 = None
         else:
@@ -154,8 +155,8 @@ class DXFParser:
                     self.parse_line()
                 else:
                     # not supported
-                    print "Ignored unsupported element in line %d: %s" \
-                            % (self.line_number, value)
+                    log.warn("DXFImporter: Ignored unsupported element in " \
+                            + "line %d: %s" % (self.line_number, value))
             key, value = self._read_key_value()
 
     def parse_line(self):
@@ -184,16 +185,17 @@ class DXFParser:
         if not key is None:
             self._push_on_stack(key, value)
         if (None in p1) or (None in p2):
-            print >>sys.stderr, "Incomplete LINE definition between line " \
-                    + "%d and %d" % (start_line, end_line)
+            log.warn("DXFImporter: Incomplete LINE definition between line " \
+                    + "%d and %d" % (start_line, end_line))
         else:
             self.lines.append(Line(Point(p1[0], p1[1], p1[2]), Point(p2[0], p2[1], p2[2])))
 
     def check_header(self):
+        # TODO: this function is not used?
         # we expect "0" in the first line and "SECTION" in the second one
         key, value = self._read_key_value()
         if (key != KEYS["MARKER"]) or (value and (value != "SECTION")):
-            print >>sys.stderr, "DXF file header not recognized"
+            log.error("DXFImporter: DXF file header not recognized")
             return None
 
 
@@ -201,7 +203,7 @@ def import_model(filename):
     try:
         f = open(filename,"rb")
     except IOError, err_msg:
-        print >>sys.stderr, "Failed to read file (%s): %s" % (filename, err_msg)
+        log.error("DXFImporter: Failed to read file (%s): %s" % (filename, err_msg))
         return None
 
     result = DXFParser(f)
@@ -212,14 +214,9 @@ def import_model(filename):
         model = pycam.Geometry.Model.ContourModel()
         for l in lines:
             model.append(l)
-        print "Imported DXF model: %d lines" % len(lines)
+        log.info("DXFImporter: Imported DXF model: %d lines" % len(lines))
         return model
     else:
-        print >>sys.stderr, "No supported elements found in DXF file!"
+        log.error("DXFImporter: No supported elements found in DXF file!")
         return None
-
-
-if __name__ == "__main__":
-    filename = sys.argv[1]
-    import_model(filename)
 

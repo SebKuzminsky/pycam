@@ -25,11 +25,14 @@ from pycam.Geometry import Point, Line, Triangle
 from pycam.Geometry.PointKdtree import PointKdtree
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
 from pycam.Geometry.Model import Model
+import pycam.Utils.log
 
 from struct import unpack 
 import re
 import os
-import sys
+
+log = pycam.Utils.log.get_logger()
+
 
 vertices = 0
 edges = 0
@@ -79,7 +82,7 @@ def ImportModel(filename, use_kdtree=True):
     try:
         f = open(filename,"rb")
     except IOError, err_msg:
-        print >>sys.stderr, "Failed to read file (%s): %s" % (filename, err_msg)
+        log.error("STLImporter: Failed to read file (%s): %s" % (filename, err_msg))
         return None
     # read the first two lines of (potentially non-binary) input - they should contain "solid" and "facet"
     header = f.readline(200)

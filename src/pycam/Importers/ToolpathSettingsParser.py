@@ -39,7 +39,8 @@ def parseToolpathSettings(filename):
     try:
         f = open(filename,"r")
     except IOError, err_msg:
-        print >>sys.stderr, "Failed to read file (%s): %s" % (filename, err_msg)
+        log.warn("ToolpathSettingsParser: Failed to read file (%s): %s" % \
+                (filename, err_msg))
         return None
     for line in f.readlines():
         match = re.match(REGEX_META_KEYWORDS, line)

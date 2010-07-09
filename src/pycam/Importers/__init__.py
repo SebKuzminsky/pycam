@@ -23,11 +23,14 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = ["STLImporter", "DXFImporter", "TestModel"]
 
+import pycam.Utils.log
 import DXFImporter
 import STLImporter
 
 import os
-import sys
+
+log = pycam.Utils.log.get_logger()
+
 
 def detect_file_type(filename):
     failure = (None, None)
@@ -41,7 +44,7 @@ def detect_file_type(filename):
         elif filename.endswith(".dxf"):
             return ("dxf", DXFImporter.import_model)
         else:
-            print >>sys.stderr, "Failed to detect the model type of '%s'." \
-                    % filename + " Is the file extension (.stl/.dxf) correct?"
-            failure
+            log.error("Importers: Failed to detect the model type of '%s'." \
+                    % filename + " Is the file extension (.stl/.dxf) correct?")
+            return failure
 

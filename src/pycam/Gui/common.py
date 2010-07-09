@@ -20,11 +20,13 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import pycam.Utils.log
 # Tkinter is used for "EmergencyDialog" below - but we will try to import it carefully
 #import Tkinter
 import sys
 import os
 
+log = pycam.Utils.log.get_logger()
 
 DEPENDENCY_DESCRIPTION = {
     "gtk": ("Python bindings for GTK+",
@@ -142,14 +144,13 @@ class EmergencyDialog:
             import Tkinter
         except ImportError:
             # tk is not installed
-            print >>sys.stderr, "Warning: %s" % str(title)
-            print >>sys.stderr, message
+            log.warn("Failed to show error dialog due to a missing Tkinter Python package.")
             return
         try:
             root = Tkinter.Tk()
         except Tkinter.TclError, err_msg:
-            print >>sys.stderr, "Warning: Failed to create error dialog window (%s). Probably you are running PyCAM from a terminal." % str(err_msg)
-            print >>sys.stderr, "%s: %s" % (title, message)
+            log.info("Failed to create error dialog window (%s). " % str(err_msg) \
+                    + "Probably you are running PyCAM from a terminal.")
             return
         root.title(title)
         root.bind("<Return>", self.finish)

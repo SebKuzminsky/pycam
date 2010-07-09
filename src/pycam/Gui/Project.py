@@ -31,6 +31,7 @@ import pycam.Cutters
 import pycam.Toolpath.Generator
 import pycam.Toolpath
 import pycam.Geometry.utils as utils
+import pycam.Utils.log
 from pycam.Gui.OpenGLTools import ModelViewWindowGL
 from pycam import VERSION
 import pycam.Physics.ode_physics
@@ -92,17 +93,22 @@ user's home directory on startup/shutdown"""
 # floating point color values are only available since gtk 2.16
 GTK_COLOR_MAX = 65535.0
 
+log = pycam.Utils.log.get_logger()
+
 def get_data_file_location(filename):
     for base_dir in DATA_BASE_DIRS:
         test_path = os.path.join(base_dir, filename)
         if os.path.exists(test_path):
             return test_path
     else:
-        print >>sys.stderr, "Failed to locate a resource file (%s) in %s!" % (filename, DATA_BASE_DIRS)
-        print >>sys.stderr, "You can extend the search path by setting the environment variable '%s'." % str(DATA_DIR_ENVIRON_KEY)
+        lines = []
+        lines.append("Failed to locate a resource file (%s) in %s!" % (filename, DATA_BASE_DIRS))
+        lines.append("You can extend the search path by setting the environment variable '%s'." % str(DATA_DIR_ENVIRON_KEY))
+        log.error(os.linesep.join(lines))
         return None
 
 def show_error_dialog(window, message):
+    # TODO: move this to the log handler
     warn_window = gtk.MessageDialog(window, type=gtk.MESSAGE_ERROR,
             buttons=gtk.BUTTONS_OK, message_format=str(message))
     warn_window.set_title("Error")
@@ -873,8 +879,8 @@ class ProjectGui:
         try:
             task = self.task_list[task_index]
         except IndexError:
-            # this shoudl only happen, if we were called in batch mode (command line)
-            print >>sys.stderr, "The given task ID (%d) does not exist. Valid values are: %s." % (task_index, range(len(self.task_list)))
+            # this should only happen, if we were called in batch mode (command line)
+            log.warn("The given task ID (%d) does not exist. Valid values are: %s." % (task_index, range(len(self.task_list))))
             return
         self.generate_toolpath(task["tool"], task["process"], task["bounds"])
 
@@ -1030,7 +1036,7 @@ class ProjectGui:
             controls = (("x <-> y", "x_swap_y"), ("x <-> z", "x_swap_z"), ("y <-> z", "y_swap_z"))
         else:
             # broken gui
-            print >> sys.stderr, "Unknown button action: %s" % str(widget.get_name())
+            log.warn("Unknown button action: %s" % str(widget.get_name()))
             return
         for obj, value in controls:
             if self.gui.get_object(obj).get_active():
@@ -1351,7 +1357,7 @@ class ProjectGui:
         # report any ignored (obsolete) preference keys present in the file
         for item, value in config.items("DEFAULT"):
             if not item in PREFERENCES_DEFAULTS.keys():
-                print "Warning: skipping obsolete preference item: %s" % str(item)
+                log.warn("Skipping obsolete preference item: %s" % str(item))
         for item in PREFERENCES_DEFAULTS.keys():
             if not config.has_option("DEFAULT", item):
                 # a new preference setting is missing in the (old) file
@@ -1372,7 +1378,8 @@ class ProjectGui:
         config_filename = pycam.Gui.Settings.get_config_filename()
         if config_filename is None:
             # failed to create the personal preferences directory
-            print >>sys.stderr, "Warning: Failed to create a preferences directory your user home directory." 
+            log.warn("Failed to create a preferences directory in " \
+                    + "your user's home directory.")
             return
         config = ConfigParser.ConfigParser()
         for item in PREFERENCES_DEFAULTS.keys():
@@ -1382,7 +1389,7 @@ class ProjectGui:
             config.write(config_file)
             config_file.close()
         except IOError, err_msg:
-            print >>sys.stderr, "Warning: Failed to write preferences file (%s): %s" % (config_filename, err_msg)
+            log.warn("Failed to write preferences file (%s): %s" % (config_filename, err_msg))
 
     @gui_activity_guard
     def shift_model(self, widget, use_form_values=True):
@@ -2029,7 +2036,7 @@ class ProjectGui:
         toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(
                 self.model, toolpath_settings, callback=draw_callback)
 
-        print "Time elapsed: %f" % (time.time() - start_time)
+        log.info("Toolpath generation time: %f" % (time.time() - start_time))
 
         if isinstance(toolpath, basestring):
             # an error occoured - "toolpath" contains the error message
@@ -2037,7 +2044,7 @@ class ProjectGui:
             if not self.no_dialog:
                 show_error_dialog(self.window, message)
             else:
-                print >>sys.stderr, message
+                log.warn("Toolpath generation failed: %s" % str(message))
             # we were not successful (similar to a "cancel" request)
             return False
         else:
@@ -2072,7 +2079,7 @@ class ProjectGui:
             pass
         else:
             # this should never happen
-            print >>sys.stderr, "Assertion failed: invalid boundary_mode (%s)" % str(self.settings.get("boundary_mode"))
+            log.error("Assertion failed: invalid boundary_mode (%s)" % str(self.settings.get("boundary_mode")))
 
         abs_bounds = self._get_bounds_limits_absolute(bounds)
 
@@ -2251,8 +2258,7 @@ class ProjectGui:
                         max_skip_safety_distance=2*tool["tool_radius"],
                         comment=os.linesep.join(meta_data))
             destination.close()
-            if self.no_dialog:
-                print "GCode file successfully written: %s" % str(filename)
+            log.info("GCode file successfully written: %s" % str(filename))
         except IOError, err_msg:
             if not no_dialog and not self.no_dialog:
                 show_error_dialog(self.window, "Failed to save toolpath file")

@@ -21,12 +21,14 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Cutters
+import pycam.Utils.log
 import ConfigParser
 import StringIO
-import sys
 import os
 
 CONFIG_DIR = "pycam"
+
+log = pycam.Utils.log.get_logger()
 
 def get_config_dirname():
     try:
@@ -282,7 +284,8 @@ process: 3
         try:
             self.config.read([filename])
         except ConfigParser.ParsingError, err_msg:
-            print >> sys.stderr, "Failed to parse config file '%s': %s" % (filename, err_msg)
+            log.error("Settings: Failed to parse config file '%s': %s" % \
+                    (filename, err_msg))
             return False
         return True
 
@@ -291,7 +294,8 @@ process: 3
         try:
             self.reset(input_text)
         except ConfigParser.ParsingError, err_msg:
-            print >> sys.stderr, "Failed to parse config data: %s" % str(err_msg)
+            log.error("Settings: Failed to parse config data: %s" % \
+                    str(err_msg))
             return False
         return True
 
@@ -302,7 +306,8 @@ process: 3
             fi.write(text)
             fi.close()
         except IOError, err_msg:
-            print >> sys.stderr, "Failed to write configuration to file (%s): %s" % (filename, err_msg)
+            log.error("Settings: Failed to write configuration to file " \
+                    + "(%s): %s" % (filename, err_msg))
             return False
         return True
 
@@ -402,7 +407,8 @@ process: 3
                 if values and (values.count(values[0]) == len(values)):
                     common_keys.append(key)
             if common_keys:
-                section = "[%s%s]" % (self.SECTION_PREFIXES[type_name], self.DEFAULT_SUFFIX)
+                section = "[%s%s]" % (self.SECTION_PREFIXES[type_name],
+                        self.DEFAULT_SUFFIX)
                 result.append(section)
                 for key in common_keys:
                     value = type_list[0][key]
@@ -574,7 +580,8 @@ class ToolpathSettings:
                     try:
                         value = value_type(raw_value)
                     except ValueError:
-                        print >>sys.stderr, "Ignored invalid setting (%s -> %s): %s" % (section, key, value_raw)
+                        log.warn("Settings: Ignored invalid setting " \
+                                "(%s -> %s): %s" % (section, key, value_raw))
                 config_dict[key] = value
 
     def get_string(self):

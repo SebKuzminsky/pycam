@@ -25,8 +25,11 @@ import pycam.PathProcessors.PathAccumulator
 from pycam.Geometry import Point
 from pycam.Geometry.utils import INFINITE
 from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode, get_free_paths_ode, get_free_paths_triangles, ProgressCounter
+import pycam.Utils.log
 import math
-import sys
+
+log = pycam.Utils.log.get_logger()
+
 
 class EngraveCutter:
 
@@ -175,9 +178,9 @@ class EngraveCutter:
                 p = Point(x, y, self.safety_height)
                 pa.append(p)
                 if not self._boundary_warning_already_shown:
-                    print >>sys.stderr, "WARNING: DropCutter exceed the height" \
-                            + " of the boundary box: using a safe height " \
-                            + "instead. This warning is reported only once."
+                    log.warn("EngraveCutter: exceed the height " \
+                            + "of the boundary box: using a safe height " \
+                            + "instead. This warning is reported only once.")
                 self._boundary_warning_already_shown = True
             self.cutter.moveto(p)
             # "draw_callback" returns true, if the user requested quitting via the GUI
