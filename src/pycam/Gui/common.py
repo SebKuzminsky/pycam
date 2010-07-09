@@ -41,24 +41,22 @@ DEPENDENCY_DESCRIPTION = {
     "gl": ("OpenGL support of graphic driver",
         "Your current graphic driver does not support OpenGL. Please consult " \
         + "'glxgears' to locate this problem."),
-    "togl": ("Tk for OpenGL",
-        "see http://downloads.sourceforge.net/togl/",
-        "see http://downloads.sourceforge.net/togl/"),
-    "tkinter": ("Tk interface for Python",
-        "Install the package 'python-tk'",
-        "see http://tkinter.unpythonic.net/wiki/"),
 }
 
 REQUIREMENTS_LINK = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=Requirements"
 
 
-def dependency_details_gtk():
+def requirements_details_gtk():
     result = {}
     try:
         import gtk
         result["gtk"] = True
     except ImportError:
         result["gtk"] = False
+    return result
+
+def recommends_details_gtk():
+    result = {}
     try:
         import gtk.gtkgl
         result["gtkgl"] = True
@@ -72,45 +70,10 @@ def dependency_details_gtk():
         result["opengl"] = True
     except ImportError:
         result["opengl"] = False
-    return result
-
-def dependency_details_tk():
-    result = {}
-    try:
-        import OpenGL
-        result["opengl"] = True
-    except ImportError:
-        result["opengl"] = False
-    try:
-        import Tkinter
-        result["tkinter"] = True
-    except ImportError:
-        result["tkinter"] = False
-    # Don't try to import OpenGL.Tk if Tkinter itself is missing.
-    # Otherwise the "except" statement below fails due to the unknown
-    # Tkinter.TclError exception.
-    if result["tkinter"]:
-        try:
-            import logging
-            try:
-                # temporarily disable debug output of the logging module
-                # the error message is: No handlers could be found for logger "OpenGL.Tk"
-                previous = logging.raiseExceptions
-                logging.raiseExceptions = 0
-            except AttributeError:
-                previous = None
-            import OpenGL.Tk
-            if not previous is None:
-                logging.raiseExceptions = previous
-            result["togl"] = True
-        except (ImportError, Tkinter.TclError):
-            result["togl"] = False
-    else:
-        result["togl"] = False
-    return result
 
 def check_dependencies(details):
-    """you can feed this function with the output of "dependency_details_gtk" or "..._tk".
+    """you can feed this function with the output of
+    '(requirements|recommends)_details_*'.
     The result is True if all dependencies are met.
     """
     failed = [key for (key, state) in details.items() if not state]
