@@ -8,6 +8,6 @@ include release_info.txt
 include pycamGUI
 recursive-include desktop *
 recursive-include man *
-recursive-include pycam *
+recursive-include src *
 recursive-include Samples *
 recursive-include Tests *

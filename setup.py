@@ -61,6 +61,7 @@ Basically you will need Python, GTK and OpenGL.
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX",
     ],
+    package_dir={'': 'src'},
     packages=[
         "pycam",
         "pycam.Cutters",
