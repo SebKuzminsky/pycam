@@ -41,8 +41,42 @@ def init_logger(log, logfilename=None):
     log.addHandler(console_output)
     log.setLevel(logging.INFO)
 
-def add_stream(stream):
+def add_stream(stream, level=None):
     log = get_logger()
     logstream = logging.StreamHandler(stream)
+    if not level is None:
+        logstream.setLevel(level)
     log.addHandler(logstream)
+
+def add_gtk_gui(parent_window, level=None):
+    log = get_logger()
+    loggui = GTKHandler(parent_window)
+    if not level is None:
+        loggui.setLevel(level)
+    log.addHandler(loggui)
+
+
+class GTKHandler(logging.Handler):
+
+    def __init__(self, parent_window=None, **kwargs):
+        logging.Handler.__init__(self, **kwargs)
+        self.parent_window = parent_window
+
+    def emit(self, record):
+        message = self.format(record)
+        import gtk
+        if record.levelno <= 20:
+            message_type = gtk.MESSAGE_INFO
+            message_title = "Information"
+        elif record.levelno <= 30:
+            message_type = gtk.MESSAGE_WARNING
+            message_title = "Warning"
+        else:
+            message_type = gtk.MESSAGE_ERROR
+            message_title = "Error"
+        window = gtk.MessageDialog(self.parent_window, type=message_type,
+                buttons=gtk.BUTTONS_OK, message_format=str(message))
+        window.set_title(message_title)
+        window.run()
+        window.destroy()
 

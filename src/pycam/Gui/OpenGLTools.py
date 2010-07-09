@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.Point import Point
 import pycam.Geometry.Matrix as Matrix
+import pycam.Utils.log
 import OpenGL.GL as GL
 import OpenGL.GLU as GLU
 import OpenGL.GLUT as GLUT
@@ -45,6 +46,9 @@ VIEWS = {
     "front": {"distance": (0.0, -1.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
     "back": {"distance": (0.0, 1.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
 }
+
+
+log = pycam.Utils.log.get_logger()
 
 
 class Camera:
@@ -208,8 +212,8 @@ class ModelViewWindowGL:
         try:
             import gtk.gtkgl
             self.enabled = True
-        except ImportError:
-            show_error_dialog(self.window, "Failed to initialize the interactive 3D model view."
+        except (ImportError, RuntimeError):
+            log.error("Failed to initialize the interactive 3D model view."
                     + "\nPlease install 'python-gtkglext1' to enable it.")
             self.enabled = False
             return
