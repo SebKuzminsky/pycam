@@ -38,19 +38,16 @@ class PushCutter:
     def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, dx, dy, dz, draw_callback=None):
         # calculate the number of steps
         num_of_layers = 1 + int(math.ceil(abs(maxz - minz) / dz))
-        if num_of_layers > 1:
-            z_step = abs(maxz - minz) / (num_of_layers - 1)
-        else:
-            z_step = 0
+        z_step = abs(maxz - minz) / max(1, (num_of_layers - 1))
 
         lines_per_layer = 0
         if dx != 0:
             x_lines_per_layer = 1 + int(math.ceil(abs(maxx - minx) / dx))
-            x_step = abs(maxx - minx) / (x_lines_per_layer - 1)
+            x_step = abs(maxx - minx) / max(1, (x_lines_per_layer - 1))
             lines_per_layer += x_lines_per_layer
         if dy != 0:
             y_lines_per_layer = 1 + int(math.ceil(abs(maxy - miny) / dy))
-            y_step = abs(maxy - miny) / (y_lines_per_layer - 1)
+            y_step = abs(maxy - miny) / max(1, (y_lines_per_layer - 1))
             lines_per_layer += y_lines_per_layer
 
         progress_counter = ProgressCounter(num_of_layers * lines_per_layer,
@@ -102,7 +99,7 @@ class PushCutter:
             depth_x = max(int(math.ceil(depth_x)), 4)
             depth_x = min(depth_x, max_depth)
             num_of_x_lines = 1 + int(math.ceil(abs(maxx - minx) / dx))
-            x_step = abs(maxx - minx) / (num_of_x_lines - 1)
+            x_step = abs(maxx - minx) / max(1, (num_of_x_lines - 1))
             x_steps = [minx + i * x_step for i in range(num_of_x_lines)]
             y_steps = [None] * num_of_x_lines
         else:
@@ -110,7 +107,7 @@ class PushCutter:
             depth_y = max(int(math.ceil(depth_y)), 4)
             depth_y = min(depth_y, max_depth)
             num_of_y_lines = 1 + int(math.ceil(abs(maxy - miny) / dy))
-            y_step = abs(maxy - miny) / (num_of_y_lines - 1)
+            y_step = abs(maxy - miny) / max(1, (num_of_y_lines - 1))
             y_steps = [miny + i * y_step for i in range(num_of_y_lines)]
             x_steps = [None] * num_of_y_lines
 

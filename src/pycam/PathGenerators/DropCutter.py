@@ -76,8 +76,8 @@ class DropCutter:
         # determine step size
         num_of_x_lines = 1 + int(math.ceil(abs(maxx - minx) / d0))
         num_of_y_lines = 1 + int(math.ceil(abs(maxy - miny) / d0))
-        x_step = abs(maxx - minx) / (num_of_x_lines - 1)
-        y_step = abs(maxy - miny) / (num_of_y_lines - 1)
+        x_step = abs(maxx - minx) / max(1, (num_of_x_lines - 1))
+        y_step = abs(maxy - miny) / max(1, (num_of_y_lines - 1))
         x_steps = [(minx + i * x_step) for i in range(num_of_x_lines)]
         y_steps = [(miny + i * y_step) for i in range(num_of_y_lines)]
 
