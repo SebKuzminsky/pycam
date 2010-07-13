@@ -13,6 +13,10 @@ EXPORT_FILE_PREFIX = $(EXPORT_DIR)
 EXPORT_ZIP = $(EXPORT_FILE_PREFIX).zip
 EXPORT_TGZ = $(EXPORT_FILE_PREFIX).tar.gz
 EXPORT_WIN32 = $(EXPORT_FILE_PREFIX).win32.exe
+PYTHON_EXE ?= python
+# check if the local version of python's distutils support "--plat-name"
+# (introduced in python 2.6)
+DISTUTILS_PLAT_NAME = $(shell $(PYTHON_EXE) setup.py --help build_ext | grep -q -- "--plat-name" && echo "--plat-name win32")
 
 # turn the destination directory into an absolute path
 ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
@@ -36,14 +40,14 @@ create_archive_dir:
 	mkdir -p "$(ARCHIVE_DIR)"
 
 zip: create_archive_dir svn_export
-	cd "$(EXPORT_DIR)"; python setup.py sdist --format zip --dist-dir "$(ARCHIVE_DIR)"
+	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py sdist --format zip --dist-dir "$(ARCHIVE_DIR)"
 
 tgz: create_archive_dir svn_export
-	cd "$(EXPORT_DIR)"; python setup.py sdist --format gztar --dist-dir "$(ARCHIVE_DIR)"
+	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py sdist --format gztar --dist-dir "$(ARCHIVE_DIR)"
 
 win32: create_archive_dir svn_export
 	# this is a binary release
-	cd "$(EXPORT_DIR)"; python setup.py bdist --format wininst --dist-dir "$(ARCHIVE_DIR)"
+	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py bdist --format wininst --dist-dir "$(ARCHIVE_DIR)" $(DISTUTILS_PLAT_NAME)
 
 upload:
 	svn cp "$(SVN_REPO_BASE)" "$(REPO_TAGS)/release-$(VERSION)" -m "tag release $(VERSION)"
