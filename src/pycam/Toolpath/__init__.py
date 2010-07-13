@@ -120,7 +120,8 @@ class Bounds:
     TYPE_FIXED_MARGIN = 1
     TYPE_CUSTOM = 2
 
-    def __init__(self, bounds_type=None, bounds_low=None, bounds_high=None):
+    def __init__(self, bounds_type=None, bounds_low=None, bounds_high=None,
+            reference=None):
         """ create a new Bounds instance
 
         @value bounds_type: any of TYPE_RELATIVE_MARGIN | TYPE_FIXED_MARGIN | TYPE_CUSTOM
@@ -132,6 +133,8 @@ class Bounds:
         @type bounds_low: (tuple|list) of float
         @value bounds_high: see 'bounds_low'
         @type bounds_high: (tuple|list) of float
+        @value reference: optional default reference Bounds instance
+        @type reference: Bounds
         """
         self.name = "No name"
         # set type
@@ -145,6 +148,14 @@ class Bounds:
         if bounds_high is None:
             bounds_high = [0, 0, 0]
         self.set_bounds(bounds_low, bounds_high)
+        self.reference = reference
+
+    def is_valid(self):
+        for index in range(3):
+            if self.bounds_low[index] > self.bounds_high[index]:
+                return False
+        else:
+            return True
 
     def set_name(self, name):
         self.name = name
@@ -193,6 +204,9 @@ class Bounds:
         @returns: a tuple of two lists containg the low and high limits
         @rvalue: tuple(list)
         """
+        # use the default reference if none was given
+        if reference is None:
+            reference = self.reference
         # check if a reference is given (if necessary)
         if self.bounds_type \
                 in (Bounds.TYPE_RELATIVE_MARGIN, Bounds.TYPE_FIXED_MARGIN):
@@ -241,6 +255,9 @@ class Bounds:
             value. This argument is ignored for the boundary type "TYPE_CUSTOM".
         @type reference: (tuple|list) of float
         """
+        # use the default reference if none was given
+        if reference is None:
+            reference = self.reference
         # check if a reference is given (if necessary)
         if self.bounds_type \
                 in (Bounds.TYPE_RELATIVE_MARGIN, Bounds.TYPE_FIXED_MARGIN):

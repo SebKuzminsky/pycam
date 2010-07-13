@@ -37,23 +37,23 @@ def generate_toolpath_from_settings(model, tp_settings, callback=None):
     process = tp_settings.get_process_settings()
     grid = tp_settings.get_support_grid()
     backend = tp_settings.get_calculation_backend()
-    bounds = []
-    bounds_dict = tp_settings.get_bounds()
-    for key in ("minx", "maxx", "miny", "maxy", "minz", "maxz"):
-        bounds.append(bounds_dict[key])
+    bounds_obj = tp_settings.get_bounds()
+    bounds_low, bounds_high = bounds_obj.get_absolute_limits()
     return generate_toolpath(model, tp_settings.get_tool_settings(),
-            bounds, process["path_direction"], process["generator"],
-            process["postprocessor"], process["material_allowance"],
-            process["safety_height"], process["overlap"],
-            process["step_down"], process["engrave_offset"], grid["distance"],
-            grid["thickness"], grid["height"], backend, callback)
+            bounds_low, bounds_high, process["path_direction"],
+            process["generator"], process["postprocessor"],
+            process["material_allowance"], process["safety_height"],
+            process["overlap"], process["step_down"], process["engrave_offset"],
+            grid["distance"], grid["thickness"], grid["height"], backend,
+            callback)
 
 def generate_toolpath(model, tool_settings=None,
-        bounds=None, direction="x", path_generator="DropCutter",
-        path_postprocessor="ZigZagCutter", material_allowance=0.0,
-        safety_height=None, overlap=0.0, step_down=0.0, engrave_offset=0.0,
-        support_grid_distance=None, support_grid_thickness=None,
-        support_grid_height=None, calculation_backend=None, callback=None):
+        bounds_low=None, bounds_high=None, direction="x",
+        path_generator="DropCutter", path_postprocessor="ZigZagCutter",
+        material_allowance=0.0, safety_height=None, overlap=0.0, step_down=0.0,
+        engrave_offset=0.0, support_grid_distance=None,
+        support_grid_thickness=None, support_grid_height=None,
+        calculation_backend=None, callback=None):
     """ abstract interface for generating a toolpath
 
     @type model: pycam.Geometry.Model.Model
@@ -64,9 +64,12 @@ def generate_toolpath(model, tool_settings=None,
         "shape": any of possible cutter shape (see "pycam.Cutters")
         "tool_radius": main radius of the tools
         "torus_radius": (only for ToroidalCutter) second toroidal radius
-    @type bounds: tuple(float) | list(float)
-    @value bounds: the processing boundary (relative to the center of the tool)
-        (order: minx, maxx, miny, maxy, minz, maxz)
+    @type bounds_low: tuple(float) | list(float)
+    @value bounds_low: the lower processing boundary (used for the center of
+        the tool) (order: minx, miny, minz)
+    @type bounds_high: tuple(float) | list(float)
+    @value bounds_high: the lower processing boundary (used for the center of
+        the tool) (order: maxx, maxy, maxz)
     @type direction: str
     @value direction: any member of the DIRECTIONS set (e.g. "x", "y" or "xy")
     @type path_generator: str
@@ -94,13 +97,16 @@ def generate_toolpath(model, tool_settings=None,
     @return: the resulting toolpath object or an error string in case of invalid
         arguments
     """
-    if bounds is None:
+    if bounds_low is None:
         # no bounds were given - we use the boundaries of the model
-        minx, maxx = model.minx, model.maxx
-        miny, maxy = model.miny, model.maxy
-        minz, maxz = model.minz, model.maxz
+        minx, miny, minz = (model.minx, model.miny, model.minz)
     else:
-        minx, maxx, miny, maxy, minz, maxz = bounds
+        minx, miny, minz = bounds_low
+    if bounds_high is None:
+        # no bounds were given - we use the boundaries of the model
+        maxx, maxy, maxz = (model.maxx, model.maxy, model.maxz)
+    else:
+        maxx, maxy, maxz = bounds_high
     # trimesh model or contour model?
     if isinstance(model, pycam.Geometry.Model.Model):
         # trimesh model

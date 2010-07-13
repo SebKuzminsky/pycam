@@ -529,18 +529,21 @@ class ToolpathSettings:
         self.support_grid = {}
         self.process_settings = {}
 
-    def set_bounds(self, minx, maxx, miny, maxy, minz, maxz):
+    def set_bounds(self, bounds):
+        low, high = bounds.get_absolute_limits()
         self.bounds = {
-                "minx": minx,
-                "maxx": maxx,
-                "miny": miny,
-                "maxy": maxy,
-                "minz": minz,
-                "maxz": maxz,
+                "minx": low[0],
+                "maxx": high[0],
+                "miny": low[1],
+                "maxy": high[1],
+                "minz": low[2],
+                "maxz": high[2],
         }
 
     def get_bounds(self):
-        return self.bounds
+        low = (self.bounds["minx"], self.bounds["miny"], self.bounds["minz"])
+        high = (self.bounds["maxx"], self.bounds["maxy"], self.bounds["maxz"])
+        return Bounds(Bounds.TYPE_CUSTOM, low, high)
 
     def set_tool(self, index, shape, tool_radius, torus_radius=None, speed=0.0, feedrate=0.0):
         self.tool_settings = {"id": index,

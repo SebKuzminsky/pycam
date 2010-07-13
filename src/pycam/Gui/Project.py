@@ -2033,22 +2033,17 @@ class ProjectGui:
             # this should never happen
             log.error("Assertion failed: invalid boundary_mode (%s)" % str(self.settings.get("boundary_mode")))
 
-        abs_bounds_low, abs_bounds_high = bounds.get_absolute_limits(
+        border = (offset, offset, 0)
+        processing_bounds = Bounds(Bounds.TYPE_FIXED_MARGIN, border, border,
                 reference=self.model.get_bounds())
 
-        minx = float(abs_bounds_low[0])-offset
-        miny = float(abs_bounds_low[1])-offset
-        minz = float(abs_bounds_low[2])
-        maxx = float(abs_bounds_high[0])+offset
-        maxy = float(abs_bounds_high[1])+offset
-        maxz = float(abs_bounds_high[2])
-        toolpath_settings.set_bounds(minx, maxx, miny, maxy, minz, maxz)
-
         # check if the boundary limits are valid
-        if (minx > maxx) or (miny > maxy) or (minz > maxz):
+        if not processing_bounds.is_valid():
             # don't generate a toolpath if the area is too small (e.g. due to the tool size)
             log.error("Processing boundaries are too small for this tool size.")
             return None
+
+        toolpath_settings.set_bounds(processing_bounds)
 
         # put the tool settings together
         tool_id = self.tool_list.index(tool_settings) + 1

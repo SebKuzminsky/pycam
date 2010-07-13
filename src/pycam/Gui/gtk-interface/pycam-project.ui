@@ -2707,7 +2707,7 @@ This operation is not available for engraving.</property>
                                             <child>
                                               <object class="GtkLabel" id="max label">
                                                 <property name="visible">True</property>
-                                                <property name="label" translatable="yes">max</property>
+                                                <property name="label" translatable="yes">upper</property>
                                               </object>
                                               <packing>
                                                 <property name="left_attach">2</property>
@@ -2732,7 +2732,7 @@ This operation is not available for engraving.</property>
                                             <child>
                                               <object class="GtkLabel" id="min label">
                                                 <property name="visible">True</property>
-                                                <property name="label" translatable="yes">min</property>
+                                                <property name="label" translatable="yes">lower</property>
                                               </object>
                                               <packing>
                                                 <property name="left_attach">1</property>
