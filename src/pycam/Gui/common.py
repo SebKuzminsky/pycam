@@ -45,11 +45,53 @@ DEPENDENCY_DESCRIPTION = {
 
 REQUIREMENTS_LINK = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=Requirements"
 
+# Usually the windows registry "HKEY_LOCAL_MACHINE/SOFTWARE/Gtk+/Path" contains
+# something like: C:\Programs\Common files\GTK
+# Afterwards we need to append "\bin" to get the library subdirectory.
+WINDOWS_GTK_REGISTRY_PATH = r"SOFTWARE\Gtk+"
+WINDOWS_GTK_REGISTRY_KEY = "Path"
+WINDOWS_GTK_LIB_SUBDIR = "bin"
+
+def import_gtk_carefully():
+    """ especially for windows: try to locate required libraries manually, if
+    the import of GTK fails
+    """
+    try:
+        import _winreg
+        in_windows = True
+    except ImportError:
+        in_windows = False
+    if not in_windows:
+        # We are not in windows - thus we just try to import gtk without
+        # the need for any more manual preparations.
+        import gtk
+    else:
+        # We try to retrive the GTK library directory from the registry before
+        # trying any import. Otherwise the user will always see a warning
+        # dialog regarding the missing libglib-2.0-0.dll file. This Windows
+        # warning dialog can't be suppressed - thus we should try to avoid it.
+        try:
+            reg_path = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
+                    WINDOWS_GTK_REGISTRY_PATH)
+            gtk_dll_path = os.path.join(_winreg.QueryValueEx(reg_path,
+                    WINDOWS_GTK_REGISTRY_KEY)[0], WINDOWS_GTK_LIB_SUBDIR)
+            _winreg.CloseKey(reg_path)
+        except NameError:
+            # GTK is probably not installed - the next import will fail
+            pass
+        else:
+            # add the new path to the PATH environment variable
+            if "PATH" in os.environ:
+                if not gtk_dll_path in os.environ["PATH"].split(os.pathsep):
+                    # append the guessed path to the library search path
+                    os.environ["PATH"] += "%s%s" % (os.pathsep, gtk_dll_path)
+        # everything should be prepared - now we try to import it again
+        import gtk
 
 def requirements_details_gtk():
     result = {}
     try:
-        import gtk
+        import_gtk_carefully()
         result["gtk"] = True
     except ImportError:
         result["gtk"] = False
