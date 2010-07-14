@@ -1850,12 +1850,14 @@ class ProjectGui:
 
     def toggle_progress_bar(self, status):
         if status:
+            self.menubar.set_sensitive(False)
             self.task_pane.set_sensitive(False)
             self.update_progress_bar("", 0)
             self.progress_widget.show()
         else:
             self.progress_widget.hide()
             self.task_pane.set_sensitive(True)
+            self.menubar.set_sensitive(True)
 
     def update_progress_bar(self, text=None, percent=None):
         if not percent is None:
