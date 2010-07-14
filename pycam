@@ -44,7 +44,7 @@ EXAMPLE_MODEL_LOCATIONS = (
 DEFAULT_MODEL_FILE = "pycam.stl"
 
 
-def show_gui(self, inputfile=None, task_settings_file=None):
+def show_gui(inputfile=None, task_settings_file=None):
     deps_gtk = GuiCommon.requirements_details_gtk()
     report_gtk = GuiCommon.get_dependency_report(deps_gtk, prefix="\t")
     if GuiCommon.check_dependencies(deps_gtk):
