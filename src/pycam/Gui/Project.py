@@ -754,8 +754,11 @@ class ProjectGui:
         current_task = self.settings.get("current_task")
         if not current_task is None:
             self.settings.set("current_tool", current_task["tool"])
+            self.update_tool_table(skip_model_update=True)
             self.settings.set("current_process", current_task["process"])
+            self.update_process_table(skip_model_update=True)
             self.settings.set("current_bounds", current_task["bounds"])
+            self.update_bounds_table(skip_model_update=True)
         self.update_tasklist_controls()
 
     @gui_activity_guard
