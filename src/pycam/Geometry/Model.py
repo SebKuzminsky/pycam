@@ -21,6 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import pycam.Exporters.STLExporter
 from pycam.Geometry import Triangle, Line, Point
 from pycam.Toolpath import Bounds
 from utils import INFINITE
@@ -60,6 +61,8 @@ class BaseModel(object):
         self.maxx = None
         self.maxy = None
         self.maxz = None
+        # derived classes should override this
+        self._export_function = None
 
     def __add__(self, other_model):
         """ combine two models """
@@ -85,6 +88,16 @@ class BaseModel(object):
     def to_OpenGL(self):
         for item in self.next():
             item.to_OpenGL()
+
+    def is_export_supported(self):
+        return not self._export_function is None
+
+    def export(self, comment=None):
+        if self.is_export_supported():
+            return self._export_function(self, comment=comment)
+        else:
+            raise NotImplementedError(("This type of model (%s) does not " \
+                    + "support the 'export' function.") % str(type(self)))
 
     def _update_limits(self, item):
         if self.minx is None:
@@ -169,6 +182,7 @@ class Model(BaseModel):
         super(Model, self).__init__()
         self._triangles = []
         self._item_groups.append(self._triangles)
+        self._export_function = pycam.Exporters.STLExporter.STLExporter
 
     def append(self, item):
         super(Model, self).append(item)
