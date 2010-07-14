@@ -2037,8 +2037,9 @@ class ProjectGui:
             log.error("Assertion failed: invalid boundary_mode (%s)" % str(self.settings.get("boundary_mode")))
 
         border = (offset, offset, 0)
+        bounds.set_reference(self.model.get_bounds())
         processing_bounds = Bounds(Bounds.TYPE_FIXED_MARGIN, border, border,
-                reference=self.model.get_bounds())
+                reference=bounds)
 
         # check if the boundary limits are valid
         if not processing_bounds.is_valid():

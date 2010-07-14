@@ -157,6 +157,9 @@ class Bounds:
         else:
             return True
 
+    def set_reference(self, reference):
+        self.reference = reference
+
     def set_name(self, name):
         self.name = name
 
@@ -215,7 +218,7 @@ class Bounds:
                         + "requires an a reference object for caluclating " \
                         + "absolute limits"
             else:
-                ref_low, ref_high = reference.get_absolute_limits(reference)
+                ref_low, ref_high = reference.get_absolute_limits()
         low = [None] * 3
         high = [None] * 3
         # calculate the absolute limits
@@ -266,7 +269,7 @@ class Bounds:
                         + "requires an a reference object for caluclating " \
                         + "absolute limits"
             else:
-                ref_low, ref_high = reference.get_absolute_limits(reference)
+                ref_low, ref_high = reference.get_absolute_limits()
         # calculate the new settings
         if self.bounds_type == Bounds.TYPE_RELATIVE_MARGIN:
             for index in range(3):
