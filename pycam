@@ -63,7 +63,15 @@ def show_gui(inputfile=None, task_settings_file=None):
 
     gui = gui_class()
 
-    gui.load_model(get_model(inputfile))
+    # load the given model or the default
+    if inputfile is None:
+        default_model = get_default_model()
+        if isinstance(default_model, basestring):
+            gui.load_model_file(filename=default_model)
+        else:
+            gui.load_model(default_model)
+    else:
+        gui.load_model_file(filename=inputfile)
 
     # load task settings file
     if not task_settings_file is None:
@@ -73,23 +81,19 @@ def show_gui(inputfile=None, task_settings_file=None):
     gui.mainloop()
 
 
-def get_model(inputfile=None):
+def get_default_model():
+    """ return a filename or a Model instance """
     # try to load the default model file ("pycam" logo)
-    if inputfile is None:
-        for inputdir in EXAMPLE_MODEL_LOCATIONS:
-            inputfile = os.path.join(inputdir, DEFAULT_MODEL_FILE)
-            if os.path.isfile(inputfile):
-                model = pycam.Importers.STLImporter.ImportModel(inputfile)
-                break
-            else:
-                # fall back to the simple test model
-                log.warn("Failed to find the default model (%s) in the " \
-                        "following locations: %s" % (DEFAULT_MODEL_FILE,
-                                ", ".join(EXAMPLE_MODEL_LOCATIONS)))
-                model = pycam.Importers.TestModel()
+    for inputdir in EXAMPLE_MODEL_LOCATIONS:
+        inputfile = os.path.join(inputdir, DEFAULT_MODEL_FILE)
+        if os.path.isfile(inputfile):
+            return inputfile
     else:
-        model = pycam.Importers.STLImporter.ImportModel(inputfile)
-    return model
+        # fall back to the simple test model
+        log.warn("Failed to find the default model (%s) in the " \
+                "following locations: %s" % (DEFAULT_MODEL_FILE,
+                        ", ".join(EXAMPLE_MODEL_LOCATIONS)))
+        return pycam.Importers.TestModel()
 
 
 # check if we were started as a separate program
