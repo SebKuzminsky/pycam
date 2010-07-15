@@ -520,7 +520,6 @@ class ProjectGui:
         self.update_process_table()
         self.update_bounds_table()
         self.update_tasklist_table()
-        self.update_tasklist_controls()
         self.update_save_actions()
         self.update_unit_labels()
         self.update_support_grid_controls()
@@ -665,6 +664,8 @@ class ProjectGui:
         bounds.adjust_bounds_to_absolute_limits(abs_bounds_low, abs_bounds_high,
                 reference=self.model.get_bounds())
         self._put_bounds_settings_to_gui(bounds)
+        # update the descriptive label for each margin type
+        self.update_bounds_controls()
         self.append_to_queue(self.update_boundary_limits)
 
     @gui_activity_guard
@@ -673,7 +674,7 @@ class ProjectGui:
         self.update_support_grid_model()
         self.update_view()
 
-    def update_tasklist_controls(self, widget=None, data=None):
+    def update_tasklist_controls(self):
         # en/disable some buttons
         index = self._treeview_get_active_index(self.tasklist_table, self.task_list)
         selection_active = not index is None
@@ -1580,6 +1581,26 @@ class ProjectGui:
             self.update_bounds_table()
         self.append_to_queue(self.update_boundary_limits)
 
+    def update_bounds_controls(self):
+        current_index = self._treeview_get_active_index(
+                self.bounds_editor_table, self.bounds_list)
+        if current_index is None:
+            # no bounds setting is active
+            return
+        # show the proper descriptive label for the current margin type
+        current_type = self._load_bounds_settings_from_gui().get_type()
+        type_labels = {
+                Bounds.TYPE_RELATIVE_MARGIN: "BoundsMarginTypeRelativeLabel",
+                Bounds.TYPE_FIXED_MARGIN: "BoundsMarginTypeFixedLabel",
+                Bounds.TYPE_CUSTOM: "BoundsMarginTypeCustomLabel",
+        }
+        for type_key, label_name in type_labels.items():
+            is_active = type_key == current_type
+            if is_active:
+                self.gui.get_object(label_name).show()
+            else:
+                self.gui.get_object(label_name).hide()
+
     def update_bounds_table(self, new_index=None, skip_model_update=False):
         # reset the model data and the selection
         if new_index is None:
@@ -1595,15 +1616,19 @@ class ProjectGui:
                 model.append(items)
             if not new_index is None:
                 self._treeview_set_active_index(self.bounds_editor_table, new_index)
+        selection_active = not new_index is None
         # enable/disable the modification buttons
-        self.gui.get_object("BoundsListMoveUp").set_sensitive((not new_index is None) and (new_index > 0))
-        self.gui.get_object("BoundsListDelete").set_sensitive(not new_index is None)
-        self.gui.get_object("BoundsListMoveDown").set_sensitive((not new_index is None) and (new_index + 1 < len(self.bounds_list)))
+        self.gui.get_object("BoundsListMoveUp").set_sensitive(selection_active \
+                and (new_index > 0))
+        self.gui.get_object("BoundsListDelete").set_sensitive(selection_active)
+        self.gui.get_object("BoundsListMoveDown").set_sensitive(
+                selection_active and (new_index + 1 < len(self.bounds_list)))
         # hide all controls if no bound is defined
-        if new_index is None:
-            self.gui.get_object("BoundsSettingsControlsBox").hide()
-        else:
+        if selection_active:
             self.gui.get_object("BoundsSettingsControlsBox").show()
+        else:
+            self.gui.get_object("BoundsSettingsControlsBox").hide()
+        self.update_bounds_controls()
         # remove any broken tasks and update changed names
         self.update_task_description()
 
