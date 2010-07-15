@@ -24,9 +24,11 @@ __all__ = ["ToolPathList", "ToolPath", "Generator"]
 
 from pycam.Geometry.Point import Point
 import pycam.Gui.Settings
+import pycam.Utils.log
 import random
 import os
 
+log = pycam.Utils.log.get_logger()
 
 class ToolPathList(list):
 
@@ -244,7 +246,8 @@ class Bounds:
                     + "'%s'" % str(self.bounds_type)
         return low, high
 
-    def adjust_bounds_to_absolute_limits(self, limits_low, limits_high, reference=None):
+    def adjust_bounds_to_absolute_limits(self, limits_low, limits_high,
+            reference=None):
         """ change the current bounds settings according to some absolute values
 
         This does not change the type of this bounds instance (e.g. relative).
@@ -274,10 +277,25 @@ class Bounds:
         if self.bounds_type == Bounds.TYPE_RELATIVE_MARGIN:
             for index in range(3):
                 dim_width = ref_high[index] - ref_low[index]
-                self.bounds_low[index] = \
-                        (ref_low[index] - limits_low[index]) / dim_width
-                self.bounds_high[index] = \
-                        (limits_high[index] - ref_high[index]) / dim_width
+                if dim_width == 0:
+                    # We always loose relative margins if the specific dimension
+                    # is zero. There is no way to avoid this.
+                    message = "Non-zero %s boundary lost during conversion " \
+                            + "to relative margins due to zero size " \
+                            + "dimension '%s'." % "xyz"[index]
+                    # Display warning messages, if we can't reach the requested
+                    # absolute dimension.
+                    if ref_low[index] != limits_low[index]:
+                        log.info(message % "lower")
+                    if ref_high[index] != limits_high[index]:
+                        log.info(message % "upper")
+                    self.bounds_low[index] = 0
+                    self.bounds_high[index] = 0
+                else:
+                    self.bounds_low[index] = \
+                            (ref_low[index] - limits_low[index]) / dim_width
+                    self.bounds_high[index] = \
+                            (limits_high[index] - ref_high[index]) / dim_width
         elif self.bounds_type == Bounds.TYPE_FIXED_MARGIN:
             for index in range(3):
                 self.bounds_low[index] = ref_low[index] - limits_low[index]
