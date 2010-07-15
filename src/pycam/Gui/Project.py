@@ -1568,14 +1568,17 @@ class ProjectGui:
         else:
             factor = 1
         for index, axis in enumerate("xyz"):
-            low[index] = self.gui.get_object("boundary_%s_low" % axis).get_value() * factor
-            high[index] = self.gui.get_object("boundary_%s_high" % axis).get_value() * factor
+            low[index] = self.gui.get_object(
+                    "boundary_%s_low" % axis).get_value() * factor
+            high[index] = self.gui.get_object(
+                    "boundary_%s_high" % axis).get_value() * factor
         settings.set_bounds(low, high)
         return settings
 
     @gui_activity_guard
     def handle_bounds_settings_change(self, widget=None, data=None):
-        current_index = self._treeview_get_active_index(self.bounds_editor_table, self.bounds_list)
+        current_index = self._treeview_get_active_index(
+                self.bounds_editor_table, self.bounds_list)
         if not current_index is None:
             self._load_bounds_settings_from_gui(self.bounds_list[current_index])
             self.update_bounds_table()
@@ -1588,7 +1591,8 @@ class ProjectGui:
             # no bounds setting is active
             return
         # show the proper descriptive label for the current margin type
-        current_type = self._load_bounds_settings_from_gui().get_type()
+        current_settings = self._load_bounds_settings_from_gui()
+        current_type = current_settings.get_type()
         type_labels = {
                 Bounds.TYPE_RELATIVE_MARGIN: "BoundsMarginTypeRelativeLabel",
                 Bounds.TYPE_FIXED_MARGIN: "BoundsMarginTypeFixedLabel",
@@ -1600,6 +1604,27 @@ class ProjectGui:
                 self.gui.get_object(label_name).show()
             else:
                 self.gui.get_object(label_name).hide()
+        # return the control for one of the axes (low/high)
+        def get_control(index, side):
+            return self.gui.get_object("boundary_%s_%s" % ("xyz"[index], side))
+        # disable each zero-dimension in relative margin mode
+        if current_type == Bounds.TYPE_RELATIVE_MARGIN:
+            low, high = current_settings.get_bounds()
+            model_dims = (self.model.maxx - self.model.minx,
+                    self.model.maxy - self.model.miny,
+                    self.model.maxz - self.model.minz)
+            # disable the low/high controls for each zero-dimension
+            for index in range(3):
+                # enabled, if dimension is non-zero
+                state = model_dims[index] != 0
+                get_control(index, "low").set_sensitive(state)
+                get_control(index, "high").set_sensitive(state)
+        else:
+            # non-relative margins: enable all controls
+            for index in range(3):
+                get_control(index, "low").set_sensitive(True)
+                get_control(index, "high").set_sensitive(True)
+
 
     def update_bounds_table(self, new_index=None, skip_model_update=False):
         # reset the model data and the selection
