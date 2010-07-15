@@ -65,5 +65,5 @@ class PolygonCutter:
                     p.append(points[-i-1])
                     p.append(points[i])
                 paths.append(p)
-        self.paths = paths
+        self.paths.extend(paths)
 

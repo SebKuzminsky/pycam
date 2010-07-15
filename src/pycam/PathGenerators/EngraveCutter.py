@@ -59,7 +59,6 @@ class EngraveCutter:
             z_steps = [minz]
         num_of_layers = len(z_steps)
 
-        paths = []
         current_layer = 0
         num_of_lines = len(self.contour_model.get_lines())
         progress_counter = ProgressCounter(len(z_steps) * num_of_lines,
@@ -81,12 +80,10 @@ class EngraveCutter:
                     if progress_counter.increment():
                         # cancel requested
                         quit_requested = True
+                        # finish the current path
+                        self.pa_push.finish()
                         break
             self.pa_push.finish()
-
-            # the path accumulator will be reset for each slice - we need to store the result
-            if self.pa_push.paths:
-                paths += self.pa_push.paths
 
             # break the outer loop if requested
             if quit_requested:
@@ -94,8 +91,9 @@ class EngraveCutter:
 
             current_layer += 1
 
+
         if quit_requested:
-            return paths
+            return self.pa_push.paths
 
         if draw_callback:
             draw_callback(text="Engrave: processing layer %d/%d" \
@@ -118,11 +116,8 @@ class EngraveCutter:
             if quit_requested:
                 break
         self.pa_drop.finish()
-        # the path accumulator will be reset for each slice - we need to store the result
-        if self.pa_drop.paths:
-            paths += self.pa_drop.paths
         
-        return paths
+        return self.pa_push.paths + self.pa_drop.paths
 
     def GenerateToolPathLinePush(self, pa, line, z, draw_callback=None):
         p1 = Point(line.p1.x, line.p1.y, z)

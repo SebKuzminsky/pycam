@@ -53,8 +53,6 @@ class PushCutter:
         progress_counter = ProgressCounter(num_of_layers * lines_per_layer,
                 draw_callback)
 
-        paths = []
-
         current_layer = 0
 
         z_steps = [(maxz - i * z_step) for i in range(num_of_layers)]
@@ -77,13 +75,9 @@ class PushCutter:
                 self.pa.end_direction()
             self.pa.finish()
 
-            # the path accumulator will be reset for each slice - we need to store the result
-            if self.pa.paths:
-                paths += self.pa.paths
-
             current_layer += 1
 
-        return paths
+        return self.pa.paths
 
     def GenerateToolPathSlice(self, minx, maxx, miny, maxy, z, dx, dy,
             draw_callback=None, progress_counter=None):
