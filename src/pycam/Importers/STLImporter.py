@@ -85,8 +85,18 @@ def ImportModel(filename, use_kdtree=True):
         log.error("STLImporter: Failed to read file (%s): %s" % (filename, err_msg))
         return None
     # read the first two lines of (potentially non-binary) input - they should contain "solid" and "facet"
-    header = f.readline(200)
-    header += f.readline(200)
+    header_lines = []
+    while len(header_lines) < 2:
+        current_line = f.readline(200)
+        if len(current_line) == 0:
+            # empty line (not even a line-feed) -> EOF
+            log.error("STLImporter: No valid lines found in '%s'" % filename)
+            return None
+        # ignore comment lines
+        # note: partial comments (starting within a line) are not handled
+        if not current_line.startswith(";"):
+            header_lines.append(current_line)
+    header = "".join(header_lines)
     # read byte 80 to 83 - they contain the "numfacets" value in binary format
     f.seek(80)
     numfacets = unpack("<I",f.read(4))[0]
