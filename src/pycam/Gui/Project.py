@@ -22,14 +22,13 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import pycam.Importers.STLImporter
-import pycam.Exporters.STLExporter
 import pycam.Exporters.SimpleGCodeExporter
 import pycam.Exporters.EMCToolExporter
 import pycam.Gui.Settings
 import pycam.Cutters
 import pycam.Toolpath.Generator
 import pycam.Toolpath
+import pycam.Importers
 import pycam.Utils.log
 from pycam.Gui.OpenGLTools import ModelViewWindowGL
 from pycam.Toolpath import Bounds
@@ -569,7 +568,11 @@ class ProjectGui:
 
     def update_save_actions(self):
         self.gui.get_object("SaveTaskSettings").set_sensitive(not self.last_task_settings_file is None)
-        self.gui.get_object("SaveModel").set_sensitive(not self.last_model_file is None)
+        save_as_possible = (not self.model is None) \
+                and self.model.is_export_supported()
+        self.gui.get_object("SaveAsModel").set_sensitive(save_as_possible)
+        save_possible = (not self.last_model_file is None) and save_as_possible
+        self.gui.get_object("SaveModel").set_sensitive(save_possible)
 
     @gui_activity_guard
     def update_support_grid_controls(self, widget=None):
@@ -1256,6 +1259,12 @@ class ProjectGui:
 
     @gui_activity_guard
     def save_model(self, widget=None, filename=None):
+        # only triangle models may be saved
+        if not self.model.is_export_supported():
+            log.warn(("Saving this type of model (%s) is currently not " \
+                    + "implemented!") % str(type(self.model)))
+            return
+        # get the filename
         no_dialog = False
         if callable(filename):
             filename = filename()
@@ -1273,7 +1282,7 @@ class ProjectGui:
             return
         try:
             fi = open(filename, "w")
-            pycam.Exporters.STLExporter.STLExporter(self.model, comment=self.get_meta_data()).write(fi)
+            self.model.export(comment=self.get_meta_data()).write(fi)
             fi.close()
         except IOError, err_msg:
             log.error("Failed to save model file")
@@ -1439,12 +1448,6 @@ class ProjectGui:
     def quit(self):
         self.save_preferences()
 
-    def open(self, filename):
-        """ This function is used by the commandline handler """
-        self.last_model_file = filename
-        self.load_model_file(filename=filename)
-        self.update_save_actions()
-
     def append_to_queue(self, func, *args, **kwargs):
         # check if gui is currently active
         if self.gui_is_active:
@@ -1461,13 +1464,12 @@ class ProjectGui:
         if not filename:
             filename = self.get_filename_via_dialog("Loading model ...",
                     mode_load=True, type_filter=FILTER_MODEL)
-            if filename:
-                self.last_model_file = filename
-                self.update_save_actions()
         if filename:
             file_type, importer = pycam.Importers.detect_file_type(filename)
             if file_type and callable(importer):
+                self.last_model_file = filename
                 self.load_model(importer(filename))
+                self.update_save_actions()
             else:
                 log.error("Failed to detect filetype!")
 
