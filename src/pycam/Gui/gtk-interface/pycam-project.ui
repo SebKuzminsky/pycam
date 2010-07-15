@@ -4227,6 +4227,7 @@ upon interesting bugs and weird results.</property>
     <property name="label">_Load Model</property>
     <property name="tooltip">Loads an STL model file.</property>
     <property name="stock_id">gtk-open</property>
+    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="FileMenu">
     <property name="label">_File</property>
@@ -4238,36 +4239,43 @@ upon interesting bugs and weird results.</property>
     <property name="label">_Export Toolpaths</property>
     <property name="tooltip">Write all current toolpaths to a file.</property>
     <property name="stock_id">gtk-execute</property>
+    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="LoadTaskSettings">
     <property name="label">_Load Task Settings</property>
     <property name="tooltip">Load tool, process and task definitions from a file.</property>
     <property name="stock_id">gtk-open</property>
+    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="SaveTaskSettings">
     <property name="label">_Save Task Settings</property>
     <property name="tooltip">Save the tool, process and task definitions.</property>
     <property name="stock_id">gtk-save</property>
+    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="SaveAsTaskSettings">
     <property name="label">Save Task Settings _as ...</property>
     <property name="tooltip">Save the tool, process and task definitions to a new file.</property>
     <property name="stock_id">gtk-save-as</property>
+    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="GeneralSettings">
     <property name="label">_Preferences</property>
     <property name="tooltip">Configure PyCAM</property>
     <property name="stock_id">gtk-preferences</property>
+    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="Quit">
     <property name="label">_Quit</property>
     <property name="tooltip">Exit PyCAM</property>
     <property name="stock_id">gtk-quit</property>
+    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="SaveModel">
     <property name="label">_Save Model</property>
     <property name="tooltip">Save the current model to the STL file.</property>
     <property name="stock_id">gtk-save</property>
+    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="WindowMenu">
     <property name="label">_Windows</property>
@@ -4281,6 +4289,7 @@ upon interesting bugs and weird results.</property>
     <property name="short_label">Save Model as ...</property>
     <property name="tooltip">Save the current model to a new STL file.</property>
     <property name="stock_id">gtk-save-as</property>
+    <property name="always_show_image">True</property>
   </object>
   <object class="GtkDialog" id="GeneralSettingsWindow">
     <property name="border_width">5</property>
@@ -5049,6 +5058,7 @@ You should have received a copy of the GNU General Public License along with thi
   <object class="GtkAction" id="About">
     <property name="label">_About</property>
     <property name="stock_id">gtk-about</property>
+    <property name="always_show_image">True</property>
   </object>
   <object class="GtkImage" id="GenerateOneToolPathIcon">
     <property name="visible">True</property>
@@ -5061,6 +5071,7 @@ You should have received a copy of the GNU General Public License along with thi
   <object class="GtkAction" id="ExportEMCToolDefinition">
     <property name="label">_Export EMC tools</property>
     <property name="stock_id">gtk-execute</property>
+    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAdjustment" id="ScaleDimensionValue">
     <property name="lower">0.01</property>
