@@ -399,7 +399,7 @@ process: 3
         elif value_type == object:
             try:
                 return lists[key].index(value)
-            except IndexError:
+            except ValueError:
                 return None
         else:
             return str(value_type(value))
