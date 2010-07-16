@@ -31,6 +31,7 @@ import pycam.Gui.common as GuiCommon
 import pycam.Gui.Settings
 import pycam.Importers.STLImporter
 import pycam.Importers.TestModel
+import pycam.Exporters.SimpleGCodeExporter
 import pycam.Toolpath.Generator
 import pycam.Toolpath
 from pycam import VERSION
@@ -98,9 +99,17 @@ def get_default_model():
 
 # check if we were started as a separate program
 if __name__ == "__main__":
-    parser = OptionParser(
-            usage="usage: %prog [options] [inputfile]",
-            version="PyCAM v%s" % VERSION)
+    parser = OptionParser( prog="PyCAM", version="PyCAM v%s" % VERSION,
+            usage="usage: %prog [options] [inputfile]\n\n" \
+                    + "Use any of the '--export-???' parameters to disable " \
+                    + "the graphical user interface (GUI).\n" \
+                    + "When starting the GUI (default) all arguments except " \
+                    + "'inputfile' are ignored.\n" \
+                    + "'inputfile' may be an STL or DXF file.",
+            epilog="Use any of the '--export-???' parameters to enable " \
+                    + "non-interactive mode. Otherwise all options (except " \
+                    + "'inputfile') are silently ignored and the GUI is " \
+                    + "started.")
     group_general = parser.add_option_group("General options")
     group_export = parser.add_option_group("Export formats",
             "Export the resulting toolpath or meta-data in various formats. " \
@@ -134,9 +143,18 @@ if __name__ == "__main__":
             default="mm", action="store", type="choice",
             choices=["mm", "inch"], help="choose 'mm' or 'inch' for all " \
             + "numbers. By default 'mm' is assumed.")
-    group_general.add_option("", "--disable-ode", dest="ode_disabled",
-            default=False, action="store_true",
-            help="disable experimental ODE collision detection")
+    group_general.add_option("", "--collision-engine", dest="collision_engine",
+            default="triangles", action="store", type="choice",
+            choices=["triangles", "ode", "help"],
+            help="choose a specific collision detection engine. The default " \
+                    + "is 'triangles'. Use 'help' to get a list of possible " \
+                    + "engines.")
+    group_general.add_option("", "--boundary-mode", dest="boundary_mode",
+            default="along", action="store", type="choice",
+            choices=["inside", "along", "outside"],
+            help="specify if the mill tool (including its radius) should " \
+                    + "move completely 'inside', 'along' or 'outside' the " \
+                    + "defined processing boundary.")
     group_export.add_option("", "--export-gcode", dest="export_gcode",
             default=None, action="store", type="string",
             help="export the generated toolpaths to a file")
@@ -206,18 +224,18 @@ if __name__ == "__main__":
     group_bounds.add_option("", "--bounds-lower", dest="bounds_lower",
             default="", action="store", type="string",
             help="comma-separated x/y/z combination of the lower boundary " \
-            + "(e.g. '12,5.5,0')")
+            + "(e.g. '4,4,-0.5')")
     group_bounds.add_option("", "--bounds-upper", dest="bounds_upper",
             default="", action="store", type="string",
             help="comma-separated x/y/z combination of the upper boundary " \
-            + "(e.g. '4,4,-0.5')")
+            + "(e.g. '12,5.5,0')")
     group_support_grid.add_option("", "--enable-support-grid",
             dest="support_grid_enabled", default=False, action="store_true",
             help="enable the support grid")
     group_support_grid.add_option("", "--support-grid-distance",
             dest="support_grid_distance", default=10.0, action="store",
-            type="float", help="how far apart should two adjacent parallel " \
-            + "lines of the support grid pattern be")
+            type="float", help="horizontal and vertical distance between two " \
+                    + "adjacent parallel lines of the support grid pattern")
     group_support_grid.add_option("", "--support-grid-height",
             dest="support_grid_height", default=2.0, action="store",
             type="float", help="height of the support grid profile")
@@ -230,9 +248,6 @@ if __name__ == "__main__":
         inputfile = args[0]
     else:
         inputfile = None
-
-    if opts.ode_disabled:
-        override_ode_availability(False)
 
     if not opts.export_gcode and not opts.export_task_config:
         show_gui(inputfile, opts.config_file)
@@ -248,7 +263,7 @@ if __name__ == "__main__":
         if opts.support_grid_enabled:
             tps.set_support_grid(opts.support_grid_distance,
                     opts.support_grid_thickness, opts.support_grid_height)
-        if not opts.ode_disabled:
+        if opts.collision_engine == "ode":
             tps.set_calculation_backend("ODE")
         tps.set_unit_size(opts.unit_size)
         path_generator = {"layer": "PushCutter",
@@ -307,10 +322,42 @@ if __name__ == "__main__":
         else:
             # both lower and upper bounds were specified
             bounds.set_bounds(bounds_lower_nums, bounds_upper_nums)
-            
-        # TODO: inside/along/outside boundary (currently: along)
-        tps.set_bounds(bounds)
-        tp = pycam.Toolpath.Generator.generate_toolpath_from_settings(model, tps)
-        # write result
-        print tp
+        # adjust the bounding box according to the "boundary_mode"
+        if opts.boundary_mode == "along":
+            offset = (0, 0, 0)
+        elif opts.boundary_mode == "inside":
+            offset = (-opts.tool_radius, -opts.tool_radius, 0)
+        else:
+            # "outside"
+            offset = (opts.tool_radius, opts.tool_radius, 0)
+        process_bounds = Bounds(Bounds.TYPE_FIXED_MARGIN, offset, offset)
+        process_bounds.set_reference(bounds)
+        tps.set_bounds(process_bounds)
+        if opts.export_gcode:
+            # generate the toolpath
+            tp = pycam.Toolpath.Generator.generate_toolpath_from_settings(model, tps)
+            # write result
+            if isinstance(tp, basestring):
+                # an error occoured
+                log.error(tp)
+            else:
+                start_pos = tp.get_start_position()
+                meta_data = os.linesep.join(tp.get_meta_data())
+                if opts.export_gcode == "-":
+                    destination = sys.stdout
+                    close_destination = False
+                else:
+                    destination = open(opts.export_gcode, "w")
+                    close_destination = True
+                pycam.Exporters.SimpleGCodeExporter.ExportPathList(destination,
+                        tp.get_path(), opts.unit_size, start_pos.x,
+                        start_pos.y, start_pos.z, opts.tool_feedrate,
+                        opts.tool_speed, safety_height=opts.safety_height,
+                        max_skip_safety_distance=2*opts.tool_radius,
+                        comment=meta_data)
+                if close_destination:
+                    destination.close()
+        if opts.export_task_config:
+            raise NotImplementedError("Export of task config is not " \
+                    + "implemented, yet!")
 
