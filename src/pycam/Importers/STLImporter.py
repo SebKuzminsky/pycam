@@ -168,10 +168,7 @@ def ImportModel(filename, use_kdtree=True):
 
             model.append(t)
     else:
-        AOI = False
-
         solid = re.compile("\s*solid\s+(\w+)\s+.*")
-        solid_AOI = re.compile("\s*solid\s+\"([\w\-]+)\"; Produced by Art of Illusion.*")
         endsolid = re.compile("\s*endsolid\s*")
         facet = re.compile("\s*facet\s*")
         normal = re.compile("\s*facet\s+normal\s+(?P<x>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<y>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<z>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+")
@@ -181,11 +178,6 @@ def ImportModel(filename, use_kdtree=True):
         vertex = re.compile("\s*vertex\s+(?P<x>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<y>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<z>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+")
 
         for line in f:
-            m = solid_AOI.match(line)
-            if m:
-                model.name = m.group(1)
-                AOI = True
-                continue
             m = solid.match(line)
             if m:
                 model.name = m.group(1)
@@ -195,10 +187,7 @@ def ImportModel(filename, use_kdtree=True):
             if m:
                 m = normal.match(line)
                 if m:
-                    if AOI:
-                        n = Point(float(m.group('x')),float(m.group('z')),float(m.group('y')))
-                    else:
-                        n = Point(float(m.group('x')),float(m.group('y')),float(m.group('z')))
+                    n = Point(float(m.group('x')),float(m.group('y')),float(m.group('z')))
                 else:
                     n = None
                 continue
@@ -207,10 +196,7 @@ def ImportModel(filename, use_kdtree=True):
                 continue
             m = vertex.match(line)
             if m:
-                if AOI:
-                    p = UniqueVertex(float(m.group('x')),float(m.group('z')),float(m.group('y')))
-                else:
-                    p = UniqueVertex(float(m.group('x')),float(m.group('y')),float(m.group('z')))
+                p = UniqueVertex(float(m.group('x')),float(m.group('y')),float(m.group('z')))
                 if p1 is None:
                     p1 = p
                 elif p2 is None:
