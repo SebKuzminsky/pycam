@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Exporters.STLExporter
 from pycam.Geometry import Triangle, Line, Point
+from pycam.Geometry.TriangleKdtree import TriangleKdtree
 from pycam.Toolpath import Bounds
 from utils import INFINITE
 
@@ -188,6 +189,12 @@ class Model(BaseModel):
         super(Model, self).append(item)
         if isinstance(item, Triangle):
             self._triangles.append(item)
+
+    def reset_cache(self):
+        super(Model, self).reset_cache()
+        # the triangle kdtree needs to be reset after transforming the model
+        if hasattr(self, "t_kdtree"):
+            self.t_kdtree = TriangleKdtree(self.triangles())
 
     def triangles(self, minx=-INFINITE,miny=-INFINITE,minz=-INFINITE,maxx=+INFINITE,maxy=+INFINITE,maxz=+INFINITE):
         if minx==-INFINITE and miny==-INFINITE and minz==-INFINITE and maxx==+INFINITE and maxy==+INFINITE and maxz==+INFINITE:
