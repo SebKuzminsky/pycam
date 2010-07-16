@@ -63,6 +63,7 @@ class ContourCutter:
         if paths:
             for p in paths:
                 p.append(p.points[0])
-        self.paths.extend(paths)
+        if paths:
+            self.paths.extend(paths)
         self.pe = None
 
