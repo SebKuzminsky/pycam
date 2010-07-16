@@ -405,7 +405,7 @@ process: 3
             return str(value_type(value))
 
     def get_config_text(self, tools=None, processes=None, bounds=None, tasks=None):
-        def get_dictinary_of_bounds(b):
+        def get_dictionary_of_bounds(b):
             """ this function should be the inverse operation of 
             '_get_bounds_instance_from_dict'
             """
