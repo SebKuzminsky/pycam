@@ -114,7 +114,7 @@ def ImportModel(filename, use_kdtree=True):
 
     if use_kdtree:
         kdtree = PointKdtree([], 3, 1, epsilon)
-    model = Model()
+    model = Model(use_kdtree)
 
     t = None
     p1 = None
@@ -256,10 +256,6 @@ def ImportModel(filename, use_kdtree=True):
             m = endsolid.match(line)
             if m:
                 continue
-
-    if use_kdtree:
-        model.p_kdtree = kdtree
-        model.t_kdtree = TriangleKdtree(model.triangles())
 
     log.info("Imported STL model: %d vertices, %d edges, %d triangles" \
             % (vertices, edges, len(model.triangles())))

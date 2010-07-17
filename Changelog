@@ -1,11 +1,12 @@
 Version 0.3.0 - UNRELEASED
- * improved performance of toolpath generation
  * added a complete commandline interface
  * added basic support for importing simple DXF contour files
  * added support for engravings
  * integrated "help" links pointing to the wiki
  * allow non-square profiles for the support grid
  * improved OpenGL lightning (contributed by imyrek)
+ * fixed performance issue when using a support grid
+ * fixed empty toolpath after transforming the model
  * added minor fix for PushCutter
 
 Version 0.2.5 - 2010-06-10

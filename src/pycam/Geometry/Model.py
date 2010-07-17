@@ -179,13 +179,15 @@ class BaseModel(object):
 
 class Model(BaseModel):
 
-    def __init__(self):
+    def __init__(self, use_kdtree=True):
         super(Model, self).__init__()
         self._triangles = []
         self._item_groups.append(self._triangles)
         self._export_function = pycam.Exporters.STLExporter.STLExporter
         # marker for state of kdtree
         self._kdtree_dirty = False
+        # enable/disable kdtree
+        self._use_kdtree = use_kdtree
 
     def append(self, item):
         super(Model, self).append(item)
@@ -200,19 +202,21 @@ class Model(BaseModel):
         self._update_kdtree()
 
     def _update_kdtree(self):
-        if hasattr(self, "t_kdtree"):
-            self.t_kdtree = TriangleKdtree(self.triangles())
+        if self._use_kdtree:
+            self._t_kdtree = TriangleKdtree(self.triangles())
         # the kdtree is up-to-date again
         self._kdtree_dirty = False
 
-    def triangles(self, minx=-INFINITE,miny=-INFINITE,minz=-INFINITE,maxx=+INFINITE,maxy=+INFINITE,maxz=+INFINITE):
-        if minx==-INFINITE and miny==-INFINITE and minz==-INFINITE and maxx==+INFINITE and maxy==+INFINITE and maxz==+INFINITE:
+    def triangles(self, minx=-INFINITE, miny=-INFINITE, minz=-INFINITE,
+            maxx=+INFINITE, maxy=+INFINITE, maxz=+INFINITE):
+        if (minx == miny == minz == -INFINITE) \
+                and (maxx == maxy == maxz == +INFINITE):
             return self._triangles
-        if hasattr(self, "t_kdtree"):
+        if self._use_kdtree:
             # update the kdtree, if new triangles were added meanwhile
             if self._kdtree_dirty:
                 self._update_kdtree()
-            return self.t_kdtree.Search(minx,maxx,miny,maxy)
+            return self._t_kdtree.Search(minx, maxx, miny, maxy)
         return self._triangles
 
 
