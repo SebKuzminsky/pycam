@@ -51,12 +51,19 @@ def parse_toolpath_settings(filename):
     keywords = {}
     in_meta_zone = False
     meta_content = []
-    try:
-        infile = open(filename,"r")
-    except IOError, err_msg:
-        log.warn("ToolpathSettingsParser: Failed to read file (%s): %s" % \
-                (filename, err_msg))
-        return None
+    if filename == "-":
+        # read from stdin, if the input filename is "-"
+        infile = sys.stdin
+        close_file = False
+    else:
+        # open the file
+        try:
+            infile = open(filename,"r")
+        except IOError, err_msg:
+            log.warn("ToolpathSettingsParser: Failed to read file (%s): %s" % \
+                    (filename, err_msg))
+            return None
+        close_file = True
     for line in infile.readlines():
         match = re.match(REGEX_META_KEYWORDS, line)
         if match:
@@ -71,7 +78,9 @@ def parse_toolpath_settings(filename):
             if re.match(REGEX_SETTINGS_START, line):
                 in_meta_zone = True
                 meta_content.append([])
-    infile.close()
+    if close_file:
+        # only close the file if it was opened before (e.g. not stdin)
+        infile.close()
     return keywords, [os.linesep.join(one_block) for one_block in meta_content]
 
 if __name__ == "__main__":
