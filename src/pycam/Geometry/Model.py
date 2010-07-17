@@ -185,7 +185,7 @@ class Model(BaseModel):
         self._item_groups.append(self._triangles)
         self._export_function = pycam.Exporters.STLExporter.STLExporter
         # marker for state of kdtree
-        self._kdtree_dirty = False
+        self._kdtree_dirty = True
         # enable/disable kdtree
         self._use_kdtree = use_kdtree
 
