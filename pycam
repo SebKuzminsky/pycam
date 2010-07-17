@@ -167,12 +167,12 @@ if __name__ == "__main__":
             choices=["cylindrical", "spherical", "toroidal"],
             help="tool shape for the operation (cylindrical, spherical, " \
             + "toroidal)")
-    group_tool.add_option("", "--tool-radius", dest="tool_radius",
+    group_tool.add_option("", "--tool-size", dest="tool_diameter",
             default=1.0, action="store", type="float",
-            help="radius of the tool")
-    group_tool.add_option("", "--tool-torus-radius", dest="tool_torus_radius",
+            help="diameter of the tool")
+    group_tool.add_option("", "--tool-torus-size", dest="tool_torus_diameter",
             default=0.25, action="store", type="float",
-            help="torus radius of the tool (only for toroidal tool shape)")
+            help="torus diameter of the tool (only for toroidal tool shape)")
     group_tool.add_option("", "--tool-feedrate", dest="tool_feedrate",
             default=1000, action="store", type="float",
             help="allowed movement velocity of the tool (units/minute)")
@@ -258,8 +258,9 @@ if __name__ == "__main__":
                 "spherical": "SphericalCutter",
                 "toroidal": "ToroidalCutter",
             }[opts.tool_shape]
-        tps.set_tool(opts.tool_id, tool_shape, opts.tool_radius,
-                opts.tool_torus_radius, opts.tool_speed, opts.tool_feedrate)
+        tps.set_tool(opts.tool_id, tool_shape, 0.5 * opts.tool_diameter,
+                0.5 * opts.tool_torus_diameter, opts.tool_speed,
+                opts.tool_feedrate)
         if opts.support_grid_enabled:
             tps.set_support_grid(opts.support_grid_distance,
                     opts.support_grid_thickness, opts.support_grid_height)
@@ -326,10 +327,10 @@ if __name__ == "__main__":
         if opts.boundary_mode == "along":
             offset = (0, 0, 0)
         elif opts.boundary_mode == "inside":
-            offset = (-opts.tool_radius, -opts.tool_radius, 0)
+            offset = (-0.5 * opts.tool_diameter, -0.5 * opts.tool_diameter, 0)
         else:
             # "outside"
-            offset = (opts.tool_radius, opts.tool_radius, 0)
+            offset = (0.5 * opts.tool_diameter, 0.5 * opts.tool_diameter, 0)
         process_bounds = Bounds(Bounds.TYPE_FIXED_MARGIN, offset, offset)
         process_bounds.set_reference(bounds)
         tps.set_bounds(process_bounds)
@@ -353,7 +354,7 @@ if __name__ == "__main__":
                         tp.get_path(), opts.unit_size, start_pos.x,
                         start_pos.y, start_pos.z, opts.tool_feedrate,
                         opts.tool_speed, safety_height=opts.safety_height,
-                        max_skip_safety_distance=2*opts.tool_radius,
+                        max_skip_safety_distance=opts.tool_diameter,
                         comment=meta_data)
                 if close_destination:
                     destination.close()

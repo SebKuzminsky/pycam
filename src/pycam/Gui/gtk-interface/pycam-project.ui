@@ -1352,20 +1352,20 @@
                                                 <property name="column_spacing">2</property>
                                                 <property name="row_spacing">4</property>
                                                 <child>
-                                                  <object class="GtkLabel" id="ToolRadiusLabel">
+                                                  <object class="GtkLabel" id="ToolDiameterLabel">
                                                     <property name="visible">True</property>
                                                     <property name="xalign">0</property>
-                                                    <property name="label" translatable="yes">Tool Radius:</property>
+                                                    <property name="label" translatable="yes">Tool Diameter:</property>
                                                   </object>
                                                   <packing>
                                                     <property name="x_options">GTK_FILL</property>
                                                   </packing>
                                                 </child>
                                                 <child>
-                                                  <object class="GtkLabel" id="TorusRadiusLabel">
+                                                  <object class="GtkLabel" id="TorusDiameterLabel">
                                                     <property name="visible">True</property>
                                                     <property name="xalign">0</property>
-                                                    <property name="label" translatable="yes">Torus Radius:</property>
+                                                    <property name="label" translatable="yes">Torus Diameter:</property>
                                                   </object>
                                                   <packing>
                                                     <property name="top_attach">1</property>
@@ -1374,11 +1374,11 @@
                                                   </packing>
                                                 </child>
                                                 <child>
-                                                  <object class="GtkSpinButton" id="ToolRadiusControl">
+                                                  <object class="GtkSpinButton" id="ToolDiameterControl">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
                                                     <property name="invisible_char">&#x2022;</property>
-                                                    <property name="adjustment">toolradius</property>
+                                                    <property name="adjustment">tooldiameter</property>
                                                     <property name="digits">4</property>
                                                     <property name="numeric">True</property>
                                                   </object>
@@ -1390,11 +1390,11 @@
                                                   </packing>
                                                 </child>
                                                 <child>
-                                                  <object class="GtkSpinButton" id="TorusRadiusControl">
+                                                  <object class="GtkSpinButton" id="TorusDiameterControl">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
                                                     <property name="invisible_char">&#x2022;</property>
-                                                    <property name="adjustment">torusradius</property>
+                                                    <property name="adjustment">torusdiameter</property>
                                                     <property name="digits">4</property>
                                                     <property name="numeric">True</property>
                                                   </object>
@@ -4190,12 +4190,12 @@ upon interesting bugs and weird results.</property>
     <property name="upper">10000</property>
     <property name="step_increment">1</property>
   </object>
-  <object class="GtkAdjustment" id="toolradius">
+  <object class="GtkAdjustment" id="tooldiameter">
     <property name="lower">0.0001</property>
     <property name="upper">500</property>
     <property name="step_increment">0.10000000000000001</property>
   </object>
-  <object class="GtkAdjustment" id="torusradius">
+  <object class="GtkAdjustment" id="torusdiameter">
     <property name="lower">0.0001</property>
     <property name="upper">500</property>
     <property name="step_increment">0.050000000000000003</property>

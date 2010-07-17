@@ -5,6 +5,7 @@ Version 0.3.0 - UNRELEASED
  * integrated "help" links pointing to the wiki
  * allow non-square profiles for the support grid
  * improved OpenGL lightning (contributed by imyrek)
+ * switched default tool size from radius to diameter
  * fixed performance issue when using a support grid
  * fixed empty toolpath after transforming the model
  * added minor fix for PushCutter

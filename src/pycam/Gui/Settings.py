@@ -122,20 +122,20 @@ feedrate: 1000
 speed: 200
 
 [Tool0]
-name: Cylindrical (r=3)
+name: Cylindrical (d=3)
 shape: CylindricalCutter
-tool_radius: 3
+tool_radius: 1.5
 
 [Tool1]
-name: Toroidal (r=2)
+name: Toroidal (d=2)
 shape: ToroidalCutter
-tool_radius: 2
+tool_radius: 1
 torus_radius: 0.2
 
 [Tool2]
-name: Spherical (r=1.0)
+name: Spherical (d=1.0)
 shape: SphericalCutter
-tool_radius: 1.0
+tool_radius: 0.5
 
 [ProcessDefault]
 path_direction: x

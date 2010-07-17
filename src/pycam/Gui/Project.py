@@ -358,11 +358,8 @@ class ProjectGui:
         sim_detail_obj = self.gui.get_object("SimulationDetailsValue")
         self.settings.add_item("simulation_details_level", sim_detail_obj.get_value, sim_detail_obj.set_value)
         # drill settings
-        for objname, key in (
-                ("ToolRadiusControl", "tool_radius"),
-                ("TorusRadiusControl", "torus_radius"),
-                ("FeedrateControl", "feedrate"),
-                ("SpeedControl", "speed")):
+        for objname in ("ToolDiameterControl", "TorusDiameterControl",
+                "FeedrateControl", "SpeedControl"):
             self.gui.get_object(objname).connect("value-changed", self.handle_tool_settings_change)
         for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
             self.gui.get_object(name).connect("clicked", self.handle_tool_settings_change)
@@ -720,9 +717,9 @@ class ProjectGui:
             unit = self.settings.get("unit")
             tool_desc = "Tool: %s " % tool["shape"]
             if tool["shape"] != "ToroidalCutter":
-                tool_desc += "(%.4f%s)" % (tool["tool_radius"], unit)
+                tool_desc += "(%.4f%s)" % (2 * tool["tool_radius"], unit)
             else:
-                tool_desc += "(%.4f%s / %.4f%s)" % (tool["tool_radius"], unit, tool["torus_radius"], unit)
+                tool_desc += "(%.4f%s / %.4f%s)" % ( 2 * tool["tool_radius"], unit, 2 * tool["torus_radius"], unit)
             lines.append(tool_desc)
             lines.append("Speed: %d/minute / Feedrate: %d%s/minute" % (tool["speed"], tool["feedrate"], unit))
             lines.append("Path: %s / %s" % (process["path_generator"], process["path_postprocessor"]))
@@ -895,10 +892,14 @@ class ProjectGui:
 
     def update_tool_controls(self, widget=None, data=None):
         # disable the toroidal radius if the toroidal cutter is not enabled
-        is_torus_shape = self.gui.get_object("ToroidalCutter").get_active()
-        self.gui.get_object("TorusRadiusControl").set_sensitive(is_torus_shape)
-        for objname, default_value in (("ToolRadiusControl", 1.0),
-                ("TorusRadiusControl", 0.25),
+        if self.gui.get_object("ToroidalCutter").get_active():
+            self.gui.get_object("TorusDiameterControl").show()
+            self.gui.get_object("TorusDiameterLabel").show()
+        else:
+            self.gui.get_object("TorusDiameterControl").hide()
+            self.gui.get_object("TorusDiameterLabel").hide()
+        for objname, default_value in (("ToolDiameterControl", 1.0),
+                ("TorusDiameterControl", 0.25),
                 ("SpeedControl", 1000),
                 ("FeedrateControl", 200)):
             obj = self.gui.get_object(objname)
@@ -1053,11 +1054,14 @@ class ProjectGui:
             self.gui.get_object(value).set_active(True)
         set_cutter_shape_name(settings["shape"])
         for objname, key in (
-                ("ToolRadiusControl", "tool_radius"),
-                ("TorusRadiusControl", "torus_radius"),
                 ("FeedrateControl", "feedrate"),
                 ("SpeedControl", "speed")):
             self.gui.get_object(objname).set_value(settings[key])
+        # radius -> diameter
+        for objname, key in (
+                ("ToolDiameterControl", "tool_radius"),
+                ("TorusDiameterControl", "torus_radius")):
+            self.gui.get_object(objname).set_value(2 * settings[key])
 
     def _load_tool_settings_from_gui(self, settings=None):
         if settings is None:
@@ -1069,11 +1073,14 @@ class ProjectGui:
                     return name
         settings["shape"] = get_cutter_shape_name()
         for objname, key in (
-                ("ToolRadiusControl", "tool_radius"),
-                ("TorusRadiusControl", "torus_radius"),
                 ("FeedrateControl", "feedrate"),
                 ("SpeedControl", "speed")):
             settings[key] = self.gui.get_object(objname).get_value()
+        # diameter -> radius
+        for objname, key in (
+                ("ToolDiameterControl", "tool_radius"),
+                ("TorusDiameterControl", "torus_radius")):
+            settings[key] = 0.5 * self.gui.get_object(objname).get_value()
         return settings
 
     @gui_activity_guard
@@ -2075,7 +2082,7 @@ class ProjectGui:
         toolpath_settings = pycam.Gui.Settings.ToolpathSettings()
 
         # this offset allows to cut a model with a minimal boundary box correctly
-        offset = tool_settings["tool_radius"] / 2.0
+        offset = tool_settings["tool_radius"]
         # check the configured direction of the offset (boundary mode)
         if self.settings.get("boundary_mode") == self.BOUNDARY_MODES["inside"]:
             # use the negative offset to stay inside the boundaries
