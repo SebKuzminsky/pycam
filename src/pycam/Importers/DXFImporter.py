@@ -90,8 +90,10 @@ class DXFParser:
                 current_group = ordered_groups[-1]
                 closest_distance = None
                 for cmp_group in remaining_groups:
-                    cmp_distance = get_distance_between_groups(current_group, cmp_group)
-                    if (closest_distance is None) or (cmp_distance < closest_distance):
+                    cmp_distance = get_distance_between_groups(current_group,
+                            cmp_group)
+                    if (closest_distance is None) \
+                            or (cmp_distance < closest_distance):
                         closest_distance = cmp_distance
                         closest_group = cmp_group
                 ordered_groups.append(closest_group)
@@ -140,13 +142,13 @@ class DXFParser:
                 line2 = None
         else:
             line2 = line2.upper()
-            pass
         self.line_number += 2
         return line1, line2
 
     def parse_content(self):
         key, value = self._read_key_value()
-        while (not key is None) and not ((key == self.KEYS["MARKER"]) and (value == "EOF")):
+        while (not key is None) \
+                and not ((key == self.KEYS["MARKER"]) and (value == "EOF")):
             if key == self.KEYS["MARKER"]:
                 if value in ("SECTION", "TABLE", "LAYER", "ENDTAB", "ENDSEC"):
                     # we don't handle these meta-information
@@ -181,32 +183,35 @@ class DXFParser:
                 pass
             key, value = self._read_key_value()
         end_line = self.line_number
-        # the last lines were not used - they are just the marker for the next item
+        # The last lines were not used - they are just the marker for the next
+        # item.
         if not key is None:
             self._push_on_stack(key, value)
         if (None in p1) or (None in p2):
             log.warn("DXFImporter: Incomplete LINE definition between line " \
                     + "%d and %d" % (start_line, end_line))
         else:
-            self.lines.append(Line(Point(p1[0], p1[1], p1[2]), Point(p2[0], p2[1], p2[2])))
+            self.lines.append(Line(Point(p1[0], p1[1], p1[2]),
+                    Point(p2[0], p2[1], p2[2])))
 
     def check_header(self):
         # TODO: this function is not used?
         # we expect "0" in the first line and "SECTION" in the second one
         key, value = self._read_key_value()
-        if (key != KEYS["MARKER"]) or (value and (value != "SECTION")):
+        if (key != self.KEYS["MARKER"]) or (value and (value != "SECTION")):
             log.error("DXFImporter: DXF file header not recognized")
             return None
 
 
 def import_model(filename):
     try:
-        f = open(filename,"rb")
+        infile = open(filename,"rb")
     except IOError, err_msg:
-        log.error("DXFImporter: Failed to read file (%s): %s" % (filename, err_msg))
+        log.error("DXFImporter: Failed to read file (%s): %s" \
+                % (filename, err_msg))
         return None
 
-    result = DXFParser(f)
+    result = DXFParser(infile)
 
     lines = result.get_model()["lines"]
 

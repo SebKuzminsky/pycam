@@ -39,34 +39,33 @@ edges = 0
 epsilon = 0.0001
 kdtree = None
 
-def UniqueVertex(x,y,z):
+def UniqueVertex(x, y, z):
     global vertices
     if kdtree:
         last = Point.id
-        p = kdtree.Point(x,y,z)
+        p = kdtree.Point(x, y, z)
         if p.id == last:
-#            print p
             vertices += 1
         return p
     else:
         vertices += 1
-        return Point(x,y,z)
+        return Point(x, y, z)
 
 def UniqueEdge(p1, p2):
     global edges
-    if hasattr(p1,"edges"):
+    if hasattr(p1, "edges"):
         for e in p1.edges:
             if e.p1 == p1 and e.p2 == p2:
                 return e
             if e.p2 == p1 and e.p1 == p2:
                 return e
     edges += 1
-    e = Line(p1,p2)
-    if not hasattr(p1,"edges"):
+    e = Line(p1, p2)
+    if not hasattr(p1, "edges"):
         p1.edges = [e]
     else:
         p1.edges.append(e)
-    if not hasattr(p2,"edges"):
+    if not hasattr(p2, "edges"):
         p2.edges = [e]
     else:
         p2.edges.append(e)
@@ -80,11 +79,13 @@ def ImportModel(filename, use_kdtree=True):
     kdtree = None
 
     try:
-        f = open(filename,"rb")
+        f = open(filename, "rb")
     except IOError, err_msg:
-        log.error("STLImporter: Failed to read file (%s): %s" % (filename, err_msg))
+        log.error("STLImporter: Failed to read file (%s): %s" \
+                % (filename, err_msg))
         return None
-    # read the first two lines of (potentially non-binary) input - they should contain "solid" and "facet"
+    # Read the first two lines of (potentially non-binary) input - they should
+    # contain "solid" and "facet".
     header_lines = []
     while len(header_lines) < 2:
         current_line = f.readline(200)
@@ -99,7 +100,7 @@ def ImportModel(filename, use_kdtree=True):
     header = "".join(header_lines)
     # read byte 80 to 83 - they contain the "numfacets" value in binary format
     f.seek(80)
-    numfacets = unpack("<I",f.read(4))[0]
+    numfacets = unpack("<I", f.read(4))[0]
     binary = False
 
     if os.path.getsize(filename) == (84 + 50*numfacets):
@@ -108,11 +109,11 @@ def ImportModel(filename, use_kdtree=True):
         binary = False
         f.seek(0)
     else:
-        print "STL binary/ascii detection failed"
+        log.error("STLImporter: STL binary/ascii detection failed")
         return None
 
     if use_kdtree:
-        kdtree = PointKdtree([],3,1,epsilon)
+        kdtree = PointKdtree([], 3, 1, epsilon)
     model = Model()
 
     t = None
@@ -121,63 +122,77 @@ def ImportModel(filename, use_kdtree=True):
     p3 = None
 
     if binary:
-        for i in range(1,numfacets+1): 
-            a1 = unpack("<f",f.read(4))[0] 
-            a2 = unpack("<f",f.read(4))[0] 
-            a3 = unpack("<f",f.read(4))[0] 
+        for i in range(1, numfacets + 1): 
+            a1 = unpack("<f", f.read(4))[0] 
+            a2 = unpack("<f", f.read(4))[0] 
+            a3 = unpack("<f", f.read(4))[0] 
 
-            n = Point(float(a1),float(a2),float(a3))
+            n = Point(float(a1), float(a2), float(a3))
             
-            v11 = unpack("<f",f.read(4))[0] 
-            v12 = unpack("<f",f.read(4))[0] 
-            v13 = unpack("<f",f.read(4))[0] 
+            v11 = unpack("<f", f.read(4))[0] 
+            v12 = unpack("<f", f.read(4))[0] 
+            v13 = unpack("<f", f.read(4))[0] 
 
-            p1 = UniqueVertex(float(v11),float(v12),float(v13))
+            p1 = UniqueVertex(float(v11), float(v12), float(v13))
             
-            v21 = unpack("<f",f.read(4))[0] 
-            v22 = unpack("<f",f.read(4))[0] 
-            v23 = unpack("<f",f.read(4))[0] 
+            v21 = unpack("<f", f.read(4))[0] 
+            v22 = unpack("<f", f.read(4))[0] 
+            v23 = unpack("<f", f.read(4))[0] 
 
-            p2 = UniqueVertex(float(v21),float(v22),float(v23))
+            p2 = UniqueVertex(float(v21), float(v22), float(v23))
             
-            v31 = unpack("<f",f.read(4))[0] 
-            v32 = unpack("<f",f.read(4))[0] 
-            v33 = unpack("<f",f.read(4))[0] 
+            v31 = unpack("<f", f.read(4))[0] 
+            v32 = unpack("<f", f.read(4))[0] 
+            v33 = unpack("<f", f.read(4))[0] 
             
-            p3 = UniqueVertex(float(v31),float(v32),float(v33))
+            p3 = UniqueVertex(float(v31), float(v32), float(v33))
 
-            attribs = unpack("<H",f.read(2)) 
+            # not used
+            attribs = unpack("<H", f.read(2)) 
             
             dotcross = n.dot(p3.sub(p1).cross(p2.sub(p1)))
-            if a1==0 and a2==0 and a3==0:
+            if a1 == a2 == a3 == 0:
                 dotcross = p3.sub(p1).cross(p2.sub(p1)).z
                 n = None
 
             if dotcross > 0:
-                t = Triangle(p1, p2, p3, UniqueEdge(p1,p2), UniqueEdge(p2,p3), UniqueEdge(p3,p1))
+                t = Triangle(p1, p2, p3, UniqueEdge(p1, p2), UniqueEdge(p2, p3),
+                        UniqueEdge(p3, p1))
             elif dotcross < 0:
-                t = Triangle(p1, p3, p2, UniqueEdge(p1,p3), UniqueEdge(p3,p2), UniqueEdge(p2,p1))
+                t = Triangle(p1, p3, p2, UniqueEdge(p1, p3), UniqueEdge(p3, p2),
+                        UniqueEdge(p2, p1))
             else:
                 # the three points are in a line - or two points are identical
                 # usually this is caused by points, that are too close together
                 # check the tolerance value in pycam/Geometry/PointKdtree.py
-                print "ERROR: skipping invalid triangle: %s / %s / %s" % (p1, p2, p3)
+                log.warn("Skipping invalid triangle: %s / %s / %s" \
+                        % (p1, p2, p3) + " (maybe the resolution of the model" \
+                        + " is too high?)")
                 continue
             if n:
                 t._normal = n
 
             model.append(t)
     else:
-        solid = re.compile("\s*solid\s+(\w+)\s+.*")
-        endsolid = re.compile("\s*endsolid\s*")
-        facet = re.compile("\s*facet\s*")
-        normal = re.compile("\s*facet\s+normal\s+(?P<x>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<y>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<z>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+")
-        endfacet = re.compile("\s*endfacet\s+")
-        loop = re.compile("\s*outer\s+loop\s+")
-        endloop = re.compile("\s*endloop\s+")
-        vertex = re.compile("\s*vertex\s+(?P<x>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<y>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+(?P<z>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+")
+        solid = re.compile(r"\s*solid\s+(\w+)\s+.*")
+        endsolid = re.compile(r"\s*endsolid\s*")
+        facet = re.compile(r"\s*facet\s*")
+        normal = re.compile(r"\s*facet\s+normal" \
+                + r"\s+(?P<x>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)" \
+                + r"\s+(?P<y>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)" \
+                + r"\s+(?P<z>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+")
+        endfacet = re.compile(r"\s*endfacet\s+")
+        loop = re.compile(r"\s*outer\s+loop\s+")
+        endloop = re.compile(r"\s*endloop\s+")
+        vertex = re.compile(r"\s*vertex" \
+                + r"\s+(?P<x>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)" \
+                + r"\s+(?P<y>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)" \
+                + r"\s+(?P<z>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+")
+
+        current_line = 0
 
         for line in f:
+            current_line += 1
             m = solid.match(line)
             if m:
                 model.name = m.group(1)
@@ -187,7 +202,8 @@ def ImportModel(filename, use_kdtree=True):
             if m:
                 m = normal.match(line)
                 if m:
-                    n = Point(float(m.group('x')),float(m.group('y')),float(m.group('z')))
+                    n = Point(float(m.group('x')), float(m.group('y')),
+                            float(m.group('z')))
                 else:
                     n = None
                 continue
@@ -196,7 +212,8 @@ def ImportModel(filename, use_kdtree=True):
                 continue
             m = vertex.match(line)
             if m:
-                p = UniqueVertex(float(m.group('x')),float(m.group('y')),float(m.group('z')))
+                p = UniqueVertex(float(m.group('x')), float(m.group('y')),
+                        float(m.group('z')))
                 if p1 is None:
                     p1 = p
                 elif p2 is None:
@@ -204,7 +221,8 @@ def ImportModel(filename, use_kdtree=True):
                 elif p3 is None:
                     p3 = p
                 else:
-                    print "ERROR: more then 3 points in facet"
+                    log.error("STLImporter: ERROR: more then 3 points in " \
+                            + "facet (line %d)" % current_line)
                 continue
             m = endloop.match(line)
             if m:
@@ -218,17 +236,21 @@ def ImportModel(filename, use_kdtree=True):
                 # make sure the points are in ClockWise order
                 dotcross = n.dot(p3.sub(p1).cross(p2.sub(p1)))
                 if dotcross > 0:
-                    t = Triangle(p1, p2, p3, UniqueEdge(p1,p2), UniqueEdge(p2,p3), UniqueEdge(p3,p1), n)
+                    t = Triangle(p1, p2, p3, UniqueEdge(p1, p2),
+                            UniqueEdge(p2, p3), UniqueEdge(p3, p1), n)
                 elif dotcross < 0:
-                    t = Triangle(p1, p3, p2, UniqueEdge(p1,p3), UniqueEdge(p3,p2), UniqueEdge(p2,p1), n)
+                    t = Triangle(p1, p3, p2, UniqueEdge(p1, p3),
+                            UniqueEdge(p3, p2), UniqueEdge(p2, p1), n)
                 else:
-                    # the three points are in a line - or two points are identical
-                    # usually this is caused by points, that are too close together
-                    # check the tolerance value in pycam/Geometry/PointKdtree.py
-                    print "ERROR: skipping invalid triangle: %s / %s / %s" % (p1, p2, p3)
-                    n=p1=p2=p3=None
+                    # The three points are in a line - or two points are
+                    # identical. Usually this is caused by points, that are too
+                    # close together. Check the tolerance value in
+                    # pycam/Geometry/PointKdtree.py.
+                    print "ERROR: skipping invalid triangle: %s / %s / %s" \
+                            % (p1, p2, p3)
+                    n, p1, p2, p3 = (None, None, None, None)
                     continue
-                n=p1=p2=p3=None
+                n, p1, p2, p3 = (None, None, None, None)
                 model.append(t)
                 continue
             m = endsolid.match(line)
@@ -239,7 +261,8 @@ def ImportModel(filename, use_kdtree=True):
         model.p_kdtree = kdtree
         model.t_kdtree = TriangleKdtree(model.triangles())
 
-    print "Imported STL model: ", vertices, "vertices,", edges, "edges,", len(model.triangles()), "triangles"
+    log.info("Imported STL model: %d vertices, %d edges, %d triangles" \
+            % (vertices, edges, len(model.triangles())))
     vertices = 0
     edges = 0
     kdtree = None
