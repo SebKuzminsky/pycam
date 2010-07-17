@@ -118,8 +118,8 @@ class ProcessSettings:
     DEFAULT_CONFIG = """
 [ToolDefault]
 torus_radius: 0.25
-feedrate: 1000
-speed: 200
+feedrate: 200
+speed: 1000
 
 [Tool0]
 name: Cylindrical (d=3)
