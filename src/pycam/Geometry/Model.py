@@ -184,22 +184,34 @@ class Model(BaseModel):
         self._triangles = []
         self._item_groups.append(self._triangles)
         self._export_function = pycam.Exporters.STLExporter.STLExporter
+        # marker for state of kdtree
+        self._kdtree_dirty = False
 
     def append(self, item):
         super(Model, self).append(item)
         if isinstance(item, Triangle):
             self._triangles.append(item)
+            # we assume, that the kdtree needs to be rebuilt again
+            self._kdtree_dirty = True
 
     def reset_cache(self):
         super(Model, self).reset_cache()
         # the triangle kdtree needs to be reset after transforming the model
+        self._update_kdtree()
+
+    def _update_kdtree(self):
         if hasattr(self, "t_kdtree"):
             self.t_kdtree = TriangleKdtree(self.triangles())
+        # the kdtree is up-to-date again
+        self._kdtree_dirty = False
 
     def triangles(self, minx=-INFINITE,miny=-INFINITE,minz=-INFINITE,maxx=+INFINITE,maxy=+INFINITE,maxz=+INFINITE):
         if minx==-INFINITE and miny==-INFINITE and minz==-INFINITE and maxx==+INFINITE and maxy==+INFINITE and maxz==+INFINITE:
             return self._triangles
         if hasattr(self, "t_kdtree"):
+            # update the kdtree, if new triangles were added meanwhile
+            if self._kdtree_dirty:
+                self._update_kdtree()
             return self.t_kdtree.Search(minx,maxx,miny,maxy)
         return self._triangles
 
