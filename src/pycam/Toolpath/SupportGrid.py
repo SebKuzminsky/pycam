@@ -59,28 +59,45 @@ def _add_cuboid_to_model(minx, maxx, miny, maxy, minz, maxz):
         model.append(t)
     return model
 
-def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness, height):
-    lines_x = int(math.ceil((maxx - minx) / dist_x))
-    lines_y = int(math.ceil((maxy - miny) / dist_y))
-    # we center the grid
-    start_x = ((maxx - minx) - (lines_x - 1) * dist_x) / 2.0 + minx
-    start_y = ((maxy - miny) - (lines_y - 1) * dist_y) / 2.0 + miny
+def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness,
+        height, offset_x=0.0, offset_y=0.0):
+    def get_lines(center, dist, min_value, max_value):
+        """ generate a list of positions starting from the middle going up and
+        and down
+        """
+        if dist > 0:
+            lines = [center]
+            current = center
+            while current - dist > min_value:
+                current -= dist
+                lines.insert(0, current)
+            current = center
+            while current + dist < max_value:
+                current += dist
+                lines.append(current)
+        else:
+            lines = []
+        # remove lines that are out of range (e.g. due to a huge offset)
+        lines = [line for line in lines if min_value < line < max_value]
+        return lines
+    center_x = (maxx + minx) / 2.0 + offset_x
+    center_y = (maxy + miny) / 2.0 + offset_y
+    lines_x = get_lines(center_x, dist_x, minx, maxx)
+    lines_y = get_lines(center_y, dist_y, miny, maxy)
     # create all x grid lines
     grid_model = Model.Model()
     # helper variables
     thick_half = thickness / 2.0
     length_extension = max(thickness, height)
-    for i in range(lines_x):
-        x = start_x + i * dist_x
+    for line_x in lines_x:
         # we make the grid slightly longer (by thickness) than necessary
-        grid_model += _add_cuboid_to_model(x - thick_half, x + thick_half,
-                miny - length_extension, maxy + length_extension, z_plane,
-                z_plane + height)
-    for i in range(lines_y):
-        y = start_y + i * dist_y
+        grid_model += _add_cuboid_to_model(line_x - thick_half,
+                line_x + thick_half, miny - length_extension,
+                maxy + length_extension, z_plane, z_plane + height)
+    for line_y in lines_y:
         # we make the grid slightly longer (by thickness) than necessary
         grid_model += _add_cuboid_to_model(minx - length_extension,
-                maxx + length_extension, y - thick_half, y + thick_half,
-                z_plane, z_plane + height)
+                maxx + length_extension, line_y - thick_half,
+                line_y + thick_half, z_plane, z_plane + height)
     return grid_model
 

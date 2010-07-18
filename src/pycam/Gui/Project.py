@@ -281,25 +281,44 @@ class ProjectGui:
         self.gui.get_object("ScaleDimensionButton").connect("clicked", self.scale_model_axis_fit)
         # support grid
         self.gui.get_object("SupportGridEnable").connect("clicked", self.update_support_grid_controls)
-        grid_distance = self.gui.get_object("SupportGridDistance")
-        grid_distance.connect("value-changed", self.update_support_grid_controls)
-        self.settings.add_item("support_grid_distance",
-                grid_distance.get_value, grid_distance.set_value)
-        grid_square_profile = self.gui.get_object("SupportGridSquare")
-        grid_square_profile.connect("toggled", self.update_support_grid_controls)
+        grid_distance_x = self.gui.get_object("SupportGridDistanceX")
+        grid_distance_x.connect("value-changed",
+                self.update_support_grid_controls)
+        self.settings.add_item("support_grid_distance_x",
+                grid_distance_x.get_value, grid_distance_x.set_value)
+        grid_distance_square = self.gui.get_object("SupportGridDistanceSquare")
+        grid_distance_square.connect("clicked",
+                self.update_support_grid_controls)
+        grid_distance_y = self.gui.get_object("SupportGridDistanceY")
+        grid_distance_y.connect("value-changed",
+                self.update_support_grid_controls)
+        def get_support_grid_distance_y():
+            if grid_distance_square.get_active():
+                return self.settings.get("support_grid_distance_x")
+            else:
+                return grid_distance_y.get_value()
+        self.settings.add_item("support_grid_distance_y",
+                get_support_grid_distance_y, grid_distance_y.set_value)
         grid_thickness = self.gui.get_object("SupportGridThickness")
         grid_thickness.connect("value-changed", self.update_support_grid_controls)
         self.settings.add_item("support_grid_thickness",
                 grid_thickness.get_value, grid_thickness.set_value)
         grid_height = self.gui.get_object("SupportGridHeight")
-        def get_support_grid_height():
-            if grid_square_profile.get_active():
-                return self.settings.get("support_grid_thickness")
-            else:
-                return grid_height.get_value()
-        self.settings.add_item("support_grid_height", get_support_grid_height, grid_height.set_value)
         grid_height.connect("value-changed", self.update_support_grid_controls)
-        self.settings.set("support_grid_distance", 5.0)
+        self.settings.add_item("support_grid_height",
+                grid_height.get_value, grid_height.set_value)
+        grid_offset_x = self.gui.get_object("SupportGridOffsetX")
+        grid_offset_x.connect("value-changed",
+                self.update_support_grid_controls)
+        self.settings.add_item("support_grid_offset_x",
+                grid_offset_x.get_value, grid_offset_x.set_value)
+        grid_offset_y = self.gui.get_object("SupportGridOffsetY")
+        grid_offset_y.connect("value-changed",
+                self.update_support_grid_controls)
+        self.settings.add_item("support_grid_offset_y",
+                grid_offset_y.get_value, grid_offset_y.set_value)
+        grid_distance_square.set_active(True)
+        self.settings.set("support_grid_distance_x", 5.0)
         self.settings.set("support_grid_thickness", 0.5)
         self.settings.set("support_grid_height", 0.5)
         # visual and general settings
@@ -579,20 +598,16 @@ class ProjectGui:
 
     @gui_activity_guard
     def update_support_grid_controls(self, widget=None):
-        is_enabled = self.gui.get_object("SupportGridEnable").get_active()
-        grid_square = self.gui.get_object("SupportGridSquare")
         details_box = self.gui.get_object("SupportGridDetailsBox")
-        grid_height_box = self.gui.get_object("SupportGridHeightBox")
-        if is_enabled:
+        grid_square = self.gui.get_object("SupportGridDistanceSquare")
+        distance_y = self.gui.get_object("SupportGridDistanceYControl")
+        if self.gui.get_object("SupportGridEnable").get_active():
+            distance_y.set_sensitive(not grid_square.get_active())
             details_box.show()
             if grid_square.get_active():
-                grid_height_box.hide()
-            else:
-                if widget == grid_square:
-                    # reset the current height to the thickness, if the
-                    # "square" checkbox was just de-activated
-                    self.settings.set("support_grid_height", self.settings.get("support_grid_thickness"))
-                grid_height_box.show()
+                # We let "distance_y" track the value of "distance_x".
+                self.settings.set("support_grid_distance_y",
+                        self.settings.get("support_grid_distance_x"))
         else:
             details_box.hide()
         self.update_support_grid_model()
@@ -603,17 +618,26 @@ class ProjectGui:
         s = self.settings
         if is_enabled \
                 and (s.get("support_grid_thickness") > 0) \
-                and (s.get("support_grid_distance") > s.get("support_grid_thickness")) \
+                and ((s.get("support_grid_distance_x") > 0) \
+                    or (s.get("support_grid_distance_y") > 0)) \
+                and ((s.get("support_grid_distance_x") == 0) \
+                    or (s.get("support_grid_distance_x") \
+                        > s.get("support_grid_thickness"))) \
+                and ((s.get("support_grid_distance_y") == 0) \
+                    or (s.get("support_grid_distance_y") \
+                        > s.get("support_grid_thickness"))) \
                 and (s.get("support_grid_height") > 0):
-            s.set("support_grid",
-                    pycam.Toolpath.SupportGrid.get_support_grid(s.get("minx"),
-                            s.get("maxx"), s.get("miny"), s.get("maxy"),
-                            s.get("minz"), s.get("support_grid_distance"),
-                            s.get("support_grid_distance"),
-                            s.get("support_grid_thickness"),
-                            s.get("support_grid_height")))
+            support_grid = pycam.Toolpath.SupportGrid.get_support_grid(
+                    s.get("minx"), s.get("maxx"), s.get("miny"), s.get("maxy"),
+                    s.get("minz"), s.get("support_grid_distance_x"),
+                    s.get("support_grid_distance_y"),
+                    s.get("support_grid_thickness"),
+                    s.get("support_grid_height"),
+                    offset_x=s.get("support_grid_offset_x"),
+                    offset_y=s.get("support_grid_offset_y"))
         else:
-            self.settings.set("support_grid", None)
+            support_grid = None
+        s.set("support_grid", support_grid)
 
     @gui_activity_guard
     def adjust_bounds(self, widget, axis, change):

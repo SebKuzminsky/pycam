@@ -871,148 +871,332 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkTable" id="SupportGridDetailsBox">
+                              <object class="GtkVBox" id="SupportGridDetailsBox">
                                 <property name="visible">True</property>
-                                <property name="n_rows">2</property>
-                                <property name="n_columns">5</property>
-                                <property name="row_spacing">3</property>
+                                <property name="orientation">vertical</property>
                                 <child>
-                                  <object class="GtkVSeparator" id="vseparator7">
-                                    <property name="visible">True</property>
-                                    <property name="orientation">vertical</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">3</property>
-                                    <property name="right_attach">4</property>
-                                    <property name="x_options">GTK_FILL</property>
-                                    <property name="y_options">GTK_FILL</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkSpinButton" id="SupportGridDistanceControl">
+                                  <object class="GtkExpander" id="GridPatternExpander">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x25CF;</property>
-                                    <property name="adjustment">SupportGridDistance</property>
-                                    <property name="digits">2</property>
-                                    <property name="numeric">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">2</property>
-                                    <property name="right_attach">3</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel" id="SupportGridDistanceLabel">
-                                    <property name="visible">True</property>
-                                    <property name="xalign">0</property>
-                                    <property name="label" translatable="yes">grid distance:</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">1</property>
-                                    <property name="right_attach">2</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkArrow" id="arrow1">
-                                    <property name="visible">True</property>
-                                    <property name="xpad">2</property>
-                                    <property name="shadow_type">etched-in</property>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel" id="SupportGridThicknessLabel">
-                                    <property name="visible">True</property>
-                                    <property name="xalign">0</property>
-                                    <property name="label" translatable="yes">grid thickness:</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">1</property>
-                                    <property name="right_attach">2</property>
-                                    <property name="top_attach">1</property>
-                                    <property name="bottom_attach">2</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkSpinButton" id="SupportGridThicknessControl">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="invisible_char">&#x25CF;</property>
-                                    <property name="adjustment">SupportGridThickness</property>
-                                    <property name="digits">2</property>
-                                    <property name="numeric">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">2</property>
-                                    <property name="right_attach">3</property>
-                                    <property name="top_attach">1</property>
-                                    <property name="bottom_attach">2</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkVSeparator" id="vseparator10">
-                                    <property name="visible">True</property>
-                                    <property name="orientation">vertical</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">3</property>
-                                    <property name="right_attach">4</property>
-                                    <property name="top_attach">1</property>
-                                    <property name="bottom_attach">2</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkCheckButton" id="SupportGridSquare">
-                                    <property name="label" translatable="yes">square grid profile</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">False</property>
-                                    <property name="draw_indicator">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">4</property>
-                                    <property name="right_attach">5</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkHBox" id="SupportGridHeightBox">
-                                    <property name="visible">True</property>
+                                    <property name="expanded">True</property>
                                     <child>
-                                      <object class="GtkLabel" id="SupportGridHeightLabel">
+                                      <object class="GtkTable" id="table10">
                                         <property name="visible">True</property>
-                                        <property name="label" translatable="yes">grid height:</property>
+                                        <property name="n_rows">2</property>
+                                        <property name="n_columns">4</property>
+                                        <property name="column_spacing">4</property>
+                                        <property name="row_spacing">1</property>
+                                        <child>
+                                          <object class="GtkLabel" id="SupportGridDistanceXLabel">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">distance x:</property>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">1</property>
+                                            <property name="right_attach">2</property>
+                                            <property name="x_options">GTK_FILL</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="SupportGridDistanceYLabel">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">distance y:</property>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">1</property>
+                                            <property name="right_attach">2</property>
+                                            <property name="top_attach">1</property>
+                                            <property name="bottom_attach">2</property>
+                                            <property name="x_options">GTK_FILL</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkSpinButton" id="SupportGridDistanceXControl">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="adjustment">SupportGridDistanceX</property>
+                                            <property name="digits">2</property>
+                                            <property name="numeric">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">2</property>
+                                            <property name="right_attach">3</property>
+                                            <property name="x_options">GTK_FILL</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkSpinButton" id="SupportGridDistanceYControl">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="adjustment">SupportGridDistanceY</property>
+                                            <property name="digits">2</property>
+                                            <property name="numeric">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">2</property>
+                                            <property name="right_attach">3</property>
+                                            <property name="top_attach">1</property>
+                                            <property name="bottom_attach">2</property>
+                                            <property name="x_options">GTK_FILL</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkCheckButton" id="SupportGridDistanceSquare">
+                                            <property name="label" translatable="yes">square grid</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">False</property>
+                                            <property name="draw_indicator">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">3</property>
+                                            <property name="right_attach">4</property>
+                                            <property name="top_attach">1</property>
+                                            <property name="bottom_attach">2</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkAlignment" id="alignment23">
+                                            <property name="width_request">40</property>
+                                            <property name="visible">True</property>
+                                            <child>
+                                              <placeholder/>
+                                            </child>
+                                          </object>
+                                          <packing>
+                                            <property name="x_options">GTK_FILL</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkAlignment" id="alignment33">
+                                            <property name="width_request">40</property>
+                                            <property name="visible">True</property>
+                                            <child>
+                                              <placeholder/>
+                                            </child>
+                                          </object>
+                                          <packing>
+                                            <property name="top_attach">1</property>
+                                            <property name="bottom_attach">2</property>
+                                            <property name="x_options">GTK_FILL</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <placeholder/>
+                                        </child>
                                       </object>
-                                      <packing>
-                                        <property name="position">0</property>
-                                      </packing>
                                     </child>
-                                    <child>
-                                      <object class="GtkSpinButton" id="SupportGridHeightControl">
+                                    <child type="label">
+                                      <object class="GtkLabel" id="GridPatternExpanderLabel">
                                         <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="invisible_char">&#x25CF;</property>
-                                        <property name="adjustment">SupportGridHeight</property>
-                                        <property name="digits">2</property>
-                                        <property name="numeric">True</property>
+                                        <property name="label" translatable="yes">Pattern</property>
                                       </object>
-                                      <packing>
-                                        <property name="position">1</property>
-                                      </packing>
                                     </child>
                                   </object>
                                   <packing>
-                                    <property name="left_attach">4</property>
-                                    <property name="right_attach">5</property>
-                                    <property name="top_attach">1</property>
-                                    <property name="bottom_attach">2</property>
+                                    <property name="position">0</property>
                                   </packing>
                                 </child>
                                 <child>
-                                  <placeholder/>
+                                  <object class="GtkExpander" id="GridProfileExpander">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <child>
+                                      <object class="GtkHBox" id="hbox1">
+                                        <property name="visible">True</property>
+                                        <property name="spacing">3</property>
+                                        <child>
+                                          <object class="GtkAlignment" id="alignment20">
+                                            <property name="width_request">40</property>
+                                            <property name="visible">True</property>
+                                            <child>
+                                              <placeholder/>
+                                            </child>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="SupportGridThicknessLabel">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">thickness:</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkSpinButton" id="SupportGridThicknessControl">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="adjustment">SupportGridThickness</property>
+                                            <property name="digits">2</property>
+                                            <property name="numeric">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">2</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkVSeparator" id="vseparator10">
+                                            <property name="visible">True</property>
+                                            <property name="orientation">vertical</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="padding">3</property>
+                                            <property name="position">3</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="SupportGridHeightLabel">
+                                            <property name="visible">True</property>
+                                            <property name="label" translatable="yes">height:</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">4</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkSpinButton" id="SupportGridHeightControl">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="adjustment">SupportGridHeight</property>
+                                            <property name="digits">2</property>
+                                            <property name="numeric">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">5</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child type="label">
+                                      <object class="GtkLabel" id="GridProfileExpanderLabel">
+                                        <property name="visible">True</property>
+                                        <property name="label" translatable="yes">Profile</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkExpander" id="GridPositionExpander">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <child>
+                                      <object class="GtkHBox" id="hbox17">
+                                        <property name="visible">True</property>
+                                        <property name="spacing">4</property>
+                                        <child>
+                                          <object class="GtkAlignment" id="alignment37">
+                                            <property name="width_request">40</property>
+                                            <property name="visible">True</property>
+                                            <child>
+                                              <placeholder/>
+                                            </child>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="GridOffsetXLabel">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">offset x:</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkSpinButton" id="SupportGridOffsetXControl">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="adjustment">SupportGridOffsetX</property>
+                                            <property name="digits">2</property>
+                                            <property name="numeric">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">2</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkVSeparator" id="vseparator2">
+                                            <property name="visible">True</property>
+                                            <property name="orientation">vertical</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">3</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="GridOffsetYLabel">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">offset y:</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">4</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkSpinButton" id="SupportGridOffsetYControl">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="adjustment">SupportGridOffsetY</property>
+                                            <property name="digits">2</property>
+                                            <property name="numeric">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">5</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child type="label">
+                                      <object class="GtkLabel" id="GridPositionExpanderLabel">
+                                        <property name="visible">True</property>
+                                        <property name="label" translatable="yes">Position</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="position">2</property>
+                                  </packing>
                                 </child>
                               </object>
                               <packing>
-                                <property name="expand">False</property>
                                 <property name="position">1</property>
                               </packing>
                             </child>
@@ -5264,9 +5448,8 @@ Any selected group of dimensions will be scaled accordingly.</property>
       <action-widget response="0">UnitChangeApply</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkAdjustment" id="SupportGridDistance">
+  <object class="GtkAdjustment" id="SupportGridDistanceX">
     <property name="value">5</property>
-    <property name="lower">0.01</property>
     <property name="upper">1000</property>
     <property name="step_increment">1</property>
   </object>
@@ -5329,5 +5512,17 @@ Any selected group of dimensions will be scaled accordingly.</property>
   </object>
   <object class="GtkAction" id="FeatureRequest">
     <property name="label">Request a Feature</property>
+  </object>
+  <object class="GtkAdjustment" id="SupportGridDistanceY">
+    <property name="upper">1000</property>
+    <property name="step_increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="SupportGridOffsetX">
+    <property name="upper">1000</property>
+    <property name="step_increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="SupportGridOffsetY">
+    <property name="upper">1000</property>
+    <property name="step_increment">1</property>
   </object>
 </interface>

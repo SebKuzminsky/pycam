@@ -499,9 +499,12 @@ class ToolpathSettings:
             "feedrate": float,
         },
         "SupportGrid": {
-            "distance": float,
+            "distance_x": float,
+            "distance_y": float,
             "thickness": float,
             "height": float,
+            "offset_x": float,
+            "offset_y": float,
         },
         "Program": {
             "unit": str,
@@ -560,8 +563,12 @@ class ToolpathSettings:
     def get_tool_settings(self):
         return self.tool_settings
 
-    def set_support_grid(self, distance, thickness, height):
-        self.support_grid["distance"] = distance
+    def set_support_grid(self, distance_x, distance_y, thickness, height,
+            offset_x=0.0, offset_y=0.0):
+        self.support_grid["distance_x"] = distance_x
+        self.support_grid["distance_y"] = distance_y
+        self.support_grid["offset_x"] = offset_x
+        self.support_grid["offset_y"] = offset_y
         self.support_grid["thickness"] = thickness
         self.support_grid["height"] = height
 
@@ -569,7 +576,8 @@ class ToolpathSettings:
         if self.support_grid:
             return self.support_grid
         else:
-            return {"distance": None, "thickness": None, "height": None}
+            return {"distance_x": None, "distance_y": None, "thickness": None,
+                    "height": None, "offset_x": None, "offset_y": None}
 
     def set_calculation_backend(self, backend=None):
         self.program["enable_ode"] = (backend.upper() == "ODE")

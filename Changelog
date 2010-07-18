@@ -3,8 +3,10 @@ Version 0.3.0 - UNRELEASED
  * added basic support for importing simple DXF contour files
  * added support for engravings
  * integrated "help" links pointing to the wiki
- * allow non-square profiles for the support grid
  * improved OpenGL lightning (contributed by imyrek)
+ * allow non-square profiles for the support grid
+ * added ability to create support grids with different x/y grid distance
+ * added x/y offsets to support grid options
  * switched default tool size from radius to diameter
  * fixed performance issue when using a support grid
  * fixed empty toolpath after transforming the model
