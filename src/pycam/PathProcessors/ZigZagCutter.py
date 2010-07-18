@@ -20,13 +20,14 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import *
+from pycam.Geometry import Path
 
 class ZigZagCutter:
     def __init__(self):
         self.paths = []
         self.curr_path = None
         self.scanline = None
+        self.curr_scanline = None
 
     def append(self, p):
         curr_path = None
@@ -46,7 +47,7 @@ class ZigZagCutter:
                 curr_path.reverse()
                 self.curr_scanline.insert(0, curr_path)
 
-    def new_direction(self, dir):
+    def new_direction(self, direction):
         self.scanline = 0
 
     def end_direction(self):

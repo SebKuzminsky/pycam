@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import *
+from pycam.Geometry import Path
 
 class SimpleCutter:
     def __init__(self):
@@ -39,7 +39,7 @@ class SimpleCutter:
         if self.curr_path == None:
             self.paths.append(curr_path)
 
-    def new_direction(self, dir):
+    def new_direction(self, direction):
         pass
 
     def end_direction(self):

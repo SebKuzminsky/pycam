@@ -21,8 +21,9 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import *
-from pycam.Geometry.PolygonExtractor import *
+from pycam.Geometry import Path
+from pycam.Geometry.PolygonExtractor import PolygonExtractor
+
 
 class PolygonCutter:
     def __init__(self):
@@ -34,8 +35,8 @@ class PolygonCutter:
     def append(self, p):
         self.pe.append(p)
 
-    def new_direction(self, dir):
-        self.pe.new_direction(dir)
+    def new_direction(self, direction):
+        self.pe.new_direction(direction)
 
     def end_direction(self):
         self.pe.end_direction()

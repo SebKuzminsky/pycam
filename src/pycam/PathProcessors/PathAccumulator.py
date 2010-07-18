@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import *
+from pycam.Geometry import Path
 
 def _check_colinearity(p1, p2, p3):
     v1 = p2.sub(p1)
@@ -36,18 +36,20 @@ class PathAccumulator:
         self.paths = []
         self.curr_path = None
         self.zigzag = zigzag
+        self.scanline = None
 
     def append(self, p):
         if self.curr_path == None:
             self.curr_path = Path()
         if (len(self.curr_path.points) >= 2) and \
-                (_check_colinearity(self.curr_path.points[-2], self.curr_path.points[-1], p)):
+                (_check_colinearity(self.curr_path.points[-2],
+                self.curr_path.points[-1], p)):
             # remove the previous point since it is in line with its
             # predecessor and the new point
             self.curr_path.points.pop()
         self.curr_path.append(p)
 
-    def new_direction(self, dir):
+    def new_direction(self, direction):
         self.scanline = 0
 
     def end_direction(self):

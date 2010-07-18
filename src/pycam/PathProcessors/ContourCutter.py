@@ -20,8 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import *
-from pycam.Geometry.PolygonExtractor import *
+from pycam.Geometry.PolygonExtractor import PolygonExtractor
 
 class ContourCutter:
     def __init__(self):
@@ -34,11 +33,11 @@ class ContourCutter:
     def append(self, p):
         self.points.append(p)
 
-    def new_direction(self, dir):
+    def new_direction(self, direction):
         if self.pe == None:
             self.pe = PolygonExtractor(PolygonExtractor.CONTOUR)
 
-        self.pe.new_direction(dir)
+        self.pe.new_direction(direction)
 
     def end_direction(self):
         self.pe.end_direction()

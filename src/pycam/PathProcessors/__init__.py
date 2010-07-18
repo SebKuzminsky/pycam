@@ -20,13 +20,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-list = ["PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter", "ContourCutter"]
-__all__ = list
+__all__ = ["PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter",
+        "ContourCutter"]
 
-
-from PathAccumulator import PathAccumulator
-from SimpleCutter import SimpleCutter
-from ZigZagCutter import ZigZagCutter
-from PolygonCutter import PolygonCutter
-from ContourCutter import ContourCutter
+from pycam.PathProcessors.PathAccumulator import PathAccumulator
+from pycam.PathProcessors.SimpleCutter import SimpleCutter
+from pycam.PathProcessors.ZigZagCutter import ZigZagCutter
+from pycam.PathProcessors.PolygonCutter import PolygonCutter
+from pycam.PathProcessors.ContourCutter import ContourCutter
 
