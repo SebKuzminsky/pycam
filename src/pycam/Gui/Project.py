@@ -277,7 +277,7 @@ class ProjectGui:
         self.gui.get_object("ScalePercent").set_value(100)
         self.gui.get_object("ScaleModelButton").connect("clicked", self.scale_model)
         # scale model to an axis dimension
-        self.gui.get_object("ScaleDimensionAxis").connect("changed", self.switch_scale_axis)
+        self.gui.get_object("ScaleDimensionAxis").connect("changed", self.update_scale_controls)
         self.gui.get_object("ScaleDimensionButton").connect("clicked", self.scale_model_axis_fit)
         # support grid
         self.gui.get_object("SupportGridEnable").connect("clicked", self.update_support_grid_controls)
@@ -546,7 +546,7 @@ class ProjectGui:
         self.update_save_actions()
         self.update_unit_labels()
         self.update_support_grid_controls()
-        self.switch_scale_axis()
+        self.update_scale_controls()
 
     def progress_activity_guard(func):
         def progress_activity_guard_wrapper(self, *args, **kwargs):
@@ -1457,22 +1457,22 @@ class ProjectGui:
         self.update_view()
 
     @gui_activity_guard
-    def switch_scale_axis(self, widget=None):
+    def update_scale_controls(self, widget=None):
         if self.model is None:
             return
-        index = self.gui.get_object("ScaleDimensionAxis").get_active()
-        if index == 0:
-            # x axis
-            value = self.model.maxx - self.model.minx
-        elif index == 1:
-            # y axis
-            value = self.model.maxy - self.model.miny
-        elif index == 2:
-            # z axis
-            value = self.model.maxz - self.model.minz
-        else:
-            return
-        self.gui.get_object("ScaleDimensionValue").set_value(value)
+        axis_control = self.gui.get_object("ScaleDimensionAxis")
+        scale_button = self.gui.get_object("ScaleDimensionButton")
+        scale_value = self.gui.get_object("ScaleDimensionControl")
+        index = axis_control.get_active()
+        dims = (self.model.maxx - self.model.minx,
+                self.model.maxy - self.model.miny,
+                self.model.maxz - self.model.minz)
+        value = dims[index]
+        non_zero_dimensions = [i for i, dim in enumerate(dims) if dim > 0]
+        enable_controls = index in non_zero_dimensions
+        scale_button.set_sensitive(enable_controls)
+        scale_value.set_sensitive(enable_controls)
+        scale_value.set_value(value)
 
     @gui_activity_guard
     def scale_model_axis_fit(self, widget):

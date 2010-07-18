@@ -817,7 +817,7 @@
                         <child type="label">
                           <object class="GtkLabel" id="Shift Model Label">
                             <property name="visible">True</property>
-                            <property name="label" translatable="yes">&lt;b&gt;Move Origin&lt;/b&gt;</property>
+                            <property name="label" translatable="yes">&lt;b&gt;Move Model&lt;/b&gt;</property>
                             <property name="use_markup">True</property>
                           </object>
                         </child>
@@ -5258,7 +5258,6 @@ You should have received a copy of the GNU General Public License along with thi
     <property name="always_show_image">True</property>
   </object>
   <object class="GtkAdjustment" id="ScaleDimensionValue">
-    <property name="lower">0.01</property>
     <property name="upper">2000</property>
     <property name="step_increment">1</property>
   </object>
