@@ -774,7 +774,11 @@ class ProjectGui:
         process_id = self.gui.get_object("TaskProcessSelector").get_active()
         task["process"] = self.process_list[process_id]
         bounds_id = self.gui.get_object("TaskBoundsSelector").get_active()
+        old_bounds_id = self.bounds_list.index(task["bounds"])
         task["bounds"] = self.bounds_list[bounds_id]
+        # update the current boundary limit, if it was changed
+        if bounds_id != old_bounds_id:
+            self.append_to_queue(self.update_boundary_limits)
         # update the tasklist table (especially for name changes)
         self.update_tasklist_table()
 
@@ -962,8 +966,6 @@ class ProjectGui:
                         notify_destroy=self.toggle_3d_view,
                         accel_group=self._accel_group)
                 if self.model and self.view3d.enabled:
-                    # TODO: bound init?
-                    #self.append_to_queue(self.reset_bounds)
                     self.view3d.reset_view()
                 # disable the "toggle" button, if the 3D view does not work
                 toggle_3d_checkbox.set_sensitive(self.view3d.enabled)
