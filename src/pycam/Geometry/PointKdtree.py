@@ -20,21 +20,21 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import math
-
-from Point import *
-from Line import *
-from Triangle import *
-from kdtree import *
+from pycam.Geometry.utils import epsilon
+from pycam.Geometry.Point import Point
+from pycam.Geometry.kdtree import Node, kdtree
 
 
 class PointKdtree(kdtree):
-    def __init__(self, points=[],cutoff=5, cutoff_distance=0.5, tolerance=0.001):
+    def __init__(self, points=None, cutoff=5, cutoff_distance=0.5,
+            tolerance=epsilon):
+        if points is None:
+            points = []
         self._n = None
-        self.tolerance=tolerance
+        self.tolerance = tolerance
         nodes = []
         for p in points:
-            n = Node();
+            n = Node()
             n.point = p
             n.bound = []
             n.bound.append(p.x)
@@ -54,19 +54,18 @@ class PointKdtree(kdtree):
         if self._n:
             n = self._n
         else:
-            n = Node();
+            n = Node()
         n.bound = []
         n.bound.append(x)
         n.bound.append(y)
         n.bound.append(z)
-        (nn,dist) = self.nearest_neighbor(n, self.dist)
-        if nn and dist<self.tolerance:
+        (nn, dist) = self.nearest_neighbor(n, self.dist)
+        if nn and (dist < self.tolerance):
             self._n = n
             return nn.p
         else:
-            n.p = Point(x,y,z)
+            n.p = Point(x, y, z)
             self._n = None
             self.insert(n)
             return n.p
-
 

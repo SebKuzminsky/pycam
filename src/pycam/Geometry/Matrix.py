@@ -20,12 +20,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-"""
-various matrix related functions for PyCAM
-"""
+# various matrix related functions for PyCAM
+
 
 from pycam.Geometry.Point import Point
 import math
+
 
 def get_dot_product(a, b):
     """ calculate the dot product of two 3d vectors
@@ -37,7 +37,7 @@ def get_dot_product(a, b):
     @rtype: float
     @return: the dot product is (a0*b0 + a1*b1 + a2*b2)
     """
-    return sum(map(lambda l1, l2: l1 * l2, a, b))
+    return sum(l1 * l2 for l1, l2 in zip(a, b))
 
 def get_cross_product(a, b):
     """ calculate the cross product of two 3d vectors
@@ -103,7 +103,8 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
         arcsin = -1.0
     rot_angle = math.asin(arcsin)
     # calculate the rotation axis
-    # the rotation axis is equal to the cross product of the original and destination vectors
+    # The rotation axis is equal to the cross product of the original and
+    # destination vectors.
     rot_axis = Point(v_orig[1] * v_dest[2] - v_orig[2] * v_dest[1],
             v_orig[2] * v_dest[0] - v_orig[0] * v_dest[2],
             v_orig[0] * v_dest[1] - v_orig[1] * v_dest[0])
@@ -124,7 +125,7 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
             t * rot_axis.z * rot_axis.z + c)
 
 def get_rotation_matrix_axis_angle(rot_axis, rot_angle):
-    """ calculate rotation matrix for a normalized "rot_axis" vector and an angle
+    """ calculate rotation matrix for a normalized vector and an angle
 
     see http://mathworld.wolfram.com/RotationMatrix.html
     @type rot_axis: tuple(float)

@@ -23,7 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 try:
     import OpenGL.GL as GL
     GL_enabled = True
-except:
+except ImportError:
     GL_enabled = False
 
 
@@ -31,16 +31,20 @@ import math
 
 
 class Line:
-    id=0
-    def __init__(self,p1,p2):
+    id = 0
+
+    def __init__(self, p1, p2):
         self.id = Line.id
         Line.id += 1
         self.p1 = p1
         self.p2 = p2
+        self._dir = None
+        self._len = None
 
     def __repr__(self):
-        return "Line<%g,%g,%g>-<%g,%g,%g>" % (self.p1.x,self.p1.y,self.p1.z,
-                                              self.p2.x,self.p2.y,self.p2.z)
+        return "Line<%g,%g,%g>-<%g,%g,%g>" % (self.p1.x, self.p1.y, self.p1.z,
+                self.p2.x, self.p2.y, self.p2.z)
+
     def __cmp__(self, other):
         """ Two lines are equal if both pairs of points are at the same
         locations.
@@ -58,13 +62,13 @@ class Line:
             return cmp(str(self), str(other))
 
     def dir(self):
-        if not hasattr(self,"_dir"):
+        if self._dir is None:
             self._dir = self.p2.sub(self.p1)
             self._dir.normalize()
         return self._dir
 
     def len(self):
-        if not hasattr(self,"_len"):
+        if self._len is None:
             self._len = self.p2.sub(self.p1).norm()
         return self._len
 
@@ -73,14 +77,14 @@ class Line:
 
     def closest_point(self, p):
         v = self.dir()
-        l = self.p1.dot(v)-p.dot(v)
+        l = self.p1.dot(v) - p.dot(v)
         return self.p1.sub(v.mul(l))
 
     def dist_to_point_sq(self, p):
         return p.sub(self.closest_point(p)).normsq()
 
     def dist_to_point(self, p):
-        return sqrt(self.dist_to_point_sq(p))
+        return math.sqrt(self.dist_to_point_sq(p))
     
     def minx(self):
         return min(self.p1.x, self.p2.x)
@@ -117,10 +121,14 @@ class Line:
                 line_size = math.sqrt((line[0] ** 2) + (line[1] ** 2))
                 ortho_size = math.sqrt((ortho[0] ** 2) + (ortho[1] ** 2))
                 ortho_dest_size = line_size / 10.0
-                ortho = (ortho[0] * ortho_dest_size / ortho_size, ortho[1] * ortho_dest_size / ortho_size)
-                line_back = (-line[0] * ortho_dest_size / line_size, -line[1] * ortho_dest_size / line_size)
-                p3 = (self.p2.x + ortho[0] + line_back[0], self.p2.y + ortho[1] + line_back[1], self.p2.z)
-                p4 = (self.p2.x - ortho[0] + line_back[0], self.p2.y - ortho[1] + line_back[1], self.p2.z)
+                ortho = (ortho[0] * ortho_dest_size / ortho_size,
+                        ortho[1] * ortho_dest_size / ortho_size)
+                line_back = (-line[0] * ortho_dest_size / line_size,
+                        -line[1] * ortho_dest_size / line_size)
+                p3 = (self.p2.x + ortho[0] + line_back[0],
+                        self.p2.y + ortho[1] + line_back[1], self.p2.z)
+                p4 = (self.p2.x - ortho[0] + line_back[0],
+                        self.p2.y - ortho[1] + line_back[1], self.p2.z)
                 GL.glVertex3f(p3[0], p3[1], p3[2])
                 GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
                 GL.glVertex3f(p4[0], p4[1], p4[2])

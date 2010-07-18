@@ -20,7 +20,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from Point import *
 
 class Plane:
     id = 0
@@ -31,5 +30,5 @@ class Plane:
         self.n = n
 
     def __repr__(self):
-        return "Plane<%s,%s>" % (self.p,self.n)
+        return "Plane<%s,%s>" % (self.p, self.n)
 

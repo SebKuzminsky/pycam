@@ -27,17 +27,19 @@ def _is_near(x, y):
 
 
 class Point:
-    id=0
+    id = 0
 
-    def __init__(self,x,y,z):
+    def __init__(self, x, y, z):
         self.id = Point.id
         Point.id += 1
         self.x = float(x)
         self.y = float(y)
         self.z = float(z)
+        self._norm = None
+        self._normsq = None
 
     def __repr__(self):
-        return "Point%d<%g,%g,%g>" % (self.id,self.x,self.y,self.z)
+        return "Point%d<%g,%g,%g>" % (self.id, self.x, self.y, self.z)
 
     def __cmp__(self, other):
         """ Two points are equal if all dimensions are identical.
@@ -57,30 +59,31 @@ class Point:
             return cmp(str(self), str(other))
 
     def mul(self, c):
-        return Point(self.x*c,self.y*c,self.z*c)
+        return Point(self.x * c, self.y * c, self.z * c)
 
     def div(self, c):
-        return Point(self.x/c,self.y/c,self.z/c)
+        return Point(self.x / c, self.y / c, self.z / c)
 
-    def add(p1, p2):
-        return Point(p1.x+p2.x,p1.y+p2.y,p1.z+p2.z)
+    def add(self, p):
+        return Point(self.x + p.x, self.y + p.y, self.z + p.z)
 
-    def sub(p1, p2):
-        return Point(p1.x-p2.x,p1.y-p2.y,p1.z-p2.z)
+    def sub(self, p):
+        return Point(self.x - p.x, self.y - p.y, self.z - p.z)
 
-    def dot(p1, p2):
-        return p1.x*p2.x + p1.y*p2.y + p1.z*p2.z
+    def dot(self, p):
+        return self.x * p.x + self.y * p.y + self.z * p.z
 
-    def cross(p1, p2):
-        return Point(p1.y*p2.z-p2.y*p1.z, p2.x*p1.z-p1.x*p2.z, p1.x*p2.y-p2.x*p1.y)
+    def cross(self, p):
+        return Point(self.y * p.z - p.y * self.z, p.x * self.z - self.x * p.z,
+                self.x * p.y - p.x * self.y)
 
     def normsq(self):
-        if not hasattr(self, "_normsq"):
+        if self._normsq is None:
             self._normsq = self.dot(self)
         return self._normsq
 
     def norm(self):
-        if not hasattr(self, "_norm"):
+        if self._norm is None:
             self._norm = math.sqrt(self.normsq())
         return self._norm
 

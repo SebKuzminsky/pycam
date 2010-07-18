@@ -26,6 +26,7 @@ don't really need complete "Point" instances that consume a lot of memory.
 Since python 2.6 the "namedtuple" factory is available.
 This reduces the memory consumption of a toolpath down to 1/3.
 """
+
 try:
     # this works for python 2.6 or above (saves memory)
     import collections.namedtuple
@@ -43,7 +44,7 @@ class Path:
         Path.id += 1
         self.top_join = None
         self.bot_join = None
-        self.winding=0
+        self.winding = 0
         self.points = []
 
     def __repr__(self):
@@ -54,7 +55,7 @@ class Path:
             if first:
                 first = False
             else:
-                s +="-"
+                s += "-"
             s += "%d(%g,%g,%g)" % (p.id, p.x, p.y, p.z)
         return s
 

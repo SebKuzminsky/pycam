@@ -25,10 +25,9 @@ __all__ = ["utils", "Line", "Model", "Path", "Plane", "Point", "Triangle",
            "PolygonExtractor", "TriangleKdtree", "intersection", "kdtree",
            "Matrix"]
 
-from Point import Point
-from Line import Line
-from Triangle import Triangle
-from Path import Path
-from Plane import Plane
-from utils import *
-from PolygonExtractor import PolygonExtractor
+from pycam.Geometry.Point import Point
+from pycam.Geometry.Line import Line
+from pycam.Geometry.Triangle import Triangle
+from pycam.Geometry.Path import Path
+from pycam.Geometry.Plane import Plane
+from pycam.Geometry.PolygonExtractor import PolygonExtractor

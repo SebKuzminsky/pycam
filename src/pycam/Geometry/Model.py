@@ -25,13 +25,7 @@ import pycam.Exporters.STLExporter
 from pycam.Geometry import Triangle, Line, Point
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
 from pycam.Toolpath import Bounds
-from utils import INFINITE
-
-try:
-    import OpenGL.GL as GL
-    GL_enabled = True
-except:
-    GL_enabled = False
+from pycam.Geometry.utils import INFINITE
 
 
 MODEL_TRANSFORMATIONS = {
@@ -146,9 +140,12 @@ class BaseModel(object):
             for point in item.get_points():
                 if not point.id in processed:
                     processed.append(point.id)
-                    x = point.x * matrix[0][0] + point.y * matrix[0][1] + point.z * matrix[0][2] + matrix[0][3]
-                    y = point.x * matrix[1][0] + point.y * matrix[1][1] + point.z * matrix[1][2] + matrix[1][3]
-                    z = point.x * matrix[2][0] + point.y * matrix[2][1] + point.z * matrix[2][2] + matrix[2][3]
+                    x = point.x * matrix[0][0] + point.y * matrix[0][1] \
+                            + point.z * matrix[0][2] + matrix[0][3]
+                    y = point.x * matrix[1][0] + point.y * matrix[1][1] \
+                            + point.z * matrix[1][2] + matrix[1][3]
+                    z = point.x * matrix[2][0] + point.y * matrix[2][1] \
+                            + point.z * matrix[2][2] + matrix[2][3]
                     point.x = x
                     point.y = y
                     point.z = z
@@ -188,6 +185,7 @@ class Model(BaseModel):
         self._kdtree_dirty = True
         # enable/disable kdtree
         self._use_kdtree = use_kdtree
+        self._t_kdtree = None
 
     def append(self, item):
         super(Model, self).append(item)
@@ -313,7 +311,8 @@ class ContourModel(BaseModel):
             finished = False
             while not finished:
                 if len(new_group) > 1:
-                    # calculate new intersections for each pair of adjacent lines
+                    # Calculate new intersections for each pair of adjacent
+                    # lines.
                     for index in range(len(new_group)):
                         if (index == 0) and (not closed_group):
                             # skip the first line if the group is not closed
@@ -324,7 +323,8 @@ class ContourModel(BaseModel):
                         do_lines_intersection(l1, l2)
                 # Remove all lines that were marked as obsolete during
                 # intersection calculation.
-                clean_group = [line for line in new_group if not line.p1 is None]
+                clean_group = [line for line in new_group
+                        if not line.p1 is None]
                 finished = len(new_group) == len(clean_group)
                 if (len(clean_group) == 1) and closed_group:
                     new_group = []
