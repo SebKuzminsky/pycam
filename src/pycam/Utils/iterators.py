@@ -34,7 +34,7 @@ class Iterator:
             return v
 
     def insertBefore(self, v):
-        self.seq.insert(self.ind-1, v)
+        self.seq.insert(self.ind - 1, v)
         self.ind += 1
 
     def insert(self, v):
@@ -42,15 +42,15 @@ class Iterator:
         self.ind += 1
 
     def replace(self, v, w):
-        for i in range(0,len(self.seq)):
-            if self.seq[i]==v:
-                self.seq[i]=w
+        for i in range(len(self.seq)):
+            if self.seq[i] == v:
+                self.seq[i] = w
 
     def remove(self, v):
-        for i in range(0,len(self.seq)):
-            if self.seq[i]==v:
+        for i in range(len(self.seq)):
+            if self.seq[i] == v:
                 del self.seq[i]
-                if i<self.ind:
+                if i < self.ind:
                     self.ind -= 1
                 return
 
@@ -64,13 +64,13 @@ class Iterator:
         return Iterator(self.seq, self.ind)
 
     def peek(self, i=0):
-        if self.ind+i >= len(self.seq):
+        if self.ind + i >= len(self.seq):
             return None
         else:
-            return self.seq[self.ind+i]
+            return self.seq[self.ind + i]
 
     def remains(self):
-        return len(self.seq)-self.ind
+        return len(self.seq) - self.ind
 
 class CyclicIterator:
     def __init__(self, seq, start=0):
@@ -89,8 +89,8 @@ class CyclicIterator:
         return CyclicIterator(self.seq, self.ind)
 
     def peek(self, i=0):
-        idx = self.ind+i
-        while idx>=len(self.seq):
+        idx = self.ind + i
+        while idx >= len(self.seq):
             idx -= len(self.seq)
         return self.seq[idx]
 
@@ -100,10 +100,10 @@ if __name__ == "__main__":
     i = Iterator(l)
     print i.peek()
     while True:
-        v = i.next()
-        if v == None:
+        val = i.next()
+        if val == None:
             break
-        if v == 4:
+        if val == 4:
             i.insertBefore(3)
             i.insert(5)
 
@@ -118,14 +118,14 @@ if __name__ == "__main__":
     print "remains=", i.remains()
 
     print "l=", l
-    sum = 0
+    sum_value = 0
     i = CyclicIterator(l)
     print "cycle :",
-    while sum<30:
-        v = i.next()
-        print v,
-        sum += v
-    print "=", sum
+    while sum_value < 30:
+        val = i.next()
+        print val,
+        sum_value += val
+    print "=", sum_value
 
     i = Iterator(l)
     print "l=", l
@@ -137,3 +137,4 @@ if __name__ == "__main__":
     i.remove(4)
     print "remove(4) : ", i.peek()
     print "l=", l
+

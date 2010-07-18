@@ -34,7 +34,7 @@ def get_logger(suffix=None):
 def init_logger(log, logfilename=None):
     if logfilename:
         datetime_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        logfile_hander = logging.FileHandler(logfilename)
+        logfile_handler = logging.FileHandler(logfilename)
         logfile_handler.setFormatter(datetime_format)
         log.addHandler(logfile_handler)
     console_output = logging.StreamHandler()
