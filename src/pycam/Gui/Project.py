@@ -386,11 +386,19 @@ class ProjectGui:
             else:
                 return item_list[index]
         def set_current_item(table, item_list, item):
+            old_index = self._treeview_get_active_index(table, item_list)
             try:
                 new_index = item_list.index(item)
             except ValueError:
                 return
-            self._treeview_set_active_index(table, new_index)
+            if old_index == new_index:
+                return
+            else:
+                self._treeview_set_active_index(table, new_index)
+                # update all controls related the (possibly changed) item
+                self.append_to_queue(self.switch_tool_table_selection)
+                self.append_to_queue(self.switch_process_table_selection)
+                self.append_to_queue(self.switch_tasklist_table_selection)
         # the boundary manager
         self.settings.add_item("current_bounds",
                 lambda: get_current_item(self.bounds_editor_table, self.bounds_list),
