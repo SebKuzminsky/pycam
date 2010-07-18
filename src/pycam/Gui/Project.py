@@ -476,15 +476,14 @@ class ProjectGui:
         self.gui.get_object("GenerateToolPathButton").connect("clicked", self._handle_tasklist_button_event, "generate_one_toolpath")
         self.gui.get_object("GenerateAllToolPathsButton").connect("clicked", self._handle_tasklist_button_event, "generate_all_toolpaths")
         # We need to collect the signal handles to block them during
-        # programmatical changes.
+        # programmatical changes. The "self._task_property_signals" list allows
+        # us to track all handlers that need to be blocked.
         self._task_property_signals = []
-        for objname, signal in (("TaskNameControl", "focus-out-event"),
-                ("TaskToolSelector", "changed"),
-                ("TaskProcessSelector", "changed"),
-                ("TaskBoundsSelector", "changed")):
+        for objname in ("TaskNameControl", "TaskToolSelector",
+                "TaskProcessSelector", "TaskBoundsSelector"):
             obj = self.gui.get_object(objname)
             self._task_property_signals.append((obj,
-                    obj.connect(signal, self._handle_task_setting_change)))
+                    obj.connect("changed", self._handle_task_setting_change)))
         # menu bar
         uimanager = gtk.UIManager()
         self._accel_group = uimanager.get_accel_group()
@@ -776,7 +775,11 @@ class ProjectGui:
         task = self.settings.get("current_task")
         if task is None:
             return
-        task["name"] = self.gui.get_object("TaskNameControl").get_text()
+        task_name_obj = self.gui.get_object("TaskNameControl")
+        old_name = task["name"]
+        new_name = task_name_obj.get_text()
+        if old_name != new_name:
+            task["name"] = new_name
         tool_id = self.gui.get_object("TaskToolSelector").get_active()
         task["tool"] = self.tool_list[tool_id]
         process_id = self.gui.get_object("TaskProcessSelector").get_active()
@@ -789,6 +792,9 @@ class ProjectGui:
             self.append_to_queue(self.update_boundary_limits)
         # update the tasklist table (especially for name changes)
         self.update_tasklist_table()
+        # the task_name input control seems to loose focus somehow
+        if old_name != new_name:
+            task_name_obj.grab_focus()
 
     @gui_activity_guard
     def _handle_tasklist_button_event(self, widget, data, action=None):
