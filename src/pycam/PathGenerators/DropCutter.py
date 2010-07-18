@@ -23,7 +23,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry import Point
 from pycam.Geometry.utils import INFINITE
-from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode, ProgressCounter
+from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode, \
+        ProgressCounter
 import pycam.Utils.log
 import math
 
@@ -45,7 +46,8 @@ class Dimension:
         if tolerance is None:
             return (value >= self.min) and (value <= self.max)
         else:
-            return (value > self.min - tolerance) and (value < self.max + tolerance)
+            return (value > self.min - tolerance) \
+                    and (value < self.max + tolerance)
 
     def shift(self, distance):
         if self.downward:
@@ -62,7 +64,8 @@ class Dimension:
 
 class DropCutter:
 
-    def __init__(self, cutter, model, path_processor, physics=None, safety_height=INFINITE):
+    def __init__(self, cutter, model, path_processor, physics=None,
+            safety_height=INFINITE):
         self.cutter = cutter
         self.model = model
         self.pa = path_processor
@@ -71,11 +74,12 @@ class DropCutter:
         # remember if we already reported an invalid boundary
         self._boundary_warning_already_shown = False
 
-    def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, d0, d1, direction, draw_callback=None):
+    def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, d0, d1,
+            direction, draw_callback=None):
         quit_requested = False
         # determine step size
         num_of_x_lines = 1 + int(math.ceil(abs(maxx - minx) / d0))
-        num_of_y_lines = 1 + int(math.ceil(abs(maxy - miny) / d0))
+        num_of_y_lines = 1 + int(math.ceil(abs(maxy - miny) / d1))
         x_step = abs(maxx - minx) / max(1, (num_of_x_lines - 1))
         y_step = abs(maxy - miny) / max(1, (num_of_y_lines - 1))
         x_steps = [(minx + i * x_step) for i in range(num_of_x_lines)]
@@ -108,8 +112,8 @@ class DropCutter:
             # for now only used for triangular collision detection
             last_position = None
 
-            if draw_callback and draw_callback(text="DropCutter: processing line %d/%d" \
-                        % (current_line, num_of_lines),
+            if draw_callback and draw_callback(text="DropCutter: processing " \
+                        + "line %d/%d" % (current_line, num_of_lines),
                         percent=(100.0 * current_line / num_of_lines)):
                 # cancel requested
                 quit_requested = True
@@ -131,19 +135,17 @@ class DropCutter:
                     p = Point(x, y, self.safety_height)
                     self.pa.append(p)
                     if not self._boundary_warning_already_shown:
-                        log.warn("DropCutter: exceed the height " \
-                                + "of the boundary box: using a safe height " \
-                                + "instead. This warning is reported only once.")
+                        log.warn("DropCutter: exceed the height of the " \
+                                + "boundary box: using a safe height instead." \
+                                + " This warning is reported only once.")
                     self._boundary_warning_already_shown = True
                 self.cutter.moveto(p)
-                # "draw_callback" returns true, if the user requested quitting via the GUI
-                if draw_callback and draw_callback(tool_position=p):
-                    finished_line = True
-                    break
-
-                # the progress counter may return True, if cancel was requested
-                if progress_counter.increment():
-                    finished_line = True
+                # "draw_callback" returns true, if the user requested to quit
+                # via the GUI.
+                # The progress counter may return True, if cancel was requested.
+                if (draw_callback and draw_callback(tool_position=p)) \
+                        or (progress_counter.increment()):
+                    quit_requested = True
                     break
 
             self.pa.end_scanline()

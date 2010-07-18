@@ -24,7 +24,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import pycam.PathProcessors.PathAccumulator
 from pycam.Geometry import Point
 from pycam.Geometry.utils import INFINITE
-from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode, get_free_paths_ode, get_free_paths_triangles, ProgressCounter
+from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode, \
+        get_free_paths_ode, get_free_paths_triangles, ProgressCounter
 import pycam.Utils.log
 import math
 
@@ -33,8 +34,8 @@ log = pycam.Utils.log.get_logger()
 
 class EngraveCutter:
 
-    def __init__(self, cutter, model, contour_model, path_processor, physics=None,
-            safety_height=INFINITE):
+    def __init__(self, cutter, model, contour_model, path_processor,
+            physics=None, safety_height=INFINITE):
         self.cutter = cutter
         self.model = model
         self.contour_model = contour_model
@@ -53,7 +54,8 @@ class EngraveCutter:
         if num_of_layers > 1:
             z_step = abs(maxz - minz) / (num_of_layers - 1)
             z_steps = [(maxz - i * z_step) for i in range(num_of_layers)]
-            # the top layer is treated as the surface - thus it does not require engraving
+            # The top layer is treated as the current surface - thus it does not
+            # require engraving.
             z_steps = z_steps[1:]
         else:
             z_steps = [minz]
@@ -76,7 +78,8 @@ class EngraveCutter:
 
             for line_group in line_groups:
                 for line in line_group:
-                    self.GenerateToolPathLinePush(self.pa_push, line, z)
+                    self.GenerateToolPathLinePush(self.pa_push, line, z,
+                            draw_callback)
                     if progress_counter.increment():
                         # cancel requested
                         quit_requested = True
@@ -104,8 +107,8 @@ class EngraveCutter:
             self.pa_drop.new_direction(0)
             self.pa_drop.new_scanline()
             for line in line_group:
-                self.GenerateToolPathLineDrop(self.pa_drop, line, minz, maxz, horiz_step,
-                        draw_callback=draw_callback)
+                self.GenerateToolPathLineDrop(self.pa_drop, line, minz, maxz,
+                        horiz_step, draw_callback=draw_callback)
                 if progress_counter.increment():
                     # quit requested
                     quit_requested = True
@@ -135,7 +138,7 @@ class EngraveCutter:
                 pa.append(p)
             self.cutter.moveto(p)
             if draw_callback:
-                draw_callback(tool_position=tool_position)
+                draw_callback(tool_position=p)
 
 
     def GenerateToolPathLineDrop(self, pa, line, minz, maxz, horiz_step,
@@ -178,7 +181,8 @@ class EngraveCutter:
                             + "instead. This warning is reported only once.")
                 self._boundary_warning_already_shown = True
             self.cutter.moveto(p)
-            # "draw_callback" returns true, if the user requested quitting via the GUI
+            # "draw_callback" returns true, if the user requested quitting via
+            # the GUI.
             if draw_callback and draw_callback(tool_position=p):
                 break
         pa.end_scanline()

@@ -47,14 +47,14 @@ class ProgressCounter:
 
 
 class Hit:
-    def __init__(self, cl, t, d, dir):
+    def __init__(self, cl, t, d, direction):
         self.cl = cl
         self.t = t
         self.d = d
-        self.dir = dir
+        self.dir = direction
         self.z = -INFINITE
 
-    def cmp(a,b):
+    def cmp(a, b):
         return cmp(a.d, b.d)
 
 def get_free_paths_triangles(model, cutter, p1, p2):
@@ -68,24 +68,22 @@ def get_free_paths_triangles(model, cutter, p1, p2):
     z_frac = z_dist / xyz_dist
     forward = Point(x_frac, y_frac, z_frac)
     backward = Point(-x_frac, -y_frac, -z_frac)
-    forward_small = Point(epsilon * x_frac, epsilon * y_frac, epsilon * z_frac)
-    backward_small = Point(-epsilon * x_frac, -epsilon * y_frac, -epsilon * z_frac)
 
     minx = min(p1.x, p2.x)
     maxx = max(p1.x, p2.x)
     miny = min(p1.y, p2.y)
     maxy = max(p1.y, p2.y)
     minz = min(p1.z, p2.z)
-    maxz = max(p1.z, p2.z)
 
     # find all hits along scan line
     hits = []
 
-    triangles = model.triangles(minx - cutter.radius, miny - cutter.radius, minz,
-            maxx + cutter.radius, maxy + cutter.radius, INFINITE)
+    triangles = model.triangles(minx - cutter.radius, miny - cutter.radius,
+            minz, maxx + cutter.radius, maxy + cutter.radius, INFINITE)
 
     for t in triangles:
-        # normals point outward... and we want to approach the model from the outside!
+        # Normals point outward... and we want to approach the model from the
+        # outside.
         n = t.normal().dot(forward)
         cutter.moveto(p1)
         (cl, d) = cutter.intersect(backward, t)
@@ -98,7 +96,6 @@ def get_free_paths_triangles(model, cutter, p1, p2):
     # sort along the scan direction
     hits.sort(Hit.cmp)
 
-    c = None
     count = 0
     points = []
     for h in hits:
@@ -165,8 +162,9 @@ def get_free_paths_ode(physics, p1, p2, depth=8):
             group1 = get_free_paths_ode(physics, p1, p_middle, depth - 1)
             group2 = get_free_paths_ode(physics, p_middle, p2, depth - 1)
             if group1 and group2 and (group1[-1] == group2[0]):
-                # the last couple of the first group ends where the first couple of the second group starts
-                # we will combine them into one couple
+                # The last pair of the first group ends where the first pair of
+                # the second group starts.
+                # We will combine them into a single pair.
                 points.extend(group1[:-1])
                 points.extend(group2[1:])
             else:
@@ -205,7 +203,8 @@ def get_max_height_ode(physics, x, y, minz, maxz, order=None):
         # there is an object between z1 and z0 - we need more=None loops
         trips = trip_start
     else:
-        # no need for further collision detection - we can go down the whole range z1..z0
+        # No need for further collision detection - we can go down the whole
+        # range z1..z0.
         trips = 0
         safe_z = minz
     while trips > 0:
@@ -231,7 +230,8 @@ def get_max_height_ode(physics, x, y, minz, maxz, order=None):
     else:
         return [Point(x, y, safe_z)]
 
-def get_max_height_triangles(model, cutter, x, y, minz, maxz, order=None, last_pos=None):
+def get_max_height_triangles(model, cutter, x, y, minz, maxz, order=None,
+        last_pos=None):
     # TODO: "order" should be replaced with a direction vector
     result = []
     if last_pos is None:
@@ -252,9 +252,10 @@ def get_max_height_triangles(model, cutter, x, y, minz, maxz, order=None, last_p
     box_y_max = cutter.maxy
     box_z_min = minz
     box_z_max = maxz
-    triangles = model.triangles(box_x_min, box_y_min, box_z_min, box_x_max, box_y_max, box_z_max)
+    triangles = model.triangles(box_x_min, box_y_min, box_z_min, box_x_max,
+            box_y_max, box_z_max)
     for t in triangles:
-        if t.normal().z < 0: continue;
+        if t.normal().z < 0: continue
         cut = cutter.drop(t)
         if cut and (cut.z > height_max or height_max is None):
             height_max = cut.z
@@ -268,10 +269,14 @@ def get_max_height_triangles(model, cutter, x, y, minz, maxz, order=None, last_p
             ((triangle_max and not last_pos["triangle"]) \
             or (last_pos["triangle"] and not triangle_max)):
         if minz <= last_pos["cut"].z <= maxz:
-            result.append(Point(last_pos["cut"].x, last_pos["cut"].y, cut_max.z))
+            result.append(Point(last_pos["cut"].x, last_pos["cut"].y,
+                    cut_max.z))
         else:
             result.append(Point(cut_max.x, cut_max.y, last_pos["cut"].z))
-    elif (triangle_max and last_pos["triangle"] and last_pos["cut"] and cut_max) and (triangle_max != last_pos["triangle"]):
+    elif (triangle_max and last_pos["triangle"] and last_pos["cut"] and \
+            cut_max) and (triangle_max != last_pos["triangle"]):
+        # TODO: check if this path is ever in use (e.g. "intersect_lines" is not
+        # defined)
         nl = range(3)
         nl[0] = -getattr(last_pos["triangle"].normal(), order[0])
         nl[2] = last_pos["triangle"].normal().z
@@ -285,10 +290,11 @@ def get_max_height_triangles(model, cutter, x, y, minz, maxz, order=None, last_p
         mx[0] = getattr(cut_max, order[0])
         mx[2] = cut_max.z
         c = range(3)
-        (c[0], c[2]) = intersect_lines(last[0], last[2], nl[0], nl[2], mx[0], mx[2], nm[0], nm[2])
-        if c[0] and last[0] < c[0] and c[0] < mx[0] and (c[2] > last[2] or c[2] > mx[2]):
+        (c[0], c[2]) = intersect_lines(last[0], last[2], nl[0], nl[2], mx[0],
+                mx[2], nm[0], nm[2])
+        if c[0] and last[0] < c[0] < mx[0] and (c[2] > last[2] or c[2] > mx[2]):
             c[1] = getattr(last_pos["cut"], order[1])
-            if c[2]<minz-10 or c[2]>maxz+10:
+            if (c[2] < minz - 10) or (c[2] > maxz + 10):
                 print "^", "%sl=%s" % (order[0], last[0]), \
                         ", %sl=%s" % ("z", last[2]), \
                         ", n%sl=%s" % (order[0], nl[0]), \

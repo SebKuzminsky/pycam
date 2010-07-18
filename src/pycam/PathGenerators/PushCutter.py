@@ -22,8 +22,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry import Point
-from pycam.Geometry.utils import INFINITE, epsilon
-from pycam.PathGenerators import drop_cutter_test, get_free_paths_ode, get_free_paths_triangles, ProgressCounter
+from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles, \
+        ProgressCounter
 import math
 
 
@@ -35,7 +35,8 @@ class PushCutter:
         self.pa = path_processor
         self.physics = physics
 
-    def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, dx, dy, dz, draw_callback=None):
+    def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, dx, dy, dz,
+            draw_callback=None):
         # calculate the number of steps
         num_of_layers = 1 + int(math.ceil(abs(maxz - minz) / dz))
         z_step = abs(maxz - minz) / max(1, (num_of_layers - 1))
@@ -111,15 +112,19 @@ class PushCutter:
             if dx > 0:
                 p1, p2 = Point(x, miny, z), Point(x, maxy, z)
                 if self.physics:
-                    points = get_free_paths_ode(self.physics, p1, p2, depth=depth_x)
+                    points = get_free_paths_ode(self.physics, p1, p2,
+                            depth=depth_x)
                 else:
-                    points = get_free_paths_triangles(self.model, self.cutter, p1, p2)
+                    points = get_free_paths_triangles(self.model, self.cutter,
+                            p1, p2)
             else:
                 p1, p2 = Point(minx, y, z), Point(maxx, y, z)
                 if self.physics:
-                    points = get_free_paths_ode(self.physics, p1, p2, depth=depth_y)
+                    points = get_free_paths_ode(self.physics, p1, p2,
+                            depth=depth_y)
                 else:
-                    points = get_free_paths_triangles(self.model, self.cutter, p1, p2)
+                    points = get_free_paths_triangles(self.model, self.cutter,
+                            p1, p2)
 
             if points:
                 for p in points:
