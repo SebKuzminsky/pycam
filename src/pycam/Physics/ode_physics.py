@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.Triangle import Triangle
+
 try:
     import ode
 except ImportError:
@@ -28,7 +29,8 @@ except ImportError:
 
 
 ShapeCylinder = lambda radius, height: ode.GeomCylinder(None, radius, height)
-ShapeCapsule = lambda radius, height: ode.GeomCapsule(None, radius, height - (2 * radius))
+ShapeCapsule = lambda radius, height: \
+        ode.GeomCapsule(None, radius, height - (2 * radius))
 
 _ode_override_state = None
 
@@ -165,7 +167,9 @@ class PhysicalWorld:
 
     def set_drill_position(self, position):
         if self._drill:
-            position = (position[0] + self._drill_offset[0], position[1] + self._drill_offset[1], position[2] + self._drill_offset[2])
+            position = (position[0] + self._drill_offset[0],
+                    position[1] + self._drill_offset[1],
+                    position[2] + self._drill_offset[2])
             self._drill.setPosition(position)
 
     def _get_rays_for_geom(self, geom):
