@@ -1035,7 +1035,27 @@ class ProjectGui:
                 future_selection_index = index + 1
         elif action == "delete":
             # delete one item from the list
-            datalist.remove(datalist[index])
+            item = datalist[index]
+            if len(datalist) == 1:
+                # There are no replacements available for this item.
+                # Thus we need to remove _all_ tasks.
+                while len(self.task_list) > 0:
+                    self.task_list.remove(self.task_list[0])
+            else:
+                if index > 0:
+                    alternative = datalist[0]
+                else:
+                    alternative = datalist[1]
+                # Replace all references to the to-be-deleted item with the
+                # alternative.
+                for task in self.task_list:
+                    for sublist in ("tool", "process", "bounds"):
+                        if item is task[sublist]:
+                            task[sublist] = alternative
+            # Delete the object. Maybe this is not necessary, if it was the
+            # last remaining task item (see above).
+            if item in datalist:
+                datalist.remove(item)
             # don't set a new index, if the list emptied
             if len(datalist) > 0:
                 if index < len(datalist):
@@ -1043,9 +1063,14 @@ class ProjectGui:
                 else:
                     # the last item was removed
                     future_selection_index = len(datalist) - 1
+            # update the tasklist table (maybe we removed some items)
+            self.update_tasklist_table()
         else:
             pass
-        update_func(new_index=future_selection_index, skip_model_update=skip_model_update)
+        # any new item can influence the "New task" button
+        self.append_to_queue(self.update_tasklist_controls)
+        update_func(new_index=future_selection_index,
+                skip_model_update=skip_model_update)
 
     def _put_tool_settings_to_gui(self, settings):
         self.gui.get_object("ToolName").set_text(settings["name"])
