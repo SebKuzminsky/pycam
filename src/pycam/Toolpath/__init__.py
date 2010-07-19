@@ -97,15 +97,15 @@ class ToolPath:
         if start_position is None:
             start_position = Point(0, 0, 0)
         feedrate = settings.get_tool_settings()["feedrate"]
-        current_position = start_position
-        result_time = 0
+        result = {}
+        result["time"] = 0
+        result["position"] = start_position
         def move(new_pos):
-            global current_position, result_time
-            result_time += new_pos.sub(current_position).norm() / feedrate
-            current_position = new_pos
+            result["time"] += new_pos.sub(result["position"]).norm() / feedrate
+            result["position"] = new_pos
         # move to safey height at the starting position
         safety_height = settings.get_process_settings()["safety_height"]
-        move(Point(start_position.x, start_position.y, safety_height))
+        move(result, Point(start_position.x, start_position.y, safety_height))
         for path in self.get_path():
             # go to safety height (horizontally from the previous x/y location)
             if len(path.points) > 0:
@@ -116,7 +116,7 @@ class ToolPath:
             # go to safety height (vertically up from the current x/y location)
             if len(path.points) > 0:
                 move(Point(path.points[-1].x, path.points[-1].y, safety_height))
-        return result_time
+        return result["time"]
 
 
 class Bounds:
