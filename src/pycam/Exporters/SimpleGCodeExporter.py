@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from gcode import gcode
+from pycam.Exporters.gcode import gcode
 import os
 
 # simplistic GCode exporter
@@ -50,7 +50,8 @@ class SimpleGCodeExporter:
             self.destination.write("G21\n")
         else:
             self.destination.write("G20\n")
-        self.gcode = gcode(startx, starty, startz, safetyheight=safety_height, tool_id=tool_id)
+        self.gcode = gcode(startx, starty, startz, safetyheight=safety_height,
+                tool_id=tool_id)
         gc = self.gcode
         self._finish_program_on_exit = finish_program
         self.destination.write(gc.begin() + "\n")
@@ -67,7 +68,8 @@ class SimpleGCodeExporter:
             self.destination.close()
 
     def _check_distance_for_skipping_safety_height(self, new_point):
-        if (self._last_path_point is None) or (self._max_skip_safety_distance is None):
+        if (self._last_path_point is None) \
+                or (self._max_skip_safety_distance is None):
             return False
         distance = new_point.sub(self._last_path_point).norm()
         return distance <= self._max_skip_safety_distance
@@ -87,7 +89,8 @@ class SimpleGCodeExporter:
                 self.destination.write(gc.rapid(self._last_path_point.x,
                         self._last_path_point.y, gc.safetyheight) + "\n")
             # move to safety height for the start of the current path
-            self.destination.write(gc.rapid(point.x, point.y, gc.safetyheight) + "\n")
+            self.destination.write(gc.rapid(point.x, point.y, gc.safetyheight) \
+                    + "\n")
         for point in path.points:
             self.destination.write(gc.cut(point.x, point.y, point.z) + "\n")
         self._last_path_point = point

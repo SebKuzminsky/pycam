@@ -21,5 +21,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = [ "SimpleGCodeExporter", "SVGExporter", "STLExporter", "EMCToolExporter"]
+__all__ = [ "SimpleGCodeExporter", "SVGExporter", "STLExporter",
+        "EMCToolExporter"]
 

@@ -49,11 +49,13 @@ class SVGExporter:
             x = -7
         if y < -1000:
             y = -7
-        l = "<circle fill='" + self._fill +"'" + (" cx='%g'" % x) + (" cy='%g'" % -y) + " r='0.04'/>\n"
+        l = "<circle fill='" + self._fill +"'" + (" cx='%g'" % x) \
+                + (" cy='%g'" % -y) + " r='0.04'/>\n"
         self.file.write(l)
 
     def AddText(self, x, y, text):
-        l = "<text fill='" + self._fill +"'" + (" x='%g'" % x) + (" y='%g'" % -y) + " dx='0.07'>" + text + "</text>\n"
+        l = "<text fill='" + self._fill +"'" + (" x='%g'" % x) \
+                + (" y='%g'" % -y) + " dx='0.07'>" + text + "</text>\n"
         self.file.write(l)
         
 
@@ -62,17 +64,19 @@ class SVGExporter:
             y1 = -7
         if y2 < -1000:
             y2 = -7
-        l = "<line fill='" + self._fill +"' stroke='" + self._stroke + "'" + (" x1='%g'" % x1) + (" y1='%g'" % -y1) + (" x2='%g'" % x2) + (" y2='%g'" % -y2) + " />\n"
+        l = "<line fill='" + self._fill +"' stroke='" + self._stroke + "'" \
+                + (" x1='%g'" % x1) + (" y1='%g'" % -y1) + (" x2='%g'" % x2) \
+                + (" y2='%g'" % -y2) + " />\n"
         self.file.write(l)
         
     def AddPoint(self, p):
-        AddDot(p.x, p.y)
+        self.AddDot(p.x, p.y)
 
     def AddPath(self, path):
         l = "<path fill='" + self._fill +"' stroke='" + self._stroke + "' d='"
         for i in range(0, len(path.points)):
             p = path.points[i]
-            if i==0:
+            if i == 0:
                 l += "M "
             else:
                 l += " L "
@@ -83,3 +87,4 @@ class SVGExporter:
     def AddPathList(self, pathlist):
         for path in pathlist:
             self.AddPath(path)
+
