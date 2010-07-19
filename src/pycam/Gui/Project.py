@@ -1429,6 +1429,7 @@ class ProjectGui:
             shift_y = -self.model.miny
             shift_z = -self.model.minz
         self.model.shift(shift_x, shift_y, shift_z)
+        self.update_support_grid_model()
         self.update_view()
 
     def _get_model_center(self):
@@ -1454,6 +1455,7 @@ class ProjectGui:
         old_center = self._get_model_center()
         self.model.scale(factor)
         self._set_model_center(old_center)
+        self.update_support_grid_model()
         self.update_view()
 
     @gui_activity_guard
@@ -1499,6 +1501,7 @@ class ProjectGui:
             self.model.scale(factor_x, factor_y, factor_z)
         # move the model to its previous center
         self._set_model_center(old_center)
+        self.update_support_grid_model()
         self.update_view()
 
     def destroy(self, widget=None, data=None):
@@ -2184,9 +2187,12 @@ class ProjectGui:
         # get the support grid options
         if self.gui.get_object("SupportGridEnable").get_active():
             toolpath_settings.set_support_grid(
-                    self.settings.get("support_grid_distance"),
+                    self.settings.get("support_grid_distance_x"),
+                    self.settings.get("support_grid_distance_y"),
                     self.settings.get("support_grid_thickness"),
-                    self.settings.get("support_grid_height"))
+                    self.settings.get("support_grid_height"),
+                    self.settings.get("support_grid_offset_x"),
+                    self.settings.get("support_grid_offset_y"))
         
         # calculation backend: ODE / None
         if self.settings.get("enable_ode"):
