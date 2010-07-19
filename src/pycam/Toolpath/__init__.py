@@ -51,7 +51,8 @@ class ToolPath:
         return self.toolpath
 
     def get_start_position(self):
-        safety_height = self.toolpath_settings.get_process_settings()["safety_height"]
+        safety_height = \
+                self.toolpath_settings.get_process_settings()["safety_height"]
         for path in self.toolpath:
             if path.points:
                 p = path.points[0]
@@ -92,16 +93,18 @@ class ToolPath:
         @rtype: float
         @returns: the machine time used for processing the toolpath in minutes
         """
+        settings = self.toolpath_settings
         if start_position is None:
             start_position = Point(0, 0, 0)
-        feedrate = self.toolpath_settings.get_tool_settings()["feedrate"]
+        feedrate = settings.get_tool_settings()["feedrate"]
+        current_position = start_position
+        result_time = 0
         def move(new_pos):
-            move.result_time += new_pos.sub(move.current_position).norm() / feedrate
-            move.current_position = new_pos
-        move.current_position = start_position
-        move.result_time = 0
+            global current_position, result_time
+            result_time += new_pos.sub(current_position).norm() / feedrate
+            current_position = new_pos
         # move to safey height at the starting position
-        safety_height = self.toolpath_settings.get_process_settings()["safety_height"]
+        safety_height = settings.get_process_settings()["safety_height"]
         move(Point(start_position.x, start_position.y, safety_height))
         for path in self.get_path():
             # go to safety height (horizontally from the previous x/y location)
@@ -113,7 +116,7 @@ class ToolPath:
             # go to safety height (vertically up from the current x/y location)
             if len(path.points) > 0:
                 move(Point(path.points[-1].x, path.points[-1].y, safety_height))
-        return move.result_time
+        return result_time
 
 
 class Bounds:
@@ -126,7 +129,8 @@ class Bounds:
             reference=None):
         """ create a new Bounds instance
 
-        @value bounds_type: any of TYPE_RELATIVE_MARGIN | TYPE_FIXED_MARGIN | TYPE_CUSTOM
+        @value bounds_type: any of TYPE_RELATIVE_MARGIN | TYPE_FIXED_MARGIN |
+            TYPE_CUSTOM
         @type bounds_type: int
         @value bounds_low: the lower margin of the boundary compared to the
             reference object (for TYPE_RELATIVE_MARGIN | TYPE_FIXED_MARGIN) or
@@ -140,11 +144,14 @@ class Bounds:
         """
         self.name = "No name"
         # set type
+        self.bounds_type = None
         if bounds_type is None:
             self.set_type(Bounds.TYPE_CUSTOM)
         else:
             self.set_type(bounds_type)
         # store the bounds values
+        self.bounds_low = None
+        self.bounds_high = None
         if bounds_low is None:
             bounds_low = [0, 0, 0]
         if bounds_high is None:
@@ -194,7 +201,8 @@ class Bounds:
         if not high is None:
             if len(high) != 3:
                 raise ValueError, "upper bounds should be supplied as a " \
-                        + "tuple/list of 3 items - but %d were given" % len(high)
+                        + "tuple/list of 3 items - but %d were given" \
+                        % len(high)
             else:
                 self.bounds_high = list(high[:])
 

@@ -45,7 +45,6 @@ def generate_physics(model, cutter, physics=None):
     return physics
 
 def is_ode_available():
-    global _ode_override_state
     if not _ode_override_state is None:
         return _ode_override_state
     else:

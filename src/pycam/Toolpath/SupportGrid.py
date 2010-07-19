@@ -21,7 +21,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry import Point, Line, Triangle, Model
-import math
 
 
 def _add_cuboid_to_model(minx, maxx, miny, maxy, minz, maxz):
@@ -42,17 +41,23 @@ def _add_cuboid_to_model(minx, maxx, miny, maxy, minz, maxz):
             Point(minx, maxy, maxz))
     triangles = []
     # lower face
-    triangles.extend(get_triangles_for_face((points[0], points[1], points[2], points[3])))
+    triangles.extend(get_triangles_for_face(
+            (points[0], points[1], points[2], points[3])))
     # upper face
-    triangles.extend(get_triangles_for_face((points[4], points[5], points[6], points[7])))
+    triangles.extend(get_triangles_for_face(
+            (points[4], points[5], points[6], points[7])))
     # front face
-    triangles.extend(get_triangles_for_face((points[0], points[1], points[5], points[4])))
+    triangles.extend(get_triangles_for_face(
+            (points[0], points[1], points[5], points[4])))
     # back face
-    triangles.extend(get_triangles_for_face((points[2], points[3], points[7], points[6])))
+    triangles.extend(get_triangles_for_face(
+            (points[2], points[3], points[7], points[6])))
     # right face
-    triangles.extend(get_triangles_for_face((points[1], points[2], points[6], points[5])))
+    triangles.extend(get_triangles_for_face(
+            (points[1], points[2], points[6], points[5])))
     # left face
-    triangles.extend(get_triangles_for_face((points[3], points[0], points[4], points[7])))
+    triangles.extend(get_triangles_for_face(
+            (points[3], points[0], points[4], points[7])))
     # add all triangles to the model
     model = Model.Model()
     for t in triangles:

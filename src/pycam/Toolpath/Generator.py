@@ -25,11 +25,12 @@ import pycam.PathProcessors
 import pycam.Cutters
 import pycam.Toolpath.SupportGrid
 import pycam.Geometry.Model
-import sys
+
 
 DIRECTIONS = frozenset(("x", "y", "xy"))
 PATH_GENERATORS = frozenset(("DropCutter", "PushCutter", "EngraveCutter"))
-PATH_POSTPROCESSORS = frozenset(("ContourCutter", "PathAccumulator", "PolygonCutter", "SimpleCutter", "ZigZagCutter"))
+PATH_POSTPROCESSORS = frozenset(("ContourCutter", "PathAccumulator",
+        "PolygonCutter", "SimpleCutter", "ZigZagCutter"))
 CALCULATION_BACKENDS = frozenset((None, "ODE"))
 
 
@@ -44,7 +45,8 @@ def generate_toolpath_from_settings(model, tp_settings, callback=None):
             process["generator"], process["postprocessor"],
             process["material_allowance"], process["safety_height"],
             process["overlap"], process["step_down"], process["engrave_offset"],
-            grid["distance"], grid["thickness"], grid["height"], backend,
+            grid["distance_x"], grid["distance_y"], grid["thickness"],
+            grid["height"], grid["offset_x"], grid["offset_y"], backend,
             callback)
 
 def generate_toolpath(model, tool_settings=None,
@@ -128,7 +130,7 @@ def generate_toolpath(model, tool_settings=None,
     # create the grid model if requested
     if (((not support_grid_distance_x is None) \
             or (not support_grid_distance_y is None)) \
-            and (support_grid_thickness is None)):
+            and (not support_grid_thickness is None)):
         # grid height defaults to the thickness
         if support_grid_height is None:
             support_grid_height = support_grid_thickness
@@ -156,13 +158,14 @@ def generate_toolpath(model, tool_settings=None,
             callback(text="Preparing contour model with offset ...")
         contour_model = contour_model.get_offset_model(engrave_offset)
         if not callback is None:
-            callback(text="Checking contour model with offset for collisions ...")
+            callback(text="Checking contour model with offset for collisions " \
+                    + "...")
         if contour_model.check_for_collisions():
             return "The contour model contains colliding line groups." \
                     + " This is not allowed in combination with an" \
                     + " engraving offset."
-    # Due to some weirdness the height of the drill must be bigger than the object's size.
-    # Otherwise some collisions are not detected.
+    # Due to some weirdness the height of the drill must be bigger than the
+    # object's size. Otherwise some collisions are not detected.
     cutter_height = 4 * (maxy - miny)
     cutter = pycam.Cutters.get_tool_from_settings(tool_settings, cutter_height)
     if isinstance(cutter, basestring):
@@ -172,12 +175,12 @@ def generate_toolpath(model, tool_settings=None,
     if isinstance(physics, basestring):
         return physics
     generator = _get_pathgenerator_instance(trimesh_model, contour_model,
-            cutter, path_generator, path_postprocessor, material_allowance,
-            safety_height, physics)
+            cutter, path_generator, path_postprocessor, safety_height, physics)
     if isinstance(generator, basestring):
         return generator
     if (overlap < 0) or (overlap >= 1):
-        return "Invalid overlap value (%f): should be greater or equal 0 and lower than 1"
+        return "Invalid overlap value (%f): should be greater or equal 0 " \
+                + "and lower than 1"
     effective_toolradius = tool_settings["tool_radius"] * (1.0 - overlap)
     if path_generator == "DropCutter":
         if direction == "x":
@@ -185,11 +188,15 @@ def generate_toolpath(model, tool_settings=None,
         elif direction == "y":
             direction_param = 1
         else:
-            return "Invalid direction value (%s): not one of %s" % (direction, DIRECTIONS)
+            return "Invalid direction value (%s): not one of %s" \
+                    % (direction, DIRECTIONS)
         if safety_height < maxz:
-            return "Safety height (%.4f) is within the bounding box height (%.4f) - this can cause collisions of the tool with the material." % (safety_height, maxz)
-        toolpath = generator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz,
-                effective_toolradius, effective_toolradius, direction_param, callback)
+            return ("Safety height (%.4f) is within the bounding box height " \
+                    + "(%.4f) - this can cause collisions of the tool with " \
+                    + "the material.") % (safety_height, maxz)
+        toolpath = generator.GenerateToolPath(minx, maxx, miny, maxy, minz,
+                maxz, effective_toolradius, effective_toolradius,
+                direction_param, callback)
     elif path_generator == "PushCutter":
         if step_down > 0:
             dz = step_down
@@ -202,28 +209,33 @@ def generate_toolpath(model, tool_settings=None,
         elif direction == "xy":
             dx, dy = effective_toolradius, effective_toolradius
         else:
-            return "Invalid direction (%s): not one of %s" % (direction, DIRECTIONS)
-        toolpath = generator.GenerateToolPath(minx, maxx, miny, maxy, minz, maxz, dx, dy, dz, callback)
+            return "Invalid direction (%s): not one of %s" \
+                    % (direction, DIRECTIONS)
+        toolpath = generator.GenerateToolPath(minx, maxx, miny, maxy, minz,
+                maxz, dx, dy, dz, callback)
     else:
         # EngraveCutter
         if step_down > 0:
             dz = step_down
         else:
             dz = maxz - minz
-        toolpath = generator.GenerateToolPath(minz, maxz, effective_toolradius, dz, callback)
+        toolpath = generator.GenerateToolPath(minz, maxz, effective_toolradius,
+                dz, callback)
     return toolpath
     
-def _get_pathgenerator_instance(trimesh_model, contour_model, cutter, pathgenerator, pathprocessor,
-        material_allowance, safety_height, physics):
+def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
+        pathgenerator, pathprocessor, safety_height, physics):
     if pathgenerator == "DropCutter":
         if pathprocessor == "ZigZagCutter":
             processor = pycam.PathProcessors.PathAccumulator(zigzag=True)
         elif pathprocessor == "PathAccumulator":
             processor = pycam.PathProcessors.PathAccumulator()
         else:
-            return "Invalid postprocessor (%s) for 'DropCutter': only 'ZigZagCutter' or 'PathAccumulator' are allowed" % str(pathprocessor)
-        return DropCutter.DropCutter(cutter, trimesh_model, processor, physics=physics,
-                safety_height=safety_height)
+            return ("Invalid postprocessor (%s) for 'DropCutter': only " \
+                    + "'ZigZagCutter' or 'PathAccumulator' are allowed") \
+                    % str(pathprocessor)
+        return DropCutter.DropCutter(cutter, trimesh_model, processor,
+                physics=physics, safety_height=safety_height)
     elif pathgenerator == "PushCutter":
         if pathprocessor == "PathAccumulator":
             processor = pycam.PathProcessors.PathAccumulator()
@@ -236,27 +248,34 @@ def _get_pathgenerator_instance(trimesh_model, contour_model, cutter, pathgenera
         elif pathprocessor == "ContourCutter":
             processor = pycam.PathProcessors.ContourCutter()
         else:
-            return "Invalid postprocessor (%s) for 'PushCutter' - it should be one of these: %s" % (processor, PATH_POSTPROCESSORS)
-        return PushCutter.PushCutter(cutter, trimesh_model, processor, physics=physics)
+            return ("Invalid postprocessor (%s) for 'PushCutter' - it should " \
+                    + "be one of these: %s") % (processor, PATH_POSTPROCESSORS)
+        return PushCutter.PushCutter(cutter, trimesh_model, processor,
+                physics=physics)
     elif pathgenerator == "EngraveCutter":
         if pathprocessor == "SimpleCutter":
             processor = pycam.PathProcessors.SimpleCutter()
         else:
-            return "Invalid postprocessor (%s) for 'EngraveCutter' - it should be one of these: %s" % (processor, PATH_POSTPROCESSORS)
+            return ("Invalid postprocessor (%s) for 'EngraveCutter' - it " \
+                    + "should be one of these: %s") \
+                    % (processor, PATH_POSTPROCESSORS)
         if not contour_model:
-            return "The EngraveCutter requires a contour model (e.g. from a DXF file)."
+            return "The EngraveCutter requires a contour model (e.g. from a " \
+                    + "DXF file)."
         return EngraveCutter.EngraveCutter(cutter, trimesh_model,
                 contour_model, processor, physics=physics)
     else:
-        return "Invalid path generator (%s): not one of %s" % (pathgenerator, PATH_GENERATORS)
+        return "Invalid path generator (%s): not one of %s" \
+                % (pathgenerator, PATH_GENERATORS)
 
 def _get_physics(trimesh_model, cutter, calculation_backend):
     if calculation_backend is None:
         # triangular collision detection does not need any physical model
         return None
     elif calculation_backend == "ODE":
-        import pycam.Physics.ode_physics
-        return pycam.Physics.ode_physics.generate_physics(trimesh_model, cutter)
+        import pycam.Physics.ode_physics as ode_physics
+        return ode_physics.generate_physics(trimesh_model, cutter)
     else:
-        return "Invalid calculation backend (%s): not one of %s" % (calculation_backend, CALCULATION_BACKENDS)
+        return "Invalid calculation backend (%s): not one of %s" \
+                % (calculation_backend, CALCULATION_BACKENDS)
 
