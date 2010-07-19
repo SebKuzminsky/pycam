@@ -75,7 +75,7 @@ class ODEBlocks:
                 or (location_start.y > location_end.y):
             swap = location_start
             location_start = location_end
-            location_end = location_start
+            location_end = swap
         cutter_body = ode.Body(self.world)
         cutter_shape, cutter_position_func = self.cutter.get_shape("ODE")
         self.space.add(cutter_shape)

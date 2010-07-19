@@ -36,15 +36,23 @@ BUTTON_ROTATE = gtk.gdk.BUTTON1_MASK
 BUTTON_MOVE = gtk.gdk.BUTTON2_MASK
 BUTTON_ZOOM = gtk.gdk.BUTTON3_MASK
 
-# the length of the distance vector does not matter - it will be normalized and multiplied later anyway
+# The length of the distance vector does not matter - it will be normalized and
+# multiplied later anyway.
 VIEWS = {
-    "reset": {"distance": (1.0, 1.0, 1.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "top": {"distance": (0.0, 0.0, 1.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 1.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "bottom": {"distance": (0.0, 0.0, -1.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 1.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "left": {"distance": (-1.0, 0.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "right": {"distance": (1.0, 0.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "front": {"distance": (0.0, -1.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
-    "back": {"distance": (0.0, 1.0, 0.0), "center": (0.0, 0.0, 0.0), "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "reset": {"distance": (1.0, 1.0, 1.0), "center": (0.0, 0.0, 0.0),
+            "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "top": {"distance": (0.0, 0.0, 1.0), "center": (0.0, 0.0, 0.0),
+            "up": (0.0, 1.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "bottom": {"distance": (0.0, 0.0, -1.0), "center": (0.0, 0.0, 0.0),
+            "up": (0.0, 1.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "left": {"distance": (-1.0, 0.0, 0.0), "center": (0.0, 0.0, 0.0),
+            "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "right": {"distance": (1.0, 0.0, 0.0), "center": (0.0, 0.0, 0.0),
+            "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "front": {"distance": (0.0, -1.0, 0.0), "center": (0.0, 0.0, 0.0),
+            "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
+    "back": {"distance": (0.0, 1.0, 0.0), "center": (0.0, 0.0, 0.0),
+            "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
 }
 
 
@@ -70,7 +78,9 @@ class Camera:
     def center_view(self):
         s = self.settings
         # center the view on the object
-        self.view["center"] = ((s.get("maxx") + s.get("minx"))/2, (s.get("maxy") + s.get("miny"))/2, (s.get("maxz") + s.get("minz"))/2)
+        self.view["center"] = ((s.get("maxx") + s.get("minx")) / 2,
+                (s.get("maxy") + s.get("miny")) / 2,
+                (s.get("maxz") + s.get("minz")) / 2)
 
     def auto_adjust_distance(self):
         s = self.settings
@@ -80,19 +90,21 @@ class Camera:
         dimy = s.get("maxy") - s.get("miny")
         dimz = s.get("maxz") - s.get("minz")
         max_dim = max(max(dimx, dimy), dimz)
-        width, height = self._get_screen_dimensions()
-        win_size = min(width, height)
-        distv = Point(v["distance"][0], v["distance"][1], v["distance"][2]).normalize()
-        # the multiplier "2.0" is based on: sqrt(2) + margin  -- the squre root makes sure, that the the diagonal fits
+        distv = Point(v["distance"][0], v["distance"][1],
+                v["distance"][2]).normalize()
+        # The multiplier "2.0" is based on: sqrt(2) + margin  -- the squre root
+        # makes sure, that the the diagonal fits.
         distv = distv.mul((max_dim * 2.0) / math.sin(v["fovy"]/2))
         self.view["distance"] = (distv.x, distv.y, distv.z)
-        # adjust the "far" distance for the camera to make sure, that huge models (e.g. x=1000) are still visible
+        # Adjust the "far" distance for the camera to make sure, that huge
+        # models (e.g. x=1000) are still visible.
         self.view["zfar"] = 100 * max_dim
 
     def scale_distance(self, scale):
         if scale != 0:
             dist = self.view["distance"]
-            self.view["distance"] = (scale * dist[0], scale * dist[1], scale * dist[2])
+            self.view["distance"] = (scale * dist[0], scale * dist[1],
+                    scale * dist[2])
 
     def get(self, key, default=None):
         if (not self.view is None) and self.view.has_key(key):
@@ -110,7 +122,8 @@ class Camera:
         @type y_move: int
         @value y_move: movement of the mouse along the y axis
         @type max_model_shift: float
-        @value max_model_shift: maximum shifting of the model view (e.g. for x_move == screen width)
+        @value max_model_shift: maximum shifting of the model view (e.g. for
+            x_move == screen width)
         """
         factors_x, factors_y = self._get_axes_vectors()
         width, height = self._get_screen_dimensions()
@@ -128,19 +141,22 @@ class Camera:
         old_center = self.view["center"]
         new_center = []
         for i in range(3):
-            new_center.append(old_center[i] + max_model_shift * (win_x_rel * factors_x[i] + win_y_rel * factors_y[i]))
+            new_center.append(old_center[i] + max_model_shift \
+                    * (win_x_rel * factors_x[i] + win_y_rel * factors_y[i]))
         self.view["center"] = tuple(new_center)
 
     def rotate_camera_by_screen(self, start_x, start_y, end_x, end_y):
         factors_x, factors_y = self._get_axes_vectors()
         width, height = self._get_screen_dimensions()
-        # calculate rotation factors - based on the distance to the center (between -1 and 1)
+        # calculate rotation factors - based on the distance to the center
+        # (between -1 and 1)
         rot_x_factor = (2.0 * start_x) / width - 1
         rot_y_factor = (2.0 * start_y) / height - 1
         # calculate rotation angles (between -90 and +90 degrees)
         xdiff = end_x - start_x
         ydiff = end_y - start_y
-        # compensate inverse rotation left/right side (around x axis) and top/bottom (around y axis)
+        # compensate inverse rotation left/right side (around x axis) and
+        # top/bottom (around y axis)
         if rot_x_factor < 0:
             ydiff = -ydiff
         if rot_y_factor > 0:
@@ -150,11 +166,14 @@ class Camera:
         # rotate around the "up" vector with the y-axis rotation
         original_distance = self.view["distance"]
         original_up = self.view["up"]
-        y_rot_matrix = Matrix.get_rotation_matrix_axis_angle(factors_y, rot_y_angle)
-        new_distance = Matrix.multiply_vector_matrix(original_distance, y_rot_matrix)
+        y_rot_matrix = Matrix.get_rotation_matrix_axis_angle(factors_y,
+                rot_y_angle)
+        new_distance = Matrix.multiply_vector_matrix(original_distance,
+                y_rot_matrix)
         new_up = Matrix.multiply_vector_matrix(original_up, y_rot_matrix)
         # rotate around the cross vector with the x-axis rotation
-        x_rot_matrix = Matrix.get_rotation_matrix_axis_angle(factors_x, rot_x_angle)
+        x_rot_matrix = Matrix.get_rotation_matrix_axis_angle(factors_x,
+                rot_x_angle)
         new_distance = Matrix.multiply_vector_matrix(new_distance, x_rot_matrix)
         new_up = Matrix.multiply_vector_matrix(new_up, x_rot_matrix)
         self.view["distance"] = new_distance
@@ -172,13 +191,17 @@ class Camera:
         light_pos[0] = 2 * model.maxx - model.minx
         light_pos[1] = 2 * model.maxy - model.miny
         light_pos[2] = 2 * model.maxz - model.minz
-        GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, (light_pos[0], light_pos[1], light_pos[2], 1.0))
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, (light_pos[0], light_pos[1],
+                light_pos[2], 1.0))
         # position the camera
         camera_position = (v["center"][0] + v["distance"][0],
-                v["center"][1] + v["distance"][1], v["center"][2] + v["distance"][2])
-        GLU.gluPerspective(v["fovy"], (0.0 + width) / height, v["znear"], v["zfar"])
-        GLU.gluLookAt(camera_position[0], camera_position[1], camera_position[2],
-                v["center"][0], v["center"][1], v["center"][2], v["up"][0], v["up"][1], v["up"][2])
+                v["center"][1] + v["distance"][1],
+                v["center"][2] + v["distance"][2])
+        GLU.gluPerspective(v["fovy"], (0.0 + width) / height, v["znear"],
+                v["zfar"])
+        GLU.gluLookAt(camera_position[0], camera_position[1],
+                camera_position[2], v["center"][0], v["center"][1],
+                v["center"][2], v["up"][0], v["up"][1], v["up"][2])
         GL.glMatrixMode(prev_mode)
 
     def _get_screen_dimensions(self):
@@ -186,10 +209,12 @@ class Camera:
 
     def _get_axes_vectors(self):
         """calculate the model vectors along the screen's x and y axes"""
-        # the "up" vector defines, in what proportion each axis of the model is in line with the screen's y axis
+        # The "up" vector defines, in what proportion each axis of the model is
+        # in line with the screen's y axis.
         v_up = self.view["up"]
         factors_y = (v_up[0], v_up[1], v_up[2])
-        # calculate the proportion of each model axis according to the x axis of the screen
+        # Calculate the proportion of each model axis according to the x axis of
+        # the screen.
         distv = self.view["distance"]
         distv = Point(distv[0], distv[1], distv[2]).normalize()
         factors_x = distv.cross(Point(v_up[0], v_up[1], v_up[2])).normalize()
@@ -224,19 +249,28 @@ class ModelViewWindowGL:
         self._position = self.gui.get_object("ProjectWindow").get_position()
         self._position = (self._position[0] + 100, self._position[1] + 100)
         self.container = self.gui.get_object("view3dbox")
-        self.gui.get_object("Reset View").connect("clicked", self.rotate_view, VIEWS["reset"])
-        self.gui.get_object("Left View").connect("clicked", self.rotate_view, VIEWS["left"])
-        self.gui.get_object("Right View").connect("clicked", self.rotate_view, VIEWS["right"])
-        self.gui.get_object("Front View").connect("clicked", self.rotate_view, VIEWS["front"])
-        self.gui.get_object("Back View").connect("clicked", self.rotate_view, VIEWS["back"])
-        self.gui.get_object("Top View").connect("clicked", self.rotate_view, VIEWS["top"])
-        self.gui.get_object("Bottom View").connect("clicked", self.rotate_view, VIEWS["bottom"])
+        self.gui.get_object("Reset View").connect("clicked", self.rotate_view,
+                VIEWS["reset"])
+        self.gui.get_object("Left View").connect("clicked", self.rotate_view,
+                VIEWS["left"])
+        self.gui.get_object("Right View").connect("clicked", self.rotate_view,
+                VIEWS["right"])
+        self.gui.get_object("Front View").connect("clicked", self.rotate_view,
+                VIEWS["front"])
+        self.gui.get_object("Back View").connect("clicked", self.rotate_view,
+                VIEWS["back"])
+        self.gui.get_object("Top View").connect("clicked", self.rotate_view,
+                VIEWS["top"])
+        self.gui.get_object("Bottom View").connect("clicked", self.rotate_view,
+                VIEWS["bottom"])
         # key binding
         self.window.connect("key-press-event", self.key_handler)
         # OpenGL stuff
-        glconfig = gtk.gdkgl.Config(mode=gtk.gdkgl.MODE_RGB|gtk.gdkgl.MODE_DEPTH|gtk.gdkgl.MODE_DOUBLE)
+        glconfig = gtk.gdkgl.Config(mode=gtk.gdkgl.MODE_RGB \
+                | gtk.gdkgl.MODE_DEPTH | gtk.gdkgl.MODE_DOUBLE)
         self.area = gtk.gtkgl.DrawingArea(glconfig)
-        # first run; might also be important when doing other fancy gtk/gdk stuff
+        # first run; might also be important when doing other fancy
+        # gtk/gdk stuff
         self.area.connect_after('realize', self.paint)
         # called when a part of the screen is uncovered
         self.area.connect('expose-event', self.paint)
@@ -248,13 +282,18 @@ class ModelViewWindowGL:
         self.area.connect('motion-notify-event', self.mouse_handler)
         self.area.show()
         self.container.add(self.area)
-        self.camera = Camera(self.settings, lambda: (self.area.allocation.width, self.area.allocation.height))
-        # color the dimension value according to the axes
-        # for "y" axis: 100% green is too bright on light background - we reduce it a bit
+        self.camera = Camera(self.settings, lambda: (self.area.allocation.width,
+                self.area.allocation.height))
+        # Color the dimension value according to the axes.
+        # For "y" axis: 100% green is too bright on light background - we
+        # reduce it a bit.
         for color, names in (
-                (pango.AttrForeground(65535, 0, 0, 0, 100), ("model_dim_x_label", "model_dim_x")),
-                (pango.AttrForeground(0, 50000, 0, 0, 100), ("model_dim_y_label", "model_dim_y")),
-                (pango.AttrForeground(0, 0, 65535, 0, 100), ("model_dim_z_label", "model_dim_z"))):
+                (pango.AttrForeground(65535, 0, 0, 0, 100),
+                        ("model_dim_x_label", "model_dim_x")),
+                (pango.AttrForeground(0, 50000, 0, 0, 100),
+                        ("model_dim_y_label", "model_dim_y")),
+                (pango.AttrForeground(0, 0, 65535, 0, 100),
+                        ("model_dim_z_label", "model_dim_z"))):
             attributes = pango.AttrList()
             attributes.insert(color)
             for name in names:
@@ -343,8 +382,10 @@ class ModelViewWindowGL:
         GL.glDepthMask(GL.GL_TRUE)
         GL.glHint(GL.GL_PERSPECTIVE_CORRECTION_HINT, GL.GL_NICEST)
         GL.glMatrixMode(GL.GL_MODELVIEW)
-        #GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))
-        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR, (0.1, 0.1, 0.1, 1.0))
+        #GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT,
+        #        (0.1, 0.1, 0.1, 1.0))
+        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR,
+                (0.1, 0.1, 0.1, 1.0))
         #GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (0.5))
         if self.settings.get("view_polygon"):
             GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
@@ -354,11 +395,15 @@ class ModelViewWindowGL:
         GL.glLoadIdentity()
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadIdentity()
-        GL.glViewport(0, 0, self.area.allocation.width, self.area.allocation.height)
+        GL.glViewport(0, 0, self.area.allocation.width,
+                self.area.allocation.height)
         # lightning
-        GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0.3, 0.3, 0.3, 3.))		# Setup The Ambient Light
-        GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, (1., 1., 1., .0))		# Setup The Diffuse Light
-        GL.glLightfv(GL.GL_LIGHT0, GL.GL_SPECULAR, (.3, .3, .3, 1.0))		# Setup The SpecularLight
+        # Setup The Ambient Light
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0.3, 0.3, 0.3, 3.))
+        # Setup The Diffuse Light
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, (1., 1., 1., .0))
+        # Setup The SpecularLight
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_SPECULAR, (.3, .3, .3, 1.0))
         GL.glEnable(GL.GL_LIGHT0)
         # Enable Light One
         if self.settings.get("view_light"):
@@ -366,9 +411,9 @@ class ModelViewWindowGL:
         else:
             GL.glDisable(GL.GL_LIGHTING)
         GL.glEnable(GL.GL_NORMALIZE)
-        GL.glColorMaterial(GL.GL_FRONT_AND_BACK,GL.GL_AMBIENT_AND_DIFFUSE)
-        #GL.glColorMaterial(GL.GL_FRONT_AND_BACK,GL.GL_SPECULAR)
-        #GL.glColorMaterial(GL.GL_FRONT_AND_BACK,GL.GL_EMISSION)
+        GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT_AND_DIFFUSE)
+        #GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR)
+        #GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_EMISSION)
         GL.glEnable(GL.GL_COLOR_MATERIAL)
 
     def destroy(self, widget=None, data=None):
@@ -379,10 +424,10 @@ class ModelViewWindowGL:
 
     def gtkgl_functionwrapper(function):
         def gtkgl_functionwrapper_function(self, *args, **kwords):
-            gldrawable=self.area.get_gl_drawable()
+            gldrawable = self.area.get_gl_drawable()
             if not gldrawable:
                 return
-            glcontext=self.area.get_gl_context()
+            glcontext = self.area.get_gl_context()
             if not gldrawable.gl_begin(glcontext):
                 return
             if not self.initialized:
@@ -399,11 +444,13 @@ class ModelViewWindowGL:
         last_timestamp = self.mouse["timestamp"]
         x, y, state = event.x, event.y, event.state
         if self.mouse["button"] is None:
-            if (state == BUTTON_ZOOM) or (state == BUTTON_ROTATE) or (state == BUTTON_MOVE):
+            if (state == BUTTON_ZOOM) or (state == BUTTON_ROTATE) \
+                    or (state == BUTTON_MOVE):
                 self.mouse["button"] = state
                 self.mouse["start_pos"] = [x, y]
         else:
-            # not more than 25 frames per second (enough for decent visualization)
+            # not more than 25 frames per second (enough for a decent
+            # visualization)
             if time.time() - last_timestamp < 0.04:
                 return
             # a button was pressed before
@@ -411,7 +458,8 @@ class ModelViewWindowGL:
                 # the start button is still active: update the view
                 start_x, start_y = self.mouse["start_pos"]
                 self.mouse["start_pos"] = [x, y]
-                # move the mouse from lower left to top right corner for scale up
+                # Move the mouse from lower left to top right corner for
+                # scaling up.
                 scale = 1 - 0.01 * ((x - start_x) + (start_y - y))
                 # do some sanity checks, scale no more than
                 # 1:100 on any given click+drag
@@ -421,17 +469,23 @@ class ModelViewWindowGL:
                     scale = 100
                 self.camera.scale_distance(scale)
                 self._paint_ignore_busy()
-            elif (state == self.mouse["button"] == BUTTON_MOVE) or (state == self.mouse["button"] == BUTTON_ROTATE):
+            elif (state == self.mouse["button"] == BUTTON_MOVE) \
+                    or (state == self.mouse["button"] == BUTTON_ROTATE):
                 start_x, start_y = self.mouse["start_pos"]
                 self.mouse["start_pos"] = [x, y]
                 if (state == BUTTON_MOVE):
-                    # determine the biggest dimension (x/y/z) for moving the screen's center in relation to this value
+                    # Determine the biggest dimension (x/y/z) for moving the
+                    # screen's center in relation to this value.
                     obj_dim = []
-                    obj_dim.append(self.settings.get("maxx") - self.settings.get("minx"))
-                    obj_dim.append(self.settings.get("maxy") - self.settings.get("miny"))
-                    obj_dim.append(self.settings.get("maxz") - self.settings.get("minz"))
+                    obj_dim.append(self.settings.get("maxx") \
+                            - self.settings.get("minx"))
+                    obj_dim.append(self.settings.get("maxy") \
+                            - self.settings.get("miny"))
+                    obj_dim.append(self.settings.get("maxz") \
+                            - self.settings.get("minz"))
                     max_dim = max(obj_dim)
-                    self.camera.move_camera_by_screen(x - start_x, y - start_y, max_dim)
+                    self.camera.move_camera_by_screen(x - start_x, y - start_y,
+                            max_dim)
                 else:
                     # BUTTON_ROTATE
                     # update the camera position according to the mouse movement
@@ -456,7 +510,8 @@ class ModelViewWindowGL:
     @gtkgl_functionwrapper
     @gtkgl_refresh
     def _resize_window(self, widget, data=None):
-        GL.glViewport(0, 0, self.area.allocation.width, self.area.allocation.height)
+        GL.glViewport(0, 0, self.area.allocation.width,
+                self.area.allocation.height)
 
     @check_busy
     @gtkgl_functionwrapper
@@ -481,7 +536,8 @@ class ModelViewWindowGL:
                     ("model_dim_x", s.get("maxx") - s.get("minx")),
                     ("model_dim_y", s.get("maxy") - s.get("miny")),
                     ("model_dim_z", s.get("maxz") - s.get("minz"))):
-                self.gui.get_object(name).set_text("%.3f %s" % (size, s.get("unit")))
+                self.gui.get_object(name).set_text("%.3f %s" \
+                        % (size, s.get("unit")))
             dimension_bar.show()
         else:
             dimension_bar.hide()
@@ -513,7 +569,6 @@ def draw_string(x, y, z, p, s, scale=.01):
     GL.glTranslatef(x, y, z)
     if p == 'xy':
         GL.glRotatef(90, 1, 0, 0)
-        pass
     elif p == 'yz':
         GL.glRotatef(90, 0, 1, 0)
         GL.glRotatef(90, 0, 0, 1)
@@ -589,7 +644,8 @@ def draw_complete_model_view(settings):
         draw_axes(settings)
     # stock model
     if settings.get("show_bounding_box"):
-        draw_bounding_box(float(settings.get("minx")), float(settings.get("miny")),
+        draw_bounding_box(
+                float(settings.get("minx")), float(settings.get("miny")),
                 float(settings.get("minz")), float(settings.get("maxx")),
                 float(settings.get("maxy")), float(settings.get("maxz")),
                 settings.get("color_bounding_box"))

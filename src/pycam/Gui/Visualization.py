@@ -20,18 +20,17 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import string
 import math
+import sys
 
-from OpenGL.GL import *
-from OpenGL.GLUT import *
-from OpenGL.GLU import *
+import OpenGL.GL as GL
+import OpenGL.GLU as GLU
+import OpenGL.GLUT as GLUT
 
 from OpenGL.constant import Constant
-GLUT_WHEEL_UP=Constant('GLUT_WHEEL_UP',3)
-GLUT_WHEEL_DOWN=Constant('GLUT_WHEEL_DOWN',4)
+GLUT_WHEEL_UP = Constant('GLUT_WHEEL_UP', 3)
+GLUT_WHEEL_DOWN = Constant('GLUT_WHEEL_DOWN', 4)
 
-from pycam.Geometry.utils import *
 
 _DrawCurrentSceneFunc = None
 _KeyHandlerFunc = None
@@ -53,79 +52,95 @@ ydist = -1.0
 zdist = -8.0
 
 texture_num = 2
-object = 0
 light = 1
-shade_model = GL_FLAT
-polygon_mode = GL_FILL
+shade_model = GL.GL_FLAT
+polygon_mode = GL.GL_FILL
 width = 320
 height = 200
 
 # A general OpenGL initialization function.  Sets all of the initial parameters.
-def InitGL(Width, Height):				# We call this right after our OpenGL window is created.
+def InitGL(Width, Height):
+    # We call this right after our OpenGL window is created.
     global width, height
     width = Width
     height = Height
 
-    glClearColor(0.0, 0.0, 0.0, 0.0)	# This Will Clear The Background Color To Black
-    glClearDepth(1.0)					# Enables Clearing Of The Depth Buffer
-    glDepthFunc(GL_LESS)				# The Type Of Depth Test To Do
-    glEnable(GL_DEPTH_TEST)				# Enables Depth Testing
-#    glShadeModel(GL_SMOOTH)				# Enables Smooth Color Shading
-#    glShadeModel(GL_FLAT)				# Enables Flat Color Shading
-    glShadeModel(shade_model)
+    # This Will Clear The Background Color To Black
+    GL.glClearColor(0.0, 0.0, 0.0, 0.0)
+    # Enables Clearing Of The Depth Buffer
+    GL.glClearDepth(1.0)
+    # The Type Of Depth Test To Do
+    GL.glDepthFunc(GL.GL_LESS)
+    # Enables Depth Testing
+    GL.glEnable(GL.GL_DEPTH_TEST)
+    # Enables Smooth Color Shading
+#    GL.glShadeModel(GL.GL_SMOOTH)
+    # Enables Flat Color Shading
+#    GL.glShadeModel(GL.GL_FLAT)
+    GL.glShadeModel(shade_model)
 
-    glMatrixMode(GL_PROJECTION)
-    glLoadIdentity()					# Reset The Projection Matrix
-										# Calculate The Aspect Ratio Of The Window
-    gluPerspective(60.0, float(Width)/float(Height), 0.1, 100.0)
+    GL.glMatrixMode(GL.GL_PROJECTION)
+    # Reset The Projection Matrix
+    GL.glLoadIdentity()
 
-    glLightfv(GL_LIGHT0, GL_AMBIENT, (0.5, 0.5, 0.5, 1.0))		# Setup The Ambient Light
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, (1.0, 1.0, 1.0, 1.0))		# Setup The Diffuse Light
-    glLightfv(GL_LIGHT0, GL_POSITION, (-10.0, 0.0, 0.0, 1.0))	# Position The Light
-    glEnable(GL_LIGHT0)					# Enable Light One
+    # Calculate The Aspect Ratio Of The Window
+    GLU.gluPerspective(60.0, float(Width)/float(Height), 0.1, 100.0)
 
-    glMatrixMode(GL_MODELVIEW)
-    glMaterial(GL_FRONT_AND_BACK, GL_SPECULAR, (0.1, 0.1, 0.1, 1.0))
-#    glMaterial(GL_FRONT_AND_BACK, GL_SHININESS, (0.5))
+    # Setup The Ambient Light
+    GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0.5, 0.5, 0.5, 1.0))
+    # Setup The Diffuse Light
+    GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, (1.0, 1.0, 1.0, 1.0))
+    # Position The Light
+    GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, (-10.0, 0.0, 0.0, 1.0))
+    # Enable Light One
+    GL.glEnable(GL.GL_LIGHT0)
 
-    glPolygonMode(GL_FRONT_AND_BACK, polygon_mode)
+    GL.glMatrixMode(GL.GL_MODELVIEW)
+    GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR, (0.1, 0.1, 0.1, 1.0))
+#    GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (0.5))
+
+    GL.glPolygonMode(GL.GL_FRONT_AND_BACK, polygon_mode)
 
 def ReSizeGLScene(Width, Height):
-    if Height == 0:						# Prevent A Divide By Zero If The Window Is Too Small
+    # Prevent A Divide By Zero If The Window Is Too Small
+    if Height == 0:
         Height = 1
 
     global width, height
     width = Width
     height = Height
 
-    glViewport(0, 0, Width, Height)		# Reset The Current Viewport And Perspective Transformation
-    glMatrixMode(GL_PROJECTION)
-    glLoadIdentity()
-    gluPerspective(60.0, float(Width)/float(Height), 0.1, 100.0)
-    glMatrixMode(GL_MODELVIEW)
+    # Reset The Current Viewport And Perspective Transformation
+    GL.glViewport(0, 0, Width, Height)
+    GL.glMatrixMode(GL.GL_PROJECTION)
+    GL.glLoadIdentity()
+    GLU.gluPerspective(60.0, float(Width)/float(Height), 0.1, 100.0)
+    GL.glMatrixMode(GL.GL_MODELVIEW)
 
 # The main drawing function.
 def DrawGLScene():
     global xrot, yrot, zrot, scale, xdist, ydist, zdist, light
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)	# Clear The Screen And The Depth Buffer
-    glLoadIdentity()					# Reset The View
-    glTranslatef(xdist,ydist,zdist)			# Move Into The Screen
+    # Clear The Screen And The Depth Buffer
+    GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+    GL.glLoadIdentity()					# Reset The View
+    GL.glTranslatef(xdist, ydist, zdist)			# Move Into The Screen
 
-    glRotatef(xrot,1.0,0.0,0.0)			# Rotate The Cube On It's X Axis
-    glRotatef(yrot,0.0,1.0,0.0)			# Rotate The Cube On It's Y Axis
-    glRotatef(zrot,0.0,0.0,1.0)			# Rotate The Cube On It's Z Axis
-    glScalef(scale,scale,scale)
+    GL.glRotatef(xrot, 1.0, 0.0, 0.0)			# Rotate The Cube On It's X Axis
+    GL.glRotatef(yrot, 0.0, 1.0, 0.0)			# Rotate The Cube On It's Y Axis
+    GL.glRotatef(zrot, 0.0, 0.0, 1.0)			# Rotate The Cube On It's Z Axis
+    GL.glScalef(scale, scale, scale)
     if light:
-        glEnable(GL_LIGHTING)
+        GL.glEnable(GL.GL_LIGHTING)
     else:
-        glDisable(GL_LIGHTING)
+        GL.glDisable(GL.GL_LIGHTING)
 
     if _DrawCurrentSceneFunc:
         _DrawCurrentSceneFunc()
 
-    #  since this is double buffered, swap the buffers to display what just got drawn.
-    glutSwapBuffers()
+    # Since this is double buffered, swap the buffers to display what just got
+    # drawn.
+    GLUT.glutSwapBuffers()
 
 # The function called whenever a key is pressed
 def keyPressed(key, x, y):
@@ -133,66 +148,66 @@ def keyPressed(key, x, y):
     global xrot, yrot, zrot
     global _KeyHandlerFunc
 
-    key = string.upper(key)
-    if key == ESCAPE or key=='Q':
+    key = key.upper()
+    if (key == ESCAPE) or (key == 'Q'):
         # If escape is pressed, kill everything.
         sys.exit()
     elif key == 'S':
         light = not light
     elif key == '=':
-        print "rot=<%g,%g,%g>" % (xrot,yrot,zrot)
+        print "rot=<%g,%g,%g>" % (xrot, yrot, zrot)
     elif key == 'I':
         xrot = 110
         yrot = 180
         zrot = 250
     elif key == 'T': # top
-        xrot=0
-        yrot=0
-        zrot=0
+        xrot = 0
+        yrot = 0
+        zrot = 0
     elif key == 'F': # front
-        xrot=-90
-        yrot=0
-        zrot=0
+        xrot = -90
+        yrot = 0
+        zrot = 0
     elif key == 'R': # right
-        xrot=-90
-        yrot=0
-        zrot=-90
+        xrot = -90
+        yrot = 0
+        zrot = -90
     elif key == 'L': # left
-        xrot=-90
-        yrot=0
-        zrot=+90
+        xrot = -90
+        yrot = 0
+        zrot = +90
     elif key == 'M':
-        if shade_model == GL_SMOOTH:
-            shade_model = GL_FLAT
+        if shade_model == GL.GL_SMOOTH:
+            shade_model = GL.GL_FLAT
         else:
-            shade_model = GL_SMOOTH
-        glShadeModel(shade_model)
+            shade_model = GL.GL_SMOOTH
+        GL.glShadeModel(shade_model)
     elif key == 'P':
-        if polygon_mode == GL_FILL:
-            polygon_mode = GL_LINE
+        if polygon_mode == GL.GL_FILL:
+            polygon_mode = GL.GL_LINE
         else:
-            polygon_mode = GL_FILL
-        glPolygonMode(GL_FRONT_AND_BACK, polygon_mode)
+            polygon_mode = GL.GL_FILL
+        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, polygon_mode)
     elif _KeyHandlerFunc:
         _KeyHandlerFunc(key, x, y)
 
 class mouseState:
     button = None
     state = None
-    x=0
-    y=0
+    x = 0
+    y = 0
 
 def mousePressed(button, state, x, y):
     global xrot, yrot, zrot, xdist, ydist, zdist, scale
-    if button==GLUT_WHEEL_DOWN:
+    if button == GLUT_WHEEL_DOWN:
         scale *= 1.1
-    elif button==GLUT_WHEEL_UP:
+    elif button == GLUT_WHEEL_UP:
         scale /= 1.1
 
     mouseState.button = button
     mouseState.state = state
-    mouseState.x=float(x)
-    mouseState.y=float(y)
+    mouseState.x = float(x)
+    mouseState.y = float(y)
 
 def mouseMoved(x, y):
     global xrot, yrot, zrot, xdist, ydist, zdist, scale
@@ -200,36 +215,33 @@ def mouseMoved(x, y):
     x = float(x)
     y = float(y)
     a1 = math.atan2(mouseState.y-height/2.0, mouseState.x-width/2.0)
-    r1 = math.sqrt(sqr(mouseState.y-height/2.0)+sqr(mouseState.x-width/2.0))
+    r1 = math.sqrt((mouseState.y - height / 2.0) ** 2 \
+            + (mouseState.x - width / 2.0) ** 2)
     a2 = math.atan2(y-height/2.0, x-width/2.0)
-    r2 = math.sqrt(sqr(y-height/2.0)+sqr(x-width/2.0))
-    da = abs(a2-a1)
-    dr = 0
-    if r2>r1:
-        dr = r1/r2
-    else:
-        dr = r2/r1
-    if mouseState.button == GLUT_LEFT_BUTTON or mouseState.button == GLUT_RIGHT_BUTTON:
+    r2 = math.sqrt((y - height / 2.0) ** 2 + (x - width / 2.0) ** 2)
+    if (mouseState.button == GLUT.GLUT_LEFT_BUTTON) \
+            or (mouseState.button == GLUT.GLUT_RIGHT_BUTTON):
         a3 = math.acos(mouseState.x/width-0.5)
         a4 = math.acos(x/width-0.5)
         zrot = zrot - (a4-a3)*180/math.pi*2
-    if mouseState.button == GLUT_RIGHT_BUTTON:
+    if mouseState.button == GLUT.GLUT_RIGHT_BUTTON:
         a3 = math.acos(mouseState.y/height-0.5)
         a4 = math.acos(y/height-0.5)
-        if x>width/2.0:
+        if x > width / 2.0:
             yrot = yrot + (a4-a3)*180/math.pi*2
         else:
             yrot = yrot - (a4-a3)*180/math.pi*2
-    if mouseState.button == GLUT_LEFT_BUTTON:
+    if mouseState.button == GLUT.GLUT_LEFT_BUTTON:
         a3 = math.acos(mouseState.y/width-0.5)
         a4 = math.acos(y/width-0.5)
         xrot = xrot - (a4-a3)*180/math.pi*2
-    mouseState.x=x
-    mouseState.y=y
+    mouseState.x = x
+    mouseState.y = y
 
-def Visualization(title, drawScene=DrawGLScene, width=320, height=200, handleKey=None):
+def Visualization(title, drawScene=DrawGLScene, width=320, height=200,
+        handleKey=None):
     global window, _DrawCurrentSceneFunc, _KeyHandlerFunc
-    glutInit(sys.argv)
+    GLUT.glutInit(sys.argv)
 
     _DrawCurrentSceneFunc = drawScene
 
@@ -241,47 +253,50 @@ def Visualization(title, drawScene=DrawGLScene, width=320, height=200, handleKey
     #  RGBA color
     # Alpha components supported
     # Depth buffer
-    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH)
+    GLUT.glutInitDisplayMode(GLUT.GLUT_RGBA | GLUT.GLUT_DOUBLE \
+            | GLUT.GLUT_DEPTH)
 
     # get a 640 x 480 window
-    glutInitWindowSize(640, 480)
+    GLUT.glutInitWindowSize(640, 480)
 
     # the window starts at the upper left corner of the screen
-    glutInitWindowPosition(0, 0)
+    GLUT.glutInitWindowPosition(0, 0)
 
-    # Okay, like the C version we retain the window id to use when closing, but for those of you new
-    # to Python (like myself), remember this assignment would make the variable local and not global
-    # if it weren't for the global declaration at the start of main.
-    window = glutCreateWindow(title)
+    # Okay, like the C version we retain the window id to use when closing, but
+    # for those of you new to Python (like myself), remember this assignment
+    # would make the variable local and not global if it weren't for the global
+    # declaration at the start of main.
+    window = GLUT.glutCreateWindow(title)
 
-    # Register the drawing function with glut, BUT in Python land, at least using PyOpenGL, we need to
-    # set the function pointer and invoke a function to actually register the callback, otherwise it
-    # would be very much like the C version of the code.
-    glutDisplayFunc(DrawGLScene)
+    # Register the drawing function with glut, BUT in Python land, at least
+    # using PyOpenGL, we need to set the function pointer and invoke a function
+    # to actually register the callback, otherwise it would be very much like
+    # the C version of the code.
+    GLUT.glutDisplayFunc(DrawGLScene)
 
     # Uncomment this line to get full screen.
-    # glutFullScreen()
+    # GLUT.glutFullScreen()
 
     # When we are doing nothing, redraw the scene.
-    glutIdleFunc(DrawGLScene)
+    GLUT.glutIdleFunc(DrawGLScene)
 
     # Register the function called when our window is resized.
-    glutReshapeFunc(ReSizeGLScene)
+    GLUT.glutReshapeFunc(ReSizeGLScene)
 
     # Register the function called when the keyboard is pressed.
-    glutKeyboardFunc(keyPressed)
+    GLUT.glutKeyboardFunc(keyPressed)
 
     # Register the function called when the mouse is pressed.
-    glutMouseFunc(mousePressed)
+    GLUT.glutMouseFunc(mousePressed)
 
     # Register the function called when the mouse is pressed.
-    glutMotionFunc(mouseMoved)
+    GLUT.glutMotionFunc(mouseMoved)
 
     # Initialize our window.
     InitGL(640, 480)
 
     # Start Event Processing Engine
-    glutMainLoop()
+    GLUT.glutMainLoop()
 
 
 test_model = None
@@ -291,19 +306,19 @@ test_pathlist = None
 def DrawTestScene():
     global test_model, test_cutter, test_pathlist
     if test_model:
-        glColor4f(1,0.5,0.5,0.1)
+        GL.glColor4f(1, 0.5, 0.5, 0.1)
         test_model.to_OpenGL()
     if test_cutter:
-        glColor3f(0.5,0.5,0.5)
+        GL.glColor3f(0.5, 0.5, 0.5)
         test_cutter.to_OpenGL()
     if test_pathlist:
         for path in test_pathlist:
-            glColor3f(0.5,0.5,1)
-            glBegin(GL_LINE_STRIP)
+            GL.glColor3f(0.5, 0.5, 1)
+            GL.glBegin(GL.GL_LINE_STRIP)
             for point in path.points:
-                glVertex3f(point.x, point.y, point.z)
-#                glVertex3f(point.x, point.y, point.z+1)
-            glEnd()
+                GL.glVertex3f(point.x, point.y, point.z)
+#                GL.glVertex3f(point.x, point.y, point.z+1)
+            GL.glEnd()
 
 def ShowTestScene(model=None, cutter=None, pathlist=None):
     global test_model, test_cutter, test_pathlist

@@ -37,7 +37,8 @@ def get_config_dirname():
         from win32com.shell import shellcon, shell            
         homedir = shell.SHGetFolderPath(0, shellcon.CSIDL_APPDATA, 0, 0)
         config_dir = os.path.join(homedir, CONFIG_DIR)
-    except ImportError: # quick semi-nasty fallback for non-windows/win32com case
+    except ImportError:
+        # quick semi-nasty fallback for non-windows/win32com case
         homedir = os.path.expanduser("~")
         # hide the config directory for unixes
         config_dir = os.path.join(homedir, "." + CONFIG_DIR)
@@ -343,7 +344,8 @@ process: 3
             return False
         return True
 
-    def write_to_file(self, filename, tools=None, processes=None, bounds=None, tasks=None):
+    def write_to_file(self, filename, tools=None, processes=None, bounds=None,
+            tasks=None):
         text = self.get_config_text(tools, processes, bounds, tasks)
         try:
             fi = open(filename, "w")
@@ -398,19 +400,23 @@ process: 3
                     value_type = self.SETTING_TYPES[key]
                     raw = value_type == str
                     try:
-                        value_raw = self.config.get(current_section_name, key, raw=raw)
+                        value_raw = self.config.get(current_section_name, key,
+                                raw=raw)
                     except ConfigParser.NoOptionError:
                         try:
-                            value_raw = self.config.get(prefix + self.DEFAULT_SUFFIX, key, raw=raw)
+                            value_raw = self.config.get(
+                                    prefix + self.DEFAULT_SUFFIX, key, raw=raw)
                         except ConfigParser.NoOptionError:
                             value_raw = None
                     if not value_raw is None:
                         try:
                             if value_type == object:
                                 # try to get the referenced object
-                                value = self._get_category_items(key)[int(value_raw)]
+                                value = self._get_category_items(key)[
+                                        int(value_raw)]
                             elif value_type == bool:
-                                if value_raw.lower() in ("1", "true", "yes", "on"):
+                                if value_raw.lower() in (
+                                        "1", "true", "yes", "on"):
                                     value = True
                                 else:
                                     value = False
@@ -446,7 +452,8 @@ process: 3
         else:
             return str(value_type(value))
 
-    def get_config_text(self, tools=None, processes=None, bounds=None, tasks=None):
+    def get_config_text(self, tools=None, processes=None, bounds=None,
+            tasks=None):
         def get_dictionary_of_bounds(b):
             """ this function should be the inverse operation of 
             '_get_bounds_instance_from_dict'
@@ -487,7 +494,7 @@ process: 3
             for key in self.CATEGORY_KEYS[type_name]:
                 try:
                     values = [item[key] for item in type_list]
-                except KeyError, err_msg:
+                except KeyError:
                     values = None
                 # check if there are values and if they all have the same value
                 if values and (values.count(values[0]) == len(values)):
@@ -590,7 +597,8 @@ class ToolpathSettings:
         high = (self.bounds["maxx"], self.bounds["maxy"], self.bounds["maxz"])
         return Bounds(Bounds.TYPE_CUSTOM, low, high)
 
-    def set_tool(self, index, shape, tool_radius, torus_radius=None, speed=0.0, feedrate=0.0):
+    def set_tool(self, index, shape, tool_radius, torus_radius=None, speed=0.0,
+            feedrate=0.0):
         self.tool_settings = {"id": index,
                 "shape": shape,
                 "tool_radius": tool_radius,
@@ -668,14 +676,14 @@ class ToolpathSettings:
                 (self.support_grid, "SupportGrid"),
                 (self.process_settings, "Process")):
             for key, value_type in self.SECTIONS[section].items():
-                raw_value = config.get(section, key, None)
-                if raw_value is None:
+                value_raw = config.get(section, key, None)
+                if value_raw is None:
                     continue
                 elif value_type == bool:
                     value = value_raw.lower() in ("1", "true", "yes", "on")
                 else:
                     try:
-                        value = value_type(raw_value)
+                        value = value_type(value_raw)
                     except ValueError:
                         log.warn("Settings: Ignored invalid setting " \
                                 "(%s -> %s): %s" % (section, key, value_raw))

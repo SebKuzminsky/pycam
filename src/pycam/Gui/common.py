@@ -21,7 +21,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Utils.log
-# Tkinter is used for "EmergencyDialog" below - but we will try to import it carefully
+# Tkinter is used for "EmergencyDialog" below - but we will try to import it
+# carefully.
 #import Tkinter
 import sys
 import os
@@ -149,13 +150,14 @@ class EmergencyDialog:
             import Tkinter
         except ImportError:
             # tk is not installed
-            log.warn("Failed to show error dialog due to a missing Tkinter Python package.")
+            log.warn("Failed to show error dialog due to a missing Tkinter " \
+                    + "Python package.")
             return
         try:
             root = Tkinter.Tk()
         except Tkinter.TclError, err_msg:
-            log.info("Failed to create error dialog window (%s). " % str(err_msg) \
-                    + "Probably you are running PyCAM from a terminal.")
+            log.info(("Failed to create error dialog window (%s). Probably " \
+                    + "you are running PyCAM from a terminal.") % err_msg)
             return
         root.title(title)
         root.bind("<Return>", self.finish)

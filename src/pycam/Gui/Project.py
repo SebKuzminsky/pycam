@@ -43,7 +43,6 @@ import math
 import time
 import logging
 import datetime
-import re
 import os
 import sys
 
@@ -969,7 +968,7 @@ class ProjectGui:
             # the "delete-event" issues the additional "event" argument
             state = event
         if state is None:
-           state = not self._preferences_window_visible
+            state = not self._preferences_window_visible
         if state:
             if self._preferences_window_position:
                 self.preferences_window.move(*self._preferences_window_position)
@@ -1358,7 +1357,7 @@ class ProjectGui:
             self.model.export(comment=self.get_meta_data()).write(fi)
             fi.close()
         except IOError, err_msg:
-            log.error("Failed to save model file")
+            log.error("Failed to save model file: %s" % err_msg)
         else:
             self.add_to_recent_file_list(filename)
 
@@ -1564,7 +1563,7 @@ class ProjectGui:
                 out.write(text)
                 out.close()
             except IOError, err_msg:
-                log.error("Failed to save EMC tool file")
+                log.error("Failed to save EMC tool file: %s" % err_msg)
             else:
                 self.add_to_recent_file_list(filename)
 
@@ -1684,7 +1683,6 @@ class ProjectGui:
             return self.gui.get_object("boundary_%s_%s" % ("xyz"[index], side))
         # disable each zero-dimension in relative margin mode
         if current_type == Bounds.TYPE_RELATIVE_MARGIN:
-            low, high = current_settings.get_bounds()
             model_dims = (self.model.maxx - self.model.minx,
                     self.model.maxy - self.model.miny,
                     self.model.maxz - self.model.minz)
@@ -1799,9 +1797,9 @@ class ProjectGui:
             self.gui.get_object(value).set_active(True)
         set_path_generator(settings["path_generator"])
         # path direction
-        def set_path_direction(input):
+        def set_path_direction(direction):
             for obj, value in (("PathDirectionX", "x"), ("PathDirectionY", "y"), ("PathDirectionXY", "xy")):
-                if value == input:
+                if value == direction:
                     self.gui.get_object(obj).set_active(True)
                     return
         set_path_direction(settings["path_direction"])
@@ -1953,12 +1951,9 @@ class ProjectGui:
 
     @gui_activity_guard
     def save_task_settings_file(self, widget=None, filename=None):
-        no_dialog = False
         if callable(filename):
             filename = filename()
-        if isinstance(filename, basestring):
-            no_dialog = True
-        else:
+        if not isinstance(filename, basestring):
             # we open a dialog
             filename = self.get_filename_via_dialog("Save settings to ...",
                     mode_load=False, type_filter=FILTER_CONFIG)
@@ -2008,7 +2003,7 @@ class ProjectGui:
 
     @progress_activity_guard
     def update_toolpath_simulation(self, widget=None, toolpath=None):
-        import pycam.Simulation.ODEBlocks
+        import pycam.Simulation.ODEBlocks as ODEBlocks
         # get the currently selected toolpath, if none is give
         if toolpath is None:
             toolpath_index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
@@ -2029,9 +2024,8 @@ class ProjectGui:
                 / (bounding_box["maxy"] - bounding_box["miny"])
         x_steps = int(math.sqrt(grid_size) * proportion)
         y_steps = int(math.sqrt(grid_size) / proportion)
-        simulation_backend = pycam.Simulation.ODEBlocks.ODEBlocks(
-                toolpath.get_tool_settings(), toolpath.get_bounding_box(),
-                x_steps=x_steps, y_steps=y_steps)
+        simulation_backend = ODEBlocks.ODEBlocks(toolpath.get_tool_settings(),
+                toolpath.get_bounding_box(), x_steps=x_steps, y_steps=y_steps)
         self.settings.set("simulation_object", simulation_backend)
         # disable the simulation widget (avoids confusion regarding "cancel")
         if not widget is None:
@@ -2240,10 +2234,10 @@ class ProjectGui:
                     file_filter.add_pattern(ext)
                 dialog.add_filter(file_filter)
         # add filter for all files
-        filter = gtk.FileFilter()
-        filter.set_name("All files")
-        filter.add_pattern("*")
-        dialog.add_filter(filter)
+        ext_filter = gtk.FileFilter()
+        ext_filter.set_name("All files")
+        ext_filter.add_pattern("*")
+        dialog.add_filter(ext_filter)
         done = False
         while not done:
             dialog.set_filter(dialog.list_filters()[0])
@@ -2343,7 +2337,7 @@ class ProjectGui:
             destination.close()
             log.info("GCode file successfully written: %s" % str(filename))
         except IOError, err_msg:
-            log.error("Failed to save toolpath file")
+            log.error("Failed to save toolpath file: %s" % err_msg)
         else:
             self.add_to_recent_file_list(filename)
 
@@ -2367,6 +2361,6 @@ class ProjectGui:
 if __name__ == "__main__":
     gui = ProjectGui()
     if len(sys.argv) > 1:
-        gui.open(sys.argv[1])
+        gui.load_model_file(sys.argv[1])
     gui.mainloop()
 
