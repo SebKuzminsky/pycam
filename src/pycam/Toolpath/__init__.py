@@ -105,7 +105,7 @@ class ToolPath:
             result["position"] = new_pos
         # move to safey height at the starting position
         safety_height = settings.get_process_settings()["safety_height"]
-        move(result, Point(start_position.x, start_position.y, safety_height))
+        move(Point(start_position.x, start_position.y, safety_height))
         for path in self.get_path():
             # go to safety height (horizontally from the previous x/y location)
             if len(path.points) > 0:
