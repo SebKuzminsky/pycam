@@ -20,13 +20,13 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-list = [ "SphericalCutter", "CylindricalCutter", "ToroidalCutter" ]
-__all__ = [ "BaseCutter" ] + list
+__all__ = [ "SphericalCutter", "CylindricalCutter", "ToroidalCutter",
+        "BaseCutter" ]
 
-from BaseCutter import BaseCutter
-from SphericalCutter import SphericalCutter
-from CylindricalCutter import CylindricalCutter
-from ToroidalCutter import ToroidalCutter
+from pycam.Cutters.BaseCutter import BaseCutter
+from pycam.Cutters.SphericalCutter import SphericalCutter
+from pycam.Cutters.CylindricalCutter import CylindricalCutter
+from pycam.Cutters.ToroidalCutter import ToroidalCutter
 
 
 def get_tool_from_settings(tool_settings, height=None):
