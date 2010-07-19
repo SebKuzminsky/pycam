@@ -115,6 +115,37 @@ class Settings:
 
 class ProcessSettings:
 
+    BASIC_DEFAULT_CONFIG = """
+[ToolDefault]
+shape: CylindricalCutter
+name: Cylindrical (d=3)
+tool_radius: 1.5
+torus_radius: 0.25
+feedrate: 200
+speed: 1000
+
+[ProcessDefault]
+name: Remove material
+path_direction: x
+safety_height: 5
+engrave_offset: 0.0
+path_generator: PushCutter
+path_postprocessor: PolygonCutter
+material_allowance: 0.5
+step_down: 3.0
+overlap_percent: 0
+
+[BoundsDefault]
+name: No Margin
+type: relative_margin
+x_low: 0.0
+x_high: 0.0
+y_low: 0.0
+y_high: 0.0
+z_low: 0.0
+z_high: 0.0
+"""
+
     DEFAULT_CONFIG = """
 [ToolDefault]
 torus_radius: 0.25
@@ -133,7 +164,7 @@ tool_radius: 1
 torus_radius: 0.2
 
 [Tool2]
-name: Spherical (d=1.0)
+name: Spherical (d=1)
 shape: SphericalCutter
 tool_radius: 0.5
 
@@ -279,15 +310,26 @@ process: 3
         if config_text is None:
             config_text = StringIO.StringIO(self.DEFAULT_CONFIG)
         else:
+            # Read the basic default config first - in case some new options
+            # are missing in an older config file.
+            basic_default_config = StringIO.StringIO(self.BASIC_DEFAULT_CONFIG)
+            self.config.readfp(basic_default_config)
+            # Read the real config afterwards.
             config_text = StringIO.StringIO(config_text)
         self.config.readfp(config_text)
 
     def load_file(self, filename):
         try:
-            self.config.read([filename])
+            content = file(filename).read()
+        except IOError, err_msg:
+            log.error("Settings: Failed to read config file '%s': %s" \
+                    % (filename, err_msg))
+            return False
+        try:
+            self.reset(content)
         except ConfigParser.ParsingError, err_msg:
-            log.error("Settings: Failed to parse config file '%s': %s" % \
-                    (filename, err_msg))
+            log.error("Settings: Failed to parse config file '%s': %s" \
+                    % (filename, err_msg))
             return False
         return True
 
@@ -421,8 +463,8 @@ process: 3
             result["type"] = bounds_type_name
             low, high = b.get_bounds()
             for index, axis in enumerate("xyz"):
-                result["%s_low"] = low[index]
-                result["%s_high"] = high[index]
+                result["%s_low" % axis] = low[index]
+                result["%s_high" % axis] = high[index]
             return result
         result = []
         if tools is None:
