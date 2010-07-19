@@ -24,8 +24,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.Geometry.Point import Point
 from pycam.Geometry.utils import INFINITE
 from pycam.Geometry.intersection import intersect_torus_plane, \
-        intersect_torus_point, intersect_circle_plane, intersect_circle_line, \
-        intersect_cylinder_point, intersect_cylinder_line
+        intersect_torus_point, intersect_circle_plane, intersect_circle_point, \
+        intersect_cylinder_point, intersect_cylinder_line, intersect_circle_line
 from pycam.Cutters.BaseCutter import BaseCutter
 
 
