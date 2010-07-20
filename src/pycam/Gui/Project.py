@@ -414,9 +414,12 @@ class ProjectGui:
             else:
                 self._treeview_set_active_index(table, new_index)
                 # update all controls related the (possibly changed) item
-                self.append_to_queue(self.switch_tool_table_selection)
-                self.append_to_queue(self.switch_process_table_selection)
-                self.append_to_queue(self.switch_tasklist_table_selection)
+                if item_list is self.tool_list:
+                    self.append_to_queue(self.switch_tool_table_selection)
+                elif item_list is self.process_list:
+                    self.append_to_queue(self.switch_process_table_selection)
+                elif item_list is self.task_list:
+                    self.append_to_queue(self.switch_tasklist_table_selection)
         # the boundary manager
         self.settings.add_item("current_bounds",
                 lambda: get_current_item(self.bounds_editor_table, self.bounds_list),
