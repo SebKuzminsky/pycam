@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import Point
+from pycam.Geometry.Point import Point
 from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles, \
         ProgressCounter
 import math
