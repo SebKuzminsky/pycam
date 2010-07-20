@@ -1075,7 +1075,13 @@ class ProjectGui:
         elif action == "delete":
             # delete one item from the list
             item = datalist[index]
-            if len(datalist) == 1:
+            # Check if we need to remove items that depended on the currently
+            # deleted one.
+            if not datalist in (self.tool_list, self.process_list,
+                    self.bounds_list):
+                # tasks do not depend on this list - just continue
+                pass
+            elif len(datalist) == 1:
                 # There are no replacements available for this item.
                 # Thus we need to remove _all_ tasks.
                 while len(self.task_list) > 0:
@@ -1108,6 +1114,8 @@ class ProjectGui:
             pass
         # any new item can influence the "New task" button
         self.append_to_queue(self.update_tasklist_controls)
+        # removing or adding "bounds" may change the visualization
+        self.append_to_queue(self.update_boundary_limits)
         update_func(new_index=future_selection_index,
                 skip_model_update=skip_model_update)
 
