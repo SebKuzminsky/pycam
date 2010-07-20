@@ -258,7 +258,11 @@ class ContourModel(BaseModel):
             b = x4.sub(x3)
             c = x3.sub(x1)
             # see http://mathworld.wolfram.com/Line-LineIntersection.html (24)
-            factor = c.cross(b).dot(a.cross(b)) / a.cross(b).normsq()
+            try:
+                factor = c.cross(b).dot(a.cross(b)) / a.cross(b).normsq()
+            except ZeroDivisionError:
+                l2.p1 = None
+                return
             if not (0 <= factor < 1):
                 # The intersection is always supposed to be within p1 and p2.
                 l2.p1 = None
