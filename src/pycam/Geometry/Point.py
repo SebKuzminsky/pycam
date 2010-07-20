@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import math
+
 def _is_near(x, y):
     return abs(x - y) < 1e-6
 
@@ -58,6 +59,22 @@ class Point:
         else:
             return cmp(str(self), str(other))
 
+    def transform_by_matrix(self, matrix, transformed_list=None):
+        x = self.x * matrix[0][0] + self.y * matrix[0][1] \
+                + self.z * matrix[0][2] + matrix[0][3]
+        y = self.x * matrix[1][0] + self.y * matrix[1][1] \
+                + self.z * matrix[1][2] + matrix[1][3]
+        z = self.x * matrix[2][0] + self.y * matrix[2][1] \
+                + self.z * matrix[2][2] + matrix[2][3]
+        self.x = x
+        self.y = y
+        self.z = z
+        self.reset_cache()
+
+    def reset_cache(self):
+        self._norm = None
+        self._normsq = None
+        
     def mul(self, c):
         return Point(self.x * c, self.y * c, self.z * c)
 

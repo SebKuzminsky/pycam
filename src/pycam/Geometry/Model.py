@@ -22,10 +22,13 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Exporters.STLExporter
-from pycam.Geometry import Triangle, Line, Point
+from pycam.Geometry.Triangle import Triangle
+from pycam.Geometry.Line import Line
+from pycam.Geometry.Point import Point
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
 from pycam.Toolpath import Bounds
 from pycam.Geometry.utils import INFINITE
+from pycam.Geometry import TransformableContainer
 
 
 MODEL_TRANSFORMATIONS = {
@@ -42,7 +45,7 @@ MODEL_TRANSFORMATIONS = {
 }
 
 
-class BaseModel(object):
+class BaseModel(TransformableContainer):
     id = 0
 
     def __init__(self):
@@ -67,9 +70,6 @@ class BaseModel(object):
         for item in other_model.next():
             result.append(item)
         return result
-
-    def __iter__(self):
-        return self
 
     def next(self):
         for item_group in self._item_groups:
@@ -133,25 +133,6 @@ class BaseModel(object):
         self.maxz = None
         for item in self.next():
             self._update_limits(item)
-
-    def transform_by_matrix(self, matrix):
-        processed = []
-        for item in self.next():
-            for point in item.get_points():
-                if not point.id in processed:
-                    processed.append(point.id)
-                    x = point.x * matrix[0][0] + point.y * matrix[0][1] \
-                            + point.z * matrix[0][2] + matrix[0][3]
-                    y = point.x * matrix[1][0] + point.y * matrix[1][1] \
-                            + point.z * matrix[1][2] + matrix[1][3]
-                    z = point.x * matrix[2][0] + point.y * matrix[2][1] \
-                            + point.z * matrix[2][2] + matrix[2][3]
-                    point.x = x
-                    point.y = y
-                    point.z = z
-            if hasattr(item, "reset_cache"):
-                item.reset_cache()
-        self.reset_cache()
 
     def transform_by_template(self, direction="normal"):
         if direction in MODEL_TRANSFORMATIONS.keys():

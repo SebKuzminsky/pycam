@@ -20,6 +20,10 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry import TransformableContainer
+import math
+
+
 try:
     import OpenGL.GL as GL
     GL_enabled = True
@@ -27,10 +31,7 @@ except ImportError:
     GL_enabled = False
 
 
-import math
-
-
-class Line:
+class Line(TransformableContainer):
     id = 0
 
     def __init__(self, p1, p2):
@@ -60,6 +61,14 @@ class Line:
                 return cmp(self.p2, other.p2)
         else:
             return cmp(str(self), str(other))
+
+    def next(self):
+        yield self.p1
+        yield self.p2
+
+    def reset_cache(self):
+        self._dir is None
+        self._len is None
 
     def dir(self):
         if self._dir is None:

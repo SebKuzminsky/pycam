@@ -25,9 +25,66 @@ __all__ = ["utils", "Line", "Model", "Path", "Plane", "Point", "Triangle",
            "PolygonExtractor", "TriangleKdtree", "intersection", "kdtree",
            "Matrix"]
 
-from pycam.Geometry.Point import Point
-from pycam.Geometry.Line import Line
-from pycam.Geometry.Triangle import Triangle
-from pycam.Geometry.Path import Path
-from pycam.Geometry.Plane import Plane
-from pycam.Geometry.PolygonExtractor import PolygonExtractor
+#from pycam.Geometry.Point import Point
+#from pycam.Geometry.Line import Line
+#from pycam.Geometry.Triangle import Triangle
+#from pycam.Geometry.Path import Path
+#from pycam.Geometry.Plane import Plane
+#from pycam.Geometry.PolygonExtractor import PolygonExtractor
+
+
+class TransformableContainer(object):
+    """ a base class for geometrical objects containing other elements
+
+    This class is mainly used for simplifying model transformations in a
+    consistent way.
+
+    Every subclass _must_ implement a 'next' generator returning (via yield)
+    its children.
+    Additionally a method 'reset_cache' for any custom re-initialization must
+    be provided. This method is called when all children of the object were
+    successfully transformed.
+
+    Optionally the method 'transform_by_matrix' may be used to perform
+    object-specific calculations (e.g. retaining the 'normal' vector of a
+    triangle).
+
+    The basic primitives that are part of TransformableContainer _must_
+    implement the above 'transform_by_matrix' method. These primitives are
+    not required to be a subclass of TransformableContainer.
+    """
+
+    def transform_by_matrix(self, matrix, transformed_list=None):
+        if transformed_list is None:
+            transformed_list = []
+        # Prevent any kind of loops or double transformations (e.g. Points in
+        # multiple containers (Line, Triangle, ...).
+        # Use the 'id' builtin to prevent expensive object comparions.
+        transformed_list.append(id(self))
+        for item in self.next():
+            if not id(item) in transformed_list:
+                if isinstance(item, TransformableContainer):
+                    item.transform_by_matrix(matrix, transformed_list)
+                else:
+                    # non-TransformableContainer do not care to update the
+                    # 'transformed_list'. Thus we need to do it.
+                    transformed_list.append(id(item))
+                    # Don't transmit the 'transformed_list' if the object is
+                    # not a TransformableContainer. It is not necessary and it
+                    # is hard to understand on the lowest level (e.g. Point).
+                    item.transform_by_matrix(matrix)
+        self.reset_cache()
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        raise NotImplementedError(("'%s' is a subclass of " \
+                + "'TransformableContainer' but it fails to implement the " \
+                + "'next' generator") % str(type(self)))
+
+    def reset_cache(self):
+        raise NotImplementedError(("'%s' is a subclass of " \
+                + "'TransformableContainer' but it fails to implement the " \
+                + "'reset_cache' method") % str(type(self)))
+
