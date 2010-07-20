@@ -95,7 +95,7 @@ class DropCutter:
         else:
             # first y, then x
             for y in y_steps:
-                grid.append(zip(x_steps, [y] * (len(y_steps) + 1)))
+                grid.append(zip(x_steps, [y] * (len(x_steps) + 1)))
             dim_attrs = ["y", "x"]
 
         num_of_lines = len(grid) + 1
