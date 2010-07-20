@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import Path
+from pycam.Geometry.Path import Path
 
 def _check_colinearity(p1, p2, p3):
     v1 = p2.sub(p1)

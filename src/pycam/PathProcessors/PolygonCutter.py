@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import Path
+from pycam.Geometry.Path import Path
 from pycam.Geometry.PolygonExtractor import PolygonExtractor
 
 

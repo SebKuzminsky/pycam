@@ -20,7 +20,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import Point, Line
+from pycam.Geometry.Point import Point
+from pycam.Geometry.Line import Line
 import pycam.Geometry.Model
 import pycam.Utils.log
 

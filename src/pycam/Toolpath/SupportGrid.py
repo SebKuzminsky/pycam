@@ -20,7 +20,10 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import Point, Line, Triangle, Model
+from pycam.Geometry.Point import Point
+from pycam.Geometry.Line import Line
+from pycam.Geometry.Triangle import Triangle
+from pycam.Geometry.Model import Model
 
 
 def _add_cuboid_to_model(minx, maxx, miny, maxy, minz, maxz):

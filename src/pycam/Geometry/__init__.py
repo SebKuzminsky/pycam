@@ -25,13 +25,6 @@ __all__ = ["utils", "Line", "Model", "Path", "Plane", "Point", "Triangle",
            "PolygonExtractor", "TriangleKdtree", "intersection", "kdtree",
            "Matrix"]
 
-#from pycam.Geometry.Point import Point
-#from pycam.Geometry.Line import Line
-#from pycam.Geometry.Triangle import Triangle
-#from pycam.Geometry.Path import Path
-#from pycam.Geometry.Plane import Plane
-#from pycam.Geometry.PolygonExtractor import PolygonExtractor
-
 
 class TransformableContainer(object):
     """ a base class for geometrical objects containing other elements
