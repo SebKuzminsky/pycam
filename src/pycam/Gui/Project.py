@@ -377,13 +377,13 @@ class ProjectGui:
         self.settings.add_item("simulation_details_level", sim_detail_obj.get_value, sim_detail_obj.set_value)
         # drill settings
         for objname in ("ToolDiameterControl", "TorusDiameterControl",
-                "FeedrateControl", "SpeedControl"):
+                "FeedrateControl", "SpindleSpeedControl"):
             self.gui.get_object(objname).connect("value-changed", self.handle_tool_settings_change)
         for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
             self.gui.get_object(name).connect("clicked", self.handle_tool_settings_change)
         self.gui.get_object("ToolName").connect("changed", self.handle_tool_settings_change)
         # speed and feedrate controls
-        speed_control = self.gui.get_object("SpeedControl")
+        speed_control = self.gui.get_object("SpindleSpeedControl")
         feedrate_control = self.gui.get_object("FeedrateControl")
         # connect the "consistency check" and the update-handler with all toolpath settings
         for objname in ("PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter", "ContourCutter",
@@ -751,7 +751,7 @@ class ProjectGui:
             else:
                 tool_desc += "(%.4f%s / %.4f%s)" % ( 2 * tool["tool_radius"], unit, 2 * tool["torus_radius"], unit)
             lines.append(tool_desc)
-            lines.append("Speed: %d/minute / Feedrate: %d%s/minute" % (tool["speed"], tool["feedrate"], unit))
+            lines.append("Speed: %drpm / Feedrate: %d%s/minute" % (tool["speed"], tool["feedrate"], unit))
             lines.append("Path: %s / %s" % (process["path_generator"], process["path_postprocessor"]))
             lines.append("Overlap: %d%%" % process["overlap_percent"])
             lines.append("Material allowance: %.2f%s" % (process["material_allowance"], unit))
@@ -941,7 +941,7 @@ class ProjectGui:
             self.gui.get_object("TorusDiameterLabel").hide()
         for objname, default_value in (("ToolDiameterControl", 1.0),
                 ("TorusDiameterControl", 0.25),
-                ("SpeedControl", 1000),
+                ("SpindleSpeedControl", 1000),
                 ("FeedrateControl", 200)):
             obj = self.gui.get_object(objname)
             if obj.get_value() == 0:
@@ -1127,7 +1127,7 @@ class ProjectGui:
         set_cutter_shape_name(settings["shape"])
         for objname, key in (
                 ("FeedrateControl", "feedrate"),
-                ("SpeedControl", "speed")):
+                ("SpindleSpeedControl", "speed")):
             self.gui.get_object(objname).set_value(settings[key])
         # radius -> diameter
         for objname, key in (
@@ -1146,7 +1146,7 @@ class ProjectGui:
         settings["shape"] = get_cutter_shape_name()
         for objname, key in (
                 ("FeedrateControl", "feedrate"),
-                ("SpeedControl", "speed")):
+                ("SpindleSpeedControl", "speed")):
             settings[key] = self.gui.get_object(objname).get_value()
         # diameter -> radius
         for objname, key in (

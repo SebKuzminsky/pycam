@@ -1653,10 +1653,10 @@
                                               </packing>
                                             </child>
                                             <child>
-                                              <object class="GtkLabel" id="label7">
+                                              <object class="GtkLabel" id="SpindleSpeedLabel">
                                                 <property name="visible">True</property>
                                                 <property name="xalign">0</property>
-                                                <property name="label" translatable="yes">Speed:</property>
+                                                <property name="label" translatable="yes">Spindle Speed:</property>
                                               </object>
                                               <packing>
                                                 <property name="top_attach">2</property>
@@ -1679,7 +1679,7 @@
                                               </packing>
                                             </child>
                                             <child>
-                                              <object class="GtkSpinButton" id="SpeedControl">
+                                              <object class="GtkSpinButton" id="SpindleSpeedControl">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="invisible_char">&#x2022;</property>
