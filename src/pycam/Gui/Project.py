@@ -165,7 +165,7 @@ class ProjectGui:
                 ("ExportEMCToolDefinition", self.export_emc_tools, None, None),
                 ("Quit", self.destroy, None, "<Control>q"),
                 ("GeneralSettings", self.toggle_preferences_window, None, "<Control>p"),
-                ("Toggle3DView", self.toggle_3d_view, None, "<Control>v"),
+                ("Toggle3DView", self.toggle_3d_view, None, "<Control><Shift>v"),
                 ("HelpIntroduction", self.show_help, "Introduction", "F1"),
                 ("HelpSupportedFormats", self.show_help, "SupportedFormats", None),
                 ("HelpModelTransformations", self.show_help, "ModelTransformations", None),
