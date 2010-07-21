@@ -206,6 +206,12 @@ class ContourModel(BaseModel):
         self.name = "contourmodel%d" % self.id
         self._line_groups = []
         self._item_groups.append(self._line_groups)
+        self._cached_offset_models = {}
+
+    def reset_cache(self):
+        super(ContourModel, self).reset_cache()
+        # reset the offset model cache
+        self._cached_offset_models = {}
 
     def append(self, item):
         super(ContourModel, self).append(item)
@@ -229,11 +235,18 @@ class ContourModel(BaseModel):
     def get_line_groups(self):
         return self._line_groups
 
-    def get_offset_model(self, offset):
+    def get_offset_model(self, offset, callback=None):
         """ calculate a contour model that surrounds the current model with
         a given offset.
         This is mainly useful for engravings that should not proceed _on_ the
         lines but besides these.
+        @value offset: shifting distance; positive values enlarge the model
+        @type offset: float
+        @value callback: function to call after finishing a single line.
+            It should return True if the user interrupted the operation.
+        @type callback: callable
+        @returns: the new shifted model
+        @rtype: pycam.Geometry.Model.Model
         """
         def get_parallel_line(line, offset):
             if offset == 0:
@@ -287,12 +300,17 @@ class ContourModel(BaseModel):
                     # shorten both lines according to the new intersection
                     l1.p2 = intersection
                     l2.p1 = intersection
+        # use a cached offset model if it exists
+        if offset in self._cached_offset_models:
+            return self._cached_offset_models[offset]
         result = ContourModel()
         for group in self._line_groups:
             closed_group = (len(group) > 1) and (group[-1].p2 == group[0].p1)
             new_group = []
             for line in group:
                 new_group.append(get_parallel_line(line, offset))
+            # counter for the progress callback
+            lines_to_be_processed = len(new_group)
             finished = False
             while not finished:
                 if len(new_group) > 1:
@@ -306,6 +324,13 @@ class ContourModel(BaseModel):
                         l1 = new_group[index - 1]
                         l2 = new_group[index]
                         do_lines_intersection(l1, l2)
+                        # Don't call the "progress" callback more times than the
+                        # number of lines in this group.
+                        if (lines_to_be_processed > 0) \
+                                and callback and callback():
+                            # the user requested "quit"
+                            return None
+                        lines_to_be_processed -= 1
                 # Remove all lines that were marked as obsolete during
                 # intersection calculation.
                 clean_group = [line for line in new_group
@@ -316,11 +341,28 @@ class ContourModel(BaseModel):
                     finished = True
                 else:
                     new_group = clean_group
+            # "fix" the progress counter (it expected as many lines as there
+            # are items in the group. This causes small progress jumps.
+            if callback:
+                while lines_to_be_processed > 0:
+                    if callback():
+                        return None
+                    lines_to_be_processed -= 1
             for line in new_group:
                 result.append(line)
+        # cache the result
+        self._cached_offset_models[offset] = result
         return result
 
-    def check_for_collisions(self):
+    def check_for_collisions(self, callback=None):
+        """ check if lines in different line groups of this model collide
+
+        Returns a pycam.Geometry.Point.Point instance in case of an
+        intersection.
+        Returns None if the optional "callback" returns True (e.g. the user
+        interrupted the operation).
+        Otherwise it returns False if no intersections were found.
+        """
         def get_bounds_of_group(group):
             minx, maxx, miny, maxy = None, None, None, None
             for line in group:
@@ -337,27 +379,41 @@ class ContourModel(BaseModel):
                 if (maxy is None) or (maxy > lmaxy):
                     maxy = lmaxy
             return (minx, maxx, miny, maxy)
-        def check_bounds_of_groups(group1, group2):
-            bound1 = get_bounds_of_group(group1)
-            bound2 = get_bounds_of_group(group2)
-            if ((bound1[0] < bound2[0]) and not (bound1[1] > bound2[1])) or \
-                    ((bound2[0] < bound1[0]) and not (bound2[1] > bound1[1])):
+        def check_bounds_of_groups(bound1, bound2):
+            if ((bound1[0] <= bound2[0] <= bound1[1]) \
+                    or (bound1[0] <= bound2[1] <= bound1[1]) \
+                    or (bound2[0] <= bound1[0] <= bound2[1]) \
+                    or (bound2[0] <= bound1[1] <= bound2[1])):
                 # the x boundaries overlap
-                if ((bound1[2] < bound2[2]) and not (bound1[3] > bound2[3])) \
-                        or ((bound2[2] < bound1[2]) \
-                        and not (bound2[3] > bound1[3])):
-                    # y also overlap
+                if ((bound1[2] <= bound2[2] <= bound1[3]) \
+                        or (bound1[2] <= bound2[3] <= bound1[3]) \
+                        or (bound2[2] <= bound1[2] <= bound2[3]) \
+                        or (bound2[2] <= bound1[3] <= bound2[3])):
+                    # also the y boundaries overlap
                     return True
             return False
         # check each pair of line groups for intersections
+        # first: cache the bounds of each group
+        bounds = {}
+        for group in self._line_groups:
+            bounds[id(group)] = get_bounds_of_group(group)
+        # now start to look for intersections
         for group1 in self._line_groups:
             for group2 in self._line_groups:
+                # don't compare a group with itself
+                if group1 is group2:
+                    continue
                 # check if both groups overlap - otherwise skip this pair
-                if check_bounds_of_groups(group1, group2):
+                if check_bounds_of_groups(bounds[id(group1)],
+                        bounds[id(group2)]):
                     # check each pair of lines for intersections
                     for line1 in group1:
                         for line2 in group2:
-                            if line1.get_intersection(line2):
-                                return True
+                            intersection = line1.get_intersection(line2)
+                            if intersection:
+                                return intersection
+            # update the progress visualization and quit if requested
+            if callback and callback():
+                return None
         return False
 
