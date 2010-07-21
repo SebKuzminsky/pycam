@@ -25,6 +25,7 @@ import pycam.PathProcessors
 import pycam.Cutters
 import pycam.Toolpath.SupportGrid
 import pycam.Geometry.Model
+from pycam.Utils import ProgressCounter
 
 
 DIRECTIONS = frozenset(("x", "y", "xy"))
@@ -156,14 +157,34 @@ def generate_toolpath(model, tool_settings=None,
     if (not contour_model is None) and (engrave_offset > 0):
         if not callback is None:
             callback(text="Preparing contour model with offset ...")
-        contour_model = contour_model.get_offset_model(engrave_offset)
+            progress_callback = ProgressCounter(len(contour_model.get_lines()),
+                    callback).increment
+        else:
+            progress_callback = None
+        contour_model = contour_model.get_offset_model(engrave_offset,
+                callback=progress_callback)
         if not callback is None:
-            callback(text="Checking contour model with offset for collisions " \
-                    + "...")
-        if contour_model.check_for_collisions():
-            return "The contour model contains colliding line groups." \
-                    + " This is not allowed in combination with an" \
-                    + " engraving offset."
+            # reset percentage counter after the contour model calculation
+            callback(percent=0)
+            if callback(text="Checking contour model with offset for " \
+                    + "collisions ..."):
+                # quit requested
+                return None
+            progress_callback = ProgressCounter(
+                    len(contour_model.get_line_groups()), callback).increment
+        else:
+            progress_callback = None
+        result = contour_model.check_for_collisions(callback=progress_callback)
+        if result is None:
+            return None
+        elif result:
+            return "The contour model contains colliding line groups. " \
+                    + "This is not allowed in combination with an " \
+                    + "engraving offset.\nA collision was detected at " \
+                    + "(%.2f, %.2f, %.2f)." % (result.x, result.y, result.z)
+        else:
+            # no collisions and no user interruption
+            pass
     # Due to some weirdness the height of the drill must be bigger than the
     # object's size. Otherwise some collisions are not detected.
     cutter_height = 4 * (maxy - miny)

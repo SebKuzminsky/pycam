@@ -2131,7 +2131,11 @@ class ProjectGui:
 
         log.info("Toolpath generation time: %f" % (time.time() - start_time))
 
-        if isinstance(toolpath, basestring):
+        if toolpath is None:
+            # user interruption
+            # return "False" if the action was cancelled
+            return not self._progress_cancel_requested
+        elif isinstance(toolpath, basestring):
             # an error occoured - "toolpath" contains the error message
             log.error("Failed to generate toolpath: %s" % toolpath)
             # we were not successful (similar to a "cancel" request)
