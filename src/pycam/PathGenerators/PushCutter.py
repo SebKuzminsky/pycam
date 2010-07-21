@@ -22,8 +22,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.Point import Point
-from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles, \
-        ProgressCounter
+from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
+from pycam.Utils import ProgressCounter
 import math
 
 

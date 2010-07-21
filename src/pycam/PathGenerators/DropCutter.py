@@ -23,8 +23,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry import Point
 from pycam.Geometry.utils import INFINITE
-from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode, \
-        ProgressCounter
+from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode
+from pycam.Utils import ProgressCounter
 import pycam.Utils.log
 import math
 

@@ -20,4 +20,24 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = [ "iterators", "polynomials"]
+__all__ = [ "iterators", "polynomials", "ProgressCounter"]
+
+
+class ProgressCounter:
+
+    def __init__(self, max_value, update_callback):
+        self.max_value = max_value
+        self.current_value = 0
+        self.update_callback = update_callback
+
+    def increment(self):
+        self.current_value += 1
+        if self.update_callback:
+            # "True" means: "quit requested via GUI"
+            return self.update_callback(percent=self.get_percent())
+        else:
+            return False
+
+    def get_percent(self):
+        return 100.0 * self.current_value / self.max_value
+

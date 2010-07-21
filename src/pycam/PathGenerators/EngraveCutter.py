@@ -25,7 +25,8 @@ import pycam.PathProcessors.PathAccumulator
 from pycam.Geometry.Point import Point
 from pycam.Geometry.utils import INFINITE
 from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode, \
-        get_free_paths_ode, get_free_paths_triangles, ProgressCounter
+        get_free_paths_ode, get_free_paths_triangles
+from pycam.Utils import ProgressCounter
 import pycam.Utils.log
 import math
 
