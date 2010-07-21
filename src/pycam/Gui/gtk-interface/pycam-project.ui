@@ -5465,7 +5465,9 @@ Any selected group of dimensions will be scaled accordingly.</property>
     <property name="step_increment">0.10000000000000001</property>
   </object>
   <object class="GtkAdjustment" id="EngraveOffsetValue">
+    <property name="lower">-1000</property>
     <property name="upper">1000</property>
+    <property name="step_increment">0.5</property>
   </object>
   <object class="GtkAction" id="HelpMenu">
     <property name="label">_Help</property>
