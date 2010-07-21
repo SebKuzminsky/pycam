@@ -63,9 +63,6 @@ def get_free_paths_triangles(model, cutter, p1, p2):
             minz, maxx + cutter.radius, maxy + cutter.radius, INFINITE)
 
     for t in triangles:
-        # Normals point outward... and we want to approach the model from the
-        # outside.
-        n = t.normal().dot(forward)
         cutter.moveto(p1)
         (cl, d) = cutter.intersect(backward, t)
         if cl:
@@ -167,7 +164,6 @@ def drop_cutter_test(cutter, point, model):
     tmax = None
     cutter.moveto(point)
     for t in model.triangles():
-        if t.normal().z < 0: continue
         cl = cutter.drop(t)
         if cl and cl.z > zmax and cl.z < INFINITE:
             zmax = cl.z
@@ -236,7 +232,6 @@ def get_max_height_triangles(model, cutter, x, y, minz, maxz, order=None,
     triangles = model.triangles(box_x_min, box_y_min, box_z_min, box_x_max,
             box_y_max, box_z_max)
     for t in triangles:
-        if t.normal().z < 0: continue
         cut = cutter.drop(t)
         if cut and (cut.z > height_max or height_max is None):
             height_max = cut.z
