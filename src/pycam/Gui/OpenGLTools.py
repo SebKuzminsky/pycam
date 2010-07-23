@@ -320,11 +320,29 @@ class ModelViewWindowGL:
             get_state = getattr(event, "get_state")
         except AttributeError:
             return
-        if not (0 <= keyval <= 255):
-            # e.g. "shift" key
-            return
-        if chr(keyval) in ('l', 'm', 's'):
-            if (chr(keyval) == 'l'):
+        # define arrow keys and "vi"-like navigation keys
+        move_keys_dict = {
+                gtk.keysyms.Left: (1, 0),
+                gtk.keysyms.Down: (0, -1),
+                gtk.keysyms.Up: (0, 1),
+                gtk.keysyms.Right: (-1, 0),
+                ord("h"): (1, 0),
+                ord("j"): (0, -1),
+                ord("k"): (0, 1),
+                ord("l"): (-1, 0),
+                ord("H"): (1, 0),
+                ord("J"): (0, -1),
+                ord("K"): (0, 1),
+                ord("L"): (-1, 0),
+        }
+        def get_char(value):
+            # avoid exceptions
+            if 0 <= value <= 255:
+                return chr(value)
+            else:
+                return None
+        if get_char(keyval) in ('i', 'm', 's'):
+            if (chr(keyval) == 'i'):
                 key = "view_light"
             elif (chr(keyval) == 'm'):
                 key = "view_polygon"
@@ -337,7 +355,37 @@ class ModelViewWindowGL:
             # re-init gl settings
             self.glsetup()
             self.paint()
+        elif get_char(keyval) in ("+", "-"):
+            if chr(keyval) == "+":
+                scale = 0.8
+            else:
+                scale = 1.25
+            self.camera.scale_distance(scale)
+            self._paint_ignore_busy()
+        elif keyval in move_keys_dict.keys():
+            move_x, move_y = move_keys_dict[keyval]
+            if get_state() == gtk.gdk.SHIFT_MASK:
+                # shift key pressed -> rotation
+                base = 0
+                factor = 10
+                self.camera.rotate_camera_by_screen(base, base,
+                        base - factor * move_x, base - factor * move_y)
+            else:
+                # no shift key -> moving
+                obj_dim = []
+                obj_dim.append(self.settings.get("maxx") \
+                        - self.settings.get("minx"))
+                obj_dim.append(self.settings.get("maxy") \
+                        - self.settings.get("miny"))
+                obj_dim.append(self.settings.get("maxz") \
+                        - self.settings.get("minz"))
+                max_dim = max(obj_dim)
+                factor = 50
+                self.camera.move_camera_by_screen(move_x * factor,
+                        move_y * factor, max_dim)
+            self._paint_ignore_busy()
         else:
+            # see dir(gtk.keysyms)
             #print "Key pressed: %s (%s)" % (chr(keyval), get_state())
             pass
 
