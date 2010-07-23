@@ -78,7 +78,7 @@ class EngraveCutter:
                 break
 
             for line_group in line_groups:
-                for line in line_group:
+                for line in line_group.next():
                     self.GenerateToolPathLinePush(self.pa_push, line, z,
                             draw_callback)
                     if progress_counter.increment():
@@ -107,7 +107,7 @@ class EngraveCutter:
         for line_group in self.contour_model.get_line_groups():
             self.pa_drop.new_direction(0)
             self.pa_drop.new_scanline()
-            for line in line_group:
+            for line in line_group.get_lines():
                 self.GenerateToolPathLineDrop(self.pa_drop, line, minz, maxz,
                         horiz_step, draw_callback=draw_callback)
                 if progress_counter.increment():

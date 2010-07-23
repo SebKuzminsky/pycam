@@ -157,8 +157,8 @@ def generate_toolpath(model, tool_settings=None,
     if (not contour_model is None) and (engrave_offset > 0):
         if not callback is None:
             callback(text="Preparing contour model with offset ...")
-            progress_callback = ProgressCounter(len(contour_model.get_lines()),
-                    callback).increment
+            progress_callback = ProgressCounter(
+                    len(contour_model.get_line_groups()), callback).increment
         else:
             progress_callback = None
         contour_model = contour_model.get_offset_model(engrave_offset,
