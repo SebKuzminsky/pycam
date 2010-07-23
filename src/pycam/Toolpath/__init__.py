@@ -23,7 +23,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 __all__ = ["ToolPathList", "ToolPath", "Generator"]
 
 from pycam.Geometry.Point import Point
-import pycam.Gui.Settings
 import pycam.Utils.log
 import random
 import os
