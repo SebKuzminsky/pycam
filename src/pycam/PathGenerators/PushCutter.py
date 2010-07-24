@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.Point import Point
 from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
+from pycam.Geometry.utils import epsilon
 from pycam.Utils import ProgressCounter
 import math
 
@@ -38,8 +39,14 @@ class PushCutter:
     def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, dx, dy, dz,
             draw_callback=None):
         # calculate the number of steps
-        num_of_layers = 1 + int(math.ceil(abs(maxz - minz) / dz))
-        z_step = abs(maxz - minz) / max(1, (num_of_layers - 1))
+        # Sometimes there is a floating point accuracy issue: make sure
+        # that only one layer is drawn, if maxz and minz are almost the same.
+        if abs(maxz - minz) < epsilon:
+            diff_z = 0
+        else:
+            diff_z = abs(maxz - minz)
+        num_of_layers = 1 + int(math.ceil(diff_z / dz))
+        z_step = diff_z / max(1, (num_of_layers - 1))
 
         lines_per_layer = 0
         if dx != 0:
