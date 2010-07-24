@@ -95,7 +95,6 @@ class HookHandler(logging.Handler):
 
     def emit(self, record):
         message = self.format(record)
-        print dir(record)
         message_type = record.levelname
         self.callback(message_type, message, record=record)
 
