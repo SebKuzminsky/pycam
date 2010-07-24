@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry import TransformableContainer
 from pycam.Geometry.Point import Point
+from pycam.Geometry.Plane import Plane
 from pycam.Geometry.utils import epsilon
 import pycam.Geometry.Matrix as Matrix
 import math
@@ -195,6 +196,60 @@ class Line(TransformableContainer):
         else:
             # intersection outside of the length of line(x1, x2)
             return None
+
+    def get_cropped_line(self, minx, maxx, miny, maxy, minz, maxz):
+        if (minx <= self.minx() <= self.maxx() <= maxx) \
+                and (miny <= self.miny() <= self.maxy() <= maxy) \
+                and (minz <= self.minz() <= self.maxz() <= maxz):
+            return Line(line.p1, line.p2)
+        elif (maxx < self.minx()) or (self.maxx() < minx) \
+                or (maxy < self.miny()) or (self.maxy() < miny) \
+                or (maxz < self.minz()) or (self.maxz() < minz):
+            return None
+        else:
+            # the line needs to be cropped
+            # generate the six planes of the cube for possible intersections
+            minp = Point(minx, miny, minz)
+            maxp = Point(maxx, maxy, maxz)
+            planes = [
+                    Plane(minp, Point(1, 0, 0)),
+                    Plane(minp, Point(0, 1, 0)),
+                    Plane(minp, Point(0, 0, 1)),
+                    Plane(maxp, Point(1, 0, 0)),
+                    Plane(maxp, Point(0, 1, 0)),
+                    Plane(maxp, Point(0, 0, 1)),
+            ]
+            # calculate all intersections
+            intersections = [plane.intersect_point(self.dir(), self.p1)
+                    for plane in planes]
+            # remove all intersections outside the box and outside the line
+            valid_intersections = [(cp, dist) for cp, dist in intersections
+                    if cp and (0 <= dist <= self.len()) \
+                            and (minx <= cp.x <= maxx) \
+                            and (miny <= cp.y <= maxy) \
+                            and (minz <= cp.z <= maxz)]
+            # sort the intersections according to their distance to self.p1
+            valid_intersections.sort(
+                    cmp=lambda (cp1, l1), (cp2, l2): cmp(l1, l2))
+            # Check if p1 is within the box - otherwise use the closest
+            # intersection.
+            if (minx <= self.p1.x <= maxx) and (miny <= self.p1.y <= maxy) \
+                    and (minz <= self.p1.z <= maxz):
+                new_p1 = self.p1
+            else:
+                new_p1 = valid_intersections[0][0]
+            # Check if p2 is within the box - otherwise use the intersection
+            # most distant from p1.
+            if (minx <= self.p2.x <= maxx) and (miny <= self.p2.y <= maxy) \
+                    and (minz <= self.p2.z <= maxz):
+                new_p2 = self.p2
+            else:
+                new_p2 = valid_intersections[-1][0]
+            if new_p1 == new_p2:
+                # no real line
+                return None
+            else:
+                return Line(new_p1, new_p2)
 
 
 class LineGroup(TransformableContainer):
@@ -434,4 +489,42 @@ class LineGroup(TransformableContainer):
                 for line in cleaned_line_group:
                     group.append(line)
                 return group
+
+    def get_cropped_line_groups(self, minx, maxx, miny, maxy, minz, maxz):
+        """ crop a line group according to a 3d bounding box
+
+        The result is a list of LineGroups, since the bounding box can possibly
+        break the original line group into several non-connected pieces.
+        """
+        new_groups = []
+        for line in self._lines:
+            new_line = None
+            if (minx <= line.minx() <= line.maxx() <= maxx) \
+                    and (miny <= line.miny() <= line.maxy() <= maxy) \
+                    and (minz <= line.minz() <= line.maxz() <= maxz):
+                new_line = line
+            else:
+                cropped_line = line.get_cropped_line(minx, maxx, miny, maxy,
+                        minz, maxz)
+                if not cropped_line is None:
+                    new_line = cropped_line
+            # add the new line to one of the line groups
+            if not new_line is None:
+                # try to find a suitable line group
+                for new_group in new_groups:
+                    try:
+                        new_group.append(new_line)
+                        break
+                    except ValueError:
+                        # the line did not fit to this group (segment is broken)
+                        pass
+                else:
+                    # no suitable group was found - we create a new one
+                    new_group = LineGroup(self.get_offset_matrix())
+                    new_group.append(new_line)
+                    new_groups.append(new_group)
+        if len(new_groups) > 0:
+            return new_groups
+        else:
+            return None
 

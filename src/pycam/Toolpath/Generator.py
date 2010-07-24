@@ -185,6 +185,12 @@ def generate_toolpath(model, tool_settings=None,
         else:
             # no collisions and no user interruption
             pass
+    # limit the contour model to the bounding box
+    if contour_model:
+        contour_model = contour_model.get_cropped_model(minx, maxx, miny, maxy,
+                minz, maxz)
+        if contour_model is None:
+            return "No part of the contour model is within the bounding box."
     # Due to some weirdness the height of the drill must be bigger than the
     # object's size. Otherwise some collisions are not detected.
     cutter_height = 4 * (maxy - miny)

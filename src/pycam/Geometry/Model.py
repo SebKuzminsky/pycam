@@ -231,6 +231,21 @@ class ContourModel(BaseModel):
     def get_line_groups(self):
         return self._line_groups
 
+    def get_cropped_model(self, minx, maxx, miny, maxy, minz, maxz):
+        new_line_groups = []
+        for group in self._line_groups:
+            new_groups = group.get_cropped_line_groups(minx, maxx, miny, maxy,
+                    minz, maxz)
+            if not new_groups is None:
+                new_line_groups.extend(new_groups)
+        if len(new_line_groups) > 0:
+            result = ContourModel()
+            for group in new_line_groups:
+                result.append(group)
+            return result
+        else:
+            return None
+
     def get_offset_model(self, offset, callback=None):
         """ calculate a contour model that surrounds the current model with
         a given offset.
