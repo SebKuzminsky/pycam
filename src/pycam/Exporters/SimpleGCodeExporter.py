@@ -29,7 +29,7 @@ import os
 
 class SimpleGCodeExporter:
 
-    def __init__(self, destination, unit, startx, starty, startz, feedrate,
+    def __init__(self, destination, unit, feedrate,
             speed, safety_height=None, tool_id=1, finish_program=False,
             max_skip_safety_distance=None, comment=None):
         self._last_path_point = None
@@ -50,14 +50,12 @@ class SimpleGCodeExporter:
             self.destination.write("G21\n")
         else:
             self.destination.write("G20\n")
-        self.gcode = gcode(startx, starty, startz, safetyheight=safety_height,
-                tool_id=tool_id)
-        gc = self.gcode
+        self.gcode = gcode(safetyheight=safety_height, tool_id=tool_id)
         self._finish_program_on_exit = finish_program
-        self.destination.write(gc.begin() + "\n")
+        self.destination.write(self.gcode.begin() + "\n")
         self.destination.write("F" + str(feedrate) + "\n")
         self.destination.write("S" + str(speed) + "\n")
-        self.destination.write(gc.safety() + "\n")
+        self.destination.write(self.gcode.safety() + "\n")
 
     def close(self):
         gc = self.gcode
@@ -104,10 +102,8 @@ class SimpleGCodeExporter:
                     self._last_path_point.y, self.gcode.safetyheight) + "\n")
 
 
-def ExportPathList(destination, pathlist, unit, startx, starty, startz,
-        feedrate, speed, **kwargs):
-    exporter = SimpleGCodeExporter(destination, unit, startx, starty, startz,
-            feedrate, speed, **kwargs)
+def ExportPathList(destination, pathlist, unit, feedrate, speed, **kwargs):
+    exporter = SimpleGCodeExporter(destination, unit, feedrate, speed, **kwargs)
     exporter.AddPathList(pathlist)
     exporter.close()
 

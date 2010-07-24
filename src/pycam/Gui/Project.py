@@ -2338,7 +2338,6 @@ class ProjectGui:
                     is_last_loop = True
                 else:
                     is_last_loop = False
-                start_pos = tp.get_start_position()
                 settings = tp.get_toolpath_settings()
                 process = settings.get_process_settings()
                 tool = settings.get_tool_settings()
@@ -2346,9 +2345,9 @@ class ProjectGui:
                 meta_data.append(self.get_meta_data())
                 meta_data.append(tp.get_meta_data())
                 pycam.Exporters.SimpleGCodeExporter.ExportPathList(destination,
-                        tp.get_path(), settings.get_unit_size(), start_pos.x,
-                        start_pos.y, start_pos.z, tool["feedrate"],
-                        tool["speed"], safety_height=process["safety_height"],
+                        tp.get_path(), settings.get_unit_size(),
+                        tool["feedrate"], tool["speed"],
+                        safety_height=process["safety_height"],
                         tool_id=tool["id"], finish_program=is_last_loop,
                         max_skip_safety_distance=2*tool["tool_radius"],
                         comment=os.linesep.join(meta_data))

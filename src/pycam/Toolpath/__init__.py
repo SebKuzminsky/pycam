@@ -79,16 +79,6 @@ class ToolPath:
     def get_path(self):
         return self.toolpath
 
-    def get_start_position(self):
-        safety_height = \
-                self.toolpath_settings.get_process_settings()["safety_height"]
-        for path in self.toolpath:
-            if path.points:
-                p = path.points[0]
-                return Point(p.x, p.y, safety_height)
-        else:
-            return Point(0, 0, safety_height)
-
     def get_bounding_box(self):
         box = self.toolpath_settings.get_bounds()
         return (box["minx"], box["maxx"], box["miny"], box["maxy"], box["minz"],

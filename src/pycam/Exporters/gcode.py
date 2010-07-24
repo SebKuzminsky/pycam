@@ -20,23 +20,19 @@ class gcode:
     lastx = lasty = lastz = lasta = lastgcode = None
     lastfeed = None
 
-    def __init__(self, startx, starty, startz, homeheight=1.5,
-            safetyheight=None, tool_id=1):
-        self.startx = startx
-        self.starty = starty
-        self.startz = startz
+    def __init__(self, homeheight=1.5, safetyheight=None, tool_id=1):
         self.tool_id = tool_id
         if safetyheight is None:
-            safetyheight = max(max(startz, homeheight), 0.04)
-        self.homeheight = max(startz, homeheight)
+            safetyheight = max(homeheight, 0.04)
+        self.homeheight = homeheight
         self.safetyheight = safetyheight
-        self.lastz = max(self.homeheight, safetyheight)
+        self.lastz = self.safetyheight
 
     def begin(self):
+        # no x/y positioning - just go up to safety height
         return "G40 G49 G54 G80 G90\n" \
                 + "G04 P3 T%d M6\n" % self.tool_id \
-                + "G00 X%.4f Y%.4f Z%.4f\n" \
-                % (self.startx, self.starty, self.startz)
+                + "G00 Z%.4f\n" % self.safetyheight
 
     def end(self):
         return self.safety() + "\n" + "M2\n"
