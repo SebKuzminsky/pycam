@@ -235,7 +235,14 @@ class PolygonExtractor:
         curr_path = Iterator(self.curr_path_list)
 
         winding = 0
-        while (prev_point.remains() > 0) or (curr_point.remains() > 0):
+        loop_counter = 0
+        while (prev_point.remains() > 1) or (curr_point.remains() > 1):
+            loop_counter += 1
+            if loop_counter % 1000 == 999:
+                print "prev: %s" % str(prev_point.remains())
+                print "curr: %s" % str(curr_point.remains())
+                if loop_counter > 100000:
+                    break
             if DEBUG_POLYGONEXTRACTOR:
                 print "num_prev=%d, num_curr=%d" \
                         % (prev_point.remains(), curr_point.remains())

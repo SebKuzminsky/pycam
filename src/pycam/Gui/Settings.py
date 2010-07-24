@@ -299,6 +299,7 @@ process: 3
     }
 
     DEFAULT_SUFFIX = "Default"
+    REFERENCE_TAG = "_reference_"
 
     def __init__(self):
         self.config = None
@@ -404,8 +405,12 @@ process: 3
                                 raw=raw)
                     except ConfigParser.NoOptionError:
                         try:
-                            value_raw = self.config.get(
-                                    prefix + self.DEFAULT_SUFFIX, key, raw=raw)
+                            try:
+                                value_raw = self.config.get(
+                                        prefix + self.DEFAULT_SUFFIX, key, raw=raw)
+                            except (ConfigParser.NoSectionError,
+                                    ConfigParser.NoOptionError):
+                                value_raw = None
                         except ConfigParser.NoOptionError:
                             value_raw = None
                     if not value_raw is None:
@@ -448,6 +453,11 @@ process: 3
             try:
                 return lists[key].index(value)
             except ValueError:
+                # special handling for non-direct object references ("bounds")
+                for index, item in enumerate(lists[key]):
+                    if (self.REFERENCE_TAG in item) \
+                            and (value is item[self.REFERENCE_TAG]):
+                        return index
                 return None
         else:
             return str(value_type(value))
@@ -472,6 +482,8 @@ process: 3
             for index, axis in enumerate("xyz"):
                 result["%s_low" % axis] = low[index]
                 result["%s_high" % axis] = high[index]
+            # special handler to allow tasks to track this new object
+            result[self.REFERENCE_TAG] = b
             return result
         result = []
         if tools is None:
