@@ -20,6 +20,7 @@
     </menu>
     <menu action="WindowMenu">
       <menuitem action="Toggle3DView"/>
+      <menuitem action="ToggleLogWindow"/>
     </menu>
     <menu action="HelpMenu">
       <menuitem action="HelpIntroduction"/>

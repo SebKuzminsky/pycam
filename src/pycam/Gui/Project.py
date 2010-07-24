@@ -166,6 +166,7 @@ class ProjectGui:
                 ("Quit", self.destroy, None, "<Control>q"),
                 ("GeneralSettings", self.toggle_preferences_window, None, "<Control>p"),
                 ("Toggle3DView", self.toggle_3d_view, None, "<Control><Shift>v"),
+                ("ToggleLogWindow", self.toggle_log_window, None, "<Control>l"),
                 ("HelpIntroduction", self.show_help, "Introduction", "F1"),
                 ("HelpSupportedFormats", self.show_help, "SupportedFormats", None),
                 ("HelpModelTransformations", self.show_help, "ModelTransformations", None),
@@ -181,7 +182,7 @@ class ProjectGui:
                 ("BugTracker", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104176", None),
                 ("FeatureRequest", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104179", None)):
             item = self.gui.get_object(objname)
-            if objname == "Toggle3DView":
+            if objname in ("Toggle3DView", "ToggleLogWindow"):
                 action = "toggled"
             else:
                 action = "activate"
@@ -212,6 +213,14 @@ class ProjectGui:
         # TODO: fix this ugly hack!
         self.gui.get_object("AboutWindowButtons").get_children()[-1].connect("clicked", self.toggle_about_window, False)
         self.about_window.connect("delete-event", self.toggle_about_window, False)
+        # "log" window
+        self.log_window = self.gui.get_object("LogWindow")
+        self.log_window.set_default_size(500, 400)
+        self.log_window.connect("delete-event", self.toggle_log_window, False)
+        self.log_window.connect("destroy", self.toggle_log_window, False)
+        self.gui.get_object("LogWindowClose").connect("clicked", self.toggle_log_window, False)
+        self.gui.get_object("LogWindowClear").connect("clicked", self.clear_log_window)
+        self.log_model = self.gui.get_object("LogWindowList")
         # set defaults
         self.model = None
         self.toolpath = pycam.Toolpath.ToolPathList()
@@ -511,6 +520,7 @@ class ProjectGui:
         self.window.add_accel_group(self._accel_group)
         self.about_window.add_accel_group(self._accel_group)
         self.preferences_window.add_accel_group(self._accel_group)
+        self.log_window.add_accel_group(self._accel_group)
         # load menu data
         gtk_menu_file = get_data_file_location(GTKMENU_FILE)
         if gtk_menu_file is None:
@@ -536,6 +546,8 @@ class ProjectGui:
         if not self.no_dialog:
             # register a logging handler for displaying error messages
             pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
+            # register a callback for the log window
+            pycam.Utils.log.add_hook(self.add_log_message)
             self.window.show()
 
     def update_all_controls(self):
@@ -984,6 +996,33 @@ class ProjectGui:
             self.preferences_window.hide()
         self._preferences_window_visible = state
         # don't close the window - just hide it (for "delete-event")
+        return True
+
+    def add_log_message(self, title, message, record=None):
+        timestamp = datetime.datetime.fromtimestamp(record.created).strftime("%H:%M")
+        self.log_model.append((timestamp, title, message))
+
+    @gui_activity_guard
+    def clear_log_window(self, widget=None):
+        self.log_model.clear()
+
+    @gui_activity_guard
+    def toggle_log_window(self, widget=None, value=None, action=None):
+        toggle_log_checkbox = self.gui.get_object("ToggleLogWindow")
+        checkbox_state = toggle_log_checkbox.get_active()
+        if value is None:
+            new_state = checkbox_state
+        else:
+            if action is None:
+                new_state = value
+            else:
+                new_state = action
+        if new_state:
+            self.log_window.show()
+        else:
+            self.log_window.hide()
+        toggle_log_checkbox.set_active(new_state)
+        # don't destroy the window with a "destroy" event
         return True
 
     @gui_activity_guard

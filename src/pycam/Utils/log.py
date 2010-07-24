@@ -48,6 +48,13 @@ def add_stream(stream, level=None):
         logstream.setLevel(level)
     log.addHandler(logstream)
 
+def add_hook(callback, level=None):
+    log = get_logger()
+    loghook = HookHandler(callback)
+    if not level is None:
+        loghook.setLevel(level)
+    log.addHandler(loghook)
+
 def add_gtk_gui(parent_window, level=None):
     log = get_logger()
     loggui = GTKHandler(parent_window)
@@ -79,4 +86,16 @@ class GTKHandler(logging.Handler):
         window.set_title(message_title)
         window.run()
         window.destroy()
+
+class HookHandler(logging.Handler):
+
+    def __init__(self, callback, **kwargs):
+        logging.Handler.__init__(self, **kwargs)
+        self.callback = callback
+
+    def emit(self, record):
+        message = self.format(record)
+        print dir(record)
+        message_type = record.levelname
+        self.callback(message_type, message, record=record)
 
