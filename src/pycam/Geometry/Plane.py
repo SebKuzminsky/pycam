@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry.utils import INFINITE
+from pycam.Geometry.Point import Point
 
 class Plane:
     id = 0
@@ -31,4 +33,15 @@ class Plane:
 
     def __repr__(self):
         return "Plane<%s,%s>" % (self.p, self.n)
+
+    def intersect_point(self, direction, point):
+        if direction.norm() != 1:
+            # calculations will go wrong, if the direction is not a unit vector
+            direction = Point(direction.x, direction.y, direction.z).normalize()
+        denom = self.n.dot(direction)
+        if denom == 0:
+            return (None, INFINITE)
+        l = -(self.n.dot(point) - self.n.dot(self.p)) / denom
+        cp = point.add(direction.mul(l))
+        return (cp, l)
 

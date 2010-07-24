@@ -59,14 +59,6 @@ def intersect_lines(xl, zl, nxl, nzl, xm, zm, nxm, nzm):
         pass
     return (None, None)
 
-def intersect_plane_point(plane, direction, point):
-    denom = plane.n.dot(direction)
-    if denom == 0:
-        return (None, INFINITE)
-    l = -(plane.n.dot(point) - plane.n.dot(plane.p)) / denom
-    cp = point.add(direction.mul(l))
-    return (cp, l)
-
 def intersect_cylinder_point(center, axis, radius, radiussq, direction, point):
     # take a plane along direction and axis
     n = direction.cross(axis)
@@ -79,9 +71,9 @@ def intersect_cylinder_point(center, axis, radius, radiussq, direction, point):
     d2 = sqrt(radiussq-d*d)
     ccl = center.add(n.mul(d)).add(direction.mul(d2))
     # take plane through ccl and axis
-    p = Plane(ccl, direction)
+    plane = Plane(ccl, direction)
     # intersect point with plane
-    (ccp, l)=intersect_plane_point(p, direction, point)
+    (ccp, l) = plane.intersect_point(direction, point)
     return (ccp, point, -l)
 
 def intersect_cylinder_line(center, axis, radius, radiussq, direction, edge):
@@ -107,17 +99,17 @@ def intersect_cylinder_line(center, axis, radius, radiussq, direction, edge):
         # intersects line...
         return (None, None, INFINITE)
     n2.normalize()
-    p = Plane(ccl, n2)
+    plane1 = Plane(ccl, n2)
     # intersect this plane with the line, this gives us the contact point
-    (cp, l) = intersect_plane_point(p, d, edge.p1)
+    (cp, l) = plane1.intersect_point(d, edge.p1)
     if not cp:
         return (None, None, INFINITE)
     # now take a plane through the contact line and perpendicular to the
     # direction (3)
-    p2 = Plane(ccl, direction)
+    plane2 = Plane(ccl, direction)
     # the intersection of this plane (3) with the line through the contact point
     # gives us the cutter contact point
-    (ccp, l) = intersect_plane_point(p2, direction, cp)
+    (ccp, l) = plane2.intersect_point(direction, cp)
     cp = ccp.add(direction.mul(-l))
     return (ccp, cp, -l)
 
@@ -129,21 +121,21 @@ def intersect_circle_plane(center, radius, direction, triangle):
     # project onto z=0
     n2 = Point(n.x, n.y, 0)
     if n2.normsq() == 0:
-        (cp, d) = intersect_plane_point(triangle.plane(), direction, center)
+        (cp, d) = triangle.plane().intersect_point(direction, center)
         ccp = cp.sub(direction.mul(d))
         return (ccp, cp, d)
     n2.normalize()
     # the cutter contact point is on the circle, where the surface normal is n
     ccp = center.add(n2.mul(-radius))
     # intersect the plane with a line through the contact point
-    (cp, d) = intersect_plane_point(triangle.plane(), direction, ccp)
+    (cp, d) = triangle.plane().intersect_point(direction, ccp)
     return (ccp, cp, d)
 
 def intersect_circle_point(center, axis, radius, radiussq, direction, point):
     # take a plane through the base
-    p = Plane(center, axis)
+    plane = Plane(center, axis)
     # intersect with line gives ccp
-    (ccp, l) = intersect_plane_point(p, direction, point)
+    (ccp, l) = plane.intersect_point(direction, point)
     # check if inside circle
     if ccp and (center.sub(ccp).normsq() <= radiussq):
         return (ccp, point, -l)
@@ -155,9 +147,9 @@ def intersect_circle_line(center, axis, radius, radiussq, direction, edge):
     if d.dot(axis) == 0:
         if direction.dot(axis) == 0:
             return (None, None, INFINITE)
-        p = Plane(center, axis)
-        (p1, l) = intersect_plane_point(p, direction, edge.p1)
-        (p2, l) = intersect_plane_point(p, direction, edge.p2)
+        plane = Plane(center, axis)
+        (p1, l) = plane.intersect_point(direction, edge.p1)
+        (p2, l) = plane.intersect_point(direction, edge.p2)
         pc = Line(p1, p2).closest_point(center)
         d_sq = pc.sub(center).normsq()
         if d_sq > radiussq:
@@ -184,9 +176,9 @@ def intersect_circle_line(center, axis, radius, radiussq, direction, edge):
         return (None, None, INFINITE)
     n.normalize()
     # take a plane through the base
-    p = Plane(center, axis)
+    plane = Plane(center, axis)
     # intersect base with line
-    (lp, l) = intersect_plane_point(p, d, edge.p1)
+    (lp, l) = plane.intersect_point(d, edge.p1)
     if not lp:
         return (None, None, INFINITE)
     # intersection of 2 planes: lp + \lambda v
@@ -209,8 +201,8 @@ def intersect_circle_line(center, axis, radius, radiussq, direction, edge):
     if d.dot(axis) < 0:
         dist2 = -dist2
     ccp = center.sub(n2.mul(dist)).sub(v.mul(dist2))
-    p = Plane(edge.p1, d.cross(direction).cross(d))
-    (cp, l) = intersect_plane_point(p, direction, ccp)
+    plane = Plane(edge.p1, d.cross(direction).cross(d))
+    (cp, l) = plane.intersect_point(direction, ccp)
     return (ccp, cp, l)
 
 def intersect_sphere_plane(center, radius, direction, triangle):
@@ -224,7 +216,7 @@ def intersect_sphere_plane(center, radius, direction, triangle):
     else:
         ccp = center.add(n.mul(radius))
     # intersect the plane with a line through the contact point
-    (cp, d) = intersect_plane_point(triangle.plane(), direction, ccp)
+    (cp, d) = triangle.plane().intersect_point(direction, ccp)
     return (ccp, cp, d)
 
 def intersect_sphere_point(center, radius, radiussq, direction, point):
@@ -278,8 +270,8 @@ def intersect_sphere_line(center, radius, radiussq, direction, edge):
     ccp = center.add(n.mul(dist)).add(n2.mul(dist2))
 
     # now intersect a line through this point with the plane (2)
-    p = Plane(edge.p1, n2)
-    (cp, l) = intersect_plane_point(p, direction, ccp)
+    plane = Plane(edge.p1, n2)
+    (cp, l) = plane.intersect_point(direction, ccp)
     return (ccp, cp, l)
 
 def intersect_torus_plane(center, axis, majorradius, minorradius, direction,
@@ -300,8 +292,8 @@ def intersect_torus_plane(center, axis, majorradius, minorradius, direction,
     a = a.div(sqrt(a_sq))
     ccp = center.add(a.mul(majorradius)).add(b.mul(minorradius))
     # find intersection with plane
-    p = triangle.plane()
-    (cp, l) = intersect_plane_point(p, direction, ccp)
+    plane = triangle.plane()
+    (cp, l) = plane.intersect_point(direction, ccp)
     return (ccp, cp, l)
 
 def intersect_torus_point(center, axis, majorradius, minorradius, majorradiussq,
