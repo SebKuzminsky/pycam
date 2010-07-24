@@ -754,11 +754,14 @@ class ProjectGui:
             else:
                 tool_desc += "(%.4f%s / %.4f%s)" % ( 2 * tool["tool_radius"], unit, 2 * tool["torus_radius"], unit)
             lines.append(tool_desc)
-            lines.append("Speed: %drpm / Feedrate: %d%s/minute" % (tool["speed"], tool["feedrate"], unit))
+            lines.append("Spindle speed: %drpm / Feedrate: %d%s/minute" % (tool["speed"], tool["feedrate"], unit))
             lines.append("Path: %s / %s" % (process["path_generator"], process["path_postprocessor"]))
-            lines.append("Overlap: %d%%" % process["overlap_percent"])
-            lines.append("Material allowance: %.2f%s" % (process["material_allowance"], unit))
-            if process["path_generator"] == "PushCutter":
+            if process["path_generator"] == "EngraveCutter":
+                lines.append("Engrave offset: %.3f" % process["engrave_offset"])
+            else:
+                lines.append("Overlap: %d%%" % process["overlap_percent"])
+                lines.append("Material allowance: %.2f%s" % (process["material_allowance"], unit))
+            if process["path_generator"] != "DropCutter":
                 lines.append("Maximum step down: %.2f%s" % (process["step_down"], unit))
         else:
             lines.append("No task selected")
