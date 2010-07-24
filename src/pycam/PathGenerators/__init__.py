@@ -77,13 +77,12 @@ def get_free_paths_triangles(model, cutter, p1, p2):
 
     count = 0
     points = []
-    maybe_first_is_missing = False
     for h in hits:
         if h.dir == forward:
             if count == 0:
                 if h.d >= 0:
                     if len(points) == 0:
-                        maybe_first_is_missing = True
+                        points.append(p1)
                     points.append(h.cl)
             count += 1
         else:
@@ -92,12 +91,10 @@ def get_free_paths_triangles(model, cutter, p1, p2):
                 if h.d <= xyz_dist:
                     points.append(h.cl)
 
-    if maybe_first_is_missing:
-        points.insert(0, p1)
-        if len(points) % 2 == 1:
-            points.append(p2)
+    if len(points)%2 == 1:
+        points.append(p2)
 
-    if len(hits) == 0:
+    if len(hits)==0:
         points.append(p1)
         points.append(p2)
 
