@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.Path import Path
 from pycam.Geometry.PolygonExtractor import PolygonExtractor
+from pycam.Toolpath import simplify_toolpath
 
 
 class PolygonCutter:
@@ -67,5 +68,7 @@ class PolygonCutter:
                     p.append(points[i])
                 paths.append(p)
         if paths:
+            for p in paths:
+                simplify_toolpath(p)
             self.paths.extend(paths)
 

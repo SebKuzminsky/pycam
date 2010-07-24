@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.Path import Path
+from pycam.Toolpath import simplify_toolpath
 
 class ZigZagCutter:
     def __init__(self):
@@ -58,7 +59,9 @@ class ZigZagCutter:
         self.curr_scanline = []
 
     def end_scanline(self):
-        self.paths += self.curr_scanline
+        for path in self.curr_scanline:
+            simplify_toolpath(path)
+            self.paths.append(path)
         self.curr_scanline = None
 
     def finish(self):

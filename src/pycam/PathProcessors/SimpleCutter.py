@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.Path import Path
+from pycam.Toolpath import simplify_toolpath
 
 class SimpleCutter:
     def __init__(self):
@@ -37,6 +38,7 @@ class SimpleCutter:
             self.curr_path = None
         curr_path.append(p)
         if self.curr_path == None:
+            simplify_toolpath(curr_path)
             self.paths.append(curr_path)
 
     def new_direction(self, direction):

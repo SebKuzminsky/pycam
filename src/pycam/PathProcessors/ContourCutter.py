@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.PolygonExtractor import PolygonExtractor
+from pycam.Toolpath import simplify_toolpath
 
 class ContourCutter:
     def __init__(self):
@@ -62,6 +63,7 @@ class ContourCutter:
         if paths:
             for p in paths:
                 p.append(p.points[0])
+                simplify_toolpath(p)
         if paths:
             self.paths.extend(paths)
         self.pe = None

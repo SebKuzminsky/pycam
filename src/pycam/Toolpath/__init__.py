@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = ["ToolPathList", "ToolPath", "Generator"]
+__all__ = ["simplify_toolpath", "ToolPathList", "ToolPath", "Generator"]
 
 from pycam.Geometry.Point import Point
 import pycam.Utils.log
@@ -28,6 +28,36 @@ import random
 import os
 
 log = pycam.Utils.log.get_logger()
+
+
+def _check_colinearity(p1, p2, p3):
+    v1 = p2.sub(p1)
+    v2 = p3.sub(p2)
+    v1.normalize()
+    v2.normalize()
+    # compare if the normalized distances between p1-p2 and p2-p3 are equal
+    return v1 == v2
+
+
+def simplify_toolpath(path):
+    """ remove multiple points in a line from a toolpath
+
+    If A, B, C and D are on a straight line, then B and C will be removed.
+    This reduces memory consumption and avoids a severe slow-down of the machine
+    when moving along very small steps.
+    The toolpath is simplified _in_place_.
+    @value path: a single separate segment of a toolpath
+    @type path: pycam.Geometry.Path.Path
+    """
+    index = 1
+    points = path.points
+    while index < len(points) - 1:
+        if _check_colinearity(points[index-1], points[index], points[index+1]):
+            points.pop(index)
+            # don't increase the counter - otherwise we skip one point
+        else:
+            index += 1
+
 
 class ToolPathList(list):
 
