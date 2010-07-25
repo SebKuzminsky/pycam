@@ -23,6 +23,3 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 INFINITE = 10000
 epsilon = 0.0001
 
-def sqr(x):
-    return x*x
-
