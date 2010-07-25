@@ -229,6 +229,8 @@ class ProjectGui:
         self.process_list = []
         self.bounds_list = []
         self.task_list = []
+        self.grid_adjustments_x = []
+        self.grid_adjustments_y = []
         self._last_unit = None
         # add some dummies - to be implemented later ...
         self.settings.add_item("model", lambda: self.model)
@@ -325,10 +327,51 @@ class ProjectGui:
                 self.update_support_grid_controls)
         self.settings.add_item("support_grid_offset_y",
                 grid_offset_y.get_value, grid_offset_y.set_value)
+        # manual grid adjustments
+        self.grid_adjustment_axis_x = self.gui.get_object("SupportGridPositionManualAxisX")
+        self.grid_adjustment_axis_x.connect("toggled",
+                self.switch_support_grid_manual_selector)
+        self.gui.get_object("SupportGridPositionManualResetOne").connect(
+                "clicked", self.reset_support_grid_manual, False)
+        self.gui.get_object("SupportGridPositionManualResetAll").connect(
+                "clicked", self.reset_support_grid_manual, True)
+        self.grid_adjustment_model = self.gui.get_object(
+                "SupportGridPositionManualList")
+        self.grid_adjustment_selector = self.gui.get_object(
+                "SupportGridPositionManualSelector")
+        self.grid_adjustment_selector.connect("changed",
+                self.switch_support_grid_manual_selector)
+        self.grid_adjustment_value = self.gui.get_object(
+                "SupportGridPositionManualAdjustment")
+        self.grid_adjustment_value_control = self.gui.get_object(
+                "SupportGridPositionManualShiftControl")
+        self.grid_adjustment_value_control.connect("move-slider",
+                self.update_support_grid_manual_adjust)
+        self.grid_adjustment_value_control.connect("change-value",
+                self.update_support_grid_manual_adjust)
+        def get_set_grid_adjustment_value(value=None):
+            if self.grid_adjustment_axis_x.get_active():
+                adjustments = self.grid_adjustments_x
+            else:
+                adjustments = self.grid_adjustments_y
+            index = self.grid_adjustment_selector.get_active()
+            if value is None:
+                if 0 <= index < len(adjustments):
+                    return adjustments[index]
+                else:
+                    return 0
+            else:
+                while len(adjustments) <= index:
+                    adjustments.append(0)
+                adjustments[index] = value
+        self.settings.add_item("support_grid_adjustment_value",
+                get_set_grid_adjustment_value, get_set_grid_adjustment_value)
+        # support grid defaults
         grid_distance_square.set_active(True)
         self.settings.set("support_grid_distance_x", 5.0)
         self.settings.set("support_grid_thickness", 0.5)
         self.settings.set("support_grid_height", 0.5)
+        self.grid_adjustment_axis_x_last = True
         # visual and general settings
         for name, objname in (("show_model", "ShowModelCheckBox"),
                 ("show_support_grid", "ShowSupportGridCheckBox"),
@@ -622,6 +665,8 @@ class ProjectGui:
                 # We let "distance_y" track the value of "distance_x".
                 self.settings.set("support_grid_distance_y",
                         self.settings.get("support_grid_distance_x"))
+            self.update_support_grid_manual_model()
+            self.switch_support_grid_manual_selector()
         else:
             details_box.hide()
         self.update_support_grid_model()
@@ -648,10 +693,97 @@ class ProjectGui:
                     s.get("support_grid_thickness"),
                     s.get("support_grid_height"),
                     offset_x=s.get("support_grid_offset_x"),
-                    offset_y=s.get("support_grid_offset_y"))
+                    offset_y=s.get("support_grid_offset_y"),
+                    adjustments_x=self.grid_adjustments_x,
+                    adjustments_y=self.grid_adjustments_y)
         else:
             support_grid = None
         s.set("support_grid", support_grid)
+
+    def switch_support_grid_manual_selector(self, widget=None):
+        old_axis_was_x = self.grid_adjustment_axis_x_last
+        self.grid_adjustment_axis_x_last = \
+                self.grid_adjustment_axis_x.get_active()
+        if self.grid_adjustment_axis_x.get_active():
+            # x axis is selected
+            if not old_axis_was_x:
+                self.update_support_grid_manual_model()
+            half_distance = self.settings.get("support_grid_distance_x")
+        else:
+            # y axis
+            if old_axis_was_x:
+                self.update_support_grid_manual_model()
+            half_distance = self.settings.get("support_grid_distance_y")
+        half_distance /= 2.0
+        self.grid_adjustment_value.set_lower(-half_distance)
+        self.grid_adjustment_value.set_upper(half_distance)
+        if self.grid_adjustment_value.get_value() \
+                != self.settings.get("support_grid_adjustment_value"):
+            self.grid_adjustment_value.set_value(self.settings.get(
+                    "support_grid_adjustment_value"))
+        self.grid_adjustment_value_control.set_sensitive(
+                self.grid_adjustment_selector.get_active() >= 0)
+        
+
+    def update_support_grid_manual_adjust(self, widget=None, data1=None,
+            data2=None):
+        new_value = self.grid_adjustment_value.get_value()
+        self.settings.set("support_grid_adjustment_value", new_value)
+        tree_iter = self.grid_adjustment_selector.get_active_iter()
+        value_string = "(%+.1f)" % new_value
+        self.grid_adjustment_model.set(tree_iter, 1, value_string)
+        self.update_support_grid_model()
+        self.update_view()
+
+    def reset_support_grid_manual(self, widget=None, reset_all=False):
+        if reset_all:
+            self.grid_adjustments_x = []
+            self.grid_adjustments_y = []
+        else:
+            self.settings.set("support_grid_adjustment_value", 0)
+        self.update_support_grid_manual_model()
+        self.switch_support_grid_manual_selector()
+        self.update_support_grid_model()
+        self.update_view()
+
+    def update_support_grid_manual_model(self):
+        old_index = self.grid_adjustment_selector.get_active()
+        model = self.grid_adjustment_model
+        model.clear()
+        s = self.settings
+        base_x, base_y = pycam.Toolpath.SupportGrid.get_support_grid_locations(
+                s.get("minx"), s.get("maxx"), s.get("miny"), s.get("maxy"),
+                s.get("support_grid_distance_x"),
+                s.get("support_grid_distance_y"),
+                offset_x=s.get("support_grid_offset_x"),
+                offset_y=s.get("support_grid_offset_y"),
+                adjustments_x=self.grid_adjustments_x,
+                adjustments_y=self.grid_adjustments_y)
+        # fill the adjustment lists
+        while len(self.grid_adjustments_x) < len(base_x):
+            self.grid_adjustments_x.append(0)
+        while len(self.grid_adjustments_y) < len(base_y):
+            self.grid_adjustments_y.append(0)
+        # select the currently active list
+        if self.grid_adjustment_axis_x.get_active():
+            base = base_x
+            adjustments = self.grid_adjustments_x
+        else:
+            base = base_y
+            adjustments = self.grid_adjustments_y
+        # generate the model content
+        for index, base_value in enumerate(base):
+            position = "%.2f%s" % (base_value, s.get("unit"))
+            if (0 <= index < len(adjustments)) and (adjustments[index] != 0):
+                diff = "(%+.1f)" % adjustments[index]
+            else:
+                diff = ""
+            model.append((position, diff))
+        if old_index < len(base):
+            self.grid_adjustment_selector.set_active(old_index)
+        else:
+            self.grid_adjustment_selector.set_active(-1)
+        
 
     @gui_activity_guard
     def adjust_bounds(self, widget, axis, change):
@@ -2242,8 +2374,10 @@ class ProjectGui:
                     self.settings.get("support_grid_distance_y"),
                     self.settings.get("support_grid_thickness"),
                     self.settings.get("support_grid_height"),
-                    self.settings.get("support_grid_offset_x"),
-                    self.settings.get("support_grid_offset_y"))
+                    offset_x=self.settings.get("support_grid_offset_x"),
+                    offset_y=self.settings.get("support_grid_offset_y"),
+                    adjustments_x=self.grid_adjustments_x,
+                    adjustments_y=self.grid_adjustments_y)
         
         # calculation backend: ODE / None
         if self.settings.get("enable_ode"):

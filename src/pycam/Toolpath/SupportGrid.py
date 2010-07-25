@@ -67,8 +67,8 @@ def _add_cuboid_to_model(minx, maxx, miny, maxy, minz, maxz):
         model.append(t)
     return model
 
-def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness,
-        height, offset_x=0.0, offset_y=0.0):
+def get_support_grid_locations(minx, maxx, miny, maxy, dist_x, dist_y,
+        offset_x=0.0, offset_y=0.0, adjustments_x=None, adjustments_y=None):
     def get_lines(center, dist, min_value, max_value):
         """ generate a list of positions starting from the middle going up and
         and down
@@ -92,6 +92,19 @@ def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness,
     center_y = (maxy + miny) / 2.0 + offset_y
     lines_x = get_lines(center_x, dist_x, minx, maxx)
     lines_y = get_lines(center_y, dist_y, miny, maxy)
+    if adjustments_x:
+        for index in range(min(len(lines_x), len(adjustments_x))):
+            lines_x[index] += adjustments_x[index]
+    if adjustments_y:
+        for index in range(min(len(lines_y), len(adjustments_y))):
+            lines_y[index] += adjustments_y[index]
+    return lines_x, lines_y
+
+def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness,
+        height, offset_x=0.0, offset_y=0.0, adjustments_x=None,
+        adjustments_y=None):
+    lines_x, lines_y = get_support_grid_locations(minx, maxx, miny, maxy, dist_x,
+            dist_y, offset_x, offset_y, adjustments_x, adjustments_y)
     # create all x grid lines
     grid_model = Model()
     # helper variables

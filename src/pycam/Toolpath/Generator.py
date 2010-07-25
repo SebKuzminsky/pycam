@@ -47,7 +47,8 @@ def generate_toolpath_from_settings(model, tp_settings, callback=None):
             process["material_allowance"], process["safety_height"],
             process["overlap"], process["step_down"], process["engrave_offset"],
             grid["distance_x"], grid["distance_y"], grid["thickness"],
-            grid["height"], grid["offset_x"], grid["offset_y"], backend,
+            grid["height"], grid["offset_x"], grid["offset_y"],
+            grid["adjustments_x"], grid["adjustments_y"], backend,
             callback)
 
 def generate_toolpath(model, tool_settings=None,
@@ -100,6 +101,10 @@ def generate_toolpath(model, tool_settings=None,
     @value support_grid_offset_x: shift the support grid by this value along x
     @type support_grid_offset_y: float
     @value support_grid_offset_y: shift the support grid by this value along y
+    @type support_grid_adjustments_x: list(float)
+    @value support_grid_adjustments_x: manual adjustment of each x-grid bar
+    @type support_grid_adjustments_y: list(float)
+    @value support_grid_adjustments_y: manual adjustment of each y-grid bar
     @type calculation_backend: str | None
     @value calculation_backend: any member of the CALCULATION_BACKENDS set
         The default is the triangular collision detection.
@@ -150,7 +155,9 @@ def generate_toolpath(model, tool_settings=None,
                 minx, maxx, miny, maxy, minz, support_grid_distance_x,
                 support_grid_distance_y, support_grid_thickness,
                 support_grid_height, offset_x=support_grid_offset_x,
-                offset_y=support_grid_offset_y)
+                offset_y=support_grid_offset_y,
+                support_grid_adjustments_x=support_grid_adjustments_x,
+                support_grid_adjustments_y=support_grid_adjustments_y)
         trimesh_model += support_grid_model
     # Adapt the contour_model to the engraving offset. This offset is
     # considered to be part of the material_allowance.

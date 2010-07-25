@@ -189,6 +189,20 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkListStore" id="SupportGridPositionManualList">
+    <columns>
+      <!-- column-name base -->
+      <column type="gchararray"/>
+      <!-- column-name change -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">17.3mm (-2.0)</col>
+        <col id="1" translatable="yes">-2.0</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkWindow" id="ProjectWindow">
     <property name="title" translatable="yes">PyCAM</property>
     <property name="destroy_with_parent">True</property>
@@ -1197,12 +1211,185 @@
                                     <child type="label">
                                       <object class="GtkLabel" id="GridPositionExpanderLabel">
                                         <property name="visible">True</property>
-                                        <property name="label" translatable="yes">Position</property>
+                                        <property name="label" translatable="yes">Position offset</property>
                                       </object>
                                     </child>
                                   </object>
                                   <packing>
                                     <property name="position">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkExpander" id="GridManualShiftExpander">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <child>
+                                      <object class="GtkVBox" id="vbox12">
+                                        <property name="visible">True</property>
+                                        <property name="orientation">vertical</property>
+                                        <child>
+                                          <object class="GtkHBox" id="hbox24">
+                                            <property name="visible">True</property>
+                                            <property name="spacing">3</property>
+                                            <child>
+                                              <object class="GtkRadioButton" id="SupportGridPositionManualAxisX">
+                                                <property name="label" translatable="yes">x</property>
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="receives_default">False</property>
+                                                <property name="active">True</property>
+                                                <property name="draw_indicator">True</property>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="padding">10</property>
+                                                <property name="position">0</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkRadioButton" id="SupportGridPositionManualAxisY">
+                                                <property name="label" translatable="yes">y</property>
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="receives_default">False</property>
+                                                <property name="active">True</property>
+                                                <property name="draw_indicator">True</property>
+                                                <property name="group">SupportGridPositionManualAxisX</property>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="padding">10</property>
+                                                <property name="position">1</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkVSeparator" id="vseparator7">
+                                                <property name="visible">True</property>
+                                                <property name="orientation">vertical</property>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="position">2</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkLabel" id="GridPositionManualSelectionLabel">
+                                                <property name="visible">True</property>
+                                                <property name="xalign">0</property>
+                                                <property name="label" translatable="yes">Grid item:</property>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="position">3</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkComboBox" id="SupportGridPositionManualSelector">
+                                                <property name="visible">True</property>
+                                                <property name="model">SupportGridPositionManualList</property>
+                                                <child>
+                                                  <object class="GtkCellRendererText" id="SupportGridManualSelectorBase"/>
+                                                  <attributes>
+                                                    <attribute name="text">0</attribute>
+                                                  </attributes>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkCellRendererText" id="SupportGridManualSelectorChange"/>
+                                                  <attributes>
+                                                    <attribute name="text">1</attribute>
+                                                  </attributes>
+                                                </child>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="position">4</property>
+                                              </packing>
+                                            </child>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkVBox" id="vbox28">
+                                            <property name="visible">True</property>
+                                            <property name="orientation">vertical</property>
+                                            <child>
+                                              <object class="GtkHScale" id="SupportGridPositionManualShiftControl">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="adjustment">SupportGridPositionManualAdjustment</property>
+                                                <property name="digits">2</property>
+                                                <property name="value_pos">right</property>
+                                              </object>
+                                              <packing>
+                                                <property name="position">0</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkHBox" id="hbox25">
+                                                <property name="visible">True</property>
+                                                <property name="homogeneous">True</property>
+                                                <child>
+                                                  <object class="GtkButton" id="SupportGridPositionManualResetAll">
+                                                    <property name="label" translatable="yes">Reset all items</property>
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">True</property>
+                                                    <property name="receives_default">True</property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="fill">False</property>
+                                                    <property name="position">0</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkArrow" id="arrow1">
+                                                    <property name="visible">True</property>
+                                                    <property name="yalign">0</property>
+                                                    <property name="arrow_type">up</property>
+                                                    <property name="shadow_type">etched-in</property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">False</property>
+                                                    <property name="position">1</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkButton" id="SupportGridPositionManualResetOne">
+                                                    <property name="label" translatable="yes">Reset this item</property>
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">True</property>
+                                                    <property name="receives_default">True</property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="fill">False</property>
+                                                    <property name="position">2</property>
+                                                  </packing>
+                                                </child>
+                                              </object>
+                                              <packing>
+                                                <property name="position">1</property>
+                                              </packing>
+                                            </child>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child type="label">
+                                      <object class="GtkLabel" id="GridManualShiftExpanderLabel">
+                                        <property name="visible">True</property>
+                                        <property name="label" translatable="yes">Manual position adjustment</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="position">3</property>
                                   </packing>
                                 </child>
                               </object>
@@ -5654,5 +5841,10 @@ Any selected group of dimensions will be scaled accordingly.</property>
       <action-widget response="0">LogWindowClear</action-widget>
       <action-widget response="0">LogWindowClose</action-widget>
     </action-widgets>
+  </object>
+  <object class="GtkAdjustment" id="SupportGridPositionManualAdjustment">
+    <property name="lower">-100</property>
+    <property name="upper">100</property>
+    <property name="step_increment">10</property>
   </object>
 </interface>
