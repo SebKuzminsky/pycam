@@ -70,6 +70,10 @@ class Line(TransformableContainer):
         yield self.p1
         yield self.p2
 
+    def get_children_count(self):
+        # a line always contains two points
+        return 2
+
     def reset_cache(self):
         self._dir = None
         self._len = None
@@ -295,6 +299,10 @@ class LineGroup(TransformableContainer):
         for line in self._lines:
             yield line
 
+    def get_children_count(self):
+        # two children per line -> 3 times the number of lines
+        return 3 * len(self._lines)
+
     def _init_line_offsets(self):
         if self._lines and self._line_offsets is None:
             self._line_offsets = []
@@ -303,23 +311,29 @@ class LineGroup(TransformableContainer):
             for line in self._lines:
                 line_dir = line.dir()
                 vector = (line_dir.x, line_dir.y, line_dir.z)
-                offset_vector = Matrix.multiply_vector_matrix(vector, offset_matrix)
-                offset_point = Point(offset_vector[0], offset_vector[1], offset_vector[2])
-                self._line_offsets.append(Line(line.p1, line.p1.add(offset_point)))
+                offset_vector = Matrix.multiply_vector_matrix(vector,
+                        offset_matrix)
+                offset_point = Point(offset_vector[0], offset_vector[1],
+                        offset_vector[2])
+                self._line_offsets.append(Line(line.p1,
+                        line.p1.add(offset_point)))
 
-    def transform_by_matrix(self, matrix, transformed_list):
+    def transform_by_matrix(self, matrix, transformed_list, **kwargs):
         if self._lines:
             offset_matrix = self.get_offset_matrix()
             # initialize all offset vectors (if necessary)
             self._init_line_offsets()
-        super(LineGroup, self).transform_by_matrix(matrix, transformed_list)
+        super(LineGroup, self).transform_by_matrix(matrix, transformed_list,
+                **kwargs)
         # transform all offset vectors
         if self._lines:
             for offset in self._line_offsets:
                 if not id(offset) in transformed_list:
-                    offset.transform_by_matrix(matrix, transformed_list)
+                    offset.transform_by_matrix(matrix, transformed_list,
+                            **kwargs)
             # transform the offset vector of this line group
-            self._offset_matrix = Matrix.multiply_matrix_matrix(matrix, offset_matrix)
+            self._offset_matrix = Matrix.multiply_matrix_matrix(matrix,
+                    offset_matrix)
 
     def get_lines(self):
         return self._lines[:]

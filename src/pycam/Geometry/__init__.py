@@ -38,6 +38,10 @@ class TransformableContainer(object):
     be provided. This method is called when all children of the object were
     successfully transformed.
 
+    A method 'get_children_count' for calculating the number of children
+    (recursively) is necessary for the "callback" parameter of
+    "transform_by_matrix".
+
     Optionally the method 'transform_by_matrix' may be used to perform
     object-specific calculations (e.g. retaining the 'normal' vector of a
     triangle).
@@ -47,7 +51,7 @@ class TransformableContainer(object):
     not required to be a subclass of TransformableContainer.
     """
 
-    def transform_by_matrix(self, matrix, transformed_list=None):
+    def transform_by_matrix(self, matrix, transformed_list=None, callback=None):
         if transformed_list is None:
             transformed_list = []
         # Prevent any kind of loops or double transformations (e.g. Points in
@@ -57,7 +61,8 @@ class TransformableContainer(object):
         for item in self.next():
             if not id(item) in transformed_list:
                 if isinstance(item, TransformableContainer):
-                    item.transform_by_matrix(matrix, transformed_list)
+                    item.transform_by_matrix(matrix, transformed_list,
+                            callback=callback)
                 else:
                     # non-TransformableContainer do not care to update the
                     # 'transformed_list'. Thus we need to do it.
@@ -65,7 +70,11 @@ class TransformableContainer(object):
                     # Don't transmit the 'transformed_list' if the object is
                     # not a TransformableContainer. It is not necessary and it
                     # is hard to understand on the lowest level (e.g. Point).
-                    item.transform_by_matrix(matrix)
+                    item.transform_by_matrix(matrix, callback=callback)
+            # run the callback - e.g. for a progress counter
+            if callback and callback():
+                # user requesteded abort
+                break
         self.reset_cache()
 
     def __iter__(self):
@@ -75,6 +84,11 @@ class TransformableContainer(object):
         raise NotImplementedError(("'%s' is a subclass of " \
                 + "'TransformableContainer' but it fails to implement the " \
                 + "'next' generator") % str(type(self)))
+
+    def get_children_count(self):
+        raise NotImplementedError(("'%s' is a subclass of " \
+                + "'TransformableContainer' but it fails to implement the " \
+                + "'get_children_count' method") % str(type(self)))
 
     def reset_cache(self):
         raise NotImplementedError(("'%s' is a subclass of " \

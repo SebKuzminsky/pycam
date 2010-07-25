@@ -59,7 +59,7 @@ class Point:
         else:
             return cmp(str(self), str(other))
 
-    def transform_by_matrix(self, matrix, transformed_list=None):
+    def transform_by_matrix(self, matrix, transformed_list=None, callback=None):
         x = self.x * matrix[0][0] + self.y * matrix[0][1] \
                 + self.z * matrix[0][2] + matrix[0][3]
         y = self.x * matrix[1][0] + self.y * matrix[1][1] \
@@ -69,6 +69,8 @@ class Point:
         self.x = x
         self.y = y
         self.z = z
+        if callback:
+            callback()
         self.reset_cache()
 
     def reset_cache(self):

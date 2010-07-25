@@ -30,7 +30,7 @@ from pycam.Geometry.Matrix import TRANSFORMATIONS
 from pycam.Toolpath import Bounds
 from pycam.Geometry.utils import INFINITE
 from pycam.Geometry import TransformableContainer
-
+from pycam.Utils import ProgressCounter
 
 
 class BaseModel(TransformableContainer):
@@ -67,6 +67,15 @@ class BaseModel(TransformableContainer):
                         yield subitem
                 else:
                     yield item
+
+    def get_children_count(self):
+        result = 0
+        for item_group in self._item_groups:
+            for item in item_group:
+                result += 1
+                if hasattr(item, "get_children_count"):
+                    result += item.get_children_count()
+        return result
 
     def to_OpenGL(self):
         for item in self.next():
@@ -128,21 +137,31 @@ class BaseModel(TransformableContainer):
         for item in self.next():
             self._update_limits(item)
 
-    def transform_by_template(self, direction="normal"):
-        if direction in TRANSFORMATIONS.keys():
-            self.transform_by_matrix(TRANSFORMATIONS[direction])
+    def _get_progress_callback(self, update_callback):
+        if update_callback:
+            return ProgressCounter(self.get_children_count(),
+                    update_callback=update_callback).increment
+        else:
+            return None
 
-    def shift(self, shift_x, shift_y, shift_z):
+    def transform_by_template(self, direction="normal", callback=None):
+        if direction in TRANSFORMATIONS.keys():
+            self.transform_by_matrix(TRANSFORMATIONS[direction],
+                    callback=self._get_progress_callback(callback))
+
+    def shift(self, shift_x, shift_y, shift_z, callback=None):
         matrix = ((1, 0, 0, shift_x), (0, 1, 0, shift_y), (0, 0, 1, shift_z))
-        self.transform_by_matrix(matrix)
+        self.transform_by_matrix(matrix,
+                callback=self._get_progress_callback(callback))
         
-    def scale(self, scale_x, scale_y=None, scale_z=None):
+    def scale(self, scale_x, scale_y=None, scale_z=None, callback=None):
         if scale_y is None:
             scale_y = scale_x
         if scale_z is None:
             scale_z = scale_x
         matrix = ((scale_x, 0, 0, 0), (0, scale_y, 0, 0), (0, 0, scale_z, 0))
-        self.transform_by_matrix(matrix)
+        self.transform_by_matrix(matrix,
+                callback=self._get_progress_callback(callback))
 
     def get_bounds(self):
         return Bounds(Bounds.TYPE_CUSTOM, (self.minx, self.miny, self.minz),

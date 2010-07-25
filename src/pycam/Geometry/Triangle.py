@@ -80,12 +80,17 @@ class Triangle(TransformableContainer):
         yield self.p2
         yield self.p3
 
-    def transform_by_matrix(self, matrix, transformed_list=None):
+    def get_children_count(self):
+        # tree points per triangle
+        return 3
+
+    def transform_by_matrix(self, matrix, transformed_list=None, **kwargs):
         previous_normal = self._normal
-        super(Triangle, self).transform_by_matrix(matrix, transformed_list)
+        super(Triangle, self).transform_by_matrix(matrix, transformed_list,
+                **kwargs)
         # try to keep the original normal vector (transform it manually)
         if not previous_normal is None:
-            previous_normal.transform_by_matrix(matrix)
+            previous_normal.transform_by_matrix(matrix, **kwargs)
             self._normal = previous_normal
 
     def name(self):

@@ -512,7 +512,8 @@ class ProjectGui:
         self.progress_bar = self.gui.get_object("ProgressBar")
         self.progress_widget = self.gui.get_object("ProgressWidget")
         self.task_pane = self.gui.get_object("MainTabs")
-        self.gui.get_object("ProgressCancelButton").connect("clicked", self.cancel_progress)
+        self.progress_cancel_button = self.gui.get_object("ProgressCancelButton")
+        self.progress_cancel_button.connect("clicked", self.cancel_progress)
         # make sure that the toolpath settings are consistent
         self.toolpath_table = self.gui.get_object("ToolPathTable")
         self.toolpath_table.get_selection().connect("changed", self.toolpath_table_event, "update_buttons")
@@ -1195,6 +1196,7 @@ class ProjectGui:
         # (e.g. disabled if no OpenGL support is available)
         toggle_3d_checkbox.set_active(self.view3d.enabled and new_state)
 
+    @progress_activity_guard
     @gui_activity_guard
     def transform_model(self, widget):
         if widget is self.gui.get_object("Rotate"):
@@ -1209,7 +1211,10 @@ class ProjectGui:
             return
         for obj, value in controls:
             if self.gui.get_object(obj).get_active():
-                self.model.transform_by_template(value)
+                self.disable_progress_cancel_button()
+                self.update_progress_bar("Transforming model")
+                self.model.transform_by_template(value,
+                        callback=self.update_progress_bar)
         self.update_view()
 
     def _treeview_get_active_index(self, table, datalist):
@@ -1604,6 +1609,7 @@ class ProjectGui:
         except IOError, err_msg:
             log.warn("Failed to write preferences file (%s): %s" % (config_filename, err_msg))
 
+    @progress_activity_guard
     @gui_activity_guard
     def shift_model(self, widget, use_form_values=True):
         if use_form_values:
@@ -1614,7 +1620,10 @@ class ProjectGui:
             shift_x = -self.model.minx
             shift_y = -self.model.miny
             shift_z = -self.model.minz
-        self.model.shift(shift_x, shift_y, shift_z)
+        self.update_progress_bar("Shifting model")
+        self.disable_progress_cancel_button()
+        self.model.shift(shift_x, shift_y, shift_z,
+                callback=self.update_progress_bar)
         self.update_support_grid_model()
         self.update_view()
 
@@ -1629,8 +1638,11 @@ class ProjectGui:
     def _set_model_center(self, center):
         new_x, new_y, new_z = center
         old_x, old_y, old_z = self._get_model_center()
-        self.model.shift(new_x - old_x, new_y - old_y, new_z - old_z)
+        self.update_progress_bar("Centering model")
+        self.model.shift(new_x - old_x, new_y - old_y, new_z - old_z,
+                callback=self.update_progress_bar)
 
+    @progress_activity_guard
     @gui_activity_guard
     def scale_model(self, widget=None, percent=None):
         if percent is None:
@@ -1639,7 +1651,9 @@ class ProjectGui:
         if (factor <= 0) or (factor == 1):
             return
         old_center = self._get_model_center()
-        self.model.scale(factor)
+        self.update_progress_bar("Scaling model")
+        self.disable_progress_cancel_button()
+        self.model.scale(factor, callback=self.update_progress_bar)
         self._set_model_center(old_center)
         self.update_support_grid_model()
         self.update_view()
@@ -1662,6 +1676,7 @@ class ProjectGui:
         scale_value.set_sensitive(enable_controls)
         scale_value.set_value(value)
 
+    @progress_activity_guard
     @gui_activity_guard
     def scale_model_axis_fit(self, widget):
         proportionally = self.gui.get_object("ScaleDimensionsProportionally").get_active()
@@ -1672,8 +1687,10 @@ class ProjectGui:
         factor = value / (getattr(self.model, "max" + axis_suffix) - getattr(self.model, "min" + axis_suffix))
         # store the original center of the model
         old_center = self._get_model_center()
+        self.update_progress_bar("Scaling model")
+        self.disable_progress_cancel_button()
         if proportionally:
-            self.model.scale(factor)
+            self.model.scale(factor, callback=self.update_progress_bar)
         else:
             factor_x, factor_y, factor_z = (1, 1, 1)
             if index == 0:
@@ -1684,7 +1701,8 @@ class ProjectGui:
                 factor_z = factor
             else:
                 return
-            self.model.scale(factor_x, factor_y, factor_z)
+            self.model.scale(factor_x, factor_y, factor_z,
+                    callback=self.update_progress_bar)
         # move the model to its previous center
         self._set_model_center(old_center)
         self.update_support_grid_model()
@@ -2162,11 +2180,18 @@ class ProjectGui:
             self.menubar.set_sensitive(False)
             self.task_pane.set_sensitive(False)
             self.update_progress_bar("", 0)
+            self.progress_cancel_button.set_sensitive(True)
             self.progress_widget.show()
         else:
             self.progress_widget.hide()
             self.task_pane.set_sensitive(True)
             self.menubar.set_sensitive(True)
+
+    def disable_progress_cancel_button(self):
+        """ mainly useful for non-interruptable operations (e.g. model
+        transformations)
+        """
+        self.progress_cancel_button.set_sensitive(False)
 
     def update_progress_bar(self, text=None, percent=None):
         if not percent is None:
@@ -2174,6 +2199,11 @@ class ProjectGui:
             self.progress_bar.set_fraction(percent/100.0)
         if not text is None:
             self.progress_bar.set_text(text)
+        # update the GUI
+        while gtk.events_pending():
+            gtk.main_iteration()
+        # return if the user requested a break
+        return self._progress_cancel_requested
 
     def cancel_progress(self, widget=None):
         self._progress_cancel_requested = True
@@ -2223,7 +2253,9 @@ class ProjectGui:
         for path_index, path in enumerate(paths):
             progress_text = "Simulating path %d/%d" % (path_index, len(paths))
             progress_value_percent = 100.0 * path_index / len(paths)
-            self.update_progress_bar(progress_text, progress_value_percent)
+            if self.update_progress_bar(progress_text, progress_value_percent):
+                # break if the user pressed the "cancel" button
+                break
             for index in range(len(path.points)):
                 self.cutter.moveto(path.points[index])
                 if index != 0:
@@ -2232,14 +2264,9 @@ class ProjectGui:
                     if start != end:
                         simulation_backend.process_cutter_movement(start, end)
                 self.update_view()
-                # update the GUI
-                while gtk.events_pending():
-                    gtk.main_iteration()
                 # break the loop if someone clicked the "cancel" button
-                if self._progress_cancel_requested:
+                if self.update_progress_bar():
                     break
-            if self._progress_cancel_requested:
-                break
         # enable the simulation widget again (if we were started from the GUI)
         if not widget is None:
             self.gui.get_object("SimulationTab").set_sensitive(True)
@@ -2256,7 +2283,7 @@ class ProjectGui:
         self.settings.set("show_simulation", True)
         self.update_toolpath_simulation(toolpath=toolpath)
         # hide the controls immediately, if the simulation was cancelled
-        if self._progress_cancel_requested:
+        if self.update_progress_bar():
             self.finish_toolpath_simulation()
 
     @progress_activity_guard
@@ -2272,16 +2299,12 @@ class ProjectGui:
             def update(self, text=None, percent=None, tool_position=None):
                 if not tool_position is None:
                     parent.cutter.moveto(tool_position)
-                parent.update_progress_bar(text, percent)
                 if (time.time() - self.last_update) > 1.0/self.max_fps:
                     self.last_update = time.time()
                     if self.func:
                         self.func()
-                # update the GUI
-                while gtk.events_pending():
-                    gtk.main_iteration()
                 # break the loop if someone clicked the "cancel" button
-                return parent._progress_cancel_requested
+                return parent.update_progress_bar(text, percent)
         if self.settings.get("show_drill_progress"):
             callback = self.update_view
         else:
@@ -2310,7 +2333,7 @@ class ProjectGui:
         if toolpath is None:
             # user interruption
             # return "False" if the action was cancelled
-            return not self._progress_cancel_requested
+            return not self.update_progress_bar()
         elif isinstance(toolpath, basestring):
             # an error occoured - "toolpath" contains the error message
             log.error("Failed to generate toolpath: %s" % toolpath)
@@ -2329,7 +2352,7 @@ class ProjectGui:
             self.update_toolpath_table()
             self.update_view()
             # return "False" if the action was cancelled
-            return not self._progress_cancel_requested
+            return not self.update_progress_bar()
 
     def get_toolpath_settings(self, tool_settings, process_settings, bounds):
         toolpath_settings = pycam.Gui.Settings.ToolpathSettings()
