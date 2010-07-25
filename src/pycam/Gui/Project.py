@@ -281,16 +281,38 @@ class ProjectGui:
         self.gui.get_object("Rotate").connect("clicked", self.transform_model)
         self.gui.get_object("Flip").connect("clicked", self.transform_model)
         self.gui.get_object("Swap").connect("clicked", self.transform_model)
-        self.gui.get_object("Shift Model").connect("clicked", self.shift_model, True)
+        shift_model_button = self.gui.get_object("Shift Model")
+        shift_model_button.connect("clicked", self.shift_model, True)
+        # Make the "shift" button the default while one of the x/y/z values is
+        # active.
+        for objname in ("shift_x", "shift_y", "shift_z"):
+            self.gui.get_object(objname).connect("focus-in-event",
+                    lambda widget, data: shift_model_button.grab_default())
+            self.gui.get_object(objname).connect("focus-out-event",
+                    lambda widget, data: self.window.set_default(None))
         self.gui.get_object("Shift To Origin").connect("clicked", self.shift_model, False)
         # scale model
-        self.gui.get_object("ScalePercent").set_value(100)
-        self.gui.get_object("ScaleModelButton").connect("clicked", self.scale_model)
+        scale_percent = self.gui.get_object("ScalePercent")
+        scale_button = self.gui.get_object("ScaleModelButton")
+        scale_percent.set_value(100)
+        scale_percent.connect("focus-in-event",
+                lambda widget, data: scale_button.grab_default())
+        scale_percent.connect("focus-out-event",
+                lambda widget, data: self.window.set_default(None))
+        scale_button.connect("clicked", self.scale_model)
         # scale model to an axis dimension
-        self.gui.get_object("ScaleDimensionAxis").connect("changed", self.update_scale_controls)
-        self.gui.get_object("ScaleDimensionButton").connect("clicked", self.scale_model_axis_fit)
+        self.gui.get_object("ScaleDimensionAxis").connect("changed",
+                self.update_scale_controls)
+        scale_dimension_button = self.gui.get_object("ScaleDimensionButton")
+        scale_dimension_button.connect("clicked", self.scale_model_axis_fit)
+        scale_dimension_control = self.gui.get_object("ScaleDimensionControl")
+        scale_dimension_control.connect("focus-in-event",
+                lambda widget, data: scale_dimension_button.grab_default())
+        scale_dimension_control.connect("focus-out-event",
+                lambda widget, data: self.window.set_default(None))
         # support grid
-        self.gui.get_object("SupportGridEnable").connect("clicked", self.update_support_grid_controls)
+        self.gui.get_object("SupportGridEnable").connect("clicked",
+                self.update_support_grid_controls)
         grid_distance_x = self.gui.get_object("SupportGridDistanceX")
         grid_distance_x.connect("value-changed",
                 self.update_support_grid_controls)

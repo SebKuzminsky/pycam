@@ -562,6 +562,7 @@
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="invisible_char">&#x2022;</property>
+                                        <property name="activates_default">True</property>
                                         <property name="adjustment">scale_percent_value</property>
                                         <property name="numeric">True</property>
                                       </object>
@@ -589,6 +590,7 @@
                                     <property name="label" translatable="yes">Scale Model</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
+                                    <property name="can_default">True</property>
                                     <property name="receives_default">True</property>
                                   </object>
                                   <packing>
@@ -633,6 +635,7 @@
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="invisible_char">&#x2022;</property>
+                                        <property name="activates_default">True</property>
                                         <property name="adjustment">ScaleDimensionValue</property>
                                         <property name="digits">2</property>
                                       </object>
@@ -665,6 +668,7 @@
                                     <property name="label" translatable="yes">Fit Dimension</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
+                                    <property name="can_default">True</property>
                                     <property name="receives_default">True</property>
                                   </object>
                                   <packing>
@@ -727,6 +731,7 @@
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="invisible_char">&#x2022;</property>
+                                        <property name="activates_default">True</property>
                                         <property name="width_chars">5</property>
                                         <property name="adjustment">shift-x</property>
                                         <property name="digits">2</property>
@@ -743,6 +748,7 @@
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="invisible_char">&#x2022;</property>
+                                        <property name="activates_default">True</property>
                                         <property name="width_chars">5</property>
                                         <property name="adjustment">shift-y</property>
                                         <property name="digits">2</property>
@@ -761,6 +767,7 @@
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="invisible_char">&#x2022;</property>
+                                        <property name="activates_default">True</property>
                                         <property name="width_chars">5</property>
                                         <property name="adjustment">shift-z</property>
                                         <property name="digits">2</property>
@@ -816,6 +823,7 @@
                                     <property name="label" translatable="yes">Shift</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
+                                    <property name="can_default">True</property>
                                     <property name="receives_default">True</property>
                                   </object>
                                   <packing>
