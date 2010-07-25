@@ -708,20 +708,21 @@ class ProjectGui:
             # x axis is selected
             if not old_axis_was_x:
                 self.update_support_grid_manual_model()
-            half_distance = self.settings.get("support_grid_distance_x")
+            max_distance = self.settings.get("support_grid_distance_x")
         else:
             # y axis
             if old_axis_was_x:
                 self.update_support_grid_manual_model()
-            half_distance = self.settings.get("support_grid_distance_y")
-        half_distance /= 2.0
-        self.grid_adjustment_value.set_lower(-half_distance)
-        self.grid_adjustment_value.set_upper(half_distance)
+            max_distance = self.settings.get("support_grid_distance_y")
+        # we allow an individual adjustment of 66% of the distance
+        max_distance /= 1.5
+        self.grid_adjustment_value.set_lower(-max_distance)
+        self.grid_adjustment_value.set_upper(max_distance)
         if self.grid_adjustment_value.get_value() \
                 != self.settings.get("support_grid_adjustment_value"):
             self.grid_adjustment_value.set_value(self.settings.get(
                     "support_grid_adjustment_value"))
-        self.grid_adjustment_value_control.set_sensitive(
+        self.gui.get_object("SupportGridPositionManualShiftBox").set_sensitive(
                 self.grid_adjustment_selector.get_active() >= 0)
         
 
@@ -751,14 +752,13 @@ class ProjectGui:
         model = self.grid_adjustment_model
         model.clear()
         s = self.settings
+        # get the toolpath without adjustments
         base_x, base_y = pycam.Toolpath.SupportGrid.get_support_grid_locations(
                 s.get("minx"), s.get("maxx"), s.get("miny"), s.get("maxy"),
                 s.get("support_grid_distance_x"),
                 s.get("support_grid_distance_y"),
                 offset_x=s.get("support_grid_offset_x"),
-                offset_y=s.get("support_grid_offset_y"),
-                adjustments_x=self.grid_adjustments_x,
-                adjustments_y=self.grid_adjustments_y)
+                offset_y=s.get("support_grid_offset_y"))
         # fill the adjustment lists
         while len(self.grid_adjustments_x) < len(base_x):
             self.grid_adjustments_x.append(0)
@@ -844,6 +844,8 @@ class ProjectGui:
 
     @gui_activity_guard
     def update_boundary_limits(self, widget=None):
+        # update the values in the manual support grid adjustment list
+        self.update_support_grid_manual_model()
         # the support grid depends on the boundary
         self.update_support_grid_model()
         self.update_view()

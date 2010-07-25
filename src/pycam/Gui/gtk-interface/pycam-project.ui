@@ -1316,12 +1316,34 @@
                                             <property name="visible">True</property>
                                             <property name="orientation">vertical</property>
                                             <child>
-                                              <object class="GtkHScale" id="SupportGridPositionManualShiftControl">
+                                              <object class="GtkHBox" id="SupportGridPositionManualShiftBox">
                                                 <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="adjustment">SupportGridPositionManualAdjustment</property>
-                                                <property name="digits">2</property>
-                                                <property name="value_pos">right</property>
+                                                <child>
+                                                  <object class="GtkHScale" id="SupportGridPositionManualShiftControl">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">True</property>
+                                                    <property name="adjustment">SupportGridPositionManualAdjustment</property>
+                                                    <property name="digits">2</property>
+                                                    <property name="draw_value">False</property>
+                                                    <property name="value_pos">right</property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="position">0</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkSpinButton" id="SupportGridPositionManualShiftControl2">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">True</property>
+                                                    <property name="invisible_char">&#x25CF;</property>
+                                                    <property name="adjustment">SupportGridPositionManualAdjustment</property>
+                                                    <property name="digits">1</property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">False</property>
+                                                    <property name="position">1</property>
+                                                  </packing>
+                                                </child>
                                               </object>
                                               <packing>
                                                 <property name="position">0</property>
@@ -5716,10 +5738,12 @@ Any selected group of dimensions will be scaled accordingly.</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="SupportGridOffsetX">
+    <property name="lower">-1000</property>
     <property name="upper">1000</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="SupportGridOffsetY">
+    <property name="lower">-1000</property>
     <property name="upper">1000</property>
     <property name="step_increment">1</property>
   </object>
@@ -5843,8 +5867,6 @@ Any selected group of dimensions will be scaled accordingly.</property>
     </action-widgets>
   </object>
   <object class="GtkAdjustment" id="SupportGridPositionManualAdjustment">
-    <property name="lower">-100</property>
-    <property name="upper">100</property>
-    <property name="step_increment">10</property>
+    <property name="step_increment">1</property>
   </object>
 </interface>

@@ -58,7 +58,8 @@ def generate_toolpath(model, tool_settings=None,
         engrave_offset=0.0, support_grid_distance_x=None,
         support_grid_distance_y=None, support_grid_thickness=None,
         support_grid_height=None, support_grid_offset_x=None,
-        support_grid_offset_y=None, calculation_backend=None, callback=None):
+        support_grid_offset_y=None, support_grid_adjustments_x=None,
+        support_grid_adjustments_y=None, calculation_backend=None, callback=None):
     """ abstract interface for generating a toolpath
 
     @type model: pycam.Geometry.Model.Model
@@ -156,8 +157,8 @@ def generate_toolpath(model, tool_settings=None,
                 support_grid_distance_y, support_grid_thickness,
                 support_grid_height, offset_x=support_grid_offset_x,
                 offset_y=support_grid_offset_y,
-                support_grid_adjustments_x=support_grid_adjustments_x,
-                support_grid_adjustments_y=support_grid_adjustments_y)
+                adjustments_x=support_grid_adjustments_x,
+                adjustments_y=support_grid_adjustments_y)
         trimesh_model += support_grid_model
     # Adapt the contour_model to the engraving offset. This offset is
     # considered to be part of the material_allowance.
