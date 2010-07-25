@@ -347,8 +347,10 @@ class ProjectGui:
                 "SupportGridPositionManualShiftControl")
         self.grid_adjustment_value_control.connect("move-slider",
                 self.update_support_grid_manual_adjust)
-        self.grid_adjustment_value_control.connect("change-value",
+        self.grid_adjustment_value_control.connect("value-changed",
                 self.update_support_grid_manual_adjust)
+        self.gui.get_object("SupportGridPositionManualShiftControl2").connect(
+                "value-changed", self.update_support_grid_manual_adjust)
         def get_set_grid_adjustment_value(value=None):
             if self.grid_adjustment_axis_x.get_active():
                 adjustments = self.grid_adjustments_x
