@@ -100,7 +100,7 @@ class Triangle(TransformableContainer):
         if not GL_enabled:
             return
         GL.glBegin(GL.GL_TRIANGLES)
-        # use normals to improve lightning (contributed by imyrek)
+        # use normals to improve lighting (contributed by imyrek)
         normal_t = self.normal()
         GL.glNormal3f(normal_t.x, normal_t.y, normal_t.z)
         GL.glVertex3f(self.p1.x, self.p1.y, self.p1.z)

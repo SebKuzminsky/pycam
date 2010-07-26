@@ -5286,7 +5286,7 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                         </child>
                         <child>
                           <object class="GtkCheckButton" id="OpenGLLight">
-                            <property name="label" translatable="yes">Lightning</property>
+                            <property name="label" translatable="yes">Lighting</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>

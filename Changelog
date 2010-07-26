@@ -3,7 +3,7 @@ Version 0.3.0 - UNRELEASED
  * added basic support for importing simple DXF contour files
  * added support for engravings
  * integrated "help" links pointing to the wiki
- * improved OpenGL lightning (contributed by imyrek)
+ * improved OpenGL lighting (contributed by imyrek)
  * allow non-square profiles for the support grid
  * added ability to create support grids with different x/y grid distance
  * added x/y offsets to support grid options
@@ -74,7 +74,7 @@ Version 0.2 - 2010-03-04
   * configure "overlap" instead of "lines" and "samples"
   * configure "maximum step down" instead of "layers"
   * show a progress bar during calculations
-  * basic lightning for the OpenGL view
+  * basic lighting for the OpenGL view
  * improved performance by (optionally) using the "Open Dynamics Engine" (ODE) for
    collision detection
 

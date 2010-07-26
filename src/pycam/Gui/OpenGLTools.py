@@ -445,7 +445,7 @@ class ModelViewWindowGL:
         GL.glLoadIdentity()
         GL.glViewport(0, 0, self.area.allocation.width,
                 self.area.allocation.height)
-        # lightning
+        # lighting
         # Setup The Ambient Light
         GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0.3, 0.3, 0.3, 3.))
         # Setup The Diffuse Light
