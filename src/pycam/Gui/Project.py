@@ -1537,13 +1537,14 @@ class ProjectGui:
         else:
             filter_ext = filter_ext[1:]
         basename = os.path.basename(filename)
-        splitted = basename.split(".")
-        if len(splitted) > 1:
+        if (basename.rfind(".") == -1) or (basename[-5:].rfind(".") == -1):
+            # The filename does not contain a dot or the dot is not within the
+            # last five characters. Dots within the start of the filename are
+            # ignored.
+            return filename + filter_ext
+        else:
             # contains at least one dot
             return filename
-        else:
-            # the filename does not contain a dot
-            return filename + filter_ext
 
     @gui_activity_guard
     def save_model(self, widget=None, filename=None):
