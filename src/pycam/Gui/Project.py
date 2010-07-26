@@ -150,6 +150,7 @@ class ProjectGui:
             # see http://www.daa.com.au/pipermail/pygtk/2009-May/017052.html
             self.recent_manager = None
         # file loading
+        self.last_dirname = None
         self.last_task_settings_file = None
         self.last_model_file = None
         self.last_toolpath_file = None
@@ -1554,12 +1555,9 @@ class ProjectGui:
                     + "implemented!") % str(type(self.model)))
             return
         # get the filename
-        no_dialog = False
         if callable(filename):
             filename = filename()
-        if isinstance(filename, basestring):
-            no_dialog = True
-        else:
+        if not isinstance(filename, basestring):
             # we open a dialog
             filename = self.get_filename_via_dialog("Save model to ...",
                     mode_load=False, type_filter=FILTER_MODEL)
@@ -1766,7 +1764,9 @@ class ProjectGui:
     def load_model_file(self, widget=None, filename=None):
         if callable(filename):
             filename = filename()
-        if not filename:
+        if filename:
+            self.add_to_recent_file_list(filename)
+        else:
             filename = self.get_filename_via_dialog("Loading model ...",
                     mode_load=True, type_filter=FILTER_MODEL)
         if filename:
@@ -1782,7 +1782,9 @@ class ProjectGui:
     def export_emc_tools(self, widget=None, filename=None):
         if callable(filename):
             filename = filename()
-        if not filename:
+        if filename:
+            self.add_to_recent_file_list(filename)
+        else:
             filename = self.get_filename_via_dialog("Exporting EMC tool definition ...",
                     mode_load=False, type_filter=FILTER_EMC_TOOL)
         if filename:
@@ -1807,7 +1809,9 @@ class ProjectGui:
     def load_task_settings_file(self, widget=None, filename=None):
         if callable(filename):
             filename = filename()
-        if not filename:
+        if filename:
+            self.add_to_recent_file_list(filename)
+        else:
             filename = self.get_filename_via_dialog("Loading settings ...",
                     mode_load=True, type_filter=FILTER_CONFIG)
             if filename:
@@ -2461,6 +2465,9 @@ class ProjectGui:
                     parent=self.window, action=gtk.FILE_CHOOSER_ACTION_SAVE,
                     buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                         gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+        # set the initial directory to the last one used
+        if self.last_dirname and os.path.isdir(self.last_dirname):
+            dialog.set_current_folder(self.last_dirname)
         # add filter for files
         if type_filter:
             if not isinstance(type_filter[0], (list, tuple)):
@@ -2512,16 +2519,18 @@ class ProjectGui:
         dialog.destroy()
         # add the file to the list of recently used ones
         if filename:
-            if os.path.isfile(filename):
-                # Add the item to the recent files list - if it already exists.
-                # Otherwise it will be added later after writing the file.
-                self.add_to_recent_file_list(filename)
+            self.add_to_recent_file_list(filename)
         return filename
 
     def add_to_recent_file_list(self, filename):
-        # skip this, if the recent manager is not available (e.g. GTK 2.12.1 on Windows)
-        if self.recent_manager:
-            self.recent_manager.add_item("file://%s" % str(filename))
+        # Add the item to the recent files list - if it already exists.
+        # Otherwise it will be added later after writing the file.
+        if os.path.isfile(filename):
+            # skip this, if the recent manager is not available (e.g. GTK 2.12.1 on Windows)
+            if self.recent_manager:
+                self.recent_manager.add_item("file://%s" % str(filename))
+            # store the directory of the last loaded file
+            self.last_dirname = os.path.dirname(os.path.abspath(filename))
 
     def setOutputFilename(self, filename):
         self.last_toolpath_file = filename
@@ -2534,10 +2543,7 @@ class ProjectGui:
             widget = widget()
         if isinstance(widget, basestring):
             filename = widget
-            no_dialog = True
-        elif self.no_dialog:
-            filename = self.last_toolpath_file
-            no_dialog = True
+            self.add_to_recent_file_list(filename)
         else:
             # we open a dialog
             filename = self.get_filename_via_dialog("Save toolpath to ...",
@@ -2545,7 +2551,6 @@ class ProjectGui:
             if filename:
                 self.last_toolpath_file = filename
                 self.update_save_actions()
-            no_dialog = False
         # no filename given -> exit
         if not filename:
             return
