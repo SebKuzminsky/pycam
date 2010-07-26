@@ -121,8 +121,7 @@ class ProjectGui:
 
     META_DATA_PREFIX = "PYCAM-META-DATA:"
 
-    def __init__(self, master=None, no_dialog=False):
-        """ TODO: remove "master" above when the Tk interface is abandoned"""
+    def __init__(self, no_dialog=False):
         self.settings = pycam.Gui.Settings.Settings()
         self.gui_is_active = False
         self.view3d = None
@@ -459,9 +458,6 @@ class ProjectGui:
         for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
             self.gui.get_object(name).connect("clicked", self.handle_tool_settings_change)
         self.gui.get_object("ToolName").connect("changed", self.handle_tool_settings_change)
-        # speed and feedrate controls
-        speed_control = self.gui.get_object("SpindleSpeedControl")
-        feedrate_control = self.gui.get_object("FeedrateControl")
         # connect the "consistency check" and the update-handler with all toolpath settings
         for objname in ("PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter", "ContourCutter",
                 "DropCutter", "PushCutter", "PathDirectionX", "PathDirectionY", "PathDirectionXY", "SettingEnableODE"):
@@ -1069,7 +1065,7 @@ class ProjectGui:
 
     def update_process_controls(self, widget=None, data=None):
         # possible dependencies of the DropCutter
-        get_obj = lambda name: self.gui.get_object(name)
+        get_obj = self.gui.get_object
         cutter_name = None
         for one_cutter in ("DropCutter", "PushCutter", "EngraveCutter"):
             if get_obj(one_cutter).get_active():
@@ -1079,13 +1075,11 @@ class ProjectGui:
                 get_obj("PathDirectionX").set_active(True)
             if not (get_obj("PathAccumulator").get_active() or get_obj("ZigZagCutter").get_active()):
                 get_obj("PathAccumulator").set_active(True)
-            dropcutter_active = True
         elif cutter_name == "PushCutter":
             if not (get_obj("SimpleCutter").get_active() \
                     or get_obj("PolygonCutter").get_active() \
                     or get_obj("ContourCutter").get_active()):
                 get_obj("SimpleCutter").set_active(True)
-            dropcutter_active = False
         else:
             # engraving
             if not get_obj("SimpleCutter").get_active():
@@ -1389,7 +1383,6 @@ class ProjectGui:
         if action is None:
             action = data
         self._treeview_button_event(self.tool_editor_table, self.tool_list, action, self.update_tool_table)
-        override_index = None
         if action == "add":
             # look for the first unused default name
             prefix = "New Tool "
@@ -1568,9 +1561,9 @@ class ProjectGui:
         if not filename:
             return
         try:
-            fi = open(filename, "w")
-            self.model.export(comment=self.get_meta_data()).write(fi)
-            fi.close()
+            file_in = open(filename, "w")
+            self.model.export(comment=self.get_meta_data()).write(file_in)
+            file_in.close()
         except IOError, err_msg:
             log.error("Failed to save model file: %s" % err_msg)
         else:
@@ -1824,11 +1817,7 @@ class ProjectGui:
         # load the new model only if the import worked
         if not model is None:
             self.model = model
-            # place the "safe height" clearly above the model's peak
-            self.settings.set("safety_height", (2 * self.model.maxz - self.model.minz))
             # do some initialization
-            # TODO: bound init?
-            #self.append_to_queue(self.reset_bounds)
             self.append_to_queue(self.update_all_controls)
             self.append_to_queue(self.toggle_3d_view, value=True)
             self.append_to_queue(self.update_view)
@@ -2528,12 +2517,10 @@ class ProjectGui:
         if os.path.isfile(filename):
             # skip this, if the recent manager is not available (e.g. GTK 2.12.1 on Windows)
             if self.recent_manager:
-                self.recent_manager.add_item("file://%s" % str(filename))
+                self.recent_manager.add_item("file://%s" \
+                        % str(os.path.abspath(filename)))
             # store the directory of the last loaded file
             self.last_dirname = os.path.dirname(os.path.abspath(filename))
-
-    def setOutputFilename(self, filename):
-        self.last_toolpath_file = filename
 
     @gui_activity_guard
     def save_toolpath(self, widget=None, data=None):
@@ -2604,8 +2591,8 @@ class ProjectGui:
                 self.quit()
 
 if __name__ == "__main__":
-    gui = ProjectGui()
+    GUI = ProjectGui()
     if len(sys.argv) > 1:
-        gui.load_model_file(sys.argv[1])
-    gui.mainloop()
+        GUI.load_model_file(sys.argv[1])
+    GUI.mainloop()
 
