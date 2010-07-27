@@ -566,6 +566,8 @@ class ToolpathSettings:
             "height": float,
             "offset_x": float,
             "offset_y": float,
+            "adjustments_x": "list_of_float",
+            "adjustments_y": "list_of_float",
         },
         "Program": {
             "unit": str,
@@ -641,8 +643,10 @@ class ToolpathSettings:
         if self.support_grid:
             return self.support_grid
         else:
-            return {"distance_x": None, "distance_y": None, "thickness": None,
-                    "height": None, "offset_x": None, "offset_y": None}
+            result = {}
+            for key in self.SECTIONS["SupportGrid"].keys():
+                result[key] = None
+            return result
 
     def set_calculation_backend(self, backend=None):
         self.program["enable_ode"] = (backend.upper() == "ODE")
@@ -696,12 +700,26 @@ class ToolpathSettings:
                     continue
                 elif value_type == bool:
                     value = value_raw.lower() in ("1", "true", "yes", "on")
+                elif isinstance(value_type, basestring) \
+                        and (value_type.startswith("list_of_")):
+                    item_type = value_type[len("list_of_"):]
+                    if item_type == "float":
+                        item_type = float
+                    else:
+                        continue
+                    try:
+                        value = [item_type(one_val)
+                                for one_val in value_raw.split(",")]
+                    except ValueError:
+                        log.warn("Settings: Ignored invalid setting due to " \
+                                + "a failed list type parsing: " \
+                                + "(%s -> %s): %s" % (section, key, value_raw))
                 else:
                     try:
                         value = value_type(value_raw)
                     except ValueError:
                         log.warn("Settings: Ignored invalid setting " \
-                                "(%s -> %s): %s" % (section, key, value_raw))
+                                + "(%s -> %s): %s" % (section, key, value_raw))
                 config_dict[key] = value
 
     def get_string(self):
@@ -717,7 +735,11 @@ class ToolpathSettings:
             for key, value_type in self.SECTIONS[section].items():
                 if config_dict.has_key(key):
                     value = config_dict[key]
-                    if type(value) == value_type:
+                    if isinstance(value_type, basestring) \
+                            and (value_type.startswith("list_of_")):
+                        result.append("%s = %s" % (key,
+                                ",".join([str(val) for val in value])))
+                    elif type(value) == value_type:
                         result.append("%s = %s" % (key, value))
                 # add one empty line after each section
             result.append("")
