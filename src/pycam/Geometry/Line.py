@@ -318,6 +318,21 @@ class LineGroup(TransformableContainer):
                 self._line_offsets.append(Line(line.p1,
                         line.p1.add(offset_point)))
 
+    def get_area(self):
+        """ calculate the area covered by a line group
+        Currently this works only for line groups in an xy-plane.
+        Returns zero for empty line groups or for open line groups.
+        """
+        if not self._lines:
+            return 0
+        if not self._is_closed:
+            return 0
+        value = 0
+        # taken from: http://www.wikihow.com/Calculate-the-Area-of-a-Polygon
+        for line in self._lines + [self._lines[0]]:
+            value += line.p1.x * line.p2.y - line.p1.y * line.p2.x
+        return value / 2.0
+
     def transform_by_matrix(self, matrix, transformed_list, **kwargs):
         if self._lines:
             offset_matrix = self.get_offset_matrix()
