@@ -8,6 +8,7 @@ Version 0.3.0 - UNRELEASED
  * added ability to create support grids with different x/y grid distance
  * added x/y offsets to support grid options
  * added 3D view movement and rotation with a keyboard in addition to the mouse
+ * added optional support for the Psyco just-in-time compiler
  * switched default tool size from radius to diameter
  * fixed performance issue when using a support grid
  * fixed empty toolpath after transforming the model

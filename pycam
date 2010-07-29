@@ -155,6 +155,9 @@ if __name__ == "__main__":
             help="specify if the mill tool (including its radius) should " \
                     + "move completely 'inside', 'along' or 'outside' the " \
                     + "defined processing boundary.")
+    group_general.add_option("", "--disable-psyco", dest="disable_psyco",
+            default=False, action="store_true", help="disable the Psyco " \
+                    + "just-in-time-compiler even when it is available")
     group_export.add_option("", "--export-gcode", dest="export_gcode",
             default=None, action="store", type="string",
             help="export the generated toolpaths to a file")
@@ -248,6 +251,17 @@ if __name__ == "__main__":
         inputfile = args[0]
     else:
         inputfile = None
+
+    if not opts.disable_psyco:
+        try:
+            import psyco
+            psyco.full()
+            log.info("Psyco enabled")
+        except ImportError:
+            log.info("Psyco is not available (performance will probably " \
+                    + "suffer slightly)")
+    else:
+        log.info("Psyco was disabled via the commandline")
 
     if not opts.export_gcode and not opts.export_task_config:
         show_gui(inputfile, opts.config_file)
