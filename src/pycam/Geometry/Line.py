@@ -236,16 +236,17 @@ class Line(TransformableContainer):
             valid_intersections.sort(
                     cmp=lambda (cp1, l1), (cp2, l2): cmp(l1, l2))
             # Check if p1 is within the box - otherwise use the closest
-            # intersection.
+            # intersection. The check for "valid_intersections" is necessary
+            # to prevent an IndexError due to floating point inaccuracies.
             if (minx <= self.p1.x <= maxx) and (miny <= self.p1.y <= maxy) \
-                    and (minz <= self.p1.z <= maxz):
+                    and (minz <= self.p1.z <= maxz) or not valid_intersections:
                 new_p1 = self.p1
             else:
                 new_p1 = valid_intersections[0][0]
             # Check if p2 is within the box - otherwise use the intersection
             # most distant from p1.
             if (minx <= self.p2.x <= maxx) and (miny <= self.p2.y <= maxy) \
-                    and (minz <= self.p2.z <= maxz):
+                    and (minz <= self.p2.z <= maxz) or not valid_intersections:
                 new_p2 = self.p2
             else:
                 new_p2 = valid_intersections[-1][0]
