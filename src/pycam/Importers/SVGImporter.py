@@ -35,7 +35,8 @@ def convert_svg2eps(svg_filename, eps_filename, location=None):
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 args = [location, "--export-eps", eps_filename, svg_filename])
     except OSError, err_msg:
-        log.warning("SVGImporter: failed to execute 'inkscape': %s" % err_msg)
+        log.error("SVGImporter: failed to execute 'inkscape' (%s): %s" \
+                % (location, err_msg))
         return False
     returncode = process.wait()
     if returncode == 0:
@@ -57,7 +58,8 @@ def convert_eps2dxf(eps_filename, dxf_filename, location=None):
                         "-f", "dxf:-polyaslines",
                         eps_filename, dxf_filename])
     except OSError, err_msg:
-        log.warning("SVGImporter: failed to execute 'pstoedit': %s" % err_msg)
+        log.error("SVGImporter: failed to execute 'pstoedit' (%s): %s" \
+                % (location, err_msg))
         return False
     returncode = process.wait()
     if returncode == 0:
@@ -76,12 +78,12 @@ def import_model(filename, program_locations=None):
     if program_locations and "inkscape" in program_locations:
         inkscape_path = program_locations["inkscape"]
     else:
-        inkscape_path = "inkscape"
+        inkscape_path = None
 
     if program_locations and "pstoedit" in program_locations:
         pstoedit_path = program_locations["pstoedit"]
     else:
-        pstoedit_path = "pstoedit"
+        pstoedit_path = None
 
     # the "right" way would be:
     # inkscape --print='| pstoedit -dt -f dxf:-polyaslines - -' input.svg
