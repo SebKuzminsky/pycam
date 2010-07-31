@@ -429,8 +429,10 @@ class LineGroup(TransformableContainer):
             else:
                 cross_offset = line_offset.dir().mul(offset)
                 # Prolong the line at the beginning and at the end - to allow
-                # overlaps.
-                in_line = line.dir().mul(offset)
+                # overlaps. Use factor "2" to take care for star-like structure
+                # where a complete convex triangle would get cropped (two lines
+                # get lost instead of just one).
+                in_line = line.dir().mul(2 * offset)
                 return Line(line.p1.add(cross_offset).sub(in_line),
                         line.p2.add(cross_offset).add(in_line))
         def do_lines_intersection(l1, l2):
