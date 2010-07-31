@@ -57,8 +57,9 @@ GTKMENU_FILE = "menubar.xml"
 HELP_WIKI_URL = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=%s"
 
 FILTER_GCODE = ("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode"))
-FILTER_MODEL = (("STL models", "*.stl"), ("DXF contours", "*.dxf"),
-        ("SVG files", "*.svg"))
+FILTER_MODEL = (("All supported model filetypes", ("*.stl", "*.dxf", "*.svg")),
+        ("STL models", "*.stl"), ("DXF contours", "*.dxf"),
+        ("SVG contours", "*.svg"))
 FILTER_CONFIG = ("Config files", "*.conf")
 FILTER_EMC_TOOL = ("EMC tool files", "*.tbl")
 
