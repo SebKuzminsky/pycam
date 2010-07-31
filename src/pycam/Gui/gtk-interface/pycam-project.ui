@@ -4635,8 +4635,8 @@ upon interesting bugs and weird results.</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAction" id="LoadModel">
-    <property name="label">_Load Model</property>
-    <property name="tooltip">Loads an STL model file.</property>
+    <property name="label">_Open Model</property>
+    <property name="tooltip">Opens a model file.</property>
     <property name="stock_id">gtk-open</property>
     <property name="always_show_image">True</property>
   </object>
