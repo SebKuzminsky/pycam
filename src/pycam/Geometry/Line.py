@@ -130,7 +130,7 @@ class Line(TransformableContainer):
             GL.glVertex3f(self.p1.x, self.p1.y, self.p1.z)
             GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
             # (optional) draw arrows for visualizing the direction of each line
-            if False:
+            if True:
                 line = (self.p2.x - self.p1.x, self.p2.y - self.p1.y)
                 if line[0] == 0:
                     ortho = (1.0, 0.0)
@@ -331,7 +331,7 @@ class LineGroup(TransformableContainer):
             return 0
         value = 0
         # taken from: http://www.wikihow.com/Calculate-the-Area-of-a-Polygon
-        for line in self._lines + [self._lines[0]]:
+        for line in self._lines:
             value += line.p1.x * line.p2.y - line.p1.y * line.p2.x
         return value / 2.0
 
@@ -456,7 +456,7 @@ class LineGroup(TransformableContainer):
             for line in self._lines:
                 self._update_limits(line)
 
-    def get_offset_line_group(self, offset):
+    def get_offset_line_groups(self, offset):
         def get_parallel_line(line, line_offset, offset):
             if offset == 0:
                 return Line(line.p1, line.p2)
@@ -473,6 +473,7 @@ class LineGroup(TransformableContainer):
         def do_lines_intersection(l1, l2):
             """ calculate the new intersection between two neighbouring lines
             """
+            # TODO: use Line.get_intersection instead of the code below
             if l1.p2 == l2.p1:
                 # intersection is already fine
                 return
@@ -538,7 +539,87 @@ class LineGroup(TransformableContainer):
                     finished = True
                 else:
                     new_group = clean_group
-            return new_group
+            # remove all non-adjacent intersecting lines (this splits the group)
+            if len(new_group) > 0:
+                intersections = []
+                # don't test neighbours for intersections -> "-2"
+                for index1 in range(len(new_group) - 2):
+                    for index2 in range(index1 + 2, len(new_group)):
+                        if (index1 == 0) and (index2 == len(new_group) - 1):
+                            # the first and the list lines are neighbours
+                            continue
+                        line1 = new_group[index1]
+                        line2 = new_group[index2]
+                        intersection = line1.get_intersection(line2)
+                        if intersection:
+                            intersections.append((intersection, line1, line2))
+                # The lines intersect each other
+                # We need to split the group.
+                if len(intersections) > 0:
+                    groups = []
+                    current_group = []
+                    for current_line in new_group:
+                        for intersection, line1, line2 in intersections:
+                            if current_line is line1 or current_line is line2:
+                                break
+                        else:
+                            # the current line is not part of an intersection
+                            current_group.append(current_line)
+                            continue
+                        # add the start of the current line to the current group
+                        if current_line.p1 != intersection:
+                            current_group.append(Line(current_line.p1,
+                                    intersection))
+                        if current_group:
+                            groups.append(current_group)
+                        current_group = []
+                        # Add the end of the current line as the beginning of
+                        # the new group.
+                        if current_line.p2 != intersection:
+                            current_group.append(Line(intersection,
+                                    current_line.p2))
+                    # All lines are processed. Now we need to add the remaining
+                    # items of the last group to the beginning of the first
+                    # group (closed loop around the end of the list).
+                    if current_group:
+                        if (len(groups) > 0) \
+                                and (current_group[-1].p2 == groups[0][0].p1):
+                            # it is a closed loop
+                            groups[0] = current_group + groups[0]
+                        else:
+                            # the line group is open
+                            groups.append(current_group)
+                    # try to find open groups that can be combined
+                    combined_groups = []
+                    for index, current_group in enumerate(groups):
+                        # Check if the group is not closed: try to add it to
+                        # other non-closed groups.
+                        if current_group[0].p1 == current_group[-1].p2:
+                            # a closed group
+                            combined_groups.append(current_group)
+                        else:
+                            # the current group is open
+                            for other_group in groups[index + 1:]:
+                                if other_group[0].p1 != other_group[-1].p2:
+                                    # This group is also open - a candidate
+                                    # for merging?
+                                    if other_group[0].p1 == current_group[-1].p2:
+                                        current_group.reverse()
+                                        for line in current_group:
+                                            other_group.insert(0, line)
+                                        break
+                                    if other_group[-1].p2 == current_group[0].p1:
+                                        other_group.extend(current_group)
+                                        break
+                            else:
+                                # not suitable open group found
+                                combined_groups.append(current_group)
+                    return combined_groups
+                else:
+                    # just return one group without intersections
+                    return [new_group]
+            else:
+                return None
         if self.get_offset_matrix() is None:
             # we can't get an offset line group if the normal is invalid
             return self
@@ -548,14 +629,23 @@ class LineGroup(TransformableContainer):
             new_lines = []
             for line, line_offset in zip(self._lines, self._line_offsets):
                 new_lines.append(get_parallel_line(line, line_offset, offset))
-            cleaned_line_group = simplify_line_group_intersections(new_lines)
-            if len(cleaned_line_group) == 0:
+            cleaned_line_groups = simplify_line_group_intersections(new_lines)
+            if cleaned_line_groups is None:
                 return None
             else:
-                group = LineGroup(self.get_offset_matrix())
-                for line in cleaned_line_group:
-                    group.append(line)
-                return group
+                # remove all groups with a toggled direction
+                self_is_outer = self.is_outer()
+                groups = []
+                for lines in cleaned_line_groups:
+                    group = LineGroup(self.get_offset_matrix())
+                    for line in lines:
+                        group.append(line)
+                    if group.is_outer() == self_is_outer:
+                        # We ignore groups that changed the direction. These
+                        # parts of the original group are flipped due to the
+                        # offset.
+                        groups.append(group)
+                return groups
 
     def get_cropped_line_groups(self, minx, maxx, miny, maxy, minz, maxz):
         """ crop a line group according to a 3d bounding box
