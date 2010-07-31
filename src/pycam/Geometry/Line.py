@@ -323,6 +323,7 @@ class LineGroup(TransformableContainer):
         """ calculate the area covered by a line group
         Currently this works only for line groups in an xy-plane.
         Returns zero for empty line groups or for open line groups.
+        Returns negative values for inner hole.
         """
         if not self._lines:
             return 0
@@ -333,6 +334,39 @@ class LineGroup(TransformableContainer):
         for line in self._lines + [self._lines[0]]:
             value += line.p1.x * line.p2.y - line.p1.y * line.p2.x
         return value / 2.0
+
+    def is_outer(self):
+        return self.get_area() > 0
+
+    def is_point_inside(self, p):
+        """ Test if a given point is inside of the polygon.
+        The result is unpredictable if the point is exactly on one of the lines.
+        """
+        # First: check if the point is within the boundary of the polygon.
+        if not ((self.minx <= p.x <= self.maxx) \
+                and (self.miny <= p.y <= self.maxy) \
+                and (self.minz <= p.z <= self.maxz)):
+            # the point is outside the rectangle boundary
+            return False
+        # see http://www.alienryderflex.com/polygon/
+        # Count the number of intersections of a ray along the x axis through
+        # all polygon lines.
+        # Odd number -> point is inside
+        intersection_count = 0
+        for line in self._lines:
+            # Only count intersections with lines that are partly below
+            # the y level of the point. This solves the problem of intersections
+            # through shared vertices or lines that go along the y level of the
+            # point.
+            if ((line.p1.y < p.y) and (p.y <= line.p2.y)) \
+                    or ((line.p2.y < p.y) and (p.y <= line.p1.y)):
+                part_y = (p.y - line.p1.y) / (line.p2.y - line.p1.y)
+                intersection_x = line.p1.x + part_y * (line.p2.x - line.p1.x)
+                if intersection_x < p.x:
+                    # only count intersections to the left
+                    intersection_count += 1
+        # odd intersection count -> inside
+        return intersection_count % 2 == 1
 
     def transform_by_matrix(self, matrix, transformed_list, **kwargs):
         if self._lines:
