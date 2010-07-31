@@ -57,7 +57,8 @@ GTKMENU_FILE = "menubar.xml"
 HELP_WIKI_URL = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=%s"
 
 FILTER_GCODE = ("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode"))
-FILTER_MODEL = (("STL models", "*.stl"), ("DXF contours", "*.dxf"))
+FILTER_MODEL = (("STL models", "*.stl"), ("DXF contours", "*.dxf"),
+        ("SVG files", "*.svg"))
 FILTER_CONFIG = ("Config files", "*.conf")
 FILTER_EMC_TOOL = ("EMC tool files", "*.tbl")
 
@@ -1766,7 +1767,8 @@ class ProjectGui:
             file_type, importer = pycam.Importers.detect_file_type(filename)
             if file_type and callable(importer):
                 self.last_model_file = filename
-                self.load_model(importer(filename))
+                # TODO: get the "program_locations"
+                self.load_model(importer(filename, program_locations=None))
                 self.update_save_actions()
             else:
                 log.error("Failed to detect filetype!")

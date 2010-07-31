@@ -74,7 +74,7 @@ def UniqueEdge(p1, p2):
     return e
 
 
-def ImportModel(filename, use_kdtree=True):
+def ImportModel(filename, use_kdtree=True, program_locations=None):
     global vertices, edges, kdtree
     vertices = 0
     edges = 0

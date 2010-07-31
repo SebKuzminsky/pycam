@@ -204,7 +204,7 @@ class DXFParser:
             return None
 
 
-def import_model(filename):
+def import_model(filename, program_locations=None):
     try:
         infile = open(filename,"rb")
     except IOError, err_msg:
