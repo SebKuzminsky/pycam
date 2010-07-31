@@ -162,7 +162,7 @@ def generate_toolpath(model, tool_settings=None,
         trimesh_model += support_grid_model
     # Adapt the contour_model to the engraving offset. This offset is
     # considered to be part of the material_allowance.
-    if (not contour_model is None) and (engrave_offset > 0):
+    if (not contour_model is None) and (engrave_offset != 0):
         if not callback is None:
             callback(text="Preparing contour model with offset ...")
             progress_callback = ProgressCounter(
