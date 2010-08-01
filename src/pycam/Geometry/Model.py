@@ -283,9 +283,10 @@ class ContourModel(BaseModel):
             return self._cached_offset_models[offset]
         result = ContourModel()
         for group in self._line_groups:
-            new_group = group.get_offset_line_group(offset)
-            if not new_group is None:
-                result.append(new_group)
+            new_groups = group.get_offset_line_groups(offset)
+            if not new_groups is None:
+                for new_group in new_groups:
+                    result.append(new_group)
             if callback and callback():
                 return None
         # cache the result
@@ -327,8 +328,9 @@ class ContourModel(BaseModel):
                     # check each pair of lines for intersections
                     for line1 in group1.next():
                         for line2 in group2.next():
-                            intersection = line1.get_intersection(line2)
+                            intersection, factor = line1.get_intersection(line2)
                             if intersection:
+                                # return just the place of intersection
                                 return intersection
             # update the progress visualization and quit if requested
             if callback and callback():

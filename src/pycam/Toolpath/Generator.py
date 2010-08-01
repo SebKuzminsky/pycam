@@ -26,6 +26,9 @@ import pycam.Cutters
 import pycam.Toolpath.SupportGrid
 import pycam.Geometry.Model
 from pycam.Utils import ProgressCounter
+import pycam.Utils.log
+
+log = pycam.Utils.log.get_logger()
 
 
 DIRECTIONS = frozenset(("x", "y", "xy"))
@@ -186,10 +189,11 @@ def generate_toolpath(model, tool_settings=None,
         if result is None:
             return None
         elif result:
-            return "The contour model contains colliding line groups. " \
+            warning = "The contour model contains colliding line groups. " \
                     + "This is not allowed in combination with an " \
                     + "engraving offset.\nA collision was detected at " \
                     + "(%.2f, %.2f, %.2f)." % (result.x, result.y, result.z)
+            log.warning(warning)
         else:
             # no collisions and no user interruption
             pass

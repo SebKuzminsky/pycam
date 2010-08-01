@@ -158,10 +158,12 @@ class Line(TransformableContainer):
     def get_points(self):
         return (self.p1, self.p2)
 
-    def get_intersection(self, line):
+    def get_intersection(self, line, infinite_lines=False):
         """ Get the point of intersection between two lines. Intersections
         outside the length of these lines are ignored.
-        Returns None if no valid intersection was found.
+        Returns (None, None) if no valid intersection was found.
+        Otherwise the result is (CollisionPoint, distance). Distance is between
+        0 and 1.
         """
         x1, x2, x3, x4 = self.p1, self.p2, line.p1, line.p2
         a = x2.sub(x1)
@@ -174,32 +176,34 @@ class Line(TransformableContainer):
             # lines are parallel
             # check if they are _one_ line
             if a.cross(c).normsq() != 0:
-                # the lines are parallel with a disctance
-                return None
+                # the lines are parallel with a distance
+                return None, None
             # the lines are on one straight
             if self.is_point_in_line(x3):
-                return x3
+                return x3, a.len() / c.len()
             elif self.is_point_in_line(x4):
-                return x4
+                return x4, a.len() / line.p2.sub(self.p1).len()
             elif line.is_point_in_line(x1):
-                return x1
+                return x1, 0
             elif line.is_point_in_line(x2):
-                return x2
+                return x2, 1
             else:
-                return None
-        if 0 <= factor <= 1:
+                return None, None
+        if infinite_lines or (0 <= factor <= 1):
             intersection = x1.add(a.mul(factor))
             # check if the intersection is between x3 and x4
-            if (min(x3.x, x4.x) <= intersection.x <= max(x3.x, x4.x)) \
+            if infinite_lines:
+                return intersection, factor
+            elif (min(x3.x, x4.x) <= intersection.x <= max(x3.x, x4.x)) \
                     and (min(x3.y, x4.y) <= intersection.y <= max(x3.y, x4.y)) \
                     and (min(x3.z, x4.z) <= intersection.z <= max(x3.z, x4.z)):
-                return intersection
+                return intersection, factor
             else:
                 # intersection outside of the length of line(x3, x4)
-                return None
+                return None, None
         else:
             # intersection outside of the length of line(x1, x2)
-            return None
+            return None, None
 
     def get_cropped_line(self, minx, maxx, miny, maxy, minz, maxz):
         if (minx <= self.minx() <= self.maxx() <= maxx) \
@@ -282,6 +286,9 @@ class LineGroup(TransformableContainer):
                 self._lines.insert(0, line)
             self._update_limits(line)
             self._is_closed = self._lines[0].p1 == self._lines[-1].p2
+
+    def __str__(self):
+        return "LineGroup %s" % str([line.p1 for line in self._lines])
 
     def is_connectable(self, line):
         if self._is_closed:
@@ -552,7 +559,7 @@ class LineGroup(TransformableContainer):
                         if index_distance > 1:
                             line1 = new_group[index1]
                             line2 = new_group[index2]
-                            intersection = line1.get_intersection(line2)
+                            intersection, factor = line1.get_intersection(line2)
                             if intersection and (intersection != line1.p1) \
                                     and (intersection != line1.p2):
                                 del new_group[index1]
