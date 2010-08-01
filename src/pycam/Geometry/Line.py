@@ -541,54 +541,57 @@ class LineGroup(TransformableContainer):
                     new_group = clean_group
             # remove all non-adjacent intersecting lines (this splits the group)
             if len(new_group) > 0:
-                intersections = []
-                # don't test neighbours for intersections -> "-2"
-                for index1 in range(len(new_group) - 2):
-                    for index2 in range(index1 + 2, len(new_group)):
-                        if (index1 == 0) and (index2 == len(new_group) - 1):
-                            # the first and the list lines are neighbours
-                            continue
-                        line1 = new_group[index1]
-                        line2 = new_group[index2]
-                        intersection = line1.get_intersection(line2)
-                        if intersection:
-                            intersections.append((intersection, line1, line2))
+                group_starts = []
+                index1 = 0
+                while index1 < len(new_group):
+                    index2 = 0
+                    while index2 < len(new_group):
+                        index_distance = min(abs(index2 - index1), \
+                                abs(len(new_group) - (index2 - index1))) 
+                        # skip neighbours
+                        if index_distance > 1:
+                            line1 = new_group[index1]
+                            line2 = new_group[index2]
+                            intersection = line1.get_intersection(line2)
+                            if intersection and (intersection != line1.p1) \
+                                    and (intersection != line1.p2):
+                                del new_group[index1]
+                                new_group.insert(index1,
+                                        Line(line1.p1, intersection))
+                                new_group.insert(index1 + 1,
+                                        Line(intersection, line1.p2))
+                                # Shift all items in "group_starts" by one if
+                                # they reference a line whose index changed.
+                                for i in range(len(group_starts)):
+                                    if group_starts[i] > index1:
+                                        group_starts[i] += 1
+                                if not index1 + 1 in group_starts:
+                                    group_starts.append(index1 + 1)
+                                # don't update index2 -> maybe there are other hits
+                            elif intersection and (intersection == line1.p1):
+                                if not index1 in group_starts:
+                                    group_starts.append(index1)
+                                index2 += 1
+                            else:
+                                index2 += 1
+                        else:
+                            index2 += 1
+                    index1 += 1
                 # The lines intersect each other
                 # We need to split the group.
-                if len(intersections) > 0:
+                if len(group_starts) > 0:
+                    group_starts.sort()
                     groups = []
-                    current_group = []
-                    for current_line in new_group:
-                        for intersection, line1, line2 in intersections:
-                            if current_line is line1 or current_line is line2:
-                                break
-                        else:
-                            # the current line is not part of an intersection
-                            current_group.append(current_line)
-                            continue
-                        # add the start of the current line to the current group
-                        if current_line.p1 != intersection:
-                            current_group.append(Line(current_line.p1,
-                                    intersection))
-                        if current_group:
-                            groups.append(current_group)
-                        current_group = []
-                        # Add the end of the current line as the beginning of
-                        # the new group.
-                        if current_line.p2 != intersection:
-                            current_group.append(Line(intersection,
-                                    current_line.p2))
-                    # All lines are processed. Now we need to add the remaining
-                    # items of the last group to the beginning of the first
-                    # group (closed loop around the end of the list).
-                    if current_group:
-                        if (len(groups) > 0) \
-                                and (current_group[-1].p2 == groups[0][0].p1):
-                            # it is a closed loop
-                            groups[0] = current_group + groups[0]
-                        else:
-                            # the line group is open
-                            groups.append(current_group)
+                    last_start = 0
+                    for group_start in group_starts:
+                        groups.append(new_group[last_start:group_start])
+                        last_start = group_start
+                    # Add the remaining lines to the first group or as a new
+                    # group.
+                    if groups[0][0].p1 == new_group[-1].p2:
+                        groups[0] = new_group[last_start:] + groups[0]
+                    else:
+                        groups.append(new_group[last_start:])
                     # try to find open groups that can be combined
                     combined_groups = []
                     for index, current_group in enumerate(groups):
