@@ -69,7 +69,7 @@ class SimpleGCodeExporter:
         if (self._last_path_point is None) \
                 or (self._max_skip_safety_distance is None):
             return False
-        distance = new_point.sub(self._last_path_point).norm()
+        distance = new_point.sub(self._last_path_point).norm
         return distance <= self._max_skip_safety_distance
 
     def add_comment(self, comment):
