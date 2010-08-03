@@ -169,7 +169,7 @@ def generate_toolpath(model, tool_settings=None,
         if not callback is None:
             callback(text="Preparing contour model with offset ...")
             progress_callback = ProgressCounter(
-                    len(contour_model.get_line_groups()), callback).increment
+                    len(contour_model.get_polygons()), callback).increment
         else:
             progress_callback = None
         contour_model = contour_model.get_offset_model(engrave_offset,
@@ -182,7 +182,7 @@ def generate_toolpath(model, tool_settings=None,
                 # quit requested
                 return None
             progress_callback = ProgressCounter(
-                    len(contour_model.get_line_groups()), callback).increment
+                    len(contour_model.get_polygons()), callback).increment
         else:
             progress_callback = None
         result = contour_model.check_for_collisions(callback=progress_callback)

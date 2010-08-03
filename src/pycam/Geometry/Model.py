@@ -23,7 +23,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Exporters.STLExporter
 from pycam.Geometry.Triangle import Triangle
-from pycam.Geometry.Line import Line, LineGroup
+from pycam.Geometry.Line import Line
+from pycam.Geometry.Polygon import Polygon
 from pycam.Geometry.Point import Point
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
 from pycam.Geometry.Matrix import TRANSFORMATIONS
@@ -229,25 +230,25 @@ class ContourModel(BaseModel):
                     break
             else:
                 # add a single line as part of a new group
-                new_line_group = LineGroup()
+                new_line_group = Polygon()
                 new_line_group.append(item)
                 self._line_groups.append(new_line_group)
-        elif isinstance(item, LineGroup):
+        elif isinstance(item, Polygon):
             self._line_groups.append(item)
         else:
             # ignore any non-supported items
             pass
 
-    def get_lines(self):
-        return sum([group.get_lines() for group in self._line_groups], [])
+    def get_num_of_lines(self):
+        return sum([len(group) for group in self._line_groups])
 
-    def get_line_groups(self):
+    def get_polygons(self):
         return self._line_groups
 
     def get_cropped_model(self, minx, maxx, miny, maxy, minz, maxz):
         new_line_groups = []
         for group in self._line_groups:
-            new_groups = group.get_cropped_line_groups(minx, maxx, miny, maxy,
+            new_groups = group.get_cropped_polygons(minx, maxx, miny, maxy,
                     minz, maxz)
             if not new_groups is None:
                 new_line_groups.extend(new_groups)
@@ -277,7 +278,7 @@ class ContourModel(BaseModel):
             return self._cached_offset_models[offset]
         result = ContourModel()
         for group in self._line_groups:
-            new_groups = group.get_offset_line_groups(offset)
+            new_groups = group.get_offset_polygons(offset)
             if not new_groups is None:
                 for new_group in new_groups:
                     result.append(new_group)
@@ -320,8 +321,8 @@ class ContourModel(BaseModel):
                 # check if both groups overlap - otherwise skip this pair
                 if check_bounds_of_groups(group1, group2):
                     # check each pair of lines for intersections
-                    for line1 in group1.next():
-                        for line2 in group2.next():
+                    for line1 in group1.get_lines():
+                        for line2 in group2.get_lines():
                             intersection, factor = line1.get_intersection(line2)
                             if intersection:
                                 # return just the place of intersection

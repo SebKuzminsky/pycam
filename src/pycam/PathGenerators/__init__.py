@@ -255,11 +255,11 @@ def get_max_height_triangles(model, cutter, x, y, minz, maxz, order=None,
         # TODO: check if this path is ever in use (e.g. "intersect_lines" is not
         # defined)
         nl = range(3)
-        nl[0] = -getattr(last_pos["triangle"].normal(), order[0])
-        nl[2] = last_pos["triangle"].normal().z
+        nl[0] = -getattr(last_pos["triangle"].normal, order[0])
+        nl[2] = last_pos["triangle"].normal.z
         nm = range(3)
-        nm[0] = -getattr(triangle_max.normal(), order[0])
-        nm[2] = triangle_max.normal().z
+        nm[0] = -getattr(triangle_max.normal, order[0])
+        nm[2] = triangle_max.normal.z
         last = range(3)
         last[0] = getattr(last_pos["cut"], order[0])
         last[2] = last_pos["cut"].z

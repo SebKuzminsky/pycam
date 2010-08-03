@@ -63,11 +63,11 @@ class EngraveCutter:
         num_of_layers = len(z_steps)
 
         current_layer = 0
-        num_of_lines = len(self.contour_model.get_lines())
+        num_of_lines = self.contour_model.get_num_of_lines()
         progress_counter = ProgressCounter(len(z_steps) * num_of_lines,
                 draw_callback)
 
-        line_groups = self.contour_model.get_line_groups()
+        line_groups = self.contour_model.get_polygons()
 
         # push slices for all layers above ground
         for z in z_steps[:-1]:
@@ -104,7 +104,7 @@ class EngraveCutter:
                     % (current_layer, num_of_layers))
 
         # process the final layer with a drop cutter
-        for line_group in self.contour_model.get_line_groups():
+        for line_group in self.contour_model.get_polygons():
             self.pa_drop.new_direction(0)
             self.pa_drop.new_scanline()
             for line in line_group.get_lines():
@@ -148,7 +148,7 @@ class EngraveCutter:
         pa.new_scanline()
         p1 = Point(line.p1.x, line.p1.y, minz)
         p2 = Point(line.p2.x, line.p2.y, minz)
-        distance = line.len()
+        distance = line.len
         # we want to have at least five steps each
         num_of_steps = max(5, 1 + int(math.ceil(distance / horiz_step)))
         # steps may be negative

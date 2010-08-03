@@ -20,10 +20,11 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry import TransformableContainer
 from pycam.Geometry.utils import INFINITE
 from pycam.Geometry.Point import Point
 
-class Plane:
+class Plane(TransformableContainer):
     id = 0
     def __init__(self, p, n):
         self.id = Plane.id
@@ -33,6 +34,18 @@ class Plane:
 
     def __repr__(self):
         return "Plane<%s,%s>" % (self.p, self.n)
+
+    def next(self):
+        yield self.p
+        yield self.n
+
+    def get_children_count(self):
+        # a plane always consists of two points
+        return 2
+
+    def reset_cache():
+        # nothing to be done (but required for TransformableContainer)
+        pass
 
     def intersect_point(self, direction, point):
         if direction.norm != 1:
