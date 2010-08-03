@@ -463,6 +463,27 @@ class LineGroup(TransformableContainer):
             for line in self._lines:
                 self._update_limits(line)
 
+    def get_straight_skeleton(self):
+        skeleton = []
+        for index in range(len(self._lines)):
+            # "-1" also works for index==0
+            l1 = self._lines[index - 1]
+            l2 = self._lines[index]
+            skel_p = Point((l1.p1.x + l2.p2.x) / 2.0, (l1.p1.y + l2.p2.y) / 2.0,
+                    (l1.p1.z + l2.p2.z) / 2.0)
+            skel_dir = skel_p.sub(l1.p2)
+            skel_up_vector = skel_dir.cross(l1.dir())
+            offset_line = self._line_offsets[index - 1]
+            offset_up_vector = offset_line.cross(l1.dir())
+            # TODO: check for other axis as well
+            if offset_up_vector.z * skel_up_vector.z < 0:
+                # reverse the skeleton vector to point outwards
+                skel_dir = skel_dir.mul(-1)
+            skel_dir.normalize()
+            skeletion.append(skel_dir)
+
+        return skeleton
+
     def get_offset_line_groups(self, offset):
         def get_parallel_line(line, line_offset, offset):
             if offset == 0:
