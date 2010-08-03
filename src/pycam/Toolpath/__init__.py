@@ -31,10 +31,8 @@ log = pycam.Utils.log.get_logger()
 
 
 def _check_colinearity(p1, p2, p3):
-    v1 = p2.sub(p1)
-    v2 = p3.sub(p2)
-    v1.normalize()
-    v2.normalize()
+    v1 = p2.sub(p1).normalized()
+    v2 = p3.sub(p2).normalized()
     # compare if the normalized distances between p1-p2 and p2-p3 are equal
     return v1 == v2
 
@@ -120,7 +118,7 @@ class ToolPath:
         result["time"] = 0
         result["position"] = start_position
         def move(new_pos):
-            result["time"] += new_pos.sub(result["position"]).norm() / feedrate
+            result["time"] += new_pos.sub(result["position"]).norm / feedrate
             result["position"] = new_pos
         # move to safey height at the starting position
         safety_height = settings.get_process_settings()["safety_height"]

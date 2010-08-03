@@ -92,26 +92,20 @@ class BaseModel(TransformableContainer):
                     + "support the 'export' function.") % str(type(self)))
 
     def _update_limits(self, item):
-        if callable(item.minx):
-            minx, miny, minz = item.minx(), item.miny(), item.minz()
-            maxx, maxy, maxz = item.maxx(), item.maxy(), item.maxz()
-        else:
-            minx, miny, minz = item.minx, item.miny, item.minz
-            maxx, maxy, maxz = item.maxx, item.maxy, item.maxz
         if self.minx is None:
-            self.minx = minx
-            self.miny = miny
-            self.minz = minz
-            self.maxx = maxx
-            self.maxy = maxy
-            self.maxz = maxz
+            self.minx = item.minx
+            self.miny = item.miny
+            self.minz = item.minz
+            self.maxx = item.maxx
+            self.maxy = item.maxy
+            self.maxz = item.maxz
         else:
-            self.minx = min(self.minx, minx)
-            self.miny = min(self.miny, miny)
-            self.minz = min(self.minz, minz)
-            self.maxx = max(self.maxx, maxx)
-            self.maxy = max(self.maxy, maxy)
-            self.maxz = max(self.maxz, maxz)
+            self.minx = min(self.minx, item.minx)
+            self.miny = min(self.miny, item.miny)
+            self.minz = min(self.minz, item.minz)
+            self.maxx = max(self.maxx, item.maxx)
+            self.maxy = max(self.maxy, item.maxy)
+            self.maxz = max(self.maxz, item.maxz)
 
     def append(self, item):
         self._update_limits(item)

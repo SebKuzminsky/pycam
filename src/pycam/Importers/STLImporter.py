@@ -232,8 +232,7 @@ def ImportModel(filename, use_kdtree=True, program_locations=None):
             m = endfacet.match(line)
             if m:
                 if not n:
-                    n = p3.sub(p1).cross(p2.sub(p1))
-                    n.normalize()
+                    n = p3.sub(p1).cross(p2.sub(p1)).normalized()
 
                 # make sure the points are in ClockWise order
                 dotcross = n.dot(p3.sub(p1).cross(p2.sub(p1)))

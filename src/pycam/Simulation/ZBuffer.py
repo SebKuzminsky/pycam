@@ -106,13 +106,13 @@ class ZBuffer:
             self.add_triangle(t)
 
     def add_triangle(self, t):
-        minx = int((t.minx() - self.minx) / (self.maxx - self.minx) \
+        minx = int((t.minx - self.minx) / (self.maxx - self.minx) \
                 * self.xres) - 1
-        maxx = int((t.maxx() - self.minx) / (self.maxx - self.minx) \
+        maxx = int((t.maxx - self.minx) / (self.maxx - self.minx) \
                 * self.xres) + 1
-        miny = int((t.miny() - self.miny) / (self.maxy - self.miny) \
+        miny = int((t.miny - self.miny) / (self.maxy - self.miny) \
                 * self.yres) - 1
-        maxy = int((t.maxy() - self.miny) / (self.maxy - self.miny) \
+        maxy = int((t.maxy - self.miny) / (self.maxy - self.miny) \
                 * self.yres) + 2
         if minx < 0: 
             minx = 0

@@ -91,7 +91,7 @@ class Camera:
         dimz = s.get("maxz") - s.get("minz")
         max_dim = max(max(dimx, dimy), dimz)
         distv = Point(v["distance"][0], v["distance"][1],
-                v["distance"][2]).normalize()
+                v["distance"][2]).normalized()
         # The multiplier "2.0" is based on: sqrt(2) + margin  -- the squre root
         # makes sure, that the the diagonal fits.
         distv = distv.mul((max_dim * 2.0) / math.sin(v["fovy"]/2))
@@ -216,8 +216,8 @@ class Camera:
         # Calculate the proportion of each model axis according to the x axis of
         # the screen.
         distv = self.view["distance"]
-        distv = Point(distv[0], distv[1], distv[2]).normalize()
-        factors_x = distv.cross(Point(v_up[0], v_up[1], v_up[2])).normalize()
+        distv = Point(distv[0], distv[1], distv[2]).normalized()
+        factors_x = distv.cross(Point(v_up[0], v_up[1], v_up[2])).normalized()
         factors_x = (factors_x.x, factors_x.y, factors_x.z)
         return (factors_x, factors_y)
 

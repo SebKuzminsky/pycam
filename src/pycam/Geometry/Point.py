@@ -36,8 +36,7 @@ class Point:
         self.x = float(x)
         self.y = float(y)
         self.z = float(z)
-        self._norm = None
-        self._normsq = None
+        self.reset_cache()
 
     def __repr__(self):
         return "Point%d<%g,%g,%g>" % (self.id, self.x, self.y, self.z)
@@ -74,13 +73,14 @@ class Point:
         self.reset_cache()
 
     def reset_cache(self):
-        self._norm = None
-        self._normsq = None
+        self.normsq = self.dot(self)
+        self.norm = math.sqrt(self.normsq)
         
     def mul(self, c):
         return Point(self.x * c, self.y * c, self.z * c)
 
     def div(self, c):
+        c = float(c)
         return Point(self.x / c, self.y / c, self.z / c)
 
     def add(self, p):
@@ -96,23 +96,10 @@ class Point:
         return Point(self.y * p.z - p.y * self.z, p.x * self.z - self.x * p.z,
                 self.x * p.y - p.x * self.y)
 
-    def normsq(self):
-        if self._normsq is None:
-            self._normsq = self.dot(self)
-        return self._normsq
-
-    def norm(self):
-        if self._norm is None:
-            self._norm = math.sqrt(self.normsq())
-        return self._norm
-
-    def normalize(self):
-        n = self.norm()
-        if n != 0:
-            self.x /= n
-            self.y /= n
-            self.z /= n
-            self._norm = 1.0
-            self._normsq = 1.0
-        return self
+    def normalized(self):
+        n = self.norm
+        if n == 0:
+            return None
+        else:
+            return Point(self.x / n, self.y / n, self.z / n)
 

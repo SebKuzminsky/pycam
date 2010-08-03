@@ -188,7 +188,7 @@ class SphericalCutter(BaseCutter):
             # check if the contact point is between the endpoints
             d = edge.p2.sub(edge.p1)
             m = cp.sub(edge.p1).dot(d)
-            if (m < 0) or (m > d.normsq()):
+            if (m < 0) or (m > d.normsq):
                 return (None, INFINITE)
         return (cl, l)
 
@@ -220,8 +220,8 @@ class SphericalCutter(BaseCutter):
         (cl, ccp, cp, l) = self.intersect_cylinder_line(direction, edge)
         if not ccp:
             return (None, INFINITE)
-        m = cp.sub(edge.p1).dot(edge.dir())
-        if (m < 0) or (m > edge.len()):
+        m = cp.sub(edge.p1).dot(edge.dir)
+        if (m < 0) or (m > edge.len):
             return (None, INFINITE)
         if ccp.z < self.center.z:
             return (None, INFINITE)
@@ -299,7 +299,7 @@ class SphericalCutter(BaseCutter):
 
     def drop_bis(self, triangle):
         """ TODO: this function is never called - remove it? """
-        n = triangle.normal()
+        n = triangle.normal
         if abs(n.dot(self.axis)) < epsilon:
             d = triangle.p1.sub(self.center).dot(n)
             if abs(d) >= self.radius - epsilon:

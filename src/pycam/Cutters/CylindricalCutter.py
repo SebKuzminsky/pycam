@@ -175,8 +175,8 @@ class CylindricalCutter(BaseCutter):
         (cl, ccp, cp, l) = self.intersect_circle_line(direction, edge)
         if cp:
             # check if the contact point is between the endpoints
-            m = cp.sub(edge.p1).dot(edge.dir())
-            if (m < 0) or (m > edge.len()):
+            m = cp.sub(edge.p1).dot(edge.dir)
+            if (m < 0) or (m > edge.len):
                 return (None, INFINITE)
         return (cl, l)
 
@@ -208,8 +208,8 @@ class CylindricalCutter(BaseCutter):
         (cl, ccp, cp, l) = self.intersect_cylinder_line(direction, edge)
         if not ccp:
             return (None, INFINITE)
-        m = cp.sub(edge.p1).dot(edge.dir())
-        if (m < 0) or (m > edge.len()):
+        m = cp.sub(edge.p1).dot(edge.dir)
+        if (m < 0) or (m > edge.len):
             return (None, INFINITE)
         if ccp.z < self.center.z:
             return (None, INFINITE)

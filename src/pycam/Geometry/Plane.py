@@ -35,9 +35,9 @@ class Plane:
         return "Plane<%s,%s>" % (self.p, self.n)
 
     def intersect_point(self, direction, point):
-        if direction.norm() != 1:
+        if direction.norm != 1:
             # calculations will go wrong, if the direction is not a unit vector
-            direction = Point(direction.x, direction.y, direction.z).normalize()
+            direction = Point(direction.x, direction.y, direction.z).normalized()
         denom = self.n.dot(direction)
         if denom == 0:
             return (None, INFINITE)

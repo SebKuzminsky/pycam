@@ -51,7 +51,7 @@ class STLExporter:
             for line in self.comment.split(self.linesep):
                 yield(";%s" % line)
         for tr in self.model.triangles():
-            norm = tr.normal().normalize()
+            norm = tr.normal.normalized()
             yield "facet normal %f %f %f" % (norm.x, norm.y, norm.z)
             yield "  outer loop"
             for p in (tr.p1, tr.p2, tr.p3):

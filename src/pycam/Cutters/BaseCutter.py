@@ -39,10 +39,10 @@ class BaseCutter(object):
         self.id = BaseCutter.id
         BaseCutter.id += 1
         self.radius = radius
-        self.radiussq = radius*radius
+        self.radiussq = radius ** 2
         self.required_distance = 0
         self.distance_radius = self.radius
-        self.distance_radiussq = self.distance_radius * self.distance_radius
+        self.distance_radiussq = self.distance_radius ** 2
         # self.minx, self.maxx, self.miny and self.maxy are defined as
         # properties below
         self.shape = {}
@@ -98,20 +98,20 @@ class BaseCutter(object):
 
     def drop(self, triangle):
         # check bounding box collision
-        if self.minx > triangle.maxx():
+        if self.minx > triangle.maxx:
             return None
-        if self.maxx < triangle.minx():
+        if self.maxx < triangle.minx:
             return None
-        if self.miny > triangle.maxy():
+        if self.miny > triangle.maxy:
             return None
-        if self.maxy < triangle.miny():
+        if self.maxy < triangle.miny:
             return None
 
         # check bounding circle collision
-        c = triangle.center()
+        c = triangle.center
         if (c.x - self.location.x) ** 2 + (c.y - self.location.y) ** 2 \
                 > (self.distance_radiussq + 2 * self.distance_radius \
-                    * triangle.radius() + triangle.radiussq()):
+                    * triangle.radius + triangle.radiussq):
             return None
 
         (cl, d)= self.intersect(BaseCutter.vertical, triangle)
@@ -121,22 +121,22 @@ class BaseCutter(object):
         """ TODO: this function is never used - remove it? """
         # check bounding box collision
         if dx == 0:
-            if self.miny > triangle.maxy():
+            if self.miny > triangle.maxy:
                 return None
-            if self.maxy < triangle.miny():
+            if self.maxy < triangle.miny:
                 return None
         if dy == 0:
-            if self.minx > triangle.maxx():
+            if self.minx > triangle.maxx:
                 return None
-            if self.maxx < triangle.minx():
+            if self.maxx < triangle.minx:
                 return None
-        if triangle.maxz() < self.location.z:
+        if triangle.maxz < self.location.z:
             return None
 
         # check bounding sphere collision
-        c = triangle.center()
+        c = triangle.center
         d = (c.x - self.location.x) * dy -(c.y - self.location.y) * dx
-        t = self.radius + triangle.radius()
+        t = self.radius + triangle.radius
         if abs(d) > t:
             return None
 

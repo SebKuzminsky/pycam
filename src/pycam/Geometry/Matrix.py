@@ -121,8 +121,7 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
     # destination vectors.
     rot_axis = Point(v_orig[1] * v_dest[2] - v_orig[2] * v_dest[1],
             v_orig[2] * v_dest[0] - v_orig[0] * v_dest[2],
-            v_orig[0] * v_dest[1] - v_orig[1] * v_dest[0])
-    rot_axis.normalize()
+            v_orig[0] * v_dest[1] - v_orig[1] * v_dest[0]).normalized()
     # get the rotation matrix
     # see http://www.fastgraph.com/makegames/3drotation/
     c = math.cos(rot_angle)

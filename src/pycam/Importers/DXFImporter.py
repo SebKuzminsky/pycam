@@ -79,8 +79,8 @@ class DXFParser:
                     current_group = []
                     groups.append(current_group)
         def get_distance_between_groups(group1, group2):
-            forward = group1[-1].p2.sub(group2[0].p1).norm()
-            backward = group2[-1].p2.sub(group1[0].p1).norm()
+            forward = group1[-1].p2.sub(group2[0].p1).norm
+            backward = group2[-1].p2.sub(group1[0].p1).norm
             return min(forward, backward)
         remaining_groups = groups[:]
         ordered_groups = []

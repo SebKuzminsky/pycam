@@ -43,8 +43,7 @@ class Line(TransformableContainer):
         Line.id += 1
         self.p1 = p1
         self.p2 = p2
-        self._dir = None
-        self._len = None
+        self.reset_cache()
 
     def __repr__(self):
         return "Line<%g,%g,%g>-<%g,%g,%g>" % (self.p1.x, self.p1.y, self.p1.z,
@@ -75,54 +74,31 @@ class Line(TransformableContainer):
         return 2
 
     def reset_cache(self):
-        self._dir = None
-        self._len = None
-
-    def dir(self):
-        if self._dir is None:
-            self._dir = self.p2.sub(self.p1)
-            self._dir.normalize()
-        return self._dir
-
-    def len(self):
-        if self._len is None:
-            self._len = self.p2.sub(self.p1).norm()
-        return self._len
+        self.dir = self.p2.sub(self.p1).normalized()
+        self.len = self.p2.sub(self.p1).norm
+        self.minx = min(self.p1.x, self.p2.x)
+        self.miny = min(self.p1.y, self.p2.y)
+        self.minz = min(self.p1.z, self.p2.z)
+        self.maxx = max(self.p1.x, self.p2.x)
+        self.maxy = max(self.p1.y, self.p2.y)
+        self.maxz = max(self.p1.z, self.p2.z)
 
     def point(self, l):
-        return self.p1.add(self.dir().mul(l*self.len()))
+        return self.p1.add(self.dir.mul(l*self.len))
 
     def closest_point(self, p):
-        v = self.dir()
+        v = self.dir
         l = self.p1.dot(v) - p.dot(v)
         return self.p1.sub(v.mul(l))
 
     def dist_to_point_sq(self, p):
-        return p.sub(self.closest_point(p)).normsq()
+        return p.sub(self.closest_point(p)).normsq
 
     def dist_to_point(self, p):
         return math.sqrt(self.dist_to_point_sq(p))
     
     def is_point_in_line(self, p):
-        return abs(p.sub(self.p1).norm() + p.sub(self.p2).norm() - self.len()) < epsilon
-
-    def minx(self):
-        return min(self.p1.x, self.p2.x)
-
-    def miny(self):
-        return min(self.p1.y, self.p2.y)
-
-    def minz(self):
-        return min(self.p1.z, self.p2.z)
-
-    def maxx(self):
-        return max(self.p1.x, self.p2.x)
-
-    def maxy(self):
-        return max(self.p1.y, self.p2.y)
-
-    def maxz(self):
-        return max(self.p1.z, self.p2.z)
+        return abs(p.sub(self.p1).norm + p.sub(self.p2).norm - self.len) < epsilon
 
     def to_OpenGL(self):
         if GL_enabled:
@@ -130,7 +106,7 @@ class Line(TransformableContainer):
             GL.glVertex3f(self.p1.x, self.p1.y, self.p1.z)
             GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
             # (optional) draw arrows for visualizing the direction of each line
-            if True:
+            if False:
                 line = (self.p2.x - self.p1.x, self.p2.y - self.p1.y)
                 if line[0] == 0:
                     ortho = (1.0, 0.0)
@@ -155,9 +131,6 @@ class Line(TransformableContainer):
                 GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
             GL.glEnd()
 
-    def get_points(self):
-        return (self.p1, self.p2)
-
     def get_intersection(self, line, infinite_lines=False):
         """ Get the point of intersection between two lines. Intersections
         outside the length of these lines are ignored.
@@ -171,18 +144,18 @@ class Line(TransformableContainer):
         c = x3.sub(x1)
         # see http://mathworld.wolfram.com/Line-LineIntersection.html (24)
         try:
-            factor = c.cross(b).dot(a.cross(b)) / a.cross(b).normsq()
+            factor = c.cross(b).dot(a.cross(b)) / a.cross(b).normsq
         except ZeroDivisionError:
             # lines are parallel
             # check if they are _one_ line
-            if a.cross(c).normsq() != 0:
+            if a.cross(c).norm != 0:
                 # the lines are parallel with a distance
                 return None, None
             # the lines are on one straight
             if self.is_point_in_line(x3):
-                return x3, a.len() / c.len()
+                return x3, a.len / c.len
             elif self.is_point_in_line(x4):
-                return x4, a.len() / line.p2.sub(self.p1).len()
+                return x4, a.len / line.p2.sub(self.p1).len
             elif line.is_point_in_line(x1):
                 return x1, 0
             elif line.is_point_in_line(x2):
@@ -206,13 +179,13 @@ class Line(TransformableContainer):
             return None, None
 
     def get_cropped_line(self, minx, maxx, miny, maxy, minz, maxz):
-        if (minx <= self.minx() <= self.maxx() <= maxx) \
-                and (miny <= self.miny() <= self.maxy() <= maxy) \
-                and (minz <= self.minz() <= self.maxz() <= maxz):
+        if (minx <= self.minx <= self.maxx <= maxx) \
+                and (miny <= self.miny <= self.maxy <= maxy) \
+                and (minz <= self.minz <= self.maxz <= maxz):
             return Line(line.p1, line.p2)
-        elif (maxx < self.minx()) or (self.maxx() < minx) \
-                or (maxy < self.miny()) or (self.maxy() < miny) \
-                or (maxz < self.minz()) or (self.maxz() < minz):
+        elif (maxx < self.minx) or (self.maxx < minx) \
+                or (maxy < self.miny) or (self.maxy < miny) \
+                or (maxz < self.minz) or (self.maxz < minz):
             return None
         else:
             # the line needs to be cropped
@@ -228,11 +201,11 @@ class Line(TransformableContainer):
                     Plane(maxp, Point(0, 0, 1)),
             ]
             # calculate all intersections
-            intersections = [plane.intersect_point(self.dir(), self.p1)
+            intersections = [plane.intersect_point(self.dir, self.p1)
                     for plane in planes]
             # remove all intersections outside the box and outside the line
             valid_intersections = [(cp, dist) for cp, dist in intersections
-                    if cp and (0 <= dist <= self.len()) \
+                    if cp and (0 <= dist <= self.len) \
                             and (minx <= cp.x <= maxx) \
                             and (miny <= cp.y <= maxy) \
                             and (minz <= cp.z <= maxz)]
@@ -317,7 +290,7 @@ class LineGroup(TransformableContainer):
             offset_matrix = self.get_offset_matrix()
             # initialize all offset vectors (if necessary)
             for line in self._lines:
-                line_dir = line.dir()
+                line_dir = line.dir
                 vector = (line_dir.x, line_dir.y, line_dir.z)
                 offset_vector = Matrix.multiply_vector_matrix(vector,
                         offset_matrix)
@@ -409,21 +382,21 @@ class LineGroup(TransformableContainer):
             offset_matrix = None
             # check if all lines are in one specific layer (z/y/x)
             # return the respective axis rotation matrix
-            z_start_value = self._lines[0].minz()
+            z_start_value = self._lines[0].minz
             on_z_level = [True for line in self._lines
-                    if line.minz() == line.maxz() == z_start_value]
+                    if line.minz == line.maxz == z_start_value]
             if len(on_z_level) == len(self._lines):
                 offset_matrix = Matrix.TRANSFORMATIONS["z"]
             else:
                 y_start_value = self._lines[0].y
                 on_y_level = [True for line in self._lines
-                        if line.miny() == line.maxy() == y_start_value]
+                        if line.miny == line.maxy == y_start_value]
                 if len(on_y_level) == len(self._lines):
                     offset_matrix = Matrix.TRANSFORMATIONS["y"]
                 else:
                     x_start_value = self._lines[0].x
                     on_x_level = [True for line in self._lines
-                            if line.minx() == line.maxx() == x_start_value]
+                            if line.minx == line.maxx == x_start_value]
                     if len(on_x_level) == len(self._lines):
                         offset_matrix = Matrix.TRANSFORMATIONS["x"]
             # store the result to avoid re-calculation
@@ -432,19 +405,19 @@ class LineGroup(TransformableContainer):
 
     def _update_limits(self, line):
         if self.minx is None:
-            self.minx = line.minx()
-            self.maxx = line.maxx()
-            self.miny = line.miny()
-            self.maxy = line.maxy()
-            self.minz = line.minz()
-            self.maxz = line.maxz()
+            self.minx = line.minx
+            self.maxx = line.maxx
+            self.miny = line.miny
+            self.maxy = line.maxy
+            self.minz = line.minz
+            self.maxz = line.maxz
         else:
-            self.minx = min(self.minx, line.minx())
-            self.maxx = max(self.maxx, line.maxx())
-            self.miny = min(self.miny, line.miny())
-            self.maxy = max(self.maxy, line.maxy())
-            self.minz = min(self.minz, line.minz())
-            self.maxz = max(self.maxz, line.maxz())
+            self.minx = min(self.minx, line.minx)
+            self.maxx = max(self.maxx, line.maxx)
+            self.miny = min(self.miny, line.miny)
+            self.maxy = max(self.maxy, line.maxy)
+            self.minz = min(self.minz, line.minz)
+            self.maxz = max(self.maxz, line.maxz)
 
     def reset_cache(self):
         if not self._lines:
@@ -453,12 +426,12 @@ class LineGroup(TransformableContainer):
         else:
             first = self._lines[0]
             # initialize the start limit with valid values
-            self.minx = first.minx()
-            self.maxx = first.maxx()
-            self.miny = first.miny()
-            self.maxy = first.maxy()
-            self.minz = first.minz()
-            self.maxz = first.maxz()
+            self.minx = first.minx
+            self.maxx = first.maxx
+            self.miny = first.miny
+            self.maxy = first.maxy
+            self.minz = first.minz
+            self.maxz = first.maxz
             # update the limit for each line
             for line in self._lines:
                 self._update_limits(line)
@@ -471,17 +444,15 @@ class LineGroup(TransformableContainer):
             l2 = self._lines[index]
             skel_p = Point((l1.p1.x + l2.p2.x) / 2.0, (l1.p1.y + l2.p2.y) / 2.0,
                     (l1.p1.z + l2.p2.z) / 2.0)
-            skel_dir = skel_p.sub(l1.p2)
-            skel_up_vector = skel_dir.cross(l1.dir())
+            skel_dir = skel_p.sub(l1.p2).normalized()
+            skel_up_vector = skel_dir.cross(l1.dir)
             offset_line = self._line_offsets[index - 1]
-            offset_up_vector = offset_line.cross(l1.dir())
+            offset_up_vector = offset_line.cross(l1.dir)
             # TODO: check for other axis as well
             if offset_up_vector.z * skel_up_vector.z < 0:
                 # reverse the skeleton vector to point outwards
                 skel_dir = skel_dir.mul(-1)
-            skel_dir.normalize()
             skeletion.append(skel_dir)
-
         return skeleton
 
     def get_offset_line_groups(self, offset):
@@ -489,13 +460,13 @@ class LineGroup(TransformableContainer):
             if offset == 0:
                 return Line(line.p1, line.p2)
             else:
-                cross_offset = line_offset.dir().mul(offset)
+                cross_offset = line_offset.dir.mul(offset)
                 # Prolong the line at the beginning and at the end - to allow
                 # overlaps. Use factor "2" to take care for star-like structure
                 # where a complete convex triangle would get cropped (two lines
                 # get lost instead of just one). Use the "abs" value to
                 # compensate negative offsets.
-                in_line = line.dir().mul(2 * abs(offset))
+                in_line = line.dir.mul(2 * abs(offset))
                 return Line(line.p1.add(cross_offset).sub(in_line),
                         line.p2.add(cross_offset).add(in_line))
         def do_lines_intersection(l1, l2):
@@ -514,7 +485,7 @@ class LineGroup(TransformableContainer):
             c = x3.sub(x1)
             # see http://mathworld.wolfram.com/Line-LineIntersection.html (24)
             try:
-                factor = c.cross(b).dot(a.cross(b)) / a.cross(b).normsq()
+                factor = c.cross(b).dot(a.cross(b)) / a.cross(b).normsq
             except ZeroDivisionError:
                 l2.p1 = None
                 return
@@ -523,13 +494,13 @@ class LineGroup(TransformableContainer):
                 l2.p1 = None
             else:
                 intersection = x1.add(a.mul(factor))
-                if Line(l1.p1, intersection).dir() != l1.dir():
+                if Line(l1.p1, intersection).dir != l1.dir:
                     # Remove lines that would change their direction due to the
                     # new intersection. These are usually lines that become
                     # obsolete due to a more favourable intersection of the two
                     # neighbouring lines. This appears at small corners.
                     l1.p1 = None
-                elif Line(intersection, l2.p2).dir() != l2.dir():
+                elif Line(intersection, l2.p2).dir != l2.dir:
                     # see comment above
                     l2.p1 = None
                 elif l1.p1 == intersection:
@@ -687,9 +658,9 @@ class LineGroup(TransformableContainer):
         new_groups = []
         for line in self._lines:
             new_line = None
-            if (minx <= line.minx() <= line.maxx() <= maxx) \
-                    and (miny <= line.miny() <= line.maxy() <= maxy) \
-                    and (minz <= line.minz() <= line.maxz() <= maxz):
+            if (minx <= line.minx <= line.maxx <= maxx) \
+                    and (miny <= line.miny <= line.maxy <= maxy) \
+                    and (minz <= line.minz <= line.maxz <= maxz):
                 new_line = line
             else:
                 cropped_line = line.get_cropped_line(minx, maxx, miny, maxy,
