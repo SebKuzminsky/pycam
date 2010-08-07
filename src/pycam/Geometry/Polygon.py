@@ -25,6 +25,7 @@ from pycam.Geometry.Point import Point
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry import TransformableContainer
 import pycam.Geometry.Matrix as Matrix
+import math
 
 
 class Polygon(TransformableContainer):
@@ -43,6 +44,7 @@ class Polygon(TransformableContainer):
         self.miny = None
         self.maxz = None
         self.minz = None
+        self._lines_cache = None
 
     def append(self, line):
         if not self.is_connectable(line):
@@ -78,6 +80,10 @@ class Polygon(TransformableContainer):
         else:
             status = "open"
         return "Polygon (%s) %s" % (status, [point for point in self._points])
+
+    def reverse_direction(self):
+        self._points.reverse()
+        self.reset_cache()
 
     def is_connectable(self, line):
         if self._is_closed:
@@ -119,8 +125,28 @@ class Polygon(TransformableContainer):
             value += p1.x * p2.y - p2.x * p1.y
         return value / 2.0
 
+    def get_max_inside_distance(self):
+        """ calculate the maximum distance between two points of the polygon
+        """
+        if len(self._points) < 2:
+            return None
+        distance = self._points[1].sub(self._points[0]).norm
+        for p1 in self._points:
+            for p2 in self._points:
+                if p1 is p2:
+                    continue
+                distance = max(distance, p2.sub(p1).norm)
+        return distance
+
     def is_outer(self):
         return self.get_area() > 0
+
+    def is_polygon_inside(self, polygon):
+        inside_counter = 0
+        for point in polygon._points:
+            if self.is_point_inside(point):
+                inside_counter += 1
+        return inside_counter >= len(polygon._points) / 2.0
 
     def is_point_inside(self, p):
         """ Test if a given point is inside of the polygon.
@@ -158,7 +184,7 @@ class Polygon(TransformableContainer):
         """ Caching is necessary to avoid constant recalculation due to
         the "to_OpenGL" method.
         """
-        if not hasattr(self, "_lines_cache") \
+        if (self._lines_cache is None) \
                 or (len(self) != len(self._lines_cache)):
             # recalculate the line cache
             lines = []
@@ -170,6 +196,16 @@ class Polygon(TransformableContainer):
     def to_OpenGL(self):
         for line in self.get_lines():
             line.to_OpenGL()
+        return
+        offset_polygons = self.get_offset_polygons(0.2)
+        for polygon in offset_polygons:
+            for line in polygon.get_lines():
+                line.to_OpenGL()
+        """
+        for index, point in enumerate(self._points):
+            line = Line(point, point.add(self.get_bisector(index)))
+            line.get_length_line(1).to_OpenGL()
+        """
 
     def _update_limits(self, point):
         if self.minx is None:
@@ -188,34 +224,179 @@ class Polygon(TransformableContainer):
             self.maxz = max(self.maxz, point.z)
 
     def reset_cache(self):
-        if not self._points:
-            self.minx, self.miny, self.minz = None, None, None
-            self.maxx, self.maxy, self.maxz = None, None, None
-        else:
-            # update the limit for each line
-            for point in self._points:
-                self._update_limits(points)
+        self._lines_cache = None
+        self.minx, self.miny, self.minz = None, None, None
+        self.maxx, self.maxy, self.maxz = None, None, None
+        # update the limit for each line
+        for point in self._points:
+            self._update_limits(point)
 
-    def get_straight_skeleton(self):
-        skeleton = []
-        for index in range(len(self._lines)):
-            # "-1" also works for index==0
-            l1 = self._lines[index - 1]
-            l2 = self._lines[index]
-            skel_p = Point((l1.p1.x + l2.p2.x) / 2.0, (l1.p1.y + l2.p2.y) / 2.0,
-                    (l1.p1.z + l2.p2.z) / 2.0)
-            skel_dir = skel_p.sub(l1.p2).normalized()
-            skel_up_vector = skel_dir.cross(l1.dir)
-            offset_line = self._line_offsets[index - 1]
-            offset_up_vector = offset_line.cross(l1.dir)
+    def get_bisector(self, index):
+        p1 = self._points[index - 1]
+        p2 = self._points[index]
+        p3 = self._points[(index + 1) % len(self._points)]
+        d1 = p2.sub(p1).normalized()
+        d2 = p2.sub(p3).normalized()
+        skel_dir = d1.add(d2).normalized()
+        if skel_dir is None:
+            # the two vectors pointed to opposite directions
+            skel_dir = d1.cross(self._plane.n).normalized()
+        else:
+            skel_up_vector = skel_dir.cross(p2.sub(p1))
+            offset_up_vector = self._plane.n
             # TODO: check for other axis as well
             if offset_up_vector.z * skel_up_vector.z < 0:
                 # reverse the skeleton vector to point outwards
                 skel_dir = skel_dir.mul(-1)
-            skeletion.append(skel_dir)
-        return skeleton
+        return skel_dir
 
     def get_offset_polygons(self, offset):
+        def get_shifted_vertex(index, offset):
+            p1 = self._points[index]
+            p2 = self._points[(index + 1) % len(self._points)]
+            cross_offset = p2.sub(p1).cross(self._plane.n).normalized()
+            bisector_normalized = self.get_bisector(index)
+            factor = cross_offset.dot(bisector_normalized)
+            bisector_sized = bisector_normalized.mul(offset / factor)
+            return p1.add(bisector_sized)
+        def simplify_polygon_intersections(lines):
+            new_group = lines[:]
+            # remove all non-adjacent intersecting lines (this splits the group)
+            if len(new_group) > 0:
+                group_starts = []
+                index1 = 0
+                while index1 < len(new_group):
+                    index2 = 0
+                    while index2 < len(new_group):
+                        index_distance = min(abs(index2 - index1), \
+                                abs(len(new_group) - (index2 - index1))) 
+                        # skip neighbours
+                        if index_distance > 1:
+                            line1 = new_group[index1]
+                            line2 = new_group[index2]
+                            intersection, factor = line1.get_intersection(line2)
+                            if intersection and (intersection != line1.p1) \
+                                    and (intersection != line1.p2):
+                                del new_group[index1]
+                                new_group.insert(index1,
+                                        Line(line1.p1, intersection))
+                                new_group.insert(index1 + 1,
+                                        Line(intersection, line1.p2))
+                                # Shift all items in "group_starts" by one if
+                                # they reference a line whose index changed.
+                                for i in range(len(group_starts)):
+                                    if group_starts[i] > index1:
+                                        group_starts[i] += 1
+                                if not index1 + 1 in group_starts:
+                                    group_starts.append(index1 + 1)
+                                # don't update index2 -> maybe there are other hits
+                            elif intersection and (intersection == line1.p1):
+                                if not index1 in group_starts:
+                                    group_starts.append(index1)
+                                index2 += 1
+                            else:
+                                index2 += 1
+                        else:
+                            index2 += 1
+                    index1 += 1
+                # The lines intersect each other
+                # We need to split the group.
+                if len(group_starts) > 0:
+                    group_starts.sort()
+                    groups = []
+                    last_start = 0
+                    for group_start in group_starts:
+                        groups.append(new_group[last_start:group_start])
+                        last_start = group_start
+                    # Add the remaining lines to the first group or as a new
+                    # group.
+                    if groups[0][0].p1 == new_group[-1].p2:
+                        groups[0] = new_group[last_start:] + groups[0]
+                    else:
+                        groups.append(new_group[last_start:])
+                    # try to find open groups that can be combined
+                    combined_groups = []
+                    for index, current_group in enumerate(groups):
+                        # Check if the group is not closed: try to add it to
+                        # other non-closed groups.
+                        if current_group[0].p1 == current_group[-1].p2:
+                            # a closed group
+                            combined_groups.append(current_group)
+                        else:
+                            # the current group is open
+                            for other_group in groups[index + 1:]:
+                                if other_group[0].p1 != other_group[-1].p2:
+                                    # This group is also open - a candidate
+                                    # for merging?
+                                    if other_group[0].p1 == current_group[-1].p2:
+                                        current_group.reverse()
+                                        for line in current_group:
+                                            other_group.insert(0, line)
+                                        break
+                                    if other_group[-1].p2 == current_group[0].p1:
+                                        other_group.extend(current_group)
+                                        break
+                            else:
+                                # not suitable open group found
+                                combined_groups.append(current_group)
+                    return combined_groups
+                else:
+                    # just return one group without intersections
+                    return [new_group]
+            else:
+                return None
+        if offset == 0:
+            return [self]
+        if offset * 2 >= self.get_max_inside_distance():
+            # This offset will not create a valid offset polygon.
+            # Sadly there is currently no other way to detect a complete flip of
+            # something like a circle.
+            return []
+        points = []
+        for index in range(len(self._points)):
+            points.append(get_shifted_vertex(index, offset))
+        new_lines = []
+        for index in range(len(points)):
+            p1 = points[index]
+            p2 = points[(index + 1) % len(points)]
+            new_lines.append(Line(p1, p2))
+        cleaned_line_groups = simplify_polygon_intersections(new_lines)
+        if cleaned_line_groups is None:
+            return None
+        else:
+            # remove all groups with a toggled direction
+            self_is_outer = self.is_outer()
+            groups = []
+            for lines in cleaned_line_groups:
+                group = Polygon(self._plane)
+                for line in lines:
+                    group.append(line)
+                if group.is_outer() != self_is_outer:
+                    # We ignore groups that changed the direction. These
+                    # parts of the original group are flipped due to the
+                    # offset.
+                    continue
+                # Remove polygons that should be inside the original,
+                # but due to float inaccuracies they are not.
+                if ((self.is_outer() and (offset < 0)) \
+                        or (not self.is_outer() and (offset > 0))) \
+                        and (not self.is_polygon_inside(group)):
+                    continue
+                groups.append(group)
+            # remove all polygons that are within other polygons
+            result = []
+            for group in groups:
+                inside = False
+                for group_test in groups:
+                    if group_test is group:
+                        continue
+                    if group_test.is_polygon_inside(group):
+                        inside = True
+                if not inside:
+                    result.append(group)
+            return result
+
+    def get_offset_polygons_old(self, offset):
         def get_parallel_line(line, offset):
             if offset == 0:
                 return Line(line.p1, line.p2)

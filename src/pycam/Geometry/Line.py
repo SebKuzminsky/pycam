@@ -83,8 +83,10 @@ class Line(TransformableContainer):
         self.maxy = max(self.p1.y, self.p2.y)
         self.maxz = max(self.p1.z, self.p2.z)
 
-    def point(self, l):
-        return self.p1.add(self.dir.mul(l*self.len))
+    def get_length_line(self, length):
+        """ return a line with the same direction and the specified length
+        """
+        return Line(self.p1, self.p1.add(self.dir.mul(length)))
 
     def closest_point(self, p):
         v = self.dir
@@ -153,9 +155,9 @@ class Line(TransformableContainer):
                 return None, None
             # the lines are on one straight
             if self.is_point_in_line(x3):
-                return x3, a.len / c.len
+                return x3, c.norm / a.norm
             elif self.is_point_in_line(x4):
-                return x4, a.len / line.p2.sub(self.p1).len
+                return x4, line.p2.sub(self.p1).norm / a.norm
             elif line.is_point_in_line(x1):
                 return x1, 0
             elif line.is_point_in_line(x2):
