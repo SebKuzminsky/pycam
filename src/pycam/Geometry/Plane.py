@@ -43,7 +43,7 @@ class Plane(TransformableContainer):
         # a plane always consists of two points
         return 2
 
-    def reset_cache():
+    def reset_cache(self):
         # nothing to be done (but required for TransformableContainer)
         pass
 
