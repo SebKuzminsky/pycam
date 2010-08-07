@@ -245,6 +245,11 @@ class ContourModel(BaseModel):
     def get_polygons(self):
         return self._line_groups
 
+    def reverse_directions(self):
+        for polygon in self._line_groups:
+            polygon.reverse_direction()
+        self.reset_cache()
+
     def get_cropped_model(self, minx, maxx, miny, maxy, minz, maxz):
         new_line_groups = []
         for group in self._line_groups:
