@@ -97,7 +97,7 @@ class DropCutter:
                 grid.append(zip(x_steps, [y] * (len(x_steps) + 1)))
             dim_attrs = ["y", "x"]
 
-        num_of_lines = len(grid) + 1
+        num_of_lines = len(grid)
         num_of_grid_positions = num_of_x_lines * num_of_y_lines
         progress_counter = ProgressCounter(num_of_grid_positions, draw_callback)
         current_line = 0

@@ -225,7 +225,8 @@ def generate_toolpath(model, tool_settings=None,
     if (overlap < 0) or (overlap >= 1):
         return "Invalid overlap value (%f): should be greater or equal 0 " \
                 + "and lower than 1"
-    effective_toolradius =number(tool_settings["tool_radius"]) * (1 - overlap)
+    # factor "2" since we are based on radius instead of diameter
+    stepping = 2 * number(tool_settings["tool_radius"]) * (1 - overlap)
     if path_generator == "DropCutter":
         if direction == "x":
             direction_param = 0
@@ -235,24 +236,22 @@ def generate_toolpath(model, tool_settings=None,
             return "Invalid direction value (%s): not one of %s" \
                     % (direction, DIRECTIONS)
         if safety_height < maxz:
-            print "%s / %s / %s / %s" % (safety_height, maxz, type(safety_height), type(maxz))
             return ("Safety height (%.4f) is within the bounding box height " \
                     + "(%.4f) - this can cause collisions of the tool with " \
                     + "the material.") % (safety_height, maxz)
         toolpath = generator.GenerateToolPath(minx, maxx, miny, maxy, minz,
-                maxz, effective_toolradius, effective_toolradius,
-                direction_param, callback)
+                maxz, stepping, stepping, direction_param, callback)
     elif path_generator == "PushCutter":
         if step_down > 0:
             dz = step_down
         else:
             dz = maxz - minz
         if direction == "x":
-            dx, dy = 0, effective_toolradius
+            dx, dy = 0, stepping
         elif direction == "y":
-            dx, dy = effective_toolradius, 0
+            dx, dy = stepping, 0
         elif direction == "xy":
-            dx, dy = effective_toolradius, effective_toolradius
+            dx, dy = stepping, stepping
         else:
             return "Invalid direction (%s): not one of %s" \
                     % (direction, DIRECTIONS)
@@ -264,8 +263,8 @@ def generate_toolpath(model, tool_settings=None,
             dz = step_down
         else:
             dz = maxz - minz
-        toolpath = generator.GenerateToolPath(minz, maxz, effective_toolradius,
-                dz, callback)
+        toolpath = generator.GenerateToolPath(minz, maxz, stepping, dz,
+                callback)
     return toolpath
     
 def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
