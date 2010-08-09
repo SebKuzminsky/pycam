@@ -22,9 +22,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = ["DropCutter", "PushCutter", "EngraveCutter"]
 
-from pycam.Geometry.utils import INFINITE, epsilon
+from pycam.Geometry.utils import INFINITE, epsilon, sqrt
 from pycam.Geometry.Point import Point
-import math
 
 
 class Hit:
@@ -43,7 +42,7 @@ def get_free_paths_triangles(model, cutter, p1, p2):
     x_dist = p2.x - p1.x
     y_dist = p2.y - p1.y
     z_dist = p2.z - p1.z
-    xyz_dist = math.sqrt(x_dist * x_dist + y_dist * y_dist + z_dist * z_dist)
+    xyz_dist = sqrt(x_dist * x_dist + y_dist * y_dist + z_dist * z_dist)
     x_frac = x_dist / xyz_dist
     y_frac = y_dist / xyz_dist
     z_frac = z_dist / xyz_dist
@@ -134,9 +133,9 @@ def get_free_paths_ode(physics, p1, p2, depth=8):
     if physics.check_collision():
         # collision detected
         if depth > 0:
-            middle_x = (p1.x + p2.x) / 2.0
-            middle_y = (p1.y + p2.y) / 2.0
-            middle_z = (p1.z + p2.z) / 2.0
+            middle_x = (p1.x + p2.x) / 2
+            middle_y = (p1.y + p2.y) / 2
+            middle_z = (p1.z + p2.z) / 2
             p_middle = Point(middle_x, middle_y, middle_z)
             group1 = get_free_paths_ode(physics, p1, p_middle, depth - 1)
             group2 = get_free_paths_ode(physics, p_middle, p2, depth - 1)
@@ -186,7 +185,7 @@ def get_max_height_ode(physics, x, y, minz, maxz, order=None):
         trips = 0
         safe_z = minz
     while trips > 0:
-        current_z = (low + high) / 2.0
+        current_z = (low + high) / 2
         physics.set_drill_position((x, y, current_z))
         if physics.check_collision():
             low = current_z

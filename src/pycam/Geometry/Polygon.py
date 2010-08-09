@@ -24,6 +24,7 @@ from pycam.Geometry.Line import Line
 from pycam.Geometry.Point import Point
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry import TransformableContainer
+from pycam.Geometry.utils import number
 import pycam.Geometry.Matrix as Matrix
 import math
 
@@ -123,7 +124,7 @@ class Polygon(TransformableContainer):
             p1 = self._points[index]
             p2 = self._points[(index + 1) % len(self._points)]
             value += p1.x * p2.y - p2.x * p1.y
-        return value / 2.0
+        return value / 2
 
     def get_max_inside_distance(self):
         """ calculate the maximum distance between two points of the polygon
@@ -188,8 +189,11 @@ class Polygon(TransformableContainer):
                 or (len(self) != len(self._lines_cache)):
             # recalculate the line cache
             lines = []
-            for index in range(len(self._points)):
-                lines.append(Line(self._points[index], self._points[(index + 1) % len(self._points)]))
+            for index in range(len(self._points) - 1):
+                lines.append(Line(self._points[index], self._points[index + 1]))
+            # connect the last point with the first only if the polygon is closed
+            if self._is_closed:
+                lines.append(Line(self._points[-1], self._points[0]))
             self._lines_cache = lines
         return self._lines_cache[:]
 
@@ -345,6 +349,7 @@ class Polygon(TransformableContainer):
                     return [new_group]
             else:
                 return None
+        offset = number(offset)
         if offset == 0:
             return [self]
         if offset * 2 >= self.get_max_inside_distance():

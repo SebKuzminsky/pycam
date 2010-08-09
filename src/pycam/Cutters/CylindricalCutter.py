@@ -21,14 +21,13 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.utils import INFINITE
+from pycam.Geometry.utils import INFINITE, sqrt
 from pycam.Geometry.Point import Point
 from pycam.Geometry.intersection import intersect_circle_plane, \
         intersect_circle_point, intersect_circle_line, \
         intersect_cylinder_point, intersect_cylinder_line
 from pycam.Cutters.BaseCutter import BaseCutter
 
-import math
 
 try:
     import OpenGL.GL as GL
@@ -64,7 +63,7 @@ class CylindricalCutter(BaseCutter):
             additional_distance = self.get_required_distance()
             radius = self.distance_radius
             height = self.height + additional_distance
-            center_height = 0.5 * height - additional_distance
+            center_height = height / 2 - additional_distance
             geom = ode.GeomTransform(None)
             geom_drill = ode.GeomCylinder(None, radius, height)
             geom_drill.setPosition((0, 0, center_height))
@@ -77,7 +76,7 @@ class CylindricalCutter(BaseCutter):
             def extend_shape(diff_x, diff_y, diff_z):
                 reset_shape()
                 # see http://mathworld.wolfram.com/RotationMatrix.html
-                hypotenuse = math.sqrt(diff_x * diff_x + diff_y * diff_y)
+                hypotenuse = sqrt(diff_x * diff_x + diff_y * diff_y)
                 # Some paths contain two identical points (e.g. a "touch" of
                 # the PushCutter) We don't need any extension for these.
                 if hypotenuse == 0:
@@ -96,20 +95,20 @@ class CylindricalCutter(BaseCutter):
                 geom_connect_transform = ode.GeomTransform(geom.space)
                 geom_connect_transform.setBody(geom.getBody())
                 geom_connect = ode_physics.get_parallelepiped_geom(
-                        (Point(-hypotenuse / 2.0, radius, -diff_z / 2.0),
-                        Point(hypotenuse / 2.0, radius, diff_z / 2.0),
-                        Point(hypotenuse / 2.0, -radius, diff_z / 2.0),
-                        Point(-hypotenuse / 2.0, -radius, -diff_z / 2.0)),
-                        (Point(-hypotenuse / 2.0, radius,
-                            self.height - diff_z / 2.0),
-                        Point(hypotenuse / 2.0,
-                            radius, self.height + diff_z / 2.0),
-                        Point(hypotenuse / 2.0, -radius,
-                            self.height + diff_z / 2.0),
-                        Point(-hypotenuse / 2.0, -radius,
-                            self.height - diff_z / 2.0)))
+                        (Point(-hypotenuse / 2, radius, -diff_z / 2),
+                        Point(hypotenuse / 2, radius, diff_z / 2),
+                        Point(hypotenuse / 2, -radius, diff_z / 2),
+                        Point(-hypotenuse / 2, -radius, -diff_z / 2)),
+                        (Point(-hypotenuse / 2, radius,
+                            self.height - diff_z / 2),
+                        Point(hypotenuse / 2,
+                            radius, self.height + diff_z / 2),
+                        Point(hypotenuse / 2, -radius,
+                            self.height + diff_z / 2),
+                        Point(-hypotenuse / 2, -radius,
+                            self.height - diff_z / 2)))
                 geom_connect.setRotation(rot_matrix_box)
-                geom_connect.setPosition((hypotenuse / 2.0, 0, radius))
+                geom_connect.setPosition((hypotenuse / 2, 0, radius))
                 geom_connect_transform.setGeom(geom_connect)
                 # sort the geoms in order of collision probability
                 geom.children.extend([geom_connect_transform,

@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 __all__ = ["simplify_toolpath", "ToolPathList", "ToolPath", "Generator"]
 
 from pycam.Geometry.Point import Point
+from pycam.Geometry.utils import number
 import pycam.Utils.log
 import random
 import os
@@ -113,7 +114,7 @@ class ToolPath:
         settings = self.toolpath_settings
         if start_position is None:
             start_position = Point(0, 0, 0)
-        feedrate = settings.get_tool_settings()["feedrate"]
+        feedrate = number(settings.get_tool_settings()["feedrate"])
         result = {}
         result["time"] = 0
         result["position"] = start_position
@@ -121,7 +122,7 @@ class ToolPath:
             result["time"] += new_pos.sub(result["position"]).norm / feedrate
             result["position"] = new_pos
         # move to safey height at the starting position
-        safety_height = settings.get_process_settings()["safety_height"]
+        safety_height = number(settings.get_process_settings()["safety_height"])
         move(Point(start_position.x, start_position.y, safety_height))
         for path in self.get_path():
             # go to safety height (horizontally from the previous x/y location)
@@ -214,14 +215,14 @@ class Bounds:
                 raise ValueError, "lower bounds should be supplied as a " \
                         + "tuple/list of 3 items - but %d were given" % len(low)
             else:
-                self.bounds_low = list(low[:])
+                self.bounds_low = [number(value) for value in low]
         if not high is None:
             if len(high) != 3:
                 raise ValueError, "upper bounds should be supplied as a " \
                         + "tuple/list of 3 items - but %d were given" \
                         % len(high)
             else:
-                self.bounds_high = list(high[:])
+                self.bounds_high = [number(value) for value in high]
 
     def get_absolute_limits(self, reference=None):
         """ calculate the current absolute limits of the Bounds instance
@@ -262,8 +263,8 @@ class Bounds:
                 high[index] = ref_high[index] + self.bounds_high[index]
         elif self.bounds_type == Bounds.TYPE_CUSTOM:
             for index in range(3):
-                low[index] = self.bounds_low[index]
-                high[index] = self.bounds_high[index]
+                low[index] = number(self.bounds_low[index])
+                high[index] = number(self.bounds_high[index])
         else:
             # this should not happen
             raise NotImplementedError, "the function 'get_absolute_limits' is" \

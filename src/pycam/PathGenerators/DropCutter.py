@@ -22,11 +22,10 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry import Point
-from pycam.Geometry.utils import INFINITE
+from pycam.Geometry.utils import INFINITE, ceil
 from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
-import math
 
 log = pycam.Utils.log.get_logger()
 
@@ -78,8 +77,8 @@ class DropCutter:
             direction, draw_callback=None):
         quit_requested = False
         # determine step size
-        num_of_x_lines = 1 + int(math.ceil(abs(maxx - minx) / d0))
-        num_of_y_lines = 1 + int(math.ceil(abs(maxy - miny) / d1))
+        num_of_x_lines = 1 + ceil(abs(maxx - minx) / d0)
+        num_of_y_lines = 1 + ceil(abs(maxy - miny) / d1)
         x_step = abs(maxx - minx) / max(1, (num_of_x_lines - 1))
         y_step = abs(maxy - miny) / max(1, (num_of_y_lines - 1))
         x_steps = [(minx + i * x_step) for i in range(num_of_x_lines)]
@@ -113,8 +112,7 @@ class DropCutter:
             last_position = None
 
             if draw_callback and draw_callback(text="DropCutter: processing " \
-                        + "line %d/%d" % (current_line, num_of_lines),
-                        percent=(100.0 * current_line / num_of_lines)):
+                        + "line %d/%d" % (current_line, num_of_lines)):
                 # cancel requested
                 quit_requested = True
                 break

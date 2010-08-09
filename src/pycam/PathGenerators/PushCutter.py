@@ -23,7 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.Point import Point
 from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
-from pycam.Geometry.utils import epsilon
+from pycam.Geometry.utils import epsilon, ceil
 from pycam.Utils import ProgressCounter
 import math
 
@@ -45,16 +45,16 @@ class PushCutter:
             diff_z = 0
         else:
             diff_z = abs(maxz - minz)
-        num_of_layers = 1 + int(math.ceil(diff_z / dz))
+        num_of_layers = 1 + ceil(diff_z / dz)
         z_step = diff_z / max(1, (num_of_layers - 1))
 
         lines_per_layer = 0
         if dx != 0:
-            x_lines_per_layer = 1 + int(math.ceil(abs(maxx - minx) / dx))
+            x_lines_per_layer = 1 + ceil(abs(maxx - minx) / dx)
             x_step = abs(maxx - minx) / max(1, (x_lines_per_layer - 1))
             lines_per_layer += x_lines_per_layer
         if dy != 0:
-            y_lines_per_layer = 1 + int(math.ceil(abs(maxy - miny) / dy))
+            y_lines_per_layer = 1 + ceil(abs(maxy - miny) / dy)
             y_step = abs(maxy - miny) / max(1, (y_lines_per_layer - 1))
             lines_per_layer += y_lines_per_layer
 
@@ -98,17 +98,17 @@ class PushCutter:
         # calculate the required number of steps in each direction
         if dx > 0:
             depth_x = math.log(accuracy * abs(maxx - minx) / dx) / math.log(2)
-            depth_x = max(int(math.ceil(depth_x)), 4)
+            depth_x = max(ceil(depth_x), 4)
             depth_x = min(depth_x, max_depth)
-            num_of_x_lines = 1 + int(math.ceil(abs(maxx - minx) / dx))
+            num_of_x_lines = 1 + ceil(abs(maxx - minx) / dx)
             x_step = abs(maxx - minx) / max(1, (num_of_x_lines - 1))
             x_steps = [minx + i * x_step for i in range(num_of_x_lines)]
             y_steps = [None] * num_of_x_lines
         else:
             depth_y = math.log(accuracy * abs(maxy - miny) / dy) / math.log(2)
-            depth_y = max(int(math.ceil(depth_y)), 4)
+            depth_y = max(ceil(depth_y), 4)
             depth_y = min(depth_y, max_depth)
-            num_of_y_lines = 1 + int(math.ceil(abs(maxy - miny) / dy))
+            num_of_y_lines = 1 + ceil(abs(maxy - miny) / dy)
             y_step = abs(maxy - miny) / max(1, (num_of_y_lines - 1))
             y_steps = [miny + i * y_step for i in range(num_of_y_lines)]
             x_steps = [None] * num_of_y_lines

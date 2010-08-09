@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import math
+from pycam.Geometry.utils import sqrt
 from pycam.Geometry.Point import Point
 import ctypes
 
@@ -93,10 +93,10 @@ class ZBuffer:
 
     def add_wave(self, freq=8, damp=3.0):
         self.changed = True
-        rmax = math.sqrt(self.y[0]*self.y[0]+self.x[0]*self.x[0])
+        rmax = sqrt(self.y[0]*self.y[0]+self.x[0]*self.x[0])
         for y in range(0, self.yres):
             for x in range(0, self.xres):
-                r = math.sqrt(self.y[y]*self.y[y]+self.x[x]*self.x[x])
+                r = sqrt(self.y[y]*self.y[y]+self.x[x]*self.x[x])
                 self.buf[y][x].z = 1 + math.cos(r / rmax * r / rmax * math.pi \
                         * freq) / (1 + damp * (r / rmax))
                 self.buf[y][x].changed = True

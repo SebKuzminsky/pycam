@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.Point import Point
-from pycam.Geometry.utils import INFINITE
+from pycam.Geometry.utils import INFINITE, number
 from pycam.Geometry.intersection import intersect_torus_plane, \
         intersect_torus_point, intersect_circle_plane, intersect_circle_point, \
         intersect_cylinder_point, intersect_cylinder_line, intersect_circle_line
@@ -42,7 +42,8 @@ class ToroidalCutter(BaseCutter):
 
     def __init__(self, radius, minorradius, **kwargs):
         BaseCutter.__init__(self, radius, **kwargs)
-        self.majorradius = radius-minorradius
+        minorradius = number(minorradius)
+        self.majorradius = self.radius - minorradius
         self.minorradius = minorradius
         self.axis = Point(0, 0, 1)
         self.center = Point(self.location.x, self.location.y,

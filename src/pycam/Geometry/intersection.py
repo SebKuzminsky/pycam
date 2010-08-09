@@ -20,11 +20,10 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from math import sqrt
 
 #import pycam.Geometry
 from pycam.Utils.polynomials import poly4_roots
-from pycam.Geometry.utils import INFINITE
+from pycam.Geometry.utils import INFINITE, sqrt
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Point import Point

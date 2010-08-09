@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.Triangle import Triangle
+from pycam.Geometry.utils import number
 
 try:
     import ode
@@ -146,7 +147,7 @@ class PhysicalWorld:
         # the cutters' "extend" functions
         shape.space = self._space
         self._add_geom(shape, position, append=False)
-        self._drill_offset = position
+        self._drill_offset = [number(value) for value in position]
         self._drill = shape
         self.reset_drill()
 

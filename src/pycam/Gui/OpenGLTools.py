@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.Point import Point
 import pycam.Geometry.Matrix as Matrix
+from pycam.Geometry.utils import sqrt, number
 import pycam.Utils.log
 import OpenGL.GL as GL
 import OpenGL.GLU as GLU
@@ -94,7 +95,7 @@ class Camera:
                 v["distance"][2]).normalized()
         # The multiplier "2.0" is based on: sqrt(2) + margin  -- the squre root
         # makes sure, that the the diagonal fits.
-        distv = distv.mul((max_dim * 2.0) / math.sin(v["fovy"]/2))
+        distv = distv.mul((max_dim * 2) / number(math.sin(v["fovy"] / 2)))
         self.view["distance"] = (distv.x, distv.y, distv.z)
         # Adjust the "far" distance for the camera to make sure, that huge
         # models (e.g. x=1000) are still visible.
@@ -102,6 +103,7 @@ class Camera:
 
     def scale_distance(self, scale):
         if scale != 0:
+            scale = number(scale)
             dist = self.view["distance"]
             self.view["distance"] = (scale * dist[0], scale * dist[1],
                     scale * dist[2])
@@ -128,21 +130,22 @@ class Camera:
         factors_x, factors_y = self._get_axes_vectors()
         width, height = self._get_screen_dimensions()
         # relation of x/y movement to the respective screen dimension
-        win_x_rel = ((-2.0 * x_move) / width) / math.sin(self.view["fovy"])
-        win_y_rel = ((-2.0 * y_move) / height) / math.sin(self.view["fovy"])
+        win_x_rel = (-2 * x_move) / float(width) / math.sin(self.view["fovy"])
+        win_y_rel = (-2 * y_move) / float(height) / math.sin(self.view["fovy"])
         # This code is completely arbitrarily based on trial-and-error for
         # finding a nice movement speed for all distances.
         # Anyone with a better approach should just fix this.
         distance_vector = self.get("distance")
-        distance = math.sqrt(sum([dim ** 2 for dim in distance_vector]))
+        distance = float(sqrt(sum([dim ** 2 for dim in distance_vector])))
         win_x_rel *= math.cos(win_x_rel / distance) ** 20
         win_y_rel *= math.cos(win_y_rel / distance) ** 20
         # update the model position that should be centered on the screen
         old_center = self.view["center"]
         new_center = []
         for i in range(3):
-            new_center.append(old_center[i] + max_model_shift \
-                    * (win_x_rel * factors_x[i] + win_y_rel * factors_y[i]))
+            new_center.append(old_center[i] \
+                    + max_model_shift * (number(win_x_rel) * factors_x[i] \
+                    + number(win_y_rel) * factors_y[i]))
         self.view["center"] = tuple(new_center)
 
     def rotate_camera_by_screen(self, start_x, start_y, end_x, end_y):
@@ -212,7 +215,7 @@ class Camera:
         # The "up" vector defines, in what proportion each axis of the model is
         # in line with the screen's y axis.
         v_up = self.view["up"]
-        factors_y = (v_up[0], v_up[1], v_up[2])
+        factors_y = (number(v_up[0]), number(v_up[1]), number(v_up[2]))
         # Calculate the proportion of each model axis according to the x axis of
         # the screen.
         distv = self.view["distance"]
@@ -638,10 +641,10 @@ def draw_axes(settings):
     size_x = abs(settings.get("maxx"))
     size_y = abs(settings.get("maxy"))
     size_z = abs(settings.get("maxz"))
-    size = 1.7 * max(size_x, size_y, size_z)
+    size = number(1.7) * max(size_x, size_y, size_z)
     # the divider is just based on playing with numbers
-    scale = size/1500.0
-    string_distance = 1.1 * size
+    scale = size / number(1500.0)
+    string_distance = number(1.1) * size
     GL.glBegin(GL.GL_LINES)
     GL.glColor3f(1, 0, 0)
     GL.glVertex3f(0, 0, 0)

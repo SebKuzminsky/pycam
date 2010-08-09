@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 from pycam.Geometry.Point import Point
+from pycam.Geometry.utils import number
 
 
 class BaseCutter(object):
@@ -35,7 +36,8 @@ class BaseCutter(object):
         self.location = location
         if height is None:
             height = 10
-        self.height = height
+        radius = number(radius)
+        self.height = number(height)
         self.id = BaseCutter.id
         BaseCutter.id += 1
         self.radius = radius
@@ -80,7 +82,7 @@ class BaseCutter(object):
 
     def set_required_distance(self, value):
         if value >= 0:
-            self.required_distance = value
+            self.required_distance = number(value)
             self.distance_radius = self.radius + self.get_required_distance()
             self.distance_radiussq = self.distance_radius * self.distance_radius
 

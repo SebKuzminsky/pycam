@@ -23,13 +23,12 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry import Matrix
 from pycam.Geometry.Point import Point
-from pycam.Geometry.utils import INFINITE, epsilon
+from pycam.Geometry.utils import INFINITE, epsilon, sqrt
 from pycam.Geometry.intersection import intersect_sphere_plane, \
         intersect_sphere_point, intersect_sphere_line, \
         intersect_cylinder_point, intersect_cylinder_line
 from pycam.Cutters.BaseCutter import BaseCutter
 
-import math
 
 try:
     import OpenGL.GL as GL
@@ -45,7 +44,7 @@ class SphericalCutter(BaseCutter):
         BaseCutter.__init__(self, radius, **kwargs)
         self.axis = Point(0, 0, 1)
         self.center = Point(self.location.x, self.location.y,
-                self.location.z + radius)
+                self.location.z + self.radius)
 
     def __repr__(self):
         return "SphericalCutter<%s,%s>" % (self.location, self.radius)
@@ -56,7 +55,7 @@ class SphericalCutter(BaseCutter):
             import pycam.Physics.ode_physics as ode_physics
             additional_distance = self.get_required_distance()
             radius = self.radius + additional_distance
-            center_height = 0.5 * self.height + radius - additional_distance
+            center_height = self.height / 2 + radius - additional_distance
             geom = ode.GeomTransform(None)
             geom_drill = ode.GeomCapsule(None, radius, self.height)
             geom_drill.setPosition((0, 0, center_height))
@@ -69,7 +68,7 @@ class SphericalCutter(BaseCutter):
             def extend_shape(diff_x, diff_y, diff_z):
                 reset_shape()
                 # see http://mathworld.wolfram.com/RotationMatrix.html
-                hypotenuse = math.sqrt(diff_x * diff_x + diff_y * diff_y)
+                hypotenuse = sqrt(diff_x * diff_x + diff_y * diff_y)
                 # Some paths contain two identical points (e.g. a "touch" of the
                 # PushCutter). We don't need any extension for these.
                 if hypotenuse == 0:
@@ -88,20 +87,20 @@ class SphericalCutter(BaseCutter):
                 geom_connect_transform = ode.GeomTransform(geom.space)
                 geom_connect_transform.setBody(geom.getBody())
                 geom_connect = ode_physics.get_parallelepiped_geom((
-                        Point(-hypotenuse / 2.0, radius, -diff_z / 2.0),
-                        Point(hypotenuse / 2.0, radius, diff_z / 2.0),
-                        Point(hypotenuse / 2.0, -radius, diff_z / 2.0),
-                        Point(-hypotenuse / 2.0, -radius, -diff_z / 2.0)),
-                        (Point(-hypotenuse / 2.0, radius,
-                            self.height - diff_z / 2.0),
-                        Point(hypotenuse / 2.0, radius,
-                            self.height + diff_z / 2.0),
-                        Point(hypotenuse / 2.0, -radius,
-                            self.height + diff_z / 2.0),
-                        Point(-hypotenuse / 2.0, -radius,
-                            self.height - diff_z / 2.0)))
+                        Point(-hypotenuse / 2, radius, -diff_z / 2),
+                        Point(hypotenuse / 2, radius, diff_z / 2),
+                        Point(hypotenuse / 2, -radius, diff_z / 2),
+                        Point(-hypotenuse / 2, -radius, -diff_z / 2)),
+                        (Point(-hypotenuse / 2, radius,
+                            self.height - diff_z / 2),
+                        Point(hypotenuse / 2, radius,
+                            self.height + diff_z / 2),
+                        Point(hypotenuse / 2, -radius,
+                            self.height + diff_z / 2),
+                        Point(-hypotenuse / 2, -radius,
+                            self.height - diff_z / 2)))
                 geom_connect.setRotation(rot_matrix_box)
-                geom_connect.setPosition((hypotenuse / 2.0, 0, radius))
+                geom_connect.setPosition((hypotenuse / 2, 0, radius))
                 geom_connect_transform.setGeom(geom_connect)
                 # Create a cylinder, that connects the two half spheres at the
                 # lower end of both drills.
@@ -116,7 +115,7 @@ class SphericalCutter(BaseCutter):
                         cyl_original_vector, cyl_destination_vector))
                 # The rotation is around the center - thus we ignore negative
                 # diff values.
-                geom_cyl.setPosition((abs(diff_x / 2.0), abs(diff_y / 2.0),
+                geom_cyl.setPosition((abs(diff_x / 2), abs(diff_y / 2),
                         radius - additional_distance))
                 geom_cyl_transform.setGeom(geom_cyl)
                 # sort the geoms in order of collision probability

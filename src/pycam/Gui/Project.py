@@ -30,6 +30,7 @@ import pycam.Toolpath.Generator
 import pycam.Toolpath
 import pycam.Importers
 import pycam.Utils.log
+from pycam.Geometry.utils import sqrt
 from pycam.Gui.OpenGLTools import ModelViewWindowGL
 from pycam.Toolpath import Bounds
 from pycam import VERSION
@@ -39,7 +40,6 @@ import pycam.Physics.ode_physics
 import gtk
 import webbrowser
 import ConfigParser
-import math
 import time
 import logging
 import datetime
@@ -2260,8 +2260,8 @@ class ProjectGui:
         # proportion = dimension_x / dimension_y
         proportion = (bounding_box["maxx"] - bounding_box["minx"]) \
                 / (bounding_box["maxy"] - bounding_box["miny"])
-        x_steps = int(math.sqrt(grid_size) * proportion)
-        y_steps = int(math.sqrt(grid_size) / proportion)
+        x_steps = int(sqrt(grid_size) * proportion)
+        y_steps = int(sqrt(grid_size) / proportion)
         simulation_backend = ODEBlocks.ODEBlocks(toolpath.get_tool_settings(),
                 toolpath.get_bounding_box(), x_steps=x_steps, y_steps=y_steps)
         self.settings.set("simulation_object", simulation_backend)

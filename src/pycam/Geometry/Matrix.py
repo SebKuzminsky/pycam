@@ -24,6 +24,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 from pycam.Geometry.Point import Point
+from pycam.Geometry.utils import sqrt, number
 import math
 
 
@@ -80,7 +81,7 @@ def get_length(vector):
     @return: the length of a vector is the square root of the dot product
         of the vector with itself
     """
-    return math.sqrt(get_dot_product(vector, vector))
+    return sqrt(get_dot_product(vector, vector))
 
 def get_rotation_matrix_from_to(v_orig, v_dest):
     """ calculate the rotation matrix used to transform one vector into another
@@ -149,8 +150,8 @@ def get_rotation_matrix_axis_angle(rot_axis, rot_angle):
     @rtype: tuple(float)
     @return: the roation
     """
-    sin = math.sin(rot_angle)
-    cos = math.cos(rot_angle)
+    sin = number(math.sin(rot_angle))
+    cos = number(math.cos(rot_angle))
     return ((cos + rot_axis[0]*rot_axis[0]*(1-cos),
             rot_axis[0]*rot_axis[1]*(1-cos) - rot_axis[2]*sin,
             rot_axis[0]*rot_axis[2]*(1-cos) + rot_axis[1]*sin),
@@ -172,7 +173,13 @@ def multiply_vector_matrix(v, m):
     @return: a tuple of 3 floats as the matrix product
     """
     if len(m) == 9:
+        m = [number(value) for value in m]
         m = ((m[0], m[1], m[2]), (m[3], m[4], m[5]), (m[6], m[7], m[8]))
+    else:
+        new_m = []
+        for column in m:
+            new_m.append([number(value) for value in column])
+    v = [number(value) for value in v]
     return (v[0] * m[0][0] + v[1] * m[0][1] + v[2] * m[0][2],
             v[0] * m[1][0] + v[1] * m[1][1] + v[2] * m[1][2],
             v[0] * m[2][0] + v[1] * m[2][1] + v[2] * m[2][2])

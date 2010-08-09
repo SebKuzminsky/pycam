@@ -21,7 +21,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import math
+from pycam.Geometry.utils import sqrt, number
+from decimal import Decimal
 
 def _is_near(x, y):
     return abs(x - y) < 1e-6
@@ -33,9 +34,9 @@ class Point:
     def __init__(self, x, y, z):
         self.id = Point.id
         Point.id += 1
-        self.x = float(x)
-        self.y = float(y)
-        self.z = float(z)
+        self.x = number(x)
+        self.y = number(y)
+        self.z = number(z)
         self.reset_cache()
 
     def __repr__(self):
@@ -74,13 +75,14 @@ class Point:
 
     def reset_cache(self):
         self.normsq = self.dot(self)
-        self.norm = math.sqrt(self.normsq)
+        self.norm = sqrt(self.normsq)
         
     def mul(self, c):
+        c = number(c)
         return Point(self.x * c, self.y * c, self.z * c)
 
     def div(self, c):
-        c = float(c)
+        c = number(c)
         return Point(self.x / c, self.y / c, self.z / c)
 
     def add(self, p):

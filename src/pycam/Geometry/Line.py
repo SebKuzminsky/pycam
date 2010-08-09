@@ -24,7 +24,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.Geometry import TransformableContainer
 from pycam.Geometry.Point import Point
 from pycam.Geometry.Plane import Plane
-from pycam.Geometry.utils import epsilon
+from pycam.Geometry.utils import epsilon, sqrt
 import math
 
 
@@ -97,7 +97,7 @@ class Line(TransformableContainer):
         return p.sub(self.closest_point(p)).normsq
 
     def dist_to_point(self, p):
-        return math.sqrt(self.dist_to_point_sq(p))
+        return sqrt(self.dist_to_point_sq(p))
     
     def is_point_in_line(self, p):
         return abs(p.sub(self.p1).norm + p.sub(self.p2).norm - self.len) < epsilon
@@ -116,8 +116,8 @@ class Line(TransformableContainer):
                     ortho = (0.0, 1.0)
                 else:
                     ortho = (1.0 / line[0], -1.0 / line[1])
-                line_size = math.sqrt((line[0] ** 2) + (line[1] ** 2))
-                ortho_size = math.sqrt((ortho[0] ** 2) + (ortho[1] ** 2))
+                line_size = sqrt((line[0] ** 2) + (line[1] ** 2))
+                ortho_size = sqrt((ortho[0] ** 2) + (ortho[1] ** 2))
                 ortho_dest_size = line_size / 10.0
                 ortho = (ortho[0] * ortho_dest_size / ortho_size,
                         ortho[1] * ortho_dest_size / ortho_size)

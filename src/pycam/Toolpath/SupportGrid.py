@@ -24,6 +24,7 @@ from pycam.Geometry.Point import Point
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.Model import Model
+from pycam.Geometry.utils import number
 
 
 def _add_cuboid_to_model(minx, maxx, miny, maxy, minz, maxz):
@@ -88,16 +89,21 @@ def get_support_grid_locations(minx, maxx, miny, maxy, dist_x, dist_y,
         # remove lines that are out of range (e.g. due to a huge offset)
         lines = [line for line in lines if min_value < line < max_value]
         return lines
-    center_x = (maxx + minx) / 2.0 + offset_x
-    center_y = (maxy + miny) / 2.0 + offset_y
+    # convert all inputs to the type defined in "number"
+    dist_x = number(dist_x)
+    dist_y = number(dist_y)
+    offset_x = number(offset_x)
+    offset_y = number(offset_y)
+    center_x = (maxx + minx) / 2 + offset_x
+    center_y = (maxy + miny) / 2 + offset_y
     lines_x = get_lines(center_x, dist_x, minx, maxx)
     lines_y = get_lines(center_y, dist_y, miny, maxy)
     if adjustments_x:
         for index in range(min(len(lines_x), len(adjustments_x))):
-            lines_x[index] += adjustments_x[index]
+            lines_x[index] += number(adjustments_x[index])
     if adjustments_y:
         for index in range(min(len(lines_y), len(adjustments_y))):
-            lines_y[index] += adjustments_y[index]
+            lines_y[index] += number(adjustments_y[index])
     return lines_x, lines_y
 
 def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness,
@@ -107,8 +113,11 @@ def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness,
             dist_y, offset_x, offset_y, adjustments_x, adjustments_y)
     # create all x grid lines
     grid_model = Model()
+    # convert all inputs to "number"
+    thickness = number(thickness)
+    height = number(height)
     # helper variables
-    thick_half = thickness / 2.0
+    thick_half = thickness / 2
     length_extension = max(thickness, height)
     for line_x in lines_x:
         # we make the grid slightly longer (by thickness) than necessary

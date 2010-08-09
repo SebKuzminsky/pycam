@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.PathGenerators import DropCutter, PushCutter, EngraveCutter
+from pycam.Geometry.utils import number
 import pycam.PathProcessors
 import pycam.Cutters
 import pycam.Toolpath.SupportGrid
@@ -57,8 +58,8 @@ def generate_toolpath_from_settings(model, tp_settings, callback=None):
 def generate_toolpath(model, tool_settings=None,
         bounds_low=None, bounds_high=None, direction="x",
         path_generator="DropCutter", path_postprocessor="ZigZagCutter",
-        material_allowance=0.0, safety_height=None, overlap=0.0, step_down=0.0,
-        engrave_offset=0.0, support_grid_distance_x=None,
+        material_allowance=0, safety_height=None, overlap=0, step_down=0,
+        engrave_offset=0, support_grid_distance_x=None,
         support_grid_distance_y=None, support_grid_thickness=None,
         support_grid_height=None, support_grid_offset_x=None,
         support_grid_offset_y=None, support_grid_adjustments_x=None,
@@ -116,16 +117,20 @@ def generate_toolpath(model, tool_settings=None,
     @return: the resulting toolpath object or an error string in case of invalid
         arguments
     """
+    overlap = number(overlap)
+    step_down = number(step_down)
+    safety_height = number(safety_height)
+    engrave_offset = number(engrave_offset)
     if bounds_low is None:
         # no bounds were given - we use the boundaries of the model
         minx, miny, minz = (model.minx, model.miny, model.minz)
     else:
-        minx, miny, minz = bounds_low
+        minx, miny, minz = [number(value) for value in bounds_low]
     if bounds_high is None:
         # no bounds were given - we use the boundaries of the model
         maxx, maxy, maxz = (model.maxx, model.maxy, model.maxz)
     else:
-        maxx, maxy, maxz = bounds_high
+        maxx, maxy, maxz = [number(value) for value in bounds_high]
     # trimesh model or contour model?
     if isinstance(model, pycam.Geometry.Model.Model):
         # trimesh model
@@ -136,7 +141,7 @@ def generate_toolpath(model, tool_settings=None,
         trimesh_model = pycam.Geometry.Model.Model()
         contour_model = model
         # material allowance is ignored for engraving
-        material_allowance = 0.0
+        material_allowance = 0
     # create the grid model if requested
     if (((not support_grid_distance_x is None) \
             or (not support_grid_distance_y is None)) \
@@ -220,7 +225,7 @@ def generate_toolpath(model, tool_settings=None,
     if (overlap < 0) or (overlap >= 1):
         return "Invalid overlap value (%f): should be greater or equal 0 " \
                 + "and lower than 1"
-    effective_toolradius = tool_settings["tool_radius"] * (1.0 - overlap)
+    effective_toolradius =number(tool_settings["tool_radius"]) * (1 - overlap)
     if path_generator == "DropCutter":
         if direction == "x":
             direction_param = 0
@@ -230,6 +235,7 @@ def generate_toolpath(model, tool_settings=None,
             return "Invalid direction value (%s): not one of %s" \
                     % (direction, DIRECTIONS)
         if safety_height < maxz:
+            print "%s / %s / %s / %s" % (safety_height, maxz, type(safety_height), type(maxz))
             return ("Safety height (%.4f) is within the bounding box height " \
                     + "(%.4f) - this can cause collisions of the tool with " \
                     + "the material.") % (safety_height, maxz)

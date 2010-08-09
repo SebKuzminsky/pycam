@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry.utils import sqrt
+
 import math
 import sys
 
@@ -215,10 +217,10 @@ def mouseMoved(x, y):
     x = float(x)
     y = float(y)
     a1 = math.atan2(mouseState.y-height/2.0, mouseState.x-width/2.0)
-    r1 = math.sqrt((mouseState.y - height / 2.0) ** 2 \
+    r1 = sqrt((mouseState.y - height / 2.0) ** 2 \
             + (mouseState.x - width / 2.0) ** 2)
     a2 = math.atan2(y-height/2.0, x-width/2.0)
-    r2 = math.sqrt((y - height / 2.0) ** 2 + (x - width / 2.0) ** 2)
+    r2 = sqrt((y - height / 2.0) ** 2 + (x - width / 2.0) ** 2)
     if (mouseState.button == GLUT.GLUT_LEFT_BUTTON) \
             or (mouseState.button == GLUT.GLUT_RIGHT_BUTTON):
         a3 = math.acos(mouseState.x/width-0.5)

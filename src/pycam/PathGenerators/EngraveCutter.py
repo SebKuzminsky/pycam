@@ -23,12 +23,11 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.PathProcessors.PathAccumulator
 from pycam.Geometry.Point import Point
-from pycam.Geometry.utils import INFINITE
+from pycam.Geometry.utils import INFINITE, ceil
 from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode, \
         get_free_paths_ode, get_free_paths_triangles
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
-import math
 
 log = pycam.Utils.log.get_logger()
 
@@ -51,7 +50,7 @@ class EngraveCutter:
     def GenerateToolPath(self, minz, maxz, horiz_step, dz, draw_callback=None):
         quit_requested = False
         # calculate the number of steps
-        num_of_layers = 1 + int(math.ceil(abs(maxz - minz) / dz))
+        num_of_layers = 1 + ceil(abs(maxz - minz) / dz)
         if num_of_layers > 1:
             z_step = abs(maxz - minz) / (num_of_layers - 1)
             z_steps = [(maxz - i * z_step) for i in range(num_of_layers)]
@@ -78,7 +77,7 @@ class EngraveCutter:
                 break
 
             for line_group in line_groups:
-                for line in line_group.next():
+                for line in line_group.get_lines():
                     self.GenerateToolPathLinePush(self.pa_push, line, z,
                             draw_callback)
                     if progress_counter.increment():
@@ -150,7 +149,7 @@ class EngraveCutter:
         p2 = Point(line.p2.x, line.p2.y, minz)
         distance = line.len
         # we want to have at least five steps each
-        num_of_steps = max(5, 1 + int(math.ceil(distance / horiz_step)))
+        num_of_steps = max(5, 1 + ceil(distance / horiz_step))
         # steps may be negative
         x_step = (p2.x - p1.x) / (num_of_steps - 1)
         y_step = (p2.y - p1.y) / (num_of_steps - 1)
