@@ -159,17 +159,6 @@ def get_free_paths_ode(physics, p1, p2, depth=8):
     physics.reset_drill()
     return points
 
-def drop_cutter_test(cutter, point, model):
-    zmax = -INFINITE
-    tmax = None
-    cutter.moveto(point)
-    for t in model.triangles():
-        cl = cutter.drop(t)
-        if cl and cl.z > zmax and cl.z < INFINITE:
-            zmax = cl.z
-            tmax = t
-    return (zmax, tmax)
-
 def get_max_height_ode(physics, x, y, minz, maxz, order=None):
     low, high = minz, maxz
     trip_start = 20

@@ -119,29 +119,3 @@ class BaseCutter(object):
         (cl, d)= self.intersect(BaseCutter.vertical, triangle)
         return cl
 
-    def push(self, dx, dy, triangle):
-        """ TODO: this function is never used - remove it? """
-        # check bounding box collision
-        if dx == 0:
-            if self.miny > triangle.maxy:
-                return None
-            if self.maxy < triangle.miny:
-                return None
-        if dy == 0:
-            if self.minx > triangle.maxx:
-                return None
-            if self.maxx < triangle.minx:
-                return None
-        if triangle.maxz < self.location.z:
-            return None
-
-        # check bounding sphere collision
-        c = triangle.center
-        d = (c.x - self.location.x) * dy -(c.y - self.location.y) * dx
-        t = self.radius + triangle.radius
-        if abs(d) > t:
-            return None
-
-        (cl, d)= self.intersect(Point(dx, dy, 0), triangle)
-        return cl
-

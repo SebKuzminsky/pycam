@@ -296,13 +296,3 @@ class SphericalCutter(BaseCutter):
                 cl = cl_e3
         return (cl, d)
 
-    def drop_bis(self, triangle):
-        """ TODO: this function is never called - remove it? """
-        n = triangle.normal
-        if abs(n.dot(self.axis)) < epsilon:
-            d = triangle.p1.sub(self.center).dot(n)
-            if abs(d) >= self.radius - epsilon:
-                return None
-        (cl, d)= self.intersect(Point(0, 0, -1), triangle)
-        return cl
-
