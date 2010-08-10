@@ -110,10 +110,10 @@ class BaseCutter(object):
             return None
 
         # check bounding circle collision
-        c = triangle.center
+        c = triangle.middle
         if (c.x - self.location.x) ** 2 + (c.y - self.location.y) ** 2 \
                 > (self.distance_radiussq + 2 * self.distance_radius \
-                    * triangle.radius + triangle.radiussq):
+                    * triangle.radius + triangle.radiussq) + epsilon:
             return None
 
         (cl, d)= self.intersect(BaseCutter.vertical, triangle)

@@ -63,6 +63,7 @@ class Triangle(TransformableContainer):
         self.reset_cache()
 
     def reset_cache(self):
+        # TODO: check if we need to rebuild the edges and the normal
         self.minx = min(self.p1.x, self.p2.x, self.p3.x)
         self.miny = min(self.p1.y, self.p2.y, self.p3.y)
         self.minz = min(self.p1.z, self.p2.z, self.p3.z)
@@ -81,14 +82,6 @@ class Triangle(TransformableContainer):
                 * self.p3.sub(self.p2).norm * self.p3.sub(self.p1).norm) \
                 / (2 * denom)
         self.radiussq = self.radius ** 2
-
-    def get_middle(self):
-        """ this function is only used for a special debug case of "to_OpenGL".
-        Thus we don't need to calculate this value for every triangle.
-        """
-        if hasattr(self, "_middle"):
-            return self._middle
-        denom = self.p2.sub(self.p1).cross(self.p3.sub(self.p2)).norm
         denom2 = 2 * denom * denom
         alpha = self.p3.sub(self.p2).normsq \
                 * self.p1.sub(self.p2).dot(self.p1.sub(self.p3)) / denom2
@@ -96,11 +89,10 @@ class Triangle(TransformableContainer):
                 * self.p2.sub(self.p1).dot(self.p2.sub(self.p3)) / denom2
         gamma = self.p1.sub(self.p2).normsq \
                 * self.p3.sub(self.p1).dot(self.p3.sub(self.p2)) / denom2
-        self._middle = Point(
+        self.middle = Point(
                 self.p1.x * alpha + self.p2.x * beta + self.p3.x * gamma,
                 self.p1.y * alpha + self.p2.y * beta + self.p3.y * gamma,
                 self.p1.z * alpha + self.p2.z * beta + self.p3.z * gamma)
-        return self._middle
 
     def __repr__(self):
         return "Triangle%d<%s,%s,%s>" % (self.id, self.p1, self.p2, self.p3)
@@ -144,7 +136,7 @@ class Triangle(TransformableContainer):
             GL.glEnd()
         if False: # display bounding sphere
             GL.glPushMatrix()
-            middle = self.get_middle()
+            middle = self.middle
             GL.glTranslate(middle.x, middle.y, middle.z)
             if not hasattr(self, "_sphere"):
                 self._sphere = GLU.gluNewQuadric()
