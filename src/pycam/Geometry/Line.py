@@ -164,14 +164,14 @@ class Line(TransformableContainer):
                 return x2, 1
             else:
                 return None, None
-        if infinite_lines or (0 <= factor <= 1):
+        if infinite_lines or (-epsilon <= factor <= 1 + epsilon):
             intersection = x1.add(a.mul(factor))
             # check if the intersection is between x3 and x4
             if infinite_lines:
                 return intersection, factor
-            elif (min(x3.x, x4.x) <= intersection.x <= max(x3.x, x4.x)) \
-                    and (min(x3.y, x4.y) <= intersection.y <= max(x3.y, x4.y)) \
-                    and (min(x3.z, x4.z) <= intersection.z <= max(x3.z, x4.z)):
+            elif (min(x3.x, x4.x) - epsilon <= intersection.x <= max(x3.x, x4.x) + epsilon) \
+                    and (min(x3.y, x4.y) - epsilon <= intersection.y <= max(x3.y, x4.y) + epsilon) \
+                    and (min(x3.z, x4.z) - epsilon <= intersection.z <= max(x3.z, x4.z) + epsilon):
                 return intersection, factor
             else:
                 # intersection outside of the length of line(x3, x4)
@@ -181,13 +181,9 @@ class Line(TransformableContainer):
             return None, None
 
     def get_cropped_line(self, minx, maxx, miny, maxy, minz, maxz):
-        if (minx <= self.minx <= self.maxx <= maxx) \
-                and (miny <= self.miny <= self.maxy <= maxy) \
-                and (minz <= self.minz <= self.maxz <= maxz):
+        if self.is_completely_inside(minx, maxx, miny, maxy, minz, maxz):
             return Line(line.p1, line.p2)
-        elif (maxx < self.minx) or (self.maxx < minx) \
-                or (maxy < self.miny) or (self.maxy < miny) \
-                or (maxz < self.minz) or (self.maxz < minz):
+        elif self.is_completely_outside(minx, maxx, miny, maxy, minz, maxz):
             return None
         else:
             # the line needs to be cropped
@@ -207,25 +203,23 @@ class Line(TransformableContainer):
                     for plane in planes]
             # remove all intersections outside the box and outside the line
             valid_intersections = [(cp, dist) for cp, dist in intersections
-                    if cp and (0 <= dist <= self.len) \
-                            and (minx <= cp.x <= maxx) \
-                            and (miny <= cp.y <= maxy) \
-                            and (minz <= cp.z <= maxz)]
+                    if cp and (-epsilon <= dist <= self.len + epsilon) and \
+                            cp.is_inside(minx, maxx, miny, maxy, minz, maxz)]
             # sort the intersections according to their distance to self.p1
             valid_intersections.sort(
                     cmp=lambda (cp1, l1), (cp2, l2): cmp(l1, l2))
             # Check if p1 is within the box - otherwise use the closest
             # intersection. The check for "valid_intersections" is necessary
             # to prevent an IndexError due to floating point inaccuracies.
-            if (minx <= self.p1.x <= maxx) and (miny <= self.p1.y <= maxy) \
-                    and (minz <= self.p1.z <= maxz) or not valid_intersections:
+            if self.p1.is_inside(minx, maxx, miny, maxy, minz, maxz) \
+                    or not valid_intersections:
                 new_p1 = self.p1
             else:
                 new_p1 = valid_intersections[0][0]
             # Check if p2 is within the box - otherwise use the intersection
             # most distant from p1.
-            if (minx <= self.p2.x <= maxx) and (miny <= self.p2.y <= maxy) \
-                    and (minz <= self.p2.z <= maxz) or not valid_intersections:
+            if self.p2.is_inside(minx, maxx, miny, maxy, minz, maxz) \
+                    or not valid_intersections:
                 new_p2 = self.p2
             else:
                 new_p2 = valid_intersections[-1][0]

@@ -24,7 +24,7 @@ from pycam.Geometry.Line import Line
 from pycam.Geometry.Point import Point
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry import TransformableContainer
-from pycam.Geometry.utils import number
+from pycam.Geometry.utils import number, epsilon
 import pycam.Geometry.Matrix as Matrix
 import math
 
@@ -154,9 +154,8 @@ class Polygon(TransformableContainer):
         The result is unpredictable if the point is exactly on one of the lines.
         """
         # First: check if the point is within the boundary of the polygon.
-        if not ((self.minx <= p.x <= self.maxx) \
-                and (self.miny <= p.y <= self.maxy) \
-                and (self.minz <= p.z <= self.maxz)):
+        if not p.is_inside(self.minx, self.maxx, self.miny, self.maxy,
+                self.minz, self.maxz):
             # the point is outside the rectangle boundary
             return False
         # see http://www.alienryderflex.com/polygon/
@@ -175,7 +174,7 @@ class Polygon(TransformableContainer):
                     or ((p2.y < p.y) and (p.y <= p1.y)):
                 part_y = (p.y - p1.y) / (p2.y - p1.y)
                 intersection_x = p1.x + part_y * (p2.x - p1.x)
-                if intersection_x < p.x:
+                if intersection_x < p.x + epsilon:
                     # only count intersections to the left
                     intersection_count += 1
         # odd intersection count -> inside
@@ -598,9 +597,7 @@ class Polygon(TransformableContainer):
         new_groups = []
         for line in self.get_lines():
             new_line = None
-            if (minx <= line.minx <= line.maxx <= maxx) \
-                    and (miny <= line.miny <= line.maxy <= maxy) \
-                    and (minz <= line.minz <= line.maxz <= maxz):
+            if line.is_completely_inside(minx, maxx, miny, maxy, minz, maxz):
                 new_line = line
             else:
                 cropped_line = line.get_cropped_line(minx, maxx, miny, maxy,

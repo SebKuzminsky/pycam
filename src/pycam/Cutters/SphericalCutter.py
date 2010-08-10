@@ -187,7 +187,7 @@ class SphericalCutter(BaseCutter):
             # check if the contact point is between the endpoints
             d = edge.p2.sub(edge.p1)
             m = cp.sub(edge.p1).dot(d)
-            if (m < 0) or (m > d.normsq):
+            if (m < 0) or (m > d.normsq + epsilon):
                 return (None, INFINITE)
         return (cl, l)
 
@@ -202,7 +202,7 @@ class SphericalCutter(BaseCutter):
 
     def intersect_cylinder_vertex(self, direction, point):
         (cl, ccp, cp, l) = self.intersect_cylinder_point(direction, point)
-        if ccp and ccp.z < self.center.z:
+        if ccp and ccp.z < self.center.z - epsilon:
             return (None, INFINITE)
         return (cl, l)
 
@@ -220,9 +220,9 @@ class SphericalCutter(BaseCutter):
         if not ccp:
             return (None, INFINITE)
         m = cp.sub(edge.p1).dot(edge.dir)
-        if (m < 0) or (m > edge.len):
+        if (m < 0) or (m > edge.len + epsilon):
             return (None, INFINITE)
-        if ccp.z < self.center.z:
+        if ccp.z < self.center.z - epsilon:
             return (None, INFINITE)
         return (cl, l)
 

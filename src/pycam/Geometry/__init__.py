@@ -25,6 +25,8 @@ __all__ = ["utils", "Line", "Model", "Path", "Plane", "Point", "Triangle",
            "PolygonExtractor", "TriangleKdtree", "intersection", "kdtree",
            "Matrix", "Polygon"]
 
+from pycam.Geometry.utils import epsilon
+
 
 class TransformableContainer(object):
     """ a base class for geometrical objects containing other elements
@@ -94,4 +96,22 @@ class TransformableContainer(object):
         raise NotImplementedError(("'%s' is a subclass of " \
                 + "'TransformableContainer' but it fails to implement the " \
                 + "'reset_cache' method") % str(type(self)))
+
+    def is_completely_inside(self, minx=None, maxx=None, miny=None, maxy=None,
+            minz=None, maxz=None):
+        return ((minx is None) or (minx - epsilon <= self.minx)) \
+                and ((maxx is None) or (self.maxx <= maxx + epsilon)) \
+                and ((miny is None) or (miny - epsilon <= self.miny)) \
+                and ((maxy is None) or (self.maxy <= maxy + epsilon)) \
+                and ((minz is None) or (minz - epsilon <= self.minz)) \
+                and ((maxz is None) or (self.maxz <= maxz + epsilon))
+
+    def is_completely_outside(self, minx=None, maxx=None, miny=None, maxy=None,
+            minz=None, maxz=None):
+        return ((maxx is None) or (maxx + epsilon < self.minx)) \
+                or ((minx is None) or (self.maxx < minx - epsilon)) \
+                or ((maxy is None) or (maxy + epsilon < self.miny)) \
+                or ((miny is None) or (self.maxy < miny - epsilon)) \
+                or ((maxz is None) or (maxz + epsilon < self.minz)) \
+                or ((minz is None) or (self.maxz < minz - epsilon))
 

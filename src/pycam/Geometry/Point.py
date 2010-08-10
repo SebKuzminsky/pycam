@@ -21,11 +21,11 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.utils import sqrt, number
+from pycam.Geometry.utils import epsilon, sqrt, number
 from decimal import Decimal
 
 def _is_near(x, y):
-    return abs(x - y) < 1e-6
+    return abs(x - y) < epsilon
 
 
 class Point:
@@ -104,4 +104,13 @@ class Point:
             return None
         else:
             return Point(self.x / n, self.y / n, self.z / n)
+
+    def is_inside(self, minx=None, maxx=None, miny=None, maxy=None, minz=None,
+            maxz=None):
+        return ((minx is None) or (minx - epsilon <= self.x)) \
+                and ((maxx is None) or (self.x <= maxx + epsilon)) \
+                and ((miny is None) or (miny - epsilon <= self.y)) \
+                and ((maxy is None) or (self.y <= maxy + epsilon)) \
+                and ((minz is None) or (minz - epsilon <= self.z)) \
+                and ((maxz is None) or (self.z <= maxz + epsilon))
 

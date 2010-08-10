@@ -100,13 +100,13 @@ class BaseCutter(object):
 
     def drop(self, triangle):
         # check bounding box collision
-        if self.minx > triangle.maxx:
+        if self.minx > triangle.maxx + epsilon:
             return None
-        if self.maxx < triangle.minx:
+        if self.maxx < triangle.minx - epsilon:
             return None
-        if self.miny > triangle.maxy:
+        if self.miny > triangle.maxy + epsilon:
             return None
-        if self.maxy < triangle.miny:
+        if self.maxy < triangle.miny - epsilon:
             return None
 
         # check bounding circle collision

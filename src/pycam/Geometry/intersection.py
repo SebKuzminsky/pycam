@@ -23,13 +23,13 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 #import pycam.Geometry
 from pycam.Utils.polynomials import poly4_roots
-from pycam.Geometry.utils import INFINITE, sqrt
+from pycam.Geometry.utils import INFINITE, sqrt, epsilon
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Point import Point
 
 def isNear(a, b):
-    return abs(a - b) < 1e-6
+    return abs(a - b) < epsilon
 
 def isZero(a):
     return isNear(a, 0)
@@ -63,7 +63,7 @@ def intersect_cylinder_point(center, axis, radius, radiussq, direction, point):
     n = direction.cross(axis).normalized()
     # distance of the point to this plane
     d = n.dot(point) - n.dot(center)
-    if abs(d) > radius:
+    if abs(d) > radius + epsilon:
         return (None, None, INFINITE)
     # ccl is on cylinder
     d2 = sqrt(radiussq-d*d)
@@ -157,13 +157,14 @@ def intersect_circle_line(center, axis, radius, radiussq, direction, edge):
         d2 = p2.sub(pc).dot(d)
         ccp = None
         cp = None
-        if abs(d1) < a:
+        if abs(d1) < a + epsilon:
             ccp = p1
             cp = p1.sub(direction.mul(l))
-        elif abs(d2) < a:
+        elif abs(d2) < a + epsilon:
             ccp = p2
             cp = p2.sub(direction.mul(l))
-        elif (d1 <- a and d2 > a) or (d2 < -a and d1 > a):
+        elif ((d1 < -a + epsilon) and (d2 > a - epsilon)) \
+                or ((d2 < -a + epsilon) and (d1 > a - epsilon)):
             ccp = pc
             cp = pc.sub(direction.mul(l))
         return (ccp, cp, -l)
@@ -300,7 +301,7 @@ def intersect_torus_point(center, axis, majorradius, minorradius, majorradiussq,
         minlsq = (majorradius - minorradius) ** 2
         maxlsq = (majorradius + minorradius) ** 2
         l_sq = (point.x-center.x) ** 2 + (point.y - center.y) ** 2
-        if (l_sq < minlsq) or (l_sq > maxlsq):
+        if (l_sq < minlsq - epsilon) or (l_sq > maxlsq + epsilon):
             return (None, None, INFINITE)
         l = sqrt(l_sq)
         z_sq = minorradiussq - (majorradius - l) ** 2
@@ -312,12 +313,12 @@ def intersect_torus_point(center, axis, majorradius, minorradius, majorradiussq,
     elif direction.z == 0:
         # push
         z = point.z - center.z
-        if abs(z) > minorradius:
+        if abs(z) > minorradius + epsilon:
             return (None, None, INFINITE)
         l = majorradius + sqrt(minorradiussq - z * z)
         n = axis.cross(direction)
         d = n.dot(point) - n.dot(center)
-        if abs(d) > l:
+        if abs(d) > l + epsilon:
             return (None, None, INFINITE)
         a = sqrt(l * l - d * d)
         ccp = center.add(n.mul(d).add(direction.mul(a)))

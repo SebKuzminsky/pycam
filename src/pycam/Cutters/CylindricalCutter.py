@@ -175,7 +175,7 @@ class CylindricalCutter(BaseCutter):
         if cp:
             # check if the contact point is between the endpoints
             m = cp.sub(edge.p1).dot(edge.dir)
-            if (m < 0) or (m > edge.len):
+            if (m < 0) or (m > edge.len + epsilon):
                 return (None, INFINITE)
         return (cl, l)
 
@@ -190,7 +190,7 @@ class CylindricalCutter(BaseCutter):
 
     def intersect_cylinder_vertex(self, direction, point):
         (cl, ccp, cp, l) = self.intersect_cylinder_point(direction, point)
-        if ccp and ccp.z < self.center.z:
+        if ccp and ccp.z < self.center.z - epsilon:
             return (None, INFINITE)
         return (cl, l)
 
@@ -208,9 +208,9 @@ class CylindricalCutter(BaseCutter):
         if not ccp:
             return (None, INFINITE)
         m = cp.sub(edge.p1).dot(edge.dir)
-        if (m < 0) or (m > edge.len):
+        if (m < 0) or (m > edge.len + epsilon):
             return (None, INFINITE)
-        if ccp.z < self.center.z:
+        if ccp.z < self.center.z - epsilon:
             return (None, INFINITE)
         return (cl, l)
 

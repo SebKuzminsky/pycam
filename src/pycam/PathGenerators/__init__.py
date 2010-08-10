@@ -79,7 +79,7 @@ def get_free_paths_triangles(model, cutter, p1, p2):
     for h in hits:
         if h.dir == forward:
             if count == 0:
-                if h.d >= 0:
+                if h.d >= 0 - epsilon:
                     if len(points) == 0:
                         points.append(p1)
                     points.append(h.cl)
@@ -87,7 +87,7 @@ def get_free_paths_triangles(model, cutter, p1, p2):
         else:
             count -= 1
             if count == 0:
-                if h.d <= xyz_dist:
+                if h.d <= xyz_dist + epsilon:
                     points.append(h.cl)
 
     if len(points)%2 == 1:
@@ -233,18 +233,18 @@ def get_max_height_triangles(model, cutter, x, y, minz, maxz, order=None,
             box_y_max, box_z_max)
     for t in triangles:
         cut = cutter.drop(t)
-        if cut and (cut.z > height_max or height_max is None):
+        if cut and ((height_max is None) or (cut.z > height_max)):
             height_max = cut.z
             cut_max = cut
             triangle_max = t
     # don't do a complete boundary check for the height
     # this avoids zero-cuts for models that exceed the bounding box height
-    if not cut_max or cut_max.z < minz:
+    if not cut_max or cut_max.z < minz + epsilon:
         cut_max = Point(x, y, minz)
     if last_pos["cut"] and \
             ((triangle_max and not last_pos["triangle"]) \
             or (last_pos["triangle"] and not triangle_max)):
-        if minz <= last_pos["cut"].z <= maxz:
+        if minz - epsilon <= last_pos["cut"].z <= maxz + epsilon:
             result.append(Point(last_pos["cut"].x, last_pos["cut"].y,
                     cut_max.z))
         else:
