@@ -79,16 +79,16 @@ def get_free_paths_triangles(model, cutter, p1, p2):
     for h in hits:
         if h.dir == forward:
             if count == 0:
-                if h.d >= 0 - epsilon:
+                if -epsilon <= h.d <= xyz_dist + epsilon:
                     if len(points) == 0:
                         points.append(p1)
                     points.append(h.cl)
             count += 1
         else:
-            count -= 1
-            if count == 0:
-                if h.d <= xyz_dist + epsilon:
+            if count == 1:
+                if -epsilon <= h.d <= xyz_dist + epsilon:
                     points.append(h.cl)
+            count -= 1
 
     if len(points)%2 == 1:
         points.append(p2)
