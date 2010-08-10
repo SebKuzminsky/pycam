@@ -23,8 +23,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import decimal
 import math
 
-INFINITE = 10000
-epsilon = 0.0001
+INFINITE = 100000
+epsilon = 0.00001
 
 # use the "decimal" module for fixed precision numbers (only for debugging)
 _use_precision = False

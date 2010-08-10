@@ -26,6 +26,7 @@ from pycam.Geometry.Line import Line
 from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.PointKdtree import PointKdtree
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
+from pycam.Geometry.utils import epsilon
 from pycam.Geometry.Model import Model
 import pycam.Utils.log
 
@@ -38,7 +39,6 @@ log = pycam.Utils.log.get_logger()
 
 vertices = 0
 edges = 0
-epsilon = 0.0001
 kdtree = None
 
 def UniqueVertex(x, y, z):
@@ -167,9 +167,9 @@ def ImportModel(filename, use_kdtree=True, program_locations=None):
                 # the three points are in a line - or two points are identical
                 # usually this is caused by points, that are too close together
                 # check the tolerance value in pycam/Geometry/PointKdtree.py
-                log.warn("Skipping invalid triangle: %s / %s / %s" \
-                        % (p1, p2, p3) + " (maybe the resolution of the model" \
-                        + " is too high?)")
+                log.warn("Skipping invalid triangle: %s / %s / %s " \
+                        % (p1, p2, p3) + "(maybe the resolution of the model " \
+                        + "is too high?)")
                 continue
             if n:
                 t._normal = n
@@ -223,8 +223,8 @@ def ImportModel(filename, use_kdtree=True, program_locations=None):
                 elif p3 is None:
                     p3 = p
                 else:
-                    log.error("STLImporter: ERROR: more then 3 points in " \
-                            + "facet (line %d)" % current_line)
+                    log.error("STLImporter: more then 3 points in facet " \
+                            + "(line %d)" % current_line)
                 continue
             m = endloop.match(line)
             if m:
@@ -234,8 +234,12 @@ def ImportModel(filename, use_kdtree=True, program_locations=None):
                 if not n:
                     n = p3.sub(p1).cross(p2.sub(p1)).normalized()
 
-                # make sure the points are in ClockWise order
-                dotcross = n.dot(p3.sub(p1).cross(p2.sub(p1)))
+                if n is None:
+                    # invalid triangle (zero-length vector)
+                    dotcross = 0
+                else:
+                    # make sure the points are in ClockWise order
+                    dotcross = n.dot(p3.sub(p1).cross(p2.sub(p1)))
                 if dotcross > 0:
                     t = Triangle(p1, p2, p3, UniqueEdge(p1, p2),
                             UniqueEdge(p2, p3), UniqueEdge(p3, p1), n)
@@ -247,8 +251,9 @@ def ImportModel(filename, use_kdtree=True, program_locations=None):
                     # identical. Usually this is caused by points, that are too
                     # close together. Check the tolerance value in
                     # pycam/Geometry/PointKdtree.py.
-                    print "ERROR: skipping invalid triangle: %s / %s / %s" \
-                            % (p1, p2, p3)
+                    log.warn("Skipping invalid triangle: %s / %s / %s " \
+                            % (p1, p2, p3) + "(maybe the resolution of the " \
+                            + "model is too high?)")
                     n, p1, p2, p3 = (None, None, None, None)
                     continue
                 n, p1, p2, p3 = (None, None, None, None)
