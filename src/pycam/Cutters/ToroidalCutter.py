@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.Point import Point
-from pycam.Geometry.utils import INFINITE, number
+from pycam.Geometry.utils import INFINITE, number, epsilon
 from pycam.Geometry.intersection import intersect_torus_plane, \
         intersect_torus_point, intersect_circle_plane, intersect_circle_point, \
         intersect_cylinder_point, intersect_cylinder_line, intersect_circle_line
@@ -156,7 +156,7 @@ class ToroidalCutter(BaseCutter):
         scale = max(3, scale)
         for i in range(scale + 1):
             m = float(i) / scale
-            p = edge.point(m)
+            p = edge.point_with_length_multiply(m)
             (cl, ccp, cp, l) = self.intersect_torus_point(direction, p)
             if not cl:
                 continue
@@ -169,9 +169,9 @@ class ToroidalCutter(BaseCutter):
         scale2 = 10
         for i in range(1, scale2 + 1):
             m = min_m + ((float(i) / (scale2)) * 2 - 1)/scale
-            if (m < 0) or (m > 1):
+            if (m < -epsilon) or (m > 1 + epsilon):
                 continue
-            p = edge.point(m)
+            p = edge.point_with_length_multiply(m)
             (cl, ccp, cp, l) = self.intersect_torus_point(direction, p)
             if not cl:
                 continue

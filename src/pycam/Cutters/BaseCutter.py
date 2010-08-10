@@ -23,7 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 from pycam.Geometry.Point import Point
-from pycam.Geometry.utils import number
+from pycam.Geometry.utils import number, epsilon
 
 
 class BaseCutter(object):

@@ -83,6 +83,9 @@ class Line(TransformableContainer):
         self.maxy = max(self.p1.y, self.p2.y)
         self.maxz = max(self.p1.z, self.p2.z)
 
+    def point_with_length_multiply(self, l):
+        return self.p1.add(self.dir.mul(l*self.len))
+
     def get_length_line(self, length):
         """ return a line with the same direction and the specified length
         """
