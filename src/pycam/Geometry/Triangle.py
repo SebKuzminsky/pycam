@@ -101,19 +101,14 @@ class Triangle(TransformableContainer):
         yield self.p1
         yield self.p2
         yield self.p3
+        yield self.e1
+        yield self.e2
+        yield self.e3
+        yield self.normal
 
     def get_children_count(self):
         # tree points per triangle
-        return 3
-
-    def transform_by_matrix(self, matrix, transformed_list=None, **kwargs):
-        previous_normal = self.normal
-        super(Triangle, self).transform_by_matrix(matrix, transformed_list,
-                **kwargs)
-        # try to keep the original normal vector (transform it manually)
-        if not previous_normal is None:
-            previous_normal.transform_by_matrix(matrix, **kwargs)
-            self.normal = previous_normal
+        return 7
 
     def to_OpenGL(self):
         if not GL_enabled:
