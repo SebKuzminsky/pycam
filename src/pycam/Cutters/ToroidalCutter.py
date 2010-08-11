@@ -41,13 +41,12 @@ except ImportError:
 class ToroidalCutter(BaseCutter):
 
     def __init__(self, radius, minorradius, **kwargs):
-        BaseCutter.__init__(self, radius, **kwargs)
         minorradius = number(minorradius)
-        self.majorradius = self.radius - minorradius
         self.minorradius = minorradius
+        # we need "minorradius" for "moveto" - thus set it before parent's init
+        BaseCutter.__init__(self, radius, **kwargs)
+        self.majorradius = self.radius - minorradius
         self.axis = Point(0, 0, 1)
-        self.center = Point(self.location.x, self.location.y,
-                self.location.z + minorradius)
         self.majorradiussq = self.majorradius ** 2
         self.minorradiussq = self.minorradius ** 2
         self.distance_majorradius = self.majorradius \

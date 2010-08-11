@@ -33,7 +33,6 @@ class BaseCutter(object):
     def __init__(self, radius, location=None, height=None):
         if location is None:
             location = Point(0, 0, 0)
-        self.location = location
         if height is None:
             height = 10
         radius = number(radius)
@@ -48,6 +47,7 @@ class BaseCutter(object):
         # self.minx, self.maxx, self.miny and self.maxy are defined as
         # properties below
         self.shape = {}
+        self.moveto(location)
 
     def _get_minx(self):
         return self.location.x - self.distance_radius

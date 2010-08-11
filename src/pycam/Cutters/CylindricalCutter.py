@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.utils import INFINITE, sqrt, epsilon
-from pycam.Geometry.Point import Point
+from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.intersection import intersect_circle_plane, \
         intersect_circle_point, intersect_circle_line, \
         intersect_cylinder_point, intersect_cylinder_line
@@ -41,9 +41,7 @@ class CylindricalCutter(BaseCutter):
 
     def __init__(self, radius, **kwargs):
         BaseCutter.__init__(self, radius, **kwargs)
-        self.axis = Point(0, 0, 1)
-        self.center = self.location.sub(Point(0, 0,
-                self.get_required_distance()))
+        self.axis = Vector(0, 0, 1)
 
     def __repr__(self):
         return "CylindricalCutter<%s,%s>" % (self.location, self.radius)
@@ -134,7 +132,7 @@ class CylindricalCutter(BaseCutter):
 
     def moveto(self, location):
         BaseCutter.moveto(self, location)
-        self.center = location.sub(Point(0, 0, self.get_required_distance()))
+        self.center = Point(location.x, location.y, location.z - self.get_required_distance())
 
     def intersect_circle_plane(self, direction, triangle):
         (ccp, cp, d) = intersect_circle_plane(self.center, self.distance_radius,
@@ -199,7 +197,7 @@ class CylindricalCutter(BaseCutter):
                 self.distance_radius, self.distance_radiussq, direction, edge)
         # offset intersection
         if ccp:
-            cl = cp.add(self.location.sub(ccp))
+            cl = self.location.add(cp.sub(ccp))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 

@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry import Matrix
-from pycam.Geometry.Point import Point
+from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.utils import INFINITE, epsilon, sqrt
 from pycam.Geometry.intersection import intersect_sphere_plane, \
         intersect_sphere_point, intersect_sphere_line, \
@@ -42,9 +42,7 @@ class SphericalCutter(BaseCutter):
 
     def __init__(self, radius, **kwargs):
         BaseCutter.__init__(self, radius, **kwargs)
-        self.axis = Point(0, 0, 1)
-        self.center = Point(self.location.x, self.location.y,
-                self.location.z + self.radius)
+        self.axis = Vector(0, 0, 1)
 
     def __repr__(self):
         return "SphericalCutter<%s,%s>" % (self.location, self.radius)
@@ -142,7 +140,7 @@ class SphericalCutter(BaseCutter):
 
     def moveto(self, location):
         BaseCutter.moveto(self, location)
-        self.center = Point(location.x, location.y, location.z+self.radius)
+        self.center = Point(location.x, location.y, location.z + self.radius)
 
     def intersect_sphere_plane(self, direction, triangle):
         (ccp, cp, d) = intersect_sphere_plane(self.center, self.distance_radius,
@@ -192,7 +190,7 @@ class SphericalCutter(BaseCutter):
         return (cl, l)
 
     def intersect_cylinder_point(self, direction, point):
-        (ccp, cp, l)=intersect_cylinder_point(self.center, self.axis,
+        (ccp, cp, l) = intersect_cylinder_point(self.center, self.axis,
                 self.distance_radius, self.distance_radiussq, direction, point)
         # offset intersection
         if ccp:
