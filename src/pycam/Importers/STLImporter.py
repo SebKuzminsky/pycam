@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.Point import Point
+from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.PointKdtree import PointKdtree
@@ -129,7 +129,7 @@ def ImportModel(filename, use_kdtree=True, program_locations=None):
             a2 = unpack("<f", f.read(4))[0] 
             a3 = unpack("<f", f.read(4))[0] 
 
-            n = Point(float(a1), float(a2), float(a3))
+            n = Vector(float(a1), float(a2), float(a3))
             
             v11 = unpack("<f", f.read(4))[0] 
             v12 = unpack("<f", f.read(4))[0] 
@@ -172,7 +172,7 @@ def ImportModel(filename, use_kdtree=True, program_locations=None):
                         + "is too high?)")
                 continue
             if n:
-                t._normal = n
+                t.normal = n
 
             model.append(t)
     else:
@@ -204,7 +204,7 @@ def ImportModel(filename, use_kdtree=True, program_locations=None):
             if m:
                 m = normal.match(line)
                 if m:
-                    n = Point(float(m.group('x')), float(m.group('y')),
+                    n = Vector(float(m.group('x')), float(m.group('y')),
                             float(m.group('z')))
                 else:
                     n = None
