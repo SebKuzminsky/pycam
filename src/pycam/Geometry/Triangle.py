@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.Point import Point
+from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Line import Line
 from pycam.Geometry import TransformableContainer
@@ -74,6 +74,8 @@ class Triangle(TransformableContainer):
         if self.normal is None:
             self.normal = self.p3.sub(self.p1).cross(self.p2.sub( \
                     self.p1)).normalized()
+        if not isinstance(self.normal, Vector):
+            self.normal = self.normal.get_vector()
         self.center = self.p1.add(self.p2).add(self.p3).div(3)
         self.plane = Plane(self.center, self.normal)
         # calculate circumcircle (resulting in radius and middle)
@@ -200,13 +202,17 @@ class Triangle(TransformableContainer):
         dot12 = v1.dot(v2)
         # Compute barycentric coordinates
         denom = dot00 * dot11 - dot01 * dot01
+        if denom == 0:
+            return False
+        invDenom = 1.0 / denom
         # Originally, "u" and "v" are multiplied with "1/denom".
         # We don't do this to avoid division by zero (for triangles that are
         # "almost" invalid).
-        u = dot11 * dot02 - dot01 * dot12
-        v = dot00 * dot12 - dot01 * dot02
+        u = (dot11 * dot02 - dot01 * dot12) * invDenom
+        v = (dot00 * dot12 - dot01 * dot02) * invDenom
         # Check if point is in triangle
-        return ((u * denom) >= 0) and ((v * denom) >= 0) and (u + v <= denom)
+        return (u > 0) and (v > 0) and (u + v < 1)
+
     def subdivide(self, depth):
         sub = []
         if depth == 0:

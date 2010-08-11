@@ -59,20 +59,18 @@ class TransformableContainer(object):
         # Prevent any kind of loops or double transformations (e.g. Points in
         # multiple containers (Line, Triangle, ...).
         # Use the 'id' builtin to prevent expensive object comparions.
-        transformed_list.append(id(self))
         for item in self.next():
-            if not id(item) in transformed_list:
-                if isinstance(item, TransformableContainer):
-                    item.transform_by_matrix(matrix, transformed_list,
-                            callback=callback)
-                else:
-                    # non-TransformableContainer do not care to update the
-                    # 'transformed_list'. Thus we need to do it.
-                    transformed_list.append(id(item))
-                    # Don't transmit the 'transformed_list' if the object is
-                    # not a TransformableContainer. It is not necessary and it
-                    # is hard to understand on the lowest level (e.g. Point).
-                    item.transform_by_matrix(matrix, callback=callback)
+            if isinstance(item, TransformableContainer):
+                item.transform_by_matrix(matrix, transformed_list,
+                        callback=callback)
+            elif not id(item) in transformed_list:
+                # non-TransformableContainer do not care to update the
+                # 'transformed_list'. Thus we need to do it.
+                transformed_list.append(id(item))
+                # Don't transmit the 'transformed_list' if the object is
+                # not a TransformableContainer. It is not necessary and it
+                # is hard to understand on the lowest level (e.g. Point).
+                item.transform_by_matrix(matrix, callback=callback)
             # run the callback - e.g. for a progress counter
             if callback and callback():
                 # user requesteded abort

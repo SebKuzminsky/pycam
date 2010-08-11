@@ -114,3 +114,27 @@ class Point:
                 and ((minz is None) or (minz - epsilon <= self.z)) \
                 and ((maxz is None) or (self.z <= maxz + epsilon))
 
+    def get_vector(self):
+        return Vector(self.x, self.y, self.z)
+
+
+class Vector(Point):
+    """ The Vector class is similar to the Point class. The only difference
+    is that vectors are not shifted during transformations. This feature
+    is necessary for normals (e.g. of Triangles or Planes).
+    """
+
+    def transform_by_matrix(self, matrix, transformed_list=None, callback=None):
+        x = self.x * matrix[0][0] + self.y * matrix[0][1] \
+                + self.z * matrix[0][2]
+        y = self.x * matrix[1][0] + self.y * matrix[1][1] \
+                + self.z * matrix[1][2]
+        z = self.x * matrix[2][0] + self.y * matrix[2][1] \
+                + self.z * matrix[2][2]
+        self.x = x
+        self.y = y
+        self.z = z
+        if callback:
+            callback()
+        self.reset_cache()
+

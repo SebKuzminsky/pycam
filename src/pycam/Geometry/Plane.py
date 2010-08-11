@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry import TransformableContainer
 from pycam.Geometry.utils import INFINITE
-from pycam.Geometry.Point import Point
+from pycam.Geometry.Point import Point, Vector
 
 class Plane(TransformableContainer):
     id = 0
@@ -31,6 +31,8 @@ class Plane(TransformableContainer):
         Plane.id += 1
         self.p = p
         self.n = n
+        if not isinstance(self.n, Vector):
+            self.n = self.n.get_vector()
 
     def __repr__(self):
         return "Plane<%s,%s>" % (self.p, self.n)
@@ -48,9 +50,11 @@ class Plane(TransformableContainer):
         pass
 
     def intersect_point(self, direction, point):
-        if direction.norm != 1:
+        if (not direction is None) and (direction.norm != 1):
             # calculations will go wrong, if the direction is not a unit vector
-            direction = Point(direction.x, direction.y, direction.z).normalized()
+            direction = direction.normalized()
+        if direction is None:
+            return (None, INFINITE)
         denom = self.n.dot(direction)
         if denom == 0:
             return (None, INFINITE)
