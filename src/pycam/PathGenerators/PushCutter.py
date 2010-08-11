@@ -104,7 +104,7 @@ class PushCutter:
             x_step = abs(maxx - minx) / max(1, (num_of_x_lines - 1))
             x_steps = [minx + i * x_step for i in range(num_of_x_lines)]
             y_steps = [None] * num_of_x_lines
-        else:
+        elif dy != 0:
             depth_y = math.log(accuracy * abs(maxy - miny) / dy) / math.log(2)
             depth_y = max(ceil(depth_y), 4)
             depth_y = min(depth_y, max_depth)
@@ -112,6 +112,9 @@ class PushCutter:
             y_step = abs(maxy - miny) / max(1, (num_of_y_lines - 1))
             y_steps = [miny + i * y_step for i in range(num_of_y_lines)]
             x_steps = [None] * num_of_y_lines
+        else:
+            # nothing to be done
+            return
 
         for x, y in zip(x_steps, y_steps):
             self.pa.new_scanline()
