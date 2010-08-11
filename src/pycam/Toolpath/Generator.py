@@ -246,6 +246,8 @@ def generate_toolpath(model, tool_settings=None,
             dz = step_down
         else:
             dz = maxz - minz
+            if dz <= 0:
+                dz = 1
         if direction == "x":
             dx, dy = 0, stepping
         elif direction == "y":
