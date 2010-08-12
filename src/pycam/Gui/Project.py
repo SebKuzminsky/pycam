@@ -669,6 +669,19 @@ class ProjectGui:
                 self.view3d.glsetup()
             self.view3d.paint()
 
+    def set_model_filename(self, filename):
+        """ Store the given filename for a possible later "save model" action.
+        Additionally the window's title is adjusted and the "save" buttons are
+        updated.
+        """
+        self.last_model_file = filename
+        if self.last_model_file is None:
+            self.window.set_title("PyCAM")
+        else:
+            short_name = os.path.basename(filename)
+            self.window.set_title("PyCAM - %s" % short_name)
+        self.update_save_actions()
+
     def update_save_actions(self):
         self.gui.get_object("SaveTaskSettings").set_sensitive(not self.last_task_settings_file is None)
         save_as_possible = (not self.model is None) \
@@ -1557,8 +1570,7 @@ class ProjectGui:
             filename = self.get_filename_via_dialog("Save model to ...",
                     mode_load=False, type_filter=FILTER_MODEL)
             if filename:
-                self.last_model_file = filename
-                self.update_save_actions()
+                self.set_model_filename(filename)
         # no filename given -> exit
         if not filename:
             return
@@ -1767,10 +1779,9 @@ class ProjectGui:
         if filename:
             file_type, importer = pycam.Importers.detect_file_type(filename)
             if file_type and callable(importer):
-                self.last_model_file = filename
                 # TODO: get the "program_locations"
                 self.load_model(importer(filename, program_locations=None))
-                self.update_save_actions()
+                self.set_model_filename(filename)
             else:
                 log.error("Failed to detect filetype!")
 
