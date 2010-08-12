@@ -67,6 +67,24 @@ class EngraveCutter:
                 draw_callback)
 
         line_groups = self.contour_model.get_polygons()
+        # Sort the polygons according to their directions (first inside, then
+        # outside. Smaller polygons are processed first.
+        # This reduces the problem of break-away pieces.
+        def polygon_priority(poly1, poly2):
+            """ polygon priority comparison: first holes, then outlines
+            (sorted by ascending area size)
+            TODO: ordering according to the locations and groups of polygons
+            would be even better.
+            """
+            area1 = poly1.get_area()
+            area2 = poly2.get_area()
+            if (area1 < 0) and (area2 > 0):
+                return -1
+            elif (area2 < 0) and (area1 > 0):
+                return 1
+            else:
+                return cmp(abs(area1), abs(area2))
+        line_groups.sort(cmp=polygon_priority)
 
         # push slices for all layers above ground
         for z in z_steps[:-1]:
