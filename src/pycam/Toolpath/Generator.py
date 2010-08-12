@@ -225,6 +225,10 @@ def generate_toolpath(model, tool_settings=None,
     if (overlap < 0) or (overlap >= 1):
         return "Invalid overlap value (%f): should be greater or equal 0 " \
                 + "and lower than 1"
+    if safety_height < maxz:
+        return ("Safety height (%.4f) is within the bounding box height " \
+                + "(%.4f) - this can cause collisions of the tool with " \
+                + "the material.") % (safety_height, maxz)
     # factor "2" since we are based on radius instead of diameter
     stepping = 2 * number(tool_settings["tool_radius"]) * (1 - overlap)
     if path_generator == "DropCutter":
@@ -235,10 +239,6 @@ def generate_toolpath(model, tool_settings=None,
         else:
             return "Invalid direction value (%s): not one of %s" \
                     % (direction, DIRECTIONS)
-        if safety_height < maxz:
-            return ("Safety height (%.4f) is within the bounding box height " \
-                    + "(%.4f) - this can cause collisions of the tool with " \
-                    + "the material.") % (safety_height, maxz)
         toolpath = generator.GenerateToolPath(minx, maxx, miny, maxy, minz,
                 maxz, stepping, stepping, direction_param, callback)
     elif path_generator == "PushCutter":
