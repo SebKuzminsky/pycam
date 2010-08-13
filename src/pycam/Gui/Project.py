@@ -860,8 +860,8 @@ class ProjectGui:
         location = pycam.Utils.get_external_program_location(key)
         if not location:
             log.error("Failed to locate the external program '%s'. " % key \
-                    + "Please install the program and try again.\nOr maybe" \
-                    + "you need to specify the location manually.")
+                    + "Please install the program and try again.\n" \
+                    + "Or maybe you need to specify the location manually.")
         else:
             # store the new setting
             self.settings.set("external_program_%s" % key, location)
@@ -2398,9 +2398,12 @@ class ProjectGui:
                 self.last_update = time.time()
                 self.max_fps = max_fps
                 self.func = func
-            def update(self, text=None, percent=None, tool_position=None):
+            def update(self, text=None, percent=None, tool_position=None,
+                    toolpath=None):
                 if not tool_position is None:
                     parent.cutter.moveto(tool_position)
+                if not toolpath is None:
+                    parent.settings.set("toolpath_in_progress", toolpath)
                 if (time.time() - self.last_update) > 1.0/self.max_fps:
                     self.last_update = time.time()
                     if self.func:
@@ -2437,6 +2440,8 @@ class ProjectGui:
             return False
 
         log.info("Toolpath generation time: %f" % (time.time() - start_time))
+        # don't show the new toolpath anymore
+        self.settings.set("toolpath_in_progress", None)
 
         if toolpath is None:
             # user interruption

@@ -141,7 +141,7 @@ class PushCutter:
                     self.pa.append(p)
                 self.cutter.moveto(p)
                 if draw_callback:
-                    draw_callback(tool_position=p)
+                    draw_callback(tool_position=p, toolpath=self.pa.paths)
             self.pa.end_scanline()
 
             # update the progress counter

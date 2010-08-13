@@ -156,7 +156,7 @@ class EngraveCutter:
                 pa.append(p)
             self.cutter.moveto(p)
             if draw_callback:
-                draw_callback(tool_position=p)
+                draw_callback(tool_position=p, toolpath=pa.paths)
 
 
     def GenerateToolPathLineDrop(self, pa, line, minz, maxz, horiz_step,
@@ -201,7 +201,8 @@ class EngraveCutter:
             self.cutter.moveto(p)
             # "draw_callback" returns true, if the user requested quitting via
             # the GUI.
-            if draw_callback and draw_callback(tool_position=p):
+            if draw_callback \
+                    and draw_callback(tool_position=p, toolpath=pa.paths):
                 break
         pa.end_scanline()
         pa.end_direction()

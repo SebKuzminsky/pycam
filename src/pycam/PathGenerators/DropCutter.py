@@ -141,7 +141,8 @@ class DropCutter:
                 # "draw_callback" returns true, if the user requested to quit
                 # via the GUI.
                 # The progress counter may return True, if cancel was requested.
-                if (draw_callback and draw_callback(tool_position=p)) \
+                if (draw_callback and draw_callback(tool_position=p,
+                        toolpath=self.pa.paths)) \
                         or (progress_counter.increment()):
                     quit_requested = True
                     break

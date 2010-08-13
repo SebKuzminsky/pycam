@@ -715,7 +715,10 @@ def draw_complete_model_view(settings):
         GL.glColor3f(*settings.get("color_support_grid"))
         settings.get("support_grid").to_OpenGL()
     # draw the toolpath
-    if settings.get("show_toolpath"):
+    # don't do it, if a new toolpath is just being calculated
+    if settings.get("show_toolpath") \
+            and not (settings.get("show_drill_progress") \
+            and (not settings.get("toolpath_in_progress") is None)):
         for toolpath_obj in settings.get("toolpath"):
             if toolpath_obj.visible:
                 draw_toolpath(toolpath_obj.get_path(),
@@ -727,6 +730,12 @@ def draw_complete_model_view(settings):
         if not cutter is None:
             GL.glColor3f(*settings.get("color_cutter"))
             cutter.to_OpenGL()
+        # also show the toolpath that is currently being calculated
+        toolpath_in_progress = settings.get("toolpath_in_progress")
+        if not toolpath_in_progress is None:
+                draw_toolpath(toolpath_in_progress,
+                        settings.get("color_toolpath_cut"),
+                        settings.get("color_toolpath_return"))
 
 @keep_gl_mode
 @keep_matrix

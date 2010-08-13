@@ -174,7 +174,7 @@ tool_radius: 0.5
 
 [ProcessDefault]
 path_direction: x
-safety_height: 5
+safety_height: 25
 engrave_offset: 0.0
 
 [Process0]
