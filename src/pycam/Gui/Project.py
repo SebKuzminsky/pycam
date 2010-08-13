@@ -226,6 +226,8 @@ class ProjectGui:
         self.log_window.connect("destroy", self.toggle_log_window, False)
         self.gui.get_object("LogWindowClose").connect("clicked", self.toggle_log_window, False)
         self.gui.get_object("LogWindowClear").connect("clicked", self.clear_log_window)
+        self.gui.get_object("LogWindowCopyToClipboard").connect("clicked",
+                self.copy_log_to_clipboard)
         self.log_model = self.gui.get_object("LogWindowList")
         # set defaults
         self.model = None
@@ -1217,6 +1219,18 @@ class ProjectGui:
         self.log_model.append((timestamp, title, message))
         # update the status bar
         self.status_bar.push(0, message)
+
+    @gui_activity_guard
+    def copy_log_to_clipboard(self, widget=None):
+        content = []
+        def copy_row(model, path, it, content):
+            columns = []
+            for column in range(model.get_n_columns()):
+                columns.append(model.get_value(it, column))
+            content.append(" ".join(columns))
+        self.log_model.foreach(copy_row, content)
+        clipboard = gtk.Clipboard()
+        clipboard.set_text(os.linesep.join(content))
 
     @gui_activity_guard
     def clear_log_window(self, widget=None):
