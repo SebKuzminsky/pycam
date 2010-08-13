@@ -80,8 +80,8 @@ class ToolPath:
 
     def get_bounding_box(self):
         box = self.toolpath_settings.get_bounds()
-        return (box["minx"], box["maxx"], box["miny"], box["maxy"], box["minz"],
-                box["maxz"])
+        (minx, miny, minz), (maxx, maxy, maxz) = box.get_bounds()
+        return (minx, maxx, miny, maxy, minz, maxz)
 
     def get_tool_settings(self):
         return self.toolpath_settings.get_tool_settings()

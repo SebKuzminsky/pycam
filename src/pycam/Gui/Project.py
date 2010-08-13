@@ -1549,30 +1549,30 @@ class ProjectGui:
                 if self.gui.get_object("UnitChangeBounds").get_active():
                     # scale the boundaries and keep their center
                     for bounds in self.bounds_list:
-                        if bounds["type"] == "fixed_margin":
-                            bounds["x_low"] *= factor
-                            bounds["x_high"] *= factor
-                            bounds["y_low"] *= factor
-                            bounds["y_high"] *= factor
-                            bounds["z_low"] *= factor
-                            bounds["z_high"] *= factor
-                        elif bounds["type"] == "custom":
-                            center_x = (bounds["x_high"] + bounds["x_low"]) / 2.0
-                            center_y = (bounds["y_high"] + bounds["y_low"]) / 2.0
-                            center_z = (bounds["z_high"] + bounds["z_low"]) / 2.0
-                            bounds["x_low"] = center_x + (bounds["x_low"] - center_x) * factor
-                            bounds["x_high"] = center_x + (bounds["x_high"] - center_x) * factor
-                            bounds["y_low"] = center_y + (bounds["y_low"] - center_y) * factor
-                            bounds["y_high"] = center_y + (bounds["y_high"] - center_y) * factor
-                            bounds["z_low"] = center_z + (bounds["z_low"] - center_z) * factor
-                            bounds["z_high"] = center_z + (bounds["z_high"] - center_z) * factor
-                        elif bounds["type"] == "relative_margin":
+                        low, high = bounds.get_bounds()
+                        if bounds.get_type() == Bounds.TYPE_FIXED_MARGIN:
+                            low[0] *= factor
+                            high[0] *= factor
+                            low[1] *= factor
+                            high[1] *= factor
+                            low[2] *= factor
+                            high[2] *= factor
+                            bounds.set_bounds(low, high)
+                        elif bounds.get_type() == Bounds.TYPE_CUSTOM:
+                            center = [0, 0, 0]
+                            for i in range(3):
+                                center[i] = (high[i] + low[i]) / 2
+                            for i in range(3):
+                                low[i] = center[i] + (low[i] - center[i]) * factor
+                                high[i] = center[i] + (high[i] - center[i]) * factor
+                            bounds.set_bounds(low, high)
+                        elif bounds.get_type() == Bounds.TYPE_RELATIVE_MARGIN:
                             # no need to change relative margins
                             pass
                 if self.gui.get_object("UnitChangeTools").get_active():
                     # scale all tool dimensions
                     for tool in self.tool_list:
-                        for key in ("tool_radius", "torus_radius", "feedrate"):
+                        for key in ("tool_radius", "torus_radius"):
                             tool[key] *= factor
         self.unit_change_window.hide()
         # store the current unit (for the next run of this function)
@@ -2314,8 +2314,7 @@ class ProjectGui:
         # hide the simulation tab
         self.gui.get_object("SimulationTab").hide()
         # enable all other tabs again
-        for objname in ("ModelTab", "ModelTabLabel", "TasksTab", "TasksTabLabel", "ToolPathTab", "ToolPathTabLabel"):
-            self.gui.get_object(objname).set_sensitive(True)
+        self.toggle_tabs_for_simulation(True)
         self.settings.set("simulate_object", None)
         self.settings.set("show_simulation", False)
         self.update_view()
@@ -2338,9 +2337,9 @@ class ProjectGui:
         detail_level = self.gui.get_object("SimulationDetailsValue").get_value()
         grid_size = 100 * pow(2, detail_level - 1)
         bounding_box = toolpath.get_toolpath_settings().get_bounds()
+        (minx, miny, minz), (maxx, maxy, maxz) = bounding_box.get_bounds()
         # proportion = dimension_x / dimension_y
-        proportion = (bounding_box["maxx"] - bounding_box["minx"]) \
-                / (bounding_box["maxy"] - bounding_box["miny"])
+        proportion = (maxx - minx) / (maxy - miny)
         x_steps = int(sqrt(grid_size) * proportion)
         y_steps = int(sqrt(grid_size) / proportion)
         simulation_backend = ODEBlocks.ODEBlocks(toolpath.get_tool_settings(),
@@ -2373,10 +2372,16 @@ class ProjectGui:
         if not widget is None:
             self.gui.get_object("SimulationTab").set_sensitive(True)
 
+    def toggle_tabs_for_simulation(self, new_state):
+        for objname in ("ModelTab", "ModelTabLabel", "TasksTab",
+                "TasksTabLabel", "ToolPathTab", "ToolPathTabLabel", "ToolTab",
+                "ToolTabLabel", "ProcessTab", "ProcessTabLabel", "BoundsTab",
+                "BoundsTabLabel"):
+            self.gui.get_object(objname).set_sensitive(new_state)
+
     def show_toolpath_simulation(self, toolpath):
         # disable the main controls
-        for objname in ("ModelTab", "ModelTabLabel", "TasksTab", "TasksTabLabel", "ToolPathTab", "ToolPathTabLabel"):
-            self.gui.get_object(objname).set_sensitive(False)
+        self.toggle_tabs_for_simulation(False)
         # show the simulation controls
         self.gui.get_object("SimulationTab").show()
         # switch to the simulation tab

@@ -1457,7 +1457,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkVBox" id="dialog-vbox3">
+              <object class="GtkVBox" id="ToolTab">
                 <property name="visible">True</property>
                 <property name="orientation">vertical</property>
                 <property name="spacing">2</property>
@@ -1992,7 +1992,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkVBox" id="dialog-vbox4">
+              <object class="GtkVBox" id="ProcessTab">
                 <property name="visible">True</property>
                 <property name="orientation">vertical</property>
                 <property name="spacing">2</property>
@@ -2703,7 +2703,7 @@ This operation is not available for engraving.</property>
               </packing>
             </child>
             <child type="tab">
-              <object class="GtkLabel" id="ProcessesTabLabel">
+              <object class="GtkLabel" id="ProcessTabLabel">
                 <property name="visible">True</property>
                 <property name="label" translatable="yes">Processes</property>
               </object>
@@ -2713,7 +2713,7 @@ This operation is not available for engraving.</property>
               </packing>
             </child>
             <child>
-              <object class="GtkFrame" id="BoundsFrame">
+              <object class="GtkFrame" id="BoundsTab">
                 <property name="visible">True</property>
                 <property name="label_xalign">0</property>
                 <property name="shadow_type">none</property>
