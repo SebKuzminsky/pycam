@@ -59,7 +59,7 @@ def get_external_program_location(key):
         # no other options for non-windows systems
         return None
     # scan the program directory
-    for subdir in windows_program_directories[key]:
+    for sub_dir in windows_program_directories[key]:
         for basename in potential_names:
             location = os.path.join(program_dir, sub_dir, basename)
             if os.path.isfile(location):
