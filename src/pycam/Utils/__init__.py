@@ -22,6 +22,40 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = [ "iterators", "polynomials", "ProgressCounter"]
 
+import os
+# this is imported below on demand
+#import win32.com
+
+
+def get_external_program_location(key):
+    extensions = ["", ".exe"]
+    potential_names = ["%s%s" % (key, ext) for ext in extensions]
+    windows_program_directories = {'inkscape': ['Inkscape'],
+            'pstoedit': ['pstoedit']}
+    # go through the PATH environment variable
+    if "PATH" in os.environ:
+        path_env = os.environ["PATH"]
+        for one_dir in path_env.split(os.pathsep):
+            for basename in potential_names:
+                location = os.path.join(one_dir, basename)
+                if os.path.isfile(location):
+                    return location
+    # do a manual scan in the programs directory (only for windows)
+    try:
+        from win32com.shell import shellcon, shell            
+        program_dir = shell.SHGetFolderPath(0, shellcon.CSIDL_PROGRAM_FILES, 0, 0)
+    except ImportError:
+        # no other options for non-windows systems
+        return None
+    # scan the program directory
+    for subdir in windows_program_directories[key]:
+        for basename in potential_names:
+            location = os.path.join(program_dir, sub_dir, basename)
+            if os.path.isfile(location):
+                return location
+    # nothing found
+    return None
+
 
 class ProgressCounter:
 

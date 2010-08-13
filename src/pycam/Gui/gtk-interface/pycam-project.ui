@@ -4713,6 +4713,18 @@ upon interesting bugs and weird results.</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child>
+          <object class="GtkImage" id="logo">
+            <property name="visible">True</property>
+            <property name="ypad">2</property>
+            <property name="pixbuf">logo_gui.png</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkNotebook" id="notebook1">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
@@ -5384,7 +5396,7 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                       <object class="GtkTable" id="table11">
                         <property name="visible">True</property>
                         <property name="n_rows">2</property>
-                        <property name="n_columns">3</property>
+                        <property name="n_columns">4</property>
                         <property name="column_spacing">3</property>
                         <child>
                           <object class="GtkLinkButton" id="ExternalProgramInkscapeLink">
@@ -5398,32 +5410,6 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                             <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=Requirements#Inkscape</property>
                           </object>
                           <packing>
-                            <property name="x_options">GTK_FILL</property>
-                            <property name="y_options">GTK_FILL</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkFileChooserButton" id="ExternalProgramInkscapeChooser">
-                            <property name="visible">True</property>
-                            <property name="title" translatable="yes">Choose location of Inkscape</property>
-                          </object>
-                          <packing>
-                            <property name="left_attach">1</property>
-                            <property name="right_attach">2</property>
-                            <property name="y_options">GTK_FILL</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkCheckButton" id="ExternalProgramInkscapeAuto">
-                            <property name="label" translatable="yes">auto</property>
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="receives_default">False</property>
-                            <property name="draw_indicator">True</property>
-                          </object>
-                          <packing>
-                            <property name="left_attach">2</property>
-                            <property name="right_attach">3</property>
                             <property name="x_options">GTK_FILL</property>
                             <property name="y_options">GTK_FILL</property>
                           </packing>
@@ -5447,25 +5433,55 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkFileChooserButton" id="ExternalProgramPstoeditChooser">
+                          <object class="GtkButton" id="ExternalProgramInkscapeAuto">
+                            <property name="label">Detect</property>
                             <property name="visible">True</property>
-                            <property name="title" translatable="yes">Choose location of pstoedit</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
                           </object>
                           <packing>
-                            <property name="left_attach">1</property>
-                            <property name="right_attach">2</property>
-                            <property name="top_attach">1</property>
-                            <property name="bottom_attach">2</property>
+                            <property name="left_attach">3</property>
+                            <property name="right_attach">4</property>
+                            <property name="x_options">GTK_FILL</property>
                             <property name="y_options">GTK_FILL</property>
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkCheckButton" id="ExternalProgramPstoeditAuto">
-                            <property name="label" translatable="yes">auto</property>
+                          <object class="GtkButton" id="ExternalProgramPstoeditAuto">
+                            <property name="label">Detect</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
-                            <property name="receives_default">False</property>
-                            <property name="draw_indicator">True</property>
+                            <property name="receives_default">True</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">3</property>
+                            <property name="right_attach">4</property>
+                            <property name="top_attach">1</property>
+                            <property name="bottom_attach">2</property>
+                            <property name="x_options">GTK_FILL</property>
+                            <property name="y_options">GTK_FILL</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="ExternalProgramInkscapeBrowse">
+                            <property name="label" translatable="yes">Browse</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">2</property>
+                            <property name="right_attach">3</property>
+                            <property name="x_options">GTK_FILL</property>
+                            <property name="y_options">GTK_FILL</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="ExternalProgramPstoeditBrowse">
+                            <property name="label" translatable="yes">Browse</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
                           </object>
                           <packing>
                             <property name="left_attach">2</property>
@@ -5473,6 +5489,32 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                             <property name="top_attach">1</property>
                             <property name="bottom_attach">2</property>
                             <property name="x_options">GTK_FILL</property>
+                            <property name="y_options">GTK_FILL</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="ExternalProgramInkscapeControl">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="invisible_char">&#x25CF;</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="right_attach">2</property>
+                            <property name="y_options">GTK_FILL</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="ExternalProgramPstoeditControl">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="invisible_char">&#x25CF;</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="right_attach">2</property>
+                            <property name="top_attach">1</property>
+                            <property name="bottom_attach">2</property>
                             <property name="y_options">GTK_FILL</property>
                           </packing>
                         </child>
@@ -5504,7 +5546,7 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
             </child>
           </object>
           <packing>
-            <property name="position">1</property>
+            <property name="position">3</property>
           </packing>
         </child>
         <child internal-child="action_area">

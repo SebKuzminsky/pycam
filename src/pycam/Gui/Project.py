@@ -30,6 +30,7 @@ import pycam.Toolpath.Generator
 import pycam.Toolpath
 import pycam.Importers
 import pycam.Utils.log
+import pycam.Utils
 from pycam.Geometry.utils import sqrt
 from pycam.Gui.OpenGLTools import ModelViewWindowGL
 from pycam.Toolpath import Bounds
@@ -87,6 +88,8 @@ PREFERENCES_DEFAULTS = {
         "view_polygon": True,
         "simulation_details_level": 3,
         "drill_progress_max_fps": 2,
+        "external_program_inkscape": "",
+        "external_program_pstoedit": "",
 }
 """ the listed items will be loaded/saved via the preferences file in the
 user's home directory on startup/shutdown"""
@@ -266,6 +269,8 @@ class ProjectGui:
         # Calculate the "minx, ..." settings based on a (potentially) selected
         # bounds setting.
         def get_absolute_limit(key):
+            if self.model is None:
+                return None
             bounds = self.settings.get("current_bounds")
             if bounds is None:
                 return getattr(self.model, key)
@@ -581,6 +586,21 @@ class ProjectGui:
             obj = self.gui.get_object(objname)
             self._task_property_signals.append((obj,
                     obj.connect("changed", self._handle_task_setting_change)))
+        # configure locations of external programs
+        for auto_control_name, location_control_name, browse_button, key in (
+                ("ExternalProgramInkscapeAuto",
+                "ExternalProgramInkscapeControl",
+                "ExternalProgramInkscapeBrowse", "inkscape"),
+                ("ExternalProgramPstoeditAuto",
+                "ExternalProgramPstoeditControl",
+                "ExternalProgramPstoeditBrowse", "pstoedit")):
+            self.gui.get_object(auto_control_name).connect("clicked",
+                    self._locate_external_program, key)
+            location_control = self.gui.get_object(location_control_name)
+            self.settings.add_item("external_program_%s" % key,
+                    location_control.get_text, location_control.set_text)
+            self.gui.get_object(browse_button).connect("clicked",
+                    self._browse_external_program_location, key)
         # menu bar
         uimanager = gtk.UIManager()
         self._accel_group = uimanager.get_accel_group()
@@ -821,6 +841,23 @@ class ProjectGui:
         else:
             self.grid_adjustment_selector.set_active(-1)
         
+    def _browse_external_program_location(self, widget=None, key=None):
+        location = self.get_filename_via_dialog(title="Select the executable " \
+                + "for '%s'" % key, mode_load=True)
+        if not location is None:
+            self.settings.set("external_program_%s" % key, location)
+
+
+    def _locate_external_program(self, widget=None, key=None):
+        # the button was just activated
+        location = pycam.Utils.get_external_program_location(key)
+        if location is None:
+            log.error("Failed to locate the external program '%s'. " % key \
+                    + "Please install the program and try again.\nOr maybe" \
+                    + "you need to specify the location manually.")
+        else:
+            # store the new setting
+            self.settings.set("external_program_%s" % key, location)
 
     @gui_activity_guard
     def adjust_bounds(self, widget, axis, change):
@@ -1169,6 +1206,11 @@ class ProjectGui:
 
     def add_log_message(self, title, message, record=None):
         timestamp = datetime.datetime.fromtimestamp(record.created).strftime("%H:%M")
+        try:
+            message = message.encode("utf-8")
+        except UnicodeDecodeError:
+            # remove all non-ascii characters
+            message = "".join([char for char in message if ord(char) < 128])
         self.log_model.append((timestamp, title, message))
 
     @gui_activity_guard
@@ -1612,9 +1654,10 @@ class ProjectGui:
                 continue
             value_raw = config.get("DEFAULT", item)
             old_value = self.settings.get(item)
-            if isinstance(old_value, basestring):
+            value_type = type(PREFERENCES_DEFAULTS[item])
+            if isinstance(value_type(), basestring):
                 # keep strings as they are
-                value = value_raw
+                value = str(value_raw)
             else:
                 # parse tuples, integers, bools, ...
                 value = eval(value_raw)
@@ -1777,10 +1820,16 @@ class ProjectGui:
             filename = self.get_filename_via_dialog("Loading model ...",
                     mode_load=True, type_filter=FILTER_MODEL)
         if filename:
+            # import all external program locations into a dict
+            program_locations = {}
+            prefix = "external_program_"
+            for key in self.settings.get_keys():
+                if key.startswith(prefix) and self.settings.get(key):
+                    program_locations[key[len(prefix):]] = self.settings.get(key)
             file_type, importer = pycam.Importers.detect_file_type(filename)
             if file_type and callable(importer):
-                # TODO: get the "program_locations"
-                self.load_model(importer(filename, program_locations=None))
+                self.load_model(importer(filename,
+                        program_locations=program_locations))
                 self.set_model_filename(filename)
             else:
                 log.error("Failed to detect filetype!")

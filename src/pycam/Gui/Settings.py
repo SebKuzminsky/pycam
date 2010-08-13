@@ -113,6 +113,9 @@ class Settings:
             result[key] = self.get(key)
         return str(result)
 
+    def get_keys(self):
+        return self.items.keys()
+
 
 class ProcessSettings:
 
