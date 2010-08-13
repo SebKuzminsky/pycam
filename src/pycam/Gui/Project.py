@@ -601,6 +601,8 @@ class ProjectGui:
                     location_control.get_text, location_control.set_text)
             self.gui.get_object(browse_button).connect("clicked",
                     self._browse_external_program_location, key)
+        # status bar
+        self.status_bar = self.gui.get_object("StatusBar")
         # menu bar
         uimanager = gtk.UIManager()
         self._accel_group = uimanager.get_accel_group()
@@ -1212,6 +1214,8 @@ class ProjectGui:
             # remove all non-ascii characters
             message = "".join([char for char in message if ord(char) < 128])
         self.log_model.append((timestamp, title, message))
+        # update the status bar
+        self.status_bar.push(0, message)
 
     @gui_activity_guard
     def clear_log_window(self, widget=None):
