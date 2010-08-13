@@ -32,6 +32,9 @@ _use_precision = False
 
 def sqrt(value):
     # support precision libraries like "decimal" (built-in)
+    if -epsilon < value <= 0:
+        # compensate slightly negative values (due to float inaccuracies)
+        return 0
     if hasattr(value, "sqrt"):
         return value.sqrt()
     else:
