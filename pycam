@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 $Id$
@@ -40,8 +40,9 @@ import pycam.Utils.log
 log = pycam.Utils.log.get_logger()
 
 EXAMPLE_MODEL_LOCATIONS = (
-        os.path.join(os.path.dirname(__file__), "Samples", "STL"),
-        "/usr/share/pycam/Samples/STL")
+        os.path.join(os.path.dirname(__file__), "samples"),
+        os.path.join(sys.prefix, "share", "pycam", "samples"),
+        os.path.join("usr", "share", "pycam", "samples"))
 DEFAULT_MODEL_FILE = "pycam.stl"
 
 

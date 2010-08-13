@@ -24,7 +24,8 @@ __all__ = [ "iterators", "polynomials", "ProgressCounter"]
 
 import os
 # this is imported below on demand
-#import win32.com
+#import win32com
+#import win32api
 
 
 def get_external_program_location(key):
@@ -32,6 +33,16 @@ def get_external_program_location(key):
     potential_names = ["%s%s" % (key, ext) for ext in extensions]
     windows_program_directories = {'inkscape': ['Inkscape'],
             'pstoedit': ['pstoedit']}
+    # check the windows path via win32api
+    try:
+        import win32api
+        handle, location = win32api.FindExecutable(key)
+        if location:
+            return location
+    except:
+        # Wildcard exeception to match "ImportError" and "pywintypes.error"
+        # (for "not found").
+        pass
     # go through the PATH environment variable
     if "PATH" in os.environ:
         path_env = os.environ["PATH"]

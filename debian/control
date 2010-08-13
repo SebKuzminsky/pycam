@@ -7,11 +7,11 @@ Build-Depends-Indep: python-support
 Standards-Version: 3.8.4
 Homepage: http://sourceforge.net/projects/pycam/
 
-Package: python-pycam
+Package: pycam
 Architecture: all
 Depends: python-gtk2, python-opengl (>>3.0.0~b6-3), python-gtkglext1,
  ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
-Recommends: python-pyode (>>1.2.0-3)
+Recommends: python-pyode (>>1.2.0-3), python-psyco
 Description: CAM program & library written in Python
  This is a set of Python modules for toolpath generation for 3-Axis
  CNC machining, and a GUI program that uses them.

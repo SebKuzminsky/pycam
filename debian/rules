@@ -19,6 +19,6 @@ include /usr/share/cdbs/1/class/python-distutils.mk
 include /usr/share/cdbs/1/rules/simple-patchsys.mk
 
 # install the .desktop file
-install/python-pycam::
-	cp -v desktop/pycam.desktop `pwd`/debian/python-pycam/usr/share/applications/
+install/pycam::
+	cp -v desktop/pycam.desktop `pwd`/debian/pycam/usr/share/applications/
 

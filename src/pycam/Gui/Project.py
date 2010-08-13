@@ -51,7 +51,7 @@ import sys
 DATA_DIR_ENVIRON_KEY = "PYCAM_DATA_DIR"
 DATA_BASE_DIRS = [os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
             os.pardir, "share", "gtk-interface"),
-        os.path.join(sys.prefix, "share", "python-pycam", "ui")]
+        os.path.join(sys.prefix, "share", "pycam", "ui")]
 if DATA_DIR_ENVIRON_KEY in os.environ:
     DATA_BASE_DIRS.insert(0, os.environ[DATA_DIR_ENVIRON_KEY])
 
@@ -858,7 +858,7 @@ class ProjectGui:
     def _locate_external_program(self, widget=None, key=None):
         # the button was just activated
         location = pycam.Utils.get_external_program_location(key)
-        if location is None:
+        if not location:
             log.error("Failed to locate the external program '%s'. " % key \
                     + "Please install the program and try again.\nOr maybe" \
                     + "you need to specify the location manually.")

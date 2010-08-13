@@ -46,7 +46,7 @@ START_MENU_SUBDIR = os.path.join(START_MENU_BASEDIR, "PyCAM")
 PYTHON_EXE = os.path.join(distutils.sysconfig.EXEC_PREFIX, "pythonw.exe")
 START_SCRIPT = os.path.join(distutils.sysconfig.EXEC_PREFIX, "Scripts", "pycam")
 
-PYTHON_DATA_DIR = os.path.join(distutils.sysconfig.PREFIX, "share", "python-pycam")
+PYTHON_DATA_DIR = os.path.join(distutils.sysconfig.PREFIX, "share", "pycam")
 
 # add some more doc files
 DOC_FILES = [

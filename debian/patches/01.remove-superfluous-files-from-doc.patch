@@ -5,7 +5,7 @@ index 3046304..9f66f6d 100755
 @@ -45,13 +45,9 @@ setup(
      ],
      scripts = ['pycam', 'pycam_win32_postinstall.py'],
-     data_files=[("share/doc/python-pycam",[
+     data_files=[("share/doc/pycam",[
 -            "COPYING.TXT",
              "HOWTO.TXT",
 -            "INSTALL.TXT",
@@ -14,6 +14,6 @@ index 3046304..9f66f6d 100755
 -            "Changelog",
 -            "release_info.txt"]),
 +            "Changelog"]),
-         ("share/python-pycam/ui", [
+         ("share/pycam/ui", [
              os.path.join("share", "gtk-interface", "pycam-project.ui"),
              os.path.join("share", "gtk-interface", "menubar.xml"),
