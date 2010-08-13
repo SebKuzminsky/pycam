@@ -5,9 +5,10 @@ include COPYING.TXT
 include README.TXT
 include Changelog
 include release_info.txt
-include pycamGUI
+include pycam
 recursive-include desktop *
 recursive-include man *
 recursive-include src *
+recursive-include share *
 recursive-include Samples *
 recursive-include Tests *

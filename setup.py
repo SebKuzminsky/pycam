@@ -86,9 +86,9 @@ Basically you will need Python, GTK and OpenGL.
             "Changelog",
             "release_info.txt"]),
         ("share/python-pycam/ui", [
-            os.path.join("src", "pycam", "Gui", "gtk-interface", "pycam-project.ui"),
-            os.path.join("src", "pycam", "Gui", "gtk-interface", "menubar.xml"),
-            os.path.join("src", "pycam", "Gui", "gtk-interface", "logo_gui.png"),
+            os.path.join("share", "gtk-interface", "pycam-project.ui"),
+            os.path.join("share", "gtk-interface", "menubar.xml"),
+            os.path.join("share", "gtk-interface", "logo_gui.png"),
             ]),
         ("share/python-pycam/samples", 
             glob.glob(os.path.join("Samples","STL","*.stl"))),

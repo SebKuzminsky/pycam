@@ -15,5 +15,5 @@ index 3046304..9f66f6d 100755
 -            "release_info.txt"]),
 +            "Changelog"]),
          ("share/python-pycam/ui", [
-             os.path.join("pycam", "Gui", "gtk-interface", "pycam-project.ui"),
-             os.path.join("pycam", "Gui", "gtk-interface", "menubar.xml"),
+             os.path.join("share", "gtk-interface", "pycam-project.ui"),
+             os.path.join("share", "gtk-interface", "menubar.xml"),

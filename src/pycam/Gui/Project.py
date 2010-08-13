@@ -49,7 +49,9 @@ import os
 import sys
 
 DATA_DIR_ENVIRON_KEY = "PYCAM_DATA_DIR"
-DATA_BASE_DIRS = [os.path.join(os.path.dirname(__file__), "gtk-interface"), os.path.join(sys.prefix, "share", "python-pycam", "ui")]
+DATA_BASE_DIRS = [os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
+            os.pardir, "share", "gtk-interface"),
+        os.path.join(sys.prefix, "share", "python-pycam", "ui")]
 if DATA_DIR_ENVIRON_KEY in os.environ:
     DATA_BASE_DIRS.insert(0, os.environ[DATA_DIR_ENVIRON_KEY])
 
