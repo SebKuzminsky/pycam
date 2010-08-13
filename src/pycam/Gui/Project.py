@@ -44,6 +44,7 @@ import ConfigParser
 import time
 import logging
 import datetime
+import traceback
 import os
 import sys
 
@@ -2410,8 +2411,14 @@ class ProjectGui:
 
         # run the toolpath generation
         self.update_progress_bar("Starting the toolpath generation")
-        toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(
-                self.model, toolpath_settings, callback=draw_callback)
+        try:
+            toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(
+                    self.model, toolpath_settings, callback=draw_callback)
+        except:
+            log.error("An unexpected exception occoured: please send the " \
+                    + "text below to the developers of PyCAM. Thanks a lot!\n" \
+                    + traceback.format_exc())
+            return False
 
         log.info("Toolpath generation time: %f" % (time.time() - start_time))
 
