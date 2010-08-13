@@ -76,7 +76,7 @@ Basically you will need Python, GTK and OpenGL.
         "pycam.Toolpath",
         "pycam.Physics",
     ],
-    scripts = ['pycamGUI', 'pycam_win32_postinstall.py'],
+    scripts = ['pycam', 'pycam_win32_postinstall.py'],
     data_files=[("share/doc/python-pycam",[
             "COPYING.TXT",
             "HOWTO.TXT",

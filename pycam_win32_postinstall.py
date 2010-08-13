@@ -44,8 +44,7 @@ START_MENU_SUBDIR = os.path.join(START_MENU_BASEDIR, "PyCAM")
 
 # create a start menu item for pycam
 PYTHON_EXE = os.path.join(distutils.sysconfig.EXEC_PREFIX, "pythonw.exe")
-START_SCRIPT = os.path.join(distutils.sysconfig.EXEC_PREFIX, "Scripts", "pycamGUI")
-RUN_TARGET = '%s "%s"' % (PYTHON_EXE, START_SCRIPT)
+START_SCRIPT = os.path.join(distutils.sysconfig.EXEC_PREFIX, "Scripts", "pycam")
 
 PYTHON_DATA_DIR = os.path.join(distutils.sysconfig.PREFIX, "share", "python-pycam")
 

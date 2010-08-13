@@ -1,6 +1,6 @@
 1) update the version and the changelog
  - in "Changelog" (version, release date, changes)
- - in "pycam/__init__.py" (version)
+ - in "src/pycam/__init__.py" (version)
  - commit the changes
 
 2) create the archives

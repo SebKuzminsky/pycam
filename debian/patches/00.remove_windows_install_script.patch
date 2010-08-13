@@ -2,11 +2,11 @@ diff -Nur -x '*.orig' -x '*~' pycam-0.2.2//setup.py pycam-0.2.2.new//setup.py
 --- pycam-0.2.2//setup.py	2010-03-20 12:57:16.000000000 +0100
 +++ pycam-0.2.2.new//setup.py	2010-03-20 13:07:53.026518970 +0100
 @@ -43,7 +43,7 @@
-         "pycam.PathGenerators", 
-         "pycam.Simulation"
+         "pycam.Toolpath",
+         "pycam.Physics",
      ],
--    scripts = ['pycamGUI', 'pycam_win32_postinstall.py'],
-+    scripts = ['pycamGUI'],
+-    scripts = ['pycam', 'pycam_win32_postinstall.py'],
++    scripts = ['pycam'],
      data_files=[("share/doc/python-pycam",[
              "COPYING.TXT",
              "HOWTO.TXT",

@@ -35,7 +35,7 @@ Features:
 
 RUNNING:
 
-   extract the archive and run "python pycamGUI"
+   extract the archive and run "python pycam"
 
 
 
