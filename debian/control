@@ -3,7 +3,7 @@ Section: python
 Priority: extra
 Maintainer: Sebastian Kuzminsky <seb@highlab.com>
 Build-Depends: python, debhelper (>= 7), cdbs, patchutils
-Build-Depends-Indep: python-support
+Build-Depends-Indep: python-support, help2man
 Standards-Version: 3.8.4
 Homepage: http://sourceforge.net/projects/pycam/
 

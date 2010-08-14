@@ -1,4 +1,5 @@
-# BEWARE: this makefile is solely used for preparing a release - it is not useful for compiling/installing the program
+# export SVN_REPO_BASE=. if you want to use the local version instead of trunk
+# from the subversion repository.
 
 # use something like "VERSION=0.2 make" to override the VERSION on the command line
 VERSION ?= $(shell sed -n "s/^.*[\t ]*VERSION[\t ]*=[\t ]*[\"']\([^\"']*\)[\"'].*/\1/gp" src/pycam/__init__.py)
@@ -21,7 +22,7 @@ DISTUTILS_PLAT_NAME = $(shell $(PYTHON_EXE) setup.py --help build_ext | grep -q 
 # turn the destination directory into an absolute path
 ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
 
-.PHONY: zip tgz win32 clean dist svn_export upload create_archive_dir
+.PHONY: zip tgz win32 clean dist svn_export upload create_archive_dir man
 
 dist: zip tgz win32
 	@# remove the tmp directory when everything is done
@@ -29,6 +30,9 @@ dist: zip tgz win32
 
 clean:
 	@rm -rf "$(EXPORT_DIR)"
+
+man: svn_export
+	@make -C "$(EXPORT_DIR)/man"
 
 svn_export: clean
 	@if svn info &>/dev/null;\
@@ -39,13 +43,13 @@ svn_export: clean
 create_archive_dir:
 	mkdir -p "$(ARCHIVE_DIR)"
 
-zip: create_archive_dir svn_export
+zip: create_archive_dir man svn_export
 	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py sdist --format zip --dist-dir "$(ARCHIVE_DIR)"
 
-tgz: create_archive_dir svn_export
+tgz: create_archive_dir man svn_export
 	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py sdist --format gztar --dist-dir "$(ARCHIVE_DIR)"
 
-win32: create_archive_dir svn_export
+win32: create_archive_dir man svn_export
 	# this is a binary release
 	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py bdist --format wininst --dist-dir "$(ARCHIVE_DIR)" $(DISTUTILS_PLAT_NAME)
 
