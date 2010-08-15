@@ -1382,7 +1382,7 @@ class ProjectGui:
             # last remaining task item (see above).
             if item in datalist:
                 datalist.remove(item)
-            # don't set a new index, if the list emptied
+            # don't set a new index, if the list is empty now
             if len(datalist) > 0:
                 if index < len(datalist):
                     future_selection_index = index
@@ -1391,6 +1391,19 @@ class ProjectGui:
                     future_selection_index = len(datalist) - 1
             # update the tasklist table (maybe we removed some items)
             self.update_tasklist_table()
+            # also update the specific description of the tool/process/bounds
+            if datalist is self.tool_list:
+                self.settings.set("current_tool",
+                        self.tool_list[future_selection_index])
+                self.switch_tool_table_selection()
+            elif datalist is self.process_list:
+                self.settings.set("current_process",
+                        self.process_list[future_selection_index])
+                self.switch_process_table_selection()
+            elif datalist is self.bounds_list:
+                self.settings.set("current_bounds",
+                        self.bounds_list[future_selection_index])
+                self.switch_bounds_table_selection()
         else:
             pass
         # any new item can influence the "New task" button
