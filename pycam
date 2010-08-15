@@ -316,6 +316,8 @@ if __name__ == "__main__":
 
     if opts.quiet:
         log.setLevel(logging.WARNING)
+        # disable the progress bar
+        opts.progress = "none"
 
     # show version and exit
     if opts.show_version:
@@ -342,6 +344,15 @@ if __name__ == "__main__":
                     + "suffer slightly)")
     else:
         log.info("Psyco was disabled via the commandline")
+
+    # initialize the progress bar
+    progress_styles = {"none": pycam.Gui.Console.ConsoleProgressBar.STYLE_NONE,
+            "text": pycam.Gui.Console.ConsoleProgressBar.STYLE_TEXT,
+            "bar": pycam.Gui.Console.ConsoleProgressBar.STYLE_BAR,
+            "dot": pycam.Gui.Console.ConsoleProgressBar.STYLE_DOT,
+    }
+    progress_bar = pycam.Gui.Console.ConsoleProgressBar(sys.stdout,
+            progress_styles[opts.progress])
 
     if not opts.export_gcode and not opts.export_task_config:
         show_gui(inputfile, opts.config_file)
@@ -453,7 +464,6 @@ if __name__ == "__main__":
         if opts.export_gcode:
             # generate the toolpath
             start_time = time.time()
-            progress_bar = pycam.Gui.Console.ConsoleProgressBar(sys.stdout)
             toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(
                     model, tps, callback=progress_bar.update)
             progress_bar.finish()

@@ -26,13 +26,52 @@ import os
 
 class ConsoleProgressBar(object):
 
-    def __init__(self, output):
+    STYLE_NONE = 0
+    STYLE_TEXT = 1
+    STYLE_BAR = 2
+    STYLE_DOT = 3
+    PROGRESS_BAR_LENGTH = 70
+
+    def __init__(self, output, style=None):
+        if style is None:
+            style = ConsoleProgressBar.STYLE_TEXT
         self.output = output
+        self.style = style
         self.last_length = 0
         self.text = ""
         self.percent = 0
-        
+
+    def _output_current_state(self, progress_happened=True):
+        if self.style == ConsoleProgressBar.STYLE_TEXT:
+            text = "%d%% %s" % (self.percent, self.text)
+            self.last_length = len(text)
+        elif self.style == ConsoleProgressBar.STYLE_BAR:
+            bar_length = ConsoleProgressBar.PROGRESS_BAR_LENGTH
+            hashes = int(bar_length * self.percent / 100.0)
+            empty = bar_length - hashes
+            text = "[%s%s]" % ("#" * hashes, "." * empty)
+            # include a text like " 10% " in the middle
+            percent_text = " %d%% " % self.percent
+            start_text = text[:(len(text) - len(percent_text)) / 2]
+            end_text = text[-(len(text) - len(start_text) - len(percent_text)):]
+            text = start_text + percent_text + end_text
+            self.last_length = len(text)
+        elif self.style == ConsoleProgressBar.STYLE_DOT:
+            if progress_happened:
+                text = "."
+            else:
+                text = ""
+            # don't remove any previous characters
+            self.last_length = 0
+        else:
+            raise ValueError("ConsoleProgressBar: invalid style (%d)" \
+                    % self.style)
+        self.output.write(text)
+        self.output.flush()
+
     def update(self, text=None, percent=None, **kwargs):
+        if self.style == ConsoleProgressBar.STYLE_NONE:
+            return
         if not text is None:
             self.text = text
         if not percent is None:
@@ -40,11 +79,10 @@ class ConsoleProgressBar(object):
         if self.last_length > 0:
             # delete the previous line
             self.output.write("\x08" * self.last_length)
-        result = "%d%% %s" % (self.percent, self.text)
-        self.last_length = len(result)
-        self.output.write(result)
-        self.output.flush()
+        self._output_current_state(progress_happened = (not percent is None))
 
     def finish(self):
+        if self.style == ConsoleProgressBar.STYLE_NONE:
+            return
         self.output.write(os.linesep)
 
