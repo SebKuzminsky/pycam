@@ -29,7 +29,14 @@ class gcode:
         self.lastz = self.safetyheight
 
     def begin(self):
-        # no x/y positioning - just go up to safety height
+        """
+        G40: disable tool radius compensation
+        G49: disable tool length compensation
+        G54: select coordinate system 1
+        G80: cancel model motion
+        G90: use absolute coordinates instead of axis increments
+        G00 Z?: no x/y positioning - just go up to safety height
+        """
         return "G40 G49 G54 G80 G90\n" \
                 + "G04 P3 T%d M6\n" % self.tool_id \
                 + "G00 Z%.4f\n" % self.safetyheight

@@ -55,6 +55,8 @@ class SimpleGCodeExporter:
         self.destination.write(self.gcode.begin() + "\n")
         self.destination.write("F" + str(feedrate) + "\n")
         self.destination.write("S" + str(speed) + "\n")
+        # enable "exact path" mode (prefer accuracy over speed)
+        self.destination.write(self.gcode.exactpath())
         self.destination.write(self.gcode.safety() + "\n")
 
     def close(self):

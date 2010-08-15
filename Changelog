@@ -20,6 +20,7 @@ Version 0.3.0 - UNRELEASED
  * fixed performance issue when using a support grid
  * fixed empty toolpath after transforming the model
  * fixed various minor bugs of the toolpath generator
+ * fixed rounded corners (see GCode G61)
 
 Version 0.2.5 - 2010-06-10
  * added support bridges for holding the object during cutting
