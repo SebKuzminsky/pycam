@@ -1,3 +1,11 @@
+[EXAMPLES]
+.nf
+.B pycam \-\-export\-gcode=output.ngc \-\-bounds\-type=relative\-margin \-\-bounds-lower=0.1,0.05,-0.1 foo.stl
+
+.fi
+Use the default settings to process the model \fBfoo.stl\fR with an adjusted
+lower margin (minx, miny, minz) of 10% (for x), 5% (for y) and -10% (for z).
+
 [ENVIRONMENT]
 .IP PYCAM_DATA_DIR
 Override the default data directory of PyCAM. This allows

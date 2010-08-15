@@ -633,6 +633,10 @@ class ToolpathSettings:
     def set_support_grid(self, distance_x, distance_y, thickness, height,
             offset_x=0.0, offset_y=0.0, adjustments_x=None,
             adjustments_y=None):
+        if adjustments_x is None:
+            adjustments_x = []
+        if adjustments_y is None:
+            adjustments_y = []
         self.support_grid["distance_x"] = distance_x
         self.support_grid["distance_y"] = distance_y
         self.support_grid["offset_x"] = offset_x

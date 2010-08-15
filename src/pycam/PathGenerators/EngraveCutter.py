@@ -118,7 +118,7 @@ class EngraveCutter:
 
         if draw_callback:
             draw_callback(text="Engrave: processing layer %d/%d" \
-                    % (current_layer, num_of_layers))
+                    % (current_layer + 1, num_of_layers))
 
         # process the final layer with a drop cutter
         for line_group in self.contour_model.get_polygons():

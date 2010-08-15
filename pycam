@@ -29,6 +29,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 from pycam.Physics.ode_physics import override_ode_availability
 import pycam.Gui.common as GuiCommon
 import pycam.Gui.Settings
+import pycam.Gui.Console
 import pycam.Importers.TestModel
 import pycam.Importers
 import pycam.Exporters.SimpleGCodeExporter
@@ -47,7 +48,7 @@ EXAMPLE_MODEL_LOCATIONS = (
         os.path.join("usr", "share", "pycam", "samples"))
 DEFAULT_MODEL_FILE = "pycam.stl"
 EXIT_CODES = {"ok": 0, "requirements": 1, "load_model_failed": 2,
-        "write_output_failed": 3}
+        "write_output_failed": 3, "parsing_failed": 4}
 
 
 def show_gui(inputfile=None, task_settings_file=None):
@@ -146,8 +147,8 @@ if __name__ == "__main__":
             + "is disabled.")
     group_tool = parser.add_option_group("Tool definition",
             "Specify the tool paramters. The default tool is spherical and " \
-            + "has a diameter of 1mm. The default speeds are 1000 (feedrate) " \
-            + "and 250 (drill spindle rotations per minute)")
+            + "has a diameter of 1 unit. The default speeds are 1000 " \
+            + "units/minute (feedrate) and 250 (spindle rotations per minute)")
     group_process = parser.add_option_group("Process definition",
             "Specify the process parameters: toolpath strategy, layer height," \
             + " and others. A typical roughing operation is configured by " \
@@ -193,6 +194,11 @@ if __name__ == "__main__":
     group_general.add_option("-q", "--quiet", dest="quiet",
             default=False, action="store_true", help="show only warnings and " \
             + "errors.")
+    group_general.add_option("", "--progress", dest="progress",
+            default="text", action="store", type="choice",
+            choices=["none", "text", "bar", "dot"],
+            help="specify the type of progress bar used in non-GUI mode. " \
+            + "The following options are available: text, none, bar, dot.")
     group_general.add_option("-v", "--version", dest="show_version",
             default=False, action="store_true", help="show the current " \
             + "version of PyCAM and exit")
@@ -254,7 +260,7 @@ if __name__ == "__main__":
             type="int", help="how much should two adjacent parallel " \
             + "toolpaths overlap each other (0..99)")
     group_process.add_option("", "--safety-height", dest="safety_height",
-            default=0.0, action="store", type="float",
+            default=25.0, action="store", type="float",
             help="height for safe re-positioning moves")
     group_process.add_option("", "--process-engrave-offset",
             dest="process_engrave_offset", default=0.0, action="store",
@@ -262,7 +268,7 @@ if __name__ == "__main__":
             + "given distance (only for 'engrave' strategy)")
     # bounds settings
     group_bounds.add_option("", "--bounds-type", dest="bounds_type",
-            default="relative-margin", action="store", type="choice",
+            default="fixed-margin", action="store", type="choice",
             choices=["relative-margin", "fixed-margin", "custom"],
             help="type of the boundary definition (relative-margin, " \
             + "fixed-margin, custom)")
@@ -278,9 +284,13 @@ if __name__ == "__main__":
     group_support_grid.add_option("", "--enable-support-grid",
             dest="support_grid_enabled", default=False, action="store_true",
             help="enable the support grid")
-    group_support_grid.add_option("", "--support-grid-distance",
-            dest="support_grid_distance", default=10.0, action="store",
-            type="float", help="horizontal and vertical distance between two " \
+    group_support_grid.add_option("", "--support-grid-distance-x",
+            dest="support_grid_distance_x", default=10.0, action="store",
+            type="float", help="distance along the x-axis between two " \
+                    + "adjacent parallel lines of the support grid pattern")
+    group_support_grid.add_option("", "--support-grid-distance-y",
+            dest="support_grid_distance_y", default=10.0, action="store",
+            type="float", help="distance along the y-axis between two " \
                     + "adjacent parallel lines of the support grid pattern")
     group_support_grid.add_option("", "--support-grid-height",
             dest="support_grid_height", default=2.0, action="store",
@@ -346,8 +356,9 @@ if __name__ == "__main__":
                 0.5 * opts.tool_torus_diameter, opts.tool_spindle_speed,
                 opts.tool_feedrate)
         if opts.support_grid_enabled:
-            tps.set_support_grid(opts.support_grid_distance,
-                    opts.support_grid_thickness, opts.support_grid_height)
+            tps.set_support_grid(opts.support_grid_distance_x,
+                    opts.support_grid_distance_y, opts.support_grid_thickness,
+                    opts.support_grid_height)
         if opts.collision_engine == "ode":
             tps.set_calculation_backend("ODE")
         tps.set_unit_size(opts.unit_size)
@@ -386,12 +397,12 @@ if __name__ == "__main__":
         # set the bounds type and let the default bounding box match the model
         if opts.bounds_type == "relative-margin":
             bounds.set_type(Bounds.TYPE_RELATIVE_MARGIN)
-            bounds_default_low = (10, 10, 0)
-            bounds_default_high = (10, 10, 0)
+            bounds_default_low = (0, 0, 0)
+            bounds_default_high = (0, 0, 0)
         elif opts.bounds_type == "fixed-margin":
             bounds.set_type(Bounds.TYPE_FIXED_MARGIN)
-            bounds_default_low = (10, 10, 0)
-            bounds_default_high = (10, 10, 0)
+            bounds_default_low = (0, 0, 0)
+            bounds_default_high = (0, 0, 0)
         else:
             # custom boundary setting
             bounds.set_type(Bounds.TYPE_CUSTOM)
@@ -407,23 +418,27 @@ if __name__ == "__main__":
                 try:
                     result.append(float(num))
                 except ValueError:
-                    return None
+                    if num == "":
+                        result.append(0.0)
+                    else:
+                        return None
             return result
         bounds_lower_nums = parse_triple_float(opts.bounds_lower)
+        if opts.bounds_lower and not bounds_lower_nums:
+            log.error("Failed to parse the lower boundary limit: %s" \
+                    % opts.bounds_lower)
+            sys.exit(EXIT_CODES["parsing_failed"])
         bounds_upper_nums = parse_triple_float(opts.bounds_upper)
-        if bounds_lower_nums is None \
-                and bounds_upper_nums is None:
-            # no bound was given 
-            bounds.set_bounds(bounds_default_low, bounds_default_high)
-        elif bounds_lower_nums is None:
-            # only the upper bound was specified
-            bounds.set_bounds(bounds_default_low, bounds_upper_nums)
-        elif bounds_upper_nums is None:
-            # only the lower bound was specified
-            bounds.set_bounds(bounds_lower_nums, bounds_default_high)
-        else:
-            # both lower and upper bounds were specified
-            bounds.set_bounds(bounds_lower_nums, bounds_upper_nums)
+        if opts.bounds_upper and not bounds_upper_nums:
+            log.error("Failed to parse the upper boundary limit: %s" \
+                    % opts.bounds_upper)
+            sys.exit(EXIT_CODES["parsing_failed"])
+        if bounds_lower_nums is None:
+            bounds_lower_nums = bounds_default_low
+        if bounds_upper_nums is None:
+            bounds_upper_nums = bounds_default_high
+        # both lower and upper bounds were specified
+        bounds.set_bounds(bounds_lower_nums, bounds_upper_nums)
         # adjust the bounding box according to the "boundary_mode"
         if opts.boundary_mode == "along":
             offset = (0, 0, 0)
@@ -438,7 +453,10 @@ if __name__ == "__main__":
         if opts.export_gcode:
             # generate the toolpath
             start_time = time.time()
-            toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(model, tps)
+            progress_bar = pycam.Gui.Console.ConsoleProgressBar(sys.stdout)
+            toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(
+                    model, tps, callback=progress_bar.update)
+            progress_bar.finish()
             log.info("Toolpath generation time: %f" \
                     % (time.time() - start_time))
             # write result

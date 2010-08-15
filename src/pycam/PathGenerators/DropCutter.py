@@ -112,7 +112,7 @@ class DropCutter:
             last_position = None
 
             if draw_callback and draw_callback(text="DropCutter: processing " \
-                        + "line %d/%d" % (current_line, num_of_lines)):
+                        + "line %d/%d" % (current_line + 1, num_of_lines)):
                 # cancel requested
                 quit_requested = True
                 break
