@@ -23,6 +23,8 @@ Features:
 
     * Importers:
       ** STL
+      ** DXF (only lines)
+      ** SVG (paths for engravings)
 
     * Exporters:
       ** STL
@@ -74,9 +76,6 @@ FEATURE REQUESTS:
 
 
 KNOWN BUGS:
-
-    * The combination of PushCutter with PolygonCutter and ContourCutter 
-      sometimes make tiny cuts accross the model in between lines
 
     * The ODE collision detection sometimes fails at the corners of a
       model.
