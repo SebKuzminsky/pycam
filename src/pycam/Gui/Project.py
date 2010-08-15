@@ -1915,7 +1915,6 @@ class ProjectGui:
         if not model is None:
             self.model = model
             # do some initialization
-            self.append_to_queue(self.update_all_controls)
             self.append_to_queue(self.toggle_3d_view, value=True)
             self.append_to_queue(self.update_view)
 
