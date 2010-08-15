@@ -113,7 +113,7 @@ def generate_toolpath(model, tool_settings=None,
     @type calculation_backend: str | None
     @value calculation_backend: any member of the CALCULATION_BACKENDS set
         The default is the triangular collision detection.
-    @rtype: pycam.Toolpath.ToolPath | str
+    @rtype: pycam.Toolpath.Toolpath | str
     @return: the resulting toolpath object or an error string in case of invalid
         arguments
     """

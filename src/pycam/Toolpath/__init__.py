@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = ["simplify_toolpath", "ToolPathList", "ToolPath", "Generator"]
+__all__ = ["simplify_toolpath", "ToolpathList", "Toolpath", "Generator"]
 
 from pycam.Geometry.Point import Point
 from pycam.Geometry.utils import number
@@ -58,13 +58,13 @@ def simplify_toolpath(path):
             index += 1
 
 
-class ToolPathList(list):
+class ToolpathList(list):
 
     def add_toolpath(self, toolpath, name, toolpath_settings):
-        self.append(ToolPath(toolpath, name, toolpath_settings))
+        self.append(Toolpath(toolpath, name, toolpath_settings))
 
 
-class ToolPath:
+class Toolpath(object):
 
     def __init__(self, toolpath, name, toolpath_settings):
         self.toolpath = toolpath

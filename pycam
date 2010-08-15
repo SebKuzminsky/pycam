@@ -29,14 +29,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 from pycam.Physics.ode_physics import override_ode_availability
 import pycam.Gui.common as GuiCommon
 import pycam.Gui.Settings
-import pycam.Importers.STLImporter
 import pycam.Importers.TestModel
+import pycam.Importers
 import pycam.Exporters.SimpleGCodeExporter
 import pycam.Toolpath.Generator
-import pycam.Toolpath
+from pycam.Toolpath import Bounds, Toolpath
 from pycam import VERSION
 import pycam.Utils.log
 import logging
+import time
 
 log = pycam.Utils.log.get_logger()
 
@@ -45,6 +46,8 @@ EXAMPLE_MODEL_LOCATIONS = (
         os.path.join(sys.prefix, "share", "pycam", "samples"),
         os.path.join("usr", "share", "pycam", "samples"))
 DEFAULT_MODEL_FILE = "pycam.stl"
+EXIT_CODES = {"ok": 0, "requirements": 1, "load_model_failed": 2,
+        "write_output_failed": 3}
 
 
 def show_gui(inputfile=None, task_settings_file=None):
@@ -62,7 +65,7 @@ def show_gui(inputfile=None, task_settings_file=None):
         full_report.append("")
         full_report.append("Detailed list of requirements: %s" % GuiCommon.REQUIREMENTS_LINK)
         log.critical(os.linesep.join(full_report))
-        sys.exit(1)
+        sys.exit(EXIT_CODES["requirements"])
 
     gui = gui_class()
 
@@ -98,23 +101,48 @@ def get_default_model():
                         ", ".join(EXAMPLE_MODEL_LOCATIONS)))
         return pycam.Importers.TestModel.get_test_model()
 
+def load_model_file(filename, program_locations):
+    if not os.path.isfile(filename):
+        log.warn("The input file ('%') was not found!" % filename)
+        return None
+    filetype, importer = pycam.Importers.detect_file_type(filename)
+    model = importer(filename, program_locations=program_locations)
+    if model is None:
+        log.warn("Failed to load the model file (%s)." % filename)
+        return None
+    else:
+        return model
+
+def get_output_handler(destination):
+    if destination == "-":
+        handler = sys.stdout
+        closer = lambda: None
+    else:
+        try:
+            handler = open(destination, "w")
+        except IOError, err_msg:
+            log.error("Failed to open output file (%s) for writing: %s" \
+                    % (destination, err_msg))
+            return None, None
+        closer = handler.close
+    return (handler, closer)
+
 
 # check if we were started as a separate program
 if __name__ == "__main__":
     parser = OptionParser(prog="PyCAM",
-            usage="usage: %prog [options] [inputfile]\n\n" \
-                    + "Use any of the '--export-???' parameters to disable " \
-                    + "the graphical user interface (GUI).\n" \
-                    + "When starting the GUI (the default) all arguments " \
-                    + "except 'inputfile' are ignored.\n" \
-                    + "'inputfile' may be an STL or DXF file.",
+            usage="usage: pycam [options] [inputfile]\n\n" \
+                    + "Start the PyCAM toolpath generator. Supplying one of " \
+                    + "the '--export-?' parameters will cause PyCAM to start " \
+                    + "in batch mode. Most parameters are useful only for " \
+                    + "batch mode.",
             epilog="Take a look at the wiki for more information: " \
                     + "http://sourceforge.net/apps/mediawiki/pycam/.\n" \
                     + "Bug reports: http://sourceforge.net/tracker/?group_id=237831&atid=1104176")
     group_general = parser.add_option_group("General options")
     group_export = parser.add_option_group("Export formats",
             "Export the resulting toolpath or meta-data in various formats. " \
-            + "This option triggers the non-interactive mode. Thus the GUI " \
+            + "These options trigger the non-interactive mode. Thus the GUI " \
             + "is disabled.")
     group_tool = parser.add_option_group("Tool definition",
             "Specify the tool paramters. The default tool is spherical and " \
@@ -149,7 +177,7 @@ if __name__ == "__main__":
             + "numbers. By default 'mm' is assumed.")
     group_general.add_option("", "--collision-engine", dest="collision_engine",
             default="triangles", action="store", type="choice",
-            choices=["triangles", "ode", "help"],
+            choices=["triangles", "ode"],
             help="choose a specific collision detection engine. The default " \
                     + "is 'triangles'. Use 'help' to get a list of possible " \
                     + "engines.")
@@ -191,7 +219,7 @@ if __name__ == "__main__":
     group_tool.add_option("", "--tool-feedrate", dest="tool_feedrate",
             default=1000, action="store", type="float",
             help="allowed movement velocity of the tool (units/minute)")
-    group_tool.add_option("", "--tool-speed", dest="tool_speed",
+    group_tool.add_option("", "--tool-spindle-speed", dest="tool_spindle_speed",
             default=250, action="store", type="float",
             help="rotation speed of the tool (per minute)")
     group_tool.add_option("", "--tool-id", dest="tool_id",
@@ -292,7 +320,7 @@ if __name__ == "__main__":
             print "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>."
             print "This is free software: you are free to change and redistribute it."
             print "There is NO WARRANTY, to the extent permitted by law."
-        sys.exit(0)
+        sys.exit(EXIT_CODES["ok"])
 
     if not opts.disable_psyco:
         try:
@@ -315,7 +343,7 @@ if __name__ == "__main__":
                 "toroidal": "ToroidalCutter",
             }[opts.tool_shape]
         tps.set_tool(opts.tool_id, tool_shape, 0.5 * opts.tool_diameter,
-                0.5 * opts.tool_torus_diameter, opts.tool_speed,
+                0.5 * opts.tool_torus_diameter, opts.tool_spindle_speed,
                 opts.tool_feedrate)
         if opts.support_grid_enabled:
             tps.set_support_grid(opts.support_grid_distance,
@@ -335,21 +363,38 @@ if __name__ == "__main__":
                 opts.process_path_direction, opts.process_material_allowance,
                 opts.safety_height, opts.process_overlap_percent / 100.0,
                 opts.process_step_down, opts.process_engrave_offset)
-        model = get_model(inputfile)
+        # set locations of external programs
+        program_locations = {}
+        if opts.external_program_inkscape:
+            program_locations["inkscape"] = opts.external_program_inkscape
+        if opts.external_program_pstoedit:
+            program_locations["pstoedit"] = opts.external_program_pstoedit
+        # load the model
+        if inputfile is None:
+            model = get_default_model()
+            # the "get_default_model" function returns a string or a model
+            if isinstance(model, basestring):
+                model = load_model_file(model, program_locations)
+        else:
+            model = load_model_file(inputfile, program_locations)
+        if model is None:
+            # something went wrong - we quit
+            sys.exit(EXIT_CODES["load_model_failed"])
         # calculate the processing boundary
-        bounds = pycam.Toolpath.Bounds()
+        bounds = Bounds()
+        bounds.set_reference(model.get_bounds())
         # set the bounds type and let the default bounding box match the model
         if opts.bounds_type == "relative-margin":
-            bounds.set_type(pycam.Toolpath.Bounds.TYPE_RELATIVE_MARGIN)
+            bounds.set_type(Bounds.TYPE_RELATIVE_MARGIN)
             bounds_default_low = (10, 10, 0)
             bounds_default_high = (10, 10, 0)
         elif opts.bounds_type == "fixed-margin":
-            bounds.set_type(pycam.Toolpath.Bounds.TYPE_FIXED_MARGIN)
+            bounds.set_type(Bounds.TYPE_FIXED_MARGIN)
             bounds_default_low = (10, 10, 0)
             bounds_default_high = (10, 10, 0)
         else:
             # custom boundary setting
-            bounds.set_type(pycam.Toolpath.Bounds.TYPE_CUSTOM)
+            bounds.set_type(Bounds.TYPE_CUSTOM)
             bounds_default_low = (model.minx, model.miny, model.minz)
             bounds_default_high = (model.maxx, model.maxy, model.maxz)
         # TODO: use the optparse conversion callback instead
@@ -392,29 +437,31 @@ if __name__ == "__main__":
         tps.set_bounds(process_bounds)
         if opts.export_gcode:
             # generate the toolpath
-            tp = pycam.Toolpath.Generator.generate_toolpath_from_settings(model, tps)
+            start_time = time.time()
+            toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(model, tps)
+            log.info("Toolpath generation time: %f" \
+                    % (time.time() - start_time))
             # write result
-            if isinstance(tp, basestring):
+            if isinstance(toolpath, basestring):
                 # an error occoured
-                log.error(tp)
+                log.error(toolpath)
             else:
-                start_pos = tp.get_start_position()
-                meta_data = os.linesep.join(tp.get_meta_data())
-                if opts.export_gcode == "-":
-                    destination = sys.stdout
-                    close_destination = False
-                else:
-                    destination = open(opts.export_gcode, "w")
-                    close_destination = True
-                pycam.Exporters.SimpleGCodeExporter.ExportPathList(destination,
-                        tp.get_path(), opts.unit_size, start_pos.x,
-                        start_pos.y, start_pos.z, opts.tool_feedrate,
-                        opts.tool_speed, safety_height=opts.safety_height,
+                description = "Toolpath generated via PyCAM v%s" % VERSION
+                tp_obj = Toolpath(toolpath, description, tps)
+                handler, closer = get_output_handler(opts.export_gcode)
+                if handler is None:
+                    sys.exit(EXIT_CODES["write_output_failed"])
+                pycam.Exporters.SimpleGCodeExporter.ExportPathList(handler,
+                        tp_obj.get_path(), opts.unit_size, opts.tool_feedrate,
+                        opts.tool_spindle_speed,
+                        safety_height=opts.safety_height,
                         max_skip_safety_distance=opts.tool_diameter,
-                        comment=meta_data)
-                if close_destination:
-                    destination.close()
+                        comment=tp_obj.get_meta_data())
+                closer()
         if opts.export_task_config:
-            raise NotImplementedError("Export of task config is not " \
-                    + "implemented, yet!")
+            handler, closer = get_output_handler(opts.export_task_config)
+            if handler is None:
+                sys.exit(EXIT_CODES["write_output_failed"])
+            print >>handler, tps.get_string()
+            closer()
 

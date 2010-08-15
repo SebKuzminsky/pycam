@@ -725,6 +725,9 @@ class ToolpathSettings:
                                 + "(%s -> %s): %s" % (section, key, value_raw))
                 config_dict[key] = value
 
+    def __str__(self):
+        return self.get_string()
+
     def get_string(self):
         result = []
         for config_dict, section in ((self.bounds, "Bounds"),

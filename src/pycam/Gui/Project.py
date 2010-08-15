@@ -233,7 +233,7 @@ class ProjectGui:
         self.log_model = self.gui.get_object("LogWindowList")
         # set defaults
         self.model = None
-        self.toolpath = pycam.Toolpath.ToolPathList()
+        self.toolpath = pycam.Toolpath.ToolpathList()
         self.cutter = None
         self.tool_list = []
         self.process_list = []

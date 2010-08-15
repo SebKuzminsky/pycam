@@ -18,7 +18,15 @@ include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/python-distutils.mk
 include /usr/share/cdbs/1/rules/simple-patchsys.mk
 
+# clean the manpage
+clean:
+	make -C man clean
+
+# build the manpage
+build:
+	make -C man
+
 # install the .desktop file
-install/pycam::
+install:
 	cp -v desktop/pycam.desktop `pwd`/debian/pycam/usr/share/applications/
 
