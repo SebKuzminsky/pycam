@@ -260,8 +260,11 @@ class Polygon(TransformableContainer):
             cross_offset = p2.sub(p1).cross(self._plane.n).normalized()
             bisector_normalized = self.get_bisector(index)
             factor = cross_offset.dot(bisector_normalized)
-            bisector_sized = bisector_normalized.mul(offset / factor)
-            return p1.add(bisector_sized)
+            if factor != 0:
+                bisector_sized = bisector_normalized.mul(offset / factor)
+                return p1.add(bisector_sized)
+            else:
+                return p2
         def simplify_polygon_intersections(lines):
             new_group = lines[:]
             # remove all non-adjacent intersecting lines (this splits the group)

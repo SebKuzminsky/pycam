@@ -192,8 +192,13 @@ class DXFParser:
             log.warn("DXFImporter: Incomplete LINE definition between line " \
                     + "%d and %d" % (start_line, end_line))
         else:
-            self.lines.append(Line(Point(p1[0], p1[1], p1[2]),
-                    Point(p2[0], p2[1], p2[2])))
+            line = Line(Point(p1[0], p1[1], p1[2]), Point(p2[0], p2[1], p2[2]))
+            if line.len > 0:
+                self.lines.append(line)
+            else:
+                log.warn("DXFImporter: Ignoring zero-length LINE (between " \
+                        + "input line %d and %d): %s" % (start_line, end_line,
+                        line))
 
     def check_header(self):
         # TODO: this function is not used?

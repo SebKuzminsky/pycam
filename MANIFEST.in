@@ -10,5 +10,5 @@ recursive-include desktop *
 recursive-include man *
 recursive-include src *
 recursive-include share *
-recursive-include Samples *
+recursive-include samples *
 recursive-include Tests *

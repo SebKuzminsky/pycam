@@ -795,8 +795,9 @@ class ProjectGui:
         new_value = self.grid_adjustment_value.get_value()
         self.settings.set("support_grid_adjustment_value", new_value)
         tree_iter = self.grid_adjustment_selector.get_active_iter()
-        value_string = "(%+.1f)" % new_value
-        self.grid_adjustment_model.set(tree_iter, 1, value_string)
+        if not tree_iter is None:
+            value_string = "(%+.1f)" % new_value
+            self.grid_adjustment_model.set(tree_iter, 1, value_string)
         self.update_support_grid_model()
         self.update_view()
 
@@ -1915,6 +1916,7 @@ class ProjectGui:
         if not model is None:
             self.model = model
             # do some initialization
+            self.append_to_queue(self.update_scale_controls)
             self.append_to_queue(self.toggle_3d_view, value=True)
             self.append_to_queue(self.update_view)
 
