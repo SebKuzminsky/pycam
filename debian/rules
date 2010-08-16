@@ -22,10 +22,11 @@ clean::
 	make -C man clean
 
 # build the manpage
-build:
+build/pycam::
 	make -C man
 
 # install the .desktop file
-install:
+install/pycam::
 	cp -v desktop/pycam.desktop `pwd`/debian/pycam/usr/share/applications/
+	rm -rf `pwd`/debian/pycam/usr/share/pycam/doc
 
