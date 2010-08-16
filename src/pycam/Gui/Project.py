@@ -1763,8 +1763,9 @@ class ProjectGui:
         self.disable_progress_cancel_button()
         self.model.scale(factor, callback=self.update_progress_bar)
         self._set_model_center(old_center)
-        self.update_support_grid_model()
-        self.update_view()
+        self.append_to_queue(self.update_scale_controls)
+        self.append_to_queue(self.update_support_grid_model)
+        self.append_to_queue(self.update_view)
 
     @gui_activity_guard
     def update_scale_controls(self, widget=None):
@@ -1864,7 +1865,8 @@ class ProjectGui:
             file_type, importer = pycam.Importers.detect_file_type(filename)
             if file_type and callable(importer):
                 self.load_model(importer(filename,
-                        program_locations=program_locations))
+                        program_locations=program_locations,
+                        unit=self.settings.get("unit")))
                 self.set_model_filename(filename)
             else:
                 log.error("Failed to detect filetype!")

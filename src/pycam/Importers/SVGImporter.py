@@ -70,7 +70,7 @@ def convert_eps2dxf(eps_filename, dxf_filename, location=None):
                 process.stderr.read()))
         return False
 
-def import_model(filename, program_locations=None):
+def import_model(filename, program_locations=None, unit=None):
     if not os.path.isfile(filename):
         log.error("SVGImporter: file (%s) does not exist" % filename)
         return None
@@ -116,7 +116,7 @@ def import_model(filename, program_locations=None):
         result = None
     else:
         log.info("Successfully converted EPS file to DXF file")
-        result = pycam.Importers.DXFImporter.import_model(dxf_file_name)
+        result = pycam.Importers.DXFImporter.import_model(dxf_file_name, unit=unit)
     # always remove the dxf file
     remove_temp_file(dxf_file_name)
     return result

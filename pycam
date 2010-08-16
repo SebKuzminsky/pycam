@@ -400,9 +400,12 @@ if __name__ == "__main__":
             model = get_default_model()
             # the "get_default_model" function returns a string or a model
             if isinstance(model, basestring):
-                model = load_model_file(model, program_locations)
+                model = load_model_file(model,
+                        program_locations=program_locations,
+                        unit=opts.unit_size)
         else:
-            model = load_model_file(inputfile, program_locations)
+            model = load_model_file(inputfile,
+                    program_locations=program_locations, unit=opts.unit_size)
         if model is None:
             # something went wrong - we quit
             sys.exit(EXIT_CODES["load_model_failed"])

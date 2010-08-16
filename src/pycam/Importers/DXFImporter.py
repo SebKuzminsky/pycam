@@ -209,7 +209,7 @@ class DXFParser:
             return None
 
 
-def import_model(filename, program_locations=None):
+def import_model(filename, program_locations=None, unit=None):
     try:
         infile = open(filename,"rb")
     except IOError, err_msg:
@@ -225,6 +225,10 @@ def import_model(filename, program_locations=None):
         model = pycam.Geometry.Model.ContourModel()
         for l in lines:
             model.append(l)
+        if unit == "mm":
+            # pstoedit uses inch internally - we need to scale
+            log.info("DXFImporter: scaling model from inch to mm")
+            model.scale(25.4)
         log.info("DXFImporter: Imported DXF model: %d lines" % len(lines))
         return model
     else:
