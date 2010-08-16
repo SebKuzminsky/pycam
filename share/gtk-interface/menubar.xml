@@ -29,6 +29,7 @@
       <menuitem action="HelpGCodeExport"/>
       <menuitem action="HelpSimulation"/>
       <menuitem action="HelpCommandLine"/>
+      <menuitem action="HelpHotkeys"/>
       <separator />
       <menuitem action="HelpToolTypes"/>
       <menuitem action="HelpProcessSettings"/>

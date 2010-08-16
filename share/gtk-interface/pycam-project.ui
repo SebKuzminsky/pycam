@@ -6064,4 +6064,7 @@ Any selected group of dimensions will be scaled accordingly.</property>
   <object class="GtkAdjustment" id="SupportGridPositionManualAdjustment">
     <property name="step_increment">1</property>
   </object>
+  <object class="GtkAction" id="HelpHotkeys">
+    <property name="label">_Keyboard Shortcuts</property>
+  </object>
 </interface>
