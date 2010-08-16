@@ -45,7 +45,7 @@ START_MENU_SUBDIR = os.path.join(START_MENU_BASEDIR, "PyCAM")
 # create a start menu item for pycam
 PYTHON_EXE = os.path.join(distutils.sysconfig.EXEC_PREFIX, "pythonw.exe")
 # surround the start script with quotes to avoid space-issues
-START_SCRIPT = "'%s'" % os.path.join(distutils.sysconfig.EXEC_PREFIX, "Scripts", "pycam")
+START_SCRIPT = '"%s"' % os.path.join(distutils.sysconfig.EXEC_PREFIX, "Scripts", "pycam")
 
 PYTHON_DOC_DIR = os.path.join(distutils.sysconfig.PREFIX, "share", "pycam", "doc")
 
@@ -57,7 +57,7 @@ WEB_LINKS = [
         (r"http://sourceforge.net/projects/pycam/", "Project's Website"),
         (r"http://sourceforge.net/tracker/?group_id=237831&atid=1104176", "Report a Bug"),
         (r"http://sourceforge.net/projects/pycam/forums", "Forum Discussions"),
-        (r"http://sourceforge.net/apps/mediawiki/pycam/", "Wiki")]
+        (r"http://sourceforge.net/apps/mediawiki/pycam/", "Wiki Documentation")]
 
 MENU_ITEMS = map(lambda v: (os.path.join(PYTHON_DOC_DIR, v[0]), v[1]), DOC_FILES)
 MENU_ITEMS.extend(WEB_LINKS)

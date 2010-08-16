@@ -1,3 +1,10 @@
+pycam (0.3-1) unstable; urgency=low
+
+  * new upstream release
+  * Switch to dpkg-source 3.0 (quilt) format
+
+ -- Lars Kruse <devel@sumpfralle.de>  Mon, 16 Aug 2010 15:57:45 +0200
+
 pycam (0.2.3-1) unstable; urgency=low
 
   * new upstream release

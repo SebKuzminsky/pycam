@@ -2,11 +2,12 @@ diff --git a/setup.py b/setup.py
 index 3046304..9f66f6d 100755
 --- a/setup.py
 +++ b/setup.py
-@@ -45,13 +45,9 @@ setup(
+@@ -78,13 +78,9 @@ setup(
      ],
      scripts = ['pycam', 'pycam_win32_postinstall.py'],
      data_files=[("share/pycam/doc",[
 -            "COPYING.TXT",
+             "technical_details.txt",
 -            "INSTALL.TXT",
 -            "LICENSE.TXT",
              "README.TXT",

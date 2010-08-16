@@ -1,4 +1,4 @@
-Version 0.3.0 - UNRELEASED
+Version 0.3.0 - 2010-08-16
  * added support for importing contour paths from SVG files (requires Inkscape and pstoedit)
  * added basic support for importing simple DXF contour files
  * added support for engravings (along the lines of a contour model)
