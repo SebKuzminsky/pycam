@@ -8,8 +8,7 @@ SVK_REPO_BASE ?= $(shell LANG= svk info | grep "^Depot Path:" | cut -f 3- -d " "
 REPO_TAGS ?= https://pycam.svn.sourceforge.net/svnroot/pycam/tags
 RELEASE_PREFIX ?= pycam-
 ARCHIVE_DIR_RELATIVE ?= release-archives
-TMP ?= /tmp
-EXPORT_DIR = $(TMP)/$(RELEASE_PREFIX)$(VERSION)
+EXPORT_DIR = $(RELEASE_PREFIX)$(VERSION)
 EXPORT_FILE_PREFIX = $(EXPORT_DIR)
 EXPORT_ZIP = $(EXPORT_FILE_PREFIX).zip
 EXPORT_TGZ = $(EXPORT_FILE_PREFIX).tar.gz
