@@ -16,7 +16,6 @@ export DEB_PYTHON_SYSTEM=pysupport
 # dh_python / dh_pycentral / dh_pysupport
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/python-distutils.mk
-include /usr/share/cdbs/1/rules/simple-patchsys.mk
 
 # clean the manpage
 clean::
