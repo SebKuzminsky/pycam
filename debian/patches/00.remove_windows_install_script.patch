@@ -7,6 +7,6 @@ diff -Nur -x '*.orig' -x '*~' pycam-0.2.2//setup.py pycam-0.2.2.new//setup.py
      ],
 -    scripts = ['pycam', 'pycam_win32_postinstall.py'],
 +    scripts = ['pycam'],
-     data_files=[("share/pycam/doc",[
+     data_files=[("share/pycam/doc", [
              "COPYING.TXT",
              "technical_details.txt",
