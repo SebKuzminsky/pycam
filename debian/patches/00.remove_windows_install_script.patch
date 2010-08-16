@@ -9,4 +9,3 @@ diff -Nur -x '*.orig' -x '*~' pycam-0.2.2//setup.py pycam-0.2.2.new//setup.py
 +    scripts = ['pycam'],
      data_files=[("share/doc/pycam",[
              "COPYING.TXT",
-             "HOWTO.TXT",

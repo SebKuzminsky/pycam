@@ -1,5 +1,5 @@
 include LICENSE.TXT
-include HOWTO.TXT
+include technical_details.txt
 include INSTALL.TXT
 include COPYING.TXT
 include README.TXT

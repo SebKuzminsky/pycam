@@ -5,9 +5,8 @@ index 3046304..9f66f6d 100755
 @@ -45,13 +45,9 @@ setup(
      ],
      scripts = ['pycam', 'pycam_win32_postinstall.py'],
-     data_files=[("share/doc/pycam",[
+     data_files=[("share/pycam/doc",[
 -            "COPYING.TXT",
-             "HOWTO.TXT",
 -            "INSTALL.TXT",
 -            "LICENSE.TXT",
              "README.TXT",
