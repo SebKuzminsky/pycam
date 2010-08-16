@@ -185,6 +185,7 @@ class ProjectGui:
                 ("HelpGCodeExport", self.show_help, "GCodeExport", None),
                 ("HelpSimulation", self.show_help, "Simulation", None),
                 ("HelpCommandLine", self.show_help, "CommandLine", None),
+                ("HelpHotkeys", self.show_help, "KeyboardShortcuts", None),
                 ("ProjectWebsite", self.show_help, "http://sourceforge.net/projects/pycam", None),
                 ("Forum", self.show_help, "http://sourceforge.net/projects/pycam/forums", None),
                 ("BugTracker", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104176", None),

@@ -344,7 +344,12 @@ class ModelViewWindowGL:
                 return chr(value)
             else:
                 return None
-        if get_char(keyval) in ('i', 'm', 's'):
+        if get_char(keyval) and (get_char(keyval) in '1234567'):
+            names = ["reset", "front", "back", "left", "right", "top", "bottom"]
+            index = '1234567'.index(get_char(keyval))
+            self.rotate_view(view=VIEWS[names[index]])
+            self._paint_ignore_busy()
+        elif get_char(keyval) in ('i', 'm', 's'):
             if (chr(keyval) == 'i'):
                 key = "view_light"
             elif (chr(keyval) == 'm'):
