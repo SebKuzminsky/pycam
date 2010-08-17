@@ -97,6 +97,8 @@ PREFERENCES_DEFAULTS = {
 """ the listed items will be loaded/saved via the preferences file in the
 user's home directory on startup/shutdown"""
 
+GRID_TYPES = {"none": 0, "grid": 1, "automatic": 2}
+
 # floating point color values are only available since gtk 2.16
 GTK_COLOR_MAX = 65535.0
 
@@ -324,7 +326,7 @@ class ProjectGui:
         scale_dimension_control.connect("focus-out-event",
                 lambda widget, data: self.window.set_default(None))
         # support grid
-        self.gui.get_object("SupportGridEnable").connect("clicked",
+        self.gui.get_object("SupportGridTypesControl").connect("changed",
                 self.update_support_grid_controls)
         grid_distance_x = self.gui.get_object("SupportGridDistanceX")
         grid_distance_x.connect("value-changed",
@@ -354,14 +356,25 @@ class ProjectGui:
                 grid_height.get_value, grid_height.set_value)
         grid_offset_x = self.gui.get_object("SupportGridOffsetX")
         grid_offset_x.connect("value-changed",
-                self.update_support_grid_controls)
+                self.update_support_grid_model)
         self.settings.add_item("support_grid_offset_x",
                 grid_offset_x.get_value, grid_offset_x.set_value)
         grid_offset_y = self.gui.get_object("SupportGridOffsetY")
         grid_offset_y.connect("value-changed",
-                self.update_support_grid_controls)
+                self.update_support_grid_model)
         self.settings.add_item("support_grid_offset_y",
                 grid_offset_y.get_value, grid_offset_y.set_value)
+        grid_average_distance = self.gui.get_object("GridAverageDistance")
+        grid_average_distance.connect("value-changed",
+                self.update_support_grid_model)
+        self.settings.add_item("support_grid_average_distance",
+                grid_average_distance.get_value,
+                grid_average_distance.set_value)
+        grid_minimum_bridges = self.gui.get_object("GridMinBridgesPerPolygon")
+        grid_minimum_bridges.connect("value-changed",
+                self.update_support_grid_model)
+        self.settings.add_item("support_grid_minimum_bridges",
+                grid_minimum_bridges.get_value, grid_minimum_bridges.set_value)
         # manual grid adjustments
         self.grid_adjustment_axis_x = self.gui.get_object("SupportGridPositionManualAxisX")
         self.grid_adjustment_axis_x.connect("toggled",
@@ -405,9 +418,11 @@ class ProjectGui:
                 get_set_grid_adjustment_value, get_set_grid_adjustment_value)
         # support grid defaults
         grid_distance_square.set_active(True)
-        self.settings.set("support_grid_distance_x", 5.0)
+        self.settings.set("support_grid_distance_x", 10.0)
         self.settings.set("support_grid_thickness", 0.5)
         self.settings.set("support_grid_height", 0.5)
+        self.settings.set("support_grid_average_distance", 30)
+        self.settings.set("support_grid_minimum_bridges", 2)
         self.grid_adjustment_axis_x_last = True
         # visual and general settings
         for name, objname in (("show_model", "ShowModelCheckBox"),
@@ -720,49 +735,77 @@ class ProjectGui:
 
     @gui_activity_guard
     def update_support_grid_controls(self, widget=None):
-        details_box = self.gui.get_object("SupportGridDetailsBox")
-        grid_square = self.gui.get_object("SupportGridDistanceSquare")
-        distance_y = self.gui.get_object("SupportGridDistanceYControl")
-        if self.gui.get_object("SupportGridEnable").get_active():
+        controls = {"GridProfileExpander": ("grid", "automatic"),
+                "GridPatternExpander": ("grid", ),
+                "GridPositionExpander": ("grid", ),
+                "GridManualShiftExpander": ("grid", ),
+                "GridAverageDistanceExpander": ("automatic", ),
+        }
+        grid_type = self.gui.get_object("SupportGridTypesControl").get_active()
+        if grid_type == GRID_TYPES["grid"]:
+            grid_square = self.gui.get_object("SupportGridDistanceSquare")
+            distance_y = self.gui.get_object("SupportGridDistanceYControl")
             distance_y.set_sensitive(not grid_square.get_active())
-            details_box.show()
             if grid_square.get_active():
                 # We let "distance_y" track the value of "distance_x".
                 self.settings.set("support_grid_distance_y",
                         self.settings.get("support_grid_distance_x"))
             self.update_support_grid_manual_model()
             self.switch_support_grid_manual_selector()
+        elif grid_type == GRID_TYPES["automatic"]:
+            pass
+        elif grid_type == GRID_TYPES["none"]:
+            pass
         else:
-            details_box.hide()
+            raise ValueError("Invalid grid type: %d" % grid_type)
+        # show and hide all controls according to the current type
+        for key, grid_types in controls.iteritems():
+            obj = self.gui.get_object(key)
+            if grid_type in [GRID_TYPES[allowed] for allowed in grid_types]:
+                obj.show()
+            else:
+                obj.hide()
         self.update_support_grid_model()
         self.update_view()
 
-    def update_support_grid_model(self):
-        is_enabled = self.gui.get_object("SupportGridEnable").get_active()
+    def update_support_grid_model(self, widget=None):
+        grid_type = self.gui.get_object("SupportGridTypesControl").get_active()
         s = self.settings
-        if is_enabled \
-                and (s.get("support_grid_thickness") > 0) \
-                and ((s.get("support_grid_distance_x") > 0) \
-                    or (s.get("support_grid_distance_y") > 0)) \
-                and ((s.get("support_grid_distance_x") == 0) \
-                    or (s.get("support_grid_distance_x") \
-                        > s.get("support_grid_thickness"))) \
-                and ((s.get("support_grid_distance_y") == 0) \
-                    or (s.get("support_grid_distance_y") \
-                        > s.get("support_grid_thickness"))) \
-                and (s.get("support_grid_height") > 0):
-            support_grid = pycam.Toolpath.SupportGrid.get_support_grid(
-                    s.get("minx"), s.get("maxx"), s.get("miny"), s.get("maxy"),
-                    s.get("minz"), s.get("support_grid_distance_x"),
-                    s.get("support_grid_distance_y"),
-                    s.get("support_grid_thickness"),
-                    s.get("support_grid_height"),
-                    offset_x=s.get("support_grid_offset_x"),
-                    offset_y=s.get("support_grid_offset_y"),
-                    adjustments_x=self.grid_adjustments_x,
-                    adjustments_y=self.grid_adjustments_y)
-        else:
-            support_grid = None
+        support_grid = None
+        if grid_type == GRID_TYPES["grid"]: 
+            if (s.get("support_grid_thickness") > 0) \
+                    and ((s.get("support_grid_distance_x") > 0) \
+                        or (s.get("support_grid_distance_y") > 0)) \
+                    and ((s.get("support_grid_distance_x") == 0) \
+                        or (s.get("support_grid_distance_x") \
+                            > s.get("support_grid_thickness"))) \
+                    and ((s.get("support_grid_distance_y") == 0) \
+                        or (s.get("support_grid_distance_y") \
+                            > s.get("support_grid_thickness"))) \
+                    and (s.get("support_grid_height") > 0):
+                support_grid = pycam.Toolpath.SupportGrid.get_support_grid(
+                        s.get("minx"), s.get("maxx"), s.get("miny"), s.get("maxy"),
+                        s.get("minz"), s.get("support_grid_distance_x"),
+                        s.get("support_grid_distance_y"),
+                        s.get("support_grid_thickness"),
+                        s.get("support_grid_height"),
+                        offset_x=s.get("support_grid_offset_x"),
+                        offset_y=s.get("support_grid_offset_y"),
+                        adjustments_x=self.grid_adjustments_x,
+                        adjustments_y=self.grid_adjustments_y)
+        elif grid_type == GRID_TYPES["automatic"]:
+            if (s.get("support_grid_thickness") > 0) \
+                    and (s.get("support_grid_height") > 0) \
+                    and (s.get("support_grid_average_distance") > 0) \
+                    and (s.get("support_grid_minimum_bridges") > 0):
+                support_grid = pycam.Toolpath.SupportGrid.get_distributed_support_bridges(
+                        s.get("model"), s.get("minz"),
+                        s.get("support_grid_average_distance"),
+                        s.get("support_grid_minimum_bridges"),
+                        s.get("support_grid_thickness"),
+                        s.get("support_grid_height"))
+        elif grid_type == GRID_TYPES["none"]:
+            pass
         s.set("support_grid", support_grid)
 
     def switch_support_grid_manual_selector(self, widget=None):
@@ -2528,7 +2571,8 @@ class ProjectGui:
                 tool_settings["speed"], tool_settings["feedrate"])
 
         # get the support grid options
-        if self.gui.get_object("SupportGridEnable").get_active():
+        grid_type = self.gui.get_object("SupportGridTypesControl").get_active()
+        if grid_type == GRID_TYPES["grid"]:
             toolpath_settings.set_support_grid(
                     self.settings.get("support_grid_distance_x"),
                     self.settings.get("support_grid_distance_y"),
@@ -2538,6 +2582,16 @@ class ProjectGui:
                     offset_y=self.settings.get("support_grid_offset_y"),
                     adjustments_x=self.grid_adjustments_x,
                     adjustments_y=self.grid_adjustments_y)
+        elif grid_type == GRID_TYPES["automatic"]:
+            toolpath_settings.set_support_automatic(
+                    self.settings.get("support_grid_average_distance"),
+                    self.settings.get("support_grid_minimum_bridges"),
+                    self.settings.get("support_grid_thickness"),
+                    self.settings.get("support_grid_height"))
+        elif grid_type == GRID_TYPES["none"]:
+            pass
+        else:
+            raise ValueError("Invalid support grid type: %d" % grid_type)
         
         # calculation backend: ODE / None
         if self.settings.get("enable_ode"):

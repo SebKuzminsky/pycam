@@ -1,3 +1,6 @@
+Version 0.3.1 - UNRELEASED
+ * added automatic support grid positioning for contour models
+
 Version 0.3.0 - 2010-08-16
  * added support for importing contour paths from SVG files (requires Inkscape and pstoedit)
  * added basic support for importing simple DXF contour files

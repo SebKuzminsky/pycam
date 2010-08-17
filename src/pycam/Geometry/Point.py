@@ -94,6 +94,9 @@ class Point:
     def dot(self, p):
         return self.x * p.x + self.y * p.y + self.z * p.z
 
+    def size(self):
+        return sqrt(self.dot(self))
+
     def cross(self, p):
         return Point(self.y * p.z - p.y * self.z, p.x * self.z - self.x * p.z,
                 self.x * p.y - p.x * self.y)

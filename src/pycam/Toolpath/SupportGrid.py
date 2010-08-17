@@ -20,12 +20,22 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.Point import Point
+from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.Model import Model
 from pycam.Geometry.utils import number
 
+
+def _add_pyramid_to_model(model, start, direction, height, width):
+    up = Vector(0, 0, 1)
+    top = start.add(direction).add(up.mul(height))
+    middle_end = start.add(direction)
+    end_right = middle_end.add(direction.cross(up).normalized().mul(width / 2))
+    end_left = middle_end.add(direction.cross(up).normalized().mul(-width / 2))
+    for points in ((start, top, end_right), (start, end_right, top),
+            (start, end_right, end_left), (top, end_left, end_right)):
+        model.append(Triangle(points[0], points[1], points[2]))
 
 def _add_cuboid_to_model(minx, maxx, miny, maxy, minz, maxz):
     def get_triangles_for_face(pts):
@@ -130,4 +140,39 @@ def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness,
                 maxx + length_extension, line_y - thick_half,
                 line_y + thick_half, z_plane, z_plane + height)
     return grid_model
+
+def get_distributed_support_bridges(model, z_plane, average_distance,
+        min_bridges_per_polygon, thickness, height):
+    result = Model()
+    for polygon in model.get_polygons():
+        if not polygon.is_outer():
+            continue
+        lines = polygon.get_lines()
+        poly_lengths = polygon.get_lengths()
+        num_of_bridges = max(min_bridges_per_polygon,
+                int(round(sum(poly_lengths) / average_distance)))
+        real_average_distance = sum(poly_lengths) / num_of_bridges
+        max_line_index = poly_lengths.index(max(poly_lengths))
+        positions = []
+        current_line_index = max_line_index
+        distance_processed = poly_lengths[current_line_index] / 2
+        positions.append(current_line_index)
+        while len(positions) < num_of_bridges:
+            current_line_index += 1
+            current_line_index %= len(poly_lengths)
+            while distance_processed + poly_lengths[current_line_index] < real_average_distance:
+                distance_processed += poly_lengths[current_line_index]
+                current_line_index += 1
+                current_line_index %= len(poly_lengths)
+            positions.append(current_line_index)
+            distance_processed += poly_lengths[current_line_index]
+            distance_processed %= real_average_distance
+        for line_index in positions:
+            bridge_dir = lines[line_index].dir.cross(polygon.plane.n)
+            # TODO: should we ask for a length?
+            length = average_distance / 4
+            _add_pyramid_to_model(result,
+                    polygon.get_middle_of_line(line_index), bridge_dir,
+                    height, thickness)
+    return result
 

@@ -36,7 +36,7 @@ class Polygon(TransformableContainer):
         # TODO: derive the plane from the appended points
         if plane is None:
             plane = Plane(Point(0, 0, 0), Point(0, 0, 1))
-        self._plane = plane
+        self.plane = plane
         self._points = []
         self._is_closed = False
         self.maxx = None
@@ -102,10 +102,10 @@ class Polygon(TransformableContainer):
     def next(self):
         for point in self._points:
             yield point
-        yield self._plane
+        yield self.plane
 
     def get_children_count(self):
-        return len(self._points) + self._plane.get_children_count()
+        return len(self._points) + self.plane.get_children_count()
 
     def get_area(self):
         """ calculate the area covered by a line group
@@ -125,6 +125,27 @@ class Polygon(TransformableContainer):
             p2 = self._points[(index + 1) % len(self._points)]
             value += p1.x * p2.y - p2.x * p1.y
         return value / 2
+
+    def get_length(self):
+        """ add the length of all lines within the polygon
+        """
+        return sum(self.get_lengths())
+
+    def get_middle_of_line(self, index):
+        if (index >= len(self._points)) \
+                or (not self._is_closed and index == len(self._points) - 1):
+            return None
+        else:
+            return self._points[index].add(self._points[(index + 1) % len(self._points)]).div(2)
+
+    def get_lengths(self):
+        result = []
+        for index in range(len(self._points) - 1):
+            result.append(self._points[index + 1].sub(
+                    self._points[index]).size())
+        if self._is_closed:
+            result.append(self._points[0].sub(self._points[-1]).size())
+        return result
 
     def get_max_inside_distance(self):
         """ calculate the maximum distance between two points of the polygon
@@ -243,10 +264,10 @@ class Polygon(TransformableContainer):
         skel_dir = d1.add(d2).normalized()
         if skel_dir is None:
             # the two vectors pointed to opposite directions
-            skel_dir = d1.cross(self._plane.n).normalized()
+            skel_dir = d1.cross(self.plane.n).normalized()
         else:
             skel_up_vector = skel_dir.cross(p2.sub(p1))
-            offset_up_vector = self._plane.n
+            offset_up_vector = self.plane.n
             # TODO: check for other axis as well
             if offset_up_vector.z * skel_up_vector.z < 0:
                 # reverse the skeleton vector to point outwards
@@ -257,7 +278,7 @@ class Polygon(TransformableContainer):
         def get_shifted_vertex(index, offset):
             p1 = self._points[index]
             p2 = self._points[(index + 1) % len(self._points)]
-            cross_offset = p2.sub(p1).cross(self._plane.n).normalized()
+            cross_offset = p2.sub(p1).cross(self.plane.n).normalized()
             bisector_normalized = self.get_bisector(index)
             factor = cross_offset.dot(bisector_normalized)
             if factor != 0:
@@ -375,7 +396,7 @@ class Polygon(TransformableContainer):
             self_is_outer = self.is_outer()
             groups = []
             for lines in cleaned_line_groups:
-                group = Polygon(self._plane)
+                group = Polygon(self.plane)
                 for line in lines:
                     group.append(line)
                 if group.is_outer() != self_is_outer:
@@ -408,7 +429,7 @@ class Polygon(TransformableContainer):
             if offset == 0:
                 return Line(line.p1, line.p2)
             else:
-                cross_offset = line.dir.cross(self._plane.n).normalized().mul(offset)
+                cross_offset = line.dir.cross(self.plane.n).normalized().mul(offset)
                 # Prolong the line at the beginning and at the end - to allow
                 # overlaps. Use factor "2" to take care for star-like structure
                 # where a complete convex triangle would get cropped (two lines
@@ -581,7 +602,7 @@ class Polygon(TransformableContainer):
             self_is_outer = self.is_outer()
             groups = []
             for lines in cleaned_line_groups:
-                group = Polygon(self._plane)
+                group = Polygon(self.plane)
                 for line in lines:
                     group.append(line)
                 if group.is_outer() == self_is_outer:
@@ -619,7 +640,7 @@ class Polygon(TransformableContainer):
                         pass
                 else:
                     # no suitable group was found - we create a new one
-                    new_group = Polygon(self._plane)
+                    new_group = Polygon(self.plane)
                     new_group.append(new_line)
                     new_groups.append(new_group)
         if len(new_groups) > 0:
