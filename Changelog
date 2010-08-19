@@ -1,5 +1,6 @@
 Version 0.3.1 - UNRELEASED
  * added automatic support grid positioning for contour models
+ * allow to reverse the direction of a 2D contour model
 
 Version 0.3.0 - 2010-08-16
  * added support for importing contour paths from SVG files (requires Inkscape and pstoedit)

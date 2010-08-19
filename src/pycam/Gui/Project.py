@@ -325,6 +325,8 @@ class ProjectGui:
                 lambda widget, data: scale_dimension_button.grab_default())
         scale_dimension_control.connect("focus-out-event",
                 lambda widget, data: self.window.set_default(None))
+        self.gui.get_object("ToggleModelDirectionButton").connect("clicked",
+                self.reverse_model_direction)
         # support grid
         self.gui.get_object("SupportGridTypesControl").connect("changed",
                 self.update_support_grid_controls)
@@ -347,13 +349,17 @@ class ProjectGui:
         self.settings.add_item("support_grid_distance_y",
                 get_support_grid_distance_y, grid_distance_y.set_value)
         grid_thickness = self.gui.get_object("SupportGridThickness")
-        grid_thickness.connect("value-changed", self.update_support_grid_controls)
+        grid_thickness.connect("value-changed", self.update_support_grid_model)
         self.settings.add_item("support_grid_thickness",
                 grid_thickness.get_value, grid_thickness.set_value)
         grid_height = self.gui.get_object("SupportGridHeight")
-        grid_height.connect("value-changed", self.update_support_grid_controls)
+        grid_height.connect("value-changed", self.update_support_grid_model)
         self.settings.add_item("support_grid_height",
                 grid_height.get_value, grid_height.set_value)
+        grid_length = self.gui.get_object("SupportGridLength")
+        grid_length.connect("value-changed", self.update_support_grid_model)
+        self.settings.add_item("support_grid_length",
+                grid_length.get_value, grid_length.set_value)
         grid_offset_x = self.gui.get_object("SupportGridOffsetX")
         grid_offset_x.connect("value-changed",
                 self.update_support_grid_model)
@@ -423,6 +429,7 @@ class ProjectGui:
         self.settings.set("support_grid_height", 0.5)
         self.settings.set("support_grid_average_distance", 30)
         self.settings.set("support_grid_minimum_bridges", 2)
+        self.settings.set("support_grid_length", 5)
         self.grid_adjustment_axis_x_last = True
         # visual and general settings
         for name, objname in (("show_model", "ShowModelCheckBox"),
@@ -797,13 +804,15 @@ class ProjectGui:
             if (s.get("support_grid_thickness") > 0) \
                     and (s.get("support_grid_height") > 0) \
                     and (s.get("support_grid_average_distance") > 0) \
-                    and (s.get("support_grid_minimum_bridges") > 0):
+                    and (s.get("support_grid_minimum_bridges") > 0) \
+                    and (s.get("support_grid_length") > 0):
                 support_grid = pycam.Toolpath.SupportGrid.get_distributed_support_bridges(
                         s.get("model"), s.get("minz"),
                         s.get("support_grid_average_distance"),
                         s.get("support_grid_minimum_bridges"),
                         s.get("support_grid_thickness"),
-                        s.get("support_grid_height"))
+                        s.get("support_grid_height"),
+                        s.get("support_grid_length"))
         elif grid_type == GRID_TYPES["none"]:
             pass
         s.set("support_grid", support_grid)
@@ -1831,7 +1840,19 @@ class ProjectGui:
 
     @progress_activity_guard
     @gui_activity_guard
-    def scale_model_axis_fit(self, widget):
+    def reverse_model_direction(self, widget=None):
+        if (self.model is None) \
+                or not hasattr(self.model, "reverse_directions"):
+            return
+        self.update_progress_bar(text="Reversing directions of contour model")
+        progress_callback = pycam.Utils.ProgressCounter(
+                len(self.model.get_polygons()),
+                        self.update_progress_bar).increment
+        self.model.reverse_directions(callback=progress_callback)
+
+    @progress_activity_guard
+    @gui_activity_guard
+    def scale_model_axis_fit(self, widget=None):
         proportionally = self.gui.get_object("ScaleDimensionsProportionally").get_active()
         value = self.gui.get_object("ScaleDimensionValue").get_value()
         index = self.gui.get_object("ScaleDimensionAxis").get_active()
@@ -2587,7 +2608,8 @@ class ProjectGui:
                     self.settings.get("support_grid_average_distance"),
                     self.settings.get("support_grid_minimum_bridges"),
                     self.settings.get("support_grid_thickness"),
-                    self.settings.get("support_grid_height"))
+                    self.settings.get("support_grid_height"),
+                    self.settings.get("support_grid_length"))
         elif grid_type == GRID_TYPES["none"]:
             pass
         else:
