@@ -563,6 +563,7 @@ class ToolpathSettings:
             "feedrate": float,
         },
         "SupportGrid": {
+            "type": str,
             "distance_x": float,
             "distance_y": float,
             "thickness": float,
@@ -571,6 +572,9 @@ class ToolpathSettings:
             "offset_y": float,
             "adjustments_x": "list_of_float",
             "adjustments_y": "list_of_float",
+            "average_distance": float,
+            "minimum_bridges": int,
+            "length": float,
         },
         "Program": {
             "unit": str,
@@ -637,6 +641,7 @@ class ToolpathSettings:
             adjustments_x = []
         if adjustments_y is None:
             adjustments_y = []
+        self.support_grid["type"] = "grid"
         self.support_grid["distance_x"] = distance_x
         self.support_grid["distance_y"] = distance_y
         self.support_grid["offset_x"] = offset_x
@@ -646,14 +651,28 @@ class ToolpathSettings:
         self.support_grid["adjustments_x"] = adjustments_x
         self.support_grid["adjustments_y"] = adjustments_y
 
+    def set_support_distributed(self, average_distance, minimum_bridges,
+            thickness, height, length):
+        self.support_grid["type"] = "distributed"
+        self.support_grid["average_distance"] = average_distance
+        self.support_grid["minimum_bridges"] = minimum_bridges
+        self.support_grid["thickness"] = thickness
+        self.support_grid["height"] = height
+        self.support_grid["length"] = length
+
     def get_support_grid(self):
+        result = {}
         if self.support_grid:
-            return self.support_grid
+            options = self.support_grid
         else:
-            result = {}
-            for key in self.SECTIONS["SupportGrid"].keys():
+            options = {}
+        # add all keys from the default list
+        for key in self.SECTIONS["SupportGrid"].keys():
+            if options.has_key(key):
+                result[key] = options[key]
+            else:
                 result[key] = None
-            return result
+        return result
 
     def set_calculation_backend(self, backend=None):
         self.program["enable_ode"] = (backend.upper() == "ODE")

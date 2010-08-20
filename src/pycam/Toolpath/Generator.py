@@ -50,20 +50,23 @@ def generate_toolpath_from_settings(model, tp_settings, callback=None):
             process["generator"], process["postprocessor"],
             process["material_allowance"], process["safety_height"],
             process["overlap"], process["step_down"], process["engrave_offset"],
-            grid["distance_x"], grid["distance_y"], grid["thickness"],
-            grid["height"], grid["offset_x"], grid["offset_y"],
-            grid["adjustments_x"], grid["adjustments_y"], backend,
-            callback)
+            grid["type"], grid["distance_x"], grid["distance_y"],
+            grid["thickness"], grid["height"], grid["offset_x"],
+            grid["offset_y"], grid["adjustments_x"], grid["adjustments_y"],
+            grid["average_distance"], grid["minimum_bridges"], grid["length"],
+            backend, callback)
 
 def generate_toolpath(model, tool_settings=None,
         bounds_low=None, bounds_high=None, direction="x",
         path_generator="DropCutter", path_postprocessor="ZigZagCutter",
         material_allowance=0, safety_height=None, overlap=0, step_down=0,
-        engrave_offset=0, support_grid_distance_x=None,
+        engrave_offset=0, support_grid_type=None, support_grid_distance_x=None,
         support_grid_distance_y=None, support_grid_thickness=None,
         support_grid_height=None, support_grid_offset_x=None,
         support_grid_offset_y=None, support_grid_adjustments_x=None,
-        support_grid_adjustments_y=None, calculation_backend=None, callback=None):
+        support_grid_adjustments_y=None, support_grid_average_distance=None,
+        support_grid_minimum_bridges=None, support_grid_length=None,
+        calculation_backend=None, callback=None):
     """ abstract interface for generating a toolpath
 
     @type model: pycam.Geometry.Model.Model
@@ -143,7 +146,8 @@ def generate_toolpath(model, tool_settings=None,
         # material allowance is ignored for engraving
         material_allowance = 0
     # create the grid model if requested
-    if (((not support_grid_distance_x is None) \
+    if (support_grid_type == "grid") \
+            and (((not support_grid_distance_x is None) \
             or (not support_grid_distance_y is None)) \
             and (not support_grid_thickness is None)):
         # grid height defaults to the thickness
@@ -167,6 +171,35 @@ def generate_toolpath(model, tool_settings=None,
                 offset_y=support_grid_offset_y,
                 adjustments_x=support_grid_adjustments_x,
                 adjustments_y=support_grid_adjustments_y)
+        trimesh_model += support_grid_model
+    elif (support_grid_type == "distributed") \
+            and (not support_grid_average_distance is None) \
+            and (not support_grid_thickness is None) \
+            and (not support_grid_length is None):
+        if support_grid_height is None:
+            support_grid_height = support_grid_thickness
+        if support_grid_minimum_bridges is None:
+            support_grid_minimum_bridges = 2
+        if support_grid_average_distance <= 0:
+            return "The average support grid distance must be a positive value"
+        if support_grid_minimum_bridges <= 0:
+            return "The minimum number of bridged per polygon must be a " \
+                    + "positive value"
+        if support_grid_thickness <= 0:
+            return "The thickness of the support grid must be a positive value"
+        if support_grid_height <= 0:
+            return "The height of the support grid must be a positive value"
+        if not callback is None:
+            callback(text="Preparing support grid model ...")
+        # check which model to choose
+        if not contour_model is None:
+            model = contour_model
+        else:
+            model = trimesh_model
+        support_grid_model = pycam.Toolpath.SupportGrid.get_support_distributed(
+                model, minz, support_grid_average_distance,
+                support_grid_minimum_bridges, support_grid_thickness,
+                support_grid_height, support_grid_length)
         trimesh_model += support_grid_model
     # Adapt the contour_model to the engraving offset. This offset is
     # considered to be part of the material_allowance.

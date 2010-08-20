@@ -804,9 +804,8 @@ class ProjectGui:
             if (s.get("support_grid_thickness") > 0) \
                     and (s.get("support_grid_height") > 0) \
                     and (s.get("support_grid_average_distance") > 0) \
-                    and (s.get("support_grid_minimum_bridges") > 0) \
-                    and (s.get("support_grid_length") > 0):
-                support_grid = pycam.Toolpath.SupportGrid.get_distributed_support_bridges(
+                    and (s.get("support_grid_minimum_bridges") > 0):
+                support_grid = pycam.Toolpath.SupportGrid.get_support_distributed(
                         s.get("model"), s.get("minz"),
                         s.get("support_grid_average_distance"),
                         s.get("support_grid_minimum_bridges"),
@@ -816,6 +815,7 @@ class ProjectGui:
         elif grid_type == GRID_TYPES["none"]:
             pass
         s.set("support_grid", support_grid)
+        self.update_view()
 
     def switch_support_grid_manual_selector(self, widget=None):
         old_axis_was_x = self.grid_adjustment_axis_x_last
@@ -2604,7 +2604,7 @@ class ProjectGui:
                     adjustments_x=self.grid_adjustments_x,
                     adjustments_y=self.grid_adjustments_y)
         elif grid_type == GRID_TYPES["automatic"]:
-            toolpath_settings.set_support_automatic(
+            toolpath_settings.set_support_distributed(
                     self.settings.get("support_grid_average_distance"),
                     self.settings.get("support_grid_minimum_bridges"),
                     self.settings.get("support_grid_thickness"),
