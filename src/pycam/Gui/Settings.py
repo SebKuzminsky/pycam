@@ -148,6 +148,13 @@ y_low: 0.0
 y_high: 0.0
 z_low: 0.0
 z_high: 0.0
+
+[TaskDefault]
+name: Default
+enabled: yes
+tool: 0
+process: 0
+bounds: 0
 """
 
     DEFAULT_CONFIG = """

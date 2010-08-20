@@ -116,6 +116,11 @@ def get_data_file_location(filename):
         log.error(os.linesep.join(lines))
         return None
 
+def report_exception():
+    log.error("An unexpected exception occoured: please send the " \
+            + "text below to the developers of PyCAM. Thanks a lot!\n" \
+            + traceback.format_exc())
+
 
 class ProjectGui:
 
@@ -697,7 +702,12 @@ class ProjectGui:
             if self.gui_is_active:
                 return
             self.gui_is_active = True
-            result = func(self, *args, **kwargs)
+            try:
+                result = func(self, *args, **kwargs)
+            except:
+                # catch possible exceptions and report them
+                report_exception()
+                result = None
             self.gui_is_active = False
             while self._batch_queue:
                 batch_func, batch_args, batch_kwargs = self._batch_queue[0]
@@ -2520,9 +2530,7 @@ class ProjectGui:
             toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(
                     self.model, toolpath_settings, callback=draw_callback)
         except:
-            log.error("An unexpected exception occoured: please send the " \
-                    + "text below to the developers of PyCAM. Thanks a lot!\n" \
-                    + traceback.format_exc())
+            report_exception()
             return False
 
         log.info("Toolpath generation time: %f" % (time.time() - start_time))
