@@ -80,6 +80,9 @@ def import_gtk_carefully():
         except NameError:
             # GTK is probably not installed - the next import will fail
             pass
+        except WindowsError:
+            # this happens with pyinstaller binaries - just ignore it
+            pass
         else:
             # add the new path to the PATH environment variable
             if "PATH" in os.environ:
