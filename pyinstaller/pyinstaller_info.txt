@@ -1,0 +1,12 @@
+PyInstaller (http://pyinstaller.org) can be used to create standalone binaries for Windows.
+
+How to build a standalone exe file (on Windows only):
+1) download pyinstaller
+2) run "cmd"
+3) "cd PATH_TO_PYCAM"
+4) "python PYINSTALLER_PATH\Build.py pyinstaller\pycam.spec"
+5) test and upload the binary file "pycam-VERSION_standalone.exe"
+
+Known issues:
+- the "logo_gui.png" image is not displayed in the "Preferences" window
+  (the dll for png support is not included; the "pixbuf.loaders" file does not exist)

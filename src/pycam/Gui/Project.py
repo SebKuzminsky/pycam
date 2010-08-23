@@ -54,6 +54,9 @@ DATA_BASE_DIRS = [os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
         os.path.join(sys.prefix, "share", "pycam", "ui")]
 if DATA_DIR_ENVIRON_KEY in os.environ:
     DATA_BASE_DIRS.insert(0, os.environ[DATA_DIR_ENVIRON_KEY])
+# necessary for "pyinstaller"
+if "_MEIPASS2" in os.environ:
+    DATA_BASE_DIRS.insert(0, os.environ["_MEIPASS2"])
 
 GTKBUILD_FILE = "pycam-project.ui"
 GTKMENU_FILE = "menubar.xml"
@@ -843,8 +846,10 @@ class ProjectGui:
             max_distance = self.settings.get("support_grid_distance_y")
         # we allow an individual adjustment of 66% of the distance
         max_distance /= 1.5
-        self.grid_adjustment_value.set_lower(-max_distance)
-        self.grid_adjustment_value.set_upper(max_distance)
+        if hasattr(self.grid_adjustment_value, "set_lower"):
+            # gtk 2.14 is required for "set_lower" and "set_upper"
+            self.grid_adjustment_value.set_lower(-max_distance)
+            self.grid_adjustment_value.set_upper(max_distance)
         if self.grid_adjustment_value.get_value() \
                 != self.settings.get("support_grid_adjustment_value"):
             self.grid_adjustment_value.set_value(self.settings.get(
