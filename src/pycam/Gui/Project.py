@@ -818,13 +818,20 @@ class ProjectGui:
                     and (s.get("support_grid_height") > 0) \
                     and (s.get("support_grid_average_distance") > 0) \
                     and (s.get("support_grid_minimum_bridges") > 0):
-                support_grid = pycam.Toolpath.SupportGrid.get_support_distributed(
-                        s.get("model"), s.get("minz"),
-                        s.get("support_grid_average_distance"),
-                        s.get("support_grid_minimum_bridges"),
-                        s.get("support_grid_thickness"),
-                        s.get("support_grid_height"),
-                        s.get("support_grid_length"))
+                # get the minimum z value of the bounding box
+                bounds = self.settings.get("current_bounds")
+                if (bounds is None) and (len(self.bounds_list) > 0):
+                    bounds = self.bounds_list[0]
+                if not bounds is None:
+                    minz = bounds.get_absolute_limits(
+                            reference=self.model.get_bounds())[0][2]
+                    support_grid = pycam.Toolpath.SupportGrid.get_support_distributed(
+                            s.get("model"), minz,
+                            s.get("support_grid_average_distance"),
+                            s.get("support_grid_minimum_bridges"),
+                            s.get("support_grid_thickness"),
+                            s.get("support_grid_height"),
+                            s.get("support_grid_length"))
         elif grid_type == GRID_TYPES["none"]:
             pass
         s.set("support_grid", support_grid)
