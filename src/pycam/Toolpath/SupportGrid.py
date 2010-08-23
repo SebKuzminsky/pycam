@@ -206,7 +206,10 @@ def get_support_distributed(model, z_plane, average_distance,
                 else:
                     # position1 is OK
                     position = position1
+            # append the original position (ignoring z_plane)
             bridge_positions.append(position)
+            # move the point to z_plane
+            position = Point(position.x, position.y, z_plane)
             bridge_dir = lines[line_index].dir.cross(
                     polygon.plane.n).normalized().mul(length)
             _add_cuboid_to_model(result, position, bridge_dir, height, thickness)
