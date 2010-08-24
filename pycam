@@ -32,7 +32,7 @@ import pycam.Gui.Settings
 import pycam.Gui.Console
 import pycam.Importers.TestModel
 import pycam.Importers
-import pycam.Exporters.SimpleGCodeExporter
+import pycam.Exporters.GCodeExporter
 import pycam.Toolpath.Generator
 from pycam.Toolpath import Bounds, Toolpath
 from pycam import VERSION
@@ -170,6 +170,8 @@ if __name__ == "__main__":
             + "place during the mill operation. The support grid can be " \
             + "removed manually afterwards. The support grid can have a " \
             + "rectangular profile. By default the support grid is disabled.")
+    group_gcode = parser.add_option_group("GCode settings",
+            "Specify some details of the generated GCode.")
     group_external_programs = parser.add_option_group("External programs",
             "Some optional external programs are used for format conversions.")
     # general options
@@ -302,6 +304,25 @@ if __name__ == "__main__":
     group_support_grid.add_option("", "--support-grid-thickness",
             dest="support_grid_thickness", default=0.5, action="store",
             type="float", help="width of the support grid profile")
+    # gcode options
+    group_gcode.add_option("", "--gcode-no-start-stop-spindle",
+            dest="gcode_no_start_stop_spindle", default=True,
+            action="store_false", help="do not start the spindle before " \
+            + "and stop it after each operation (M3/M5)")
+    group_gcode.add_option("", "--gcode-path-mode", dest="gcode_path_mode",
+            default="exact_path", action="store", type="choice",
+            choices=["exact_path", "exact_stop", "continuous"],
+            help="choose the GCode path mode from 'exact_path', 'exact_stop'" \
+            + "and 'continuous'. See " \
+            + "http://linuxcnc.org/docs/html/gcode_main.html for details")
+    group_gcode.add_option("", "--gcode-motion-tolerance",
+            dest="gcode_motion_tolerance", default=None,
+            action="store", help="the optional motion tolerance for " \
+            + "'continuous' path mode (G64).")
+    group_gcode.add_option("", "--gcode-naive-tolerance",
+            dest="gcode_naive_tolerance", default=None,
+            action="store", help="the optional naive CAM tolerance for " \
+            + "'continuous' path mode (G64).")
     # external program settings
     group_external_programs.add_option("", "--location-inkscape",
             dest="external_program_inkscape", default="", action="store",
@@ -489,10 +510,25 @@ if __name__ == "__main__":
                 handler, closer = get_output_handler(opts.export_gcode)
                 if handler is None:
                     sys.exit(EXIT_CODES["write_output_failed"])
-                pycam.Exporters.SimpleGCodeExporter.ExportPathList(handler,
-                        tp_obj.get_path(), opts.unit_size, opts.tool_feedrate,
-                        opts.tool_spindle_speed,
+                # TODO: change to the new gcode exporter
+                generator = pycam.Exporters.GCodeExporter.GCodeGenerator(
+                        handler, metric_units = (opts.unit_size == "mm"),
                         safety_height=opts.safety_height,
+                        toggle_spindle_status=opts.gcode_no_start_stop_spindle)
+                generator.set_speed(opts.tool_feedrate, opts.tool_spindle_speed)
+                path_mode = opts.gcode_path_mode
+                PATH_MODES = pycam.Exporters.GCodeExporter.PATH_MODES
+                if (path_mode == "continuous") \
+                        and (not opts.gcode_motion_tolerance is None):
+                    if opts.gcode_naive_tolerance == 0:
+                        naive_tolerance = None
+                    else:
+                        naive_tolerance = opts.gcode_naive_tolerance
+                    generator.set_path_mode(PATH_MODES["continuous"],
+                            opts.gcode_motion_tolerance, naive_tolerance)
+                else:
+                    generator.set_path_mode(PATH_MODES[opts.gcode_path_mode])
+                generator.add_path_list(toolpath,
                         max_skip_safety_distance=opts.tool_diameter,
                         comment=tp_obj.get_meta_data())
                 closer()
