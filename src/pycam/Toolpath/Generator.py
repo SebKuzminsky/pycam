@@ -48,8 +48,8 @@ def generate_toolpath_from_settings(model, tp_settings, callback=None):
     return generate_toolpath(model, tp_settings.get_tool_settings(),
             bounds_low, bounds_high, process["path_direction"],
             process["generator"], process["postprocessor"],
-            process["material_allowance"], process["safety_height"],
-            process["overlap"], process["step_down"], process["engrave_offset"],
+            process["material_allowance"], process["overlap"],
+            process["step_down"], process["engrave_offset"],
             grid["type"], grid["distance_x"], grid["distance_y"],
             grid["thickness"], grid["height"], grid["offset_x"],
             grid["offset_y"], grid["adjustments_x"], grid["adjustments_y"],
@@ -59,8 +59,8 @@ def generate_toolpath_from_settings(model, tp_settings, callback=None):
 def generate_toolpath(model, tool_settings=None,
         bounds_low=None, bounds_high=None, direction="x",
         path_generator="DropCutter", path_postprocessor="ZigZagCutter",
-        material_allowance=0, safety_height=None, overlap=0, step_down=0,
-        engrave_offset=0, support_grid_type=None, support_grid_distance_x=None,
+        material_allowance=0, overlap=0, step_down=0, engrave_offset=0,
+        support_grid_type=None, support_grid_distance_x=None,
         support_grid_distance_y=None, support_grid_thickness=None,
         support_grid_height=None, support_grid_offset_x=None,
         support_grid_offset_y=None, support_grid_adjustments_x=None,
@@ -122,7 +122,6 @@ def generate_toolpath(model, tool_settings=None,
     """
     overlap = number(overlap)
     step_down = number(step_down)
-    safety_height = number(safety_height)
     engrave_offset = number(engrave_offset)
     if bounds_low is None:
         # no bounds were given - we use the boundaries of the model
@@ -252,16 +251,12 @@ def generate_toolpath(model, tool_settings=None,
     if isinstance(physics, basestring):
         return physics
     generator = _get_pathgenerator_instance(trimesh_model, contour_model,
-            cutter, path_generator, path_postprocessor, safety_height, physics)
+            cutter, path_generator, path_postprocessor, physics)
     if isinstance(generator, basestring):
         return generator
     if (overlap < 0) or (overlap >= 1):
         return "Invalid overlap value (%f): should be greater or equal 0 " \
                 + "and lower than 1"
-    if safety_height < maxz:
-        return ("Safety height (%.4f) is within the bounding box height " \
-                + "(%.4f) - this can cause collisions of the tool with " \
-                + "the material.") % (safety_height, maxz)
     # factor "2" since we are based on radius instead of diameter
     stepping = 2 * number(tool_settings["tool_radius"]) * (1 - overlap)
     if path_generator == "DropCutter":
@@ -303,7 +298,7 @@ def generate_toolpath(model, tool_settings=None,
     return toolpath
     
 def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
-        pathgenerator, pathprocessor, safety_height, physics):
+        pathgenerator, pathprocessor, physics):
     if pathgenerator == "DropCutter":
         if pathprocessor == "ZigZagCutter":
             processor = pycam.PathProcessors.PathAccumulator(zigzag=True)
@@ -314,7 +309,7 @@ def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
                     + "'ZigZagCutter' or 'PathAccumulator' are allowed") \
                     % str(pathprocessor)
         return DropCutter.DropCutter(cutter, trimesh_model, processor,
-                physics=physics, safety_height=safety_height)
+                physics=physics)
     elif pathgenerator == "PushCutter":
         if pathprocessor == "PathAccumulator":
             processor = pycam.PathProcessors.PathAccumulator()

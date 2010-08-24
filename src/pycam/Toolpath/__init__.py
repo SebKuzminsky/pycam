@@ -101,7 +101,7 @@ class Toolpath(object):
         else:
             self.color = color
 
-    def get_machine_time(self, start_position=None):
+    def get_machine_time(self, start_position=None, safety_height=0.0):
         """ calculate an estimation of the time required for processing the
         toolpath with the machine
 
@@ -122,7 +122,7 @@ class Toolpath(object):
             result["time"] += new_pos.sub(result["position"]).norm / feedrate
             result["position"] = new_pos
         # move to safey height at the starting position
-        safety_height = number(settings.get_process_settings()["safety_height"])
+        safety_height = number(safety_height)
         move(Point(start_position.x, start_position.y, safety_height))
         for path in self.get_path():
             # go to safety height (horizontally from the previous x/y location)

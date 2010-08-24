@@ -131,7 +131,6 @@ speed: 1000
 [ProcessDefault]
 name: Remove material
 path_direction: x
-safety_height: 5
 engrave_offset: 0.0
 path_generator: PushCutter
 path_postprocessor: PolygonCutter
@@ -181,7 +180,6 @@ tool_radius: 0.5
 
 [ProcessDefault]
 path_direction: x
-safety_height: 25
 engrave_offset: 0.0
 
 [Process0]
@@ -272,7 +270,6 @@ process: 3
             "path_direction": str,
             "path_generator": str,
             "path_postprocessor": str,
-            "safety_height": float,
             "material_allowance": float,
             "overlap_percent": int,
             "step_down": float,
@@ -294,7 +291,7 @@ process: 3
             "tool": ("name", "shape", "tool_radius", "torus_radius", "feedrate",
                     "speed"),
             "process": ("name", "path_generator", "path_postprocessor",
-                    "path_direction", "safety_height", "material_allowance",
+                    "path_direction", "material_allowance",
                     "overlap_percent", "step_down", "engrave_offset"),
             "bounds": ("name", "type", "x_low", "x_high", "y_low",
                     "y_high", "z_low", "z_high"),
@@ -592,7 +589,6 @@ class ToolpathSettings:
             "postprocessor": str,
             "path_direction": str,
             "material_allowance": float,
-            "safety_height": float,
             "overlap": float,
             "step_down": float,
             "engrave_offset": float,
@@ -703,14 +699,13 @@ class ToolpathSettings:
             return "mm"
 
     def set_process_settings(self, generator, postprocessor, path_direction,
-            material_allowance=0.0, safety_height=0.0, overlap=0.0,
+            material_allowance=0.0, overlap=0.0,
             step_down=1.0, engrave_offset=0.0):
         self.process_settings = {
                 "generator": generator,
                 "postprocessor": postprocessor,
                 "path_direction": path_direction,
                 "material_allowance": material_allowance,
-                "safety_height": safety_height,
                 "overlap": overlap,
                 "step_down": step_down,
                 "engrave_offset": engrave_offset,

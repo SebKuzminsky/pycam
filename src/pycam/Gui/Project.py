@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import pycam.Exporters.SimpleGCodeExporter
+import pycam.Exporters.GCodeExporter
 import pycam.Exporters.EMCToolExporter
 import pycam.Gui.Settings
 import pycam.Cutters
@@ -94,6 +94,11 @@ PREFERENCES_DEFAULTS = {
         "view_polygon": True,
         "simulation_details_level": 3,
         "drill_progress_max_fps": 2,
+        "gcode_safety_height": 25.0,
+        "gcode_path_mode": 0,
+        "gcode_motion_tolerance": 0,
+        "gcode_naive_tolerance": 0,
+        "gcode_start_stop_spindle": True,
         "external_program_inkscape": "",
         "external_program_pstoedit": "",
 }
@@ -507,9 +512,8 @@ class ProjectGui:
             self.gui.get_object(objname).connect("toggled", self.update_process_controls)
             if objname != "SettingEnableODE":
                 self.gui.get_object(objname).connect("toggled", self.handle_process_settings_change)
-        for objname in ("SafetyHeightControl", "OverlapPercentControl",
-                "MaterialAllowanceControl", "MaxStepDownControl",
-                "EngraveOffsetControl"):
+        for objname in ("OverlapPercentControl", "MaterialAllowanceControl",
+                "MaxStepDownControl", "EngraveOffsetControl"):
             self.gui.get_object(objname).connect("value-changed", self.handle_process_settings_change)
         self.gui.get_object("ProcessSettingName").connect("changed", self.handle_process_settings_change)
         # get/set functions for the current tool/process/bounds/task
@@ -622,6 +626,23 @@ class ProjectGui:
             obj = self.gui.get_object(objname)
             self._task_property_signals.append((obj,
                     obj.connect("changed", self._handle_task_setting_change)))
+        # gcode settings
+        gcode_safety_height = self.gui.get_object("SafetyHeightControl")
+        self.settings.add_item("gcode_safety_height",
+                gcode_safety_height.get_value, gcode_safety_height.set_value)
+        gcode_path_mode = self.gui.get_object("GCodeCornerStyleControl")
+        self.settings.add_item("gcode_path_mode", gcode_path_mode.get_active,
+                gcode_path_mode.set_active)
+        gcode_path_mode.connect("changed", self.update_gcode_controls)
+        gcode_motion_tolerance = self.gui.get_object("GCodeCornerStyleMotionTolerance")
+        self.settings.add_item("gcode_motion_tolerance",
+                gcode_motion_tolerance.get_value, gcode_motion_tolerance.set_value)
+        gcode_naive_tolerance = self.gui.get_object("GCodeCornerStyleCAMTolerance")
+        self.settings.add_item("gcode_naive_tolerance",
+                gcode_naive_tolerance.get_value, gcode_naive_tolerance.set_value)
+        gcode_start_stop_spindle = self.gui.get_object("GCodeStartStopSpindle")
+        self.settings.add_item("gcode_start_stop_spindle",
+                gcode_start_stop_spindle.get_active, gcode_start_stop_spindle.set_active)
         # configure locations of external programs
         for auto_control_name, location_control_name, browse_button, key in (
                 ("ExternalProgramInkscapeAuto",
@@ -686,6 +707,11 @@ class ProjectGui:
         self.update_unit_labels()
         self.update_support_grid_controls()
         self.update_scale_controls()
+        self.update_gcode_controls()
+
+    def update_gcode_controls(self, widget=None):
+        path_mode = self.settings.get("gcode_path_mode")
+        self.gui.get_object("GCodeToleranceTable").set_sensitive(path_mode == 3)
 
     def progress_activity_guard(func):
         def progress_activity_guard_wrapper(self, *args, **kwargs):
@@ -1632,8 +1658,8 @@ class ProjectGui:
                 if self.gui.get_object("UnitChangeProcesses").get_active():
                     # scale the process settings
                     for process in self.process_list:
-                        for key in ("safety_height", "material_allowance",
-                                "step_down", "engrave_offset"):
+                        for key in ("material_allowance", "step_down",
+                                "engrave_offset"):
                             process[key] *= factor
                 if self.gui.get_object("UnitChangeBounds").get_active():
                     # scale the boundaries and keep their center
@@ -2193,8 +2219,7 @@ class ProjectGui:
                 if self.gui.get_object(name).get_active():
                     return name
         settings["path_postprocessor"] = get_path_postprocessor()
-        for objname, key in (("SafetyHeightControl", "safety_height"),
-                ("OverlapPercentControl", "overlap_percent"),
+        for objname, key in (("OverlapPercentControl", "overlap_percent"),
                 ("MaterialAllowanceControl", "material_allowance"),
                 ("MaxStepDownControl", "step_down"),
                 ("EngraveOffsetControl", "engrave_offset")):
@@ -2217,8 +2242,7 @@ class ProjectGui:
         def set_path_postprocessor(value):
             self.gui.get_object(value).set_active(True)
         set_path_postprocessor(settings["path_postprocessor"])
-        for objname, key in (("SafetyHeightControl", "safety_height"),
-                ("OverlapPercentControl", "overlap_percent"),
+        for objname, key in (("OverlapPercentControl", "overlap_percent"),
                 ("MaterialAllowanceControl", "material_allowance"),
                 ("MaxStepDownControl", "step_down"),
                 ("EngraveOffsetControl", "engrave_offset")):
@@ -2349,7 +2373,8 @@ class ProjectGui:
                 items = (index, tp.name, tp.visible, tool["tool_radius"],
                         tool["id"], process["material_allowance"],
                         tool["speed"], tool["feedrate"],
-                        get_time_string(tp.get_machine_time()))
+                        get_time_string(tp.get_machine_time(
+                        safety_height=self.settings.get("gcode_safety_height"))))
                 model.append(items)
             if not new_index is None:
                 self._treeview_set_active_index(self.toolpath_table, new_index)
@@ -2648,7 +2673,6 @@ class ProjectGui:
                 process_settings["path_postprocessor"],
                 process_settings["path_direction"],
                 process_settings["material_allowance"],
-                process_settings["safety_height"],
                 process_settings["overlap_percent"] / 100.0,
                 process_settings["step_down"],
                 process_settings["engrave_offset"])
@@ -2754,31 +2778,43 @@ class ProjectGui:
         # no filename given -> exit
         if not filename:
             return
+        if self.settings.get("gcode_safety_height") < self.settings.get("maxz"):
+            log.warn(("Safety height (%.4f) is below the top of the model " \
+                    + "(%.4f) - this can cause collisions of the tool with " \
+                    + "the material.") % (self.settings.get(
+                    "gcode_safety_height"), self.settings.get("maxz")))
         try:
             destination = open(filename, "w")
-            index = 0
-            for index in range(len(self.toolpath)):
-                tp = self.toolpath[index]
-                # check if this is the last loop iteration
-                # only the last toolpath of the list should contain the "M2"
-                # ("end program") G-code
-                if index + 1 == len(self.toolpath):
-                    is_last_loop = True
-                else:
-                    is_last_loop = False
+            generator = pycam.Exporters.GCodeExporter.GCodeGenerator(
+                    destination,
+                    metric_units=(self.settings.get("unit") == "mm"),
+                    safety_height=self.settings.get("gcode_safety_height"),
+                    toggle_spindle_status=self.settings.get("gcode_start_stop_spindle"),
+                    comment=self.get_meta_data())
+            path_mode = self.settings.get("gcode_path_mode")
+            PATH_MODES = pycam.Exporters.GCodeExporter.PATH_MODES
+            if path_mode == 0:
+                generator.set_path_mode(PATH_MODES["exact_path"])
+            elif path_mode == 1:
+                generator.set_path_mode(PATH_MODES["exact_stop"])
+            elif path_mode == 2:
+                generator.set_path_mode(PATH_MODES["continuous"])
+            else:
+                naive_tolerance = self.settings.get("gcode_naive_tolerance")
+                if naive_tolerance == 0:
+                    naive_tolerance = None
+                generator.set_path_mode(PATH_MODES["continuous"],
+                        self.settings.get("gcode_motion_tolerance"),
+                        naive_tolerance)
+            for tp in self.toolpath:
                 settings = tp.get_toolpath_settings()
                 process = settings.get_process_settings()
                 tool = settings.get_tool_settings()
-                meta_data = []
-                meta_data.append(self.get_meta_data())
-                meta_data.append(tp.get_meta_data())
-                pycam.Exporters.SimpleGCodeExporter.ExportPathList(destination,
-                        tp.get_path(), settings.get_unit_size(),
-                        tool["feedrate"], tool["speed"],
-                        safety_height=process["safety_height"],
-                        tool_id=tool["id"], finish_program=is_last_loop,
+                generator.set_speed(tool["feedrate"], tool["speed"])
+                generator.add_path_list(tp.get_path(), tool_id=tool["id"],
                         max_skip_safety_distance=2*tool["tool_radius"],
-                        comment=os.linesep.join(meta_data))
+                        comment=tp.get_meta_data())
+            generator.finish()
             destination.close()
             log.info("GCode file successfully written: %s" % str(filename))
         except IOError, err_msg:

@@ -63,13 +63,11 @@ class Dimension:
 
 class DropCutter:
 
-    def __init__(self, cutter, model, path_processor, physics=None,
-            safety_height=INFINITE):
+    def __init__(self, cutter, model, path_processor, physics=None):
         self.cutter = cutter
         self.model = model
         self.pa = path_processor
         self.physics = physics
-        self.safety_height = safety_height
         # remember if we already reported an invalid boundary
         self._boundary_warning_already_shown = False
 
@@ -130,7 +128,7 @@ class DropCutter:
                     for p in points:
                         self.pa.append(p)
                 else:
-                    p = Point(x, y, self.safety_height)
+                    p = Point(x, y, self.model.maxz)
                     self.pa.append(p)
                     if not self._boundary_warning_already_shown:
                         log.warn("DropCutter: exceed the height of the " \

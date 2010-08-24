@@ -17,16 +17,19 @@
 
 class gcode:
 
-    lastx = lasty = lastz = lasta = lastgcode = None
-    lastfeed = None
-
-    def __init__(self, homeheight=1.5, safetyheight=None, tool_id=1):
+    def __init__(self, safetyheight=1.0, tool_id=1):
         self.tool_id = tool_id
-        if safetyheight is None:
-            safetyheight = max(homeheight, 0.04)
-        self.homeheight = homeheight
         self.safetyheight = safetyheight
-        self.lastz = self.safetyheight
+        self.lastfeed = None
+        self.lastx = None
+        self.lasty = None
+        self.lastz = None
+        self.lasta = None
+        self.lastgcode = None
+        self.lastz = None
+
+    def delay(self, seconds):
+        return "G04 P%d" % seconds
 
     def begin(self):
         """
@@ -37,12 +40,9 @@ class gcode:
         G90: use absolute coordinates instead of axis increments
         G00 Z?: no x/y positioning - just go up to safety height
         """
-        return "G40 G49 G54 G80 G90\n" \
-                + "G04 P3 T%d M6\n" % self.tool_id \
-                + "G00 Z%.4f\n" % self.safetyheight
-
-    def end(self):
-        return self.safety() + "\n" + "M2\n"
+        return ("G40 G49 G54 G80 G90",
+                "G04 P3 T%d M6" % self.tool_id,
+                "G00 Z%.4f" % self.safetyheight)
 
     def exactpath(self):
         return "G61"
@@ -79,7 +79,11 @@ class gcode:
         if (gcode == "G01") and feed and (feed != self.lastfeed):
             feedstring = " F%.4f" % (feed)
             self.lastfeed = feed
-        return gcodestring + feedstring + xstring + ystring + zstring + astring
+        positionstring = xstring + ystring + zstring + astring
+        if len(positionstring) > 0:
+            return gcodestring + feedstring + positionstring
+        else:
+            return ""
 
     def cut(self, x = None, y = None, z = None, a = None, feed=None):
         if x == None: x = self.lastx
@@ -87,9 +91,6 @@ class gcode:
         if z == None: z = self.lastz
         if a == None: a = self.lasta
         return self.rapid(x, y, z, a, gcode="G01", feed=feed)
-
-    def home(self):
-        return self.rapid(z=self.homeheight)
 
     def safety(self):
         return self.rapid(z=self.safetyheight)
