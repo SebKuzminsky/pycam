@@ -54,6 +54,14 @@ Afterwards you can remove the new package repository again.
 Hint: installing 'python-psyco' will probably speed up processing speed.
 
 
+MacOS
+-----
+
+Please read http://sourceforge.net/projects/pycam/forums/forum/860183/topic/3800091
+for the issues involved with installing PyCAM's dependencies via MacPorts.
+(thanks to lilalinux for this description)
+
+
 Minimal requirements for non-GUI mode
 =====================================
 If you plan to use PyCAM only in batch mode (without a graphical user
