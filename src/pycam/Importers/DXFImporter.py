@@ -229,7 +229,8 @@ def import_model(filename, program_locations=None, unit=None):
             # pstoedit uses inch internally - we need to scale
             log.info("DXFImporter: scaling model from inch to mm")
             model.scale(25.4)
-        log.info("DXFImporter: Imported DXF model: %d lines" % len(lines))
+        log.info("DXFImporter: Imported DXF model: %d lines / %d polygons" \
+                % (len(lines), len(model.get_polygons())))
         return model
     else:
         log.error("DXFImporter: No supported elements found in DXF file!")

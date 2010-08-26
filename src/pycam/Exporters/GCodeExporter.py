@@ -111,7 +111,7 @@ class GCodeGenerator:
         # move straight up to safety height
         self.append(self.gcode.safety())
         for path in paths:
-            self.add_path(path)
+            self.add_path(path, max_skip_safety_distance=max_skip_safety_distance)
         # go back to safety height
         self.append(self.gcode.safety())
         if self.toggle_spindle_status:
