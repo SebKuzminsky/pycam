@@ -40,6 +40,15 @@ class Plane(TransformableContainer):
     def __repr__(self):
         return "Plane<%s,%s>" % (self.p, self.n)
 
+    def __cmp__(self, other):
+        if self.__class__ == other.__class__:
+            if self.p == other.p:
+                return cmp(self.n, other.n)
+            else:
+                return cmp(self.p, other.p)
+        else:
+            return cmp(str(self), str(other))
+
     def next(self):
         yield self.p
         yield self.n

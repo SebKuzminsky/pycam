@@ -26,15 +26,18 @@ from pycam.Geometry.Plane import Plane
 from pycam.Geometry import TransformableContainer
 from pycam.Geometry.utils import number, epsilon
 import pycam.Geometry.Matrix as Matrix
+import pycam.Utils.log
 import math
+
+log = pycam.Utils.log.get_logger()
 
 
 class Polygon(TransformableContainer):
 
     def __init__(self, plane=None):
         super(Polygon, self).__init__()
-        # TODO: derive the plane from the appended points
         if plane is None:
+            # the default plane points upwards along the z axis
             plane = Plane(Point(0, 0, 0), Point(0, 0, 1))
         self.plane = plane
         self._points = []
@@ -647,4 +650,19 @@ class Polygon(TransformableContainer):
             return new_groups
         else:
             return None
+
+    def get_plane_projection(self, plane):
+        if plane == self.plane:
+            return self
+        elif plane.n.dot(self.plane.n) == 0:
+            log.warn("Polygon projection onto plane: orthogonal projection " \
+                    + "is not possible")
+            return None
+        else:
+            result = Polygon(plane)
+            for line in self.get_lines():
+                p1, dist = plane.intersect_point(plane.n, line.p1)
+                p2, dist = plane.intersect_point(plane.n, line.p2)
+                result.append(Line(p1, p2))
+            return result
 
