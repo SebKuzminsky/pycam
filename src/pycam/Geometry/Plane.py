@@ -21,8 +21,11 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry import TransformableContainer
-from pycam.Geometry.utils import INFINITE
+from pycam.Geometry.utils import INFINITE, epsilon
 from pycam.Geometry.Point import Point, Vector
+# "Line" is imported later to avoid circular imports
+#from pycam.Geometry.Line import Line
+
 
 class Plane(TransformableContainer):
     id = 0
@@ -61,4 +64,32 @@ class Plane(TransformableContainer):
         l = -(self.n.dot(point) - self.n.dot(self.p)) / denom
         cp = point.add(direction.mul(l))
         return (cp, l)
+
+    def intersect_triangle(self, triangle):
+        """ Returns the line of intersection of a triangle with a plane.
+        "None" is returned, if:
+            - the triangle does not intersect with the plane
+            - all vertices of the triangle are on the plane
+            - only one vertex of the triangle is on the plane
+        """
+        # don't import Line in the header -> circular import
+        from pycam.Geometry.Line import Line
+        collisions = []
+        for edge, point in ((triangle.e1, triangle.p1),
+                (triangle.e2, triangle.p2),
+                (triangle.e3, triangle.p3)):
+            cp, l = self.intersect_point(edge.dir, point)
+            # filter all real collisions (ignore l == 0 to avoid duplicates)
+            if (not cp is None) and (0 < l <= edge.len + epsilon):
+                collisions.append(cp)
+        if len(collisions) == 3:
+            # all points of the triangle are on the plane
+            return None
+        elif (len(collisions) == 2) and (collisions[0] != collisions[1]):
+            return Line(collisions[0], collisions[1])
+        elif len(collisions) == 1:
+            # only one point is on the plane -> ignore it
+            return None
+        else:
+            return None
 

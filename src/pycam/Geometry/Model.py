@@ -24,14 +24,18 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import pycam.Exporters.STLExporter
 from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.Line import Line
+from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Polygon import Polygon
-from pycam.Geometry.Point import Point
+from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
 from pycam.Geometry.Matrix import TRANSFORMATIONS
 from pycam.Toolpath import Bounds
 from pycam.Geometry.utils import INFINITE
 from pycam.Geometry import TransformableContainer
 from pycam.Utils import ProgressCounter
+import pycam.Utils.log
+
+log = pycam.Utils.log.get_logger()
 
 
 class BaseModel(TransformableContainer):
@@ -206,6 +210,39 @@ class Model(BaseModel):
             return self._t_kdtree.Search(minx, maxx, miny, maxy)
         return self._triangles
 
+    def get_waterline_polygons(self, plane):
+        collision_lines = []
+        for t in self._triangles:
+            collision_line = plane.intersect_triangle(t)
+            if not collision_line is None:
+                # check direction of line - the lines should run clockwise
+                cross = plane.n.cross(collision_line.dir)
+                if cross.dot(t.normal) < 0:
+                    # revert the direction of the line
+                    collision_line = Line(collision_line.p2, collision_line.p1)
+                collision_lines.append(collision_line)
+        # combine these lines into polygons
+        contour = ContourModel()
+        for line in collision_lines:
+            contour.append(line)
+        log.debug("Waterline: %f - %d - %s" % (plane.p.z,
+                len(contour.get_polygons()),
+                [len(p.get_lines()) for p in contour.get_polygons()]))
+        return contour.get_polygons()
+
+    def to_OpenGL_waterline(self, num_of_levels=10):
+        """ Visualize the waterline of the model for various z-levels.
+        This is only used for debugging.
+        """
+        #super(Model, self).to_OpenGL()
+        z_diff = (self.maxz - self.minz) / (num_of_levels - 1)
+        z_levels = [self.minz + z_diff * i for i in range(num_of_levels)]
+        for z_level in z_levels:
+            polygons = self.get_waterline_polygons(Plane(Point(0, 0, z_level),
+                    Vector(0, 0, 1)))
+            for polygon in polygons:
+                polygon.to_OpenGL()
+
 
 class ContourModel(BaseModel):
 
@@ -221,12 +258,44 @@ class ContourModel(BaseModel):
         # reset the offset model cache
         self._cached_offset_models = {}
 
+    def _merge_polygon_if_possible(self, other_polygon):
+        """ Check if the given 'other_polygon' can be connected to another
+        polygon of the the current model. Both polygons are merged if possible.
+        This function should be called after any "append" event, if the lines to
+        be added are given in a random order (e.g. by the "waterline" function).
+        """
+        connector1 = other_polygon.get_lines()[0]
+        connector2 = other_polygon.get_lines()[-1]
+        # filter all polygons that can be combined with 'other_polygon'
+        connectables = []
+        for lg in self._line_groups:
+            if lg is other_polygon:
+                continue
+            if lg.is_connectable(connector1) or lg.is_connectable(connector2):
+                connectables.append(lg)
+        # merge 'other_polygon' with all other connectable polygons
+        for polygon in connectables:
+            if other_polygon.is_connectable(polygon.get_lines()[0]):
+                for line in polygon.get_lines():
+                    other_polygon.append(line)
+                self._line_groups.remove(polygon)
+            elif other_polygon.is_connectable(polygon.get_lines()[-1]):
+                lines = polygon.get_lines()
+                lines.reverse()
+                for line in lines:
+                    other_polygon.append(line)
+                self._line_groups.remove(polygon)
+            else:
+                log.debug("merge_polygon_if_possible: ambiguous combinations " \
+                        + "(%s - %s)" % (other_polygon, connectables))
+
     def append(self, item):
         super(ContourModel, self).append(item)
         if isinstance(item, Line):
             for line_group in self._line_groups:
                 if line_group.is_connectable(item):
                     line_group.append(item)
+                    self._merge_polygon_if_possible(line_group)
                     break
             else:
                 # add a single line as part of a new group
