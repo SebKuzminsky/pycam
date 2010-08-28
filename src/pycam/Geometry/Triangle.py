@@ -40,25 +40,12 @@ class Triangle(TransformableContainer):
     id = 0
 
     # points are expected to be in ClockWise order
-    def __init__(self, p1=None, p2=None, p3=None, e1=None, e2=None, e3=None,
-            n=None):
+    def __init__(self, p1=None, p2=None, p3=None, n=None):
         self.id = Triangle.id
         Triangle.id += 1
         self.p1 = p1
         self.p2 = p2
         self.p3 = p3
-        if (not e1) and p1 and p2:
-            self.e1 = Line(p1, p2)
-        else:
-            self.e1 = e1
-        if (not e2) and p2 and p3:
-            self.e2 = Line(p2, p3)
-        else:
-            self.e2 = e2
-        if (not e3) and p3 and p1:
-            self.e3 = Line(p3, p1)
-        else:
-            self.e3 = e3
         self.normal = n
         self.reset_cache()
 
@@ -70,6 +57,9 @@ class Triangle(TransformableContainer):
         self.maxx = max(self.p1.x, self.p2.x, self.p3.x)
         self.maxy = max(self.p1.y, self.p2.y, self.p3.y)
         self.maxz = max(self.p1.z, self.p2.z, self.p3.z)
+        self.e1 = Line(self.p1, self.p2)
+        self.e2 = Line(self.p2, self.p3)
+        self.e3 = Line(self.p3, self.p1)
         # calculate normal, if p1-p2-pe are in clockwise order
         if self.normal is None:
             self.normal = self.p3.sub(self.p1).cross(self.p2.sub( \

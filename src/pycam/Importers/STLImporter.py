@@ -53,27 +53,6 @@ def UniqueVertex(x, y, z):
         vertices += 1
         return Point(x, y, z)
 
-def UniqueEdge(p1, p2):
-    global edges
-    if hasattr(p1, "edges"):
-        for e in p1.edges:
-            if e.p1 == p1 and e.p2 == p2:
-                return e
-            if e.p2 == p1 and e.p1 == p2:
-                return e
-    edges += 1
-    e = Line(p1, p2)
-    if not hasattr(p1, "edges"):
-        p1.edges = [e]
-    else:
-        p1.edges.append(e)
-    if not hasattr(p2, "edges"):
-        p2.edges = [e]
-    else:
-        p2.edges.append(e)
-    return e
-
-
 def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None):
     global vertices, edges, kdtree
     vertices = 0
@@ -158,11 +137,9 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None):
                 n = None
 
             if dotcross > 0:
-                t = Triangle(p1, p2, p3, UniqueEdge(p1, p2), UniqueEdge(p2, p3),
-                        UniqueEdge(p3, p1))
+                t = Triangle(p1, p2, p3)
             elif dotcross < 0:
-                t = Triangle(p1, p3, p2, UniqueEdge(p1, p3), UniqueEdge(p3, p2),
-                        UniqueEdge(p2, p1))
+                t = Triangle(p1, p3, p2)
             else:
                 # the three points are in a line - or two points are identical
                 # usually this is caused by points, that are too close together
@@ -241,11 +218,9 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None):
                     # make sure the points are in ClockWise order
                     dotcross = n.dot(p3.sub(p1).cross(p2.sub(p1)))
                 if dotcross > 0:
-                    t = Triangle(p1, p2, p3, UniqueEdge(p1, p2),
-                            UniqueEdge(p2, p3), UniqueEdge(p3, p1), n)
+                    t = Triangle(p1, p2, p3, n)
                 elif dotcross < 0:
-                    t = Triangle(p1, p3, p2, UniqueEdge(p1, p3),
-                            UniqueEdge(p3, p2), UniqueEdge(p2, p1), n)
+                    t = Triangle(p1, p3, p2, n)
                 else:
                     # The three points are in a line - or two points are
                     # identical. Usually this is caused by points, that are too
