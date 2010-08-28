@@ -222,7 +222,7 @@ class Model(BaseModel):
                     collision_line = Line(collision_line.p2, collision_line.p1)
                 collision_lines.append(collision_line)
         # combine these lines into polygons
-        contour = ContourModel()
+        contour = ContourModel(plane=plane)
         for line in collision_lines:
             contour.append(line)
         log.debug("Waterline: %f - %d - %s" % (plane.p.z,
@@ -237,20 +237,28 @@ class Model(BaseModel):
         #super(Model, self).to_OpenGL()
         z_diff = (self.maxz - self.minz) / (num_of_levels - 1)
         z_levels = [self.minz + z_diff * i for i in range(num_of_levels)]
+        projection_plane = Plane(Point(0, 0, 0), Vector(0, 0, 1))
         for z_level in z_levels:
-            polygons = self.get_waterline_polygons(Plane(Point(0, 0, z_level),
-                    Vector(0, 0, 1)))
+            waterline_plane = Plane(Point(0, 0, z_level), Vector(0, 0, 1))
+            polygons = self.get_waterline_polygons(waterline_plane)
             for polygon in polygons:
-                polygon.to_OpenGL()
+                polygon.get_plane_projection(projection_plane).to_OpenGL()
 
 
 class ContourModel(BaseModel):
 
-    def __init__(self):
+    def __init__(self, plane=None):
         super(ContourModel, self).__init__()
         self.name = "contourmodel%d" % self.id
+        if plane is None:
+            # the default plane points upwards along the z axis
+            plane = Plane(Point(0, 0, 0), Point(0, 0, 1))
+        self._plane = plane
         self._line_groups = []
         self._item_groups.append(self._line_groups)
+        # there is always just one plane
+        self._plane_groups = [self._plane]
+        self._item_groups.append(self._plane_groups)
         self._cached_offset_models = {}
 
     def reset_cache(self):
@@ -299,7 +307,7 @@ class ContourModel(BaseModel):
                     break
             else:
                 # add a single line as part of a new group
-                new_line_group = Polygon()
+                new_line_group = Polygon(plane=self._plane)
                 new_line_group.append(item)
                 self._line_groups.append(new_line_group)
         elif isinstance(item, Polygon):
@@ -329,7 +337,7 @@ class ContourModel(BaseModel):
             if not new_groups is None:
                 new_line_groups.extend(new_groups)
         if len(new_line_groups) > 0:
-            result = ContourModel()
+            result = ContourModel(plane=self.plane)
             for group in new_line_groups:
                 result.append(group)
             return result
@@ -352,7 +360,7 @@ class ContourModel(BaseModel):
         # use a cached offset model if it exists
         if offset in self._cached_offset_models:
             return self._cached_offset_models[offset]
-        result = ContourModel()
+        result = ContourModel(plane=self.plane)
         for group in self._line_groups:
             new_groups = group.get_offset_polygons(offset)
             if not new_groups is None:
