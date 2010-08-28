@@ -200,6 +200,9 @@ if __name__ == "__main__":
     group_general.add_option("-q", "--quiet", dest="quiet",
             default=False, action="store_true", help="show only warnings and " \
             + "errors.")
+    group_general.add_option("-d", "--debug", dest="debug",
+            default=False, action="store_true", help="enable output of debug " \
+            + "messages.")
     group_general.add_option("", "--progress", dest="progress",
             default="text", action="store", type="choice",
             choices=["none", "text", "bar", "dot"],
@@ -339,7 +342,9 @@ if __name__ == "__main__":
     else:
         inputfile = None
 
-    if opts.quiet:
+    if opts.debug:
+        log.setLevel(logging.DEBUG)
+    elif opts.quiet:
         log.setLevel(logging.WARNING)
         # disable the progress bar
         opts.progress = "none"
