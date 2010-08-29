@@ -215,9 +215,9 @@ class Model(BaseModel):
         for t in self._triangles:
             collision_line = plane.intersect_triangle(t)
             if not collision_line is None:
-                # check direction of line - the lines should run clockwise
+                # check direction of line - the lines should run anti-clockwise
                 cross = plane.n.cross(collision_line.dir)
-                if cross.dot(t.normal) < 0:
+                if cross.dot(t.normal) > 0:
                     # revert the direction of the line
                     collision_line = Line(collision_line.p2, collision_line.p1)
                 collision_lines.append(collision_line)
