@@ -49,6 +49,7 @@ class Polygon(TransformableContainer):
         self.maxz = None
         self.minz = None
         self._lines_cache = None
+        self._area_cache = None
 
     def append(self, line):
         if not self.is_connectable(line):
@@ -116,18 +117,25 @@ class Polygon(TransformableContainer):
         Returns zero for empty line groups or for open line groups.
         Returns negative values for inner hole.
         """
-        # TODO: this currently works only for polygons on an x/y plane
         if not self._points:
             return 0
         if not self._is_closed:
             return 0
-        value = 0
-        # taken from: http://www.wikihow.com/Calculate-the-Area-of-a-Polygon
-        for index in range(len(self._points)):
-            p1 = self._points[index]
-            p2 = self._points[(index + 1) % len(self._points)]
-            value += p1.x * p2.y - p2.x * p1.y
-        return value / 2
+        if self._area_cache is None:
+            # calculate the area for the first time
+            value = [0, 0, 0]
+            # taken from: http://www.wikihow.com/Calculate-the-Area-of-a-Polygon
+            # and: http://softsurfer.com/Archive/algorithm_0101/algorithm_0101.htm#3D%20Polygons
+            for index in range(len(self._points)):
+                p1 = self._points[index]
+                p2 = self._points[(index + 1) % len(self._points)]
+                value[0] += p1.y * p2.z - p1.z * p2.y
+                value[1] += p1.z * p2.x - p1.x * p2.z
+                value[2] += p1.x * p2.y - p1.y * p2.x
+            result = self.plane.n.x * value[0] + self.plane.n.y * value[1] \
+                    + self.plane.n.z * value[2]
+            self._area_cache = result / 2
+        return self._area_cache
 
     def get_length(self):
         """ add the length of all lines within the polygon
@@ -266,6 +274,7 @@ class Polygon(TransformableContainer):
 
     def reset_cache(self):
         self._lines_cache = None
+        self._area_cache = None
         self.minx, self.miny, self.minz = None, None, None
         self.maxx, self.maxy, self.maxz = None, None, None
         # update the limit for each line
