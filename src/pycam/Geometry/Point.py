@@ -141,3 +141,6 @@ class Vector(Point):
             callback()
         self.reset_cache()
 
+    def __repr__(self):
+        return "Vector%d<%g,%g,%g>" % (self.id, self.x, self.y, self.z)
+
