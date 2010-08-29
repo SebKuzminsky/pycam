@@ -171,11 +171,11 @@ class Polygon(TransformableContainer):
         for point in polygon._points:
             if self.is_point_inside(point):
                 inside_counter += 1
-        return inside_counter >= len(polygon._points) / 2.0
+        return inside_counter == len(polygon._points)
 
     def is_point_inside(self, p):
         """ Test if a given point is inside of the polygon.
-        The result is unpredictable if the point is exactly on one of the lines.
+        The result is True if the point is on a line (or very close to it).
         """
         # First: check if the point is within the boundary of the polygon.
         if not p.is_inside(self.minx, self.maxx, self.miny, self.maxy,
@@ -186,7 +186,8 @@ class Polygon(TransformableContainer):
         # Count the number of intersections of a ray along the x axis through
         # all polygon lines.
         # Odd number -> point is inside
-        intersection_count = 0
+        intersection_count_left = 0
+        intersection_count_right = 0
         for index in range(len(self._points)):
             p1 = self._points[index]
             p2 = self._points[(index + 1) % len(self._points)]
@@ -199,10 +200,23 @@ class Polygon(TransformableContainer):
                 part_y = (p.y - p1.y) / (p2.y - p1.y)
                 intersection_x = p1.x + part_y * (p2.x - p1.x)
                 if intersection_x < p.x + epsilon:
-                    # only count intersections to the left
-                    intersection_count += 1
+                    # count intersections to the left
+                    intersection_count_left += 1
+                if intersection_x > p.x - epsilon:
+                    # count intersections to the right
+                    intersection_count_right += 1
         # odd intersection count -> inside
-        return intersection_count % 2 == 1
+        left_odd = intersection_count_left % 2 == 1
+        right_odd = intersection_count_right % 2 == 1
+        if left_odd and right_odd:
+            # clear decision: we are inside
+            return True
+        elif not left_odd and not right_odd:
+            # clear decision: we are outside
+            return False
+        else:
+            # it seems like we are on the line -> inside
+            return True
 
     def get_lines(self):
         """ Caching is necessary to avoid constant recalculation due to
@@ -664,5 +678,8 @@ class Polygon(TransformableContainer):
                 p1, dist = plane.intersect_point(plane.n, line.p1)
                 p2, dist = plane.intersect_point(plane.n, line.p2)
                 result.append(Line(p1, p2))
+            # check if the projection would revert the direction of the polygon
+            if plane.n.dot(self.plane.n) < 0:
+                result.reverse_direction()
             return result
 
