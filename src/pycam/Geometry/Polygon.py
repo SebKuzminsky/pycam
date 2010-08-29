@@ -28,6 +28,9 @@ from pycam.Geometry.utils import number, epsilon
 import pycam.Geometry.Matrix as Matrix
 import pycam.Utils.log
 import math
+# import later to avoid circular imports
+#from pycam.Geometry.Model import ContourModel
+
 
 log = pycam.Utils.log.get_logger()
 
@@ -64,12 +67,22 @@ class Polygon(TransformableContainer):
                 self._points.append(line.p2)
                 self._update_limits(line.p2)
             elif self._points[-1] == line.p1:
+                # the new Line can be added to the end of the polygon
+                if line.dir == line.p1.sub(self._points[-1]).normalized():
+                    # Remove the last point, if the previous point combination
+                    # is in line with the new Line. This avoids unnecessary
+                    # points on straight lines.
+                    self._points.pop(-1)
                 if line.p2 != self._points[0]:
                     self._points.append(line.p2)
                     self._update_limits(line.p2)
                 else:
                     self._is_closed = True
             else:
+                # the new Line can be added to the beginning of the polygon
+                if line.dir == self._points[0].sub(line.p2).normalized():
+                    # Avoid points on straight lines - see above.
+                    self._points.pop(0)
                 if line.p1 != self._points[-1]:
                     self._points.insert(0, line.p1)
                     self._update_limits(line.p1)
@@ -180,6 +193,12 @@ class Polygon(TransformableContainer):
             if self.is_point_inside(point):
                 inside_counter += 1
         return inside_counter == len(polygon._points)
+
+    def is_point_on_outline(self, p):
+        for line in self.get_lines():
+            if line.is_point_in_line(p):
+                return True
+        return False
 
     def is_point_inside(self, p):
         """ Test if a given point is inside of the polygon.
@@ -691,4 +710,77 @@ class Polygon(TransformableContainer):
             if plane.n.dot(self.plane.n) < 0:
                 result.reverse_direction()
             return result
+
+    def is_overlap(self, other):
+        for line1 in self.get_lines():
+            for line2 in other.get_lines():
+                cp, dist = line1.get_intersection(line2)
+                if not cp is None:
+                    return True
+        return False
+
+    def union(self, other):
+        # don't import earlier to avoid circular imports
+        from pycam.Geometry.Model import ContourModel
+        # check if one of the polygons is completely inside of the other
+        if self.is_polygon_inside(other):
+            result = Polygon(self.plane)
+            for line in self.get_lines():
+                result.append(line)
+            return [result]
+        if other.is_polygon_inside(self):
+            result = Polygon(other.plane)
+            for line in other.get_lines():
+                result.append(line)
+            return [result]
+        # check if there is any overlap at all
+        if not self.is_overlap(other):
+            # no changes
+            return []
+        contour = ContourModel(self.plane)
+        def get_outside_lines(poly1, poly2):
+            result = []
+            for line in poly1.get_lines():
+                collisions = []
+                for o_line in poly2.get_lines():
+                    cp, dist = o_line.get_intersection(line)
+                    if (not cp is None) and (0 < dist < 1):
+                        collisions.append((cp, dist))
+                # sort the collisions according to the distance
+                collisions.append((line.p1, 0))
+                collisions.append((line.p2, 1))
+                collisions.sort(key=lambda (cp, dist): dist)
+                for index in range(len(collisions) - 1):
+                    p1 = collisions[index][0]
+                    p2 = collisions[index + 1][0]
+                    if p1.sub(p2).norm < epsilon:
+                        # ignore zero-length lines
+                        continue
+                    # Use the middle between p1 and p2 to check the
+                    # inner/outer state.
+                    p_middle = p1.add(p2).div(2)
+                    p_inside = poly2.is_point_inside(p_middle) \
+                            and not poly2.is_point_on_outline(p_middle)
+                    if not p_inside:
+                        result.append(Line(p1, p2))
+            return result
+        outside_lines = []
+        outside_lines.extend(get_outside_lines(self, other))
+        outside_lines.extend(get_outside_lines(other, self))
+        for line in outside_lines:
+            contour.append(line)
+        # fix potential overlapping at the beginning and end of each polygon
+        result = []
+        for poly in contour.get_polygons():
+            if not poly._is_closed:
+                lines = poly.get_lines()
+                line1 = lines[-1]
+                line2 = lines[0]
+                if (line1.dir == line2.dir) \
+                        and (line1.is_point_in_line(line2.p1)):
+                    # remove the last point and define the polygon as closed
+                    poly._points.pop(-1)
+                    poly._is_closed = True
+            result.append(poly)
+        return result
 
