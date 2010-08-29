@@ -157,16 +157,20 @@ class Line(TransformableContainer):
                 # the lines are parallel with a distance
                 return None, None
             # the lines are on one straight
+            candidates = []
             if self.is_point_in_line(x3):
-                return x3, c.norm / a.norm
+                candidates.append((x3, c.norm / a.norm))
             elif self.is_point_in_line(x4):
-                return x4, line.p2.sub(self.p1).norm / a.norm
+                candidates.append((x4, line.p2.sub(self.p1).norm / a.norm))
             elif line.is_point_in_line(x1):
-                return x1, 0
+                candidates.append((x1, 0))
             elif line.is_point_in_line(x2):
-                return x2, 1
+                candidates.append((x2, 1))
             else:
                 return None, None
+            # return the collision candidate with the lowest distance
+            candidates.sort(key=lambda (cp, dist): dist)
+            return candidates[0]
         if infinite_lines or (-epsilon <= factor <= 1 + epsilon):
             intersection = x1.add(a.mul(factor))
             # check if the intersection is between x3 and x4
