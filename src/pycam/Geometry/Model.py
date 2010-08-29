@@ -84,7 +84,9 @@ class BaseModel(TransformableContainer):
 
     def to_OpenGL(self):
         for item in self.next():
-            item.to_OpenGL()
+            # ignore invisble things like the normal of a ContourModel
+            if hasattr(item, "to_OpenGL"):
+                item.to_OpenGL()
 
     def is_export_supported(self):
         return not self._export_function is None
@@ -97,20 +99,22 @@ class BaseModel(TransformableContainer):
                     + "support the 'export' function.") % str(type(self)))
 
     def _update_limits(self, item):
-        if self.minx is None:
-            self.minx = item.minx
-            self.miny = item.miny
-            self.minz = item.minz
-            self.maxx = item.maxx
-            self.maxy = item.maxy
-            self.maxz = item.maxz
-        else:
-            self.minx = min(self.minx, item.minx)
-            self.miny = min(self.miny, item.miny)
-            self.minz = min(self.minz, item.minz)
-            self.maxx = max(self.maxx, item.maxx)
-            self.maxy = max(self.maxy, item.maxy)
-            self.maxz = max(self.maxz, item.maxz)
+        # ignore items without limit attributes (e.g. the normal of a ContourModel)
+        if hasattr(item, "minx"):
+            if self.minx is None:
+                self.minx = item.minx
+                self.miny = item.miny
+                self.minz = item.minz
+                self.maxx = item.maxx
+                self.maxy = item.maxy
+                self.maxz = item.maxz
+            else:
+                self.minx = min(self.minx, item.minx)
+                self.miny = min(self.miny, item.miny)
+                self.minz = min(self.minz, item.minz)
+                self.maxx = max(self.maxx, item.maxx)
+                self.maxy = max(self.maxy, item.maxy)
+                self.maxz = max(self.maxz, item.maxz)
 
     def append(self, item):
         self._update_limits(item)
@@ -230,7 +234,7 @@ class Model(BaseModel):
                 [len(p.get_lines()) for p in contour.get_polygons()]))
         return contour.get_polygons()
 
-    def to_OpenGL_waterline(self, num_of_levels=10):
+    def to_OpenGL_waterline(self, num_of_levels=8):
         """ Visualize the waterline of the model for various z-levels.
         This is only used for debugging.
         """
@@ -238,11 +242,13 @@ class Model(BaseModel):
         z_diff = (self.maxz - self.minz) / (num_of_levels - 1)
         z_levels = [self.minz + z_diff * i for i in range(num_of_levels)]
         projection_plane = Plane(Point(0, 0, 0), Vector(0, 0, 1))
+        contour = ContourModel(projection_plane.n)
         for z_level in z_levels:
             waterline_plane = Plane(Point(0, 0, z_level), Vector(0, 0, 1))
-            polygons = self.get_waterline_polygons(waterline_plane)
-            for polygon in polygons:
-                polygon.get_plane_projection(projection_plane).to_OpenGL()
+            for polygon in self.get_waterline_polygons(waterline_plane):
+                projected_polygon = polygon.get_plane_projection(projection_plane)
+                contour.append(projected_polygon, unify_overlaps=True)
+        contour.to_OpenGL()
 
 
 class ContourModel(BaseModel):
@@ -297,7 +303,7 @@ class ContourModel(BaseModel):
                 log.debug("merge_polygon_if_possible: ambiguous combinations " \
                         + "(%s - %s)" % (other_polygon, connectables))
 
-    def append(self, item):
+    def append(self, item, unify_overlaps=False):
         super(ContourModel, self).append(item)
         if isinstance(item, Line):
             for line_group in self._line_groups:
@@ -311,9 +317,56 @@ class ContourModel(BaseModel):
                 new_line_group.append(item)
                 self._line_groups.append(new_line_group)
         elif isinstance(item, Polygon):
-            self._line_groups.append(item)
+            if not unify_overlaps or (len(self._line_groups) == 0):
+                self._line_groups.append(item)
+            else:
+                # go through all polygons and check if they can be combined
+                is_outer = item.is_outer()
+                new_queue = [item]
+                processed_polygons = []
+                queue = self.get_polygons()
+                while len(queue) > 0:
+                    polygon = queue.pop()
+                    if polygon.is_outer() != is_outer:
+                        processed_polygons.append(polygon)
+                    else:
+                        processed = []
+                        while len(new_queue) > 0:
+                            new = new_queue.pop()
+                            if new.is_polygon_inside(polygon):
+                                # "polygon" is obsoleted by "new"
+                                processed.extend(new_queue)
+                                break
+                            elif polygon.is_polygon_inside(new):
+                                # "new" is obsoleted by "polygon"
+                                continue
+                            elif not new.is_overlap(polygon):
+                                processed.append(new)
+                                continue
+                            else:
+                                union = polygon.union(new)
+                                if union:
+                                    for p in union:
+                                        if p.is_outer() == is_outer:
+                                            new_queue.append(p)
+                                        else:
+                                            processed_polygons.append(p)
+                                else:
+                                    processed.append(new)
+                                break
+                        else:
+                            processed_polygons.append(polygon)
+                        new_queue = processed
+                while len(self._line_groups) > 0:
+                    self._line_groups.pop()
+                print "Processed polygons: %s" % str([len(p.get_lines()) for p in processed_polygons])
+                print "New queue: %s" % str([len(p.get_lines()) for p in new_queue])
+                for processed_polygon in processed_polygons + new_queue:
+                    self._line_groups.append(processed_polygon)
+            self.reset_cache()
         else:
-            # ignore any non-supported items
+            # ignore any non-supported items (they are probably handled by a
+            # parent class)
             pass
 
     def get_num_of_lines(self):
