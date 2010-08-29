@@ -720,23 +720,20 @@ class Polygon(TransformableContainer):
         return False
 
     def union(self, other):
+        """ This "union" of two polygons only works for polygons without
+        shared edges. TODO: fix the issues of shared edges!
+        """
         # don't import earlier to avoid circular imports
         from pycam.Geometry.Model import ContourModel
         # check if one of the polygons is completely inside of the other
         if self.is_polygon_inside(other):
-            result = Polygon(self.plane)
-            for line in self.get_lines():
-                result.append(line)
-            return [result]
+            return [self]
         if other.is_polygon_inside(self):
-            result = Polygon(other.plane)
-            for line in other.get_lines():
-                result.append(line)
-            return [result]
+            return [other]
         # check if there is any overlap at all
         if not self.is_overlap(other):
             # no changes
-            return []
+            return [self, other]
         contour = ContourModel(self.plane)
         def get_outside_lines(poly1, poly2):
             result = []
