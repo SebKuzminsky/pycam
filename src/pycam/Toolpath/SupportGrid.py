@@ -28,10 +28,8 @@ from pycam.Geometry.utils import number
 
 
 def _get_triangles_for_face(pts):
-    t1 = Triangle(pts[0], pts[1], pts[2], Line(pts[0], pts[1]),
-            Line(pts[1], pts[2]), Line(pts[2], pts[0]))
-    t2 = Triangle(pts[2], pts[3], pts[0], Line(pts[2], pts[3]),
-            Line(pts[3], pts[0]), Line(pts[0], pts[2]))
+    t1 = Triangle(pts[0], pts[1], pts[2])
+    t2 = Triangle(pts[2], pts[3], pts[0])
     return (t1, t2)
 
 def _add_cuboid_to_model(model, start, direction, height, width):
