@@ -119,7 +119,13 @@ class EngraveCutter:
             elif (area2 < 0) and (area1 > 0):
                 return 1
             else:
-                return 0
+                # do a "relaxed" sorting by size
+                if abs(area1) < 2 * abs(area2):
+                    return -1
+                elif abs(area2) < 2 * abs(area1):
+                    return 1
+                else:
+                    return 0
         line_groups.sort(cmp=polygon_priority)
 
         # process the final layer with a drop cutter

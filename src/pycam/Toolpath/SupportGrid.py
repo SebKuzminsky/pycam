@@ -161,7 +161,10 @@ def get_support_distributed(model, z_plane, average_distance,
     # minimum required distance between two bridge start points
     avoid_distance = 1.5 * (abs(length) + thickness)
     for polygon in model.get_polygons():
-        if not polygon.is_outer():
+        # no grid for _small_ inner polygons
+        # TODO: calculate a reasonable factor (see below)
+        if not polygon.is_outer() \
+                and (abs(polygon.get_area()) < 25000 * thickness ** 2):
             continue
         lines = polygon.get_lines()
         poly_lengths = polygon.get_lengths()
