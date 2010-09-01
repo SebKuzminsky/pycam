@@ -219,11 +219,6 @@ class Model(BaseModel):
         for t in self._triangles:
             collision_line = plane.intersect_triangle(t)
             if not collision_line is None:
-                # check direction of line - the lines should run anti-clockwise
-                cross = plane.n.cross(collision_line.dir)
-                if cross.dot(t.normal) > 0:
-                    # revert the direction of the line
-                    collision_line = Line(collision_line.p2, collision_line.p1)
                 collision_lines.append(collision_line)
         # combine these lines into polygons
         contour = ContourModel(plane=plane)
@@ -390,7 +385,7 @@ class ContourModel(BaseModel):
             if not new_groups is None:
                 new_line_groups.extend(new_groups)
         if len(new_line_groups) > 0:
-            result = ContourModel(plane=self.plane)
+            result = ContourModel(plane=self._plane)
             for group in new_line_groups:
                 result.append(group)
             return result
@@ -413,7 +408,7 @@ class ContourModel(BaseModel):
         # use a cached offset model if it exists
         if offset in self._cached_offset_models:
             return self._cached_offset_models[offset]
-        result = ContourModel(plane=self.plane)
+        result = ContourModel(plane=self._plane)
         for group in self._line_groups:
             new_groups = group.get_offset_polygons(offset)
             if not new_groups is None:
