@@ -200,8 +200,22 @@ class Camera:
         camera_position = (v["center"][0] + v["distance"][0],
                 v["center"][1] + v["distance"][1],
                 v["center"][2] + v["distance"][2])
-        GLU.gluPerspective(v["fovy"], (0.0 + width) / height, v["znear"],
-                v["zfar"])
+        if self.settings.get("view_perspective"):
+            # perspective view
+            GLU.gluPerspective(v["fovy"], (0.0 + width) / height, v["znear"],
+                    v["zfar"])
+        else:
+            # parallel projection
+            # This distance calculation is completely based on trial-and-error.
+            distance = math.sqrt(sum([d ** 2 for d in v["distance"]]))
+            distance *= math.log(math.sqrt(width * height)) / math.log(10)
+            left = v["center"][0] - math.sin(v["fovy"] / 360.0 * math.pi) * distance
+            right = v["center"][0] + math.sin(v["fovy"] / 360.0 * math.pi) * distance
+            top = v["center"][1] + math.sin(v["fovy"] / 360.0 * math.pi) * distance
+            bottom = v["center"][1] - math.sin(v["fovy"] / 360.0 * math.pi) * distance
+            near = v["center"][2] - 2 * math.sin(v["fovy"] / 360.0 * math.pi) * distance
+            far = v["center"][2] + 2 * math.sin(v["fovy"] / 360.0 * math.pi) * distance
+            GL.glOrtho(left, right, bottom, top, near, far)
         GLU.gluLookAt(camera_position[0], camera_position[1],
                 camera_position[2], v["center"][0], v["center"][1],
                 v["center"][2], v["up"][0], v["up"][1], v["up"][2])

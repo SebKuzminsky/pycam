@@ -92,6 +92,7 @@ PREFERENCES_DEFAULTS = {
         "view_light": True,
         "view_shadow": True,
         "view_polygon": True,
+        "view_perspective": True,
         "simulation_details_level": 3,
         "drill_progress_max_fps": 2,
         "gcode_safety_height": 25.0,
@@ -459,7 +460,8 @@ class ProjectGui:
         for name, objname in (
                 ("view_light", "OpenGLLight"),
                 ("view_shadow", "OpenGLShadow"),
-                ("view_polygon", "OpenGLPolygon")):
+                ("view_polygon", "OpenGLPolygon"),
+                ("view_perspective", "OpenGLPerspective")):
             obj = self.gui.get_object(objname)
             self.settings.add_item(name, obj.get_active, obj.set_active)
             # send "True" to trigger a re-setup of GL settings

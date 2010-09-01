@@ -5793,6 +5793,20 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                           </packing>
                         </child>
                         <child>
+                          <object class="GtkCheckButton" id="OpenGLPerspective">
+                            <property name="label" translatable="yes">Perspective view</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="tooltip_text" translatable="yes">Toggle between orthogonal and perspective view.</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">3</property>
+                          </packing>
+                        </child>
+                        <child>
                           <object class="GtkHBox" id="hbox7">
                             <property name="visible">True</property>
                             <property name="spacing">2</property>
@@ -5822,7 +5836,7 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                           </object>
                           <packing>
                             <property name="expand">False</property>
-                            <property name="position">3</property>
+                            <property name="position">4</property>
                           </packing>
                         </child>
                       </object>
@@ -6126,7 +6140,7 @@ You should have received a copy of the GNU General Public License along with thi
     <property name="always_show_image">True</property>
   </object>
   <object class="GtkAdjustment" id="ScaleDimensionValue">
-    <property name="upper">2000</property>
+    <property name="upper">10000</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkImage" id="ShowToolPathSimulation">
