@@ -157,10 +157,16 @@ def get_support_distributed(model, z_plane, average_distance,
                 return True
         return False
     result = Model()
+    if hasattr(model, "get_polygons"):
+        polygons = model.get_polygons()
+    else:
+        # TODO: Solid models are not supported, yet - we need to get the
+        # maximum outline of the model.
+        return result
     bridge_positions = []
     # minimum required distance between two bridge start points
     avoid_distance = 1.5 * (abs(length) + thickness)
-    for polygon in model.get_polygons():
+    for polygon in polygons:
         # no grid for _small_ inner polygons
         # TODO: calculate a reasonable factor (see below)
         if not polygon.is_outer() \

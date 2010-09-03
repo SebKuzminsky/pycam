@@ -342,8 +342,13 @@ class ProjectGui:
         self.gui.get_object("ToggleModelDirectionButton").connect("clicked",
                 self.reverse_model_direction)
         # support grid
-        self.gui.get_object("SupportGridTypesControl").connect("changed",
+        support_grid_type_control = self.gui.get_object(
+                "SupportGridTypesControl")
+        support_grid_type_control.connect("changed",
                 self.update_support_grid_controls)
+        self.settings.add_item("support_grid_type",
+                support_grid_type_control.get_active,
+                support_grid_type_control.set_active)
         grid_distance_x = self.gui.get_object("SupportGridDistanceX")
         grid_distance_x.connect("value-changed",
                 self.update_support_grid_controls)
@@ -710,6 +715,13 @@ class ProjectGui:
         self.update_support_grid_controls()
         self.update_scale_controls()
         self.update_gcode_controls()
+        self.update_model_type_related_controls()
+
+    def update_model_type_related_controls(self):
+        is_reversible = (not self.model is None) \
+                and hasattr(self.model, "reverse_directions")
+        self.gui.get_object("ToggleModelDirectionButton").set_sensitive(
+                is_reversible)
 
     def update_gcode_controls(self, widget=None):
         path_mode = self.settings.get("gcode_path_mode")
@@ -789,7 +801,17 @@ class ProjectGui:
                 "GridManualShiftExpander": ("grid", ),
                 "GridAverageDistanceExpander": ("automatic", ),
         }
-        grid_type = self.gui.get_object("SupportGridTypesControl").get_active()
+        if (self.settings.get("support_grid_type") == GRID_TYPES["automatic"]) \
+                and (not hasattr(self.model, "get_polygons")):
+            message = "This feature only works for 2D contour models for now " \
+                    + "- sorry!"
+            window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_WARNING,
+                    buttons=gtk.BUTTONS_OK, message_format=message)
+            window.set_title("Under construction ...")
+            window.run()
+            window.destroy()
+            self.settings.set("support_grid_type", GRID_TYPES["none"])
+        grid_type = self.settings.get("support_grid_type")
         if grid_type == GRID_TYPES["grid"]:
             grid_square = self.gui.get_object("SupportGridDistanceSquare")
             distance_y = self.gui.get_object("SupportGridDistanceYControl")
@@ -804,6 +826,9 @@ class ProjectGui:
             pass
         elif grid_type == GRID_TYPES["none"]:
             pass
+        elif grid_type < 0:
+            # not initialized
+            pass
         else:
             raise ValueError("Invalid grid type: %d" % grid_type)
         # show and hide all controls according to the current type
@@ -817,7 +842,7 @@ class ProjectGui:
         self.update_view()
 
     def update_support_grid_model(self, widget=None):
-        grid_type = self.gui.get_object("SupportGridTypesControl").get_active()
+        grid_type = self.settings.get("support_grid_type")
         s = self.settings
         support_grid = None
         if grid_type == GRID_TYPES["grid"]: 
@@ -2034,6 +2059,8 @@ class ProjectGui:
             self.model = model
             # do some initialization
             self.append_to_queue(self.update_scale_controls)
+            self.append_to_queue(self.update_model_type_related_controls)
+            self.append_to_queue(self.update_support_grid_controls)
             self.append_to_queue(self.toggle_3d_view, value=True)
             self.append_to_queue(self.update_view)
 
@@ -2639,7 +2666,7 @@ class ProjectGui:
                 tool_settings["speed"], tool_settings["feedrate"])
 
         # get the support grid options
-        grid_type = self.gui.get_object("SupportGridTypesControl").get_active()
+        grid_type = self.settings.get("support_grid_type")
         if grid_type == GRID_TYPES["grid"]:
             toolpath_settings.set_support_grid(
                     self.settings.get("support_grid_distance_x"),
