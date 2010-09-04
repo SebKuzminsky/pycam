@@ -1,7 +1,8 @@
 <ui>
   <menubar name="MenuBar">
     <menu action="FileMenu">
-      <menuitem action="LoadModel"/>
+      <menuitem action="OpenModel"/>
+      <menuitem action="OpenRecentModel" name="OpenRecentModelMenu"/>
       <menuitem action="SaveModel"/>
       <menuitem action="SaveAsModel"/>
       <separator />

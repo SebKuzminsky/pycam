@@ -41,6 +41,7 @@ import pycam.Physics.ode_physics
 import gtk
 import webbrowser
 import ConfigParser
+import urllib
 import time
 import logging
 import datetime
@@ -130,6 +131,25 @@ def report_exception():
             + "text below to the developers of PyCAM. Thanks a lot!\n" \
             + traceback.format_exc())
 
+def get_filters_from_list(filter_list, file_filter=True):
+    if file_filter:
+        return_class = gtk.FileFilter
+    else:
+        return_class = gtk.RecentFilter
+    result = []
+    if not isinstance(filter_list[0], (list, tuple)):
+        filter_list = [filter_list]
+    for one_filter in filter_list:
+        file_filter = return_class()
+        file_filter.set_name(one_filter[0])
+        file_extensions = one_filter[1]
+        if not isinstance(file_extensions, (list, tuple)):
+            file_extensions = [file_extensions]
+        for ext in file_extensions:
+            file_filter.add_pattern(ext)
+        result.append(file_filter)
+    return result
+
 
 class ProjectGui:
 
@@ -182,7 +202,7 @@ class ProjectGui:
                 ("LoadTaskSettings", self.load_task_settings_file, None, "<Control>t"),
                 ("SaveTaskSettings", self.save_task_settings_file, lambda: self.last_task_settings_file, None),
                 ("SaveAsTaskSettings", self.save_task_settings_file, None, None),
-                ("LoadModel", self.load_model_file, None, "<Control>o"),
+                ("OpenModel", self.load_model_file, None, "<Control>o"),
                 ("SaveModel", self.save_model, lambda: self.last_model_file, "<Control>s"),
                 ("SaveAsModel", self.save_model, None, "<Control><Shift>s"),
                 ("ExportGCode", self.save_toolpath, None, "<Control><Shift>e"),
@@ -681,10 +701,30 @@ class ProjectGui:
         uimanager.add_ui_from_file(gtk_menu_file)
         # make the actions defined in the GTKBUILD file available in the menu
         actiongroup = gtk.ActionGroup("menubar")
-        for action in [action for action in self.gui.get_objects() if isinstance(action, gtk.Action)]:
+        for action in [action for action in self.gui.get_objects()
+                if isinstance(action, gtk.Action)]:
             actiongroup.add_action(action)
         # the "pos" parameter is optional since 2.12 - we can remove it later
         uimanager.insert_action_group(actiongroup, pos=-1)
+        # the "recent files" sub-menu
+        if not self.recent_manager is None:
+            recent_files_menu = gtk.RecentChooserMenu(self.recent_manager)
+            recent_files_menu.set_name("RecentFilesMenu")
+            for file_filter in get_filters_from_list(FILTER_MODEL,
+                    file_filter=False):
+                recent_files_menu.add_filter(file_filter)
+            recent_files_menu.set_show_numbers(True)
+            # non-local files (without "file://") are not supported. yet
+            recent_files_menu.set_local_only(True)
+            # most recent files to the top
+            recent_files_menu.set_sort_type(gtk.RECENT_SORT_MRU)
+            # show only five files
+            recent_files_menu.set_limit(5)
+            uimanager.get_widget("/MenuBar/FileMenu/OpenRecentModelMenu").set_submenu(recent_files_menu)
+            recent_files_menu.connect("item-activated",
+                    self.load_recent_model_file)
+        else:
+            self.gui.get_object("OpenRecentModel").set_visible(False)
         # load the menubar and connect functions to its items
         self.menubar = uimanager.get_widget("/MenuBar")
         window_box = self.gui.get_object("WindowBox")
@@ -1986,6 +2026,19 @@ class ProjectGui:
             # call the function right now
             func(*args, **kwargs)
 
+    def load_recent_model_file(self, widget):
+        uri = widget.get_current_uri()
+        if uri.startswith("file://"):
+            parsed = urllib.unquote(uri[len("file://"):])
+            self.load_model_file(filename=parsed)
+        else:
+            message = "Sorry - PyCAM can currently load only local files."
+            window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_WARNING,
+                    buttons=gtk.BUTTONS_OK, message_format=message)
+            window.set_title("Unsupported file location specified")
+            window.run()
+            window.destroy()
+
     @gui_activity_guard
     def load_model_file(self, widget=None, filename=None):
         if callable(filename):
@@ -2725,16 +2778,7 @@ class ProjectGui:
             dialog.set_current_folder(self.last_dirname)
         # add filter for files
         if type_filter:
-            if not isinstance(type_filter[0], (list, tuple)):
-                type_filter = [type_filter]
-            for one_filter in type_filter:
-                file_filter = gtk.FileFilter()
-                file_filter.set_name(one_filter[0])
-                file_extensions = one_filter[1]
-                if not isinstance(file_extensions, (list, tuple)):
-                    file_extensions = [file_extensions]
-                for ext in file_extensions:
-                    file_filter.add_pattern(ext)
+            for file_filter in get_filters_from_list(type_filter):
                 dialog.add_filter(file_filter)
         # add filter for all files
         ext_filter = gtk.FileFilter()
