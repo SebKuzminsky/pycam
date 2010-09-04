@@ -172,14 +172,16 @@ class kdtree(object):
             dist += d*d
         return dist
 
-    def nearest_neighbor(self, node, dist=dist):
+    def nearest_neighbor(self, node, dist=None):
+        if dist is None:
+            dist = self.dist
         if self.bucket:
             if len(self.nodes) == 0:
                 return (None, 0)
             best = self.nodes[0]
-            bestdist = self.dist(node, best)
+            bestdist = dist(node, best)
             for n in self.nodes:
-                d = self.dist(n, node)
+                d = dist(n, node)
                 if d < bestdist:
                     best = n
                     bestdist = d
