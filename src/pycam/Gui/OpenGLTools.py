@@ -386,7 +386,7 @@ class ModelViewWindowGL:
             self._paint_ignore_busy()
         elif keyval in move_keys_dict.keys():
             move_x, move_y = move_keys_dict[keyval]
-            if get_state() == gtk.gdk.SHIFT_MASK:
+            if get_state() & gtk.gdk.SHIFT_MASK:
                 # shift key pressed -> rotation
                 base = 0
                 factor = 10
@@ -514,8 +514,8 @@ class ModelViewWindowGL:
         last_timestamp = self.mouse["timestamp"]
         x, y, state = event.x, event.y, event.state
         if self.mouse["button"] is None:
-            if (state == BUTTON_ZOOM) or (state == BUTTON_ROTATE) \
-                    or (state == BUTTON_MOVE):
+            if (state & BUTTON_ZOOM) or (state & BUTTON_ROTATE) \
+                    or (state & BUTTON_MOVE):
                 self.mouse["button"] = state
                 self.mouse["start_pos"] = [x, y]
         else:
@@ -524,7 +524,7 @@ class ModelViewWindowGL:
             if time.time() - last_timestamp < 0.04:
                 return
             # a button was pressed before
-            if state == self.mouse["button"] == BUTTON_ZOOM:
+            if state & self.mouse["button"] & BUTTON_ZOOM:
                 # the start button is still active: update the view
                 start_x, start_y = self.mouse["start_pos"]
                 self.mouse["start_pos"] = [x, y]
@@ -539,11 +539,11 @@ class ModelViewWindowGL:
                     scale = 100
                 self.camera.scale_distance(scale)
                 self._paint_ignore_busy()
-            elif (state == self.mouse["button"] == BUTTON_MOVE) \
-                    or (state == self.mouse["button"] == BUTTON_ROTATE):
+            elif (state & self.mouse["button"] & BUTTON_MOVE) \
+                    or (state & self.mouse["button"] & BUTTON_ROTATE):
                 start_x, start_y = self.mouse["start_pos"]
                 self.mouse["start_pos"] = [x, y]
-                if (state == BUTTON_MOVE):
+                if (state & BUTTON_MOVE):
                     # Determine the biggest dimension (x/y/z) for moving the
                     # screen's center in relation to this value.
                     obj_dim = []
