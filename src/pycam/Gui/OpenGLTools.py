@@ -335,6 +335,7 @@ class ModelViewWindowGL:
         try:
             keyval = getattr(event, "keyval")
             get_state = getattr(event, "get_state")
+            key_string = getattr(event, "string")
         except AttributeError:
             return
         # define arrow keys and "vi"-like navigation keys
@@ -358,19 +359,19 @@ class ModelViewWindowGL:
                 return chr(value)
             else:
                 return None
-        if get_char(keyval) and (get_char(keyval) in '1234567'):
+        if key_string and (key_string in '1234567'):
             names = ["reset", "front", "back", "left", "right", "top", "bottom"]
-            index = '1234567'.index(get_char(keyval))
+            index = '1234567'.index(key_string)
             self.rotate_view(view=VIEWS[names[index]])
             self._paint_ignore_busy()
-        elif get_char(keyval) in ('i', 'm', 's', 'p'):
-            if (chr(keyval) == 'i'):
+        elif key_string in ('i', 'm', 's', 'p'):
+            if key_string == 'i':
                 key = "view_light"
-            elif (chr(keyval) == 'm'):
+            elif key_string == 'm':
                 key = "view_polygon"
-            elif (chr(keyval) == 's'):
+            elif key_string == 's':
                 key = "view_shadow"
-            elif (chr(keyval) == 'p'):
+            elif key_string == 'p':
                 key = "view_perspective"
             else:
                 key = None
@@ -379,8 +380,8 @@ class ModelViewWindowGL:
             # re-init gl settings
             self.glsetup()
             self.paint()
-        elif get_char(keyval) in ("+", "-"):
-            if chr(keyval) == "+":
+        elif key_string in ("+", "-"):
+            if key_string == "+":
                 scale = 0.8
             else:
                 scale = 1.25
@@ -410,7 +411,7 @@ class ModelViewWindowGL:
             self._paint_ignore_busy()
         else:
             # see dir(gtk.keysyms)
-            #print "Key pressed: %s (%s)" % (chr(keyval), get_state())
+            #print "Key pressed: %s (%s)" % (keyval, get_state())
             pass
 
     def check_busy(func):
