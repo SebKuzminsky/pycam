@@ -363,13 +363,15 @@ class ModelViewWindowGL:
             index = '1234567'.index(get_char(keyval))
             self.rotate_view(view=VIEWS[names[index]])
             self._paint_ignore_busy()
-        elif get_char(keyval) in ('i', 'm', 's'):
+        elif get_char(keyval) in ('i', 'm', 's', 'p'):
             if (chr(keyval) == 'i'):
                 key = "view_light"
             elif (chr(keyval) == 'm'):
                 key = "view_polygon"
             elif (chr(keyval) == 's'):
                 key = "view_shadow"
+            elif (chr(keyval) == 'p'):
+                key = "view_perspective"
             else:
                 key = None
             # toggle setting
