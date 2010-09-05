@@ -145,6 +145,7 @@ def generate_toolpath(model, tool_settings=None,
         # material allowance is ignored for engraving
         material_allowance = 0
     # create the grid model if requested
+    trimesh_models = [trimesh_model]
     if (support_grid_type == "grid") \
             and (((not support_grid_distance_x is None) \
             or (not support_grid_distance_y is None)) \
@@ -170,7 +171,7 @@ def generate_toolpath(model, tool_settings=None,
                 offset_y=support_grid_offset_y,
                 adjustments_x=support_grid_adjustments_x,
                 adjustments_y=support_grid_adjustments_y)
-        trimesh_model += support_grid_model
+        trimesh_models.append(support_grid_model)
     elif (support_grid_type == "distributed") \
             and (not support_grid_average_distance is None) \
             and (not support_grid_thickness is None) \
@@ -199,7 +200,7 @@ def generate_toolpath(model, tool_settings=None,
                 model, minz, support_grid_average_distance,
                 support_grid_minimum_bridges, support_grid_thickness,
                 support_grid_height, support_grid_length)
-        trimesh_model += support_grid_model
+        trimesh_models.append(support_grid_model)
     # Adapt the contour_model to the engraving offset. This offset is
     # considered to be part of the material_allowance.
     if (not contour_model is None) and (engrave_offset != 0):
@@ -247,10 +248,13 @@ def generate_toolpath(model, tool_settings=None,
     if isinstance(cutter, basestring):
         return cutter
     cutter.set_required_distance(material_allowance)
-    physics = _get_physics(trimesh_model, cutter, calculation_backend)
+    physics = _get_physics(trimesh_models, cutter, calculation_backend)
     if isinstance(physics, basestring):
         return physics
-    generator = _get_pathgenerator_instance(trimesh_model, contour_model,
+    combined_models = trimesh_models[0]
+    for next_model in trimesh_models[1:]:
+        combined_models += next_model
+    generator = _get_pathgenerator_instance(combined_models, contour_model,
             cutter, path_generator, path_postprocessor, physics)
     if isinstance(generator, basestring):
         return generator
@@ -342,13 +346,13 @@ def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
         return "Invalid path generator (%s): not one of %s" \
                 % (pathgenerator, PATH_GENERATORS)
 
-def _get_physics(trimesh_model, cutter, calculation_backend):
+def _get_physics(models, cutter, calculation_backend):
     if calculation_backend is None:
         # triangular collision detection does not need any physical model
         return None
     elif calculation_backend == "ODE":
         import pycam.Physics.ode_physics as ode_physics
-        return ode_physics.generate_physics(trimesh_model, cutter)
+        physics = ode_physics.generate_physics(models, cutter)
     else:
         return "Invalid calculation backend (%s): not one of %s" \
                 % (calculation_backend, CALCULATION_BACKENDS)

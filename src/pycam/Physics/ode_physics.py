@@ -36,11 +36,14 @@ ShapeCapsule = lambda radius, height: \
 _ode_override_state = None
 
 
-def generate_physics(model, cutter, physics=None):
+def generate_physics(models, cutter, physics=None):
     if physics is None:
         physics = PhysicalWorld()
     physics.reset()
-    physics.add_mesh((0, 0, 0), model.triangles())
+    if not isinstance(models, (list, set, tuple)):
+        models = [models]
+    for model in models:
+        physics.add_mesh(model.triangles())
     shape_info = cutter.get_shape("ODE")
     physics.set_drill(shape_info[0], (0.0, 0.0, 0.0))
     return physics
@@ -130,7 +133,9 @@ class PhysicalWorld:
         if append:
             self._obstacles.append(geom)
 
-    def add_mesh(self, position, triangles):
+    def add_mesh(self, triangles, position=None):
+        if position is None:
+            position = (0, 0, 0)
         mesh = ode.TriMeshData()
         vertices, faces = convert_triangles_to_vertices_faces(triangles)
         mesh.build(vertices, faces)
