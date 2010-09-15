@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.PathGenerators import DropCutter, PushCutter, EngraveCutter
+from pycam.PathGenerators import DropCutter, PushCutter, EngraveCutter, Waterline
 from pycam.Geometry.utils import number
 import pycam.PathProcessors
 import pycam.Cutters
@@ -33,7 +33,7 @@ log = pycam.Utils.log.get_logger()
 
 
 DIRECTIONS = frozenset(("x", "y", "xy"))
-PATH_GENERATORS = frozenset(("DropCutter", "PushCutter", "EngraveCutter"))
+PATH_GENERATORS = frozenset(("DropCutter", "PushCutter", "EngraveCutter", "WaterlineCutter"))
 PATH_POSTPROCESSORS = frozenset(("ContourCutter", "PathAccumulator",
         "PolygonCutter", "SimpleCutter", "ZigZagCutter"))
 CALCULATION_BACKENDS = frozenset((None, "ODE"))
@@ -291,14 +291,25 @@ def generate_toolpath(model, tool_settings=None,
                     % (direction, DIRECTIONS)
         toolpath = generator.GenerateToolPath(minx, maxx, miny, maxy, minz,
                 maxz, dx, dy, dz, callback)
-    else:
-        # EngraveCutter
+    elif path_generator == "EngraveCutter":
         if step_down > 0:
             dz = step_down
         else:
             dz = maxz - minz
         toolpath = generator.GenerateToolPath(minz, maxz, stepping, dz,
                 callback)
+    elif path_generator == "WaterlineCutter":
+        if step_down > 0:
+            dz = step_down
+        else:
+            dz = maxz - minz
+            if dz <= 0:
+                dz = 1
+        toolpath = generator.GenerateToolPath(minx, maxx, miny, maxy, minz,
+                maxz, dz, callback)
+    else:
+        return "Invalid path generator (%s): not one of %s" \
+                % (path_generator, PATH_GENERATORS)
     return toolpath
     
 def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
@@ -342,6 +353,15 @@ def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
                     + "DXF file)."
         return EngraveCutter.EngraveCutter(cutter, trimesh_model,
                 contour_model, processor, physics=physics)
+    elif pathgenerator == "WaterlineCutter":
+        if pathprocessor == "PathAccumulator":
+            processor = pycam.PathProcessors.PathAccumulator()
+        else:
+            return ("Invalid postprocessor (%s) for 'WaterlineCutter' - it " \
+                    + "should be one of these: %s") \
+                    % (processor, PATH_POSTPROCESSORS)
+        return Waterline.Waterline(cutter, trimesh_model, processor,
+                physics=physics)
     else:
         return "Invalid path generator (%s): not one of %s" \
                 % (pathgenerator, PATH_GENERATORS)

@@ -33,7 +33,8 @@ import math
 
 class Waterline:
 
-    def __init__(self, cutter, model, path_processor):
+    def __init__(self, cutter, model, path_processor, physics=None):
+        # TODO: implement ODE for physics
         self.cutter = cutter
         self.model = model
         self.pa = path_processor

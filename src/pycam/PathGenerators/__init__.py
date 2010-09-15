@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = ["DropCutter", "PushCutter", "EngraveCutter"]
+__all__ = ["DropCutter", "PushCutter", "EngraveCutter", "Waterline"]
 
 from pycam.Geometry.utils import INFINITE, epsilon, sqrt
 from pycam.Geometry.Point import Point

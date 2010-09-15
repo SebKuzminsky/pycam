@@ -534,8 +534,10 @@ class ProjectGui:
             self.gui.get_object(name).connect("clicked", self.handle_tool_settings_change)
         self.gui.get_object("ToolName").connect("changed", self.handle_tool_settings_change)
         # connect the "consistency check" and the update-handler with all toolpath settings
-        for objname in ("PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter", "ContourCutter",
-                "DropCutter", "PushCutter", "PathDirectionX", "PathDirectionY", "PathDirectionXY", "SettingEnableODE"):
+        for objname in ("PathAccumulator", "SimpleCutter", "ZigZagCutter",
+                "PolygonCutter", "ContourCutter", "DropCutter", "PushCutter",
+                "EngraveCutter", "WaterlineCutter", "PathDirectionX",
+                "PathDirectionY", "PathDirectionXY", "SettingEnableODE"):
             self.gui.get_object(objname).connect("toggled", self.update_process_controls)
             if objname != "SettingEnableODE":
                 self.gui.get_object(objname).connect("toggled", self.handle_process_settings_change)
@@ -1295,7 +1297,8 @@ class ProjectGui:
         # possible dependencies of the DropCutter
         get_obj = self.gui.get_object
         cutter_name = None
-        for one_cutter in ("DropCutter", "PushCutter", "EngraveCutter"):
+        for one_cutter in ("DropCutter", "PushCutter", "EngraveCutter",
+                "WaterlineCutter"):
             if get_obj(one_cutter).get_active():
                 cutter_name = one_cutter
         if cutter_name == "DropCutter":
@@ -1308,10 +1311,14 @@ class ProjectGui:
                     or get_obj("PolygonCutter").get_active() \
                     or get_obj("ContourCutter").get_active()):
                 get_obj("SimpleCutter").set_active(True)
-        else:
-            # engraving
+        elif cutter_name == "EngraveCutter":
             if not get_obj("SimpleCutter").get_active():
                 get_obj("SimpleCutter").set_active(True)
+        elif cutter_name == "WaterlineCutter":
+            if not get_obj("PathAccumulator").get_active():
+                get_obj("PathAccumulator").set_active(True)
+        else:
+            raise ValueError("Invalid cutter selected: %s" % str(cutter_name))
         all_controls = ("PathDirectionX", "PathDirectionY", "PathDirectionXY",
                 "SimpleCutter", "PolygonCutter", "ContourCutter",
                 "PathAccumulator", "ZigZagCutter", "MaxStepDownControl",
@@ -1327,6 +1334,8 @@ class ProjectGui:
                     "OverlapPercentControl"),
             "EngraveCutter": ("SimpleCutter", "MaxStepDownControl",
                     "EngraveOffsetControl"),
+            "WaterlineCutter": ("PathAccumulator", "MaterialAllowanceControl",
+                    "MaxStepDownControl"),
         }
         for one_control in all_controls:
             get_obj(one_control).set_sensitive(one_control in active_controls[cutter_name])
@@ -2286,7 +2295,8 @@ class ProjectGui:
         settings["name"] = self.gui.get_object("ProcessSettingName").get_text()
         # path generator
         def get_path_generator():
-            for name in ("DropCutter", "PushCutter", "EngraveCutter"):
+            for name in ("DropCutter", "PushCutter", "EngraveCutter",
+                    "WaterlineCutter"):
                 if self.gui.get_object(name).get_active():
                     return name
         settings["path_generator"] = get_path_generator()
