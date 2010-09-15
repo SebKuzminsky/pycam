@@ -26,6 +26,56 @@ __all__ = ["utils", "Line", "Model", "Path", "Plane", "Point", "Triangle",
            "Matrix", "Polygon"]
 
 from pycam.Geometry.utils import epsilon
+import math
+
+
+def get_bisector(p1, p2, p3, up_vector):
+    """ Calculate the bisector between p1, p2 and p3, whereas p2 is the origin
+    of the angle.
+    """
+    d1 = p2.sub(p1).normalized()
+    d2 = p2.sub(p3).normalized()
+    bisector_dir = d1.add(d2).normalized()
+    if bisector_dir is None:
+        # the two vectors pointed to opposite directions
+        bisector_dir = d1.cross(up_vector).normalized()
+    else:
+        skel_up_vector = bisector_dir.cross(p2.sub(p1))
+        if up_vector.dot(skel_up_vector) < 0:
+            # reverse the skeleton vector to point outwards
+            bisector_dir = bisector_dir.mul(-1)
+    return bisector_dir
+
+def get_angle_pi(p1, p2, p3, up_vector):
+    """ calculate the angle between three points
+    Visualization:
+            p3
+           /
+          /
+         /\
+        /  \
+      p2--------p1
+    The result is in a range between 0 and 2*PI.
+    """
+    d1 = p2.sub(p1).normalized()
+    d2 = p2.sub(p3).normalized()
+    if (d1 is None) or (d2 is None):
+        return 2 * math.pi
+    angle = math.acos(d1.dot(d2))
+    # check the direction of the points (clockwise/anti)
+    # The code is taken from Polygon.get_area
+    value = [0, 0, 0]
+    for (pa, pb) in ((p1, p2), (p2, p3), (p3, p1)):
+        value[0] += pa.y * pb.z - pa.z * pb.y
+        value[1] += pa.z * pb.x - pa.x * pb.z
+        value[2] += pa.x * pb.y - pa.y * pb.x
+    area = up_vector.x * value[0] + up_vector.y * value[1] \
+            + up_vector.z * value[2]
+    if area > 0:
+        # The points are in anti-clockwise order. Thus the angle is greater
+        # than 180 degree.
+        angle = 2 * math.pi - angle
+    return angle
 
 
 class TransformableContainer(object):
