@@ -142,24 +142,6 @@ class CylindricalCutter(BaseCutter):
             return (cl, ccp, cp, d)
         return (None, None, None, INFINITE)
 
-    def intersect_circle_triangle(self, direction, triangle):
-        (cl, ccp, cp, d) = self.intersect_circle_plane(direction, triangle)
-        if cp and triangle.point_inside(cp):
-            return (cl, d, cp)
-        return (None, INFINITE, None)
-
-    def intersect_circle_point(self, direction, point):
-        (ccp, cp, l) = intersect_circle_point(self.center, self.axis,
-                self.distance_radius, self.distance_radiussq, direction, point)
-        if ccp:
-            cl = cp.add(self.location.sub(ccp))
-            return (cl, ccp, cp, l)
-        return (None, None, None, INFINITE)
-
-    def intersect_circle_vertex(self, direction, point):
-        (cl, ccp, cp, l) = self.intersect_circle_point(direction, point)
-        return (cl, l, cp)
-
     def intersect_circle_line(self, direction, edge):
         (ccp, cp, l) = intersect_circle_line(self.center, self.axis,
                 self.distance_radius, self.distance_radiussq, direction, edge)
@@ -168,51 +150,8 @@ class CylindricalCutter(BaseCutter):
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
-    def intersect_circle_edge(self, direction, edge):
-        (cl, ccp, cp, l) = self.intersect_circle_line(direction, edge)
-        if cp:
-            # check if the contact point is between the endpoints
-            m = cp.sub(edge.p1).dot(edge.dir)
-            if (m < 0) or (m > edge.len + epsilon):
-                return (None, INFINITE, cp)
-        return (cl, l, cp)
-
-    def intersect_cylinder_point(self, direction, point):
-        (ccp, cp, l) = intersect_cylinder_point(self.center, self.axis,
-                self.distance_radius, self.distance_radiussq, direction, point)
-        # offset intersection
-        if ccp:
-            cl = cp.add(self.location.sub(ccp))
-            return (cl, ccp, cp, l)
-        return (None, None, None, INFINITE)
-
-    def intersect_cylinder_vertex(self, direction, point):
-        (cl, ccp, cp, l) = self.intersect_cylinder_point(direction, point)
-        if ccp and ccp.z < self.center.z - epsilon:
-            return (None, INFINITE, None)
-        return (cl, l, cp)
-
-    def intersect_cylinder_line(self, direction, edge):
-        (ccp, cp, l) = intersect_cylinder_line(self.center, self.axis,
-                self.distance_radius, self.distance_radiussq, direction, edge)
-        # offset intersection
-        if ccp:
-            cl = self.location.add(cp.sub(ccp))
-            return (cl, ccp, cp, l)
-        return (None, None, None, INFINITE)
-
-    def intersect_cylinder_edge(self, direction, edge):
-        (cl, ccp, cp, l) = self.intersect_cylinder_line(direction, edge)
-        if not ccp:
-            return (None, INFINITE, None)
-        m = cp.sub(edge.p1).dot(edge.dir)
-        if (m < 0) or (m > edge.len + epsilon):
-            return (None, INFINITE, None)
-        if ccp.z < self.center.z - epsilon:
-            return (None, INFINITE, None)
-        return (cl, l, cp)
-
     def intersect_plane(self, direction, triangle):
+        # TODO: are "intersect_plane" and "self.intersect_circle_plane" obsolete?
         return self.intersect_circle_plane(direction, triangle)
 
     def intersect(self, direction, triangle):

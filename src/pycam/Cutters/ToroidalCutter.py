@@ -142,7 +142,7 @@ class ToroidalCutter(BaseCutter):
 
     def intersect_torus_vertex(self, direction, point):
         (cl, ccp, cp, l) = self.intersect_torus_point(direction, point)
-        return (cl, l)
+        return (cl, l, cp)
 
     def intersect_torus_edge(self, direction, edge):
         # TODO: calculate "optimal" scale:
@@ -163,8 +163,9 @@ class ToroidalCutter(BaseCutter):
                 min_m = m
                 min_l = l
                 min_cl = cl
+                min_cp = cp
         if min_l == INFINITE:
-            return (None, INFINITE)
+            return (None, INFINITE, None)
         scale2 = 10
         for i in range(1, scale2 + 1):
             m = min_m + ((float(i) / (scale2)) * 2 - 1)/scale
@@ -177,7 +178,8 @@ class ToroidalCutter(BaseCutter):
             if l < min_l:
                 min_l = l
                 min_cl = cl
-        return (min_cl, min_l)
+                min_cp = cp
+        return (min_cl, min_l, min_cp)
 
     def intersect_cylinder_point(self, direction, point):
         (ccp, cp, l) = intersect_cylinder_point(self.center, self.axis,
@@ -187,12 +189,6 @@ class ToroidalCutter(BaseCutter):
             cl = self.location.add(direction.mul(l))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
-
-    def intersect_cylinder_vertex(self, direction, point):
-        (cl, ccp, cp, l) = self.intersect_cylinder_point(direction, point)
-        if ccp and ccp.z < self.center.z - epsilon:
-            return (None, INFINITE)
-        return (cl, l)
 
     def intersect_cylinder_line(self, direction, edge):
         (ccp, cp, l) = intersect_cylinder_line(self.center, self.axis,
@@ -206,12 +202,12 @@ class ToroidalCutter(BaseCutter):
     def intersect_cylinder_edge(self, direction, edge):
         (cl, ccp, cp, l) = self.intersect_cylinder_line(direction, edge)
         if ccp and ccp.z < self.center.z - epsilon:
-            return (None, INFINITE)
+            return (None, INFINITE, None)
         if ccp:
             m = cp.sub(edge.p1).dot(edge.dir)
             if (m < 0) or (m > edge.len + epsilon):
-                return (None, INFINITE)
-        return (cl, l)
+                return (None, INFINITE, None)
+        return (cl, l, cp)
 
     def intersect_circle_plane(self, direction, triangle):
         (ccp, cp, l) = intersect_circle_plane(self.location,
@@ -222,12 +218,6 @@ class ToroidalCutter(BaseCutter):
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
-    def intersect_circle_triangle(self, direction, triangle):
-        (cl, ccp, cp, d) = self.intersect_circle_plane(direction, triangle)
-        if cp and triangle.point_inside(cp):
-            return (cl, d)
-        return (None, INFINITE)
-
     def intersect_circle_point(self, direction, point):
         (ccp, cp, l) = intersect_circle_point(self.location, self.axis,
                 self.distance_majorradius, self.distance_majorradiussq,
@@ -236,10 +226,6 @@ class ToroidalCutter(BaseCutter):
             cl = cp.sub(ccp.sub(self.location))
             return (cl, ccp, point, l)
         return (None, None, None, INFINITE)
-
-    def intersect_circle_vertex(self, direction, point):
-        (cl, ccp, cp, l) = self.intersect_circle_point(direction, point)
-        return (cl, l)
 
     def intersect_circle_line(self, direction, edge):
         (ccp, cp, l) = intersect_circle_line(self.location, self.axis,
@@ -250,15 +236,6 @@ class ToroidalCutter(BaseCutter):
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
-    def intersect_circle_edge(self, direction, edge):
-        (cl, ccp, cp, l) = self.intersect_circle_line(direction, edge)
-        if cp:
-            # check if the contact point is between the endpoints
-            m = cp.sub(edge.p1).dot(edge.dir)
-            if (m < 0) or (m > edge.len + epsilon):
-                return (None, INFINITE)
-        return (cl, l)
-
     def intersect(self, direction, triangle):
         (cl_t, d_t) = self.intersect_torus_triangle(direction, triangle)
         d = INFINITE
@@ -266,85 +243,104 @@ class ToroidalCutter(BaseCutter):
         if d_t < d:
             d = d_t
             cl = cl_t
-        (cl_e1, d_e1) = self.intersect_torus_edge(direction, triangle.e1)
-        (cl_e2, d_e2) = self.intersect_torus_edge(direction, triangle.e2)
-        (cl_e3, d_e3) = self.intersect_torus_edge(direction, triangle.e3)
+        (cl_e1, d_e1, cp_e1) = self.intersect_torus_edge(direction, triangle.e1)
+        (cl_e2, d_e2, cp_e2) = self.intersect_torus_edge(direction, triangle.e2)
+        (cl_e3, d_e3, cp_e3) = self.intersect_torus_edge(direction, triangle.e3)
         if d_e1 < d:
             d = d_e1
             cl = cl_e1
+            cp = cp_e1
         if d_e2 < d:
             d = d_e2
             cl = cl_e2
+            cp = cp_e2
         if d_e3 < d:
             d = d_e3
             cl = cl_e3
-        (cl_p1, d_p1) = self.intersect_torus_vertex(direction, triangle.p1)
-        (cl_p2, d_p2) = self.intersect_torus_vertex(direction, triangle.p2)
-        (cl_p3, d_p3) = self.intersect_torus_vertex(direction, triangle.p3)
+            cp = cp_e3
+        (cl_p1, d_p1, cp_p1) = self.intersect_torus_vertex(direction, triangle.p1)
+        (cl_p2, d_p2, cp_p2) = self.intersect_torus_vertex(direction, triangle.p2)
+        (cl_p3, d_p3, cp_p3) = self.intersect_torus_vertex(direction, triangle.p3)
         if d_p1 < d:
             d = d_p1
             cl = cl_p1
+            cp = cp_p1
         if d_p2 < d:
             d = d_p2
             cl = cl_p2
+            cp = cp_p2
         if d_p3 < d:
             d = d_p3
             cl = cl_p3
-        (cl_t, d_t) = self.intersect_circle_triangle(direction, triangle)
+            cp = cp_p3
+        (cl_t, d_t, cp_t) = self.intersect_circle_triangle(direction, triangle)
         if d_t < d:
             d = d_t
             cl = cl_t
-        (cl_p1, d_p1) = self.intersect_circle_vertex(direction, triangle.p1)
-        (cl_p2, d_p2) = self.intersect_circle_vertex(direction, triangle.p2)
-        (cl_p3, d_p3) = self.intersect_circle_vertex(direction, triangle.p3)
+            cp = cp_t
+        (cl_p1, d_p1, cp_p1) = self.intersect_circle_vertex(direction, triangle.p1)
+        (cl_p2, d_p2, cp_p2) = self.intersect_circle_vertex(direction, triangle.p2)
+        (cl_p3, d_p3, cp_p3) = self.intersect_circle_vertex(direction, triangle.p3)
         if d_p1 < d:
             d = d_p1
             cl = cl_p1
+            cp = cp_p1
         if d_p2 < d:
             d = d_p2
             cl = cl_p2
+            cp = cp_p2
         if d_p3 < d:
             d = d_p3
             cl = cl_p3
-        (cl_e1, d_e1) = self.intersect_circle_edge(direction, triangle.e1)
-        (cl_e2, d_e2) = self.intersect_circle_edge(direction, triangle.e2)
-        (cl_e3, d_e3) = self.intersect_circle_edge(direction, triangle.e3)
+            cp = cp_p3
+        (cl_e1, d_e1, cp_e1) = self.intersect_circle_edge(direction, triangle.e1)
+        (cl_e2, d_e2, cp_e2) = self.intersect_circle_edge(direction, triangle.e2)
+        (cl_e3, d_e3, cp_e3) = self.intersect_circle_edge(direction, triangle.e3)
         if d_e1 < d:
             d = d_e1
             cl = cl_e1
+            cp = cp_e1
         if d_e2 < d:
             d = d_e2
             cl = cl_e2
+            cp = cp_e2
         if d_e3 < d:
             d = d_e3
             cl = cl_e3
+            cp = cp_e3
         if direction.x != 0 or direction.y != 0:
-            (cl_p1, d_p1) = self.intersect_cylinder_vertex(direction,
+            (cl_p1, d_p1, cp_p1) = self.intersect_cylinder_vertex(direction,
                     triangle.p1)
-            (cl_p2, d_p2) = self.intersect_cylinder_vertex(direction,
+            (cl_p2, d_p2, cp_p2) = self.intersect_cylinder_vertex(direction,
                     triangle.p2)
-            (cl_p3, d_p3) = self.intersect_cylinder_vertex(direction,
+            (cl_p3, d_p3, cp_p3) = self.intersect_cylinder_vertex(direction,
                     triangle.p3)
             if d_p1 < d:
                 d = d_p1
                 cl = cl_p1
+                cp = cp_p1
             if d_p2 < d:
                 d = d_p2
                 cl = cl_p2
+                cp = cp_p2
             if d_p3 < d:
                 d = d_p3
                 cl = cl_p3
-            (cl_e1, d_e1) = self.intersect_cylinder_edge(direction, triangle.e1)
-            (cl_e2, d_e2) = self.intersect_cylinder_edge(direction, triangle.e2)
-            (cl_e3, d_e3) = self.intersect_cylinder_edge(direction, triangle.e3)
+                cp = cp_p3
+            (cl_e1, d_e1, cp_e1) = self.intersect_cylinder_edge(direction, triangle.e1)
+            (cl_e2, d_e2, cp_e2) = self.intersect_cylinder_edge(direction, triangle.e2)
+            (cl_e3, d_e3, cp_e3) = self.intersect_cylinder_edge(direction, triangle.e3)
             if d_e1 < d:
                 d = d_e1
                 cl = cl_e1
+                cp = cp_e1
             if d_e2 < d:
                 d = d_e2
                 cl = cl_e2
+                cp = cp_e2
             if d_e3 < d:
                 d = d_e3
                 cl = cl_e3
-        return (cl, d)
+                cp = cp_e3
+        return (cl, d, cp)
 
