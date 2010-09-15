@@ -23,7 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Point import Point
 from pycam.Geometry.Plane import Plane
-from pycam.Geometry import TransformableContainer
+from pycam.Geometry import TransformableContainer, get_bisector
 from pycam.Geometry.utils import number, epsilon
 import pycam.Geometry.Matrix as Matrix
 import pycam.Utils.log
@@ -304,20 +304,7 @@ class Polygon(TransformableContainer):
         p1 = self._points[index - 1]
         p2 = self._points[index]
         p3 = self._points[(index + 1) % len(self._points)]
-        d1 = p2.sub(p1).normalized()
-        d2 = p2.sub(p3).normalized()
-        skel_dir = d1.add(d2).normalized()
-        if skel_dir is None:
-            # the two vectors pointed to opposite directions
-            skel_dir = d1.cross(self.plane.n).normalized()
-        else:
-            skel_up_vector = skel_dir.cross(p2.sub(p1))
-            offset_up_vector = self.plane.n
-            # TODO: check for other axis as well
-            if offset_up_vector.z * skel_up_vector.z < 0:
-                # reverse the skeleton vector to point outwards
-                skel_dir = skel_dir.mul(-1)
-        return skel_dir
+        return get_bisector(p1, p2, p3, self.plane.n)
 
     def get_offset_polygons(self, offset):
         def get_shifted_vertex(index, offset):
@@ -703,8 +690,8 @@ class Polygon(TransformableContainer):
         else:
             result = Polygon(plane)
             for line in self.get_lines():
-                p1, dist = plane.intersect_point(plane.n, line.p1)
-                p2, dist = plane.intersect_point(plane.n, line.p2)
+                p1 = plane.get_point_projection(line.p1)
+                p2 = plane.get_point_projection(line.p2)
                 result.append(Line(p1, p2))
             # check if the projection would revert the direction of the polygon
             if plane.n.dot(self.plane.n) < 0:
