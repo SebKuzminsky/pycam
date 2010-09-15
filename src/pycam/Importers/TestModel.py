@@ -74,7 +74,6 @@ def get_test_model():
             (2, 8, 9, 15, 16, 17),
             (2, 9, 0, 17, 18, 2),
             (0, 9, 3, 18, 19, 3)):
-        model.append(Triangle(points[p1], points[p2], points[p3],
-                lines[l1], lines[l2], lines[l3]))
+        model.append(Triangle(points[p1], points[p2], points[p3]))
     return model
 
