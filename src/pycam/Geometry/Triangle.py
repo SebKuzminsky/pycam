@@ -50,7 +50,6 @@ class Triangle(TransformableContainer):
         self.reset_cache()
 
     def reset_cache(self):
-        # TODO: check if we need to rebuild the edges and the normal
         self.minx = min(self.p1.x, self.p2.x, self.p3.x)
         self.miny = min(self.p1.y, self.p2.y, self.p3.y)
         self.minz = min(self.p1.z, self.p2.z, self.p3.z)
