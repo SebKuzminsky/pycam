@@ -27,17 +27,16 @@ from pycam.Geometry.Point import Point
 
 
 class Hit:
-    def __init__(self, cl, t, d, direction):
+    def __init__(self, cl, cp, t, d, direction):
         self.cl = cl
+        self.cp = cp
         self.t = t
         self.d = d
         self.dir = direction
         self.z = -INFINITE
 
-    def cmp(a, b):
-        return cmp(a.d, b.d)
 
-def get_free_paths_triangles(model, cutter, p1, p2):
+def get_free_paths_triangles(model, cutter, p1, p2, return_triangles=False):
     points = []
     x_dist = p2.x - p1.x
     y_dist = p2.y - p1.y
@@ -64,15 +63,15 @@ def get_free_paths_triangles(model, cutter, p1, p2):
 
     for t in triangles:
         cutter.moveto(p1)
-        (cl, d) = cutter.intersect(backward, t)
+        (cl, d, cp) = cutter.intersect(backward, t)
         if cl:
-            hits.append(Hit(cl, t, -d, backward))
-        (cl, d) = cutter.intersect(forward, t)
+            hits.append(Hit(cl, cp, t, -d, backward))
+        (cl, d, cp) = cutter.intersect(forward, t)
         if cl:
-            hits.append(Hit(cl, t, d, forward))
+            hits.append(Hit(cl, cp, t, d, forward))
 
     # sort along the scan direction
-    hits.sort(Hit.cmp)
+    hits.sort(key=lambda h: h.d)
 
     count = 0
     points = []
@@ -81,23 +80,27 @@ def get_free_paths_triangles(model, cutter, p1, p2):
             if count == 0:
                 if -epsilon <= h.d <= xyz_dist + epsilon:
                     if len(points) == 0:
-                        points.append(p1)
-                    points.append(h.cl)
+                        points.append((p1, None, None))
+                    points.append((h.cl, h.t, h.cp))
             count += 1
         else:
             if count == 1:
                 if -epsilon <= h.d <= xyz_dist + epsilon:
-                    points.append(h.cl)
+                    points.append((h.cl, h.t, h.cp))
             count -= 1
 
     if len(points)%2 == 1:
-        points.append(p2)
+        points.append((p2, None, None))
 
     if len(hits)==0:
-        points.append(p1)
-        points.append(p2)
+        points.append((p1, None, None))
+        points.append((p2, None, None))
 
-    return points
+    if return_triangles:
+        return points
+    else:
+        # return only the cutter locations (without triangles)
+        return [cl for (cl, t, cp) in points]
 
 
 def get_free_paths_ode(physics, p1, p2, depth=8):
