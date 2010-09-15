@@ -79,7 +79,7 @@ class Plane(TransformableContainer):
         "None" is returned, if:
             - the triangle does not intersect with the plane
             - all vertices of the triangle are on the plane
-            - only one vertex of the triangle is on the plane
+        The line always runs clockwise through the triangle.
         """
         # don't import Line in the header -> circular import
         from pycam.Geometry.Line import Line
@@ -88,17 +88,35 @@ class Plane(TransformableContainer):
                 (triangle.e2, triangle.p2),
                 (triangle.e3, triangle.p3)):
             cp, l = self.intersect_point(edge.dir, point)
-            # filter all real collisions (ignore l == 0 to avoid duplicates)
-            if (not cp is None) and (0 < l <= edge.len + epsilon):
+            # filter all real collisions
+            if (not cp is None) and (-epsilon <= l <= edge.len + epsilon):
                 collisions.append(cp)
+            elif (cp is None) and (self.n.dot(edge.dir) == 0):
+                cp, dist = self.intersect_point(self.n, point)
+                if abs(dist) < epsilon:
+                    # the edge is on the plane
+                    collisions.append(point)
         if len(collisions) == 3:
-            # all points of the triangle are on the plane
+            # All points of the triangle are on the plane.
             return None
-        elif (len(collisions) == 2) and (collisions[0] != collisions[1]):
-            return Line(collisions[0], collisions[1])
+        if len(collisions) == 2:
+            collision_line = Line(collisions[0], collisions[1])
+            # no further calculation, if the line is zero-sized
+            if collision_line.len == 0:
+                return collision_line
+            cross = self.n.cross(collision_line.dir)
+            if cross.dot(triangle.normal) < 0:
+                # anti-clockwise direction -> revert the direction of the line
+                collision_line = Line(collision_line.p2, collision_line.p1)
+            return collision_line
         elif len(collisions) == 1:
-            # only one point is on the plane -> ignore it
-            return None
+            # only one point is on the plane
+            # TODO: probably we should return None here
+            return Line(collisions[0], collisions[0])
         else:
             return None
+
+    def get_point_projection(self, point):
+        p, dist = self.intersect_point(self.n, point)
+        return p
 
