@@ -240,6 +240,7 @@ class ToroidalCutter(BaseCutter):
         (cl_t, d_t) = self.intersect_torus_triangle(direction, triangle)
         d = INFINITE
         cl = None
+        cp = None
         if d_t < d:
             d = d_t
             cl = cl_t

@@ -23,7 +23,9 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 from pycam.Geometry.Point import Point
-from pycam.Geometry.utils import number, epsilon
+from pycam.Geometry.utils import number, INFINITE, epsilon
+from pycam.Geometry.intersection import intersect_circle_point, \
+        intersect_cylinder_point, intersect_cylinder_line
 
 
 class BaseCutter(object):
@@ -116,7 +118,7 @@ class BaseCutter(object):
                     * triangle.radius + triangle.radiussq) + epsilon:
             return None
 
-        (cl, d)= self.intersect(BaseCutter.vertical, triangle)
+        (cl, d, cp) = self.intersect(BaseCutter.vertical, triangle)
         return cl
 
     def intersect_circle_triangle(self, direction, triangle):

@@ -24,8 +24,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.Geometry.utils import INFINITE, sqrt, epsilon
 from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.intersection import intersect_circle_plane, \
-        intersect_circle_point, intersect_circle_line, \
-        intersect_cylinder_point, intersect_cylinder_line
+        intersect_circle_point, intersect_circle_line
 from pycam.Cutters.BaseCutter import BaseCutter
 
 
@@ -140,6 +139,14 @@ class CylindricalCutter(BaseCutter):
         if ccp and cp:
             cl = cp.add(self.location.sub(ccp))
             return (cl, ccp, cp, d)
+        return (None, None, None, INFINITE)
+
+    def intersect_circle_point(self, direction, point):
+        (ccp, cp, l) = intersect_circle_point(self.center, self.axis,
+                self.distance_radius, self.distance_radiussq, direction, point)
+        if ccp:
+            cl = cp.add(self.location.sub(ccp))
+            return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
     def intersect_circle_line(self, direction, edge):

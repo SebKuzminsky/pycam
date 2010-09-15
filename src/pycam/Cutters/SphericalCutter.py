@@ -25,8 +25,7 @@ from pycam.Geometry import Matrix
 from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.utils import INFINITE, epsilon, sqrt
 from pycam.Geometry.intersection import intersect_sphere_plane, \
-        intersect_sphere_point, intersect_sphere_line, \
-        intersect_cylinder_point, intersect_cylinder_line
+        intersect_sphere_point, intersect_sphere_line
 from pycam.Cutters.BaseCutter import BaseCutter
 
 
@@ -197,6 +196,7 @@ class SphericalCutter(BaseCutter):
         (cl_t, d_t) = self.intersect_sphere_triangle(direction, triangle)
         d = INFINITE
         cl = None
+        cp = None
         if d_t < d:
             d = d_t
             cl = cl_t
