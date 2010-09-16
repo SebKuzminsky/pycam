@@ -70,7 +70,7 @@ class GTKHandler(logging.Handler):
         self.parent_window = parent_window
 
     def emit(self, record):
-        message = self.format(record)
+        message = self.format(record).encode("utf-8")
         import gtk
         if record.levelno <= 20:
             message_type = gtk.MESSAGE_INFO
@@ -83,6 +83,12 @@ class GTKHandler(logging.Handler):
             message_title = "Error"
         window = gtk.MessageDialog(self.parent_window, type=message_type,
                 buttons=gtk.BUTTONS_OK, message_format=str(message))
+        try:
+            message_title = message_title.encode("utf-8")
+        except UnicodeDecodeError:
+            # remove all non-ascii characters
+            message_title = "".join([char for char in message_title
+                    if ord(char) < 128])
         window.set_title(message_title)
         window.run()
         window.destroy()
