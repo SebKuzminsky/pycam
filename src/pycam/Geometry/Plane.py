@@ -89,7 +89,9 @@ class Plane(TransformableContainer):
                 (triangle.e3, triangle.p3)):
             cp, l = self.intersect_point(edge.dir, point)
             # filter all real collisions
-            if (not cp is None) and (-epsilon <= l <= edge.len + epsilon):
+            # We don't want to count vertices double -> thus we only accept
+            # a distance that is lower than the length of the edge.
+            if (not cp is None) and (-epsilon < l < edge.len - epsilon):
                 collisions.append(cp)
             elif (cp is None) and (self.n.dot(edge.dir) == 0):
                 cp, dist = self.intersect_point(self.n, point)
@@ -119,4 +121,11 @@ class Plane(TransformableContainer):
     def get_point_projection(self, point):
         p, dist = self.intersect_point(self.n, point)
         return p
+
+    def get_line_projection(self, line):
+        # don't import Line in the header -> circular import
+        from pycam.Geometry.Line import Line
+        proj_p1 = self.get_point_projection(line.p1)
+        proj_p2 = self.get_point_projection(line.p2)
+        return Line(proj_p1, proj_p2)
 
