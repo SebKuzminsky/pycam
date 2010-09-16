@@ -127,8 +127,8 @@ class ToroidalCutter(BaseCutter):
     def intersect_torus_triangle(self, direction, triangle):
         (cl, ccp, cp, d) = self.intersect_torus_plane(direction, triangle)
         if cp and triangle.point_inside(cp):
-            return (cl, d)
-        return (None, INFINITE)
+            return (cl, d, cp)
+        return (None, INFINITE, None)
 
     def intersect_torus_point(self, direction, point):
         (ccp, cp, l) = intersect_torus_point(self.center, self.axis,
@@ -237,13 +237,14 @@ class ToroidalCutter(BaseCutter):
         return (None, None, None, INFINITE)
 
     def intersect(self, direction, triangle):
-        (cl_t, d_t) = self.intersect_torus_triangle(direction, triangle)
+        (cl_t, d_t, cp_t) = self.intersect_torus_triangle(direction, triangle)
         d = INFINITE
         cl = None
         cp = None
         if d_t < d:
             d = d_t
             cl = cl_t
+            cp = cp_t
         (cl_e1, d_e1, cp_e1) = self.intersect_torus_edge(direction, triangle.e1)
         (cl_e2, d_e2, cp_e2) = self.intersect_torus_edge(direction, triangle.e2)
         (cl_e3, d_e3, cp_e3) = self.intersect_torus_edge(direction, triangle.e3)

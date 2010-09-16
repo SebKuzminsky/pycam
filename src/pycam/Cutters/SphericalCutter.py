@@ -153,8 +153,8 @@ class SphericalCutter(BaseCutter):
     def intersect_sphere_triangle(self, direction, triangle):
         (cl, ccp, cp, d) = self.intersect_sphere_plane(direction, triangle)
         if cp and triangle.point_inside(cp):
-            return (cl, d)
-        return (None, INFINITE)
+            return (cl, d, cp)
+        return (None, INFINITE, None)
 
     def intersect_sphere_point(self, direction, point):
         (ccp, cp, l) = intersect_sphere_point(self.center, self.distance_radius,
@@ -193,13 +193,14 @@ class SphericalCutter(BaseCutter):
         return self.intersect_sphere_point(direction, point)
 
     def intersect(self, direction, triangle):
-        (cl_t, d_t) = self.intersect_sphere_triangle(direction, triangle)
+        (cl_t, d_t, cp_t) = self.intersect_sphere_triangle(direction, triangle)
         d = INFINITE
         cl = None
         cp = None
         if d_t < d:
             d = d_t
             cl = cl_t
+            cp = cp_t
         if cl and (direction.x == 0) and (direction.y == 0):
             return (cl, d, cp)
         (cl_e1, d_e1, cp_e1) = self.intersect_sphere_edge(direction, triangle.e1)
