@@ -103,7 +103,11 @@ class Line(TransformableContainer):
         return sqrt(self.dist_to_point_sq(p))
     
     def is_point_in_line(self, p):
-        return abs(p.sub(self.p1).norm + p.sub(self.p2).norm - self.len) < epsilon
+        dir1 = p.sub(self.p1).normalized()
+        dir2 = self.p2.sub(p).normalized()
+        # True if the two parts of the line have the same direction or if the
+        # point is self.p1 or self.p2.
+        return (dir1 == dir2 == self.dir) or (dir1 is None) or (dir2 is None)
 
     def to_OpenGL(self):
         if GL_enabled:
