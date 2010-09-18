@@ -100,6 +100,8 @@ class Plane(TransformableContainer):
                     collisions.append(point)
         if len(collisions) == 3:
             # All points of the triangle are on the plane.
+            # We don't return a waterline, as there should be another non-flat
+            # triangle with the same waterline.
             return None
         if len(collisions) == 2:
             collision_line = Line(collisions[0], collisions[1])
@@ -113,8 +115,8 @@ class Plane(TransformableContainer):
             return collision_line
         elif len(collisions) == 1:
             # only one point is on the plane
-            # TODO: probably we should return None here
-            return Line(collisions[0], collisions[0])
+            # This waterline (with zero length) should be of no use.
+            return None
         else:
             return None
 
