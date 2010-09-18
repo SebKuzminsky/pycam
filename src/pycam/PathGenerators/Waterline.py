@@ -31,6 +31,129 @@ import random
 import math
 
 
+class WaterlineTriangles:
+
+    def __init__(self):
+        self.triangles = []
+        self.waterlines = []
+        self.shifted_lines = []
+        self.left = []
+        self.right = []
+
+    def __str__(self):
+        lines = []
+        for index, t in enumerate(self.triangles):
+            lines.append("%d - %s" % (index, t))
+            left_index = self.left[index] and self.triangles.index(self.left[index])
+            right_index = self.right[index] and self.triangles.index(self.right[index])
+            lines.append("\t%s / %s" % (left_index, right_index))
+            lines.append("\t%s" % str(self.waterlines[index]))
+            lines.append("\t%s" % str(self.shifted_lines[index]))
+        return "\n".join(lines)
+
+    def add(self, triangle, waterline, shifted_line):
+        if triangle in self.triangles:
+            raise ValueError("Processing a triangle twice: %s" % str(triangle))
+        if waterline in self.waterlines:
+            # ignore this triangle
+            return
+        left = None
+        right = None
+        for index, wl in enumerate(self.waterlines):
+            if waterline.p2 == wl.p1:
+                if not right is None:
+                    raise ValueError("Too many right neighbours:\n%s\n%s\n%s" % (triangle, right, self.triangles[index]))
+                right = self.triangles[index]
+                if not self.left[index] is None:
+                    raise ValueError("Too many previous right neighbours:\n%s\n%s\n%s" % (triangle, self.left[index], self.triangles[index]))
+                self.left[index] = triangle
+            elif waterline.p1 == wl.p2:
+                if not left is None:
+                    raise ValueError("Too many left neighbours:\n%s\n%s\n%s" % (triangle, left, self.triangles[index]))
+                left = self.triangles[index]
+                if not self.right[index] is None:
+                    raise ValueError("Too many previous left neighbours:\n%s\n%s\n%s" % (triangle, self.right[index], self.triangles[index]))
+                self.right[index] = triangle
+            else:
+                # no neighbour found
+                pass
+        self.triangles.append(triangle)
+        self.waterlines.append(waterline)
+        self.shifted_lines.append(shifted_line)
+        self.left.append(left)
+        self.right.append(right)
+
+    def extend_waterlines(self):
+        index = 0
+        while index < len(self.triangles):
+            if self.right[index] is None:
+                index += 1
+                continue
+            shifted_line = self.shifted_lines[index]
+            right_index = self.triangles.index(self.right[index])
+            right_shifted_line = self.shifted_lines[right_index]
+            if shifted_line.dir == right_shifted_line.dir:
+                # straight lines - combine these lines
+                self.shifted_lines[index] = Line(shifted_line.p1, right_shifted_line.p2)
+                self.remove(right_index)
+                index = 0
+                continue
+            if shifted_line.p2 == right_shifted_line.p1:
+                # the lines intersect properly
+                index += 1
+                continue
+            cp, dist = shifted_line.get_intersection(right_shifted_line, infinite_lines=True)
+            cp2, dist2 = right_shifted_line.get_intersection(shifted_line, infinite_lines=True)
+            if cp is None:
+                raise ValueError("Missing intersection: %s / %s" % (shifted_line, right_shifted_line))
+            if dist < epsilon:
+                # remove the current triangle
+                self.remove(index)
+                index = 0
+            elif dist2 > 1 - epsilon:
+                # remove the other triangle
+                self.remove(right_index)
+                index = 0
+            else:
+                # introduce the new intersection point
+                self.shifted_lines[index] = Line(shifted_line.p1, cp)
+                self.shifted_lines[right_index] = Line(cp, right_shifted_line.p2)
+                index += 1
+
+    def remove(self, index):
+        # fix the connection to the left
+        if not self.left[index] is None:
+            left_index = self.triangles.index(self.left[index])
+            self.right[left_index] = self.right[index]
+        # fix the connection to the right
+        if not self.right[index] is None:
+            right_index = self.triangles.index(self.right[index])
+            self.left[right_index] = self.left[index]
+        # remove the item
+        self.triangles.pop(index)
+        self.waterlines.pop(index)
+        self.shifted_lines.pop(index)
+        self.left.pop(index)
+        self.right.pop(index)
+
+    def get_shifted_lines(self):
+        finished = []
+        queue = self.shifted_lines
+        while len(queue) > 0:
+            current = queue.pop()
+            finished.append(current)
+            match_found = True
+            while match_found:
+                match_found = False
+                for other_index, other in enumerate(queue):
+                    if current.p2 == other.p1:
+                        finished.append(other)
+                        queue.pop(other_index)
+                        current = other
+                        match_found = True
+        return finished
+
+
 class Waterline:
 
     def __init__(self, cutter, model, path_processor, physics=None):
@@ -105,44 +228,27 @@ class Waterline:
     def GenerateToolPathSlice(self, minx, maxx, miny, maxy, z,
             draw_callback=None, progress_counter=None):
         #print "**** Starting new slice at %f ****" % z
-        triangle_queue = self.model.triangles()[:]
+        plane = Plane(Point(0, 0, z), self._up_vector)
         visited_triangles = []
-        while len(triangle_queue) > 0:
-            first_skipped = False
-            #print "Triangles left: %d" % len(triangle_queue)
-            triangle = triangle_queue.pop()
+        lines = []
+        waterline_triangles = WaterlineTriangles()
+        for triangle in self.model.triangles():
             # ignore triangles below the z level
-            if triangle.maxz < z:
+            if (triangle.maxz < z) or (triangle in visited_triangles):
                 continue
             cutter_location, ct, ctp, waterline = self.get_collision_waterline_of_triangle(triangle, z)
             if ct is None:
                 continue
-            if ct in visited_triangles:
-                continue
-            print "%s / %s / %s / %s" % (cutter_location, ct, ctp, waterline)
+            shifted_waterline = self.get_waterline_extended(ct, waterline, cutter_location)
+            projected_waterline = plane.get_line_projection(waterline)
+            waterline_triangles.add(triangle, projected_waterline, shifted_waterline)
+        waterline_triangles.extend_waterlines()
+        for wl in waterline_triangles.get_shifted_lines():
             self.pa.new_scanline()
-            #print "**** new scanline ****"
-            # start from the middle of the triangle to the end of the waterline
-            waterline = Line(ctp, waterline.p2)
-            cutter_location = waterline.p2
-            cutter_location, ct, ctp, waterline = \
-                    self.go_to_next_collision(ct, ctp, cutter_location, waterline)
-            self.pa.append(cutter_location)
-            self.cutter.moveto(cutter_location)
-            while (not ct in visited_triangles) and (not math.isnan(cutter_location.x)):
-                if first_skipped:
-                    #print "New cutter location: %s" % str(cutter_location)
-                    self.pa.append(cutter_location)
-                    visited_triangles.append(ct)
-                    self.cutter.moveto(cutter_location)
-                else:
-                    first_skipped = True
-                if draw_callback:
-                    draw_callback(tool_position=cutter_location, toolpath=self.pa.paths)
-                cutter_location, ct, ctp, waterline = \
-                        self.go_to_next_collision(ct, ctp, cutter_location, waterline)
-                #print "cl, ct, ctp, waterline: %s\n\t%s\n\t%s\n\t%s" % (cutter_location, ct, ctp, waterline)
+            self.pa.append(wl.p1)
+            self.pa.append(wl.p2)
             self.pa.end_scanline()
+            #print l
         return self.pa.paths
 
     def get_collision_waterline_of_triangle(self, triangle, z):
@@ -168,10 +274,14 @@ class Waterline:
             return None, None, None, None
         # this vector is guaranteed to reach the outer limits
         direction_sized = direction_xy.mul(self.get_max_length())
-        cutter_location, triangle_collisions = self.find_next_outer_collision(start, direction_sized)
+        if str(triangle).startswith("Triangle8<"):
+            debug = True
+        else:
+            debug = False
+        cutter_location, triangle_collisions = self.find_next_outer_collision(start, direction_sized, preferred_triangle=triangle)
         if cutter_location is None:
             # no collision starting from this point
-            #print "Unexpected: missing collision"
+            #print "Unexpected: missing collision (%s)" % str(direction_sized)
             return None, None, None, None
         # ct: colliding triangle
         # ctp: collision point within colliding triangle
@@ -226,7 +336,7 @@ class Waterline:
         new_list.sort(key=line_distance)
         return new_list[0]
 
-    def find_next_outer_collision(self, point, direction):
+    def find_next_outer_collision(self, point, direction, preferred_triangle=None):
         collisions = get_free_paths_triangles(self.model, self.cutter,
                 point, point.add(direction), return_triangles=True)
         # remove leading "None"
@@ -237,31 +347,44 @@ class Waterline:
             # with an even index satisfies this condition.
             # Additionally we don't want to care for "not-real" collisions (e.g.
             # on the edge of the bounding box.
-            if (index % 2 == 0) and (not coll[1] is None):
+            if (index % 2 == 0) and (not coll[1] is None) \
+                    and (not coll[2] is None):
                 coll_outer.append(coll)
-        #print "Outer collision candidates: %s" % str(coll_outer)
+        #print "Outer collision candidates: (%d) %s" % (len(coll_outer), collisions)
         if not coll_outer:
             return None, None
         # find all triangles that cause the collision
         cutter_location = coll_outer[0][0]
         closest_triangles = []
+        # check the collision with the preferred triangle
+        if not preferred_triangle is None:
+            self.cutter.moveto(point)
+            pt_cl, pt_d, pt_cp = self.cutter.intersect(direction, preferred_triangle)
+            if pt_cl != cutter_location:
+                # try the reverse direction
+                pt_cl, pt_d, pt_cp = self.cutter.intersect(direction.mul(-1), preferred_triangle)
+            if pt_cl == cutter_location:
+                raw_waterline = self.get_raw_triangle_waterline(preferred_triangle, pt_cp, cutter_location)
+                return cutter_location, [(preferred_triangle, pt_cp, raw_waterline)]
         while coll_outer and (abs(coll_outer[0][0].sub(cutter_location).norm) < epsilon):
             current_collision, t, cp = coll_outer.pop()
             raw_waterline = self.get_raw_triangle_waterline(t, cp, cutter_location)
             if (not raw_waterline is None) and (raw_waterline.len != 0):
                 closest_triangles.append((t, cp, raw_waterline))
+            else:
+                print "No waterline found: %s / %s / %s" % (t, cp, cutter_location)
         #print "Outer collision selection: %s" % str(closest_triangles)
         if len(closest_triangles) > 0:
             return cutter_location, closest_triangles
         else:
             return None, None
 
-    def get_closest_adjacent_waterline(self, triangle, waterline, reference_point):
+    def get_closest_adjacent_waterline(self, triangle, waterline, wl_point, reference_point):
         # Find the adjacent triangles that share vertices with the end of the
         # waterline of the original triangle.
         edges = []
         for edge in (triangle.e1, triangle.e2, triangle.e3):
-            if edge.is_point_in_line(waterline.p2):
+            if edge.is_point_in_line(wl_point):
                 edges.append(edge)
                 # also add the reverse to speed up comparisons
                 edges.append(Line(edge.p2, edge.p1))
@@ -269,7 +392,7 @@ class Waterline:
         for t in self.model.triangles():
             if (not t is triangle) and ((t.e1 in edges) or (t.e2 in edges) \
                     or (t.e3 in edges)):
-                t_waterline = self.get_raw_triangle_waterline(t, waterline.p2,
+                t_waterline = self.get_raw_triangle_waterline(t, wl_point,
                         reference_point)
                 if t_waterline is None:
                     # no waterline through this triangle
@@ -278,15 +401,18 @@ class Waterline:
                     # Ignore zero-length waterlines - there should be other -
                     # non-point-like waterlines in other triangles.
                     continue
-                if t_waterline.p1 != waterline.p2:
-                    if t_waterline.p2 == waterline.p2:
+                if t_waterline.p1 != wl_point:
+                    if t_waterline.p2 == wl_point:
                         t_waterline = Line(t_waterline.p2, t_waterline.p1)
                     else:
                         raise ValueError("get_waterline_endpoint: invalid " \
                                 + ("neighbouring waterline: %s (orig) / %s " \
                                 + "(neighbour)") % (waterline, t_waterline))
-                angle = get_angle_pi(t_waterline.p2, t_waterline.p1,
-                        waterline.p1, self._up_vector)
+                    angle = get_angle_pi(waterline.p2, waterline.p1,
+                            t_waterline.p1, self._up_vector)
+                else:
+                    angle = get_angle_pi(t_waterline.p2, t_waterline.p1,
+                            waterline.p1, self._up_vector)
                 triangles.append((t, t_waterline, angle))
         # Find the waterline with the smallest angle between original waterline
         # and this triangle's waterline.
@@ -294,91 +420,52 @@ class Waterline:
         t, t_waterline, angle = triangles[0]
         return t, t_waterline, angle
 
-    def get_waterline_endpoint(self, triangle, waterline, cutter_location):
-        strategy = "waterline"
-        reference_point = cutter_location.add(waterline.p2.sub(waterline.p1))
+    def get_waterline_extended(self, triangle, waterline, cutter_location):
         # Project the waterline and the cutter location down to the slice plane.
         # This is necessary for calculating the horizontal distance between the
         # cutter and the triangle waterline.
         plane = Plane(cutter_location, self._up_vector)
-        wl_proj_p1 = plane.get_point_projection(waterline.p1)
-        wl_proj_p2 = plane.get_point_projection(waterline.p2)
-        wl_proj = Line(wl_proj_p1, wl_proj_p2)
+        wl_proj = plane.get_line_projection(waterline)
         if wl_proj.len < epsilon:
             #print "Waterline endpoint for zero sized line requested: %s" % str(waterline)
-            return reference_point
+            return cutter_location
         offset = wl_proj.dist_to_point(cutter_location)
         if offset < epsilon:
-            return reference_point
+            return cutter_location
+        # shift both ends of the waterline towards the cutter location
+        shift = cutter_location.sub(wl_proj.closest_point(cutter_location))
+        shifted_waterline = Line(wl_proj.p1.add(shift), wl_proj.p2.add(shift))
+        return shifted_waterline
+
         # Calculate the length of the vector change.
-        t, t_waterline, angle = self.get_closest_adjacent_waterline(triangle, waterline, reference_point)
-        def get_waterline_collision():
-            # TODO: same height as before?
-            next_cl, dummy1, dummy2, next_waterline = self.get_collision_waterline_of_triangle(t, reference_point.z)
+        t1, t1_waterline, angle1 = self.get_closest_adjacent_waterline(triangle, waterline, waterline.p1, cutter_location)
+        t2, t2_waterline, angle2 = self.get_closest_adjacent_waterline(triangle, waterline, waterline.p2, cutter_location)
+        #TODO1: check "get_closest_adjacent_waterline" for edge=waterline (don't take the triangle above/below)
+        #TODO2: the extension does not work, if the "hit" triangles are above the cutter (e.g. lower sphere-half)
+        #TODO3: same shift for both waterlines?
+        def get_waterline_collision(t, default_location):
+            next_cl, dummy1, dummy2, next_waterline = self.get_collision_waterline_of_triangle(t, cutter_location.z)
             if next_cl is None:
-                raise ValueError("Failed collision: %s / %s" % (t, reference_point))
-            line1 = Line(cutter_location, cutter_location.add(waterline.p2.sub(waterline.p1)))
-            line2 = Line(next_cl, next_cl.add(next_waterline.p2.sub(next_waterline.p1)))
-            if line1.dir == line2.dir:
+                print "Failed collision: %s / %s" % (t, cutter_location)
+                return default_location
+            next_wl_proj = plane.get_line_projection(next_waterline)
+            next_shift = next_cl.sub(next_wl_proj.closest_point(next_cl))
+            line = Line(next_wl_proj.p1.add(next_shift), next_wl_proj.p2.add(next_shift))
+            if waterline.dir == line.dir:
                 # both are on a straight line
                 #print "STRAIGHT: %s / %s" % (line1, line2)
-                return line1.p2
-            cp, dist = line1.get_intersection(line2, infinite_lines=True)
+                return default_location
+            cp, dist = shifted_waterline.get_intersection(line, infinite_lines=True)
             if cp is None:
-                raise ValueError("Line going backward: %s / %s" % (waterline, t_waterline))
+                raise ValueError("Line going backward: %s / %s / %s / %s" % (triangle, t, waterline, next_waterline))
             else:
                 if abs(dist) < epsilon:
                     # "dist" is almost zero: 
-                    return cutter_location
-                elif dist < 0:
-                    raise ValueError("Waterline endpoint backwards: %s / %s" % (cp, dist))
-                else:
-                    # safety distance is required to avoid any collision due to float inaccuracies
-                    safety_distance = cp.sub(cutter_location).normalized().mul(epsilon)
-                    return cp.add(safety_distance)
-        def get_bisector_collision():
-            # bisector based code
-            bisector_dir = get_bisector(waterline.p1, waterline.p2, t_waterline.p2, self._up_vector)
-            bisector = Line(waterline.p2, waterline.p2.add(bisector_dir))
-            waterline_dir = waterline.p2.sub(waterline.p1)
-            cp, dist = Line(cutter_location, cutter_location.add(
-                    waterline_dir)).get_intersection(bisector, infinite_lines=True)
-            if cp is None:
-                raise ValueError("Line going backward: %s / %s" % (waterline, t_waterline))
-            else:
-                if abs(dist) < epsilon:
-                    # "dist" is almost zero: 
-                    return cutter_location
-                elif dist < 0:
-                    raise ValueError("Waterline endpoint backwards: %s / %s" % (cp, dist))
+                    return default_location
                 else:
                     return cp
-        def get_angle_collision():
-            # angle based code
-            if abs(angle - math.pi) < epsilon:
-                # The two waterlines (waterline and t_waterline) are on a straight
-                # line. Thus we need to add the length of the t_waterline (incl.
-                # its extension) as the extension of "waterline".
-                # This sounds like a possible recursion trap, but it should be
-                # of finite depth.
-                #print "Waterline extension: straight line (%s / %s)" % (waterline, t_waterline)
-                endpoint = t_waterline.p2.sub(t_waterline.p1).add(
-                        self.get_waterline_endpoint(t, t_waterline,
-                        reference_point))
-            if abs(angle - 2 * math.pi) < epsilon:
-                raise ValueError("Line going backward: %s / %s" % (waterline, t_waterline))
-            else:
-                # this waterline and the next are _not_ on a straight line
-                change_vector_length = offset / math.tan(angle / 2)
-                change_vector = waterline.dir.mul(change_vector_length)
-                endpoint = cutter_location.add(waterline.p2.sub(waterline.p1)).add(change_vector)
-            #print "Waterline extension: %s (%f)" % (change_vector, change_vector.norm)
-            return endpoint
         # alternative calculations - "waterline_collision" seems to be the best
-        waterline_collision = get_waterline_collision()
-        #bisector_collision = get_bisector_collision()
-        #angle_collision = get_angle_collision()
-        #print "Endpoints: %s / %s / %s" % (waterline_collision, bisector_collision, angle_collision)
-        collision = waterline_collision
-        return Point(collision.x, collision.y, collision.z)
+        collision1 = get_waterline_collision(t1, shifted_waterline.p1)
+        collision2 = get_waterline_collision(t2, shifted_waterline.p2)
+        return Line(collision1, collision2)
 
