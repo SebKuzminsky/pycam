@@ -3,6 +3,7 @@ Version 0.3.1 - UNRELEASED
  * allow to reverse the direction of a 2D contour model
  * added optional "orthogonal" view (instead of perspective)
  * added a "recent files" item to the file menu
+ * added the transparency (alpha) component to all configurable colors
 
 Version 0.3.0 - 2010-08-16
  * added support for importing contour paths from SVG files (requires Inkscape and pstoedit)

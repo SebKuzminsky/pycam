@@ -5500,6 +5500,7 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="use_alpha">True</property>
                             <property name="color">#000000000000</property>
                           </object>
                           <packing>
@@ -5527,6 +5528,7 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="use_alpha">True</property>
                             <property name="color">#000000000000</property>
                           </object>
                           <packing>
@@ -5541,6 +5543,7 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="use_alpha">True</property>
                             <property name="color">#000000000000</property>
                           </object>
                           <packing>
@@ -5596,6 +5599,7 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="use_alpha">True</property>
                             <property name="color">#000000000000</property>
                           </object>
                           <packing>
@@ -5625,6 +5629,7 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="use_alpha">True</property>
                             <property name="color">#000000000000</property>
                           </object>
                           <packing>
@@ -5654,6 +5659,7 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="use_alpha">True</property>
                             <property name="color">#000000000000</property>
                           </object>
                           <packing>
@@ -5684,6 +5690,7 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="use_alpha">True</property>
                             <property name="color">#000000000000</property>
                           </object>
                           <packing>
@@ -5713,6 +5720,7 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="use_alpha">True</property>
                             <property name="color">#000000000000</property>
                           </object>
                           <packing>

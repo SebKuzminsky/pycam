@@ -698,7 +698,7 @@ def draw_bounding_box(minx, miny, minz, maxx, maxy, maxz, color):
     p8 = [maxx, miny, maxz]
     # lower rectangle
     GL.glBegin(GL.GL_LINES)
-    GL.glColor3f(*color)
+    GL.glColor4f(*color)
     # all combinations of neighbouring corners
     for corner_pair in [(p1, p2), (p1, p5), (p1, p4), (p2, p3),
                 (p2, p6), (p3, p4), (p3, p7), (p4, p8), (p5, p6),
@@ -726,15 +726,15 @@ def draw_complete_model_view(settings):
     if settings.get("show_simulation"):
         obj = settings.get("simulation_object")
         if not obj is None:
-            GL.glColor3f(*settings.get("color_material"))
+            GL.glColor4f(*settings.get("color_material"))
             obj.to_OpenGL()
     # draw the model
     if settings.get("show_model"):
-        GL.glColor3f(*settings.get("color_model"))
+        GL.glColor4f(*settings.get("color_model"))
         settings.get("model").to_OpenGL()
     # draw the support grid
     if settings.get("show_support_grid") and settings.get("support_grid"):
-        GL.glColor3f(*settings.get("color_support_grid"))
+        GL.glColor4f(*settings.get("color_support_grid"))
         settings.get("support_grid").to_OpenGL()
     # draw the toolpath
     # don't do it, if a new toolpath is just being calculated
@@ -750,7 +750,7 @@ def draw_complete_model_view(settings):
     if settings.get("show_drill_progress"):
         cutter = settings.get("cutter")
         if not cutter is None:
-            GL.glColor3f(*settings.get("color_cutter"))
+            GL.glColor4f(*settings.get("color_cutter"))
             cutter.to_OpenGL()
         # also show the toolpath that is currently being calculated
         toolpath_in_progress = settings.get("toolpath_in_progress")
@@ -768,13 +768,13 @@ def draw_toolpath(toolpath, color_forward, color_backward):
         last = None
         for path in toolpath:
             if last:
-                GL.glColor3f(*color_backward)
+                GL.glColor4f(*color_backward)
                 GL.glBegin(GL.GL_LINES)
                 GL.glVertex3f(last.x, last.y, last.z)
                 last = path.points[0]
                 GL.glVertex3f(last.x, last.y, last.z)
                 GL.glEnd()
-            GL.glColor3f(*color_forward)
+            GL.glColor4f(*color_forward)
             GL.glBegin(GL.GL_LINE_STRIP)
             for point in path.points:
                 GL.glVertex3f(point.x, point.y, point.z)

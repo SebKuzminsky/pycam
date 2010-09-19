@@ -82,14 +82,14 @@ PREFERENCES_DEFAULTS = {
         "show_bounding_box": True,
         "show_toolpath": True,
         "show_drill_progress": False,
-        "color_background": (0.0, 0.0, 0.0),
-        "color_model": (0.5, 0.5, 1.0),
-        "color_support_grid": (0.8, 0.8, 0.3),
-        "color_bounding_box": (0.3, 0.3, 0.3),
-        "color_cutter": (1.0, 0.2, 0.2),
-        "color_toolpath_cut": (1.0, 0.5, 0.5),
-        "color_toolpath_return": (0.5, 1.0, 0.5),
-        "color_material": (1.0, 0.5, 0.0),
+        "color_background": (0.0, 0.0, 0.0, 1.0),
+        "color_model": (0.5, 0.5, 1.0, 1.0),
+        "color_support_grid": (0.8, 0.8, 0.3, 1.0),
+        "color_bounding_box": (0.3, 0.3, 0.3, 1.0),
+        "color_cutter": (1.0, 0.2, 0.2, 1.0),
+        "color_toolpath_cut": (1.0, 0.5, 0.5, 1.0),
+        "color_toolpath_return": (0.5, 1.0, 0.5, 1.0),
+        "color_material": (1.0, 0.5, 0.0, 1.0),
         "view_light": True,
         "view_shadow": True,
         "view_polygon": True,
@@ -495,12 +495,23 @@ class ProjectGui:
         def get_color_wrapper(obj):
             def gtk_color_to_float():
                 gtk_color = obj.get_color()
-                return (gtk_color.red / GTK_COLOR_MAX, gtk_color.green / GTK_COLOR_MAX, gtk_color.blue / GTK_COLOR_MAX)
+                alpha = obj.get_alpha()
+                return (gtk_color.red / GTK_COLOR_MAX,
+                        gtk_color.green / GTK_COLOR_MAX,
+                        gtk_color.blue / GTK_COLOR_MAX,
+                        alpha / GTK_COLOR_MAX)
             return gtk_color_to_float
         def set_color_wrapper(obj):
-            def set_gtk_color_by_float((red, green, blue)):
+            def set_gtk_color_by_float(components):
+                # use alpha if it was given
+                if len(components) == 3:
+                    alpha = 1.0
+                else:
+                    alpha = components[3]
+                red, green, blue = components[:3]
                 obj.set_color(gtk.gdk.Color(int(red * GTK_COLOR_MAX),
                         int(green * GTK_COLOR_MAX), int(blue * GTK_COLOR_MAX)))
+                obj.set_alpha(int(alpha * GTK_COLOR_MAX))
             return set_gtk_color_by_float
         for name, objname in (("color_background", "ColorBackground"),
                 ("color_model", "ColorModel"),
