@@ -193,7 +193,7 @@ class Line(TransformableContainer):
 
     def get_cropped_line(self, minx, maxx, miny, maxy, minz, maxz):
         if self.is_completely_inside(minx, maxx, miny, maxy, minz, maxz):
-            return Line(line.p1, line.p2)
+            return self
         elif self.is_completely_outside(minx, maxx, miny, maxy, minz, maxz):
             return None
         else:
