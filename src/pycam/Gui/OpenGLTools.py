@@ -283,7 +283,7 @@ class ModelViewWindowGL:
         # key binding
         self.window.connect("key-press-event", self.key_handler)
         # OpenGL stuff
-        glconfig = gtk.gdkgl.Config(mode=gtk.gdkgl.MODE_RGB \
+        glconfig = gtk.gdkgl.Config(mode=gtk.gdkgl.MODE_RGBA \
                 | gtk.gdkgl.MODE_DEPTH | gtk.gdkgl.MODE_DOUBLE)
         self.area = gtk.gtkgl.DrawingArea(glconfig)
         # first run; might also be important when doing other fancy
@@ -488,6 +488,10 @@ class ModelViewWindowGL:
         #GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR)
         #GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_EMISSION)
         GL.glEnable(GL.GL_COLOR_MATERIAL)
+        # enable blending/transparency (alpha) for colors
+        GL.glEnable(GL.GL_BLEND)
+        # see http://wiki.delphigl.com/index.php/glBlendFunc
+        GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
 
     def destroy(self, widget=None, data=None):
         if self.notify_destroy_func:
