@@ -2515,6 +2515,7 @@ class ProjectGui:
             self.update_progress_bar("", 0)
             self.progress_cancel_button.set_sensitive(True)
             self.progress_widget.show()
+            self._progress_start_time = time.time()
         else:
             self.progress_widget.hide()
             self.task_pane.set_sensitive(True)
@@ -2530,8 +2531,28 @@ class ProjectGui:
         if not percent is None:
             percent = min(max(percent, 0.0), 100.0)
             self.progress_bar.set_fraction(percent/100.0)
+        # "estimated time of arrival" text
+        if self.progress_bar.get_fraction() > 0:
+            eta_full = (time.time() - self._progress_start_time) / self.progress_bar.get_fraction()
+            if eta_full > 0:
+                eta_delta = eta_full - (time.time() - self._progress_start_time)
+                eta_delta = int(round(eta_delta))
+                eta_delta_obj = datetime.timedelta(seconds=eta_delta)
+                eta_text = "%s remaining ..." % str(eta_delta_obj)
+            else:
+                eta_text = None
+        else:
+            eta_text = None
+        lines = []
         if not text is None:
-            self.progress_bar.set_text(text)
+            lines.append(text)
+        else:
+            old_lines = self.progress_bar.get_text().split(os.linesep)
+            # skip the last line
+            lines.extend(old_lines[:-1])
+        if eta_text:
+            lines.append(eta_text)
+        self.progress_bar.set_text(os.linesep.join(lines))
         # update the GUI
         while gtk.events_pending():
             gtk.main_iteration()
