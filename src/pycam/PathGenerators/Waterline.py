@@ -214,11 +214,11 @@ class WaterlineTriangles:
 class Waterline:
 
     def __init__(self, cutter, model, path_processor, physics=None):
-        # TODO: implement ODE for physics
         self.cutter = cutter
         self.model = model
         self.pa = path_processor
         self._up_vector = Vector(0, 0, 1)
+        self.physics = physics
 
     def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, dz,
             draw_callback=None):
@@ -232,7 +232,8 @@ class Waterline:
         num_of_layers = 1 + ceil(diff_z / dz)
         z_step = diff_z / max(1, (num_of_layers - 1))
 
-        progress_counter = ProgressCounter(num_of_layers, draw_callback)
+        progress_counter = ProgressCounter(num_of_layers \
+                * len(self.model.triangles()), draw_callback)
 
         current_layer = 0
 
@@ -256,12 +257,44 @@ class Waterline:
 
     def GenerateToolPathSlice(self, minx, maxx, miny, maxy, z,
             draw_callback=None, progress_counter=None):
-        #print "**** Starting new slice at %f ****" % z
+        shifted_lines = self.get_potential_contour_lines(minx, maxx, miny, maxy, z)
+        last_position = None
+        self.pa.new_scanline()
+        for line in shifted_lines:
+            if self.physics:
+                points = get_free_paths_ode(self.physics, line.p1, line.p2,
+                        depth=depth_x)
+            else:
+                points = get_free_paths_triangles(self.model, self.cutter,
+                        line.p1, line.p2)
+            if points:
+                if (not last_position is None) and (len(points) > 0) \
+                        and (last_position != points[0]):
+                    self.pa.end_scanline()
+                    self.pa.new_scanline()
+                for p in points:
+                    self.pa.append(p)
+                self.cutter.moveto(p)
+                if draw_callback:
+                    draw_callback(tool_position=p, toolpath=self.pa.paths)
+                last_position = p
+            # update the progress counter
+            if not progress_counter is None:
+                if progress_counter.increment():
+                    # quit requested
+                    break
+        # the progress counter jumps up by the number of non directly processed triangles
+        if not progress_counter is None:
+            progress_counter.increment(len(self.model.triangles()) - len(shifted_lines))
+        self.pa.end_scanline()
+        return self.pa.paths
+
+    def get_potential_contour_lines(self, minx, maxx, miny, maxy, z):
         plane = Plane(Point(0, 0, z), self._up_vector)
         visited_triangles = []
         lines = []
         waterline_triangles = WaterlineTriangles()
-        for triangle in self.model.triangles():
+        for triangle in self.model.triangles(minx=minx, miny=miny, maxx=maxx, maxy=maxy):
             # ignore triangles below the z level
             if (triangle.maxz < z) or (triangle in visited_triangles):
                 continue
@@ -274,12 +307,12 @@ class Waterline:
             projected_waterline = plane.get_line_projection(waterline)
             waterline_triangles.add(triangle, projected_waterline, shifted_waterline)
         waterline_triangles.extend_waterlines()
-        for wl in waterline_triangles.get_shifted_lines():
-            self.pa.new_scanline()
-            self.pa.append(wl.p1)
-            self.pa.append(wl.p2)
-            self.pa.end_scanline()
-        return self.pa.paths
+        result = []
+        for line in waterline_triangles.get_shifted_lines():
+            cropped_line = line.get_cropped_line(minx, maxx, miny, maxy, z, z)
+            if not cropped_line is None:
+                result.append(cropped_line)
+        return result
 
     def get_max_length(self):
         if not hasattr(self, "_max_length_cache"):
