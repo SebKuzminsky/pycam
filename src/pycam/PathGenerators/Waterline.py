@@ -254,12 +254,6 @@ class Waterline:
 
         return self.pa.paths
 
-    def get_max_length(self):
-        x_dim = abs(self.model.maxx - self.model.minx)
-        y_dim = abs(self.model.maxy - self.model.miny)
-        z_dim = abs(self.model.maxz - self.model.minz)
-        return sqrt(x_dim ** 2 + y_dim ** 2 + z_dim ** 2)
-
     def GenerateToolPathSlice(self, minx, maxx, miny, maxy, z,
             draw_callback=None, progress_counter=None):
         #print "**** Starting new slice at %f ****" % z
@@ -271,7 +265,6 @@ class Waterline:
             # ignore triangles below the z level
             if (triangle.maxz < z) or (triangle in visited_triangles):
                 continue
-            #cutter_location, ct, ctp, waterline = self.get_collision_waterline_of_triangle(triangle, z)
             cutter_location, waterline = self.get_collision_waterline_of_triangle(triangle, z)
             if cutter_location is None:
                 continue
@@ -279,10 +272,7 @@ class Waterline:
             if shifted_waterline is None:
                 continue
             projected_waterline = plane.get_line_projection(waterline)
-            try:
-                waterline_triangles.add(triangle, projected_waterline, shifted_waterline)
-            except ValueError:
-                print "Ignored:", triangle
+            waterline_triangles.add(triangle, projected_waterline, shifted_waterline)
         waterline_triangles.extend_waterlines()
         for wl in waterline_triangles.get_shifted_lines():
             self.pa.new_scanline()
@@ -290,6 +280,15 @@ class Waterline:
             self.pa.append(wl.p2)
             self.pa.end_scanline()
         return self.pa.paths
+
+    def get_max_length(self):
+        if not hasattr(self, "_max_length_cache"):
+            # update the cache
+            x_dim = abs(self.model.maxx - self.model.minx)
+            y_dim = abs(self.model.maxy - self.model.miny)
+            z_dim = abs(self.model.maxz - self.model.minz)
+            self._max_length_cache = sqrt(x_dim ** 2 + y_dim ** 2 + z_dim ** 2)
+        return self._max_length_cache
 
     def get_collision_waterline_of_triangle(self, triangle, z):
         points = []
@@ -316,6 +315,8 @@ class Waterline:
         direction_sized = direction_xy.mul(self.get_max_length())
         # calculate the collision point
         self.cutter.moveto(start)
+        # We are looking for the collision of the "back" of the cutter with the
+        # triangle.
         cl, d, cp = self.cutter.intersect(direction_xy.mul(-1), triangle)
         if cl is None:
             return None, None
@@ -326,98 +327,6 @@ class Waterline:
                 return None, None
             else:
                 return cl, waterline
-
-    def get_collision_waterline_of_triangle_old(self, triangle, z):
-        points = []
-        for edge in (triangle.e1, triangle.e2, triangle.e3):
-            if edge.p1.z < z < edge.p2.z:
-                points.append(edge.p1.add(edge.p2.sub(edge.p1).mul((z - edge.p1.z) / (edge.p2.z - edge.p1.z))))
-            elif edge.p2.z < z < edge.p1.z:
-                points.append(edge.p2.add(edge.p1.sub(edge.p2).mul((z - edge.p2.z) / (edge.p1.z - edge.p2.z))))
-        sums = [0, 0, 0]
-        for p in points:
-            sums[0] += p.x
-            sums[1] += p.y
-            sums[2] += p.z
-        if len(points) > 0:
-            start = Point(sums[0] / len(points), sums[1] / len(points), sums[2] / len(points))
-        else:
-            start = Point(triangle.center.x, triangle.center.y, z)
-        # use a projection upon a plane trough (0, 0, 0)
-        direction_xy = Plane(Point(0, 0, 0), self._up_vector).get_point_projection(triangle.normal).normalized()
-        # ignore triangles pointing upward or downward
-        if direction_xy is None:
-            return None, None, None, None
-        # this vector is guaranteed to reach the outer limits
-        direction_sized = direction_xy.mul(self.get_max_length())
-        cutter_location, triangle_collisions = self.find_next_outer_collision(
-                start, direction_sized, preferred_triangle=triangle)
-        if cutter_location is None:
-            # no collision starting from this point
-            #print "Unexpected: missing collision (%s)" % str(direction_sized)
-            return None, None, None, None
-        # ct: colliding triangle
-        # ctp: collision point within colliding triangle
-        # waterline: cut along the triangle at the height of ctp
-        ct, ctp, waterline = self.pick_suitable_triangle(triangle_collisions, cutter_location)
-        return cutter_location, ct, ctp, waterline
-
-    def pick_suitable_triangle(self, triangle_list, cutter_location):
-        # TODO: is the distance to the cutter location the proper sorting key?
-        line_distance = lambda (t, cp, waterline): waterline.dist_to_point_sq(cutter_location)
-        new_list = triangle_list[:]
-        new_list.sort(key=line_distance)
-        return new_list[0]
-
-    def find_next_outer_collision(self, point, direction, preferred_triangle=None):
-        collisions = get_free_paths_triangles(self.model, self.cutter,
-                point, point.add(direction), return_triangles=True)
-        # remove leading "None"
-        coll_outer = []
-        for index, coll in enumerate(collisions):
-            # Check if the collision goes in the direction of inside->outside of
-            # the material. We assume, that each item of the "collisions" list
-            # with an even index satisfies this condition.
-            # Additionally we don't want to care for "not-real" collisions (e.g.
-            # on the edge of the bounding box.
-            if (index % 2 == 0) and (not coll[1] is None) \
-                    and (not coll[2] is None):
-                coll_outer.append(coll)
-        if not coll_outer:
-            return None, None
-        # find all triangles that cause the collision
-        cutter_location = coll_outer[0][0]
-        closest_triangles = []
-        # check the collision with the preferred triangle
-        if not preferred_triangle is None:
-            self.cutter.moveto(point)
-            pt_cl, pt_d, pt_cp = self.cutter.intersect(direction, preferred_triangle)
-            if pt_cl != cutter_location:
-                # Also try the reverse direction. The direction is not just used
-                # for the movement, but also for choosing the side (front/back)
-                # of the cutter for collision checks.
-                pt_cl, pt_d, pt_cp = self.cutter.intersect(direction.mul(-1), preferred_triangle)
-            if pt_cl == cutter_location:
-                plane = Plane(pt_cp, self._up_vector)
-                waterline = plane.intersect_triangle(preferred_triangle)
-                if not waterline is None:
-                    return (cutter_location,
-                            [(preferred_triangle, pt_cp, waterline)])
-                else:
-                    # Don't return a result, if the triangle was flat. The
-                    # other triangle (sharing the relevant edge) will return
-                    # a valid result anyway.
-                    return None, None
-        while coll_outer and (abs(coll_outer[0][0].sub(cutter_location).norm) < epsilon):
-            current_collision, t, cp = coll_outer.pop()
-            plane = Plane(current_collision, self._up_vector)
-            waterline = plane.intersect_triangle(t)
-            if not waterline is None:
-                closest_triangles.append((t, cp, waterline))
-        if len(closest_triangles) > 0:
-            return cutter_location, closest_triangles
-        else:
-            return None, None
 
     def get_shifted_waterline(self, triangle, waterline, cutter_location):
         # Project the waterline and the cutter location down to the slice plane.
