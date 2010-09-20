@@ -146,7 +146,7 @@ class Triangle(TransformableContainer):
             for ch in str(self.id):
                 w += GLUT.glutStrokeWidth(GLUT.GLUT_STROKE_ROMAN, ord(ch))
             GL.glTranslate(-w/2, 0, 0)
-            GL.glColor4f(1, 1, 1, 0)
+            GL.glColor4f(1, 1, 1, 1)
             for ch in str(self.id):
                 GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(ch))
             GL.glPopMatrix()
@@ -171,7 +171,7 @@ class Triangle(TransformableContainer):
                 for ch in str(p.id):
                     w += GLUT.glutStrokeWidth(GLUT.GLUT_STROKE_ROMAN, ord(ch))
                     GL.glTranslate(-w/2, 0, 0)
-                GL.glColor4f(0.5, 1, 0.5, 0)
+                GL.glColor4f(0.5, 1, 0.5, 1.0)
                 for ch in str(p.id):
                     GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(ch))
                 GL.glPopMatrix()
