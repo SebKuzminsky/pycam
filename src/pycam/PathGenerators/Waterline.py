@@ -69,8 +69,8 @@ class WaterlineTriangles:
         if waterline in self.waterlines:
             # ignore this triangle
             return
-        left = None
-        right = None
+        left = []
+        right = []
         removal_list = []
         # Try to combine the new waterline with all currently existing ones.
         # The three input parameters may be changed in this process.
@@ -101,26 +101,14 @@ class WaterlineTriangles:
         removal_list.reverse()
         for index in removal_list:
             # don't connect the possible left/right neighbours
-            self.remove(index, reset_connections=True)
+            self.remove(index)
         for index, wl in enumerate(self.waterlines):
             if (waterline.p2 == wl.p1) and (waterline.p1 != wl.p2):
-                if not right is None:
-                    # this may happen for multiple overlapping lines
-                    continue
-                right = self.triangles[index]
-                if not self.left[index] is None:
-                    # this may happen for multiple overlapping lines
-                    continue
-                self.left[index] = triangle
+                right.append(self.triangles[index])
+                self.left[index].append(triangle)
             elif (waterline.p1 == wl.p2) and (waterline.p2 != wl.p1):
-                if not left is None:
-                    # this may happen for multiple overlapping lines
-                    continue
-                left = self.triangles[index]
-                if not self.right[index] is None:
-                    # this may happen for multiple overlapping lines
-                    continue
-                self.right[index] = triangle
+                left.append(self.triangles[index])
+                self.right[index].append(triangle)
             else:
                 # no neighbour found
                 pass
@@ -133,59 +121,57 @@ class WaterlineTriangles:
     def extend_waterlines(self):
         index = 0
         while index < len(self.triangles):
-            if self.right[index] is None:
+            if not self.right[index]:
                 index += 1
                 continue
             shifted_line = self.shifted_lines[index]
-            right_index = self.triangles.index(self.right[index])
-            right_shifted_line = self.shifted_lines[right_index]
-            if shifted_line.dir == right_shifted_line.dir:
-                # straight lines - combine these lines
-                self.shifted_lines[index] = Line(shifted_line.p1, right_shifted_line.p2)
-                # the following update is not necessary but it is good for debugging
-                self.waterlines[index] = Line(self.waterlines[index].p1, self.waterlines[right_index].p2)
-                self.remove(right_index)
-                index = 0
-                continue
-            if shifted_line.p2 == right_shifted_line.p1:
-                # the lines intersect properly
-                index += 1
-                continue
-            cp, dist = shifted_line.get_intersection(right_shifted_line, infinite_lines=True)
-            cp2, dist2 = right_shifted_line.get_intersection(shifted_line, infinite_lines=True)
-            if cp is None:
-                raise ValueError("Missing intersection:%d / %d\n\t%s\n\t%s\n\t%s\n\t%s" % (index, right_index, shifted_line, right_shifted_line, self.waterlines[index], self.waterlines[right_index]))
-            if dist < epsilon:
-                # remove the current triangle
-                self.remove(index)
-                index = 0
-            elif dist2 > 1 - epsilon:
-                # remove the other triangle
-                self.remove(right_index)
-                index = 0
-            else:
-                # introduce the new intersection point
-                self.shifted_lines[index] = Line(shifted_line.p1, cp)
-                self.shifted_lines[right_index] = Line(cp, right_shifted_line.p2)
-                index += 1
+            potential_endings = []
+            for right_triangle in self.right[index]:
+                right_index = self.triangles.index(right_triangle)
+                right_shifted_line = self.shifted_lines[right_index]
+                if shifted_line.dir == right_shifted_line.dir:
+                    # straight lines - extend to the start of the next one
+                    potential_endings.append((right_shifted_line.p1, 1.0, right_index, 0.0))
+                    continue
+                if shifted_line.p2 == right_shifted_line.p1:
+                    # the lines intersect properly
+                    potential_endings.append((shifted_line.p2, 1.0, right_index, 0.0))
+                    continue
+                cp, dist = shifted_line.get_intersection(right_shifted_line,
+                        infinite_lines=True)
+                cp2, dist2 = right_shifted_line.get_intersection(shifted_line,
+                        infinite_lines=True)
+                if cp is None:
+                    raise ValueError("Missing intersection:%d / %d\n\t%s\n\t%s\n\t%s\n\t%s" \
+                            % (index, right_index, shifted_line,
+                            right_shifted_line, self.waterlines[index],
+                            self.waterlines[right_index]))
+                potential_endings.append((cp, dist, right_index, dist2))
+            # adjust all connected lines
+            potential_endings.sort(key=lambda (cp, dist, other_index, dist2): dist)
+            # the point with the greatest distance will be the final end of this line
+            if potential_endings[-1][1] > 0:
+                self.shifted_lines[index] = Line(self.shifted_lines[index].p1, potential_endings[-1][0])
+            final_end = potential_endings[-1][0]
+            for cp, dist, other_index, dist2 in potential_endings:
+                other_line = self.shifted_lines[other_index]
+                new_line = Line(cp, other_line.p2)
+                if new_line.dir != other_line.dir:
+                    # don't reverse the line
+                    continue
+                self.shifted_lines[other_index] = new_line
+            index += 1
 
-    def remove(self, index, reset_connections=False):
+    def remove(self, index):
+        triangle = self.triangles[index]
         # fix the connection to the left
-        if not self.left[index] is None:
-            left_index = self.triangles.index(self.left[index])
-            # Avoid "right neighbour" == "myself" loops.
-            if reset_connections or (self.left[index] is self.triangles[left_index]):
-                self.right[left_index] = None
-            else:
-                self.right[left_index] = self.right[index]
+        for left_triangle in self.left[index]:
+            left_index = self.triangles.index(left_triangle)
+            self.right[left_index].remove(triangle)
         # fix the connection to the right
-        if not self.right[index] is None:
-            right_index = self.triangles.index(self.right[index])
-            # Avoid "left neighbour" == "myself" loops.
-            if reset_connections or (self.right[index] is self.triangles[right_index]):
-                self.left[right_index] = None
-            else:
-                self.left[right_index] = self.left[index]
+        for right_triangle in self.right[index]:
+            right_index = self.triangles.index(right_triangle)
+            self.left[right_index].remove(triangle)
         # remove the item
         self.triangles.pop(index)
         self.waterlines.pop(index)
@@ -298,6 +284,9 @@ class Waterline:
             # ignore triangles below the z level
             if (triangle.maxz < z) or (triangle in visited_triangles):
                 continue
+            # ignore triangles pointing upwards or downwards
+            if triangle.normal.dot(self._up_vector) == 0:
+                continue
             cutter_location, waterline = self.get_collision_waterline_of_triangle(triangle, z)
             if cutter_location is None:
                 continue
@@ -357,7 +346,12 @@ class Waterline:
             plane = Plane(cp, self._up_vector)
             waterline = plane.intersect_triangle(triangle)
             if waterline is None:
-                return None, None
+                # calculate the waterline based on the z height
+                plane = Plane(Point(cp.x, cp.y, z), self._up_vector)
+                waterline = plane.intersect_triangle(triangle)
+                # shift the waterline to the outside
+                offset = waterline.closest_point(cp).sub(plane.get_point_projection(cp))
+                return cl, Line(waterline.p1.add(offset), waterline.p2.add(offset))
             else:
                 return cl, waterline
 
@@ -374,6 +368,10 @@ class Waterline:
             return wl_proj
         # shift both ends of the waterline towards the cutter location
         shift = cutter_location.sub(wl_proj.closest_point(cutter_location))
+        extra_shift = Plane(Point(0, 0, 0), self._up_vector).get_point_projection(shift)
+        # TODO: check if we need this extra distance to avoid collisions (resp. "touching")
+        if not extra_shift is None:
+            shift = shift.add(extra_shift.mul(epsilon))
         shifted_waterline = Line(wl_proj.p1.add(shift), wl_proj.p2.add(shift))
         return shifted_waterline
 
