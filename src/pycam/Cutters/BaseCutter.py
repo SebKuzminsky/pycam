@@ -123,7 +123,7 @@ class BaseCutter(object):
 
     def intersect_circle_triangle(self, direction, triangle):
         (cl, ccp, cp, d) = self.intersect_circle_plane(direction, triangle)
-        if cp and triangle.point_inside(cp):
+        if cp and triangle.is_point_inside(cp):
             return (cl, d, cp)
         return (None, INFINITE, None)
 

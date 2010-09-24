@@ -196,7 +196,7 @@ class Polygon(TransformableContainer):
 
     def is_point_on_outline(self, p):
         for line in self.get_lines():
-            if line.is_point_in_line(p):
+            if line.is_point_inside(p):
                 return True
         return False
 
@@ -761,7 +761,7 @@ class Polygon(TransformableContainer):
                 line1 = lines[-1]
                 line2 = lines[0]
                 if (line1.dir == line2.dir) \
-                        and (line1.is_point_in_line(line2.p1)):
+                        and (line1.is_point_inside(line2.p1)):
                     # remove the last point and define the polygon as closed
                     poly._points.pop(-1)
                     poly._is_closed = True

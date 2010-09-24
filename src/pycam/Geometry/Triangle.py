@@ -97,6 +97,9 @@ class Triangle(TransformableContainer):
         yield self.e3
         yield self.normal
 
+    def get_points(self):
+        return (self.p1, self.p2, self.p3)
+
     def get_children_count(self):
         # tree points per triangle
         return 7
@@ -143,11 +146,12 @@ class Triangle(TransformableContainer):
             GL.glTranslatef(n.x, n.y, n.z)
             GL.glScalef(0.003, 0.003, 0.003)
             w = 0
-            for ch in str(self.id):
+            id_string = "%s." % str(self.id)
+            for ch in id_string:
                 w += GLUT.glutStrokeWidth(GLUT.GLUT_STROKE_ROMAN, ord(ch))
             GL.glTranslate(-w/2, 0, 0)
             GL.glColor4f(1, 1, 1, 1)
-            for ch in str(self.id):
+            for ch in id_string:
                 GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(ch))
             GL.glPopMatrix()
             GL.glColor4f(cc[0], cc[1], cc[2], cc[3])
@@ -177,7 +181,7 @@ class Triangle(TransformableContainer):
                 GL.glPopMatrix()
             GL.glColor4f(cc[0], cc[1], cc[2], cc[3])
 
-    def point_inside(self, p):
+    def is_point_inside(self, p):
         # http://www.blackpawn.com/texts/pointinpoly/default.html
         # Compute vectors
         v0 = self.p3.sub(self.p1)

@@ -83,6 +83,9 @@ class Line(TransformableContainer):
         self.maxy = max(self.p1.y, self.p2.y)
         self.maxz = max(self.p1.z, self.p2.z)
 
+    def get_points(self):
+        return (self.p1, self.p2)
+
     def point_with_length_multiply(self, l):
         return self.p1.add(self.dir.mul(l*self.len))
 
@@ -102,7 +105,10 @@ class Line(TransformableContainer):
     def dist_to_point(self, p):
         return sqrt(self.dist_to_point_sq(p))
     
-    def is_point_in_line(self, p):
+    def is_point_inside(self, p):
+        if (p == self.p1) or (p == self.p2):
+            # these conditions are not covered by the code below
+            return True
         dir1 = p.sub(self.p1).normalized()
         dir2 = self.p2.sub(p).normalized()
         # True if the two parts of the line have the same direction or if the
@@ -162,13 +168,13 @@ class Line(TransformableContainer):
                 return None, None
             # the lines are on one straight
             candidates = []
-            if self.is_point_in_line(x3):
+            if self.is_point_inside(x3):
                 candidates.append((x3, c.norm / a.norm))
-            elif self.is_point_in_line(x4):
+            elif self.is_point_inside(x4):
                 candidates.append((x4, line.p2.sub(self.p1).norm / a.norm))
-            elif line.is_point_in_line(x1):
+            elif line.is_point_inside(x1):
                 candidates.append((x1, 0))
-            elif line.is_point_in_line(x2):
+            elif line.is_point_inside(x2):
                 candidates.append((x2, 1))
             else:
                 return None, None

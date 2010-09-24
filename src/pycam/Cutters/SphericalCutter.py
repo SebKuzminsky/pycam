@@ -152,7 +152,7 @@ class SphericalCutter(BaseCutter):
 
     def intersect_sphere_triangle(self, direction, triangle):
         (cl, ccp, cp, d) = self.intersect_sphere_plane(direction, triangle)
-        if cp and triangle.point_inside(cp):
+        if cp and triangle.is_point_inside(cp):
             return (cl, d, cp)
         return (None, INFINITE, None)
 
