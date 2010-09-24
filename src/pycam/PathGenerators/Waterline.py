@@ -27,8 +27,16 @@ from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
 from pycam.Geometry.utils import epsilon, ceil, sqrt
 from pycam.Geometry import get_bisector, get_angle_pi
 from pycam.Utils import ProgressCounter
+import pycam.Utils.log
 import random
 import math
+
+_DEBUG_DISABLE_COLLISION_CHECK = False
+_DEBUG_DISABLE_EXTEND_LINES = False
+_DEBUG_DISBALE_WATERLINE_SHIFT = False
+
+
+log = pycam.Utils.log.get_logger()
 
 
 class WaterlineTriangles:
@@ -78,6 +86,12 @@ class WaterlineTriangles:
                     current_group.insert(0, index)
                     queue.remove(index)
                     break
+                elif self.waterlines[index].p1 == self.waterlines[current_group[-1]].p2:
+                    current_group.append(index)
+                    queue.remove(index)
+                    break
+                else:
+                    pass
             else:
                 # no new members added to this group - start a new one
                 current_group = [queue[0]]
@@ -204,10 +218,12 @@ class Waterline:
         last_position = None
         self.pa.new_scanline()
         for line in shifted_lines:
-            points = self._get_free_paths(line.p1, line.p2)
+            if _DEBUG_DISABLE_COLLISION_CHECK:
+                points = (line.p1, line.p2)
+            else:
+                points = self._get_free_paths(line.p1, line.p2)
             if points:
-                if (not last_position is None) and (len(points) > 0) \
-                        and (last_position != points[0]):
+                if (not last_position is None) and (last_position != points[0]):
                     self.pa.end_scanline()
                     self.pa.new_scanline()
                 for p in points:
@@ -251,8 +267,12 @@ class Waterline:
                 shifted_edge = self.get_shifted_waterline(edge, cutter_location)
                 if shifted_edge is None:
                     continue
-                waterline_triangles.add(edge, shifted_edge)
-        waterline_triangles.extend_shifted_lines()
+                if _DEBUG_DISBALE_WATERLINE_SHIFT:
+                    waterline_triangles.add(edge, edge)
+                else:
+                    waterline_triangles.add(edge, shifted_edge)
+        if not _DEBUG_DISABLE_EXTEND_LINES:
+            waterline_triangles.extend_shifted_lines()
         result = []
         for line in waterline_triangles.get_shifted_lines():
             cropped_line = line.get_cropped_line(minx, maxx, miny, maxy, z, z)
@@ -347,7 +367,11 @@ class Waterline:
                         edges.append(Line(waterline.p1, other_point))
                         edges.append(Line(waterline.p2, other_point))
                         edges.sort(key=lambda x: x.len)
-                        outer_edges = [edges[-1]]
+                        edge = edges[-1]
+                        if edge.dir.cross(triangle.normal).dot(self._up_vector) < 0:
+                            outer_edges = [Line(edge.p2, edge.p1)]
+                        else:
+                            outer_edges = [edge]
                 else:
                     # two points above
                     other_point = points_above[0]
@@ -377,27 +401,32 @@ class Waterline:
                             outer_edges = [edge]
         result = []
         for edge in outer_edges:
-            start = edge.p1.add(edge.p2).div(2)
             direction = self._up_vector.cross(edge.dir).normalized()
             if direction is None:
                 continue
             direction = direction.mul(self.get_max_length())
-            # We need to use the triangle collision algorithm here - because we
-            # need the point of collision in the triangle.
-            collisions = get_free_paths_triangles(self.model, self.cutter, start,
-                    start.add(direction), return_triangles=True)
-            for index, coll in enumerate(collisions):
-                if (index % 2 == 0) and (not coll[1] is None) \
-                        and (not coll[2] is None) \
-                        and (coll[0].sub(start).dot(direction) > 0):
-                    cl, hit_t, cp = coll
+            edge_dir = edge.p2.sub(edge.p1)
+            for factor in (0.5, 0.0, 1.0, 0.25, 0.75):
+                start = edge.p1.add(edge_dir.mul(factor))
+                # We need to use the triangle collision algorithm here - because we
+                # need the point of collision in the triangle.
+                collisions = get_free_paths_triangles(self.model, self.cutter, start,
+                        start.add(direction), return_triangles=True)
+                for index, coll in enumerate(collisions):
+                    if (index % 2 == 0) and (not coll[1] is None) \
+                            and (not coll[2] is None) \
+                            and (coll[0].sub(start).dot(direction) > 0):
+                        cl, hit_t, cp = coll
+                        break
+                else:
+                    continue
+                    log.info("Failed to detect any collision: " \
+                            + "%s / %s -> %s" % (edge, start, direction))
+                proj_cp = plane.get_point_projection(cp)
+                if edge.is_point_inside(proj_cp):
+                    result.append((cl, edge))
+                    # continue with the next outer_edge
                     break
-            else:
-                raise ValueError("Failed to detect any collision: " \
-                        + "%s / %s -> %s" % (edge, start, direction))
-            proj_cp = plane.get_point_projection(cp)
-            if edge.is_point_inside(proj_cp):
-                result.append((cl, edge))
         return result
 
     def get_shifted_waterline(self, waterline, cutter_location):
@@ -413,6 +442,8 @@ class Waterline:
             return wl_proj
         # shift both ends of the waterline towards the cutter location
         shift = cutter_location.sub(wl_proj.closest_point(cutter_location))
+        # increase the shift width slightly to avoid "touch" collisions
+        shift = shift.mul(1.0 + epsilon)
         shifted_waterline = Line(wl_proj.p1.add(shift), wl_proj.p2.add(shift))
         return shifted_waterline
 
