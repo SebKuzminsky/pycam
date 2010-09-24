@@ -96,6 +96,9 @@ class Line(TransformableContainer):
 
     def closest_point(self, p):
         v = self.dir
+        if v is None:
+            # for zero-length lines
+            return self.p1
         l = self.p1.dot(v) - p.dot(v)
         return self.p1.sub(v.mul(l))
 
