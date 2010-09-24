@@ -35,18 +35,14 @@ class Hit:
         self.dir = direction
         self.z = -INFINITE
 
+    def __repr__(self):
+        return "%s - %s - %s - %s" % (self.d, self.cl, self.dir, self.cp)
+
 
 def get_free_paths_triangles(model, cutter, p1, p2, return_triangles=False):
-    points = []
-    x_dist = p2.x - p1.x
-    y_dist = p2.y - p1.y
-    z_dist = p2.z - p1.z
-    xyz_dist = sqrt(x_dist * x_dist + y_dist * y_dist + z_dist * z_dist)
-    x_frac = x_dist / xyz_dist
-    y_frac = y_dist / xyz_dist
-    z_frac = z_dist / xyz_dist
-    forward = Point(x_frac, y_frac, z_frac)
-    backward = Point(-x_frac, -y_frac, -z_frac)
+    backward = p1.sub(p2).normalized()
+    forward = p2.sub(p1).normalized()
+    xyz_dist = p2.sub(p1).norm
 
     minx = min(p1.x, p2.x)
     maxx = max(p1.x, p2.x)
@@ -89,10 +85,10 @@ def get_free_paths_triangles(model, cutter, p1, p2, return_triangles=False):
                     points.append((h.cl, h.t, h.cp))
             count -= 1
 
-    if len(points)%2 == 1:
+    if len(points) % 2 == 1:
         points.append((p2, None, None))
 
-    if len(hits)==0:
+    if len(points) == 0:
         points.append((p1, None, None))
         points.append((p2, None, None))
 
