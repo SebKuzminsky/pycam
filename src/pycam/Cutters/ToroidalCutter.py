@@ -205,7 +205,7 @@ class ToroidalCutter(BaseCutter):
             return (None, INFINITE, None)
         if ccp:
             m = cp.sub(edge.p1).dot(edge.dir)
-            if (m < 0) or (m > edge.len + epsilon):
+            if (m < -epsilon) or (m > edge.len + epsilon):
                 return (None, INFINITE, None)
         return (cl, l, cp)
 

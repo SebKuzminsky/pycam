@@ -63,7 +63,7 @@ def intersect_cylinder_point(center, axis, radius, radiussq, direction, point):
     n = direction.cross(axis).normalized()
     # distance of the point to this plane
     d = n.dot(point) - n.dot(center)
-    if abs(d) > radius + epsilon:
+    if abs(d) > radius - epsilon:
         return (None, None, INFINITE)
     # ccl is on cylinder
     d2 = sqrt(radiussq-d*d)
@@ -135,7 +135,7 @@ def intersect_circle_point(center, axis, radius, radiussq, direction, point):
     # intersect with line gives ccp
     (ccp, l) = plane.intersect_point(direction, point)
     # check if inside circle
-    if ccp and (center.sub(ccp).normsq <= radiussq):
+    if ccp and (center.sub(ccp).normsq < radiussq - epsilon):
         return (ccp, point, -l)
     return (None, None, INFINITE)
 
@@ -150,17 +150,17 @@ def intersect_circle_line(center, axis, radius, radiussq, direction, edge):
         (p2, l) = plane.intersect_point(direction, edge.p2)
         pc = Line(p1, p2).closest_point(center)
         d_sq = pc.sub(center).normsq
-        if d_sq > radiussq:
+        if d_sq > radiussq - epsilon:
             return (None, None, INFINITE)
         a = sqrt(radiussq - d_sq)
         d1 = p1.sub(pc).dot(d)
         d2 = p2.sub(pc).dot(d)
         ccp = None
         cp = None
-        if abs(d1) < a + epsilon:
+        if abs(d1) < a - epsilon:
             ccp = p1
             cp = p1.sub(direction.mul(l))
-        elif abs(d2) < a + epsilon:
+        elif abs(d2) < a - epsilon:
             ccp = p2
             cp = p2.sub(direction.mul(l))
         elif ((d1 < -a + epsilon) and (d2 > a - epsilon)) \
@@ -193,7 +193,7 @@ def intersect_circle_line(center, axis, radius, radiussq, direction, edge):
     # distance from center to this plane
     dist = n2.dot(center) - n2.dot(lp)
     distsq = dist * dist
-    if distsq > radiussq:
+    if distsq > radiussq - epsilon:
         return (None, None, INFINITE)
     # must be on circle
     dist2 = sqrt(radiussq - distsq)
@@ -251,7 +251,7 @@ def intersect_sphere_line(center, radius, radiussq, direction, edge):
 
     # calculate the distance from the sphere center to the plane
     dist = - center.dot(n) - edge.p1.dot(n)
-    if abs(dist) > radius:
+    if abs(dist) > radius - epsilon:
         return (None, None, INFINITE)
     # this gives us the intersection circle on the sphere
 
@@ -301,7 +301,7 @@ def intersect_torus_point(center, axis, majorradius, minorradius, majorradiussq,
         minlsq = (majorradius - minorradius) ** 2
         maxlsq = (majorradius + minorradius) ** 2
         l_sq = (point.x-center.x) ** 2 + (point.y - center.y) ** 2
-        if (l_sq < minlsq - epsilon) or (l_sq > maxlsq + epsilon):
+        if (l_sq < minlsq + epsilon) or (l_sq > maxlsq - epsilon):
             return (None, None, INFINITE)
         l = sqrt(l_sq)
         z_sq = minorradiussq - (majorradius - l) ** 2
@@ -313,12 +313,12 @@ def intersect_torus_point(center, axis, majorradius, minorradius, majorradiussq,
     elif direction.z == 0:
         # push
         z = point.z - center.z
-        if abs(z) > minorradius + epsilon:
+        if abs(z) > minorradius - epsilon:
             return (None, None, INFINITE)
         l = majorradius + sqrt(minorradiussq - z * z)
         n = axis.cross(direction)
         d = n.dot(point) - n.dot(center)
-        if abs(d) > l + epsilon:
+        if abs(d) > l - epsilon:
             return (None, None, INFINITE)
         a = sqrt(l * l - d * d)
         ccp = center.add(n.mul(d).add(direction.mul(a)))

@@ -184,7 +184,7 @@ class SphericalCutter(BaseCutter):
             # check if the contact point is between the endpoints
             d = edge.p2.sub(edge.p1)
             m = cp.sub(edge.p1).dot(d)
-            if (m < 0) or (m > d.normsq + epsilon):
+            if (m < -epsilon) or (m > d.normsq + epsilon):
                 return (None, INFINITE, None)
         return (cl, l, cp)
 
