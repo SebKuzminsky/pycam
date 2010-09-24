@@ -46,7 +46,7 @@ def get_bisector(p1, p2, p3, up_vector):
             bisector_dir = bisector_dir.mul(-1)
     return bisector_dir
 
-def get_angle_pi(p1, p2, p3, up_vector):
+def get_angle_pi(p1, p2, p3, up_vector, pi_factor=False):
     """ calculate the angle between three points
     Visualization:
             p3
@@ -75,7 +75,11 @@ def get_angle_pi(p1, p2, p3, up_vector):
         # The points are in anti-clockwise order. Thus the angle is greater
         # than 180 degree.
         angle = 2 * math.pi - angle
-    return angle
+    if pi_factor:
+        # the result is in the range of 0..2
+        return angle / math.pi
+    else:
+        return angle
 
 
 class TransformableContainer(object):
