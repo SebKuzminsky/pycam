@@ -87,13 +87,17 @@ class WaterlineTriangles:
 
     def extend_shifted_lines(self):
         # TODO: improve the code below to handle "holes" properly (neighbours that disappear due to a negative collision distance - use the example "SampleScene.stl" as a reference)
-        # TODO: add a "closed group" flag to avoid intersections between [-1] and [0] for non-closed groups
         def get_right_neighbour(group, ref):
             group_len = len(group)
-            for index in range(1, group_len):
-                group_index = (ref + index) % group_len
-                if not self.shifted_lines[group[group_index]] is None:
-                    return group[group_index]
+            # limit the search for a neighbour for non-closed groups
+            if self.waterlines[group[0]].p1 == self.waterlines[group[-1]].p2:
+                index_range = range(ref + 1, ref + group_len)
+            else:
+                index_range = range(ref + 1, group_len)
+            for index in index_range:
+                line_id = group[index % group_len]
+                if not self.shifted_lines[line_id] is None:
+                    return line_id
             else:
                 return None
         groups = self._get_groups()
