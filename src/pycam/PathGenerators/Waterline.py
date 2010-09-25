@@ -20,6 +20,9 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+# take a look at the related blog posting describing this algorithm:
+# http://fab.senselab.org/node/43
+
 from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
@@ -133,6 +136,7 @@ class WaterlineTriangles:
                     continue
                 cp, dist = current_shifted.get_intersection(neighbour_shifted, infinite_lines=True)
                 cp2, dist2 = neighbour_shifted.get_intersection(current_shifted, infinite_lines=True)
+                # TODO: add an arc (composed of lines) for a soft corner (not required, but nicer)
                 if dist < epsilon:
                     self.shifted_lines[current] = None
                     index -= 1
@@ -256,9 +260,11 @@ class Waterline:
                     break
             # ignore triangles below the z level
             if triangle.maxz < z:
+                # Case 1a
                 continue
             # ignore triangles pointing upwards or downwards
             if triangle.normal.cross(self._up_vector).norm == 0:
+                # Case 1b
                 continue
             edge_collisions = self.get_collision_waterline_of_triangle(triangle, z)
             if not edge_collisions:
@@ -295,6 +301,7 @@ class Waterline:
         if triangle.minz > z:
             # the triangle is completely above z
             # try all edges
+            # Case (4)
             proj_points = []
             for p in triangle.get_points():
                 proj_p = plane.get_point_projection(p)
@@ -327,6 +334,8 @@ class Waterline:
                     edge = Line(edge.p2, edge.p1)
                 outer_edges = [edge]
         else:
+            # some parts of the triangle are above and some below the cutter level
+            # Cases (2a), (2b), (3a) and (3b)
             points_above = [plane.get_point_projection(p) for p in triangle.get_points() if p.z > z]
             waterline = plane.intersect_triangle(triangle)
             if waterline is None:
@@ -344,13 +353,16 @@ class Waterline:
                         if (p != waterline.p1) and (p != waterline.p2)]
                 potential_edges = []
                 if len(points_above) == 0:
+                    # part of case (2a)
                     outer_edges = [waterline]
                 elif len(points_above) == 1:
                     other_point = points_above[0]
                     dot = other_point.sub(waterline.p1).cross(waterline.dir).dot(self._up_vector)
                     if dot > 0:
+                        # Case (2b)
                         outer_edges = [waterline]
                     elif dot < 0:
+                        # Case (3b)
                         edges = []
                         edges.append(Line(waterline.p1, other_point))
                         edges.append(Line(waterline.p2, other_point))
@@ -362,6 +374,7 @@ class Waterline:
                                 outer_edges.append(edge)
                     else:
                         # the three points are on one line
+                        # part of case (2a)
                         edges = []
                         edges.append(waterline)
                         edges.append(Line(waterline.p1, other_point))
@@ -377,9 +390,11 @@ class Waterline:
                     other_point = points_above[0]
                     dot = other_point.sub(waterline.p1).cross(waterline.dir).dot(self._up_vector)
                     if dot > 0:
+                        # Case (2b)
                         # the other two points are on the right side
                         outer_edges = [waterline]
                     elif dot < 0:
+                        # Case (3a)
                         edge = Line(points_above[0], points_above[1])
                         if edge.dir.cross(triangle.normal).dot(self._up_vector) < 0:
                             outer_edges = [Line(edge.p2, edge.p1)]
@@ -388,6 +403,8 @@ class Waterline:
                     else:
                         edges = []
                         # pick the longest combination of two of these points
+                        # part of case (2a)
+                        # TODO: maybe we should use the waterline instead? (otherweise the line could be too long and thus connections to the adjacent waterlines are not discovered? Test this with an appropriate test model.)
                         points = [waterline.p1, waterline.p2] + points_above
                         for p1 in points:
                             for p2 in points:
@@ -406,6 +423,7 @@ class Waterline:
                 continue
             direction = direction.mul(self.get_max_length())
             edge_dir = edge.p2.sub(edge.p1)
+            # TODO: adapt the number of potential starting positions to the length of the line
             for factor in (0.5, 0.0, 1.0, 0.25, 0.75):
                 start = edge.p1.add(edge_dir.mul(factor))
                 # We need to use the triangle collision algorithm here - because we
