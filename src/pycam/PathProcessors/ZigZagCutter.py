@@ -24,11 +24,12 @@ from pycam.Geometry.Path import Path
 from pycam.Toolpath import simplify_toolpath
 
 class ZigZagCutter:
-    def __init__(self):
+    def __init__(self, reverse=False):
         self.paths = []
         self.curr_path = None
         self.scanline = None
         self.curr_scanline = None
+        self.reverse = reverse
 
     def append(self, p):
         curr_path = None
@@ -61,8 +62,11 @@ class ZigZagCutter:
     def end_scanline(self):
         for path in self.curr_scanline:
             simplify_toolpath(path)
+            if self.reverse:
+                path.reverse()
             self.paths.append(path)
         self.curr_scanline = None
 
     def finish(self):
         pass
+

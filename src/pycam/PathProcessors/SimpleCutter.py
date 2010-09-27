@@ -24,9 +24,10 @@ from pycam.Geometry.Path import Path
 from pycam.Toolpath import simplify_toolpath
 
 class SimpleCutter:
-    def __init__(self):
+    def __init__(self, reverse=False):
         self.paths = []
         self.curr_path = None
+        self.reverse = reverse
 
     def append(self, p):
         curr_path = None
@@ -39,7 +40,10 @@ class SimpleCutter:
         curr_path.append(p)
         if self.curr_path == None:
             simplify_toolpath(curr_path)
-            self.paths.append(curr_path)
+            if self.reverse:
+                self.paths.insert(0, curr_path)
+            else:
+                self.paths.append(curr_path)
 
     def new_direction(self, direction):
         pass

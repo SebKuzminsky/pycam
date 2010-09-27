@@ -24,12 +24,13 @@ from pycam.Geometry.PolygonExtractor import PolygonExtractor
 from pycam.Toolpath import simplify_toolpath
 
 class ContourCutter:
-    def __init__(self):
+    def __init__(self, reverse=False):
         self.paths = []
         self.curr_path = None
         self.scanline = None
         self.pe = None
         self.points = []
+        self.reverse = reverse
 
     def append(self, p):
         self.points.append(p)
@@ -65,6 +66,8 @@ class ContourCutter:
                 p.append(p.points[0])
                 simplify_toolpath(p)
         if paths:
+            if self.reverse:
+                paths.reverse()
             self.paths.extend(paths)
         self.pe = None
 

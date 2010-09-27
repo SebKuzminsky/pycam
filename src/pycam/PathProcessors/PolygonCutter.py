@@ -27,11 +27,12 @@ from pycam.Toolpath import simplify_toolpath
 
 
 class PolygonCutter:
-    def __init__(self):
+    def __init__(self, reverse=False):
         self.paths = []
         self.curr_path = None
         self.scanline = None
         self.pe = PolygonExtractor(PolygonExtractor.MONOTONE)
+        self.reverse = reverse
 
     def append(self, p):
         self.pe.append(p)
@@ -70,5 +71,7 @@ class PolygonCutter:
         if paths:
             for p in paths:
                 simplify_toolpath(p)
+                if self.reverse:
+                    p.reverse()
             self.paths.extend(paths)
 
