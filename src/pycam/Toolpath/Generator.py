@@ -20,7 +20,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.PathGenerators import DropCutter, PushCutter, EngraveCutter, Waterline
+from pycam.PathGenerators import DropCutter, PushCutter, EngraveCutter, \
+        ContourFollow
 from pycam.Geometry.utils import number
 import pycam.PathProcessors
 import pycam.Cutters
@@ -33,7 +34,8 @@ log = pycam.Utils.log.get_logger()
 
 
 DIRECTIONS = frozenset(("x", "y", "xy"))
-PATH_GENERATORS = frozenset(("DropCutter", "PushCutter", "EngraveCutter", "WaterlineCutter"))
+PATH_GENERATORS = frozenset(("DropCutter", "PushCutter", "EngraveCutter",
+        "ContourFollow"))
 PATH_POSTPROCESSORS = frozenset(("ContourCutter", "PathAccumulator",
         "PolygonCutter", "SimpleCutter", "ZigZagCutter"))
 CALCULATION_BACKENDS = frozenset((None, "ODE"))
@@ -48,6 +50,7 @@ def generate_toolpath_from_settings(model, tp_settings, callback=None):
     return generate_toolpath(model, tp_settings.get_tool_settings(),
             bounds_low, bounds_high, process["path_direction"],
             process["generator"], process["postprocessor"],
+            process["reverse"],
             process["material_allowance"], process["overlap"],
             process["step_down"], process["engrave_offset"],
             grid["type"], grid["distance_x"], grid["distance_y"],
@@ -59,6 +62,7 @@ def generate_toolpath_from_settings(model, tp_settings, callback=None):
 def generate_toolpath(model, tool_settings=None,
         bounds_low=None, bounds_high=None, direction="x",
         path_generator="DropCutter", path_postprocessor="ZigZagCutter",
+        reverse=False,
         material_allowance=0, overlap=0, step_down=0, engrave_offset=0,
         support_grid_type=None, support_grid_distance_x=None,
         support_grid_distance_y=None, support_grid_thickness=None,
@@ -255,7 +259,7 @@ def generate_toolpath(model, tool_settings=None,
     for next_model in trimesh_models[1:]:
         combined_models += next_model
     generator = _get_pathgenerator_instance(combined_models, contour_model,
-            cutter, path_generator, path_postprocessor, physics)
+            cutter, path_generator, path_postprocessor, reverse, physics)
     if isinstance(generator, basestring):
         return generator
     if (overlap < 0) or (overlap >= 1):
@@ -298,7 +302,7 @@ def generate_toolpath(model, tool_settings=None,
             dz = maxz - minz
         toolpath = generator.GenerateToolPath(minz, maxz, stepping, dz,
                 callback)
-    elif path_generator == "WaterlineCutter":
+    elif path_generator == "ContourFollow":
         if step_down > 0:
             dz = step_down
         else:
@@ -313,12 +317,13 @@ def generate_toolpath(model, tool_settings=None,
     return toolpath
     
 def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
-        pathgenerator, pathprocessor, physics):
+        pathgenerator, pathprocessor, reverse, physics):
     if pathgenerator == "DropCutter":
         if pathprocessor == "ZigZagCutter":
-            processor = pycam.PathProcessors.PathAccumulator(zigzag=True)
+            processor = pycam.PathProcessors.PathAccumulator(zigzag=True,
+                    reverse=reverse)
         elif pathprocessor == "PathAccumulator":
-            processor = pycam.PathProcessors.PathAccumulator()
+            processor = pycam.PathProcessors.PathAccumulator(reverse=reverse)
         else:
             return ("Invalid postprocessor (%s) for 'DropCutter': only " \
                     + "'ZigZagCutter' or 'PathAccumulator' are allowed") \
@@ -327,15 +332,15 @@ def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
                 physics=physics)
     elif pathgenerator == "PushCutter":
         if pathprocessor == "PathAccumulator":
-            processor = pycam.PathProcessors.PathAccumulator()
+            processor = pycam.PathProcessors.PathAccumulator(reverse=reverse)
         elif pathprocessor == "SimpleCutter":
-            processor = pycam.PathProcessors.SimpleCutter()
+            processor = pycam.PathProcessors.SimpleCutter(reverse=reverse)
         elif pathprocessor == "ZigZagCutter":
-            processor = pycam.PathProcessors.ZigZagCutter()
+            processor = pycam.PathProcessors.ZigZagCutter(reverse=reverse)
         elif pathprocessor == "PolygonCutter":
-            processor = pycam.PathProcessors.PolygonCutter()
+            processor = pycam.PathProcessors.PolygonCutter(reverse=reverse)
         elif pathprocessor == "ContourCutter":
-            processor = pycam.PathProcessors.ContourCutter()
+            processor = pycam.PathProcessors.ContourCutter(reverse=reverse)
         else:
             return ("Invalid postprocessor (%s) for 'PushCutter' - it should " \
                     + "be one of these: %s") % (processor, PATH_POSTPROCESSORS)
@@ -343,7 +348,7 @@ def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
                 physics=physics)
     elif pathgenerator == "EngraveCutter":
         if pathprocessor == "SimpleCutter":
-            processor = pycam.PathProcessors.SimpleCutter()
+            processor = pycam.PathProcessors.SimpleCutter(reverse=reverse)
         else:
             return ("Invalid postprocessor (%s) for 'EngraveCutter' - it " \
                     + "should be one of these: %s") \
@@ -353,14 +358,14 @@ def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
                     + "DXF file)."
         return EngraveCutter.EngraveCutter(cutter, trimesh_model,
                 contour_model, processor, physics=physics)
-    elif pathgenerator == "WaterlineCutter":
+    elif pathgenerator == "ContourFollow":
         if pathprocessor == "PathAccumulator":
-            processor = pycam.PathProcessors.PathAccumulator()
+            processor = pycam.PathProcessors.PathAccumulator(reverse=reverse)
         else:
-            return ("Invalid postprocessor (%s) for 'WaterlineCutter' - it " \
+            return ("Invalid postprocessor (%s) for 'ContourFollow' - it " \
                     + "should be one of these: %s") \
                     % (processor, PATH_POSTPROCESSORS)
-        return Waterline.Waterline(cutter, trimesh_model, processor,
+        return ContourFollow.ContourFollow(cutter, trimesh_model, processor,
                 physics=physics)
     else:
         return "Invalid path generator (%s): not one of %s" \

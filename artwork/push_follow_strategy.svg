@@ -10,8 +10,8 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="910.52441"
-   height="2845.2439"
+   width="967.52997"
+   height="2821.4348"
    id="svg2"
    version="1.1"
    inkscape:version="0.47 r22583"
@@ -20,6 +20,67 @@
      id="title4292">Sketches for Push-Follow toolpath strategy</title>
   <defs
      id="defs4">
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5592"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5350"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5146"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4952"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4948"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4944"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4940"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4936"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4138"
+       is_visible="true" />
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Lstart"
+       style="overflow:visible">
+      <path
+         id="path3687"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(0.8,0,0,0.8,10,0)" />
+    </marker>
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect2910"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect2906"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect2902"
+       is_visible="true" />
     <linearGradient
        id="linearGradient3644">
       <stop
@@ -123,10 +184,17 @@
        y1="883.64081"
        x2="381.3631"
        y2="883.64081" />
+    <inkscape:perspective
+       id="perspective4920"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
     <linearGradient
        inkscape:collect="always"
        xlink:href="#linearGradient3644"
-       id="linearGradient4240"
+       id="linearGradient5778"
        gradientUnits="userSpaceOnUse"
        gradientTransform="translate(-274.73686,-694.75982)"
        x1="287.60236"
@@ -141,9 +209,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.35306407"
-     inkscape:cx="379.0174"
-     inkscape:cy="872.93317"
+     inkscape:zoom="0.499308"
+     inkscape:cx="898.5398"
+     inkscape:cy="243.40248"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -160,8 +228,8 @@
      inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:object-paths="true"
-     inkscape:snap-intersection-paths="true"
-     inkscape:object-nodes="false"
+     inkscape:snap-intersection-paths="false"
+     inkscape:object-nodes="true"
      inkscape:snap-smooth-nodes="false"
      inkscape:snap-nodes="false">
     <inkscape:grid
@@ -299,45 +367,6 @@
            sodipodi:role="line">above the cutter level.</tspan></text>
     </g>
     <g
-       id="g3852"
-       transform="translate(1.9550781,0)"
-       inkscape:export-filename="/home/lars/subversion/pycam/trunk/artwork/pics/case1a.png"
-       inkscape:export-xdpi="40"
-       inkscape:export-ydpi="40">
-      <g
-         transform="translate(-1160,0)"
-         id="g3844">
-        <path
-           sodipodi:nodetypes="csaacccc"
-           id="path3676"
-           d="m -406.1415,39.399761 c 0,0 14.3721,-9.70579 21.46016,-3.70003 8.92695,7.56386 16.03483,9.82794 24.42021,14.06011 7.69164,3.88203 15.07588,10.80419 23.68019,10.36008 8.49429,-0.43843 22.20018,-12.5801 22.20018,-12.5801 l 0,252.342049 -91.76074,0 0,-260.482109 z"
-           style="fill:url(#linearGradient4226);fill-opacity:1;stroke:none" />
-        <path
-           sodipodi:nodetypes="cccc"
-           id="path3680"
-           d="m -236.6722,331.72503 119.56148,49.09019 -149.86704,149.94979 30.30556,-199.03998 z"
-           style="fill:#2e980b;fill-opacity:1;stroke:none" />
-      </g>
-      <text
-         id="text3686"
-         y="588.5863"
-         x="-1421.2794"
-         style="font-size:28px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-         xml:space="preserve"><tspan
-           id="tspan3690"
-           y="588.5863"
-           x="-1421.2794"
-           sodipodi:role="line">Case 1a</tspan><tspan
-           id="tspan3692"
-           y="623.5863"
-           x="-1421.2794"
-           sodipodi:role="line">The triangle is completely</tspan><tspan
-           id="tspan3732"
-           y="658.5863"
-           x="-1421.2794"
-           sodipodi:role="line">below the cutter level.</tspan></text>
-    </g>
-    <g
        id="g4282"
        inkscape:export-filename="/home/lars/subversion/pycam/trunk/artwork/pics/case2a.png"
        inkscape:export-xdpi="39.983322"
@@ -394,7 +423,7 @@
          sodipodi:nodetypes="csaacccc"
          id="rect3642"
          d="m 13.865497,39.399761 c 0,0 14.3721,-9.70579 21.46016,-3.70003 8.92695,7.56386 16.03483,9.82794 24.42021,14.06011 7.691642,3.88203 15.075882,10.80419 23.680192,10.36008 8.49429,-0.43843 22.200181,-12.5801 22.200181,-12.5801 l 0,252.342049 -91.760743,0 0,-260.482109 z"
-         style="fill:url(#linearGradient4240);fill-opacity:1;stroke:none" />
+         style="fill:url(#linearGradient5778);fill-opacity:1;stroke:none" />
       <text
          id="text3660"
          y="478.15857"
@@ -517,16 +546,261 @@
     <text
        xml:space="preserve"
        style="font-size:28px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="-1195.6948"
-       y="2281.3574"
+       x="-1207.0242"
+       y="2207.7163"
        id="text2894"><tspan
          sodipodi:role="line"
          id="tspan2896"
-         x="-1195.6948"
-         y="2281.3574">see the related blog posting:</tspan><tspan
+         x="-1207.0242"
+         y="2207.7163">see the related blog posting:</tspan><tspan
          sodipodi:role="line"
-         x="-1195.6948"
-         y="2316.3574"
+         x="-1207.0242"
+         y="2242.7163"
          id="tspan2898">http://fab.senselab.org/node/43</tspan></text>
+    <g
+       id="g4339"
+       inkscape:export-filename="/home/lars/subversion/pycam/trunk/artwork/pics/case1a.png"
+       inkscape:export-xdpi="40"
+       inkscape:export-ydpi="40">
+      <g
+         transform="translate(-1158.0449,0)"
+         id="g3844">
+        <path
+           sodipodi:nodetypes="csaacccc"
+           id="path3676"
+           d="m -406.1415,39.399761 c 0,0 14.3721,-9.70579 21.46016,-3.70003 8.92695,7.56386 16.03483,9.82794 24.42021,14.06011 7.69164,3.88203 15.07588,10.80419 23.68019,10.36008 8.49429,-0.43843 22.20018,-12.5801 22.20018,-12.5801 l 0,252.342049 -91.76074,0 0,-260.482109 z"
+           style="fill:url(#linearGradient4226);fill-opacity:1;stroke:none" />
+        <path
+           sodipodi:nodetypes="cccc"
+           id="path3680"
+           d="m -236.6722,331.72503 119.56148,49.09019 -149.86704,149.94979 30.30556,-199.03998 z"
+           style="fill:#2e980b;fill-opacity:1;stroke:none" />
+      </g>
+      <text
+         id="text3686"
+         y="588.5863"
+         x="-1419.3243"
+         style="font-size:28px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           id="tspan3690"
+           y="588.5863"
+           x="-1419.3243"
+           sodipodi:role="line">Case 1a</tspan><tspan
+           id="tspan3692"
+           y="623.5863"
+           x="-1419.3243"
+           sodipodi:role="line">The triangle is completely</tspan><tspan
+           id="tspan3732"
+           y="658.5863"
+           x="-1419.3243"
+           sodipodi:role="line">below the cutter level.</tspan></text>
+      <path
+         transform="translate(-1603.5528,33.73877)"
+         inkscape:original-d="m 148.69822,96.45102 c 113.29389,-59.479289 -2.83234,4.24852 0,0 z"
+         inkscape:path-effect="#path-effect2902"
+         id="path2900"
+         d="m 148.69822,96.45102 0,0"
+         style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         transform="translate(-1603.5528,33.73877)"
+         inkscape:original-d="M 138.78501,86.537805 222.33925,45.468772 138.78501,86.537805 z"
+         inkscape:path-effect="#path-effect2910"
+         id="path2908"
+         d="M 138.78501,86.537805 222.33925,45.468772 138.78501,86.537805"
+         style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Lstart)" />
+      <text
+         id="text4132"
+         y="86.288414"
+         x="-1340.468"
+         style="font-size:28px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           style="font-size:22px"
+           y="86.288414"
+           x="-1340.468"
+           id="tspan4134"
+           sodipodi:role="line">Cutter</tspan></text>
+      <path
+         transform="translate(-1603.5528,33.73877)"
+         inkscape:original-d="m 263.40828,307.46088 5.6647,-69.3925 -5.6647,69.3925 z"
+         inkscape:path-effect="#path-effect4138"
+         id="path4136"
+         d="m 263.40828,307.46088 5.6647,-69.3925 -5.6647,69.3925"
+         style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Lstart)" />
+      <text
+         id="text4324"
+         y="210.31602"
+         x="-1330.7284"
+         style="font-size:28px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           style="font-size:22px"
+           y="210.31602"
+           x="-1330.7284"
+           id="tspan4326"
+           sodipodi:role="line">One triangle</tspan><tspan
+           style="font-size:22px"
+           id="tspan4328"
+           y="237.81602"
+           x="-1330.7284"
+           sodipodi:role="line">of the solid 3D</tspan><tspan
+           style="font-size:22px"
+           id="tspan4330"
+           y="265.31604"
+           x="-1330.7284"
+           sodipodi:role="line">trimesh model.</tspan></text>
+    </g>
+    <g
+       id="g5875"
+       inkscape:export-filename="/home/lars/subversion/pycam/trunk/artwork/pics/corners.png"
+       inkscape:export-xdpi="40"
+       inkscape:export-ydpi="40">
+      <g
+         id="g5780">
+        <path
+           style="opacity:0.67041201;fill:#a1af9c;fill-opacity:1;stroke:#000000;stroke-opacity:1"
+           d="m -965.74222,2727.1351 -56.76808,-78.8764 -85.7763,29.3263 -50.1352,-142.3395 229.95363,-145.1493 90.34061,256.487 -127.61466,80.5519 z"
+           id="path2897"
+           sodipodi:nodetypes="ccccccc" />
+        <path
+           id="path5873"
+           d="m -898.0403,2376.9594 -12.5,-35.5625 c 0,0 -1.3e-4,10e-5 -2e-4,2e-4 -9.80861,7.8487 -31.8438,20.1562 -31.8438,20.1562 l -2.0937,1.3125 -0.031,0.031"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1,2;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans;stroke-dashoffset:0" />
+        <path
+           id="path5871"
+           d="m -810.97214,2624.3428 c -29.04832,-82.4521 -58.08796,-164.9073 -87.06816,-247.3834"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans" />
+        <path
+           id="path5869"
+           d="m -1179.2278,2511.0531 -20.25,12.7813 7.9687,22.5625"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1,2;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans;stroke-dashoffset:0" />
+        <path
+           id="path5867"
+           d="m -944.509,2362.8968 c -78.2368,49.3906 -156.4793,98.7754 -234.7188,148.1563"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans" />
+        <path
+           id="path5865"
+           d="m -1139.0403,2695.4906 9.8437,27.9688 28.0938,-9.5313"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1,2;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans;stroke-dashoffset:0" />
+        <path
+           id="path5863"
+           d="m -1191.5091,2546.3969 c 17.504,49.6955 34.9761,99.3967 52.4688,149.0937"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans" />
+        <path
+           id="path5861"
+           d="m -991.1341,2752.9281 16.4688,22.9063 23.875,-15.0625"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1,2;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans;stroke-dashoffset:0" />
+        <path
+           id="path5859"
+           d="m -1101.1028,2713.9281 c 21.9899,-7.4481 43.8611,-14.9884 65.75,-22.5 14.7458,20.4976 29.4867,41.0159 44.2187,61.5"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans" />
+        <path
+           id="path5857"
+           d="m -950.7903,2760.7719 120.95798,-76.3509"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans" />
+        <path
+           id="path4357"
+           d="m -829.83232,2684.421 c 23.74503,-19.1043 27.7063,-34.969 18.86018,-60.0782"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1,2;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans;stroke-dashoffset:0" />
+        <path
+           style="opacity:0.33000004;fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           d="m -838.12756,2646.5832 -184.38274,1.6755 -135.9115,-113.0132 320.29424,111.3377"
+           id="path4946"
+           inkscape:path-effect="#path-effect4948"
+           inkscape:original-d="m -838.12756,2646.5832 -184.38274,1.6755 -135.9115,-113.0132 320.29424,111.3377 z" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:1.21528423px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Lstart)"
+           d="m -1100.9885,2445.7916 -22.9943,-71.8056 22.9943,71.8056"
+           id="path4950"
+           inkscape:path-effect="#path-effect4952"
+           inkscape:original-d="m -1100.9885,2445.7916 -22.9943,-71.8056 22.9943,71.8056 z" />
+        <text
+           xml:space="preserve"
+           style="font-size:22px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           x="-1112.4302"
+           y="2334.2952"
+           id="text5138"><tspan
+             sodipodi:role="line"
+             id="tspan5140"
+             x="-1112.4302"
+             y="2334.2952">extended shifted</tspan><tspan
+             sodipodi:role="line"
+             x="-1112.4302"
+             y="2361.7952"
+             id="tspan5142">collision line</tspan></text>
+        <path
+           style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Lstart)"
+           d="m -1044.7795,2700.736 -67.0928,78.1081 67.0928,-78.1081"
+           id="path5144"
+           inkscape:path-effect="#path-effect5146"
+           inkscape:original-d="m -1044.7795,2700.736 -67.0928,78.1081 67.0928,-78.1081 z"
+           sodipodi:nodetypes="ccc" />
+        <text
+           xml:space="preserve"
+           style="font-size:22px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           x="-1126.8904"
+           y="2799.8621"
+           id="text5332"><tspan
+             sodipodi:role="line"
+             id="tspan5334"
+             x="-1126.8904"
+             y="2799.8621">shortened</tspan><tspan
+             sodipodi:role="line"
+             x="-1126.8904"
+             y="2827.3621"
+             id="tspan5336">lines at</tspan><tspan
+             sodipodi:role="line"
+             x="-1126.8904"
+             y="2854.8621"
+             id="tspan5338">concave corner</tspan></text>
+        <path
+           style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Lstart)"
+           d="m -965.66996,2781.8483 58.08038,31.0429 -58.08038,-31.0429"
+           id="path5348"
+           inkscape:path-effect="#path-effect5350"
+           inkscape:original-d="m -965.66996,2781.8483 58.08038,31.0429 -58.08038,-31.0429 z" />
+        <text
+           xml:space="preserve"
+           style="font-size:22px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           x="-815.1947"
+           y="2817.2107"
+           id="text5536"><tspan
+             sodipodi:role="line"
+             id="tspan5538"
+             x="-815.1947"
+             y="2817.2107">extended lines</tspan><tspan
+             sodipodi:role="line"
+             x="-815.1947"
+             y="2844.7107"
+             id="tspan5540">at convex corner</tspan></text>
+        <text
+           xml:space="preserve"
+           style="font-size:22px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           x="-737.35394"
+           y="2440.3757"
+           id="text5576"><tspan
+             sodipodi:role="line"
+             x="-737.35394"
+             y="2440.3757"
+             id="tspan5580">connecting a</tspan><tspan
+             id="tspan5806"
+             sodipodi:role="line"
+             x="-737.35394"
+             y="2467.8757">convex corner</tspan><tspan
+             sodipodi:role="line"
+             x="-737.35394"
+             y="2495.3757"
+             id="tspan5582">with an arc</tspan><tspan
+             sodipodi:role="line"
+             x="-737.35394"
+             y="2522.8757"
+             id="tspan5586">(not implemented)</tspan></text>
+        <path
+           style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Lstart)"
+           d="M 804.1129,2599.9043 860.19051,2497.763 804.1129,2599.9043"
+           id="path5590"
+           inkscape:path-effect="#path-effect5592"
+           inkscape:original-d="M 804.1129,2599.9043 860.19051,2497.763 804.1129,2599.9043 z"
+           transform="translate(-1603.5528,33.73877)" />
+      </g>
+    </g>
   </g>
 </svg>

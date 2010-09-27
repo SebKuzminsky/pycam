@@ -414,10 +414,12 @@ if __name__ == "__main__":
                 "contour": "ContourCutter",
                 "polygon": "PolygonCutter",
             }[opts.process_path_postprocessor]
+        # TODO: add the miling_style option
         tps.set_process_settings(path_generator, postprocessor,
-                opts.process_path_direction, opts.process_material_allowance,
-                opts.safety_height, opts.process_overlap_percent / 100.0,
-                opts.process_step_down, opts.process_engrave_offset)
+                opts.process_path_direction, reverse=False,
+                material_allowance=opts.process_material_allowance,
+                overlap=opts.process_overlap_percent / 100.0,
+                step_down=opts.process_step_down, engrave_offset=opts.process_engrave_offset)
         # set locations of external programs
         program_locations = {}
         if opts.external_program_inkscape:

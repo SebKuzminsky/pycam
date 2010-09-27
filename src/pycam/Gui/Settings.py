@@ -130,11 +130,11 @@ speed: 1000
 
 [ProcessDefault]
 name: Remove material
-path_direction: x
 engrave_offset: 0.0
-path_generator: PushCutter
-path_postprocessor: PolygonCutter
-material_allowance: 0.5
+path_strategy: PushCutter
+path_direction: x
+milling_style: ignore
+material_allowance: 0.0
 step_down: 3.0
 overlap_percent: 0
 
@@ -180,37 +180,35 @@ tool_radius: 0.5
 
 [ProcessDefault]
 path_direction: x
+path_strategy: SurfaceStrategy
+milling_style: ignore
 engrave_offset: 0.0
+step_down: 3.0
+material_allowance: 0.0
 
 [Process0]
 name: Remove material
-path_generator: PushCutter
-path_postprocessor: PolygonCutter
+path_strategy: PushRemoveStrategy
 material_allowance: 0.5
 step_down: 3.0
 overlap_percent: 0
 
 [Process1]
 name: Carve contour
-path_generator: PushCutter
-path_postprocessor: ContourCutter
+path_strategy: ContourFollowStrategy
 material_allowance: 0.2
 step_down: 1.5
 overlap_percent: 20
 
 [Process2]
 name: Cleanup
-path_generator: DropCutter
-path_postprocessor: ZigZagCutter
+path_strategy: SurfaceStrategy
 material_allowance: 0.0
-step_down: 1.0
 overlap_percent: 60
 
 [Process3]
 name: Gravure
-path_generator: EngraveCutter
-path_postprocessor: SimpleCutter
-material_allowance: 0.0
+path_strategy: EngraveStrategy
 step_down: 1.0
 overlap_percent: 50
 
@@ -267,9 +265,9 @@ process: 3
             "torus_radius": float,
             "speed": float,
             "feedrate": float,
+            "path_strategy": str,
             "path_direction": str,
-            "path_generator": str,
-            "path_postprocessor": str,
+            "milling_style": str,
             "material_allowance": float,
             "overlap_percent": int,
             "step_down": float,
@@ -290,8 +288,8 @@ process: 3
     CATEGORY_KEYS = {
             "tool": ("name", "shape", "tool_radius", "torus_radius", "feedrate",
                     "speed"),
-            "process": ("name", "path_generator", "path_postprocessor",
-                    "path_direction", "material_allowance",
+            "process": ("name", "path_strategy", "path_direction",
+                    "milling_style", "material_allowance",
                     "overlap_percent", "step_down", "engrave_offset"),
             "bounds": ("name", "type", "x_low", "x_high", "y_low",
                     "y_high", "z_low", "z_high"),
@@ -588,6 +586,7 @@ class ToolpathSettings:
             "generator": str,
             "postprocessor": str,
             "path_direction": str,
+            "reverse": bool,
             "material_allowance": float,
             "overlap": float,
             "step_down": float,
@@ -699,12 +698,16 @@ class ToolpathSettings:
             return "mm"
 
     def set_process_settings(self, generator, postprocessor, path_direction,
-            material_allowance=0.0, overlap=0.0,
+            reverse=False, material_allowance=0.0, overlap=0.0,
             step_down=1.0, engrave_offset=0.0):
+        # TODO: this hack should be somewhere else, I guess
+        if generator in ("ContourFollow", "EngraveCutter"):
+            material_allowance = 0.0
         self.process_settings = {
                 "generator": generator,
                 "postprocessor": postprocessor,
                 "path_direction": path_direction,
+                "reverse": reverse,
                 "material_allowance": material_allowance,
                 "overlap": overlap,
                 "step_down": step_down,

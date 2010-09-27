@@ -1,5 +1,8 @@
 Version 0.3.1 - UNRELEASED
  * added automatic support grid positioning for contour models
+ * added an improved contour toolpath strategy (ContourFollow)
+  * see http://fab.senselab.org/node/43
+ * added options for conventional/climb milling
  * allow to reverse the direction of a 2D contour model
  * added optional "orthogonal" view (instead of perspective)
  * added a "recent files" item to the file menu

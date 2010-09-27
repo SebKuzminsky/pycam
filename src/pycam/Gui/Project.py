@@ -545,17 +545,20 @@ class ProjectGui:
             self.gui.get_object(name).connect("clicked", self.handle_tool_settings_change)
         self.gui.get_object("ToolName").connect("changed", self.handle_tool_settings_change)
         # connect the "consistency check" and the update-handler with all toolpath settings
-        for objname in ("PathAccumulator", "SimpleCutter", "ZigZagCutter",
-                "PolygonCutter", "ContourCutter", "DropCutter", "PushCutter",
-                "EngraveCutter", "WaterlineCutter", "PathDirectionX",
-                "PathDirectionY", "PathDirectionXY", "SettingEnableODE"):
-            self.gui.get_object(objname).connect("toggled", self.update_process_controls)
-            if objname != "SettingEnableODE":
-                self.gui.get_object(objname).connect("toggled", self.handle_process_settings_change)
+        for objname in ("PushRemoveStrategy", "ContourPolygonStrategy",
+                "ContourFollowStrategy", "SurfaceStrategy",
+                "EngraveStrategy", "GridDirectionX",
+                "GridDirectionY", "GridDirectionXY"):
+            self.gui.get_object(objname).connect("toggled",
+                    self.update_process_controls)
+            self.gui.get_object(objname).connect("toggled",
+                    self.handle_process_settings_change)
         for objname in ("OverlapPercentControl", "MaterialAllowanceControl",
                 "MaxStepDownControl", "EngraveOffsetControl"):
-            self.gui.get_object(objname).connect("value-changed", self.handle_process_settings_change)
-        self.gui.get_object("ProcessSettingName").connect("changed", self.handle_process_settings_change)
+            self.gui.get_object(objname).connect("value-changed",
+                    self.handle_process_settings_change)
+        self.gui.get_object("ProcessSettingName").connect("changed",
+                self.handle_process_settings_change)
         # get/set functions for the current tool/process/bounds/task
         def get_current_item(table, item_list):
             index = self._treeview_get_active_index(table, item_list)
@@ -970,7 +973,6 @@ class ProjectGui:
         self.gui.get_object("SupportGridPositionManualShiftBox").set_sensitive(
                 self.grid_adjustment_selector.get_active() >= 0)
         
-
     def update_support_grid_manual_adjust(self, widget=None, data1=None,
             data2=None):
         new_value = self.grid_adjustment_value.get_value()
@@ -1164,13 +1166,14 @@ class ProjectGui:
                 tool_desc += "(%.4f%s / %.4f%s)" % ( 2 * tool["tool_radius"], unit, 2 * tool["torus_radius"], unit)
             lines.append(tool_desc)
             lines.append("Spindle speed: %drpm / Feedrate: %d%s/minute" % (tool["speed"], tool["feedrate"], unit))
-            lines.append("Path: %s / %s" % (process["path_generator"], process["path_postprocessor"]))
-            if process["path_generator"] == "EngraveCutter":
+            lines.append("Strategy: %s" % process["path_strategy"])
+            if process["path_strategy"] == "EngraveStrategy":
                 lines.append("Engrave offset: %.3f" % process["engrave_offset"])
             else:
                 lines.append("Overlap: %d%%" % process["overlap_percent"])
+                lines.append("Milling style: %s" % process["milling_style"])
                 lines.append("Material allowance: %.2f%s" % (process["material_allowance"], unit))
-            if process["path_generator"] != "DropCutter":
+            if process["path_strategy"] != "SurfaceStrategy":
                 lines.append("Maximum step down: %.2f%s" % (process["step_down"], unit))
         else:
             lines.append("No task selected")
@@ -1308,45 +1311,38 @@ class ProjectGui:
         # possible dependencies of the DropCutter
         get_obj = self.gui.get_object
         cutter_name = None
-        for one_cutter in ("DropCutter", "PushCutter", "EngraveCutter",
-                "WaterlineCutter"):
+        for one_cutter in ("PushRemoveStrategy", "ContourPolygonStrategy",
+                "ContourFollowStrategy", "SurfaceStrategy", "EngraveStrategy"):
             if get_obj(one_cutter).get_active():
                 cutter_name = one_cutter
-        if cutter_name == "DropCutter":
-            if get_obj("PathDirectionXY").get_active():
-                get_obj("PathDirectionX").set_active(True)
-            if not (get_obj("PathAccumulator").get_active() or get_obj("ZigZagCutter").get_active()):
-                get_obj("PathAccumulator").set_active(True)
-        elif cutter_name == "PushCutter":
-            if not (get_obj("SimpleCutter").get_active() \
-                    or get_obj("PolygonCutter").get_active() \
-                    or get_obj("ContourCutter").get_active()):
-                get_obj("SimpleCutter").set_active(True)
-        elif cutter_name == "EngraveCutter":
-            if not get_obj("SimpleCutter").get_active():
-                get_obj("SimpleCutter").set_active(True)
-        elif cutter_name == "WaterlineCutter":
-            if not get_obj("PathAccumulator").get_active():
-                get_obj("PathAccumulator").set_active(True)
+                break
         else:
-            raise ValueError("Invalid cutter selected: %s" % str(cutter_name))
-        all_controls = ("PathDirectionX", "PathDirectionY", "PathDirectionXY",
-                "SimpleCutter", "PolygonCutter", "ContourCutter",
-                "PathAccumulator", "ZigZagCutter", "MaxStepDownControl",
+            raise ValueError("Invalid cutter selected")
+        if cutter_name == "SurfaceStrategy" \
+                and get_obj("GridDirectionXY").get_active():
+            get_obj("GridDirectionX").set_active(True)
+        all_controls = ("GridDirectionX", "GridDirectionY", "GridDirectionXY",
+                "MillingStyleConventional", "MillingStyleClimb",
+                "MillingStyleIgnore", "MaxStepDownControl",
                 "MaterialAllowanceControl", "OverlapPercentControl",
                 "EngraveOffsetControl")
         active_controls = {
-            "DropCutter": ("PathAccumulator", "ZigZagCutter", "PathDirectionX",
-                    "PathDirectionY", "MaterialAllowanceControl",
-                    "OverlapPercentControl"),
-            "PushCutter": ("SimpleCutter", "PolygonCutter", "ContourCutter",
-                    "PathDirectionX", "PathDirectionY", "PathDirectionXY",
+            "PushRemoveStrategy": ("GridDirectionX", "GridDirectionY",
+                    "GridDirectionXY", "MaxStepDownControl",
+                    "MaterialAllowanceControl", "OverlapPercentControl"),
+            "ContourPolygonStrategy": ("GridDirectionX", "GridDirectionY",
+                    "GridDirectionXY", "MillingStyleConventional",
+                    "MillingStyleClimb", "MillingStyleIgnore",
                     "MaxStepDownControl", "MaterialAllowanceControl",
                     "OverlapPercentControl"),
-            "EngraveCutter": ("SimpleCutter", "MaxStepDownControl",
-                    "EngraveOffsetControl"),
-            "WaterlineCutter": ("PathAccumulator", "MaterialAllowanceControl",
+            "ContourFollowStrategy": ("MillingStyleConventional",
+                    "MillingStyleClimb", "MillingStyleIgnore",
                     "MaxStepDownControl"),
+            "SurfaceStrategy": ("GridDirectionX", "GridDirectionY",
+                    "MillingStyleConventional", "MillingStyleClimb",
+                    "MillingStyleIgnore", "MaterialAllowanceControl",
+                    "OverlapPercentControl"),
+            "EngraveStrategy": ("MaxStepDownControl", "EngraveOffsetControl"),
         }
         for one_control in all_controls:
             get_obj(one_control).set_sensitive(one_control in active_controls[cutter_name])
@@ -2300,28 +2296,71 @@ class ProjectGui:
             self.update_bounds_table(self.bounds_list.index(new_settings))
             self._put_bounds_settings_to_gui(new_settings)
 
+    def _get_process_details(self, strategy, direction, milling_style):
+        STRATEGY_GENERATORS = {
+                "PushRemoveStrategy": "PushCutter",
+                "ContourPolygonStrategy": "PushCutter",
+                "ContourFollowStrategy": "ContourFollow",
+                "SurfaceStrategy": "DropCutter",
+                "EngraveStrategy": "EngraveCutter"}
+        generator = STRATEGY_GENERATORS[strategy]
+        if strategy in ("PushRemoveStrategy", "SurfaceStrategy"):
+            if strategy == "PushRemoveStrategy":
+                # TODO: implement "conventional/climb" for PolygonCutter
+                processor = "PolygonCutter"
+            elif milling_style in ("conventional", "climb"):
+                processor = "PathAccumulator"
+            else:
+                processor = "ZigZagCutter"
+            if milling_style == "conventional":
+                reverse = False
+            else:
+                reverse_counter = 0
+                if direction == "y":
+                    reverse_counter += 1
+                if milling_style == "conventional":
+                    reverse_counter += 1
+                reverse = (reverse_counter % 1) == 1
+        elif strategy in ("ContourPolygonStrategy", "ContourFollowStrategy"):
+            if strategy == "ContourPolygonStrategy":
+                processor = "ContourCutter"
+            else:
+                processor = "PathAccumulator"
+            reverse = milling_style in ("climb", "ignore")
+        elif strategy == "EngraveStrategy":
+            processor = "SimpleCutter"
+            reverse = False
+        else:
+            pass
+        return generator, processor, reverse
+
     def _load_process_settings_from_gui(self, settings=None):
         if settings is None:
             settings = {}
         settings["name"] = self.gui.get_object("ProcessSettingName").get_text()
         # path generator
-        def get_path_generator():
-            for name in ("DropCutter", "PushCutter", "EngraveCutter",
-                    "WaterlineCutter"):
-                if self.gui.get_object(name).get_active():
-                    return name
-        settings["path_generator"] = get_path_generator()
+        for key in ("PushRemoveStrategy", "ContourPolygonStrategy",
+                "ContourFollowStrategy", "SurfaceStrategy", "EngraveStrategy"):
+            if self.gui.get_object(key).get_active():
+                strategy = key
+                break
+        settings["path_strategy"] = strategy
         # path direction
-        def get_path_direction():
-            for obj, value in (("PathDirectionX", "x"), ("PathDirectionY", "y"), ("PathDirectionXY", "xy")):
-                if self.gui.get_object(obj).get_active():
-                    return value
-        settings["path_direction"] = get_path_direction()
-        def get_path_postprocessor():
-            for name in ("PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter", "ContourCutter"):
-                if self.gui.get_object(name).get_active():
-                    return name
-        settings["path_postprocessor"] = get_path_postprocessor()
+        for obj, value in (("GridDirectionX", "x"), ("GridDirectionY", "y"),
+                ("GridDirectionXY", "xy")):
+            if self.gui.get_object(obj).get_active():
+                direction = value
+                break
+        # milling style
+        for obj, value in (("MillingStyleConventional", "conventional"),
+                ("MillingStyleClimb", "climb"),
+                ("MillingStyleIgnore", "ignore")):
+            if self.gui.get_object(obj).get_active():
+                milling_style = value
+                break
+        # post_processor and reverse
+        settings["milling_style"] = milling_style
+        settings["path_direction"] = direction
         for objname, key in (("OverlapPercentControl", "overlap_percent"),
                 ("MaterialAllowanceControl", "material_allowance"),
                 ("MaxStepDownControl", "step_down"),
@@ -2331,20 +2370,24 @@ class ProjectGui:
 
     def _put_process_settings_to_gui(self, settings):
         self.gui.get_object("ProcessSettingName").set_text(settings["name"])
-        def set_path_generator(value):
-            self.gui.get_object(value).set_active(True)
-        set_path_generator(settings["path_generator"])
         # path direction
         def set_path_direction(direction):
-            for obj, value in (("PathDirectionX", "x"), ("PathDirectionY", "y"), ("PathDirectionXY", "xy")):
+            for obj, value in (("GridDirectionX", "x"), ("GridDirectionY", "y"),
+                    ("GridDirectionXY", "xy")):
                 if value == direction:
                     self.gui.get_object(obj).set_active(True)
                     return
         set_path_direction(settings["path_direction"])
-        # path postprocessor
-        def set_path_postprocessor(value):
+        def set_path_strategy(value):
             self.gui.get_object(value).set_active(True)
-        set_path_postprocessor(settings["path_postprocessor"])
+        set_path_strategy(settings["path_strategy"])
+        # milling style
+        def set_milling_style(style):
+            STYLES = {"conventional": "MillingStyleConventional",
+                    "climb": "MillingStyleClimb",
+                    "ignore": "MillingStyleIgnore"}
+            self.gui.get_object(STYLES[style]).set_active(True)
+        set_milling_style(settings["milling_style"])
         for objname, key in (("OverlapPercentControl", "overlap_percent"),
                 ("MaterialAllowanceControl", "material_allowance"),
                 ("MaxStepDownControl", "step_down"),
@@ -2791,12 +2834,15 @@ class ProjectGui:
         # unit size
         toolpath_settings.set_unit_size(self.settings.get("unit"))
 
+        generator, postprocessor, reverse = self._get_process_details(
+                process_settings["path_strategy"],
+                process_settings["path_direction"],
+                process_settings["milling_style"])
+
         # process settings
         toolpath_settings.set_process_settings(
-                process_settings["path_generator"],
-                process_settings["path_postprocessor"],
-                process_settings["path_direction"],
-                process_settings["material_allowance"],
+                generator, postprocessor, process_settings["path_direction"],
+                reverse, process_settings["material_allowance"],
                 process_settings["overlap_percent"] / 100.0,
                 process_settings["step_down"],
                 process_settings["engrave_offset"])
