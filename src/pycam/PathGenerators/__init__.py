@@ -2,6 +2,7 @@
 """
 $Id$
 
+Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 Copyright 2008 Lode Leroy
 
 This file is part of PyCAM.
@@ -20,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = ["DropCutter", "PushCutter", "EngraveCutter", "Waterline"]
+__all__ = ["DropCutter", "PushCutter", "EngraveCutter", "ContourFollow"]
 
 from pycam.Geometry.utils import INFINITE, epsilon, sqrt
 from pycam.Geometry.Point import Point

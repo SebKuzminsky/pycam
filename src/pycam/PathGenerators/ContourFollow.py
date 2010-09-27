@@ -42,7 +42,7 @@ _DEBUG_DISBALE_WATERLINE_SHIFT = False
 log = pycam.Utils.log.get_logger()
 
 
-class WaterlineTriangles:
+class CollisionPaths:
 
     def __init__(self):
         self.waterlines = []
@@ -157,7 +157,7 @@ class WaterlineTriangles:
         return result
 
 
-class Waterline:
+class ContourFollow:
 
     def __init__(self, cutter, model, path_processor, physics=None):
         self.cutter = cutter
@@ -251,7 +251,7 @@ class Waterline:
             progress_counter=None):
         plane = Plane(Point(0, 0, z), self._up_vector)
         lines = []
-        waterline_triangles = WaterlineTriangles()
+        waterline_triangles = CollisionPaths()
         projected_waterlines = []
         for triangle in self.model.triangles(minx=minx, miny=miny, maxx=maxx, maxy=maxy):
             if not progress_counter is None:
