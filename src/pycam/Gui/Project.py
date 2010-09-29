@@ -2580,6 +2580,14 @@ class ProjectGui:
             if eta_full > 0:
                 eta_delta = eta_full - (time.time() - self._progress_start_time)
                 eta_delta = int(round(eta_delta))
+                if hasattr(self, "_last_eta_delta"):
+                    previous_eta_delta = self._last_eta_delta
+                    if eta_delta == previous_eta_delta + 1:
+                        # We are currently toggling between two numbers.
+                        # We want to avoid screen flicker, thus we just live
+                        # with the slight inaccuracy.
+                        eta_delta = self._last_eta_delta
+                self._last_eta_delta = eta_delta
                 eta_delta_obj = datetime.timedelta(seconds=eta_delta)
                 eta_text = "%s remaining ..." % str(eta_delta_obj)
             else:
