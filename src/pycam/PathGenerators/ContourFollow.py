@@ -165,6 +165,7 @@ class ContourFollow:
         self.pa = path_processor
         self._up_vector = Vector(0, 0, 1)
         self.physics = physics
+        self._processed_triangles = []
         if self.physics:
             accuracy = 20
             max_depth = 16
@@ -182,6 +183,8 @@ class ContourFollow:
 
     def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, dz,
             draw_callback=None):
+        # reset the list of processed triangles
+        self._processed_triangles = []
         # calculate the number of steps
         # Sometimes there is a floating point accuracy issue: make sure
         # that only one layer is drawn, if maxz and minz are almost the same.
@@ -254,6 +257,9 @@ class ContourFollow:
         waterline_triangles = CollisionPaths()
         projected_waterlines = []
         for triangle in self.model.triangles(minx=minx, miny=miny, maxx=maxx, maxy=maxy):
+            if id(triangle) in self._processed_triangles:
+                # skip triangles that are known to cause no collision
+                continue
             if not progress_counter is None:
                 if progress_counter.increment():
                     # quit requested
@@ -327,7 +333,7 @@ class ContourFollow:
                     for edge, other_point in edges[1:]:
                         if edge.len > long_edge.len:
                             long_edge = edge
-                    outer_edges = long_edge
+                    outer_edges = [long_edge]
             else:
                 edge = Line(proj_points[0], proj_points[1])
                 if edge.dir.cross(triangle.normal).dot(self._up_vector) < 0:
@@ -445,6 +451,8 @@ class ContourFollow:
                     result.append((cl, edge))
                     # continue with the next outer_edge
                     break
+        if len(result) == 0:
+            self._processed_triangles.append(id(triangle))
         return result
 
     def get_shifted_waterline(self, waterline, cutter_location):
