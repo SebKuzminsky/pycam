@@ -92,9 +92,6 @@ class Triangle(TransformableContainer):
         yield self.p1
         yield self.p2
         yield self.p3
-        yield self.e1
-        yield self.e2
-        yield self.e3
         yield self.normal
 
     def get_points(self):
@@ -111,9 +108,11 @@ class Triangle(TransformableContainer):
         # use normals to improve lighting (contributed by imyrek)
         normal_t = self.normal
         GL.glNormal3f(normal_t.x, normal_t.y, normal_t.z)
+        # The triangle's points are in clockwise order, but GL expects
+        # counter-clockwise sorting.
         GL.glVertex3f(self.p1.x, self.p1.y, self.p1.z)
-        GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
         GL.glVertex3f(self.p3.x, self.p3.y, self.p3.z)
+        GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
         GL.glEnd()
         if False: # display surface normals
             n = self.normal
