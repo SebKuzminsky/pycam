@@ -146,8 +146,6 @@ def generate_toolpath(model, tool_settings=None,
         # contour model
         trimesh_model = pycam.Geometry.Model.Model()
         contour_model = model
-        # material allowance is ignored for engraving
-        material_allowance = 0
     # create the grid model if requested
     trimesh_models = [trimesh_model]
     if (support_grid_type == "grid") \
@@ -251,7 +249,9 @@ def generate_toolpath(model, tool_settings=None,
     cutter = pycam.Cutters.get_tool_from_settings(tool_settings, cutter_height)
     if isinstance(cutter, basestring):
         return cutter
-    cutter.set_required_distance(material_allowance)
+    if not path_generator in ("EngraveCutter", "ContourFollow"):
+        # material allowance is not available for these two strategies
+        cutter.set_required_distance(material_allowance)
     physics = _get_physics(trimesh_models, cutter, calculation_backend)
     if isinstance(physics, basestring):
         return physics
