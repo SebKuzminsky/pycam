@@ -201,7 +201,7 @@ class ToroidalCutter(BaseCutter):
 
     def intersect_cylinder_edge(self, direction, edge):
         (cl, ccp, cp, l) = self.intersect_cylinder_line(direction, edge)
-        if ccp and ccp.z < self.center.z - epsilon:
+        if ccp and ccp.z < self.center.z:
             return (None, INFINITE, None)
         if ccp:
             m = cp.sub(edge.p1).dot(edge.dir)

@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.utils import INFINITE, sqrt, epsilon
+from pycam.Geometry.utils import INFINITE, sqrt
 from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.intersection import intersect_circle_plane, \
         intersect_circle_point, intersect_circle_line
