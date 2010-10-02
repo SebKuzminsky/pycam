@@ -59,6 +59,8 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None):
     edges = 0
     kdtree = None
 
+    normal_conflict_warning_seen = False
+
     try:
         f = open(filename, "rb")
     except IOError, err_msg:
@@ -131,15 +133,21 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None):
             # not used
             attribs = unpack("<H", f.read(2)) 
             
-            dotcross = n.dot(p3.sub(p1).cross(p2.sub(p1)))
+            dotcross = n.dot(p2.sub(p1).cross(p3.sub(p1)))
             if a1 == a2 == a3 == 0:
-                dotcross = p3.sub(p1).cross(p2.sub(p1)).z
+                dotcross = p2.sub(p1).cross(p3.sub(p1)).z
                 n = None
 
             if dotcross > 0:
-                t = Triangle(p1, p2, p3)
-            elif dotcross < 0:
+                # Triangle expects the vertices in clockwise order
                 t = Triangle(p1, p3, p2)
+            elif dotcross < 0:
+                if not normal_conflict_warning_seen:
+                    log.warn(("Inconsistent normal/vertices found in line " \
+                            + "%d of '%s'. Please validate the STL file!") \
+                            % (current_line, filename))
+                    normal_conflict_warning_seen = True
+                t = Triangle(p1, p2, p3)
             else:
                 # the three points are in a line - or two points are identical
                 # usually this is caused by points, that are too close together
@@ -209,18 +217,28 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None):
             m = endfacet.match(line)
             if m:
                 if not n:
-                    n = p3.sub(p1).cross(p2.sub(p1)).normalized()
+                    n = p2.sub(p1).cross(p3.sub(p1)).normalized()
 
+                # validate the normal
+                # The three vertices of a triangle in an STL file are supposed
+                # to be in counter-clockwise order. This should match the
+                # direction of the normal.
                 if n is None:
                     # invalid triangle (zero-length vector)
                     dotcross = 0
                 else:
                     # make sure the points are in ClockWise order
-                    dotcross = n.dot(p3.sub(p1).cross(p2.sub(p1)))
+                    dotcross = n.dot(p2.sub(p1).cross(p3.sub(p1)))
                 if dotcross > 0:
-                    t = Triangle(p1, p2, p3, n)
-                elif dotcross < 0:
+                    # Triangle expects the vertices in clockwise order
                     t = Triangle(p1, p3, p2, n)
+                elif dotcross < 0:
+                    if not normal_conflict_warning_seen:
+                        log.warn(("Inconsistent normal/vertices found in line " \
+                                + "%d of '%s'. Please validate the STL file!") \
+                                % (current_line, filename))
+                        normal_conflict_warning_seen = True
+                    t = Triangle(p1, p2, p3, n)
                 else:
                     # The three points are in a line - or two points are
                     # identical. Usually this is caused by points, that are too
