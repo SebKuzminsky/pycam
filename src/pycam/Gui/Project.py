@@ -46,6 +46,7 @@ import time
 import logging
 import datetime
 import traceback
+import re
 import os
 import sys
 
@@ -2575,6 +2576,7 @@ class ProjectGui:
             percent = min(max(percent, 0.0), 100.0)
             self.progress_bar.set_fraction(percent/100.0)
         # "estimated time of arrival" text
+        time_estimation_suffix = " remaining ..."
         if self.progress_bar.get_fraction() > 0:
             eta_full = (time.time() - self._progress_start_time) / self.progress_bar.get_fraction()
             if eta_full > 0:
@@ -2589,18 +2591,18 @@ class ProjectGui:
                         eta_delta = self._last_eta_delta
                 self._last_eta_delta = eta_delta
                 eta_delta_obj = datetime.timedelta(seconds=eta_delta)
-                eta_text = "%s remaining ..." % str(eta_delta_obj)
+                eta_text = "%s%s" % (eta_delta_obj, time_estimation_suffix)
             else:
                 eta_text = None
         else:
             eta_text = None
-        lines = []
         if not text is None:
-            lines.append(text)
+            lines = [text]
         else:
             old_lines = self.progress_bar.get_text().split(os.linesep)
-            # skip the last line
-            lines.extend(old_lines[:-1])
+            # skip the time estimation line
+            lines = [line for line in old_lines
+                    if not line.endswith(time_estimation_suffix)]
         if eta_text:
             lines.append(eta_text)
         self.progress_bar.set_text(os.linesep.join(lines))
