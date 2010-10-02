@@ -451,7 +451,9 @@ class ContourFollow:
                     result.append((cl, edge))
                     # continue with the next outer_edge
                     break
-        if len(result) == 0:
+        # Don't check triangles again that are completely above the z level and
+        # did not return any collisions.
+        if (len(result) == 0) and (triangle.minz > z):
             self._processed_triangles.append(id(triangle))
         return result
 
