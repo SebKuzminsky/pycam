@@ -2326,7 +2326,7 @@ class ProjectGui:
             if strategy == "ContourPolygonStrategy":
                 processor = "ContourCutter"
             else:
-                processor = "PathAccumulator"
+                processor = "SimpleCutter"
             reverse = milling_style in ("climb", "ignore")
         elif strategy == "EngraveStrategy":
             processor = "SimpleCutter"

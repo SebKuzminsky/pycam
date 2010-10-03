@@ -351,20 +351,18 @@ def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
             processor = pycam.PathProcessors.SimpleCutter(reverse=reverse)
         else:
             return ("Invalid postprocessor (%s) for 'EngraveCutter' - it " \
-                    + "should be one of these: %s") \
-                    % (processor, PATH_POSTPROCESSORS)
+                    + "should be: SimpleCutter") % str(processor)
         if not contour_model:
             return "The EngraveCutter requires a contour model (e.g. from a " \
                     + "DXF file)."
         return EngraveCutter.EngraveCutter(cutter, trimesh_model,
                 contour_model, processor, physics=physics)
     elif pathgenerator == "ContourFollow":
-        if pathprocessor == "PathAccumulator":
-            processor = pycam.PathProcessors.PathAccumulator(reverse=reverse)
+        if pathprocessor == "SimpleCutter":
+            processor = pycam.PathProcessors.SimpleCutter(reverse=reverse)
         else:
             return ("Invalid postprocessor (%s) for 'ContourFollow' - it " \
-                    + "should be one of these: %s") \
-                    % (processor, PATH_POSTPROCESSORS)
+                    + "should be: SimpleCutter") % str(processor)
         return ContourFollow.ContourFollow(cutter, trimesh_model, processor,
                 physics=physics)
     else:
