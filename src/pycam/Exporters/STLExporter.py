@@ -21,6 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam import VERSION
 import datetime
 import os
 
@@ -46,15 +47,21 @@ class STLExporter:
 
     def get_output_lines(self):
         date = datetime.date.today().isoformat()
-        yield """solid "%s"; Produced by %s, %s""" % (self.name, self.created_by, date)
+        yield """solid "%s"; Produced by %s (v%s), %s""" \
+                % (self.name, self.created_by, VERSION, date)
+        # sadly STL does not seem to support comments
+        """
         if self.comment:
             for line in self.comment.split(self.linesep):
                 yield(";%s" % line)
+        """
         for tr in self.model.triangles():
             norm = tr.normal.normalized()
             yield "facet normal %f %f %f" % (norm.x, norm.y, norm.z)
             yield "  outer loop"
-            for p in (tr.p1, tr.p2, tr.p3):
+            # Triangle vertices are stored in clockwise order - thus we need
+            # to reverse the order (STL expects counter-clockwise orientation).
+            for p in (tr.p3, tr.p2, tr.p1):
                 yield "    vertex %f %f %f" % (p.x, p.y, p.z)
             yield "  endloop"
             yield "endfacet"
