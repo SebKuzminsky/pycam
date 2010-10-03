@@ -65,12 +65,12 @@ GTKMENU_FILE = "menubar.xml"
 
 HELP_WIKI_URL = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=%s"
 
-FILTER_GCODE = ("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode"))
+FILTER_GCODE = (("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode")),)
 FILTER_MODEL = (("All supported model filetypes", ("*.stl", "*.dxf", "*.svg")),
         ("STL models", "*.stl"), ("DXF contours", "*.dxf"),
         ("SVG contours", "*.svg"))
-FILTER_CONFIG = ("Config files", "*.conf")
-FILTER_EMC_TOOL = ("EMC tool files", "*.tbl")
+FILTER_CONFIG = (("Config files", "*.conf"),)
+FILTER_EMC_TOOL = (("EMC tool files", "*.tbl"),)
 
 PREFERENCES_DEFAULTS = {
         "enable_ode": False,
@@ -138,8 +138,6 @@ def get_filters_from_list(filter_list, file_filter=True):
     else:
         return_class = gtk.RecentFilter
     result = []
-    if not isinstance(filter_list[0], (list, tuple)):
-        filter_list = [filter_list]
     for one_filter in filter_list:
         file_filter = return_class()
         file_filter.set_name(one_filter[0])
@@ -196,7 +194,7 @@ class ProjectGui:
         # file loading
         self.last_dirname = None
         self.last_task_settings_file = None
-        self.last_model_file = None
+        self.last_model_filename = None
         self.last_toolpath_file = None
         # define callbacks and accelerator keys for the menu actions
         for objname, callback, data, accel_key in (
@@ -204,7 +202,7 @@ class ProjectGui:
                 ("SaveTaskSettings", self.save_task_settings_file, lambda: self.last_task_settings_file, None),
                 ("SaveAsTaskSettings", self.save_task_settings_file, None, None),
                 ("OpenModel", self.load_model_file, None, "<Control>o"),
-                ("SaveModel", self.save_model, lambda: self.last_model_file, "<Control>s"),
+                ("SaveModel", self.save_model, lambda: self.last_model_filename, "<Control>s"),
                 ("SaveAsModel", self.save_model, None, "<Control><Shift>s"),
                 ("ExportGCode", self.save_toolpath, None, "<Control><Shift>e"),
                 ("ExportEMCToolDefinition", self.export_emc_tools, None, None),
@@ -834,8 +832,8 @@ class ProjectGui:
         Additionally the window's title is adjusted and the "save" buttons are
         updated.
         """
-        self.last_model_file = filename
-        if self.last_model_file is None:
+        self.last_model_filename = filename
+        if self.last_model_filename is None:
             self.window.set_title("PyCAM")
         else:
             short_name = os.path.basename(filename)
@@ -847,7 +845,7 @@ class ProjectGui:
         save_as_possible = (not self.model is None) \
                 and self.model.is_export_supported()
         self.gui.get_object("SaveAsModel").set_sensitive(save_as_possible)
-        save_possible = (not self.last_model_file is None) and save_as_possible
+        save_possible = (not self.last_model_filename is None) and save_as_possible
         self.gui.get_object("SaveModel").set_sensitive(save_possible)
 
     @gui_activity_guard
@@ -1830,7 +1828,8 @@ class ProjectGui:
         if not isinstance(filename, basestring):
             # we open a dialog
             filename = self.get_filename_via_dialog("Save model to ...",
-                    mode_load=False, type_filter=FILTER_MODEL)
+                    mode_load=False, type_filter=FILTER_MODEL,
+                    filename_templates=(self.last_model_filename,))
             if filename:
                 self.set_model_filename(filename)
         # no filename given -> exit
@@ -1981,6 +1980,7 @@ class ProjectGui:
                 len(self.model.get_polygons()),
                         self.update_progress_bar).increment
         self.model.reverse_directions(callback=progress_callback)
+        self.update_support_grid_model()
 
     @progress_activity_guard
     @gui_activity_guard
@@ -2089,7 +2089,8 @@ class ProjectGui:
             self.add_to_recent_file_list(filename)
         else:
             filename = self.get_filename_via_dialog("Exporting EMC tool definition ...",
-                    mode_load=False, type_filter=FILTER_EMC_TOOL)
+                    mode_load=False, type_filter=FILTER_EMC_TOOL,
+                    filename_templates=(self.last_model_filename,))
         if filename:
             export = pycam.Exporters.EMCToolExporter.EMCToolExporter(self.tool_list)
             text = export.get_tool_definition_string()
@@ -2538,7 +2539,8 @@ class ProjectGui:
         if not isinstance(filename, basestring):
             # we open a dialog
             filename = self.get_filename_via_dialog("Save settings to ...",
-                    mode_load=False, type_filter=FILTER_CONFIG)
+                    mode_load=False, type_filter=FILTER_CONFIG,
+                    filename_templates=(self.last_task_settings_file, self.last_model_filename))
             if filename:
                 self.last_task_settings_file = filename
                 self.update_save_actions()
@@ -2859,7 +2861,8 @@ class ProjectGui:
 
         return toolpath_settings
 
-    def get_filename_via_dialog(self, title, mode_load=False, type_filter=None):
+    def get_filename_via_dialog(self, title, mode_load=False, type_filter=None,
+            filename_templates=None):
         # we open a dialog
         if mode_load:
             dialog = gtk.FileChooserDialog(title=title,
@@ -2878,6 +2881,31 @@ class ProjectGui:
         if type_filter:
             for file_filter in get_filters_from_list(type_filter):
                 dialog.add_filter(file_filter)
+        # guess the export filename based on the model's filename
+        valid_templates = [one_template for one_template in filename_templates
+                if one_template]
+        if valid_templates:
+            filename_template = valid_templates[0]
+            # remove the extension
+            default_filename = os.path.splitext(filename_template)[0]
+            if type_filter:
+                for one_type in type_filter:
+                    label, extension = one_type
+                    if isinstance(extension, (list, tuple, set)):
+                        extension = extension[0]
+                    # use only the extension of the type filter string
+                    extension = os.path.splitext(extension)[1]
+                    if extension:
+                        default_filename += extension
+                        # finish the loop
+                        break
+            dialog.select_filename(default_filename)
+            try:
+                dialog.set_current_name(
+                        os.path.basename(default_filename).encode("utf-8"))
+            except UnicodeError:
+                # ignore
+                pass
         # add filter for all files
         ext_filter = gtk.FileFilter()
         ext_filter.set_name("All files")
@@ -2942,7 +2970,8 @@ class ProjectGui:
         else:
             # we open a dialog
             filename = self.get_filename_via_dialog("Save toolpath to ...",
-                    mode_load=False, type_filter=FILTER_GCODE)
+                    mode_load=False, type_filter=FILTER_GCODE,
+                    filename_templates=(self.last_toolpath_file, self.last_model_filename))
             if filename:
                 self.last_toolpath_file = filename
                 self.update_save_actions()
@@ -2994,7 +3023,7 @@ class ProjectGui:
             self.add_to_recent_file_list(filename)
 
     def get_meta_data(self):
-        filename = "Filename: %s" % str(self.last_model_file)
+        filename = "Filename: %s" % str(self.last_model_filename)
         timestamp = "Timestamp: %s" % str(datetime.datetime.now())
         version = "Version: %s" % VERSION
         result = []
