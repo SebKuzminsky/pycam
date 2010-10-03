@@ -35,9 +35,9 @@ def _get_triangles_for_face(pts):
 def _add_cuboid_to_model(model, start, direction, height, width):
     up = Vector(0, 0, 1).mul(height)
     ortho_dir = direction.cross(up).normalized()
-    start1 = start.add(ortho_dir.mul(width/2))
+    start1 = start.add(ortho_dir.mul(-width/2))
     start2 = start1.add(up)
-    start3 = start2.add(ortho_dir.mul(-width))
+    start3 = start2.add(ortho_dir.mul(width))
     start4 = start3.sub(up)
     end1 = start1.add(direction)
     end2 = start2.add(direction)
@@ -67,19 +67,19 @@ def _add_aligned_cuboid_to_model(minx, maxx, miny, maxy, minz, maxz):
             (points[0], points[1], points[2], points[3])))
     # upper face
     triangles.extend(_get_triangles_for_face(
-            (points[4], points[5], points[6], points[7])))
+            (points[7], points[6], points[5], points[4])))
     # front face
     triangles.extend(_get_triangles_for_face(
-            (points[0], points[1], points[5], points[4])))
+            (points[0], points[4], points[5], points[1])))
     # back face
     triangles.extend(_get_triangles_for_face(
-            (points[2], points[3], points[7], points[6])))
+            (points[2], points[6], points[7], points[3])))
     # right face
     triangles.extend(_get_triangles_for_face(
-            (points[1], points[2], points[6], points[5])))
+            (points[1], points[5], points[6], points[2])))
     # left face
     triangles.extend(_get_triangles_for_face(
-            (points[3], points[0], points[4], points[7])))
+            (points[3], points[7], points[4], points[0])))
     # add all triangles to the model
     model = Model()
     for t in triangles:
