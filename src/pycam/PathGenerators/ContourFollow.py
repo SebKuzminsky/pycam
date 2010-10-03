@@ -304,8 +304,8 @@ class ContourFollow:
     def get_collision_waterline_of_triangle(self, triangle, z):
         # TODO: there are problems with "material allowance > 0"
         plane = Plane(Point(0, 0, z), self._up_vector)
-        if triangle.minz > z:
-            # the triangle is completely above z
+        if triangle.minz >= z:
+            # no point of the triangle is below z
             # try all edges
             # Case (4)
             proj_points = []
@@ -345,14 +345,14 @@ class ContourFollow:
             points_above = [plane.get_point_projection(p) for p in triangle.get_points() if p.z > z]
             waterline = plane.intersect_triangle(triangle)
             if waterline is None:
-                if len(points_above) == 2:
-                    edge = Line(points_above[0], points_above[1])
-                    if edge.dir.cross(triangle.normal).dot(self._up_vector) < 0:
-                        outer_edges = [Line(edge.p2, edge.p1)]
-                    else:
-                        outer_edges = [edge]
-                else:
+                if len(points_above) == 0:
+                    # the highest point of the triangle is at z
                     outer_edges = []
+                else:
+                    # this should not happen
+                    raise ValueError(("Could not find a waterline, but " \
+                            + "there are points above z level (%f): %s / %s") \
+                            % (z, triangle, points_above))
             else:
                 # remove points that are not part of the waterline
                 points_above = [p for p in points_above
@@ -430,7 +430,9 @@ class ContourFollow:
             direction = direction.mul(self.get_max_length())
             edge_dir = edge.p2.sub(edge.p1)
             # TODO: adapt the number of potential starting positions to the length of the line
-            for factor in (0.5, 0.0, 1.0, 0.25, 0.75):
+            # Don't use 0.0 and 1.0 - this could result in ambiguous collisions
+            # with triangles sharing these vertices.
+            for factor in (0.5, epsilon, 1.0 - epsilon, 0.25, 0.75):
                 start = edge.p1.add(edge_dir.mul(factor))
                 # We need to use the triangle collision algorithm here - because we
                 # need the point of collision in the triangle.
@@ -447,7 +449,9 @@ class ContourFollow:
                     log.info("Failed to detect any collision: " \
                             + "%s / %s -> %s" % (edge, start, direction))
                 proj_cp = plane.get_point_projection(cp)
-                if edge.is_point_inside(proj_cp):
+                # e.g. the Spherical Cutter often does not collide exactly above
+                # the potential collision line.
+                if (triangle is hit_t) or (edge.is_point_inside(proj_cp)):
                     result.append((cl, edge))
                     # continue with the next outer_edge
                     break
