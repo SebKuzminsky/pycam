@@ -42,6 +42,34 @@ _DEBUG_DISBALE_WATERLINE_SHIFT = False
 log = pycam.Utils.log.get_logger()
 
 
+# We need to use a global function here - otherwise it does not work with
+# the multiprocessing Pool.
+def _process_one_triangle((obj, triangle, z)):
+    result = []
+    if id(triangle) in obj._processed_triangles:
+        # skip triangles that are known to cause no collision
+        return result
+    # ignore triangles below the z level
+    if triangle.maxz < z:
+        # Case 1a
+        return result
+    # ignore triangles pointing upwards or downwards
+    if triangle.normal.cross(obj._up_vector).norm == 0:
+        # Case 1b
+        return result
+    edge_collisions = obj.get_collision_waterline_of_triangle(triangle, z)
+    if not edge_collisions:
+        return result
+    for cutter_location, edge in edge_collisions:
+        shifted_edge = obj.get_shifted_waterline(edge, cutter_location)
+        if not shifted_edge is None:
+            if _DEBUG_DISBALE_WATERLINE_SHIFT:
+                result.append((edge, edge))
+            else:
+                result.append((edge, shifted_edge))
+    return result
+
+
 class CollisionPaths:
 
     def __init__(self):
@@ -256,33 +284,29 @@ class ContourFollow:
         lines = []
         waterline_triangles = CollisionPaths()
         projected_waterlines = []
-        for triangle in self.model.triangles(minx=minx, miny=miny, maxx=maxx, maxy=maxy):
-            if id(triangle) in self._processed_triangles:
-                # skip triangles that are known to cause no collision
-                continue
-            if not progress_counter is None:
-                if progress_counter.increment():
-                    # quit requested
-                    break
-            # ignore triangles below the z level
-            if triangle.maxz < z:
-                # Case 1a
-                continue
-            # ignore triangles pointing upwards or downwards
-            if triangle.normal.cross(self._up_vector).norm == 0:
-                # Case 1b
-                continue
-            edge_collisions = self.get_collision_waterline_of_triangle(triangle, z)
-            if not edge_collisions:
-                continue
-            for cutter_location, edge in edge_collisions:
-                shifted_edge = self.get_shifted_waterline(edge, cutter_location)
-                if shifted_edge is None:
-                    continue
-                if _DEBUG_DISBALE_WATERLINE_SHIFT:
-                    waterline_triangles.add(edge, edge)
-                else:
-                    waterline_triangles.add(edge, shifted_edge)
+        triangles = self.model.triangles(minx=minx, miny=miny, maxx=maxx,
+                maxy=maxy)
+        try:
+            # try a multi-threading approach to use multiple CPUs
+            import multiprocessing
+            # use the number of available CPUs
+            pool = multiprocessing.Pool()
+            results_it = pool.imap_unordered(_process_one_triangle,
+                    [(self, t, z) for t in triangles])
+        except ImportError:
+            # use a single-threaded approach
+            def single_generator(triangles):
+                for t in triangles:
+                    # an iterator is expected - thus we use a generator
+                    yield _process_one_triangle((self, t, z))
+            results_it = single_generator(triangles)
+        for result in results_it:
+            for edge, shifted_edge in result:
+                waterline_triangles.add(edge, shifted_edge)
+            if (not progress_counter is None) \
+                    and (progress_counter.increment()):
+                # quit requested
+                break
         if not _DEBUG_DISABLE_EXTEND_LINES:
             waterline_triangles.extend_shifted_lines()
         result = []
