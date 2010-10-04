@@ -206,7 +206,7 @@ class ContourFollow:
         # collision handling function
         for z in z_steps:
             # update the progress bar and check, if we should cancel the process
-            if draw_callback and draw_callback(text="PushCutter: processing" \
+            if draw_callback and draw_callback(text="ContourFollow: processing" \
                         + " layer %d/%d" % (current_layer + 1, num_of_layers)):
                 # cancel immediately
                 break
@@ -352,6 +352,9 @@ class ContourFollow:
                     if abs(triangle.minz - z) < epsilon:
                         # This is just an accuracy issue (see the
                         # "triangle.minz >= z" statement above).
+                        outer_edges = []
+                    elif not [p for p in triangle.get_points() if p.z > z + epsilon]:
+                        # same as above: fix for inaccurate floating calculations
                         outer_edges = []
                     else:
                         # this should not happen

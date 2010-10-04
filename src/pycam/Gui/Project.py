@@ -174,6 +174,7 @@ class ProjectGui:
         self._batch_queue = []
         self._progress_running = False
         self._progress_cancel_requested = False
+        self._last_gtk_events_time = None
         self.gui = gtk.Builder()
         gtk_build_file = get_data_file_location(GTKBUILD_FILE)
         if gtk_build_file is None:
@@ -2621,8 +2622,15 @@ class ProjectGui:
             lines.append(eta_text)
         self.progress_bar.set_text(os.linesep.join(lines))
         # update the GUI
-        while gtk.events_pending():
-            gtk.main_iteration()
+        current_time = time.time()
+        # Don't update the GUI more often than once per second.
+        # This restriction improves performance and reduces the
+        # "snappiness" of the GUI.
+        if (self._last_gtk_events_time is None) \
+                or (self._last_gtk_events_time + 1 < current_time):
+            while gtk.events_pending():
+                gtk.main_iteration()
+            self._last_gtk_events_time = current_time
         # return if the user requested a break
         return self._progress_cancel_requested
 
@@ -2897,7 +2905,7 @@ class ProjectGui:
         if filename_templates is None:
             valid_templates = []
         else:
-            valid_templates = [t for t in filename_templates if one_template]
+            valid_templates = [t for t in filename_templates if t]
         if valid_templates:
             filename_template = valid_templates[0]
             # remove the extension

@@ -30,25 +30,22 @@ epsilon = 0.00001
 _use_precision = False
 
 
-def sqrt(value):
-    # support precision libraries like "decimal" (built-in)
-    if -epsilon < value <= 0:
-        # compensate slightly negative values (due to float inaccuracies)
-        return 0
-    if hasattr(value, "sqrt"):
-        return value.sqrt()
-    else:
-        return math.sqrt(value)
+# the lambda functions below are more efficient than function definitions
 
-def ceil(value):
-    if hasattr(value, "next_minus"):
-        return int((value + number(1).next_minus()) // 1)
-    else:
-        return int(math.ceil(value))
+if _use_precision:
+    ceil = lambda value: int((value + number(1).next_minus()) // 1)
+else:
+    ceil = lambda value: int(math.ceil(value))
 
-def number(value):
-    if _use_precision:
-        return decimal.Decimal(str(value))
-    else:
-        return float(value)
+# return "0" for "-epsilon < value < 0" (to work around floating inaccuracies)
+# otherwise: return the sqrt function of the current type (could even raise exceptions)
+if _use_precision:
+    sqrt = lambda value: (((value < -epsilon) or (value > 0)) and value.sqrt()) or 0
+else:
+    sqrt = lambda value: (((value < -epsilon) or (value > 0)) and math.sqrt(value)) or 0
+
+if _use_precision:
+    number = lambda value: decimal.Decimal(str(value))
+else:
+    number = lambda value: value
 
