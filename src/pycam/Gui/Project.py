@@ -1576,18 +1576,19 @@ class ProjectGui:
             # update the tasklist table (maybe we removed some items)
             self.update_tasklist_table()
             # also update the specific description of the tool/process/bounds
-            if datalist is self.tool_list:
-                self.settings.set("current_tool",
-                        self.tool_list[future_selection_index])
-                self.switch_tool_table_selection()
-            elif datalist is self.process_list:
-                self.settings.set("current_process",
-                        self.process_list[future_selection_index])
-                self.switch_process_table_selection()
-            elif datalist is self.bounds_list:
-                self.settings.set("current_bounds",
-                        self.bounds_list[future_selection_index])
-                self.switch_bounds_table_selection()
+            if not future_selection_index is None:
+                if datalist is self.tool_list:
+                    self.settings.set("current_tool",
+                            self.tool_list[future_selection_index])
+                    self.switch_tool_table_selection()
+                elif datalist is self.process_list:
+                    self.settings.set("current_process",
+                            self.process_list[future_selection_index])
+                    self.switch_process_table_selection()
+                elif datalist is self.bounds_list:
+                    self.settings.set("current_bounds",
+                            self.bounds_list[future_selection_index])
+                    self.switch_bounds_table_selection()
         else:
             pass
         # any new item can influence the "New task" button
@@ -1670,6 +1671,8 @@ class ProjectGui:
             self.tool_list.append(new_settings)
             self.update_tool_table(self.tool_list.index(new_settings))
             self._put_tool_settings_to_gui(new_settings)
+        elif action == "delete":
+            self.append_to_queue(self.switch_tool_table_selection)
 
     def update_tool_table(self, new_index=None, skip_model_update=False):
         tool_model = self.gui.get_object("ToolList")
@@ -2139,10 +2142,14 @@ class ProjectGui:
         settings = pycam.Gui.Settings.ProcessSettings()
         if not filename is None:
             settings.load_file(filename)
-        self.tool_list = settings.get_tools()
-        self.process_list = settings.get_processes()
-        self.bounds_list = settings.get_bounds()
-        self.task_list = settings.get_tasks()
+        # flush all tables (without re-assigning new objects)
+        for one_list in (self.tool_list, self.process_list, self.bounds_list, self.task_list):
+            while len(one_list) > 0:
+                one_list.pop()
+        self.tool_list.extend(settings.get_tools())
+        self.process_list.extend(settings.get_processes())
+        self.bounds_list.extend(settings.get_bounds())
+        self.task_list.extend(settings.get_tasks())
         self.update_tool_table()
         self.update_process_table()
         self.update_bounds_table()
@@ -2282,7 +2289,8 @@ class ProjectGui:
         # "toggle" uses two parameters - all other actions have only one
         if action is None:
             action = data
-        self._treeview_button_event(self.bounds_editor_table, self.bounds_list, action, self.update_bounds_table)
+        self._treeview_button_event(self.bounds_editor_table, self.bounds_list,
+                action, self.update_bounds_table)
         # do some post-processing ...
         if action == "add":
             # look for the first unused default name
@@ -2297,6 +2305,8 @@ class ProjectGui:
             self.bounds_list.append(new_settings)
             self.update_bounds_table(self.bounds_list.index(new_settings))
             self._put_bounds_settings_to_gui(new_settings)
+        elif action == "delete":
+            self.append_to_queue(self.switch_bounds_table_selection)
 
     def _get_process_details(self, strategy, direction, milling_style):
         STRATEGY_GENERATORS = {
@@ -2460,6 +2470,8 @@ class ProjectGui:
             self.process_list.append(new_settings)
             self.update_process_table(self.process_list.index(new_settings))
             self._put_process_settings_to_gui(new_settings)
+        elif action == "delete":
+            self.append_to_queue(self.switch_process_table_selection)
 
     @gui_activity_guard
     def toolpath_table_event(self, widget, data, action=None):
