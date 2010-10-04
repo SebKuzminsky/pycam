@@ -133,6 +133,13 @@ def get_output_handler(destination):
     return (handler, closer)
 
 def execute(opts, args):
+    # try to change the process name
+    try:
+        import setproctitle
+        setproctitle.setproctitle("pycam")
+    except ImportError:
+        pass
+
     if len(args) > 0:
         inputfile = os.path.expanduser(args[0])
     else:

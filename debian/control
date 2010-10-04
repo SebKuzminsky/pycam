@@ -11,13 +11,14 @@ Package: pycam
 Architecture: all
 Depends: python-gtk2, python-opengl (>>3.0.0~b6-3), python-gtkglext1,
  ${misc:Depends}, ${python:Depends}
-Recommends: python-pyode (>>1.2.0-3), python-psyco
+Recommends: python-pyode (>>1.2.0-3), python-psyco, python-setproctitle
 Description: CAM program & library written in Python
  This is a set of Python modules for toolpath generation for 3-Axis
  CNC machining, and a GUI program that uses them.
  .
  Features:
     * read and write STL model files
+    * limited support for 2D models (SVG or DXF)
     * generate and export toolpaths (gcode) for various strategies and
       drill definitions
     * manage processing templates (e.g. rough, semi-finish and finish

@@ -27,6 +27,7 @@ Notes:
         import OpenGL
         import ode       # this is optional
 
+
 Unix:
 -----
 
@@ -35,10 +36,12 @@ Install the following packages with your package manager:
     python-gtk2
     python-opengl
     python-gtkglext1
-    python-pyode    (optional)
+    python-pyode        (optional)
+    python-setproctitle (optional)
+    python-psyco        (optional)
 
 On a debian or ubuntu system you would just type the following in a root console:
-    apt-get install python-gtkglext1 python-pyode python-opengl python-gtk2
+    apt-get install python-gtkglext1 python-opengl python-gtk2 python-pyode python-setproctitle python-psyco
 Please note that you need to enable the "universe" repository in Ubuntu.
 
 BEWARE: Debian "Lenny" and Ubuntu "Jaunty" (maybe also Dapper/Hardy/Intrepid)
@@ -49,9 +52,6 @@ package repository list and run the following:
     apt-get update
     apt-get install python-pyode python-opengl
 Afterwards you can remove the new package repository again.
-
-
-Hint: installing 'python-psyco' will probably speed up processing speed.
 
 
 MacOS
