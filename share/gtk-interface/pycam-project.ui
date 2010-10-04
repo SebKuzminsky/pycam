@@ -5770,7 +5770,8 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
-                            <property name="tooltip_text" translatable="yes">Hotkey: &lt;p&gt;</property>
+                            <property name="tooltip_text" translatable="yes">Toggle between polygon fill or polygon outline rendering.
+Hotkey: &lt;m&gt;</property>
                             <property name="draw_indicator">True</property>
                           </object>
                           <packing>
@@ -5784,7 +5785,8 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
-                            <property name="tooltip_text" translatable="yes">Hotkey: &lt;l&gt;</property>
+                            <property name="tooltip_text" translatable="yes">Toggle the OpenGL lighting.
+Hotkey: &lt;l&gt;</property>
                             <property name="draw_indicator">True</property>
                           </object>
                           <packing>
@@ -5798,7 +5800,8 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
-                            <property name="tooltip_text" translatable="yes">Hotkey: &lt;s&gt;</property>
+                            <property name="tooltip_text" translatable="yes">Toggle the OpenGL shadow effect.
+Hotkey: &lt;s&gt;</property>
                             <property name="draw_indicator">True</property>
                           </object>
                           <packing>
@@ -5812,7 +5815,8 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
-                            <property name="tooltip_text" translatable="yes">Toggle between orthogonal and perspective view.</property>
+                            <property name="tooltip_text" translatable="yes">Toggle between orthogonal and perspective view.
+Hotkey: &lt;p&gt;</property>
                             <property name="draw_indicator">True</property>
                           </object>
                           <packing>
