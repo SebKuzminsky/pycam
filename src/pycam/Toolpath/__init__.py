@@ -177,6 +177,11 @@ class Bounds:
         self.set_bounds(bounds_low, bounds_high)
         self.reference = reference
 
+    def __repr__(self):
+        bounds_type_labels = ("relative", "fixed", "custom")
+        return "Bounds(%s, %s, %s)" % (bounds_type_labels[self.bounds_type],
+                self.bounds_low, self.bounds_high)
+
     def is_valid(self):
         for index in range(3):
             if self.bounds_low[index] > self.bounds_high[index]:

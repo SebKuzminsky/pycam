@@ -2894,8 +2894,10 @@ class ProjectGui:
             for file_filter in get_filters_from_list(type_filter):
                 dialog.add_filter(file_filter)
         # guess the export filename based on the model's filename
-        valid_templates = [one_template for one_template in filename_templates
-                if one_template]
+        if filename_templates is None:
+            valid_templates = []
+        else:
+            valid_templates = [t for t in filename_templates if one_template]
         if valid_templates:
             filename_template = valid_templates[0]
             # remove the extension

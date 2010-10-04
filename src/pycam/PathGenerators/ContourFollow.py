@@ -349,10 +349,15 @@ class ContourFollow:
                     # the highest point of the triangle is at z
                     outer_edges = []
                 else:
-                    # this should not happen
-                    raise ValueError(("Could not find a waterline, but " \
-                            + "there are points above z level (%f): %s / %s") \
-                            % (z, triangle, points_above))
+                    if abs(triangle.minz - z) < epsilon:
+                        # This is just an accuracy issue (see the
+                        # "triangle.minz >= z" statement above).
+                        outer_edges = []
+                    else:
+                        # this should not happen
+                        raise ValueError(("Could not find a waterline, but " \
+                                + "there are points above z level (%f): " \
+                                + "%s / %s") % (z, triangle, points_above))
             else:
                 # remove points that are not part of the waterline
                 points_above = [p for p in points_above
@@ -451,6 +456,7 @@ class ContourFollow:
                 proj_cp = plane.get_point_projection(cp)
                 # e.g. the Spherical Cutter often does not collide exactly above
                 # the potential collision line.
+                # TODO: maybe an "is cp inside of the triangle" check would be good?
                 if (triangle is hit_t) or (edge.is_point_inside(proj_cp)):
                     result.append((cl, edge))
                     # continue with the next outer_edge
