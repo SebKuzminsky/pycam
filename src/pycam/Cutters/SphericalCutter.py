@@ -137,8 +137,8 @@ class SphericalCutter(BaseCutter):
                 10, 10)
         GL.glPopMatrix()
 
-    def moveto(self, location):
-        BaseCutter.moveto(self, location)
+    def moveto(self, location, **kwargs):
+        BaseCutter.moveto(self, location, **kwargs)
         self.center = Point(location.x, location.y, location.z + self.radius)
 
     def intersect_sphere_plane(self, direction, triangle):

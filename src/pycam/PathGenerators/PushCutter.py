@@ -145,7 +145,6 @@ class PushCutter:
                 self.pa.new_scanline()
                 for p in points:
                     self.pa.append(p)
-                self.cutter.moveto(p)
                 if draw_callback:
                     draw_callback(tool_position=p, toolpath=self.pa.paths)
                 self.pa.end_scanline()

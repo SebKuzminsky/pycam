@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
+import pycam.Utils.threading
 from pycam.Geometry.Point import Point
 from pycam.Geometry.utils import number, INFINITE, epsilon
 from pycam.Geometry.intersection import intersect_circle_point, \
@@ -91,10 +92,15 @@ class BaseCutter(object):
     def get_required_distance(self):
         return self.required_distance
 
-    def moveto(self, location):
+    def moveto(self, location, keep_lock=False):
+        # "moveto" is used for collision detection calculation.
+        # We need to prevent multiple changes during one calculation.
+        pycam.Utils.threading.acquire_lock()
         self.location = location
         for shape, set_pos_func in self.shape.values():
             set_pos_func(location.x, location.y, location.z)
+        if not keep_lock:
+            pycam.Utils.threading.release_lock()
 
     def intersect(self, direction, triangle):
         raise NotImplementedError("Inherited class of BaseCutter does not " \

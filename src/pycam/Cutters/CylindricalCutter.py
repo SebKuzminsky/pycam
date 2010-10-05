@@ -129,8 +129,8 @@ class CylindricalCutter(BaseCutter):
         GLU.gluDisk(self._disk, 0, self.radius, 10, 10)
         GL.glPopMatrix()
 
-    def moveto(self, location):
-        BaseCutter.moveto(self, location)
+    def moveto(self, location, **kwargs):
+        BaseCutter.moveto(self, location, **kwargs)
         self.center = Point(location.x, location.y, location.z - self.get_required_distance())
 
     def intersect_circle_plane(self, direction, triangle):

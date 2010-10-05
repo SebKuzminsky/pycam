@@ -21,6 +21,9 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Utils.log
+# multiprocessing is imported later
+#import multiprocessing
+
 
 log = pycam.Utils.log.get_logger()
 
@@ -34,9 +37,11 @@ __multiprocessing = None
 # needs to be initialized, if multiprocessing is enabled
 __num_of_processes = None
 
+__lock = None
+
 
 def init_threading(number_of_processes=None):
-    global __multiprocessing, __num_of_processes
+    global __multiprocessing, __num_of_processes, __lock
     try:
         import multiprocessing
         mp_is_available = True
@@ -62,6 +67,7 @@ def init_threading(number_of_processes=None):
     if __multiprocessing is False:
         log.info("Disabled multi-threading")
     else:
+        __lock = multiprocessing.Lock()
         log.info("Enabled multi-threading with %d parallel processes" % __num_of_processes)
 
 
@@ -85,4 +91,12 @@ def run_in_parallel(func, args, unordered=False, disable_multiprocessing=False):
     else:
         for arg in args:
             yield func(arg)
+
+def acquire_lock():
+    if __multiprocessing:
+        __lock.acquire()
+
+def release_lock():
+    if __multiprocessing:
+        __lock.release()
 

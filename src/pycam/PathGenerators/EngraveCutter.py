@@ -162,7 +162,6 @@ class EngraveCutter:
         if points:
             for p in points:
                 pa.append(p)
-            self.cutter.moveto(p)
             if draw_callback:
                 draw_callback(tool_position=p, toolpath=pa.paths)
 
@@ -206,7 +205,6 @@ class EngraveCutter:
                             + "of the boundary box: using a safe height " \
                             + "instead. This warning is reported only once.")
                 self._boundary_warning_already_shown = True
-            self.cutter.moveto(p)
             # "draw_callback" returns true, if the user requested quitting via
             # the GUI.
             if draw_callback \

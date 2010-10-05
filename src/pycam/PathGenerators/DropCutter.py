@@ -151,7 +151,6 @@ class DropCutter:
 
             for p in points:
                 self.pa.append(p)
-                self.cutter.moveto(p)
                 # "draw_callback" returns true, if the user requested to quit
                 # via the GUI.
                 # The progress counter may return True, if cancel was requested.

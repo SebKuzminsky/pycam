@@ -111,8 +111,8 @@ class ToroidalCutter(BaseCutter):
         GLU.gluDisk(self._disk, 0, self.majorradius, 20, 10)
         GL.glPopMatrix()
 
-    def moveto(self, location):
-        BaseCutter.moveto(self, location)
+    def moveto(self, location, **kwargs):
+        BaseCutter.moveto(self, location, **kwargs)
         self.center = Point(location.x, location.y, location.z+self.minorradius)
 
     def intersect_torus_plane(self, direction, triangle):
