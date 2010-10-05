@@ -30,6 +30,7 @@ from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
 from pycam.Geometry.utils import epsilon, ceil, sqrt
 from pycam.Geometry import get_bisector, get_angle_pi
 from pycam.Utils import ProgressCounter
+from pycam.Utils.threading import run_in_parallel
 import pycam.Utils.log
 import random
 import math
@@ -286,21 +287,9 @@ class ContourFollow:
         projected_waterlines = []
         triangles = self.model.triangles(minx=minx, miny=miny, maxx=maxx,
                 maxy=maxy)
-        try:
-            # try a multi-threading approach to use multiple CPUs
-            import multiprocessing
-            # use the number of available CPUs
-            pool = multiprocessing.Pool()
-            results_it = pool.imap_unordered(_process_one_triangle,
-                    [(self, t, z) for t in triangles])
-        except ImportError:
-            # use a single-threaded approach
-            def single_generator(triangles):
-                for t in triangles:
-                    # an iterator is expected - thus we use a generator
-                    yield _process_one_triangle((self, t, z))
-            results_it = single_generator(triangles)
-        for result in results_it:
+        results_iter = run_in_parallel(_process_one_triangle,
+                [(self, t, z) for t in triangles], unordered=True)
+        for result in results_iter:
             for edge, shifted_edge in result:
                 waterline_triangles.add(edge, shifted_edge)
             if (not progress_counter is None) \

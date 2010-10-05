@@ -178,6 +178,11 @@ def execute(opts, args):
     else:
         log.info("Psyco was disabled via the commandline")
 
+    # initialize multiprocessing
+    if not opts.parallel_processes is None:
+        import pycam.Utils.threading
+        pycam.Utils.threading.init_threading(opts.parallel_processes)
+
     # initialize the progress bar
     progress_styles = {"none": pycam.Gui.Console.ConsoleProgressBar.STYLE_NONE,
             "text": pycam.Gui.Console.ConsoleProgressBar.STYLE_TEXT,
@@ -414,6 +419,11 @@ if __name__ == "__main__":
     group_general.add_option("", "--disable-psyco", dest="disable_psyco",
             default=False, action="store_true", help="disable the Psyco " \
                     + "just-in-time-compiler even when it is available")
+    group_general.add_option("", "--number-of-processes",
+            dest="parallel_processes", default=None, type="int", action="store",
+            help="override the default detection of multiple CPU cores. " \
+                    + "Parallel processing only works with Python 2.6 or " \
+                    + "later.")
     group_general.add_option("-q", "--quiet", dest="quiet",
             default=False, action="store_true", help="show only warnings and " \
             + "errors.")
