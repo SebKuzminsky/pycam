@@ -22,10 +22,11 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from optparse import OptionParser
+# extend the PYTHONPATH to include the "src" directory
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+
 from pycam.Physics.ode_physics import override_ode_availability
 import pycam.Gui.common as GuiCommon
 import pycam.Gui.Settings
@@ -37,6 +38,9 @@ import pycam.Toolpath.Generator
 from pycam.Toolpath import Bounds, Toolpath
 from pycam import VERSION
 import pycam.Utils.log
+from optparse import OptionParser
+# setproctitle is (optionally) imported later
+#import setproctitle
 import logging
 import time
 
@@ -132,7 +136,7 @@ def get_output_handler(destination):
         closer = handler.close
     return (handler, closer)
 
-def execute(opts, args):
+def execute(opts, args, pycam):
     # try to change the process name
     try:
         import setproctitle
@@ -569,7 +573,9 @@ if __name__ == "__main__":
 
     if opts.profile_destination:
         import cProfile
-        cProfile.run('execute(opts, args)', opts.profile_destination)
+        cProfile.run('execute(opts, args, pycam)', opts.profile_destination)
     else:
-        execute(opts, args)
+        # We need to add the parameter "pycam" to avoid weeeeird namespace
+        # issues. Any idea how to fix this?
+        execute(opts, args, pycam)
 
