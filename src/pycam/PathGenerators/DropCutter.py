@@ -25,9 +25,32 @@ from pycam.Geometry.Point import Point
 from pycam.Geometry.utils import INFINITE, ceil
 from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode
 from pycam.Utils import ProgressCounter
+from pycam.Utils.threading import run_in_parallel
 import pycam.Utils.log
 
 log = pycam.Utils.log.get_logger()
+
+
+# We need to use a global function here - otherwise it does not work with
+# the multiprocessing Pool.
+def _process_one_grid_line((positions, minz, maxz, dim_attrs, model, cutter, physics, safety_height)):
+    # for now only used for triangular collision detection
+    last_position = None
+    points = []
+    height_exceeded = False
+    for x, y in positions:
+        if physics:
+            result = get_max_height_ode(physics, x, y, minz, maxz,
+                    order=dim_attrs[:])
+        else:
+            result = get_max_height_triangles(model, cutter, x, y, minz, maxz,
+                    order=dim_attrs[:], last_pos=last_position)
+        if result:
+            points.extend(points)
+        else:
+            points.append(Point(x, y, safety_height))
+            height_exceeded = True
+    return points, height_exceeded
 
 
 class Dimension:
@@ -104,10 +127,21 @@ class DropCutter:
 
         self._boundary_warning_already_shown = False
 
+        args = []
         for one_grid_line in grid:
+            args.append((one_grid_line, minz, maxz, dim_attrs, self.model,
+                    self.cutter, self.physics, self.model.maxz))
+        # ODE does not work with multi-threading
+        disable_multiprocessing = not self.physics is None
+        for points, height_exceeded in run_in_parallel(_process_one_grid_line,
+                args, disable_multiprocessing=disable_multiprocessing):
+            if height_exceeded and not self._boundary_warning_already_shown:
+                log.warn("DropCutter: exceed the height of the " \
+                        + "boundary box: using a safe height instead." \
+                        + " This warning is reported only once.")
+                self._boundary_warning_already_shown = True
+
             self.pa.new_scanline()
-            # for now only used for triangular collision detection
-            last_position = None
 
             if draw_callback and draw_callback(text="DropCutter: processing " \
                         + "line %d/%d" % (current_line + 1, num_of_lines)):
@@ -115,26 +149,8 @@ class DropCutter:
                 quit_requested = True
                 break
 
-            for x, y in one_grid_line:
-                if self.physics:
-                    points = get_max_height_ode(self.physics, x, y, minz, maxz,
-                            order=dim_attrs[:])
-                else:
-                    points = get_max_height_triangles(self.model, self.cutter,
-                            x, y, minz, maxz, order=dim_attrs[:],
-                            last_pos=last_position)
-
-                if points:
-                    for p in points:
-                        self.pa.append(p)
-                else:
-                    p = Point(x, y, self.model.maxz)
-                    self.pa.append(p)
-                    if not self._boundary_warning_already_shown:
-                        log.warn("DropCutter: exceed the height of the " \
-                                + "boundary box: using a safe height instead." \
-                                + " This warning is reported only once.")
-                    self._boundary_warning_already_shown = True
+            for p in points:
+                self.pa.append(p)
                 self.cutter.moveto(p)
                 # "draw_callback" returns true, if the user requested to quit
                 # via the GUI.

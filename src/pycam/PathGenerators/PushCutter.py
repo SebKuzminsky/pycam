@@ -24,8 +24,19 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.Geometry.Point import Point
 from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
 from pycam.Geometry.utils import epsilon, ceil
+from pycam.Utils.threading import run_in_parallel
 from pycam.Utils import ProgressCounter
 import math
+
+
+# We need to use a global function here - otherwise it does not work with
+# the multiprocessing Pool.
+def _process_one_line((p1, p2, depth, model, cutter, physics)):
+    if physics:
+        points = get_free_paths_ode(physics, p1, p2, depth=depth)
+    else:
+        points = get_free_paths_triangles(model, cutter, p1, p2)
+    return points
 
 
 class PushCutter:
@@ -97,17 +108,17 @@ class PushCutter:
 
         # calculate the required number of steps in each direction
         if dx > 0:
-            depth_x = math.log(accuracy * abs(maxx - minx) / dx) / math.log(2)
-            depth_x = max(ceil(depth_x), 4)
-            depth_x = min(depth_x, max_depth)
+            depth = math.log(accuracy * abs(maxx - minx) / dx) / math.log(2)
+            depth = max(ceil(depth), 4)
+            depth = min(depth, max_depth)
             num_of_x_lines = 1 + ceil(abs(maxx - minx) / dx)
             x_step = abs(maxx - minx) / max(1, (num_of_x_lines - 1))
             x_steps = [minx + i * x_step for i in range(num_of_x_lines)]
             y_steps = [None] * num_of_x_lines
         elif dy != 0:
-            depth_y = math.log(accuracy * abs(maxy - miny) / dy) / math.log(2)
-            depth_y = max(ceil(depth_y), 4)
-            depth_y = min(depth_y, max_depth)
+            depth = math.log(accuracy * abs(maxy - miny) / dy) / math.log(2)
+            depth = max(ceil(depth), 4)
+            depth = min(depth, max_depth)
             num_of_y_lines = 1 + ceil(abs(maxy - miny) / dy)
             y_step = abs(maxy - miny) / max(1, (num_of_y_lines - 1))
             y_steps = [miny + i * y_step for i in range(num_of_y_lines)]
@@ -116,37 +127,30 @@ class PushCutter:
             # nothing to be done
             return
 
+        args = []
+        if dx > 0:
+            depth = depth_
         for x, y in zip(x_steps, y_steps):
-            self.pa.new_scanline()
-
             if dx > 0:
                 p1, p2 = Point(x, miny, z), Point(x, maxy, z)
-                if self.physics:
-                    points = get_free_paths_ode(self.physics, p1, p2,
-                            depth=depth_x)
-                else:
-                    points = get_free_paths_triangles(self.model, self.cutter,
-                            p1, p2)
             else:
                 p1, p2 = Point(minx, y, z), Point(maxx, y, z)
-                if self.physics:
-                    points = get_free_paths_ode(self.physics, p1, p2,
-                            depth=depth_y)
-                else:
-                    points = get_free_paths_triangles(self.model, self.cutter,
-                            p1, p2)
+            args.append((p1, p2, depth, self.model, self.cutter, self.physics))
 
+        # ODE does not work with multi-threading
+        disable_multiprocessing = not self.physics is None
+        for points in run_in_parallel(_process_one_line, args,
+                disable_multiprocessing=disable_multiprocessing):
             if points:
+                self.pa.new_scanline()
                 for p in points:
                     self.pa.append(p)
                 self.cutter.moveto(p)
                 if draw_callback:
                     draw_callback(tool_position=p, toolpath=self.pa.paths)
-            self.pa.end_scanline()
-
+                self.pa.end_scanline()
             # update the progress counter
-            if not progress_counter is None:
-                if progress_counter.increment():
-                    # quit requested
-                    break
+            if progress_counter and progress_counter.increment():
+                # quit requested
+                break
 

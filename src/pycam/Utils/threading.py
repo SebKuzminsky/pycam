@@ -65,12 +65,12 @@ def init_threading(number_of_processes=None):
         log.info("Enabled multi-threading with %d parallel processes" % __num_of_processes)
 
 
-def run_in_parallel(func, args, unordered=False):
+def run_in_parallel(func, args, unordered=False, disable_multiprocessing=False):
     global __multiprocessing, __num_of_processes
     if __multiprocessing is None:
         # threading was not configured before
         init_threading()
-    if __multiprocessing:
+    if __multiprocessing and not disable_multiprocessing:
         # use the number of CPUs as the default number of worker threads
         pool = __multiprocessing.Pool(__num_of_processes)
         if unordered:
