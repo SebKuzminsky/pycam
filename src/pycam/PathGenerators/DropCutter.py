@@ -46,7 +46,7 @@ def _process_one_grid_line((positions, minz, maxz, dim_attrs, model, cutter, phy
             result = get_max_height_triangles(model, cutter, x, y, minz, maxz,
                     order=dim_attrs[:], last_pos=last_position)
         if result:
-            points.extend(points)
+            points.extend(result)
         else:
             points.append(Point(x, y, safety_height))
             height_exceeded = True
