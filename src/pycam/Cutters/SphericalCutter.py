@@ -141,45 +141,57 @@ class SphericalCutter(BaseCutter):
         BaseCutter.moveto(self, location, **kwargs)
         self.center = Point(location.x, location.y, location.z + self.radius)
 
-    def intersect_sphere_plane(self, direction, triangle):
-        (ccp, cp, d) = intersect_sphere_plane(self.center, self.distance_radius,
+    def intersect_sphere_plane(self, direction, triangle, start=None):
+        if start is None:
+            start = self.location
+        (ccp, cp, d) = intersect_sphere_plane(
+                start.sub(self.location).add(self.center), self.distance_radius,
                 direction, triangle)
         # offset intersection
         if ccp:
-            cl = cp.add(self.location.sub(ccp))
+            cl = cp.add(start.sub(ccp))
             return (cl, ccp, cp, d)
         return (None, None, None, INFINITE)
 
-    def intersect_sphere_triangle(self, direction, triangle):
-        (cl, ccp, cp, d) = self.intersect_sphere_plane(direction, triangle)
+    def intersect_sphere_triangle(self, direction, triangle, start=None):
+        (cl, ccp, cp, d) = self.intersect_sphere_plane(direction, triangle,
+                start=start)
         if cp and triangle.is_point_inside(cp):
             return (cl, d, cp)
         return (None, INFINITE, None)
 
-    def intersect_sphere_point(self, direction, point):
-        (ccp, cp, l) = intersect_sphere_point(self.center, self.distance_radius,
+    def intersect_sphere_point(self, direction, point, start=None):
+        if start is None:
+            start = self.location
+        (ccp, cp, l) = intersect_sphere_point(
+                start.sub(self.location).add(self.center), self.distance_radius,
                 self.distance_radiussq, direction, point)
         # offset intersection
         cl = None
         if cp:
-            cl = self.location.add(direction.mul(l))
+            cl = start.add(direction.mul(l))
         return (cl, ccp, cp, l)
 
-    def intersect_sphere_vertex(self, direction, point):
-        (cl, ccp, cp, l) = self.intersect_sphere_point(direction, point)
+    def intersect_sphere_vertex(self, direction, point, start=None):
+        (cl, ccp, cp, l) = self.intersect_sphere_point(direction, point,
+                start=start)
         return (cl, l, cp)
 
-    def intersect_sphere_line(self, direction, edge):
-        (ccp, cp, l) = intersect_sphere_line(self.center, self.distance_radius,
+    def intersect_sphere_line(self, direction, edge, start=None):
+        if start is None:
+            start = self.location
+        (ccp, cp, l) = intersect_sphere_line(
+                start.sub(self.location).add(self.center), self.distance_radius,
                 self.distance_radiussq, direction, edge)
         # offset intersection
         if ccp:
-            cl = cp.sub(ccp.sub(self.location))
+            cl = cp.sub(ccp.sub(start))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
-    def intersect_sphere_edge(self, direction, edge):
-        (cl, ccp, cp, l) = self.intersect_sphere_line(direction, edge)
+    def intersect_sphere_edge(self, direction, edge, start=None):
+        (cl, ccp, cp, l) = self.intersect_sphere_line(direction, edge,
+                start=start)
         if cp:
             # check if the contact point is between the endpoints
             d = edge.p2.sub(edge.p1)
@@ -188,12 +200,13 @@ class SphericalCutter(BaseCutter):
                 return (None, INFINITE, None)
         return (cl, l, cp)
 
-    def intersect_point(self, direction, point):
+    def intersect_point(self, direction, point, start=None):
         # TODO: probably obsolete?
-        return self.intersect_sphere_point(direction, point)
+        return self.intersect_sphere_point(direction, point, start=start)
 
-    def intersect(self, direction, triangle):
-        (cl_t, d_t, cp_t) = self.intersect_sphere_triangle(direction, triangle)
+    def intersect(self, direction, triangle, start=None):
+        (cl_t, d_t, cp_t) = self.intersect_sphere_triangle(direction, triangle,
+                start=start)
         d = INFINITE
         cl = None
         cp = None
@@ -203,9 +216,12 @@ class SphericalCutter(BaseCutter):
             cp = cp_t
         if cl and (direction.x == 0) and (direction.y == 0):
             return (cl, d, cp)
-        (cl_e1, d_e1, cp_e1) = self.intersect_sphere_edge(direction, triangle.e1)
-        (cl_e2, d_e2, cp_e2) = self.intersect_sphere_edge(direction, triangle.e2)
-        (cl_e3, d_e3, cp_e3) = self.intersect_sphere_edge(direction, triangle.e3)
+        (cl_e1, d_e1, cp_e1) = self.intersect_sphere_edge(direction,
+                triangle.e1, start=start)
+        (cl_e2, d_e2, cp_e2) = self.intersect_sphere_edge(direction,
+                triangle.e2, start=start)
+        (cl_e3, d_e3, cp_e3) = self.intersect_sphere_edge(direction,
+                triangle.e3, start=start)
         if d_e1 < d:
             d = d_e1
             cl = cl_e1
@@ -220,9 +236,12 @@ class SphericalCutter(BaseCutter):
             cp = cp_e3
         if cl and (direction.x == 0) and (direction.y == 0):
             return (cl, d, cp)
-        (cl_p1, d_p1, cp_p1) = self.intersect_sphere_vertex(direction, triangle.p1)
-        (cl_p2, d_p2, cp_p2) = self.intersect_sphere_vertex(direction, triangle.p2)
-        (cl_p3, d_p3, cp_p3) = self.intersect_sphere_vertex(direction, triangle.p3)
+        (cl_p1, d_p1, cp_p1) = self.intersect_sphere_vertex(direction,
+                triangle.p1, start=start)
+        (cl_p2, d_p2, cp_p2) = self.intersect_sphere_vertex(direction,
+                triangle.p2, start=start)
+        (cl_p3, d_p3, cp_p3) = self.intersect_sphere_vertex(direction,
+                triangle.p3, start=start)
         if d_p1 < d:
             d = d_p1
             cl = cl_p1
@@ -239,11 +258,11 @@ class SphericalCutter(BaseCutter):
             return (cl, d, cp)
         if (direction.x != 0) or (direction.y != 0):
             (cl_p1, d_p1, cp_p1) = self.intersect_cylinder_vertex(direction,
-                    triangle.p1)
+                    triangle.p1, start=start)
             (cl_p2, d_p2, cp_p2) = self.intersect_cylinder_vertex(direction,
-                    triangle.p2)
+                    triangle.p2, start=start)
             (cl_p3, d_p3, cp_p3) = self.intersect_cylinder_vertex(direction,
-                    triangle.p3)
+                    triangle.p3, start=start)
             if d_p1 < d:
                 d = d_p1
                 cl = cl_p1
@@ -256,9 +275,12 @@ class SphericalCutter(BaseCutter):
                 d = d_p3
                 cl = cl_p3
                 cp = cp_p3
-            (cl_e1, d_e1, cp_e1) = self.intersect_cylinder_edge(direction, triangle.e1)
-            (cl_e2, d_e2, cp_e2) = self.intersect_cylinder_edge(direction, triangle.e2)
-            (cl_e3, d_e3, cp_e3) = self.intersect_cylinder_edge(direction, triangle.e3)
+            (cl_e1, d_e1, cp_e1) = self.intersect_cylinder_edge(direction,
+                    triangle.e1, start=start)
+            (cl_e2, d_e2, cp_e2) = self.intersect_cylinder_edge(direction,
+                    triangle.e2, start=start)
+            (cl_e3, d_e3, cp_e3) = self.intersect_cylinder_edge(direction,
+                    triangle.e3, start=start)
             if d_e1 < d:
                 d = d_e1
                 cl = cl_e1

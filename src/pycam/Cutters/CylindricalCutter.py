@@ -133,36 +133,46 @@ class CylindricalCutter(BaseCutter):
         BaseCutter.moveto(self, location, **kwargs)
         self.center = Point(location.x, location.y, location.z - self.get_required_distance())
 
-    def intersect_circle_plane(self, direction, triangle):
-        (ccp, cp, d) = intersect_circle_plane(self.center, self.distance_radius,
+    def intersect_circle_plane(self, direction, triangle, start=None):
+        if start is None:
+            start = self.location
+        (ccp, cp, d) = intersect_circle_plane(
+                start.sub(self.location).add(self.center), self.distance_radius,
                 direction, triangle)
         if ccp and cp:
-            cl = cp.add(self.location.sub(ccp))
+            cl = cp.add(start.sub(ccp))
             return (cl, ccp, cp, d)
         return (None, None, None, INFINITE)
 
-    def intersect_circle_point(self, direction, point):
-        (ccp, cp, l) = intersect_circle_point(self.center, self.axis,
+    def intersect_circle_point(self, direction, point, start=None):
+        if start is None:
+            start = self.location
+        (ccp, cp, l) = intersect_circle_point(
+                start.sub(self.location).add(self.center), self.axis,
                 self.distance_radius, self.distance_radiussq, direction, point)
         if ccp:
-            cl = cp.add(self.location.sub(ccp))
+            cl = cp.add(start.sub(ccp))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
-    def intersect_circle_line(self, direction, edge):
-        (ccp, cp, l) = intersect_circle_line(self.center, self.axis,
+    def intersect_circle_line(self, direction, edge, start=None):
+        if start is None:
+            start = self.location
+        (ccp, cp, l) = intersect_circle_line(
+                start.sub(self.location).add(self.center), self.axis,
                 self.distance_radius, self.distance_radiussq, direction, edge)
         if ccp:
-            cl = cp.add(self.location.sub(ccp))
+            cl = cp.add(start.sub(ccp))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
-    def intersect_plane(self, direction, triangle):
+    def intersect_plane(self, direction, triangle, start=None):
         # TODO: are "intersect_plane" and "self.intersect_circle_plane" obsolete?
-        return self.intersect_circle_plane(direction, triangle)
+        return self.intersect_circle_plane(direction, triangle, start=start)
 
-    def intersect(self, direction, triangle):
-        (cl_t, d_t, cp_t) = self.intersect_circle_triangle(direction, triangle)
+    def intersect(self, direction, triangle, start=None):
+        (cl_t, d_t, cp_t) = self.intersect_circle_triangle(direction, triangle,
+                start=start)
         d = INFINITE
         cl = None
         cp = None
@@ -172,9 +182,12 @@ class CylindricalCutter(BaseCutter):
             cp = cp_t
         if cl and (direction.x == 0) and (direction.y == 0):
             return (cl, d, cp)
-        (cl_e1, d_e1, cp_e1) = self.intersect_circle_edge(direction, triangle.e1)
-        (cl_e2, d_e2, cp_e2) = self.intersect_circle_edge(direction, triangle.e2)
-        (cl_e3, d_e3, cp_e3) = self.intersect_circle_edge(direction, triangle.e3)
+        (cl_e1, d_e1, cp_e1) = self.intersect_circle_edge(direction,
+                triangle.e1, start=start)
+        (cl_e2, d_e2, cp_e2) = self.intersect_circle_edge(direction,
+                triangle.e2, start=start)
+        (cl_e3, d_e3, cp_e3) = self.intersect_circle_edge(direction,
+                triangle.e3, start=start)
         if d_e1 < d:
             d = d_e1
             cl = cl_e1
@@ -189,9 +202,12 @@ class CylindricalCutter(BaseCutter):
             cp = cp_e3
         if cl and (direction.x == 0) and (direction.y == 0):
             return (cl, d, cp)
-        (cl_p1, d_p1, cp_p1) = self.intersect_circle_vertex(direction, triangle.p1)
-        (cl_p2, d_p2, cp_p2) = self.intersect_circle_vertex(direction, triangle.p2)
-        (cl_p3, d_p3, cp_p3) = self.intersect_circle_vertex(direction, triangle.p3)
+        (cl_p1, d_p1, cp_p1) = self.intersect_circle_vertex(direction,
+                triangle.p1, start=start)
+        (cl_p2, d_p2, cp_p2) = self.intersect_circle_vertex(direction,
+                triangle.p2, start=start)
+        (cl_p3, d_p3, cp_p3) = self.intersect_circle_vertex(direction,
+                triangle.p3, start=start)
         if d_p1 < d:
             d = d_p1
             cl = cl_p1
@@ -208,11 +224,11 @@ class CylindricalCutter(BaseCutter):
             return (cl, d, cp)
         if (direction.x != 0) or (direction.y != 0):
             (cl_p1, d_p1, cp_p1) = self.intersect_cylinder_vertex(direction,
-                    triangle.p1)
+                    triangle.p1, start=start)
             (cl_p2, d_p2, cp_p2) = self.intersect_cylinder_vertex(direction,
-                    triangle.p2)
+                    triangle.p2, start=start)
             (cl_p3, d_p3, cp_p3) = self.intersect_cylinder_vertex(direction,
-                    triangle.p3)
+                    triangle.p3, start=start)
             if d_p1 < d:
                 d = d_p1
                 cl = cl_p1
@@ -225,9 +241,12 @@ class CylindricalCutter(BaseCutter):
                 d = d_p3
                 cl = cl_p3
                 cp = cp_p3
-            (cl_e1, d_e1, cp_e1) = self.intersect_cylinder_edge(direction, triangle.e1)
-            (cl_e2, d_e2, cp_e2) = self.intersect_cylinder_edge(direction, triangle.e2)
-            (cl_e3, d_e3, cp_e3) = self.intersect_cylinder_edge(direction, triangle.e3)
+            (cl_e1, d_e1, cp_e1) = self.intersect_cylinder_edge(direction,
+                    triangle.e1, start=start)
+            (cl_e2, d_e2, cp_e2) = self.intersect_cylinder_edge(direction,
+                    triangle.e2, start=start)
+            (cl_e3, d_e3, cp_e3) = self.intersect_cylinder_edge(direction,
+                    triangle.e3, start=start)
             if d_e1 < d:
                 d = d_e1
                 cl = cl_e1

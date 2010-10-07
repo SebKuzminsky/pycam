@@ -47,26 +47,28 @@ class BaseCutter(object):
         self.required_distance = 0
         self.distance_radius = self.radius
         self.distance_radiussq = self.distance_radius ** 2
-        # self.minx, self.maxx, self.miny and self.maxy are defined as
-        # properties below
         self.shape = {}
         self.moveto(location)
 
-    def _get_minx(self):
+    def get_minx(self, start=None):
+        if start is None:
+            start = self.location
         return self.location.x - self.distance_radius
-    minx = property(_get_minx)
 
-    def _get_maxx(self):
+    def get_maxx(self, start=None):
+        if start is None:
+            start = self.location
         return self.location.x + self.distance_radius
-    maxx = property(_get_maxx)
 
-    def _get_miny(self):
+    def get_miny(self, start=None):
+        if start is None:
+            start = self.location
         return self.location.y - self.distance_radius
-    miny = property(_get_miny)
 
-    def _get_maxy(self):
+    def get_maxy(self, start=None):
+        if start is None:
+            start = self.location
         return self.location.y + self.distance_radius
-    maxy = property(_get_maxy)
 
     def __repr__(self):
         return "BaseCutter"
@@ -102,24 +104,26 @@ class BaseCutter(object):
         if not keep_lock:
             pycam.Utils.threading.release_lock()
 
-    def intersect(self, direction, triangle):
+    def intersect(self, direction, triangle, start=None):
         raise NotImplementedError("Inherited class of BaseCutter does not " \
                 + "implement the required function 'intersect'.")
 
-    def drop(self, triangle):
+    def drop(self, triangle, start=None):
+        if start is None:
+            start = self.location
         # check bounding box collision
-        if self.minx > triangle.maxx + epsilon:
+        if self.get_minx(start) > triangle.maxx + epsilon:
             return None
-        if self.maxx < triangle.minx - epsilon:
+        if self.get_maxx(start) < triangle.minx - epsilon:
             return None
-        if self.miny > triangle.maxy + epsilon:
+        if self.get_miny(start) > triangle.maxy + epsilon:
             return None
-        if self.maxy < triangle.miny - epsilon:
+        if self.get_maxy(start) < triangle.miny - epsilon:
             return None
 
         # check bounding circle collision
         c = triangle.middle
-        if (c.x - self.location.x) ** 2 + (c.y - self.location.y) ** 2 \
+        if (c.x - start.x) ** 2 + (c.y - start.y) ** 2 \
                 > (self.distance_radiussq + 2 * self.distance_radius \
                     * triangle.radius + triangle.radiussq) + epsilon:
             return None
@@ -127,18 +131,21 @@ class BaseCutter(object):
         (cl, d, cp) = self.intersect(BaseCutter.vertical, triangle)
         return cl
 
-    def intersect_circle_triangle(self, direction, triangle):
-        (cl, ccp, cp, d) = self.intersect_circle_plane(direction, triangle)
+    def intersect_circle_triangle(self, direction, triangle, start=None):
+        (cl, ccp, cp, d) = self.intersect_circle_plane(direction, triangle,
+                start=start)
         if cp and triangle.is_point_inside(cp):
             return (cl, d, cp)
         return (None, INFINITE, None)
 
-    def intersect_circle_vertex(self, direction, point):
-        (cl, ccp, cp, l) = self.intersect_circle_point(direction, point)
+    def intersect_circle_vertex(self, direction, point, start=None):
+        (cl, ccp, cp, l) = self.intersect_circle_point(direction, point,
+                start=start)
         return (cl, l, cp)
 
-    def intersect_circle_edge(self, direction, edge):
-        (cl, ccp, cp, l) = self.intersect_circle_line(direction, edge)
+    def intersect_circle_edge(self, direction, edge, start=None):
+        (cl, ccp, cp, l) = self.intersect_circle_line(direction, edge,
+                start=start)
         if cp:
             # check if the contact point is between the endpoints
             m = cp.sub(edge.p1).dot(edge.dir)
@@ -146,38 +153,50 @@ class BaseCutter(object):
                 return (None, INFINITE, cp)
         return (cl, l, cp)
 
-    def intersect_cylinder_point(self, direction, point):
-        (ccp, cp, l) = intersect_cylinder_point(self.center, self.axis,
+    def intersect_cylinder_point(self, direction, point, start=None):
+        if start is None:
+            start = self.location
+        (ccp, cp, l) = intersect_cylinder_point(
+                start.sub(self.location).add(self.center), self.axis,
                 self.distance_radius, self.distance_radiussq, direction, point)
         # offset intersection
         if ccp:
-            cl = cp.add(self.location.sub(ccp))
+            cl = cp.add(start.sub(ccp))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
-    def intersect_cylinder_vertex(self, direction, point):
-        (cl, ccp, cp, l) = self.intersect_cylinder_point(direction, point)
-        if ccp and ccp.z < self.center.z:
+    def intersect_cylinder_vertex(self, direction, point, start=None):
+        if start is None:
+            start = self.location
+        (cl, ccp, cp, l) = self.intersect_cylinder_point(direction, point,
+                start=start)
+        if ccp and ccp.z < start.sub(self.location).add(self.center).z:
             return (None, INFINITE, None)
         return (cl, l, cp)
 
-    def intersect_cylinder_line(self, direction, edge):
-        (ccp, cp, l) = intersect_cylinder_line(self.center, self.axis,
+    def intersect_cylinder_line(self, direction, edge, start=None):
+        if start is None:
+            start = self.location
+        (ccp, cp, l) = intersect_cylinder_line(
+                start.sub(self.location).add(self.center), self.axis,
                 self.distance_radius, self.distance_radiussq, direction, edge)
         # offset intersection
         if ccp:
-            cl = self.location.add(cp.sub(ccp))
+            cl = start.add(cp.sub(ccp))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
-    def intersect_cylinder_edge(self, direction, edge):
-        (cl, ccp, cp, l) = self.intersect_cylinder_line(direction, edge)
+    def intersect_cylinder_edge(self, direction, edge, start=None):
+        if start is None:
+            start = self.location
+        (cl, ccp, cp, l) = self.intersect_cylinder_line(direction, edge,
+                start=start)
         if not ccp:
             return (None, INFINITE, None)
         m = cp.sub(edge.p1).dot(edge.dir)
         if (m < -epsilon) or (m > edge.len + epsilon):
             return (None, INFINITE, None)
-        if ccp.z < self.center.z:
+        if ccp.z < start.sub(self.location).add(self.center).z:
             return (None, INFINITE, None)
         return (cl, l, cp)
 
