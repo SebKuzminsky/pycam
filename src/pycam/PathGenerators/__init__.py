@@ -60,12 +60,10 @@ def get_free_paths_triangles(model, cutter, p1, p2, return_triangles=False):
             maxy + cutter.distance_radius, INFINITE)
 
     for t in triangles:
-        cutter.moveto(p1, keep_lock=True)
-        (cl1, d1, cp1) = cutter.intersect(backward, t)
-        (cl2, d2, cp2) = cutter.intersect(forward, t)
-        pycam.Utils.threading.release_lock()
+        (cl1, d1, cp1) = cutter.intersect(backward, t, start=p1)
         if cl1:
             hits.append(Hit(cl1, cp1, t, -d1, backward))
+        (cl2, d2, cp2) = cutter.intersect(forward, t, start=p1)
         if cl2:
             hits.append(Hit(cl2, cp2, t, d2, forward))
 
@@ -221,14 +219,12 @@ def get_max_height_triangles(model, cutter, x, y, minz, maxz, order=None,
     box_z_max = maxz
     triangles = model.triangles(box_x_min, box_y_min, box_z_min, box_x_max,
             box_y_max, box_z_max)
-    cutter.moveto(p, keep_lock=True)
     for t in triangles:
-        cut = cutter.drop(t)
+        cut = cutter.drop(t, start=p)
         if cut and ((height_max is None) or (cut.z > height_max)):
             height_max = cut.z
             cut_max = cut
             triangle_max = t
-    pycam.Utils.threading.release_lock()
     # don't do a complete boundary check for the height
     # this avoids zero-cuts for models that exceed the bounding box height
     if not cut_max or cut_max.z < minz + epsilon:

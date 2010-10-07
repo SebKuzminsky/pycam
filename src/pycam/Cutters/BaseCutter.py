@@ -94,15 +94,11 @@ class BaseCutter(object):
     def get_required_distance(self):
         return self.required_distance
 
-    def moveto(self, location, keep_lock=False):
+    def moveto(self, location):
         # "moveto" is used for collision detection calculation.
-        # We need to prevent multiple changes during one calculation.
-        pycam.Utils.threading.acquire_lock()
         self.location = location
         for shape, set_pos_func in self.shape.values():
             set_pos_func(location.x, location.y, location.z)
-        if not keep_lock:
-            pycam.Utils.threading.release_lock()
 
     def intersect(self, direction, triangle, start=None):
         raise NotImplementedError("Inherited class of BaseCutter does not " \
