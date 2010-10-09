@@ -35,6 +35,7 @@ import pycam.Importers.TestModel
 import pycam.Importers
 import pycam.Exporters.GCodeExporter
 import pycam.Toolpath.Generator
+import pycam.Utils.threading
 from pycam.Toolpath import Bounds, Toolpath
 from pycam import VERSION
 import pycam.Utils.log
@@ -183,9 +184,15 @@ def execute(opts, args, pycam):
         log.info("Psyco was disabled via the commandline")
 
     # initialize multiprocessing
-    if not opts.parallel_processes is None:
-        import pycam.Utils.threading
-        pycam.Utils.threading.init_threading(opts.parallel_processes)
+    if opts.start_server:
+        pycam.Utils.threading.init_threading(opts.parallel_processes,
+                remote=opts.remote_server, run_server=True,
+                server_credentials=opts.server_authkey)
+        sys.exit(0)
+    else:
+        pycam.Utils.threading.init_threading(opts.parallel_processes,
+                remote=opts.remote_server,
+                server_credentials=opts.server_authkey)
 
     # initialize the progress bar
     progress_styles = {"none": pycam.Gui.Console.ConsoleProgressBar.STYLE_NONE,
@@ -428,6 +435,18 @@ if __name__ == "__main__":
             help="override the default detection of multiple CPU cores. " \
                     + "Parallel processing only works with Python 2.6 or " \
                     + "later.")
+    group_general.add_option("", "--remote-server", dest="remote_server",
+            default=None, action="store", type="string", help="Connect to a " \
+                    + "remote task server to distribute the processing load. " \
+                    + "The server is given as an IP or a hostname with an " \
+                    + "optional port (default: 1250) separated by a colon.")
+    group_general.add_option("", "--start-server-only", dest="start_server",
+            default=False, action="store_true", help="Start only a local " \
+                    + "server for handling remote requests.")
+    group_general.add_option("", "--server-auth-key", dest="server_authkey",
+            default="", action="store", type="string", help="Secret used for " \
+                    + "connecting to a remote server or for granting access " \
+                    + "to remote clients.")
     group_general.add_option("-q", "--quiet", dest="quiet",
             default=False, action="store_true", help="show only warnings and " \
             + "errors.")
@@ -578,4 +597,6 @@ if __name__ == "__main__":
         # We need to add the parameter "pycam" to avoid weeeeird namespace
         # issues. Any idea how to fix this?
         execute(opts, args, pycam)
+
+    pycam.Utils.threading.cleanup()
 

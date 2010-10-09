@@ -43,11 +43,12 @@ __multiprocessing = None
 __num_of_processes = None
 
 __manager = None
-__workers = None
+__spawner = None
 
 
-def init_threading(number_of_processes=None, host=None):
-    global __multiprocessing, __num_of_processes, __manager, __workers
+def init_threading(number_of_processes=None, remote=None, run_server=False,
+        server_credentials=""):
+    global __multiprocessing, __num_of_processes, __manager, __spawner
     try:
         import multiprocessing
         mp_is_available = True
@@ -59,7 +60,7 @@ def init_threading(number_of_processes=None, host=None):
         if number_of_processes is None:
             # use defaults
             # don't enable threading for a single cpu
-            if multiprocessing.cpu_count() > 1:
+            if (multiprocessing.cpu_count() > 1) or remote or run_server:
                 __multiprocessing = multiprocessing
                 __num_of_processes = multiprocessing.cpu_count()
             else:
@@ -76,11 +77,11 @@ def init_threading(number_of_processes=None, host=None):
         log.info("Enabled multi-threading with %d parallel processes" % __num_of_processes)
     # initialize the manager
     if __multiprocessing:
-        if host is None:
+        if remote is None:
             address = ('', DEFAULT_PORT)
         else:
-            if ":" in host:
-                host, port = host.split(":", 1)
+            if ":" in remote:
+                host, port = remote.split(":", 1)
                 try:
                     port = int(port)
                 except ValueError:
@@ -89,24 +90,67 @@ def init_threading(number_of_processes=None, host=None):
                     port = DEFAULT_PORT
             else:
                 port = DEFAULT_PORT
-            address = (host, port)
-        tasks_queue = multiprocessing.Queue()
-        results_queue = multiprocessing.Queue()
+            address = (remote, port)
         from multiprocessing.managers import BaseManager
         class TaskManager(BaseManager):
             pass
-        TaskManager.register("tasks", callable=lambda: tasks_queue)
-        TaskManager.register("results", callable=lambda: results_queue)
-        __manager = TaskManager(address=address)
-        if not host is None:
-            __manager.connect()
+        if remote is None:
+            tasks_queue = multiprocessing.Queue()
+            results_queue = multiprocessing.Queue()
+            TaskManager.register("tasks", callable=lambda: tasks_queue)
+            TaskManager.register("results", callable=lambda: results_queue)
         else:
+            TaskManager.register("tasks")
+            TaskManager.register("results")
+        __manager = TaskManager(address=address, authkey=server_credentials)
+        # run the local server, connect to a remote one or begin serving
+        if remote is None:
             __manager.start()
+            log.info("Started a local server.")
+        else:
+            __manager.connect()
+            log.info("Connected to a remote task server.")
+        # create the spawning process
+        __spawner = __multiprocessing.Process(name="spawn", target=_spawn_daemon,
+                args=(__manager, __num_of_processes))
+        __spawner.start()
+        # wait forever - in case of a server
+        if run_server:
+            log.info("Running a local server and waiting for remote connections.")
+            spawner.join()
+
+def cleanup():
+    global __manager, __spawner
+    if __multiprocessing:
+        __manager.shutdown()
+        __spawner.terminate()
+
+def _spawn_daemon(manager, number_of_processes):
+    """ wait for items in the 'tasks' queue to appear and then spawn workers
+    """
+    global __multiprocessing
+    # wait for the server to become ready
+    while manager._state.value != __multiprocessing.managers.State.STARTED:
+        time.sleep(0.1)
+    tasks = manager.tasks()
+    while True:
+        if not tasks.empty():
+            workers = []
+            for index in range(number_of_processes):
+                worker = __multiprocessing.Process(name="task-%d" % index,
+                        target=_handle_tasks, args=(manager.tasks(), manager.results()))
+                worker.start()
+                workers.append(worker)
+            # wait until all workers are finished
+            for worker in workers:
+                worker.join()
+        else:
+            time.sleep(0.5)
 
 def _handle_tasks(tasks, results):
     while not tasks.empty():
         try:
-            func, args = tasks.get(timeout=1.0)
+            func, args = tasks.get(timeout=0.5)
             results.put(func(args))
         except Queue.Empty:
             break
@@ -122,19 +166,13 @@ def run_in_parallel_remote(func, args_list, unordered=False,
         results_queue = __manager.results()
         for args in args_list:
             tasks_queue.put((func, args))
-        workers = []
-        for index in range(__num_of_processes):
-            worker = __multiprocessing.Process(name="task-%d" % index,
-                    target=_handle_tasks, args=(tasks_queue, results_queue))
-            worker.start()
-            workers.append(worker)
         for index in range(len(args_list)):
             try:
                 yield results_queue.get()
             except GeneratorExit:
-                # catch this specific (silent) exception and kill all workers
-                for w in workers:
-                    w.terminate()
+                # catch this specific (silent) exception and flush the task queue
+                while not tasks_queue.empty():
+                    tasks_queue.get(timeout=0.1)
                 # re-raise the GeneratorExit exception to finish destruction
                 raise
     else:
