@@ -27,6 +27,13 @@ import os
 #import win32com
 #import win32api
 
+# setproctitle is (optionally) imported
+try:
+    from setproctitle import setproctitle
+except ImportError:
+    # silently ignore name change requests
+    setproctitle = lambda name: None
+
 
 def get_external_program_location(key):
     extensions = ["", ".exe"]

@@ -36,12 +36,11 @@ import pycam.Importers
 import pycam.Exporters.GCodeExporter
 import pycam.Toolpath.Generator
 import pycam.Utils.threading
+import pycam.Utils
 from pycam.Toolpath import Bounds, Toolpath
 from pycam import VERSION
 import pycam.Utils.log
 from optparse import OptionParser
-# setproctitle is (optionally) imported later
-#import setproctitle
 import logging
 import time
 
@@ -139,11 +138,7 @@ def get_output_handler(destination):
 
 def execute(opts, args, pycam):
     # try to change the process name
-    try:
-        import setproctitle
-        setproctitle.setproctitle("pycam")
-    except ImportError:
-        pass
+    pycam.Utils.setproctitle("pycam")
 
     if len(args) > 0:
         inputfile = os.path.expanduser(args[0])
@@ -591,12 +586,15 @@ if __name__ == "__main__":
             + "This program is required for importing SVG files.")
     (opts, args) = parser.parse_args()
 
-    if opts.profile_destination:
-        import cProfile
-        cProfile.run('execute(opts, args, pycam)', opts.profile_destination)
-    else:
-        # We need to add the parameter "pycam" to avoid weeeeird namespace
-        # issues. Any idea how to fix this?
-        execute(opts, args, pycam)
+    try:
+        if opts.profile_destination:
+            import cProfile
+            cProfile.run('execute(opts, args, pycam)', opts.profile_destination)
+        else:
+            # We need to add the parameter "pycam" to avoid weeeeird namespace
+            # issues. Any idea how to fix this?
+            execute(opts, args, pycam)
+    except KeyboardInterrupt:
+        log.info("Quit requested")
     pycam.Utils.threading.cleanup()
 
