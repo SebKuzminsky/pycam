@@ -45,7 +45,7 @@ log = pycam.Utils.log.get_logger()
 
 # We need to use a global function here - otherwise it does not work with
 # the multiprocessing Pool.
-def _process_one_triangle((obj, triangle, z)):
+def _process_one_triangle((triangle,), (obj, z)):
     result = []
     if id(triangle) in obj._processed_triangles:
         # skip triangles that are known to cause no collision
@@ -287,7 +287,7 @@ class ContourFollow:
         triangles = self.model.triangles(minx=minx, miny=miny, maxx=maxx,
                 maxy=maxy)
         results_iter = run_in_parallel(_process_one_triangle,
-                [(self, t, z) for t in triangles], unordered=True)
+                [((t,), (self, z)) for t in triangles], unordered=True)
         for result in results_iter:
             for edge, shifted_edge in result:
                 waterline_triangles.add(edge, shifted_edge)

@@ -33,7 +33,7 @@ log = pycam.Utils.log.get_logger()
 
 # We need to use a global function here - otherwise it does not work with
 # the multiprocessing Pool.
-def _process_one_grid_line((positions, minz, maxz, dim_attrs, model, cutter, physics, safety_height)):
+def _process_one_grid_line((positions,), (minz, maxz, dim_attrs, model, cutter, physics, safety_height)):
     # for now only used for triangular collision detection
     last_position = None
     points = []
@@ -129,8 +129,8 @@ class DropCutter:
 
         args = []
         for one_grid_line in grid:
-            args.append((one_grid_line, minz, maxz, dim_attrs, self.model,
-                    self.cutter, self.physics, self.model.maxz))
+            args.append(((one_grid_line,), (minz, maxz, dim_attrs, self.model,
+                    self.cutter, self.physics, self.model.maxz)))
         # ODE does not work with multi-threading
         disable_multiprocessing = not self.physics is None
         for points, height_exceeded in run_in_parallel(_process_one_grid_line,

@@ -108,13 +108,16 @@ def init_threading(number_of_processes=None, remote=None, run_server=False,
             tasks_queue = multiprocessing.Queue()
             results_queue = multiprocessing.Queue()
             statistics = ProcessStatistics()
+            cache = ProcessDataCache()
             TaskManager.register("tasks", callable=lambda: tasks_queue)
             TaskManager.register("results", callable=lambda: results_queue)
             TaskManager.register("statistics", callable=lambda: statistics)
+            TaskManager.register("cache", callable=lambda: cache)
         else:
             TaskManager.register("tasks")
             TaskManager.register("results")
             TaskManager.register("statistics")
+            TaskManager.register("cache")
         __manager = TaskManager(address=address, authkey=server_credentials)
         # run the local server, connect to a remote one or begin serving
         if remote is None:
@@ -146,6 +149,7 @@ def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
     tasks = manager.tasks()
     results = manager.results()
     stats = manager.statistics()
+    cache = manager.cache()
     try:
         while not __closing.get():
             if not tasks.empty():
@@ -153,7 +157,7 @@ def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
                 for task_id in worker_uuid_list:
                     worker = __multiprocessing.Process(
                             name="task-%s" % str(task_id), target=_handle_tasks,
-                            args=(tasks, results, stats))
+                            args=(tasks, results, stats, cache))
                     worker.start()
                     workers.append(worker)
                 # wait until all workers are finished
@@ -165,17 +169,20 @@ def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
         # set the "closing" flag and just exit
         __closing.set(True)
 
-def _handle_tasks(tasks, results, stats):
+def _handle_tasks(tasks, results, stats, cache):
     global __multiprocessing
     name = __multiprocessing.current_process().name
+    local_cache = {}
     try:
         while not tasks.empty():
             try:
                 start_time = time.time()
-                func, args = tasks.get(timeout=1.0)
+                func, args, cache_id = tasks.get(timeout=1.0)
+                if not cache_id in local_cache.keys():
+                    local_cache[cache_id] = cache.get(cache_id)
                 stats.add_transfer_time(name, time.time() - start_time)
                 start_time = time.time()
-                results.put(func(args))
+                results.put(func(args, local_cache[cache_id]))
                 stats.add_process_time(name, time.time() - start_time)
             except Queue.Empty:
                 break
@@ -193,8 +200,24 @@ def run_in_parallel_remote(func, args_list, unordered=False,
     if __multiprocessing and not disable_multiprocessing:
         tasks_queue = __manager.tasks()
         results_queue = __manager.results()
+        cache = __manager.cache()
+        stats = __manager.statistics()
+        # TODO: make this queue_id persistent for one manager
+        queue_id = str(uuid.uuid1())
+        previous_cache_values = {}
         for args in args_list:
-            tasks_queue.put((func, args))
+            normal_args, cache_args = args
+            start_time = time.time()
+            for key, value in previous_cache_values.iteritems():
+                if cache_args == value:
+                    cache_id = key
+                    break
+            else:
+                cache_id = str(uuid.uuid4())
+                previous_cache_values[cache_id] = cache_args
+                cache.add(cache_id, cache_args)
+            tasks_queue.put((func, normal_args, cache_id))
+            stats.add_queueing_time(queue_id, time.time() - start_time)
         for index in range(len(args_list)):
             try:
                 yield results_queue.get()
@@ -202,6 +225,9 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                 # catch this specific (silent) exception and flush the task queue
                 while not tasks_queue.empty():
                     tasks_queue.get(timeout=0.1)
+                # remove the previously added cached items
+                for key in previous_cache_values.keys():
+                    cache.remove(key)
                 # re-raise the GeneratorExit exception to finish destruction
                 raise
     else:
@@ -234,7 +260,8 @@ run_in_parallel = run_in_parallel_remote
 
 
 class OneProcess(object):
-    def __init__(self, name):
+    def __init__(self, name, is_queue=False):
+        self.is_queue = is_queue
         self.name = name
         self.transfer_time = 0
         self.transfer_count = 0
@@ -243,24 +270,33 @@ class OneProcess(object):
 
     def __str__(self):
         try:
-            return "Process %s: %s (%s/%s) - %s (%s/%s)" \
+            if self.is_queue:
+                return "Queue %s: %s (%s/%s)" \
                     % (self.name, self.transfer_time/self.transfer_count,
-                            self.transfer_time, self.transfer_count,
-                            self.process_time/self.process_count,
-                            self.process_time, self.process_count)
+                            self.transfer_time, self.transfer_count)
+            else:
+                return "Process %s: %s (%s/%s) - %s (%s/%s)" \
+                        % (self.name, self.transfer_time/self.transfer_count,
+                                self.transfer_time, self.transfer_count,
+                                self.process_time/self.process_count,
+                                self.process_time, self.process_count)
         except ZeroDivisionError:
             # race condition between adding new objects and output
-            return "Process %s"
+            if self.is_queue:
+                return "Queue %s: not ready" % str(self.name)
+            else:
+                return "Process %s: not ready" % str(self.name)
 
 
 class ProcessStatistics(object):
 
     def __init__(self):
         self.processes = {}
+        self.queues = {}
 
     def __str__(self):
-        return os.linesep.join([str(process)
-                for process in self.processes.values()])
+        return os.linesep.join([str(item)
+                for item in self.processes.values() + self.queues.values()])
 
     def get_stats(self):
         return str(self)
@@ -273,7 +309,30 @@ class ProcessStatistics(object):
 
     def add_process_time(self, name, amount):
         if not name in self.processes:
-            self.processes[name] = OneProcess()
+            self.processes[name] = OneProcess(name)
         self.processes[name].process_count += 1
         self.processes[name].process_time += amount
+
+    def add_queueing_time(self, name, amount):
+        if not name in self.processes:
+            self.queues[name] = OneProcess(name, is_queue=True)
+        self.queues[name].transfer_count += 1
+        self.queues[name].transfer_time += amount
+
+
+class ProcessDataCache(object):
+
+    def __init__(self):
+        self.cache = {}
+
+    def add(self, name, value):
+        print "New cache item: %s" % str(name)
+        self.cache[name] = value
+
+    def get(self, name):
+        return self.cache[name]
+
+    def remove(self, name):
+        if name in self.cache:
+            del self.cache[name]
 

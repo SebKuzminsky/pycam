@@ -31,7 +31,7 @@ import math
 
 # We need to use a global function here - otherwise it does not work with
 # the multiprocessing Pool.
-def _process_one_line((p1, p2, depth, model, cutter, physics)):
+def _process_one_line((p1, p2), (depth, model, cutter, physics)):
     if physics:
         points = get_free_paths_ode(physics, p1, p2, depth=depth)
     else:
@@ -135,7 +135,7 @@ class PushCutter:
                 p1, p2 = Point(x, miny, z), Point(x, maxy, z)
             else:
                 p1, p2 = Point(minx, y, z), Point(maxx, y, z)
-            args.append((p1, p2, depth, self.model, self.cutter, self.physics))
+            args.append(((p1, p2), (depth, self.model, self.cutter, self.physics)))
 
         # ODE does not work with multi-threading
         disable_multiprocessing = not self.physics is None
