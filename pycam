@@ -188,6 +188,7 @@ def execute(opts, args, pycam):
         pycam.Utils.threading.init_threading(opts.parallel_processes,
                 remote=opts.remote_server, run_server=True,
                 server_credentials=opts.server_authkey)
+        pycam.Utils.threading.cleanup()
         sys.exit(0)
     else:
         pycam.Utils.threading.init_threading(opts.parallel_processes,
@@ -597,6 +598,5 @@ if __name__ == "__main__":
         # We need to add the parameter "pycam" to avoid weeeeird namespace
         # issues. Any idea how to fix this?
         execute(opts, args, pycam)
-
     pycam.Utils.threading.cleanup()
 

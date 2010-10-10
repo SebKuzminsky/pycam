@@ -44,11 +44,12 @@ __num_of_processes = None
 
 __manager = None
 __spawner = None
+__closing = None
 
 
 def init_threading(number_of_processes=None, remote=None, run_server=False,
         server_credentials=""):
-    global __multiprocessing, __num_of_processes, __manager, __spawner
+    global __multiprocessing, __num_of_processes, __manager, __spawner, __closing
     try:
         import multiprocessing
         mp_is_available = True
@@ -91,9 +92,14 @@ def init_threading(number_of_processes=None, remote=None, run_server=False,
             else:
                 port = DEFAULT_PORT
             address = (remote, port)
-        from multiprocessing.managers import BaseManager
-        class TaskManager(BaseManager):
-            pass
+        from multiprocessing.managers import SyncManager
+        class TaskManager(SyncManager):
+            @classmethod
+            def _run_server(cls, *args):
+                # make sure that the server ignores SIGINT (KeyboardInterrupt)
+                import signal
+                signal.signal(signal.SIGINT, signal.SIG_IGN)
+                SyncManager._run_server(*args)
         if remote is None:
             tasks_queue = multiprocessing.Queue()
             results_queue = multiprocessing.Queue()
@@ -111,49 +117,61 @@ def init_threading(number_of_processes=None, remote=None, run_server=False,
             __manager.connect()
             log.info("Connected to a remote task server.")
         # create the spawning process
+        __closing = __manager.Value("b", False)
         __spawner = __multiprocessing.Process(name="spawn", target=_spawn_daemon,
                 args=(__manager, __num_of_processes))
         __spawner.start()
         # wait forever - in case of a server
         if run_server:
             log.info("Running a local server and waiting for remote connections.")
-            spawner.join()
+            try:
+                __spawner.join()
+            except KeyboardInterrupt:
+                log.info("Quit requested")
+                # don't raise - this is just the normal way of quitting
+                pass
 
 def cleanup():
     global __manager, __spawner
     if __multiprocessing:
-        __manager.shutdown()
         __spawner.terminate()
+        if __manager._process.is_alive():
+            __manager.shutdown(__manager)
 
 def _spawn_daemon(manager, number_of_processes):
     """ wait for items in the 'tasks' queue to appear and then spawn workers
     """
-    global __multiprocessing
-    # wait for the server to become ready
-    while manager._state.value != __multiprocessing.managers.State.STARTED:
-        time.sleep(0.1)
+    global __multiprocessing, __closing
     tasks = manager.tasks()
-    while True:
-        if not tasks.empty():
-            workers = []
-            for index in range(number_of_processes):
-                worker = __multiprocessing.Process(name="task-%d" % index,
-                        target=_handle_tasks, args=(manager.tasks(), manager.results()))
-                worker.start()
-                workers.append(worker)
-            # wait until all workers are finished
-            for worker in workers:
-                worker.join()
-        else:
-            time.sleep(0.5)
+    results = manager.results()
+    try:
+        while not __closing.get():
+            if not tasks.empty():
+                workers = []
+                for index in range(number_of_processes):
+                    worker = __multiprocessing.Process(name="task-%d" % index,
+                            target=_handle_tasks, args=(tasks, results))
+                    worker.start()
+                    workers.append(worker)
+                # wait until all workers are finished
+                for worker in workers:
+                    worker.join()
+            else:
+                time.sleep(0.2)
+    except KeyboardInterrupt:
+        # set the "closing" flag and just exit
+        __closing.set(True)
 
 def _handle_tasks(tasks, results):
-    while not tasks.empty():
-        try:
-            func, args = tasks.get(timeout=0.5)
-            results.put(func(args))
-        except Queue.Empty:
-            break
+    try:
+        while not tasks.empty():
+            try:
+                func, args = tasks.get(timeout=0.5)
+                results.put(func(args))
+            except Queue.Empty:
+                break
+    except KeyboardInterrupt:
+        pass
 
 def run_in_parallel_remote(func, args_list, unordered=False,
         disable_multiprocessing=False, host=None):
