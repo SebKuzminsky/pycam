@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.utils import number
+import uuid
 
 try:
     import ode
@@ -105,7 +106,7 @@ def get_parallelepiped_geom(low_points, high_points, space=None):
     return geom
 
 
-class PhysicalWorld:
+class PhysicalWorld(object):
 
     def __init__(self):
         self._world = ode.World()
@@ -115,6 +116,15 @@ class PhysicalWorld:
         self._drill = None
         self._drill_offset = None
         self._collision_detected = False
+        self._dirty = True
+        self.__uuid = None
+
+    @property
+    def uuid(self):
+        if (self.__uuid is None) or self._dirty:
+            self.__uuid = str(uuid.uuid4())
+            self._dirty = False
+        return self.__uuid
 
     def reset(self):
         self._world = ode.World()
@@ -124,6 +134,7 @@ class PhysicalWorld:
         self._drill = None
         self._drill_offset = None
         self._collision_detected = False
+        self._dirty = True
 
     def _add_geom(self, geom, position, append=True):
         body = ode.Body(self._world)
@@ -132,6 +143,7 @@ class PhysicalWorld:
         geom.setBody(body)
         if append:
             self._obstacles.append(geom)
+        self._dirty = True
 
     def add_mesh(self, triangles, position=None):
         if position is None:
@@ -141,6 +153,7 @@ class PhysicalWorld:
         mesh.build(vertices, faces)
         geom = ode.GeomTriMesh(mesh, self._space)
         self._add_geom(geom, position)
+        self._dirty = True
 
     def set_drill(self, shape, position):
         #geom = ode.GeomTransform(self._space)
@@ -155,6 +168,7 @@ class PhysicalWorld:
         self._drill_offset = [number(value) for value in position]
         self._drill = shape
         self.reset_drill()
+        self._dirty = True
 
     def extend_drill(self, diff_x, diff_y, diff_z):
         try:
@@ -162,6 +176,7 @@ class PhysicalWorld:
         except ValueError:
             return
         func(diff_x, diff_y, diff_z)
+        self._dirty = True
 
     def reset_drill(self):
         try:
@@ -169,6 +184,7 @@ class PhysicalWorld:
         except ValueError:
             return
         func()
+        self._dirty = True
 
     def set_drill_position(self, position):
         if self._drill:

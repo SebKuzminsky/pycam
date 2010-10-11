@@ -27,6 +27,7 @@ from pycam.Geometry.Point import Point
 from pycam.Geometry.utils import number, INFINITE, epsilon
 from pycam.Geometry.intersection import intersect_circle_point, \
         intersect_cylinder_point, intersect_cylinder_line
+import uuid
 
 
 class BaseCutter(object):
@@ -49,6 +50,8 @@ class BaseCutter(object):
         self.distance_radiussq = self.distance_radius ** 2
         self.shape = {}
         self.moveto(location)
+        self.uuid = None
+        self.update_uuid()
 
     def get_minx(self, start=None):
         if start is None:
@@ -70,6 +73,9 @@ class BaseCutter(object):
             start = self.location
         return self.location.y + self.distance_radius
 
+    def update_uuid(self):
+        self.uuid = uuid.uuid4()
+
     def __repr__(self):
         return "BaseCutter"
 
@@ -90,6 +96,7 @@ class BaseCutter(object):
             self.required_distance = number(value)
             self.distance_radius = self.radius + self.get_required_distance()
             self.distance_radiussq = self.distance_radius * self.distance_radius
+            self.update_uuid()
 
     def get_required_distance(self):
         return self.required_distance

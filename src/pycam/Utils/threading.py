@@ -200,19 +200,28 @@ def _handle_tasks(tasks, results, stats, cache):
     global __multiprocessing
     name = __multiprocessing.current_process().name
     local_cache = {}
+    timeout_counter = 60
     try:
-        while not tasks.empty():
+        while timeout_counter > 0:
             try:
                 start_time = time.time()
-                job_id, func, args, cache_id = tasks.get(timeout=1.0)
-                if not cache_id in local_cache.keys():
-                    local_cache[cache_id] = cache.get(cache_id)
+                job_id, func, args = tasks.get(timeout=1.0)
+                real_args = []
+                for arg in args:
+                    if isinstance(arg, ProcessDataCacheItemID):
+                        cache_id = arg.value
+                        if not cache_id in local_cache.keys():
+                            local_cache[cache_id] = cache.get(cache_id)
+                        real_args.append(local_cache[cache_id])
+                    else:
+                        real_args.append(arg)
                 stats.add_transfer_time(name, time.time() - start_time)
                 start_time = time.time()
-                results.put((job_id, func((args, local_cache[cache_id]))))
+                results.put((job_id, func(*real_args)))
                 stats.add_process_time(name, time.time() - start_time)
             except Queue.Empty:
-                break
+                time.sleep(1.0)
+                timeout_counter -= 1
     except KeyboardInterrupt:
         pass
 
@@ -225,27 +234,27 @@ def run_in_parallel_remote(func, args_list, unordered=False,
     if __multiprocessing and not disable_multiprocessing:
         tasks_queue = __manager.tasks()
         results_queue = __manager.results()
-        cache = __manager.cache()
+        remote_cache = __manager.cache()
         stats = __manager.statistics()
-        previous_cache_values = {}
+        local_cache = {}
         job_id = str(uuid.uuid1())
         for args in args_list:
-            normal_args, cache_args = args
             start_time = time.time()
-            for key, value in previous_cache_values.iteritems():
-                if cache_args == value:
-                    cache_id = key
-                    break
-            else:
-                cache_id = str(uuid.uuid4())
-                previous_cache_values[cache_id] = cache_args
-                cache.add(cache_id, cache_args)
-            tasks_queue.put((job_id, func, normal_args, cache_id))
+            result_args = []
+            for arg in args:
+                # add the argument to the cache if possible
+                if hasattr(arg, "uuid"):
+                    data_uuid = ProcessDataCacheItemID(arg.uuid)
+                    if not data_uuid in local_cache.keys():
+                        local_cache[data_uuid] = arg
+                        if not remote_cache.contains(data_uuid):
+                            remote_cache.add(data_uuid, arg)
+                    result_args.append(data_uuid)
+                else:
+                    result_args.append(arg)
+            tasks_queue.put((job_id, func, result_args))
             stats.add_queueing_time(__task_source_uuid, time.time() - start_time)
         def job_cleanup():
-            # remove the previously added cached items
-            for key in previous_cache_values.keys():
-                cache.remove(key)
             print stats.get_stats()
         for index in range(len(args_list)):
             try:
@@ -255,7 +264,7 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                     if result_job_id == job_id:
                         yield result
                     elif result_job_id in __finished_jobs:
-                        # throw this result of an job away
+                        # throw away this result of an old job
                         pass
                     else:
                         # put the result back to the queue for the next manager
@@ -264,12 +273,12 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                         time.sleep(0.5 + random.random())
             except GeneratorExit:
                 # catch this specific (silent) exception and flush the task queue
-                queue_len = tasks.qsize()
+                queue_len = tasks_queue.qsize()
                 # remove all remaining tasks with the current job id
                 for index in queue_len:
-                    this_job_id, func, normal_args, cache_id = tasks_queue.get(timeout=0.1)
-                    if job_id != this_job_id:
-                        tasks.put((this_job_id, func, normal_args, cache_id))
+                    this_job_id, func, args = tasks_queue.get(timeout=0.1)
+                    if this_job_id != job_id:
+                        tasks_queue.put((this_job_id, func, args))
                 __finished_jobs.append(job_id)
                 while len(__finished_jobs) > 10:
                     __finished_jobs.pop(0)
@@ -369,13 +378,29 @@ class ProcessDataCache(object):
     def __init__(self):
         self.cache = {}
 
+    def contains(self, name):
+        if isinstance(name, ProcessDataCacheItemID):
+            name = name.value
+        return name in self.cache.keys()
+
     def add(self, name, value):
+        if isinstance(name, ProcessDataCacheItemID):
+            name = name.value
         self.cache[name] = value
 
     def get(self, name):
+        if isinstance(name, ProcessDataCacheItemID):
+            name = name.value
         return self.cache[name]
 
     def remove(self, name):
+        if isinstance(name, ProcessDataCacheItemID):
+            name = name.value
         if name in self.cache:
             del self.cache[name]
+
+class ProcessDataCacheItemID(object):
+
+    def __init__(self, value):
+        self.value = value
 

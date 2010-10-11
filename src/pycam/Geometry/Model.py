@@ -34,6 +34,7 @@ from pycam.Geometry.utils import INFINITE
 from pycam.Geometry import TransformableContainer
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
+import uuid
 
 log = pycam.Utils.log.get_logger()
 
@@ -178,18 +179,27 @@ class Model(BaseModel):
         self._triangles = []
         self._item_groups.append(self._triangles)
         self._export_function = pycam.Exporters.STLExporter.STLExporter
-        # marker for state of kdtree
-        self._kdtree_dirty = True
+        # marker for state of kdtree and uuid
+        self._dirty = True
         # enable/disable kdtree
         self._use_kdtree = use_kdtree
         self._t_kdtree = None
+        self.__uuid = None
+        
+    @property
+    def uuid(self):
+        if (self.__uuid is None) or self._dirty:
+            self.__uuid = str(uuid.uuid4())
+            if self._dirty:
+                self._update_kdtree()
+        return self.__uuid
 
     def append(self, item):
         super(Model, self).append(item)
         if isinstance(item, Triangle):
             self._triangles.append(item)
             # we assume, that the kdtree needs to be rebuilt again
-            self._kdtree_dirty = True
+            self._dirty = True
 
     def reset_cache(self):
         super(Model, self).reset_cache()
@@ -200,7 +210,7 @@ class Model(BaseModel):
         if self._use_kdtree:
             self._t_kdtree = TriangleKdtree(self.triangles())
         # the kdtree is up-to-date again
-        self._kdtree_dirty = False
+        self._dirty = False
 
     def triangles(self, minx=-INFINITE, miny=-INFINITE, minz=-INFINITE,
             maxx=+INFINITE, maxy=+INFINITE, maxz=+INFINITE):
@@ -209,7 +219,7 @@ class Model(BaseModel):
             return self._triangles
         if self._use_kdtree:
             # update the kdtree, if new triangles were added meanwhile
-            if self._kdtree_dirty:
+            if self._dirty:
                 self._update_kdtree()
             return self._t_kdtree.Search(minx, maxx, miny, maxy)
         return self._triangles
