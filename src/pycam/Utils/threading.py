@@ -254,7 +254,6 @@ def run_in_parallel_remote(func, args_list, unordered=False,
         results_queue = __manager.results()
         remote_cache = __manager.cache()
         stats = __manager.statistics()
-        local_cache = {}
         for args in args_list:
             start_time = time.time()
             result_args = []
@@ -262,13 +261,9 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                 # add the argument to the cache if possible
                 if hasattr(arg, "uuid"):
                     data_uuid = ProcessDataCacheItemID(arg.uuid)
-                    if not data_uuid in local_cache.keys():
-                        local_cache[data_uuid] = arg
-                        log.debug("Adding item to manager's local cache " \
-                                + "(job: %s): %s - %s" \
-                                % (job_id, arg.uuid, arg.__class__))
-                        if not remote_cache.contains(data_uuid):
-                            remote_cache.add(data_uuid, arg)
+                    if not remote_cache.contains(data_uuid):
+                        log.debug("Adding cache item for job %s: %s - %s" % (job_id, arg.uuid, arg.__class__))
+                        remote_cache.add(data_uuid, arg)
                     result_args.append(data_uuid)
                 else:
                     result_args.append(arg)
@@ -404,6 +399,7 @@ class ProcessStatistics(object):
         self.queues[name].transfer_time += amount
 
 
+# TODO: implement an expiry time for cache items
 class ProcessDataCache(object):
 
     def __init__(self):
@@ -417,7 +413,6 @@ class ProcessDataCache(object):
     def add(self, name, value):
         if isinstance(name, ProcessDataCacheItemID):
             name = name.value
-        log.debug("Added cache item: %s - %s" % (name, type(value)))
         self.cache[name] = value
 
     def get(self, name):
@@ -428,7 +423,6 @@ class ProcessDataCache(object):
     def remove(self, name):
         if isinstance(name, ProcessDataCacheItemID):
             name = name.value
-        log.debug("Removed cache item: %s - %s" % (name, type(value)))
         if name in self.cache:
             del self.cache[name]
 

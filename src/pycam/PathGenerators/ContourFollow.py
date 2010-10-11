@@ -45,30 +45,31 @@ log = pycam.Utils.log.get_logger()
 
 # We need to use a global function here - otherwise it does not work with
 # the multiprocessing Pool.
-def _process_one_triangle(obj, triangle, z):
+def _process_one_triangle(model, cutter, up_vector, triangle, z):
     result = []
-    if id(triangle) in obj._processed_triangles:
-        # skip triangles that are known to cause no collision
-        return result
     # ignore triangles below the z level
     if triangle.maxz < z:
         # Case 1a
-        return result
+        return result, None
     # ignore triangles pointing upwards or downwards
-    if triangle.normal.cross(obj._up_vector).norm == 0:
+    if triangle.normal.cross(up_vector).norm == 0:
         # Case 1b
-        return result
-    edge_collisions = obj.get_collision_waterline_of_triangle(triangle, z)
-    if not edge_collisions:
-        return result
-    for cutter_location, edge in edge_collisions:
-        shifted_edge = obj.get_shifted_waterline(edge, cutter_location)
-        if not shifted_edge is None:
-            if _DEBUG_DISBALE_WATERLINE_SHIFT:
-                result.append((edge, edge))
-            else:
-                result.append((edge, shifted_edge))
-    return result
+        return result, None
+    edge_collisions = get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z)
+    if edge_collisions is None:
+        # don't try to use this edge again
+        return result, [id(triangle)]
+    elif len(edge_collisions) == 0:
+        return result, None
+    else:
+        for cutter_location, edge in edge_collisions:
+            shifted_edge = get_shifted_waterline(up_vector, edge, cutter_location)
+            if not shifted_edge is None:
+                if _DEBUG_DISBALE_WATERLINE_SHIFT:
+                    result.append((edge, edge))
+                else:
+                    result.append((edge, shifted_edge))
+        return result, None
 
 
 class CollisionPaths:
@@ -286,9 +287,13 @@ class ContourFollow:
         projected_waterlines = []
         triangles = self.model.triangles(minx=minx, miny=miny, maxx=maxx,
                 maxy=maxy)
-        results_iter = run_in_parallel(_process_one_triangle,
-                [(self, t, z) for t in triangles], unordered=True)
-        for result in results_iter:
+        args = [(self.model, self.cutter, self._up_vector, t, z)
+                for t in triangles if not id(t) in self._processed_triangles]
+        results_iter = run_in_parallel(_process_one_triangle, args,
+                unordered=True)
+        for result, ignore_triangle_id_list in results_iter:
+            if ignore_triangle_id_list:
+                self._processed_triangles.extend(ignore_triangle_id_list)
             for edge, shifted_edge in result:
                 waterline_triangles.add(edge, shifted_edge)
             if (not progress_counter is None) \
@@ -304,199 +309,197 @@ class ContourFollow:
                 result.append(cropped_line)
         return result
 
-    def get_max_length(self):
-        if not hasattr(self, "_max_length_cache"):
-            # update the cache
-            x_dim = abs(self.model.maxx - self.model.minx)
-            y_dim = abs(self.model.maxy - self.model.miny)
-            z_dim = abs(self.model.maxz - self.model.minz)
-            self._max_length_cache = sqrt(x_dim ** 2 + y_dim ** 2 + z_dim ** 2)
-        return self._max_length_cache
 
-    def get_collision_waterline_of_triangle(self, triangle, z):
-        # TODO: there are problems with "material allowance > 0"
-        plane = Plane(Point(0, 0, z), self._up_vector)
-        if triangle.minz >= z:
-            # no point of the triangle is below z
-            # try all edges
-            # Case (4)
-            proj_points = []
-            for p in triangle.get_points():
-                proj_p = plane.get_point_projection(p)
-                if not proj_p in proj_points:
-                    proj_points.append(proj_p)
-            if len(proj_points) == 3:
-                edges = []
-                for index in range(3):
-                    edge = Line(proj_points[index - 1], proj_points[index])
-                    # the edge should be clockwise around the model
-                    if edge.dir.cross(triangle.normal).dot(self._up_vector) < 0:
-                        edge = Line(edge.p2, edge.p1)
-                    edges.append((edge, proj_points[index - 2]))
-                outer_edges = []
-                for edge, other_point in edges:
-                    # pick only edges, where the other point is on the right side
-                    if other_point.sub(edge.p1).cross(edge.dir).dot(self._up_vector) > 0:
-                        outer_edges.append(edge)
-                if len(outer_edges) == 0:
-                    # the points seem to be an one line
-                    # pick the longest edge
-                    long_edge = edges[0][0]
-                    for edge, other_point in edges[1:]:
-                        if edge.len > long_edge.len:
-                            long_edge = edge
-                    outer_edges = [long_edge]
-            else:
-                edge = Line(proj_points[0], proj_points[1])
-                if edge.dir.cross(triangle.normal).dot(self._up_vector) < 0:
+def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
+    # TODO: there are problems with "material allowance > 0"
+    plane = Plane(Point(0, 0, z), up_vector)
+    if triangle.minz >= z:
+        # no point of the triangle is below z
+        # try all edges
+        # Case (4)
+        proj_points = []
+        for p in triangle.get_points():
+            proj_p = plane.get_point_projection(p)
+            if not proj_p in proj_points:
+                proj_points.append(proj_p)
+        if len(proj_points) == 3:
+            edges = []
+            for index in range(3):
+                edge = Line(proj_points[index - 1], proj_points[index])
+                # the edge should be clockwise around the model
+                if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
                     edge = Line(edge.p2, edge.p1)
-                outer_edges = [edge]
+                edges.append((edge, proj_points[index - 2]))
+            outer_edges = []
+            for edge, other_point in edges:
+                # pick only edges, where the other point is on the right side
+                if other_point.sub(edge.p1).cross(edge.dir).dot(up_vector) > 0:
+                    outer_edges.append(edge)
+            if len(outer_edges) == 0:
+                # the points seem to be an one line
+                # pick the longest edge
+                long_edge = edges[0][0]
+                for edge, other_point in edges[1:]:
+                    if edge.len > long_edge.len:
+                        long_edge = edge
+                outer_edges = [long_edge]
         else:
-            # some parts of the triangle are above and some below the cutter level
-            # Cases (2a), (2b), (3a) and (3b)
-            points_above = [plane.get_point_projection(p) for p in triangle.get_points() if p.z > z]
-            waterline = plane.intersect_triangle(triangle)
-            if waterline is None:
-                if len(points_above) == 0:
-                    # the highest point of the triangle is at z
+            edge = Line(proj_points[0], proj_points[1])
+            if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+                edge = Line(edge.p2, edge.p1)
+            outer_edges = [edge]
+    else:
+        # some parts of the triangle are above and some below the cutter level
+        # Cases (2a), (2b), (3a) and (3b)
+        points_above = [plane.get_point_projection(p) for p in triangle.get_points() if p.z > z]
+        waterline = plane.intersect_triangle(triangle)
+        if waterline is None:
+            if len(points_above) == 0:
+                # the highest point of the triangle is at z
+                outer_edges = []
+            else:
+                if abs(triangle.minz - z) < epsilon:
+                    # This is just an accuracy issue (see the
+                    # "triangle.minz >= z" statement above).
+                    outer_edges = []
+                elif not [p for p in triangle.get_points() if p.z > z + epsilon]:
+                    # same as above: fix for inaccurate floating calculations
                     outer_edges = []
                 else:
-                    if abs(triangle.minz - z) < epsilon:
-                        # This is just an accuracy issue (see the
-                        # "triangle.minz >= z" statement above).
-                        outer_edges = []
-                    elif not [p for p in triangle.get_points() if p.z > z + epsilon]:
-                        # same as above: fix for inaccurate floating calculations
-                        outer_edges = []
-                    else:
-                        # this should not happen
-                        raise ValueError(("Could not find a waterline, but " \
-                                + "there are points above z level (%f): " \
-                                + "%s / %s") % (z, triangle, points_above))
-            else:
-                # remove points that are not part of the waterline
-                points_above = [p for p in points_above
-                        if (p != waterline.p1) and (p != waterline.p2)]
-                potential_edges = []
-                if len(points_above) == 0:
-                    # part of case (2a)
+                    # this should not happen
+                    raise ValueError(("Could not find a waterline, but " \
+                            + "there are points above z level (%f): " \
+                            + "%s / %s") % (z, triangle, points_above))
+        else:
+            # remove points that are not part of the waterline
+            points_above = [p for p in points_above
+                    if (p != waterline.p1) and (p != waterline.p2)]
+            potential_edges = []
+            if len(points_above) == 0:
+                # part of case (2a)
+                outer_edges = [waterline]
+            elif len(points_above) == 1:
+                other_point = points_above[0]
+                dot = other_point.sub(waterline.p1).cross(waterline.dir).dot(up_vector)
+                if dot > 0:
+                    # Case (2b)
                     outer_edges = [waterline]
-                elif len(points_above) == 1:
-                    other_point = points_above[0]
-                    dot = other_point.sub(waterline.p1).cross(waterline.dir).dot(self._up_vector)
-                    if dot > 0:
-                        # Case (2b)
-                        outer_edges = [waterline]
-                    elif dot < 0:
-                        # Case (3b)
-                        edges = []
-                        edges.append(Line(waterline.p1, other_point))
-                        edges.append(Line(waterline.p2, other_point))
-                        outer_edges = []
-                        for edge in edges:
-                            if edge.dir.cross(triangle.normal).dot(self._up_vector) < 0:
-                                outer_edges.append(Line(edge.p2, edge.p1))
-                            else:
-                                outer_edges.append(edge)
-                    else:
-                        # the three points are on one line
-                        # part of case (2a)
-                        edges = []
-                        edges.append(waterline)
-                        edges.append(Line(waterline.p1, other_point))
-                        edges.append(Line(waterline.p2, other_point))
-                        edges.sort(key=lambda x: x.len)
-                        edge = edges[-1]
-                        if edge.dir.cross(triangle.normal).dot(self._up_vector) < 0:
-                            outer_edges = [Line(edge.p2, edge.p1)]
+                elif dot < 0:
+                    # Case (3b)
+                    edges = []
+                    edges.append(Line(waterline.p1, other_point))
+                    edges.append(Line(waterline.p2, other_point))
+                    outer_edges = []
+                    for edge in edges:
+                        if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+                            outer_edges.append(Line(edge.p2, edge.p1))
                         else:
-                            outer_edges = [edge]
+                            outer_edges.append(edge)
                 else:
-                    # two points above
-                    other_point = points_above[0]
-                    dot = other_point.sub(waterline.p1).cross(waterline.dir).dot(self._up_vector)
-                    if dot > 0:
-                        # Case (2b)
-                        # the other two points are on the right side
-                        outer_edges = [waterline]
-                    elif dot < 0:
-                        # Case (3a)
-                        edge = Line(points_above[0], points_above[1])
-                        if edge.dir.cross(triangle.normal).dot(self._up_vector) < 0:
-                            outer_edges = [Line(edge.p2, edge.p1)]
-                        else:
-                            outer_edges = [edge]
+                    # the three points are on one line
+                    # part of case (2a)
+                    edges = []
+                    edges.append(waterline)
+                    edges.append(Line(waterline.p1, other_point))
+                    edges.append(Line(waterline.p2, other_point))
+                    edges.sort(key=lambda x: x.len)
+                    edge = edges[-1]
+                    if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+                        outer_edges = [Line(edge.p2, edge.p1)]
                     else:
-                        edges = []
-                        # pick the longest combination of two of these points
-                        # part of case (2a)
-                        # TODO: maybe we should use the waterline instead? (otherweise the line could be too long and thus connections to the adjacent waterlines are not discovered? Test this with an appropriate test model.)
-                        points = [waterline.p1, waterline.p2] + points_above
-                        for p1 in points:
-                            for p2 in points:
-                                if not p1 is p2:
-                                    edges.append(Line(p1, p2))
-                        edges.sort(key=lambda x: x.len)
-                        edge = edges[-1]
-                        if edge.dir.cross(triangle.normal).dot(self._up_vector) < 0:
-                            outer_edges = [Line(edge.p2, edge.p1)]
-                        else:
-                            outer_edges = [edge]
-        result = []
-        for edge in outer_edges:
-            direction = self._up_vector.cross(edge.dir).normalized()
-            if direction is None:
-                continue
-            direction = direction.mul(self.get_max_length())
-            edge_dir = edge.p2.sub(edge.p1)
-            # TODO: adapt the number of potential starting positions to the length of the line
-            # Don't use 0.0 and 1.0 - this could result in ambiguous collisions
-            # with triangles sharing these vertices.
-            for factor in (0.5, epsilon, 1.0 - epsilon, 0.25, 0.75):
-                start = edge.p1.add(edge_dir.mul(factor))
-                # We need to use the triangle collision algorithm here - because we
-                # need the point of collision in the triangle.
-                collisions = get_free_paths_triangles(self.model, self.cutter, start,
-                        start.add(direction), return_triangles=True)
-                for index, coll in enumerate(collisions):
-                    if (index % 2 == 0) and (not coll[1] is None) \
-                            and (not coll[2] is None) \
-                            and (coll[0].sub(start).dot(direction) > 0):
-                        cl, hit_t, cp = coll
-                        break
+                        outer_edges = [edge]
+            else:
+                # two points above
+                other_point = points_above[0]
+                dot = other_point.sub(waterline.p1).cross(waterline.dir).dot(up_vector)
+                if dot > 0:
+                    # Case (2b)
+                    # the other two points are on the right side
+                    outer_edges = [waterline]
+                elif dot < 0:
+                    # Case (3a)
+                    edge = Line(points_above[0], points_above[1])
+                    if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+                        outer_edges = [Line(edge.p2, edge.p1)]
+                    else:
+                        outer_edges = [edge]
                 else:
-                    continue
-                    log.info("Failed to detect any collision: " \
-                            + "%s / %s -> %s" % (edge, start, direction))
-                proj_cp = plane.get_point_projection(cp)
-                # e.g. the Spherical Cutter often does not collide exactly above
-                # the potential collision line.
-                # TODO: maybe an "is cp inside of the triangle" check would be good?
-                if (triangle is hit_t) or (edge.is_point_inside(proj_cp)):
-                    result.append((cl, edge))
-                    # continue with the next outer_edge
+                    edges = []
+                    # pick the longest combination of two of these points
+                    # part of case (2a)
+                    # TODO: maybe we should use the waterline instead? (otherweise the line could be too long and thus connections to the adjacent waterlines are not discovered? Test this with an appropriate test model.)
+                    points = [waterline.p1, waterline.p2] + points_above
+                    for p1 in points:
+                        for p2 in points:
+                            if not p1 is p2:
+                                edges.append(Line(p1, p2))
+                    edges.sort(key=lambda x: x.len)
+                    edge = edges[-1]
+                    if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+                        outer_edges = [Line(edge.p2, edge.p1)]
+                    else:
+                        outer_edges = [edge]
+    # calculate the maximum diagonal length within the model
+    x_dim = abs(model.maxx - model.minx)
+    y_dim = abs(model.maxy - model.miny)
+    z_dim = abs(model.maxz - model.minz)
+    max_length = sqrt(x_dim ** 2 + y_dim ** 2 + z_dim ** 2)
+    result = []
+    for edge in outer_edges:
+        direction = up_vector.cross(edge.dir).normalized()
+        if direction is None:
+            continue
+        direction = direction.mul(max_length)
+        edge_dir = edge.p2.sub(edge.p1)
+        # TODO: adapt the number of potential starting positions to the length of the line
+        # Don't use 0.0 and 1.0 - this could result in ambiguous collisions
+        # with triangles sharing these vertices.
+        for factor in (0.5, epsilon, 1.0 - epsilon, 0.25, 0.75):
+            start = edge.p1.add(edge_dir.mul(factor))
+            # We need to use the triangle collision algorithm here - because we
+            # need the point of collision in the triangle.
+            collisions = get_free_paths_triangles(model, cutter, start,
+                    start.add(direction), return_triangles=True)
+            for index, coll in enumerate(collisions):
+                if (index % 2 == 0) and (not coll[1] is None) \
+                        and (not coll[2] is None) \
+                        and (coll[0].sub(start).dot(direction) > 0):
+                    cl, hit_t, cp = coll
                     break
-        # Don't check triangles again that are completely above the z level and
-        # did not return any collisions.
-        if (len(result) == 0) and (triangle.minz > z):
-            self._processed_triangles.append(id(triangle))
-        return result
+            else:
+                continue
+                log.info("Failed to detect any collision: " \
+                        + "%s / %s -> %s" % (edge, start, direction))
+            proj_cp = plane.get_point_projection(cp)
+            # e.g. the Spherical Cutter often does not collide exactly above
+            # the potential collision line.
+            # TODO: maybe an "is cp inside of the triangle" check would be good?
+            if (triangle is hit_t) or (edge.is_point_inside(proj_cp)):
+                result.append((cl, edge))
+                # continue with the next outer_edge
+                break
+    # Don't check triangles again that are completely above the z level and
+    # did not return any collisions.
+    if (len(result) == 0) and (triangle.minz > z):
+        # a return value None indicates that the triangle needs no further evaluation
+        return None
+    return result
 
-    def get_shifted_waterline(self, waterline, cutter_location):
-        # Project the waterline and the cutter location down to the slice plane.
-        # This is necessary for calculating the horizontal distance between the
-        # cutter and the triangle waterline.
-        plane = Plane(cutter_location, self._up_vector)
-        wl_proj = plane.get_line_projection(waterline)
-        if wl_proj.len < epsilon:
-            return None
-        offset = wl_proj.dist_to_point(cutter_location)
-        if offset < epsilon:
-            return wl_proj
-        # shift both ends of the waterline towards the cutter location
-        shift = cutter_location.sub(wl_proj.closest_point(cutter_location))
-        # increase the shift width slightly to avoid "touch" collisions
-        shift = shift.mul(1.0 + epsilon)
-        shifted_waterline = Line(wl_proj.p1.add(shift), wl_proj.p2.add(shift))
-        return shifted_waterline
+def get_shifted_waterline(up_vector, waterline, cutter_location):
+    # Project the waterline and the cutter location down to the slice plane.
+    # This is necessary for calculating the horizontal distance between the
+    # cutter and the triangle waterline.
+    plane = Plane(cutter_location, up_vector)
+    wl_proj = plane.get_line_projection(waterline)
+    if wl_proj.len < epsilon:
+        return None
+    offset = wl_proj.dist_to_point(cutter_location)
+    if offset < epsilon:
+        return wl_proj
+    # shift both ends of the waterline towards the cutter location
+    shift = cutter_location.sub(wl_proj.closest_point(cutter_location))
+    # increase the shift width slightly to avoid "touch" collisions
+    shift = shift.mul(1.0 + epsilon)
+    shifted_waterline = Line(wl_proj.p1.add(shift), wl_proj.p2.add(shift))
+    return shifted_waterline
 
