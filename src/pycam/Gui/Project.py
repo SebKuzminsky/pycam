@@ -1404,8 +1404,9 @@ class ProjectGui:
             # remove all non-ascii characters
             message = "".join([char for char in message if ord(char) < 128])
         self.log_model.append((timestamp, title, message))
-        # update the status bar
-        self.status_bar.push(0, message)
+        # update the status bar (if the GTK interface is still active)
+        if not self.status_bar.window is None:
+            self.status_bar.push(0, message)
 
     @gui_activity_guard
     def copy_log_to_clipboard(self, widget=None):
