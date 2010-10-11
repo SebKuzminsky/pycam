@@ -93,7 +93,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None, r
     if not __multiprocessing:
         __manager == None
         log.info("Disabled parallel processing")
-    elif not enable_server:
+    elif not enable_server and not run_server:
         __manager == None
         log.info("Enabled %d parallel local processes" % __num_of_processes)
     else:
@@ -166,7 +166,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None, r
 
 def cleanup():
     global __manager, __closing
-    if __multiprocessing:
+    if __multiprocessing and __closing:
         __closing.set(True)
 
 def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
@@ -213,8 +213,6 @@ def _handle_tasks(tasks, results, stats, cache):
                 stats.add_process_time(name, time.time() - start_time)
             except Queue.Empty:
                 break
-        #print stats.get_stats()
-        #print
     except KeyboardInterrupt:
         pass
 
@@ -244,6 +242,11 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                 cache.add(cache_id, cache_args)
             tasks_queue.put((job_id, func, normal_args, cache_id))
             stats.add_queueing_time(__task_source_uuid, time.time() - start_time)
+        def job_cleanup():
+            # remove the previously added cached items
+            for key in previous_cache_values.keys():
+                cache.remove(key)
+            print stats.get_stats()
         for index in range(len(args_list)):
             try:
                 result_job_id = None
@@ -253,7 +256,6 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                         yield result
                     elif result_job_id in __finished_jobs:
                         # throw this result of an job away
-                        print "Throwing away an old result: %s" % result_job_id
                         pass
                     else:
                         # put the result back to the queue for the next manager
@@ -262,16 +264,19 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                         time.sleep(0.5 + random.random())
             except GeneratorExit:
                 # catch this specific (silent) exception and flush the task queue
-                while not tasks_queue.empty():
-                    tasks_queue.get(timeout=0.1)
-                # remove the previously added cached items
-                for key in previous_cache_values.keys():
-                    cache.remove(key)
+                queue_len = tasks.qsize()
+                # remove all remaining tasks with the current job id
+                for index in queue_len:
+                    this_job_id, func, normal_args, cache_id = tasks_queue.get(timeout=0.1)
+                    if job_id != this_job_id:
+                        tasks.put((this_job_id, func, normal_args, cache_id))
                 __finished_jobs.append(job_id)
                 while len(__finished_jobs) > 10:
                     __finished_jobs.pop(0)
+                job_cleanup()
                 # re-raise the GeneratorExit exception to finish destruction
                 raise
+        job_cleanup()
     else:
         for args in args_list:
             yield func(args)
@@ -365,7 +370,6 @@ class ProcessDataCache(object):
         self.cache = {}
 
     def add(self, name, value):
-        print "New cache item: %s" % str(name)
         self.cache[name] = value
 
     def get(self, name):
