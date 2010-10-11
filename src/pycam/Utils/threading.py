@@ -45,13 +45,24 @@ __multiprocessing = None
 __num_of_processes = None
 
 __manager = None
-__spawner = None
 __closing = None
 
 
-def init_threading(number_of_processes=None, remote=None, run_server=False,
+def run_in_parallel(*args, **kwargs):
+    global __manager
+    if __manager is None:
+        return run_in_parallel_local(*args, **kwargs)
+    else:
+        return run_in_parallel_remote(*args, **kwargs)
+
+def init_threading(number_of_processes=None, enable_server=False, remote=None, run_server=False,
         server_credentials=""):
-    global __multiprocessing, __num_of_processes, __manager, __spawner, __closing
+    global __multiprocessing, __num_of_processes, __manager, __closing, run_in_parallel
+    # only local -> no server settings allowed
+    if (not enable_server) and (not run_server):
+        remote = None
+        run_server = None
+        server_credentials = ""
     try:
         import multiprocessing
         mp_is_available = True
@@ -68,18 +79,24 @@ def init_threading(number_of_processes=None, remote=None, run_server=False,
                 __num_of_processes = multiprocessing.cpu_count()
             else:
                 __multiprocessing = False
-        elif number_of_processes < 1:
+        elif (number_of_processes < 1) and (remote is None):
+            # zero processes are allowed if we use a remote server
             __multiprocessing = False
         else:
             __multiprocessing = multiprocessing
             __num_of_processes = number_of_processes
-    # send the configured state to the logger
-    if __multiprocessing is False:
-        log.info("Disabled multi-threading")
-    else:
-        log.info("Enabled multi-threading with %d parallel processes" % __num_of_processes)
     # initialize the manager
-    if __multiprocessing:
+    if not __multiprocessing:
+        __manager == None
+        log.info("Disabled parallel processing")
+    elif not enable_server:
+        __manager == None
+        log.info("Enabled %d parallel local processes" % __num_of_processes)
+    else:
+        # with multiprocessing
+        run_in_parallel = run_in_parallel_remote
+        log.info("Enabled %d parallel local processes" % __num_of_processes)
+        log.info("Allow remote processing")
         # initialize the uuid list for all workers
         worker_uuid_list = [str(uuid.uuid1()) for index in range(__num_of_processes)]
         if remote is None:
@@ -94,8 +111,9 @@ def init_threading(number_of_processes=None, remote=None, run_server=False,
                             + "port (%d) instead") % (port, DEFAULT_PORT))
                     port = DEFAULT_PORT
             else:
+                host = remote
                 port = DEFAULT_PORT
-            address = (remote, port)
+            address = (host, port)
         from multiprocessing.managers import SyncManager
         class TaskManager(SyncManager):
             @classmethod
@@ -128,14 +146,19 @@ def init_threading(number_of_processes=None, remote=None, run_server=False,
             log.info("Connected to a remote task server.")
         # create the spawning process
         __closing = __manager.Value("b", False)
-        __spawner = __multiprocessing.Process(name="spawn", target=_spawn_daemon,
-                args=(__manager, __num_of_processes, worker_uuid_list))
-        __spawner.start()
+        if __num_of_processes > 0:
+            # only start the spawner, if we want to use local workers
+            spawner = __multiprocessing.Process(name="spawn", target=_spawn_daemon,
+                    args=(__manager, __num_of_processes, worker_uuid_list))
+            spawner.start()
+        else:
+            spawner = None
         # wait forever - in case of a server
         if run_server:
             log.info("Running a local server and waiting for remote connections.")
             # the server can be stopped via CTRL-C - it is caught later
-            __spawner.join()
+            if not spawner is None:
+                spawner.join()
 
 def cleanup():
     global __manager, __closing
@@ -182,7 +205,7 @@ def _handle_tasks(tasks, results, stats, cache):
                     local_cache[cache_id] = cache.get(cache_id)
                 stats.add_transfer_time(name, time.time() - start_time)
                 start_time = time.time()
-                results.put(func(args, local_cache[cache_id]))
+                results.put(func((args, local_cache[cache_id])))
                 stats.add_process_time(name, time.time() - start_time)
             except Queue.Empty:
                 break
@@ -255,9 +278,6 @@ def run_in_parallel_local(func, args, unordered=False, disable_multiprocessing=F
         for arg in args:
             yield func(arg)
 
-#run_in_parallel = run_in_parallel_local
-run_in_parallel = run_in_parallel_remote
-
 
 class OneProcess(object):
     def __init__(self, name, is_queue=False):
@@ -314,7 +334,7 @@ class ProcessStatistics(object):
         self.processes[name].process_time += amount
 
     def add_queueing_time(self, name, amount):
-        if not name in self.processes:
+        if not name in self.queues:
             self.queues[name] = OneProcess(name, is_queue=True)
         self.queues[name].transfer_count += 1
         self.queues[name].transfer_time += amount

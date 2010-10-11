@@ -45,7 +45,7 @@ log = pycam.Utils.log.get_logger()
 
 # We need to use a global function here - otherwise it does not work with
 # the multiprocessing Pool.
-def _process_one_triangle((triangle,), (obj, z)):
+def _process_one_triangle(((triangle,), (obj, z))):
     result = []
     if id(triangle) in obj._processed_triangles:
         # skip triangles that are known to cause no collision

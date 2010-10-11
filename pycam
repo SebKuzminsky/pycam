@@ -187,7 +187,7 @@ def execute(opts, args, pycam):
         sys.exit(0)
     else:
         pycam.Utils.threading.init_threading(opts.parallel_processes,
-                remote=opts.remote_server,
+                enable_server=opts.enable_server, remote=opts.remote_server,
                 server_credentials=opts.server_authkey)
 
     # initialize the progress bar
@@ -431,6 +431,9 @@ if __name__ == "__main__":
             help="override the default detection of multiple CPU cores. " \
                     + "Parallel processing only works with Python 2.6 or " \
                     + "later.")
+    group_general.add_option("", "--enable-server", dest="enable_server",
+            default=False, action="store_true", help="enable a local server " \
+                    + "and (optionally) remote worker servers.")
     group_general.add_option("", "--remote-server", dest="remote_server",
             default=None, action="store", type="string", help="Connect to a " \
                     + "remote task server to distribute the processing load. " \
