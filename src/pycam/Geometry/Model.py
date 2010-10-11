@@ -180,7 +180,7 @@ class Model(BaseModel):
         self._item_groups.append(self._triangles)
         self._export_function = pycam.Exporters.STLExporter.STLExporter
         # marker for state of kdtree and uuid
-        self._dirty = True
+        self._dirty = False
         # enable/disable kdtree
         self._use_kdtree = use_kdtree
         self._t_kdtree = None
@@ -189,9 +189,7 @@ class Model(BaseModel):
     @property
     def uuid(self):
         if (self.__uuid is None) or self._dirty:
-            self.__uuid = str(uuid.uuid4())
-            if self._dirty:
-                self._update_kdtree()
+            self._update_caches()
         return self.__uuid
 
     def append(self, item):
@@ -204,11 +202,12 @@ class Model(BaseModel):
     def reset_cache(self):
         super(Model, self).reset_cache()
         # the triangle kdtree needs to be reset after transforming the model
-        self._update_kdtree()
+        self._update_caches()
 
-    def _update_kdtree(self):
+    def _update_caches(self):
         if self._use_kdtree:
             self._t_kdtree = TriangleKdtree(self.triangles())
+        self.__uuid = str(uuid.uuid4())
         # the kdtree is up-to-date again
         self._dirty = False
 
@@ -220,7 +219,7 @@ class Model(BaseModel):
         if self._use_kdtree:
             # update the kdtree, if new triangles were added meanwhile
             if self._dirty:
-                self._update_kdtree()
+                self._update_caches()
             return self._t_kdtree.Search(minx, maxx, miny, maxy)
         return self._triangles
 
