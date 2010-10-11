@@ -64,6 +64,12 @@ def convert_eps2dxf(eps_filename, dxf_filename, location=None):
     returncode = process.wait()
     if returncode == 0:
         return True
+    elif returncode == -11:
+        log.warn(("SVGImporter: maybe there was a problem with the " \
+                + "conversion from EPS (%s) to DXF\n Users of Ubuntu 'lucid' should install " \
+                + "the package 'libpstoedit0c2a' from the 'maverick' " \
+                + "repository to avoid this warning.") % str(eps_filename))
+        return True
     else:
         log.warn(("SVGImporter: failed to convert EPS file (%s) to DXF file " \
                 + "(%s): %s") % (eps_filename, dxf_filename,
