@@ -20,13 +20,20 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+# careful import - otherwise pycam.Gui.Project will throw an exception
+try:
+    import gtk.gtkgl
+    import OpenGL.GL as GL
+    import OpenGL.GLU as GLU
+    import OpenGL.GLUT as GLUT
+    GL_ENABLED = True
+except (ImportError, RuntimeError):
+    GL_ENABLED = False
+
 from pycam.Geometry.Point import Point
 import pycam.Geometry.Matrix as Matrix
 from pycam.Geometry.utils import sqrt, number
 import pycam.Utils.log
-import OpenGL.GL as GL
-import OpenGL.GLU as GLU
-import OpenGL.GLUT as GLUT
 import gtk
 import pango
 import math
@@ -251,10 +258,9 @@ class ModelViewWindowGL:
         self.settings = settings
         self.is_visible = False
         # check if the 3D view is available
-        try:
-            import gtk.gtkgl
+        if GL_ENABLED:
             self.enabled = True
-        except (ImportError, RuntimeError):
+        else:
             log.error("Failed to initialize the interactive 3D model view."
                     + "\nPlease install 'python-gtkglext1' to enable it.")
             self.enabled = False
