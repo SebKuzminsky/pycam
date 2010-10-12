@@ -250,7 +250,7 @@ def intersect_sphere_line(center, radius, radiussq, direction, edge):
     n = n.normalized()
 
     # calculate the distance from the sphere center to the plane
-    dist = - center.dot(n) - edge.p1.dot(n)
+    dist = - center.dot(n) + edge.p1.dot(n)
     if abs(dist) > radius - epsilon:
         return (None, None, INFINITE)
     # this gives us the intersection circle on the sphere
