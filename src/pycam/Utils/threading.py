@@ -94,7 +94,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None, r
         if number_of_processes is None:
             # use defaults
             # don't enable threading for a single cpu
-            if (multiprocessing.cpu_count() > 1) or remote or run_server:
+            if (multiprocessing.cpu_count() > 1) or remote or run_server or enable_server:
                 __multiprocessing = multiprocessing
                 __num_of_processes = multiprocessing.cpu_count()
             else:
