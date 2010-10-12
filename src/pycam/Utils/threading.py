@@ -74,6 +74,22 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None, r
         mp_is_available = False
     if not mp_is_available:
         __multiprocessing = False
+        # Maybe a multiprocessing feature was explicitely requested?
+        # Issue some warnings if necessary.
+        multiprocessing_missing_text = "Failed to enable server mode due to " \
+                + "a lack of 'multiprocessing' capabilities. Please use " \
+                + "Python2.6 or install the 'python-multiprocessing' package."
+        if enable_server:
+            log.warn("Failed to enable server mode due to a lack of " \
+                    + "'multiprocessing' capabilities. " \
+                    + multiprocessing_missing_text)
+        elif run_server:
+            log.warn("Failed to run in server-only mode due to a lack of " \
+                    + "'multiprocessing' capabilities. " \
+                    + multiprocessing_missing_text)
+        else:
+            # no further warnings required
+            pass
     else:
         if number_of_processes is None:
             # use defaults
