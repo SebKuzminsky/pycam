@@ -857,16 +857,6 @@ class ProjectGui:
                 "GridManualShiftExpander": ("grid", ),
                 "GridAverageDistanceExpander": ("automatic", ),
         }
-        if (self.settings.get("support_grid_type") == GRID_TYPES["automatic"]) \
-                and (not hasattr(self.model, "get_polygons")):
-            message = "This feature only works for 2D contour models for now " \
-                    + "- sorry!"
-            window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_WARNING,
-                    buttons=gtk.BUTTONS_OK, message_format=message)
-            window.set_title("Under construction ...")
-            window.run()
-            window.destroy()
-            self.settings.set("support_grid_type", GRID_TYPES["none"])
         grid_type = self.settings.get("support_grid_type")
         if grid_type == GRID_TYPES["grid"]:
             grid_square = self.gui.get_object("SupportGridDistanceSquare")
@@ -1397,7 +1387,10 @@ class ProjectGui:
         return True
 
     def add_log_message(self, title, message, record=None):
-        timestamp = datetime.datetime.fromtimestamp(record.created).strftime("%H:%M")
+        timestamp = datetime.datetime.fromtimestamp(
+                record.created).strftime("%H:%M")
+        # use only the first line (linebreak don't look pretty there)
+        message = message.split(os.linesep, 1)[0]
         try:
             message = message.encode("utf-8")
         except UnicodeDecodeError:

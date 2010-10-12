@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Triangle import Triangle
+from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Model import Model
 from pycam.Geometry.utils import number
 
@@ -156,13 +157,17 @@ def get_support_distributed(model, z_plane, average_distance,
             if p.sub(point).norm <= distance:
                 return True
         return False
+    if (average_distance == 0) or (length == 0) or (thickness == 0) \
+            or (height == 0):
+        return
     result = Model()
     if hasattr(model, "get_polygons"):
         polygons = model.get_polygons()
     else:
         # TODO: Solid models are not supported, yet - we need to get the
         # maximum outline of the model.
-        return result
+        polygons = model.get_waterline_polygons(Plane(Point(0, 0, z_plane),
+                Vector(0, 0, 1)))
     bridge_positions = []
     # minimum required distance between two bridge start points
     avoid_distance = 1.5 * (abs(length) + thickness)

@@ -180,7 +180,7 @@ class Model(BaseModel):
         self._item_groups.append(self._triangles)
         self._export_function = pycam.Exporters.STLExporter.STLExporter
         # marker for state of kdtree and uuid
-        self._dirty = False
+        self._dirty = True
         # enable/disable kdtree
         self._use_kdtree = use_kdtree
         self._t_kdtree = None
@@ -226,7 +226,7 @@ class Model(BaseModel):
     def get_waterline_polygons(self, plane):
         collision_lines = []
         for t in self._triangles:
-            collision_line = plane.intersect_triangle(t)
+            collision_line = plane.intersect_triangle(t, counter_clockwise=True)
             if not collision_line is None:
                 collision_lines.append(collision_line)
         # combine these lines into polygons
@@ -237,22 +237,6 @@ class Model(BaseModel):
                 len(contour.get_polygons()),
                 [len(p.get_lines()) for p in contour.get_polygons()]))
         return contour.get_polygons()
-
-    def to_OpenGL_waterline(self, num_of_levels=8):
-        """ Visualize the waterline of the model for various z-levels.
-        This is only used for debugging.
-        """
-        #super(Model, self).to_OpenGL()
-        z_diff = (self.maxz - self.minz) / (num_of_levels - 1)
-        z_levels = [self.minz + z_diff * i for i in range(num_of_levels)]
-        projection_plane = Plane(Point(0, 0, 0), Vector(0, 0, 1))
-        contour = ContourModel(projection_plane.n)
-        for z_level in z_levels:
-            waterline_plane = Plane(Point(0, 0, z_level), Vector(0, 0, 1))
-            for polygon in self.get_waterline_polygons(waterline_plane):
-                projected_polygon = polygon.get_plane_projection(projection_plane)
-                contour.append(projected_polygon, unify_overlaps=True)
-        contour.to_OpenGL()
 
 
 class ContourModel(BaseModel):

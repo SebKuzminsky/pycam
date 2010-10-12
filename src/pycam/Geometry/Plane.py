@@ -74,7 +74,7 @@ class Plane(TransformableContainer):
         cp = point.add(direction.mul(l))
         return (cp, l)
 
-    def intersect_triangle(self, triangle):
+    def intersect_triangle(self, triangle, counter_clockwise=False):
         """ Returns the line of intersection of a triangle with a plane.
         "None" is returned, if:
             - the triangle does not intersect with the plane
@@ -109,7 +109,7 @@ class Plane(TransformableContainer):
             if collision_line.len == 0:
                 return collision_line
             cross = self.n.cross(collision_line.dir)
-            if cross.dot(triangle.normal) < 0:
+            if (cross.dot(triangle.normal) < 0) == bool(not counter_clockwise):
                 # anti-clockwise direction -> revert the direction of the line
                 collision_line = Line(collision_line.p2, collision_line.p1)
             return collision_line
