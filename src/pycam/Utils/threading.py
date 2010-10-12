@@ -242,6 +242,8 @@ def _handle_tasks(tasks, results, stats, cache, closing):
             try:
                 start_time = time.time()
                 job_id, task_id, func, args = tasks.get(timeout=1.0)
+                # reset the timeout counter, if we found another item in the queue
+                timeout_counter = 0
                 real_args = []
                 for arg in args:
                     if isinstance(arg, ProcessDataCacheItemID):
