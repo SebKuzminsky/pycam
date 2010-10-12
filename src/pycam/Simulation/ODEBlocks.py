@@ -50,6 +50,11 @@ class ODEBlocks:
         self.x_width = maxx - minx
         self.y_width = maxy - miny
         self.z_width = maxz - minz
+        if self.z_width <= 0:
+            # Use a default height of "1" if the model is flat.
+            # Half of the height is above and half below the plane.
+            self.z_width = 1.0
+            self.z_offset = minz - self.z_width / 2.0
         self.world = ode.World()
         self.space = ode.Space()
         self.boxes = []
