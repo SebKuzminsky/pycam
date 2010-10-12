@@ -318,6 +318,9 @@ def generate_toolpath(model, tool_settings=None,
     
 def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
         pathgenerator, pathprocessor, reverse, physics):
+    if pathgenerator != "EngraveCutter" and not trimesh_model.triangles():
+        return ("The only available toolpath strategy for 2D contour models " \
+                + "is 'Engraving'.")
     if pathgenerator == "DropCutter":
         if pathprocessor == "ZigZagCutter":
             processor = pycam.PathProcessors.PathAccumulator(zigzag=True,
@@ -353,8 +356,8 @@ def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
             return ("Invalid postprocessor (%s) for 'EngraveCutter' - it " \
                     + "should be: SimpleCutter") % str(processor)
         if not contour_model:
-            return "The EngraveCutter requires a contour model (e.g. from a " \
-                    + "DXF file)."
+            return "The 'Engraving' toolpath strategy requires a 2D contour " \
+                    + "model (e.g. from a DXF or SVG file)."
         return EngraveCutter.EngraveCutter(cutter, trimesh_model,
                 contour_model, processor, physics=physics)
     elif pathgenerator == "ContourFollow":
