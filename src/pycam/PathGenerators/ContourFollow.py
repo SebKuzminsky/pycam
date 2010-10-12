@@ -45,7 +45,7 @@ log = pycam.Utils.log.get_logger()
 
 # We need to use a global function here - otherwise it does not work with
 # the multiprocessing Pool.
-def _process_one_triangle(model, cutter, up_vector, triangle, z):
+def _process_one_triangle((model, cutter, up_vector, triangle, z)):
     result = []
     # ignore triangles below the z level
     if triangle.maxz < z:

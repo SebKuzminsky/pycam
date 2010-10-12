@@ -253,7 +253,7 @@ def _handle_tasks(tasks, results, stats, cache, closing):
                         real_args.append(arg)
                 stats.add_transfer_time(name, time.time() - start_time)
                 start_time = time.time()
-                results.put((job_id, task_id, func(*real_args)))
+                results.put((job_id, task_id, func(real_args)))
                 stats.add_process_time(name, time.time() - start_time)
             except Queue.Empty:
                 time.sleep(1.0)

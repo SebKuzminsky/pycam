@@ -56,22 +56,22 @@ class BaseCutter(object):
     def get_minx(self, start=None):
         if start is None:
             start = self.location
-        return self.location.x - self.distance_radius
+        return start.x - self.distance_radius
 
     def get_maxx(self, start=None):
         if start is None:
             start = self.location
-        return self.location.x + self.distance_radius
+        return start.x + self.distance_radius
 
     def get_miny(self, start=None):
         if start is None:
             start = self.location
-        return self.location.y - self.distance_radius
+        return start.y - self.distance_radius
 
     def get_maxy(self, start=None):
         if start is None:
             start = self.location
-        return self.location.y + self.distance_radius
+        return start.y + self.distance_radius
 
     def update_uuid(self):
         self.uuid = uuid.uuid4()
@@ -131,7 +131,7 @@ class BaseCutter(object):
                     * triangle.radius + triangle.radiussq) + epsilon:
             return None
 
-        (cl, d, cp) = self.intersect(BaseCutter.vertical, triangle)
+        (cl, d, cp) = self.intersect(BaseCutter.vertical, triangle, start=start)
         return cl
 
     def intersect_circle_triangle(self, direction, triangle, start=None):

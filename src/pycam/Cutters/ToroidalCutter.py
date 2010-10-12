@@ -181,7 +181,7 @@ class ToroidalCutter(BaseCutter):
                 continue
             p = edge.point_with_length_multiply(m)
             (cl, ccp, cp, l) = self.intersect_torus_point(direction, p,
-                    start=None)
+                    start=start)
             if not cl:
                 continue
             if l < min_l:
