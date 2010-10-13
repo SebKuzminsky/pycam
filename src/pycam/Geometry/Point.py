@@ -22,7 +22,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.utils import epsilon, sqrt, number
-from decimal import Decimal
 
 def _is_near(x, y):
     return abs(x - y) < epsilon
