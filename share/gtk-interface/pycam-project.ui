@@ -240,6 +240,22 @@
       </row>
     </data>
   </object>
+  <object class="GtkListStore" id="ProcessPoolStatisticsModel">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name last_notify -->
+      <column type="guint"/>
+      <!-- column-name tasks -->
+      <column type="guint"/>
+      <!-- column-name process_time -->
+      <column type="gfloat"/>
+      <!-- column-name avg_process_time -->
+      <column type="gfloat"/>
+      <!-- column-name avg_transfer_time -->
+      <column type="gfloat"/>
+    </columns>
+  </object>
   <object class="GtkWindow" id="ProjectWindow">
     <property name="title" translatable="yes">PyCAM</property>
     <property name="destroy_with_parent">True</property>
@@ -6597,6 +6613,251 @@ Any selected group of dimensions will be scaled accordingly.</property>
   <object class="GtkAction" id="OpenRecentModel">
     <property name="label">Open _Recent Model</property>
     <property name="stock_id">gtk-open</property>
+    <property name="always_show_image">True</property>
+  </object>
+  <object class="GtkDialog" id="ProcessPoolWindow">
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">PyCAM pool of processes</property>
+    <property name="type_hint">normal</property>
+    <property name="has_separator">False</property>
+    <child internal-child="vbox">
+      <object class="GtkVBox" id="dialog-vbox5">
+        <property name="visible">True</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child>
+          <object class="GtkVBox" id="vbox32">
+            <property name="visible">True</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkVBox" id="ProcessPoolStatisticsBox">
+                <property name="visible">True</property>
+                <property name="orientation">vertical</property>
+                <property name="spacing">3</property>
+                <child>
+                  <object class="GtkViewport" id="viewport1">
+                    <property name="visible">True</property>
+                    <property name="resize_mode">queue</property>
+                    <property name="shadow_type">etched-in</property>
+                    <child>
+                      <object class="GtkTreeView" id="ProcessPoolView">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="model">ProcessPoolStatisticsModel</property>
+                        <property name="headers_clickable">False</property>
+                        <property name="search_column">0</property>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="ProcessPoolColumn1">
+                            <property name="title">Name</property>
+                            <property name="clickable">True</property>
+                            <property name="sort_indicator">True</property>
+                            <property name="sort_column_id">0</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                              <attributes>
+                                <attribute name="text">0</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="ProcessPoolColumn2">
+                            <property name="title">Ping age</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="cellrenderertext2"/>
+                              <attributes>
+                                <attribute name="text">1</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="ProcessPoolColumn3">
+                            <property name="title">Processed</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="cellrenderertext3"/>
+                              <attributes>
+                                <attribute name="text">2</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="ProcessPoolColumn4">
+                            <property name="title">Processing time</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="cellrenderertext4"/>
+                              <attributes>
+                                <attribute name="text">3</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="ProcessPoolColumn5">
+                            <property name="title">Avg. process time</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="cellrenderertext5"/>
+                              <attributes>
+                                <attribute name="text">4</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="ProcessPoolColumn6">
+                            <property name="title">Avg. transfer time</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="cellrenderertext6"/>
+                              <attributes>
+                                <attribute name="text">5</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkHBox" id="hbox32">
+                    <property name="visible">True</property>
+                    <property name="spacing">3</property>
+                    <child>
+                      <object class="GtkLabel" id="ProcessPoolConnectedWorkersLabel">
+                        <property name="visible">True</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">Number of connected workers:</property>
+                        <property name="pattern">&lt;b&gt;____&lt;/b&gt;</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="ProcessPoolConnectedWorkersValue">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">0</property>
+                        <property name="use_markup">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="ProcessPoolDisabledText">
+                <property name="visible">True</property>
+                <property name="xalign">0</property>
+                <property name="label" translatable="yes">Multiprocessing is currently not enabled on your system.
+Please run PyCAM with the parameter "--enable-server" to allow remote workers to connect to your host.</property>
+                <property name="use_markup">True</property>
+                <property name="wrap">True</property>
+                <property name="width_chars">60</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child internal-child="action_area">
+          <object class="GtkHButtonBox" id="dialog-action_area6">
+            <property name="visible">True</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkHBox" id="hbox30">
+                <property name="visible">True</property>
+                <child>
+                  <object class="GtkLabel" id="ProcessPoolRefreshIntervalLabel">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Refresh interval:</property>
+                  </object>
+                  <packing>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSpinButton" id="ProcessPoolRefreshInterval">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="invisible_char">&#x25CF;</property>
+                    <property name="adjustment">ProcessPoolRefreshIntervalValue</property>
+                    <property name="numeric">True</property>
+                  </object>
+                  <packing>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="ProcessPoolWindowClose">
+                <property name="label">gtk-close</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="0">ProcessPoolWindowClose</action-widget>
+    </action-widgets>
+  </object>
+  <object class="GtkAdjustment" id="ProcessPoolRefreshIntervalValue">
+    <property name="value">3</property>
+    <property name="lower">1</property>
+    <property name="upper">60</property>
+    <property name="step_increment">1</property>
+  </object>
+  <object class="GtkToggleAction" id="ToggleProcessPoolWindow">
+    <property name="label">_Process Pool Window</property>
+    <property name="tooltip">Show the current pool of workers</property>
+    <property name="stock_id">gtk-network</property>
     <property name="always_show_image">True</property>
   </object>
 </interface>
