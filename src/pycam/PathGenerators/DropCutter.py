@@ -33,7 +33,7 @@ log = pycam.Utils.log.get_logger()
 
 # We need to use a global function here - otherwise it does not work with
 # the multiprocessing Pool.
-def _process_one_grid_line((positions, minz, maxz, dim_attrs, model, cutter,
+def _process_one_grid_line((positions, minz, maxz, model, cutter,
         physics, safety_height)):
     # for now only used for triangular collision detection
     last_position = None
@@ -41,11 +41,10 @@ def _process_one_grid_line((positions, minz, maxz, dim_attrs, model, cutter,
     height_exceeded = False
     for x, y in positions:
         if physics:
-            result = get_max_height_ode(physics, x, y, minz, maxz,
-                    order=dim_attrs[:])
+            result = get_max_height_ode(physics, x, y, minz, maxz)
         else:
             result = get_max_height_triangles(model, cutter, x, y, minz, maxz,
-                    order=dim_attrs[:], last_pos=last_position)
+                    last_pos=last_position)
         if result:
             points.extend(result)
         else:
@@ -95,43 +94,35 @@ class DropCutter:
         # remember if we already reported an invalid boundary
         self._boundary_warning_already_shown = False
 
-    def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, d0, d1,
-            direction, draw_callback=None):
+    def GenerateToolPath(self, motion_grid, minz, maxz, draw_callback=None):
         quit_requested = False
-        # determine step size
-        num_of_x_lines = 1 + ceil(abs(maxx - minx) / d0)
-        num_of_y_lines = 1 + ceil(abs(maxy - miny) / d1)
-        x_step = abs(maxx - minx) / max(1, (num_of_x_lines - 1))
-        y_step = abs(maxy - miny) / max(1, (num_of_y_lines - 1))
-        x_steps = [(minx + i * x_step) for i in range(num_of_x_lines)]
-        y_steps = [(miny + i * y_step) for i in range(num_of_y_lines)]
 
-        # map the scales according to the order of direction
-        grid = []
-        if direction == 0:
-            # first x, then y
-            for x in x_steps:
-                grid.append(zip([x] * (len(y_steps) + 1), y_steps))
-            dim_attrs = ["x", "y"]
-        else:
-            # first y, then x
-            for y in y_steps:
-                grid.append(zip(x_steps, [y] * (len(x_steps) + 1)))
-            dim_attrs = ["y", "x"]
+        # Transfer the grid (a generator) into a list of lists and count the
+        # items.
+        num_of_grid_positions = 0
+        lines = []
+        # there should be only one layer for DropCutter
+        for layer in motion_grid:
+            for line in layer:
+                lines.append(list(line))
+                num_of_grid_positions += len(lines[-1])
+            # ignore any other layers
+            break
 
-        num_of_lines = len(grid)
-        num_of_grid_positions = num_of_x_lines * num_of_y_lines
+        num_of_lines = len(lines)
         progress_counter = ProgressCounter(num_of_grid_positions, draw_callback)
         current_line = 0
 
-        self.pa.new_direction(direction)
+        self.pa.new_direction(0)
 
         self._boundary_warning_already_shown = False
 
         args = []
-        for one_grid_line in grid:
-            args.append((one_grid_line, minz, maxz, dim_attrs, self.model,
-                    self.cutter, self.physics, self.model.maxz))
+        for one_grid_line in lines:
+            # simplify the data (useful for remote processing)
+            xy_coords = [(pos.x, pos.y) for pos in one_grid_line]
+            args.append((xy_coords, minz, maxz, self.model, self.cutter,
+                    self.physics, self.model.maxz))
         # ODE does not work with multi-threading
         disable_multiprocessing = not self.physics is None
         for points, height_exceeded in run_in_parallel(_process_one_grid_line,

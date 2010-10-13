@@ -159,7 +159,7 @@ def get_free_paths_ode(physics, p1, p2, depth=8):
     physics.reset_drill()
     return points
 
-def get_max_height_ode(physics, x, y, minz, maxz, order=None):
+def get_max_height_ode(physics, x, y, minz, maxz):
     low, high = minz, maxz
     trip_start = 20
     safe_z = None
@@ -196,17 +196,13 @@ def get_max_height_ode(physics, x, y, minz, maxz, order=None):
     else:
         return [Point(x, y, safe_z)]
 
-def get_max_height_triangles(model, cutter, x, y, minz, maxz, order=None,
-        last_pos=None):
-    # TODO: "order" should be replaced with a direction vector
+def get_max_height_triangles(model, cutter, x, y, minz, maxz, last_pos=None):
     result = []
     if last_pos is None:
         last_pos = {}
     for key in ("triangle", "cut"):
         if not key in last_pos:
             last_pos[key] = None
-    if order is None:
-        order = ["x", "y"]
     p = Point(x, y, maxz)
     height_max = None
     cut_max = None

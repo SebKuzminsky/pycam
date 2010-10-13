@@ -47,59 +47,43 @@ class PushCutter:
         self.pa = path_processor
         self.physics = physics
 
-    def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, dx, dy, dz,
-            draw_callback=None):
+    def GenerateToolPath(self, motion_grid, draw_callback=None):
         # calculate the number of steps
-        # Sometimes there is a floating point accuracy issue: make sure
-        # that only one layer is drawn, if maxz and minz are almost the same.
-        if abs(maxz - minz) < epsilon:
-            diff_z = 0
-        else:
-            diff_z = abs(maxz - minz)
-        num_of_layers = 1 + ceil(diff_z / dz)
-        z_step = diff_z / max(1, (num_of_layers - 1))
 
-        lines_per_layer = 0
-        if dx != 0:
-            x_lines_per_layer = 1 + ceil(abs(maxx - minx) / dx)
-            x_step = abs(maxx - minx) / max(1, (x_lines_per_layer - 1))
-            lines_per_layer += x_lines_per_layer
-        if dy != 0:
-            y_lines_per_layer = 1 + ceil(abs(maxy - miny) / dy)
-            y_step = abs(maxy - miny) / max(1, (y_lines_per_layer - 1))
-            lines_per_layer += y_lines_per_layer
+        # Transfer the grid (a generator) into a list of lists and count the
+        # items.
+        grid = []
+        num_of_grid_positions = 0
+        for layer in motion_grid:
+            lines = []
+            for line in layer:
+                lines.append(list(line))
+                num_of_grid_positions += len(lines[-1])
+            grid.append(lines)
 
-        progress_counter = ProgressCounter(num_of_layers * lines_per_layer,
-                draw_callback)
+        num_of_layers = len(grid)
+
+        progress_counter = ProgressCounter(num_of_grid_positions, draw_callback)
 
         current_layer = 0
-
-        z_steps = [(maxz - i * z_step) for i in range(num_of_layers)]
-        for z in z_steps:
+        for layer_grid in grid:
             # update the progress bar and check, if we should cancel the process
             if draw_callback and draw_callback(text="PushCutter: processing" \
                         + " layer %d/%d" % (current_layer + 1, num_of_layers)):
                 # cancel immediately
                 break
 
-            if dy > 0:
-                self.pa.new_direction(0)
-                self.GenerateToolPathSlice(minx, maxx, miny, maxy, z, 0, y_step,
-                        draw_callback, progress_counter)
-                self.pa.end_direction()
-            if dx > 0:
-                self.pa.new_direction(1)
-                self.GenerateToolPathSlice(minx, maxx, miny, maxy, z, x_step, 0,
-                        draw_callback, progress_counter)
-                self.pa.end_direction()
+            self.pa.new_direction(0)
+            self.GenerateToolPathSlice(layer_grid, draw_callback, progress_counter)
+            self.pa.end_direction()
             self.pa.finish()
 
             current_layer += 1
 
         return self.pa.paths
 
-    def GenerateToolPathSlice(self, minx, maxx, miny, maxy, z, dx, dy,
-            draw_callback=None, progress_counter=None):
+    def GenerateToolPathSlice(self, layer_grid, draw_callback=None,
+            progress_counter=None):
         """ only dx or (exclusive!) dy may be bigger than zero
         """
         # max_deviation_x = dx/accuracy
@@ -107,34 +91,15 @@ class PushCutter:
         max_depth = 20
 
         # calculate the required number of steps in each direction
-        if dx > 0:
-            depth = math.log(accuracy * abs(maxx - minx) / dx) / math.log(2)
-            depth = max(ceil(depth), 4)
-            depth = min(depth, max_depth)
-            num_of_x_lines = 1 + ceil(abs(maxx - minx) / dx)
-            x_step = abs(maxx - minx) / max(1, (num_of_x_lines - 1))
-            x_steps = [minx + i * x_step for i in range(num_of_x_lines)]
-            y_steps = [None] * num_of_x_lines
-        elif dy != 0:
-            depth = math.log(accuracy * abs(maxy - miny) / dy) / math.log(2)
-            depth = max(ceil(depth), 4)
-            depth = min(depth, max_depth)
-            num_of_y_lines = 1 + ceil(abs(maxy - miny) / dy)
-            y_step = abs(maxy - miny) / max(1, (num_of_y_lines - 1))
-            y_steps = [miny + i * y_step for i in range(num_of_y_lines)]
-            x_steps = [None] * num_of_y_lines
-        else:
-            # nothing to be done
-            return
+        distance = layer_grid[0][-1].sub(layer_grid[0][0]).norm
+        step_width = distance / len(layer_grid[0])
+        depth = math.log(accuracy * distance / step_width) / math.log(2)
+        depth = max(ceil(depth), 4)
+        depth = min(depth, max_depth)
 
         args = []
-        if dx > 0:
-            depth = depth_
-        for x, y in zip(x_steps, y_steps):
-            if dx > 0:
-                p1, p2 = Point(x, miny, z), Point(x, maxy, z)
-            else:
-                p1, p2 = Point(minx, y, z), Point(maxx, y, z)
+        for line in layer_grid:
+            p1, p2 = line
             args.append((p1, p2, depth, self.model, self.cutter, self.physics))
 
         # ODE does not work with multi-threading

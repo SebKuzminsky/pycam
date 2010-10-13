@@ -26,6 +26,7 @@ from pycam.Geometry.utils import number
 import pycam.PathProcessors
 import pycam.Cutters
 import pycam.Toolpath.SupportGrid
+import pycam.Toolpath.MotionGrid
 import pycam.Geometry.Model
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
@@ -45,14 +46,12 @@ def generate_toolpath_from_settings(model, tp_settings, callback=None):
     process = tp_settings.get_process_settings()
     grid = tp_settings.get_support_grid()
     backend = tp_settings.get_calculation_backend()
-    bounds_obj = tp_settings.get_bounds()
-    bounds_low, bounds_high = bounds_obj.get_absolute_limits()
     return generate_toolpath(model, tp_settings.get_tool_settings(),
-            bounds_low, bounds_high, process["path_direction"],
+            tp_settings.get_bounds(), process["path_direction"],
             process["generator"], process["postprocessor"],
-            process["reverse"],
             process["material_allowance"], process["overlap"],
             process["step_down"], process["engrave_offset"],
+            process["milling_style"],
             grid["type"], grid["distance_x"], grid["distance_y"],
             grid["thickness"], grid["height"], grid["offset_x"],
             grid["offset_y"], grid["adjustments_x"], grid["adjustments_y"],
@@ -60,10 +59,10 @@ def generate_toolpath_from_settings(model, tp_settings, callback=None):
             backend, callback)
 
 def generate_toolpath(model, tool_settings=None,
-        bounds_low=None, bounds_high=None, direction="x",
+        bounds=None, direction="x",
         path_generator="DropCutter", path_postprocessor="ZigZagCutter",
-        reverse=False,
         material_allowance=0, overlap=0, step_down=0, engrave_offset=0,
+        milling_style="ignore",
         support_grid_type=None, support_grid_distance_x=None,
         support_grid_distance_y=None, support_grid_thickness=None,
         support_grid_height=None, support_grid_offset_x=None,
@@ -127,15 +126,13 @@ def generate_toolpath(model, tool_settings=None,
     overlap = number(overlap)
     step_down = number(step_down)
     engrave_offset = number(engrave_offset)
-    if bounds_low is None:
+    if bounds is None:
         # no bounds were given - we use the boundaries of the model
         minx, miny, minz = (model.minx, model.miny, model.minz)
-    else:
-        minx, miny, minz = [number(value) for value in bounds_low]
-    if bounds_high is None:
-        # no bounds were given - we use the boundaries of the model
         maxx, maxy, maxz = (model.maxx, model.maxy, model.maxz)
     else:
+        bounds_low, bounds_high = bounds.get_absolute_limits()
+        minx, miny, minz = [number(value) for value in bounds_low]
         maxx, maxy, maxz = [number(value) for value in bounds_high]
     # trimesh model or contour model?
     if isinstance(model, pycam.Geometry.Model.Model):
@@ -259,42 +256,38 @@ def generate_toolpath(model, tool_settings=None,
     for next_model in trimesh_models[1:]:
         combined_models += next_model
     generator = _get_pathgenerator_instance(combined_models, contour_model,
-            cutter, path_generator, path_postprocessor, reverse, physics)
+            cutter, path_generator, path_postprocessor, milling_style, physics)
     if isinstance(generator, basestring):
         return generator
     if (overlap < 0) or (overlap >= 1):
         return "Invalid overlap value (%f): should be greater or equal 0 " \
                 + "and lower than 1"
     # factor "2" since we are based on radius instead of diameter
-    stepping = 2 * number(tool_settings["tool_radius"]) * (1 - overlap)
+    line_stepping = 2 * number(tool_settings["tool_radius"]) * (1 - overlap)
+    if path_generator == "PushCutter":
+        step_width = None
+    else:
+        # TODO: the step_width should be configurable
+        step_width = tool_settings["tool_radius"] / 10.0
     if path_generator == "DropCutter":
-        if direction == "x":
-            direction_param = 0
-        elif direction == "y":
-            direction_param = 1
-        else:
-            return "Invalid direction value (%s): not one of %s" \
-                    % (direction, DIRECTIONS)
-        toolpath = generator.GenerateToolPath(minx, maxx, miny, maxy, minz,
-                maxz, stepping, stepping, direction_param, callback)
+        layer_distance = None
+    else:
+        layer_distance = step_down
+    direction_dict = {"x": pycam.Toolpath.MotionGrid.GRID_DIRECTION_X,
+            "y": pycam.Toolpath.MotionGrid.GRID_DIRECTION_Y,
+            "xy": pycam.Toolpath.MotionGrid.GRID_DIRECTION_XY}
+    milling_style_grid = {
+            "ignore": pycam.Toolpath.MotionGrid.MILLING_STYLE_IGNORE,
+            "conventional": pycam.Toolpath.MotionGrid.MILLING_STYLE_CONVENTIONAL,
+            "climb": pycam.Toolpath.MotionGrid.MILLING_STYLE_CLIMB}
+    motion_grid = pycam.Toolpath.MotionGrid.get_fixed_grid(bounds,
+            layer_distance, line_stepping, step_width=step_width,
+            grid_direction=direction_dict[direction],
+            milling_style=milling_style_grid[milling_style])
+    if path_generator == "DropCutter":
+        toolpath = generator.GenerateToolPath(motion_grid, minz, maxz, callback)
     elif path_generator == "PushCutter":
-        if step_down > 0:
-            dz = step_down
-        else:
-            dz = maxz - minz
-            if dz <= 0:
-                dz = 1
-        if direction == "x":
-            dx, dy = 0, stepping
-        elif direction == "y":
-            dx, dy = stepping, 0
-        elif direction == "xy":
-            dx, dy = stepping, stepping
-        else:
-            return "Invalid direction (%s): not one of %s" \
-                    % (direction, DIRECTIONS)
-        toolpath = generator.GenerateToolPath(minx, maxx, miny, maxy, minz,
-                maxz, dx, dy, dz, callback)
+        toolpath = generator.GenerateToolPath(motion_grid, callback)
     elif path_generator == "EngraveCutter":
         if step_down > 0:
             dz = step_down

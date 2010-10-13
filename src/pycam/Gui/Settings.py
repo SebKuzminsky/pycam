@@ -586,11 +586,11 @@ class ToolpathSettings:
             "generator": str,
             "postprocessor": str,
             "path_direction": str,
-            "reverse": bool,
             "material_allowance": float,
             "overlap": float,
             "step_down": float,
             "engrave_offset": float,
+            "milling_style": str,
         },
     }
 
@@ -698,20 +698,21 @@ class ToolpathSettings:
             return "mm"
 
     def set_process_settings(self, generator, postprocessor, path_direction,
-            reverse=False, material_allowance=0.0, overlap=0.0,
-            step_down=1.0, engrave_offset=0.0):
+            material_allowance=0.0, overlap=0.0, step_down=1.0,
+            engrave_offset=0.0, milling_style="ignore"):
         # TODO: this hack should be somewhere else, I guess
         if generator in ("ContourFollow", "EngraveCutter"):
             material_allowance = 0.0
+            milling_style = "ignore"
         self.process_settings = {
                 "generator": generator,
                 "postprocessor": postprocessor,
                 "path_direction": path_direction,
-                "reverse": reverse,
                 "material_allowance": material_allowance,
                 "overlap": overlap,
                 "step_down": step_down,
                 "engrave_offset": engrave_offset,
+                "milling_style": milling_style,
         }
 
     def get_process_settings(self):

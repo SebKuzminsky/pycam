@@ -36,6 +36,7 @@ from pycam.Gui.OpenGLTools import ModelViewWindowGL
 from pycam.Toolpath import Bounds
 from pycam import VERSION
 import pycam.Physics.ode_physics
+import pycam.Toolpath.MotionGrid
 # this requires ODE - we import it later, if necessary
 #import pycam.Simulation.ODEBlocks
 import gtk
@@ -547,8 +548,9 @@ class ProjectGui:
         # connect the "consistency check" and the update-handler with all toolpath settings
         for objname in ("PushRemoveStrategy", "ContourPolygonStrategy",
                 "ContourFollowStrategy", "SurfaceStrategy",
-                "EngraveStrategy", "GridDirectionX",
-                "GridDirectionY", "GridDirectionXY"):
+                "EngraveStrategy", "GridDirectionX", "GridDirectionY",
+                "GridDirectionXY", "MillingStyleConventional",
+                "MillingStyleClimb", "MillingStyleIgnore"):
             self.gui.get_object(objname).connect("toggled",
                     self.update_process_controls)
             self.gui.get_object(objname).connect("toggled",
@@ -1318,8 +1320,10 @@ class ProjectGui:
                 "EngraveOffsetControl")
         active_controls = {
             "PushRemoveStrategy": ("GridDirectionX", "GridDirectionY",
-                    "GridDirectionXY", "MaxStepDownControl",
-                    "MaterialAllowanceControl", "OverlapPercentControl"),
+                    "GridDirectionXY", "MillingStyleConventional",
+                    "MillingStyleClimb", "MillingStyleIgnore",
+                    "MaxStepDownControl", "MaterialAllowanceControl",
+                    "OverlapPercentControl"),
             "ContourPolygonStrategy": ("GridDirectionX", "GridDirectionY",
                     "GridDirectionXY", "MillingStyleConventional",
                     "MillingStyleClimb", "MillingStyleIgnore",
@@ -2303,44 +2307,6 @@ class ProjectGui:
         elif action == "delete":
             self.append_to_queue(self.switch_bounds_table_selection)
 
-    def _get_process_details(self, strategy, direction, milling_style):
-        STRATEGY_GENERATORS = {
-                "PushRemoveStrategy": "PushCutter",
-                "ContourPolygonStrategy": "PushCutter",
-                "ContourFollowStrategy": "ContourFollow",
-                "SurfaceStrategy": "DropCutter",
-                "EngraveStrategy": "EngraveCutter"}
-        generator = STRATEGY_GENERATORS[strategy]
-        if strategy in ("PushRemoveStrategy", "SurfaceStrategy"):
-            if strategy == "PushRemoveStrategy":
-                # TODO: implement "conventional/climb" for PolygonCutter
-                processor = "PolygonCutter"
-            elif milling_style in ("conventional", "climb"):
-                processor = "PathAccumulator"
-            else:
-                processor = "ZigZagCutter"
-            if milling_style == "conventional":
-                reverse = False
-            else:
-                reverse_counter = 0
-                if direction == "y":
-                    reverse_counter += 1
-                if milling_style == "conventional":
-                    reverse_counter += 1
-                reverse = (reverse_counter % 1) == 1
-        elif strategy in ("ContourPolygonStrategy", "ContourFollowStrategy"):
-            if strategy == "ContourPolygonStrategy":
-                processor = "ContourCutter"
-            else:
-                processor = "SimpleCutter"
-            reverse = milling_style in ("climb", "ignore")
-        elif strategy == "EngraveStrategy":
-            processor = "SimpleCutter"
-            reverse = False
-        else:
-            pass
-        return generator, processor, reverse
-
     def _load_process_settings_from_gui(self, settings=None):
         if settings is None:
             settings = {}
@@ -2860,18 +2826,23 @@ class ProjectGui:
         # unit size
         toolpath_settings.set_unit_size(self.settings.get("unit"))
 
-        generator, postprocessor, reverse = self._get_process_details(
-                process_settings["path_strategy"],
-                process_settings["path_direction"],
-                process_settings["milling_style"])
+        STRATEGY_GENERATORS = {
+                "PushRemoveStrategy": ("PushCutter", "SimpleCutter"),
+                "ContourPolygonStrategy": ("PushCutter", "ContourPolygonStrategy"),
+                "ContourFollowStrategy": ("ContourFollow", "SimpleCutter"),
+                "SurfaceStrategy": ("DropCutter", "PathAccumulator"),
+                "EngraveStrategy": ("EngraveCutter", "SimpleCutter")}
+        generator, postprocessor = STRATEGY_GENERATORS[
+                process_settings["path_strategy"]]
 
         # process settings
         toolpath_settings.set_process_settings(
                 generator, postprocessor, process_settings["path_direction"],
-                reverse, process_settings["material_allowance"],
+                process_settings["material_allowance"],
                 process_settings["overlap_percent"] / 100.0,
                 process_settings["step_down"],
-                process_settings["engrave_offset"])
+                process_settings["engrave_offset"],
+                process_settings["milling_style"])
 
         return toolpath_settings
 
