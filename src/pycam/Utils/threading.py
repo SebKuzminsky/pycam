@@ -326,9 +326,9 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                     else:
                         log.debug("Skipping result of non-local task: %s" % result_job_id)
                         # put the result back to the queue for the next manager
-                        results_queue.put((result_job_id, result))
-                        # wait for 0.5 up to 1.5 seconds before trying again
-                        time.sleep(0.5 + random.random())
+                        results_queue.put((result_job_id, task_id, result))
+                        # wait for up to 0.2 seconds before trying again
+                        time.sleep(random.random() / 5)
             except GeneratorExit:
                 log.debug("Parallel processing canceled: %s" % job_id)
                 # catch this specific (silent) exception and flush the task queue
