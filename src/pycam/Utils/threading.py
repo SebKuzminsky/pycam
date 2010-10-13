@@ -59,6 +59,13 @@ def run_in_parallel(*args, **kwargs):
     else:
         return run_in_parallel_remote(*args, **kwargs)
 
+def is_pool_available():
+    return not __manager is None
+
+def get_pool_statistics():
+    global __manager
+    return __manager.statistics().get_worker_statistics()
+
 def init_threading(number_of_processes=None, enable_server=False, remote=None, run_server=False,
         server_credentials=""):
     global __multiprocessing, __num_of_processes, __manager, __closing, __task_source_uuid
@@ -214,14 +221,15 @@ def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
                     task_name = "task-%s" % str(task_id)
                     worker = __multiprocessing.Process(
                             name=task_name, target=_handle_tasks,
-                            args=(tasks, results, stats, cache, __closing))
+                            args=(tasks, results, stats, cache,
+                            __closing))
                     worker.start()
                     workers.append(worker)
                 # wait until all workers are finished
                 for worker in workers:
                     worker.join()
             else:
-                time.sleep(0.2)
+                time.sleep(1.0)
     except KeyboardInterrupt:
         log.info("Spawner daemon killed by keyboard interrupt")
         # set the "closing" flag and just exit
@@ -236,9 +244,13 @@ def _handle_tasks(tasks, results, stats, cache, closing):
     local_cache = {}
     timeout_limit = 60
     timeout_counter = 0
+    last_worker_notification = 0
     log.debug("Worker thread started: %s" % name)
     try:
         while (timeout_counter < timeout_limit) and not closing.get():
+            if last_worker_notification + 30 < time.time():
+                stats.worker_notification(name)
+                last_worker_notification = time.time()
             try:
                 start_time = time.time()
                 job_id, task_id, func, args = tasks.get(timeout=1.0)
@@ -294,8 +306,6 @@ def run_in_parallel_remote(func, args_list, unordered=False,
             tasks_queue.put((job_id, index, func, result_args))
             stats.add_queueing_time(__task_source_uuid, time.time() - start_time)
         log.debug("Added %d tasks for job %s" % (len(args_list), job_id))
-        def job_cleanup():
-            print stats.get_stats()
         result_buffer = {}
         index = 0
         while index < len(args_list):
@@ -347,11 +357,9 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                 # don't keep more than 10 old job ids
                 while len(__finished_jobs) > 10:
                     __finished_jobs.pop(0)
-                job_cleanup()
                 # re-raise the GeneratorExit exception to finish destruction
                 raise
         log.debug("Parallel processing finished: %s" % job_id)
-        job_cleanup()
     else:
         for args in args_list:
             yield func(args)
@@ -409,13 +417,22 @@ class OneProcess(object):
 
 class ProcessStatistics(object):
 
+    EXPIRY_TIMER = 120
+
     def __init__(self):
         self.processes = {}
         self.queues = {}
+        self.workers = {}
 
     def __str__(self):
         return os.linesep.join([str(item)
                 for item in self.processes.values() + self.queues.values()])
+
+    def _refresh_workers(self):
+        oldest_valid = time.time() - self.EXPIRY_TIMER
+        for key, timestamp in self.workers.iteritems():
+            if timestamp < oldest_valid:
+                del self.workers[key]
 
     def get_stats(self):
         return str(self)
@@ -437,6 +454,26 @@ class ProcessStatistics(object):
             self.queues[name] = OneProcess(name, is_queue=True)
         self.queues[name].transfer_count += 1
         self.queues[name].transfer_time += amount
+
+    def worker_notification(self, name):
+        timestamp = time.time()
+        self.workers[name] = timestamp
+
+    def get_worker_statistics(self):
+        self._refresh_workers()
+        now = time.time()
+        result = []
+        for key in self.workers:
+            if key in self.processes:
+                one_process = self.processes[key]
+                last_notification = int(now - self.workers[key])
+                num_of_tasks = one_process.process_count
+                process_time = one_process.process_time
+                avg_process_time = process_time / num_of_tasks
+                avg_transfer_time = one_process.transfer_time / num_of_tasks
+                result.append((key, last_notification, num_of_tasks,
+                        process_time, avg_process_time, avg_transfer_time))
+        return result
 
 
 # TODO: implement an expiry time for cache items

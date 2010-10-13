@@ -40,6 +40,7 @@ import pycam.Toolpath.MotionGrid
 # this requires ODE - we import it later, if necessary
 #import pycam.Simulation.ODEBlocks
 import gtk
+import gobject
 import webbrowser
 import ConfigParser
 import urllib
@@ -212,6 +213,7 @@ class ProjectGui:
                 ("GeneralSettings", self.toggle_preferences_window, None, "<Control>p"),
                 ("Toggle3DView", self.toggle_3d_view, None, "<Control><Shift>v"),
                 ("ToggleLogWindow", self.toggle_log_window, None, "<Control>l"),
+                ("ToggleProcessPoolWindow", self.toggle_process_pool_window, None, None),
                 ("HelpIntroduction", self.show_help, "Introduction", "F1"),
                 ("HelpSupportedFormats", self.show_help, "SupportedFormats", None),
                 ("HelpModelTransformations", self.show_help, "ModelTransformations", None),
@@ -228,7 +230,8 @@ class ProjectGui:
                 ("BugTracker", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104176", None),
                 ("FeatureRequest", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104179", None)):
             item = self.gui.get_object(objname)
-            if objname in ("Toggle3DView", "ToggleLogWindow"):
+            if objname in ("Toggle3DView", "ToggleLogWindow",
+                    "ToggleProcessPoolWindow"):
                 action = "toggled"
             else:
                 action = "activate"
@@ -269,6 +272,14 @@ class ProjectGui:
         self.gui.get_object("LogWindowCopyToClipboard").connect("clicked",
                 self.copy_log_to_clipboard)
         self.log_model = self.gui.get_object("LogWindowList")
+        # "process pool" window
+        self.process_pool_window = self.gui.get_object("ProcessPoolWindow")
+        self.process_pool_window.set_default_size(500, 400)
+        self.process_pool_window.connect("delete-event", self.toggle_process_pool_window, False)
+        self.process_pool_window.connect("destroy", self.toggle_process_pool_window, False)
+        self.gui.get_object("ProcessPoolWindowClose").connect("clicked", self.toggle_process_pool_window, False)
+        self.gui.get_object("ProcessPoolRefreshInterval").set_value(3)
+        self.process_pool_model = self.gui.get_object("ProcessPoolStatisticsModel")
         # set defaults
         self.model = None
         self.toolpath = pycam.Toolpath.ToolpathList()
@@ -1439,6 +1450,45 @@ class ProjectGui:
         toggle_log_checkbox.set_active(new_state)
         # don't destroy the window with a "destroy" event
         return True
+
+    @gui_activity_guard
+    def toggle_process_pool_window(self, widget=None, value=None, action=None):
+        toggle_process_pool_checkbox = self.gui.get_object("ToggleProcessPoolWindow")
+        checkbox_state = toggle_process_pool_checkbox.get_active()
+        if value is None:
+            new_state = checkbox_state
+        else:
+            if action is None:
+                new_state = value
+            else:
+                new_state = action
+        if new_state:
+            is_available = pycam.Utils.threading.is_pool_available()
+            self.gui.get_object("ProcessPoolDisabledText").set_visible(
+                    not is_available)
+            self.gui.get_object("ProcessPoolStatisticsBox").set_visible(
+                    is_available)
+            interval = int(max(1, self.gui.get_object(
+                    "ProcessPoolRefreshInterval").get_value()))
+            gobject.timeout_add_seconds(interval,
+                    self.update_process_pool_statistics)
+            self.process_pool_window.show()
+        else:
+            self.process_pool_window.hide()
+        toggle_process_pool_checkbox.set_active(new_state)
+        # don't destroy the window with a "destroy" event
+        return True
+
+    def update_process_pool_statistics(self):
+        stats = pycam.Utils.threading.get_pool_statistics()
+        model = self.process_pool_model
+        model.clear()
+        for item in stats:
+            model.append(item)
+        self.gui.get_object("ProcessPoolConnectedWorkersValue").set_text(
+                str(len(stats)))
+        # don't repeat, if the window is hidden
+        return self.gui.get_object("ToggleProcessPoolWindow").get_active()
 
     @gui_activity_guard
     def toggle_3d_view(self, widget=None, value=None):
