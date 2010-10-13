@@ -435,7 +435,7 @@ class ProcessStatistics(object):
         for key in self.workers.keys():
             # be careful: maybe the workers dictionary changed in between
             try:
-                timestampe = self.workers[key]
+                timestamp = self.workers[key]
                 if timestamp < oldest_valid:
                     del self.workers[key]
             except KeyError:
