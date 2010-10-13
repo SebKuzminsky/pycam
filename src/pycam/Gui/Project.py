@@ -1471,7 +1471,7 @@ class ProjectGui:
             interval = int(max(1, self.gui.get_object(
                     "ProcessPoolRefreshInterval").get_value()))
             gobject.timeout_add_seconds(interval,
-                    self.update_process_pool_statistics)
+                    self.update_process_pool_statistics, interval)
             self.process_pool_window.show()
         else:
             self.process_pool_window.hide()
@@ -1479,7 +1479,7 @@ class ProjectGui:
         # don't destroy the window with a "destroy" event
         return True
 
-    def update_process_pool_statistics(self):
+    def update_process_pool_statistics(self, original_interval):
         stats = pycam.Utils.threading.get_pool_statistics()
         model = self.process_pool_model
         model.clear()
@@ -1487,8 +1487,17 @@ class ProjectGui:
             model.append(item)
         self.gui.get_object("ProcessPoolConnectedWorkersValue").set_text(
                 str(len(stats)))
-        # don't repeat, if the window is hidden
-        return self.gui.get_object("ToggleProcessPoolWindow").get_active()
+        current_interval = int(max(1, self.gui.get_object(
+                "ProcessPoolRefreshInterval").get_value()))
+        if original_interval != current_interval:
+            # initiate a new repetition
+            gobject.timeout_add_seconds(current_interval,
+                    self.update_process_pool_statistics, current_interval)
+            # stop the current repetition
+            return False
+        else:
+            # don't repeat, if the window is hidden
+            return self.gui.get_object("ToggleProcessPoolWindow").get_active()
 
     @gui_activity_guard
     def toggle_3d_view(self, widget=None, value=None):
