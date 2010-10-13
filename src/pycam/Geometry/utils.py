@@ -20,21 +20,15 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# use the "decimal" module for fixed precision numbers (only for debugging)
-_use_precision = False
 
-
-# "decimal" is not available in some minimal installations of python2.6
-# (e.g. in Debian Lenny)
-try:
-    import decimal
-except ImportError:
-    _use_precision = False
-
+import decimal
 import math
 
 INFINITE = 100000
 epsilon = 0.00001
+
+# use the "decimal" module for fixed precision numbers (only for debugging)
+_use_precision = False
 
 
 # the lambda functions below are more efficient than function definitions
