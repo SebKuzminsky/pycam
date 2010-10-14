@@ -268,6 +268,19 @@ def _handle_tasks(tasks, results, stats, cache, closing):
                         if not cache_id in local_cache.keys():
                             local_cache[cache_id] = cache.get(cache_id)
                         real_args.append(local_cache[cache_id])
+                    elif isinstance(arg, list) and [True for item in arg \
+                            if isinstance(item, ProcessDataCacheItemID)]:
+                        # check if any item in the list is cacheable
+                        args_list = []
+                        for item in arg:
+                            if isinstance(item, ProcessDataCacheItemID):
+                                cache_id = item.value
+                                if not cache_id in local_cache.keys():
+                                    local_cache[cache_id] = cache.get(cache_id)
+                                args_list.append(local_cache[cache_id])
+                            else:
+                                args_list.append(item)
+                        real_args.append(args_list)
                     else:
                         real_args.append(arg)
                 stats.add_transfer_time(name, time.time() - start_time)
@@ -306,6 +319,22 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                         log.debug("Adding cache item for job %s: %s - %s" % (job_id, arg.uuid, arg.__class__))
                         remote_cache.add(data_uuid, arg)
                     result_args.append(data_uuid)
+                elif isinstance(arg, (list, set, tuple)) \
+                        and ([True for item in arg if hasattr(item, "uuid")]):
+                    # a list with at least one cacheable item
+                    for item in arg:
+                        new_arg_list = []
+                        if hasattr(item, "uuid"):
+                            data_uuid = ProcessDataCacheItemID(item.uuid)
+                            if not remote_cache.contains(data_uuid):
+                                log.debug(("Adding cache item for job %s: " \
+                                        + "%s - %s") \
+                                        % (job_id, item.uuid, arg.__class__))
+                                remote_cache.add(data_uuid, item)
+                            new_arg_list.append(data_uuid)
+                        else:
+                            new_arg_list.append(item)
+                    result_args.append(new_arg_list)
                 else:
                     result_args.append(arg)
             tasks_queue.put((job_id, index, func, result_args))
