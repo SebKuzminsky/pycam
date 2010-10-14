@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.PolygonExtractor import PolygonExtractor
+from pycam.Geometry.Point import Point
 from pycam.Toolpath import simplify_toolpath
 
 class ContourCutter:
@@ -31,9 +32,15 @@ class ContourCutter:
         self.pe = None
         self.points = []
         self.reverse = reverse
+        self.__forward = Point(1, 1, 0)
 
     def append(self, p):
-        self.points.append(p)
+        # Sort the points in positive x/y direction - otherwise the
+        # PolygonExtractor breaks.
+        if self.points and (p.sub(self.points[0]).dot(self.__forward) < 0):
+            self.points.insert(0, p)
+        else:
+            self.points.append(p)
 
     def new_direction(self, direction):
         if self.pe == None:
