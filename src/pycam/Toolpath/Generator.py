@@ -252,7 +252,7 @@ def generate_toolpath(model, tool_settings=None,
     if isinstance(physics, basestring):
         return physics
     generator = _get_pathgenerator_instance(trimesh_models, contour_model,
-            cutter, path_generator, path_postprocessor, milling_style, physics)
+            cutter, path_generator, path_postprocessor, physics)
     if isinstance(generator, basestring):
         return generator
     if (overlap < 0) or (overlap >= 1):
@@ -306,16 +306,15 @@ def generate_toolpath(model, tool_settings=None,
     return toolpath
     
 def _get_pathgenerator_instance(trimesh_models, contour_model, cutter,
-        pathgenerator, pathprocessor, reverse, physics):
+        pathgenerator, pathprocessor, physics):
     if pathgenerator != "EngraveCutter" and contour_model:
         return ("The only available toolpath strategy for 2D contour models " \
                 + "is 'Engraving'.")
     if pathgenerator == "DropCutter":
         if pathprocessor == "ZigZagCutter":
-            processor = pycam.PathProcessors.PathAccumulator(zigzag=True,
-                    reverse=reverse)
+            processor = pycam.PathProcessors.PathAccumulator(zigzag=True)
         elif pathprocessor == "PathAccumulator":
-            processor = pycam.PathProcessors.PathAccumulator(reverse=reverse)
+            processor = pycam.PathProcessors.PathAccumulator()
         else:
             return ("Invalid postprocessor (%s) for 'DropCutter': only " \
                     + "'ZigZagCutter' or 'PathAccumulator' are allowed") \
@@ -324,26 +323,26 @@ def _get_pathgenerator_instance(trimesh_models, contour_model, cutter,
                 physics=physics)
     elif pathgenerator == "PushCutter":
         if pathprocessor == "PathAccumulator":
-            processor = pycam.PathProcessors.PathAccumulator(reverse=reverse)
+            processor = pycam.PathProcessors.PathAccumulator()
         elif pathprocessor == "SimpleCutter":
-            processor = pycam.PathProcessors.SimpleCutter(reverse=reverse)
+            processor = pycam.PathProcessors.SimpleCutter()
         elif pathprocessor == "ZigZagCutter":
-            processor = pycam.PathProcessors.ZigZagCutter(reverse=reverse)
+            processor = pycam.PathProcessors.ZigZagCutter()
         elif pathprocessor == "PolygonCutter":
-            processor = pycam.PathProcessors.PolygonCutter(reverse=reverse)
+            processor = pycam.PathProcessors.PolygonCutter()
         elif pathprocessor == "ContourCutter":
-            processor = pycam.PathProcessors.ContourCutter(reverse=reverse)
+            processor = pycam.PathProcessors.ContourCutter()
         else:
             return ("Invalid postprocessor (%s) for 'PushCutter' - it should " \
-                    + "be one of these: %s") % (processor, PATH_POSTPROCESSORS)
+                    + "be one of these: %s") % (pathprocessor, PATH_POSTPROCESSORS)
         return PushCutter.PushCutter(cutter, trimesh_models, processor,
                 physics=physics)
     elif pathgenerator == "EngraveCutter":
         if pathprocessor == "SimpleCutter":
-            processor = pycam.PathProcessors.SimpleCutter(reverse=reverse)
+            processor = pycam.PathProcessors.SimpleCutter()
         else:
             return ("Invalid postprocessor (%s) for 'EngraveCutter' - it " \
-                    + "should be: SimpleCutter") % str(processor)
+                    + "should be: SimpleCutter") % str(pathprocessor)
         if not contour_model:
             return "The 'Engraving' toolpath strategy requires a 2D contour " \
                     + "model (e.g. from a DXF or SVG file)."
@@ -351,10 +350,10 @@ def _get_pathgenerator_instance(trimesh_models, contour_model, cutter,
                 contour_model, processor, physics=physics)
     elif pathgenerator == "ContourFollow":
         if pathprocessor == "SimpleCutter":
-            processor = pycam.PathProcessors.SimpleCutter(reverse=reverse)
+            processor = pycam.PathProcessors.SimpleCutter()
         else:
             return ("Invalid postprocessor (%s) for 'ContourFollow' - it " \
-                    + "should be: SimpleCutter") % str(processor)
+                    + "should be: SimpleCutter") % str(pathprocessor)
         return ContourFollow.ContourFollow(cutter, trimesh_models, processor,
                 physics=physics)
     else:
