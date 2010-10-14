@@ -6648,8 +6648,8 @@ Any selected group of dimensions will be scaled accordingly.</property>
                         <property name="search_column">0</property>
                         <child>
                           <object class="GtkTreeViewColumn" id="ProcessPoolColumn1">
+                            <property name="resizable">True</property>
                             <property name="title">Name</property>
-                            <property name="clickable">True</property>
                             <property name="sort_indicator">True</property>
                             <property name="sort_column_id">0</property>
                             <child>
@@ -6662,7 +6662,10 @@ Any selected group of dimensions will be scaled accordingly.</property>
                         </child>
                         <child>
                           <object class="GtkTreeViewColumn" id="ProcessPoolColumn2">
+                            <property name="resizable">True</property>
                             <property name="title">Ping age</property>
+                            <property name="sort_indicator">True</property>
+                            <property name="sort_column_id">1</property>
                             <child>
                               <object class="GtkCellRendererText" id="cellrenderertext2"/>
                               <attributes>
@@ -6673,7 +6676,10 @@ Any selected group of dimensions will be scaled accordingly.</property>
                         </child>
                         <child>
                           <object class="GtkTreeViewColumn" id="ProcessPoolColumn3">
+                            <property name="resizable">True</property>
                             <property name="title">Processed</property>
+                            <property name="sort_indicator">True</property>
+                            <property name="sort_column_id">2</property>
                             <child>
                               <object class="GtkCellRendererText" id="cellrenderertext3"/>
                               <attributes>
@@ -6684,7 +6690,10 @@ Any selected group of dimensions will be scaled accordingly.</property>
                         </child>
                         <child>
                           <object class="GtkTreeViewColumn" id="ProcessPoolColumn4">
+                            <property name="resizable">True</property>
                             <property name="title">Processing time</property>
+                            <property name="sort_indicator">True</property>
+                            <property name="sort_column_id">3</property>
                             <child>
                               <object class="GtkCellRendererText" id="cellrenderertext4"/>
                               <attributes>
@@ -6695,7 +6704,10 @@ Any selected group of dimensions will be scaled accordingly.</property>
                         </child>
                         <child>
                           <object class="GtkTreeViewColumn" id="ProcessPoolColumn5">
+                            <property name="resizable">True</property>
                             <property name="title">Avg. process time</property>
+                            <property name="sort_indicator">True</property>
+                            <property name="sort_column_id">4</property>
                             <child>
                               <object class="GtkCellRendererText" id="cellrenderertext5"/>
                               <attributes>
@@ -6706,7 +6718,10 @@ Any selected group of dimensions will be scaled accordingly.</property>
                         </child>
                         <child>
                           <object class="GtkTreeViewColumn" id="ProcessPoolColumn6">
+                            <property name="resizable">True</property>
                             <property name="title">Avg. transfer time</property>
+                            <property name="sort_indicator">True</property>
+                            <property name="sort_column_id">5</property>
                             <child>
                               <object class="GtkCellRendererText" id="cellrenderertext6"/>
                               <attributes>
