@@ -65,7 +65,10 @@ def is_pool_available():
 
 def get_pool_statistics():
     global __manager
-    return __manager.statistics().get_worker_statistics()
+    if __manager is None:
+        return []
+    else:
+        return __manager.statistics().get_worker_statistics()
 
 def init_threading(number_of_processes=None, enable_server=False, remote=None, run_server=False,
         server_credentials=""):

@@ -1468,10 +1468,12 @@ class ProjectGui:
                     not is_available)
             self.gui.get_object("ProcessPoolStatisticsBox").set_visible(
                     is_available)
-            interval = int(max(1, self.gui.get_object(
-                    "ProcessPoolRefreshInterval").get_value()))
-            gobject.timeout_add_seconds(interval,
-                    self.update_process_pool_statistics, interval)
+            if is_available:
+                # start the refresh function
+                interval = int(max(1, self.gui.get_object(
+                        "ProcessPoolRefreshInterval").get_value()))
+                gobject.timeout_add_seconds(interval,
+                        self.update_process_pool_statistics, interval)
             self.process_pool_window.show()
         else:
             self.process_pool_window.hide()
