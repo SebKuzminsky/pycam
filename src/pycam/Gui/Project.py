@@ -1173,9 +1173,11 @@ class ProjectGui:
             if process["path_strategy"] == "EngraveStrategy":
                 lines.append("Engrave offset: %.3f" % process["engrave_offset"])
             else:
-                lines.append("Overlap: %d%%" % process["overlap_percent"])
                 lines.append("Milling style: %s" % process["milling_style"])
-                lines.append("Material allowance: %.2f%s" % (process["material_allowance"], unit))
+                if process["path_strategy"] != "ContourFollowStrategy":
+                    lines.append("Overlap: %d%%" % process["overlap_percent"])
+                    lines.append("Material allowance: %.2f%s" \
+                            % (process["material_allowance"], unit))
             if process["path_strategy"] != "SurfaceStrategy":
                 lines.append("Maximum step down: %.2f%s" % (process["step_down"], unit))
         else:
@@ -1336,10 +1338,8 @@ class ProjectGui:
                     "MaxStepDownControl", "MaterialAllowanceControl",
                     "OverlapPercentControl"),
             "ContourPolygonStrategy": ("GridDirectionX", "GridDirectionY",
-                    "GridDirectionXY", "MillingStyleConventional",
-                    "MillingStyleClimb", "MillingStyleIgnore",
-                    "MaxStepDownControl", "MaterialAllowanceControl",
-                    "OverlapPercentControl"),
+                    "MillingStyleIgnore", "MaxStepDownControl",
+                    "MaterialAllowanceControl", "OverlapPercentControl"),
             "ContourFollowStrategy": ("MillingStyleConventional",
                     "MillingStyleClimb", "MillingStyleIgnore",
                     "MaxStepDownControl"),
@@ -2889,7 +2889,7 @@ class ProjectGui:
 
         STRATEGY_GENERATORS = {
                 "PushRemoveStrategy": ("PushCutter", "SimpleCutter"),
-                "ContourPolygonStrategy": ("PushCutter", "ContourPolygonStrategy"),
+                "ContourPolygonStrategy": ("PushCutter", "ContourCutter"),
                 "ContourFollowStrategy": ("ContourFollow", "SimpleCutter"),
                 "SurfaceStrategy": ("DropCutter", "PathAccumulator"),
                 "EngraveStrategy": ("EngraveCutter", "SimpleCutter")}
