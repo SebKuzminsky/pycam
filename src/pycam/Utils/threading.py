@@ -203,8 +203,12 @@ def cleanup():
         # Managers started via ".connect" may skip this.
         if hasattr(__manager, "shutdown"):
             # wait for the spawner and the worker threads to go down
-            time.sleep(1.5)
-            __manager.shutdown()
+            time.sleep(2.5)
+            #__manager.shutdown()
+            time.sleep(0.1)
+            # check if it is still alive and kill it if necessary
+            if __manager._process.is_alive():
+                __manager._process.terminate()
 
 def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
     """ wait for items in the 'tasks' queue to appear and then spawn workers
@@ -322,14 +326,14 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                 elif isinstance(arg, (list, set, tuple)) \
                         and ([True for item in arg if hasattr(item, "uuid")]):
                     # a list with at least one cacheable item
+                    new_arg_list = []
                     for item in arg:
-                        new_arg_list = []
                         if hasattr(item, "uuid"):
                             data_uuid = ProcessDataCacheItemID(item.uuid)
                             if not remote_cache.contains(data_uuid):
-                                log.debug(("Adding cache item for job %s: " \
-                                        + "%s - %s") \
-                                        % (job_id, item.uuid, arg.__class__))
+                                log.debug("Adding cache item from list for " \
+                                        + "job %s: %s - %s" \
+                                        % (job_id, item.uuid, item.__class__))
                                 remote_cache.add(data_uuid, item)
                             new_arg_list.append(data_uuid)
                         else:
