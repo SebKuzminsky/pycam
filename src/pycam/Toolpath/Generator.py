@@ -366,7 +366,7 @@ def _get_physics(models, cutter, calculation_backend):
         return None
     elif calculation_backend == "ODE":
         import pycam.Physics.ode_physics as ode_physics
-        physics = ode_physics.generate_physics(models, cutter)
+        return ode_physics.generate_physics(models, cutter)
     else:
         return "Invalid calculation backend (%s): not one of %s" \
                 % (calculation_backend, CALCULATION_BACKENDS)

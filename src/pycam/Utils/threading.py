@@ -283,7 +283,7 @@ def _handle_tasks(tasks, results, stats, cache, closing):
             % (timeout_counter, name))
 
 def run_in_parallel_remote(func, args_list, unordered=False,
-        disable_multiprocessing=False, host=None):
+        disable_multiprocessing=False):
     global __multiprocessing, __num_of_processes, __manager, __task_source_uuid, __finished_jobs
     if __multiprocessing is None:
         # threading was not configured before
