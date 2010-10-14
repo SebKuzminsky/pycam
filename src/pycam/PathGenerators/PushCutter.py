@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.Point import Point
 from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
+import pycam.PathProcessors.PathAccumulator
 from pycam.Geometry.utils import epsilon, ceil
 from pycam.Utils.threading import run_in_parallel
 from pycam.Utils import ProgressCounter
@@ -46,6 +47,8 @@ class PushCutter:
         self.models = models
         self.pa = path_processor
         self.physics = physics
+        # check if we use a PolygonExtractor
+        self._use_polygon_extractor = hasattr(self.pa, "pe")
 
     def GenerateToolPath(self, motion_grid, draw_callback=None):
         # calculate the number of steps
@@ -80,7 +83,26 @@ class PushCutter:
 
             current_layer += 1
 
-        return self.pa.paths
+        if self._use_polygon_extractor and (len(self.models) > 1):
+            other_models = self.models[1:]
+            # TODO: this is complicated and hacky :(
+            # we don't use parallelism or ODE (for the sake of simplicity)
+            final_pa = pycam.PathProcessors.SimpleCutter()
+            for path in self.pa.paths:
+                final_pa.new_scanline()
+                pairs = []
+                for index in range(len(path.points) - 1):
+                    pairs.append((path.points[index], path.points[index + 1]))
+                for p1, p2 in pairs:
+                    free_points = get_free_paths_triangles(other_models,
+                            self.cutter, p1, p2)
+                    for p in free_points:
+                        final_pa.append(p)
+                final_pa.end_scanline()
+            final_pa.finish()
+            return final_pa.paths
+        else:
+            return self.pa.paths
 
     def GenerateToolPathSlice(self, layer_grid, draw_callback=None,
             progress_counter=None):
@@ -97,10 +119,16 @@ class PushCutter:
         depth = max(ceil(depth), 4)
         depth = min(depth, max_depth)
 
+        # the ContourCutter pathprocessor does not work with combined models
+        if self._use_polygon_extractor:
+            models = self.models[:1]
+        else:
+            models = self.models
+
         args = []
         for line in layer_grid:
             p1, p2 = line
-            args.append((p1, p2, depth, self.models, self.cutter, self.physics))
+            args.append((p1, p2, depth, models, self.cutter, self.physics))
 
         # ODE does not work with multi-threading
         disable_multiprocessing = not self.physics is None
