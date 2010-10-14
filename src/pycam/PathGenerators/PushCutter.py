@@ -31,19 +31,19 @@ import math
 
 # We need to use a global function here - otherwise it does not work with
 # the multiprocessing Pool.
-def _process_one_line((p1, p2, depth, model, cutter, physics)):
+def _process_one_line((p1, p2, depth, models, cutter, physics)):
     if physics:
         points = get_free_paths_ode(physics, p1, p2, depth=depth)
     else:
-        points = get_free_paths_triangles(model, cutter, p1, p2)
+        points = get_free_paths_triangles(models, cutter, p1, p2)
     return points
 
 
 class PushCutter:
 
-    def __init__(self, cutter, model, path_processor, physics=None):
+    def __init__(self, cutter, models, path_processor, physics=None):
         self.cutter = cutter
-        self.model = model
+        self.models = models
         self.pa = path_processor
         self.physics = physics
 
@@ -100,7 +100,7 @@ class PushCutter:
         args = []
         for line in layer_grid:
             p1, p2 = line
-            args.append((p1, p2, depth, self.model, self.cutter, self.physics))
+            args.append((p1, p2, depth, self.models, self.cutter, self.physics))
 
         # ODE does not work with multi-threading
         disable_multiprocessing = not self.physics is None

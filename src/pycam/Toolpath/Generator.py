@@ -137,14 +137,13 @@ def generate_toolpath(model, tool_settings=None,
     # trimesh model or contour model?
     if isinstance(model, pycam.Geometry.Model.Model):
         # trimesh model
-        trimesh_model = model
+        trimesh_models = [model]
         contour_model = None
     else:
         # contour model
-        trimesh_model = pycam.Geometry.Model.Model()
+        trimesh_models = []
         contour_model = model
     # create the grid model if requested
-    trimesh_models = [trimesh_model]
     if (support_grid_type == "grid") \
             and (((not support_grid_distance_x is None) \
             or (not support_grid_distance_y is None)) \
@@ -194,7 +193,7 @@ def generate_toolpath(model, tool_settings=None,
         if not contour_model is None:
             model = contour_model
         else:
-            model = trimesh_model
+            model = trimesh_models[0]
         support_grid_model = pycam.Toolpath.SupportGrid.get_support_distributed(
                 model, minz, support_grid_average_distance,
                 support_grid_minimum_bridges, support_grid_thickness,
@@ -242,7 +241,7 @@ def generate_toolpath(model, tool_settings=None,
             return "No part of the contour model is within the bounding box."
     # Due to some weirdness the height of the drill must be bigger than the
     # object's size. Otherwise some collisions are not detected.
-    cutter_height = 4 * (maxy - miny)
+    cutter_height = 4 * abs(maxz - minz)
     cutter = pycam.Cutters.get_tool_from_settings(tool_settings, cutter_height)
     if isinstance(cutter, basestring):
         return cutter
@@ -252,10 +251,7 @@ def generate_toolpath(model, tool_settings=None,
     physics = _get_physics(trimesh_models, cutter, calculation_backend)
     if isinstance(physics, basestring):
         return physics
-    combined_models = trimesh_models[0]
-    for next_model in trimesh_models[1:]:
-        combined_models += next_model
-    generator = _get_pathgenerator_instance(combined_models, contour_model,
+    generator = _get_pathgenerator_instance(trimesh_models, contour_model,
             cutter, path_generator, path_postprocessor, milling_style, physics)
     if isinstance(generator, basestring):
         return generator
@@ -309,9 +305,9 @@ def generate_toolpath(model, tool_settings=None,
                 % (path_generator, PATH_GENERATORS)
     return toolpath
     
-def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
+def _get_pathgenerator_instance(trimesh_models, contour_model, cutter,
         pathgenerator, pathprocessor, reverse, physics):
-    if pathgenerator != "EngraveCutter" and not trimesh_model.triangles():
+    if pathgenerator != "EngraveCutter" and contour_model:
         return ("The only available toolpath strategy for 2D contour models " \
                 + "is 'Engraving'.")
     if pathgenerator == "DropCutter":
@@ -324,7 +320,7 @@ def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
             return ("Invalid postprocessor (%s) for 'DropCutter': only " \
                     + "'ZigZagCutter' or 'PathAccumulator' are allowed") \
                     % str(pathprocessor)
-        return DropCutter.DropCutter(cutter, trimesh_model, processor,
+        return DropCutter.DropCutter(cutter, trimesh_models, processor,
                 physics=physics)
     elif pathgenerator == "PushCutter":
         if pathprocessor == "PathAccumulator":
@@ -340,7 +336,7 @@ def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
         else:
             return ("Invalid postprocessor (%s) for 'PushCutter' - it should " \
                     + "be one of these: %s") % (processor, PATH_POSTPROCESSORS)
-        return PushCutter.PushCutter(cutter, trimesh_model, processor,
+        return PushCutter.PushCutter(cutter, trimesh_models, processor,
                 physics=physics)
     elif pathgenerator == "EngraveCutter":
         if pathprocessor == "SimpleCutter":
@@ -351,7 +347,7 @@ def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
         if not contour_model:
             return "The 'Engraving' toolpath strategy requires a 2D contour " \
                     + "model (e.g. from a DXF or SVG file)."
-        return EngraveCutter.EngraveCutter(cutter, trimesh_model,
+        return EngraveCutter.EngraveCutter(cutter, trimesh_models,
                 contour_model, processor, physics=physics)
     elif pathgenerator == "ContourFollow":
         if pathprocessor == "SimpleCutter":
@@ -359,7 +355,7 @@ def _get_pathgenerator_instance(trimesh_model, contour_model, cutter,
         else:
             return ("Invalid postprocessor (%s) for 'ContourFollow' - it " \
                     + "should be: SimpleCutter") % str(processor)
-        return ContourFollow.ContourFollow(cutter, trimesh_model, processor,
+        return ContourFollow.ContourFollow(cutter, trimesh_models, processor,
                 physics=physics)
     else:
         return "Invalid path generator (%s): not one of %s" \

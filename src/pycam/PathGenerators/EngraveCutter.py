@@ -34,10 +34,17 @@ log = pycam.Utils.log.get_logger()
 
 class EngraveCutter:
 
-    def __init__(self, cutter, model, contour_model, path_processor,
+    def __init__(self, cutter, trimesh_models, contour_model, path_processor,
             physics=None, safety_height=INFINITE):
         self.cutter = cutter
-        self.model = model
+        self.models = trimesh_models
+        # combine the models (if there is more than one)
+        if self.models:
+            self.combined_model = self.models[0]
+            for model in self.models[1:]:
+                self.combined_model += model
+        else:
+            self.combined_models = []
         self.contour_model = contour_model
         self.pa_push = path_processor
         # We use a separated path processor for the last "drop" layer.
@@ -153,12 +160,13 @@ class EngraveCutter:
         p2 = Point(line.p2.x, line.p2.y, z)
         # no model -> no possible obstacles
         # model is completely below z (e.g. support bridges) -> no obstacles
-        if not self.model or (self.model.maxz < z):
+        relevant_models = [m for m in self.models if m.maxz >= z]
+        if not relevant_models:
             points = [p1, p2]
         elif self.physics:
             points = get_free_paths_ode(self.physics, p1, p2)
         else:
-            points = get_free_paths_triangles(self.model, self.cutter, p1, p2)
+            points = get_free_paths_triangles(relevant_models, self.cutter, p1, p2)
         if points:
             for p in points:
                 pa.append(p)
@@ -185,13 +193,13 @@ class EngraveCutter:
         last_position = None
 
         for x, y in step_coords:
-            if not self.model:
+            if not self.combined_model:
                 # no obstacle -> minimum height
                 points = [Point(x, y, minz)]
             elif self.physics:
                 points = get_max_height_ode(self.physics, x, y, minz, maxz)
             else:
-                points = get_max_height_triangles(self.model, self.cutter,
+                points = get_max_height_triangles(self.combined_model, self.cutter,
                         x, y, minz, maxz, last_pos=last_position)
 
             if points:

@@ -41,7 +41,27 @@ class Hit:
         return "%s - %s - %s - %s" % (self.d, self.cl, self.dir, self.cp)
 
 
-def get_free_paths_triangles(model, cutter, p1, p2, return_triangles=False):
+def get_free_paths_triangles(models, cutter, p1, p2, return_triangles=False):
+    if len(models) == 1:
+        # only one model is left - just continue
+        model = models[0]
+    else:
+        # multiple models were given - process them in layers
+        result = get_free_paths_triangles(models[:1], cutter, p1, p2,
+                return_triangles)
+        # group the result into pairs of two points (start/end)
+        point_pairs = []
+        while result:
+            pair1 = result.pop(0)
+            pair2 = result.pop(0)
+            point_pairs.append((pair1, pair2))
+        all_results = []
+        for pair in point_pairs:
+            one_result = get_free_paths_triangles(models[1:], cutter, pair[0],
+                    pair[1], return_triangles)
+            all_results.extend(one_result)
+        return all_results
+
     backward = p1.sub(p2).normalized()
     forward = p2.sub(p1).normalized()
     xyz_dist = p2.sub(p1).norm
@@ -90,8 +110,20 @@ def get_free_paths_triangles(model, cutter, p1, p2, return_triangles=False):
         points.append((p2, None, None))
 
     if len(points) == 0:
-        points.append((p1, None, None))
-        points.append((p2, None, None))
+        # check if the path is completely free or if we are inside of the model
+        inside_counter = 0
+        for h in hits:
+            if -epsilon <= h.d:
+                # we reached the outer limit of the model
+                break
+            if h.dir == forward:
+                inside_counter += 1
+            else:
+                inside_counter -= 1
+        if inside_counter <= 0:
+            # we are not inside of the model
+            points.append((p1, None, None))
+            points.append((p2, None, None))
 
     if return_triangles:
         return points

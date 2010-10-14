@@ -86,9 +86,12 @@ class Dimension:
 
 class DropCutter:
 
-    def __init__(self, cutter, model, path_processor, physics=None):
+    def __init__(self, cutter, models, path_processor, physics=None):
         self.cutter = cutter
-        self.model = model
+        # combine the models (if there is more than one)
+        self.model = models[0]
+        for model in models[1:]:
+            self.model += model
         self.pa = path_processor
         self.physics = physics
         # remember if we already reported an invalid boundary

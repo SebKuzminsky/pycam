@@ -189,9 +189,9 @@ class CollisionPaths:
 
 class ContourFollow:
 
-    def __init__(self, cutter, model, path_processor, physics=None):
+    def __init__(self, cutter, models, path_processor, physics=None):
         self.cutter = cutter
-        self.model = model
+        self.models = models
         self.pa = path_processor
         self._up_vector = Vector(0, 0, 1)
         self.physics = physics
@@ -199,8 +199,11 @@ class ContourFollow:
         if self.physics:
             accuracy = 20
             max_depth = 16
-            model_dim = max(abs(self.model.maxx - self.model.minx),
-                    abs(self.model.maxy - self.model.miny))
+            maxx = max([m.maxx for m in self.models])
+            minx = max([m.minx for m in self.models])
+            maxy = max([m.maxy for m in self.models])
+            miny = max([m.miny for m in self.models])
+            model_dim = max(abs(maxx - minx), abs(maxy - miny))
             depth = math.log(accuracy * model_dim / self.cutter.radius) / math.log(2)
             self._physics_maxdepth = min(max_depth, max(ceil(depth_x), 4))
 
@@ -209,7 +212,7 @@ class ContourFollow:
             return get_free_paths_ode(self.physics, p1, p2,
                     depth=self._physics_maxdepth)
         else:
-            return get_free_paths_triangles(self.model, self.cutter, p1, p2)
+            return get_free_paths_triangles(self.models, self.cutter, p1, p2)
 
     def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, dz,
             draw_callback=None):
@@ -225,7 +228,8 @@ class ContourFollow:
         num_of_layers = 1 + ceil(diff_z / dz)
         z_step = diff_z / max(1, (num_of_layers - 1))
 
-        num_of_triangles = len(self.model.triangles(minx=minx, miny=miny, maxx=maxx, maxy=maxy))
+        # only the first model is used for the contour-follow algorithm
+        num_of_triangles = len(self.models[0].triangles(minx=minx, miny=miny, maxx=maxx, maxy=maxy))
         progress_counter = ProgressCounter(2 * num_of_layers * num_of_triangles,
                 draw_callback)
 
@@ -242,16 +246,18 @@ class ContourFollow:
                 break
             self.pa.new_direction(0)
             self.GenerateToolPathSlice(minx, maxx, miny, maxy, z,
-                    draw_callback, progress_counter)
+                    draw_callback, progress_counter, num_of_triangles)
             self.pa.end_direction()
             self.pa.finish()
             current_layer += 1
         return self.pa.paths
 
     def GenerateToolPathSlice(self, minx, maxx, miny, maxy, z,
-            draw_callback=None, progress_counter=None):
+            draw_callback=None, progress_counter=None, num_of_triangles=None):
         shifted_lines = self.get_potential_contour_lines(minx, maxx, miny, maxy,
                 z, progress_counter=progress_counter)
+        if num_of_triangles is None:
+            num_of_triangles = len(shifted_lines)
         last_position = None
         self.pa.new_scanline()
         for line in shifted_lines:
@@ -275,19 +281,21 @@ class ContourFollow:
                     break
         # the progress counter jumps up by the number of non directly processed triangles
         if not progress_counter is None:
-            progress_counter.increment(len(self.model.triangles()) - len(shifted_lines))
+            progress_counter.increment(num_of_triangles - len(shifted_lines))
         self.pa.end_scanline()
         return self.pa.paths
 
     def get_potential_contour_lines(self, minx, maxx, miny, maxy, z,
             progress_counter=None):
+        # use only the first model for the contour
+        follow_model = self.models[0]
         plane = Plane(Point(0, 0, z), self._up_vector)
         lines = []
         waterline_triangles = CollisionPaths()
         projected_waterlines = []
-        triangles = self.model.triangles(minx=minx, miny=miny, maxx=maxx,
+        triangles = follow_model.triangles(minx=minx, miny=miny, maxx=maxx,
                 maxy=maxy)
-        args = [(self.model, self.cutter, self._up_vector, t, z)
+        args = [(follow_model, self.cutter, self._up_vector, t, z)
                 for t in triangles if not id(t) in self._processed_triangles]
         results_iter = run_in_parallel(_process_one_triangle, args,
                 unordered=True)
@@ -458,7 +466,7 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
             start = edge.p1.add(edge_dir.mul(factor))
             # We need to use the triangle collision algorithm here - because we
             # need the point of collision in the triangle.
-            collisions = get_free_paths_triangles(model, cutter, start,
+            collisions = get_free_paths_triangles([model], cutter, start,
                     start.add(direction), return_triangles=True)
             for index, coll in enumerate(collisions):
                 if (index % 2 == 0) and (not coll[1] is None) \
