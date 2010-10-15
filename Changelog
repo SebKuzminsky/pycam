@@ -1,20 +1,25 @@
-Version 0.3.1 - UNRELEASED
+Version 0.4 - UNRELEASED
  * use multiple processes for some toolpath strategies
   * this requires at least Python 2.6 or the "python-multiprocessing" package
  * added an improved contour toolpath strategy (ContourFollow)
   * see http://fab.senselab.org/node/43
  * added options for conventional/climb milling
- * added automatic support grid positioning for contour models
+ * added automatic support grid distribution for contour models
  * allow to reverse the direction of a 2D contour model
  * beautification of the process name (via python-setproctitle)
- * added an experiemental remote-processing handler
+ * added experimental cluster processing (server mode)
+ * added G61/64 GCode settings for path precision
  * Usability:
   * added optional "orthogonal" view (instead of perspective)
   * added a "recent files" item to the file menu
   * added the transparency (alpha) component to all configurable colors
+  * added "remaining time" estimation for all operations
   * pre-select output filenames of "Save as" dialogs based on the name of the model file
+ * Bugs fixed:
+  * SVG import: work around a bug in pstoedit (shipped with Ubuntu Lucid)
+  * fixed various problems with the support grid
 
-Version 0.3.0 - 2010-08-16
+Version 0.3 - 2010-08-16
  * added support for importing contour paths from SVG files (requires Inkscape and pstoedit)
  * added basic support for importing simple DXF contour files
  * added support for engravings (along the lines of a contour model)
