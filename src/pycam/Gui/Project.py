@@ -223,9 +223,12 @@ class ProjectGui:
                 ("HelpTaskSetup", self.show_help, "TaskSetup", None),
                 ("HelpGCodeExport", self.show_help, "GCodeExport", None),
                 ("HelpSimulation", self.show_help, "Simulation", None),
-                ("HelpCommandLine", self.show_help, "CommandLine", None),
+                ("HelpServerMode", self.show_help, "ServerMode", None),
+                # TODO: write a general wiki page about the commandline usage (not just examples)
+                ("HelpCommandLine", self.show_help, "CommandlineExamples", None),
                 ("HelpHotkeys", self.show_help, "KeyboardShortcuts", None),
-                ("ProjectWebsite", self.show_help, "http://sourceforge.net/projects/pycam", None),
+                ("ProjectWebsite", self.show_help, "http://pycam.sourceforge.net", None),
+                ("DevelopmentBlog", self.show_help, "http://fab.senselab.org/pycam", None),
                 ("Forum", self.show_help, "http://sourceforge.net/projects/pycam/forums", None),
                 ("BugTracker", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104176", None),
                 ("FeatureRequest", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104179", None)):

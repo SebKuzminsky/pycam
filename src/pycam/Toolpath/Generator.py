@@ -289,7 +289,7 @@ def generate_toolpath(model, tool_settings=None,
             dz = step_down
         else:
             dz = maxz - minz
-        toolpath = generator.GenerateToolPath(minz, maxz, stepping, dz,
+        toolpath = generator.GenerateToolPath(minz, maxz, step_width, dz,
                 callback)
     elif path_generator == "ContourFollow":
         if step_down > 0:

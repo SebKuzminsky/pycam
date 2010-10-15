@@ -221,7 +221,8 @@ def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
     log.debug("Spawner daemon started with %d processes" % number_of_processes)
     log.debug("Registering %d worker threads: %s" \
             % (len(worker_uuid_list), worker_uuid_list))
-    hostname = platform.node()
+    # use only the hostname (for brevity) - no domain part
+    hostname = platform.node().split(".", 1)[0]
     try:
         while not __closing.get():
             if not tasks.empty():

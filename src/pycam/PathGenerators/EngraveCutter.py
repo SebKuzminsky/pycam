@@ -44,7 +44,7 @@ class EngraveCutter:
             for model in self.models[1:]:
                 self.combined_model += model
         else:
-            self.combined_models = []
+            self.combined_model = []
         self.contour_model = contour_model
         self.pa_push = path_processor
         # We use a separated path processor for the last "drop" layer.
