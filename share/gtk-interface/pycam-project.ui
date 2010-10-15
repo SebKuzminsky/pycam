@@ -6635,21 +6635,23 @@ Any selected group of dimensions will be scaled accordingly.</property>
                 <property name="orientation">vertical</property>
                 <property name="spacing">3</property>
                 <child>
-                  <object class="GtkViewport" id="viewport1">
+                  <object class="GtkScrolledWindow" id="scrolledwindow4">
                     <property name="visible">True</property>
-                    <property name="resize_mode">queue</property>
+                    <property name="can_focus">True</property>
+                    <property name="hscrollbar_policy">automatic</property>
+                    <property name="vscrollbar_policy">automatic</property>
                     <property name="shadow_type">etched-in</property>
                     <child>
                       <object class="GtkTreeView" id="ProcessPoolView">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="model">ProcessPoolStatisticsModel</property>
-                        <property name="headers_clickable">False</property>
                         <property name="search_column">0</property>
                         <child>
                           <object class="GtkTreeViewColumn" id="ProcessPoolColumn1">
                             <property name="resizable">True</property>
                             <property name="title">Name</property>
+                            <property name="clickable">True</property>
                             <property name="sort_indicator">True</property>
                             <property name="sort_column_id">0</property>
                             <child>
@@ -6664,6 +6666,7 @@ Any selected group of dimensions will be scaled accordingly.</property>
                           <object class="GtkTreeViewColumn" id="ProcessPoolColumn2">
                             <property name="resizable">True</property>
                             <property name="title">Ping age</property>
+                            <property name="clickable">True</property>
                             <property name="sort_indicator">True</property>
                             <property name="sort_column_id">1</property>
                             <child>
@@ -6678,6 +6681,7 @@ Any selected group of dimensions will be scaled accordingly.</property>
                           <object class="GtkTreeViewColumn" id="ProcessPoolColumn3">
                             <property name="resizable">True</property>
                             <property name="title">Processed</property>
+                            <property name="clickable">True</property>
                             <property name="sort_indicator">True</property>
                             <property name="sort_column_id">2</property>
                             <child>
@@ -6692,6 +6696,7 @@ Any selected group of dimensions will be scaled accordingly.</property>
                           <object class="GtkTreeViewColumn" id="ProcessPoolColumn4">
                             <property name="resizable">True</property>
                             <property name="title">Processing time</property>
+                            <property name="clickable">True</property>
                             <property name="sort_indicator">True</property>
                             <property name="sort_column_id">3</property>
                             <child>
@@ -6706,6 +6711,7 @@ Any selected group of dimensions will be scaled accordingly.</property>
                           <object class="GtkTreeViewColumn" id="ProcessPoolColumn5">
                             <property name="resizable">True</property>
                             <property name="title">Avg. process time</property>
+                            <property name="clickable">True</property>
                             <property name="sort_indicator">True</property>
                             <property name="sort_column_id">4</property>
                             <child>
@@ -6720,6 +6726,7 @@ Any selected group of dimensions will be scaled accordingly.</property>
                           <object class="GtkTreeViewColumn" id="ProcessPoolColumn6">
                             <property name="resizable">True</property>
                             <property name="title">Avg. transfer time</property>
+                            <property name="clickable">True</property>
                             <property name="sort_indicator">True</property>
                             <property name="sort_column_id">5</property>
                             <child>
@@ -6775,8 +6782,6 @@ Any selected group of dimensions will be scaled accordingly.</property>
                 </child>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
                 <property name="position">0</property>
               </packing>
             </child>
@@ -6874,5 +6879,11 @@ Please run PyCAM with the parameter "--enable-server" to allow remote workers to
     <property name="tooltip">Show the current pool of workers</property>
     <property name="stock_id">gtk-network</property>
     <property name="always_show_image">True</property>
+  </object>
+  <object class="GtkAction" id="DevelopmentBlog">
+    <property name="label">Development Blog</property>
+  </object>
+  <object class="GtkAction" id="HelpServerMode">
+    <property name="label">Server Mode</property>
   </object>
 </interface>

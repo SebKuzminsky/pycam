@@ -30,6 +30,7 @@
       <menuitem action="HelpModelTransformations"/>
       <menuitem action="HelpGCodeExport"/>
       <menuitem action="HelpSimulation"/>
+      <menuitem action="HelpServerMode"/>
       <menuitem action="HelpCommandLine"/>
       <menuitem action="HelpHotkeys"/>
       <separator />
@@ -42,6 +43,7 @@
       <menuitem action="Forum"/>
       <menuitem action="FeatureRequest"/>
       <menuitem action="BugTracker"/>
+      <menuitem action="DevelopmentBlog"/>
       <separator />
       <menuitem action="About"/>
     </menu>
