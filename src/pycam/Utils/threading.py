@@ -221,10 +221,15 @@ def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
     log.debug("Spawner daemon started with %d processes" % number_of_processes)
     log.debug("Registering %d worker threads: %s" \
             % (len(worker_uuid_list), worker_uuid_list))
+    last_cache_update = time.time()
     # use only the hostname (for brevity) - no domain part
     hostname = platform.node().split(".", 1)[0]
     try:
         while not __closing.get():
+            # check the expire timeout of the cache from time to time
+            if last_cache_update + 30 < time.time():
+                cache.expire_cache_items()
+                last_cache_update = time.time()
             if not tasks.empty():
                 workers = []
                 for task_id in worker_uuid_list:
@@ -251,7 +256,7 @@ def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
 def _handle_tasks(tasks, results, stats, cache, closing):
     global __multiprocessing
     name = __multiprocessing.current_process().name
-    local_cache = {}
+    local_cache = ProcessDataCache()
     timeout_limit = 60
     timeout_counter = 0
     last_worker_notification = 0
@@ -269,20 +274,25 @@ def _handle_tasks(tasks, results, stats, cache, closing):
                 real_args = []
                 for arg in args:
                     if isinstance(arg, ProcessDataCacheItemID):
-                        cache_id = arg.value
-                        if not cache_id in local_cache.keys():
-                            local_cache[cache_id] = cache.get(cache_id)
-                        real_args.append(local_cache[cache_id])
+                        try:
+                            value = local_cache.get(arg)
+                        except KeyError:
+                            # TODO: we will break hard, if the item is expired
+                            value = cache.get(arg)
+                            local_cache.add(arg, value)
+                        real_args.append(value)
                     elif isinstance(arg, list) and [True for item in arg \
                             if isinstance(item, ProcessDataCacheItemID)]:
                         # check if any item in the list is cacheable
                         args_list = []
                         for item in arg:
                             if isinstance(item, ProcessDataCacheItemID):
-                                cache_id = item.value
-                                if not cache_id in local_cache.keys():
-                                    local_cache[cache_id] = cache.get(cache_id)
-                                args_list.append(local_cache[cache_id])
+                                try:
+                                    value = local_cache.get(item)
+                                except KeyError:
+                                    value = cache.get(item)
+                                    local_cache.add(item, value)
+                                args_list.append(value)
                             else:
                                 args_list.append(item)
                         real_args.append(args_list)
@@ -456,19 +466,18 @@ class OneProcess(object):
 
 class ProcessStatistics(object):
 
-    EXPIRY_TIMER = 120
-
-    def __init__(self):
+    def __init__(self, timeout=120):
         self.processes = {}
         self.queues = {}
         self.workers = {}
+        self.timeout = timeout
 
     def __str__(self):
         return os.linesep.join([str(item)
                 for item in self.processes.values() + self.queues.values()])
 
     def _refresh_workers(self):
-        oldest_valid = time.time() - self.EXPIRY_TIMER
+        oldest_valid = time.time() - self.timeout
         for key in self.workers.keys():
             # be careful: maybe the workers dictionary changed in between
             try:
@@ -528,32 +537,53 @@ class ProcessStatistics(object):
         return result
 
 
-# TODO: implement an expiry time for cache items
 class ProcessDataCache(object):
 
-    def __init__(self):
+    def __init__(self, timeout=600):
         self.cache = {}
+        self.timeout = timeout
+
+    def _update_timestamp(self, name):
+        if isinstance(name, ProcessDataCacheItemID):
+            name = name.value
+        now = time.time()
+        try:
+            self.cache[name][1] = now
+        except KeyError:
+            # the item was deleted meanwhile
+            pass
+
+    def expire_cache_items(self):
+        expired = time.time() - self.timeout
+        for key in self.cache.keys():
+            try:
+                if self.cache[key][1] < expired:
+                    del self.cache[key]
+            except KeyError:
+                # ignore removed items
+                pass
 
     def contains(self, name):
         if isinstance(name, ProcessDataCacheItemID):
             name = name.value
+        self._update_timestamp(name)
+        self.expire_cache_items()
         return name in self.cache.keys()
 
     def add(self, name, value):
+        now = time.time()
         if isinstance(name, ProcessDataCacheItemID):
             name = name.value
-        self.cache[name] = value
+        self.expire_cache_items()
+        self.cache[name] = [value, now]
 
     def get(self, name):
         if isinstance(name, ProcessDataCacheItemID):
             name = name.value
-        return self.cache[name]
+        self._update_timestamp(name)
+        self.expire_cache_items()
+        return self.cache[name][0]
 
-    def remove(self, name):
-        if isinstance(name, ProcessDataCacheItemID):
-            name = name.value
-        if name in self.cache:
-            del self.cache[name]
 
 class ProcessDataCacheItemID(object):
 
