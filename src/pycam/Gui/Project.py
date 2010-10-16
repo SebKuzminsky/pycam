@@ -1340,7 +1340,8 @@ class ProjectGui:
                     "MillingStyleClimb", "MillingStyleIgnore",
                     "MaxStepDownControl", "MaterialAllowanceControl",
                     "OverlapPercentControl"),
-            "ContourPolygonStrategy": ("GridDirectionX", "GridDirectionY",
+            # TODO: direction y and xy currently don't work for ContourPolygonStrategy
+            "ContourPolygonStrategy": ("GridDirectionX",
                     "MillingStyleIgnore", "MaxStepDownControl",
                     "MaterialAllowanceControl", "OverlapPercentControl"),
             "ContourFollowStrategy": ("MillingStyleConventional",

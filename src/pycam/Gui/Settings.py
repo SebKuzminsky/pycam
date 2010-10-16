@@ -198,7 +198,7 @@ name: Carve contour
 path_strategy: ContourFollowStrategy
 material_allowance: 0.2
 step_down: 1.5
-overlap_percent: 20
+overlap_percent: 40
 
 [Process2]
 name: Cleanup
