@@ -757,7 +757,7 @@ class ProjectGui:
             recent_files_menu.connect("item-activated",
                     self.load_recent_model_file)
         else:
-            self.gui.get_object("OpenRecentModel").set_visible(False)
+            self.gui.get_object("OpenRecentModel").hide()
         # load the menubar and connect functions to its items
         self.menubar = uimanager.get_widget("/MenuBar")
         window_box = self.gui.get_object("WindowBox")
@@ -1469,16 +1469,19 @@ class ProjectGui:
                 new_state = action
         if new_state:
             is_available = pycam.Utils.threading.is_pool_available()
-            self.gui.get_object("ProcessPoolDisabledBox").set_visible(
-                    not is_available)
-            self.gui.get_object("ProcessPoolStatisticsBox").set_visible(
-                    is_available)
+            disabled_box = self.gui.get_object("ProcessPoolDisabledBox")
+            statistics_box = self.gui.get_object("ProcessPoolStatisticsBox")
             if is_available:
+                disabled_box.hide()
+                statistics_box.show()
                 # start the refresh function
                 interval = int(max(1, self.gui.get_object(
                         "ProcessPoolRefreshInterval").get_value()))
                 gobject.timeout_add_seconds(interval,
                         self.update_process_pool_statistics, interval)
+            else:
+                disabled_box.show()
+                statistics_box.hide()
             self.process_pool_window.show()
         else:
             self.process_pool_window.hide()
