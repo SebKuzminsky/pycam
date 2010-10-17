@@ -6786,14 +6786,42 @@ Any selected group of dimensions will be scaled accordingly.</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="ProcessPoolDisabledText">
+              <object class="GtkVBox" id="ProcessPoolDisabledBox">
                 <property name="visible">True</property>
-                <property name="xalign">0</property>
-                <property name="label" translatable="yes">Multiprocessing is currently not enabled on your system.
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel" id="ProcessPoolDisabledLabel">
+                    <property name="visible">True</property>
+                    <property name="xalign">0</property>
+                    <property name="label" translatable="yes">Multiprocessing is currently not enabled on your system.
 Please run PyCAM with the parameter "--enable-server" to allow remote workers to connect to your host.</property>
-                <property name="use_markup">True</property>
-                <property name="wrap">True</property>
-                <property name="width_chars">60</property>
+                    <property name="use_markup">True</property>
+                    <property name="wrap">True</property>
+                    <property name="width_chars">60</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLinkButton" id="ProcessPoolHelpLink">
+                    <property name="label" translatable="yes">Read more about the Server Mode.</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="has_tooltip">True</property>
+                    <property name="relief">none</property>
+                    <property name="xalign">0</property>
+                    <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=ServerMode</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -6803,6 +6831,8 @@ Please run PyCAM with the parameter "--enable-server" to allow remote workers to
             </child>
           </object>
           <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
             <property name="position">1</property>
           </packing>
         </child>

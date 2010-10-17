@@ -726,6 +726,7 @@ class ProjectGui:
         self.about_window.add_accel_group(self._accel_group)
         self.preferences_window.add_accel_group(self._accel_group)
         self.log_window.add_accel_group(self._accel_group)
+        self.process_pool_window.add_accel_group(self._accel_group)
         # load menu data
         gtk_menu_file = get_data_file_location(GTKMENU_FILE)
         if gtk_menu_file is None:
@@ -1468,7 +1469,7 @@ class ProjectGui:
                 new_state = action
         if new_state:
             is_available = pycam.Utils.threading.is_pool_available()
-            self.gui.get_object("ProcessPoolDisabledText").set_visible(
+            self.gui.get_object("ProcessPoolDisabledBox").set_visible(
                     not is_available)
             self.gui.get_object("ProcessPoolStatisticsBox").set_visible(
                     is_available)
