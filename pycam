@@ -41,8 +41,18 @@ from pycam.Toolpath import Bounds, Toolpath
 from pycam import VERSION
 import pycam.Utils.log
 from optparse import OptionParser
+import socket
 import logging
 import time
+
+# we need the multiprocessing exception for remote connections
+try:
+    import multiprocessing
+except ImportError:
+    class multiprocessing:
+        # use an arbitrary other Exception
+        AuthenticationError = socket.error
+
 
 log = pycam.Utils.log.get_logger()
 
@@ -55,7 +65,8 @@ if "_MEIPASS2" in os.environ:
     EXAMPLE_MODEL_LOCATIONS.insert(0, os.path.join(os.environ["_MEIPASS2"], "samples"))
 DEFAULT_MODEL_FILE = "pycam.stl"
 EXIT_CODES = {"ok": 0, "requirements": 1, "load_model_failed": 2,
-        "write_output_failed": 3, "parsing_failed": 4}
+        "write_output_failed": 3, "parsing_failed": 4,
+        "server_without_password": 5, "connection_error": 6}
 
 
 def show_gui(inputfile=None, task_settings_file=None):
@@ -136,7 +147,7 @@ def get_output_handler(destination):
         closer = handler.close
     return (handler, closer)
 
-def execute(opts, args, pycam):
+def execute(parser, opts, args, pycam):
     # try to change the process name
     pycam.Utils.setproctitle("pycam")
 
@@ -178,17 +189,34 @@ def execute(opts, args, pycam):
     else:
         log.info("Psyco was disabled via the commandline")
 
+    # check if server-auth-key is given -> this is mandatory for server mode
+    if (opts.enable_server or opts.start_server) and not opts.server_authkey:
+        parser.error("You need to supply a shared secret for server mode. " \
+                + "This is supposed to prevent you from exposing your host " \
+                + "to remote access without authentication.\n" \
+                + "Please add the '--server-auth-key' argument followed by " \
+                + "a shared secret password.")
+        sys.exit(EXIT_CODES["server_without_password"])
+
     # initialize multiprocessing
-    if opts.start_server:
-        pycam.Utils.threading.init_threading(opts.parallel_processes,
-                remote=opts.remote_server, run_server=True,
-                server_credentials=opts.server_authkey)
-        pycam.Utils.threading.cleanup()
-        sys.exit(0)
-    else:
-        pycam.Utils.threading.init_threading(opts.parallel_processes,
-                enable_server=opts.enable_server, remote=opts.remote_server,
-                server_credentials=opts.server_authkey)
+    try:
+        if opts.start_server:
+            pycam.Utils.threading.init_threading(opts.parallel_processes,
+                    remote=opts.remote_server, run_server=True,
+                    server_credentials=opts.server_authkey)
+            pycam.Utils.threading.cleanup()
+            sys.exit(EXIT_CODES["ok"])
+        else:
+            pycam.Utils.threading.init_threading(opts.parallel_processes,
+                    enable_server=opts.enable_server, remote=opts.remote_server,
+                    server_credentials=opts.server_authkey)
+    except socket.error, err_msg:
+        log.error("Failed to connect to remote server: %s" % err_msg)
+        sys.exit(EXIT_CODES["connection_error"])
+    except multiprocessing.AuthenticationError, err_msg:
+        log.error("The remote server rejected your authentication key: %s" \
+                % err_msg)
+        sys.exit(EXIT_CODES["connection_error"])
 
     # initialize the progress bar
     progress_styles = {"none": pycam.Gui.Console.ConsoleProgressBar.STYLE_NONE,
@@ -289,12 +317,12 @@ def execute(opts, args, pycam):
             return result
         bounds_lower_nums = parse_triple_float(opts.bounds_lower)
         if opts.bounds_lower and not bounds_lower_nums:
-            log.error("Failed to parse the lower boundary limit: %s" \
+            parser.error("Failed to parse the lower boundary limit: %s" \
                     % opts.bounds_lower)
             sys.exit(EXIT_CODES["parsing_failed"])
         bounds_upper_nums = parse_triple_float(opts.bounds_upper)
         if opts.bounds_upper and not bounds_upper_nums:
-            log.error("Failed to parse the upper boundary limit: %s" \
+            parser.error("Failed to parse the upper boundary limit: %s" \
                     % opts.bounds_upper)
             sys.exit(EXIT_CODES["parsing_failed"])
         if bounds_lower_nums is None:
@@ -592,11 +620,12 @@ if __name__ == "__main__":
     try:
         if opts.profile_destination:
             import cProfile
-            cProfile.run('execute(opts, args, pycam)', opts.profile_destination)
+            cProfile.run('execute(parser, opts, args, pycam)',
+                    opts.profile_destination)
         else:
             # We need to add the parameter "pycam" to avoid weeeeird namespace
             # issues. Any idea how to fix this?
-            execute(opts, args, pycam)
+            execute(parser, opts, args, pycam)
     except KeyboardInterrupt:
         log.info("Quit requested")
     pycam.Utils.threading.cleanup()
