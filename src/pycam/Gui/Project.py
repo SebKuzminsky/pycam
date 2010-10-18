@@ -56,11 +56,12 @@ DATA_DIR_ENVIRON_KEY = "PYCAM_DATA_DIR"
 DATA_BASE_DIRS = [os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
             os.pardir, "share", "gtk-interface"),
         os.path.join(sys.prefix, "share", "pycam", "ui")]
-if DATA_DIR_ENVIRON_KEY in os.environ:
-    DATA_BASE_DIRS.insert(0, os.environ[DATA_DIR_ENVIRON_KEY])
 # necessary for "pyinstaller"
 if "_MEIPASS2" in os.environ:
     DATA_BASE_DIRS.insert(0, os.environ["_MEIPASS2"])
+# respect an override via an environment setting
+if DATA_DIR_ENVIRON_KEY in os.environ:
+    DATA_BASE_DIRS.insert(0, os.environ[DATA_DIR_ENVIRON_KEY])
 
 GTKBUILD_FILE = "pycam-project.ui"
 GTKMENU_FILE = "menubar.xml"
@@ -757,7 +758,7 @@ class ProjectGui:
             recent_files_menu.connect("item-activated",
                     self.load_recent_model_file)
         else:
-            self.gui.get_object("OpenRecentModel").hide()
+            self.gui.get_object("OpenRecentModel").set_visible(False)
         # load the menubar and connect functions to its items
         self.menubar = uimanager.get_widget("/MenuBar")
         window_box = self.gui.get_object("WindowBox")

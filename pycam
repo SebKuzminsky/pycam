@@ -27,6 +27,11 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
+# register the glut32.dll manually for the pyinstaller standalone executable
+if hasattr(sys, "frozen") and sys.frozen and "_MEIPASS2" in os.environ:
+    from ctypes import windll
+    windll[os.path.join(os.environ["_MEIPASS2"], "glut32.dll")]
+
 from pycam.Physics.ode_physics import override_ode_availability
 import pycam.Gui.common as GuiCommon
 import pycam.Gui.Settings
