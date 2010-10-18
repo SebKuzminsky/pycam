@@ -4,17 +4,21 @@ Dependencies of the graphical interface:
 Windows:
 --------
 
-    Python 2.5:
-                http://www.python.org/download/releases/2.5.4/
-                Please note that some of the GTK packages below require
-                specifically v2.5 (thus v2.6 will not help).
+Please note that there are two ways of using PyCAM on Windows:
+1) use the standalone executable (experimental - but it does not require further dependencies)
+2) the installer package - it requires the following dependencies:
 
-    GTK v2.12 and GtkGlExt and PyGTK:
+    Python 2.6:
+                http://www.python.org/download/releases/2.6.6/
+                Please note that some of the GTK packages below require
+                specifically v2.6 (thus v2.7 will not help).
+
+    GTK v2.16 and GtkGlExt and PyGTK:
                 http://www.bonifazi.eu/appunti/ (Blog)
                 http://www.bonifazi.eu/appunti/pygtk_windows_installer.exe
 
     PyODE (optional):
-                http://downloads.sourceforge.net/pyode/PyODE-1.2.0.win32-py2.5.exe?use_mirror=osdn
+                http://sourceforge.net/projects/pyode/files/pyode/snapshot-2010-03-22/PyODE-snapshot-2010-03-22.win32-py2.6.exe/download
 
 
 Notes:

@@ -1,6 +1,7 @@
 Version 0.4 - UNRELEASED
- * use multiple processes for some toolpath strategies
+ * use all available CPU cores for parallel processing
   * this requires at least Python 2.6 or the "python-multiprocessing" package
+ * a standalone windows executable is available (experimental)
  * added an improved contour toolpath strategy (ContourFollow)
   * see http://fab.senselab.org/node/43
  * added options for conventional/climb milling

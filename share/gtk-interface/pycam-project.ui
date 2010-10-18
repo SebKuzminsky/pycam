@@ -6794,7 +6794,8 @@ Any selected group of dimensions will be scaled accordingly.</property>
                     <property name="visible">True</property>
                     <property name="xalign">0</property>
                     <property name="label" translatable="yes">Multiprocessing is currently not enabled on your system.
-Please run PyCAM with the parameter "--enable-server" to allow remote workers to connect to your host.</property>
+You need to start PyCAM with the parameter "--enable-server" to allow remote workers to connect to your host.
+Please read the description of the Server Mode (linked below) to understand the related security implications.</property>
                     <property name="use_markup">True</property>
                     <property name="wrap">True</property>
                     <property name="width_chars">60</property>

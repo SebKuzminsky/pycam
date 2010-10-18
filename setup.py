@@ -90,8 +90,8 @@ Basically you will need Python, GTK and OpenGL.
             os.path.join("share", "gtk-interface", "menubar.xml"),
             os.path.join("share", "gtk-interface", "logo_gui.png"),
             ]),
-        ("share/pycam/samples", 
-            glob.glob(os.path.join("samples", "*"))),
+        ("share/pycam", [os.path.join("share", "pycam.ico")]),
+        ("share/pycam/samples", glob.glob(os.path.join("samples", "*"))),
     ],
 )
 

@@ -49,6 +49,8 @@ START_SCRIPT = '"%s"' % os.path.join(distutils.sysconfig.EXEC_PREFIX, "Scripts",
 
 PYTHON_DOC_DIR = os.path.join(distutils.sysconfig.PREFIX, "share", "pycam", "doc")
 
+ICON_FILE = os.path.join(distutils.sysconfig.PREFIX, "share", "pycam", "pycam.ico")
+
 # add some more doc files
 DOC_FILES = [
         ("LICENSE.TXT", "License"),
@@ -74,7 +76,7 @@ if action == "-install":
         create_shortcut(target, description, filename)
         file_created(filename)
     filename = os.path.join(START_MENU_SUBDIR, "Run PyCAM") + LINK_EXTENSION
-    create_shortcut(PYTHON_EXE, "Run PyCAM", filename, START_SCRIPT)
+    create_shortcut(PYTHON_EXE, "Run PyCAM", filename, START_SCRIPT, iconpath=ICON_FILE)
     file_created(filename)
 elif action == "-remove":
     pass

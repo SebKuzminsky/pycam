@@ -78,6 +78,6 @@ exe = EXE(pyz, data, samples, gtk_pixbuf_loaders,
           debug=False,
           strip=False,
           upx=True,
-          console=True,
+          console=False,
       )
 
