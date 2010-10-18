@@ -205,7 +205,7 @@ class ContourFollow:
             miny = max([m.miny for m in self.models])
             model_dim = max(abs(maxx - minx), abs(maxy - miny))
             depth = math.log(accuracy * model_dim / self.cutter.radius) / math.log(2)
-            self._physics_maxdepth = min(max_depth, max(ceil(depth_x), 4))
+            self._physics_maxdepth = min(max_depth, max(ceil(depth), 4))
 
     def _get_free_paths(self, p1, p2):
         if self.physics:
