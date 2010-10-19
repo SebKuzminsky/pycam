@@ -7,8 +7,11 @@
  - "make dist"
  - carefully check the resulting content of the archives
 
-3) create an svn tag for the release (includes uploading the archive files)
+3a) create an svn tag for the release (includes uploading the archive files)
  - "make upload"
+
+3b) create the Windows standalone binary
+ - see pyinstaller/pyinstall_info.txt for details
 
 4) upload files to sourceforge
  - https://sourceforge.net/project/admin/explorer.php?group_id=237831
@@ -23,12 +26,13 @@
   - zip: others
   - exe: Windows
   - tar.gz: Linux, Mac, BSD, Solaris
+  - standalone binary (Windows): no specific architecture
 
 5) announcements
  - create a project news items at sourceforge
  - create a new release at http://freshmeat.net
  - post the new release at http://www.cnczone.com/forums/showthread.php?t=63716
- - ?
+ - create a blog post at: http://fab.senselab.org
 
 6) other stuff
  - create a new release tag for the bug tracker:

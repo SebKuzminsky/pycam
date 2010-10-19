@@ -1,4 +1,4 @@
-Version 0.4 - UNRELEASED
+Version 0.4 - 2010-10-19
  * use all available CPU cores for parallel processing
   * this requires at least Python 2.6 or the "python-multiprocessing" package
  * a standalone windows executable is available (experimental)

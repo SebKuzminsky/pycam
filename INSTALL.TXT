@@ -6,7 +6,13 @@ Windows:
 
 Please note that there are two ways of using PyCAM on Windows:
 1) use the standalone executable (experimental - but it does not require further dependencies)
+    http://sourceforge.net/projects/pycam/files/
+
 2) the installer package - it requires the following dependencies:
+
+BEWARE: this currently (as of 2010/10/20) does not work due to a problem with
+the gtk-installer. I guess, it will be fixed in the next weeks. Until then you
+should use the standalone executable for Windows (see above).
 
     Python 2.6:
                 http://www.python.org/download/releases/2.6.6/
