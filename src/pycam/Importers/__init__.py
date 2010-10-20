@@ -27,6 +27,7 @@ import pycam.Utils.log
 import pycam.Importers.DXFImporter
 import pycam.Importers.STLImporter
 import pycam.Importers.SVGImporter
+import pycam.Importers.PSImporter
 
 import os
 
@@ -46,8 +47,12 @@ def detect_file_type(filename):
             return ("dxf", pycam.Importers.DXFImporter.import_model)
         elif filename.lower().endswith(".svg"):
             return ("svg", pycam.Importers.SVGImporter.import_model)
+        elif filename.lower().endswith(".eps") \
+                or filename.lower().endswith(".ps"):
+            return ("ps", pycam.Importers.PSImporter.import_model)
         else:
-            log.error("Importers: Failed to detect the model type of '%s'." \
-                    % filename + " Is the file extension (stl/dxf/svg) correct?")
+            log.error(("Importers: Failed to detect the model type of '%s'. " \
+                    + "Is the file extension (stl/dxf/svg/eps/ps) correct?") \
+                    % filename)
             return failure
 
