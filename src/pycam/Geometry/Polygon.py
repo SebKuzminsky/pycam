@@ -166,9 +166,9 @@ class Polygon(TransformableContainer):
         result = []
         for index in range(len(self._points) - 1):
             result.append(self._points[index + 1].sub(
-                    self._points[index]).size())
+                    self._points[index]).norm)
         if self._is_closed:
-            result.append(self._points[0].sub(self._points[-1]).size())
+            result.append(self._points[0].sub(self._points[-1]).norm)
         return result
 
     def get_max_inside_distance(self):
