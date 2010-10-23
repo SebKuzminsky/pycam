@@ -101,9 +101,11 @@ class Triangle(TransformableContainer):
         # tree points per triangle
         return 7
 
-    def to_OpenGL(self):
+    def to_OpenGL(self, color=None):
         if not GL_enabled:
             return
+        if not color is None:
+            GL.glColor4f(*color)
         GL.glBegin(GL.GL_TRIANGLES)
         # use normals to improve lighting (contributed by imyrek)
         normal_t = self.normal
@@ -218,4 +220,8 @@ class Triangle(TransformableContainer):
             sub += Triangle(p6, p4, p5).subdivide(depth - 1)
             sub += Triangle(p4, self.p2, p5).subdivide(depth - 1)
         return sub
+
+    def get_area(self):
+        cross = self.p2.sub(self.p1).cross(self.p3.sub(self.p1))
+        return cross.norm / 2
 

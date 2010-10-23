@@ -83,11 +83,19 @@ class BaseModel(TransformableContainer):
                     result += item.get_children_count()
         return result
 
-    def to_OpenGL(self):
+    def to_OpenGL(self, visible_filter=None):
+        def paint_item_filtered(item):
+            do_paint, color = visible_filter(item)
+            if do_paint:
+                item.to_OpenGL(color)
+        if visible_filter is None:
+            paint_item = lambda item: item.to_OpenGL()
+        else:
+            paint_item = paint_item_filtered
         for item in self.next():
             # ignore invisble things like the normal of a ContourModel
             if hasattr(item, "to_OpenGL"):
-                item.to_OpenGL()
+                paint_item(item)
 
     def is_export_supported(self):
         return not self._export_function is None
@@ -184,6 +192,7 @@ class Model(BaseModel):
         # enable/disable kdtree
         self._use_kdtree = use_kdtree
         self._t_kdtree = None
+        self.__flat_groups_cache = {}
         self.__uuid = None
         
     @property
@@ -208,6 +217,7 @@ class Model(BaseModel):
         if self._use_kdtree:
             self._t_kdtree = TriangleKdtree(self.triangles())
         self.__uuid = str(uuid.uuid4())
+        self.__flat_groups_cache = {}
         # the kdtree is up-to-date again
         self._dirty = False
 
@@ -237,6 +247,49 @@ class Model(BaseModel):
                 len(contour.get_polygons()),
                 [len(p.get_lines()) for p in contour.get_polygons()]))
         return contour.get_polygons()
+
+    def get_flat_areas(self, min_area=None):
+        """ Find plane areas (combinations of triangles) bigger than 'min_area'
+        and ignore vertical planes. The result is cached.
+        """
+        if not self.__flat_groups_cache.has_key(min_area):
+            def has_shared_edge(t1, t2):
+                count = 0
+                for p in (t1.p1, t1.p2, t1.p3):
+                    if p in (t2.p1, t2.p2, t2.p3):
+                        count += 1
+                return count >= 2
+            groups = []
+            for t in self.triangles():
+                # Find all groups with the same direction (see 'normal') that
+                # share at least one edge with the current triangle.
+                touch_groups = []
+                if t.normal.z == 0:
+                    # ignore vertical triangles
+                    continue
+                for group_index, group in enumerate(groups):
+                    if t.normal == group[0].normal:
+                        for group_t in group:
+                            if has_shared_edge(t, group_t):
+                                touch_groups.append(group_index)
+                                break
+                if len(touch_groups) > 1:
+                    # combine multiple areas with this new triangle
+                    touch_groups.reverse()
+                    combined = [t]
+                    for touch_group_index in touch_groups:
+                        combined.extend(groups.pop(touch_group_index))
+                    groups.append(combined)
+                elif len(touch_groups) == 1:
+                    groups[touch_groups[0]].append(t)
+                else:
+                    groups.append([t])
+            # check the size of each area
+            if not min_area is None:
+                groups = [group for group in groups
+                        if sum([t.get_area() for t in group]) >= min_area]
+            self.__flat_groups_cache[min_area] = groups
+        return self.__flat_groups_cache[min_area]
 
 
 class ContourModel(BaseModel):
