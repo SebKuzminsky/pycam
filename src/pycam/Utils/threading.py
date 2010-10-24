@@ -23,13 +23,26 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import pycam.Utils.log
 # multiprocessing is imported later
 #import multiprocessing
-#from multiprocessing.managers import SyncManager
 import Queue
+import signal
 import platform
 import random
 import uuid
 import time
 import os
+import sys
+
+try:
+    from multiprocessing.managers import SyncManager
+    # this class definition needs to be at the top level - for pyinstaller
+    class TaskManager(SyncManager):
+        @classmethod
+        def _run_server(cls, *args):
+            # make sure that the server ignores SIGINT (KeyboardInterrupt)
+            signal.signal(signal.SIGINT, signal.SIG_IGN)
+            SyncManager._run_server(*args)
+except ImportError:
+    pass
 
 DEFAULT_PORT = 1250
 
@@ -73,16 +86,48 @@ def get_pool_statistics():
 def init_threading(number_of_processes=None, enable_server=False, remote=None, run_server=False,
         server_credentials=""):
     global __multiprocessing, __num_of_processes, __manager, __closing, __task_source_uuid
+    # server mode is disabled for the Windows standalone executable
+    is_frozen = hasattr(sys, "frozen") and sys.frozen
+    if is_frozen and (enable_server or run_server):
+        # server mode is disabled for the Windows pyinstaller standalone
+        # due to "pickle errors". How to reproduce: run the standalone binary
+        # with "--enable-server --server-auth-key foo".
+        server_mode_unavailable = "Server mode is not available for " \
+                + "the Windows standalone executable. Please use the " \
+                + "installer package instead (if possible)."
+        if enable_server:
+            log.warn("Unable to enable server mode with the Windows " \
+                    + "standalone executable. " \
+                    + multiprocessing_missing_text)
+        elif run_server:
+            log.warn("Unable to run in server-only mode with the Windows " \
+                    + "standalone executable. " \
+                    + multiprocessing_missing_text)
+        else:
+            # no further warnings required
+            pass
+        enable_server = False
+        run_server = False
     # only local -> no server settings allowed
     if (not enable_server) and (not run_server):
         remote = None
         run_server = None
         server_credentials = ""
-    try:
-        import multiprocessing
-        mp_is_available = True
-    except ImportError:
+    if is_frozen:
+        # Running multiple processes with the Windows standalone executable
+        # causes "WindowsError: invalid handle" error messages. The processes
+        # can't communicate - thus no results are returned.
+        # Reproduce with: "--number-of-processes 2"
+        log.warn("Multiprocessing capabilities are not available for the " \
+                + "Windows standable executable. Use the installer package " \
+                + "instead (if possible).")
         mp_is_available = False
+    else:
+        try:
+            import multiprocessing
+            mp_is_available = True
+        except ImportError:
+            mp_is_available = False
     if not mp_is_available:
         __multiprocessing = False
         # Maybe a multiprocessing feature was explicitely requested?
@@ -145,14 +190,6 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None, r
                 host = remote
                 port = DEFAULT_PORT
             address = (host, port)
-        from multiprocessing.managers import SyncManager
-        class TaskManager(SyncManager):
-            @classmethod
-            def _run_server(cls, *args):
-                # make sure that the server ignores SIGINT (KeyboardInterrupt)
-                import signal
-                signal.signal(signal.SIGINT, signal.SIG_IGN)
-                SyncManager._run_server(*args)
         if remote is None:
             tasks_queue = multiprocessing.Queue()
             results_queue = multiprocessing.Queue()
