@@ -397,6 +397,12 @@ def execute(parser, opts, args, pycam):
 
 # define the commandline interface
 if __name__ == "__main__":
+    # The PyInstaller standalone executable requires this "freeze_support" call.
+    # Otherwise we will see a warning regarding an invalid argument called
+    # "--multiprocessing-fork". This problem can be triggered on single-core
+    # systems with these arguments: "--enable-server --server-auth-key foo".
+    if hasattr(multiprocessing, "freeze_support"):
+        multiprocessing.freeze_support()
     parser = OptionParser(prog="PyCAM",
             usage="usage: pycam [options] [inputfile]\n\n" \
                     + "Start the PyCAM toolpath generator. Supplying one of " \
