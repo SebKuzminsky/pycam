@@ -303,8 +303,7 @@ class ModelViewWindowGL:
         self.area.set_events(gtk.gdk.MOUSE | gtk.gdk.BUTTON_PRESS_MASK)
         self.area.connect("button-press-event", self.mouse_handler)
         self.area.connect('motion-notify-event', self.mouse_handler)
-        self.area.show()
-        self.container.add(self.area)
+        self.container.pack_end(self.area)
         self.camera = Camera(self.settings, lambda: (self.area.allocation.width,
                 self.area.allocation.height))
         # Color the dimension value according to the axes.
@@ -322,6 +321,7 @@ class ModelViewWindowGL:
             for name in names:
                 self.gui.get_object(name).set_attributes(attributes)
         # show the window
+        self.area.show()
         self.container.show()
         self.show()
 
@@ -741,7 +741,24 @@ def draw_complete_model_view(settings):
     # draw the model
     if settings.get("show_model"):
         GL.glColor4f(*settings.get("color_model"))
-        settings.get("model").to_OpenGL()
+        model = settings.get("model")
+        min_area = abs(model.maxx - model.minx) * abs(model.maxy - model.miny) / 100
+        """
+        # example for coloring specific triangles
+        groups = model.get_flat_areas(min_area)
+        all_flat_ids = []
+        for group in groups:
+            all_flat_ids.extend([t.id for t in group])
+        flat_color = (1.0, 0.0, 0.0, 1.0)
+        normal_color = settings.get("color_model")
+        def check_triangle_draw(triangle):
+            if triangle.id in all_flat_ids:
+                return True, flat_color
+            else:
+                return True, normal_color
+        model.to_OpenGL(visible_filter=check_triangle_draw)
+        """
+        model.to_OpenGL()
     # draw the support grid
     if settings.get("show_support_grid") and settings.get("support_grid"):
         GL.glColor4f(*settings.get("color_support_grid"))

@@ -329,7 +329,8 @@ class ProjectGui:
         # bounds setting.
         def get_absolute_limit(key):
             if self.model is None:
-                return None
+                # avoid problems if no model is loaded
+                return 0
             bounds = self.settings.get("current_bounds")
             if bounds is None:
                 return getattr(self.model, key)
