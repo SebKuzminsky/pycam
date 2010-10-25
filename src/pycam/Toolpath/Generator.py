@@ -210,6 +210,8 @@ def generate_toolpath(model, tool_settings=None,
             progress_callback = None
         contour_model = contour_model.get_offset_model(engrave_offset,
                 callback=progress_callback)
+        if contour_model is None:
+            return "Failed to calculate offset polygons"
         if not callback is None:
             # reset percentage counter after the contour model calculation
             callback(percent=0)

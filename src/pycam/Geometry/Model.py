@@ -128,6 +128,10 @@ class BaseModel(TransformableContainer):
     def append(self, item):
         self._update_limits(item)
 
+    def extend(self, items):
+        for item in items:
+            self.append(item)
+
     def maxsize(self):
         return max(abs(self.maxx), abs(self.minx), abs(self.maxy),
                 abs(self.miny), abs(self.maxz), abs(self.minz))
@@ -438,7 +442,7 @@ class ContourModel(BaseModel):
         else:
             return None
 
-    def get_offset_model(self, offset, callback=None):
+    def get_offset_model_simple(self, offset, callback=None):
         """ calculate a contour model that surrounds the current model with
         a given offset.
         This is mainly useful for engravings that should not proceed _on_ the
@@ -466,7 +470,16 @@ class ContourModel(BaseModel):
         self._cached_offset_models[offset] = result
         return result
 
-    def check_for_collisions(self, callback=None):
+    def get_offset_model(self, offset, callback=None):
+        result = ContourModel(plane=self._plane)
+        for group in self.get_polygons():
+            new_groups = group.get_offset_polygons(offset)
+            result.extend(new_groups)
+            if callback and callback():
+                return None
+        return result
+
+    def check_for_collisions(self, callback=None, find_all_collisions=False):
         """ check if lines in different line groups of this model collide
 
         Returns a pycam.Geometry.Point.Point instance in case of an
@@ -494,8 +507,12 @@ class ContourModel(BaseModel):
                         return True
             return False
         # check each pair of line groups for intersections
-        for index, group1 in enumerate(self._line_groups[:-1]):
-            for group2 in self._line_groups[index+1:]:
+        intersections = []
+        for index1, group1 in enumerate(self._line_groups[:-1]):
+            for index2, group2 in enumerate(self._line_groups):
+                if index2 <= index1:
+                    # avoid double-checks
+                    continue
                 # check if both groups overlap - otherwise skip this pair
                 if check_bounds_of_groups(group1, group2):
                     # check each pair of lines for intersections
@@ -503,10 +520,19 @@ class ContourModel(BaseModel):
                         for line2 in group2.get_lines():
                             intersection, factor = line1.get_intersection(line2)
                             if intersection:
-                                # return just the place of intersection
-                                return intersection
+                                if find_all_collisions:
+                                    intersections.append((index1, index2))
+                                else:
+                                    # return just the place of intersection
+                                    return intersection
             # update the progress visualization and quit if requested
             if callback and callback():
-                return None
-        return False
+                if find_all_collisions:
+                    return intersections
+                else:
+                    return None
+        if find_all_collisions:
+            return intersections
+        else:
+            return False
 

@@ -306,7 +306,160 @@ class Polygon(TransformableContainer):
         p3 = self._points[(index + 1) % len(self._points)]
         return get_bisector(p1, p2, p3, self.plane.n)
 
+    def get_offset_polygons_validated(self, offset):
+        def get_shifted_vertex(index, offset):
+            p1 = self._points[index]
+            p2 = self._points[(index + 1) % len(self._points)]
+            cross_offset = p2.sub(p1).cross(self.plane.n).normalized()
+            bisector_normalized = self.get_bisector(index)
+            factor = cross_offset.dot(bisector_normalized)
+            if factor != 0:
+                bisector_sized = bisector_normalized.mul(offset / factor)
+                return p1.add(bisector_sized)
+            else:
+                return p2
+        if offset * 2 >= self.get_max_inside_distance():
+            # no polygons will be left
+            return []
+        points = []
+        for index in range(len(self._points)):
+            points.append(get_shifted_vertex(index, offset))
+        new_lines = []
+        split_points = []
+        def test_point_near(p, others):
+            for o in others:
+                if p.sub(o).norm < 0.0001:
+                    return True
+            return False
+        for index in range(len(points)):
+            next_index = (index + 1) % len(points)
+            p1 = points[index]
+            p2 = points[next_index]
+            diff = p2.sub(p1)
+            if diff.norm < epsilon:
+                # fix the location of p2 (avoid gaps for diff.norm > 0)
+                points[next_index] = points[index]
+                # don't add the current line
+            else:
+                old_dir = self._points[next_index].sub(
+                        self._points[index]).normalized()
+                if diff.normalized() != old_dir:
+                    # the direction turned around - this offset is too big
+                    print "TURNAROUND"
+                    return None
+                else:
+                    new_line = Line(p1, p2)
+                    if index == len(points) - 1:
+                        # Don't check for a collision of the last line with the
+                        # first line.
+                        other_index = 1
+                    else:
+                        other_index = 0
+                    # Check for any intersections with previous lines (except
+                    # for the direct predecessor).
+                    already_added = False
+                    while other_index < len(new_lines) - 1:
+                        other_line = new_lines[other_index]
+                        cp, dist = new_line.get_intersection(other_line)
+                        if not cp is None:
+                            # There is a collision - let's check if the split
+                            # happened at the end of one of these lines.
+                            split_points.append(cp)
+                            if test_point_near(cp, (p1, p2)):
+                                # maybe we need to split 'other_line'
+                                if not test_point_near(cp, (other_line.p1, other_line.p2)):
+                                    line_part1 = Line(other_line.p1, cp)
+                                    line_part2 = Line(cp, other_line.p2)
+                                    # remove the old line
+                                    new_lines.pop(other_index)
+                                    new_lines.insert(other_index, line_part1)
+                                    new_lines.insert(other_index + 1, line_part2)
+                                    # Skip the pointless check for the second
+                                    # part of the splitted 'other_line'.
+                                    other_index += 1
+                            elif test_point_near(cp, (other_line.p1, other_line.p2)):
+                                if not test_point_near(cp, (p1, p2)):
+                                    if already_added:
+                                        raise BaseException("Already added before")
+                                    new_lines.append(Line(p1, cp))
+                                    new_lines.append(Line(cp, p2))
+                                    already_added = True
+                            else:
+                                # a split within the line -> problem
+                                return None
+                        other_index += 1
+                    # the new line is ok
+                    if not already_added:
+                        new_lines.append(new_line)
+        TODO: move the splitting of lines down here
+        # split the list of lines into groups (based on intersections)
+        print "Lines:", new_lines
+        print "Points:", split_points
+        groups = [[]]
+        current_group = 0
+        for line in new_lines:
+            if test_point_near(line.p1, split_points):
+                # check if any preceeding group fits to the point
+                for index, group in enumerate(groups):
+                    if not group:
+                        continue
+                    if index == current_group:
+                        continue
+                    if line.p1 == group[-1].p2:
+                        current_group = index
+                        groups[current_group].append(line)
+                        break
+                else:
+                    current_group = len(groups)
+                    groups.append([line])
+            else:
+                groups[current_group].append(line)
+        result_polygons = []
+        for group in groups:
+            if len(group) <= 2:
+                continue
+            poly = Polygon(self.plane)
+            for line in group:
+                poly.append(line)
+            if self._is_closed:
+                if poly.is_outer() != poly.is_outer():
+                    continue
+            else:
+                if poly.get_area() != 0:
+                    continue
+            result_polygons.append(poly)
+        return result_polygons
+
     def get_offset_polygons(self, offset):
+        if offset == 0:
+            return [self]
+        result = self.get_offset_polygons_validated(offset)
+        if not result is None:
+            return result
+        else:
+            lower = number(0)
+            upper = offset
+            loop_limit = 25
+            while (loop_limit > 0):
+                middle = (upper + lower) / 2
+                result = self.get_offset_polygons_validated(middle)
+                if result is None:
+                    upper = middle
+                elif len(result) > 1:
+                    print "POLYGON SPLIT at %s: %d" % (middle, len(result))
+                    # the original polygon was splitted
+                    shifted_sub_polygons = []
+                    for sub_poly in result:
+                        shifted_sub_polygons.extend(
+                                sub_poly.get_offset_polygons(offset - middle))
+                    return shifted_sub_polygons
+                else:
+                    lower = middle
+                loop_limit -= 1
+            # no split event happened -> no valid shifted polygon
+            return []
+
+    def get_offset_polygons_quite_ok(self, offset):
         def get_shifted_vertex(index, offset):
             p1 = self._points[index]
             p2 = self._points[(index + 1) % len(self._points)]
