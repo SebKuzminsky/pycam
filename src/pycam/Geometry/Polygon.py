@@ -324,81 +324,127 @@ class Polygon(TransformableContainer):
         points = []
         for index in range(len(self._points)):
             points.append(get_shifted_vertex(index, offset))
-        new_lines = []
-        split_points = []
+        max_dist = 100 * epsilon
         def test_point_near(p, others):
             for o in others:
-                if p.sub(o).norm < 0.0001:
+                if p.sub(o).norm < max_dist:
                     return True
             return False
+        reverse_lines = []
+        shifted_lines = []
         for index in range(len(points)):
             next_index = (index + 1) % len(points)
             p1 = points[index]
             p2 = points[next_index]
             diff = p2.sub(p1)
-            if diff.norm < epsilon:
-                # fix the location of p2 (avoid gaps for diff.norm > 0)
-                points[next_index] = points[index]
-                # don't add the current line
-            else:
-                old_dir = self._points[next_index].sub(
-                        self._points[index]).normalized()
-                if diff.normalized() != old_dir:
-                    # the direction turned around - this offset is too big
-                    print "TURNAROUND"
+            old_dir = self._points[next_index].sub(
+                    self._points[index]).normalized()
+            if diff.normalized() != old_dir:
+                # the direction turned around
+                if diff.norm > max_dist:
+                    # the offset was too big
                     return None
                 else:
-                    new_line = Line(p1, p2)
-                    if index == len(points) - 1:
-                        # Don't check for a collision of the last line with the
-                        # first line.
-                        other_index = 1
-                    else:
-                        other_index = 0
-                    # Check for any intersections with previous lines (except
-                    # for the direct predecessor).
-                    already_added = False
-                    while other_index < len(new_lines) - 1:
-                        other_line = new_lines[other_index]
-                        cp, dist = new_line.get_intersection(other_line)
-                        if not cp is None:
-                            # There is a collision - let's check if the split
-                            # happened at the end of one of these lines.
-                            split_points.append(cp)
-                            if test_point_near(cp, (p1, p2)):
-                                # maybe we need to split 'other_line'
-                                if not test_point_near(cp, (other_line.p1, other_line.p2)):
-                                    line_part1 = Line(other_line.p1, cp)
-                                    line_part2 = Line(cp, other_line.p2)
-                                    # remove the old line
-                                    new_lines.pop(other_index)
-                                    new_lines.insert(other_index, line_part1)
-                                    new_lines.insert(other_index + 1, line_part2)
-                                    # Skip the pointless check for the second
-                                    # part of the splitted 'other_line'.
-                                    other_index += 1
-                            elif test_point_near(cp, (other_line.p1, other_line.p2)):
-                                if not test_point_near(cp, (p1, p2)):
-                                    if already_added:
-                                        raise BaseException("Already added before")
-                                    new_lines.append(Line(p1, cp))
-                                    new_lines.append(Line(cp, p2))
-                                    already_added = True
-                            else:
-                                # a split within the line -> problem
-                                return None
-                        other_index += 1
-                    # the new line is ok
-                    if not already_added:
-                        new_lines.append(new_line)
-        TODO: move the splitting of lines down here
+                    reverse_lines.append(index)
+                shifted_lines.append((True, Line(p1, p2)))
+            else:
+                shifted_lines.append((False, Line(p1, p2)))
+        # look for reversed lines
+        index = 0
+        while index < len(shifted_lines):
+            line_reverse, line = shifted_lines[index]
+            if line_reverse:
+                prev_index = (index - 1) % len(shifted_lines)
+                next_index = (index + 1) % len(shifted_lines)
+                prev_reverse, prev_line = shifted_lines[prev_index]
+                while prev_reverse and (prev_index != next_index):
+                    prev_index = (prev_index - 1) % len(shifted_lines)
+                    prev_reverse, prev_line = shifted_lines[prev_index]
+                if prev_index == next_index:
+                    # no lines are left
+                    print "out 1"
+                    return []
+                next_reverse, next_line = shifted_lines[next_index]
+                while next_reverse and (prev_index != next_index):
+                    next_index = (next_index + 1) % len(shifted_lines)
+                    next_reverse, next_line = shifted_lines[next_index]
+                if prev_index == next_index:
+                    # no lines are left
+                    print "out 2"
+                    return []
+                if prev_line.p2.sub(next_line.p1).norm > max_dist:
+                    cp, dist = prev_line.get_intersection(next_line)
+                else:
+                    cp = prev_line.p2
+                if cp:
+                    shifted_lines[prev_index] = (False, Line(prev_line.p1, cp))
+                    shifted_lines[next_index] = (False, Line(cp, next_line.p2))
+                else:
+                    cp, dist = prev_line.get_intersection(next_line, infinite_lines=True)
+                    raise BaseException("Expected intersection not found: " \
+                            + "%s - %s - %s(%d) / %s(%d)" % (cp, shifted_lines[prev_index+1:next_index], prev_line, prev_index, next_line, next_index))
+                if index > next_index:
+                    # we wrapped around the end of the list
+                    break
+                else:
+                    index = next_index + 1
+            else:
+                index += 1
+        non_reversed = [line for reverse, line in shifted_lines
+                if not reverse and line.len > 0]
         # split the list of lines into groups (based on intersections)
-        print "Lines:", new_lines
-        print "Points:", split_points
+        split_points = []
+        index = 0
+        while index < len(non_reversed):
+            other_index = 0
+            while other_index < len(non_reversed):
+                other_line = non_reversed[other_index]
+                if (other_index == index) \
+                        or (other_index == ((index - 1) % len(non_reversed))) \
+                        or (other_index == ((index + 1) % len(non_reversed))):
+                    # skip neighbours
+                    other_index += 1
+                    continue
+                line = non_reversed[index]
+                cp, dist = line.get_intersection(other_line)
+                if cp:
+                    if not test_point_near(cp,
+                            (line.p1, line.p2, other_line.p1, other_line.p2)):
+                        # the collision is not close to an end of the line
+                        return None
+                    elif (cp == line.p1) or (cp == line.p2):
+                        # maybe we have been here before
+                        if not cp in split_points:
+                            split_points.append(cp)
+                    elif (cp.sub(line.p1).norm < max_dist) \
+                            or (cp.sub(line.p2).norm < max_dist):
+                        if cp.sub(line.p1).norm < cp.sub(line.p2).norm:
+                            non_reversed[index] = Line(cp, line.p2)
+                        else:
+                            non_reversed[index] = Line(line.p1, cp)
+                        non_reversed.pop(other_index)
+                        non_reversed.insert(other_index,
+                                Line(other_line.p1, cp))
+                        non_reversed.insert(other_index + 1,
+                                Line(cp, other_line.p2))
+                        split_points.append(cp)
+                        if other_index < index:
+                            index += 1
+                        # skip the second part of this line
+                        other_index += 1
+                    else:
+                        # the split of 'other_line' will be handled later
+                        pass
+                other_index += 1
+            index += 1
         groups = [[]]
         current_group = 0
-        for line in new_lines:
-            if test_point_near(line.p1, split_points):
+        split_here = False
+        for line in non_reversed:
+            if line.p1 in split_points:
+                split_here = True
+            if split_here:
+                split_here = False
                 # check if any preceeding group fits to the point
                 for index, group in enumerate(groups):
                     if not group:
@@ -414,20 +460,24 @@ class Polygon(TransformableContainer):
                     groups.append([line])
             else:
                 groups[current_group].append(line)
+            if line.p2 in split_points:
+                split_here = True
         result_polygons = []
         for group in groups:
             if len(group) <= 2:
                 continue
             poly = Polygon(self.plane)
+            #print "**************************************"
             for line in group:
+                #print line
                 poly.append(line)
-            if self._is_closed:
-                if poly.is_outer() != poly.is_outer():
-                    continue
+            if self._is_closed and ((not poly._is_closed) \
+                    or (self.is_outer() != poly.is_outer())):
+                continue
+            elif (not self._is_closed) and (poly.get_area() != 0):
+                continue
             else:
-                if poly.get_area() != 0:
-                    continue
-            result_polygons.append(poly)
+                result_polygons.append(poly)
         return result_polygons
 
     def get_offset_polygons(self, offset):
@@ -445,16 +495,14 @@ class Polygon(TransformableContainer):
                 result = self.get_offset_polygons_validated(middle)
                 if result is None:
                     upper = middle
-                elif len(result) > 1:
-                    print "POLYGON SPLIT at %s: %d" % (middle, len(result))
-                    # the original polygon was splitted
+                else:
+                    # the original polygon was splitted or modified
+                    print "Next level: %s" % str(middle)
                     shifted_sub_polygons = []
                     for sub_poly in result:
                         shifted_sub_polygons.extend(
                                 sub_poly.get_offset_polygons(offset - middle))
                     return shifted_sub_polygons
-                else:
-                    lower = middle
                 loop_limit -= 1
             # no split event happened -> no valid shifted polygon
             return []
