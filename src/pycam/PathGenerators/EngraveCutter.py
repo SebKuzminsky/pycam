@@ -23,9 +23,10 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.PathProcessors.PathAccumulator
 from pycam.Geometry.Point import Point
-from pycam.Geometry.utils import INFINITE, ceil
-from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode, \
-        get_free_paths_ode, get_free_paths_triangles
+from pycam.Geometry.utils import ceil
+from pycam.PathGenerators import get_max_height_dynamic
+from pycam.PathGenerators import get_max_height_dynamic, get_free_paths_ode, \
+        get_free_paths_triangles
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
 
@@ -35,7 +36,7 @@ log = pycam.Utils.log.get_logger()
 class EngraveCutter:
 
     def __init__(self, cutter, trimesh_models, contour_model, path_processor,
-            physics=None, safety_height=INFINITE):
+            physics=None):
         self.cutter = cutter
         self.models = trimesh_models
         # combine the models (if there is more than one)
@@ -51,8 +52,6 @@ class EngraveCutter:
         # This path processor does not need to be configurable.
         self.pa_drop = pycam.PathProcessors.PathAccumulator()
         self.physics = physics
-        self.safety_height = safety_height
-        self._boundary_warning_already_shown = False
 
     def GenerateToolPath(self, minz, maxz, horiz_step, dz, draw_callback=None):
         quit_requested = False
@@ -178,46 +177,30 @@ class EngraveCutter:
             draw_callback=None):
         pa.new_direction(0)
         pa.new_scanline()
-        p1 = Point(line.p1.x, line.p1.y, minz)
-        p2 = Point(line.p2.x, line.p2.y, minz)
-        distance = line.len
-        # we want to have at least five steps each
-        num_of_steps = max(5, 1 + ceil(distance / horiz_step))
-        # steps may be negative
-        x_step = (p2.x - p1.x) / (num_of_steps - 1)
-        y_step = (p2.y - p1.y) / (num_of_steps - 1)
-        x_steps = [(p1.x + i * x_step) for i in range(num_of_steps)]
-        y_steps = [(p1.y + i * y_step) for i in range(num_of_steps)]
-        step_coords = zip(x_steps, y_steps)
-
-        last_position = None
-
-        for x, y in step_coords:
-            if not self.combined_model:
-                # no obstacle -> minimum height
-                points = [Point(x, y, minz)]
-            elif self.physics:
-                points = get_max_height_ode(self.physics, x, y, minz, maxz)
-            else:
-                points = get_max_height_triangles(self.combined_model, self.cutter,
-                        x, y, minz, maxz, last_pos=last_position)
-
-            if points:
-                for p in points:
-                    pa.append(p)
-            else:
-                p = Point(x, y, self.safety_height)
-                pa.append(p)
-                if not self._boundary_warning_already_shown:
-                    log.warn("EngraveCutter: exceed the height " \
-                            + "of the boundary box: using a safe height " \
-                            + "instead. This warning is reported only once.")
-                self._boundary_warning_already_shown = True
-            # "draw_callback" returns true, if the user requested quitting via
-            # the GUI.
-            if draw_callback \
-                    and draw_callback(tool_position=p, toolpath=pa.paths):
-                break
+        if not self.combined_model:
+            # no obstacle -> minimum height
+            points = [Point(line.p1.x, line.p1.y, minz),
+                    Point(line.p2.x, line.p2.y, minz)]
+        else:
+            p1 = Point(line.p1.x, line.p1.y, minz)
+            p2 = Point(line.p2.x, line.p2.y, minz)
+            distance = line.len
+            # we want to have at least five steps each
+            num_of_steps = max(5, 1 + ceil(distance / horiz_step))
+            # steps may be negative
+            x_step = (p2.x - p1.x) / (num_of_steps - 1)
+            y_step = (p2.y - p1.y) / (num_of_steps - 1)
+            x_steps = [(p1.x + i * x_step) for i in range(num_of_steps)]
+            y_steps = [(p1.y + i * y_step) for i in range(num_of_steps)]
+            step_coords = zip(x_steps, y_steps)
+            points = get_max_height_dynamic(self.combined_model, self.cutter,
+                    step_coords, minz, maxz, self.physics)
+        for p in points:
+            pa.append(p)
+        # "draw_callback" returns true, if the user requested quitting via
+        # the GUI.
+        if draw_callback and points:
+                draw_callback(tool_position=points[-1], toolpath=pa.paths)
         pa.end_scanline()
         pa.end_direction()
 

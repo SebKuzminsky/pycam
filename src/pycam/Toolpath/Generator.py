@@ -265,8 +265,8 @@ def generate_toolpath(model, tool_settings=None,
     if path_generator == "PushCutter":
         step_width = None
     else:
-        # TODO: the step_width should be configurable
-        step_width = tool_settings["tool_radius"] / 10.0
+        # the step_width is only used for the DropCutter
+        step_width = tool_settings["tool_radius"] / 4
     if path_generator == "DropCutter":
         layer_distance = None
     else:

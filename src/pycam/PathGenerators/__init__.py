@@ -215,30 +215,14 @@ def get_max_height_ode(physics, x, y, minz, maxz):
             safe_z = current_z
         trips -= 1
     if safe_z is None:
-        # no safe position was found - let's check the upper bound
-        physics.set_drill_position((x, y, maxz))
-        if physics.check_collision():
-            # the object fills the whole range of z0..z1 -> no safe height
-            pass
-        else:
-            # at least the upper bound is collision free
-            safe_z = maxz
-    if safe_z is None:
-        return []
+        # return maxz as the collision height
+        return Point(x, y, maxz)
     else:
-        return [Point(x, y, safe_z)]
+        return Point(x, y, safe_z)
 
-def get_max_height_triangles(model, cutter, x, y, minz, maxz, last_pos=None):
-    result = []
-    if last_pos is None:
-        last_pos = {}
-    for key in ("triangle", "cut"):
-        if not key in last_pos:
-            last_pos[key] = None
+def get_max_height_triangles(model, cutter, x, y, minz, maxz):
     p = Point(x, y, maxz)
     height_max = None
-    cut_max = None
-    triangle_max = None
     box_x_min = cutter.get_minx(p)
     box_x_max = cutter.get_maxx(p)
     box_y_min = cutter.get_miny(p)
@@ -251,61 +235,61 @@ def get_max_height_triangles(model, cutter, x, y, minz, maxz, last_pos=None):
         cut = cutter.drop(t, start=p)
         if cut and ((height_max is None) or (cut.z > height_max)):
             height_max = cut.z
-            cut_max = cut
-            triangle_max = t
     # don't do a complete boundary check for the height
     # this avoids zero-cuts for models that exceed the bounding box height
-    if not cut_max or cut_max.z < minz + epsilon:
-        cut_max = Point(x, y, minz)
-    if last_pos["cut"] and \
-            ((triangle_max and not last_pos["triangle"]) \
-            or (last_pos["triangle"] and not triangle_max)):
-        if minz - epsilon <= last_pos["cut"].z <= maxz + epsilon:
-            result.append(Point(last_pos["cut"].x, last_pos["cut"].y,
-                    cut_max.z))
-        else:
-            result.append(Point(cut_max.x, cut_max.y, last_pos["cut"].z))
-    elif (triangle_max and last_pos["triangle"] and last_pos["cut"] and \
-            cut_max) and (triangle_max != last_pos["triangle"]):
-        # TODO: check if this path is ever in use (e.g. "intersect_lines" is not
-        # defined)
-        nl = range(3)
-        nl[0] = -getattr(last_pos["triangle"].normal, order[0])
-        nl[2] = last_pos["triangle"].normal.z
-        nm = range(3)
-        nm[0] = -getattr(triangle_max.normal, order[0])
-        nm[2] = triangle_max.normal.z
-        last = range(3)
-        last[0] = getattr(last_pos["cut"], order[0])
-        last[2] = last_pos["cut"].z
-        mx = range(3)
-        mx[0] = getattr(cut_max, order[0])
-        mx[2] = cut_max.z
-        c = range(3)
-        (c[0], c[2]) = intersect_lines(last[0], last[2], nl[0], nl[2], mx[0],
-                mx[2], nm[0], nm[2])
-        if c[0] and last[0] < c[0] < mx[0] and (c[2] > last[2] or c[2] > mx[2]):
-            c[1] = getattr(last_pos["cut"], order[1])
-            if (c[2] < minz - 10) or (c[2] > maxz + 10):
-                print "^", "%sl=%s" % (order[0], last[0]), \
-                        ", %sl=%s" % ("z", last[2]), \
-                        ", n%sl=%s" % (order[0], nl[0]), \
-                        ", n%sl=%s" % ("z", nl[2]), \
-                        ", %s=%s" % (order[0].upper(), c[0]), \
-                        ", %s=%s" % ("z".upper(), c[2]), \
-                        ", %sm=%s" % (order[0], mx[0]), \
-                        ", %sm=%s" % ("z", mx[2]), \
-                        ", n%sm=%s" % (order[0], nm[0]), \
-                        ", n%sm=%s" % ("z", nm[2])
+    if (height_max is None) or (height_max < minz + epsilon):
+        height_max = minz
+    # check if we need more points in between (for better accuracy)
+    return Point(x, y, height_max)
 
+def _check_deviance_of_adjacent_points(p1, p2, p3, min_distance):
+    straight = p3.sub(p1)
+    added = p2.sub(p1).norm + p3.sub(p2).norm
+    # compare only the x/y distance of p1 and p3 with min_distance
+    if straight.x ** 2 + straight.y ** 2 < min_distance ** 2:
+        # the points are too close together
+        return True
+    else:
+        # allow 0.1% deviance - this is an angle of around 2 degrees
+        return (added / straight.norm) < 1.001
+
+def get_max_height_dynamic(model, cutter, positions, minz, maxz, physics=None):
+    max_depth = 8
+    # the points don't need to get closer than 1/1000 of the cutter radius
+    min_distance = cutter.distance_radius / 1000
+    result = []
+    if physics:
+        get_max_height = lambda x, y: get_max_height_ode(physics, x, y, minz,
+                maxz)
+    else:
+        get_max_height = lambda x, y: get_max_height_triangles(model, cutter,
+                x, y, minz, maxz)
+    # add one point between all existing points
+    for index in range(len(positions)):
+        p = positions[index]
+        result.append(get_max_height(p[0], p[1]))
+    # Check if three consecutive points are "flat".
+    # Add additional points if necessary.
+    index = 0
+    depth_count = 0
+    while index < len(result) - 2:
+        p1 = result[index]
+        p2 = result[index + 1]
+        p3 = result[index + 2]
+        if not _check_deviance_of_adjacent_points(p1, p2, p3, min_distance) \
+                and (depth_count < max_depth):
+            # distribute the new point two before the middle and one after
+            if depth_count % 3 != 2:
+                # insert between the 1st and 2nd point
+                middle = ((p1.x + p2.x) / 2, (p1.y + p2.y) / 2)
+                result.insert(index + 1, get_max_height(middle[0], middle[1]))
             else:
-                if order[0] == "x":
-                    result.append(Point(c[0], c[1], c[2]))
-                else:
-                    result.append(Point(c[1], c[0], c[2]))
-    result.append(cut_max)
-
-    last_pos["cut"] = cut_max
-    last_pos["triangle"] = triangle_max
+                # insert between the 2nd and 3rd point
+                middle = ((p2.x + p3.x) / 2, (p2.y + p3.y) / 2)
+                result.insert(index + 2, get_max_height(middle[0], middle[1]))
+            depth_count += 1
+        else:
+            index += 1
+            depth_count = 0
     return result
 

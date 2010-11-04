@@ -23,7 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.Point import Point
 from pycam.Geometry.utils import INFINITE, ceil
-from pycam.PathGenerators import get_max_height_triangles, get_max_height_ode
+from pycam.PathGenerators import get_max_height_dynamic
 from pycam.Utils import ProgressCounter
 from pycam.Utils.threading import run_in_parallel
 import pycam.Utils.log
@@ -33,24 +33,12 @@ log = pycam.Utils.log.get_logger()
 
 # We need to use a global function here - otherwise it does not work with
 # the multiprocessing Pool.
-def _process_one_grid_line((positions, minz, maxz, model, cutter,
-        physics, safety_height)):
-    # for now only used for triangular collision detection
-    last_position = None
-    points = []
-    height_exceeded = False
-    for x, y in positions:
-        if physics:
-            result = get_max_height_ode(physics, x, y, minz, maxz)
-        else:
-            result = get_max_height_triangles(model, cutter, x, y, minz, maxz,
-                    last_pos=last_position)
-        if result:
-            points.extend(result)
-        else:
-            points.append(Point(x, y, safety_height))
-            height_exceeded = True
-    return points, height_exceeded
+def _process_one_grid_line((positions, minz, maxz, model, cutter, physics)):
+    """ This function assumes, that the positions are next to each other.
+    Otherwise the dynamic over-sampling (in get_max_height_dynamic) is
+    pointless.
+    """
+    return get_max_height_dynamic(model, cutter, positions, minz, maxz, physics)
 
 
 class Dimension:
@@ -95,76 +83,58 @@ class DropCutter:
         self.pa = path_processor
         self.physics = physics
         # remember if we already reported an invalid boundary
-        self._boundary_warning_already_shown = False
 
     def GenerateToolPath(self, motion_grid, minz, maxz, draw_callback=None):
         quit_requested = False
 
         # Transfer the grid (a generator) into a list of lists and count the
         # items.
-        num_of_grid_positions = 0
         lines = []
         # there should be only one layer for DropCutter
         for layer in motion_grid:
             for line in layer:
-                lines.append(list(line))
-                num_of_grid_positions += len(lines[-1])
+                lines.append(line)
             # ignore any other layers
             break
 
         num_of_lines = len(lines)
-        progress_counter = ProgressCounter(num_of_grid_positions, draw_callback)
+        progress_counter = ProgressCounter(len(lines), draw_callback)
         current_line = 0
 
         self.pa.new_direction(0)
-
-        self._boundary_warning_already_shown = False
 
         args = []
         for one_grid_line in lines:
             # simplify the data (useful for remote processing)
             xy_coords = [(pos.x, pos.y) for pos in one_grid_line]
             args.append((xy_coords, minz, maxz, self.model, self.cutter,
-                    self.physics, self.model.maxz))
-        # ODE does not work with multi-threading
+                    self.physics))
+        # ODE does not work with multi-threading (TODO: check this)
         disable_multiprocessing = not self.physics is None
-        for points, height_exceeded in run_in_parallel(_process_one_grid_line,
+        for points in run_in_parallel(_process_one_grid_line,
                 args, disable_multiprocessing=disable_multiprocessing):
-            if height_exceeded and not self._boundary_warning_already_shown:
-                log.warn("DropCutter: exceed the height of the " \
-                        + "boundary box: using a safe height instead." \
-                        + " This warning is reported only once.")
-                self._boundary_warning_already_shown = True
-
             self.pa.new_scanline()
-
             if draw_callback and draw_callback(text="DropCutter: processing " \
                         + "line %d/%d" % (current_line + 1, num_of_lines)):
                 # cancel requested
                 quit_requested = True
                 break
-
             for p in points:
                 self.pa.append(p)
                 # "draw_callback" returns true, if the user requested to quit
                 # via the GUI.
                 # The progress counter may return True, if cancel was requested.
-                if (draw_callback and draw_callback(tool_position=p,
-                        toolpath=self.pa.paths)) \
-                        or (progress_counter.increment()):
+                if draw_callback and draw_callback(tool_position=p,
+                        toolpath=self.pa.paths):
                     quit_requested = True
                     break
-
+            progress_counter.increment()
             self.pa.end_scanline()
-
             # update progress
             current_line += 1
-
             if quit_requested:
                 break
-
         self.pa.end_direction()
-
         self.pa.finish()
         return self.pa.paths
 
