@@ -87,6 +87,7 @@ PREFERENCES_DEFAULTS = {
         "show_bounding_box": True,
         "show_toolpath": True,
         "show_drill_progress": False,
+        "show_directions": False,
         "color_background": (0.0, 0.0, 0.0, 1.0),
         "color_model": (0.5, 0.5, 1.0, 1.0),
         "color_support_grid": (0.8, 0.8, 0.3, 1.0),
@@ -495,7 +496,8 @@ class ProjectGui:
                 ("show_dimensions", "ShowDimensionsCheckBox"),
                 ("show_bounding_box", "ShowBoundingCheckBox"),
                 ("show_toolpath", "ShowToolPathCheckBox"),
-                ("show_drill_progress", "ShowDrillProgressCheckBox")):
+                ("show_drill_progress", "ShowDrillProgressCheckBox"),
+                ("show_directions", "ShowDirectionsCheckBox")):
             obj = self.gui.get_object(objname)
             self.settings.add_item(name, obj.get_active, obj.set_active)
             # all of the objects above should trigger redraw
@@ -1349,13 +1351,13 @@ class ProjectGui:
                     "MillingStyleIgnore", "MaxStepDownControl",
                     "MaterialAllowanceControl", "OverlapPercentControl"),
             "ContourFollowStrategy": ("MillingStyleConventional",
-                    "MillingStyleClimb", "MillingStyleIgnore",
-                    "MaxStepDownControl"),
+                    "MillingStyleClimb", "MaxStepDownControl"),
             "SurfaceStrategy": ("GridDirectionX", "GridDirectionY",
                     "MillingStyleConventional", "MillingStyleClimb",
                     "MillingStyleIgnore", "MaterialAllowanceControl",
                     "OverlapPercentControl"),
-            "EngraveStrategy": ("MaxStepDownControl", "EngraveOffsetControl"),
+            "EngraveStrategy": ("MaxStepDownControl", "EngraveOffsetControl",
+                    "MillingStyleConventional", "MillingStyleClimb"),
         }
         for one_control in all_controls:
             get_obj(one_control).set_sensitive(one_control in active_controls[cutter_name])

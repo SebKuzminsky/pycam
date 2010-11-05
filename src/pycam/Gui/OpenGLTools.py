@@ -31,6 +31,7 @@ except (ImportError, RuntimeError):
     GL_ENABLED = False
 
 from pycam.Geometry.Point import Point
+from pycam.Geometry.Line import Line
 import pycam.Geometry.Matrix as Matrix
 from pycam.Geometry.utils import sqrt, number
 import pycam.Utils.log
@@ -758,7 +759,7 @@ def draw_complete_model_view(settings):
                 return True, normal_color
         model.to_OpenGL(visible_filter=check_triangle_draw)
         """
-        model.to_OpenGL()
+        model.to_OpenGL(show_directions=settings.get("show_directions"))
     # draw the support grid
     if settings.get("show_support_grid") and settings.get("support_grid"):
         GL.glColor4f(*settings.get("color_support_grid"))
@@ -772,7 +773,8 @@ def draw_complete_model_view(settings):
             if toolpath_obj.visible:
                 draw_toolpath(toolpath_obj.get_path(),
                         settings.get("color_toolpath_cut"),
-                        settings.get("color_toolpath_return"))
+                        settings.get("color_toolpath_return"),
+                        settings.get("show_directions"))
     # draw the drill
     if settings.get("show_drill_progress"):
         cutter = settings.get("cutter")
@@ -784,11 +786,13 @@ def draw_complete_model_view(settings):
         if not toolpath_in_progress is None:
                 draw_toolpath(toolpath_in_progress,
                         settings.get("color_toolpath_cut"),
-                        settings.get("color_toolpath_return"))
+                        settings.get("color_toolpath_return"),
+                        settings.get("show_directions"))
 
 @keep_gl_mode
 @keep_matrix
-def draw_toolpath(toolpath, color_forward, color_backward):
+def draw_toolpath(toolpath, color_forward, color_backward,
+        show_directions=False):
     GL.glMatrixMode(GL.GL_MODELVIEW)
     GL.glLoadIdentity()
     if toolpath:
@@ -796,15 +800,11 @@ def draw_toolpath(toolpath, color_forward, color_backward):
         for path in toolpath:
             if last:
                 GL.glColor4f(*color_backward)
-                GL.glBegin(GL.GL_LINES)
-                GL.glVertex3f(last.x, last.y, last.z)
-                last = path.points[0]
-                GL.glVertex3f(last.x, last.y, last.z)
-                GL.glEnd()
+                Line(last, path.points[0]).to_OpenGL(
+                        show_directions=show_directions)
             GL.glColor4f(*color_forward)
-            GL.glBegin(GL.GL_LINE_STRIP)
-            for point in path.points:
-                GL.glVertex3f(point.x, point.y, point.z)
-            GL.glEnd()
+            for index in range(len(path.points) - 1):
+                Line(path.points[index], path.points[index + 1]).to_OpenGL(
+                        show_directions=show_directions)
             last = path.points[-1]
 

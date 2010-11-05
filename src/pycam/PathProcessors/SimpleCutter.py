@@ -41,6 +41,7 @@ class SimpleCutter:
         if self.curr_path == None:
             simplify_toolpath(curr_path)
             if self.reverse:
+                curr_path.reverse()
                 self.paths.insert(0, curr_path)
             else:
                 self.paths.append(curr_path)

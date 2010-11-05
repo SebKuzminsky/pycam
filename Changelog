@@ -1,6 +1,8 @@
 Version 0.4.1 - UNRELEASED
  * added support for EPS/PS contour files
  * added adaptive positioning for DropCutter strategy (improves precision)
+ * allow conventional/climb milling style for ContourFollow and Engrave strategies
+ * optional visualization of toolpath direction
 
 Version 0.4.0.1 - 2010-10-24
  * disabled parallel processing for Windows standalone executable

@@ -101,7 +101,7 @@ class Triangle(TransformableContainer):
         # tree points per triangle
         return 7
 
-    def to_OpenGL(self, color=None):
+    def to_OpenGL(self, color=None, show_directions=False):
         if not GL_enabled:
             return
         if not color is None:
@@ -116,7 +116,7 @@ class Triangle(TransformableContainer):
         GL.glVertex3f(self.p3.x, self.p3.y, self.p3.z)
         GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
         GL.glEnd()
-        if False: # display surface normals
+        if show_directions: # display surface normals
             n = self.normal
             c = self.center
             d = 0.5

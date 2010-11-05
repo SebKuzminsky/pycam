@@ -254,7 +254,8 @@ def generate_toolpath(model, tool_settings=None,
     if isinstance(physics, basestring):
         return physics
     generator = _get_pathgenerator_instance(trimesh_models, contour_model,
-            cutter, path_generator, path_postprocessor, physics)
+            cutter, path_generator, path_postprocessor, physics,
+            milling_style=milling_style)
     if isinstance(generator, basestring):
         return generator
     if (overlap < 0) or (overlap >= 1):
@@ -278,14 +279,16 @@ def generate_toolpath(model, tool_settings=None,
             "ignore": pycam.Toolpath.MotionGrid.MILLING_STYLE_IGNORE,
             "conventional": pycam.Toolpath.MotionGrid.MILLING_STYLE_CONVENTIONAL,
             "climb": pycam.Toolpath.MotionGrid.MILLING_STYLE_CLIMB}
-    motion_grid = pycam.Toolpath.MotionGrid.get_fixed_grid(bounds,
-            layer_distance, line_stepping, step_width=step_width,
-            grid_direction=direction_dict[direction],
-            milling_style=milling_style_grid[milling_style])
-    if path_generator == "DropCutter":
-        toolpath = generator.GenerateToolPath(motion_grid, minz, maxz, callback)
-    elif path_generator == "PushCutter":
-        toolpath = generator.GenerateToolPath(motion_grid, callback)
+    if path_generator in ("DropCutter", "PushCutter"):
+        motion_grid = pycam.Toolpath.MotionGrid.get_fixed_grid(bounds,
+                layer_distance, line_stepping, step_width=step_width,
+                grid_direction=direction_dict[direction],
+                milling_style=milling_style_grid[milling_style])
+        if path_generator == "DropCutter":
+            toolpath = generator.GenerateToolPath(motion_grid, minz, maxz,
+                    callback)
+        else:
+            toolpath = generator.GenerateToolPath(motion_grid, callback)
     elif path_generator == "EngraveCutter":
         if step_down > 0:
             dz = step_down
@@ -308,7 +311,7 @@ def generate_toolpath(model, tool_settings=None,
     return toolpath
     
 def _get_pathgenerator_instance(trimesh_models, contour_model, cutter,
-        pathgenerator, pathprocessor, physics):
+        pathgenerator, pathprocessor, physics, milling_style):
     if pathgenerator != "EngraveCutter" and contour_model:
         return ("The only available toolpath strategy for 2D contour models " \
                 + "is 'Engraving'.")
@@ -340,8 +343,9 @@ def _get_pathgenerator_instance(trimesh_models, contour_model, cutter,
         return PushCutter.PushCutter(cutter, trimesh_models, processor,
                 physics=physics)
     elif pathgenerator == "EngraveCutter":
+        reverse = (milling_style == "conventional")
         if pathprocessor == "SimpleCutter":
-            processor = pycam.PathProcessors.SimpleCutter()
+            processor = pycam.PathProcessors.SimpleCutter(reverse=reverse)
         else:
             return ("Invalid postprocessor (%s) for 'EngraveCutter' - it " \
                     + "should be: SimpleCutter") % str(pathprocessor)
@@ -351,8 +355,9 @@ def _get_pathgenerator_instance(trimesh_models, contour_model, cutter,
         return EngraveCutter.EngraveCutter(cutter, trimesh_models,
                 contour_model, processor, physics=physics)
     elif pathgenerator == "ContourFollow":
+        reverse = (milling_style == "conventional")
         if pathprocessor == "SimpleCutter":
-            processor = pycam.PathProcessors.SimpleCutter()
+            processor = pycam.PathProcessors.SimpleCutter(reverse=reverse)
         else:
             return ("Invalid postprocessor (%s) for 'ContourFollow' - it " \
                     + "should be: SimpleCutter") % str(pathprocessor)

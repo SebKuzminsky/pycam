@@ -83,13 +83,14 @@ class BaseModel(TransformableContainer):
                     result += item.get_children_count()
         return result
 
-    def to_OpenGL(self, visible_filter=None):
+    def to_OpenGL(self, visible_filter=None, show_directions=False):
         def paint_item_filtered(item):
             do_paint, color = visible_filter(item)
             if do_paint:
-                item.to_OpenGL(color)
+                item.to_OpenGL(color, show_directions=show_directions)
         if visible_filter is None:
-            paint_item = lambda item: item.to_OpenGL()
+            paint_item = lambda item: item.to_OpenGL(
+                    show_directions=show_directions)
         else:
             paint_item = paint_item_filtered
         for item in self.next():

@@ -199,6 +199,7 @@ path_strategy: ContourFollowStrategy
 material_allowance: 0.2
 step_down: 1.5
 overlap_percent: 40
+milling_style: conventional
 
 [Process2]
 name: Cleanup
@@ -211,6 +212,7 @@ name: Gravure
 path_strategy: EngraveStrategy
 step_down: 1.0
 overlap_percent: 50
+milling_style: conventional
 
 [BoundsDefault]
 type: relative_margin
@@ -703,7 +705,6 @@ class ToolpathSettings:
         # TODO: this hack should be somewhere else, I guess
         if generator in ("ContourFollow", "EngraveCutter"):
             material_allowance = 0.0
-            milling_style = "ignore"
         self.process_settings = {
                 "generator": generator,
                 "postprocessor": postprocessor,

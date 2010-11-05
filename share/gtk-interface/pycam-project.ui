@@ -5462,6 +5462,21 @@ It is significantly faster, but the current release of ODE contains a nasty bug 
                             <property name="position">6</property>
                           </packing>
                         </child>
+                        <child>
+                          <object class="GtkCheckButton" id="ShowDirectionsCheckBox">
+                            <property name="label" translatable="yes">Show Directions</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="tooltip_text" translatable="yes">Show the directions of some visual features (e.g. arrows
+for contour lines and toolpaths, triangle's normals, et cetera).</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">7</property>
+                          </packing>
+                        </child>
                       </object>
                     </child>
                   </object>
