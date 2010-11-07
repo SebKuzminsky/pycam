@@ -774,7 +774,8 @@ def draw_complete_model_view(settings):
                 draw_toolpath(toolpath_obj.get_path(),
                         settings.get("color_toolpath_cut"),
                         settings.get("color_toolpath_return"),
-                        settings.get("show_directions"))
+                        safety_height=settings.get("gcode_safety_height"),
+                        show_directions=settings.get("show_directions"))
     # draw the drill
     if settings.get("show_drill_progress"):
         cutter = settings.get("cutter")
@@ -787,24 +788,48 @@ def draw_complete_model_view(settings):
                 draw_toolpath(toolpath_in_progress,
                         settings.get("color_toolpath_cut"),
                         settings.get("color_toolpath_return"),
-                        settings.get("show_directions"))
+                        safety_height=settings.get("gcode_safety_height"),
+                        show_directions=settings.get("show_directions"))
 
 @keep_gl_mode
 @keep_matrix
 def draw_toolpath(toolpath, color_forward, color_backward,
-        show_directions=False):
+        safety_height=None, show_directions=False):
+    draw_line = lambda p1, p2: Line(p1, p2).to_OpenGL(
+            show_directions=show_directions)
     GL.glMatrixMode(GL.GL_MODELVIEW)
     GL.glLoadIdentity()
+    p_last = None
     if toolpath:
-        last = None
         for path in toolpath:
-            if last:
+            if not path:
+                # ignore empty paths
+                continue
+            if (p_last is None) and (not safety_height is None):
+                current = path.points[0]
+                p_last = Point(current.x, current.y, safety_height)
+            if p_last:
+                p_next = path.points[0]
                 GL.glColor4f(*color_backward)
-                Line(last, path.points[0]).to_OpenGL(
-                        show_directions=show_directions)
+                # Draw the connection between the last and the next path.
+                # Respect the safety height.
+                if (not safety_height is None) and \
+                        ((p_last.x != p_next.x) or (p_last.y != p_next.y)):
+                    # first move up
+                    safety_last = Point(p_last.x, p_last.y, safety_height)
+                    safety_next = Point(p_next.x, p_next.y, safety_height)
+                    connect_points = (p_last, safety_last, safety_next, p_next)
+                else:
+                    # ignore safety height
+                    connect_points = (p_last, p_next)
+                for i in range(len(connect_points) - 1):
+                    draw_line(connect_points[i], connect_points[i + 1])
             GL.glColor4f(*color_forward)
             for index in range(len(path.points) - 1):
-                Line(path.points[index], path.points[index + 1]).to_OpenGL(
-                        show_directions=show_directions)
-            last = path.points[-1]
+                draw_line(path.points[index], path.points[index + 1])
+            p_last = path.points[-1]
+    if (not p_last is None) and (not safety_height is None):
+        GL.glColor4f(*color_backward)
+        p_last_safety = Point(p_last.x, p_last.y, safety_height)
+        draw_line(p_last, p_last_safety)
 

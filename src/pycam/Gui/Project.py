@@ -694,6 +694,8 @@ class ProjectGui:
         gcode_safety_height = self.gui.get_object("SafetyHeightControl")
         self.settings.add_item("gcode_safety_height",
                 gcode_safety_height.get_value, gcode_safety_height.set_value)
+        # redraw the toolpath if safety height changed
+        gcode_safety_height.connect("value-changed", self.update_view)
         gcode_path_mode = self.gui.get_object("GCodeCornerStyleControl")
         self.settings.add_item("gcode_path_mode", gcode_path_mode.get_active,
                 gcode_path_mode.set_active)

@@ -157,7 +157,7 @@ class Line(TransformableContainer):
             # center the cone
             GL.glTranslatef(0, 0, -cone_length / 2)
             # draw the cone
-            GLUT.glutSolidCone(cone_radius, cone_length, 12, 2)
+            GLUT.glutSolidCone(cone_radius, cone_length, 12, 1)
             GL.glPopMatrix()
 
     def get_intersection(self, line, infinite_lines=False):
