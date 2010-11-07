@@ -137,16 +137,23 @@ class Line(TransformableContainer):
             GL.glTranslatef((self.p1.x + self.p2.x) / 2,
                     (self.p1.y + self.p2.y) / 2,
                     (self.p1.z + self.p2.z) / 2)
-            # rotate the cone correctly
-            for distance, axis in ((self.dir.x, (0, 1, 0)),
-                    (self.dir.y, (-1, 0, 0))):
-                if distance != 0:
-                    angle = math.asin(distance) / math.pi * 180
-                    if self.dir.z < 0:
-                        angle = 180 - angle
-                    GL.glRotatef(angle, axis[0], axis[1], axis[2])
-            if self.dir.z == -1:
+            # rotate the cone according to the line direction
+            # The cross product is a good rotation axis.
+            cross = self.dir.cross(Point(0, 0, -1))
+            if cross.norm != 0:
+                # The line direction is not in line with the z axis.
+                angle = math.asin(sqrt(self.dir.x ** 2 + self.dir.y ** 2))
+                # convert from radians to degree
+                angle = angle / math.pi * 180
+                if self.dir.z < 0:
+                    angle = 180 - angle
+                GL.glRotatef(angle, cross.x, cross.y, cross.z)
+            elif self.dir.z == -1:
+                # The line goes down the z axis - turn it around.
                 GL.glRotatef(180, 1, 0, 0)
+            else:
+                # The line goes up the z axis - nothing to be done.
+                pass
             # center the cone
             GL.glTranslatef(0, 0, -cone_length / 2)
             # draw the cone
