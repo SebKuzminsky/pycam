@@ -215,8 +215,8 @@ def get_max_height_ode(physics, x, y, minz, maxz):
             safe_z = current_z
         trips -= 1
     if safe_z is None:
-        # return maxz as the collision height
-        return Point(x, y, maxz)
+        # skip this point (by going up to safety height)
+        return None
     else:
         return Point(x, y, safe_z)
 
@@ -239,8 +239,10 @@ def get_max_height_triangles(model, cutter, x, y, minz, maxz):
     # this avoids zero-cuts for models that exceed the bounding box height
     if (height_max is None) or (height_max < minz + epsilon):
         height_max = minz
-    # check if we need more points in between (for better accuracy)
-    return Point(x, y, height_max)
+    if height_max > maxz:
+        return None
+    else:
+        return Point(x, y, height_max)
 
 def _check_deviance_of_adjacent_points(p1, p2, p3, min_distance):
     straight = p3.sub(p1)
@@ -276,7 +278,8 @@ def get_max_height_dynamic(model, cutter, positions, minz, maxz, physics=None):
         p1 = result[index]
         p2 = result[index + 1]
         p3 = result[index + 2]
-        if not _check_deviance_of_adjacent_points(p1, p2, p3, min_distance) \
+        if (not p1 is None) and (not p2 is None) and (not p3 is None) \
+                and not _check_deviance_of_adjacent_points(p1, p2, p3, min_distance) \
                 and (depth_count < max_depth):
             # distribute the new point two before the middle and one after
             if depth_count % 3 != 2:

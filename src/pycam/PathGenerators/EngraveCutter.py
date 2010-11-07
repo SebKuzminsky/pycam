@@ -196,9 +196,12 @@ class EngraveCutter:
             points = get_max_height_dynamic(self.combined_model, self.cutter,
                     step_coords, minz, maxz, self.physics)
         for p in points:
+            if p is None:
+                # exceeded maxz - the cutter has to skip this point
+                self.pa.end_scanline()
+                self.pa.new_scanline()
+                continue
             pa.append(p)
-        # "draw_callback" returns true, if the user requested quitting via
-        # the GUI.
         if draw_callback and points:
                 draw_callback(tool_position=points[-1], toolpath=pa.paths)
         pa.end_scanline()

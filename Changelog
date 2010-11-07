@@ -2,6 +2,9 @@ Version 0.4.1 - UNRELEASED
  * added support for EPS/PS contour files
  * added adaptive positioning for DropCutter strategy (improves precision)
  * allow conventional/climb milling style for ContourFollow and Engrave strategies
+ * visualize movements up to safety height properly
+ * unify DropCutter behaviour for models that are higher than the defined bounding box
+  * always move up to safety height in this case
  * optional visualization of toolpath direction
 
 Version 0.4.0.1 - 2010-10-24

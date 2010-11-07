@@ -120,6 +120,11 @@ class DropCutter:
                 quit_requested = True
                 break
             for p in points:
+                if p is None:
+                    # exceeded maxz - the cutter has to skip this point
+                    self.pa.end_scanline()
+                    self.pa.new_scanline()
+                    continue
                 self.pa.append(p)
                 # "draw_callback" returns true, if the user requested to quit
                 # via the GUI.
