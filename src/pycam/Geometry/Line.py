@@ -30,6 +30,7 @@ import math
 
 try:
     import OpenGL.GL as GL
+    import OpenGL.GLUT as GLUT
     GL_enabled = True
 except ImportError:
     GL_enabled = False
@@ -126,31 +127,31 @@ class Line(TransformableContainer):
         GL.glBegin(GL.GL_LINES)
         GL.glVertex3f(self.p1.x, self.p1.y, self.p1.z)
         GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
-        # (optional) draw arrows for visualizing the direction of each line
-        if show_directions and (self.p1 != self.p2):
-            line = (self.p2.x - self.p1.x, self.p2.y - self.p1.y)
-            if line[0] == 0:
-                ortho = (1.0, 0.0)
-            elif line[1] == 0:
-                ortho = (0.0, 1.0)
-            else:
-                ortho = (1.0 / line[0], -1.0 / line[1])
-            line_size = sqrt((line[0] ** 2) + (line[1] ** 2))
-            ortho_size = sqrt((ortho[0] ** 2) + (ortho[1] ** 2))
-            ortho_dest_size = line_size / 10.0
-            ortho = (ortho[0] * ortho_dest_size / ortho_size,
-                    ortho[1] * ortho_dest_size / ortho_size)
-            line_back = (-line[0] * ortho_dest_size / line_size,
-                    -line[1] * ortho_dest_size / line_size)
-            p3 = (self.p2.x + ortho[0] + line_back[0],
-                    self.p2.y + ortho[1] + line_back[1], self.p2.z)
-            p4 = (self.p2.x - ortho[0] + line_back[0],
-                    self.p2.y - ortho[1] + line_back[1], self.p2.z)
-            GL.glVertex3f(p3[0], p3[1], p3[2])
-            GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
-            GL.glVertex3f(p4[0], p4[1], p4[2])
-            GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
         GL.glEnd()
+        # (optional) draw a cone for visualizing the direction of each line
+        if show_directions and (self.len > 0):
+            cone_radius = self.len / 30
+            cone_length = self.len / 10
+            GL.glPushMatrix()
+            # move the cone to the middle of the line
+            GL.glTranslatef((self.p1.x + self.p2.x) / 2,
+                    (self.p1.y + self.p2.y) / 2,
+                    (self.p1.z + self.p2.z) / 2)
+            # rotate the cone correctly
+            for distance, axis in ((self.dir.x, (0, 1, 0)),
+                    (self.dir.y, (-1, 0, 0))):
+                if distance != 0:
+                    angle = math.asin(distance) / math.pi * 180
+                    if self.dir.z < 0:
+                        angle = 180 - angle
+                    GL.glRotatef(angle, axis[0], axis[1], axis[2])
+            if self.dir.z == -1:
+                GL.glRotatef(180, 1, 0, 0)
+            # center the cone
+            GL.glTranslatef(0, 0, -cone_length / 2)
+            # draw the cone
+            GLUT.glutSolidCone(cone_radius, cone_length, 12, 2)
+            GL.glPopMatrix()
 
     def get_intersection(self, line, infinite_lines=False):
         """ Get the point of intersection between two lines. Intersections
