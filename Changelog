@@ -2,6 +2,7 @@ Version 0.4.1 - UNRELEASED
  * added support for EPS/PS contour files
  * added adaptive positioning for DropCutter strategy (improves precision)
  * allow conventional/climb milling style for ContourFollow and Engrave strategies
+ * added support for single-line fonts text (based on fonts from QCAD)
  * visualize movements up to safety height properly
  * unify DropCutter behaviour for models that are higher than the defined bounding box
   * always move up to safety height in this case

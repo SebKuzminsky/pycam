@@ -19,6 +19,9 @@
       <separator />
       <menuitem action="GeneralSettings"/>
     </menu>
+    <menu action="ExtrasMenu">
+      <menuitem action="ShowFontDialog"/>
+    </menu>
     <menu action="WindowMenu">
       <menuitem action="Toggle3DView"/>
       <menuitem action="ToggleLogWindow"/>

@@ -23,9 +23,9 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = ["utils", "Line", "Model", "Path", "Plane", "Point", "Triangle",
            "PolygonExtractor", "TriangleKdtree", "intersection", "kdtree",
-           "Matrix", "Polygon"]
+           "Matrix", "Polygon", "Letters"]
 
-from pycam.Geometry.utils import epsilon
+from pycam.Geometry.utils import epsilon, ceil
 import math
 
 
@@ -80,6 +80,41 @@ def get_angle_pi(p1, p2, p3, up_vector, pi_factor=False):
         return angle / math.pi
     else:
         return angle
+
+def get_points_of_arc(center, radius, a1, a2, plane=None, cords=16):
+    """ return the points for an approximated arc
+
+    @param center: center of the circle
+    @type center: pycam.Geometry.Point.Point
+    @param radius: radius of the arc
+    @type radius: float
+    @param a1: angle of the start (in degree)
+    @type a1: float
+    @param a2: angle of the end (in degree)
+    @type a2: float
+    @param plane: the plane of the circle (default: xy-plane)
+    @type plane: pycam.Geometry.Plane.Plane
+    @param cords: number of lines for a full circle
+    @type cords: int
+    @return: a list of lines approximating the arc
+    @rtype: list(pycam.Geometry.Line.Line)
+    """
+    # TODO: implement 3D arc and respect "plane"
+    a1 = math.pi * a1 / 180
+    a2 = math.pi * a2 / 180
+    angle_diff = a2 - a1
+    if angle_diff < 0:
+        angle_diff += 2 * math.pi
+    num_of_segments = ceil(angle_diff / (2 * math.pi) * cords)
+    angle_segment = angle_diff / num_of_segments
+    points = []
+    get_angle_point = lambda angle: (
+            center.x + radius * math.cos(angle),
+            center.y + radius * math.sin(angle))
+    points.append(get_angle_point(a1))
+    for index in range(num_of_segments):
+        points.append(get_angle_point(a1 + angle_segment * (index + 1)))
+    return points
 
 
 class TransformableContainer(object):

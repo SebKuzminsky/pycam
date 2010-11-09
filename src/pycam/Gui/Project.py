@@ -28,11 +28,13 @@ import pycam.Gui.Settings
 import pycam.Cutters
 import pycam.Toolpath.Generator
 import pycam.Toolpath
+import pycam.Importers.CXFImporter
 import pycam.Importers
 import pycam.Utils.log
 import pycam.Utils
 from pycam.Geometry.utils import sqrt
 from pycam.Gui.OpenGLTools import ModelViewWindowGL
+from pycam.Utils import ProgressCounter
 from pycam.Toolpath import Bounds
 from pycam import VERSION
 import pycam.Physics.ode_physics
@@ -56,6 +58,8 @@ DATA_DIR_ENVIRON_KEY = "PYCAM_DATA_DIR"
 DATA_BASE_DIRS = [os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
             os.pardir, "share", "gtk-interface"),
         os.path.join(sys.prefix, "share", "pycam", "ui")]
+# TODO: improve this definition of the fonts' location
+FONT_DIRS = [os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, "share", "fonts")]
 # necessary for "pyinstaller"
 if "_MEIPASS2" in os.environ:
     DATA_BASE_DIRS.insert(0, os.environ["_MEIPASS2"])
@@ -154,6 +158,32 @@ def get_filters_from_list(filter_list, file_filter=True):
         result.append(file_filter)
     return result
 
+def get_font_files():
+    result = []
+    for font_dir in FONT_DIRS:
+        files = os.listdir(font_dir)
+        for fname in files:
+            filename = os.path.join(font_dir, fname)
+            if filename.lower().endswith(".cxf") and os.path.isfile(filename):
+                result.append(filename)
+    return result
+
+def load_fonts(callback=None):
+    fonts = {}
+    all_font_files = get_font_files()
+    if not callback is None:
+        progress_counter = ProgressCounter(len(all_font_files), callback)
+    else:
+        progress_counter = None
+    for font_file in all_font_files:
+        charset = pycam.Importers.CXFImporter.import_font(font_file)
+        if (not progress_counter is None) and progress_counter.increment():
+            break
+        if not charset is None:
+            for name in charset.get_names():
+                fonts[name] = charset
+    return fonts
+
 
 class ProjectGui:
 
@@ -217,6 +247,7 @@ class ProjectGui:
                 ("Toggle3DView", self.toggle_3d_view, None, "<Control><Shift>v"),
                 ("ToggleLogWindow", self.toggle_log_window, None, "<Control>l"),
                 ("ToggleProcessPoolWindow", self.toggle_process_pool_window, None, None),
+                ("ShowFontDialog", self.toggle_font_dialog_window, None, "<Control><Shift>t"),
                 ("HelpIntroduction", self.show_help, "Introduction", "F1"),
                 ("HelpSupportedFormats", self.show_help, "SupportedFormats", None),
                 ("HelpModelTransformations", self.show_help, "ModelTransformations", None),
@@ -286,6 +317,21 @@ class ProjectGui:
         self.gui.get_object("ProcessPoolWindowClose").connect("clicked", self.toggle_process_pool_window, False)
         self.gui.get_object("ProcessPoolRefreshInterval").set_value(3)
         self.process_pool_model = self.gui.get_object("ProcessPoolStatisticsModel")
+        # "font dialog" window
+        self.font_dialog_window = self.gui.get_object("FontDialog")
+        self.font_dialog_window.connect("delete-event",
+                self.toggle_font_dialog_window, False)
+        self.font_dialog_window.connect("destroy",
+                self.toggle_font_dialog_window, False)
+        self.gui.get_object("FontDialogCancel").connect("clicked",
+                self.toggle_font_dialog_window, False)
+        self.gui.get_object("FontDialogApply").connect("clicked",
+                self.import_from_font_dialog)
+        self.gui.get_object("FontDialogSave").connect("clicked",
+                self.export_from_font_dialog)
+        self._font_dialog_window_visible = False
+        self._font_dialog_window_position = None
+        self._fonts = None
         # set defaults
         self.model = None
         self.toolpath = pycam.Toolpath.ToolpathList()
@@ -1381,6 +1427,60 @@ class ProjectGui:
                 # set the value to the configured minimum
                 obj.set_value(default_value)
         self.gui.get_object("ExportEMCToolDefinition").set_sensitive(len(self.tool_list) > 0)
+
+    @progress_activity_guard
+    @gui_activity_guard
+    def toggle_font_dialog_window(self, widget=None, event=None, state=None):
+        # only "delete-event" uses four arguments
+        # TODO: unify all these "toggle" functions for different windows into one single function (including storing the position)
+        if state is None:
+            state = event
+        if state is None:
+            state = not self._font_dialog_window_visible
+        if state:
+            if self._fonts is None:
+                self.update_progress_bar("Initializing fonts")
+                self._fonts = load_fonts(callback=self.update_progress_bar)
+                # create it manually to ease access
+                font_selector = gtk.combo_box_new_text()
+                self.gui.get_object("FontSelectionBox").pack_start(
+                        font_selector, expand=False, fill=False)
+                sorted_keys = self._fonts.keys()
+                sorted_keys.sort()
+                for name in sorted_keys:
+                    font_selector.append_text(name)
+                if sorted_keys:
+                    font_selector.set_active(0)
+                else:
+                    # TODO: show some warning - no fonts found
+                    pass
+                font_selector.show()
+                self.font_selector = font_selector
+            if self._font_dialog_window_position:
+                self.font_dialog_window.move(
+                        *self._font_dialog_window_position)
+            self.font_dialog_window.show()
+        else:
+            self._font_dialog_window_position = \
+                    self.font_dialog_window.get_position()
+            self.font_dialog_window.hide()
+        self._font_dialog_window_visible = state
+        # don't close the window - just hide it (for "delete-event")
+        return True
+
+    @gui_activity_guard
+    def import_from_font_dialog(self, widget=None):
+        text_buffer = self.gui.get_object("FontDialogInput").get_buffer()
+        text = text_buffer.get_text(text_buffer.get_start_iter(),
+                text_buffer.get_end_iter())
+        font_name = self.font_selector.get_active_text()
+        new_model = self._fonts[font_name].render(text)
+        self.load_model(new_model)
+        self.append_to_queue(self.toggle_font_dialog_window)
+
+    @gui_activity_guard
+    def export_from_font_dialog(self, widget=None):
+        self.append_to_queue(self.toggle_font_dialog_window)
 
     @gui_activity_guard
     def toggle_about_window(self, widget=None, event=None, state=None):
@@ -2660,13 +2760,16 @@ class ProjectGui:
         # update the GUI
         current_time = time.time()
         # Don't update the GUI more often than once per second.
+        # Exception: text-only updates
         # This restriction improves performance and reduces the
         # "snappiness" of the GUI.
         if (self._last_gtk_events_time is None) \
+                or (percent is None) \
                 or (self._last_gtk_events_time + 1 < current_time):
             while gtk.events_pending():
                 gtk.main_iteration()
-            self._last_gtk_events_time = current_time
+            if not percent is None:
+                self._last_gtk_events_time = current_time
         # return if the user requested a break
         return self._progress_cancel_requested
 
