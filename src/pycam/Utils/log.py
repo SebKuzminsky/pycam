@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import locale
 import logging
 
 def get_logger(suffix=None):
@@ -70,7 +71,17 @@ class GTKHandler(logging.Handler):
         self.parent_window = parent_window
 
     def emit(self, record):
-        message = self.format(record).encode("utf-8")
+        raw_message = self.format(record)
+        try:
+            message = raw_message.encode("utf-8")
+        except UnicodeDecodeError:
+            try:
+                # try to decode the string with the current locale
+                current_encoding = locale.getpreferredencoding()
+                message = raw_message.decode(current_encoding)
+            except (UnicodeDecodeError, LookupError):
+                # remove all critical characters
+                message = re.sub("[^\w\s]", "", raw_message)
         import gtk
         if record.levelno <= 20:
             message_type = gtk.MESSAGE_INFO
