@@ -37,6 +37,7 @@ class _LineFeeder(object):
 
     def __init__(self, items):
         self.items = items
+        self._len = len(items)
         self.index = 0
 
     def consume(self):
@@ -54,7 +55,7 @@ class _LineFeeder(object):
             return None
 
     def is_empty(self):
-        return self.index >= len(self.items)
+        return self.index >= self._len
 
     def get_index(self):
         return self.index + 1
@@ -67,10 +68,10 @@ class CXFParser(object):
     META_KEYWORDS_MULTI = ("author", "name")
 
 
-    def __init__(self, stream):
+    def __init__(self, stream, callback=None):
         self.letters = {}
         self.meta = {}
-        finished = False
+        self.callback = callback
         feeder = _LineFeeder(stream.readlines())
         while not feeder.is_empty():
             line = feeder.consume()
@@ -101,6 +102,10 @@ class CXFParser(object):
                         # unknown -> ignore
                         pass
             elif line.startswith("["):
+                # Update the GUI from time to time.
+                # This is useful for the big unicode font.
+                if self.callback and (len(self.letters) % 100 == 0):
+                    self.callback.update()
                 if (len(line) >= 3) and (line[2] == "]"):
                     # single character
                     character = line[1]
@@ -124,19 +129,24 @@ class CXFParser(object):
                 char_definition = []
                 while not feeder.is_empty() and (len(feeder.get()) > 0):
                     line = feeder.consume()
-                    coords = [float(value) for value in line[2:].split(",")]
+                    # split the line after the first whitespace
+                    type_def, coord_string = line.split(None, 1)
+                    coords = [float(value) for value in coord_string.split(",")]
                     type_char = line[0].upper()
-                    if (type_char == "L") and (len(coords) == 4):
+                    if (type_def == "L") and (len(coords) == 4):
                         # line
                         p1 = Point(coords[0], coords[1], 0)
                         p2 = Point(coords[2], coords[3], 0)
                         char_definition.append(Line(p1, p2))
-                    elif (type_char == "A") and (len(coords) == 5):
+                    elif (type_def in ("A", "AR")) and (len(coords) == 5):
                         # arc
                         previous = None
                         center = Point(coords[0], coords[1], 0)
                         radius = coords[2]
                         start_angle, end_angle = coords[3], coords[4]
+                        if type_def == "AR":
+                            # reverse the arc
+                            start_angle, end_angle = end_angle, start_angle
                         for p in get_points_of_arc(center, radius, start_angle,
                                 end_angle):
                             current = Point(p[0], p[1], 0)
@@ -153,7 +163,7 @@ class CXFParser(object):
                         + "line %d" % feeder.get_index())
 
 
-def import_font(filename, program_locations=None, unit=None):
+def import_font(filename, callback=None):
     try:
         infile = open(filename,"r")
     except IOError, err_msg:
@@ -161,7 +171,7 @@ def import_font(filename, program_locations=None, unit=None):
                 % (filename, err_msg))
         return None
     try:
-        parsed_font = CXFParser(infile)
+        parsed_font = CXFParser(infile, callback=callback)
     except _CXFParseError, err_msg:
         log.error("CFXImporter: Skipped font defintion file '%s'. Reason: %s" \
                 % (filename, err_msg))
