@@ -53,6 +53,7 @@ class Polygon(TransformableContainer):
         self.minz = None
         self._lines_cache = None
         self._area_cache = None
+        self._cached_offset_polygons = {}
 
     def append(self, line):
         if not self.is_connectable(line):
@@ -245,6 +246,9 @@ class Polygon(TransformableContainer):
             # it seems like we are on the line -> inside
             return True
 
+    def get_points(self):
+        return self._points[:]
+
     def get_lines(self):
         """ Caching is necessary to avoid constant recalculation due to
         the "to_OpenGL" method.
@@ -261,14 +265,14 @@ class Polygon(TransformableContainer):
             self._lines_cache = lines
         return self._lines_cache[:]
 
-    def to_OpenGL(self):
+    def to_OpenGL(self, **kwords):
         for line in self.get_lines():
-            line.to_OpenGL()
+            line.to_OpenGL(**kwords)
         return
         offset_polygons = self.get_offset_polygons(0.2)
         for polygon in offset_polygons:
             for line in polygon.get_lines():
-                line.to_OpenGL()
+                line.to_OpenGL(**kwords)
         """
         for index, point in enumerate(self._points):
             line = Line(point, point.add(self.get_bisector(index)))
@@ -292,6 +296,7 @@ class Polygon(TransformableContainer):
             self.maxz = max(self.maxz, point.z)
 
     def reset_cache(self):
+        self._cached_offset_polygons = {}
         self._lines_cache = None
         self._area_cache = None
         self.minx, self.miny, self.minz = None, None, None
@@ -324,7 +329,7 @@ class Polygon(TransformableContainer):
         points = []
         for index in range(len(self._points)):
             points.append(get_shifted_vertex(index, offset))
-        max_dist = 100 * epsilon
+        max_dist = 1000 * epsilon
         def test_point_near(p, others):
             for o in others:
                 if p.sub(o).norm < max_dist:
@@ -451,6 +456,9 @@ class Polygon(TransformableContainer):
                         continue
                     if index == current_group:
                         continue
+                    if group[0].p1 == group[-1].p2:
+                        # the group is already closed
+                        continue
                     if line.p1 == group[-1].p2:
                         current_group = index
                         groups[current_group].append(line)
@@ -462,15 +470,48 @@ class Polygon(TransformableContainer):
                 groups[current_group].append(line)
             if line.p2 in split_points:
                 split_here = True
+        def is_joinable(g1, g2):
+            if g1 and g2 and (g1[0].p1 != g1[-1].p2):
+                if g1[0].p1 == g2[-1].p2:
+                    return g2 + g1
+                if g2[0].p1 == g1[-1].p2:
+                    return g1 + g2
+            return None
+        # try to combine open groups
+        for index1, group1 in enumerate(groups):
+            if not group1:
+                continue
+            for index2, group2 in enumerate(groups):
+                if not group2:
+                    continue
+                if index2 <= index1:
+                    continue
+                if (group1[-1].p2 == group2[0].p1) \
+                        and (group1[0].p1 == group2[-1].p2):
+                    group1.extend(group2)
+                    groups[index2] = []
+                    break
         result_polygons = []
+        print "********** GROUPS **************"
+        for a in groups:
+            print a
         for group in groups:
             if len(group) <= 2:
                 continue
             poly = Polygon(self.plane)
             #print "**************************************"
             for line in group:
-                #print line
-                poly.append(line)
+                try:
+                    poly.append(line)
+                except ValueError:
+                    print "NON_REVERSED"
+                    for a in non_reversed:
+                        print a
+                    print groups
+                    print split_points
+                    print poly
+                    print line
+                    raise
             if self._is_closed and ((not poly._is_closed) \
                     or (self.is_outer() != poly.is_outer())):
                 continue
@@ -480,32 +521,58 @@ class Polygon(TransformableContainer):
                 result_polygons.append(poly)
         return result_polygons
 
-    def get_offset_polygons(self, offset):
+    def get_offset_polygons(self, offset, depth=20):
         if offset == 0:
             return [self]
-        result = self.get_offset_polygons_validated(offset)
-        if not result is None:
-            return result
-        else:
-            lower = number(0)
-            upper = offset
-            loop_limit = 25
-            while (loop_limit > 0):
-                middle = (upper + lower) / 2
-                result = self.get_offset_polygons_validated(middle)
-                if result is None:
-                    upper = middle
+        if self._cached_offset_polygons.has_key(offset):
+            return self._cached_offset_polygons[offset]
+        def is_better_offset(previous_offset, alternative_offset):
+            return ((offset < alternative_offset < 0) \
+                    or (0 < alternative_offset < offset)) \
+                    and (abs(alternative_offset) > abs(previous_offset))
+        # check the cache for a good starting point
+        best_offset = 0
+        best_offset_polygons = [self]
+        for cached_offset in self._cached_offset_polygons:
+            if is_better_offset(best_offset, cached_offset):
+                best_offset = cached_offset
+                best_offset_polygons = self._cached_offset_polygons[cached_offset]
+        remaining_offset = offset - best_offset
+        result_polygons = []
+        for poly in best_offset_polygons:
+            result = poly.get_offset_polygons_validated(remaining_offset)
+            if not result is None:
+                result_polygons.extend(result)
+            else:
+                lower = number(0)
+                upper = remaining_offset
+                loop_limit = 90
+                while (loop_limit > 0):
+                    middle = (upper + lower) / 2
+                    result = poly.get_offset_polygons_validated(middle)
+                    if result is None:
+                        upper = middle
+                    else:
+                        if depth > 0:
+                            # the original polygon was splitted or modified
+                            print "Next level: %s" % str(middle)
+                            shifted_sub_polygons = []
+                            for sub_poly in result:
+                                shifted_sub_polygons.extend(
+                                        sub_poly.get_offset_polygons(
+                                            remaining_offset - middle,
+                                            depth=depth-1))
+                            result_polygons.extend(shifted_sub_polygons)
+                            break
+                        else:
+                            print "Maximum recursion level reached"
+                            break
+                    loop_limit -= 1
                 else:
-                    # the original polygon was splitted or modified
-                    print "Next level: %s" % str(middle)
-                    shifted_sub_polygons = []
-                    for sub_poly in result:
-                        shifted_sub_polygons.extend(
-                                sub_poly.get_offset_polygons(offset - middle))
-                    return shifted_sub_polygons
-                loop_limit -= 1
-            # no split event happened -> no valid shifted polygon
-            return []
+                    # no split event happened -> no valid shifted polygon
+                    pass
+        self._cached_offset_polygons[offset] = result_polygons
+        return result_polygons
 
     def get_offset_polygons_quite_ok(self, offset):
         def get_shifted_vertex(index, offset):
