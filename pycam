@@ -89,7 +89,7 @@ def show_gui(inputfile=None, task_settings_file=None):
         full_report.append("")
         full_report.append("Detailed list of requirements: %s" % GuiCommon.REQUIREMENTS_LINK)
         log.critical(os.linesep.join(full_report))
-        sys.exit(EXIT_CODES["requirements"])
+        return EXIT_CODES["requirements"]
 
     gui = gui_class()
 
@@ -109,6 +109,8 @@ def show_gui(inputfile=None, task_settings_file=None):
 
     # open the GUI
     gui.mainloop()
+    # no error -> return no error code
+    return None
 
 
 def get_default_model():
@@ -181,7 +183,7 @@ def execute(parser, opts, args, pycam):
             print "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>."
             print "This is free software: you are free to change and redistribute it."
             print "There is NO WARRANTY, to the extent permitted by law."
-        sys.exit(EXIT_CODES["ok"])
+        return EXIT_CODES["ok"]
 
     if not opts.disable_psyco:
         try:
@@ -201,7 +203,7 @@ def execute(parser, opts, args, pycam):
                 + "to remote access without authentication.\n" \
                 + "Please add the '--server-auth-key' argument followed by " \
                 + "a shared secret password.")
-        sys.exit(EXIT_CODES["server_without_password"])
+        return EXIT_CODES["server_without_password"]
 
     # initialize multiprocessing
     try:
@@ -210,18 +212,18 @@ def execute(parser, opts, args, pycam):
                     remote=opts.remote_server, run_server=True,
                     server_credentials=opts.server_authkey)
             pycam.Utils.threading.cleanup()
-            sys.exit(EXIT_CODES["ok"])
+            return EXIT_CODES["ok"]
         else:
             pycam.Utils.threading.init_threading(opts.parallel_processes,
                     enable_server=opts.enable_server, remote=opts.remote_server,
                     server_credentials=opts.server_authkey)
     except socket.error, err_msg:
         log.error("Failed to connect to remote server: %s" % err_msg)
-        sys.exit(EXIT_CODES["connection_error"])
+        return EXIT_CODES["connection_error"]
     except multiprocessing.AuthenticationError, err_msg:
         log.error("The remote server rejected your authentication key: %s" \
                 % err_msg)
-        sys.exit(EXIT_CODES["connection_error"])
+        return EXIT_CODES["connection_error"]
 
     # initialize the progress bar
     progress_styles = {"none": pycam.Gui.Console.ConsoleProgressBar.STYLE_NONE,
@@ -236,7 +238,10 @@ def execute(parser, opts, args, pycam):
         opts.config_file = os.path.expanduser(opts.config_file)
 
     if not opts.export_gcode and not opts.export_task_config:
-        show_gui(inputfile, opts.config_file)
+        result = show_gui(inputfile, opts.config_file)
+        if not result is None:
+            # deliver the error code to our caller
+            return result
     else:
         # generate toolpath
         tps = pycam.Gui.Settings.ToolpathSettings()
@@ -287,7 +292,7 @@ def execute(parser, opts, args, pycam):
                     program_locations=program_locations, unit=opts.unit_size)
         if model is None:
             # something went wrong - we quit
-            sys.exit(EXIT_CODES["load_model_failed"])
+            return EXIT_CODES["load_model_failed"]
         # calculate the processing boundary
         bounds = Bounds()
         bounds.set_reference(model.get_bounds())
@@ -324,12 +329,12 @@ def execute(parser, opts, args, pycam):
         if opts.bounds_lower and not bounds_lower_nums:
             parser.error("Failed to parse the lower boundary limit: %s" \
                     % opts.bounds_lower)
-            sys.exit(EXIT_CODES["parsing_failed"])
+            return EXIT_CODES["parsing_failed"]
         bounds_upper_nums = parse_triple_float(opts.bounds_upper)
         if opts.bounds_upper and not bounds_upper_nums:
             parser.error("Failed to parse the upper boundary limit: %s" \
                     % opts.bounds_upper)
-            sys.exit(EXIT_CODES["parsing_failed"])
+            return EXIT_CODES["parsing_failed"]
         if bounds_lower_nums is None:
             bounds_lower_nums = bounds_default_low
         if bounds_upper_nums is None:
@@ -364,7 +369,7 @@ def execute(parser, opts, args, pycam):
                 tp_obj = Toolpath(toolpath, description, tps)
                 handler, closer = get_output_handler(opts.export_gcode)
                 if handler is None:
-                    sys.exit(EXIT_CODES["write_output_failed"])
+                    return EXIT_CODES["write_output_failed"]
                 # TODO: change to the new gcode exporter
                 generator = pycam.Exporters.GCodeExporter.GCodeGenerator(
                         handler, metric_units = (opts.unit_size == "mm"),
@@ -390,9 +395,11 @@ def execute(parser, opts, args, pycam):
         if opts.export_task_config:
             handler, closer = get_output_handler(opts.export_task_config)
             if handler is None:
-                sys.exit(EXIT_CODES["write_output_failed"])
+                return EXIT_CODES["write_output_failed"]
             print >>handler, tps.get_string()
             closer()
+    # no error -> don't return a specific exit code
+    return None
 
 
 # define the commandline interface
@@ -631,13 +638,18 @@ if __name__ == "__main__":
     try:
         if opts.profile_destination:
             import cProfile
-            cProfile.run('execute(parser, opts, args, pycam)',
+            exit_code = cProfile.run('execute(parser, opts, args, pycam)',
                     opts.profile_destination)
         else:
             # We need to add the parameter "pycam" to avoid weeeeird namespace
             # issues. Any idea how to fix this?
-            execute(parser, opts, args, pycam)
+            exit_code = execute(parser, opts, args, pycam)
     except KeyboardInterrupt:
         log.info("Quit requested")
+        exit_code = None
     pycam.Utils.threading.cleanup()
+    if not exit_code is None:
+        sys.exit(exit_code)
+    else:
+        sys.exit(EXIT_CODES["ok"])
 
