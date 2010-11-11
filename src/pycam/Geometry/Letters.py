@@ -46,9 +46,12 @@ class Letter(TransformableContainer):
 
     def get_positioned_lines(self, base_point, skew=None):
         result = []
-        # TODO: calculate skew
+        get_skewed_point = lambda p: \
+                Point(base_point.x + p.x + (p.y * skew / 100.0),
+                        base_point.y + p.y, base_point.z)
         for line in self.lines:
-            new_line = Line(line.p1.add(base_point), line.p2.add(base_point))
+            new_line = Line(get_skewed_point(line.p1),
+                    get_skewed_point(line.p2))
             result.append(new_line)
         return result
 
@@ -89,30 +92,41 @@ class Charset(object):
     def get_names(self):
         return self.names
 
-    def render(self, text, origin=None, skew=0):
+    def get_authors(self):
+        return self.authors
+
+    def render(self, text, origin=None, skew=0, line_spacing=1.0, pitch=1.0):
         result = ContourModel()
         if origin is None:
             origin = Point(0, 0, 0)
         base = origin
+        letter_spacing = self.letterspacing * pitch
+        word_spacing = self.wordspacing * pitch
+        line_factor = self.default_linespacing * self.linespacingfactor \
+                * line_spacing
         for line in text.splitlines():
             line_height = self.default_height
             for character in line:
                 if character == " ":
-                    base = base.add(Point(self.wordspacing, 0, 0))
-                elif character in self.letters:
+                    base = base.add(Point(word_spacing, 0, 0))
+                elif character in self.letters.keys():
                     charset_letter = self.letters[character]
-                    for line in charset_letter.get_positioned_lines(base):
-                        result.append(line)
+                    new_model = ContourModel()
+                    for line in charset_letter.get_positioned_lines(base,
+                            skew=skew):
+                        new_model.append(line)
+                    for polygon in new_model.get_polygons():
+                        # add polygons instead of lines -> more efficient
+                        result.append(polygon)
                     # update line height
                     line_height = max(line_height, charset_letter.maxy())
                     # shift the base position
                     base = base.add(Point(
-                            charset_letter.maxx() + self.letterspacing, 0, 0))
+                            charset_letter.maxx() + letter_spacing, 0, 0))
                 else:
                     # unknown character - add a small whitespace
-                    base = base.add(Point(self.letterspacing, 0, 0))
+                    base = base.add(Point(letter_spacing, 0, 0))
             # go to the next line
-            line_spacing = line_height * self.default_linespacing * self.linespacingfactor
-            base = Point(origin.x, base.y - line_spacing, origin.z)
+            base = Point(origin.x, base.y - line_height * line_factor, origin.z)
         return result
 
