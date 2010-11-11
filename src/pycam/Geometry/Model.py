@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Exporters.STLExporter
+import pycam.Exporters.SVGExporter
 from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
@@ -312,6 +313,7 @@ class ContourModel(BaseModel):
         self._plane_groups = [self._plane]
         self._item_groups.append(self._plane_groups)
         self._cached_offset_models = {}
+        self._export_function = pycam.Exporters.SVGExporter.SVGExporterContourModel
 
     def reset_cache(self):
         super(ContourModel, self).reset_cache()
@@ -365,6 +367,8 @@ class ContourModel(BaseModel):
         elif isinstance(item, Polygon):
             if not unify_overlaps or (len(self._line_groups) == 0):
                 self._line_groups.append(item)
+                for subitem in item.next():
+                    self._update_limits(subitem)
             else:
                 # go through all polygons and check if they can be combined
                 is_outer = item.is_outer()
@@ -409,7 +413,8 @@ class ContourModel(BaseModel):
                 print "New queue: %s" % str([len(p.get_lines()) for p in new_queue])
                 for processed_polygon in processed_polygons + new_queue:
                     self._line_groups.append(processed_polygon)
-            self.reset_cache()
+                # TODO: this is quite expensive - can we do it differently?
+                self.reset_cache()
         else:
             # ignore any non-supported items (they are probably handled by a
             # parent class)

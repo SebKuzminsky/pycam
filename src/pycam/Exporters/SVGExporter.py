@@ -22,21 +22,26 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 class SVGExporter:
 
-    def __init__(self, filename):
-        self.file = file(filename,"w")
-        self.file.write("""<?xml version='1.0'?>
+    def __init__(self, output):
+        if isinstance(output, basestring):
+            # a filename was given
+            self.output = file(filename,"w")
+        else:
+            # a stream was given
+            self.output = output
+        self.output.write("""<?xml version='1.0'?>
 <svg xmlns='http://www.w3.org/2000/svg' width='640' height='800'>
 <g transform='translate(320,320) scale(50)' stroke-width='0.01' font-size='0.2'>
 """)
         self._fill = 'none'
         self._stroke = 'black'
 
-    def close(self):
-        self.file.write("""</g>
+    def close(self, close_stream=True):
+        self.output.write("""</g>
 </svg>
 """)
-
-        self.file.close()
+        if close_stream:
+            self.output.close()
 
     def stroke(self, stroke):
         self._stroke = stroke
@@ -51,12 +56,12 @@ class SVGExporter:
             y = -7
         l = "<circle fill='" + self._fill +"'" + (" cx='%g'" % x) \
                 + (" cy='%g'" % -y) + " r='0.04'/>\n"
-        self.file.write(l)
+        self.output.write(l)
 
     def AddText(self, x, y, text):
         l = "<text fill='" + self._fill +"'" + (" x='%g'" % x) \
                 + (" y='%g'" % -y) + " dx='0.07'>" + text + "</text>\n"
-        self.file.write(l)
+        self.output.write(l)
         
 
     def AddLine(self, x1, y1, x2, y2):
@@ -67,24 +72,40 @@ class SVGExporter:
         l = "<line fill='" + self._fill +"' stroke='" + self._stroke + "'" \
                 + (" x1='%g'" % x1) + (" y1='%g'" % -y1) + (" x2='%g'" % x2) \
                 + (" y2='%g'" % -y2) + " />\n"
-        self.file.write(l)
+        self.output.write(l)
         
     def AddPoint(self, p):
         self.AddDot(p.x, p.y)
 
     def AddPath(self, path):
+        self.AddLines(path.points)
+    
+    def AddLines(self, points):
         l = "<path fill='" + self._fill +"' stroke='" + self._stroke + "' d='"
-        for i in range(0, len(path.points)):
-            p = path.points[i]
+        for i in range(0, len(points)):
+            p = points[i]
             if i == 0:
                 l += "M "
             else:
                 l += " L "
             l += "%g %g" % (p.x, -p.y-5)
         l += "'/>\n"
-        self.file.write(l)
+        self.output.write(l)
 
     def AddPathList(self, pathlist):
         for path in pathlist:
             self.AddPath(path)
+
+
+#TODO: we need to create a unified "Exporter" interface and base class
+class SVGExporterContourModel(object):
+
+    def __init__(self, model, comment=None):
+        self.model = model
+
+    def write(self, stream):
+        writer = SVGExporter(stream)
+        for polygon in self.model.get_polygons():
+            writer.AddLines(polygon.get_points())
+        writer.close(close_stream=False)
 
