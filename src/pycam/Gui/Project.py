@@ -609,7 +609,8 @@ class ProjectGui:
             obj.connect("color-set", self.update_view)
         # set the availability of ODE
         enable_ode_control = self.gui.get_object("SettingEnableODE")
-        if pycam.Physics.ode_physics.is_ode_available():
+        if not pycam.Utils.threading.is_multiprocessing_enabled \
+                and pycam.Physics.ode_physics.is_ode_available():
             self.settings.add_item("enable_ode", enable_ode_control.get_active, enable_ode_control.set_active)
         else:
             enable_ode_control.set_sensitive(False)
@@ -1591,7 +1592,11 @@ class ProjectGui:
         self.log_model.append((timestamp, title, message))
         # update the status bar (if the GTK interface is still active)
         if not self.status_bar.window is None:
-            self.status_bar.push(0, message)
+            try:
+                self.status_bar.push(0, message)
+            except TypeError:
+                new_message = re.sub("[^\w\s]", "", message)
+                self.status_bar.push(0, new_message)
 
     @gui_activity_guard
     def copy_log_to_clipboard(self, widget=None):

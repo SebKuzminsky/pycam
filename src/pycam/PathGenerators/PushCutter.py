@@ -43,6 +43,10 @@ def _process_one_line((p1, p2, depth, models, cutter, physics)):
 class PushCutter:
 
     def __init__(self, cutter, models, path_processor, physics=None):
+        if physics is None:
+            log.debug("Starting PushCutter (without ODE)")
+        else:
+            log.debug("Starting PushCutter (with ODE)")
         self.cutter = cutter
         self.models = models
         self.pa = path_processor
@@ -130,10 +134,7 @@ class PushCutter:
             p1, p2 = line
             args.append((p1, p2, depth, models, self.cutter, self.physics))
 
-        # ODE does not work with multi-threading
-        disable_multiprocessing = not self.physics is None
-        for points in run_in_parallel(_process_one_line, args,
-                disable_multiprocessing=disable_multiprocessing):
+        for points in run_in_parallel(_process_one_line, args):
             if points:
                 self.pa.new_scanline()
                 for p in points:

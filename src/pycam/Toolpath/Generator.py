@@ -123,6 +123,7 @@ def generate_toolpath(model, tool_settings=None,
     @return: the resulting toolpath object or an error string in case of invalid
         arguments
     """
+    log.debug("Starting toolpath generation")
     overlap = number(overlap)
     step_down = number(step_down)
     engrave_offset = number(engrave_offset)

@@ -54,7 +54,7 @@ log = pycam.Utils.log.get_logger()
 # possible values:
 #   None: not initialized
 #   False: no threading
-#   multiprocessing: the multiprocessing module is impored and enabled
+#   multiprocessing: the multiprocessing module is imported and enabled later
 __multiprocessing = None
 
 # needs to be initialized, if multiprocessing is enabled
@@ -76,6 +76,13 @@ def run_in_parallel(*args, **kwargs):
 def is_pool_available():
     return not __manager is None
 
+def is_multiprocessing_enabled():
+    return not __multiprocessing is None
+
+def is_server_mode_available():
+    # server mode is disabled for the Windows standalone executable
+    return not (hasattr(sys, "frozen") and sys.frozen)
+
 def get_pool_statistics():
     global __manager
     if __manager is None:
@@ -83,12 +90,13 @@ def get_pool_statistics():
     else:
         return __manager.statistics().get_worker_statistics()
 
-def init_threading(number_of_processes=None, enable_server=False, remote=None, run_server=False,
-        server_credentials=""):
+def init_threading(number_of_processes=None, enable_server=False, remote=None,
+        run_server=False, server_credentials=""):
     global __multiprocessing, __num_of_processes, __manager, __closing, __task_source_uuid
-    # server mode is disabled for the Windows standalone executable
-    is_frozen = hasattr(sys, "frozen") and sys.frozen
-    if is_frozen and (enable_server or run_server):
+    if __multiprocessing:
+        # kill the manager and clean everything up for a re-initialization
+        cleanup()
+    if (not is_server_mode_available()) and (enable_server or run_server):
         # server mode is disabled for the Windows pyinstaller standalone
         # due to "pickle errors". How to reproduce: run the standalone binary
         # with "--enable-server --server-auth-key foo".
@@ -113,7 +121,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None, r
         remote = None
         run_server = None
         server_credentials = ""
-    if is_frozen:
+    if not is_server_mode_available():
         # Running multiple processes with the Windows standalone executable
         # causes "WindowsError: invalid handle" error messages. The processes
         # can't communicate - thus no results are returned.
@@ -246,6 +254,8 @@ def cleanup():
             # check if it is still alive and kill it if necessary
             if __manager._process.is_alive():
                 __manager._process.terminate()
+    __manager = None
+    __closing = None
 
 def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
     """ wait for items in the 'tasks' queue to appear and then spawn workers
