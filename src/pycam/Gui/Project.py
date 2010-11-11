@@ -166,6 +166,7 @@ def get_font_files():
             filename = os.path.join(font_dir, fname)
             if filename.lower().endswith(".cxf") and os.path.isfile(filename):
                 result.append(filename)
+    result.sort()
     return result
 
 def load_fonts(callback=None):
@@ -176,7 +177,8 @@ def load_fonts(callback=None):
     else:
         progress_counter = None
     for font_file in all_font_files:
-        charset = pycam.Importers.CXFImporter.import_font(font_file)
+        charset = pycam.Importers.CXFImporter.import_font(font_file,
+                callback=progress_counter)
         if (not progress_counter is None) and progress_counter.increment():
             break
         if not charset is None:
@@ -213,7 +215,7 @@ class ProjectGui:
         self.gui = gtk.Builder()
         gtk_build_file = get_data_file_location(GTKBUILD_FILE)
         if gtk_build_file is None:
-            sys.exit(1)
+            gtk.main_quit()
         self.gui.add_from_file(gtk_build_file)
         self.window = self.gui.get_object("ProjectWindow")
         # increase the initial width of the window (due to hidden elements)
@@ -329,6 +331,20 @@ class ProjectGui:
                 self.import_from_font_dialog)
         self.gui.get_object("FontDialogSave").connect("clicked",
                 self.export_from_font_dialog)
+        self.gui.get_object("FontDialogInputBuffer").connect("changed",
+                self.update_font_dialog_preview)
+        self.gui.get_object("FontDialogPreview").connect("configure_event",
+                self.update_font_dialog_preview)
+        self.gui.get_object("FontDialogPreview").connect("expose_event",
+                self.update_font_dialog_preview)
+        for objname in ("FontSideSkewValue", "FontCharacterSpacingValue",
+                "FontLineSpacingValue"):
+            obj = self.gui.get_object(objname)
+            # set default value before connecting the change-handler
+            if objname != "FontSideSkewValue":
+                obj.set_value(1.0)
+            obj.connect("value-changed",
+                    self.update_font_dialog_preview)
         self._font_dialog_window_visible = False
         self._font_dialog_window_position = None
         self._fonts = None
@@ -780,10 +796,11 @@ class ProjectGui:
         self.preferences_window.add_accel_group(self._accel_group)
         self.log_window.add_accel_group(self._accel_group)
         self.process_pool_window.add_accel_group(self._accel_group)
+        self.font_dialog_window.add_accel_group(self._accel_group)
         # load menu data
         gtk_menu_file = get_data_file_location(GTKMENU_FILE)
         if gtk_menu_file is None:
-            sys.exit(1)
+            gtk.main_quit()
         uimanager.add_ui_from_file(gtk_menu_file)
         # make the actions defined in the GTKBUILD file available in the menu
         actiongroup = gtk.ActionGroup("menubar")
@@ -1428,8 +1445,8 @@ class ProjectGui:
                 obj.set_value(default_value)
         self.gui.get_object("ExportEMCToolDefinition").set_sensitive(len(self.tool_list) > 0)
 
-    @progress_activity_guard
     @gui_activity_guard
+    @progress_activity_guard
     def toggle_font_dialog_window(self, widget=None, event=None, state=None):
         # only "delete-event" uses four arguments
         # TODO: unify all these "toggle" functions for different windows into one single function (including storing the position)
@@ -1454,6 +1471,8 @@ class ProjectGui:
                 else:
                     # TODO: show some warning - no fonts found
                     pass
+                font_selector.connect("changed",
+                        self.update_font_dialog_preview)
                 font_selector.show()
                 self.font_selector = font_selector
             if self._font_dialog_window_position:
@@ -1468,19 +1487,65 @@ class ProjectGui:
         # don't close the window - just hide it (for "delete-event")
         return True
 
-    @gui_activity_guard
-    def import_from_font_dialog(self, widget=None):
+    def get_font_dialog_text_rendered(self):
         text_buffer = self.gui.get_object("FontDialogInput").get_buffer()
         text = text_buffer.get_text(text_buffer.get_start_iter(),
                 text_buffer.get_end_iter())
-        font_name = self.font_selector.get_active_text()
-        new_model = self._fonts[font_name].render(text)
-        self.load_model(new_model)
-        self.append_to_queue(self.toggle_font_dialog_window)
+        if text:
+            skew = self.gui.get_object("FontSideSkewValue").get_value()
+            line_space = self.gui.get_object("FontLineSpacingValue").get_value()
+            pitch = self.gui.get_object("FontCharacterSpacingValue").get_value()
+            font_name = self.font_selector.get_active_text()
+            return self._fonts[font_name].render(text, skew=skew,
+                    line_spacing=line_space, pitch=pitch)
+        else:
+            # empty text
+            return None
 
     @gui_activity_guard
-    def export_from_font_dialog(self, widget=None):
+    def import_from_font_dialog(self, widget=None):
+        self.load_model(self.get_font_dialog_text_rendered())
         self.append_to_queue(self.toggle_font_dialog_window)
+
+    def export_from_font_dialog(self, widget=None):
+        text_model = self.get_font_dialog_text_rendered()
+        if text_model and (not text_model.maxx is None):
+            self.save_model(model=text_model)
+
+    @gui_activity_guard
+    def update_font_dialog_preview(self, widget=None, event=None):
+        if self._fonts is None:
+            return
+        font_name = self.font_selector.get_active_text()
+        font = self._fonts[font_name]
+        self.gui.get_object("FontAuthorText").set_label(
+                "\n".join(font.get_authors()))
+        preview_widget = self.gui.get_object("FontDialogPreview")
+        final_drawing_area = preview_widget.window
+        text_model = self.get_font_dialog_text_rendered()
+        # carefully check if there are lines in the rendered text
+        if text_model and (not text_model.maxx is None):
+            x, y, width, height = preview_widget.get_allocation()
+            x_fac = width / (text_model.maxx - text_model.minx)
+            y_fac = height / (text_model.maxy - text_model.miny)
+            model_base_x = text_model.minx
+            model_base_y = text_model.miny
+            factor = min(x_fac, y_fac)
+            drawing_area = gtk.gdk.Pixmap(final_drawing_area, width, height)
+            # always clean the background
+            drawing_area.draw_rectangle(preview_widget.get_style().white_gc, True, 0, 0, width, height)
+            gc = drawing_area.new_gc()
+            get_virtual_x = lambda x: int((x - model_base_x) * factor)
+            get_virtual_y = lambda y: height - int((y - model_base_y) * factor)
+            for polygon in text_model.get_polygons():
+                draw_points = []
+                for point in polygon.get_points():
+                    x = get_virtual_x(point.x)
+                    y = get_virtual_y(point.y)
+                    draw_points.append((x, y))
+                drawing_area.draw_lines(gc, draw_points)
+            final_gc = final_drawing_area.new_gc()
+            final_drawing_area.draw_drawable(final_gc, drawing_area, 0, 0, 0, 0, -1, -1)
 
     @gui_activity_guard
     def toggle_about_window(self, widget=None, event=None, state=None):
@@ -1994,11 +2059,12 @@ class ProjectGui:
             return filename
 
     @gui_activity_guard
-    def save_model(self, widget=None, filename=None):
-        # only triangle models may be saved
-        if not self.model.is_export_supported():
+    def save_model(self, widget=None, filename=None, model=None):
+        if model is None:
+            model = self.model
+        if not model.is_export_supported():
             log.warn(("Saving this type of model (%s) is currently not " \
-                    + "implemented!") % str(type(self.model)))
+                    + "implemented!") % str(type(model)))
             return
         # get the filename
         if callable(filename):
@@ -2015,7 +2081,7 @@ class ProjectGui:
             return
         try:
             file_in = open(filename, "w")
-            self.model.export(comment=self.get_meta_data()).write(file_in)
+            model.export(comment=self.get_meta_data()).write(file_in)
             file_in.close()
         except IOError, err_msg:
             log.error("Failed to save model file: %s" % err_msg)
@@ -2768,7 +2834,10 @@ class ProjectGui:
                 or (self._last_gtk_events_time + 1 < current_time):
             while gtk.events_pending():
                 gtk.main_iteration()
-            if not percent is None:
+            if percent:
+                # We don't store the timining if percent=0 or percent=None.
+                # This is especially nice for the snappines during font
+                # initialization.
                 self._last_gtk_events_time = current_time
         # return if the user requested a break
         return self._progress_cancel_requested

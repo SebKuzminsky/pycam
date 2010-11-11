@@ -6947,10 +6947,12 @@ Please read the description of the Server Mode (linked below) to understand the 
           <object class="GtkLabel" id="FontDialogProperties">
             <property name="visible">True</property>
             <property name="xalign">0</property>
-            <property name="label" translatable="yes">&lt;b&gt;Font selection:&lt;/b&gt;</property>
+            <property name="label" translatable="yes">&lt;b&gt;Font properties:&lt;/b&gt;</property>
             <property name="use_markup">True</property>
           </object>
           <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
             <property name="position">0</property>
           </packing>
         </child>
@@ -6961,13 +6963,84 @@ Please read the description of the Server Mode (linked below) to understand the 
               <placeholder/>
             </child>
             <child>
-              <object class="GtkHScale" id="FontSideShift">
+              <object class="GtkTable" id="table6">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="tooltip_text" translatable="yes">Skew the text to the left or right side. The value is given in percent based on the height of the text.</property>
-                <property name="adjustment">FontSideSkewValue</property>
-                <property name="digits">0</property>
-                <property name="value_pos">bottom</property>
+                <property name="n_rows">2</property>
+                <property name="n_columns">3</property>
+                <property name="column_spacing">3</property>
+                <property name="homogeneous">True</property>
+                <child>
+                  <object class="GtkHScale" id="FontSideShift">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="update_policy">delayed</property>
+                    <property name="adjustment">FontSideSkewValue</property>
+                    <property name="digits">0</property>
+                    <property name="value_pos">bottom</property>
+                  </object>
+                  <packing>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="FontSideSkewLabel">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Horiz. skew</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="FontLineSpacingLabel">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Line spacing</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkHScale" id="FontLineSpacing">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="update_policy">delayed</property>
+                    <property name="adjustment">FontLineSpacingValue</property>
+                    <property name="digits">2</property>
+                    <property name="value_pos">bottom</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="FontCharacterSpacingLabel">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Pitch</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="right_attach">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkHScale" id="FontCharacterSpacing">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="update_policy">delayed</property>
+                    <property name="adjustment">FontCharacterSpacingValue</property>
+                    <property name="digits">2</property>
+                    <property name="value_pos">bottom</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="right_attach">3</property>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="pack_type">end</property>
@@ -6976,7 +7049,50 @@ Please read the description of the Server Mode (linked below) to understand the 
             </child>
           </object>
           <packing>
+            <property name="expand">False</property>
             <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkHBox" id="hbox33">
+            <property name="visible">True</property>
+            <property name="spacing">2</property>
+            <child>
+              <object class="GtkLabel" id="FontAuthorLabel">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Font author:</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="FontAuthorText">
+                <property name="visible">True</property>
+                <property name="xalign">0</property>
+                <property name="label" translatable="yes">FontAuthor</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="FontDedicationQCAD">
+            <property name="visible">True</property>
+            <property name="xalign">0</property>
+            <property name="label" translatable="yes">Thanks to the &lt;a href="http://qcad.org"&gt;QCAD developers&lt;/a&gt; for these single-line fonts!</property>
+            <property name="use_markup">True</property>
+          </object>
+          <packing>
+            <property name="position">3</property>
           </packing>
         </child>
         <child>
@@ -6985,7 +7101,8 @@ Please read the description of the Server Mode (linked below) to understand the 
           </object>
           <packing>
             <property name="expand">False</property>
-            <property name="position">2</property>
+            <property name="fill">False</property>
+            <property name="position">4</property>
           </packing>
         </child>
         <child>
@@ -6996,7 +7113,9 @@ Please read the description of the Server Mode (linked below) to understand the 
             <property name="use_markup">True</property>
           </object>
           <packing>
-            <property name="position">3</property>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">5</property>
           </packing>
         </child>
         <child>
@@ -7007,6 +7126,7 @@ Please read the description of the Server Mode (linked below) to understand the 
               <object class="GtkTextView" id="FontDialogInput">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="has_focus">True</property>
                 <property name="border_width">3</property>
                 <property name="wrap_mode">word</property>
                 <property name="buffer">FontDialogInputBuffer</property>
@@ -7015,7 +7135,9 @@ Please read the description of the Server Mode (linked below) to understand the 
             </child>
           </object>
           <packing>
-            <property name="position">4</property>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">6</property>
           </packing>
         </child>
         <child>
@@ -7024,7 +7146,8 @@ Please read the description of the Server Mode (linked below) to understand the 
           </object>
           <packing>
             <property name="expand">False</property>
-            <property name="position">5</property>
+            <property name="fill">False</property>
+            <property name="position">7</property>
           </packing>
         </child>
         <child>
@@ -7035,13 +7158,16 @@ Please read the description of the Server Mode (linked below) to understand the 
             <property name="use_markup">True</property>
           </object>
           <packing>
-            <property name="position">6</property>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">8</property>
           </packing>
         </child>
         <child>
           <object class="GtkViewport" id="FontDialogPreviewViewPort">
             <property name="height_request">120</property>
             <property name="visible">True</property>
+            <property name="border_width">3</property>
             <property name="resize_mode">queue</property>
             <property name="shadow_type">etched-in</property>
             <child>
@@ -7051,7 +7177,7 @@ Please read the description of the Server Mode (linked below) to understand the 
             </child>
           </object>
           <packing>
-            <property name="position">7</property>
+            <property name="position">9</property>
           </packing>
         </child>
         <child internal-child="action_area">
@@ -7074,11 +7200,10 @@ Please read the description of the Server Mode (linked below) to understand the 
             </child>
             <child>
               <object class="GtkButton" id="FontDialogSave">
-                <property name="label">gtk-save-as</property>
+                <property name="label">Save as SVG</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -7104,7 +7229,7 @@ Please read the description of the Server Mode (linked below) to understand the 
           <packing>
             <property name="expand">False</property>
             <property name="pack_type">end</property>
-            <property name="position">8</property>
+            <property name="position">10</property>
           </packing>
         </child>
       </object>
@@ -7128,5 +7253,17 @@ Please read the description of the Server Mode (linked below) to understand the 
   <object class="GtkTextBuffer" id="FontDialogInputBuffer"/>
   <object class="GtkAction" id="ExtrasMenu">
     <property name="label">E_xtras</property>
+  </object>
+  <object class="GtkAdjustment" id="FontCharacterSpacingValue">
+    <property name="value">1</property>
+    <property name="lower">-1</property>
+    <property name="upper">5</property>
+    <property name="step_increment">0.10000000000000001</property>
+  </object>
+  <object class="GtkAdjustment" id="FontLineSpacingValue">
+    <property name="value">1</property>
+    <property name="lower">-1</property>
+    <property name="upper">5</property>
+    <property name="step_increment">0.10000000000000001</property>
   </object>
 </interface>
