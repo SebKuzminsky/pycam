@@ -46,6 +46,56 @@ class Line(TransformableContainer):
         self.p2 = p2
         self.reset_cache()
 
+    @property
+    def vector(self):
+        if self._vector is None:
+            self._vector = self.p2.sub(self.p1)
+        return self._vector
+
+    @property
+    def dir(self):
+        return self.vector.normalized()
+
+    @property
+    def len(self):
+        return self.vector.norm
+
+    @property
+    def minx(self):
+        if self._minx is None:
+            self._minx = min(self.p1.x, self.p2.x)
+        return self._minx
+
+    @property
+    def maxx(self):
+        if self._maxx is None:
+            self._maxx = max(self.p1.x, self.p2.x)
+        return self._maxx
+
+    @property
+    def miny(self):
+        if self._miny is None:
+            self._miny = min(self.p1.y, self.p2.y)
+        return self._miny
+
+    @property
+    def maxy(self):
+        if self._maxy is None:
+            self._maxy = max(self.p1.y, self.p2.y)
+        return self._maxy
+
+    @property
+    def minz(self):
+        if self._minz is None:
+            self._minz = min(self.p1.z, self.p2.z)
+        return self._minz
+
+    @property
+    def maxz(self):
+        if self._maxz is None:
+            self._maxz = max(self.p1.z, self.p2.z)
+        return self._maxz
+
     def __repr__(self):
         return "Line<%g,%g,%g>-<%g,%g,%g>" % (self.p1.x, self.p1.y, self.p1.z,
                 self.p2.x, self.p2.y, self.p2.z)
@@ -75,14 +125,13 @@ class Line(TransformableContainer):
         return 2
 
     def reset_cache(self):
-        self.dir = self.p2.sub(self.p1).normalized()
-        self.len = self.p2.sub(self.p1).norm
-        self.minx = min(self.p1.x, self.p2.x)
-        self.miny = min(self.p1.y, self.p2.y)
-        self.minz = min(self.p1.z, self.p2.z)
-        self.maxx = max(self.p1.x, self.p2.x)
-        self.maxy = max(self.p1.y, self.p2.y)
-        self.maxz = max(self.p1.z, self.p2.z)
+        self._vector = None
+        self._minx = None
+        self._maxx = None
+        self._miny = None
+        self._maxy = None
+        self._minz = None
+        self._maxz = None
 
     def get_points(self):
         return (self.p1, self.p2)

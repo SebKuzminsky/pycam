@@ -27,7 +27,7 @@ def _is_near(x, y):
     return abs(x - y) < epsilon
 
 
-class Point:
+class Point(object):
     id = 0
 
     def __init__(self, x, y, z):
@@ -37,6 +37,18 @@ class Point:
         self.y = number(y)
         self.z = number(z)
         self.reset_cache()
+
+    @property
+    def norm(self):
+        if self._norm is None:
+            self._norm = sqrt(self.normsq)
+        return self._norm
+
+    @property
+    def normsq(self):
+        if self._normsq is None:
+            self._normsq = self.dot(self)
+        return self._normsq
 
     def __repr__(self):
         return "Point%d<%g,%g,%g>" % (self.id, self.x, self.y, self.z)
@@ -73,8 +85,8 @@ class Point:
         self.reset_cache()
 
     def reset_cache(self):
-        self.normsq = self.dot(self)
-        self.norm = sqrt(self.normsq)
+        self._norm = None
+        self._normsq = None
         
     def mul(self, c):
         c = number(c)
