@@ -25,6 +25,7 @@ import pycam.Utils.log
 #import multiprocessing
 import Queue
 import signal
+import socket
 import platform
 import random
 import uuid
@@ -40,7 +41,11 @@ try:
         def _run_server(cls, *args):
             # make sure that the server ignores SIGINT (KeyboardInterrupt)
             signal.signal(signal.SIGINT, signal.SIG_IGN)
-            SyncManager._run_server(*args)
+            # prevent connection errors to trigger exceptions
+            try:
+                SyncManager._run_server(*args)
+            except socket.error, err_msg:
+                pass
 except ImportError:
     pass
 
@@ -77,11 +82,34 @@ def is_pool_available():
     return not __manager is None
 
 def is_multiprocessing_enabled():
-    return not __multiprocessing is None
+    return bool(__multiprocessing)
 
-def is_server_mode_available():
+def is_windows_parallel_processing_available():
     # server mode is disabled for the Windows standalone executable
     return not (hasattr(sys, "frozen") and sys.frozen)
+
+def is_parallel_processing_available():
+    if not is_windows_parallel_processing_available():
+        # Windows -> no parallel processing
+        return False
+    try:
+        import multiprocessing
+        return True
+    except ImportError:
+        return False
+
+def get_number_of_processes():
+    if __num_of_processes is None:
+        return 1
+    else:
+        return __num_of_processes
+
+def get_number_of_cores():
+    try:
+        import multiprocessing
+        return multiprocessing.cpu_count()
+    except ImportError:
+        return None
 
 def get_pool_statistics():
     global __manager
@@ -91,12 +119,12 @@ def get_pool_statistics():
         return __manager.statistics().get_worker_statistics()
 
 def init_threading(number_of_processes=None, enable_server=False, remote=None,
-        run_server=False, server_credentials=""):
+        run_server=False, server_credentials="", local_port=DEFAULT_PORT):
     global __multiprocessing, __num_of_processes, __manager, __closing, __task_source_uuid
     if __multiprocessing:
         # kill the manager and clean everything up for a re-initialization
         cleanup()
-    if (not is_server_mode_available()) and (enable_server or run_server):
+    if (not is_windows_parallel_processing_available()) and (enable_server or run_server):
         # server mode is disabled for the Windows pyinstaller standalone
         # due to "pickle errors". How to reproduce: run the standalone binary
         # with "--enable-server --server-auth-key foo".
@@ -121,7 +149,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
         remote = None
         run_server = None
         server_credentials = ""
-    if not is_server_mode_available():
+    if not is_windows_parallel_processing_available():
         # Running multiple processes with the Windows standalone executable
         # causes "WindowsError: invalid handle" error messages. The processes
         # can't communicate - thus no results are returned.
@@ -184,7 +212,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
         worker_uuid_list = [str(uuid.uuid1()) for index in range(__num_of_processes)]
         __task_source_uuid = str(uuid.uuid1())
         if remote is None:
-            address = ('', DEFAULT_PORT)
+            address = ('localhost', local_port)
         else:
             if ":" in remote:
                 host, port = remote.split(":", 1)
@@ -214,12 +242,19 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
             TaskManager.register("cache")
         __manager = TaskManager(address=address, authkey=server_credentials)
         # run the local server, connect to a remote one or begin serving
-        if remote is None:
-            __manager.start()
-            log.info("Started a local server.")
-        else:
-            __manager.connect()
-            log.info("Connected to a remote task server.")
+        try:
+            if remote is None:
+                __manager.start()
+                log.info("Started a local server.")
+            else:
+                __manager.connect()
+                log.info("Connected to a remote task server.")
+        except (multiprocessing.AuthenticationError, socket.error), err_msg:
+            __manager = None
+            return err_msg
+        except EOFError:
+            __manager = None
+            return "Failed to bind to socket for unknown reasons"
         # create the spawning process
         __closing = __manager.Value("b", False)
         if __num_of_processes > 0:
@@ -237,7 +272,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
                 spawner.join()
 
 def cleanup():
-    global __manager, __closing
+    global __multiprocessing, __manager, __closing
     if __multiprocessing and __closing:
         log.debug("Shutting down process handler")
         try:
@@ -256,6 +291,7 @@ def cleanup():
                 __manager._process.terminate()
     __manager = None
     __closing = None
+    __multiprocessing = None
 
 def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
     """ wait for items in the 'tasks' queue to appear and then spawn workers
