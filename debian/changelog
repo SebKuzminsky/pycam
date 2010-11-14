@@ -1,3 +1,13 @@
+pycam (0.4-2) unstable; urgency=low
+
+  * Improved the packaging based on suggestions by Benoît Knecht:
+   * Changed the copyright file to the format specified by DEP5
+   * Removed postinst and prerm placeholders
+   * Added descriptions to the patches
+   * Added a watch file
+
+ -- Lars Kruse <devel@sumpfralle.de>  Sun, 14 Nov 2010 15:46:01 +0100
+
 pycam (0.4-1) unstable; urgency=low
 
   * new upstream release
