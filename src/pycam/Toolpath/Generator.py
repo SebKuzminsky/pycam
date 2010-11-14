@@ -23,7 +23,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.PathGenerators import DropCutter, PushCutter, EngraveCutter, \
         ContourFollow
 from pycam.Geometry.utils import number
-import pycam.PathProcessors
+from pycam.PathProcessors import PathAccumulator, SimpleCutter, ZigZagCutter, \
+        PolygonCutter, ContourCutter
 import pycam.Cutters
 import pycam.Toolpath.SupportGrid
 import pycam.Toolpath.MotionGrid
@@ -318,9 +319,9 @@ def _get_pathgenerator_instance(trimesh_models, contour_model, cutter,
                 + "is 'Engraving'.")
     if pathgenerator == "DropCutter":
         if pathprocessor == "ZigZagCutter":
-            processor = pycam.PathProcessors.PathAccumulator(zigzag=True)
+            processor = PathAccumulator.PathAccumulator(zigzag=True)
         elif pathprocessor == "PathAccumulator":
-            processor = pycam.PathProcessors.PathAccumulator()
+            processor = PathAccumulator.PathAccumulator()
         else:
             return ("Invalid postprocessor (%s) for 'DropCutter': only " \
                     + "'ZigZagCutter' or 'PathAccumulator' are allowed") \
@@ -329,15 +330,15 @@ def _get_pathgenerator_instance(trimesh_models, contour_model, cutter,
                 physics=physics)
     elif pathgenerator == "PushCutter":
         if pathprocessor == "PathAccumulator":
-            processor = pycam.PathProcessors.PathAccumulator()
+            processor = PathAccumulator.PathAccumulator()
         elif pathprocessor == "SimpleCutter":
-            processor = pycam.PathProcessors.SimpleCutter()
+            processor = SimpleCutter.SimpleCutter()
         elif pathprocessor == "ZigZagCutter":
-            processor = pycam.PathProcessors.ZigZagCutter()
+            processor = ZigZagCutter.ZigZagCutter()
         elif pathprocessor == "PolygonCutter":
-            processor = pycam.PathProcessors.PolygonCutter()
+            processor = PolygonCutter.PolygonCutter()
         elif pathprocessor == "ContourCutter":
-            processor = pycam.PathProcessors.ContourCutter()
+            processor = ContourCutter.ContourCutter()
         else:
             return ("Invalid postprocessor (%s) for 'PushCutter' - it should " \
                     + "be one of these: %s") % (pathprocessor, PATH_POSTPROCESSORS)
@@ -346,7 +347,7 @@ def _get_pathgenerator_instance(trimesh_models, contour_model, cutter,
     elif pathgenerator == "EngraveCutter":
         reverse = (milling_style == "conventional")
         if pathprocessor == "SimpleCutter":
-            processor = pycam.PathProcessors.SimpleCutter(reverse=reverse)
+            processor = SimpleCutter.SimpleCutter(reverse=reverse)
         else:
             return ("Invalid postprocessor (%s) for 'EngraveCutter' - it " \
                     + "should be: SimpleCutter") % str(pathprocessor)
@@ -358,7 +359,7 @@ def _get_pathgenerator_instance(trimesh_models, contour_model, cutter,
     elif pathgenerator == "ContourFollow":
         reverse = (milling_style == "conventional")
         if pathprocessor == "SimpleCutter":
-            processor = pycam.PathProcessors.SimpleCutter(reverse=reverse)
+            processor = SimpleCutter.SimpleCutter(reverse=reverse)
         else:
             return ("Invalid postprocessor (%s) for 'ContourFollow' - it " \
                     + "should be: SimpleCutter") % str(pathprocessor)

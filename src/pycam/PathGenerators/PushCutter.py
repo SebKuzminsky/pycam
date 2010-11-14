@@ -23,11 +23,15 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.Point import Point
 from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
-import pycam.PathProcessors.PathAccumulator
+import pycam.PathProcessors
 from pycam.Geometry.utils import epsilon, ceil
 from pycam.Utils.threading import run_in_parallel
 from pycam.Utils import ProgressCounter
+import pycam.Utils.log
 import math
+
+
+log = pycam.Utils.log.get_logger()
 
 
 # We need to use a global function here - otherwise it does not work with
@@ -91,7 +95,7 @@ class PushCutter:
             other_models = self.models[1:]
             # TODO: this is complicated and hacky :(
             # we don't use parallelism or ODE (for the sake of simplicity)
-            final_pa = pycam.PathProcessors.SimpleCutter()
+            final_pa = pycam.PathProcessors.SimpleCutter.SimpleCutter()
             for path in self.pa.paths:
                 final_pa.new_scanline()
                 pairs = []

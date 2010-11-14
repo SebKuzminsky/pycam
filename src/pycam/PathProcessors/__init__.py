@@ -21,11 +21,17 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 __all__ = ["PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter",
-        "ContourCutter"]
+        "ContourCutter", "BasePathProcessor"]
 
-from pycam.PathProcessors.PathAccumulator import PathAccumulator
-from pycam.PathProcessors.SimpleCutter import SimpleCutter
-from pycam.PathProcessors.ZigZagCutter import ZigZagCutter
-from pycam.PathProcessors.PolygonCutter import PolygonCutter
-from pycam.PathProcessors.ContourCutter import ContourCutter
+
+class BasePathProcessor(object):
+
+    def new_direction(self, direction):
+        pass
+
+    def end_direction(self):
+        pass
+
+    def finish(self):
+        pass
 

@@ -21,11 +21,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import pycam.PathProcessors
 from pycam.Toolpath import simplify_toolpath
 from pycam.Geometry.Path import Path
 
 
-class PathAccumulator:
+class PathAccumulator(pycam.PathProcessors.BasePathProcessor):
     def __init__(self, zigzag=False, reverse=False):
         self.paths = []
         self.curr_path = None
@@ -40,9 +41,6 @@ class PathAccumulator:
 
     def new_direction(self, direction):
         self.scanline = 0
-
-    def end_direction(self):
-        pass
 
     def new_scanline(self):
         self.scanline += 1
@@ -59,7 +57,4 @@ class PathAccumulator:
             simplify_toolpath(self.curr_path)
             self.paths.append(self.curr_path)
             self.curr_path = None
-
-    def finish(self):
-        pass
 

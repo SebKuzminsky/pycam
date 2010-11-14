@@ -20,10 +20,11 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import pycam.PathProcessors
 from pycam.Geometry.Path import Path
 from pycam.Toolpath import simplify_toolpath
 
-class SimpleCutter:
+class SimpleCutter(pycam.PathProcessors.BasePathProcessor):
     def __init__(self, reverse=False):
         self.paths = []
         self.curr_path = None
@@ -46,12 +47,6 @@ class SimpleCutter:
             else:
                 self.paths.append(curr_path)
 
-    def new_direction(self, direction):
-        pass
-
-    def end_direction(self):
-        pass
-
     def new_scanline(self):
         if self.curr_path:
             print "ERROR: curr_path expected to be empty"
@@ -62,5 +57,3 @@ class SimpleCutter:
             print "ERROR: curr_path expected to be empty"
             self.curr_path = None
 
-    def finish(self):
-        pass

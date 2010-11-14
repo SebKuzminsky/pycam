@@ -50,7 +50,7 @@ class EngraveCutter:
         self.pa_push = path_processor
         # We use a separated path processor for the last "drop" layer.
         # This path processor does not need to be configurable.
-        self.pa_drop = pycam.PathProcessors.PathAccumulator()
+        self.pa_drop = pycam.PathProcessors.PathAccumulator.PathAccumulator()
         self.physics = physics
 
     def GenerateToolPath(self, minz, maxz, horiz_step, dz, draw_callback=None):

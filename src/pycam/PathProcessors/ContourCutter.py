@@ -20,11 +20,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import pycam.PathProcessors
 from pycam.Geometry.PolygonExtractor import PolygonExtractor
 from pycam.Geometry.Point import Point
 from pycam.Toolpath import simplify_toolpath
 
-class ContourCutter:
+class ContourCutter(pycam.PathProcessors.BasePathProcessor):
     def __init__(self, reverse=False):
         self.paths = []
         self.curr_path = None
