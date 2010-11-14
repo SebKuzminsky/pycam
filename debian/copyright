@@ -1,41 +1,32 @@
-This package was debianized by:
+Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135
+Name: PyCAM
+Maintainer: Lars Kruse <devel@sumpfralle.de>
+Source: http://pycam.sourceforge.net
 
-    Sebastian Kuzminsky <seb@highlab.com> on Tue, 16 Mar 2010 22:14:56 -0600
+Files: *
+Copyright: 2010, Lars Kruse <devel@sumpfralle.de>
+           2006-2010, Lode Leroy
+License: GPL-3+
 
-It was downloaded from:
+Files: debian/*
+Copyright: 2010, Lars Kruse <devel@sumpfralle.de>
+           2010, Sebastian Kuzminsky <seb@highlab.com>
+License: GPL-3+
 
-    <https://sourceforge.net/projects/pycam/>
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the full text of the GNU General Public License
+ version 3 can be found in the file `/usr/share/common-licenses/GPL-3'.
 
-Upstream Authors:
-
-    Lode Leroy
-    Lars (sumpfralle)
-
-Copyright:
-
-    Copyright (C) 2010 lode_leroy
-    Copyright (C) 2010 sumpfralle
-
-License:
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This package is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-On Debian systems, the complete text of the GNU General
-Public License version 3 can be found in `/usr/share/common-licenses/GPL-3'.
-
-The Debian packaging is:
-
-    Copyright (C) 2010 Sebastian Kuzminsky <Sebastian Kuzminsky <seb@highlab.com>>
-
-and is licensed under the GPL version 3, see above.

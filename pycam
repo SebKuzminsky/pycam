@@ -32,7 +32,6 @@ if hasattr(sys, "frozen") and sys.frozen and "_MEIPASS2" in os.environ:
     from ctypes import windll
     windll[os.path.join(os.environ["_MEIPASS2"], "glut32.dll")]
 
-from pycam.Physics.ode_physics import override_ode_availability
 import pycam.Gui.common as GuiCommon
 import pycam.Gui.Settings
 import pycam.Gui.Console
@@ -425,7 +424,7 @@ if __name__ == "__main__":
             + "These options trigger the non-interactive mode. Thus the GUI " \
             + "is disabled.")
     group_tool = parser.add_option_group("Tool definition",
-            "Specify the tool paramters. The default tool is spherical and " \
+            "Specify the tool parameters. The default tool is spherical and " \
             + "has a diameter of 1 unit. The default speeds are 1000 " \
             + "units/minute (feedrate) and 250 (spindle rotations per minute)")
     group_process = parser.add_option_group("Process definition",

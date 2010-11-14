@@ -4,7 +4,7 @@
 
 .fi
 Use the default settings to process the model \fBfoo.stl\fR with an adjusted
-lower margin (minx, miny, minz) of 10% (for x), 5% (for y) and -10% (for z).
+lower margin (minx, miny, minz) of 10% (for x), 5% (for y) and \-10% (for z).
 
 [ENVIRONMENT]
 .IP PYCAM_DATA_DIR
@@ -18,7 +18,7 @@ You may want to define this variable in case that you installed the
 See http://sourceforge.net/tracker/?group_id=237831&atid=1104176
 
 [SEE ALSO]
-Take a look at the output of \fBpycam --help\fR to get a slightly better
+Take a look at the output of \fBpycam \-\-help\fR to get a slightly better
 formatted list of options. The manual that you are reading right now is
 derived from this output.
 
