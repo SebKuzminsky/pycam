@@ -59,6 +59,9 @@ class Path:
             s += "%d(%g,%g,%g)" % (p.id, p.x, p.y, p.z)
         return s
 
+    def insert(self, index, p):
+        self.points.insert(index, get_point_object(p))
+
     def append(self, p):
         self.points.append(get_point_object(p))
 

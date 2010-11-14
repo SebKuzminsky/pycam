@@ -77,5 +77,6 @@ class ContourCutter(pycam.PathProcessors.BasePathProcessor):
             if self.reverse:
                 paths.reverse()
             self.paths.extend(paths)
+            self.sort_layered()
         self.pe = None
 

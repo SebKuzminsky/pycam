@@ -75,4 +75,5 @@ class PolygonCutter(pycam.PathProcessors.BasePathProcessor):
                 if self.reverse:
                     p.reverse()
             self.paths.extend(paths)
+            self.sort_layered()
 

@@ -37,7 +37,10 @@ class PathAccumulator(pycam.PathProcessors.BasePathProcessor):
     def append(self, p):
         if self.curr_path == None:
             self.curr_path = Path()
-        self.curr_path.append(p)
+        if self.reverse:
+            self.curr_path.insert(0, p)
+        else:
+            self.curr_path.append(p)
 
     def new_direction(self, direction):
         self.scanline = 0
@@ -52,9 +55,10 @@ class PathAccumulator(pycam.PathProcessors.BasePathProcessor):
         if self.curr_path:
             if self.zigzag and (self.scanline % 2 == 0):
                 self.curr_path.reverse()
-            if self.reverse:
-                self.curr_path.reverse()
             simplify_toolpath(self.curr_path)
-            self.paths.append(self.curr_path)
+            if self.reverse:
+                self.paths.insert(0, self.curr_path)
+            else:
+                self.paths.append(self.curr_path)
             self.curr_path = None
 

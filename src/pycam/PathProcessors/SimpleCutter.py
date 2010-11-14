@@ -57,3 +57,6 @@ class SimpleCutter(pycam.PathProcessors.BasePathProcessor):
             print "ERROR: curr_path expected to be empty"
             self.curr_path = None
 
+    def finish(self):
+        self.sort_layered()
+
