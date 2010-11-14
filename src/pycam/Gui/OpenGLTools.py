@@ -33,7 +33,7 @@ except (ImportError, RuntimeError):
 from pycam.Geometry.Point import Point
 from pycam.Geometry.Line import Line
 import pycam.Geometry.Matrix as Matrix
-from pycam.Geometry.utils import sqrt, number
+from pycam.Geometry.utils import sqrt, number, epsilon
 import pycam.Utils.log
 import gtk
 import pango
@@ -814,7 +814,8 @@ def draw_toolpath(toolpath, color_forward, color_backward,
                 # Draw the connection between the last and the next path.
                 # Respect the safety height.
                 if (not safety_height is None) and \
-                        ((p_last.x != p_next.x) or (p_last.y != p_next.y)):
+                        ((abs(p_last.x - p_next.x) > epsilon) \
+                            or (abs(p_last.y - p_next.y) > epsilon)):
                     # first move up
                     safety_last = Point(p_last.x, p_last.y, safety_height)
                     safety_next = Point(p_next.x, p_next.y, safety_height)
