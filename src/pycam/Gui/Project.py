@@ -1516,17 +1516,23 @@ class ProjectGui:
     def update_process_controls(self, widget=None, data=None):
         # possible dependencies of the DropCutter
         get_obj = self.gui.get_object
-        cutter_name = None
-        for one_cutter in ("PushRemoveStrategy", "ContourPolygonStrategy",
+        strategy = None
+        for one_strategy in ("PushRemoveStrategy", "ContourPolygonStrategy",
                 "ContourFollowStrategy", "SurfaceStrategy", "EngraveStrategy"):
-            if get_obj(one_cutter).get_active():
-                cutter_name = one_cutter
+            if get_obj(one_strategy).get_active():
+                strategy = one_strategy
                 break
         else:
             raise ValueError("Invalid cutter selected")
-        if cutter_name == "SurfaceStrategy" \
+        if strategy == "SurfaceStrategy" \
                 and get_obj("GridDirectionXY").get_active():
             get_obj("GridDirectionX").set_active(True)
+        if strategy == "ContourPolygonStrategy" \
+                and not get_obj("MillingStyleIgnore").get_active():
+            get_obj("MillingStyleIgnore").set_active(True)
+        if strategy in ("ContourFollowStrategy", "EngraveStrategy") \
+                and get_obj("MillingStyleIgnore").get_active():
+            get_obj("MillingStyleConventional").set_active(True)
         all_controls = ("GridDirectionX", "GridDirectionY", "GridDirectionXY",
                 "MillingStyleConventional", "MillingStyleClimb",
                 "MillingStyleIgnore", "MaxStepDownControl",
@@ -1552,7 +1558,7 @@ class ProjectGui:
                     "MillingStyleConventional", "MillingStyleClimb"),
         }
         for one_control in all_controls:
-            get_obj(one_control).set_sensitive(one_control in active_controls[cutter_name])
+            get_obj(one_control).set_sensitive(one_control in active_controls[strategy])
 
     def update_tool_controls(self, widget=None, data=None):
         # disable the toroidal radius if the toroidal cutter is not enabled

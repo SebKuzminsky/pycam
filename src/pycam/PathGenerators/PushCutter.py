@@ -95,7 +95,8 @@ class PushCutter:
             other_models = self.models[1:]
             # TODO: this is complicated and hacky :(
             # we don't use parallelism or ODE (for the sake of simplicity)
-            final_pa = pycam.PathProcessors.SimpleCutter.SimpleCutter()
+            final_pa = pycam.PathProcessors.SimpleCutter.SimpleCutter(
+                    reverse=self.pa.reverse)
             for path in self.pa.paths:
                 final_pa.new_scanline()
                 pairs = []
