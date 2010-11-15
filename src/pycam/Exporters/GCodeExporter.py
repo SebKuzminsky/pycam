@@ -37,8 +37,7 @@ PATH_MODES = {"exact_path": 0, "exact_stop": 1, "continuous": 2}
 class GCodeGenerator:
 
     def __init__(self, destination, metric_units=True, safety_height=0.0,
-            toggle_spindle_status=False, max_skip_safety_distance=None,
-            header=None, comment=None):
+            toggle_spindle_status=False, header=None, comment=None):
         if isinstance(destination, basestring):
             # open the file
             self.destination = file(destination,"w")
@@ -51,10 +50,8 @@ class GCodeGenerator:
             self._close_stream_on_exit = False
         self.safety_height = safety_height
         self.gcode = gcode(safetyheight=self.safety_height)
-        self.max_skip_safety_distance = max_skip_safety_distance
         self.toggle_spindle_status = toggle_spindle_status
         self.comment = comment
-        self._last_path_point = None
         self._finished = False
         if comment:
             self.add_comment(comment)
@@ -94,54 +91,25 @@ class GCodeGenerator:
                     % str(mode))
         self.append(result)
 
-    def add_path_list(self, paths, tool_id=None, max_skip_safety_distance=None,
-            comment=None):
-        if max_skip_safety_distance is None:
-            max_skip_safety_distance = self.max_skip_safety_distance
+    def add_moves(self, moves, tool_id=None, comment=None):
         if not comment is None:
             self.add_comment(comment)
+        # move straight up to safety height
+        self.append(self.gcode.safety())
         if not tool_id is None:
-            # Move straight up to safety height (avoiding any collisions on the
-            # way to the tool changer).
-            self.append(self.gcode.safety())
             self.append("T%d M6" % tool_id)
         if self.toggle_spindle_status:
             self.append("M3 (start spindle)")
             self.append(self.gcode.delay(2))
-        # move straight up to safety height
-        self.append(self.gcode.safety())
-        for path in paths:
-            self.add_path(path, max_skip_safety_distance=max_skip_safety_distance)
+        for pos, rapid in moves:
+            if rapid:
+                self.append(self.gcode.rapid(pos.x, pos.y, pos.z))
+            else:
+                self.append(self.gcode.cut(pos.x, pos.y, pos.z))
         # go back to safety height
         self.append(self.gcode.safety())
         if self.toggle_spindle_status:
             self.append("M5 (stop spindle)")
-
-    def _check_distance_for_skipping_safety_height(self, new_point,
-            max_skip_safety_distance):
-        if (self._last_path_point is None) \
-                or (max_skip_safety_distance is None):
-            return False
-        distance = new_point.sub(self._last_path_point).norm
-        return distance <= max_skip_safety_distance
-
-    def add_path(self, path, max_skip_safety_distance=None):
-        if not path:
-            return
-        point = path.points[0]
-        # first move to the safety height if the distance to the last point
-        # does not exceed the given maximum
-        if not self._check_distance_for_skipping_safety_height(point,
-                max_skip_safety_distance):
-            # move to safety height at the end of the previous path
-            if not self._last_path_point is None:
-                self.append(self.gcode.safety())
-            # move to safety height for the start of the current path
-            self.append(self.gcode.rapid(point.x, point.y,
-                    self.safety_height))
-        for point in path.points:
-            self.append(self.gcode.cut(point.x, point.y, point.z))
-        self._last_path_point = point
 
     def finish(self):
         self.append(self.gcode.safety())

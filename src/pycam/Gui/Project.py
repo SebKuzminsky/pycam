@@ -100,7 +100,7 @@ PREFERENCES_DEFAULTS = {
         "color_bounding_box": (0.3, 0.3, 0.3, 1.0),
         "color_cutter": (1.0, 0.2, 0.2, 1.0),
         "color_toolpath_cut": (1.0, 0.5, 0.5, 1.0),
-        "color_toolpath_return": (0.5, 1.0, 0.5, 1.0),
+        "color_toolpath_return": (0.9, 1.0, 0.1, 0.4),
         "color_material": (1.0, 0.5, 0.0, 1.0),
         "view_light": True,
         "view_shadow": True,
@@ -2874,7 +2874,7 @@ class ProjectGui:
                         tool["id"], process["material_allowance"],
                         tool["speed"], tool["feedrate"],
                         get_time_string(tp.get_machine_time(
-                        safety_height=self.settings.get("gcode_safety_height"))))
+                                self.settings.get("gcode_safety_height"))))
                 model.append(items)
             if not new_index is None:
                 self._treeview_set_active_index(self.toolpath_table, new_index)
@@ -3002,7 +3002,7 @@ class ProjectGui:
                 return
             else:
                 toolpath = self.toolpath[toolpath_index]
-        paths = toolpath.get_path()
+        paths = toolpath.get_paths()
         # set the current cutter
         self.cutter = pycam.Cutters.get_tool_from_settings(
                 toolpath.get_tool_settings())
@@ -3358,10 +3358,11 @@ class ProjectGui:
                     "gcode_safety_height"), self.settings.get("maxz")))
         try:
             destination = open(filename, "w")
+            safety_height=self.settings.get("gcode_safety_height")
             generator = pycam.Exporters.GCodeExporter.GCodeGenerator(
                     destination,
                     metric_units=(self.settings.get("unit") == "mm"),
-                    safety_height=self.settings.get("gcode_safety_height"),
+                    safety_height=safety_height,
                     toggle_spindle_status=self.settings.get("gcode_start_stop_spindle"),
                     comment=self.get_meta_data())
             path_mode = self.settings.get("gcode_path_mode")
@@ -3384,9 +3385,8 @@ class ProjectGui:
                 process = settings.get_process_settings()
                 tool = settings.get_tool_settings()
                 generator.set_speed(tool["feedrate"], tool["speed"])
-                generator.add_path_list(tp.get_path(), tool_id=tool["id"],
-                        max_skip_safety_distance=2*tool["tool_radius"],
-                        comment=tp.get_meta_data())
+                generator.add_moves(tp.get_moves(safety_height),
+                        tool_id=tool["id"], comment=tp.get_meta_data())
             generator.finish()
             destination.close()
             log.info("GCode file successfully written: %s" % str(filename))

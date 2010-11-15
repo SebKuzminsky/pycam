@@ -766,71 +766,55 @@ def draw_complete_model_view(settings):
         settings.get("support_grid").to_OpenGL()
     # draw the toolpath
     # don't do it, if a new toolpath is just being calculated
+    safety_height = settings.get("gcode_safety_height")
     if settings.get("show_toolpath") \
             and not (settings.get("show_drill_progress") \
             and (not settings.get("toolpath_in_progress") is None)):
         for toolpath_obj in settings.get("toolpath"):
             if toolpath_obj.visible:
-                draw_toolpath(toolpath_obj.get_path(),
+                draw_toolpath(toolpath_obj.get_moves(safety_height),
                         settings.get("color_toolpath_cut"),
                         settings.get("color_toolpath_return"),
-                        safety_height=settings.get("gcode_safety_height"),
                         show_directions=settings.get("show_directions"))
     # draw the drill
-    if settings.get("show_drill_progress"):
+    if settings.get("show_drill_progress") \
+            and settings.get("toolpath_in_progress"):
         cutter = settings.get("cutter")
         if not cutter is None:
             GL.glColor4f(*settings.get("color_cutter"))
             cutter.to_OpenGL()
         # also show the toolpath that is currently being calculated
         toolpath_in_progress = settings.get("toolpath_in_progress")
+        # do a quick conversion from a list of Paths to a list of points
+        moves = []
+        for path in toolpath_in_progress:
+            for point in path.points:
+                moves.append((point, False))
         if not toolpath_in_progress is None:
-                draw_toolpath(toolpath_in_progress,
-                        settings.get("color_toolpath_cut"),
+                draw_toolpath(moves, settings.get("color_toolpath_cut"),
                         settings.get("color_toolpath_return"),
-                        safety_height=settings.get("gcode_safety_height"),
                         show_directions=settings.get("show_directions"))
 
 @keep_gl_mode
 @keep_matrix
-def draw_toolpath(toolpath, color_forward, color_backward,
-        safety_height=None, show_directions=False):
-    draw_line = lambda p1, p2: Line(p1, p2).to_OpenGL(
-            show_directions=show_directions)
+def draw_toolpath(moves, color_cut, color_rapid, show_directions=False):
     GL.glMatrixMode(GL.GL_MODELVIEW)
     GL.glLoadIdentity()
-    p_last = None
-    if toolpath:
-        for path in toolpath:
-            if not path:
-                # ignore empty paths
-                continue
-            if (p_last is None) and (not safety_height is None):
-                current = path.points[0]
-                p_last = Point(current.x, current.y, safety_height)
-            if p_last:
-                p_next = path.points[0]
-                GL.glColor4f(*color_backward)
-                # Draw the connection between the last and the next path.
-                # Respect the safety height.
-                if (not safety_height is None) and \
-                        ((abs(p_last.x - p_next.x) > epsilon) \
-                            or (abs(p_last.y - p_next.y) > epsilon)):
-                    # first move up
-                    safety_last = Point(p_last.x, p_last.y, safety_height)
-                    safety_next = Point(p_next.x, p_next.y, safety_height)
-                    connect_points = (p_last, safety_last, safety_next, p_next)
-                else:
-                    # ignore safety height
-                    connect_points = (p_last, p_next)
-                for i in range(len(connect_points) - 1):
-                    draw_line(connect_points[i], connect_points[i + 1])
-            GL.glColor4f(*color_forward)
-            for index in range(len(path.points) - 1):
-                draw_line(path.points[index], path.points[index + 1])
-            p_last = path.points[-1]
-    if (not p_last is None) and (not safety_height is None):
-        GL.glColor4f(*color_backward)
-        p_last_safety = Point(p_last.x, p_last.y, safety_height)
-        draw_line(p_last, p_last_safety)
+    last_position = None
+    last_rapid = None
+    GL.glBegin(GL.GL_LINE_STRIP)
+    for position, rapid in moves:
+        if last_rapid != rapid:
+            GL.glEnd()
+            if rapid:
+                GL.glColor4f(*color_rapid)
+            else:
+                GL.glColor4f(*color_cut)
+            GL.glBegin(GL.GL_LINE_STRIP)
+            if not last_position is None:
+                GL.glVertex3f(last_position.x, last_position.y, last_position.z)
+            last_rapid = rapid
+        GL.glVertex3f(position.x, position.y, position.z)
+        last_position = position
+    GL.glEnd()
 

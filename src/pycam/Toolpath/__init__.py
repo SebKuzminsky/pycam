@@ -23,7 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 __all__ = ["simplify_toolpath", "ToolpathList", "Toolpath", "Generator"]
 
 from pycam.Geometry.Point import Point
-from pycam.Geometry.utils import number
+from pycam.Geometry.utils import number, epsilon
 import pycam.Utils.log
 import random
 import os
@@ -75,7 +75,7 @@ class Toolpath(object):
         # generate random color
         self.set_color()
 
-    def get_path(self):
+    def get_paths(self):
         return self.toolpath
 
     def get_bounding_box(self):
@@ -101,40 +101,61 @@ class Toolpath(object):
         else:
             self.color = color
 
-    def get_machine_time(self, start_position=None, safety_height=0.0):
+    def get_moves(self, safety_height):
+        result = []
+        paths = self.get_paths()
+        p_last = None
+        max_safe_distance = 2 * self.toolpath_settings.get_tool().radius \
+                + epsilon
+        for path in paths:
+            if not path:
+                # ignore empty paths
+                continue
+            p_next = path.points[0]
+            if p_last is None:
+                p_last = Point(p_next.x, p_next.y, safety_height)
+                result.append((p_last, True))
+            if ((abs(p_last.x - p_next.x) > epsilon) \
+                    or (abs(p_last.y - p_next.y) > epsilon)):
+                # Draw the connection between the last and the next path.
+                # Respect the safety height.
+                if (abs(p_last.z - p_next.z) > epsilon) \
+                        or (p_last.sub(p_next).norm > max_safe_distance):
+                    # The distance between these two points is too far.
+                    # This condition helps to prevent moves up/down for
+                    # adjacent lines.
+                    safety_last = Point(p_last.x, p_last.y, safety_height)
+                    safety_next = Point(p_next.x, p_next.y, safety_height)
+                    result.append((safety_last, True))
+                    result.append((safety_next, True))
+            for p in path.points:
+                result.append((p, False))
+            p_last = path.points[-1]
+        if not p_last is None:
+            p_last_safety = Point(p_last.x, p_last.y, safety_height)
+            result.append((p_last_safety, True))
+        return result
+
+    def get_machine_time(self, safety_height=0.0):
         """ calculate an estimation of the time required for processing the
         toolpath with the machine
 
-        @value start_position: (optional) the position of the tool before the
-                start
-        @type start_position: pycam.Geometry.Point.Point
+        @value safety_height: the safety height configured for this toolpath
+        @type safety_height: float
         @rtype: float
         @returns: the machine time used for processing the toolpath in minutes
         """
-        settings = self.toolpath_settings
-        if start_position is None:
-            start_position = Point(0, 0, 0)
-        feedrate = number(settings.get_tool_settings()["feedrate"])
-        result = {}
-        result["time"] = 0
-        result["position"] = start_position
-        def move(new_pos):
-            result["time"] += new_pos.sub(result["position"]).norm / feedrate
-            result["position"] = new_pos
-        # move to safey height at the starting position
+        result = 0
+        feedrate = self.toolpath_settings.get_tool_settings()["feedrate"]
+        feedrate = number(feedrate)
         safety_height = number(safety_height)
-        move(Point(start_position.x, start_position.y, safety_height))
-        for path in self.get_path():
-            # go to safety height (horizontally from the previous x/y location)
-            if len(path.points) > 0:
-                move(Point(path.points[0].x, path.points[0].y, safety_height))
-            # go through all points of the path
-            for point in path.points:
-                move(point)
-            # go to safety height (vertically up from the current x/y location)
-            if len(path.points) > 0:
-                move(Point(path.points[-1].x, path.points[-1].y, safety_height))
-        return result["time"]
+        current_position = None
+        # go through all points of the path
+        for new_pos, rapid in self.get_moves(safety_height):
+            if not current_position is None:
+                result += new_pos.sub(current_position).norm / feedrate
+            current_position = new_pos
+        return result
 
 
 class Bounds:
