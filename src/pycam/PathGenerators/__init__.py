@@ -192,7 +192,10 @@ def get_free_paths_ode(physics, p1, p2, depth=8):
     return points
 
 def get_max_height_ode(physics, x, y, minz, maxz):
-    low, high = minz, maxz
+    # Take a small float inaccuracy for the upper limit into account.
+    # Otherwise an upper bound at maxz of the model will not return
+    # a valid surface. That's why we add 'epsilon'.
+    low, high = minz, maxz + epsilon
     trip_start = 20
     safe_z = None
     # check if the full step-down would be ok
@@ -239,7 +242,7 @@ def get_max_height_triangles(model, cutter, x, y, minz, maxz):
     # this avoids zero-cuts for models that exceed the bounding box height
     if (height_max is None) or (height_max < minz + epsilon):
         height_max = minz
-    if height_max > maxz:
+    if height_max > maxz + epsilon:
         return None
     else:
         return Point(x, y, height_max)
