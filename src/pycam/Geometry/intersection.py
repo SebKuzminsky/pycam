@@ -150,7 +150,7 @@ def intersect_circle_line(center, axis, radius, radiussq, direction, edge):
         (p2, l) = plane.intersect_point(direction, edge.p2)
         pc = Line(p1, p2).closest_point(center)
         d_sq = pc.sub(center).normsq
-        if d_sq > radiussq - epsilon:
+        if d_sq >= radiussq:
             return (None, None, INFINITE)
         a = sqrt(radiussq - d_sq)
         d1 = p1.sub(pc).dot(d)
