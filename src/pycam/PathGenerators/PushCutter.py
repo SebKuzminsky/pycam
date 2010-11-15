@@ -68,8 +68,9 @@ class PushCutter:
         for layer in motion_grid:
             lines = []
             for line in layer:
+                # convert the generator to a list
                 lines.append(list(line))
-                num_of_grid_positions += len(lines[-1])
+            num_of_grid_positions += len(lines)
             grid.append(lines)
 
         num_of_layers = len(grid)
