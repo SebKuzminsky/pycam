@@ -126,13 +126,13 @@ def get_default_model():
                         ", ".join(EXAMPLE_MODEL_LOCATIONS)))
         return pycam.Importers.TestModel.get_test_model()
 
-def load_model_file(filename, program_locations):
+def load_model_file(filename, program_locations, unit=None):
     filename = os.path.expanduser(filename)
     if not os.path.isfile(filename):
         log.warn("The input file ('%') was not found!" % filename)
         return None
     filetype, importer = pycam.Importers.detect_file_type(filename)
-    model = importer(filename, program_locations=program_locations)
+    model = importer(filename, program_locations=program_locations, unit=unit)
     if model is None:
         log.warn("Failed to load the model file (%s)." % filename)
         return None
@@ -144,6 +144,8 @@ def get_output_handler(destination):
         handler = sys.stdout
         closer = lambda: None
     else:
+        # support paths with a tilde (~)
+        destination = os.path.expanduser(destination)
         try:
             handler = open(destination, "w")
         except IOError, err_msg:
@@ -258,20 +260,21 @@ def execute(parser, opts, args, pycam):
         if opts.collision_engine == "ode":
             tps.set_calculation_backend("ODE")
         tps.set_unit_size(opts.unit_size)
-        path_generator = {"layer": "PushCutter",
-                "surface": "DropCutter",
-                "engrave": "EngraveCutter",
-            }[opts.process_path_generator]
-        postprocessor = {"zigzag": "ZigZagCutter",
-                "contour": "ContourCutter",
-                "polygon": "PolygonCutter",
-            }[opts.process_path_postprocessor]
+        path_generator, postprocessor = {
+                "layer": ("PushCutter", "SimpleCutter"),
+                "contour-follow": ("ContourFollow", "SimpleCutter"),
+                "contour-polygon": ("PushCutter", "ContourCutter"),
+                "surface": ("DropCutter", "PathAccumulator"),
+                "engrave": ("EngraveCutter", "SimpleCutter"),
+            }[opts.process_path_strategy]
         # TODO: add the miling_style option
         tps.set_process_settings(path_generator, postprocessor,
-                opts.process_path_direction, reverse=False,
+                opts.process_path_direction,
                 material_allowance=opts.process_material_allowance,
                 overlap=opts.process_overlap_percent / 100.0,
-                step_down=opts.process_step_down, engrave_offset=opts.process_engrave_offset)
+                step_down=opts.process_step_down,
+                engrave_offset=opts.process_engrave_offset,
+                milling_style=opts.process_milling_style)
         # set locations of external programs
         program_locations = {}
         if opts.external_program_inkscape:
@@ -387,9 +390,9 @@ def execute(parser, opts, args, pycam):
                             opts.gcode_motion_tolerance, naive_tolerance)
                 else:
                     generator.set_path_mode(PATH_MODES[opts.gcode_path_mode])
-                generator.add_path_list(toolpath,
-                        max_skip_safety_distance=opts.tool_diameter,
+                generator.add_moves(tp_obj.get_moves(opts.safety_height),
                         comment=tp_obj.get_meta_data())
+                generator.finish()
                 closer()
         if opts.export_task_config:
             handler, closer = get_output_handler(opts.export_task_config)
@@ -543,16 +546,12 @@ if __name__ == "__main__":
             dest="process_path_direction", default="x", action="store",
             type="choice", choices=["x", "y", "xy"],
             help="primary direction of the generated toolpath (x/y/xy)")
-    group_process.add_option("", "--process-path-generator",
-            dest="process_path_generator", default="layer", action="store",
-            type="choice", choices=["layer", "surface", "engrave"],
+    group_process.add_option("", "--process-path-strategy",
+            dest="process_path_strategy", default="surface", action="store",
+            type="choice", choices=["layer", "contour-follow",
+                    "contour-polygon", "surface", "engrave"],
             help="one of the available toolpath strategies (layer, surface, " \
-            + "engrave)")
-    group_process.add_option("", "--process-path-postprocessor",
-            dest="process_path_postprocessor", default="polygon",
-            action="store", type="choice",
-            choices=["polygon", "contour", "zigzag"], help="one of the " \
-            + "available toolpath postprocessors (polygon, zigzag, contour)")
+            + "contour-follow, contour-polygon, engrave)")
     group_process.add_option("", "--process-material-allowance",
             dest="process_material_allowance", default=0.0, action="store",
             type="float", help="minimum distance between the tool and the " \
@@ -565,6 +564,11 @@ if __name__ == "__main__":
             dest="process_overlap_percent", default=0, action="store",
             type="int", help="how much should two adjacent parallel " \
             + "toolpaths overlap each other (0..99)")
+    group_process.add_option("", "--process-milling-style",
+            dest="process_milling_style", default="ignore",
+            action="store", type="choice",
+            choices=["ignore", "conventional", "climb"],
+            help="milling style (conventional / climb / ignore)")
     group_process.add_option("", "--safety-height", dest="safety_height",
             default=25.0, action="store", type="float",
             help="height for safe re-positioning moves")
