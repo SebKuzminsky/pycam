@@ -84,5 +84,8 @@ class ConsoleProgressBar(object):
     def finish(self):
         if self.style == ConsoleProgressBar.STYLE_NONE:
             return
+        # show that we are finished
+        self.update(percent=100)
+        # finish the line
         self.output.write(os.linesep)
 
