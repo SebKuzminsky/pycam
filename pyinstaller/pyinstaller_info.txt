@@ -9,5 +9,6 @@ How to build a standalone exe file (on Windows only):
 5) "python PYINSTALLER_PATH\Build.py pyinstaller\pycam.spec"
 6) test and upload the binary file "pycam-VERSION_standalone.exe"
 
-Known issues: currently none
+Known issues:
+* multiprocessing does not work with standalone executable
 

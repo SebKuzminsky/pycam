@@ -1,12 +1,14 @@
 # -*- mode: python -*-
 BASE_DIR = os.path.realpath(os.path.join(os.path.dirname(locals()["spec"]),
         os.path.pardir))
+UI_DATA_DIR = os.path.join(BASE_DIR, "share", "ui")
 
-data = [("pycam-project.ui", os.path.join(BASE_DIR, "share", "gtk-interface", "pycam-project.ui"), "DATA"),
-        ("menubar.xml", os.path.join(BASE_DIR, "share", "gtk-interface", "menubar.xml"), "DATA"),
-        ("logo_gui.png", os.path.join(BASE_DIR, "share", "gtk-interface", "logo_gui.png"), "DATA"),
+data = [("pycam-project.ui", os.path.join(UI_DATA_DIR, "pycam-project.ui"), "DATA"),
+        ("menubar.xml", os.path.join(UI_DATA_DIR, "menubar.xml"), "DATA"),
+        ("logo_gui.png", os.path.join(UI_DATA_DIR, "logo_gui.png"), "DATA"),
 ]
 
+# look for the location of "libpixbufloader-png.dll" (for Windows standalone executable)
 start_dirs = (os.path.join(os.environ["PROGRAMFILES"], "Common files", "Gtk"),
         os.path.join(os.environ["COMMONPROGRAMFILES"], "Gtk"))
 def find_gtk_pixbuf_dir(dirs):
@@ -20,6 +22,7 @@ if gtk_loaders_dir is None:
     print >>sys.stderr, "Failed to locate Gtk installation (looking for libpixbufloader-png.dll)"
     sys.exit(1)
 
+# configure the pixbufloader (for the Windows standalone executable)
 config_dir = gtk_loaders_dir
 config_relative = os.path.join("etc", "gtk-2.0", "gdk-pixbuf.loaders")
 while not os.path.isfile(os.path.join(config_dir, config_relative)):

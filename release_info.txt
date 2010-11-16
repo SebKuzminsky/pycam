@@ -29,6 +29,7 @@
   - standalone binary (Windows): no specific architecture
 
 5) announcements
+ - run "python setup.py register" (for the PyPI package index)
  - create a project news items at sourceforge
  - create a new release at http://freshmeat.net
  - post the new release at http://www.cnczone.com/forums/showthread.php?t=63716

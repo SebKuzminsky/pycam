@@ -57,11 +57,11 @@ import os
 import sys
 
 DATA_DIR_ENVIRON_KEY = "PYCAM_DATA_DIR"
-DATA_BASE_DIRS = [os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
-            os.pardir, "share", "gtk-interface"),
-        os.path.join(sys.prefix, "share", "pycam", "ui")]
-# TODO: improve this definition of the fonts' location
-FONT_DIRS = [os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, "share", "fonts")]
+DATA_BASE_DIRS = [os.path.realpath(os.path.join(os.path.dirname(__file__),
+            os.pardir, os.pardir, os.pardir, "share")),
+        os.path.join(sys.prefix, "share", "pycam")]
+UI_SUBDIR = "ui"
+FONTS_SUBDIR = "fonts"
 # necessary for "pyinstaller"
 if "_MEIPASS2" in os.environ:
     DATA_BASE_DIRS.insert(0, os.environ["_MEIPASS2"])
@@ -69,8 +69,8 @@ if "_MEIPASS2" in os.environ:
 if DATA_DIR_ENVIRON_KEY in os.environ:
     DATA_BASE_DIRS.insert(0, os.environ[DATA_DIR_ENVIRON_KEY])
 
-GTKBUILD_FILE = "pycam-project.ui"
-GTKMENU_FILE = "menubar.xml"
+GTKBUILD_FILE = os.path.join(UI_SUBDIR, "pycam-project.ui")
+GTKMENU_FILE = os.path.join(UI_SUBDIR, "menubar.xml")
 
 HELP_WIKI_URL = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=%s"
 
@@ -126,16 +126,19 @@ GTK_COLOR_MAX = 65535.0
 
 log = pycam.Utils.log.get_logger()
 
-def get_data_file_location(filename):
+def get_data_file_location(filename, silent=False):
     for base_dir in DATA_BASE_DIRS:
         test_path = os.path.join(base_dir, filename)
         if os.path.exists(test_path):
             return test_path
     else:
-        lines = []
-        lines.append("Failed to locate a resource file (%s) in %s!" % (filename, DATA_BASE_DIRS))
-        lines.append("You can extend the search path by setting the environment variable '%s'." % str(DATA_DIR_ENVIRON_KEY))
-        log.error(os.linesep.join(lines))
+        if not silent:
+            lines = []
+            lines.append("Failed to locate a resource file (%s) in %s!" \
+                    % (filename, DATA_BASE_DIRS))
+            lines.append("You can extend the search path by setting the " \
+                    + "environment variable '%s'." % str(DATA_DIR_ENVIRON_KEY))
+            log.error(os.linesep.join(lines))
         return None
 
 def report_exception():
@@ -161,13 +164,17 @@ def get_filters_from_list(filter_list, file_filter=True):
     return result
 
 def get_font_files():
+    font_dir = get_data_file_location(FONTS_SUBDIR, silent=True)
+    if font_dir is None:
+        log.warn("Failed to locate the fonts directory '%s' below '%s'." \
+                % (FONTS_SUBDIR, DATA_BASE_DIRS))
+        return []
     result = []
-    for font_dir in FONT_DIRS:
-        files = os.listdir(font_dir)
-        for fname in files:
-            filename = os.path.join(font_dir, fname)
-            if filename.lower().endswith(".cxf") and os.path.isfile(filename):
-                result.append(filename)
+    files = os.listdir(font_dir)
+    for fname in files:
+        filename = os.path.join(font_dir, fname)
+        if filename.lower().endswith(".cxf") and os.path.isfile(filename):
+            result.append(filename)
     result.sort()
     return result
 
@@ -1608,15 +1615,21 @@ class ProjectGui:
                         self.update_font_dialog_preview)
                 font_selector.show()
                 self.font_selector = font_selector
-            if self._font_dialog_window_position:
-                self.font_dialog_window.move(
-                        *self._font_dialog_window_position)
-            self.font_dialog_window.show()
+            if self._fonts:
+                # show the dialog only if fonts are available
+                if self._font_dialog_window_position:
+                    self.font_dialog_window.move(
+                            *self._font_dialog_window_position)
+                self.font_dialog_window.show()
+                self._font_dialog_window_visible = True
+            else:
+                log.error("No fonts were found on your system. " \
+                        + "Please check the Log Window for details.")
         else:
             self._font_dialog_window_position = \
                     self.font_dialog_window.get_position()
             self.font_dialog_window.hide()
-        self._font_dialog_window_visible = state
+            self._font_dialog_window_visible = False
         # don't close the window - just hide it (for "delete-event")
         return True
 
@@ -1647,7 +1660,8 @@ class ProjectGui:
 
     @gui_activity_guard
     def update_font_dialog_preview(self, widget=None, event=None):
-        if self._fonts is None:
+        if not self._fonts:
+            # not initialized or empty
             return
         font_name = self.font_selector.get_active_text()
         font = self._fonts[font_name]
