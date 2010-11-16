@@ -4957,7 +4957,6 @@ upon interesting bugs and weird results.</property>
     <property name="title" translatable="yes">PyCAM Preferences</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">normal</property>
-    <property name="transient_for">ProjectWindow</property>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox1">
         <property name="visible">True</property>
@@ -5625,7 +5624,7 @@ for contour lines and toolpaths, triangle's normals, et cetera).</property>
                           <object class="GtkLabel" id="ColorToolpathReturnLabel">
                             <property name="visible">True</property>
                             <property name="xalign">0</property>
-                            <property name="label" translatable="yes">Toolpath return:</property>
+                            <property name="label" translatable="yes">Toolpath rapid:</property>
                           </object>
                           <packing>
                             <property name="top_attach">6</property>
