@@ -199,8 +199,8 @@ class EngraveCutter:
         for p in points:
             if p is None:
                 # exceeded maxz - the cutter has to skip this point
-                self.pa.end_scanline()
-                self.pa.new_scanline()
+                pa.end_scanline()
+                pa.new_scanline()
                 continue
             pa.append(p)
         if draw_callback and points:
