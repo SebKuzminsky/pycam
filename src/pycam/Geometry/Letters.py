@@ -50,9 +50,13 @@ class Letter(TransformableContainer):
                 Point(base_point.x + p.x + (p.y * skew / 100.0),
                         base_point.y + p.y, base_point.z)
         for line in self.lines:
-            new_line = Line(get_skewed_point(line.p1),
-                    get_skewed_point(line.p2))
-            result.append(new_line)
+            skewed_p1 = get_skewed_point(line.p1)
+            skewed_p2 = get_skewed_point(line.p2)
+            # Some triplex fonts contain zero-length lines
+            # (e.g. "/" in italict.cxf). Ignore these.
+            if skewed_p1 != skewed_p2:
+                new_line = Line(skewed_p1, skewed_p2)
+                result.append(new_line)
         return result
 
 
