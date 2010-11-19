@@ -57,6 +57,7 @@ import os
 import sys
 
 DATA_DIR_ENVIRON_KEY = "PYCAM_DATA_DIR"
+FONT_DIR_ENVIRON_KEY = "PYCAM_FONT_DIR"
 DATA_BASE_DIRS = [os.path.realpath(os.path.join(os.path.dirname(__file__),
             os.pardir, os.pardir, os.pardir, "share")),
         os.path.join(sys.prefix, "share", "pycam")]
@@ -68,6 +69,11 @@ if "_MEIPASS2" in os.environ:
 # respect an override via an environment setting
 if DATA_DIR_ENVIRON_KEY in os.environ:
     DATA_BASE_DIRS.insert(0, os.environ[DATA_DIR_ENVIRON_KEY])
+if FONT_DIR_ENVIRON_KEY in os.environ:
+    FONT_DIR_OVERRIDE = os.environ[FONT_DIR_ENVIRON_KEY]
+else:
+    FONT_DIR_OVERRIDE = None
+FONT_DIR_FALLBACK = "/usr/share/qcad/fonts"
 
 GTKBUILD_FILE = os.path.join(UI_SUBDIR, "pycam-project.ui")
 GTKMENU_FILE = os.path.join(UI_SUBDIR, "menubar.xml")
@@ -163,12 +169,32 @@ def get_filters_from_list(filter_list, file_filter=True):
         result.append(file_filter)
     return result
 
-def get_font_files():
+def get_font_dir():
+    if FONT_DIR_OVERRIDE:
+        if os.path.isdir(FONT_DIR_OVERRIDE):
+            return FONT_DIR_OVERRIDE
+        else:
+            log.warn(("You specified a font dir that does not exist (%s). " \
+                    + "I will ignore it.") % FONT_DIR_OVERRIDE)
     font_dir = get_data_file_location(FONTS_SUBDIR, silent=True)
-    if font_dir is None:
-        log.warn("Failed to locate the fonts directory '%s' below '%s'." \
-                % (FONTS_SUBDIR, DATA_BASE_DIRS))
+    if not font_dir is None:
+        return font_dir
+    else:
+        log.warn(("Failed to locate the fonts directory '%s' below '%s'. " \
+                + "Falling back to '%s'.") \
+                % (FONTS_SUBDIR, DATA_BASE_DIRS, FONT_DIR_FALLBACK))
+        if os.path.isdir(FONT_DIR_FALLBACK):
+            return FONT_DIR_FALLBACK
+        else:
+            log.warn(("The fallback font directory (%s) does not exist. " \
+                    + "No fonts will be available.") % FONT_DIR_FALLBACK)
+            return None
+
+def get_font_files():
+    font_dir = get_font_dir()
+    if not font_dir:
         return []
+    log.info("Loading font files from '%s'." % font_dir)
     result = []
     files = os.listdir(font_dir)
     for fname in files:
@@ -1603,7 +1629,7 @@ class ProjectGui:
                 self.gui.get_object("FontSelectionBox").pack_start(
                         font_selector, expand=False, fill=False)
                 sorted_keys = self._fonts.keys()
-                sorted_keys.sort()
+                sorted_keys.sort(key=lambda x: x.upper())
                 for name in sorted_keys:
                     font_selector.append_text(name)
                 if sorted_keys:
