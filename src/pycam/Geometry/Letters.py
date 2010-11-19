@@ -26,6 +26,10 @@ from pycam.Geometry.Model import ContourModel
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Point import Point
 
+TEXT_ALIGN_LEFT = 0
+TEXT_ALIGN_CENTER = 1
+TEXT_ALIGN_RIGHT = 2
+
 
 class Letter(TransformableContainer):
     
@@ -99,16 +103,20 @@ class Charset(object):
     def get_authors(self):
         return self.authors
 
-    def render(self, text, origin=None, skew=0, line_spacing=1.0, pitch=1.0):
+    def render(self, text, origin=None, skew=0, line_spacing=1.0, pitch=1.0,
+            align=None):
         result = ContourModel()
         if origin is None:
             origin = Point(0, 0, 0)
+        if align is None:
+            align = TEXT_ALIGN_LEFT
         base = origin
         letter_spacing = self.letterspacing * pitch
         word_spacing = self.wordspacing * pitch
         line_factor = self.default_linespacing * self.linespacingfactor \
                 * line_spacing
         for line in text.splitlines():
+            current_line = ContourModel()
             line_height = self.default_height
             for character in line:
                 if character == " ":
@@ -121,7 +129,7 @@ class Charset(object):
                         new_model.append(line)
                     for polygon in new_model.get_polygons():
                         # add polygons instead of lines -> more efficient
-                        result.append(polygon)
+                        current_line.append(polygon)
                     # update line height
                     line_height = max(line_height, charset_letter.maxy())
                     # shift the base position
@@ -132,5 +140,18 @@ class Charset(object):
                     base = base.add(Point(letter_spacing, 0, 0))
             # go to the next line
             base = Point(origin.x, base.y - line_height * line_factor, origin.z)
+            if not current_line.maxx is None:
+                if align == TEXT_ALIGN_CENTER:
+                    current_line.shift(-current_line.maxx / 2, 0, 0)
+                elif align == TEXT_ALIGN_RIGHT:
+                    current_line.shift(-current_line.maxx, 0, 0)
+                else:
+                    # left align
+                    if current_line.minx != 0:
+                        current_line.shift(-current_line.minx, 0, 0)
+            for polygon in current_line.get_polygons():
+                result.append(polygon)
+        # the text should be just above the x axis
+        result.shift(0, -result.miny, 0)
         return result
 

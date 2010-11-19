@@ -34,6 +34,8 @@ import pycam.Utils.log
 import pycam.Utils
 from pycam.Geometry.utils import sqrt
 from pycam.Gui.OpenGLTools import ModelViewWindowGL
+from pycam.Geometry.Letters import TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, \
+        TEXT_ALIGN_RIGHT
 from pycam.Utils import ProgressCounter
 from pycam.Toolpath import Bounds
 from pycam import VERSION
@@ -379,6 +381,10 @@ class ProjectGui:
             if objname != "FontSideSkewValue":
                 obj.set_value(1.0)
             obj.connect("value-changed",
+                    self.update_font_dialog_preview)
+        for objname in ("FontTextAlignLeft", "FontTextAlignCenter",
+                "FontTextAlignRight"):
+            self.gui.get_object(objname).connect("toggled",
                     self.update_font_dialog_preview)
         self._font_dialog_window_visible = False
         self._font_dialog_window_position = None
@@ -1660,16 +1666,26 @@ class ProjectGui:
         return True
 
     def get_font_dialog_text_rendered(self):
-        text_buffer = self.gui.get_object("FontDialogInput").get_buffer()
+        input_field = self.gui.get_object("FontDialogInput")
+        text_buffer = input_field.get_buffer()
         text = text_buffer.get_text(text_buffer.get_start_iter(),
                 text_buffer.get_end_iter())
         if text:
             skew = self.gui.get_object("FontSideSkewValue").get_value()
             line_space = self.gui.get_object("FontLineSpacingValue").get_value()
             pitch = self.gui.get_object("FontCharacterSpacingValue").get_value()
+            # get the active align setting
+            for objname, value, justification in (
+                    ("FontTextAlignLeft", TEXT_ALIGN_LEFT, gtk.JUSTIFY_LEFT),
+                    ("FontTextAlignCenter", TEXT_ALIGN_CENTER, gtk.JUSTIFY_CENTER),
+                    ("FontTextAlignRight", TEXT_ALIGN_RIGHT, gtk.JUSTIFY_RIGHT)):
+                obj = self.gui.get_object(objname)
+                if obj.get_active():
+                    align = value
+                    input_field.set_justification(justification)
             font_name = self.font_selector.get_active_text()
             return self._fonts[font_name].render(text, skew=skew,
-                    line_spacing=line_space, pitch=pitch)
+                    line_spacing=line_space, pitch=pitch, align=align)
         else:
             # empty text
             return None
@@ -1696,20 +1712,28 @@ class ProjectGui:
         preview_widget = self.gui.get_object("FontDialogPreview")
         final_drawing_area = preview_widget.window
         text_model = self.get_font_dialog_text_rendered()
+        # always clean the background
+        x, y, width, height = preview_widget.get_allocation()
+        drawing_area = gtk.gdk.Pixmap(final_drawing_area, width, height)
+        drawing_area.draw_rectangle(preview_widget.get_style().white_gc, True,
+                0, 0, width, height)
         # carefully check if there are lines in the rendered text
         if text_model and (not text_model.maxx is None):
-            x, y, width, height = preview_widget.get_allocation()
-            x_fac = width / (text_model.maxx - text_model.minx)
-            y_fac = height / (text_model.maxy - text_model.miny)
-            model_base_x = text_model.minx
-            model_base_y = text_model.miny
+            x_fac = (width - 1) / (text_model.maxx - text_model.minx)
+            y_fac = (height - 1) / (text_model.maxy - text_model.miny)
             factor = min(x_fac, y_fac)
-            drawing_area = gtk.gdk.Pixmap(final_drawing_area, width, height)
-            # always clean the background
-            drawing_area.draw_rectangle(preview_widget.get_style().white_gc, True, 0, 0, width, height)
             gc = drawing_area.new_gc()
-            get_virtual_x = lambda x: int((x - model_base_x) * factor)
-            get_virtual_y = lambda y: height - int((y - model_base_y) * factor)
+            if text_model.minx == 0:
+                # left align
+                get_virtual_x = lambda x: int(x * factor)
+            elif text_model.maxx == 0:
+                # right align
+                get_virtual_x = lambda x: width + int(x * factor) - 1
+            else:
+                # center align
+                get_virtual_x = lambda x: int(width / 2.0 + x * factor) - 1
+            get_virtual_y = lambda y: \
+                    height - int((y - text_model.miny) * factor) - 1
             for polygon in text_model.get_polygons():
                 draw_points = []
                 for point in polygon.get_points():
@@ -1717,8 +1741,9 @@ class ProjectGui:
                     y = get_virtual_y(point.y)
                     draw_points.append((x, y))
                 drawing_area.draw_lines(gc, draw_points)
-            final_gc = final_drawing_area.new_gc()
-            final_drawing_area.draw_drawable(final_gc, drawing_area, 0, 0, 0, 0, -1, -1)
+        final_gc = final_drawing_area.new_gc()
+        final_drawing_area.draw_drawable(final_gc, drawing_area, 0, 0, 0, 0,
+                -1, -1)
 
     @gui_activity_guard
     def toggle_about_window(self, widget=None, event=None, state=None):
