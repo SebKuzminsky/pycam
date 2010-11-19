@@ -31,7 +31,6 @@ except (ImportError, RuntimeError):
     GL_ENABLED = False
 
 from pycam.Geometry.Point import Point
-from pycam.Geometry.Line import Line
 import pycam.Geometry.Matrix as Matrix
 from pycam.Geometry.utils import sqrt, number, epsilon
 import pycam.Utils.log
@@ -648,6 +647,37 @@ def keep_matrix(func):
     return keep_matrix_wrapper
 
 @keep_matrix
+def draw_direction_cone(p1, p2):
+    distance = p2.sub(p1)
+    length = distance.norm
+    direction = distance.normalized()
+    cone_radius = length / 30
+    cone_length = length / 10
+    # move the cone to the middle of the line
+    GL.glTranslatef((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, (p1.z + p2.z) / 2)
+    # rotate the cone according to the line direction
+    # The cross product is a good rotation axis.
+    cross = direction.cross(Point(0, 0, -1))
+    if cross.norm != 0:
+        # The line direction is not in line with the z axis.
+        angle = math.asin(sqrt(direction.x ** 2 + direction.y ** 2))
+        # convert from radians to degree
+        angle = angle / math.pi * 180
+        if direction.z < 0:
+            angle = 180 - angle
+        GL.glRotatef(angle, cross.x, cross.y, cross.z)
+    elif direction.z == -1:
+        # The line goes down the z axis - turn it around.
+        GL.glRotatef(180, 1, 0, 0)
+    else:
+        # The line goes up the z axis - nothing to be done.
+        pass
+    # center the cone
+    GL.glTranslatef(0, 0, -cone_length / 2)
+    # draw the cone
+    GLUT.glutSolidCone(cone_radius, cone_length, 12, 1)
+
+@keep_matrix
 def draw_string(x, y, z, p, s, scale=.01):
     GL.glPushMatrix()
     GL.glTranslatef(x, y, z)
@@ -817,4 +847,9 @@ def draw_toolpath(moves, color_cut, color_rapid, show_directions=False):
         GL.glVertex3f(position.x, position.y, position.z)
         last_position = position
     GL.glEnd()
+    if show_directions:
+        for index in range(len(moves) - 1):
+            p1 = moves[index][0]
+            p2 = moves[index + 1][0]
+            draw_direction_cone(p1, p2)
 

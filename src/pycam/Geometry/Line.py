@@ -25,6 +25,7 @@ from pycam.Geometry import TransformableContainer
 from pycam.Geometry.Point import Point
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.utils import epsilon, sqrt
+import pycam.Gui.OpenGLTools
 import math
 
 
@@ -179,35 +180,7 @@ class Line(TransformableContainer):
         GL.glEnd()
         # (optional) draw a cone for visualizing the direction of each line
         if show_directions and (self.len > 0):
-            cone_radius = self.len / 30
-            cone_length = self.len / 10
-            GL.glPushMatrix()
-            # move the cone to the middle of the line
-            GL.glTranslatef((self.p1.x + self.p2.x) / 2,
-                    (self.p1.y + self.p2.y) / 2,
-                    (self.p1.z + self.p2.z) / 2)
-            # rotate the cone according to the line direction
-            # The cross product is a good rotation axis.
-            cross = self.dir.cross(Point(0, 0, -1))
-            if cross.norm != 0:
-                # The line direction is not in line with the z axis.
-                angle = math.asin(sqrt(self.dir.x ** 2 + self.dir.y ** 2))
-                # convert from radians to degree
-                angle = angle / math.pi * 180
-                if self.dir.z < 0:
-                    angle = 180 - angle
-                GL.glRotatef(angle, cross.x, cross.y, cross.z)
-            elif self.dir.z == -1:
-                # The line goes down the z axis - turn it around.
-                GL.glRotatef(180, 1, 0, 0)
-            else:
-                # The line goes up the z axis - nothing to be done.
-                pass
-            # center the cone
-            GL.glTranslatef(0, 0, -cone_length / 2)
-            # draw the cone
-            GLUT.glutSolidCone(cone_radius, cone_length, 12, 1)
-            GL.glPopMatrix()
+            pycam.Gui.OpenGLTools.draw_direction_cone(self.p1, self.p2)
 
     def get_intersection(self, line, infinite_lines=False):
         """ Get the point of intersection between two lines. Intersections
