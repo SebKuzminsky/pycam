@@ -347,14 +347,14 @@ class ModelViewWindowGL:
             return
         # define arrow keys and "vi"-like navigation keys
         move_keys_dict = {
-                gtk.keysyms.Left: (1, 0),
-                gtk.keysyms.Down: (0, -1),
-                gtk.keysyms.Up: (0, 1),
-                gtk.keysyms.Right: (-1, 0),
-                ord("h"): (1, 0),
-                ord("j"): (0, -1),
-                ord("k"): (0, 1),
-                ord("l"): (-1, 0),
+                gtk.keysyms.Left: (-1, 0),
+                gtk.keysyms.Down: (0, 1),
+                gtk.keysyms.Up: (0, -1),
+                gtk.keysyms.Right: (1, 0),
+                ord("h"): (-1, 0),
+                ord("j"): (0, 1),
+                ord("k"): (0, -1),
+                ord("l"): (1, 0),
                 ord("H"): (1, 0),
                 ord("J"): (0, -1),
                 ord("K"): (0, 1),

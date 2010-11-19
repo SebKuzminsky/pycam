@@ -4527,7 +4527,7 @@ upon interesting bugs and weird results.</property>
             <child>
               <object class="GtkToolButton" id="Reset View">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">Reset</property>
+                <property name="label" translatable="yes">Center</property>
                 <property name="use_underline">True</property>
               </object>
               <packing>
