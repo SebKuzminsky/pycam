@@ -651,6 +651,9 @@ def draw_direction_cone(p1, p2):
     distance = p2.sub(p1)
     length = distance.norm
     direction = distance.normalized()
+    if direction is None:
+        # zero-length line
+        return
     cone_radius = length / 30
     cone_length = length / 10
     # move the cone to the middle of the line
