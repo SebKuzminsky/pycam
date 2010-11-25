@@ -154,21 +154,17 @@ def report_exception():
             + "text below to the developers of PyCAM. Thanks a lot!\n" \
             + traceback.format_exc())
 
-def get_filters_from_list(filter_list, file_filter=True):
-    if file_filter:
-        return_class = gtk.FileFilter
-    else:
-        return_class = gtk.RecentFilter
+def get_filters_from_list(filter_list):
     result = []
     for one_filter in filter_list:
-        file_filter = return_class()
-        file_filter.set_name(one_filter[0])
+        current_filter = gtk.FileFilter()
+        current_filter.set_name(one_filter[0])
         file_extensions = one_filter[1]
         if not isinstance(file_extensions, (list, tuple)):
             file_extensions = [file_extensions]
         for ext in file_extensions:
-            file_filter.add_pattern(ext)
-        result.append(file_filter)
+            current_filter.add_pattern(ext)
+        result.append(current_filter)
     return result
 
 def get_font_dir():
@@ -883,9 +879,13 @@ class ProjectGui:
         if not self.recent_manager is None:
             recent_files_menu = gtk.RecentChooserMenu(self.recent_manager)
             recent_files_menu.set_name("RecentFilesMenu")
-            for file_filter in get_filters_from_list(FILTER_MODEL,
-                    file_filter=False):
-                recent_files_menu.add_filter(file_filter)
+            recent_menu_filter = gtk.RecentFilter()
+            for filter_name, filter_patterns in FILTER_MODEL:
+                if not isinstance(filter_patterns, (list, set, tuple)):
+                    filter_patterns = [filter_patterns]
+                for pattern in filter_patterns:
+                    recent_menu_filter.add_pattern(pattern)
+            recent_files_menu.add_filter(recent_menu_filter)
             recent_files_menu.set_show_numbers(True)
             # non-local files (without "file://") are not supported. yet
             recent_files_menu.set_local_only(True)
@@ -2510,9 +2510,7 @@ class ProjectGui:
     def load_model_file(self, widget=None, filename=None):
         if callable(filename):
             filename = filename()
-        if filename:
-            self.add_to_recent_file_list(filename)
-        else:
+        if not filename:
             filename = self.get_filename_via_dialog("Loading model ...",
                     mode_load=True, type_filter=FILTER_MODEL)
         if filename:
@@ -2527,11 +2525,12 @@ class ProjectGui:
                 self.update_progress_bar(text="Loading model file ...")
                 # "cancel" is not allowed
                 self.disable_progress_cancel_button()
-                self.load_model(importer(filename,
+                if self.load_model(importer(filename,
                         program_locations=program_locations,
                         unit=self.settings.get("unit"),
-                        callback=self.update_progress_bar))
-                self.set_model_filename(filename)
+                        callback=self.update_progress_bar)):
+                    self.set_model_filename(filename)
+                    self.add_to_recent_file_list(filename)
             else:
                 log.error("Failed to detect filetype!")
 
@@ -2539,9 +2538,7 @@ class ProjectGui:
     def export_emc_tools(self, widget=None, filename=None):
         if callable(filename):
             filename = filename()
-        if filename:
-            self.add_to_recent_file_list(filename)
-        else:
+        if not filename:
             filename = self.get_filename_via_dialog("Exporting EMC tool definition ...",
                     mode_load=False, type_filter=FILTER_EMC_TOOL,
                     filename_templates=(self.last_model_filename,))
@@ -2567,16 +2564,16 @@ class ProjectGui:
     def load_task_settings_file(self, widget=None, filename=None):
         if callable(filename):
             filename = filename()
-        if filename:
-            self.add_to_recent_file_list(filename)
-        else:
+        if not filename:
             filename = self.get_filename_via_dialog("Loading settings ...",
                     mode_load=True, type_filter=FILTER_CONFIG)
-            if filename:
-                self.last_task_settings_file = filename
-                self.update_save_actions()
+            # Only update the last_task_settings attribute if the task file was
+            # loaded interactively. E.g. ignore the initial task file loading.
+            self.last_task_settings_file = filename
         if filename:
             self.load_task_settings(filename)
+            self.add_to_recent_file_list(filename)
+        self.update_save_actions()
 
     def load_model(self, model):
         # load the new model only if the import worked
@@ -2588,6 +2585,9 @@ class ProjectGui:
             self.append_to_queue(self.update_support_grid_controls)
             self.append_to_queue(self.toggle_3d_view, value=True)
             self.append_to_queue(self.update_view)
+            return True
+        else:
+            return False
 
     def load_task_settings(self, filename=None):
         settings = pycam.Gui.Settings.ProcessSettings()
@@ -3417,7 +3417,6 @@ class ProjectGui:
             widget = widget()
         if isinstance(widget, basestring):
             filename = widget
-            self.add_to_recent_file_list(filename)
         else:
             # we open a dialog
             filename = self.get_filename_via_dialog("Save toolpath to ...",
@@ -3425,7 +3424,7 @@ class ProjectGui:
                     filename_templates=(self.last_toolpath_file, self.last_model_filename))
             if filename:
                 self.last_toolpath_file = filename
-                self.update_save_actions()
+        self.update_save_actions()
         # no filename given -> exit
         if not filename:
             return
