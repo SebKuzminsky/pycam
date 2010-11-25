@@ -105,7 +105,7 @@ class CXFParser(object):
                 # Update the GUI from time to time.
                 # This is useful for the big unicode font.
                 if self.callback and (len(self.letters) % 100 == 0):
-                    self.callback.update()
+                    self.callback()
                 if (len(line) >= 3) and (line[2] == "]"):
                     # single character
                     character = line[1]

@@ -215,7 +215,7 @@ def load_fonts(callback=None):
         progress_counter = None
     for font_file in all_font_files:
         charset = pycam.Importers.CXFImporter.import_font(font_file,
-                callback=progress_counter)
+                callback=progress_counter.update)
         if (not progress_counter is None) and progress_counter.increment():
             break
         if not charset is None:
@@ -1892,6 +1892,9 @@ class ProjectGui:
         if self.view3d and not self.view3d.enabled:
             # initialization failed - don't do anything
             return
+        if not self.model:
+            # no model loaded - don't enable the window
+            return
         current_state = not ((self.view3d is None) or (not self.view3d.is_visible))
         if value is None:
             new_state = not current_state
@@ -2503,6 +2506,7 @@ class ProjectGui:
             window.destroy()
 
     @gui_activity_guard
+    @progress_activity_guard
     def load_model_file(self, widget=None, filename=None):
         if callable(filename):
             filename = filename()
@@ -2520,9 +2524,13 @@ class ProjectGui:
                     program_locations[key[len(prefix):]] = self.settings.get(key)
             file_type, importer = pycam.Importers.detect_file_type(filename)
             if file_type and callable(importer):
+                self.update_progress_bar(text="Loading model file ...")
+                # "cancel" is not allowed
+                self.disable_progress_cancel_button()
                 self.load_model(importer(filename,
                         program_locations=program_locations,
-                        unit=self.settings.get("unit")))
+                        unit=self.settings.get("unit"),
+                        callback=self.update_progress_bar))
                 self.set_model_filename(filename)
             else:
                 log.error("Failed to detect filetype!")
@@ -2978,6 +2986,8 @@ class ProjectGui:
             self._progress_start_time = time.time()
             self.update_progress_bar("", 0)
             self.progress_cancel_button.set_sensitive(True)
+            # enable "pulse" mode for a start (in case of unknown ETA)
+            self.progress_bar.pulse()
             self.progress_widget.show()
         else:
             self.progress_widget.hide()
@@ -2994,6 +3004,9 @@ class ProjectGui:
         if not percent is None:
             percent = min(max(percent, 0.0), 100.0)
             self.progress_bar.set_fraction(percent/100.0)
+        if (percent is None) and (self.progress_bar.get_fraction() == 0):
+            # use "pulse" mode until we reach 1% of the work to be done
+            self.progress_bar.pulse()
         # "estimated time of arrival" text
         time_estimation_suffix = " remaining ..."
         if self.progress_bar.get_fraction() > 0:

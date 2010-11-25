@@ -44,11 +44,12 @@ class DXFParser:
         "COLOR": 62,
     }
 
-    def __init__(self, inputstream):
+    def __init__(self, inputstream, callback=None):
         self.inputstream = inputstream
         self.line_number = 0
         self.lines = []
         self._input_stack = []
+        self.callback = callback
         self.parse_content()
         self.optimize_line_order()
 
@@ -61,6 +62,8 @@ class DXFParser:
         groups.append(current_group)
         remaining_lines = self.lines[:]
         while remaining_lines:
+            if self.callback and self.callback():
+                return
             if not current_group:
                 current_group.append(remaining_lines.pop(0))
             else:
@@ -150,6 +153,8 @@ class DXFParser:
         key, value = self._read_key_value()
         while (not key is None) \
                 and not ((key == self.KEYS["MARKER"]) and (value == "EOF")):
+            if self.callback and self.callback():
+                return
             if key == self.KEYS["MARKER"]:
                 if value in ("SECTION", "TABLE", "LAYER", "ENDTAB", "ENDSEC"):
                     # we don't handle these meta-information
@@ -209,7 +214,7 @@ class DXFParser:
             return None
 
 
-def import_model(filename, program_locations=None, unit=None):
+def import_model(filename, program_locations=None, unit=None, callback=None):
     try:
         infile = open(filename,"rb")
     except IOError, err_msg:
@@ -217,9 +222,13 @@ def import_model(filename, program_locations=None, unit=None):
                 % (filename, err_msg))
         return None
 
-    result = DXFParser(infile)
+    result = DXFParser(infile, callback=callback)
 
     lines = result.get_model()["lines"]
+
+    if callback and callback():
+        log.warn("DXFImporter: load model operation was cancelled")
+        return None
 
     if lines:
         model = pycam.Geometry.Model.ContourModel()

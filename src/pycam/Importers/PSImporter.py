@@ -29,7 +29,7 @@ import os
 log = pycam.Utils.log.get_logger()
 
 
-def import_model(filename, program_locations=None, unit=None):
+def import_model(filename, program_locations=None, unit=None, callback=None):
     if not os.path.isfile(filename):
         log.error("PSImporter: file (%s) does not exist" % filename)
         return None
@@ -53,9 +53,13 @@ def import_model(filename, program_locations=None, unit=None):
     success = convert_eps2dxf(filename, dxf_file_name, location=pstoedit_path)
     if not success:
         result = None
+    elif callback and callback():
+        log.warn("PSImporter: load model operation canceled")
+        result = None
     else:
         log.info("Successfully converted PS file to DXF file")
-        result = pycam.Importers.DXFImporter.import_model(dxf_file_name, unit=unit)
+        result = pycam.Importers.DXFImporter.import_model(dxf_file_name,
+                unit=unit, callback=callback)
     # always remove the dxf file
     remove_temp_file(dxf_file_name)
     return result

@@ -76,7 +76,7 @@ def convert_eps2dxf(eps_filename, dxf_filename, location=None):
                 process.stderr.read()))
         return False
 
-def import_model(filename, program_locations=None, unit=None):
+def import_model(filename, program_locations=None, unit=None, callback=None):
     if not os.path.isfile(filename):
         log.error("SVGImporter: file (%s) does not exist" % filename)
         return None
@@ -110,6 +110,10 @@ def import_model(filename, program_locations=None, unit=None):
     if not success:
         remove_temp_file(eps_file_name)
         return None
+    if callback and callback():
+        remove_temp_file(eps_file_name)
+        log.warn("SVGImporter: load model operation was cancelled")
+        return None
     log.info("Successfully converted SVG file to EPS file")
 
     # convert eps to dxf via pstoedit
@@ -120,9 +124,13 @@ def import_model(filename, program_locations=None, unit=None):
     remove_temp_file(eps_file_name)
     if not success:
         result = None
+    elif callback and callback():
+        log.warn("SVGImporter: load model operation was cancelled")
+        result = None
     else:
         log.info("Successfully converted EPS file to DXF file")
-        result = pycam.Importers.DXFImporter.import_model(dxf_file_name, unit=unit)
+        result = pycam.Importers.DXFImporter.import_model(dxf_file_name,
+                unit=unit, callback=callback)
     # always remove the dxf file
     remove_temp_file(dxf_file_name)
     return result

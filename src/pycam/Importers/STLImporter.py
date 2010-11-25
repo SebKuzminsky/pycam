@@ -53,7 +53,8 @@ def UniqueVertex(x, y, z):
         vertices += 1
         return Point(x, y, z)
 
-def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None):
+def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None,
+        callback=None):
     global vertices, edges, kdtree
     vertices = 0
     edges = 0
@@ -106,6 +107,9 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None):
 
     if binary:
         for i in range(1, numfacets + 1): 
+            if callback and callback():
+                log.warn("STLImporter: load model operation cancelled")
+                return None
             a1 = unpack("<f", f.read(4))[0] 
             a2 = unpack("<f", f.read(4))[0] 
             a3 = unpack("<f", f.read(4))[0] 
@@ -180,6 +184,9 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None):
         current_line = 0
 
         for line in f:
+            if callback and callback():
+                log.warn("STLImporter: load model operation cancelled")
+                return None
             current_line += 1
             m = solid.match(line)
             if m:
