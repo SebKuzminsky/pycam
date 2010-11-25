@@ -663,7 +663,11 @@ def draw_direction_cone(p1, p2):
     cross = direction.cross(Point(0, 0, -1))
     if cross.norm != 0:
         # The line direction is not in line with the z axis.
-        angle = math.asin(sqrt(direction.x ** 2 + direction.y ** 2))
+        try:
+            angle = math.asin(sqrt(direction.x ** 2 + direction.y ** 2))
+        except ValueError:
+            # invalid angle - just ignore this cone
+            return
         # convert from radians to degree
         angle = angle / math.pi * 180
         if direction.z < 0:
