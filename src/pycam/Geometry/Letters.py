@@ -152,6 +152,8 @@ class Charset(object):
             for polygon in current_line.get_polygons():
                 result.append(polygon)
         # the text should be just above the x axis
-        result.shift(0, -result.miny, 0)
+        if result.miny:
+            # don't shift, if result.miny is None (e.g.: no content) or zero
+            result.shift(0, -result.miny, 0)
         return result
 
