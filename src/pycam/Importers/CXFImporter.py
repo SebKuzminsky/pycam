@@ -104,11 +104,19 @@ class CXFParser(object):
             elif line.startswith("["):
                 # Update the GUI from time to time.
                 # This is useful for the big unicode font.
-                if self.callback and (len(self.letters) % 100 == 0):
+                if self.callback and (len(self.letters) % 50 == 0):
                     self.callback()
                 if (len(line) >= 3) and (line[2] == "]"):
                     # single character
-                    character = line[1]
+                    for encoding in ("utf-8", "iso8859-1", "iso8859-15"):
+                        try:
+                            character = unicode(line[1], encoding)
+                            break
+                        except UnicodeDecodeError:
+                            pass
+                    else:
+                        raise _CXFParseError("Failed to decode character at " \
+                                + "line %d" % feeder.get_index())
                 elif (len(line) >= 6) and (line[5] == "]"):
                     # unicode character (e.g. "[1ae4]")
                     try:
@@ -120,7 +128,7 @@ class CXFParser(object):
                     # read UTF8 (qcad 1 compatibility)
                     end_bracket = line.find("] ")
                     text = line[1:end_bracket]
-                    character = text.decode("utf-8")[0]
+                    character = unicode(text, "utf-8")[0]
                 else:
                     # unknown format
                     raise _CXFParseError("Failed to parse character at line " \

@@ -1670,6 +1670,7 @@ class ProjectGui:
         text_buffer = input_field.get_buffer()
         text = text_buffer.get_text(text_buffer.get_start_iter(),
                 text_buffer.get_end_iter())
+        text = unicode(text)
         if text:
             skew = self.gui.get_object("FontSideSkewValue").get_value()
             line_space = self.gui.get_object("FontLineSpacingValue").get_value()
