@@ -36,6 +36,7 @@ from pycam.Geometry.utils import sqrt
 from pycam.Gui.OpenGLTools import ModelViewWindowGL
 from pycam.Geometry.Letters import TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, \
         TEXT_ALIGN_RIGHT
+import pycam.Geometry.Model
 from pycam.Utils import ProgressCounter
 from pycam.Toolpath import Bounds
 from pycam import VERSION
@@ -2277,8 +2278,19 @@ class ProjectGui:
             filename = filename()
         if not isinstance(filename, basestring):
             # we open a dialog
+            # determine the file type
+            # TODO: this needs to be decided by the exporter code
+            if isinstance(self.model, pycam.Geometry.Model.Model):
+                # TODO: fix this extremely fragile filter
+                type_filter = [(name, patterns)
+                        for name, patterns in FILTER_MODEL
+                        if "STL" in name.upper()]
+            elif isinstance(self.model, pycam.Geometry.Model.ContourModel):
+                type_filter = [(name, patterns)
+                        for name, patterns in FILTER_MODEL
+                        if "SVG" in name.upper()]
             filename = self.get_filename_via_dialog("Save model to ...",
-                    mode_load=False, type_filter=FILTER_MODEL,
+                    mode_load=False, type_filter=type_filter,
                     filename_templates=(self.last_model_filename,))
             if filename:
                 self.set_model_filename(filename)
