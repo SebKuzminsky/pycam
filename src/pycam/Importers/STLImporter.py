@@ -22,10 +22,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.Point import Point, Vector
-from pycam.Geometry.Line import Line
 from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.PointKdtree import PointKdtree
-from pycam.Geometry.TriangleKdtree import TriangleKdtree
 from pycam.Geometry.utils import epsilon
 from pycam.Geometry.Model import Model
 import pycam.Utils.log
@@ -72,15 +70,15 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None,
     # contain "solid" and "facet".
     header_lines = []
     while len(header_lines) < 2:
-        current_line = f.readline(200)
-        if len(current_line) == 0:
+        line = f.readline(200)
+        if len(line) == 0:
             # empty line (not even a line-feed) -> EOF
             log.error("STLImporter: No valid lines found in '%s'" % filename)
             return None
         # ignore comment lines
         # note: partial comments (starting within a line) are not handled
-        if not current_line.startswith(";"):
-            header_lines.append(current_line)
+        if not line.startswith(";"):
+            header_lines.append(line)
     header = "".join(header_lines)
     # read byte 80 to 83 - they contain the "numfacets" value in binary format
     f.seek(80)
@@ -148,9 +146,9 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None,
             elif dotcross < 0:
                 if not normal_conflict_warning_seen:
                     # TODO: use the line number here instead of its content
-                    log.warn(("Inconsistent normal/vertices found in line " \
-                            + "%s of '%s'. Please validate the STL file!") \
-                            % (current_line, filename))
+                    log.warn(("Inconsistent normal/vertices found in facet " \
+                            + "definition %d of '%s'. Please validate the STL " \
+                            + "file!") % (i, filename))
                     normal_conflict_warning_seen = True
                 t = Triangle(p1, p2, p3)
             else:
@@ -224,6 +222,11 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None,
                 continue
             m = endfacet.match(line)
             if m:
+                if p1 is None or p2 is None or p3 is None:
+                    log.warn(("Invalid facet definition in line " \
+                            + "%d of '%s'. Please validate the STL file!") \
+                            % (current_line, filename))
+                    n, p1, p2, p3 = None, None, None, None
                 if not n:
                     n = p2.sub(p1).cross(p3.sub(p1)).normalized()
 
