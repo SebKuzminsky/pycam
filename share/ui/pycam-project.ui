@@ -617,7 +617,6 @@
                                         <property name="invisible_char">&#x2022;</property>
                                         <property name="activates_default">True</property>
                                         <property name="adjustment">scale_percent_value</property>
-                                        <property name="numeric">True</property>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
@@ -788,7 +787,6 @@
                                         <property name="width_chars">5</property>
                                         <property name="adjustment">shift-x</property>
                                         <property name="digits">2</property>
-                                        <property name="numeric">True</property>
                                       </object>
                                       <packing>
                                         <property name="left_attach">1</property>
@@ -805,7 +803,6 @@
                                         <property name="width_chars">5</property>
                                         <property name="adjustment">shift-y</property>
                                         <property name="digits">2</property>
-                                        <property name="numeric">True</property>
                                       </object>
                                       <packing>
                                         <property name="left_attach">1</property>
@@ -824,7 +821,6 @@
                                         <property name="width_chars">5</property>
                                         <property name="adjustment">shift-z</property>
                                         <property name="digits">2</property>
-                                        <property name="numeric">True</property>
                                       </object>
                                       <packing>
                                         <property name="left_attach">1</property>
@@ -1069,7 +1065,6 @@ This can be useful if the imported model is technically broken (sometimes this h
                                             <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">SupportGridThickness</property>
                                             <property name="digits">2</property>
-                                            <property name="numeric">True</property>
                                           </object>
                                           <packing>
                                             <property name="expand">False</property>
@@ -1104,7 +1099,6 @@ This can be useful if the imported model is technically broken (sometimes this h
                                             <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">SupportGridHeight</property>
                                             <property name="digits">2</property>
-                                            <property name="numeric">True</property>
                                           </object>
                                           <packing>
                                             <property name="expand">False</property>
@@ -1171,7 +1165,6 @@ This can be useful if the imported model is technically broken (sometimes this h
                                             <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">SupportGridDistanceX</property>
                                             <property name="digits">2</property>
-                                            <property name="numeric">True</property>
                                           </object>
                                           <packing>
                                             <property name="left_attach">2</property>
@@ -1187,7 +1180,6 @@ This can be useful if the imported model is technically broken (sometimes this h
                                             <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">SupportGridDistanceY</property>
                                             <property name="digits">2</property>
-                                            <property name="numeric">True</property>
                                           </object>
                                           <packing>
                                             <property name="left_attach">2</property>
@@ -1296,7 +1288,6 @@ This can be useful if the imported model is technically broken (sometimes this h
                                             <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">SupportGridOffsetX</property>
                                             <property name="digits">2</property>
-                                            <property name="numeric">True</property>
                                           </object>
                                           <packing>
                                             <property name="expand">False</property>
@@ -1331,7 +1322,6 @@ This can be useful if the imported model is technically broken (sometimes this h
                                             <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">SupportGridOffsetY</property>
                                             <property name="digits">2</property>
-                                            <property name="numeric">True</property>
                                           </object>
                                           <packing>
                                             <property name="expand">False</property>
@@ -2057,7 +2047,6 @@ This can be useful if the imported model is technically broken (sometimes this h
                                                     <property name="invisible_char">&#x2022;</property>
                                                     <property name="adjustment">tooldiameter</property>
                                                     <property name="digits">4</property>
-                                                    <property name="numeric">True</property>
                                                   </object>
                                                   <packing>
                                                     <property name="left_attach">1</property>
@@ -2073,7 +2062,6 @@ This can be useful if the imported model is technically broken (sometimes this h
                                                     <property name="invisible_char">&#x2022;</property>
                                                     <property name="adjustment">torusdiameter</property>
                                                     <property name="digits">4</property>
-                                                    <property name="numeric">True</property>
                                                   </object>
                                                   <packing>
                                                     <property name="left_attach">1</property>
@@ -2162,7 +2150,6 @@ This can be useful if the imported model is technically broken (sometimes this h
                                                 <property name="can_focus">True</property>
                                                 <property name="invisible_char">&#x2022;</property>
                                                 <property name="adjustment">feedrate</property>
-                                                <property name="numeric">True</property>
                                               </object>
                                               <packing>
                                                 <property name="left_attach">1</property>
@@ -2177,7 +2164,6 @@ This can be useful if the imported model is technically broken (sometimes this h
                                                 <property name="can_focus">True</property>
                                                 <property name="invisible_char">&#x2022;</property>
                                                 <property name="adjustment">speed</property>
-                                                <property name="numeric">True</property>
                                               </object>
                                               <packing>
                                                 <property name="left_attach">1</property>
@@ -2601,7 +2587,6 @@ Use the "Engrave Offset" to shift the position of the tool to the outside (posit
 Higher values increase accuracy and processing time.</property>
                                                     <property name="invisible_char">&#x25CF;</property>
                                                     <property name="adjustment">OverlapPercentValue</property>
-                                                    <property name="numeric">True</property>
                                                   </object>
                                                   <packing>
                                                     <property name="left_attach">1</property>
@@ -2633,7 +2618,6 @@ The last finishing operation should have zero material allowance.</property>
                                                     <property name="invisible_char">&#x25CF;</property>
                                                     <property name="adjustment">MaterialAllowanceValue</property>
                                                     <property name="digits">2</property>
-                                                    <property name="numeric">True</property>
                                                   </object>
                                                   <packing>
                                                     <property name="left_attach">1</property>
@@ -2652,7 +2636,6 @@ The last finishing operation should have zero material allowance.</property>
                                                     <property name="invisible_char">&#x25CF;</property>
                                                     <property name="adjustment">MaxStepDownValue</property>
                                                     <property name="digits">2</property>
-                                                    <property name="numeric">True</property>
                                                   </object>
                                                   <packing>
                                                     <property name="left_attach">1</property>
@@ -2698,7 +2681,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                                     <property name="invisible_char">&#x25CF;</property>
                                                     <property name="adjustment">EngraveOffsetValue</property>
                                                     <property name="digits">2</property>
-                                                    <property name="numeric">True</property>
                                                   </object>
                                                   <packing>
                                                     <property name="left_attach">1</property>
@@ -3227,7 +3209,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                                     <property name="width_chars">6</property>
                                                     <property name="adjustment">min-x</property>
                                                     <property name="digits">2</property>
-                                                    <property name="numeric">True</property>
                                                   </object>
                                                   <packing>
                                                     <property name="left_attach">1</property>
@@ -3246,7 +3227,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                                     <property name="width_chars">6</property>
                                                     <property name="adjustment">max-y</property>
                                                     <property name="digits">2</property>
-                                                    <property name="numeric">True</property>
                                                   </object>
                                                   <packing>
                                                     <property name="left_attach">2</property>
@@ -3265,7 +3245,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                                     <property name="width_chars">6</property>
                                                     <property name="adjustment">min-z</property>
                                                     <property name="digits">2</property>
-                                                    <property name="numeric">True</property>
                                                   </object>
                                                   <packing>
                                                     <property name="left_attach">1</property>
@@ -3284,7 +3263,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                                     <property name="width_chars">6</property>
                                                     <property name="adjustment">max-z</property>
                                                     <property name="digits">2</property>
-                                                    <property name="numeric">True</property>
                                                   </object>
                                                   <packing>
                                                     <property name="left_attach">2</property>
@@ -3303,7 +3281,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                                     <property name="width_chars">6</property>
                                                     <property name="adjustment">min-y</property>
                                                     <property name="digits">2</property>
-                                                    <property name="numeric">True</property>
                                                   </object>
                                                   <packing>
                                                     <property name="left_attach">1</property>
@@ -3322,7 +3299,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                                     <property name="width_chars">6</property>
                                                     <property name="adjustment">max-x</property>
                                                     <property name="digits">2</property>
-                                                    <property name="numeric">True</property>
                                                   </object>
                                                   <packing>
                                                     <property name="left_attach">2</property>
@@ -5167,7 +5143,6 @@ ODE can't be used in combination with parallel processing or server mode.</prope
                                 <property name="invisible_char">&#x25CF;</property>
                                 <property name="adjustment">SafetyHeightValue</property>
                                 <property name="digits">1</property>
-                                <property name="numeric">True</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -6301,7 +6276,6 @@ You will need a remote server.&lt;/span&gt;</property>
 PyCAM's default port is 1250.</property>
                                                 <property name="invisible_char">&#x25CF;</property>
                                                 <property name="adjustment">RemoteServerPortValue</property>
-                                                <property name="numeric">True</property>
                                               </object>
                                               <packing>
                                                 <property name="left_attach">2</property>
@@ -6374,7 +6348,6 @@ Remember that you need administrative permissions for ports below 1024.
 The default port is 1250.</property>
                                                 <property name="invisible_char">&#x25CF;</property>
                                                 <property name="adjustment">ServerPortLocalValue</property>
-                                                <property name="numeric">True</property>
                                               </object>
                                               <packing>
                                                 <property name="left_attach">1</property>
