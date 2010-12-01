@@ -44,7 +44,7 @@ class Polygon(TransformableContainer):
             plane = Plane(Point(0, 0, 0), Point(0, 0, 1))
         self.plane = plane
         self._points = []
-        self._is_closed = False
+        self.is_closed = False
         self.maxx = None
         self.minx = None
         self.maxy = None
@@ -78,7 +78,7 @@ class Polygon(TransformableContainer):
                     self._points.append(line.p2)
                     self._update_limits(line.p2)
                 else:
-                    self._is_closed = True
+                    self.is_closed = True
             else:
                 # the new Line can be added to the beginning of the polygon
                 if line.dir == self._points[0].sub(line.p2).normalized():
@@ -88,13 +88,13 @@ class Polygon(TransformableContainer):
                     self._points.insert(0, line.p1)
                     self._update_limits(line.p1)
                 else:
-                    self._is_closed = True
+                    self.is_closed = True
 
     def __len__(self):
         return len(self._points)
 
     def __str__(self):
-        if self._is_closed:
+        if self.is_closed:
             status = "closed"
         else:
             status = "open"
@@ -105,7 +105,7 @@ class Polygon(TransformableContainer):
         self.reset_cache()
 
     def is_connectable(self, line):
-        if self._is_closed:
+        if self.is_closed:
             return False
         elif not self._points:
             # empty polygons can be connected with any line
@@ -133,7 +133,7 @@ class Polygon(TransformableContainer):
         """
         if not self._points:
             return 0
-        if not self._is_closed:
+        if not self.is_closed:
             return 0
         if self._area_cache is None:
             # calculate the area for the first time
@@ -158,7 +158,7 @@ class Polygon(TransformableContainer):
 
     def get_middle_of_line(self, index):
         if (index >= len(self._points)) \
-                or (not self._is_closed and index == len(self._points) - 1):
+                or (not self.is_closed and index == len(self._points) - 1):
             return None
         else:
             return self._points[index].add(self._points[(index + 1) % len(self._points)]).div(2)
@@ -168,7 +168,7 @@ class Polygon(TransformableContainer):
         for index in range(len(self._points) - 1):
             result.append(self._points[index + 1].sub(
                     self._points[index]).norm)
-        if self._is_closed:
+        if self.is_closed:
             result.append(self._points[0].sub(self._points[-1]).norm)
         return result
 
@@ -260,7 +260,7 @@ class Polygon(TransformableContainer):
             for index in range(len(self._points) - 1):
                 lines.append(Line(self._points[index], self._points[index + 1]))
             # connect the last point with the first only if the polygon is closed
-            if self._is_closed:
+            if self.is_closed:
                 lines.append(Line(self._points[-1], self._points[0]))
             self._lines_cache = lines
         return self._lines_cache[:]
@@ -512,10 +512,10 @@ class Polygon(TransformableContainer):
                     print poly
                     print line
                     raise
-            if self._is_closed and ((not poly._is_closed) \
+            if self.is_closed and ((not poly.is_closed) \
                     or (self.is_outer() != poly.is_outer())):
                 continue
-            elif (not self._is_closed) and (poly.get_area() != 0):
+            elif (not self.is_closed) and (poly.get_area() != 0):
                 continue
             else:
                 result_polygons.append(poly)
@@ -790,7 +790,7 @@ class Polygon(TransformableContainer):
                     # Calculate new intersections for each pair of adjacent
                     # lines.
                     for index in range(len(new_group)):
-                        if (index == 0) and (not self._is_closed):
+                        if (index == 0) and (not self.is_closed):
                             # skip the first line if the group is not closed
                             continue
                         # this also works for index==0 (closed groups)
@@ -802,7 +802,7 @@ class Polygon(TransformableContainer):
                 clean_group = [line for line in new_group
                         if not line.p1 is None]
                 finished = len(new_group) == len(clean_group)
-                if (len(clean_group) == 1) and self._is_closed:
+                if (len(clean_group) == 1) and self.is_closed:
                     new_group = []
                     finished = True
                 else:
@@ -1024,7 +1024,7 @@ class Polygon(TransformableContainer):
         # fix potential overlapping at the beginning and end of each polygon
         result = []
         for poly in contour.get_polygons():
-            if not poly._is_closed:
+            if not poly.is_closed:
                 lines = poly.get_lines()
                 line1 = lines[-1]
                 line2 = lines[0]
@@ -1032,7 +1032,7 @@ class Polygon(TransformableContainer):
                         and (line1.is_point_inside(line2.p1)):
                     # remove the last point and define the polygon as closed
                     poly._points.pop(-1)
-                    poly._is_closed = True
+                    poly.is_closed = True
             result.append(poly)
         return result
 
