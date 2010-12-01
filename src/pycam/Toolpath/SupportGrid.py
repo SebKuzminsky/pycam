@@ -174,7 +174,7 @@ def get_support_distributed(model, z_plane, average_distance,
     for polygon in polygons:
         # no grid for _small_ inner polygons
         # TODO: calculate a reasonable factor (see below)
-        if not polygon.is_outer() \
+        if polygon.is_closed and (not polygon.is_outer()) \
                 and (abs(polygon.get_area()) < 25000 * thickness ** 2):
             continue
         lines = polygon.get_lines()
