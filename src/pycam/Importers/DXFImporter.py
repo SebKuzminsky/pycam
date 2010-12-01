@@ -161,11 +161,70 @@ class DXFParser:
                     pass
                 elif value == "LINE":
                     self.parse_line()
+                elif value == "LWPOLYLINE":
+                    self.parse_polyline()
                 else:
                     # not supported
                     log.warn("DXFImporter: Ignored unsupported element in " \
                             + "line %d: %s" % (self.line_number, value))
             key, value = self._read_key_value()
+
+    def parse_polyline(self):
+        points = []
+        def add_point(p_array):
+            # fill all "None" values with zero
+            for index in range(len(p_array)):
+                if p_array[index] is None:
+                    if index == 0:
+                        print "WEIRDX: %d - %s" % (self.line_number, p_array)
+                    if index == 1:
+                        print "WEIRDY: %d - %s" % (self.line_number, p_array)
+                    p_array[index] = 0
+            points.append(Point(p_array[0], p_array[1], p_array[2]))
+        start_line = self.line_number
+        current_point = [None, None, None]
+        key, value = self._read_key_value()
+        while (not key is None) and (key != self.KEYS["MARKER"]):
+            if key == self.KEYS["START_X"]:
+                axis = 0
+            elif key == self.KEYS["START_Y"]:
+                axis = 1
+            elif key == self.KEYS["START_Z"]:
+                axis = 2
+            else:
+                axis = None
+            if not axis is None:
+                if current_point[axis] is None:
+                    # The current point definition is not complete, yet.
+                    current_point[axis] = value
+                else:
+                    # The current point seems to be complete.
+                    add_point(current_point)
+                    current_point = [None, None, None]
+                    current_point[axis] = value
+            key, value = self._read_key_value()
+        end_line = self.line_number
+        # The last lines were not used - they are just the marker for the next
+        # item.
+        if not key is None:
+            self._push_on_stack(key, value)
+        # check if there is a remaining item in "current_point"
+        if len(current_point) != current_point.count(None):
+            add_point(current_point)
+        if len(points) < 2:
+            # too few points for a polyline
+            log.warn("DXFImporter: Empty LWPOLYLINE definition between line " \
+                    + "%d and %d" % (start_line, end_line))
+        else:
+            for index in range(len(points) - 1):
+                point = points[index]
+                next_point = points[index + 1]
+                if point != next_point:
+                    self.lines.append(Line(point, next_point))
+                else:
+                    log.warn("DXFImporter: Ignoring zero-length LINE " \
+                            + "(between input line %d and %d): %s" \
+                            % (start_line, end_line, point))
 
     def parse_line(self):
         start_line = self.line_number
