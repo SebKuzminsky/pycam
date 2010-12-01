@@ -2130,7 +2130,9 @@ class ProjectGui:
             tool_model.clear()
             counter = 0
             for tool in self.tool_list:
-                tool_model.append((counter, counter + 1, tool["name"]))
+                # add the tool size to the descriptive text
+                description = "%s (d=%s)" % (tool["name"], 2 * tool["tool_radius"])
+                tool_model.append((counter, counter + 1, description))
                 counter += 1
             if not new_index is None:
                 self._treeview_set_active_index(self.tool_editor_table, new_index)

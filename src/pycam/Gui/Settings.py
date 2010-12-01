@@ -122,7 +122,7 @@ class ProcessSettings:
     BASIC_DEFAULT_CONFIG = """
 [ToolDefault]
 shape: CylindricalCutter
-name: Cylindrical (d=3)
+name: Cylindrical
 tool_radius: 1.5
 torus_radius: 0.25
 feedrate: 200
@@ -163,18 +163,18 @@ feedrate: 200
 speed: 1000
 
 [Tool0]
-name: Cylindrical (d=3)
+name: Cylindrical
 shape: CylindricalCutter
 tool_radius: 1.5
 
 [Tool1]
-name: Toroidal (d=2)
+name: Toroidal
 shape: ToroidalCutter
 tool_radius: 1
 torus_radius: 0.2
 
 [Tool2]
-name: Spherical (d=1)
+name: Spherical
 shape: SphericalCutter
 tool_radius: 0.5
 
