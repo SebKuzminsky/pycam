@@ -227,7 +227,9 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None,
                             + "%d of '%s'. Please validate the STL file!") \
                             % (current_line, filename))
                     n, p1, p2, p3 = None, None, None, None
+                    continue
                 if not n:
+                    print p1, p2, p3
                     n = p2.sub(p1).cross(p3.sub(p1)).normalized()
 
                 # validate the normal
@@ -273,5 +275,9 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None,
     edges = 0
     kdtree = None
 
-    return model
+    if model.minx is None:
+        # no valid items added to the model
+        return None
+    else:
+        return model
     
