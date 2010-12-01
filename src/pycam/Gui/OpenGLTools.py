@@ -354,10 +354,10 @@ class ModelViewWindowGL:
                 ord("j"): (0, -1),
                 ord("k"): (0, 1),
                 ord("l"): (-1, 0),
-                ord("H"): (-1, 0),
-                ord("J"): (0, 1),
-                ord("K"): (0, -1),
-                ord("L"): (1, 0),
+                ord("H"): (1, 0),
+                ord("J"): (0, -1),
+                ord("K"): (0, 1),
+                ord("L"): (-1, 0),
         }
         def get_char(value):
             # avoid exceptions
