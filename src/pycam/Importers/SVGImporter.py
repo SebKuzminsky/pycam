@@ -33,7 +33,8 @@ def convert_svg2eps(svg_filename, eps_filename, location=None):
     try:
         process = subprocess.Popen(stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                args = [location, "--export-eps", eps_filename, svg_filename])
+                args = [location, "--export-area-page", "--export-eps",
+                        eps_filename, svg_filename])
     except OSError, err_msg:
         log.error("SVGImporter: failed to execute 'inkscape' (%s): %s" \
                 % (location, err_msg))
