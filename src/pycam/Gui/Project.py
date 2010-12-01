@@ -2280,12 +2280,12 @@ class ProjectGui:
             # we open a dialog
             # determine the file type
             # TODO: this needs to be decided by the exporter code
-            if isinstance(self.model, pycam.Geometry.Model.Model):
+            if isinstance(model, pycam.Geometry.Model.Model):
                 # TODO: fix this extremely fragile filter
                 type_filter = [(name, patterns)
                         for name, patterns in FILTER_MODEL
                         if "STL" in name.upper()]
-            elif isinstance(self.model, pycam.Geometry.Model.ContourModel):
+            elif isinstance(model, pycam.Geometry.Model.ContourModel):
                 type_filter = [(name, patterns)
                         for name, patterns in FILTER_MODEL
                         if "SVG" in name.upper()]
