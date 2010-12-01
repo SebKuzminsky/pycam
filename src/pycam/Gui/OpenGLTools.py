@@ -47,7 +47,7 @@ BUTTON_ZOOM = gtk.gdk.BUTTON3_MASK
 # The length of the distance vector does not matter - it will be normalized and
 # multiplied later anyway.
 VIEWS = {
-    "reset": {"distance": (1.0, 1.0, 1.0), "center": (0.0, 0.0, 0.0),
+    "reset": {"distance": (-1.0, -1.0, 1.0), "center": (0.0, 0.0, 0.0),
             "up": (0.0, 0.0, 1.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},
     "top": {"distance": (0.0, 0.0, 1.0), "center": (0.0, 0.0, 0.0),
             "up": (0.0, 1.0, 0.0), "znear": 0.1, "zfar": 1000.0, "fovy": 30.0},

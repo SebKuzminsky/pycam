@@ -229,7 +229,6 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None,
                     n, p1, p2, p3 = None, None, None, None
                     continue
                 if not n:
-                    print p1, p2, p3
                     n = p2.sub(p1).cross(p3.sub(p1)).normalized()
 
                 # validate the normal
