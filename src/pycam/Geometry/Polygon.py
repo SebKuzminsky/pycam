@@ -189,11 +189,10 @@ class Polygon(TransformableContainer):
         return self.get_area() > 0
 
     def is_polygon_inside(self, polygon):
-        inside_counter = 0
         for point in polygon._points:
-            if self.is_point_inside(point):
-                inside_counter += 1
-        return inside_counter == len(polygon._points)
+            if not self.is_point_inside(point):
+                return False
+        return True
 
     def is_point_on_outline(self, p):
         for line in self.get_lines():
@@ -244,6 +243,7 @@ class Polygon(TransformableContainer):
             return False
         else:
             # it seems like we are on the line -> inside
+            log.debug("polygon.is_point_inside: unclear decision")
             return True
 
     def get_points(self):
@@ -521,7 +521,7 @@ class Polygon(TransformableContainer):
                 result_polygons.append(poly)
         return result_polygons
 
-    def get_offset_polygons(self, offset, depth=20):
+    def get_offset_polygons_incremental(self, offset, depth=20):
         if offset == 0:
             return [self]
         if self._cached_offset_polygons.has_key(offset):
@@ -574,7 +574,7 @@ class Polygon(TransformableContainer):
         self._cached_offset_polygons[offset] = result_polygons
         return result_polygons
 
-    def get_offset_polygons_quite_ok(self, offset):
+    def get_offset_polygons(self, offset):
         def get_shifted_vertex(index, offset):
             p1 = self._points[index]
             p2 = self._points[(index + 1) % len(self._points)]
@@ -679,6 +679,7 @@ class Polygon(TransformableContainer):
             # This offset will not create a valid offset polygon.
             # Sadly there is currently no other way to detect a complete flip of
             # something like a circle.
+            log.debug("Skipping offset polygon: polygon is too small")
             return []
         points = []
         for index in range(len(self._points)):
@@ -690,8 +691,13 @@ class Polygon(TransformableContainer):
             new_lines.append(Line(p1, p2))
         cleaned_line_groups = simplify_polygon_intersections(new_lines)
         if cleaned_line_groups is None:
+            log.debug("Skipping offset polygon: intersections could not be " \
+                    + "simplified")
             return None
         else:
+            if not cleaned_line_groups:
+                log.debug("Skipping offset polygon: no polygons left after " \
+                        + "intersection simplification")
             # remove all groups with a toggled direction
             self_is_outer = self.is_outer()
             groups = []
@@ -703,14 +709,18 @@ class Polygon(TransformableContainer):
                     # We ignore groups that changed the direction. These
                     # parts of the original group are flipped due to the
                     # offset.
+                    log.debug("Ignoring reversed polygon: %s / %s" % (self.get_area(), group.get_area()))
                     continue
                 # Remove polygons that should be inside the original,
                 # but due to float inaccuracies they are not.
                 if ((self.is_outer() and (offset < 0)) \
                         or (not self.is_outer() and (offset > 0))) \
                         and (not self.is_polygon_inside(group)):
+                    log.debug("Ignoring inaccurate polygon: %s / %s" % (self.get_area(), group.get_area()))
                     continue
                 groups.append(group)
+            if not groups:
+                log.debug("Skipping offset polygon: toggled polygon removed")
             # remove all polygons that are within other polygons
             result = []
             for group in groups:
@@ -722,6 +732,9 @@ class Polygon(TransformableContainer):
                         inside = True
                 if not inside:
                     result.append(group)
+            if not result:
+                log.debug("Skipping offset polygon: polygon is inside of " \
+                        + "another one")
             return result
 
     def get_offset_polygons_old(self, offset):
