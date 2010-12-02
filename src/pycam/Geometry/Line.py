@@ -25,7 +25,8 @@ from pycam.Geometry import TransformableContainer
 from pycam.Geometry.Point import Point
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.utils import epsilon, sqrt
-import pycam.Gui.OpenGLTools
+# OpenGLTools will be imported later, if necessary
+#import pycam.Gui.OpenGLTools
 import math
 
 
@@ -180,6 +181,9 @@ class Line(TransformableContainer):
         GL.glEnd()
         # (optional) draw a cone for visualizing the direction of each line
         if show_directions and (self.len > 0):
+            # We can't import OpenGLTools in the header - otherwise server
+            # mode without GTK will break.
+            import pycam.Gui.OpenGLTools
             pycam.Gui.OpenGLTools.draw_direction_cone(self.p1, self.p2)
 
     def get_intersection(self, line, infinite_lines=False):
