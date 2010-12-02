@@ -114,16 +114,16 @@ class EngraveCutter:
         # We do the sorting just before the final layer (breakage does not
         # happen before).
         def polygon_priority(poly1, poly2):
-            """ polygon priority comparison: first holes, then outlines
-            (sorted by ascending area size)
+            """ polygon priority comparison: first holes and open polygons, then
+            outlines (roughly sorted by ascending area size)
             TODO: ordering according to the locations and groups of polygons
             would be even better.
             """
             area1 = poly1.get_area()
             area2 = poly2.get_area()
-            if (area1 < 0) and (area2 > 0):
+            if (area1 <= 0) and (area2 > 0):
                 return -1
-            elif (area2 < 0) and (area1 > 0):
+            elif (area2 <= 0) and (area1 > 0):
                 return 1
             else:
                 # do a "relaxed" sorting by size
