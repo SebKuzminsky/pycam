@@ -480,6 +480,10 @@ class ProjectGui:
                 lambda widget, data: self.window.set_default(None))
         self.gui.get_object("ToggleModelDirectionButton").connect("clicked",
                 self.reverse_model_direction)
+        self.gui.get_object("ScaleInchMM").connect("clicked", self.scale_model,
+                100 / 25.4)
+        self.gui.get_object("ScaleMMInch").connect("clicked", self.scale_model,
+                100 * 25.4)
         # support grid
         support_grid_type_control = self.gui.get_object(
                 "SupportGridTypesControl")
