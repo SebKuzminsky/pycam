@@ -228,8 +228,9 @@ class DXFParser:
 
     def parse_line(self):
         start_line = self.line_number
-        p1 = [None, None, None]
-        p2 = [None, None, None]
+        # the z-level defaults to zero (for 2D models)
+        p1 = [None, None, 0]
+        p2 = [None, None, 0]
         key, value = self._read_key_value()
         while (not key is None) and (key != self.KEYS["MARKER"]):
             if key == self.KEYS["START_X"]:
