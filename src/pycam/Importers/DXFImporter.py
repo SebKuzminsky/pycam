@@ -175,10 +175,9 @@ class DXFParser:
             # fill all "None" values with zero
             for index in range(len(p_array)):
                 if p_array[index] is None:
-                    if index == 0:
-                        print "WEIRDX: %d - %s" % (self.line_number, p_array)
-                    if index == 1:
-                        print "WEIRDY: %d - %s" % (self.line_number, p_array)
+                    if (index == 0) or (index == 1):
+                        log.debug("DXFImporter: weird LWPOLYLINE input data " \
+                                + "in line %d: %s" % (self.line_number, p_array))
                     p_array[index] = 0
             points.append(Point(p_array[0], p_array[1], p_array[2]))
         start_line = self.line_number
