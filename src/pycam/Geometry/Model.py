@@ -433,6 +433,12 @@ class ContourModel(BaseModel):
                 return None
         self.reset_cache()
 
+    def get_reversed(self):
+        result = ContourModel(plane=self._plane)
+        for poly in self.get_polygons():
+            result.append(poly.get_reversed())
+        return result
+
     def get_cropped_model(self, minx, maxx, miny, maxy, minz, maxz):
         new_line_groups = []
         for group in self._line_groups:

@@ -104,6 +104,12 @@ class Polygon(TransformableContainer):
         self._points.reverse()
         self.reset_cache()
 
+    def get_reversed(self):
+        result = Polygon(plane=self.plane)
+        result._points = self._points[:]
+        result.reverse_direction()
+        return result
+
     def is_connectable(self, line):
         if self.is_closed:
             return False

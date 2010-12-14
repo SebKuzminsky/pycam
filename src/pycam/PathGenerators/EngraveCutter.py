@@ -36,7 +36,7 @@ log = pycam.Utils.log.get_logger()
 class EngraveCutter:
 
     def __init__(self, cutter, trimesh_models, contour_model, path_processor,
-            physics=None):
+            clockwise=False, physics=None):
         self.cutter = cutter
         self.models = trimesh_models
         # combine the models (if there is more than one)
@@ -46,7 +46,10 @@ class EngraveCutter:
                 self.combined_model += model
         else:
             self.combined_model = []
-        self.contour_model = contour_model
+        if clockwise:
+            self.contour_model = contour_model.get_reversed()
+        else:
+            self.contour_model = contour_model
         self.pa_push = path_processor
         # We use a separated path processor for the last "drop" layer.
         # This path processor does not need to be configurable.

@@ -345,9 +345,9 @@ def _get_pathgenerator_instance(trimesh_models, contour_model, cutter,
         return PushCutter.PushCutter(cutter, trimesh_models, processor,
                 physics=physics)
     elif pathgenerator == "EngraveCutter":
-        reverse = (milling_style == "conventional")
+        clockwise = (milling_style == "climb")
         if pathprocessor == "SimpleCutter":
-            processor = SimpleCutter.SimpleCutter(reverse=reverse)
+            processor = SimpleCutter.SimpleCutter()
         else:
             return ("Invalid postprocessor (%s) for 'EngraveCutter' - it " \
                     + "should be: SimpleCutter") % str(pathprocessor)
@@ -355,7 +355,7 @@ def _get_pathgenerator_instance(trimesh_models, contour_model, cutter,
             return "The 'Engraving' toolpath strategy requires a 2D contour " \
                     + "model (e.g. from a DXF or SVG file)."
         return EngraveCutter.EngraveCutter(cutter, trimesh_models,
-                contour_model, processor, physics=physics)
+                contour_model, processor, clockwise=clockwise, physics=physics)
     elif pathgenerator == "ContourFollow":
         reverse = (milling_style == "conventional")
         if pathprocessor == "SimpleCutter":
