@@ -777,7 +777,9 @@ def draw_complete_model_view(settings):
             GL.glColor4f(*settings.get("color_material"))
             obj.to_OpenGL()
     # draw the model
-    if settings.get("show_model"):
+    if settings.get("show_model") \
+            and not (settings.get("show_simulation") \
+                    and settings.get("simulation_toolpath_moves")):
         GL.glColor4f(*settings.get("color_model"))
         model = settings.get("model")
         min_area = abs(model.maxx - model.minx) * abs(model.maxy - model.miny) / 100
@@ -801,12 +803,21 @@ def draw_complete_model_view(settings):
     if settings.get("show_support_grid") and settings.get("support_grid"):
         GL.glColor4f(*settings.get("color_support_grid"))
         settings.get("support_grid").to_OpenGL()
+    # draw the toolpath simulation
+    if settings.get("show_simulation"):
+        moves = settings.get("simulation_toolpath_moves")
+        if not moves is None:
+            draw_toolpath(moves, settings.get("color_toolpath_cut"),
+                    settings.get("color_toolpath_return"),
+                    show_directions=settings.get("show_directions"))
     # draw the toolpath
     # don't do it, if a new toolpath is just being calculated
     safety_height = settings.get("gcode_safety_height")
     if settings.get("show_toolpath") \
             and not (settings.get("show_drill_progress") \
-            and (not settings.get("toolpath_in_progress") is None)):
+                    and (not settings.get("toolpath_in_progress") is None)) \
+            and not (settings.get("show_simulation") \
+                    and settings.get("simulation_toolpath_moves")):
         for toolpath_obj in settings.get("toolpath"):
             if toolpath_obj.visible:
                 draw_toolpath(toolpath_obj.get_moves(safety_height),

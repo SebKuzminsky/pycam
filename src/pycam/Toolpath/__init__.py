@@ -101,20 +101,54 @@ class Toolpath(object):
         else:
             self.color = color
 
-    def get_moves(self, safety_height):
-        result = []
-        paths = self.get_paths()
+    def get_moves(self, safety_height, max_movement=None):
+        class move_container(object):
+            def __init__(self, max_movement):
+                self.max_movement = max_movement
+                self.moved_distance = 0
+                self.moves = []
+                self.last_pos = None
+                if max_movement is None:
+                    self.append = self.append_without_movement_limit
+                else:
+                    self.append = self.append_with_movement_limit
+            def append_with_movement_limit(self, new_position, rapid):
+                if self.last_pos is None:
+                    # first movement with unknown start position - thus we ignore it
+                    self.moves.append((new_position, rapid))
+                    self.last_pos = new_position
+                    return True
+                else:
+                    distance = new_position.sub(self.last_pos).norm
+                    if self.moved_distance + distance > self.max_movement:
+                        partial = (self.max_movement - self.moved_distance) / distance
+                        partial_dest = p_last.add(new_position.sub(
+                                self.last_pos).mul(partial))
+                        self.moves.append((partial_dest, rapid))
+                        self.last_pos = partial_dest
+                        # we are finished
+                        return False
+                    else:
+                        self.moves.append((new_position, rapid))
+                        self.moved_distance += distance
+                        self.last_pos = new_position
+                        return True
+            def append_without_movement_limit(self, new_position, rapid):
+                self.moves.append((new_position, rapid))
+                return True
         p_last = None
         max_safe_distance = 2 * self.toolpath_settings.get_tool().radius \
                 + epsilon
-        for path in paths:
+        result = move_container(max_movement)
+        for path in self.get_paths():
             if not path:
                 # ignore empty paths
                 continue
             p_next = path.points[0]
             if p_last is None:
                 p_last = Point(p_next.x, p_next.y, safety_height)
-                result.append((p_last, True))
+                if not result.append(p_last, True):
+                    return result.moves
             if ((abs(p_last.x - p_next.x) > epsilon) \
                     or (abs(p_last.y - p_next.y) > epsilon)):
                 # Draw the connection between the last and the next path.
@@ -126,15 +160,18 @@ class Toolpath(object):
                     # adjacent lines.
                     safety_last = Point(p_last.x, p_last.y, safety_height)
                     safety_next = Point(p_next.x, p_next.y, safety_height)
-                    result.append((safety_last, True))
-                    result.append((safety_next, True))
+                    if not result.append(safety_last, True):
+                        return result.moves
+                    if not result.append(safety_next, True):
+                        return result.moves
             for p in path.points:
-                result.append((p, False))
+                if not result.append(p, False):
+                    return result.moves
             p_last = path.points[-1]
         if not p_last is None:
             p_last_safety = Point(p_last.x, p_last.y, safety_height)
-            result.append((p_last_safety, True))
-        return result
+            result.append(p_last_safety, True)
+        return result.moves
 
     def get_machine_time(self, safety_height=0.0):
         """ calculate an estimation of the time required for processing the
@@ -154,6 +191,17 @@ class Toolpath(object):
         for new_pos, rapid in self.get_moves(safety_height):
             if not current_position is None:
                 result += new_pos.sub(current_position).norm / feedrate
+            current_position = new_pos
+        return result
+
+    def get_machine_movement_distance(self, safety_height=0.0):
+        result = 0
+        safety_height = number(safety_height)
+        current_position = None
+        # go through all points of the path
+        for new_pos, rapid in self.get_moves(safety_height):
+            if not current_position is None:
+                result += new_pos.sub(current_position).norm
             current_position = new_pos
         return result
 

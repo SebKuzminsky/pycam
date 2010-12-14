@@ -756,6 +756,17 @@ class ProjectGui:
         self.gui.get_object("toolpath_simulate").connect("clicked", self.toolpath_table_event, "simulate")
         self.gui.get_object("ExitSimulationButton").connect("clicked", self.finish_toolpath_simulation)
         self.gui.get_object("UpdateSimulationButton").connect("clicked", self.update_toolpath_simulation)
+        speed_factor_widget = self.gui.get_object("SimulationSpeedFactor")
+        self.settings.add_item("simulation_speed_factor",
+                lambda: pow(10, speed_factor_widget.get_value()),
+                lambda value: speed_factor_widget.set_value(math.log10(max(0.001, value))))
+        # update the speed factor label
+        speed_factor_widget.connect("value-changed",
+                lambda widget: self.gui.get_object("SimulationSpeedFactorValueLabel").set_label(
+                        "%g" % self.settings.get("simulation_speed_factor")))
+        self.simulation_window = self.gui.get_object("SimulationDialog")
+        self.simulation_window.connect("delete-event", self.toggle_about_window, False)
+        self.gui.get_object("SimulationCancelButton").connect("clicked", self.cancel_progress)
         # store the original content (for adding the number of current toolpaths in "update_toolpath_table")
         self._original_toolpath_tab_label = self.gui.get_object("ToolPathTabLabel").get_text()
         # tool editor
@@ -2974,7 +2985,7 @@ class ProjectGui:
         self.gui.get_object("toolpath_up").set_sensitive((not new_index is None) and (new_index > 0))
         self.gui.get_object("toolpath_delete").set_sensitive(not new_index is None)
         self.gui.get_object("toolpath_down").set_sensitive((not new_index is None) and (new_index + 1 < len(self.toolpath)))
-        self.gui.get_object("toolpath_simulate").set_sensitive((not new_index is None) and pycam.Physics.ode_physics.is_ode_available())
+        self.gui.get_object("toolpath_simulate").set_sensitive(not new_index is None)
 
     @gui_activity_guard
     def save_task_settings_file(self, widget=None, filename=None):
@@ -3082,15 +3093,47 @@ class ProjectGui:
 
     def finish_toolpath_simulation(self, widget=None):
         # hide the simulation tab
-        self.gui.get_object("SimulationTab").hide()
+        self.simulation_window.hide()
         # enable all other tabs again
         self.toggle_tabs_for_simulation(True)
-        self.settings.set("simulate_object", None)
+        self.settings.set("simulation_object", None)
+        self.settings.set("simulation_toolpath_moves", None)
         self.settings.set("show_simulation", False)
         self.update_view()
 
     @progress_activity_guard
     def update_toolpath_simulation(self, widget=None, toolpath=None):
+        # get the currently selected toolpath, if none is give
+        if toolpath is None:
+            toolpath_index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
+            if toolpath_index is None:
+                return
+            else:
+                toolpath = self.toolpath[toolpath_index]
+        # set the current cutter
+        self.cutter = toolpath.toolpath_settings.get_tool()
+        # calculate steps
+        safety_height = self.settings.get("gcode_safety_height")
+        machine_time = toolpath.get_machine_time(safety_height=safety_height)
+        complete_distance = toolpath.get_machine_movement_distance(
+                safety_height=safety_height)
+        current_distance = 0
+        time_step = 1.0 / self.settings.get("drill_progress_max_fps")
+        feedrate = toolpath.toolpath_settings.get_tool_settings()["feedrate"]
+        self.update_progress_bar("Simulating movements")
+        while current_distance <= complete_distance:
+            current_distance += self.settings.get("simulation_speed_factor") * time_step * feedrate / 60
+            progress_value_percent = 100.0 * current_distance / complete_distance
+            moves = toolpath.get_moves(safety_height=safety_height,
+                    max_movement=current_distance)
+            self.settings.set("simulation_toolpath_moves", moves)
+            self.update_view()
+            if self.update_progress_bar(percent=progress_value_percent):
+                break
+            time.sleep(time_step)
+
+    @progress_activity_guard
+    def update_toolpath_simulation_ode(self, widget=None, toolpath=None):
         import pycam.Simulation.ODEBlocks as ODEBlocks
         # get the currently selected toolpath, if none is give
         if toolpath is None:
@@ -3153,9 +3196,7 @@ class ProjectGui:
         # disable the main controls
         self.toggle_tabs_for_simulation(False)
         # show the simulation controls
-        self.gui.get_object("SimulationTab").show()
-        # switch to the simulation tab
-        self.gui.get_object("MainTabs").set_current_page(3)
+        self.simulation_window.show()
         # start the simulation
         self.settings.set("show_simulation", True)
         self.update_toolpath_simulation(toolpath=toolpath)

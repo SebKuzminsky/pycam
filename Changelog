@@ -5,6 +5,7 @@ Version 0.4.1 - UNRELEASED
  * added support for single-line fonts text (based on fonts from QCAD)
  * parallel and distributed processing is configurable in a dialog
  * visualize movements up to safety height properly
+ * changed "simulation mode" for visualizing the machine moves
  * added support for DXF feature "LWPOLYLINE"
  * unify DropCutter behaviour for models that are higher than the defined bounding box
   * always move up to safety height in this case
