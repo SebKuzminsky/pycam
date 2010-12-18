@@ -50,9 +50,9 @@ def generate_toolpath_from_settings(model, tp_settings, callback=None):
     return generate_toolpath(model, tp_settings.get_tool_settings(),
             tp_settings.get_bounds(), process["path_direction"],
             process["generator"], process["postprocessor"],
-            process["material_allowance"], process["overlap"],
+            process["material_allowance"], process["overlap_percent"],
             process["step_down"], process["engrave_offset"],
-            process["milling_style"],
+            process["milling_style"], process["pocketing_type"],
             grid["type"], grid["distance_x"], grid["distance_y"],
             grid["thickness"], grid["height"], grid["offset_x"],
             grid["offset_y"], grid["adjustments_x"], grid["adjustments_y"],
@@ -62,8 +62,8 @@ def generate_toolpath_from_settings(model, tp_settings, callback=None):
 def generate_toolpath(model, tool_settings=None,
         bounds=None, direction="x",
         path_generator="DropCutter", path_postprocessor="ZigZagCutter",
-        material_allowance=0, overlap=0, step_down=0, engrave_offset=0,
-        milling_style="ignore",
+        material_allowance=0, overlap_percent=0, step_down=0, engrave_offset=0,
+        milling_style="ignore", pocketing_type="none",
         support_grid_type=None, support_grid_distance_x=None,
         support_grid_distance_y=None, support_grid_thickness=None,
         support_grid_height=None, support_grid_offset_x=None,
@@ -95,8 +95,8 @@ def generate_toolpath(model, tool_settings=None,
     @value path_postprocessor: any member of the PATH_POSTPROCESSORS set
     @type material_allowance: float
     @value material_allowance: the minimum distance between the tool and the model
-    @type overlap: float
-    @value overlap: the overlap between two adjacent tool paths (0 <= overlap < 1)
+    @type overlap_percent: int
+    @value overlap_percent: the overlap between two adjacent tool paths (0..100) given in percent
     @type step_down: float
     @value step_down: maximum height of each layer (for PushCutter)
     @type engrave_offset: float
@@ -125,7 +125,6 @@ def generate_toolpath(model, tool_settings=None,
         arguments
     """
     log.debug("Starting toolpath generation")
-    overlap = number(overlap)
     step_down = number(step_down)
     engrave_offset = number(engrave_offset)
     if bounds is None:
@@ -145,6 +144,15 @@ def generate_toolpath(model, tool_settings=None,
         # contour model
         trimesh_models = []
         contour_model = model
+    # Due to some weirdness the height of the drill must be bigger than the
+    # object's size. Otherwise some collisions are not detected.
+    cutter_height = 4 * abs(maxz - minz)
+    cutter = pycam.Cutters.get_tool_from_settings(tool_settings, cutter_height)
+    if isinstance(cutter, basestring):
+        return cutter
+    if not path_generator in ("EngraveCutter", "ContourFollow"):
+        # material allowance is not available for these two strategies
+        cutter.set_required_distance(material_allowance)
     # create the grid model if requested
     if (support_grid_type == "grid") \
             and (((not support_grid_distance_x is None) \
@@ -201,6 +209,10 @@ def generate_toolpath(model, tool_settings=None,
                 support_grid_minimum_bridges, support_grid_thickness,
                 support_grid_height, support_grid_length)
         trimesh_models.append(support_grid_model)
+    elif (not support_grid_type) or (support_grid_type == "none"):
+        pass
+    else:
+        return "Invalid support grid type selected: %s" % support_grid_type
     # Adapt the contour_model to the engraving offset. This offset is
     # considered to be part of the material_allowance.
     if (not contour_model is None) and (engrave_offset != 0):
@@ -237,29 +249,76 @@ def generate_toolpath(model, tool_settings=None,
         else:
             # no collisions and no user interruption
             pass
+    # check the pocketing type
+    if (not contour_model is None) and (pocketing_type != "none"):
+        if not callback is None:
+            callback(text="Generating pocketing polygons ...")
+        new_polygons = []
+        pocketing_offset = cutter.radius * 1.8
+        # TODO: this is an arbitrary limit to avoid infinite loops
+        pocketing_limit = 1000
+        base_polygons = []
+        other_polygons = []
+        if pocketing_type == "holes":
+            # fill polygons with negative area
+            for poly in contour_model.get_polygons():
+                if poly.is_closed and not poly.is_outer():
+                    base_polygons.append(poly)
+                else:
+                    other_polygons.append(poly)
+        elif pocketing_type == "enclosed":
+            # fill polygons with positive area
+            pocketing_offset *= -1
+            for poly in contour_model.get_polygons():
+                if poly.is_closed and poly.is_outer():
+                    base_polygons.append(poly)
+                else:
+                    other_polygons.append(poly)
+        else:
+            return "Unknown pocketing type given (not one of 'none', 'holes', " \
+                    + "'enclosed'): %s" % str(pocketing_type)
+        # For now we use only the polygons that do not surround eny other
+        # polygons. Sorry - the pocketing is currently very simple ...
+        base_filtered_polygons = []
+        for candidate in base_polygons:
+            for other in other_polygons:
+                if candidate.is_polygon_inside(other):
+                    break
+            else:
+                base_filtered_polygons.append(candidate)
+        # start the pocketing for all remaining polygons
+        pocket_polygons = []
+        for base_polygon in base_filtered_polygons:
+            current_queue = [base_polygon]
+            next_queue = []
+            pocket_depth = 0
+            while current_queue and (pocket_depth < pocketing_limit):
+                for poly in current_queue:
+                    result = poly.get_offset_polygons(pocketing_offset)
+                    pocket_polygons.extend(result)
+                    next_queue.extend(result)
+                    pocket_depth += 1
+                current_queue = next_queue
+                next_queue = []
+        # use a copy instead of the original
+        contour_model = contour_model.get_copy()
+        for pocket in pocket_polygons:
+            contour_model.append(pocket)
     # limit the contour model to the bounding box
     if contour_model:
         contour_model = contour_model.get_cropped_model(minx, maxx, miny, maxy,
                 minz, maxz)
         if contour_model is None:
             return "No part of the contour model is within the bounding box."
-    # Due to some weirdness the height of the drill must be bigger than the
-    # object's size. Otherwise some collisions are not detected.
-    cutter_height = 4 * abs(maxz - minz)
-    cutter = pycam.Cutters.get_tool_from_settings(tool_settings, cutter_height)
-    if isinstance(cutter, basestring):
-        return cutter
-    if not path_generator in ("EngraveCutter", "ContourFollow"):
-        # material allowance is not available for these two strategies
-        cutter.set_required_distance(material_allowance)
     physics = _get_physics(trimesh_models, cutter, calculation_backend)
     if isinstance(physics, basestring):
         return physics
     generator = _get_pathgenerator_instance(trimesh_models, contour_model,
             cutter, path_generator, path_postprocessor, physics,
-            milling_style=milling_style)
+            milling_style)
     if isinstance(generator, basestring):
         return generator
+    overlap = overlap_percent / 100
     if (overlap < 0) or (overlap >= 1):
         return "Invalid overlap value (%f): should be greater or equal 0 " \
                 + "and lower than 1"

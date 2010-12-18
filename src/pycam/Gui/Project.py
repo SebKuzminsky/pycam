@@ -129,6 +129,7 @@ PREFERENCES_DEFAULTS = {
 user's home directory on startup/shutdown"""
 
 GRID_TYPES = {"none": 0, "grid": 1, "automatic": 2}
+POCKETING_TYPES = ["none", "holes", "enclosed"]
 
 # floating point color values are only available since gtk 2.16
 GTK_COLOR_MAX = 65535.0
@@ -679,6 +680,11 @@ class ProjectGui:
             self.gui.get_object(objname).connect("value-changed",
                     self.handle_process_settings_change)
         self.gui.get_object("ProcessSettingName").connect("changed",
+                self.handle_process_settings_change)
+        pocketing_selector = self.gui.get_object("PocketingControl")
+        self.settings.add_item("pocketing_type", pocketing_selector.get_active,
+                pocketing_selector.set_active)
+        pocketing_selector.connect("changed",
                 self.handle_process_settings_change)
         # get/set functions for the current tool/process/bounds/task
         def get_current_item(table, item_list):
@@ -1592,7 +1598,7 @@ class ProjectGui:
                 "MillingStyleConventional", "MillingStyleClimb",
                 "MillingStyleIgnore", "MaxStepDownControl",
                 "MaterialAllowanceControl", "OverlapPercentControl",
-                "EngraveOffsetControl")
+                "EngraveOffsetControl", "PocketingControl")
         active_controls = {
             "PushRemoveStrategy": ("GridDirectionX", "GridDirectionY",
                     "GridDirectionXY", "MillingStyleConventional",
@@ -1610,7 +1616,8 @@ class ProjectGui:
                     "MillingStyleIgnore", "MaterialAllowanceControl",
                     "OverlapPercentControl"),
             "EngraveStrategy": ("MaxStepDownControl", "EngraveOffsetControl",
-                    "MillingStyleConventional", "MillingStyleClimb"),
+                    "MillingStyleConventional", "MillingStyleClimb",
+                    "PocketingControl"),
         }
         for one_control in all_controls:
             get_obj(one_control).set_sensitive(one_control in active_controls[strategy])
@@ -2821,6 +2828,8 @@ class ProjectGui:
                 ("MaxStepDownControl", "step_down"),
                 ("EngraveOffsetControl", "engrave_offset")):
             settings[key] = self.gui.get_object(objname).get_value()
+        settings["pocketing_type"] = POCKETING_TYPES[
+                self.gui.get_object("PocketingControl").get_active()]
         return settings
 
     def _put_process_settings_to_gui(self, settings):
@@ -2848,6 +2857,9 @@ class ProjectGui:
                 ("MaxStepDownControl", "step_down"),
                 ("EngraveOffsetControl", "engrave_offset")):
             self.gui.get_object(objname).set_value(settings[key])
+        if settings["pocketing_type"] in POCKETING_TYPES:
+            self.gui.get_object("PocketingControl").set_active(
+                    POCKETING_TYPES.index(settings["pocketing_type"]))
 
     @gui_activity_guard
     def handle_process_settings_change(self, widget=None, data=None):
@@ -3363,10 +3375,11 @@ class ProjectGui:
         toolpath_settings.set_process_settings(
                 generator, postprocessor, process_settings["path_direction"],
                 process_settings["material_allowance"],
-                process_settings["overlap_percent"] / 100.0,
+                process_settings["overlap_percent"],
                 process_settings["step_down"],
                 process_settings["engrave_offset"],
-                process_settings["milling_style"])
+                process_settings["milling_style"],
+                process_settings["pocketing_type"])
 
         return toolpath_settings
 

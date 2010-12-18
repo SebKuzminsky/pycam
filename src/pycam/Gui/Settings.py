@@ -137,6 +137,7 @@ milling_style: ignore
 material_allowance: 0.0
 step_down: 3.0
 overlap_percent: 0
+pocketing_type: none
 
 [BoundsDefault]
 name: No Margin
@@ -185,20 +186,20 @@ milling_style: ignore
 engrave_offset: 0.0
 step_down: 3.0
 material_allowance: 0.0
+overlap_percent: 0
+pocketing_type: none
 
 [Process0]
 name: Remove material
 path_strategy: PushRemoveStrategy
 material_allowance: 0.5
 step_down: 3.0
-overlap_percent: 0
 
 [Process1]
 name: Carve contour
 path_strategy: ContourFollowStrategy
 material_allowance: 0.2
 step_down: 1.5
-overlap_percent: 40
 milling_style: conventional
 
 [Process2]
@@ -211,8 +212,8 @@ overlap_percent: 60
 name: Gravure
 path_strategy: EngraveStrategy
 step_down: 1.0
-overlap_percent: 50
 milling_style: conventional
+pocketing_type: none
 
 [BoundsDefault]
 type: relative_margin
@@ -274,6 +275,7 @@ process: 3
             "overlap_percent": int,
             "step_down": float,
             "engrave_offset": float,
+            "pocketing_type": str,
             "tool": object,
             "process": object,
             "bounds": object,
@@ -292,7 +294,8 @@ process: 3
                     "speed"),
             "process": ("name", "path_strategy", "path_direction",
                     "milling_style", "material_allowance",
-                    "overlap_percent", "step_down", "engrave_offset"),
+                    "overlap_percent", "step_down", "engrave_offset",
+                    "pocketing_type"),
             "bounds": ("name", "type", "x_low", "x_high", "y_low",
                     "y_high", "z_low", "z_high"),
             "task": ("name", "tool", "process", "bounds", "enabled"),
@@ -589,10 +592,11 @@ class ToolpathSettings:
             "postprocessor": str,
             "path_direction": str,
             "material_allowance": float,
-            "overlap": float,
+            "overlap_percent": int,
             "step_down": float,
             "engrave_offset": float,
             "milling_style": str,
+            "pocketing_type": str,
         },
     }
 
@@ -700,8 +704,8 @@ class ToolpathSettings:
             return "mm"
 
     def set_process_settings(self, generator, postprocessor, path_direction,
-            material_allowance=0.0, overlap=0.0, step_down=1.0,
-            engrave_offset=0.0, milling_style="ignore"):
+            material_allowance=0.0, overlap_percent=0, step_down=1.0,
+            engrave_offset=0.0, milling_style="ignore", pocketing_type="none"):
         # TODO: this hack should be somewhere else, I guess
         if generator in ("ContourFollow", "EngraveCutter"):
             material_allowance = 0.0
@@ -710,10 +714,11 @@ class ToolpathSettings:
                 "postprocessor": postprocessor,
                 "path_direction": path_direction,
                 "material_allowance": material_allowance,
-                "overlap": overlap,
+                "overlap_percent": overlap_percent,
                 "step_down": step_down,
                 "engrave_offset": engrave_offset,
                 "milling_style": milling_style,
+                "pocketing_type": pocketing_type,
         }
 
     def get_process_settings(self):

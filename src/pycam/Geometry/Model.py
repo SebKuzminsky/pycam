@@ -491,6 +491,12 @@ class ContourModel(BaseModel):
                 return None
         return result
 
+    def get_copy(self):
+        result = ContourModel(plane=self._plane)
+        for group in self.get_polygons():
+            result.append(group)
+        return result
+
     def check_for_collisions(self, callback=None, find_all_collisions=False):
         """ check if lines in different line groups of this model collide
 

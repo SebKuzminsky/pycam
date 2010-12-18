@@ -256,6 +256,23 @@
       <column type="gfloat"/>
     </columns>
   </object>
+  <object class="GtkListStore" id="PocketingOptions">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">none</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">holes</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">enclosed</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkWindow" id="ProjectWindow">
     <property name="title" translatable="yes">PyCAM</property>
     <property name="destroy_with_parent">True</property>
@@ -2588,7 +2605,7 @@ Use the "Engrave Offset" to shift the position of the tool to the outside (posit
                                             <child>
                                               <object class="GtkTable" id="table7">
                                                 <property name="visible">True</property>
-                                                <property name="n_rows">4</property>
+                                                <property name="n_rows">5</property>
                                                 <property name="n_columns">2</property>
                                                 <property name="column_spacing">2</property>
                                                 <property name="row_spacing">2</property>
@@ -2711,6 +2728,39 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                                     <property name="right_attach">2</property>
                                                     <property name="top_attach">3</property>
                                                     <property name="bottom_attach">4</property>
+                                                    <property name="x_options">GTK_FILL</property>
+                                                    <property name="y_options">GTK_FILL</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkLabel" id="PocketingLabel">
+                                                    <property name="visible">True</property>
+                                                    <property name="xalign">0</property>
+                                                    <property name="label" translatable="yes">Pocketing:</property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="top_attach">4</property>
+                                                    <property name="bottom_attach">5</property>
+                                                    <property name="x_options">GTK_FILL</property>
+                                                    <property name="y_options">GTK_FILL</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkComboBox" id="PocketingControl">
+                                                    <property name="visible">True</property>
+                                                    <property name="model">PocketingOptions</property>
+                                                    <child>
+                                                      <object class="GtkCellRendererText" id="cellrenderertext7"/>
+                                                      <attributes>
+                                                        <attribute name="text">0</attribute>
+                                                      </attributes>
+                                                    </child>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="left_attach">1</property>
+                                                    <property name="right_attach">2</property>
+                                                    <property name="top_attach">4</property>
+                                                    <property name="bottom_attach">5</property>
                                                     <property name="x_options">GTK_FILL</property>
                                                     <property name="y_options">GTK_FILL</property>
                                                   </packing>
