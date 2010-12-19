@@ -102,7 +102,7 @@ class Toolpath(object):
             self.color = color
 
     def get_moves(self, safety_height, max_movement=None):
-        class move_container(object):
+        class MoveContainer(object):
             def __init__(self, max_movement):
                 self.max_movement = max_movement
                 self.moved_distance = 0
@@ -122,7 +122,7 @@ class Toolpath(object):
                     distance = new_position.sub(self.last_pos).norm
                     if self.moved_distance + distance > self.max_movement:
                         partial = (self.max_movement - self.moved_distance) / distance
-                        partial_dest = p_last.add(new_position.sub(
+                        partial_dest = self.last_pos.add(new_position.sub(
                                 self.last_pos).mul(partial))
                         self.moves.append((partial_dest, rapid))
                         self.last_pos = partial_dest
@@ -139,7 +139,7 @@ class Toolpath(object):
         p_last = None
         max_safe_distance = 2 * self.toolpath_settings.get_tool().radius \
                 + epsilon
-        result = move_container(max_movement)
+        result = MoveContainer(max_movement)
         for path in self.get_paths():
             if not path:
                 # ignore empty paths
