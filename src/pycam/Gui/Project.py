@@ -3509,12 +3509,19 @@ class ProjectGui:
         try:
             destination = open(filename, "w")
             safety_height=self.settings.get("gcode_safety_height")
+            meta_data = self.get_meta_data()
+            machine_time = 0
+            # calculate the machine time and store it in the GCode header
+            for tp in self.toolpath:
+                machine_time += tp.get_machine_time(safety_height)
+            all_info = meta_data + os.linesep \
+                    + "Estimated machine time: %g minutes" % machine_time
             generator = pycam.Exporters.GCodeExporter.GCodeGenerator(
                     destination,
                     metric_units=(self.settings.get("unit") == "mm"),
                     safety_height=safety_height,
                     toggle_spindle_status=self.settings.get("gcode_start_stop_spindle"),
-                    comment=self.get_meta_data())
+                    comment=all_info)
             path_mode = self.settings.get("gcode_path_mode")
             PATH_MODES = pycam.Exporters.GCodeExporter.PATH_MODES
             if path_mode == 0:
