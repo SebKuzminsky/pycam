@@ -281,6 +281,8 @@ def generate_toolpath(model, tool_settings=None,
         # polygons. Sorry - the pocketing is currently very simple ...
         base_filtered_polygons = []
         for candidate in base_polygons:
+            if callback and callback():
+                return "Interrupted"
             for other in other_polygons:
                 if candidate.is_polygon_inside(other):
                     break
@@ -293,6 +295,8 @@ def generate_toolpath(model, tool_settings=None,
             next_queue = []
             pocket_depth = 0
             while current_queue and (pocket_depth < pocketing_limit):
+                if callback and callback():
+                    return "Interrupted"
                 for poly in current_queue:
                     result = poly.get_offset_polygons(pocketing_offset)
                     pocket_polygons.extend(result)
