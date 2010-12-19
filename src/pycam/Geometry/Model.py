@@ -485,7 +485,7 @@ class ContourModel(BaseModel):
     def get_offset_model(self, offset, callback=None):
         result = ContourModel(plane=self._plane)
         for group in self.get_polygons():
-            new_groups = group.get_offset_polygons(offset)
+            new_groups = group.get_offset_polygons(offset, callback=callback)
             result.extend(new_groups)
             if callback and callback():
                 return None

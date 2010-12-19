@@ -582,7 +582,7 @@ class Polygon(TransformableContainer):
         self._cached_offset_polygons[offset] = result_polygons
         return result_polygons
 
-    def get_offset_polygons(self, offset):
+    def get_offset_polygons(self, offset, callback=None):
         def get_shifted_vertex(index, offset):
             p1 = self._points[index]
             p2 = self._points[(index + 1) % len(self._points)]
@@ -697,6 +697,8 @@ class Polygon(TransformableContainer):
             p1 = points[index]
             p2 = points[(index + 1) % len(points)]
             new_lines.append(Line(p1, p2))
+        if callback and callback():
+            return None
         cleaned_line_groups = simplify_polygon_intersections(new_lines)
         if cleaned_line_groups is None:
             log.debug("Skipping offset polygon: intersections could not be " \
@@ -710,6 +712,8 @@ class Polygon(TransformableContainer):
             self_is_outer = self.is_outer()
             groups = []
             for lines in cleaned_line_groups:
+                if callback and callback():
+                    return None
                 group = Polygon(self.plane)
                 for line in lines:
                     group.append(line)
@@ -734,6 +738,8 @@ class Polygon(TransformableContainer):
             for group in groups:
                 inside = False
                 for group_test in groups:
+                    if callback and callback():
+                        return None
                     if group_test is group:
                         continue
                     if group_test.is_polygon_inside(group):
