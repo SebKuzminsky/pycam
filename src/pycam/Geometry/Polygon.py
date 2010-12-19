@@ -69,7 +69,7 @@ class Polygon(TransformableContainer):
                 self._update_limits(line.p2)
             elif self._points[-1] == line.p1:
                 # the new Line can be added to the end of the polygon
-                if line.dir == line.p1.sub(self._points[-1]).normalized():
+                if line.dir == self._points[-1].sub(self._points[-2]).normalized():
                     # Remove the last point, if the previous point combination
                     # is in line with the new Line. This avoids unnecessary
                     # points on straight lines.
@@ -81,7 +81,8 @@ class Polygon(TransformableContainer):
                     self.is_closed = True
             else:
                 # the new Line can be added to the beginning of the polygon
-                if line.dir == self._points[0].sub(line.p2).normalized():
+                if (len(self._points) > 1) \
+                        and (line.dir == self._points[1].sub(self._points[0]).normalized()):
                     # Avoid points on straight lines - see above.
                     self._points.pop(0)
                 if line.p1 != self._points[-1]:
@@ -107,6 +108,7 @@ class Polygon(TransformableContainer):
     def get_reversed(self):
         result = Polygon(plane=self.plane)
         result._points = self._points[:]
+        result.is_closed = self.is_closed
         result.reverse_direction()
         return result
 
@@ -259,8 +261,7 @@ class Polygon(TransformableContainer):
         """ Caching is necessary to avoid constant recalculation due to
         the "to_OpenGL" method.
         """
-        if (self._lines_cache is None) \
-                or (len(self) != len(self._lines_cache)):
+        if self._lines_cache is None:
             # recalculate the line cache
             lines = []
             for index in range(len(self._points) - 1):
@@ -300,6 +301,7 @@ class Polygon(TransformableContainer):
             self.maxy = max(self.maxy, point.y)
             self.minz = min(self.minz, point.z)
             self.maxz = max(self.maxz, point.z)
+        self._lines_cache = None
 
     def reset_cache(self):
         self._cached_offset_polygons = {}
