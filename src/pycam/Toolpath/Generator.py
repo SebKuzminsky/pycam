@@ -306,8 +306,9 @@ def generate_toolpath(model, tool_settings=None,
             contour_model.append(pocket)
     # limit the contour model to the bounding box
     if contour_model:
+        # use minz/maxz of the contour model (in other words: ignore z)
         contour_model = contour_model.get_cropped_model(minx, maxx, miny, maxy,
-                minz, maxz)
+                contour_model.minz, contour_model.maxz)
         if contour_model is None:
             return "No part of the contour model is within the bounding box."
     physics = _get_physics(trimesh_models, cutter, calculation_backend)
