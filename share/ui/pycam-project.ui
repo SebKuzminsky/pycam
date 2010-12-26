@@ -4441,88 +4441,119 @@ This feature requires the Open Dynamics Engine (ODE).</property>
   <object class="GtkWindow" id="view3dwindow">
     <property name="title" translatable="yes">PyCAM Visualization</property>
     <child>
-      <object class="GtkVBox" id="view3d_window">
+      <object class="GtkVBox" id="view3dbox">
         <property name="visible">True</property>
         <property name="orientation">vertical</property>
+        <property name="spacing">1</property>
         <child>
-          <object class="GtkToolbar" id="View Controls">
+          <object class="GtkHBox" id="ViewControls">
             <property name="visible">True</property>
-            <property name="toolbar_style">both</property>
+            <property name="spacing">4</property>
             <child>
-              <object class="GtkToolButton" id="Reset View">
+              <object class="GtkToolbar" id="ViewItems">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">Center</property>
-                <property name="use_underline">True</property>
+                <property name="tooltip_text" translatable="yes">Configure the list of visible items.</property>
+                <property name="toolbar_style">text</property>
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="homogeneous">True</property>
+                <property name="position">0</property>
               </packing>
             </child>
             <child>
-              <object class="GtkToolButton" id="Front View">
+              <object class="GtkVSeparator" id="vseparator13">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">Front</property>
-                <property name="use_underline">True</property>
+                <property name="orientation">vertical</property>
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="homogeneous">True</property>
+                <property name="position">1</property>
               </packing>
             </child>
             <child>
-              <object class="GtkToolButton" id="Back View">
+              <object class="GtkToolbar" id="PerspectiveControls">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">Back</property>
-                <property name="use_underline">True</property>
+                <property name="toolbar_style">text</property>
+                <child>
+                  <object class="GtkToolButton" id="Reset View">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Center</property>
+                    <property name="use_underline">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="homogeneous">True</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkToolButton" id="Front View">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Front</property>
+                    <property name="use_underline">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="homogeneous">True</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkToolButton" id="Back View">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Back</property>
+                    <property name="use_underline">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="homogeneous">True</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkToolButton" id="Left View">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Left</property>
+                    <property name="use_underline">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="homogeneous">True</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkToolButton" id="Right View">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Right</property>
+                    <property name="use_underline">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="homogeneous">True</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkToolButton" id="Top View">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Top</property>
+                    <property name="use_underline">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="homogeneous">True</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkToolButton" id="Bottom View">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Bottom</property>
+                    <property name="use_underline">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="homogeneous">True</property>
+                  </packing>
+                </child>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToolButton" id="Left View">
-                <property name="visible">True</property>
-                <property name="label" translatable="yes">Left</property>
-                <property name="use_underline">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToolButton" id="Right View">
-                <property name="visible">True</property>
-                <property name="label" translatable="yes">Right</property>
-                <property name="use_underline">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToolButton" id="Top View">
-                <property name="visible">True</property>
-                <property name="label" translatable="yes">Top</property>
-                <property name="use_underline">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToolButton" id="Bottom View">
-                <property name="visible">True</property>
-                <property name="label" translatable="yes">Bottom</property>
-                <property name="use_underline">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
+                <property name="position">2</property>
               </packing>
             </child>
           </object>
@@ -4656,81 +4687,7 @@ This feature requires the Open Dynamics Engine (ODE).</property>
           </packing>
         </child>
         <child>
-          <object class="GtkHBox" id="view3dbox">
-            <property name="visible">True</property>
-            <child>
-              <object class="GtkToolbar" id="ViewItemsSelection">
-                <property name="sensitive">False</property>
-                <property name="orientation">vertical</property>
-                <property name="toolbar_style">both</property>
-                <child>
-                  <object class="GtkToggleToolButton" id="ToggleModelView">
-                    <property name="visible">True</property>
-                    <property name="label" translatable="yes">Model</property>
-                    <property name="use_underline">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkToggleToolButton" id="ToggleToolpathView">
-                    <property name="visible">True</property>
-                    <property name="label" translatable="yes">Toolpath</property>
-                    <property name="use_underline">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkToggleToolButton" id="ToggleBoundingBoxView">
-                    <property name="visible">True</property>
-                    <property name="label" translatable="yes">Bounds</property>
-                    <property name="use_underline">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkToggleToolButton" id="ToggleAxesView">
-                    <property name="visible">True</property>
-                    <property name="label" translatable="yes">Axes</property>
-                    <property name="use_underline">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkToggleToolButton" id="ToggleDrillProgressView">
-                    <property name="visible">True</property>
-                    <property name="label" translatable="yes">Drill</property>
-                    <property name="use_underline">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-          </object>
-          <packing>
-            <property name="position">2</property>
-          </packing>
+          <placeholder/>
         </child>
       </object>
     </child>
@@ -5306,7 +5263,7 @@ ODE can't be used in combination with parallel processing or server mode.</prope
                     <property name="visible">True</property>
                     <property name="left_padding">12</property>
                     <child>
-                      <object class="GtkVBox" id="vbox13">
+                      <object class="GtkVBox" id="PreferencesVisibleItemsBox">
                         <property name="visible">True</property>
                         <property name="orientation">vertical</property>
                         <property name="spacing">2</property>
@@ -6818,6 +6775,9 @@ Any selected group of dimensions will be scaled accordingly.</property>
   </object>
   <object class="GtkAction" id="HelpSimulation">
     <property name="label">_Simulation</property>
+  </object>
+  <object class="GtkAction" id="Help3DView">
+    <property name="label">3D _View</property>
   </object>
   <object class="GtkAction" id="HelpCommandLine">
     <property name="label">_Command Line Usage</property>

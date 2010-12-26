@@ -35,6 +35,7 @@ import pycam.Geometry.Matrix as Matrix
 from pycam.Geometry.utils import sqrt, number, epsilon
 import pycam.Utils.log
 import gtk
+import gobject
 import pango
 import math
 import time
@@ -247,7 +248,8 @@ class Camera:
 
 
 class ModelViewWindowGL:
-    def __init__(self, gui, settings, notify_destroy=None, accel_group=None):
+    def __init__(self, gui, settings, notify_destroy=None, accel_group=None,
+            item_buttons=None):
         # assume, that initialization will fail
         self.gui = gui
         self.window = self.gui.get_object("view3dwindow")
@@ -320,6 +322,30 @@ class ModelViewWindowGL:
             attributes.insert(color)
             for name in names:
                 self.gui.get_object(name).set_attributes(attributes)
+        # add the items buttons (for configuring visible items)
+        if item_buttons:
+            items_button_container = self.gui.get_object("ViewItems")
+            for button in item_buttons:
+                new_checkbox = gtk.ToggleToolButton()
+                new_checkbox.set_label(button.get_label())
+                new_checkbox.set_visible(True)
+                new_checkbox.set_active(button.get_active())
+                # Configure the two buttons (in "Preferences" and in the 3D view
+                # widget) to toggle each other. This is required for a
+                # consistent view of the setting.
+                def checkbox_handler(widget, button=button):
+                    button.set_active(not button.get_active())
+                checkbox_handler_id = new_checkbox.connect_object_after(
+                        "toggled", checkbox_handler, new_checkbox)
+                def button_handler(widget, new_checkbox=new_checkbox,
+                        checkbox_handler_id=checkbox_handler_id):
+                    new_checkbox.handler_block(checkbox_handler_id)
+                    # prevent any recursive handler-triggering
+                    if new_checkbox.get_active() != widget.get_active():
+                        new_checkbox.set_active(not new_checkbox.get_active())
+                    new_checkbox.handler_unblock(checkbox_handler_id)
+                button.connect_object_after("toggled", button_handler, button)
+                items_button_container.insert(new_checkbox, -1)
         # show the window
         self.area.show()
         self.container.show()

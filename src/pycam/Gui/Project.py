@@ -312,6 +312,7 @@ class ProjectGui:
                 ("HelpTaskSetup", self.show_help, "TaskSetup", None),
                 ("HelpGCodeExport", self.show_help, "GCodeExport", None),
                 ("HelpSimulation", self.show_help, "Simulation", None),
+                ("Help3DView", self.show_help, "3D_View", None),
                 ("HelpServerMode", self.show_help, "ServerMode", None),
                 # TODO: write a general wiki page about the commandline usage (not just examples)
                 ("HelpCommandLine", self.show_help, "CommandlineExamples", None),
@@ -1946,10 +1947,16 @@ class ProjectGui:
             return
         elif new_state:
             if self.view3d is None:
+                # These buttons are replicated to appear in the 3D view - for
+                # easier configuration of visible items without the Preferences
+                # window.
+                item_buttons = self.gui.get_object(
+                        "PreferencesVisibleItemsBox").get_children()
                 # do the gl initialization
                 self.view3d = ModelViewWindowGL(self.gui, self.settings,
                         notify_destroy=self.toggle_3d_view,
-                        accel_group=self._accel_group)
+                        accel_group=self._accel_group,
+                        item_buttons=item_buttons)
                 if self.model and self.view3d.enabled:
                     self.view3d.reset_view()
                 # disable the "toggle" button, if the 3D view does not work

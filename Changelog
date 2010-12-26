@@ -11,6 +11,7 @@ Version 0.4.1 - UNRELEASED
  * unify DropCutter behaviour for models that are higher than the defined bounding box
   * always move up to safety height in this case
  * optional visualization of toolpath direction
+ * visibility of 3D view items is now configurable in the 3D window
 
 Version 0.4.0.1 - 2010-10-24
  * disabled parallel processing for Windows standalone executable
