@@ -81,6 +81,8 @@ FONT_DIR_FALLBACK = "/usr/share/qcad/fonts"
 GTKBUILD_FILE = os.path.join(UI_SUBDIR, "pycam-project.ui")
 GTKMENU_FILE = os.path.join(UI_SUBDIR, "menubar.xml")
 
+WINDOW_ICON_FILENAMES = ["logo_%dpx.png" % pixels for pixels in (16, 32, 48, 64, 128)]
+
 HELP_WIKI_URL = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=%s"
 
 FILTER_GCODE = (("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode")),)
@@ -167,6 +169,22 @@ def get_filters_from_list(filter_list):
         for ext in file_extensions:
             current_filter.add_pattern(ext)
         result.append(current_filter)
+    return result
+
+def get_icons_pixbuffers():
+    result = []
+    for icon_filename in WINDOW_ICON_FILENAMES:
+        icon_subdir_filename = os.path.join(UI_SUBDIR, icon_filename)
+        abs_filename = get_data_file_location(icon_subdir_filename, silent=True)
+        if abs_filename:
+            try:
+                result.append(gtk.gdk.pixbuf_new_from_file(abs_filename))
+            except gobject.GError, err_msg:
+                # ignore icons that are not found
+                log.debug("Failed to process window icon (%s): %s" \
+                        % (abs_filename, err_msg))
+        else:
+            log.debug("Failed to locate window icon: %s" % icon_filename)
     return result
 
 def get_font_dir():
@@ -879,12 +897,12 @@ class ProjectGui:
         # menu bar
         uimanager = gtk.UIManager()
         self._accel_group = uimanager.get_accel_group()
-        self.window.add_accel_group(self._accel_group)
-        self.about_window.add_accel_group(self._accel_group)
-        self.preferences_window.add_accel_group(self._accel_group)
-        self.log_window.add_accel_group(self._accel_group)
-        self.process_pool_window.add_accel_group(self._accel_group)
-        self.font_dialog_window.add_accel_group(self._accel_group)
+        for window in (self.window, self.about_window, self.preferences_window,
+                self.log_window, self.process_pool_window,
+                self.font_dialog_window):
+            window.add_accel_group(self._accel_group)
+        # set the icons (in different sizes) for all windows
+        gtk.window_set_default_icon_list(*get_icons_pixbuffers())
         # load menu data
         gtk_menu_file = get_data_file_location(GTKMENU_FILE)
         if gtk_menu_file is None:
@@ -1027,7 +1045,7 @@ class ProjectGui:
             self.window.set_title("PyCAM")
         else:
             short_name = os.path.basename(filename)
-            self.window.set_title("PyCAM - %s" % short_name)
+            self.window.set_title("%s - PyCAM" % short_name)
         self.update_save_actions()
 
     def update_save_actions(self):
