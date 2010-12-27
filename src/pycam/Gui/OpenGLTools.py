@@ -44,6 +44,7 @@ import time
 BUTTON_ROTATE = gtk.gdk.BUTTON1_MASK
 BUTTON_MOVE = gtk.gdk.BUTTON2_MASK
 BUTTON_ZOOM = gtk.gdk.BUTTON3_MASK
+BUTTON_RIGHT = 3
 
 # The length of the distance vector does not matter - it will be normalized and
 # multiplied later anyway.
@@ -66,6 +67,25 @@ VIEWS = {
 
 
 log = pycam.Utils.log.get_logger()
+
+
+def connect_button_handlers(signal, original_button, derived_button):
+    """ Join two buttons (probably "toggle" buttons) to keep their values
+    synchronized.
+    """
+    def derived_handler(widget, original_button=original_button):
+        original_button.set_active(not original_button.get_active())
+    derived_handler_id = derived_button.connect_object_after(
+            signal, derived_handler, derived_button)
+    def original_handler(original_button, derived_button=derived_button,
+            derived_handler_id=derived_handler_id):
+        derived_button.handler_block(derived_handler_id)
+        # prevent any recursive handler-triggering
+        if derived_button.get_active() != original_button.get_active():
+            derived_button.set_active(not derived_button.get_active())
+        derived_button.handler_unblock(derived_handler_id)
+    original_button.connect_object_after(signal, original_handler,
+            original_button)
 
 
 class Camera:
@@ -249,7 +269,7 @@ class Camera:
 
 class ModelViewWindowGL:
     def __init__(self, gui, settings, notify_destroy=None, accel_group=None,
-            item_buttons=None):
+            item_buttons=None, context_menu_actions=None):
         # assume, that initialization will fail
         self.gui = gui
         self.window = self.gui.get_object("view3dwindow")
@@ -267,7 +287,10 @@ class ModelViewWindowGL:
                     + "\nPlease install 'python-gtkglext1' to enable it.")
             self.enabled = False
             return
-        self.mouse = {"start_pos": None, "button": None, "timestamp": 0}
+        self.mouse = {"start_pos": None, "button": None,
+                "event_timestamp": 0, "last_timestamp": 0,
+                "pressed_pos": None, "pressed_timestamp": 0,
+                "pressed_button": None}
         self.notify_destroy_func = notify_destroy
         self.window.connect("delete-event", self.destroy)
         self.window.set_default_size(560, 400)
@@ -302,9 +325,11 @@ class ModelViewWindowGL:
         # resize window
         self.area.connect('configure-event', self._resize_window)
         # catch mouse events
-        self.area.set_events(gtk.gdk.MOUSE | gtk.gdk.BUTTON_PRESS_MASK)
-        self.area.connect("button-press-event", self.mouse_handler)
+        self.area.set_events(gtk.gdk.MOUSE | gtk.gdk.POINTER_MOTION_HINT_MASK \
+                | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK)
+        self.area.connect("button-press-event", self.mouse_press_handler)
         self.area.connect('motion-notify-event', self.mouse_handler)
+        self.area.connect("button-release-event", self.context_menu_handler)
         self.container.pack_end(self.area)
         self.camera = Camera(self.settings, lambda: (self.area.allocation.width,
                 self.area.allocation.height))
@@ -328,24 +353,39 @@ class ModelViewWindowGL:
             for button in item_buttons:
                 new_checkbox = gtk.ToggleToolButton()
                 new_checkbox.set_label(button.get_label())
-                new_checkbox.set_visible(True)
                 new_checkbox.set_active(button.get_active())
                 # Configure the two buttons (in "Preferences" and in the 3D view
                 # widget) to toggle each other. This is required for a
                 # consistent view of the setting.
-                def checkbox_handler(widget, button=button):
-                    button.set_active(not button.get_active())
-                checkbox_handler_id = new_checkbox.connect_object_after(
-                        "toggled", checkbox_handler, new_checkbox)
-                def button_handler(widget, new_checkbox=new_checkbox,
-                        checkbox_handler_id=checkbox_handler_id):
-                    new_checkbox.handler_block(checkbox_handler_id)
-                    # prevent any recursive handler-triggering
-                    if new_checkbox.get_active() != widget.get_active():
-                        new_checkbox.set_active(not new_checkbox.get_active())
-                    new_checkbox.handler_unblock(checkbox_handler_id)
-                button.connect_object_after("toggled", button_handler, button)
+                connect_button_handlers("toggled", button, new_checkbox)
                 items_button_container.insert(new_checkbox, -1)
+            items_button_container.show_all()
+            # create the drop-down menu
+            if context_menu_actions:
+                action_group = gtk.ActionGroup("context")
+                for action in context_menu_actions:
+                    action_group.add_action(action)
+                uimanager = gtk.UIManager()
+                # the "pos" parameter is optional since 2.12 - we can remove it later
+                uimanager.insert_action_group(action_group, pos=-1)
+                uimanager_template = """<ui><popup name="context">%s</popup></ui>"""
+                uimanager_item_template = """<menuitem action="%s" />"""
+                uimanager_text = uimanager_template % "".join(
+                        [uimanager_item_template % action.get_name()
+                                for action in context_menu_actions])
+                uimanager.add_ui_from_string(uimanager_text)
+                self.context_menu = uimanager.get_widget("/context")
+                self.context_menu.insert(gtk.SeparatorMenuItem(), 0)
+            else:
+                self.context_menu = gtk.Menu()
+            for index, button in enumerate(item_buttons):
+                new_item = gtk.CheckMenuItem(button.get_label())
+                new_item.set_active(button.get_active())
+                connect_button_handlers("toggled", button, new_item)
+                self.context_menu.insert(new_item, index)
+            self.context_menu.show_all()
+        else:
+            self.context_menu = None
         # show the window
         self.area.show()
         self.container.show()
@@ -549,8 +589,25 @@ class ModelViewWindowGL:
 
     @check_busy
     @gtkgl_functionwrapper
+    def context_menu_handler(self, widget, event):
+        if (event.button == self.mouse["pressed_button"] == BUTTON_RIGHT) \
+                and self.context_menu \
+                and (event.get_time() - self.mouse["pressed_timestamp"] < 300) \
+                and (abs(event.x - self.mouse["pressed_pos"][0]) < 3) \
+                and (abs(event.y - self.mouse["pressed_pos"][1]) < 3):
+            # A quick press/release cycle with the right mouse button
+            # -> open the context menu.
+            self.context_menu.popup(None, None, None, event.button, int(event.get_time()))
+
+    def mouse_press_handler(self, widget, event):
+        self.mouse["pressed_timestamp"] = event.get_time()
+        self.mouse["pressed_button"] = event.button
+        self.mouse["pressed_pos"] = event.x, event.y
+        self.mouse_handler(widget, event)
+
+    @check_busy
+    @gtkgl_functionwrapper
     def mouse_handler(self, widget, event):
-        last_timestamp = self.mouse["timestamp"]
         x, y, state = event.x, event.y, event.state
         if self.mouse["button"] is None:
             if (state & BUTTON_ZOOM) or (state & BUTTON_ROTATE) \
@@ -558,12 +615,11 @@ class ModelViewWindowGL:
                 self.mouse["button"] = state
                 self.mouse["start_pos"] = [x, y]
         else:
-            # not more than 25 frames per second (enough for a decent
-            # visualization)
-            if time.time() - last_timestamp < 0.04:
+            # Don't try to create more than 25 frames per second (enough for
+            # a decent visualization).
+            if event.get_time() - self.mouse["event_timestamp"] < 40:
                 return
-            # a button was pressed before
-            if state & self.mouse["button"] & BUTTON_ZOOM:
+            elif state & self.mouse["button"] & BUTTON_ZOOM:
                 # the start button is still active: update the view
                 start_x, start_y = self.mouse["start_pos"]
                 self.mouse["start_pos"] = [x, y]
@@ -604,7 +660,7 @@ class ModelViewWindowGL:
                 # button was released
                 self.mouse["button"] = None
                 self._paint_ignore_busy()
-        self.mouse["timestamp"] = time.time()
+        self.mouse["event_timestamp"] = event.get_time()
 
     @check_busy
     @gtkgl_functionwrapper

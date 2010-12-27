@@ -6757,51 +6757,67 @@ Any selected group of dimensions will be scaled accordingly.</property>
   </object>
   <object class="GtkAction" id="HelpUserManual">
     <property name="label">User _Manual: Overview</property>
+    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpIntroduction">
     <property name="label">_Introduction</property>
+    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpSupportedFormats">
     <property name="label">Supported _Formats</property>
+    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpModelTransformations">
     <property name="label">_Model Transformations</property>
+    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpToolTypes">
     <property name="label">T_ool Types</property>
+    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpProcessSettings">
     <property name="label">_Process Settings</property>
+    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpBoundsSettings">
     <property name="label">_Bounds Settings</property>
+    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpTaskSetup">
     <property name="label">_Task Setup</property>
+    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpGCodeExport">
     <property name="label">_GCode Export</property>
+    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpSimulation">
     <property name="label">_Simulation</property>
+    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="Help3DView">
     <property name="label">3D _View</property>
+    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpCommandLine">
     <property name="label">_Command Line Usage</property>
+    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="ProjectWebsite">
     <property name="label">Project _Website</property>
+    <property name="stock_id">gtk-network</property>
   </object>
   <object class="GtkAction" id="Forum">
     <property name="label">Forum</property>
+    <property name="stock_id">gtk-network</property>
   </object>
   <object class="GtkAction" id="BugTracker">
     <property name="label">Report a Bug</property>
+    <property name="stock_id">gtk-network</property>
   </object>
   <object class="GtkAction" id="FeatureRequest">
     <property name="label">Request a Feature</property>
+    <property name="stock_id">gtk-network</property>
   </object>
   <object class="GtkAdjustment" id="SupportGridDistanceY">
     <property name="upper">1000</property>
@@ -6957,6 +6973,7 @@ Any selected group of dimensions will be scaled accordingly.</property>
   </object>
   <object class="GtkAction" id="HelpHotkeys">
     <property name="label">_Keyboard Shortcuts</property>
+    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAdjustment" id="SupportGridAverageDistance">
     <property name="value">30</property>
@@ -7284,9 +7301,11 @@ Please read the description of the Server Mode (linked below) to understand the 
   </object>
   <object class="GtkAction" id="DevelopmentBlog">
     <property name="label">Development Blog</property>
+    <property name="stock_id">gtk-network</property>
   </object>
   <object class="GtkAction" id="HelpServerMode">
     <property name="label">Server Mode</property>
+    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkDialog" id="FontDialog">
     <property name="border_width">5</property>

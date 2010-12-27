@@ -1956,7 +1956,9 @@ class ProjectGui:
                 self.view3d = ModelViewWindowGL(self.gui, self.settings,
                         notify_destroy=self.toggle_3d_view,
                         accel_group=self._accel_group,
-                        item_buttons=item_buttons)
+                        item_buttons=item_buttons,
+                        context_menu_actions=[self.gui.get_object(name)
+                                for name in ("GeneralSettings", "Help3DView")])
                 if self.model and self.view3d.enabled:
                     self.view3d.reset_view()
                 # disable the "toggle" button, if the 3D view does not work
