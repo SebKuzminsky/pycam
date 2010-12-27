@@ -6749,6 +6749,15 @@ Any selected group of dimensions will be scaled accordingly.</property>
   <object class="GtkAction" id="HelpMenu">
     <property name="label">_Help</property>
   </object>
+  <object class="GtkAction" id="HelpMenuMisc">
+    <property name="label">Miscellaneous</property>
+  </object>
+  <object class="GtkAction" id="HelpMenuGUI">
+    <property name="label">_GUI description</property>
+  </object>
+  <object class="GtkAction" id="HelpUserManual">
+    <property name="label">User _Manual: Overview</property>
+  </object>
   <object class="GtkAction" id="HelpIntroduction">
     <property name="label">_Introduction</property>
   </object>

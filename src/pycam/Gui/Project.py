@@ -303,7 +303,8 @@ class ProjectGui:
                 ("ToggleLogWindow", self.toggle_log_window, None, "<Control>l"),
                 ("ToggleProcessPoolWindow", self.toggle_process_pool_window, None, None),
                 ("ShowFontDialog", self.toggle_font_dialog_window, None, "<Control><Shift>t"),
-                ("HelpIntroduction", self.show_help, "Introduction", "F1"),
+                ("HelpUserManual", self.show_help, "User_Manual", "F1"),
+                ("HelpIntroduction", self.show_help, "Introduction", None),
                 ("HelpSupportedFormats", self.show_help, "SupportedFormats", None),
                 ("HelpModelTransformations", self.show_help, "ModelTransformations", None),
                 ("HelpToolTypes", self.show_help, "ToolTypes", None),
@@ -314,7 +315,6 @@ class ProjectGui:
                 ("HelpSimulation", self.show_help, "Simulation", None),
                 ("Help3DView", self.show_help, "3D_View", None),
                 ("HelpServerMode", self.show_help, "ServerMode", None),
-                # TODO: write a general wiki page about the commandline usage (not just examples)
                 ("HelpCommandLine", self.show_help, "CommandlineExamples", None),
                 ("HelpHotkeys", self.show_help, "KeyboardShortcuts", None),
                 ("ProjectWebsite", self.show_help, "http://pycam.sourceforge.net", None),
