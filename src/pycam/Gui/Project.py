@@ -97,6 +97,7 @@ PREFERENCES_DEFAULTS = {
         "enable_ode": False,
         "boundary_mode": -1,
         "unit": "mm",
+        "default_task_settings_file": "",
         "show_model": True,
         "show_support_grid": True,
         "show_axes": True,
@@ -432,6 +433,36 @@ class ProjectGui:
                 self.change_unit_set_selection, True)
         self.gui.get_object("UnitChangeSelectNone").connect("clicked",
                 self.change_unit_set_selection, False)
+        # autoload task settings file on startup
+        autoload_enable = self.gui.get_object("AutoLoadTaskFile")
+        autoload_box = self.gui.get_object("StartupTaskFileBox")
+        autoload_source = self.gui.get_object("StartupTaskFile")
+        for one_filter in get_filters_from_list(FILTER_CONFIG):
+            autoload_source.add_filter(one_filter)
+            autoload_source.set_filter(one_filter)
+        def get_autoload_task_file(autoload_source=autoload_source):
+            if autoload_enable.get_active():
+                return autoload_source.get_filename()
+            else:
+                return ""
+        def set_autoload_task_file(filename):
+            if filename:
+                autoload_enable.set_active(True)
+                autoload_box.set_visible(True)
+                autoload_source.set_filename(filename)
+            else:
+                autoload_enable.set_active(False)
+                autoload_box.set_visible(False)
+                autoload_source.unselect_all()
+        def autoload_enable_switched(widget, box):
+            if not widget.get_active():
+                set_autoload_task_file(None)
+            else:
+                autoload_box.set_visible(True)
+        autoload_enable.connect("toggled", autoload_enable_switched,
+                autoload_box)
+        self.settings.add_item("default_task_settings_file",
+                get_autoload_task_file, set_autoload_task_file)
         # boundary mode (move inside/along/around the boundaries)
         boundary_mode_control = self.gui.get_object("BoundaryModeControl")
         def set_boundary_mode(value):
@@ -948,6 +979,14 @@ class ProjectGui:
         self.reset_preferences()
         self.load_preferences()
         self.load_task_settings()
+        # Without this "gkt.main_iteration" loop the task settings file
+        # control would not be updated in time.
+        while gtk.events_pending():
+            gtk.main_iteration()
+        autoload_task_filename = self.settings.get("default_task_settings_file")
+        if autoload_task_filename:
+            self.load_task_settings_file(filename=autoload_task_filename)
+            self.last_task_settings_file = autoload_task_filename
         self.update_all_controls()
         self.no_dialog = no_dialog
         if not self.no_dialog:
@@ -2635,6 +2674,7 @@ class ProjectGui:
             # loaded interactively. E.g. ignore the initial task file loading.
             self.last_task_settings_file = filename
         if filename:
+            log.info("Loading task settings file: %s" % str(filename))
             self.load_task_settings(filename)
             self.add_to_recent_file_list(filename)
         self.update_save_actions()

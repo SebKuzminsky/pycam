@@ -4984,6 +4984,34 @@ ODE can't be used in combination with parallel processing or server mode.</prope
                                 <property name="position">2</property>
                               </packing>
                             </child>
+                            <child>
+                              <object class="GtkCheckButton" id="AutoLoadTaskFile">
+                                <property name="label" translatable="yes">Load custom task settings on startup</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="position">3</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkAlignment" id="StartupTaskFileBox">
+                                <property name="visible">True</property>
+                                <property name="left_padding">20</property>
+                                <child>
+                                  <object class="GtkFileChooserButton" id="StartupTaskFile">
+                                    <property name="visible">True</property>
+                                    <property name="title" translatable="yes">Choose custom task settings file loading on startup</property>
+                                  </object>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="position">4</property>
+                              </packing>
+                            </child>
                           </object>
                         </child>
                       </object>
