@@ -125,6 +125,7 @@ PREFERENCES_DEFAULTS = {
         "gcode_motion_tolerance": 0,
         "gcode_naive_tolerance": 0,
         "gcode_start_stop_spindle": True,
+        "gcode_filename_extension": "",
         "external_program_inkscape": "",
         "external_program_pstoedit": "",
 }
@@ -876,6 +877,9 @@ class ProjectGui:
         gcode_start_stop_spindle = self.gui.get_object("GCodeStartStopSpindle")
         self.settings.add_item("gcode_start_stop_spindle",
                 gcode_start_stop_spindle.get_active, gcode_start_stop_spindle.set_active)
+        gcode_filename_extension = self.gui.get_object("GCodeFilenameExtension")
+        self.settings.add_item("gcode_filename_extension",
+                gcode_filename_extension.get_text, gcode_filename_extension.set_text)
         # configure locations of external programs
         for auto_control_name, location_control_name, browse_button, key in (
                 ("ExternalProgramInkscapeAuto",
@@ -2346,7 +2350,7 @@ class ProjectGui:
         else:
             filter_ext = filter_ext[1:]
         basename = os.path.basename(filename)
-        if (basename.rfind(".") == -1) or (basename[-5:].rfind(".") == -1):
+        if (basename.rfind(".") == -1) or (basename[-6:].rfind(".") == -1):
             # The filename does not contain a dot or the dot is not within the
             # last five characters. Dots within the start of the filename are
             # ignored.
@@ -3451,7 +3455,7 @@ class ProjectGui:
         return toolpath_settings
 
     def get_filename_via_dialog(self, title, mode_load=False, type_filter=None,
-            filename_templates=None):
+            filename_templates=None, filename_extension=None):
         # we open a dialog
         if mode_load:
             dialog = gtk.FileChooserDialog(title=title,
@@ -3479,7 +3483,9 @@ class ProjectGui:
             filename_template = valid_templates[0]
             # remove the extension
             default_filename = os.path.splitext(filename_template)[0]
-            if type_filter:
+            if filename_extension:
+                default_filename += os.path.extsep + filename_extension
+            elif type_filter:
                 for one_type in type_filter:
                     label, extension = one_type
                     if isinstance(extension, (list, tuple, set)):
@@ -3559,9 +3565,14 @@ class ProjectGui:
             filename = widget
         else:
             # we open a dialog
+            if self.settings.get("gcode_filename_extension"):
+                filename_extension = self.settings.get("gcode_filename_extension")
+            else:
+                filename_extension = None
             filename = self.get_filename_via_dialog("Save toolpath to ...",
                     mode_load=False, type_filter=FILTER_GCODE,
-                    filename_templates=(self.last_toolpath_file, self.last_model_filename))
+                    filename_templates=(self.last_toolpath_file, self.last_model_filename),
+                    filename_extension=filename_extension)
             if filename:
                 self.last_toolpath_file = filename
         self.update_save_actions()

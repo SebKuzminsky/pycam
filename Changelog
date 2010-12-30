@@ -9,6 +9,7 @@ Version 0.4.1 - UNRELEASED
  * added a very simple "pocketing" mode for 2D models
  * added support for DXF feature "LWPOLYLINE"
  * added a configuration setting for automatically loading a custom task settings file on startup
+ * the default filename extension for exported GCode files is now configurable
  * unify DropCutter behaviour for models that are higher than the defined bounding box
   * always move up to safety height in this case
  * optional visualization of toolpath direction

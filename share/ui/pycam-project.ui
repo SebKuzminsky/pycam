@@ -5254,6 +5254,40 @@ ODE can't be used in combination with parallel processing or server mode.</prope
                             <property name="position">2</property>
                           </packing>
                         </child>
+                        <child>
+                          <object class="GtkHBox" id="hbox37">
+                            <property name="visible">True</property>
+                            <property name="spacing">3</property>
+                            <child>
+                              <object class="GtkLabel" id="GCodeFilenameExtensionLabel">
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes">Custom GCode filename extension:</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="GCodeFilenameExtension">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">The file extension to be used when storing a GCode file.
+Leave this field empty to use the default ("ngc").</property>
+                                <property name="invisible_char">&#x25CF;</property>
+                                <property name="width_chars">6</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">3</property>
+                          </packing>
+                        </child>
                       </object>
                     </child>
                   </object>
