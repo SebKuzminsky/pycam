@@ -896,8 +896,7 @@ def draw_complete_model_view(settings):
     # don't do it, if a new toolpath is just being calculated
     safety_height = settings.get("gcode_safety_height")
     if settings.get("show_toolpath") \
-            and not (settings.get("show_drill_progress") \
-                    and (not settings.get("toolpath_in_progress") is None)) \
+            and not settings.get("toolpath_in_progress") \
             and not (settings.get("show_simulation") \
                     and settings.get("simulation_toolpath_moves")):
         for toolpath_obj in settings.get("toolpath"):
@@ -907,13 +906,14 @@ def draw_complete_model_view(settings):
                         settings.get("color_toolpath_return"),
                         show_directions=settings.get("show_directions"))
     # draw the drill
-    if settings.get("show_drill_progress") \
-            and settings.get("toolpath_in_progress"):
+    if settings.get("show_drill"):
         cutter = settings.get("cutter")
         if not cutter is None:
             GL.glColor4f(*settings.get("color_cutter"))
             cutter.to_OpenGL()
-        # also show the toolpath that is currently being calculated
+    if settings.get("show_drill_progress") \
+            and settings.get("toolpath_in_progress"):
+        # show the toolpath that is currently being calculated
         toolpath_in_progress = settings.get("toolpath_in_progress")
         # do a quick conversion from a list of Paths to a list of points
         moves = []

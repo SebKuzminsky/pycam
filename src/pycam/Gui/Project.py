@@ -104,7 +104,7 @@ PREFERENCES_DEFAULTS = {
         "show_dimensions": True,
         "show_bounding_box": True,
         "show_toolpath": True,
-        "show_drill_progress": False,
+        "show_drill": False,
         "show_directions": False,
         "color_background": (0.0, 0.0, 0.0, 1.0),
         "color_model": (0.5, 0.5, 1.0, 1.0),
@@ -653,12 +653,16 @@ class ProjectGui:
                 ("show_dimensions", "ShowDimensionsCheckBox"),
                 ("show_bounding_box", "ShowBoundingCheckBox"),
                 ("show_toolpath", "ShowToolPathCheckBox"),
-                ("show_drill_progress", "ShowDrillProgressCheckBox"),
+                ("show_drill", "ShowDrillCheckBox"),
                 ("show_directions", "ShowDirectionsCheckBox")):
             obj = self.gui.get_object(objname)
             self.settings.add_item(name, obj.get_active, obj.set_active)
             # all of the objects above should trigger redraw
             obj.connect("toggled", self.update_view)
+        self.show_progress_button = self.gui.get_object("ShowToolpathProgressButton")
+        self.settings.add_item("show_drill_progress",
+                self.show_progress_button.get_active,
+                self.show_progress_button.set_active)
         for name, objname in (
                 ("view_light", "OpenGLLight"),
                 ("view_shadow", "OpenGLShadow"),
@@ -813,18 +817,21 @@ class ProjectGui:
         self.gui.get_object("toolpath_delete").connect("clicked", self.toolpath_table_event, "delete")
         self.gui.get_object("toolpath_simulate").connect("clicked", self.toolpath_table_event, "simulate")
         self.gui.get_object("ExitSimulationButton").connect("clicked", self.finish_toolpath_simulation)
-        self.gui.get_object("UpdateSimulationButton").connect("clicked", self.update_toolpath_simulation)
         speed_factor_widget = self.gui.get_object("SimulationSpeedFactor")
         self.settings.add_item("simulation_speed_factor",
                 lambda: pow(10, speed_factor_widget.get_value()),
                 lambda value: speed_factor_widget.set_value(math.log10(max(0.001, value))))
+        simulation_progress = self.gui.get_object("SimulationProgressTimelineValue")
+        def update_simulation_progress(widget):
+            complete = self.settings.get("simulation_complete_distance")
+            self.settings.set("simulation_current_distance", widget.get_value() / 100.0 * complete)
+        simulation_progress.connect("value-changed", update_simulation_progress)
         # update the speed factor label
         speed_factor_widget.connect("value-changed",
                 lambda widget: self.gui.get_object("SimulationSpeedFactorValueLabel").set_label(
                         "%g" % self.settings.get("simulation_speed_factor")))
         self.simulation_window = self.gui.get_object("SimulationDialog")
-        self.simulation_window.connect("delete-event", self.toggle_about_window, False)
-        self.gui.get_object("SimulationCancelButton").connect("clicked", self.cancel_progress)
+        self.simulation_window.connect("delete-event", self.finish_toolpath_simulation)
         # store the original content (for adding the number of current toolpaths in "update_toolpath_table")
         self._original_toolpath_tab_label = self.gui.get_object("ToolPathTabLabel").get_text()
         # tool editor
@@ -3109,6 +3116,7 @@ class ProjectGui:
             self.progress_widget.hide()
             self.task_pane.set_sensitive(True)
             self.menubar.set_sensitive(True)
+            self.show_progress_button.hide()
 
     def disable_progress_cancel_button(self):
         """ mainly useful for non-interruptable operations (e.g. model
@@ -3156,6 +3164,9 @@ class ProjectGui:
         self.progress_bar.set_text(os.linesep.join(lines))
         # update the GUI
         current_time = time.time()
+        # show the "show_tool_button" ("hide" is called in the progress decorator)
+        if self.settings.get("toolpath_in_progress"):
+            self.show_progress_button.show()
         # Don't update the GUI more often than once per second.
         # Exception: text-only updates
         # This restriction improves performance and reduces the
@@ -3177,7 +3188,7 @@ class ProjectGui:
     def cancel_progress(self, widget=None):
         self._progress_cancel_requested = True
 
-    def finish_toolpath_simulation(self, widget=None):
+    def finish_toolpath_simulation(self, widget=None, data=None):
         # hide the simulation tab
         self.simulation_window.hide()
         # enable all other tabs again
@@ -3185,38 +3196,57 @@ class ProjectGui:
         self.settings.set("simulation_object", None)
         self.settings.set("simulation_toolpath_moves", None)
         self.settings.set("show_simulation", False)
+        self.settings.set("simulation_toolpath", None)
         self.update_view()
+        # don't destroy the simulation window (for "destroy" event)
+        return True
 
-    @progress_activity_guard
     def update_toolpath_simulation(self, widget=None, toolpath=None):
-        # get the currently selected toolpath, if none is give
-        if toolpath is None:
-            toolpath_index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
-            if toolpath_index is None:
-                return
-            else:
-                toolpath = self.toolpath[toolpath_index]
-        # set the current cutter
-        self.cutter = toolpath.toolpath_settings.get_tool()
-        # calculate steps
+        # update the GUI
+        while gtk.events_pending():
+            gtk.main_iteration()
+        if not self.settings.get("show_simulation"):
+            # cancel
+            return False
         safety_height = self.settings.get("gcode_safety_height")
-        machine_time = toolpath.get_machine_time(safety_height=safety_height)
-        complete_distance = toolpath.get_machine_movement_distance(
-                safety_height=safety_height)
-        current_distance = 0
-        time_step = 1.0 / self.settings.get("drill_progress_max_fps")
-        feedrate = toolpath.toolpath_settings.get_tool_settings()["feedrate"]
-        self.update_progress_bar("Simulating movements")
-        while current_distance <= complete_distance:
-            current_distance += self.settings.get("simulation_speed_factor") * time_step * feedrate / 60
-            progress_value_percent = 100.0 * current_distance / complete_distance
+        if not self.settings.get("simulation_toolpath"):
+            # get the currently selected toolpath, if none is give
+            if toolpath is None:
+                toolpath_index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
+                if toolpath_index is None:
+                    return
+                else:
+                    toolpath = self.toolpath[toolpath_index]
+            self.settings.set("simulation_toolpath", toolpath)
+            # set the current cutter
+            self.cutter = toolpath.toolpath_settings.get_tool()
+            # calculate steps
+            self.settings.set("simulation_machine_time",
+                    toolpath.get_machine_time(safety_height=safety_height))
+            self.settings.set("simulation_complete_distance",
+                    toolpath.get_machine_movement_distance(
+                        safety_height=safety_height))
+            self.settings.set("simulation_current_distance", 0)
+        else:
+            toolpath = self.settings.get("simulation_toolpath")
+        if (self.settings.get("simulation_current_distance") \
+                < self.settings.get("simulation_complete_distance")):
+            time_step = 1.0 / self.settings.get("drill_progress_max_fps")
+            feedrate = toolpath.toolpath_settings.get_tool_settings()["feedrate"]
+            distance_step = self.settings.get("simulation_speed_factor") * time_step * feedrate / 60
+            self.settings.set("simulation_current_distance",
+                    self.settings.get("simulation_current_distance") \
+                    + distance_step)
             moves = toolpath.get_moves(safety_height=safety_height,
-                    max_movement=current_distance)
+                    max_movement=self.settings.get("simulation_current_distance"))
             self.settings.set("simulation_toolpath_moves", moves)
+            if moves:
+                self.cutter.moveto(moves[-1][0])
             self.update_view()
-            if self.update_progress_bar(percent=progress_value_percent):
-                break
-            time.sleep(time_step)
+        progress_value_percent = 100.0 * self.settings.get("simulation_current_distance") \
+                / self.settings.get("simulation_complete_distance")
+        self.gui.get_object("SimulationProgressTimelineValue").set_value(progress_value_percent)
+        return True
 
     @progress_activity_guard
     def update_toolpath_simulation_ode(self, widget=None, toolpath=None):
@@ -3278,17 +3308,16 @@ class ProjectGui:
                 "BoundsTabLabel"):
             self.gui.get_object(objname).set_sensitive(new_state)
 
-    def show_toolpath_simulation(self, toolpath):
+    def show_toolpath_simulation(self, toolpath=None):
         # disable the main controls
         self.toggle_tabs_for_simulation(False)
         # show the simulation controls
         self.simulation_window.show()
         # start the simulation
         self.settings.set("show_simulation", True)
-        self.update_toolpath_simulation(toolpath=toolpath)
-        # hide the controls immediately, if the simulation was cancelled
-        if self.update_progress_bar():
-            self.finish_toolpath_simulation()
+        time_step = int(1000 / self.settings.get("drill_progress_max_fps"))
+        # update the toolpath simulation repeatedly
+        gobject.timeout_add(time_step, self.update_toolpath_simulation)
 
     @progress_activity_guard
     def generate_toolpath(self, tool_settings, process_settings, bounds):
@@ -3312,11 +3341,11 @@ class ProjectGui:
                         self.func()
                 # break the loop if someone clicked the "cancel" button
                 return parent.update_progress_bar(text, percent)
-        if self.settings.get("show_drill_progress"):
-            callback = self.update_view
-        else:
-            callback = None
-        draw_callback = UpdateView(callback,
+        # allow the "show_drill_progress" setting to be changed instantly
+        def conditional_progress_update():
+            if self.settings.get("show_drill_progress"):
+                self.update_view()
+        draw_callback = UpdateView(conditional_progress_update,
                 max_fps=self.settings.get("drill_progress_max_fps")).update
 
         self.update_progress_bar("Generating collision model")
