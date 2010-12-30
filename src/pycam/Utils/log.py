@@ -41,6 +41,15 @@ def init_logger(log, logfilename=None):
     console_output = logging.StreamHandler()
     log.addHandler(console_output)
     log.setLevel(logging.INFO)
+    # store the latest log items in a queue (for pushing them into new handlers)
+    log.addHandler(BufferHandler())
+
+def _push_back_old_logs(new_handler):
+    log = get_logger()
+    # push all older log items into the new handler
+    for handler in log.handlers:
+        if hasattr(handler, "push_back"):
+            handler.push_back(new_handler)
 
 def add_stream(stream, level=None):
     log = get_logger()
@@ -48,6 +57,7 @@ def add_stream(stream, level=None):
     if not level is None:
         logstream.setLevel(level)
     log.addHandler(logstream)
+    _push_back_old_logs(logstream)
 
 def add_hook(callback, level=None):
     log = get_logger()
@@ -55,6 +65,7 @@ def add_hook(callback, level=None):
     if not level is None:
         loghook.setLevel(level)
     log.addHandler(loghook)
+    _push_back_old_logs(loghook)
 
 def add_gtk_gui(parent_window, level=None):
     log = get_logger()
@@ -62,6 +73,27 @@ def add_gtk_gui(parent_window, level=None):
     if not level is None:
         loggui.setLevel(level)
     log.addHandler(loggui)
+    _push_back_old_logs(loggui)
+
+
+class BufferHandler(logging.Handler):
+
+    MAX_LENGTH = 100
+
+    def __init__(self, **kwargs):
+        logging.Handler.__init__(self, **kwargs)
+        self.record_buffer = []
+
+    def emit(self, record):
+        self.record_buffer.append(record)
+        # reduce the record_buffer queue if necessary
+        while len(self.record_buffer) > self.MAX_LENGTH:
+            self.record_buffer.pop(0)
+
+    def push_back(self, other_handler):
+        for record in self.record_buffer:
+            if record.levelno >= other_handler.level:
+                other_handler.emit(record)
 
 
 class GTKHandler(logging.Handler):
