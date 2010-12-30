@@ -65,6 +65,8 @@ class Triangle(TransformableContainer):
                     self.p1)).normalized()
         if not isinstance(self.normal, Vector):
             self.normal = self.normal.get_vector()
+        # make sure that the normal has always a unit length
+        self.normal = self.normal.normalized()
         self.center = self.p1.add(self.p2).add(self.p3).div(3)
         self.plane = Plane(self.center, self.normal)
         # calculate circumcircle (resulting in radius and middle)

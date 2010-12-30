@@ -114,7 +114,7 @@ class Point(object):
         if n == 0:
             return None
         else:
-            return Point(self.x / n, self.y / n, self.z / n)
+            return self.__class__(self.x / n, self.y / n, self.z / n)
 
     def is_inside(self, minx=None, maxx=None, miny=None, maxy=None, minz=None,
             maxz=None):
