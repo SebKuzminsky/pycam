@@ -6,7 +6,8 @@
       <menuitem action="SaveModel"/>
       <menuitem action="SaveAsModel"/>
       <separator />
-      <menuitem action="ExportGCode"/>
+      <menuitem action="ExportGCodeVisible"/>
+      <menuitem action="ExportGCodeAll"/>
       <separator />
       <menuitem action="Quit"/>
     </menu>

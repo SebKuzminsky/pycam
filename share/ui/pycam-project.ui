@@ -4777,9 +4777,15 @@ This feature requires the Open Dynamics Engine (ODE).</property>
   <object class="GtkAction" id="SettingsMenu">
     <property name="label">_Settings</property>
   </object>
-  <object class="GtkAction" id="ExportGCode">
-    <property name="label">_Export Toolpaths</property>
-    <property name="tooltip">Write all current toolpaths to a file.</property>
+  <object class="GtkAction" id="ExportGCodeVisible">
+    <property name="label">_Export visible Toolpaths</property>
+    <property name="tooltip">Write all visible toolpaths to a file.</property>
+    <property name="stock_id">gtk-execute</property>
+    <property name="always_show_image">True</property>
+  </object>
+  <object class="GtkAction" id="ExportGCodeAll">
+    <property name="label">_Export all Toolpaths</property>
+    <property name="tooltip">Write all toolpaths to a file.</property>
     <property name="stock_id">gtk-execute</property>
     <property name="always_show_image">True</property>
   </object>

@@ -297,7 +297,8 @@ class ProjectGui:
                 ("OpenModel", self.load_model_file, None, "<Control>o"),
                 ("SaveModel", self.save_model, lambda: self.last_model_filename, "<Control>s"),
                 ("SaveAsModel", self.save_model, None, "<Control><Shift>s"),
-                ("ExportGCode", self.save_toolpath, None, "<Control><Shift>e"),
+                ("ExportGCodeAll", self.save_toolpath, None, "<Control><Shift>e"),
+                ("ExportGCodeVisible", self.save_toolpath, True, None),
                 ("ExportEMCToolDefinition", self.export_emc_tools, None, None),
                 ("Quit", self.destroy, None, "<Control>q"),
                 ("GeneralSettings", self.toggle_preferences_window, None, "<Control>p"),
@@ -3041,7 +3042,9 @@ class ProjectGui:
                     "%s (%d)" % (self._original_toolpath_tab_label, len(self.toolpath)))
             toolpath_tab.show()
         # enable/disable the export menu item
-        self.gui.get_object("ExportGCode").set_sensitive(len(self.toolpath) > 0)
+        self.gui.get_object("ExportGCodeAll").set_sensitive(len(self.toolpath) > 0)
+        visible_toolpaths = [tp for tp in self.toolpath if tp.visible]
+        self.gui.get_object("ExportGCodeVisible").set_sensitive(len(visible_toolpaths) > 0)
         # reset the model data and the selection
         if new_index is None:
             # keep the old selection - this may return "None" if nothing is selected
@@ -3556,7 +3559,7 @@ class ProjectGui:
             self.last_dirname = os.path.dirname(os.path.abspath(filename))
 
     @gui_activity_guard
-    def save_toolpath(self, widget=None, data=None):
+    def save_toolpath(self, widget=None, only_visible=False):
         if not self.toolpath:
             return
         if callable(widget):
@@ -3585,12 +3588,16 @@ class ProjectGui:
                     + "the material.") % (self.settings.get(
                     "gcode_safety_height"), self.settings.get("maxz")))
         try:
+            if only_visible:
+                export_toolpaths = [tp for tp in self.toolpath if tp.visible]
+            else:
+                export_toolpaths = self.toolpath
             destination = open(filename, "w")
             safety_height=self.settings.get("gcode_safety_height")
             meta_data = self.get_meta_data()
             machine_time = 0
             # calculate the machine time and store it in the GCode header
-            for tp in self.toolpath:
+            for tp in export_toolpaths:
                 machine_time += tp.get_machine_time(safety_height)
             all_info = meta_data + os.linesep \
                     + "Estimated machine time: %g minutes" % machine_time
@@ -3615,7 +3622,7 @@ class ProjectGui:
                 generator.set_path_mode(PATH_MODES["continuous"],
                         self.settings.get("gcode_motion_tolerance"),
                         naive_tolerance)
-            for tp in self.toolpath:
+            for tp in export_toolpaths:
                 settings = tp.get_toolpath_settings()
                 process = settings.get_process_settings()
                 tool = settings.get_tool_settings()
