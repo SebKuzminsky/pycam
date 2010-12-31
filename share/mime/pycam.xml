@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
+  <mime-type type="application/sla">
+    <comment>Stereo Lithographic Files (solid 3D models)</comment>
+    <magic priority="60">
+      <match type="string" offset="0" value="solid"/>
+    </magic>
+    <glob pattern="*.stl"/>
+  </mime-type>
+</mime-info>
+
