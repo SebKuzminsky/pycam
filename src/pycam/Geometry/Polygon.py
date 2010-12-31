@@ -79,6 +79,8 @@ class Polygon(TransformableContainer):
                     self._update_limits(line.p2)
                 else:
                     self.is_closed = True
+                # take care that the line_cache is flushed
+                self.reset_cache()
             else:
                 # the new Line can be added to the beginning of the polygon
                 if (len(self._points) > 1) \
@@ -90,6 +92,8 @@ class Polygon(TransformableContainer):
                     self._update_limits(line.p1)
                 else:
                     self.is_closed = True
+                # take care that the line_cache is flushed
+                self.reset_cache()
 
     def __len__(self):
         return len(self._points)

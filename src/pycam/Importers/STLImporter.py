@@ -145,7 +145,6 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None,
                 t = Triangle(p1, p3, p2)
             elif dotcross < 0:
                 if not normal_conflict_warning_seen:
-                    # TODO: use the line number here instead of its content
                     log.warn(("Inconsistent normal/vertices found in facet " \
                             + "definition %d of '%s'. Please validate the STL " \
                             + "file!") % (i, filename))

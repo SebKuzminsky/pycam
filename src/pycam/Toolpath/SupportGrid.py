@@ -164,8 +164,6 @@ def get_support_distributed(model, z_plane, average_distance,
     if hasattr(model, "get_polygons"):
         polygons = model.get_polygons()
     else:
-        # TODO: Solid models are not supported, yet - we need to get the
-        # maximum outline of the model.
         polygons = model.get_waterline_polygons(Plane(Point(0, 0, z_plane),
                 Vector(0, 0, 1)))
     bridge_positions = []

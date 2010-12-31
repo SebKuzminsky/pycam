@@ -78,9 +78,7 @@ class ODEBlocks:
         # for now we may only move from low x/y values to higher x/y values
         if (location_start.x > location_end.x) \
                 or (location_start.y > location_end.y):
-            swap = location_start
-            location_start = location_end
-            location_end = swap
+            location_start, location_end = location_end, location_start
         cutter_body = ode.Body(self.world)
         cutter_shape, cutter_position_func = self.cutter.get_shape("ODE")
         self.space.add(cutter_shape)

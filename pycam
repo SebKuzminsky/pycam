@@ -267,7 +267,6 @@ def execute(parser, opts, args, pycam):
                 "surface": ("DropCutter", "PathAccumulator"),
                 "engrave": ("EngraveCutter", "SimpleCutter"),
             }[opts.process_path_strategy]
-        # TODO: add the miling_style option
         tps.set_process_settings(path_generator, postprocessor,
                 opts.process_path_direction,
                 material_allowance=opts.process_material_allowance,
@@ -372,7 +371,6 @@ def execute(parser, opts, args, pycam):
                 handler, closer = get_output_handler(opts.export_gcode)
                 if handler is None:
                     return EXIT_CODES["write_output_failed"]
-                # TODO: change to the new gcode exporter
                 generator = pycam.Exporters.GCodeExporter.GCodeGenerator(
                         handler, metric_units = (opts.unit_size == "mm"),
                         safety_height=opts.safety_height,

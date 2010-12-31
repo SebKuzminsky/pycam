@@ -1734,8 +1734,7 @@ class ProjectGui:
                 if sorted_keys:
                     font_selector.set_active(0)
                 else:
-                    # TODO: show some warning - no fonts found
-                    pass
+                    log.warn("No single-line fonts found!")
                 font_selector.connect("changed",
                         self.update_font_dialog_preview)
                 font_selector.show()
