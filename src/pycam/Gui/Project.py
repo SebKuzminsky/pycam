@@ -3103,6 +3103,8 @@ class ProjectGui:
             self.add_to_recent_file_list(filename)
 
     def toggle_progress_bar(self, status):
+        # always hide the progress button - it will be enabled later
+        self.show_progress_button.hide()
         if status:
             self.menubar.set_sensitive(False)
             self.task_pane.set_sensitive(False)
@@ -3116,7 +3118,6 @@ class ProjectGui:
             self.progress_widget.hide()
             self.task_pane.set_sensitive(True)
             self.menubar.set_sensitive(True)
-            self.show_progress_button.hide()
 
     def disable_progress_cancel_button(self):
         """ mainly useful for non-interruptable operations (e.g. model
