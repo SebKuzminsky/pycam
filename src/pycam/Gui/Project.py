@@ -1135,7 +1135,7 @@ class ProjectGui:
             # not initialized
             pass
         else:
-            raise ValueError("Invalid grid type: %d" % grid_type)
+            log.error("Invalid grid type: %d" % grid_type)
         # show and hide all controls according to the current type
         for key, grid_types in controls.iteritems():
             obj = self.gui.get_object(key)
@@ -1654,7 +1654,7 @@ class ProjectGui:
                 strategy = one_strategy
                 break
         else:
-            raise ValueError("Invalid cutter selected")
+            raise ValueError("Invalid path strategy selected")
         if strategy == "SurfaceStrategy" \
                 and get_obj("GridDirectionXY").get_active():
             get_obj("GridDirectionX").set_active(True)
@@ -3456,7 +3456,7 @@ class ProjectGui:
         elif grid_type == GRID_TYPES["none"]:
             pass
         else:
-            raise ValueError("Invalid support grid type: %d" % grid_type)
+            log.error("Invalid support grid type: %d" % grid_type)
         
         # calculation backend: ODE / None
         if self.settings.get("enable_ode"):
