@@ -545,6 +545,7 @@ class ProjectGui:
         self.settings.add_item("support_grid_type",
                 support_grid_type_control.get_active,
                 support_grid_type_control.set_active)
+        self.settings.set("support_grid_type", GRID_TYPES["none"])
         grid_distance_x = self.gui.get_object("SupportGridDistanceX")
         grid_distance_x.connect("value-changed",
                 self.update_support_grid_controls)
