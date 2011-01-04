@@ -450,17 +450,17 @@ class ProjectGui:
         def set_autoload_task_file(filename):
             if filename:
                 autoload_enable.set_active(True)
-                autoload_box.set_visible(True)
+                autoload_box.show()
                 autoload_source.set_filename(filename)
             else:
                 autoload_enable.set_active(False)
-                autoload_box.set_visible(False)
+                autoload_box.hide()
                 autoload_source.unselect_all()
         def autoload_enable_switched(widget, box):
             if not widget.get_active():
                 set_autoload_task_file(None)
             else:
-                autoload_box.set_visible(True)
+                autoload_box.show()
         autoload_enable.connect("toggled", autoload_enable_switched,
                 autoload_box)
         self.settings.add_item("default_task_settings_file",
@@ -981,7 +981,7 @@ class ProjectGui:
             recent_files_menu.connect("item-activated",
                     self.load_recent_model_file)
         else:
-            self.gui.get_object("OpenRecentModel").set_visible(False)
+            self.gui.get_object("OpenRecentModel").hide()
         # load the menubar and connect functions to its items
         self.menubar = uimanager.get_widget("/MenuBar")
         window_box = self.gui.get_object("WindowBox")
