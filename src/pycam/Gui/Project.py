@@ -1873,8 +1873,6 @@ class ProjectGui:
     def add_log_message(self, title, message, record=None):
         timestamp = datetime.datetime.fromtimestamp(
                 record.created).strftime("%H:%M")
-        # use only the first line (linebreak don't look pretty there)
-        message = message.split(os.linesep, 1)[0]
         try:
             message = message.encode("utf-8")
         except UnicodeDecodeError:

@@ -125,7 +125,8 @@ class GTKHandler(logging.Handler):
             message_type = gtk.MESSAGE_ERROR
             message_title = "Error"
         window = gtk.MessageDialog(self.parent_window, type=message_type,
-                buttons=gtk.BUTTONS_OK, message_format=str(message))
+                buttons=gtk.BUTTONS_OK)
+        window.set_markup(str(message))
         try:
             message_title = message_title.encode("utf-8")
         except UnicodeDecodeError:
