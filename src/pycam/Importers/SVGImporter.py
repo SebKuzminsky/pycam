@@ -55,7 +55,7 @@ def convert_eps2dxf(eps_filename, dxf_filename, location=None):
         process = subprocess.Popen(stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 args = [location,
-                        "-dt",
+                        "-dt", "-nc",
                         "-f", "dxf:-polyaslines",
                         eps_filename, dxf_filename])
     except OSError, err_msg:
