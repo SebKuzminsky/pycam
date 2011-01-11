@@ -63,6 +63,7 @@ DATA_DIR_ENVIRON_KEY = "PYCAM_DATA_DIR"
 FONT_DIR_ENVIRON_KEY = "PYCAM_FONT_DIR"
 DATA_BASE_DIRS = [os.path.realpath(os.path.join(os.path.dirname(__file__),
             os.pardir, os.pardir, os.pardir, "share")),
+        os.path.join(sys.prefix, "local", "share", "pycam"),
         os.path.join(sys.prefix, "share", "pycam")]
 UI_SUBDIR = "ui"
 FONTS_SUBDIR = "fonts"
