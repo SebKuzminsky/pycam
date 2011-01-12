@@ -10,6 +10,7 @@ Version 0.4.1 - UNRELEASED
  * added 2D projection of 3D models
  * added support for DXF feature "LWPOLYLINE"
  * added a configuration setting for automatically loading a custom task settings file on startup
+ * added a simple "undo" feature for reversing model manipulations
  * the default filename extension for exported GCode files is now configurable
  * unify DropCutter behaviour for models that are higher than the defined bounding box
   * always move up to safety height in this case

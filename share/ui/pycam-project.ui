@@ -7807,6 +7807,14 @@ Please read the description of the Server Mode (linked below) to understand the 
   <object class="GtkAction" id="ExtrasMenu">
     <property name="label">E_xtras</property>
   </object>
+  <object class="GtkAction" id="EditMenu">
+    <property name="label">_Edit</property>
+  </object>
+  <object class="GtkAction" id="UndoButton">
+    <property name="label">Undo latest model change</property>
+    <property name="stock_id">gtk-undo</property>
+    <property name="always_show_image">True</property>
+  </object>
   <object class="GtkAdjustment" id="FontCharacterSpacingValue">
     <property name="value">1</property>
     <property name="lower">-1</property>

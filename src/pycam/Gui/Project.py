@@ -52,6 +52,8 @@ import webbrowser
 import ConfigParser
 import urllib
 import string
+import StringIO
+import pickle
 import time
 import logging
 import datetime
@@ -137,6 +139,7 @@ user's home directory on startup/shutdown"""
 
 GRID_TYPES = {"none": 0, "grid": 1, "automatic": 2}
 POCKETING_TYPES = ["none", "holes", "enclosed"]
+MAX_UNDO_STATES = 10
 
 # floating point color values are only available since gtk 2.16
 GTK_COLOR_MAX = 65535.0
@@ -270,6 +273,7 @@ class ProjectGui:
         self._progress_running = False
         self._progress_cancel_requested = False
         self._last_gtk_events_time = None
+        self._undo_states = []
         self.gui = gtk.Builder()
         gtk_build_file = get_data_file_location(GTKBUILD_FILE)
         if gtk_build_file is None:
@@ -309,6 +313,7 @@ class ProjectGui:
                 ("ToggleLogWindow", self.toggle_log_window, None, "<Control>l"),
                 ("ToggleProcessPoolWindow", self.toggle_process_pool_window, None, None),
                 ("ShowFontDialog", self.toggle_font_dialog_window, None, "<Control><Shift>t"),
+                ("UndoButton", self._restore_undo_state, None, "<Control>z"),
                 ("HelpUserManual", self.show_help, "User_Manual", "F1"),
                 ("HelpIntroduction", self.show_help, "Introduction", None),
                 ("HelpSupportedFormats", self.show_help, "SupportedFormats", None),
@@ -340,6 +345,8 @@ class ProjectGui:
                 accel_path = "<pycam>/%s" % objname
                 item.set_accel_path(accel_path)
                 gtk.accel_map_change_entry(accel_path, key, mod, True)
+        # no undo is allowed at the beginning
+        self.gui.get_object("UndoButton").set_sensitive(False)
         # other events
         self.window.connect("destroy", self.destroy)
         # the settings window
@@ -1082,6 +1089,27 @@ class ProjectGui:
                 batch_func(*batch_args, **batch_kwargs)
             return result
         return gui_activity_guard_wrapper
+
+    def _store_undo_state(self):
+        # for now we only store the model
+        if not self.model:
+            return
+        log.debug("Storing the current state of the model for undo")
+        self._undo_states.append(pickle.dumps(self.model))
+        while len(self._undo_states) > MAX_UNDO_STATES:
+            self._undo_states.pop(0)
+        self.gui.get_object("UndoButton").set_sensitive(True)
+
+    def _restore_undo_state(self, widget=None, event=None):
+        if len(self._undo_states) > 0:
+            latest = StringIO.StringIO(self._undo_states.pop(-1))
+            log.info("Restoring the previous state of the model")
+            self.model = pickle.Unpickler(latest).load()
+            self.gui.get_object("UndoButton").set_sensitive(
+                    len(self._undo_states) > 0)
+            self._update_all_model_attributes()
+        else:
+            log.info("No previous undo state available - ignoring request")
 
     def show_help(self, widget=None, page="Main_Page"):
         if not page.startswith("http"):
@@ -2045,6 +2073,7 @@ class ProjectGui:
             return
         for obj, value in controls:
             if self.gui.get_object(obj).get_active():
+                self._store_undo_state()
                 self.disable_progress_cancel_button()
                 self.update_progress_bar("Transforming model")
                 self.model.transform_by_template(value,
@@ -2293,6 +2322,7 @@ class ProjectGui:
                     # transform the model if it is selected
                     # keep the original center of the model
                     old_center = self._get_model_center()
+                    self._store_undo_state()
                     self.model.scale(factor)
                     self._set_model_center(old_center)
                 if self.gui.get_object("UnitChangeProcesses").get_active():
@@ -2482,6 +2512,7 @@ class ProjectGui:
             shift_x = -self.model.minx
             shift_y = -self.model.miny
             shift_z = -self.model.minz
+        self._store_undo_state()
         self.update_progress_bar("Shifting model")
         self.disable_progress_cancel_button()
         self.model.shift(shift_x, shift_y, shift_z,
@@ -2501,6 +2532,7 @@ class ProjectGui:
         new_x, new_y, new_z = center
         old_x, old_y, old_z = self._get_model_center()
         self.update_progress_bar("Centering model")
+        # undo state should be stored in the caller function
         self.model.shift(new_x - old_x, new_y - old_y, new_z - old_z,
                 callback=self.update_progress_bar)
 
@@ -2531,6 +2563,7 @@ class ProjectGui:
         if (factor <= 0) or (factor == 1):
             return
         old_center = self._get_model_center()
+        self._store_undo_state()
         self.update_progress_bar("Scaling model")
         self.disable_progress_cancel_button()
         self.model.scale(factor, callback=self.update_progress_bar)
@@ -2563,6 +2596,7 @@ class ProjectGui:
         if (self.model is None) \
                 or not hasattr(self.model, "reverse_directions"):
             return
+        self._store_undo_state()
         self.update_progress_bar(text="Reversing directions of contour model")
         progress_callback = pycam.Utils.ProgressCounter(
                 len(self.model.get_polygons()),
@@ -2581,6 +2615,7 @@ class ProjectGui:
         factor = value / (getattr(self.model, "max" + axis_suffix) - getattr(self.model, "min" + axis_suffix))
         # store the original center of the model
         old_center = self._get_model_center()
+        self._store_undo_state()
         self.update_progress_bar("Scaling model")
         self.disable_progress_cancel_button()
         if proportionally:
@@ -2715,16 +2750,20 @@ class ProjectGui:
             self.add_to_recent_file_list(filename)
         self.update_save_actions()
 
+    def _update_all_model_attributes(self):
+        self.append_to_queue(self.update_scale_controls)
+        self.append_to_queue(self.update_model_type_related_controls)
+        self.append_to_queue(self.update_support_grid_controls)
+        self.append_to_queue(self.toggle_3d_view, value=True)
+        self.append_to_queue(self.update_view)
+
     def load_model(self, model):
         # load the new model only if the import worked
         if not model is None:
+            self._store_undo_state()
             self.model = model
             # do some initialization
-            self.append_to_queue(self.update_scale_controls)
-            self.append_to_queue(self.update_model_type_related_controls)
-            self.append_to_queue(self.update_support_grid_controls)
-            self.append_to_queue(self.toggle_3d_view, value=True)
-            self.append_to_queue(self.update_view)
+            self._update_all_model_attributes()
             return True
         else:
             return False

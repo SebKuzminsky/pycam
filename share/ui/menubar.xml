@@ -11,6 +11,9 @@
       <separator />
       <menuitem action="Quit"/>
     </menu>
+    <menu action="EditMenu">
+      <menuitem action="UndoButton"/>
+    </menu>
     <menu action="SettingsMenu">
       <menuitem action="LoadTaskSettings"/>
       <menuitem action="SaveTaskSettings"/>
