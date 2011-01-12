@@ -972,6 +972,7 @@ This can be useful if the imported model is technically broken (sometimes this h
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
+                                    <property name="tooltip_text" translatable="yes">Scale the model by a factor of 25.4.</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -984,10 +985,25 @@ This can be useful if the imported model is technically broken (sometimes this h
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
+                                    <property name="tooltip_text" translatable="yes">Scale the model by a divider of 25.4.</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
                                     <property name="position">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="Projection2D">
+                                    <property name="label" translatable="yes">2D Projection</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="tooltip_text" translatable="yes">Reduce the 3D model down to a 2D projection.
+The projection plane is usually at z=0. Only in case of models completely above or below zero the bottom of the model is used instead.</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="position">3</property>
                                   </packing>
                                 </child>
                               </object>

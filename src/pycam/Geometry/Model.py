@@ -239,7 +239,7 @@ class Model(BaseModel):
             return self._t_kdtree.Search(minx, maxx, miny, maxy)
         return self._triangles
 
-    def get_waterline_polygons(self, plane):
+    def get_waterline_contour(self, plane):
         collision_lines = []
         for t in self._triangles:
             collision_line = plane.intersect_triangle(t, counter_clockwise=True)
@@ -252,7 +252,7 @@ class Model(BaseModel):
         log.debug("Waterline: %f - %d - %s" % (plane.p.z,
                 len(contour.get_polygons()),
                 [len(p.get_lines()) for p in contour.get_polygons()]))
-        return contour.get_polygons()
+        return contour
 
     def get_flat_areas(self, min_area=None):
         """ Find plane areas (combinations of triangles) bigger than 'min_area'

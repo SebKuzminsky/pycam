@@ -7,6 +7,7 @@ Version 0.4.1 - UNRELEASED
  * visualize movements up to safety height properly
  * changed "simulation mode" for visualizing the machine moves
  * added a very simple "pocketing" mode for 2D models
+ * added 2D projection of 3D models
  * added support for DXF feature "LWPOLYLINE"
  * added a configuration setting for automatically loading a custom task settings file on startup
  * the default filename extension for exported GCode files is now configurable

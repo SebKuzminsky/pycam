@@ -30,6 +30,8 @@ import pycam.Toolpath.Generator
 import pycam.Toolpath
 import pycam.Importers.CXFImporter
 import pycam.Importers
+from pycam.Geometry.Point import Point, Vector
+from pycam.Geometry.Plane import Plane
 import pycam.Utils.log
 import pycam.Utils
 from pycam.Geometry.utils import sqrt
@@ -535,9 +537,11 @@ class ProjectGui:
         self.gui.get_object("ToggleModelDirectionButton").connect("clicked",
                 self.reverse_model_direction)
         self.gui.get_object("ScaleInchMM").connect("clicked", self.scale_model,
-                100 / 25.4)
-        self.gui.get_object("ScaleMMInch").connect("clicked", self.scale_model,
                 100 * 25.4)
+        self.gui.get_object("ScaleMMInch").connect("clicked", self.scale_model,
+                100 / 25.4)
+        self.gui.get_object("Projection2D").connect("clicked",
+                self.projection_2d)
         # support grid
         support_grid_type_control = self.gui.get_object(
                 "SupportGridTypesControl")
@@ -1031,6 +1035,9 @@ class ProjectGui:
                 and hasattr(self.model, "reverse_directions")
         self.gui.get_object("ToggleModelDirectionButton").set_sensitive(
                 is_reversible)
+        is_projectable = (not self.model is None) \
+                and hasattr(self.model, "get_waterline_contour")
+        self.gui.get_object("Projection2D").set_sensitive(is_projectable)
 
     def update_gcode_controls(self, widget=None):
         path_mode = self.settings.get("gcode_path_mode")
@@ -2496,6 +2503,24 @@ class ProjectGui:
         self.update_progress_bar("Centering model")
         self.model.shift(new_x - old_x, new_y - old_y, new_z - old_z,
                 callback=self.update_progress_bar)
+
+    @progress_activity_guard
+    @gui_activity_guard
+    def projection_2d(self, widget=None):
+        self.update_progress_bar("Calculating 2D projection")
+        # determine projection plane
+        if (self.model.maxz < 0) or (self.model.minz > 0):
+            # completely above or below zero
+            plane_z = self.model.minz
+        else:
+            plane_z = 0
+        plane = Plane(Point(0, 0, plane_z), Vector(0, 0, 1))
+        log.info("Projecting 3D model at level z=%g" % plane_z)
+        projection = self.model.get_waterline_contour(plane)
+        if projection.get_num_of_lines() > 0:
+            self.load_model(projection)
+        else:
+            log.warn("The 2D projection at z=%g is empty. Aborted." % plane_z)
 
     @progress_activity_guard
     @gui_activity_guard
