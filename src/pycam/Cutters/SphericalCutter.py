@@ -234,8 +234,6 @@ class SphericalCutter(BaseCutter):
             d = d_e3
             cl = cl_e3
             cp = cp_e3
-        if cl and (direction.x == 0) and (direction.y == 0):
-            return (cl, d, cp)
         (cl_p1, d_p1, cp_p1) = self.intersect_sphere_vertex(direction,
                 triangle.p1, start=start)
         (cl_p2, d_p2, cp_p2) = self.intersect_sphere_vertex(direction,
