@@ -829,6 +829,7 @@ class ProjectGui:
         self.gui.get_object("toolpath_down").connect("clicked", self.toolpath_table_event, "move_down")
         self.gui.get_object("toolpath_delete").connect("clicked", self.toolpath_table_event, "delete")
         self.gui.get_object("toolpath_simulate").connect("clicked", self.toolpath_table_event, "simulate")
+        self.gui.get_object("toolpath_crop").connect("clicked", self.toolpath_table_event, "crop")
         self.gui.get_object("ExitSimulationButton").connect("clicked", self.finish_toolpath_simulation)
         speed_factor_widget = self.gui.get_object("SimulationSpeedFactor")
         self.settings.add_item("simulation_speed_factor",
@@ -1094,8 +1095,8 @@ class ProjectGui:
         # for now we only store the model
         if not self.model:
             return
-        log.debug("Storing the current state of the model for undo")
         self._undo_states.append(pickle.dumps(self.model))
+        log.debug("Stored the current state of the model for undo")
         while len(self._undo_states) > MAX_UNDO_STATES:
             self._undo_states.pop(0)
         self.gui.get_object("UndoButton").set_sensitive(True)
@@ -1103,13 +1104,13 @@ class ProjectGui:
     def _restore_undo_state(self, widget=None, event=None):
         if len(self._undo_states) > 0:
             latest = StringIO.StringIO(self._undo_states.pop(-1))
-            log.info("Restoring the previous state of the model")
             self.model = pickle.Unpickler(latest).load()
             self.gui.get_object("UndoButton").set_sensitive(
                     len(self._undo_states) > 0)
+            log.info("Restored the previous state of the model")
             self._update_all_model_attributes()
         else:
-            log.info("No previous undo state available - ignoring request")
+            log.info("No previous undo state available - request ignored")
 
     def show_help(self, widget=None, page="Main_Page"):
         if not page.startswith("http"):
@@ -2536,23 +2537,27 @@ class ProjectGui:
         self.model.shift(new_x - old_x, new_y - old_y, new_z - old_z,
                 callback=self.update_progress_bar)
 
-    @progress_activity_guard
-    @gui_activity_guard
-    def projection_2d(self, widget=None):
-        self.update_progress_bar("Calculating 2D projection")
+
+    def _get_projection_plane(self):
         # determine projection plane
         if (self.model.maxz < 0) or (self.model.minz > 0):
             # completely above or below zero
             plane_z = self.model.minz
         else:
             plane_z = 0
-        plane = Plane(Point(0, 0, plane_z), Vector(0, 0, 1))
-        log.info("Projecting 3D model at level z=%g" % plane_z)
+        return Plane(Point(0, 0, plane_z), Vector(0, 0, 1))
+
+    @progress_activity_guard
+    @gui_activity_guard
+    def projection_2d(self, widget=None):
+        self.update_progress_bar("Calculating 2D projection")
+        plane = self._get_projection_plane()
+        log.info("Projecting 3D model at level z=%g" % plane.p.z)
         projection = self.model.get_waterline_contour(plane)
         if projection.get_num_of_lines() > 0:
             self.load_model(projection)
         else:
-            log.warn("The 2D projection at z=%g is empty. Aborted." % plane_z)
+            log.warn("The 2D projection at z=%g is empty. Aborted." % plane.p.z)
 
     @progress_activity_guard
     @gui_activity_guard
@@ -3089,11 +3094,35 @@ class ProjectGui:
             index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
             if not index is None:
                 self.show_toolpath_simulation(self.toolpath[index])
-        self._treeview_button_event(self.toolpath_table, self.toolpath, action, self.update_toolpath_table)
+        elif action == "crop":
+            index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
+            if not index is None:
+                self.crop_toolpath(self.toolpath[index])
+        # process the default operations (move, delete)
+        self._treeview_button_event(self.toolpath_table, self.toolpath, action,
+                self.update_toolpath_table)
         # do some post-processing ...
-        if action == "delete":
+        if action in ("delete", "crop"):
             # hide the deleted toolpath immediately
             self.update_view()
+
+    @progress_activity_guard
+    def crop_toolpath(self, tp):
+        if hasattr(self.model, "get_polygons"):
+            contour = self.model
+        elif hasattr(self.model, "get_waterline_contour"):
+            plane = self._get_projection_plane()
+            self.update_progress_bar("Calculating the 2D projection")
+            contour = self.model.get_waterline_contour(plane)
+        else:
+            log.warn(("The current model (%s) does not support " \
+                    + "projections") % str(type(self.model)))
+            return
+        self.update_progress_bar("Applying the tool diameter offset")
+        offset_model = contour.get_offset_model(
+                2 * tp.get_tool_settings()["tool_radius"])
+        self.update_progress_bar("Cropping the toolpath")
+        tp.crop(offset_model.get_polygons(), callback=self.update_progress_bar)
 
     def update_toolpath_table(self, new_index=None, skip_model_update=False):
         def get_time_string(minutes):
@@ -3142,6 +3171,7 @@ class ProjectGui:
         self.gui.get_object("toolpath_delete").set_sensitive(not new_index is None)
         self.gui.get_object("toolpath_down").set_sensitive((not new_index is None) and (new_index + 1 < len(self.toolpath)))
         self.gui.get_object("toolpath_simulate").set_sensitive(not new_index is None)
+        self.gui.get_object("toolpath_crop").set_sensitive(not new_index is None)
 
     @gui_activity_guard
     def save_task_settings_file(self, widget=None, filename=None):

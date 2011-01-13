@@ -4282,17 +4282,32 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                     <property name="spacing">2</property>
                                     <child>
                                       <object class="GtkButton" id="toolpath_simulate">
-                                        <property name="label" translatable="yes">Simulation
-(experimental)</property>
+                                        <property name="label" translatable="yes">Simulate</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
                                         <property name="tooltip_text" translatable="yes">Show a simple simulation of the generated toolpath.</property>
                                         <property name="image">ShowToolPathSimulation</property>
+                                        <property name="xalign">0</property>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
                                         <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="toolpath_crop">
+                                        <property name="label" translatable="yes">Crop</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <property name="tooltip_text" translatable="yes">Crop the selected toolpath to the current 2D model (or alternatively the 2D projection of the current 3D model) with a positive offset of the tool diameter. </property>
+                                        <property name="image">CropToolpath</property>
+                                        <property name="xalign">0</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="position">1</property>
                                       </packing>
                                     </child>
                                     <child>
@@ -4306,7 +4321,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
-                                        <property name="position">1</property>
+                                        <property name="position">2</property>
                                       </packing>
                                     </child>
                                     <child>
@@ -4320,7 +4335,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
-                                        <property name="position">2</property>
+                                        <property name="position">3</property>
                                       </packing>
                                     </child>
                                     <child>
@@ -4334,7 +4349,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
-                                        <property name="position">3</property>
+                                        <property name="position">4</property>
                                       </packing>
                                     </child>
                                   </object>
@@ -8018,5 +8033,9 @@ upon interesting bugs and weird results.</property>
   <object class="GtkAdjustment" id="SimulationProgressTimelineValue">
     <property name="upper">100</property>
     <property name="step_increment">1</property>
+  </object>
+  <object class="GtkImage" id="CropToolpath">
+    <property name="visible">True</property>
+    <property name="stock">gtk-zoom-fit</property>
   </object>
 </interface>

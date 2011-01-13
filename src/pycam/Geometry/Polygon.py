@@ -1067,3 +1067,30 @@ class Polygon(TransformableContainer):
             result.append(poly)
         return result
 
+    def split_line(self, line):
+        outer = []
+        inner = []
+        # project the line onto the polygon's plane
+        proj_line = self.plane.get_line_projection(line)
+        intersections = []
+        for pline in self.get_lines():
+            cp, d = proj_line.get_intersection(pline)
+            if cp:
+                intersections.append((cp, d))
+        # sort the intersections
+        intersections.sort(key=lambda (cp, d): d)
+        intersections.insert(0, (proj_line.p1, 0))
+        intersections.append((proj_line.p2, 1))
+        get_original_point = lambda d: line.p1.add(line.vector.mul(d))
+        for index in range(len(intersections) - 1):
+            p1, d1 = intersections[index]
+            p2, d2 = intersections[index + 1]
+            if p1 != p2:
+                middle = p1.add(p2).div(2)
+                new_line = Line(get_original_point(d1), get_original_point(d2))
+                if self.is_point_inside(middle):
+                    inner.append(new_line)
+                else:
+                    outer.append(new_line)
+        return (inner, outer)
+

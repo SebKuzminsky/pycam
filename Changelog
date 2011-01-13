@@ -8,6 +8,7 @@ Version 0.4.1 - UNRELEASED
  * changed "simulation mode" for visualizing the machine moves
  * added a very simple "pocketing" mode for 2D models
  * added 2D projection of 3D models
+ * added toolpath cropping 
  * added support for DXF feature "LWPOLYLINE"
  * added a configuration setting for automatically loading a custom task settings file on startup
  * added a simple "undo" feature for reversing model manipulations

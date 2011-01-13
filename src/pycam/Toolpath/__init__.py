@@ -23,6 +23,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 __all__ = ["simplify_toolpath", "ToolpathList", "Toolpath", "Generator"]
 
 from pycam.Geometry.Point import Point
+from pycam.Geometry.Path import Path
+from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import number, epsilon
 import pycam.Utils.log
 import random
@@ -204,6 +206,52 @@ class Toolpath(object):
                 result += new_pos.sub(current_position).norm
             current_position = new_pos
         return result
+
+    def crop(self, polygons, callback=None):
+        # collect all existing toolpath lines
+        open_lines = []
+        for path in self.toolpath:
+            if path:
+                for index in range(len(path.points) - 1):
+                    open_lines.append(Line(path.points[index], path.points[index + 1]))
+        # go through all polygons and add "inner" lines (or parts thereof) to
+        # the final list of remaining lines
+        inner_lines = []
+        for polygon in polygons:
+            new_open_lines = []
+            for line in open_lines:
+                if callback and callback():
+                    return
+                inner, outer = polygon.split_line(line)
+                inner_lines.extend(inner)
+                new_open_lines.extend(outer)
+            open_lines = new_open_lines
+        # turn all "inner_lines" into toolpath movements
+        new_paths = []
+        current_path = Path()
+        if inner_lines:
+            line = inner_lines.pop(0)
+            current_path.append(line.p1)
+            current_path.append(line.p2)
+        while inner_lines:
+            if callback and callback():
+                return
+            end = current_path.points[-1]
+            # look for the next connected point
+            for line in inner_lines:
+                if line.p1 == end:
+                    inner_lines.remove(line)
+                    current_path.append(line.p2)
+                    break
+            else:
+                new_paths.append(current_path)
+                current_path = Path()
+                line = inner_lines.pop(0)
+                current_path.append(line.p1)
+                current_path.append(line.p2)
+        if current_path.points:
+            new_paths.append(current_path)
+        self.toolpath = new_paths
 
 
 class Bounds:
