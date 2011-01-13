@@ -3114,15 +3114,15 @@ class ProjectGui:
             plane = self._get_projection_plane()
             self.update_progress_bar("Calculating the 2D projection")
             contour = self.model.get_waterline_contour(plane)
+            self.update_progress_bar("Applying the tool diameter offset")
+            contour = contour.get_offset_model(
+                    2 * tp.get_tool_settings()["tool_radius"])
         else:
             log.warn(("The current model (%s) does not support " \
                     + "projections") % str(type(self.model)))
             return
-        self.update_progress_bar("Applying the tool diameter offset")
-        offset_model = contour.get_offset_model(
-                2 * tp.get_tool_settings()["tool_radius"])
         self.update_progress_bar("Cropping the toolpath")
-        tp.crop(offset_model.get_polygons(), callback=self.update_progress_bar)
+        tp.crop(contour.get_polygons(), callback=self.update_progress_bar)
 
     def update_toolpath_table(self, new_index=None, skip_model_update=False):
         def get_time_string(minutes):

@@ -4301,7 +4301,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
-                                        <property name="tooltip_text" translatable="yes">Crop the selected toolpath to the current 2D model (or alternatively the 2D projection of the current 3D model) with a positive offset of the tool diameter. </property>
+                                        <property name="tooltip_text" translatable="yes">Crop the selected toolpath to the current 2D model (or alternatively the 2D projection of the current 3D model). A positive offset of the tool diameter is added to the outline polygons in case of using a contour derived from a 3D model.</property>
                                         <property name="image">CropToolpath</property>
                                         <property name="xalign">0</property>
                                       </object>
