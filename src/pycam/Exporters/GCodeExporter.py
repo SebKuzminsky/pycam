@@ -122,7 +122,7 @@ class GCodeGenerator:
                 or NewPosition.z - OldPosition.z >= ResLimitZ \
                 or NewPosition.z - OldPosition.z <= -ResLimitZ:
                     self.append(self.gcode.cut(pos.x, pos.y, pos.z))
-            OldPosition = pos
+                    OldPosition = pos
         # go back to safety height
         self.append(self.gcode.safety())
         if self.toggle_spindle_status:
