@@ -37,7 +37,8 @@ PATH_MODES = {"exact_path": 0, "exact_stop": 1, "continuous": 2}
 class GCodeGenerator:
 
     def __init__(self, destination, metric_units=True, safety_height=0.0,
-            toggle_spindle_status=False, header=None, comment=None):
+            toggle_spindle_status=False, header=None, comment=None,
+            minimum_step=0.0):
         if isinstance(destination, basestring):
             # open the file
             self.destination = file(destination,"w")
@@ -52,6 +53,7 @@ class GCodeGenerator:
         self.gcode = gcode(safetyheight=self.safety_height)
         self.toggle_spindle_status = toggle_spindle_status
         self.comment = comment
+        self._minimum_step = minimum_step
         self._finished = False
         if comment:
             self.add_comment(comment)
@@ -66,9 +68,9 @@ class GCodeGenerator:
 
     def set_speed(self, feedrate=None, spindle_speed=None):
         if not feedrate is None:
-            self.append("F%.4f" % feedrate)
+            self.append("F%.5f" % feedrate)
         if not spindle_speed is None:
-            self.append("S%.4f" % spindle_speed)
+            self.append("S%.5f" % spindle_speed)
 
     def set_path_mode(self, mode, motion_tolerance=None,
             naive_cam_tolerance=None):
@@ -103,9 +105,9 @@ class GCodeGenerator:
             self.append(self.gcode.delay(2))
         # At minimum this will stop the duplicate gcode
         # And this is a place holder for when the GUI is linked
-        ResLimitX = 0.0001
-        ResLimitY = 0.0001
-        ResLimitZ = 0.0001
+        ResLimitX = self._minimum_step
+        ResLimitY = self._minimum_step
+        ResLimitZ = self._minimum_step
         OldPosition = None
         for pos, rapid in moves:
             if OldPosition == None:

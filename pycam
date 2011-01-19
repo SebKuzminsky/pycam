@@ -375,7 +375,8 @@ def execute(parser, opts, args, pycam):
                 generator = pycam.Exporters.GCodeExporter.GCodeGenerator(
                         handler, metric_units = (opts.unit_size == "mm"),
                         safety_height=opts.safety_height,
-                        toggle_spindle_status=opts.gcode_no_start_stop_spindle)
+                        toggle_spindle_status=opts.gcode_no_start_stop_spindle,
+                        minimum_step=opts.gcode_minimum_step)
                 generator.set_speed(opts.tool_feedrate, opts.tool_spindle_speed)
                 path_mode = opts.gcode_path_mode
                 PATH_MODES = pycam.Exporters.GCodeExporter.PATH_MODES
@@ -612,12 +613,19 @@ if __name__ == "__main__":
             dest="gcode_no_start_stop_spindle", default=True,
             action="store_false", help="do not start the spindle before " \
             + "and stop it after each operation (M3/M5)")
+    group_gcode.add_option("", "--gcode-minimum-step",
+            dest="gcode_minimum_step", default=0.0,
+            type="float", action="store", help="mimimum axial distance " \
+            + "between two machine positions. Any shorter move is not " \
+            + "written to GCode (default: 0.0).")
     group_gcode.add_option("", "--gcode-path-mode", dest="gcode_path_mode",
             default="exact_path", action="store", type="choice",
             choices=["exact_path", "exact_stop", "continuous"],
-            help="choose the GCode path mode from 'exact_path', 'exact_stop'" \
-            + "and 'continuous'. See " \
-            + "http://linuxcnc.org/docs/html/gcode_main.html for details")
+            help="choose the GCode path mode from 'exact_path', 'exact_stop' " \
+            + "and 'continuous'. Use '--gcode-motion-tolerance' and " \
+            + "and '--gcode-naive-tolerance' if you want to limit the " \
+            + "deviation. See http://linuxcnc.org/docs/html/gcode_main.html " \
+            + "(G61) for details.")
     group_gcode.add_option("", "--gcode-motion-tolerance",
             dest="gcode_motion_tolerance", default=None,
             action="store", help="the optional motion tolerance for " \
