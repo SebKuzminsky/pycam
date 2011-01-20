@@ -7595,7 +7595,7 @@ Please read the description of the Server Mode (linked below) to understand the 
         <child>
           <object class="GtkHBox" id="hbox33">
             <property name="visible">True</property>
-            <property name="spacing">2</property>
+            <property name="spacing">3</property>
             <child>
               <object class="GtkLabel" id="FontAuthorLabel">
                 <property name="visible">True</property>
@@ -7620,6 +7620,9 @@ Please read the description of the Server Mode (linked below) to understand the 
             </child>
           </object>
           <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="padding">5</property>
             <property name="position">2</property>
           </packing>
         </child>
@@ -7631,7 +7634,48 @@ Please read the description of the Server Mode (linked below) to understand the 
             <property name="use_markup">True</property>
           </object>
           <packing>
+            <property name="expand">False</property>
             <property name="position">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkHBox" id="hbox28">
+            <property name="visible">True</property>
+            <property name="spacing">3</property>
+            <child>
+              <object class="GtkLabel" id="FontExamplesLinkLabel">
+                <property name="visible">True</property>
+                <property name="xalign">0</property>
+                <property name="label" translatable="yes">Rendered overview of all fonts:</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLinkButton" id="FontExamplesLink">
+                <property name="label">gtk-index</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="has_tooltip">True</property>
+                <property name="relief">none</property>
+                <property name="use_stock">True</property>
+                <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=EngraveFonts</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">4</property>
           </packing>
         </child>
         <child>
@@ -7641,7 +7685,7 @@ Please read the description of the Server Mode (linked below) to understand the 
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
-            <property name="position">4</property>
+            <property name="position">5</property>
           </packing>
         </child>
         <child>
@@ -7724,7 +7768,7 @@ Please read the description of the Server Mode (linked below) to understand the 
           </object>
           <packing>
             <property name="expand">False</property>
-            <property name="position">5</property>
+            <property name="position">6</property>
           </packing>
         </child>
         <child>
@@ -7746,7 +7790,7 @@ Please read the description of the Server Mode (linked below) to understand the 
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
-            <property name="position">6</property>
+            <property name="position">7</property>
           </packing>
         </child>
         <child>
@@ -7756,7 +7800,7 @@ Please read the description of the Server Mode (linked below) to understand the 
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
-            <property name="position">7</property>
+            <property name="position">8</property>
           </packing>
         </child>
         <child>
@@ -7769,7 +7813,7 @@ Please read the description of the Server Mode (linked below) to understand the 
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
-            <property name="position">8</property>
+            <property name="position">9</property>
           </packing>
         </child>
         <child>
@@ -7786,7 +7830,7 @@ Please read the description of the Server Mode (linked below) to understand the 
             </child>
           </object>
           <packing>
-            <property name="position">9</property>
+            <property name="position">10</property>
           </packing>
         </child>
         <child internal-child="action_area">
@@ -7838,7 +7882,7 @@ Please read the description of the Server Mode (linked below) to understand the 
           <packing>
             <property name="expand">False</property>
             <property name="pack_type">end</property>
-            <property name="position">10</property>
+            <property name="position">11</property>
           </packing>
         </child>
       </object>
@@ -8081,6 +8125,6 @@ upon interesting bugs and weird results.</property>
   </object>
   <object class="GtkAdjustment" id="GCodeMinimumStepValue">
     <property name="upper">100</property>
-    <property name="step_increment">5.0000000000000004e-05</property>
+    <property name="step_increment">5.0000000000000002e-05</property>
   </object>
 </interface>

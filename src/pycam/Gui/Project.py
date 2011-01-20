@@ -1854,24 +1854,36 @@ class ProjectGui:
                 0, 0, width, height)
         # carefully check if there are lines in the rendered text
         if text_model and (not text_model.maxx is None):
-            x_fac = (width - 1) / (text_model.maxx - text_model.minx)
-            y_fac = (height - 1) / (text_model.maxy - text_model.miny)
+            # leave a small border around the preview
+            border = 3
+            x_fac = (width - 1 - 2 * border) / \
+                    (text_model.maxx - text_model.minx)
+            y_fac = (height - 1 - 2 * border) / \
+                    (text_model.maxy - text_model.miny)
             factor = min(x_fac, y_fac)
+            # vertically centered preview
+            y_offset = int((height - 2 * border - \
+                    factor * (text_model.maxy - text_model.miny)) // 2)
             gc = drawing_area.new_gc()
             if text_model.minx == 0:
                 # left align
-                get_virtual_x = lambda x: int(x * factor)
+                get_virtual_x = lambda x: int(x * factor) + border
             elif text_model.maxx == 0:
                 # right align
-                get_virtual_x = lambda x: width + int(x * factor) - 1
+                get_virtual_x = lambda x: width + int(x * factor) - 1 - border
             else:
                 # center align
-                get_virtual_x = lambda x: int(width / 2.0 + x * factor) - 1
-            get_virtual_y = lambda y: \
-                    height - int((y - text_model.miny) * factor) - 1
+                get_virtual_x = lambda x: \
+                        int(width / 2.0 + x * factor) - 1 - border
+            get_virtual_y = lambda y: -y_offset + \
+                    height - int((y - text_model.miny) * factor) - 1 - border
             for polygon in text_model.get_polygons():
                 draw_points = []
-                for point in polygon.get_points():
+                points = polygon.get_points()
+                if polygon.is_closed:
+                    # add the first point again to close the polygon
+                    points.append(points[0])
+                for point in points:
                     x = get_virtual_x(point.x)
                     y = get_virtual_y(point.y)
                     draw_points.append((x, y))
