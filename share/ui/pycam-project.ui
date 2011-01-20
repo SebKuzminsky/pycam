@@ -4458,9 +4458,15 @@ Usually you will want to use the cutter radius here to cut around the outline.</
           </packing>
         </child>
         <child>
-          <object class="GtkStatusbar" id="StatusBar">
+          <object class="GtkEventBox" id="StatusBarEventBox">
             <property name="visible">True</property>
-            <property name="spacing">2</property>
+            <child>
+              <object class="GtkStatusbar" id="StatusBar">
+                <property name="visible">True</property>
+                <property name="tooltip_text" translatable="yes">Click to open the log window.</property>
+                <property name="spacing">2</property>
+              </object>
+            </child>
           </object>
           <packing>
             <property name="expand">False</property>

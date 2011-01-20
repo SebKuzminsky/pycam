@@ -357,6 +357,7 @@ class ProjectGui:
         self.preferences_window.connect("delete-event", self.toggle_preferences_window, False)
         self._preferences_window_position = None
         self._preferences_window_visible = False
+        self._log_window_position = None
         # "about" window
         self.about_window = self.gui.get_object("AboutWindow")
         self.about_window.set_version(VERSION)
@@ -956,6 +957,8 @@ class ProjectGui:
         self.gui.get_object("AvailableCores").set_label(str(cpu_cores))
         # status bar
         self.status_bar = self.gui.get_object("StatusBar")
+        self.gui.get_object("StatusBarEventBox").connect("button-press-event",
+                self.toggle_log_window)
         # menu bar
         uimanager = gtk.UIManager()
         self._accel_group = uimanager.get_accel_group()
@@ -1926,14 +1929,20 @@ class ProjectGui:
     def add_log_message(self, title, message, record=None):
         timestamp = datetime.datetime.fromtimestamp(
                 record.created).strftime("%H:%M")
+        # avoid the ugly character for a linefeed
+        message = " ".join(message.splitlines())
         try:
             message = message.encode("utf-8")
         except UnicodeDecodeError:
             # remove all non-ascii characters
-            message = "".join([char for char in message if ord(char) < 128])
+            clean_char = lambda c: (32 <= ord(c) < 128) and c or " "
+            message = "".join(map(clean_char, message))
         self.log_model.append((timestamp, title, message))
         # update the status bar (if the GTK interface is still active)
         if not self.status_bar.window is None:
+            # remove the last message from the stack (probably not necessary)
+            self.status_bar.pop(0)
+            # push the new message
             try:
                 self.status_bar.push(0, message)
             except TypeError:
@@ -1962,14 +1971,20 @@ class ProjectGui:
         checkbox_state = toggle_log_checkbox.get_active()
         if value is None:
             new_state = checkbox_state
+        elif isinstance(value, gtk.gdk.Event):
+            # someone clicked at the status bar -> toggle the window state
+            new_state = not checkbox_state
         else:
             if action is None:
                 new_state = value
             else:
                 new_state = action
         if new_state:
+            if self._log_window_position:
+                self.log_window.move(*self._log_window_position)
             self.log_window.show()
         else:
+            self._log_window_position = self.log_window.get_position()
             self.log_window.hide()
         toggle_log_checkbox.set_active(new_state)
         # don't destroy the window with a "destroy" event
