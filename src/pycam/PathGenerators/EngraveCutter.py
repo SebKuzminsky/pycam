@@ -78,17 +78,17 @@ class EngraveCutter:
 
         line_groups = self.contour_model.get_polygons()
         # push slices for all layers above ground
+        last_z = maxz
         for z in z_steps[:-1]:
             # update the progress bar and check, if we should cancel the process
             if draw_callback and draw_callback(text="Engrave: processing" \
                         + " layer %d/%d" % (current_layer, num_of_layers)):
                 # cancel immediately
                 break
-
             for line_group in line_groups:
                 for line in line_group.get_lines():
-                    self.GenerateToolPathLinePush(self.pa_push, line, z,
-                            draw_callback)
+                    self.GenerateToolPathLinePush(self.pa_push, line, z, last_z,
+                            draw_callback=draw_callback)
                     if progress_counter.increment():
                         # cancel requested
                         quit_requested = True
@@ -96,17 +96,14 @@ class EngraveCutter:
                         self.pa_push.finish()
                         break
             self.pa_push.finish()
-
             # break the outer loop if requested
             if quit_requested:
                 break
-
             current_layer += 1
-
+            last_z = z
 
         if quit_requested:
             return self.pa_push.paths
-
         if draw_callback:
             draw_callback(text="Engrave: processing layer %d/%d" \
                     % (current_layer + 1, num_of_layers))
@@ -143,7 +140,7 @@ class EngraveCutter:
             self.pa_drop.new_direction(0)
             self.pa_drop.new_scanline()
             for line in line_group.get_lines():
-                self.GenerateToolPathLineDrop(self.pa_drop, line, minz, maxz,
+                self.GenerateToolPathLineDrop(self.pa_drop, line, minz, last_z,
                         horiz_step, draw_callback=draw_callback)
                 if progress_counter.increment():
                     # quit requested
@@ -158,27 +155,63 @@ class EngraveCutter:
         
         return self.pa_push.paths + self.pa_drop.paths
 
-    def GenerateToolPathLinePush(self, pa, line, z, draw_callback=None):
-        p1 = Point(line.p1.x, line.p1.y, z)
-        p2 = Point(line.p2.x, line.p2.y, z)
-        # no model -> no possible obstacles
-        # model is completely below z (e.g. support bridges) -> no obstacles
-        relevant_models = [m for m in self.models if m.maxz >= z]
-        if not relevant_models:
-            points = [p1, p2]
-        elif self.physics:
-            points = get_free_paths_ode(self.physics, p1, p2)
+    def GenerateToolPathLinePush(self, pa, line, z, previous_z,
+            draw_callback=None):
+        if previous_z <= line.minz:
+            # the line is completely above the previous level
+            pass
+        elif line.minz < z < line.maxz:
+            # Split the line at the point at z level and do the calculation
+            # for both point pairs.
+            factor = (z - line.p1.z) / (line.p2.z - line.p1.z)
+            plane_point = line.p1.add(line.vector.mul(factor))
+            GenerateToolPathLinePush(pa, Line(line.p1, plane_point), z,
+                    previous_z, draw_callback=draw_callback)
+            GenerateToolPathLinePush(pa, Line(plane_point, line.p2), z,
+                    previous_z, draw_callback=draw_callback)
+        elif line.minz < previous_z < line.maxz:
+            plane = Plane(Point(0, 0, previous_z), Vector(0, 0, 1))
+            cp, d = plane.intersect_point(line.dir, line.p1)
+            # we can be sure that there is an intersection
+            if line.p1.z > previous_z:
+                p1, p2 = cp, line.p2
+            else:
+                p1, p2 = line.p1, cp
+            GenerateToolPathLinePush(pa, Line(p1, p2), z, previous_z,
+                    draw_callback=draw_callback)
         else:
-            points = get_free_paths_triangles(relevant_models, self.cutter, p1, p2)
-        if points:
-            for p in points:
-                pa.append(p)
-            if draw_callback:
-                draw_callback(tool_position=p, toolpath=pa.paths)
+            if line.maxz <= z:
+                # the line is completely below z
+                p1 = Point(line.p1.x, line.p1.y, z)
+                p2 = Point(line.p2.x, line.p2.y, z)
+            elif line.minz >= z:
+                p1 = line.p1
+                p2 = line.p2
+            else:
+                log.warn("Unexpected condition EC_GTPLP: %s / %s / %s / %s" % \
+                        (line.p1, line.p2, z, previous_z))
+                return
+            # no model -> no possible obstacles
+            # model is completely below z (e.g. support bridges) -> no obstacles
+            relevant_models = [m for m in self.models if m.maxz >= z]
+            if not relevant_models:
+                points = [p1, p2]
+            elif self.physics:
+                points = get_free_paths_ode(self.physics, p1, p2)
+            else:
+                points = get_free_paths_triangles(relevant_models, self.cutter, p1, p2)
+            if points:
+                for p in points:
+                    pa.append(p)
+                if draw_callback:
+                    draw_callback(tool_position=p, toolpath=pa.paths)
 
 
     def GenerateToolPathLineDrop(self, pa, line, minz, maxz, horiz_step,
             draw_callback=None):
+        if line.minz >= maxz:
+            # the line is not below maxz -> nothing to be done
+            return
         pa.new_direction(0)
         pa.new_scanline()
         if not self.combined_model:
