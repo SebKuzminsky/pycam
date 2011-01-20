@@ -131,7 +131,7 @@ def import_model(filename, program_locations=None, unit=None, callback=None):
     else:
         log.info("Successfully converted EPS file to DXF file")
         result = pycam.Importers.DXFImporter.import_model(dxf_file_name,
-                unit=unit, callback=callback)
+                unit=unit, color_as_height=True, callback=callback)
     # always remove the dxf file
     remove_temp_file(dxf_file_name)
     return result

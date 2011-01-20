@@ -28,7 +28,7 @@ import pycam.Utils.log
 log = pycam.Utils.log.get_logger()
 
 
-class DXFParser:
+class DXFParser(object):
 
     # see http://www.autodesk.com/techpubs/autocad/acad2000/dxf/group_code_value_types_dxf_01.htm
     MAX_CHARS_PER_LINE = 2049
@@ -44,11 +44,12 @@ class DXFParser:
         "COLOR": 62,
     }
 
-    def __init__(self, inputstream, callback=None):
+    def __init__(self, inputstream, color_as_height=False, callback=None):
         self.inputstream = inputstream
         self.line_number = 0
         self.lines = []
         self._input_stack = []
+        self._color_as_height = color_as_height
         self.callback = callback
         self.parse_content()
         self.optimize_line_order()
@@ -141,7 +142,7 @@ class DXFParser:
                 line2 = int(line2)
             except ValueError:
                 log.warn("DXFImporter: Invalid input in line " \
-                        + "%d (float expected): %s" % (self.line_number, line2))
+                        + "%d (int expected): %s" % (self.line_number, line2))
                 line1 = None
                 line2 = None
         else:
@@ -188,8 +189,12 @@ class DXFParser:
                 axis = 0
             elif key == self.KEYS["START_Y"]:
                 axis = 1
-            elif key == self.KEYS["START_Z"]:
+            elif not self._color_as_height and (key == self.KEYS["START_Z"]):
                 axis = 2
+            elif self._color_as_height and (key == self.KEYS["COLOR"]):
+                # interpret the color as the height
+                axis = 2
+                value = float(value) / 255
             else:
                 axis = None
             if not axis is None:
@@ -230,6 +235,7 @@ class DXFParser:
         # the z-level defaults to zero (for 2D models)
         p1 = [None, None, 0]
         p2 = [None, None, 0]
+        color = None
         key, value = self._read_key_value()
         while (not key is None) and (key != self.KEYS["MARKER"]):
             if key == self.KEYS["START_X"]:
@@ -244,6 +250,8 @@ class DXFParser:
                 p2[1] = value
             elif key == self.KEYS["END_Z"]:
                 p2[2] = value
+            elif key == self.KEYS["COLOR"]:
+                color = value
             else:
                 pass
             key, value = self._read_key_value()
@@ -256,6 +264,10 @@ class DXFParser:
             log.warn("DXFImporter: Incomplete LINE definition between line " \
                     + "%d and %d" % (start_line, end_line))
         else:
+            if self._color_as_height and (not color is None):
+                # use the color code as the z coordinate
+                p1[2] = float(color) / 255
+                p2[2] = float(color) / 255
             line = Line(Point(p1[0], p1[1], p1[2]), Point(p2[0], p2[1], p2[2]))
             if line.len > 0:
                 self.lines.append(line)
@@ -273,7 +285,8 @@ class DXFParser:
             return None
 
 
-def import_model(filename, program_locations=None, unit=None, callback=None):
+def import_model(filename, program_locations=None, unit=None,
+        color_as_height=False, callback=None):
     try:
         infile = open(filename,"rb")
     except IOError, err_msg:
@@ -281,7 +294,8 @@ def import_model(filename, program_locations=None, unit=None, callback=None):
                 % (filename, err_msg))
         return None
 
-    result = DXFParser(infile, callback=callback)
+    result = DXFParser(infile, color_as_height=color_as_height,
+            callback=callback)
 
     lines = result.get_model()["lines"]
 
