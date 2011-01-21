@@ -2800,6 +2800,8 @@ class ProjectGui:
             self.model = model
             # do some initialization
             self._update_all_model_attributes()
+            if self.model and self.view3d and self.view3d.enabled:
+                self.append_to_queue(self.view3d.reset_view)
             return True
         else:
             return False

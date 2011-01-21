@@ -140,8 +140,8 @@ class EngraveCutter:
             self.pa_drop.new_direction(0)
             self.pa_drop.new_scanline()
             for line in line_group.get_lines():
-                self.GenerateToolPathLineDrop(self.pa_drop, line, minz, last_z,
-                        horiz_step, draw_callback=draw_callback)
+                self.GenerateToolPathLineDrop(self.pa_drop, line, minz, maxz,
+                        horiz_step, last_z, draw_callback=draw_callback)
                 if progress_counter.increment():
                     # quit requested
                     quit_requested = True
@@ -208,8 +208,8 @@ class EngraveCutter:
 
 
     def GenerateToolPathLineDrop(self, pa, line, minz, maxz, horiz_step,
-            draw_callback=None):
-        if line.minz >= maxz:
+            previous_z, draw_callback=None):
+        if line.minz >= previous_z:
             # the line is not below maxz -> nothing to be done
             return
         pa.new_direction(0)
