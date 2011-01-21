@@ -307,15 +307,25 @@ def import_model(filename, program_locations=None, unit=None,
         model = pycam.Geometry.Model.ContourModel()
         for l in lines:
             model.append(l)
+        # z scaling is always targetted at the 0..1 range
+        scale_z = 1.0
         if unit == "mm":
             # pstoedit uses inch internally - we need to scale
             log.info("DXFImporter: scaling model from inch to mm")
-            if color_as_height:
-                # don't scale z (should be between 0 and 1)
-                model.scale(scale_x=25.4, scale_y=25.4, scale_z=1,
-                        callback=callback)
-            else:
-                model.scale(25.4, callback=callback)
+            scale_x = 25.4
+            scale_y = 25.4
+        else:
+            scale_x = 1.0
+            scale_y = 1.0
+        if color_as_height and (model.minz != model.maxz):
+            # scale z to 1
+            scale_z /= (model.maxz - model.minz)
+        if (scale_x != 1.0) or (scale_y != 1.0) or (scale_z != 1.0):
+            model.scale(scale_x=25.4, scale_y=25.4, scale_z=scale_z,
+                    callback=callback)
+        # shift the model down to z=0
+        if model.minz != 0:
+            model.shift(0, 0, -model.minz, callback=callback)
         log.info("DXFImporter: Imported DXF model: %d lines / %d polygons" \
                 % (len(lines), len(model.get_polygons())))
         return model
