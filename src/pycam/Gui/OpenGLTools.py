@@ -45,6 +45,8 @@ BUTTON_ROTATE = gtk.gdk.BUTTON1_MASK
 BUTTON_MOVE = gtk.gdk.BUTTON2_MASK
 BUTTON_ZOOM = gtk.gdk.BUTTON3_MASK
 BUTTON_RIGHT = 3
+BUTTON_SCROLL_UP = gtk.gdk.BUTTON4_MASK
+BUTTON_SCROLL_DOWN = gtk.gdk.BUTTON5_MASK
 
 # The length of the distance vector does not matter - it will be normalized and
 # multiplied later anyway.
@@ -121,9 +123,9 @@ class Camera:
         max_dim = max(max(dimx, dimy), dimz)
         distv = Point(v["distance"][0], v["distance"][1],
                 v["distance"][2]).normalized()
-        # The multiplier "2.0" is based on: sqrt(2) + margin  -- the squre root
-        # makes sure, that the the diagonal fits.
-        distv = distv.mul((max_dim * 2) / number(math.sin(v["fovy"] / 2)))
+        # The multiplier "1.3" is based on experiments. 1.414 (sqrt(2)) should
+        # be roughly sufficient for showing the diagonal of any model.
+        distv = distv.mul((max_dim * 1.2) / number(math.sin(v["fovy"] / 2)))
         self.view["distance"] = (distv.x, distv.y, distv.z)
         # Adjust the "far" distance for the camera to make sure, that huge
         # models (e.g. x=1000) are still visible.
@@ -600,10 +602,17 @@ class ModelViewWindowGL:
             self.context_menu.popup(None, None, None, event.button, int(event.get_time()))
 
     def mouse_press_handler(self, widget, event):
-        self.mouse["pressed_timestamp"] = event.get_time()
-        self.mouse["pressed_button"] = event.button
-        self.mouse["pressed_pos"] = event.x, event.y
-        self.mouse_handler(widget, event)
+        if event.state & BUTTON_SCROLL_UP:
+            self.camera.scale_distance(srqt(0.5))
+            self._paint_ignore_busy()
+        elif event.state & BUTTON_SCROLL_DOWN:
+            self.camera.scale_distance(sqrt(2))
+            self._paint_ignore_busy()
+        else:
+            self.mouse["pressed_timestamp"] = event.get_time()
+            self.mouse["pressed_button"] = event.button
+            self.mouse["pressed_pos"] = event.x, event.y
+            self.mouse_handler(widget, event)
 
     @check_busy
     @gtkgl_functionwrapper
