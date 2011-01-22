@@ -105,26 +105,22 @@ class GCodeGenerator:
             self.append(self.gcode.delay(2))
         # At minimum this will stop the duplicate gcode
         # And this is a place holder for when the GUI is linked
-        ResLimitX = self._minimum_step
-        ResLimitY = self._minimum_step
-        ResLimitZ = self._minimum_step
-        OldPosition = None
+        res_limit_x = self._minimum_step
+        res_limit_y = self._minimum_step
+        res_limit_z = self._minimum_step
+        old_position = None
         for pos, rapid in moves:
-            if OldPosition == None:
-                OldPosition = pos
-            NewPosition = pos
-            if rapid:
-                self.append(self.gcode.rapid(pos.x, pos.y, pos.z))
-            else:
-                # make sure we arent putting out values with no motion
-                if NewPosition.x - OldPosition.x >= ResLimitX \
-                or NewPosition.x - OldPosition.x <= -ResLimitX \
-                or NewPosition.y - OldPosition.y >= ResLimitY \
-                or NewPosition.y - OldPosition.y <= -ResLimitY \
-                or NewPosition.z - OldPosition.z >= ResLimitZ \
-                or NewPosition.z - OldPosition.z <= -ResLimitZ:
+            new_position = pos
+            # make sure we arent putting out values with no motion
+            if old_position is None \
+                    or abs(new_position.x - old_position.x) >= res_limit_x \
+                    or abs(new_position.y - old_position.y) >= res_limit_y \
+                    or abs(new_position.z - old_position.z) >= res_limit_z:
+                if rapid:
+                    self.append(self.gcode.rapid(pos.x, pos.y, pos.z))
+                else:
                     self.append(self.gcode.cut(pos.x, pos.y, pos.z))
-                    OldPosition = pos
+                old_position = pos
         # go back to safety height
         self.append(self.gcode.safety())
         if self.toggle_spindle_status:
