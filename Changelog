@@ -13,6 +13,7 @@ Version 0.4.1 - UNRELEASED
  * added a configuration setting for automatically loading a custom task settings file on startup
  * added a simple "undo" feature for reversing model manipulations
  * added a minimum step width for GCode positions to be written
+ * the scroll wheel now behaves similarly to Inkscape's interface (pan and zoom)
  * the default filename extension for exported GCode files is now configurable
  * unify DropCutter behaviour for models that are higher than the defined bounding box
   * always move up to safety height in this case

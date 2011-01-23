@@ -45,8 +45,6 @@ BUTTON_ROTATE = gtk.gdk.BUTTON1_MASK
 BUTTON_MOVE = gtk.gdk.BUTTON2_MASK
 BUTTON_ZOOM = gtk.gdk.BUTTON3_MASK
 BUTTON_RIGHT = 3
-BUTTON_SCROLL_UP = gtk.gdk.BUTTON4_MASK
-BUTTON_SCROLL_DOWN = gtk.gdk.BUTTON5_MASK
 
 # The length of the distance vector does not matter - it will be normalized and
 # multiplied later anyway.
@@ -251,6 +249,21 @@ class Camera:
                 v["center"][2], v["up"][0], v["up"][1], v["up"][2])
         GL.glMatrixMode(prev_mode)
 
+    def shift_view(self, x_dist=0, y_dist=0):
+        obj_dim = []
+        obj_dim.append(self.settings.get("maxx") - self.settings.get("minx"))
+        obj_dim.append(self.settings.get("maxy") - self.settings.get("miny"))
+        obj_dim.append(self.settings.get("maxz") - self.settings.get("minz"))
+        max_dim = max(obj_dim)
+        factor = 50
+        self.move_camera_by_screen(x_dist * factor, y_dist * factor, max_dim)
+
+    def zoom_in(self):
+        self.scale_distance(sqrt(0.5))
+
+    def zoom_out(self):
+        self.scale_distance(sqrt(2))
+
     def _get_screen_dimensions(self):
         return self._get_dim_func()
 
@@ -328,10 +341,12 @@ class ModelViewWindowGL:
         self.area.connect('configure-event', self._resize_window)
         # catch mouse events
         self.area.set_events(gtk.gdk.MOUSE | gtk.gdk.POINTER_MOTION_HINT_MASK \
-                | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK)
+                | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK \
+                | gtk.gdk.SCROLL_MASK)
         self.area.connect("button-press-event", self.mouse_press_handler)
         self.area.connect('motion-notify-event', self.mouse_handler)
         self.area.connect("button-release-event", self.context_menu_handler)
+        self.area.connect("scroll-event", self.scroll_handler)
         self.container.pack_end(self.area)
         self.camera = Camera(self.settings, lambda: (self.area.allocation.width,
                 self.area.allocation.height))
@@ -456,10 +471,9 @@ class ModelViewWindowGL:
             self.paint()
         elif key_string in ("+", "-"):
             if key_string == "+":
-                scale = 0.8
+                self.camera.zoom_in()
             else:
-                scale = 1.25
-            self.camera.scale_distance(scale)
+                self.camera.zoom_out()
             self._paint_ignore_busy()
         elif keyval in move_keys_dict.keys():
             move_x, move_y = move_keys_dict[keyval]
@@ -471,17 +485,7 @@ class ModelViewWindowGL:
                         base - factor * move_x, base - factor * move_y)
             else:
                 # no shift key -> moving
-                obj_dim = []
-                obj_dim.append(self.settings.get("maxx") \
-                        - self.settings.get("minx"))
-                obj_dim.append(self.settings.get("maxy") \
-                        - self.settings.get("miny"))
-                obj_dim.append(self.settings.get("maxz") \
-                        - self.settings.get("minz"))
-                max_dim = max(obj_dim)
-                factor = 50
-                self.camera.move_camera_by_screen(move_x * factor,
-                        move_y * factor, max_dim)
+                self.camera.shift_view(x_dist=move_x, y_dist=move_y)
             self._paint_ignore_busy()
         else:
             # see dir(gtk.keysyms)
@@ -601,18 +605,51 @@ class ModelViewWindowGL:
             # -> open the context menu.
             self.context_menu.popup(None, None, None, event.button, int(event.get_time()))
 
-    def mouse_press_handler(self, widget, event):
-        if event.state & BUTTON_SCROLL_UP:
-            self.camera.scale_distance(srqt(0.5))
-            self._paint_ignore_busy()
-        elif event.state & BUTTON_SCROLL_DOWN:
-            self.camera.scale_distance(sqrt(2))
-            self._paint_ignore_busy()
+    @check_busy
+    @gtkgl_functionwrapper
+    def scroll_handler(self, widget, event):
+        """ handle events of the scroll wheel
+
+        shift key: horizontal pan instead of vertical
+        control key: zoom
+        """
+        try:
+            modifier_state = event.get_state()
+        except AttributeError:
+            # this should probably never happen
+            return
+        control_pressed = modifier_state & gtk.gdk.CONTROL_MASK
+        shift_pressed = modifier_state & gtk.gdk.SHIFT_MASK
+        if (event.direction == gtk.gdk.SCROLL_RIGHT) or \
+                ((event.direction == gtk.gdk.SCROLL_UP) and shift_pressed):
+            # horizontal move right
+            self.camera.shift_view(x_dist=1)
+        elif (event.direction == gtk.gdk.SCROLL_LEFT) or \
+                ((event.direction == gtk.gdk.SCROLL_DOWN) and shift_pressed):
+            # horizontal move left
+            self.camera.shift_view(x_dist=-1)
+        elif (event.direction == gtk.gdk.SCROLL_UP) and control_pressed:
+            # zoom in
+            self.camera.zoom_in()
+        elif event.direction == gtk.gdk.SCROLL_UP:
+            # vertical move up
+            self.camera.shift_view(y_dist=1)
+        elif (event.direction == gtk.gdk.SCROLL_DOWN) and control_pressed:
+            # zoom out
+            self.camera.zoom_out()
+        elif event.direction == gtk.gdk.SCROLL_DOWN:
+            # vertical move down
+            self.camera.shift_view(y_dist=-1)
         else:
-            self.mouse["pressed_timestamp"] = event.get_time()
-            self.mouse["pressed_button"] = event.button
-            self.mouse["pressed_pos"] = event.x, event.y
-            self.mouse_handler(widget, event)
+            # no interesting event -> no re-painting
+            return
+        self._paint_ignore_busy()
+
+    def mouse_press_handler(self, widget, event):
+        self.mouse["pressed_timestamp"] = event.get_time()
+        self.mouse["pressed_button"] = event.button
+        self.mouse["pressed_pos"] = event.x, event.y
+        self.mouse_handler(widget, event)
 
     @check_busy
     @gtkgl_functionwrapper
