@@ -54,6 +54,8 @@ class GCodeGenerator:
         self.toggle_spindle_status = toggle_spindle_status
         self.comment = comment
         self._minimum_step = minimum_step
+        #self._minimum_step_y = minimum_step_y
+        #self._minimum_step_z = minimum_step_z
         self._finished = False
         if comment:
             self.add_comment(comment)
@@ -108,6 +110,8 @@ class GCodeGenerator:
         res_limit_x = self._minimum_step
         res_limit_y = self._minimum_step
         res_limit_z = self._minimum_step
+        #res_limit_y = self._minimum_step_y
+        #res_limit_z = self._minimum_step_z
         old_position = None
         for pos, rapid in moves:
             new_position = pos
