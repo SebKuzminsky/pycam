@@ -89,6 +89,8 @@ def import_gtk_carefully():
                 if not gtk_dll_path in os.environ["PATH"].split(os.pathsep):
                     # append the guessed path to the library search path
                     os.environ["PATH"] += "%s%s" % (os.pathsep, gtk_dll_path)
+            else:
+                os.environ["PATH"] = gtk_dll_path
         # everything should be prepared - now we try to import it again
         import gtk
 
@@ -97,7 +99,8 @@ def requirements_details_gtk():
     try:
         import_gtk_carefully()
         result["gtk"] = True
-    except ImportError:
+    except ImportError, err_msg:
+        log.error("Failed to import GTK: %s" % str(err_msg))
         result["gtk"] = False
     return result
 
@@ -107,14 +110,19 @@ def recommends_details_gtk():
         import gtk.gtkgl
         result["gtkgl"] = True
         result["gl"] = True
-    except ImportError:
+    except ImportError, err_msg:
+        log.warn("Failed to import OpenGL for GTK (ImportError): %s" % \
+                str(err_msg))
         result["gtkgl"] = False
-    except RuntimeError:
+    except RuntimeError, err_msg:
+        log.warn("Failed to import OpenGL for GTK (RuntimeError): %s" % \
+                str(err_msg))
         result["gl"] = False
     try:
         import OpenGL
         result["opengl"] = True
-    except ImportError:
+    except ImportError, err_msg:
+        log.warn("Failed to import OpenGL: %s" % str(err_msg))
         result["opengl"] = False
 
 def check_dependencies(details):
