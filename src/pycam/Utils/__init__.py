@@ -20,12 +20,20 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = [ "iterators", "polynomials", "ProgressCounter", "threading"]
+__all__ = ["iterators", "polynomials", "ProgressCounter", "threading",
+        "get_platform", "get_external_program_location", "PLATFORM_WINDOWS",
+        "PLATFORM_MACOS", "PLATFORM_LINUX", "PLATFORM_UNKNOWN"]
 
+import sys
 import os
 # this is imported below on demand
 #import win32com
 #import win32api
+
+PLATFORM_LINUX = 0
+PLATFORM_WINDOWS = 1
+PLATFORM_MACOS = 2
+PLATFORM_UNKNOWN = 3
 
 # setproctitle is (optionally) imported
 try:
@@ -33,6 +41,17 @@ try:
 except ImportError:
     # silently ignore name change requests
     setproctitle = lambda name: None
+
+
+def get_platform():
+    if hasattr(sys, "getwindowsversion"):
+        return PLATFORM_WINDOWS
+    elif sys.platform == "darwin":
+        return PLATFORM_MACOS
+    elif sys.platform.startswith("linux"):
+        return PLATFORM_LINUX
+    else:
+        return PLATFORM_UNKNOWN
 
 
 def get_external_program_location(key):

@@ -51,6 +51,7 @@ import gobject
 import webbrowser
 import ConfigParser
 import urllib
+import urlparse
 import string
 import StringIO
 import pickle
@@ -73,12 +74,12 @@ UI_SUBDIR = "ui"
 FONTS_SUBDIR = "fonts"
 # necessary for "pyinstaller"
 if "_MEIPASS2" in os.environ:
-    DATA_BASE_DIRS.insert(0, os.environ["_MEIPASS2"])
+    DATA_BASE_DIRS.insert(0, os.path.normpath(os.environ["_MEIPASS2"]))
 # respect an override via an environment setting
 if DATA_DIR_ENVIRON_KEY in os.environ:
-    DATA_BASE_DIRS.insert(0, os.environ[DATA_DIR_ENVIRON_KEY])
+    DATA_BASE_DIRS.insert(0, os.path.normpath(os.environ[DATA_DIR_ENVIRON_KEY]))
 if FONT_DIR_ENVIRON_KEY in os.environ:
-    FONT_DIR_OVERRIDE = os.environ[FONT_DIR_ENVIRON_KEY]
+    FONT_DIR_OVERRIDE = os.path.normpath(os.environ[FONT_DIR_ENVIRON_KEY])
 else:
     FONT_DIR_OVERRIDE = None
 FONT_DIR_FALLBACK = "/usr/share/qcad/fonts"
@@ -286,14 +287,20 @@ class ProjectGui:
         # increase the initial width of the window (due to hidden elements)
         self.window.set_default_size(400, -1)
         # initialize the RecentManager
-        try:
-            self.recent_manager = gtk.RecentManager()
-        except AttributeError:
-            # GTK 2.12.1 seems to have problems with "RecentManager" on Windows.
-            # Sadly this is the version, that is shipped with the "appunti" GTK
-            # packages for Windows (April 2010).
-            # see http://www.daa.com.au/pipermail/pygtk/2009-May/017052.html
+        if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
+            # The pyinstaller binary for Windows fails mysteriously when trying
+            # to display the stock item.
+            # Error message: Gtk:ERROR:gtkrecentmanager.c:1942:get_icon_fallback: assertion failed: (retval != NULL)
             self.recent_manager = None
+        else:
+            try:
+                self.recent_manager = gtk.RecentManager()
+            except AttributeError:
+                # GTK 2.12.1 seems to have problems with "RecentManager" on
+                # Windows. Sadly this is the version, that is shipped with the
+                # "appunti" GTK packages for Windows (April 2010).
+                # see http://www.daa.com.au/pipermail/pygtk/2009-May/017052.html
+                self.recent_manager = None
         # file loading
         self.last_dirname = None
         self.last_task_settings_file = None
@@ -1010,7 +1017,7 @@ class ProjectGui:
             recent_files_menu.connect("item-activated",
                     self.load_recent_model_file)
         else:
-            self.gui.get_object("OpenRecentModel").hide()
+            self.gui.get_object("OpenRecentModel").set_visible(False)
         # load the menubar and connect functions to its items
         self.menubar = uimanager.get_widget("/MenuBar")
         window_box = self.gui.get_object("WindowBox")
@@ -3717,8 +3724,14 @@ class ProjectGui:
         if os.path.isfile(filename):
             # skip this, if the recent manager is not available (e.g. GTK 2.12.1 on Windows)
             if self.recent_manager:
-                self.recent_manager.add_item("file://%s" \
-                        % str(os.path.abspath(filename)))
+                # Convert the local path to a URI filename style. This is
+                # specifically necessary under Windows (due to backslashs).
+                filename_url_local = urllib.pathname2url(
+                        os.path.abspath(filename))
+                # join the "file:" scheme with the url
+                filename_url = urlparse.urlunparse(("file", None,
+                        filename_url_local, None, None, None))
+                self.recent_manager.add_item(filename_url)
             # store the directory of the last loaded file
             self.last_dirname = os.path.dirname(os.path.abspath(filename))
 
