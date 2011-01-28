@@ -126,7 +126,9 @@ PREFERENCES_DEFAULTS = {
         "simulation_details_level": 3,
         "drill_progress_max_fps": 2,
         "gcode_safety_height": 25.0,
-        "gcode_minimum_step": 0.0,
+        "gcode_minimum_step": 0.0001,
+        "gcode_minimum_step_y": 0.0001,
+        "gcode_minimum_step_z": 0.0001,
         "gcode_path_mode": 0,
         "gcode_motion_tolerance": 0,
         "gcode_naive_tolerance": 0,
@@ -3769,9 +3771,9 @@ class ProjectGui:
                     safety_height=safety_height,
                     toggle_spindle_status=self.settings.get("gcode_start_stop_spindle"),
                     comment=all_info,
-                    minimum_step=self.settings.get("gcode_minimum_step")) 
-                    #minimum_step_y=self.settings.get("gcode_minimum_step_y"), 
-                    #minimum_step_z=self.settings.get("gcode_minimum_step_z"))
+                    minimum_step=self.settings.get("gcode_minimum_step"),  
+                    minimum_step_y=self.settings.get("gcode_minimum_step_y"),  
+                    minimum_step_z=self.settings.get("gcode_minimum_step_z"))
             path_mode = self.settings.get("gcode_path_mode")
             PATH_MODES = pycam.Exporters.GCodeExporter.PATH_MODES
             if path_mode == 0:
