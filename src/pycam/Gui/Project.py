@@ -127,7 +127,7 @@ PREFERENCES_DEFAULTS = {
         "simulation_details_level": 3,
         "drill_progress_max_fps": 2,
         "gcode_safety_height": 25.0,
-        "gcode_minimum_step": 0.0001,
+        "gcode_minimum_step_x": 0.0001,
         "gcode_minimum_step_y": 0.0001,
         "gcode_minimum_step_z": 0.0001,
         "gcode_path_mode": 0,
@@ -892,9 +892,9 @@ class ProjectGui:
             self._task_property_signals.append((obj,
                     obj.connect("changed", self._handle_task_setting_change)))
         # gcode settings
-        gcode_minimum_step = self.gui.get_object("GCodeMinimumStep_x")
-        self.settings.add_item("gcode_minimum_step",
-                gcode_minimum_step.get_value, gcode_minimum_step.set_value)
+        gcode_minimum_step_x = self.gui.get_object("GCodeMinimumStep_x")
+        self.settings.add_item("gcode_minimum_step_x",
+                gcode_minimum_step_x.get_value, gcode_minimum_step_x.set_value)
         gcode_minimum_step_y = self.gui.get_object("GCodeMinimumStep_y")
         self.settings.add_item("gcode_minimum_step_y",
                 gcode_minimum_step_y.get_value, gcode_minimum_step_y.set_value)
@@ -3784,7 +3784,7 @@ class ProjectGui:
                     safety_height=safety_height,
                     toggle_spindle_status=self.settings.get("gcode_start_stop_spindle"),
                     comment=all_info,
-                    minimum_step=self.settings.get("gcode_minimum_step"),  
+                    minimum_step_x=self.settings.get("gcode_minimum_step_x"),  
                     minimum_step_y=self.settings.get("gcode_minimum_step_y"),  
                     minimum_step_z=self.settings.get("gcode_minimum_step_z"))
             path_mode = self.settings.get("gcode_path_mode")

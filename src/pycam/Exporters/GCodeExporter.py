@@ -38,7 +38,7 @@ class GCodeGenerator:
 
     def __init__(self, destination, metric_units=True, safety_height=0.0,
             toggle_spindle_status=False, header=None, comment=None,
-            minimum_step=0.0001,  minimum_step_y=0.0001,  minimum_step_z=0.0001):
+            minimum_step_x=0.0001,  minimum_step_y=0.0001,  minimum_step_z=0.0001):
         if isinstance(destination, basestring):
             # open the file
             self.destination = file(destination,"w")
@@ -53,7 +53,7 @@ class GCodeGenerator:
         self.gcode = gcode(safetyheight=self.safety_height)
         self.toggle_spindle_status = toggle_spindle_status
         self.comment = comment
-        self._minimum_step = minimum_step
+        self._minimum_step_x = minimum_step_x
         self._minimum_step_y = minimum_step_y
         self._minimum_step_z = minimum_step_z
         self._finished = False
@@ -107,7 +107,7 @@ class GCodeGenerator:
             self.append(self.gcode.delay(2))
         # At minimum this will stop the duplicate gcode
         # And this is a place holder for when the GUI is linked
-        res_limit_x = self._minimum_step
+        res_limit_x = self._minimum_step_x
         #res_limit_y = self._minimum_step
         #res_limit_z = self._minimum_step
         res_limit_y = self._minimum_step_y

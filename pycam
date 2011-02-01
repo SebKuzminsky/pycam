@@ -378,7 +378,9 @@ def execute(parser, opts, args, pycam):
                         handler, metric_units = (opts.unit_size == "mm"),
                         safety_height=opts.safety_height,
                         toggle_spindle_status=opts.gcode_no_start_stop_spindle,
-                        minimum_step=opts.gcode_minimum_step)
+                        minimum_step_x=opts.gcode_minimum_step_x,
+                        minimum_step_y=opts.gcode_minimum_step_y,
+                        minimum_step_z=opts.gcode_minimum_step_z)
                 generator.set_speed(opts.tool_feedrate, opts.tool_spindle_speed)
                 path_mode = opts.gcode_path_mode
                 PATH_MODES = pycam.Exporters.GCodeExporter.PATH_MODES
@@ -616,7 +618,7 @@ if __name__ == "__main__":
             action="store_false", help="do not start the spindle before " \
             + "and stop it after each operation (M3/M5)")
     group_gcode.add_option("", "--gcode-minimum-step",
-            dest="gcode_minimum_step", default=0.0,
+            dest="gcode_minimum_step_x", default=0.0,
             type="float", action="store", help="mimimum axial distance " \
             + "between two machine positions. Any shorter move is not " \
             + "written to GCode (default: 0.0).")

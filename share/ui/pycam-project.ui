@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <interface>
   <!-- interface-requires gtk+ 2.12 -->
   <!-- interface-naming-policy project-wide -->
@@ -619,7 +619,7 @@
                                       <object class="GtkSpinButton" id="ScalePercent">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
-                                        <property name="invisible_char">•</property>
+                                        <property name="invisible_char">&#x2022;</property>
                                         <property name="activates_default">True</property>
                                         <property name="adjustment">scale_percent_value</property>
                                       </object>
@@ -691,7 +691,7 @@
                                       <object class="GtkSpinButton" id="ScaleDimensionControl">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
-                                        <property name="invisible_char">•</property>
+                                        <property name="invisible_char">&#x2022;</property>
                                         <property name="activates_default">True</property>
                                         <property name="adjustment">ScaleDimensionValue</property>
                                         <property name="digits">2</property>
@@ -785,7 +785,7 @@
                                       <object class="GtkSpinButton" id="shift_x">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
-                                        <property name="invisible_char">•</property>
+                                        <property name="invisible_char">&#x2022;</property>
                                         <property name="activates_default">True</property>
                                         <property name="width_chars">5</property>
                                         <property name="adjustment">shift-x</property>
@@ -801,7 +801,7 @@
                                       <object class="GtkSpinButton" id="shift_y">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
-                                        <property name="invisible_char">•</property>
+                                        <property name="invisible_char">&#x2022;</property>
                                         <property name="activates_default">True</property>
                                         <property name="width_chars">5</property>
                                         <property name="adjustment">shift-y</property>
@@ -819,7 +819,7 @@
                                       <object class="GtkSpinButton" id="shift_z">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
-                                        <property name="invisible_char">•</property>
+                                        <property name="invisible_char">&#x2022;</property>
                                         <property name="activates_default">True</property>
                                         <property name="width_chars">5</property>
                                         <property name="adjustment">shift-z</property>
@@ -1101,7 +1101,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                           <object class="GtkSpinButton" id="SupportGridThicknessControl">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
-                                            <property name="invisible_char">●</property>
+                                            <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">SupportGridThickness</property>
                                             <property name="digits">2</property>
                                           </object>
@@ -1134,7 +1134,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                           <object class="GtkSpinButton" id="SupportGridHeightControl">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
-                                            <property name="invisible_char">●</property>
+                                            <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">SupportGridHeight</property>
                                             <property name="digits">2</property>
                                           </object>
@@ -1200,7 +1200,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                           <object class="GtkSpinButton" id="SupportGridDistanceXControl">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
-                                            <property name="invisible_char">●</property>
+                                            <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">SupportGridDistanceX</property>
                                             <property name="digits">2</property>
                                           </object>
@@ -1215,7 +1215,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                           <object class="GtkSpinButton" id="SupportGridDistanceYControl">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
-                                            <property name="invisible_char">●</property>
+                                            <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">SupportGridDistanceY</property>
                                             <property name="digits">2</property>
                                           </object>
@@ -1323,7 +1323,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                           <object class="GtkSpinButton" id="SupportGridOffsetXControl">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
-                                            <property name="invisible_char">●</property>
+                                            <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">SupportGridOffsetX</property>
                                             <property name="digits">2</property>
                                           </object>
@@ -1356,7 +1356,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                           <object class="GtkSpinButton" id="SupportGridOffsetYControl">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
-                                            <property name="invisible_char">●</property>
+                                            <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">SupportGridOffsetY</property>
                                             <property name="digits">2</property>
                                           </object>
@@ -1491,7 +1491,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                                   <object class="GtkSpinButton" id="SupportGridPositionManualShiftControl2">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
-                                                    <property name="invisible_char">●</property>
+                                                    <property name="invisible_char">&#x25CF;</property>
                                                     <property name="adjustment">SupportGridPositionManualAdjustment</property>
                                                     <property name="digits">1</property>
                                                   </object>
@@ -1573,7 +1573,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                           <object class="GtkSpinButton" id="GridMinBridgesPerPolygon">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
-                                            <property name="invisible_char">●</property>
+                                            <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">SupportGridMinBridgesPerPolygon</property>
                                           </object>
                                           <packing>
@@ -1604,7 +1604,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                           <object class="GtkSpinButton" id="GridAverageDistance">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
-                                            <property name="invisible_char">●</property>
+                                            <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">SupportGridAverageDistance</property>
                                             <property name="digits">2</property>
                                           </object>
@@ -1688,7 +1688,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                           <object class="GtkSpinButton" id="GridLengthControl">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
-                                            <property name="invisible_char">●</property>
+                                            <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">SupportGridLength</property>
                                             <property name="digits">2</property>
                                           </object>
@@ -1914,7 +1914,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                       <object class="GtkEntry" id="ToolName">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
-                                        <property name="invisible_char">•</property>
+                                        <property name="invisible_char">&#x2022;</property>
                                         <property name="width_chars">30</property>
                                       </object>
                                       <packing>
@@ -2072,7 +2072,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                                   <object class="GtkSpinButton" id="ToolDiameterControl">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
-                                                    <property name="invisible_char">•</property>
+                                                    <property name="invisible_char">&#x2022;</property>
                                                     <property name="adjustment">tooldiameter</property>
                                                     <property name="digits">4</property>
                                                   </object>
@@ -2087,7 +2087,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                                   <object class="GtkSpinButton" id="TorusDiameterControl">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
-                                                    <property name="invisible_char">•</property>
+                                                    <property name="invisible_char">&#x2022;</property>
                                                     <property name="adjustment">torusdiameter</property>
                                                     <property name="digits">4</property>
                                                   </object>
@@ -2176,7 +2176,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                               <object class="GtkSpinButton" id="FeedrateControl">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
-                                                <property name="invisible_char">•</property>
+                                                <property name="invisible_char">&#x2022;</property>
                                                 <property name="adjustment">feedrate</property>
                                               </object>
                                               <packing>
@@ -2190,7 +2190,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                               <object class="GtkSpinButton" id="SpindleSpeedControl">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
-                                                <property name="invisible_char">•</property>
+                                                <property name="invisible_char">&#x2022;</property>
                                                 <property name="adjustment">speed</property>
                                               </object>
                                               <packing>
@@ -2430,7 +2430,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                       <object class="GtkEntry" id="ProcessSettingName">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
-                                        <property name="invisible_char">•</property>
+                                        <property name="invisible_char">&#x2022;</property>
                                         <property name="width_chars">30</property>
                                       </object>
                                       <packing>
@@ -2607,7 +2607,7 @@ Use the "Engrave Offset" to shift the position of the tool to the outside (posit
                                                     <property name="can_focus">True</property>
                                                     <property name="tooltip_text" translatable="yes">Overlapping percentage for grid-based toolpath strategies.
 Higher values increase accuracy and processing time.</property>
-                                                    <property name="invisible_char">●</property>
+                                                    <property name="invisible_char">&#x25CF;</property>
                                                     <property name="adjustment">OverlapPercentValue</property>
                                                   </object>
                                                   <packing>
@@ -2637,7 +2637,7 @@ Higher values increase accuracy and processing time.</property>
                                                     <property name="tooltip_text" translatable="yes">Material allowance determines the minimum distance that should be preserved between the tool and the model.
 This value should be greater than zero for the first roughing operation or for inaccurate tools.
 The last finishing operation should have zero material allowance.</property>
-                                                    <property name="invisible_char">●</property>
+                                                    <property name="invisible_char">&#x25CF;</property>
                                                     <property name="adjustment">MaterialAllowanceValue</property>
                                                     <property name="digits">2</property>
                                                   </object>
@@ -2655,7 +2655,7 @@ The last finishing operation should have zero material allowance.</property>
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
                                                     <property name="tooltip_text" translatable="yes">The maximum height of each layer for all slicing toolpath strategies.</property>
-                                                    <property name="invisible_char">●</property>
+                                                    <property name="invisible_char">&#x25CF;</property>
                                                     <property name="adjustment">MaxStepDownValue</property>
                                                     <property name="digits">2</property>
                                                   </object>
@@ -2700,7 +2700,7 @@ The last finishing operation should have zero material allowance.</property>
                                                     <property name="can_focus">True</property>
                                                     <property name="tooltip_text" translatable="yes">Shift the position of the tool towards the outside (positive value) or inside (negative).
 Usually you will want to use the cutter radius here to cut around the outline.</property>
-                                                    <property name="invisible_char">●</property>
+                                                    <property name="invisible_char">&#x25CF;</property>
                                                     <property name="adjustment">EngraveOffsetValue</property>
                                                     <property name="digits">2</property>
                                                   </object>
@@ -3138,7 +3138,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   <object class="GtkEntry" id="BoundsName">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
-                                    <property name="invisible_char">●</property>
+                                    <property name="invisible_char">&#x25CF;</property>
                                     <property name="width_chars">30</property>
                                   </object>
                                   <packing>
@@ -3251,7 +3251,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                                   <object class="GtkSpinButton" id="boundary_x_low">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
-                                                    <property name="invisible_char">●</property>
+                                                    <property name="invisible_char">&#x25CF;</property>
                                                     <property name="width_chars">6</property>
                                                     <property name="adjustment">min-x</property>
                                                     <property name="digits">2</property>
@@ -3269,7 +3269,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                                   <object class="GtkSpinButton" id="boundary_y_high">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
-                                                    <property name="invisible_char">●</property>
+                                                    <property name="invisible_char">&#x25CF;</property>
                                                     <property name="width_chars">6</property>
                                                     <property name="adjustment">max-y</property>
                                                     <property name="digits">2</property>
@@ -3287,7 +3287,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                                   <object class="GtkSpinButton" id="boundary_z_low">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
-                                                    <property name="invisible_char">●</property>
+                                                    <property name="invisible_char">&#x25CF;</property>
                                                     <property name="width_chars">6</property>
                                                     <property name="adjustment">min-z</property>
                                                     <property name="digits">2</property>
@@ -3305,7 +3305,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                                   <object class="GtkSpinButton" id="boundary_z_high">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
-                                                    <property name="invisible_char">●</property>
+                                                    <property name="invisible_char">&#x25CF;</property>
                                                     <property name="width_chars">6</property>
                                                     <property name="adjustment">max-z</property>
                                                     <property name="digits">2</property>
@@ -3323,7 +3323,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                                   <object class="GtkSpinButton" id="boundary_y_low">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
-                                                    <property name="invisible_char">●</property>
+                                                    <property name="invisible_char">&#x25CF;</property>
                                                     <property name="width_chars">6</property>
                                                     <property name="adjustment">min-y</property>
                                                     <property name="digits">2</property>
@@ -3341,7 +3341,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                                   <object class="GtkSpinButton" id="boundary_x_high">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
-                                                    <property name="invisible_char">●</property>
+                                                    <property name="invisible_char">&#x25CF;</property>
                                                     <property name="width_chars">6</property>
                                                     <property name="adjustment">max-x</property>
                                                     <property name="digits">2</property>
@@ -4020,7 +4020,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                       <object class="GtkEntry" id="TaskNameControl">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
-                                        <property name="invisible_char">●</property>
+                                        <property name="invisible_char">&#x25CF;</property>
                                       </object>
                                       <packing>
                                         <property name="left_attach">1</property>
@@ -4594,7 +4594,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                         <property name="visible">True</property>
                         <property name="xalign">0</property>
                         <property name="xpad">3</property>
-                        <property name="label" translatable="yes">Δx:</property>
+                        <property name="label" translatable="yes">&#x394;x:</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -4625,7 +4625,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                         <property name="visible">True</property>
                         <property name="xalign">0</property>
                         <property name="xpad">3</property>
-                        <property name="label" translatable="yes">Δy:</property>
+                        <property name="label" translatable="yes">&#x394;y:</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -4656,7 +4656,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                         <property name="visible">True</property>
                         <property name="xalign">0</property>
                         <property name="xpad">3</property>
-                        <property name="label" translatable="yes">Δz:</property>
+                        <property name="label" translatable="yes">&#x394;z:</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -5088,7 +5088,7 @@ ODE can't be used in combination with parallel processing or server mode.</prope
 Leave this field empty if you are satisfied with the default: "ngc".
 This is just a convenience setting. The "Export Toolpath" dialog
 still allows you to choose the file extension freely.</property>
-                                <property name="invisible_char">●</property>
+                                <property name="invisible_char">&#x25CF;</property>
                                 <property name="width_chars">6</property>
                               </object>
                               <packing>
@@ -5107,7 +5107,7 @@ still allows you to choose the file extension freely.</property>
                                 <property name="tooltip_text" translatable="yes">Rapid moves are allowed at this z-level.
 This should be clearly above the stock material.
 Choose a small value to minimize rapid moves up and down.</property>
-                                <property name="invisible_char">●</property>
+                                <property name="invisible_char">&#x25CF;</property>
                                 <property name="adjustment">SafetyHeightValue</property>
                                 <property name="digits">1</property>
                               </object>
@@ -5151,9 +5151,9 @@ machine time slightly since no-move commands do not
 need to be processed at all.
 Use the default (0.0) if you want to export all GCode
 moves regardless of their length.</property>
-                                <property name="invisible_char">●</property>
+                                <property name="invisible_char">&#x25CF;</property>
                                 <property name="width_chars">7</property>
-                                <property name="adjustment">GCodeMinimumStepValue</property>
+                                <property name="adjustment">GCodeMinimumStepValue_x</property>
                                 <property name="digits">5</property>
                               </object>
                               <packing>
@@ -5169,7 +5169,7 @@ moves regardless of their length.</property>
                               <object class="GtkSpinButton" id="GCodeMinimumStep_y">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="invisible_char">●</property>
+                                <property name="invisible_char">&#x25CF;</property>
                                 <property name="width_chars">7</property>
                                 <property name="adjustment">GCodeMinimumStepValue_y</property>
                                 <property name="digits">5</property>
@@ -5187,7 +5187,7 @@ moves regardless of their length.</property>
                               <object class="GtkSpinButton" id="GCodeMinimumStep_z">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="invisible_char">●</property>
+                                <property name="invisible_char">&#x25CF;</property>
                                 <property name="width_chars">7</property>
                                 <property name="adjustment">GCodeMinimumStepValue_z</property>
                                 <property name="digits">5</property>
@@ -5307,7 +5307,7 @@ moves regardless of their length.</property>
                                           <object class="GtkSpinButton" id="GCodeCornerStyleCAMTolerance">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
-                                            <property name="invisible_char">●</property>
+                                            <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">GCodeCornerStyleCAMToleranceValue</property>
                                             <property name="digits">3</property>
                                           </object>
@@ -5324,7 +5324,7 @@ moves regardless of their length.</property>
                                           <object class="GtkSpinButton" id="GCodeCornerStyleMotionTolerance">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
-                                            <property name="invisible_char">●</property>
+                                            <property name="invisible_char">&#x25CF;</property>
                                             <property name="adjustment">GCodeCornerStyleMotionToleranceValue</property>
                                             <property name="digits">3</property>
                                           </object>
@@ -5937,7 +5937,7 @@ Hotkey: &lt;p&gt;</property>
                               <object class="GtkSpinButton" id="DrillProgressFrameSkipControl">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="invisible_char">•</property>
+                                <property name="invisible_char">&#x2022;</property>
                                 <property name="adjustment">DrillProgressMaxFPS</property>
                               </object>
                               <packing>
@@ -6090,7 +6090,7 @@ Hotkey: &lt;p&gt;</property>
                           <object class="GtkEntry" id="ExternalProgramInkscapeControl">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
-                            <property name="invisible_char">●</property>
+                            <property name="invisible_char">&#x25CF;</property>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
@@ -6102,7 +6102,7 @@ Hotkey: &lt;p&gt;</property>
                           <object class="GtkEntry" id="ExternalProgramPstoeditControl">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
-                            <property name="invisible_char">●</property>
+                            <property name="invisible_char">&#x25CF;</property>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
@@ -6213,7 +6213,7 @@ Hotkey: &lt;p&gt;</property>
                                       <object class="GtkSpinButton" id="NumberOfProcesses">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
-                                        <property name="invisible_char">●</property>
+                                        <property name="invisible_char">&#x25CF;</property>
                                         <property name="adjustment">NumberOfProcessesValue</property>
                                         <property name="numeric">True</property>
                                         <property name="update_policy">if-valid</property>
@@ -6343,7 +6343,7 @@ You will need a remote server.&lt;/span&gt;</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="tooltip_text" translatable="yes">The TCP port of the remote server. You need to set a hostname or IP as well.
 PyCAM's default port is 1250.</property>
-                                                <property name="invisible_char">●</property>
+                                                <property name="invisible_char">&#x25CF;</property>
                                                 <property name="adjustment">RemoteServerPortValue</property>
                                               </object>
                                               <packing>
@@ -6359,7 +6359,7 @@ PyCAM's default port is 1250.</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="tooltip_text" translatable="yes">Type in a hostname or IP address if you want to connect to a remote PyCAM server.
 Leave this field empty for a local-only server.</property>
-                                                <property name="invisible_char">●</property>
+                                                <property name="invisible_char">&#x25CF;</property>
                                                 <property name="width_chars">18</property>
                                                 <property name="truncate_multiline">True</property>
                                               </object>
@@ -6415,7 +6415,7 @@ Leave this field empty for a local-only server.</property>
                                                 <property name="tooltip_text" translatable="yes">PyCAM will try to bind to this local TCP port. Other PyCAM clients may connect to this port if they know the shared secret.
 Remember that you need administrative permissions for ports below 1024.
 The default port is 1250.</property>
-                                                <property name="invisible_char">●</property>
+                                                <property name="invisible_char">&#x25CF;</property>
                                                 <property name="adjustment">ServerPortLocalValue</property>
                                               </object>
                                               <packing>
@@ -6454,7 +6454,7 @@ The default port is 1250.</property>
                                                     <property name="can_focus">True</property>
                                                     <property name="tooltip_text" translatable="yes">All servers and clients of a processing cloud must use the same shared secret.</property>
                                                     <property name="visibility">False</property>
-                                                    <property name="invisible_char">●</property>
+                                                    <property name="invisible_char">&#x25CF;</property>
                                                     <property name="truncate_multiline">True</property>
                                                   </object>
                                                   <packing>
@@ -6643,8 +6643,8 @@ Sadly this problem is not too easy to solve. Future releases of PyCAM should rem
     <property name="gravity">center</property>
     <property name="program_name">PyCAM</property>
     <property name="version">0.1</property>
-    <property name="copyright" translatable="yes">Copyright © 2008-2010 Lode Leroy
-Copyright © 2010 Lars Kruse</property>
+    <property name="copyright" translatable="yes">Copyright &#xA9; 2008-2010 Lode Leroy
+Copyright &#xA9; 2010 Lars Kruse</property>
     <property name="comments" translatable="yes">Toolpath Generation for 3-Axis CNC machining</property>
     <property name="website">http://sourceforge.net/projects/pycam/</property>
     <property name="website_label" translatable="yes">Webseite des PyCAM-Projekts</property>
@@ -7397,7 +7397,7 @@ Please read the description of the Server Mode (linked below) to understand the 
                   <object class="GtkSpinButton" id="ProcessPoolRefreshInterval">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="invisible_char">●</property>
+                    <property name="invisible_char">&#x25CF;</property>
                     <property name="adjustment">ProcessPoolRefreshIntervalValue</property>
                     <property name="numeric">True</property>
                   </object>
@@ -7968,7 +7968,7 @@ Please read the description of the Server Mode (linked below) to understand the 
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="max_length">6</property>
-                    <property name="invisible_char">●</property>
+                    <property name="invisible_char">&#x25CF;</property>
                     <property name="adjustment">SimulationDetailsValue</property>
                   </object>
                   <packing>
@@ -8108,7 +8108,7 @@ upon interesting bugs and weird results.</property>
     <property name="visible">True</property>
     <property name="stock">gtk-zoom-fit</property>
   </object>
-  <object class="GtkAdjustment" id="GCodeMinimumStepValue">
+  <object class="GtkAdjustment" id="GCodeMinimumStepValue_x">
     <property name="upper">100</property>
     <property name="step_increment">5.0000000000000002e-05</property>
   </object>
