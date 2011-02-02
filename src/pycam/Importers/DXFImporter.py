@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.Geometry.Point import Point
 from pycam.Geometry.Line import Line
 import pycam.Geometry.Model
+import pycam.Geometry
 import pycam.Utils.log
 
 log = pycam.Utils.log.get_logger()
@@ -41,6 +42,9 @@ class DXFParser(object):
         "END_X": 11,
         "END_Y": 21,
         "END_Z": 31,
+        "RADIUS": 40,
+        "ANGLE_START": 50,
+        "ANGLE_END": 51,
         "COLOR": 62,
     }
 
@@ -127,9 +131,9 @@ class DXFParser(object):
             log.warn("DXFImporter: Invalid key in line " \
                     + "%d (int expected): %s" % (self.line_number, line1))
             return None, None
-        if line1 in (self.KEYS["START_X"], self.KEYS["START_Y"],
-                self.KEYS["START_Z"], self.KEYS["END_X"], self.KEYS["END_Y"],
-                self.KEYS["END_Z"]):
+        if line1 in [self.KEYS[key] for key in ("START_X", "START_Y", "START_Z",
+                "END_X", "END_Y", "END_Z", "RADIUS", "ANGLE_START",
+                "ANGLE_END")]:
             try:
                 line2 = float(line2)
             except ValueError:
@@ -164,6 +168,8 @@ class DXFParser(object):
                     self.parse_line()
                 elif value == "LWPOLYLINE":
                     self.parse_polyline()
+                elif value == "ARC":
+                    self.parse_arc()
                 else:
                     # not supported
                     log.warn("DXFImporter: Ignored unsupported element in " \
@@ -271,6 +277,59 @@ class DXFParser(object):
             line = Line(Point(p1[0], p1[1], p1[2]), Point(p2[0], p2[1], p2[2]))
             if line.len > 0:
                 self.lines.append(line)
+            else:
+                log.warn("DXFImporter: Ignoring zero-length LINE (between " \
+                        + "input line %d and %d): %s" % (start_line, end_line,
+                        line))
+    def parse_arc(self):
+        start_line = self.line_number
+        # the z-level defaults to zero (for 2D models)
+        center = [None, None, 0]
+        color = None
+        radius = None
+        angle_start = None
+        angle_end = None
+        key, value = self._read_key_value()
+        while (not key is None) and (key != self.KEYS["MARKER"]):
+            if key == self.KEYS["START_X"]:
+                center[0] = value
+            elif key == self.KEYS["START_Y"]:
+                center[1] = value
+            elif key == self.KEYS["START_Z"]:
+                center[2] = value
+            elif key == self.KEYS["RADIUS"]:
+                radius = value
+            elif key == self.KEYS["ANGLE_START"]:
+                angle_start = value
+            elif key == self.KEYS["ANGLE_END"]:
+                angle_end = value
+            elif key == self.KEYS["COLOR"]:
+                color = value
+            else:
+                pass
+            key, value = self._read_key_value()
+        end_line = self.line_number
+        # The last lines were not used - they are just the marker for the next
+        # item.
+        if not key is None:
+            self._push_on_stack(key, value)
+        if (None in center) or (None in (radius, angle_start, angle_end)):
+            log.warn("DXFImporter: Incomplete ARC definition between line " \
+                    + "%d and %d" % (start_line, end_line))
+        else:
+            if self._color_as_height and (not color is None):
+                # use the color code as the z coordinate
+                center[2] = float(color) / 255
+            center = Point(center[0], center[1], center[2])
+            xy_point_coords = pycam.Geometry.get_points_of_arc(center, radius,
+                    angle_start, angle_end)
+            if len(xy_point_coords) > 1:
+                for index in range(len(xy_point_coords) - 1):
+                    p1 = xy_point_coords[index]
+                    p1 = Point(p1[0], p1[1], center.z)
+                    p2 = xy_point_coords[index + 1]
+                    p2 = Point(p2[0], p2[1], center.z)
+                    self.lines.append(Line(p1, p2))
             else:
                 log.warn("DXFImporter: Ignoring zero-length LINE (between " \
                         + "input line %d and %d): %s" % (start_line, end_line,
