@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import pycam.Exporters.GCodeExporter
+from pycam.Exporters.GCodeExporter import PATH_MODES, GCodeGenerator
 import pycam.Exporters.EMCToolExporter
 import pycam.Gui.Settings
 import pycam.Cutters
@@ -137,6 +137,10 @@ PREFERENCES_DEFAULTS = {
         "gcode_filename_extension": "",
         "external_program_inkscape": "",
         "external_program_pstoedit": "",
+        "server_auth_key": "",
+        "server_port_local": pycam.Utils.threading.DEFAULT_PORT,
+        "server_port_remote": pycam.Utils.threading.DEFAULT_PORT,
+        "server_hostname": "",
 }
 """ the listed items will be loaded/saved via the preferences file in the
 user's home directory on startup/shutdown"""
@@ -954,10 +958,14 @@ class ProjectGui:
                 "NumberOfProcesses")
         self.number_of_processes.set_value(
                 pycam.Utils.threading.get_number_of_processes())
-        self.gui.get_object("ServerPortLocal").set_value(
-                pycam.Utils.threading.DEFAULT_PORT)
-        self.gui.get_object("RemoteServerPort").set_value(
-                pycam.Utils.threading.DEFAULT_PORT)
+        server_port_local_obj = self.gui.get_object("ServerPortLocal")
+        self.settings.add_item("server_port_local",
+                server_port_local_obj.get_value,
+                server_port_local_obj.set_value)
+        server_port_remote_obj = self.gui.get_object("RemoteServerPort")
+        self.settings.add_item("server_port_remote",
+                server_port_remote_obj.get_value,
+                server_port_remote_obj.set_value)
         self.number_of_processes.connect("value-changed",
                 self.handle_parallel_processes_settings)
         self.gui.get_object("EnableServerMode").connect("toggled",
@@ -966,6 +974,13 @@ class ProjectGui:
                 self.generate_random_server_password)
         self.gui.get_object("ServerPasswordShow").connect("toggled",
                 self.update_parallel_processes_settings)
+        auth_key_obj = self.gui.get_object("ServerPassword")
+        self.settings.add_item("server_auth_key", auth_key_obj.get_text,
+                auth_key_obj.set_text)
+        server_hostname = self.gui.get_object("RemoteServerHostname")
+        self.settings.add_item("server_hostname",
+                server_hostname.get_text,
+                server_hostname.set_text)
         cpu_cores = pycam.Utils.threading.get_number_of_cores()
         if cpu_cores is None:
             cpu_cores = "unknown"
@@ -2046,6 +2061,10 @@ class ProjectGui:
             model.append(item)
         self.gui.get_object("ProcessPoolConnectedWorkersValue").set_text(
                 str(len(stats)))
+        details = pycam.Utils.threading.get_task_statistics()
+        detail_text = os.linesep.join(["%s: %s" % (key, value)
+                for (key, value) in details.iteritems()])
+        self.gui.get_object("ProcessPoolDetails").set_text(detail_text)
         current_interval = int(max(1, self.gui.get_object(
                 "ProcessPoolRefreshInterval").get_value()))
         if original_interval != current_interval:
@@ -3273,49 +3292,49 @@ class ProjectGui:
         if (percent is None) and (self.progress_bar.get_fraction() == 0):
             # use "pulse" mode until we reach 1% of the work to be done
             self.progress_bar.pulse()
-        # "estimated time of arrival" text
-        time_estimation_suffix = " remaining ..."
-        if self.progress_bar.get_fraction() > 0:
-            eta_full = (time.time() - self._progress_start_time) / self.progress_bar.get_fraction()
-            if eta_full > 0:
-                eta_delta = eta_full - (time.time() - self._progress_start_time)
-                eta_delta = int(round(eta_delta))
-                if hasattr(self, "_last_eta_delta"):
-                    previous_eta_delta = self._last_eta_delta
-                    if eta_delta == previous_eta_delta + 1:
-                        # We are currently toggling between two numbers.
-                        # We want to avoid screen flicker, thus we just live
-                        # with the slight inaccuracy.
-                        eta_delta = self._last_eta_delta
-                self._last_eta_delta = eta_delta
-                eta_delta_obj = datetime.timedelta(seconds=eta_delta)
-                eta_text = "%s%s" % (eta_delta_obj, time_estimation_suffix)
-            else:
-                eta_text = None
-        else:
-            eta_text = None
-        if not text is None:
-            lines = [text]
-        else:
-            old_lines = self.progress_bar.get_text().split(os.linesep)
-            # skip the time estimation line
-            lines = [line for line in old_lines
-                    if not line.endswith(time_estimation_suffix)]
-        if eta_text:
-            lines.append(eta_text)
-        self.progress_bar.set_text(os.linesep.join(lines))
         # update the GUI
         current_time = time.time()
-        # show the "show_tool_button" ("hide" is called in the progress decorator)
-        if self.settings.get("toolpath_in_progress"):
-            self.show_progress_button.show()
         # Don't update the GUI more often than once per second.
         # Exception: text-only updates
         # This restriction improves performance and reduces the
         # "snappiness" of the GUI.
         if (self._last_gtk_events_time is None) \
                 or text \
-                or (self._last_gtk_events_time + 1 < current_time):
+                or (self._last_gtk_events_time + 1 <= current_time):
+            # "estimated time of arrival" text
+            time_estimation_suffix = " remaining ..."
+            if self.progress_bar.get_fraction() > 0:
+                eta_full = (time.time() - self._progress_start_time) / self.progress_bar.get_fraction()
+                if eta_full > 0:
+                    eta_delta = eta_full - (time.time() - self._progress_start_time)
+                    eta_delta = int(round(eta_delta))
+                    if hasattr(self, "_last_eta_delta"):
+                        previous_eta_delta = self._last_eta_delta
+                        if eta_delta == previous_eta_delta + 1:
+                            # We are currently toggling between two numbers.
+                            # We want to avoid screen flicker, thus we just live
+                            # with the slight inaccuracy.
+                            eta_delta = self._last_eta_delta
+                    self._last_eta_delta = eta_delta
+                    eta_delta_obj = datetime.timedelta(seconds=eta_delta)
+                    eta_text = "%s%s" % (eta_delta_obj, time_estimation_suffix)
+                else:
+                    eta_text = None
+            else:
+                eta_text = None
+            if not text is None:
+                lines = [text]
+            else:
+                old_lines = self.progress_bar.get_text().split(os.linesep)
+                # skip the time estimation line
+                lines = [line for line in old_lines
+                        if not line.endswith(time_estimation_suffix)]
+            if eta_text:
+                lines.append(eta_text)
+            self.progress_bar.set_text(os.linesep.join(lines))
+            # show the "show_tool_button" ("hide" is called in the progress decorator)
+            if self.settings.get("toolpath_in_progress"):
+                self.show_progress_button.show()
             while gtk.events_pending():
                 gtk.main_iteration()
             if not text or (self._progress_start_time + 5 < current_time):
@@ -3473,21 +3492,19 @@ class ProjectGui:
                 self.func = func
             def update(self, text=None, percent=None, tool_position=None,
                     toolpath=None):
-                if not tool_position is None:
-                    parent.cutter.moveto(tool_position)
-                if not toolpath is None:
-                    parent.settings.set("toolpath_in_progress", toolpath)
-                if (time.time() - self.last_update) > 1.0/self.max_fps:
-                    self.last_update = time.time()
-                    if self.func:
-                        self.func()
+                if parent.settings.get("show_drill_progress"):
+                    if not tool_position is None:
+                        parent.cutter.moveto(tool_position)
+                    if not toolpath is None:
+                        parent.settings.set("toolpath_in_progress", toolpath)
+                    current_time = time.time()
+                    if (current_time - self.last_update) > 1.0/self.max_fps:
+                        self.last_update = current_time
+                        if self.func:
+                            self.func()
                 # break the loop if someone clicked the "cancel" button
                 return parent.update_progress_bar(text, percent)
-        # allow the "show_drill_progress" setting to be changed instantly
-        def conditional_progress_update():
-            if self.settings.get("show_drill_progress"):
-                self.update_view()
-        draw_callback = UpdateView(conditional_progress_update,
+        draw_callback = UpdateView(self.update_view,
                 max_fps=self.settings.get("drill_progress_max_fps")).update
 
         self.update_progress_bar("Generating collision model")
@@ -3778,8 +3795,7 @@ class ProjectGui:
                 machine_time += tp.get_machine_time(safety_height)
             all_info = meta_data + os.linesep \
                     + "Estimated machine time: %g minutes" % machine_time
-            generator = pycam.Exporters.GCodeExporter.GCodeGenerator(
-                    destination,
+            generator = GCodeGenerator(destination,
                     metric_units=(self.settings.get("unit") == "mm"),
                     safety_height=safety_height,
                     toggle_spindle_status=self.settings.get("gcode_start_stop_spindle"),
@@ -3788,7 +3804,6 @@ class ProjectGui:
                     minimum_step_y=self.settings.get("gcode_minimum_step_y"),  
                     minimum_step_z=self.settings.get("gcode_minimum_step_z"))
             path_mode = self.settings.get("gcode_path_mode")
-            PATH_MODES = pycam.Exporters.GCodeExporter.PATH_MODES
             if path_mode == 0:
                 generator.set_path_mode(PATH_MODES["exact_path"])
             elif path_mode == 1:
