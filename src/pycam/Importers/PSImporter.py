@@ -54,12 +54,22 @@ def import_model(filename, program_locations=None, unit=None, callback=None):
     if not success:
         result = None
     elif callback and callback():
-        log.warn("PSImporter: load model operation canceled")
+        log.warn("PSImporter: load model operation cancelled")
         result = None
     else:
         log.info("Successfully converted PS file to DXF file")
+        # pstoedit uses "inch" -> force a scale operation
         result = pycam.Importers.DXFImporter.import_model(dxf_file_name,
                 unit=unit, callback=callback)
+        if unit == "mm":
+            # pstoedit uses inch internally - we need to scale
+            if callback:
+                callback(text="Scaling model from inch to mm")
+            log.info("PSImporter: scaling model from inch to mm")
+            scale_x = 25.4
+            scale_y = 25.4
+            result.scale(scale_x=scale_x, scale_y=scale_y, scale_z=1.0,
+                    callback=callback)
     # always remove the dxf file
     remove_temp_file(dxf_file_name)
     return result
