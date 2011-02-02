@@ -38,7 +38,7 @@ class GCodeGenerator:
 
     def __init__(self, destination, metric_units=True, safety_height=0.0,
             toggle_spindle_status=False, header=None, comment=None,
-            minimum_step_x=0.0001,  minimum_step_y=0.0001,  minimum_step_z=0.0001):
+            minimum_step_x=0.0001,  minimum_step_y=None,  minimum_step_z=None):
         if isinstance(destination, basestring):
             # open the file
             self.destination = file(destination,"w")
@@ -54,8 +54,15 @@ class GCodeGenerator:
         self.toggle_spindle_status = toggle_spindle_status
         self.comment = comment
         self._minimum_step_x = minimum_step_x
-        self._minimum_step_y = minimum_step_y
-        self._minimum_step_z = minimum_step_z
+        # use x value as default for y and z (if not specified)
+        if minimum_step_y is None:
+            self._minimum_step_y = minimum_step_x
+        else:
+            self._minimum_step_y = minimum_step_y
+        if minimum_step_z is None:
+            self._minimum_step_z = minimum_step_x
+        else:
+            self._minimum_step_z = minimum_step_z
         self._finished = False
         if comment:
             self.add_comment(comment)
