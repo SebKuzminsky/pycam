@@ -118,6 +118,16 @@ def get_pool_statistics():
     else:
         return __manager.statistics().get_worker_statistics()
 
+def get_task_statistics():
+    global __manager
+    result = {}
+    if not __manager is None:
+        result["tasks"] = __manager.tasks().qsize()
+        result["results"] = __manager.results().qsize()
+        result["pending"] = __manager.pending_tasks().length()
+        result["cache"] = __manager.cache().length()
+    return result
+
 def init_threading(number_of_processes=None, enable_server=False, remote=None,
         run_server=False, server_credentials="", local_port=DEFAULT_PORT):
     global __multiprocessing, __num_of_processes, __manager, __closing, __task_source_uuid
@@ -231,15 +241,18 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
             results_queue = multiprocessing.Queue()
             statistics = ProcessStatistics()
             cache = ProcessDataCache()
+            pending_tasks = PendingTasks()
             TaskManager.register("tasks", callable=lambda: tasks_queue)
             TaskManager.register("results", callable=lambda: results_queue)
             TaskManager.register("statistics", callable=lambda: statistics)
             TaskManager.register("cache", callable=lambda: cache)
+            TaskManager.register("pending_tasks", callable=lambda: pending_tasks)
         else:
             TaskManager.register("tasks")
             TaskManager.register("results")
             TaskManager.register("statistics")
             TaskManager.register("cache")
+            TaskManager.register("pending_tasks")
         __manager = TaskManager(address=address, authkey=server_credentials)
         # run the local server, connect to a remote one or begin serving
         try:
@@ -301,6 +314,7 @@ def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
     results = manager.results()
     stats = manager.statistics()
     cache = manager.cache()
+    pending_tasks = manager.pending_tasks()
     log.debug("Spawner daemon started with %d processes" % number_of_processes)
     log.debug("Registering %d worker threads: %s" \
             % (len(worker_uuid_list), worker_uuid_list))
@@ -320,7 +334,7 @@ def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
                     worker = __multiprocessing.Process(
                             name=task_name, target=_handle_tasks,
                             args=(tasks, results, stats, cache,
-                            __closing))
+                                    pending_tasks, __closing))
                     worker.start()
                     workers.append(worker)
                 # wait until all workers are finished
@@ -336,7 +350,7 @@ def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
         # the connection was closed
         log.info("Spawner daemon lost connection to server")
 
-def _handle_tasks(tasks, results, stats, cache, closing):
+def _handle_tasks(tasks, results, stats, cache, pending_tasks, closing):
     global __multiprocessing
     name = __multiprocessing.current_process().name
     local_cache = ProcessDataCache()
@@ -349,52 +363,59 @@ def _handle_tasks(tasks, results, stats, cache, closing):
             if last_worker_notification + 30 < time.time():
                 stats.worker_notification(name)
                 last_worker_notification = time.time()
+            start_time = time.time()
             try:
-                start_time = time.time()
-                job_id, task_id, func, args = tasks.get(timeout=1.0)
-                # reset the timeout counter, if we found another item in the queue
-                timeout_counter = 0
-                real_args = []
-                for arg in args:
-                    if isinstance(arg, ProcessDataCacheItemID):
-                        try:
-                            value = local_cache.get(arg)
-                        except KeyError:
-                            # TODO: we will break hard, if the item is expired
-                            value = cache.get(arg)
-                            local_cache.add(arg, value)
-                        real_args.append(value)
-                    elif isinstance(arg, list) and [True for item in arg \
-                            if isinstance(item, ProcessDataCacheItemID)]:
-                        # check if any item in the list is cacheable
-                        args_list = []
-                        for item in arg:
-                            if isinstance(item, ProcessDataCacheItemID):
-                                try:
-                                    value = local_cache.get(item)
-                                except KeyError:
-                                    value = cache.get(item)
-                                    local_cache.add(item, value)
-                                args_list.append(value)
-                            else:
-                                args_list.append(item)
-                        real_args.append(args_list)
-                    else:
-                        real_args.append(arg)
-                stats.add_transfer_time(name, time.time() - start_time)
-                start_time = time.time()
-                results.put((job_id, task_id, func(real_args)))
-                stats.add_process_time(name, time.time() - start_time)
+                job_id, task_id, func, args = tasks.get(timeout=0.2)
             except Queue.Empty:
-                time.sleep(1.0)
+                time.sleep(1.8)
                 timeout_counter += 1
+                continue
+            # TODO: if the client aborts/disconnects between "tasks.get" and
+            # "pending_tasks.add", the task is lost. We should better use some
+            # backup.
+            pending_tasks.add(job_id, task_id, (func, args))
+            log.debug("Worker %s processes %s / %s" % (name, job_id, task_id))
+            # reset the timeout counter, if we found another item in the queue
+            timeout_counter = 0
+            real_args = []
+            for arg in args:
+                if isinstance(arg, ProcessDataCacheItemID):
+                    try:
+                        value = local_cache.get(arg)
+                    except KeyError:
+                        # TODO: we will break hard, if the item is expired
+                        value = cache.get(arg)
+                        local_cache.add(arg, value)
+                    real_args.append(value)
+                elif isinstance(arg, list) and [True for item in arg \
+                        if isinstance(item, ProcessDataCacheItemID)]:
+                    # check if any item in the list is cacheable
+                    args_list = []
+                    for item in arg:
+                        if isinstance(item, ProcessDataCacheItemID):
+                            try:
+                                value = local_cache.get(item)
+                            except KeyError:
+                                value = cache.get(item)
+                                local_cache.add(item, value)
+                            args_list.append(value)
+                        else:
+                            args_list.append(item)
+                    real_args.append(args_list)
+                else:
+                    real_args.append(arg)
+            stats.add_transfer_time(name, time.time() - start_time)
+            start_time = time.time()
+            results.put((job_id, task_id, func(real_args)))
+            pending_tasks.remove(job_id, task_id)
+            stats.add_process_time(name, time.time() - start_time)
     except KeyboardInterrupt:
         pass
     log.debug("Worker thread finished after %d seconds of inactivity: %s" \
             % (timeout_counter, name))
 
 def run_in_parallel_remote(func, args_list, unordered=False,
-        disable_multiprocessing=False):
+        disable_multiprocessing=False, callback=None):
     global __multiprocessing, __num_of_processes, __manager, __task_source_uuid, __finished_jobs
     if __multiprocessing is None:
         # threading was not configured before
@@ -406,7 +427,11 @@ def run_in_parallel_remote(func, args_list, unordered=False,
         results_queue = __manager.results()
         remote_cache = __manager.cache()
         stats = __manager.statistics()
+        pending_tasks = __manager.pending_tasks()
+        # add all tasks of this job to the queue
         for index, args in enumerate(args_list):
+            if callback:
+                callback()
             start_time = time.time()
             result_args = []
             for arg in args:
@@ -417,21 +442,22 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                         log.debug("Adding cache item for job %s: %s - %s" % (job_id, arg.uuid, arg.__class__))
                         remote_cache.add(data_uuid, arg)
                     result_args.append(data_uuid)
-                elif isinstance(arg, (list, set, tuple)) \
-                        and ([True for item in arg if hasattr(item, "uuid")]):
-                    # a list with at least one cacheable item
+                elif isinstance(arg, (list, set, tuple)):
+                    # a list with - maybe containing cacheable items
                     new_arg_list = []
                     for item in arg:
-                        if hasattr(item, "uuid"):
+                        try:
                             data_uuid = ProcessDataCacheItemID(item.uuid)
-                            if not remote_cache.contains(data_uuid):
-                                log.debug("Adding cache item from list for " \
-                                        + "job %s: %s - %s" \
-                                        % (job_id, item.uuid, item.__class__))
-                                remote_cache.add(data_uuid, item)
-                            new_arg_list.append(data_uuid)
-                        else:
+                        except AttributeError:
+                            # non-cacheable item
                             new_arg_list.append(item)
+                            continue
+                        if not remote_cache.contains(data_uuid):
+                            log.debug("Adding cache item from list for " \
+                                    + "job %s: %s - %s" \
+                                    % (job_id, item.uuid, item.__class__))
+                            remote_cache.add(data_uuid, item)
+                        new_arg_list.append(data_uuid)
                     result_args.append(new_arg_list)
                 else:
                     result_args.append(arg)
@@ -440,63 +466,112 @@ def run_in_parallel_remote(func, args_list, unordered=False,
         log.debug("Added %d tasks for job %s" % (len(args_list), job_id))
         result_buffer = {}
         index = 0
-        while index < len(args_list):
+        cancelled = False
+        # wait for all results of this job
+        while (index < len(args_list)) and not cancelled:
+            if callback and callback():
+                # cancel requested
+                cancelled = True
+                break
+            # re-inject stale tasks if necessary
+            stale_task = pending_tasks.get_stale_task()
+            if stale_task:
+                stale_job_id, stale_task_id = stale_task[:2]
+                if stale_job_id in __finished_jobs:
+                    log.debug("Throwing away stale task of an old " + \
+                            "job: %s" % stale_job_id)
+                    pending_tasks.remove(stale_job_id, stale_task_id)
+                elif stale_job_id == job_id:
+                    log.debug("Reinjecting stale task: %s / %s" % \
+                            (job_id, stale_task_id))
+                    stale_func, stale_args = stale_task[2]
+                    tasks_queue.put((job_id, stale_task_id, stale_func,
+                            stale_args))
+                    pending_tasks.remove(job_id, stale_task_id)
+                else:
+                    # non-local task
+                    log.debug("Ignoring stale non-local task: %s / %s" \
+                            % (stale_job_id, stale_task_id))
             try:
-                result_job_id = None
-                while result_job_id != job_id:
-                    result_job_id, task_id, result = results_queue.get()
-                    if result_job_id == job_id:
-                        if unordered:
-                            # just return the values in any order
+                result_job_id, task_id, result = results_queue.get(
+                        timeout=1.0)
+            except Queue.Empty:
+                time.sleep(1.0)
+                continue
+            if result_job_id == job_id:
+                log.debug("Received the result of a task: %s / %s" % \
+                        (job_id, task_id))
+                try:
+                    if unordered:
+                        # just return the values in any order
+                        yield result
+                        index += 1
+                    else:
+                        # return the results in order (based on task_id)
+                        if task_id == index:
                             yield result
                             index += 1
-                        else:
-                            # return the results in order (based on task_id)
-                            if task_id == index:
-                                yield result
+                            while index in result_buffer.keys():
+                                yield result_buffer[index]
+                                del result_buffer[index]
                                 index += 1
-                                while index in result_buffer.keys():
-                                    yield result_buffer[index]
-                                    del result_buffer[index]
-                                    index += 1
-                            else:
-                                result_buffer[task_id] = result
-                    elif result_job_id in __finished_jobs:
-                        # throw away this result of an old job
-                        log.debug("Throwing away a result of an old task: %s" % result_job_id)
-                        pass
-                    else:
-                        log.debug("Skipping result of non-local task: %s" % result_job_id)
-                        # put the result back to the queue for the next manager
-                        results_queue.put((result_job_id, task_id, result))
-                        # wait for up to 0.2 seconds before trying again
-                        time.sleep(random.random() / 5)
-            except GeneratorExit:
-                log.debug("Parallel processing canceled: %s" % job_id)
-                # catch this specific (silent) exception and flush the task queue
-                queue_len = tasks_queue.qsize()
-                # remove all remaining tasks with the current job id
-                removed_job_counter = 0
-                for index in range(queue_len):
-                    this_job_id, task_id, func, args = tasks_queue.get(timeout=0.1)
-                    if this_job_id != job_id:
-                        tasks_queue.put((this_job_id, task_id, func, args))
-                    else:
-                        removed_job_counter += 1
-                if removed_job_counter > 0:
-                    log.debug("Removed %d remaining tasks for %s" % (removed_job_counter, job_id))
-                __finished_jobs.append(job_id)
-                # don't keep more than 10 old job ids
-                while len(__finished_jobs) > 10:
-                    __finished_jobs.pop(0)
-                # re-raise the GeneratorExit exception to finish destruction
-                raise
-        log.debug("Parallel processing finished: %s" % job_id)
+                        else:
+                            result_buffer[task_id] = result
+                except GeneratorExit:
+                    # This exception is triggered when the caller stops
+                    # requesting more items from the generator.
+                    log.debug("Parallel processing cancelled: %s" % job_id)
+                    _cleanup_job(job_id, tasks_queue, pending_tasks,
+                            __finished_jobs)
+                    # re-raise the GeneratorExit exception to finish destruction
+                    raise
+            elif result_job_id in __finished_jobs:
+                # throw away this result of an old job
+                log.debug("Throwing away one result of an old job: %s" % \
+                        result_job_id)
+            else:
+                log.debug("Skipping result of non-local job: %s" % \
+                        result_job_id)
+                # put the result back to the queue for the next manager
+                results_queue.put((result_job_id, task_id, result))
+                # wait a little bit to get some idle CPU cycles
+                time.sleep(0.2)
+        _cleanup_job(job_id, tasks_queue, pending_tasks, __finished_jobs)
+        if cancelled:
+            log.debug("Parallel processing cancelled: %s" % job_id)
+        else:
+            log.debug("Parallel processing finished: %s" % job_id)
     else:
         for args in args_list:
             yield func(args)
 
-def run_in_parallel_local(func, args, unordered=False, disable_multiprocessing=False):
+def _cleanup_job(job_id, tasks_queue, pending_tasks, finished_jobs):
+    # flush the task queue
+    queue_len = tasks_queue.qsize()
+    # remove all remaining tasks with the current job id
+    removed_job_counter = 0
+    for index in range(queue_len):
+        try:
+            this_job_id, task_id, func, args = tasks_queue.get(timeout=0.1)
+        except Queue.Empty:
+            break
+        if this_job_id != job_id:
+            tasks_queue.put((this_job_id, task_id, func, args))
+        else:
+            removed_job_counter += 1
+    if removed_job_counter > 0:
+        log.debug("Removed %d remaining tasks for %s" % (removed_job_counter,
+                job_id))
+    # remove all stale tasks
+    pending_tasks.remove(job_id)
+    # limit the number of stored finished jobs
+    finished_jobs.append(job_id)
+    while len(finished_jobs) > 30:
+        finished_jobs.pop(0)
+
+
+def run_in_parallel_local(func, args, unordered=False,
+        disable_multiprocessing=False, callback=None):
     global __multiprocessing, __num_of_processes
     if __multiprocessing is None:
         # threading was not configured before
@@ -512,9 +587,15 @@ def run_in_parallel_local(func, args, unordered=False, disable_multiprocessing=F
         # directly. It would somehow loose the focus and just hang infinitely.
         # Thus we wrap our own generator around it.
         for result in imap_func(func, args):
+            if callback and callback():
+                # cancel requested
+                break
             yield result
     else:
         for arg in args:
+            if callback and callback():
+                # cancel requested
+                break
             yield func(arg)
 
 
@@ -620,6 +701,57 @@ class ProcessStatistics(object):
         return result
 
 
+class PendingTasks(object):
+
+    def __init__(self, stale_timeout=300):
+        # we assume that multiprocessing was imported before
+        import multiprocessing
+        self._lock = multiprocessing.Lock()
+        self._jobs = {}
+        self._stale_timeout = stale_timeout
+        # necessary in case of a lost connection
+        self._lock_timeout = 3
+
+    def add(self, job_id, task_id, info):
+        # no acquire and release: be as quick as possible (avoid lost tasks)
+        self._jobs[(job_id, task_id)] = (time.time(), info)
+
+    def remove(self, job_id, task_id=None):
+        self._lock.acquire(block=True, timeout=self._lock_timeout)
+        if task_id is None:
+            # remove all tasks of this job
+            remove_keys = []
+            for key in self._jobs:
+                if key[0] == job_id:
+                    remove_keys.append(key)
+            for key in remove_keys:
+                del self._jobs[key]
+        else:
+            # remove only a specific task
+            if (job_id, task_id) in self._jobs:
+                del self._jobs[(job_id, task_id)]
+        self._lock.release()
+        
+    def get_stale_task(self):
+        self._lock.acquire(block=True, timeout=self._lock_timeout)
+        stale_start_time = time.time() - self._stale_timeout
+        stale_tasks = []
+        for (job_id, task_id), (start_time, info) in self._jobs.iteritems():
+            if start_time < stale_start_time:
+                stale_tasks.append((job_id, task_id, info))
+        if stale_tasks:
+            # pick a random task - otherwise some old tasks stop everything
+            result_index = random.randrange(0, len(stale_tasks))
+            result = stale_tasks[result_index]
+        else:
+            result = None
+        self._lock.release()
+        return result
+
+    def length(self):
+        return len(self._jobs)
+
+
 class ProcessDataCache(object):
 
     def __init__(self, timeout=600):
@@ -666,6 +798,9 @@ class ProcessDataCache(object):
         self._update_timestamp(name)
         self.expire_cache_items()
         return self.cache[name][0]
+
+    def length(self):
+        return len(self.cache)
 
 
 class ProcessDataCacheItemID(object):
