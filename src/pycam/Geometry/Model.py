@@ -423,8 +423,11 @@ class ContourModel(BaseModel):
     def get_num_of_lines(self):
         return sum([len(group) for group in self._line_groups])
 
-    def get_polygons(self):
-        return self._line_groups
+    def get_polygons(self, z=None):
+        if z is None:
+            return self._line_groups
+        else:
+            return [group for group in self._line_groups if group.minz == z]
 
     def reverse_directions(self, callback=None):
         for polygon in self._line_groups:

@@ -162,7 +162,7 @@ def get_support_distributed(model, z_plane, average_distance,
         return
     result = Model()
     if hasattr(model, "get_polygons"):
-        polygons = model.get_polygons()
+        polygons = model.get_polygons(z=z_plane)
     else:
         polygons = model.get_waterline_contour(Plane(Point(0, 0, z_plane),
                 Vector(0, 0, 1))).get_polygons()
