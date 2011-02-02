@@ -106,6 +106,9 @@ class SVGExporterContourModel(object):
     def write(self, stream):
         writer = SVGExporter(stream)
         for polygon in self.model.get_polygons():
-            writer.AddLines(polygon.get_points())
+            points = polygon.get_points()
+            if polygon.is_closed:
+                points.append(points[0])
+            writer.AddLines(points)
         writer.close(close_stream=False)
 
