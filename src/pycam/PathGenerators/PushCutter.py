@@ -140,7 +140,8 @@ class PushCutter:
             p1, p2 = line
             args.append((p1, p2, depth, models, self.cutter, self.physics))
 
-        for points in run_in_parallel(_process_one_line, args):
+        for points in run_in_parallel(_process_one_line, args,
+                callback=progress_counter.update):
             if points:
                 self.pa.new_scanline()
                 for p in points:

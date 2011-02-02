@@ -298,7 +298,7 @@ class ContourFollow:
         args = [(follow_model, self.cutter, self._up_vector, t, z)
                 for t in triangles if not id(t) in self._processed_triangles]
         results_iter = run_in_parallel(_process_one_triangle, args,
-                unordered=True)
+                unordered=True, callback=progress_counter.update)
         for result, ignore_triangle_id_list in results_iter:
             if ignore_triangle_id_list:
                 self._processed_triangles.extend(ignore_triangle_id_list)
