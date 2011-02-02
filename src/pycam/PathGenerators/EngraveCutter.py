@@ -216,11 +216,13 @@ class EngraveCutter:
         pa.new_scanline()
         if not self.combined_model:
             # no obstacle -> minimum height
-            points = [Point(line.p1.x, line.p1.y, minz),
-                    Point(line.p2.x, line.p2.y, minz)]
+            # TODO: this "max(..)" is not correct for inclined lines
+            points = [Point(line.p1.x, line.p1.y, max(minz, line.p1.z)),
+                    Point(line.p2.x, line.p2.y, max(minz, line.p2.z))]
         else:
-            p1 = Point(line.p1.x, line.p1.y, minz)
-            p2 = Point(line.p2.x, line.p2.y, minz)
+            # TODO: this "max(..)" is not correct for inclined lines.
+            p1 = Point(line.p1.x, line.p1.y, max(minz, line.p1.z))
+            p2 = Point(line.p2.x, line.p2.y, max(minz, line.p2.z))
             distance = line.len
             # we want to have at least five steps each
             num_of_steps = max(5, 1 + ceil(distance / horiz_step))
@@ -230,8 +232,9 @@ class EngraveCutter:
             x_steps = [(p1.x + i * x_step) for i in range(num_of_steps)]
             y_steps = [(p1.y + i * y_step) for i in range(num_of_steps)]
             step_coords = zip(x_steps, y_steps)
+            # TODO: this "min(..)" is not correct for inclided lines. This should be fixed in "get_max_height".
             points = get_max_height_dynamic(self.combined_model, self.cutter,
-                    step_coords, minz, maxz, self.physics)
+                    step_coords, min(p1.z, p2.z), maxz, self.physics)
         for p in points:
             if p is None:
                 # exceeded maxz - the cutter has to skip this point
