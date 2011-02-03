@@ -216,7 +216,10 @@
         <col id="0" translatable="yes">grid pattern</col>
       </row>
       <row>
-        <col id="0" translatable="yes">automatic distribution</col>
+        <col id="0" translatable="yes">automatic distribution (edges)</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">automatic distribution (corners)</col>
       </row>
     </data>
   </object>

@@ -26,6 +26,7 @@ from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Model import Model
 from pycam.Geometry.utils import number
+import pycam.Geometry
 
 
 def _get_triangles_for_face(pts):
@@ -151,12 +152,8 @@ def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness,
     return grid_model
 
 def get_support_distributed(model, z_plane, average_distance,
-        min_bridges_per_polygon, thickness, height, length):
-    def is_near_list(point_list, point, distance):
-        for p in point_list:
-            if p.sub(point).norm <= distance:
-                return True
-        return False
+        min_bridges_per_polygon, thickness, height, length,
+        start_at_corners=False):
     if (average_distance == 0) or (length == 0) or (thickness == 0) \
             or (height == 0):
         return
@@ -166,62 +163,159 @@ def get_support_distributed(model, z_plane, average_distance,
     else:
         polygons = model.get_waterline_contour(Plane(Point(0, 0, z_plane),
                 Vector(0, 0, 1))).get_polygons()
-    bridge_positions = []
     # minimum required distance between two bridge start points
     avoid_distance = 1.5 * (abs(length) + thickness)
+    if start_at_corners:
+        bridge_calculator = _get_corner_bridges
+    else:
+        bridge_calculator = _get_edge_bridges
     for polygon in polygons:
         # no grid for _small_ inner polygons
         # TODO: calculate a reasonable factor (see below)
         if polygon.is_closed and (not polygon.is_outer()) \
                 and (abs(polygon.get_area()) < 25000 * thickness ** 2):
             continue
-        lines = polygon.get_lines()
-        poly_lengths = polygon.get_lengths()
-        num_of_bridges = max(min_bridges_per_polygon,
-                int(round(sum(poly_lengths) / average_distance)))
-        real_average_distance = sum(poly_lengths) / num_of_bridges
-        max_line_index = poly_lengths.index(max(poly_lengths))
-        positions = []
-        current_line_index = max_line_index
-        distance_processed = poly_lengths[current_line_index] / 2
-        positions.append(current_line_index)
-        while len(positions) < num_of_bridges:
+        bridges = bridge_calculator(polygon, z_plane, min_bridges_per_polygon,
+                average_distance, avoid_distance)
+        for pos, direction in bridges:
+            _add_cuboid_to_model(result, pos, direction.mul(length), height,
+                    thickness)
+    return result
+
+
+class _BridgeCorner(object):
+    # currently we only use the xy plane
+    up_vector = Vector(0, 0, 1)
+    def __init__(self, barycenter, location, p1, p2, p3):
+        self.location = location
+        self.position = p2
+        self.direction = pycam.Geometry.get_bisector(p1, p2, p3,
+                self.up_vector).normalized()
+        preferred_direction = p2.sub(barycenter).normalized()
+        # direction_factor: 0..1 (bigger -> better)
+        direction_factor = (preferred_direction.dot(self.direction) + 1) / 2
+        angle = pycam.Geometry.get_angle_pi(p1, p2, p3,
+                self.up_vector, pi_factor=True)
+        # angle_factor: 0..1 (bigger -> better)
+        if angle > 0.5:
+            # use only angles > 90 degree
+            angle_factor = angle / 2.0
+        else:
+            angle_factor = 0
+        # priority: 0..1 (bigger -> better)
+        self.priority = angle_factor * direction_factor
+    def get_position_priority(self, other_location, average_distance):
+        return self.priority / (1 + self.get_distance(other_location) / \
+                average_distance)
+    def get_distance(self, other_location):
+        return min(abs(other_location - self.location),
+                abs(1 + other_location - self.location))
+    def __str__(self):
+        return "%s (%s) - %s" % (self.position, self.location, self.priority)
+        
+
+def _get_corner_bridges(polygon, z_plane, min_bridges, average_distance, avoid_distance):
+    """ try to place support bridges at corners of a polygon
+    Priorities:
+        - bigger corner angles are preferred
+        - directions pointing away from the center of the polygon are preferred
+    """
+    center = polygon.get_barycenter()
+    points = polygon.get_points()
+    lines = polygon.get_lines()
+    poly_lengths = polygon.get_lengths()
+    outline = sum(poly_lengths)
+    rel_avoid_distance = avoid_distance / outline
+    corner_positions = []
+    length_sum = 0
+    for l in poly_lengths:
+        corner_positions.append(length_sum / outline)
+        length_sum += l
+    num_of_bridges = int(max(min_bridges, round(outline / average_distance)))
+    rel_average_distance = 1.0 / num_of_bridges
+    corners = []
+    for index in range(len(polygon.get_points())):
+        p1 = points[(index - 1) % len(points)]
+        p2 = points[index % len(points)]
+        p3 = points[(index + 1) % len(points)]
+        corner = _BridgeCorner(center, corner_positions[index], p1, p2, p3)
+        if corner.priority > 0:
+            # ignore sharp corners
+            corners.append(corner)
+    bridge_corners = []
+    for index in range(num_of_bridges):
+        preferred_position = index * rel_average_distance
+        suitable_corners = []
+        for corner in corners:
+            if corner.get_distance(preferred_position) < rel_average_distance:
+                # check if the corner is too close to neighbouring corners
+                if (not bridge_corners) or \
+                        ((bridge_corners[-1].get_distance(corner.location) >= rel_avoid_distance) and \
+                            (bridge_corners[0].get_distance(corner.location) >= rel_avoid_distance)):
+                    suitable_corners.append(corner)
+        get_priority = lambda corner: corner.get_position_priority(
+                preferred_position, rel_average_distance)
+        suitable_corners.sort(key=get_priority, reverse=True)
+        if suitable_corners:
+            bridge_corners.append(suitable_corners[0])
+            corners.remove(suitable_corners[0])
+    return [(c.position, c.direction) for c in bridge_corners]
+
+def _get_edge_bridges(polygon, z_plane, min_bridges, average_distance, avoid_distance):
+    def is_near_list(point_list, point, distance):
+        for p in point_list:
+            if p.sub(point).norm <= distance:
+                return True
+        return False
+    lines = polygon.get_lines()
+    poly_lengths = polygon.get_lengths()
+    num_of_bridges = max(min_bridges,
+            int(round(sum(poly_lengths) / average_distance)))
+    real_average_distance = sum(poly_lengths) / num_of_bridges
+    max_line_index = poly_lengths.index(max(poly_lengths))
+    positions = []
+    current_line_index = max_line_index
+    distance_processed = poly_lengths[current_line_index] / 2
+    positions.append(current_line_index)
+    while len(positions) < num_of_bridges:
+        current_line_index += 1
+        current_line_index %= len(poly_lengths)
+        # skip lines that are not at least twice as long as the grid width
+        while (distance_processed + poly_lengths[current_line_index] \
+                < real_average_distance):
+            distance_processed += poly_lengths[current_line_index]
             current_line_index += 1
             current_line_index %= len(poly_lengths)
-            # skip lines that are not at least twice as long as the grid width
-            while (distance_processed + poly_lengths[current_line_index] \
-                    < real_average_distance):
-                distance_processed += poly_lengths[current_line_index]
-                current_line_index += 1
-                current_line_index %= len(poly_lengths)
-            positions.append(current_line_index)
-            distance_processed += poly_lengths[current_line_index]
-            distance_processed %= real_average_distance
-        for line_index in positions:
-            position = polygon.get_middle_of_line(line_index)
-            # skip bridges that are close to another existing bridge
-            if is_near_list(bridge_positions, position, avoid_distance):
-                line = polygon.get_lines()[line_index]
-                # calculate two alternative points on the same line
-                position1 = position.add(line.p1).div(2)
-                position2 = position.add(line.p2).div(2)
-                if is_near_list(bridge_positions, position1, avoid_distance):
-                    if is_near_list(bridge_positions, position2,
-                            avoid_distance):
-                        # no valid alternative - we skip this bridge
-                        continue
-                    else:
-                        # position2 is OK
-                        position = position2
+        positions.append(current_line_index)
+        distance_processed += poly_lengths[current_line_index]
+        distance_processed %= real_average_distance
+    result = []
+    bridge_positions = []
+    for line_index in positions:
+        position = polygon.get_middle_of_line(line_index)
+        # skip bridges that are close to another existing bridge
+        if is_near_list(bridge_positions, position, avoid_distance):
+            line = polygon.get_lines()[line_index]
+            # calculate two alternative points on the same line
+            position1 = position.add(line.p1).div(2)
+            position2 = position.add(line.p2).div(2)
+            if is_near_list(bridge_positions, position1, avoid_distance):
+                if is_near_list(bridge_positions, position2,
+                        avoid_distance):
+                    # no valid alternative - we skip this bridge
+                    continue
                 else:
-                    # position1 is OK
-                    position = position1
-            # append the original position (ignoring z_plane)
-            bridge_positions.append(position)
-            # move the point to z_plane
-            position = Point(position.x, position.y, z_plane)
-            bridge_dir = lines[line_index].dir.cross(
-                    polygon.plane.n).normalized().mul(length)
-            _add_cuboid_to_model(result, position, bridge_dir, height, thickness)
+                    # position2 is OK
+                    position = position2
+            else:
+                # position1 is OK
+                position = position1
+        # append the original position (ignoring z_plane)
+        bridge_positions.append(position)
+        # move the point to z_plane
+        position = Point(position.x, position.y, z_plane)
+        bridge_dir = lines[line_index].dir.cross(
+                polygon.plane.n).normalized()
+        result.append((position, bridge_dir))
     return result
 

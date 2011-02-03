@@ -145,7 +145,7 @@ PREFERENCES_DEFAULTS = {
 """ the listed items will be loaded/saved via the preferences file in the
 user's home directory on startup/shutdown"""
 
-GRID_TYPES = {"none": 0, "grid": 1, "automatic": 2}
+GRID_TYPES = {"none": 0, "grid": 1, "automatic_edge": 2, "automatic_corner": 3}
 POCKETING_TYPES = ["none", "holes", "enclosed"]
 MAX_UNDO_STATES = 10
 
@@ -1185,11 +1185,13 @@ class ProjectGui:
 
     @gui_activity_guard
     def update_support_grid_controls(self, widget=None):
-        controls = {"GridProfileExpander": ("grid", "automatic"),
+        controls = {"GridProfileExpander": ("grid", "automatic_edge",
+                    "automatic_corner"),
                 "GridPatternExpander": ("grid", ),
                 "GridPositionExpander": ("grid", ),
                 "GridManualShiftExpander": ("grid", ),
-                "GridAverageDistanceExpander": ("automatic", ),
+                "GridAverageDistanceExpander": ("automatic_edge",
+                    "automatic_corner"),
         }
         grid_type = self.settings.get("support_grid_type")
         if grid_type == GRID_TYPES["grid"]:
@@ -1202,9 +1204,8 @@ class ProjectGui:
                         self.settings.get("support_grid_distance_x"))
             self.update_support_grid_manual_model()
             self.switch_support_grid_manual_selector()
-        elif grid_type == GRID_TYPES["automatic"]:
-            pass
-        elif grid_type == GRID_TYPES["none"]:
+        elif grid_type in (GRID_TYPES["automatic_edge"],
+                GRID_TYPES["automatic_corner"], GRID_TYPES["none"]):
             pass
         elif grid_type < 0:
             # not initialized
@@ -1246,7 +1247,8 @@ class ProjectGui:
                         offset_y=s.get("support_grid_offset_y"),
                         adjustments_x=self.grid_adjustments_x,
                         adjustments_y=self.grid_adjustments_y)
-        elif grid_type == GRID_TYPES["automatic"]:
+        elif grid_type in (GRID_TYPES["automatic_edge"],
+                GRID_TYPES["automatic_corner"]):
             if (s.get("support_grid_thickness") > 0) \
                     and (s.get("support_grid_height") > 0) \
                     and (s.get("support_grid_average_distance") > 0) \
@@ -1258,13 +1260,15 @@ class ProjectGui:
                 if not bounds is None:
                     minz = bounds.get_absolute_limits(
                             reference=self.model.get_bounds())[0][2]
+                    corner_start = (grid_type == GRID_TYPES["automatic_corner"])
                     support_grid = pycam.Toolpath.SupportGrid.get_support_distributed(
                             s.get("model"), minz,
                             s.get("support_grid_average_distance"),
                             s.get("support_grid_minimum_bridges"),
                             s.get("support_grid_thickness"),
                             s.get("support_grid_height"),
-                            s.get("support_grid_length"))
+                            s.get("support_grid_length"),
+                            start_at_corners=corner_start)
         elif grid_type == GRID_TYPES["none"]:
             pass
         s.set("support_grid", support_grid)
@@ -3605,13 +3609,16 @@ class ProjectGui:
                     offset_y=self.settings.get("support_grid_offset_y"),
                     adjustments_x=self.grid_adjustments_x,
                     adjustments_y=self.grid_adjustments_y)
-        elif grid_type == GRID_TYPES["automatic"]:
+        elif grid_type in (GRID_TYPES["automatic_edge"],
+                GRID_TYPES["automatic_corner"]):
+            corner_start = (grid_type == GRID_TYPES["automatic_corner"])
             toolpath_settings.set_support_distributed(
                     self.settings.get("support_grid_average_distance"),
                     self.settings.get("support_grid_minimum_bridges"),
                     self.settings.get("support_grid_thickness"),
                     self.settings.get("support_grid_height"),
-                    self.settings.get("support_grid_length"))
+                    self.settings.get("support_grid_length"),
+                    start_at_corner=corner_start)
         elif grid_type == GRID_TYPES["none"]:
             pass
         else:

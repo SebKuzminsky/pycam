@@ -142,6 +142,7 @@ class Polygon(TransformableContainer):
         Currently this works only for line groups in an xy-plane.
         Returns zero for empty line groups or for open line groups.
         Returns negative values for inner hole.
+        TODO: "get_area" is wrong by some factor - check the result!
         """
         if not self._points:
             return 0
@@ -162,6 +163,55 @@ class Polygon(TransformableContainer):
                     + self.plane.n.z * value[2]
             self._area_cache = result / 2
         return self._area_cache
+
+    def get_barycenter(self):
+        area = self.get_area()
+        if not area:
+            return None
+        # TODO: for now we just calculate the "middle of the outline" - the "barycenter" code below needs to be fixed
+        return Point((self.maxx + self.minx) / 2, (self.maxy + self.miny) / 2,
+                (self.maxz + self.minz) / 2)
+        # see: http://stackoverflow.com/questions/2355931/compute-the-centroid-of-a-3d-planar-polygon/2360507
+        # first: calculate cx and y
+        cxy, cxz, cyx, cyz, czx, czy = (0, 0, 0, 0, 0, 0)
+        for index in range(len(self._points)):
+            p1 = self._points[index]
+            p2 = self._points[(index + 1) % len(self._points)]
+            cxy += (p1.x + p2.x) * (p1.x * p2.y - p1.y * p2.x)
+            cxz += (p1.x + p2.x) * (p1.x * p2.z - p1.z * p2.x)
+            cyx += (p1.y + p2.y) * (p1.y * p2.x - p1.x * p2.y)
+            cyz += (p1.y + p2.y) * (p1.y * p2.z - p1.z * p2.y)
+            czx += (p1.z + p2.z) * (p1.z * p2.x - p1.x * p2.z)
+            czy += (p1.z + p2.z) * (p1.z * p2.y - p1.y * p2.z)
+        if self.minz == self.maxz:
+            return Point(cxy / (6 * area), cyx / (6 * area), self.minz)
+        elif self.miny == self.maxy:
+            return Point(cxz / (6 * area), self.miny, czx / (6 * area))
+        elif self.minz == self.maxz:
+            return Point(self.minx, cyz / (6 * area), czy / (6 * area))
+        else:
+            # calculate area of xy projection
+            area_xy = self.get_plane_projection(Plane(Point(0, 0, 0),
+                    Point(0, 0, 1))).get_area()
+            area_xz = self.get_plane_projection(Plane(Point(0, 0, 0),
+                    Point(0, 1, 0))).get_area()
+            area_yz = self.get_plane_projection(Plane(Point(0, 0, 0),
+                    Point(1, 0, 0))).get_area()
+            if 0 in (area_xy, area_xz, area_yz):
+                log.info("Failed assumtion: zero-sized projected area - " + \
+                        "%s / %s / %s" % (area_xy, area_xz, area_yz))
+                return Point(0, 0, 0)
+            if abs(cxy / area_xy - cxz / area_xz) > epsilon:
+                log.info("Failed assumption: barycenter xy/xz - %s / %s" % \
+                        (cxy / area_xy, cxz / area_xz))
+            if abs(cyx / area_xy - cyz / area_yz) > epsilon:
+                log.info("Failed assumption: barycenter yx/yz - %s / %s" % \
+                        (cyx / area_xy, cyz / area_yz))
+            if abs(czx / area_xz - czy / area_yz) > epsilon:
+                log.info("Failed assumption: barycenter zx/zy - %s / %s" % \
+                        (czx / area_xz, cyz / area_yz))
+            return Point(cxy / (6 * area_xy), cyx / (6 * area_xy),
+                    czx / (6 * area_xz))
 
     def get_length(self):
         """ add the length of all lines within the polygon
@@ -306,6 +356,7 @@ class Polygon(TransformableContainer):
             self.minz = min(self.minz, point.z)
             self.maxz = max(self.maxz, point.z)
         self._lines_cache = None
+        self._area_cache = None
 
     def reset_cache(self):
         self._cached_offset_polygons = {}

@@ -21,6 +21,7 @@ Version 0.4.1 - UNRELEASED
  * visibility of 3D view items is now configurable in the 3D window
   * via a button and via the context menu
  * improved stability of remote processing: disconnected nodes should not cause problems anymore
+ * automatically distributed support bridges can now be placed at corners or edges
 
 Version 0.4.0.1 - 2010-10-24
  * disabled parallel processing for Windows standalone executable
