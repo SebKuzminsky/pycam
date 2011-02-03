@@ -121,9 +121,9 @@ class Camera:
         max_dim = max(max(dimx, dimy), dimz)
         distv = Point(v["distance"][0], v["distance"][1],
                 v["distance"][2]).normalized()
-        # The multiplier "1.3" is based on experiments. 1.414 (sqrt(2)) should
+        # The multiplier "1.25" is based on experiments. 1.414 (sqrt(2)) should
         # be roughly sufficient for showing the diagonal of any model.
-        distv = distv.mul((max_dim * 1.2) / number(math.sin(v["fovy"] / 2)))
+        distv = distv.mul((max_dim * 1.25) / number(math.sin(v["fovy"] / 2)))
         self.view["distance"] = (distv.x, distv.y, distv.z)
         # Adjust the "far" distance for the camera to make sure, that huge
         # models (e.g. x=1000) are still visible.
