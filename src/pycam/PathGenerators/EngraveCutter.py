@@ -78,8 +78,19 @@ class EngraveCutter:
 
         line_groups = self.contour_model.get_polygons()
         # push slices for all layers above ground
-        last_z = maxz
-        for z in z_steps[:-1]:
+        if maxz == minz:
+            # only one layer - use PushCutter instead of DropCutter
+            # put "last_z" clearly above the model plane
+            last_z = maxz + 1
+            push_steps = z_steps
+            drop_steps = []
+        else:
+            # multiple layers
+            last_z = maxz
+            push_steps = z_steps[:-1]
+            drop_steps = [z_steps[-1]]
+
+        for z in push_steps:
             # update the progress bar and check, if we should cancel the process
             if draw_callback and draw_callback(text="Engrave: processing" \
                         + " layer %d/%d" % (current_layer, num_of_layers)):
@@ -135,22 +146,24 @@ class EngraveCutter:
                     return 0
         line_groups.sort(cmp=polygon_priority)
 
-        # process the final layer with a drop cutter
-        for line_group in self.contour_model.get_polygons():
-            self.pa_drop.new_direction(0)
-            self.pa_drop.new_scanline()
-            for line in line_group.get_lines():
-                self.GenerateToolPathLineDrop(self.pa_drop, line, minz, maxz,
-                        horiz_step, last_z, draw_callback=draw_callback)
-                if progress_counter.increment():
-                    # quit requested
-                    quit_requested = True
+        for z in drop_steps:
+            # process the final layer with a drop cutter
+            for line_group in self.contour_model.get_polygons():
+                self.pa_drop.new_direction(0)
+                self.pa_drop.new_scanline()
+                for line in line_group.get_lines():
+                    self.GenerateToolPathLineDrop(self.pa_drop, line, z, maxz,
+                            horiz_step, last_z, draw_callback=draw_callback)
+                    if progress_counter.increment():
+                        # quit requested
+                        quit_requested = True
+                        break
+                self.pa_drop.end_scanline()
+                self.pa_drop.end_direction()
+                # break the outer loop if requested
+                if quit_requested:
                     break
-            self.pa_drop.end_scanline()
-            self.pa_drop.end_direction()
-            # break the outer loop if requested
-            if quit_requested:
-                break
+            last_z = z
         self.pa_drop.finish()
         
         return self.pa_push.paths + self.pa_drop.paths
