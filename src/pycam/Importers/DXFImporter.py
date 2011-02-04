@@ -323,6 +323,9 @@ class DXFParser(object):
             center = Point(center[0], center[1], center[2])
             xy_point_coords = pycam.Geometry.get_points_of_arc(center, radius,
                     angle_start, angle_end)
+            # Somehow the order of points seems to be the opposite of the what
+            # is expected.
+            xy_point_coords.reverse()
             if len(xy_point_coords) > 1:
                 for index in range(len(xy_point_coords) - 1):
                     p1 = xy_point_coords[index]
@@ -364,8 +367,11 @@ def import_model(filename, program_locations=None, unit=None,
 
     if lines:
         model = pycam.Geometry.Model.ContourModel()
-        for l in lines:
+        for index, l in enumerate(lines):
             model.append(l)
+            # keep the GUI smooth
+            if callback and (index % 50 == 0):
+                callback()
         # z scaling is always targeted at the 0..1 range
         if color_as_height and (model.minz != model.maxz):
             # scale z to 1
