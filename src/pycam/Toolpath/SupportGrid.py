@@ -221,6 +221,9 @@ def _get_corner_bridges(polygon, z_plane, min_bridges, average_distance, avoid_d
         - directions pointing away from the center of the polygon are preferred
     """
     center = polygon.get_barycenter()
+    if center is None:
+        # polygon is open or zero-sized
+        return []
     points = polygon.get_points()
     lines = polygon.get_lines()
     poly_lengths = polygon.get_lengths()

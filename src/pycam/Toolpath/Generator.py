@@ -180,7 +180,7 @@ def generate_toolpath(model, tool_settings=None,
                 adjustments_x=support_grid_adjustments_x,
                 adjustments_y=support_grid_adjustments_y)
         trimesh_models.append(support_grid_model)
-    elif (support_grid_type == "distributed") \
+    elif (support_grid_type in ("distributed_edges", "distributed_corners")) \
             and (not support_grid_average_distance is None) \
             and (not support_grid_thickness is None) \
             and (not support_grid_length is None):
@@ -204,10 +204,12 @@ def generate_toolpath(model, tool_settings=None,
             model = contour_model
         else:
             model = trimesh_models[0]
+        start_at_corners = (support_grid_type == "distributed_corners")
         support_grid_model = pycam.Toolpath.SupportGrid.get_support_distributed(
                 model, minz, support_grid_average_distance,
                 support_grid_minimum_bridges, support_grid_thickness,
-                support_grid_height, support_grid_length)
+                support_grid_height, support_grid_length,
+                start_at_corners=start_at_corners)
         trimesh_models.append(support_grid_model)
     elif (not support_grid_type) or (support_grid_type == "none"):
         pass

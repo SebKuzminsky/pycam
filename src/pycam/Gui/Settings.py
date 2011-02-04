@@ -582,7 +582,6 @@ class ToolpathSettings:
             "average_distance": float,
             "minimum_bridges": int,
             "length": float,
-            "start_at_corner": bool,
         },
         "Program": {
             "unit": str,
@@ -662,13 +661,15 @@ class ToolpathSettings:
 
     def set_support_distributed(self, average_distance, minimum_bridges,
             thickness, height, length, start_at_corner=False):
-        self.support_grid["type"] = "distributed"
+        if start_at_corner:
+            self.support_grid["type"] = "distributed_corners"
+        else:
+            self.support_grid["type"] = "distributed_edges"
         self.support_grid["average_distance"] = average_distance
         self.support_grid["minimum_bridges"] = minimum_bridges
         self.support_grid["thickness"] = thickness
         self.support_grid["height"] = height
         self.support_grid["length"] = length
-        self.support_grid["start_at_corner"] = start_at_corner
 
     def get_support_grid(self):
         result = {}
