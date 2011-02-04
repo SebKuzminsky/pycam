@@ -48,16 +48,18 @@ def convert_svg2eps(svg_filename, eps_filename, location=None):
                 process.stderr.read()))
         return False
 
-def convert_eps2dxf(eps_filename, dxf_filename, location=None):
+def convert_eps2dxf(eps_filename, dxf_filename, location=None, unit="mm"):
     if location is None:
         location = "pstoedit"
+    args = [location, "-dt", "-nc", "-f", "dxf:-polyaslines"]
+    if unit == "mm":
+        # eps uses inch by default - we need to scale
+        args.extend(("-xscale", "25.4", "-yscale", "25.4"))
+    args.append(eps_filename)
+    args.append(dxf_filename)
     try:
-        process = subprocess.Popen(stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                args = [location,
-                        "-dt", "-nc",
-                        "-f", "dxf:-polyaslines",
-                        eps_filename, dxf_filename])
+        process = subprocess.Popen(stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, args=args)
     except OSError, err_msg:
         log.error("SVGImporter: failed to execute 'pstoedit' (%s): %s" \
                 % (location, err_msg))
@@ -77,7 +79,7 @@ def convert_eps2dxf(eps_filename, dxf_filename, location=None):
                 process.stderr.read()))
         return False
 
-def import_model(filename, program_locations=None, unit=None, callback=None):
+def import_model(filename, program_locations=None, unit="mm", callback=None):
     if not os.path.isfile(filename):
         log.error("SVGImporter: file (%s) does not exist" % filename)
         return None
@@ -120,7 +122,8 @@ def import_model(filename, program_locations=None, unit=None, callback=None):
     # convert eps to dxf via pstoedit
     dxf_file_handle, dxf_file_name = tempfile.mkstemp(suffix=".dxf")
     os.close(dxf_file_handle)
-    success = convert_eps2dxf(eps_file_name, dxf_file_name, location=pstoedit_path)
+    success = convert_eps2dxf(eps_file_name, dxf_file_name, unit=unit,
+            location=pstoedit_path)
     # we don't need the eps file anymore
     remove_temp_file(eps_file_name)
     if not success:
