@@ -1181,6 +1181,12 @@ class ProjectGui:
                 and self.model.is_export_supported()
         self.gui.get_object("SaveAsModel").set_sensitive(save_as_possible)
         save_possible = (not self.last_model_filename is None) and save_as_possible
+        #TODO: fix this dirty hack to avoid silent overwrites of PS/DXF files as SVG
+        if save_possible:
+            extension = os.path.splitext(self.last_model_filename)[-1].lower()
+            if extension[1:] in ("eps", "ps", "dxf"):
+                # can't save 2D formats except SVG
+                save_possible = False
         self.gui.get_object("SaveModel").set_sensitive(save_possible)
 
     @gui_activity_guard
@@ -2507,7 +2513,8 @@ class ProjectGui:
             return
         try:
             file_in = open(filename, "w")
-            model.export(comment=self.get_meta_data()).write(file_in)
+            model.export(comment=self.get_meta_data(),
+                    unit=self.settings.get("unit")).write(file_in)
             file_in.close()
         except IOError, err_msg:
             log.error("Failed to save model file: %s" % err_msg)
