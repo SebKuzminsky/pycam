@@ -81,7 +81,7 @@ def get_angle_pi(p1, p2, p3, up_vector, pi_factor=False):
     else:
         return angle
 
-def get_points_of_arc(center, radius, a1, a2, plane=None, cords=16):
+def get_points_of_arc(center, radius, a1, a2, plane=None, cords=32):
     """ return the points for an approximated arc
 
     @param center: center of the circle
