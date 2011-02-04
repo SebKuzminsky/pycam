@@ -102,9 +102,9 @@ class BaseModel(TransformableContainer):
     def is_export_supported(self):
         return not self._export_function is None
 
-    def export(self, comment=None):
+    def export(self, **kwargs):
         if self.is_export_supported():
-            return self._export_function(self, comment=comment)
+            return self._export_function(self, **kwargs)
         else:
             raise NotImplementedError(("This type of model (%s) does not " \
                     + "support the 'export' function.") % str(type(self)))

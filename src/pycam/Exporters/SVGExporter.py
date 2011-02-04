@@ -20,19 +20,27 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+# Inkscape uses a fixed resolution of 90 dpi
+SVG_OUTPUT_DPI = 90
+
+
 class SVGExporter:
 
-    def __init__(self, output):
+    def __init__(self, output, unit="mm"):
         if isinstance(output, basestring):
             # a filename was given
             self.output = file(filename,"w")
         else:
             # a stream was given
             self.output = output
+        if unit == "mm":
+            dots_per_px = SVG_OUTPUT_DPI / 25.4
+        else:
+            dots_per_px = SVG_OUTPUT_DPI
         self.output.write("""<?xml version='1.0'?>
 <svg xmlns='http://www.w3.org/2000/svg' width='640' height='800'>
-<g transform='translate(320,320) scale(50)' stroke-width='0.01' font-size='0.2'>
-""")
+<g transform='scale(%f)' stroke-width='0.01' font-size='0.2'>
+""" % dots_per_px)
         self._fill = 'none'
         self._stroke = 'black'
 
@@ -100,11 +108,12 @@ class SVGExporter:
 #TODO: we need to create a unified "Exporter" interface and base class
 class SVGExporterContourModel(object):
 
-    def __init__(self, model, comment=None):
+    def __init__(self, model, comment=None, unit="mm"):
         self.model = model
+        self.unit = unit
 
     def write(self, stream):
-        writer = SVGExporter(stream)
+        writer = SVGExporter(stream, unit=self.unit)
         for polygon in self.model.get_polygons():
             points = polygon.get_points()
             if polygon.is_closed:
