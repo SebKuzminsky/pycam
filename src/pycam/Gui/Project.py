@@ -536,7 +536,8 @@ class ProjectGui:
                     lambda widget, data: shift_model_button.grab_default())
             self.gui.get_object(objname).connect("focus-out-event",
                     lambda widget, data: self.window.set_default(None))
-        self.gui.get_object("Shift To Origin").connect("clicked", self.shift_model, False)
+        self.gui.get_object("Shift To Origin").connect("clicked",
+                self.shift_model, False)
         # scale model
         scale_percent = self.gui.get_object("ScalePercent")
         scale_button = self.gui.get_object("ScaleModelButton")
@@ -2154,7 +2155,8 @@ class ProjectGui:
                 self.update_progress_bar("Transforming model")
                 self.model.transform_by_template(value,
                         callback=self.update_progress_bar)
-        self.update_view()
+        self.append_to_queue(self.update_support_model)
+        self.append_to_queue(self.update_view)
 
     def _treeview_get_active_index(self, table, datalist):
         if len(datalist) == 0:

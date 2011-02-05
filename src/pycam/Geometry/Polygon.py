@@ -21,7 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.Line import Line
-from pycam.Geometry.Point import Point
+from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry import TransformableContainer, get_bisector
 from pycam.Geometry.utils import number, epsilon
@@ -41,7 +41,7 @@ class Polygon(TransformableContainer):
         super(Polygon, self).__init__()
         if plane is None:
             # the default plane points upwards along the z axis
-            plane = Plane(Point(0, 0, 0), Point(0, 0, 1))
+            plane = Plane(Point(0, 0, 0), Vector(0, 0, 1))
         self.plane = plane
         self._points = []
         self.is_closed = False
@@ -168,9 +168,6 @@ class Polygon(TransformableContainer):
         area = self.get_area()
         if not area:
             return None
-        # TODO: for now we just calculate the "middle of the outline" - the "barycenter" code below needs to be fixed
-        return Point((self.maxx + self.minx) / 2, (self.maxy + self.miny) / 2,
-                (self.maxz + self.minz) / 2)
         # see: http://stackoverflow.com/questions/2355931/compute-the-centroid-of-a-3d-planar-polygon/2360507
         # first: calculate cx and y
         cxy, cxz, cyx, cyz, czx, czy = (0, 0, 0, 0, 0, 0)
@@ -179,10 +176,10 @@ class Polygon(TransformableContainer):
             p2 = self._points[(index + 1) % len(self._points)]
             cxy += (p1.x + p2.x) * (p1.x * p2.y - p1.y * p2.x)
             cxz += (p1.x + p2.x) * (p1.x * p2.z - p1.z * p2.x)
-            cyx += (p1.y + p2.y) * (p1.y * p2.x - p1.x * p2.y)
+            cyx += (p1.y + p2.y) * (p1.x * p2.y - p1.y * p2.x)
             cyz += (p1.y + p2.y) * (p1.y * p2.z - p1.z * p2.y)
             czx += (p1.z + p2.z) * (p1.z * p2.x - p1.x * p2.z)
-            czy += (p1.z + p2.z) * (p1.z * p2.y - p1.y * p2.z)
+            czy += (p1.z + p2.z) * (p1.y * p2.z - p1.z * p2.y)
         if self.minz == self.maxz:
             return Point(cxy / (6 * area), cyx / (6 * area), self.minz)
         elif self.miny == self.maxy:

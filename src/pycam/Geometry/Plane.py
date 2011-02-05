@@ -58,8 +58,10 @@ class Plane(TransformableContainer):
         return 2
 
     def reset_cache(self):
-        # nothing to be done (but required for TransformableContainer)
-        pass
+        # we need to prevent the "normal" from growing
+        norm = self.n.normalized()
+        if norm:
+            self.n = norm
 
     def intersect_point(self, direction, point):
         if (not direction is None) and (direction.norm != 1):
