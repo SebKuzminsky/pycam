@@ -26,6 +26,7 @@ __all__ = ["iterators", "polynomials", "ProgressCounter", "threading",
 
 import sys
 import os
+import socket
 # this is imported below on demand
 #import win32com
 #import win32api
@@ -52,6 +53,39 @@ def get_platform():
         return PLATFORM_LINUX
     else:
         return PLATFORM_UNKNOWN
+
+
+def get_all_ips():
+    """ try to get all IPs of this machine
+
+    The resulting list of IPs contains non-local IPs first, followed by
+    local IPs (starting with "127....").
+    """
+    result = []
+    def get_ips_of_name(name):
+        try:
+            ips = socket.gethostbyname_ex(name)
+            if len(ips) == 3:
+                return ips[2]
+        except socket.gaiaerror:
+            return []
+    result.extend(get_ips_of_name(socket.gethostname()))
+    result.extend(get_ips_of_name("localhost"))
+    filtered_result = []
+    for ip in result:
+        if not ip in filtered_result:
+            filtered_result.append(ip)
+    def sort_ip_by_relevance(ip1, ip2):
+        if ip1.startswith("127."):
+            return 1
+        if ip2.startswith("127."):
+            return -1
+        else:
+            return cmp(ip1, ip2)
+    # non-local IPs first
+    filtered_result.sort(cmp=sort_ip_by_relevance)
+    print filtered_result
+    return filtered_result
 
 
 def get_external_program_location(key):

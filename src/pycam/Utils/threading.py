@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Utils.log
+import pycam.Utils
 # multiprocessing is imported later
 #import multiprocessing
 import Queue
@@ -128,6 +129,26 @@ def get_task_statistics():
         result["cache"] = __manager.cache().length()
     return result
 
+class ManagerInfo(object):
+    """ this separate class allows proper pickling for "multiprocesssing"
+    """
+    def __init__(self, tasks, results, stats, cache, pending):
+        self.tasks_queue = tasks
+        self.results_queue = results
+        self.statistics = stats
+        self.cache = cache
+        self.pending_tasks = pending
+    def get_tasks_queue(self):
+	return self.tasks_queue
+    def get_results_queue(self):
+	return self.results_queue
+    def get_statistics(self):
+	return self.statistics
+    def get_cache(self):
+	return self.cache
+    def get_pending_tasks(self):
+	return self.pending_tasks
+
 def init_threading(number_of_processes=None, enable_server=False, remote=None,
         run_server=False, server_credentials="", local_port=DEFAULT_PORT):
     global __multiprocessing, __num_of_processes, __manager, __closing, __task_source_uuid
@@ -222,7 +243,18 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
         worker_uuid_list = [str(uuid.uuid1()) for index in range(__num_of_processes)]
         __task_source_uuid = str(uuid.uuid1())
         if remote is None:
-            address = ('localhost', local_port)
+            # try to guess an appropriate interface for binding
+            if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
+                # Windows does not support a wildcard interface listener
+                all_ips = pycam.Utils.get_all_ips()
+                if all_ips:
+                    address = (all_ips[0], local_port)
+                    log.info("Binding to local interface with IP %s" % str(all_ips[0]))
+                else:
+                    return "Failed to find any local IP"
+            else:
+                # empty hostname -> wildcard interface (does not work with windows)
+                address = ('', local_port)
         else:
             if ":" in remote:
                 host, port = remote.split(":", 1)
@@ -242,11 +274,12 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
             statistics = ProcessStatistics()
             cache = ProcessDataCache()
             pending_tasks = PendingTasks()
-            TaskManager.register("tasks", callable=lambda: tasks_queue)
-            TaskManager.register("results", callable=lambda: results_queue)
-            TaskManager.register("statistics", callable=lambda: statistics)
-            TaskManager.register("cache", callable=lambda: cache)
-            TaskManager.register("pending_tasks", callable=lambda: pending_tasks)
+            info = ManagerInfo(tasks_queue, results_queue, statistics, cache, pending_tasks)
+            TaskManager.register("tasks", callable=info.get_tasks_queue)
+            TaskManager.register("results", callable=info.get_results_queue)
+            TaskManager.register("statistics", callable=info.get_statistics)
+            TaskManager.register("cache", callable=info.get_cache)
+            TaskManager.register("pending_tasks", callable=info.get_pending_tasks)
         else:
             TaskManager.register("tasks")
             TaskManager.register("results")
@@ -290,7 +323,7 @@ def cleanup():
         log.debug("Shutting down process handler")
         try:
             __closing.set(True)
-        except EOFError:
+        except IOError, EOFError:
             log.debug("Connection to manager lost during cleanup")
         # Only managers that were started via ".start()" implement a "shutdown".
         # Managers started via ".connect" may skip this.
@@ -345,8 +378,11 @@ def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
     except KeyboardInterrupt:
         log.info("Spawner daemon killed by keyboard interrupt")
         # set the "closing" flag and just exit
-        __closing.set(True)
-    except EOFError:
+        try:
+            __closing.set(True)
+        except IOError, EOFError:
+            pass
+    except IOError, EOFError:
         # the connection was closed
         log.info("Spawner daemon lost connection to server")
 
