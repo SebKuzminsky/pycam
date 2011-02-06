@@ -74,7 +74,7 @@ UI_SUBDIR = "ui"
 FONTS_SUBDIR = "fonts"
 # necessary for "pyinstaller"
 if "_MEIPASS2" in os.environ:
-    DATA_BASE_DIRS.insert(0, os.path.normpath(os.environ["_MEIPASS2"]))
+    DATA_BASE_DIRS.insert(0, os.path.join(os.path.normpath(os.environ["_MEIPASS2"]), "share"))
 # respect an override via an environment setting
 if DATA_DIR_ENVIRON_KEY in os.environ:
     DATA_BASE_DIRS.insert(0, os.path.normpath(os.environ[DATA_DIR_ENVIRON_KEY]))
@@ -1416,7 +1416,6 @@ class ProjectGui:
         # wait for the above "set_sensitive" to finish
         while gtk.events_pending():
             gtk.main_iteration()
-        num_of_processes = int(self.number_of_processes.get_value())
         enable_parallel = self.enable_parallel_processes.get_active()
         enable_server_obj = self.gui.get_object("EnableServerMode")
         enable_server = enable_server_obj.get_active()
@@ -1433,6 +1432,19 @@ class ProjectGui:
             log.error("You need to provide a password for this connection.")
             enable_server_obj.set_active(False)
         elif enable_parallel:
+            if enable_server and \
+                    (pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS):
+                if self.number_of_processes.get_value() > 0:
+                    log.warn("Mixed local and remote processes are " + \
+                        "currently not available on the Windows platform. " + \
+                        "Setting the number of local processes to zero.\n" + \
+                        "See <a href=\"" + HELP_WIKI_URL % "Parallel_Processing_on_different_Platforms" + \
+                        "\">platform feature matrix</a> for more details.")
+                    self.number_of_processes.set_value(0)
+                self.number_of_processes.set_sensitive(False)
+            else:
+                self.number_of_processes.set_sensitive(True)
+            num_of_processes = int(self.number_of_processes.get_value())
             error = pycam.Utils.threading.init_threading(
                     number_of_processes=num_of_processes,
                     enable_server=enable_server, remote=remote,
