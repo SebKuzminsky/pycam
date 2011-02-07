@@ -359,9 +359,9 @@ process: 3
             tasks=None):
         text = self.get_config_text(tools, processes, bounds, tasks)
         try:
-            fi = open(filename, "w")
-            fi.write(text)
-            fi.close()
+            handle = open(filename, "w")
+            handle.write(text)
+            handle.close()
         except IOError, err_msg:
             log.error("Settings: Failed to write configuration to file " \
                     + "(%s): %s" % (filename, err_msg))
@@ -417,7 +417,8 @@ process: 3
                         try:
                             try:
                                 value_raw = self.config.get(
-                                        prefix + self.DEFAULT_SUFFIX, key, raw=raw)
+                                        prefix + self.DEFAULT_SUFFIX, key,
+                                        raw=raw)
                             except (ConfigParser.NoSectionError,
                                     ConfigParser.NoOptionError):
                                 value_raw = None
@@ -474,13 +475,13 @@ process: 3
 
     def get_config_text(self, tools=None, processes=None, bounds=None,
             tasks=None):
-        def get_dictionary_of_bounds(b):
+        def get_dictionary_of_bounds(boundary):
             """ this function should be the inverse operation of 
             '_get_bounds_instance_from_dict'
             """
             result = {}
-            result["name"] = b.get_name()
-            bounds_type_num = b.get_type()
+            result["name"] = boundary.get_name()
+            bounds_type_num = boundary.get_type()
             if bounds_type_num == Bounds.TYPE_RELATIVE_MARGIN:
                 bounds_type_name = "relative_margin"
             elif bounds_type_num == Bounds.TYPE_FIXED_MARGIN:
@@ -488,12 +489,12 @@ process: 3
             else:
                 bounds_type_name = "custom"
             result["type"] = bounds_type_name
-            low, high = b.get_bounds()
+            low, high = boundary.get_bounds()
             for index, axis in enumerate("xyz"):
                 result["%s_low" % axis] = low[index]
                 result["%s_high" % axis] = high[index]
             # special handler to allow tasks to track this new object
-            result[self.REFERENCE_TAG] = b
+            result[self.REFERENCE_TAG] = boundary
             return result
         result = []
         if tools is None:

@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.Geometry.utils import sqrt
 from pycam.Geometry.Point import Point
 import ctypes
+import math
 
 
 try:

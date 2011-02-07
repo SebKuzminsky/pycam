@@ -128,7 +128,8 @@ class ToroidalCutter(BaseCutter):
         return (None, None, None, INFINITE)
 
     def intersect_torus_triangle(self, direction, triangle, start=None):
-        (cl, ccp, cp, d) = self.intersect_torus_plane(direction, triangle, start=start)
+        (cl, ccp, cp, d) = self.intersect_torus_plane(direction, triangle,
+                start=start)
         if cp and triangle.is_point_inside(cp):
             return (cl, d, cp)
         return (None, INFINITE, None)

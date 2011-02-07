@@ -145,9 +145,9 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None,
                 t = Triangle(p1, p3, p2)
             elif dotcross < 0:
                 if not normal_conflict_warning_seen:
-                    log.warn(("Inconsistent normal/vertices found in facet " \
-                            + "definition %d of '%s'. Please validate the STL " \
-                            + "file!") % (i, filename))
+                    log.warn(("Inconsistent normal/vertices found in facet " + \
+                            "definition %d of '%s'. Please validate the " + \
+                            "STL file!") % (i, filename))
                     normal_conflict_warning_seen = True
                 t = Triangle(p1, p2, p3)
             else:
@@ -245,9 +245,9 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None,
                     t = Triangle(p1, p3, p2, n)
                 elif dotcross < 0:
                     if not normal_conflict_warning_seen:
-                        log.warn(("Inconsistent normal/vertices found in line " \
-                                + "%d of '%s'. Please validate the STL file!") \
-                                % (current_line, filename))
+                        log.warn(("Inconsistent normal/vertices found in " + \
+                                "line %d of '%s'. Please validate the STL " + \
+                                "file!") % (current_line, filename))
                         normal_conflict_warning_seen = True
                     t = Triangle(p1, p2, p3, n)
                 else:

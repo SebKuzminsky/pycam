@@ -2,7 +2,7 @@
 """
 $Id$
 
-Copyright 2010 Lars Kruse <devel@sumpfralle.de>
+Copyright 2010-2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
 
@@ -32,13 +32,11 @@ except (ImportError, RuntimeError):
 
 from pycam.Geometry.Point import Point
 import pycam.Geometry.Matrix as Matrix
-from pycam.Geometry.utils import sqrt, number, epsilon
+from pycam.Geometry.utils import sqrt, number
 import pycam.Utils.log
 import gtk
-import gobject
 import pango
 import math
-import time
 
 # buttons for rotating, moving and zooming the model view window
 BUTTON_ROTATE = gtk.gdk.BUTTON1_MASK
@@ -237,12 +235,13 @@ class Camera:
             # This distance calculation is completely based on trial-and-error.
             distance = math.sqrt(sum([d ** 2 for d in v["distance"]]))
             distance *= math.log(math.sqrt(width * height)) / math.log(10)
-            left = v["center"][0] - math.sin(v["fovy"] / 360.0 * math.pi) * distance
-            right = v["center"][0] + math.sin(v["fovy"] / 360.0 * math.pi) * distance
-            top = v["center"][1] + math.sin(v["fovy"] / 360.0 * math.pi) * distance
-            bottom = v["center"][1] - math.sin(v["fovy"] / 360.0 * math.pi) * distance
-            near = v["center"][2] - 2 * math.sin(v["fovy"] / 360.0 * math.pi) * distance
-            far = v["center"][2] + 2 * math.sin(v["fovy"] / 360.0 * math.pi) * distance
+            sin_factor = math.sin(v["fovy"] / 360.0 * math.pi) * distance
+            left = v["center"][0] - sin_factor
+            right = v["center"][0] + sin_factor
+            top = v["center"][1] + sin_factor
+            bottom = v["center"][1] - sin_factor
+            near = v["center"][2] - 2 * sin_factor
+            far = v["center"][2] + 2 * sin_factor
             GL.glOrtho(left, right, bottom, top, near, far)
         GLU.gluLookAt(camera_position[0], camera_position[1],
                 camera_position[2], v["center"][0], v["center"][1],
@@ -383,9 +382,10 @@ class ModelViewWindowGL:
                 for action in context_menu_actions:
                     action_group.add_action(action)
                 uimanager = gtk.UIManager()
-                # the "pos" parameter is optional since 2.12 - we can remove it later
+                # The "pos" parameter is optional since gtk 2.12 - we can
+                # remove it later.
                 uimanager.insert_action_group(action_group, pos=-1)
-                uimanager_template = """<ui><popup name="context">%s</popup></ui>"""
+                uimanager_template = '<ui><popup name="context">%s</popup></ui>'
                 uimanager_item_template = """<menuitem action="%s" />"""
                 uimanager_text = uimanager_template % "".join(
                         [uimanager_item_template % action.get_name()
@@ -442,12 +442,6 @@ class ModelViewWindowGL:
                 ord("K"): (0, 1),
                 ord("L"): (-1, 0),
         }
-        def get_char(value):
-            # avoid exceptions
-            if 0 <= value <= 255:
-                return chr(value)
-            else:
-                return None
         if key_string and (key_string in '1234567'):
             names = ["reset", "front", "back", "left", "right", "top", "bottom"]
             index = '1234567'.index(key_string)
@@ -603,7 +597,8 @@ class ModelViewWindowGL:
                 and (abs(event.y - self.mouse["pressed_pos"][1]) < 3):
             # A quick press/release cycle with the right mouse button
             # -> open the context menu.
-            self.context_menu.popup(None, None, None, event.button, int(event.get_time()))
+            self.context_menu.popup(None, None, None, event.button,
+                    int(event.get_time()))
 
     @check_busy
     @gtkgl_functionwrapper
@@ -907,11 +902,11 @@ def draw_complete_model_view(settings):
     # draw the model
     if settings.get("show_model") \
             and not (settings.get("show_simulation") \
-                    and settings.get("simulation_toolpath_moves")):
+                and settings.get("simulation_toolpath_moves")):
         GL.glColor4f(*settings.get("color_model"))
         model = settings.get("model")
-        min_area = abs(model.maxx - model.minx) * abs(model.maxy - model.miny) / 100
         """
+        min_area = abs(model.maxx - model.minx) * abs(model.maxy - model.miny) / 100
         # example for coloring specific triangles
         groups = model.get_flat_areas(min_area)
         all_flat_ids = []
@@ -967,9 +962,9 @@ def draw_complete_model_view(settings):
             for point in path.points:
                 moves.append((point, False))
         if not toolpath_in_progress is None:
-                draw_toolpath(moves, settings.get("color_toolpath_cut"),
-                        settings.get("color_toolpath_return"),
-                        show_directions=settings.get("show_directions"))
+            draw_toolpath(moves, settings.get("color_toolpath_cut"),
+                    settings.get("color_toolpath_return"),
+                    show_directions=settings.get("show_directions"))
 
 @keep_gl_mode
 @keep_matrix

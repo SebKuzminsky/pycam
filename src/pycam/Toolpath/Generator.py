@@ -251,7 +251,6 @@ def generate_toolpath(model, tool_settings=None,
     if (not contour_model is None) and (pocketing_type != "none"):
         if not callback is None:
             callback(text="Generating pocketing polygons ...")
-        new_polygons = []
         pocketing_offset = cutter.radius * 1.8
         # TODO: this is an arbitrary limit to avoid infinite loops
         pocketing_limit = 1000
@@ -273,8 +272,8 @@ def generate_toolpath(model, tool_settings=None,
                 else:
                     other_polygons.append(poly)
         else:
-            return "Unknown pocketing type given (not one of 'none', 'holes', " \
-                    + "'enclosed'): %s" % str(pocketing_type)
+            return "Unknown pocketing type given (not one of 'none', " + \
+                    "'holes', 'enclosed'): %s" % str(pocketing_type)
         # For now we use only the polygons that do not surround eny other
         # polygons. Sorry - the pocketing is currently very simple ...
         base_filtered_polygons = []
@@ -402,8 +401,9 @@ def _get_pathgenerator_instance(trimesh_models, contour_model, cutter,
         elif pathprocessor == "ContourCutter":
             processor = ContourCutter.ContourCutter()
         else:
-            return ("Invalid postprocessor (%s) for 'PushCutter' - it should " \
-                    + "be one of these: %s") % (pathprocessor, PATH_POSTPROCESSORS)
+            return ("Invalid postprocessor (%s) for 'PushCutter' - it " + \
+                    "should be one of these: %s") % \
+                    (pathprocessor, PATH_POSTPROCESSORS)
         return PushCutter.PushCutter(cutter, trimesh_models, processor,
                 physics=physics)
     elif pathgenerator == "EngraveCutter":

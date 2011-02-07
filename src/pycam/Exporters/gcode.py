@@ -44,15 +44,22 @@ class gcode:
                 "G04 P3 T%d M6" % self.tool_id,
                 "G00 Z%.4f" % self.safetyheight)
 
+    def end(self):
+        return "M2"
+
     def exactpath(self):
         return "G61"
 
     def continuous(self):
         return "G64"
 
-    def rapid(self, x = None, y = None, z = None, a = None, gcode = "G00",
-            feed=None):
-        gcodestring = feedstring = xstring = ystring = zstring = astring = ""
+    def rapid(self, x=None, y=None, z=None, a=None, code="G00", feed=None):
+        gcodestring = ""
+        feedstring = ""
+        xstring = ""
+        ystring = ""
+        zstring = ""
+        astring = ""
         if x == None:
             x = self.lastx
         if y == None:
@@ -61,9 +68,9 @@ class gcode:
             z = self.lastz
         if a == None:
             a = self.lasta
-        if gcode != self.lastgcode:
-            gcodestring = gcode
-            self.lastgcode = gcode
+        if code != self.lastgcode:
+            gcodestring = code
+        self.lastgcode = code
         if x != self.lastx:
             xstring = " X%.4f" % (x)
             self.lastx = x
@@ -76,7 +83,7 @@ class gcode:
         if a != self.lasta:
             astring = " A%.4f" % (a)
             self.lasta = a
-        if (gcode == "G01") and feed and (feed != self.lastfeed):
+        if (code == "G01") and feed and (feed != self.lastfeed):
             feedstring = " F%.4f" % (feed)
             self.lastfeed = feed
         positionstring = xstring + ystring + zstring + astring
@@ -90,7 +97,7 @@ class gcode:
         if y == None: y = self.lasty
         if z == None: z = self.lastz
         if a == None: a = self.lasta
-        return self.rapid(x, y, z, a, gcode="G01", feed=feed)
+        return self.rapid(x, y, z, a, code="G01", feed=feed)
 
     def safety(self):
         return self.rapid(z=self.safetyheight)

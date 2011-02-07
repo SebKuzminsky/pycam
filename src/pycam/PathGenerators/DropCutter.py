@@ -2,7 +2,7 @@
 """
 $Id$
 
-Copyright 2010 Lars Kruse <devel@sumpfralle.de>
+Copyright 2010-2011 Lars Kruse <devel@sumpfralle.de>
 Copyright 2008-2009 Lode Leroy
 
 This file is part of PyCAM.
@@ -21,8 +21,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.Point import Point
-from pycam.Geometry.utils import INFINITE, ceil
 from pycam.PathGenerators import get_max_height_dynamic
 from pycam.Utils import ProgressCounter
 from pycam.Utils.threading import run_in_parallel
@@ -117,17 +115,17 @@ class DropCutter:
                 # cancel requested
                 quit_requested = True
                 break
-            for p in points:
-                if p is None:
+            for point in points:
+                if point is None:
                     # exceeded maxz - the cutter has to skip this point
                     self.pa.end_scanline()
                     self.pa.new_scanline()
                     continue
-                self.pa.append(p)
+                self.pa.append(point)
                 # "draw_callback" returns true, if the user requested to quit
                 # via the GUI.
                 # The progress counter may return True, if cancel was requested.
-                if draw_callback and draw_callback(tool_position=p,
+                if draw_callback and draw_callback(tool_position=point,
                         toolpath=self.pa.paths):
                     quit_requested = True
                     break

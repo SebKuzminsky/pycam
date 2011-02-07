@@ -27,11 +27,12 @@ import os
 
 class STLExporter:
 
-    def __init__(self, model, name="model", created_by="pycam", linesep=None, comment=None):
+    def __init__(self, model, name="model", created_by="pycam", linesep=None,
+            comment=None):
+        # sadly STL does not seem to support comments
         self.model = model
         self.name = name
         self.created_by = created_by
-        self.comment = comment
         if linesep is None:
             self.linesep = os.linesep
         else:
@@ -49,20 +50,14 @@ class STLExporter:
         date = datetime.date.today().isoformat()
         yield """solid "%s"; Produced by %s (v%s), %s""" \
                 % (self.name, self.created_by, VERSION, date)
-        # sadly STL does not seem to support comments
-        """
-        if self.comment:
-            for line in self.comment.split(self.linesep):
-                yield(";%s" % line)
-        """
-        for tr in self.model.triangles():
-            norm = tr.normal.normalized()
+        for triangle in self.model.triangles():
+            norm = triangle.normal.normalized()
             yield "facet normal %f %f %f" % (norm.x, norm.y, norm.z)
             yield "  outer loop"
             # Triangle vertices are stored in clockwise order - thus we need
             # to reverse the order (STL expects counter-clockwise orientation).
-            for p in (tr.p3, tr.p2, tr.p1):
-                yield "    vertex %f %f %f" % (p.x, p.y, p.z)
+            for point in (triangle.p3, triangle.p2, triangle.p1):
+                yield "    vertex %f %f %f" % (point.x, point.y, point.z)
             yield "  endloop"
             yield "endfacet"
         yield "endsolid"

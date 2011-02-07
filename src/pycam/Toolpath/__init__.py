@@ -116,14 +116,15 @@ class Toolpath(object):
                     self.append = self.append_with_movement_limit
             def append_with_movement_limit(self, new_position, rapid):
                 if self.last_pos is None:
-                    # first movement with unknown start position - thus we ignore it
+                    # first move with unknown start position - ignore it
                     self.moves.append((new_position, rapid))
                     self.last_pos = new_position
                     return True
                 else:
                     distance = new_position.sub(self.last_pos).norm
                     if self.moved_distance + distance > self.max_movement:
-                        partial = (self.max_movement - self.moved_distance) / distance
+                        partial = (self.max_movement - self.moved_distance) / \
+                                distance
                         partial_dest = self.last_pos.add(new_position.sub(
                                 self.last_pos).mul(partial))
                         self.moves.append((partial_dest, rapid))
@@ -213,7 +214,8 @@ class Toolpath(object):
         for path in self.toolpath:
             if path:
                 for index in range(len(path.points) - 1):
-                    open_lines.append(Line(path.points[index], path.points[index + 1]))
+                    open_lines.append(Line(path.points[index],
+                            path.points[index + 1]))
         # go through all polygons and add "inner" lines (or parts thereof) to
         # the final list of remaining lines
         inner_lines = []

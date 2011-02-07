@@ -25,9 +25,7 @@ from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry import TransformableContainer, get_bisector
 from pycam.Geometry.utils import number, epsilon
-import pycam.Geometry.Matrix as Matrix
 import pycam.Utils.log
-import math
 # import later to avoid circular imports
 #from pycam.Geometry.Model import ContourModel
 
@@ -69,7 +67,8 @@ class Polygon(TransformableContainer):
                 self._update_limits(line.p2)
             elif self._points[-1] == line.p1:
                 # the new Line can be added to the end of the polygon
-                if line.dir == self._points[-1].sub(self._points[-2]).normalized():
+                if line.dir == self._points[-1].sub(
+                        self._points[-2]).normalized():
                     # Remove the last point, if the previous point combination
                     # is in line with the new Line. This avoids unnecessary
                     # points on straight lines.
@@ -84,7 +83,8 @@ class Polygon(TransformableContainer):
             else:
                 # the new Line can be added to the beginning of the polygon
                 if (len(self._points) > 1) \
-                        and (line.dir == self._points[1].sub(self._points[0]).normalized()):
+                        and (line.dir == self._points[1].sub(
+                            self._points[0]).normalized()):
                     # Avoid points on straight lines - see above.
                     self._points.pop(0)
                 if line.p1 != self._points[-1]:
@@ -142,7 +142,6 @@ class Polygon(TransformableContainer):
         Currently this works only for line groups in an xy-plane.
         Returns zero for empty line groups or for open line groups.
         Returns negative values for inner hole.
-        TODO: "get_area" is wrong by some factor - check the result!
         """
         if not self._points:
             return 0
@@ -227,7 +226,8 @@ class Polygon(TransformableContainer):
                 or (not self.is_closed and index == len(self._points) - 1):
             return None
         else:
-            return self._points[index].add(self._points[(index + 1) % len(self._points)]).div(2)
+            return self._points[index].add(self._points[(index + 1) % \
+                    len(self._points)]).div(2)
 
     def get_lengths(self):
         result = []
@@ -324,7 +324,8 @@ class Polygon(TransformableContainer):
             lines = []
             for index in range(len(self._points) - 1):
                 lines.append(Line(self._points[index], self._points[index + 1]))
-            # connect the last point with the first only if the polygon is closed
+            # Connect the last point with the first only if the polygon is
+            # closed.
             if self.is_closed:
                 lines.append(Line(self._points[-1], self._points[0]))
             self._lines_cache = lines
@@ -333,16 +334,6 @@ class Polygon(TransformableContainer):
     def to_OpenGL(self, **kwords):
         for line in self.get_lines():
             line.to_OpenGL(**kwords)
-        return
-        offset_polygons = self.get_offset_polygons(0.2)
-        for polygon in offset_polygons:
-            for line in polygon.get_lines():
-                line.to_OpenGL(**kwords)
-        """
-        for index, point in enumerate(self._points):
-            line = Line(point, point.add(self.get_bisector(index)))
-            line.get_length_line(1).to_OpenGL()
-        """
 
     def _update_limits(self, point):
         if self.minx is None:
@@ -452,9 +443,12 @@ class Polygon(TransformableContainer):
                     shifted_lines[prev_index] = (False, Line(prev_line.p1, cp))
                     shifted_lines[next_index] = (False, Line(cp, next_line.p2))
                 else:
-                    cp, dist = prev_line.get_intersection(next_line, infinite_lines=True)
-                    raise BaseException("Expected intersection not found: " \
-                            + "%s - %s - %s(%d) / %s(%d)" % (cp, shifted_lines[prev_index+1:next_index], prev_line, prev_index, next_line, next_index))
+                    cp, dist = prev_line.get_intersection(next_line,
+                            infinite_lines=True)
+                    raise BaseException("Expected intersection not found: " + \
+                            "%s - %s - %s(%d) / %s(%d)" % \
+                            (cp, shifted_lines[prev_index+1:next_index],
+                                prev_line, prev_index, next_line, next_index))
                 if index > next_index:
                     # we wrapped around the end of the list
                     break
@@ -603,7 +597,8 @@ class Polygon(TransformableContainer):
         for cached_offset in self._cached_offset_polygons:
             if is_better_offset(best_offset, cached_offset):
                 best_offset = cached_offset
-                best_offset_polygons = self._cached_offset_polygons[cached_offset]
+                best_offset_polygons = \
+                        self._cached_offset_polygons[cached_offset]
         remaining_offset = offset - best_offset
         result_polygons = []
         for poly in best_offset_polygons:
@@ -780,14 +775,16 @@ class Polygon(TransformableContainer):
                     # We ignore groups that changed the direction. These
                     # parts of the original group are flipped due to the
                     # offset.
-                    log.debug("Ignoring reversed polygon: %s / %s" % (self.get_area(), group.get_area()))
+                    log.debug("Ignoring reversed polygon: %s / %s" % \
+                            (self.get_area(), group.get_area()))
                     continue
                 # Remove polygons that should be inside the original,
                 # but due to float inaccuracies they are not.
                 if ((self.is_outer() and (offset < 0)) \
                         or (not self.is_outer() and (offset > 0))) \
                         and (not self.is_polygon_inside(group)):
-                    log.debug("Ignoring inaccurate polygon: %s / %s" % (self.get_area(), group.get_area()))
+                    log.debug("Ignoring inaccurate polygon: %s / %s" \
+                            % (self.get_area(), group.get_area()))
                     continue
                 groups.append(group)
             if not groups:

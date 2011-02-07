@@ -21,10 +21,9 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.Point import Point
 from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
 import pycam.PathProcessors
-from pycam.Geometry.utils import epsilon, ceil
+from pycam.Geometry.utils import ceil
 from pycam.Utils.threading import run_in_parallel
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
@@ -86,7 +85,8 @@ class PushCutter:
                 break
 
             self.pa.new_direction(0)
-            self.GenerateToolPathSlice(layer_grid, draw_callback, progress_counter)
+            self.GenerateToolPathSlice(layer_grid, draw_callback,
+                    progress_counter)
             self.pa.end_direction()
             self.pa.finish()
 
@@ -106,8 +106,8 @@ class PushCutter:
                 for p1, p2 in pairs:
                     free_points = get_free_paths_triangles(other_models,
                             self.cutter, p1, p2)
-                    for p in free_points:
-                        final_pa.append(p)
+                    for point in free_points:
+                        final_pa.append(point)
                 final_pa.end_scanline()
             final_pa.finish()
             return final_pa.paths
@@ -144,10 +144,10 @@ class PushCutter:
                 callback=progress_counter.update):
             if points:
                 self.pa.new_scanline()
-                for p in points:
-                    self.pa.append(p)
+                for point in points:
+                    self.pa.append(point)
                 if draw_callback:
-                    draw_callback(tool_position=p, toolpath=self.pa.paths)
+                    draw_callback(tool_position=points[-1], toolpath=self.pa.paths)
                 self.pa.end_scanline()
             # update the progress counter
             if progress_counter and progress_counter.increment():

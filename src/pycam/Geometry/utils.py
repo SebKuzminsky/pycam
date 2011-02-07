@@ -39,11 +39,14 @@ else:
     ceil = lambda value: int(math.ceil(value))
 
 # return "0" for "-epsilon < value < 0" (to work around floating inaccuracies)
-# otherwise: return the sqrt function of the current type (could even raise exceptions)
+# otherwise: return the sqrt function of the current type (could even raise
+# exceptions)
 if _use_precision:
-    sqrt = lambda value: (((value < -epsilon) or (value > 0)) and value.sqrt()) or 0
+    sqrt = lambda value: (((value < -epsilon) or (value > 0)) and \
+            value.sqrt()) or 0
 else:
-    sqrt = lambda value: (((value < -epsilon) or (value > 0)) and math.sqrt(value)) or 0
+    sqrt = lambda value: (((value < -epsilon) or (value > 0)) and \
+            math.sqrt(value)) or 0
 
 if _use_precision:
     number = lambda value: decimal.Decimal(str(value))

@@ -23,7 +23,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.Importers.SVGImporter import convert_eps2dxf
 import pycam.Importers.DXFImporter
 import tempfile
-import subprocess
 import os
 
 log = pycam.Utils.log.get_logger()

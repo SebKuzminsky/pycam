@@ -129,7 +129,7 @@ def get_free_paths_triangles(models, cutter, p1, p2, return_triangles=False):
         return points
     else:
         # return only the cutter locations (without triangles)
-        return [cl for (cl, t, cp) in points]
+        return [cut_info[0] for cut_info in points]
 
 
 def get_free_paths_ode(physics, p1, p2, depth=8):
@@ -281,9 +281,10 @@ def get_max_height_dynamic(model, cutter, positions, minz, maxz, physics=None):
         p1 = result[index]
         p2 = result[index + 1]
         p3 = result[index + 2]
-        if (not p1 is None) and (not p2 is None) and (not p3 is None) \
-                and not _check_deviance_of_adjacent_points(p1, p2, p3, min_distance) \
-                and (depth_count < max_depth):
+        if (not p1 is None) and (not p2 is None) and (not p3 is None) and \
+                not _check_deviance_of_adjacent_points(p1, p2, p3,
+                    min_distance) and \
+                (depth_count < max_depth):
             # distribute the new point two before the middle and one after
             if depth_count % 3 != 2:
                 # insert between the 1st and 2nd point

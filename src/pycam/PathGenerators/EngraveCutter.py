@@ -22,9 +22,10 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.PathProcessors.PathAccumulator
-from pycam.Geometry.Point import Point
+from pycam.Geometry.Point import Point, Vector
+from pycam.Geometry.Line import Line
+from pycam.Geometry.Plane import Plane
 from pycam.Geometry.utils import ceil
-from pycam.PathGenerators import get_max_height_dynamic
 from pycam.PathGenerators import get_max_height_dynamic, get_free_paths_ode, \
         get_free_paths_triangles
 from pycam.Utils import ProgressCounter
@@ -178,19 +179,19 @@ class EngraveCutter:
             # for both point pairs.
             factor = (z - line.p1.z) / (line.p2.z - line.p1.z)
             plane_point = line.p1.add(line.vector.mul(factor))
-            GenerateToolPathLinePush(pa, Line(line.p1, plane_point), z,
+            self.GenerateToolPathLinePush(pa, Line(line.p1, plane_point), z,
                     previous_z, draw_callback=draw_callback)
-            GenerateToolPathLinePush(pa, Line(plane_point, line.p2), z,
+            self.GenerateToolPathLinePush(pa, Line(plane_point, line.p2), z,
                     previous_z, draw_callback=draw_callback)
         elif line.minz < previous_z < line.maxz:
             plane = Plane(Point(0, 0, previous_z), Vector(0, 0, 1))
-            cp, d = plane.intersect_point(line.dir, line.p1)
+            cp = plane.intersect_point(line.dir, line.p1)[0]
             # we can be sure that there is an intersection
             if line.p1.z > previous_z:
                 p1, p2 = cp, line.p2
             else:
                 p1, p2 = line.p1, cp
-            GenerateToolPathLinePush(pa, Line(p1, p2), z, previous_z,
+            self.GenerateToolPathLinePush(pa, Line(p1, p2), z, previous_z,
                     draw_callback=draw_callback)
         else:
             if line.maxz <= z:
@@ -212,12 +213,13 @@ class EngraveCutter:
             elif self.physics:
                 points = get_free_paths_ode(self.physics, p1, p2)
             else:
-                points = get_free_paths_triangles(relevant_models, self.cutter, p1, p2)
+                points = get_free_paths_triangles(relevant_models, self.cutter,
+                        p1, p2)
             if points:
-                for p in points:
-                    pa.append(p)
+                for point in points:
+                    pa.append(point)
                 if draw_callback:
-                    draw_callback(tool_position=p, toolpath=pa.paths)
+                    draw_callback(tool_position=points[-1], toolpath=pa.paths)
 
 
     def GenerateToolPathLineDrop(self, pa, line, minz, maxz, horiz_step,
@@ -245,18 +247,19 @@ class EngraveCutter:
             x_steps = [(p1.x + i * x_step) for i in range(num_of_steps)]
             y_steps = [(p1.y + i * y_step) for i in range(num_of_steps)]
             step_coords = zip(x_steps, y_steps)
-            # TODO: this "min(..)" is not correct for inclided lines. This should be fixed in "get_max_height".
+            # TODO: this "min(..)" is not correct for inclided lines. This
+            # should be fixed in "get_max_height".
             points = get_max_height_dynamic(self.combined_model, self.cutter,
                     step_coords, min(p1.z, p2.z), maxz, self.physics)
-        for p in points:
-            if p is None:
+        for point in points:
+            if point is None:
                 # exceeded maxz - the cutter has to skip this point
                 pa.end_scanline()
                 pa.new_scanline()
                 continue
-            pa.append(p)
+            pa.append(point)
         if draw_callback and points:
-                draw_callback(tool_position=points[-1], toolpath=pa.paths)
+            draw_callback(tool_position=points[-1], toolpath=pa.paths)
         pa.end_scanline()
         pa.end_direction()
 

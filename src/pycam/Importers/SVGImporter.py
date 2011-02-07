@@ -68,10 +68,11 @@ def convert_eps2dxf(eps_filename, dxf_filename, location=None, unit="mm"):
     if returncode == 0:
         return True
     elif returncode == -11:
-        log.warn(("SVGImporter: maybe there was a problem with the " \
-                + "conversion from EPS (%s) to DXF\n Users of Ubuntu 'lucid' should install " \
-                + "the package 'libpstoedit0c2a' from the 'maverick' " \
-                + "repository to avoid this warning.") % str(eps_filename))
+        log.warn(("SVGImporter: maybe there was a problem with the " + \
+                "conversion from EPS (%s) to DXF\n Users of Ubuntu 'lucid' " + \
+                "should install the package 'libpstoedit0c2a' from the " + \
+                "'maverick' repository to avoid this warning.") % \
+                str(eps_filename))
         return True
     else:
         log.warn(("SVGImporter: failed to convert EPS file (%s) to DXF file " \
@@ -96,7 +97,8 @@ def import_model(filename, program_locations=None, unit="mm", callback=None):
 
     # the "right" way would be:
     # inkscape --print='| pstoedit -dt -f dxf:-polyaslines - -' input.svg
-    # Sadly a bug in v0.47 breaks this: https://bugs.launchpad.net/inkscape/+bug/511361
+    # Sadly a bug in v0.47 breaks this:
+    # https://bugs.launchpad.net/inkscape/+bug/511361
 
     # convert svg to eps via inkscape
     eps_file_handle, eps_file_name = tempfile.mkstemp(suffix=".eps")

@@ -29,7 +29,7 @@ class SVGExporter:
     def __init__(self, output, unit="mm"):
         if isinstance(output, basestring):
             # a filename was given
-            self.output = file(filename,"w")
+            self.output = file(output,"w")
         else:
             # a stream was given
             self.output = output

@@ -21,7 +21,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.Point import Point, Vector
-from pycam.Geometry.Line import Line
 from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Model import Model
@@ -129,8 +128,8 @@ def get_support_grid_locations(minx, maxx, miny, maxy, dist_x, dist_y,
 def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness,
         height, offset_x=0.0, offset_y=0.0, adjustments_x=None,
         adjustments_y=None):
-    lines_x, lines_y = get_support_grid_locations(minx, maxx, miny, maxy, dist_x,
-            dist_y, offset_x, offset_y, adjustments_x, adjustments_y)
+    lines_x, lines_y = get_support_grid_locations(minx, maxx, miny, maxy,
+            dist_x, dist_y, offset_x, offset_y, adjustments_x, adjustments_y)
     # create all x grid lines
     grid_model = Model()
     # convert all inputs to "number"
@@ -214,7 +213,8 @@ class _BridgeCorner(object):
         return "%s (%s) - %s" % (self.position, self.location, self.priority)
         
 
-def _get_corner_bridges(polygon, z_plane, min_bridges, average_distance, avoid_distance):
+def _get_corner_bridges(polygon, z_plane, min_bridges, average_distance,
+        avoid_distance):
     """ try to place support bridges at corners of a polygon
     Priorities:
         - bigger corner angles are preferred
@@ -264,7 +264,8 @@ def _get_corner_bridges(polygon, z_plane, min_bridges, average_distance, avoid_d
             corners.remove(suitable_corners[0])
     return [(c.position, c.direction) for c in bridge_corners]
 
-def _get_edge_bridges(polygon, z_plane, min_bridges, average_distance, avoid_distance):
+def _get_edge_bridges(polygon, z_plane, min_bridges, average_distance,
+        avoid_distance):
     def is_near_list(point_list, point, distance):
         for p in point_list:
             if p.sub(point).norm <= distance:

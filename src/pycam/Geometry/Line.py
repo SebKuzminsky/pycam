@@ -27,12 +27,10 @@ from pycam.Geometry.Plane import Plane
 from pycam.Geometry.utils import epsilon, sqrt
 # OpenGLTools will be imported later, if necessary
 #import pycam.Gui.OpenGLTools
-import math
 
 
 try:
     import OpenGL.GL as GL
-    import OpenGL.GLUT as GLUT
     GL_enabled = True
 except ImportError:
     GL_enabled = False
@@ -42,6 +40,7 @@ class Line(TransformableContainer):
     id = 0
 
     def __init__(self, p1, p2):
+        super(Line, self).__init__()
         self.id = Line.id
         Line.id += 1
         self.p1 = p1

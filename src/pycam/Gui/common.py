@@ -44,7 +44,7 @@ DEPENDENCY_DESCRIPTION = {
         + "'glxgears' to locate this problem."),
 }
 
-REQUIREMENTS_LINK = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=Requirements"
+REQUIREMENTS_LINK = "http://sf.net/apps/mediawiki/pycam/?title=Requirements"
 
 # Usually the windows registry "HKEY_LOCAL_MACHINE/SOFTWARE/Gtk+/Path" contains
 # something like: C:\Programs\Common files\GTK
@@ -80,8 +80,8 @@ def import_gtk_carefully():
         except NameError:
             # GTK is probably not installed - the next import will fail
             pass
-        except WindowsError:
-            # this happens with pyinstaller binaries - just ignore it
+        except OSError:
+            # "WindowsError" - this happens with pyinstaller binaries
             pass
         else:
             # add the new path to the PATH environment variable

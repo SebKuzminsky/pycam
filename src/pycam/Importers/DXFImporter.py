@@ -183,8 +183,9 @@ class DXFParser(object):
             for index in range(len(p_array)):
                 if p_array[index] is None:
                     if (index == 0) or (index == 1):
-                        log.debug("DXFImporter: weird LWPOLYLINE input data " \
-                                + "in line %d: %s" % (self.line_number, p_array))
+                        log.debug("DXFImporter: weird LWPOLYLINE input " + \
+                                "date in line %d: %s" % \
+                                (self.line_number, p_array))
                     p_array[index] = 0
             points.append(Point(p_array[0], p_array[1], p_array[2]))
         start_line = self.line_number
@@ -323,8 +324,8 @@ class DXFParser(object):
             center = Point(center[0], center[1], center[2])
             xy_point_coords = pycam.Geometry.get_points_of_arc(center, radius,
                     angle_start, angle_end)
-            # Somehow the order of points seems to be the opposite of the what
-            # is expected.
+            # Somehow the order of points seems to be the opposite of what is
+            # expected.
             xy_point_coords.reverse()
             if len(xy_point_coords) > 1:
                 for index in range(len(xy_point_coords) - 1):
@@ -334,9 +335,9 @@ class DXFParser(object):
                     p2 = Point(p2[0], p2[1], center.z)
                     self.lines.append(Line(p1, p2))
             else:
-                log.warn("DXFImporter: Ignoring zero-length LINE (between " \
-                        + "input line %d and %d): %s" % (start_line, end_line,
-                        line))
+                log.warn("DXFImporter: Ignoring tiny ARC (between input " + \
+                        "line %d and %d): %s / %s (%s - %s)" % (start_line,
+                        end_line, center, radius, angle_start, angle_end))
 
     def check_header(self):
         # TODO: this function is not used?
@@ -367,8 +368,8 @@ def import_model(filename, program_locations=None, unit=None,
 
     if lines:
         model = pycam.Geometry.Model.ContourModel()
-        for index, l in enumerate(lines):
-            model.append(l)
+        for index, line in enumerate(lines):
+            model.append(line)
             # keep the GUI smooth
             if callback and (index % 50 == 0):
                 callback()
@@ -390,7 +391,7 @@ def import_model(filename, program_locations=None, unit=None,
                 % (len(lines), len(model.get_polygons())))
         return model
     else:
-        link = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=SupportedFormats"
+        link = "http://sf.net/apps/mediawiki/pycam/?title=SupportedFormats"
         log.error('DXFImporter: No supported elements found in DXF file!\n' \
                 + '<a href="%s">Read PyCAM\'s modelling hints.</a>' % link)
         return None

@@ -45,7 +45,7 @@ try:
             # prevent connection errors to trigger exceptions
             try:
                 SyncManager._run_server(*args)
-            except socket.error, err_msg:
+            except socket.error:
                 pass
 except ImportError:
     pass
@@ -151,7 +151,7 @@ class ManagerInfo(object):
 
 def init_threading(number_of_processes=None, enable_server=False, remote=None,
         run_server=False, server_credentials="", local_port=DEFAULT_PORT):
-    global __multiprocessing, __num_of_processes, __manager, __closing,
+    global __multiprocessing, __num_of_processes, __manager, __closing, \
             __task_source_uuid
     if __multiprocessing:
         # kill the manager and clean everything up for a re-initialization
@@ -465,8 +465,8 @@ def _handle_tasks(tasks, results, stats, cache, pending_tasks, closing):
 
 def run_in_parallel_remote(func, args_list, unordered=False,
         disable_multiprocessing=False, callback=None):
-    global __multiprocessing, __num_of_processes, __manager, __task_source_uuid,
-            __finished_jobs
+    global __multiprocessing, __num_of_processes, __manager, \
+            __task_source_uuid, __finished_jobs
     if __multiprocessing is None:
         # threading was not configured before
         init_threading()

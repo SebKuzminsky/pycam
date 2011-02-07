@@ -22,18 +22,19 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry import TransformableContainer
 from pycam.Geometry.utils import INFINITE, epsilon
-from pycam.Geometry.Point import Point, Vector
+from pycam.Geometry.Point import Vector
 # "Line" is imported later to avoid circular imports
 #from pycam.Geometry.Line import Line
 
 
 class Plane(TransformableContainer):
     id = 0
-    def __init__(self, p, n):
+    def __init__(self, point, normal):
+        super(Plane, self).__init__()
         self.id = Plane.id
         Plane.id += 1
-        self.p = p
-        self.n = n
+        self.p = point
+        self.n = normal
         if not isinstance(self.n, Vector):
             self.n = self.n.get_vector()
 
@@ -123,8 +124,7 @@ class Plane(TransformableContainer):
             return None
 
     def get_point_projection(self, point):
-        p, dist = self.intersect_point(self.n, point)
-        return p
+        return self.intersect_point(self.n, point)[0]
 
     def get_line_projection(self, line):
         # don't import Line in the header -> circular import

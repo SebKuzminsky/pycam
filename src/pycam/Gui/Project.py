@@ -60,6 +60,7 @@ import logging
 import datetime
 import traceback
 import random
+import math
 import re
 import os
 import sys
@@ -569,22 +570,19 @@ class ProjectGui:
         support_grid_type_control = self.gui.get_object(
                 "SupportGridTypesControl")
         support_grid_type_control.connect("changed",
-                self.update_support_grid_controls)
+                self.update_support_controls)
         self.settings.add_item("support_grid_type",
                 support_grid_type_control.get_active,
                 support_grid_type_control.set_active)
         self.settings.set("support_grid_type", GRID_TYPES["none"])
         grid_distance_x = self.gui.get_object("SupportGridDistanceX")
-        grid_distance_x.connect("value-changed",
-                self.update_support_grid_controls)
+        grid_distance_x.connect("value-changed", self.update_support_controls)
         self.settings.add_item("support_grid_distance_x",
                 grid_distance_x.get_value, grid_distance_x.set_value)
         grid_distance_square = self.gui.get_object("SupportGridDistanceSquare")
-        grid_distance_square.connect("clicked",
-                self.update_support_grid_controls)
+        grid_distance_square.connect("clicked", self.update_support_controls)
         grid_distance_y = self.gui.get_object("SupportGridDistanceY")
-        grid_distance_y.connect("value-changed",
-                self.update_support_grid_controls)
+        grid_distance_y.connect("value-changed", self.update_support_controls)
         def get_support_grid_distance_y():
             if grid_distance_square.get_active():
                 return self.settings.get("support_grid_distance_x")
@@ -593,36 +591,33 @@ class ProjectGui:
         self.settings.add_item("support_grid_distance_y",
                 get_support_grid_distance_y, grid_distance_y.set_value)
         grid_thickness = self.gui.get_object("SupportGridThickness")
-        grid_thickness.connect("value-changed", self.update_support_grid_model)
+        grid_thickness.connect("value-changed", self.update_support_model)
         self.settings.add_item("support_grid_thickness",
                 grid_thickness.get_value, grid_thickness.set_value)
         grid_height = self.gui.get_object("SupportGridHeight")
-        grid_height.connect("value-changed", self.update_support_grid_model)
+        grid_height.connect("value-changed", self.update_support_model)
         self.settings.add_item("support_grid_height",
                 grid_height.get_value, grid_height.set_value)
         grid_length = self.gui.get_object("SupportGridLength")
-        grid_length.connect("value-changed", self.update_support_grid_model)
+        grid_length.connect("value-changed", self.update_support_model)
         self.settings.add_item("support_grid_length",
                 grid_length.get_value, grid_length.set_value)
         grid_offset_x = self.gui.get_object("SupportGridOffsetX")
-        grid_offset_x.connect("value-changed",
-                self.update_support_grid_model)
+        grid_offset_x.connect("value-changed", self.update_support_model)
         self.settings.add_item("support_grid_offset_x",
                 grid_offset_x.get_value, grid_offset_x.set_value)
         grid_offset_y = self.gui.get_object("SupportGridOffsetY")
-        grid_offset_y.connect("value-changed",
-                self.update_support_grid_model)
+        grid_offset_y.connect("value-changed", self.update_support_model)
         self.settings.add_item("support_grid_offset_y",
                 grid_offset_y.get_value, grid_offset_y.set_value)
         grid_average_distance = self.gui.get_object("GridAverageDistance")
         grid_average_distance.connect("value-changed",
-                self.update_support_grid_model)
+                self.update_support_model)
         self.settings.add_item("support_grid_average_distance",
                 grid_average_distance.get_value,
                 grid_average_distance.set_value)
         grid_minimum_bridges = self.gui.get_object("GridMinBridgesPerPolygon")
-        grid_minimum_bridges.connect("value-changed",
-                self.update_support_grid_model)
+        grid_minimum_bridges.connect("value-changed", self.update_support_model)
         self.settings.add_item("support_grid_minimum_bridges",
                 grid_minimum_bridges.get_value, grid_minimum_bridges.set_value)
         # manual grid adjustments
@@ -1069,7 +1064,7 @@ class ProjectGui:
         self.update_tasklist_table()
         self.update_save_actions()
         self.update_unit_labels()
-        self.update_support_grid_controls()
+        self.update_support_controls()
         self.update_scale_controls()
         self.update_gcode_controls()
         self.update_ode_settings()
@@ -1117,8 +1112,9 @@ class ProjectGui:
             self.gui_is_active = True
             try:
                 result = func(self, *args, **kwargs)
-            except:
-                # catch possible exceptions and report them
+            except Exception:
+                # Catch possible exceptions (except system-exit ones) and
+                # report them.
                 report_exception()
                 result = None
             self.gui_is_active = False
@@ -1191,7 +1187,7 @@ class ProjectGui:
         self.gui.get_object("SaveModel").set_sensitive(save_possible)
 
     @gui_activity_guard
-    def update_support_grid_controls(self, widget=None):
+    def update_support_controls(self, widget=None):
         controls = {"GridProfileExpander": ("grid", "automatic_edge",
                     "automatic_corner"),
                 "GridPatternExpander": ("grid", ),
@@ -1226,10 +1222,10 @@ class ProjectGui:
                 obj.show()
             else:
                 obj.hide()
-        self.update_support_grid_model()
+        self.update_support_model()
         self.update_view()
 
-    def update_support_grid_model(self, widget=None):
+    def update_support_model(self, widget=None):
         grid_type = self.settings.get("support_grid_type")
         s = self.settings
         support_grid = None
@@ -1316,7 +1312,7 @@ class ProjectGui:
         if not tree_iter is None:
             value_string = "(%+.1f)" % new_value
             self.grid_adjustment_model.set(tree_iter, 1, value_string)
-        self.update_support_grid_model()
+        self.update_support_model()
         self.update_view()
 
     def reset_support_grid_manual(self, widget=None, reset_all=False):
@@ -1327,7 +1323,7 @@ class ProjectGui:
             self.settings.set("support_grid_adjustment_value", 0)
         self.update_support_grid_manual_model()
         self.switch_support_grid_manual_selector()
-        self.update_support_grid_model()
+        self.update_support_model()
         self.update_view()
 
     def update_support_grid_manual_model(self):
@@ -1545,7 +1541,7 @@ class ProjectGui:
         # update the values in the manual support grid adjustment list
         self.update_support_grid_manual_model()
         # the support grid depends on the boundary
-        self.update_support_grid_model()
+        self.update_support_model()
         self.update_view()
 
     def update_tasklist_controls(self):
@@ -1989,7 +1985,7 @@ class ProjectGui:
         except UnicodeDecodeError:
             # remove all non-ascii characters
             clean_char = lambda c: (32 <= ord(c) < 128) and c or " "
-            message = "".join(map(clean_char, message))
+            message = "".join([clean_char(char) for char in message])
         self.log_model.append((timestamp, title, message))
         # update the status bar (if the GTK interface is still active)
         if not self.status_bar.window is None:
@@ -2608,7 +2604,7 @@ class ProjectGui:
         self.disable_progress_cancel_button()
         self.model.shift(shift_x, shift_y, shift_z,
                 callback=self.update_progress_bar)
-        self.update_support_grid_model()
+        self.update_support_model()
         self.update_view()
 
     def _get_model_center(self):
@@ -2664,7 +2660,7 @@ class ProjectGui:
         self.model.scale(factor, callback=self.update_progress_bar)
         self._set_model_center(old_center)
         self.append_to_queue(self.update_scale_controls)
-        self.append_to_queue(self.update_support_grid_model)
+        self.append_to_queue(self.update_support_model)
         self.append_to_queue(self.update_view)
 
     @gui_activity_guard
@@ -2697,7 +2693,7 @@ class ProjectGui:
                 len(self.model.get_polygons()),
                         self.update_progress_bar).increment
         self.model.reverse_directions(callback=progress_callback)
-        self.update_support_grid_model()
+        self.update_support_model()
 
     @progress_activity_guard
     @gui_activity_guard
@@ -2729,7 +2725,7 @@ class ProjectGui:
                     callback=self.update_progress_bar)
         # move the model to its previous center
         self._set_model_center(old_center)
-        self.update_support_grid_model()
+        self.update_support_model()
         self.update_view()
 
     def destroy(self, widget=None, data=None):
@@ -2848,7 +2844,7 @@ class ProjectGui:
     def _update_all_model_attributes(self):
         self.append_to_queue(self.update_scale_controls)
         self.append_to_queue(self.update_model_type_related_controls)
-        self.append_to_queue(self.update_support_grid_controls)
+        self.append_to_queue(self.update_support_controls)
         self.append_to_queue(self.toggle_3d_view, value=True)
         self.append_to_queue(self.update_view)
 
@@ -3199,7 +3195,7 @@ class ProjectGui:
             self.update_view()
 
     @progress_activity_guard
-    def crop_toolpath(self, tp):
+    def crop_toolpath(self, toolpath):
         if hasattr(self.model, "get_polygons"):
             contour = self.model
         elif hasattr(self.model, "get_waterline_contour"):
@@ -3208,13 +3204,13 @@ class ProjectGui:
             contour = self.model.get_waterline_contour(plane)
             self.update_progress_bar("Applying the tool diameter offset")
             contour = contour.get_offset_model(
-                    2 * tp.get_tool_settings()["tool_radius"])
+                    2 * toolpath.get_tool_settings()["tool_radius"])
         else:
             log.warn(("The current model (%s) does not support " \
                     + "projections") % str(type(self.model)))
             return
         self.update_progress_bar("Cropping the toolpath")
-        tp.crop(contour.get_polygons(), callback=self.update_progress_bar)
+        toolpath.crop(contour.get_polygons(), callback=self.update_progress_bar)
 
     def update_toolpath_table(self, new_index=None, skip_model_update=False):
         def get_time_string(minutes):
@@ -3548,7 +3544,8 @@ class ProjectGui:
         try:
             toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(
                     self.model, toolpath_settings, callback=draw_callback)
-        except:
+        except Exception:
+            # catch all non-system-exiting exceptions
             report_exception()
             return False
 
@@ -3706,7 +3703,7 @@ class ProjectGui:
                 default_filename += os.path.extsep + filename_extension
             elif type_filter:
                 for one_type in type_filter:
-                    label, extension = one_type
+                    extension = one_type[1]
                     if isinstance(extension, (list, tuple, set)):
                         extension = extension[0]
                     # use only the extension of the type filter string
@@ -3815,12 +3812,12 @@ class ProjectGui:
             else:
                 export_toolpaths = self.toolpath
             destination = open(filename, "w")
-            safety_height=self.settings.get("gcode_safety_height")
+            safety_height = self.settings.get("gcode_safety_height")
             meta_data = self.get_meta_data()
             machine_time = 0
             # calculate the machine time and store it in the GCode header
-            for tp in export_toolpaths:
-                machine_time += tp.get_machine_time(safety_height)
+            for toolpath in export_toolpaths:
+                machine_time += toolpath.get_machine_time(safety_height)
             all_info = meta_data + os.linesep \
                     + "Estimated machine time: %g minutes" % machine_time
             generator = GCodeGenerator(destination,
@@ -3845,13 +3842,12 @@ class ProjectGui:
                 generator.set_path_mode(PATH_MODES["continuous"],
                         self.settings.get("gcode_motion_tolerance"),
                         naive_tolerance)
-            for tp in export_toolpaths:
-                settings = tp.get_toolpath_settings()
-                process = settings.get_process_settings()
+            for toolpath in export_toolpaths:
+                settings = toolpath.get_toolpath_settings()
                 tool = settings.get_tool_settings()
                 generator.set_speed(tool["feedrate"], tool["speed"])
-                generator.add_moves(tp.get_moves(safety_height),
-                        tool_id=tool["id"], comment=tp.get_meta_data())
+                generator.add_moves(toolpath.get_moves(safety_height),
+                        tool_id=tool["id"], comment=toolpath.get_meta_data())
             generator.finish()
             destination.close()
             log.info("GCode file successfully written: %s" % str(filename))

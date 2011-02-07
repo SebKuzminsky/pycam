@@ -99,9 +99,9 @@ def get_external_program_location(key):
         location = win32api.FindExecutable(key)[1]
         if location:
             return location
-    except:
-        # Wildcard exeception to match "ImportError" and "pywintypes.error"
-        # (for "not found").
+    except Exception:
+        # Wildcard (non-system exiting) exeception to match "ImportError" and
+        # "pywintypes.error" (for "not found").
         pass
     # go through the PATH environment variable
     if "PATH" in os.environ:

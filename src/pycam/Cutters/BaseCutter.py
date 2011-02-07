@@ -3,7 +3,7 @@
 $Id$
 
 Copyright 2008-2010 Lode Leroy
-Copyright 2010 Lars Kruse <devel@sumpfralle.de>
+Copyright 2010-2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
 
@@ -22,11 +22,10 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import pycam.Utils.threading
 from pycam.Geometry.Point import Point
 from pycam.Geometry.utils import number, INFINITE, epsilon
-from pycam.Geometry.intersection import intersect_circle_point, \
-        intersect_cylinder_point, intersect_cylinder_line
+from pycam.Geometry.intersection import intersect_cylinder_point, \
+        intersect_cylinder_line
 import uuid
 
 
@@ -49,7 +48,8 @@ class BaseCutter(object):
         self.distance_radius = self.radius
         self.distance_radiussq = self.distance_radius ** 2
         self.shape = {}
-        self.moveto(location)
+        self.location = location
+        self.moveto(self.location)
         self.uuid = None
         self.update_uuid()
 
@@ -131,8 +131,7 @@ class BaseCutter(object):
                     * triangle.radius + triangle.radiussq) + epsilon:
             return None
 
-        (cl, d, cp) = self.intersect(BaseCutter.vertical, triangle, start=start)
-        return cl
+        return self.intersect(BaseCutter.vertical, triangle, start=start)[0]
 
     def intersect_circle_triangle(self, direction, triangle, start=None):
         (cl, ccp, cp, d) = self.intersect_circle_plane(direction, triangle,

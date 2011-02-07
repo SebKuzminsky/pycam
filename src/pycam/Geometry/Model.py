@@ -27,7 +27,7 @@ from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Polygon import Polygon
-from pycam.Geometry.Point import Point, Vector
+from pycam.Geometry.Point import Point
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
 from pycam.Geometry.Matrix import TRANSFORMATIONS
 from pycam.Toolpath import Bounds
@@ -110,7 +110,8 @@ class BaseModel(TransformableContainer):
                     + "support the 'export' function.") % str(type(self)))
 
     def _update_limits(self, item):
-        # ignore items without limit attributes (e.g. the normal of a ContourModel)
+        # Ignore items without limit attributes (e.g. the normal of a
+        # ContourModel).
         if hasattr(item, "minx"):
             if self.minx is None:
                 self.minx = item.minx
@@ -313,7 +314,8 @@ class ContourModel(BaseModel):
         self._plane_groups = [self._plane]
         self._item_groups.append(self._plane_groups)
         self._cached_offset_models = {}
-        self._export_function = pycam.Exporters.SVGExporter.SVGExporterContourModel
+        self._export_function = \
+                pycam.Exporters.SVGExporter.SVGExporterContourModel
 
     def reset_cache(self):
         super(ContourModel, self).reset_cache()
@@ -409,8 +411,10 @@ class ContourModel(BaseModel):
                         new_queue = processed
                 while len(self._line_groups) > 0:
                     self._line_groups.pop()
-                print "Processed polygons: %s" % str([len(p.get_lines()) for p in processed_polygons])
-                print "New queue: %s" % str([len(p.get_lines()) for p in new_queue])
+                print "Processed polygons: %s" % str([len(p.get_lines())
+                        for p in processed_polygons])
+                print "New queue: %s" % str([len(p.get_lines())
+                        for p in new_queue])
                 for processed_polygon in processed_polygons + new_queue:
                     self._line_groups.append(processed_polygon)
                 # TODO: this is quite expensive - can we do it differently?

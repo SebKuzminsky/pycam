@@ -110,11 +110,13 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance,
     if milling_style == MILLING_STYLE_IGNORE:
         # just move forward - milling style is not important
         pass
-    elif (milling_style == MILLING_STYLE_CLIMB) == (grid_direction == GRID_DIRECTION_X):
+    elif (milling_style == MILLING_STYLE_CLIMB) == \
+            (grid_direction == GRID_DIRECTION_X):
         if bool(start_position & START_X) == bool(start_position & START_Y):
             # we can't start from here - choose an alternative
             start_position = get_alternative_start_position(start_position)
-    elif (milling_style == MILLING_STYLE_CONVENTIONAL) == (grid_direction == GRID_DIRECTION_X):
+    elif (milling_style == MILLING_STYLE_CONVENTIONAL) == \
+            (grid_direction == GRID_DIRECTION_X):
         if bool(start_position & START_X) != bool(start_position & START_Y):
             # we can't start from here - choose an alternative
             start_position = get_alternative_start_position(start_position)

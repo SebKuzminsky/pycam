@@ -131,7 +131,8 @@ class CylindricalCutter(BaseCutter):
 
     def moveto(self, location, **kwargs):
         BaseCutter.moveto(self, location, **kwargs)
-        self.center = Point(location.x, location.y, location.z - self.get_required_distance())
+        self.center = Point(location.x, location.y,
+                location.z - self.get_required_distance())
 
     def intersect_circle_plane(self, direction, triangle, start=None):
         if start is None:
@@ -165,10 +166,6 @@ class CylindricalCutter(BaseCutter):
             cl = cp.add(start.sub(ccp))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
-
-    def intersect_plane(self, direction, triangle, start=None):
-        # TODO: are "intersect_plane" and "self.intersect_circle_plane" obsolete?
-        return self.intersect_circle_plane(direction, triangle, start=start)
 
     def intersect(self, direction, triangle, start=None):
         (cl_t, d_t, cp_t) = self.intersect_circle_triangle(direction, triangle,

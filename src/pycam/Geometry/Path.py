@@ -29,8 +29,10 @@ This reduces the memory consumption of a toolpath down to 1/3.
 
 try:
     # this works for python 2.6 or above (saves memory)
-    import collections.namedtuple
-    tuple_point = collections.namedtuple("TuplePoint", "x y z")
+    # TODO: disabled for now - check if we could enable it later ...
+    import INVALID_IMPORT
+    from collections import namedtuple
+    tuple_point = namedtuple("TuplePoint", "x y z")
     get_point_object = lambda point: tuple_point(point.x, point.y, point.z)
 except ImportError:
     # dummy for python < v2.6 (consumes more memory)
@@ -48,22 +50,22 @@ class Path:
         self.points = []
 
     def __repr__(self):
-        s = ""
-        s += "path %d: " % self.id
+        text = ""
+        text += "path %d: " % self.id
         first = True
-        for p in self.points:
+        for point in self.points:
             if first:
                 first = False
             else:
-                s += "-"
-            s += "%d(%g,%g,%g)" % (p.id, p.x, p.y, p.z)
-        return s
+                text += "-"
+            text += "%d(%g,%g,%g)" % (point.id, point.x, point.y, point.z)
+        return text
 
-    def insert(self, index, p):
-        self.points.insert(index, get_point_object(p))
+    def insert(self, index, point):
+        self.points.insert(index, get_point_object(point))
 
-    def append(self, p):
-        self.points.append(get_point_object(p))
+    def append(self, point):
+        self.points.append(get_point_object(point))
 
     def reverse(self):
         self.points.reverse()
