@@ -139,23 +139,25 @@ class ManagerInfo(object):
         self.cache = cache
         self.pending_tasks = pending
     def get_tasks_queue(self):
-	return self.tasks_queue
+        return self.tasks_queue
     def get_results_queue(self):
-	return self.results_queue
+        return self.results_queue
     def get_statistics(self):
-	return self.statistics
+        return self.statistics
     def get_cache(self):
-	return self.cache
+        return self.cache
     def get_pending_tasks(self):
-	return self.pending_tasks
+        return self.pending_tasks
 
 def init_threading(number_of_processes=None, enable_server=False, remote=None,
         run_server=False, server_credentials="", local_port=DEFAULT_PORT):
-    global __multiprocessing, __num_of_processes, __manager, __closing, __task_source_uuid
+    global __multiprocessing, __num_of_processes, __manager, __closing,
+            __task_source_uuid
     if __multiprocessing:
         # kill the manager and clean everything up for a re-initialization
         cleanup()
-    if (not is_windows_parallel_processing_available()) and (enable_server or run_server):
+    if (not is_windows_parallel_processing_available()) and \
+            (enable_server or run_server):
         # server mode is disabled for the Windows pyinstaller standalone
         # due to "pickle errors". How to reproduce: run the standalone binary
         # with "--enable-server --server-auth-key foo".
@@ -165,11 +167,11 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
         if enable_server:
             log.warn("Unable to enable server mode with the Windows " \
                     + "standalone executable. " \
-                    + multiprocessing_missing_text)
+                    + server_mode_unavailable)
         elif run_server:
             log.warn("Unable to run in server-only mode with the Windows " \
                     + "standalone executable. " \
-                    + multiprocessing_missing_text)
+                    + server_mode_unavailable)
         else:
             # no further warnings required
             pass
@@ -217,30 +219,34 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
         if number_of_processes is None:
             # use defaults
             # don't enable threading for a single cpu
-            if (multiprocessing.cpu_count() > 1) or remote or run_server or enable_server:
+            if (multiprocessing.cpu_count() > 1) or remote or run_server or \
+                    enable_server:
                 __multiprocessing = multiprocessing
                 __num_of_processes = multiprocessing.cpu_count()
             else:
                 __multiprocessing = False
-        elif (number_of_processes < 1) and (remote is None) and (enable_server is None):
-            # zero processes are allowed if we use a remote server or offer a server
+        elif (number_of_processes < 1) and (remote is None) and \
+                (enable_server is None):
+            # Zero processes are allowed if we use a remote server or offer a
+            # server.
             __multiprocessing = False
         else:
             __multiprocessing = multiprocessing
             __num_of_processes = number_of_processes
     # initialize the manager
     if not __multiprocessing:
-        __manager == None
+        __manager = None
         log.info("Disabled parallel processing")
     elif not enable_server and not run_server:
-        __manager == None
+        __manager = None
         log.info("Enabled %d parallel local processes" % __num_of_processes)
     else:
         # with multiprocessing
         log.info("Enabled %d parallel local processes" % __num_of_processes)
         log.info("Allow remote processing")
         # initialize the uuid list for all workers
-        worker_uuid_list = [str(uuid.uuid1()) for index in range(__num_of_processes)]
+        worker_uuid_list = [str(uuid.uuid1())
+                for index in range(__num_of_processes)]
         __task_source_uuid = str(uuid.uuid1())
         if remote is None:
             # try to guess an appropriate interface for binding
@@ -249,11 +255,13 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
                 all_ips = pycam.Utils.get_all_ips()
                 if all_ips:
                     address = (all_ips[0], local_port)
-                    log.info("Binding to local interface with IP %s" % str(all_ips[0]))
+                    log.info("Binding to local interface with IP %s" % \
+                            str(all_ips[0]))
                 else:
                     return "Failed to find any local IP"
             else:
-                # empty hostname -> wildcard interface (does not work with windows)
+                # empty hostname -> wildcard interface
+                # (this does not work with Windows - see above)
                 address = ('', local_port)
         else:
             if ":" in remote:
@@ -261,8 +269,9 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
                 try:
                     port = int(port)
                 except ValueError:
-                    log.warning(("Invalid port specified: '%s' - using default " \
-                            + "port (%d) instead") % (port, DEFAULT_PORT))
+                    log.warning(("Invalid port specified: '%s' - using " + \
+                            "default port (%d) instead") % \
+                            (port, DEFAULT_PORT))
                     port = DEFAULT_PORT
             else:
                 host = remote
@@ -274,12 +283,14 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
             statistics = ProcessStatistics()
             cache = ProcessDataCache()
             pending_tasks = PendingTasks()
-            info = ManagerInfo(tasks_queue, results_queue, statistics, cache, pending_tasks)
+            info = ManagerInfo(tasks_queue, results_queue, statistics, cache,
+                    pending_tasks)
             TaskManager.register("tasks", callable=info.get_tasks_queue)
             TaskManager.register("results", callable=info.get_results_queue)
             TaskManager.register("statistics", callable=info.get_statistics)
             TaskManager.register("cache", callable=info.get_cache)
-            TaskManager.register("pending_tasks", callable=info.get_pending_tasks)
+            TaskManager.register("pending_tasks",
+                    callable=info.get_pending_tasks)
         else:
             TaskManager.register("tasks")
             TaskManager.register("results")
@@ -305,14 +316,16 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
         __closing = __manager.Value("b", False)
         if __num_of_processes > 0:
             # only start the spawner, if we want to use local workers
-            spawner = __multiprocessing.Process(name="spawn", target=_spawn_daemon,
-                    args=(__manager, __num_of_processes, worker_uuid_list))
+            spawner = __multiprocessing.Process(name="spawn",
+                    target=_spawn_daemon, args=(__manager, __num_of_processes,
+                    worker_uuid_list))
             spawner.start()
         else:
             spawner = None
         # wait forever - in case of a server
         if run_server:
-            log.info("Running a local server and waiting for remote connections.")
+            log.info("Running a local server and waiting for remote " + \
+                    "connections.")
             # the server can be stopped via CTRL-C - it is caught later
             if not spawner is None:
                 spawner.join()
@@ -323,7 +336,7 @@ def cleanup():
         log.debug("Shutting down process handler")
         try:
             __closing.set(True)
-        except IOError, EOFError:
+        except (IOError, EOFError):
             log.debug("Connection to manager lost during cleanup")
         # Only managers that were started via ".start()" implement a "shutdown".
         # Managers started via ".connect" may skip this.
@@ -380,9 +393,9 @@ def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
         # set the "closing" flag and just exit
         try:
             __closing.set(True)
-        except IOError, EOFError:
+        except (IOError, EOFError):
             pass
-    except IOError, EOFError:
+    except (IOError, EOFError):
         # the connection was closed
         log.info("Spawner daemon lost connection to server")
 
@@ -452,7 +465,8 @@ def _handle_tasks(tasks, results, stats, cache, pending_tasks, closing):
 
 def run_in_parallel_remote(func, args_list, unordered=False,
         disable_multiprocessing=False, callback=None):
-    global __multiprocessing, __num_of_processes, __manager, __task_source_uuid, __finished_jobs
+    global __multiprocessing, __num_of_processes, __manager, __task_source_uuid,
+            __finished_jobs
     if __multiprocessing is None:
         # threading was not configured before
         init_threading()
@@ -475,7 +489,8 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                 if hasattr(arg, "uuid"):
                     data_uuid = ProcessDataCacheItemID(arg.uuid)
                     if not remote_cache.contains(data_uuid):
-                        log.debug("Adding cache item for job %s: %s - %s" % (job_id, arg.uuid, arg.__class__))
+                        log.debug("Adding cache item for job %s: %s - %s" % \
+                                (job_id, arg.uuid, arg.__class__))
                         remote_cache.add(data_uuid, arg)
                     result_args.append(data_uuid)
                 elif isinstance(arg, (list, set, tuple)):
@@ -498,7 +513,8 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                 else:
                     result_args.append(arg)
             tasks_queue.put((job_id, index, func, result_args))
-            stats.add_queueing_time(__task_source_uuid, time.time() - start_time)
+            stats.add_queueing_time(__task_source_uuid,
+                    time.time() - start_time)
         log.debug("Added %d tasks for job %s" % (len(args_list), job_id))
         result_buffer = {}
         index = 0

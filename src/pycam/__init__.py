@@ -20,7 +20,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__=["Cutters","Exporters","Geometry","Gui","Importers","PathGenerators","PathProcessors","Utils"]
+__all__ = ["Cutters", "Exporters", "Geometry", "Gui", "Importers",
+        "PathGenerators", "PathProcessors", "Utils"]
 
 VERSION = "0.4.1-svn"
 

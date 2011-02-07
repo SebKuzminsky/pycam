@@ -28,19 +28,19 @@ from pycam.Geometry.Path import Path
 
 class PathAccumulator(pycam.PathProcessors.BasePathProcessor):
     def __init__(self, zigzag=False, reverse=False):
-        self.paths = []
+        super(PathAccumulator, self).__init__()
         self.curr_path = None
         self.zigzag = zigzag
         self.scanline = None
         self.reverse = reverse
 
-    def append(self, p):
+    def append(self, point):
         if self.curr_path == None:
             self.curr_path = Path()
         if self.reverse:
-            self.curr_path.insert(0, p)
+            self.curr_path.insert(0, point)
         else:
-            self.curr_path.append(p)
+            self.curr_path.append(point)
 
     def new_direction(self, direction):
         self.scanline = 0

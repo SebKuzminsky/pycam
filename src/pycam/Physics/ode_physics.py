@@ -68,7 +68,8 @@ def convert_triangles_to_vertices_faces(triangles):
     id_index_map = {}
     for t in triangles:
         coords = []
-        # TODO: check if we need to change the order of points for non-AOI models as well
+        # TODO: check if we need to change the order of points for non-AOI
+        # models as well.
         for p in (t.p1, t.p3, t.p2):
             # add the point to the id/index mapping, if necessary
             if not id_index_map.has_key(p.id):
@@ -199,7 +200,7 @@ class PhysicalWorld(object):
         http://sourceforge.net/tracker/index.php?func=detail&aid=2973876&group_id=24884&atid=382799
         """
         minz, maxz = geom.getAABB()[-2:]
-        currx, curry, currz = geom.getPosition()
+        currx, curry = geom.getPosition()[0:2]
         ray = ode.GeomRay(self._space, maxz-minz)
         ray.set((currx, curry, maxz), (0.0, 0.0, -1.0))
         return [ray]

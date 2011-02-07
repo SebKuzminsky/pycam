@@ -55,7 +55,7 @@ import time
 try:
     import multiprocessing
 except ImportError:
-    class multiprocessing:
+    class multiprocessing(object):
         # use an arbitrary other Exception
         AuthenticationError = socket.error
 
@@ -89,7 +89,8 @@ def show_gui(inputfile=None, task_settings_file=None):
         full_report.append("Details:")
         full_report.append(report_gtk)
         full_report.append("")
-        full_report.append("Detailed list of requirements: %s" % GuiCommon.REQUIREMENTS_LINK)
+        full_report.append("Detailed list of requirements: %s" % \
+                GuiCommon.REQUIREMENTS_LINK)
         log.critical(os.linesep.join(full_report))
         return EXIT_CODES["requirements"]
 
@@ -134,7 +135,7 @@ def load_model_file(filename, program_locations, unit=None):
     if not os.path.isfile(filename):
         log.warn("The input file ('%s') was not found!" % filename)
         return None
-    filetype, importer = pycam.Importers.detect_file_type(filename)
+    importer = pycam.Importers.detect_file_type(filename)[1]
     model = importer(filename, program_locations=program_locations, unit=unit)
     if model is None:
         log.warn("Failed to load the model file (%s)." % filename)
@@ -180,13 +181,14 @@ def execute(parser, opts, args, pycam):
             # print only the bare version number
             print VERSION
         else:
-            print "PyCAM %s" % VERSION
-            print "Copyright (C) 2008-2010 Lode Leroy"
-            print "Copyright (C) 2010 Lars Kruse"
-            print
-            print "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>."
-            print "This is free software: you are free to change and redistribute it."
-            print "There is NO WARRANTY, to the extent permitted by law."
+            text = '''PyCAM %s
+Copyright (C) 2008-2010 Lode Leroy
+Copyright (C) 2010-2011 Lars Kruse
+
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.''' % VERSION
+            print text
         return EXIT_CODES["ok"]
 
     if not opts.disable_psyco:
@@ -271,7 +273,7 @@ def execute(parser, opts, args, pycam):
         elif opts.support_type == "none":
             pass
         else:
-            raise NotImplemented, "Invalid support type specified: %s" % \
+            raise NotImplementedError, "Invalid support type specified: %s" % \
                     opts.support_type
         if opts.collision_engine == "ode":
             tps.set_calculation_backend("ODE")
@@ -413,7 +415,7 @@ def execute(parser, opts, args, pycam):
             handler, closer = get_output_handler(opts.export_task_config)
             if handler is None:
                 return EXIT_CODES["write_output_failed"]
-            print >>handler, tps.get_string()
+            print >> handler, tps.get_string()
             closer()
     # no error -> don't return a specific exit code
     return None
@@ -429,13 +431,13 @@ if __name__ == "__main__":
         multiprocessing.freeze_support()
     parser = OptionParser(prog="PyCAM",
             usage="usage: pycam [options] [inputfile]\n\n" \
-                    + "Start the PyCAM toolpath generator. Supplying one of " \
-                    + "the '--export-?' parameters will cause PyCAM to start " \
-                    + "in batch mode. Most parameters are useful only for " \
-                    + "batch mode.",
+                + "Start the PyCAM toolpath generator. Supplying one of " \
+                + "the '--export-?' parameters will cause PyCAM to start " \
+                + "in batch mode. Most parameters are useful only for " \
+                + "batch mode.",
             epilog="Take a look at the wiki for more information: " \
-                    + "http://sourceforge.net/apps/mediawiki/pycam/.\n" \
-                    + "Bug reports: http://sourceforge.net/tracker/?group_id=237831&atid=1104176")
+                + "http://sourceforge.net/apps/mediawiki/pycam/.\nBug reports" \
+                + ": http://sf.net/tracker/?group_id=237831&atid=1104176")
     group_general = parser.add_option_group("General options")
     group_export = parser.add_option_group("Export formats",
             "Export the resulting toolpath or meta-data in various formats. " \
@@ -512,8 +514,8 @@ if __name__ == "__main__":
                     + "connecting to a remote server or for granting access " \
                     + "to remote clients.")
     group_general.add_option("-q", "--quiet", dest="quiet",
-            default=False, action="store_true", help="output only warnings and " \
-            + "errors.")
+            default=False, action="store_true", help="output only warnings " \
+            + "and errors.")
     group_general.add_option("-d", "--debug", dest="debug",
             default=False, action="store_true", help="enable output of debug " \
             + "messages.")

@@ -67,14 +67,14 @@ def get_all_ips():
             ips = socket.gethostbyname_ex(name)
             if len(ips) == 3:
                 return ips[2]
-        except socket.gaiaerror:
+        except socket.gaierror:
             return []
     result.extend(get_ips_of_name(socket.gethostname()))
     result.extend(get_ips_of_name("localhost"))
     filtered_result = []
-    for ip in result:
-        if not ip in filtered_result:
-            filtered_result.append(ip)
+    for one_ip in result:
+        if not one_ip in filtered_result:
+            filtered_result.append(one_ip)
     def sort_ip_by_relevance(ip1, ip2):
         if ip1.startswith("127."):
             return 1
@@ -96,7 +96,7 @@ def get_external_program_location(key):
     # check the windows path via win32api
     try:
         import win32api
-        handle, location = win32api.FindExecutable(key)
+        location = win32api.FindExecutable(key)[1]
         if location:
             return location
     except:
@@ -114,7 +114,8 @@ def get_external_program_location(key):
     # do a manual scan in the programs directory (only for windows)
     try:
         from win32com.shell import shellcon, shell            
-        program_dir = shell.SHGetFolderPath(0, shellcon.CSIDL_PROGRAM_FILES, 0, 0)
+        program_dir = shell.SHGetFolderPath(0, shellcon.CSIDL_PROGRAM_FILES,
+                0, 0)
     except ImportError:
         # no other options for non-windows systems
         return None

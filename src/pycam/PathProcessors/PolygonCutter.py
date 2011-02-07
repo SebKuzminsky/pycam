@@ -29,51 +29,51 @@ from pycam.Toolpath import simplify_toolpath
 
 class PolygonCutter(pycam.PathProcessors.BasePathProcessor):
     def __init__(self, reverse=False):
-        self.paths = []
+        super(PolygonCutter, self).__init__()
         self.curr_path = None
         self.scanline = None
-        self.pe = PolygonExtractor(PolygonExtractor.MONOTONE)
+        self.poly_extractor = PolygonExtractor(PolygonExtractor.MONOTONE)
         self.reverse = reverse
 
-    def append(self, p):
-        self.pe.append(p)
+    def append(self, point):
+        self.poly_extractor.append(point)
 
     def new_direction(self, direction):
-        self.pe.new_direction(direction)
+        self.poly_extractor.new_direction(direction)
 
     def end_direction(self):
-        self.pe.end_direction()
+        self.poly_extractor.end_direction()
 
     def new_scanline(self):
-        self.pe.new_scanline()
+        self.poly_extractor.new_scanline()
 
     def end_scanline(self):
-        self.pe.end_scanline()
+        self.poly_extractor.end_scanline()
 
     def finish(self):
-        self.pe.finish()
+        self.poly_extractor.finish()
         paths = []
         source_paths = []
-        if self.pe.hor_path_list:
-            source_paths.extend(self.pe.hor_path_list)
-        if self.pe.ver_path_list:
-            source_paths.extend(self.pe.ver_path_list)
+        if self.poly_extractor.hor_path_list:
+            source_paths.extend(self.poly_extractor.hor_path_list)
+        if self.poly_extractor.ver_path_list:
+            source_paths.extend(self.poly_extractor.ver_path_list)
         for path in source_paths:
             points = path.points
             for i in range(0, (len(points)+1)/2):
-                p = Path()
+                new_path = Path()
                 if i % 2 == 0:
-                    p.append(points[i])
-                    p.append(points[-i-1])
+                    new_path.append(points[i])
+                    new_path.append(points[-i-1])
                 else:
-                    p.append(points[-i-1])
-                    p.append(points[i])
-                paths.append(p)
+                    new_path.append(points[-i-1])
+                    new_path.append(points[i])
+                paths.append(new_path)
         if paths:
-            for p in paths:
-                simplify_toolpath(p)
+            for path in paths:
+                simplify_toolpath(path)
                 if self.reverse:
-                    p.reverse()
+                    path.reverse()
             self.paths.extend(paths)
             self.sort_layered()
 

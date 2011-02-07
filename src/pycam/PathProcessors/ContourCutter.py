@@ -27,56 +27,56 @@ from pycam.Toolpath import simplify_toolpath
 
 class ContourCutter(pycam.PathProcessors.BasePathProcessor):
     def __init__(self, reverse=False):
-        self.paths = []
+        super(ContourCutter, self).__init__()
         self.curr_path = None
         self.scanline = None
-        self.pe = None
+        self.polygon_extractor = None
         self.points = []
         self.reverse = reverse
         self.__forward = Point(1, 1, 0)
 
-    def append(self, p):
+    def append(self, point):
         # Sort the points in positive x/y direction - otherwise the
         # PolygonExtractor breaks.
-        if self.points and (p.sub(self.points[0]).dot(self.__forward) < 0):
-            self.points.insert(0, p)
+        if self.points and (point.sub(self.points[0]).dot(self.__forward) < 0):
+            self.points.insert(0, point)
         else:
-            self.points.append(p)
+            self.points.append(point)
 
     def new_direction(self, direction):
-        if self.pe == None:
-            self.pe = PolygonExtractor(PolygonExtractor.CONTOUR)
+        if self.polygon_extractor == None:
+            self.polygon_extractor = PolygonExtractor(PolygonExtractor.CONTOUR)
 
-        self.pe.new_direction(direction)
+        self.polygon_extractor.new_direction(direction)
 
     def end_direction(self):
-        self.pe.end_direction()
+        self.polygon_extractor.end_direction()
 
     def new_scanline(self):
-        self.pe.new_scanline()
+        self.polygon_extractor.new_scanline()
         self.points = []
 
     def end_scanline(self):
-        for i in range(1, len(self.points)-1):
-            self.pe.append(self.points[i])
-        self.pe.end_scanline()
+        for i in range(1, len(self.points) - 1):
+            self.polygon_extractor.append(self.points[i])
+        self.polygon_extractor.end_scanline()
 
     def finish(self):
-        self.pe.finish()
-        if self.pe.merge_path_list:
-            paths = self.pe.merge_path_list
-        elif self.pe.hor_path_list:
-            paths = self.pe.hor_path_list
+        self.polygon_extractor.finish()
+        if self.polygon_extractor.merge_path_list:
+            paths = self.polygon_extractor.merge_path_list
+        elif self.polygon_extractor.hor_path_list:
+            paths = self.polygon_extractor.hor_path_list
         else:
-            paths = self.pe.ver_path_list
+            paths = self.polygon_extractor.ver_path_list
         if paths:
-            for p in paths:
-                p.append(p.points[0])
-                simplify_toolpath(p)
+            for path in paths:
+                path.append(path.points[0])
+                simplify_toolpath(path)
         if paths:
             if self.reverse:
                 paths.reverse()
             self.paths.extend(paths)
             self.sort_layered()
-        self.pe = None
+        self.polygon_extractor = None
 

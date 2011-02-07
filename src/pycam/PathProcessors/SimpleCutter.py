@@ -26,11 +26,11 @@ from pycam.Toolpath import simplify_toolpath
 
 class SimpleCutter(pycam.PathProcessors.BasePathProcessor):
     def __init__(self, reverse=False):
-        self.paths = []
+        super(SimpleCutter, self).__init__()
         self.curr_path = None
         self.reverse = reverse
 
-    def append(self, p):
+    def append(self, point):
         curr_path = None
         if self.curr_path == None:
             curr_path = Path()
@@ -38,7 +38,7 @@ class SimpleCutter(pycam.PathProcessors.BasePathProcessor):
         else:
             curr_path = self.curr_path
             self.curr_path = None
-        curr_path.append(p)
+        curr_path.append(point)
         if self.curr_path == None:
             simplify_toolpath(curr_path)
             if self.reverse:

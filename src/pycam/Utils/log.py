@@ -22,6 +22,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import locale
 import logging
+import re
+
 
 def get_logger(suffix=None):
     name = "PyCAM"

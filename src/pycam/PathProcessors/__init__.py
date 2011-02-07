@@ -26,6 +26,9 @@ __all__ = ["PathAccumulator", "SimpleCutter", "ZigZagCutter", "PolygonCutter",
 
 class BasePathProcessor(object):
 
+    def __init__(self):
+        self.paths = []
+
     def new_direction(self, direction):
         pass
 
@@ -37,9 +40,11 @@ class BasePathProcessor(object):
 
     def sort_layered(self, upper_first=True):
         if upper_first:
-            compare_height = lambda path1, path2: path1.points[0].z < path2.points[0].z
+            compare_height = lambda path1, path2: \
+                    path1.points[0].z < path2.points[0].z
         else:
-            compare_height = lambda path1, path2: path1.points[0].z > path2.points[0].z
+            compare_height = lambda path1, path2: \
+                    path1.points[0].z > path2.points[0].z
         finished = False
         while not finished:
             index = 0

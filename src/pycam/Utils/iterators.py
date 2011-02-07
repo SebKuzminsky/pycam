@@ -29,26 +29,26 @@ class Iterator:
         if self.ind >= len(self.seq):
             return None
         else:
-            v = self.seq[self.ind]
+            item = self.seq[self.ind]
             self.ind += 1
-            return v
+            return item
 
-    def insertBefore(self, v):
-        self.seq.insert(self.ind - 1, v)
+    def insertBefore(self, item):
+        self.seq.insert(self.ind - 1, item)
         self.ind += 1
 
-    def insert(self, v):
-        self.seq.insert(self.ind, v)
+    def insert(self, item):
+        self.seq.insert(self.ind, item)
         self.ind += 1
 
-    def replace(self, v, w):
+    def replace(self, item_old, item_new):
         for i in range(len(self.seq)):
-            if self.seq[i] == v:
-                self.seq[i] = w
+            if self.seq[i] == item_old:
+                self.seq[i] = item_new
 
-    def remove(self, v):
+    def remove(self, item):
         for i in range(len(self.seq)):
-            if self.seq[i] == v:
+            if self.seq[i] == item:
                 del self.seq[i]
                 if i < self.ind:
                     self.ind -= 1
@@ -72,6 +72,7 @@ class Iterator:
     def remains(self):
         return len(self.seq) - self.ind
 
+
 class CyclicIterator:
     def __init__(self, seq, start=0):
         self.seq = seq
@@ -79,11 +80,11 @@ class CyclicIterator:
         self.count = len(seq)
 
     def next(self):
-        v = self.seq[self.ind]
+        item = self.seq[self.ind]
         self.ind += 1
         if self.ind == len(self.seq):
             self.ind = 0
-        return v
+        return item
 
     def copy(self):
         return CyclicIterator(self.seq, self.ind)
@@ -93,6 +94,7 @@ class CyclicIterator:
         while idx >= len(self.seq):
             idx -= len(self.seq)
         return self.seq[idx]
+
 
 if __name__ == "__main__":
     l = [1, 2, 4, 6]
