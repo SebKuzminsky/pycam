@@ -3639,7 +3639,7 @@ class ProjectGui:
                     self.settings.get("support_grid_thickness"),
                     self.settings.get("support_grid_height"),
                     self.settings.get("support_grid_length"),
-                    start_at_corner=corner_start)
+                    start_at_corners=corner_start)
         elif grid_type == GRID_TYPES["none"]:
             pass
         else:

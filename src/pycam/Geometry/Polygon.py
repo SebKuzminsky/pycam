@@ -180,24 +180,31 @@ class Polygon(TransformableContainer):
             cyz += (p1.y + p2.y) * (p1.y * p2.z - p1.z * p2.y)
             czx += (p1.z + p2.z) * (p1.z * p2.x - p1.x * p2.z)
             czy += (p1.z + p2.z) * (p1.y * p2.z - p1.z * p2.y)
-        if self.minz == self.maxz:
+        if abs(self.maxz - self.minz) < epsilon:
             return Point(cxy / (6 * area), cyx / (6 * area), self.minz)
-        elif self.miny == self.maxy:
+        elif abs(self.maxy - self.miny) < epsilon:
             return Point(cxz / (6 * area), self.miny, czx / (6 * area))
-        elif self.minz == self.maxz:
+        elif abs(self.maxx - self.minx) < epsilon:
             return Point(self.minx, cyz / (6 * area), czy / (6 * area))
         else:
             # calculate area of xy projection
-            area_xy = self.get_plane_projection(Plane(Point(0, 0, 0),
-                    Point(0, 0, 1))).get_area()
-            area_xz = self.get_plane_projection(Plane(Point(0, 0, 0),
-                    Point(0, 1, 0))).get_area()
-            area_yz = self.get_plane_projection(Plane(Point(0, 0, 0),
-                    Point(1, 0, 0))).get_area()
+            poly_xy = self.get_plane_projection(Plane(Point(0, 0, 0),
+                    Point(0, 0, 1)))
+            poly_xz = self.get_plane_projection(Plane(Point(0, 0, 0),
+                    Point(0, 1, 0)))
+            poly_yz = self.get_plane_projection(Plane(Point(0, 0, 0),
+                    Point(1, 0, 0)))
+            if (poly_xy is None) or (poly_xz is None) or (poly_yz is None):
+                log.warn("Invalid polygon projection for barycenter: %s" \
+                        % str(self))
+                return None
+            area_xy = poly_xy.get_area()
+            area_xz = poly_xz.get_area()
+            area_yz = poly_yz.get_area()
             if 0 in (area_xy, area_xz, area_yz):
                 log.info("Failed assumtion: zero-sized projected area - " + \
                         "%s / %s / %s" % (area_xy, area_xz, area_yz))
-                return Point(0, 0, 0)
+                return None
             if abs(cxy / area_xy - cxz / area_xz) > epsilon:
                 log.info("Failed assumption: barycenter xy/xz - %s / %s" % \
                         (cxy / area_xy, cxz / area_xz))

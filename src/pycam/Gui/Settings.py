@@ -660,8 +660,8 @@ class ToolpathSettings:
         self.support_grid["adjustments_y"] = adjustments_y
 
     def set_support_distributed(self, average_distance, minimum_bridges,
-            thickness, height, length, start_at_corner=False):
-        if start_at_corner:
+            thickness, height, length, start_at_corners=False):
+        if start_at_corners:
             self.support_grid["type"] = "distributed_corners"
         else:
             self.support_grid["type"] = "distributed_edges"
