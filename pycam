@@ -256,10 +256,23 @@ def execute(parser, opts, args, pycam):
         tps.set_tool(opts.tool_id, tool_shape, 0.5 * opts.tool_diameter,
                 0.5 * opts.tool_torus_diameter, opts.tool_spindle_speed,
                 opts.tool_feedrate)
-        if opts.support_grid_enabled:
+        if opts.support_type == "grid":
             tps.set_support_grid(opts.support_grid_distance_x,
-                    opts.support_grid_distance_y, opts.support_grid_thickness,
-                    opts.support_grid_height)
+                    opts.support_grid_distance_y,
+                    opts.support_profile_thickness, opts.support_profile_height,
+                    opts.support_grid_offset_x, opts.support_grid_offset_y)
+        elif opts.support_type in ("distributed-edges", "distributed-corners"):
+            start_at_corners = (opts.support_type == "distributed-corners")
+            tps.set_support_distributed(opts.support_distributed_distance,
+                    opts.support_distributed_minimum,
+                    opts.support_profile_thickness, opts.support_profile_height,
+                    opts.support_distributed_length,
+                    start_at_corners=start_at_corners)
+        elif opts.support_type == "none":
+            pass
+        else:
+            raise NotImplemented, "Invalid support type specified: %s" % \
+                    opts.support_type
         if opts.collision_engine == "ode":
             tps.set_calculation_backend("ODE")
         tps.set_unit_size(opts.unit_size)
@@ -444,11 +457,12 @@ if __name__ == "__main__":
             + "and 'custom' (absolute coordinates of the bounding box - " \
             + "regardless of the model size and position). Negative values " \
             + "are allowed and can make sense (e.g. negative margin).")
-    group_support_grid = parser.add_option_group("Support grid",
-            "An optional support grid can be used to keep the object in " \
-            + "place during the mill operation. The support grid can be " \
-            + "removed manually afterwards. The support grid can have a " \
-            + "rectangular profile. By default the support grid is disabled.")
+    group_support_structure = parser.add_option_group("Support structure",
+            "An optional support structure can be used to keep the object in " \
+            + "place during the mill operation. The support structure can be " \
+            + "removed manually afterwards. Various types of support " \
+            + "structures are available. Support structures are disabled " \
+            + "by default.")
     group_gcode = parser.add_option_group("GCode settings",
             "Specify some details of the generated GCode.")
     group_external_programs = parser.add_option_group("External programs",
@@ -475,12 +489,13 @@ if __name__ == "__main__":
                     + "defined processing boundary.")
     group_general.add_option("", "--disable-psyco", dest="disable_psyco",
             default=False, action="store_true", help="disable the Psyco " \
-                    + "just-in-time-compiler even when it is available")
+                    + "just-in-time-compiler even if it is available")
     group_general.add_option("", "--number-of-processes",
             dest="parallel_processes", default=None, type="int", action="store",
             help="override the default detection of multiple CPU cores. " \
-                    + "Parallel processing only works with Python 2.6 or " \
-                    + "later.")
+                    + "Parallel processing only works with Python 2.6 (or " \
+                    + "later) or with the additional 'multiprocessing' " \
+                    + "module.")
     group_general.add_option("", "--enable-server", dest="enable_server",
             default=False, action="store_true", help="enable a local server " \
                     + "and (optionally) remote worker servers.")
@@ -497,7 +512,7 @@ if __name__ == "__main__":
                     + "connecting to a remote server or for granting access " \
                     + "to remote clients.")
     group_general.add_option("-q", "--quiet", dest="quiet",
-            default=False, action="store_true", help="show only warnings and " \
+            default=False, action="store_true", help="output only warnings and " \
             + "errors.")
     group_general.add_option("-d", "--debug", dest="debug",
             default=False, action="store_true", help="enable output of debug " \
@@ -511,7 +526,7 @@ if __name__ == "__main__":
             action="store", type="string",
             help="store profiling statistics in a file (only for debugging)")
     group_general.add_option("-v", "--version", dest="show_version",
-            default=False, action="store_true", help="show the current " \
+            default=False, action="store_true", help="output the current " \
             + "version of PyCAM and exit")
     # export options
     group_export.add_option("", "--export-gcode", dest="export_gcode",
@@ -593,23 +608,43 @@ if __name__ == "__main__":
             help="comma-separated x/y/z combination of the upper boundary " \
             + "(e.g. '12,5.5,0')")
     # support grid settings
-    group_support_grid.add_option("", "--enable-support-grid",
-            dest="support_grid_enabled", default=False, action="store_true",
-            help="enable the support grid")
-    group_support_grid.add_option("", "--support-grid-distance-x",
+    group_support_structure.add_option("", "--support-type",
+            dest="support_type", default="none", type="choice", action="store",
+            choices=["none", "grid", "distributed-edges",
+                    "distributed-corners"],
+            help="type of the support structure (default: none)")
+    group_support_structure.add_option("", "--support-profile-height",
+            dest="support_profile_height", default=2.0, action="store",
+            type="float", help="height of the support profile")
+    group_support_structure.add_option("", "--support-profile-thickness",
+            dest="support_profile_thickness", default=0.5, action="store",
+            type="float", help="width of the support profile")
+    group_support_structure.add_option("", "--support-grid-distance-x",
             dest="support_grid_distance_x", default=10.0, action="store",
             type="float", help="distance along the x-axis between two " \
-                    + "adjacent parallel lines of the support grid pattern")
-    group_support_grid.add_option("", "--support-grid-distance-y",
+            + "adjacent parallel lines of the support structure" \
+            + "(only for grid type)")
+    group_support_structure.add_option("", "--support-grid-distance-y",
             dest="support_grid_distance_y", default=10.0, action="store",
             type="float", help="distance along the y-axis between two " \
-                    + "adjacent parallel lines of the support grid pattern")
-    group_support_grid.add_option("", "--support-grid-height",
-            dest="support_grid_height", default=2.0, action="store",
-            type="float", help="height of the support grid profile")
-    group_support_grid.add_option("", "--support-grid-thickness",
-            dest="support_grid_thickness", default=0.5, action="store",
-            type="float", help="width of the support grid profile")
+            + "adjacent parallel lines of the support structure " \
+            + "(only for grid type)")
+    group_support_structure.add_option("", "--support-grid-offset-x",
+            dest="support_grid_offset_x", default=0.0, action="store",
+            type="float", help="shift the support grid along the x axis")
+    group_support_structure.add_option("", "--support-grid-offset-y",
+            dest="support_grid_offset_y", default=0.0, action="store",
+            type="float", help="shift the support grid along the y axis")
+    group_support_structure.add_option("", "--support-distributed-distance",
+            dest="support_distributed_distance", default=30.0, action="store",
+            type="float", help="average distance between two adjacent " \
+            + "support bridges")
+    group_support_structure.add_option("", "--support-distributed-minimum",
+            dest="support_distributed_minimum", default=2, action="store",
+            type="int", help="minimum number of support bridges per polygon")
+    group_support_structure.add_option("", "--support-distributed-length",
+            dest="support_distributed_length", default=5.0, action="store",
+            type="float", help="length of each support bridge")
     # gcode options
     group_gcode.add_option("", "--gcode-no-start-stop-spindle",
             dest="gcode_no_start_stop_spindle", default=True,
