@@ -39,7 +39,7 @@ from pycam.Gui.OpenGLTools import ModelViewWindowGL
 from pycam.Geometry.Letters import TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, \
         TEXT_ALIGN_RIGHT
 import pycam.Geometry.Model
-from pycam.Utils import ProgressCounter
+from pycam.Utils import ProgressCounter, check_uri_exists
 from pycam.Toolpath import Bounds
 from pycam import VERSION
 import pycam.Physics.ode_physics
@@ -362,6 +362,8 @@ class ProjectGui:
                 gtk.accel_map_change_entry(accel_path, key, mod, True)
         # no undo is allowed at the beginning
         self.gui.get_object("UndoButton").set_sensitive(False)
+        # configure drag-n-drop for config files and models
+        self.configure_drag_and_drop(self.window)
         # other events
         self.window.connect("destroy", self.destroy)
         # the settings window
@@ -2131,6 +2133,8 @@ class ProjectGui:
                                 for name in ("GeneralSettings", "Help3DView")])
                 if self.model and self.view3d.enabled:
                     self.view3d.reset_view()
+                # configure drag-and-drop for the 3D window
+                self.configure_drag_and_drop(self.view3d.window)
                 # disable the "toggle" button, if the 3D view does not work
                 toggle_3d_checkbox.set_sensitive(self.view3d.enabled)
             else:
@@ -2748,6 +2752,39 @@ class ProjectGui:
     def quit(self):
         self.save_preferences()
 
+    def configure_drag_and_drop(self, obj):
+        obj.connect("drag-data-received", self.handle_data_drop)
+        flags = gtk.DEST_DEFAULT_ALL
+        targets = [("text/uri-list", gtk.TARGET_OTHER_APP, 0),
+                ("text/plain", gtk.TARGET_OTHER_APP, 1)]
+        actions = gtk.gdk.ACTION_COPY | gtk.gdk.ACTION_LINK | \
+                gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_PRIVATE | \
+                gtk.gdk.ACTION_ASK
+        obj.drag_dest_set(flags, targets, actions)
+
+    def handle_data_drop(self, widget, drag_context, x, y, selection_data, info,
+            timestamp):
+        if info != 0:
+            uris = [str(selection_data.data)]
+        else:
+            uris = selection_data.get_uris()
+        if not uris:
+            # empty selection
+            return True
+        for uri in uris:
+            file_type, importer = pycam.Importers.detect_file_type(uri,
+                    quiet=True)
+            if importer:
+                # looks like the file can be loaded
+                if self.load_model_file(filename=uri):
+                    return True
+        if len(uris) > 1:
+            log.error("Failed to open any of the given models: %s" % \
+                    str(uris))
+        else:
+            log.error("Failed to open the model: %s" % str(uris[0]))
+        return False
+
     def append_to_queue(self, func, *args, **kwargs):
         # check if gui is currently active
         if self.gui_is_active:
@@ -2759,16 +2796,7 @@ class ProjectGui:
 
     def load_recent_model_file(self, widget):
         uri = widget.get_current_uri()
-        if uri.startswith("file://"):
-            parsed = urllib.unquote(uri[len("file://"):])
-            self.load_model_file(filename=parsed)
-        else:
-            message = "Sorry - PyCAM can currently load only local files."
-            window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_WARNING,
-                    buttons=gtk.BUTTONS_OK, message_format=message)
-            window.set_title("Unsupported file location specified")
-            window.run()
-            window.destroy()
+        self.load_model_file(filename=uri)
 
     @gui_activity_guard
     @progress_activity_guard
@@ -2796,8 +2824,12 @@ class ProjectGui:
                         callback=self.update_progress_bar)):
                     self.set_model_filename(filename)
                     self.add_to_recent_file_list(filename)
+                    return True
+                else:
+                    return False
             else:
                 log.error("Failed to detect filetype!")
+                return False
 
     @gui_activity_guard
     def export_emc_tools(self, widget=None, filename=None):
@@ -3744,7 +3776,7 @@ class ProjectGui:
                 response = overwrite_window.run()
                 overwrite_window.destroy()
                 done = (response == gtk.RESPONSE_YES)
-            elif mode_load and not os.path.isfile(filename):
+            elif mode_load and not check_uri_exists(filename):
                 not_found_window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_ERROR,
                         buttons=gtk.BUTTONS_OK,
                         message_format="This file does not exist. Please choose a different filename.")
@@ -3763,16 +3795,21 @@ class ProjectGui:
     def add_to_recent_file_list(self, filename):
         # Add the item to the recent files list - if it already exists.
         # Otherwise it will be added later after writing the file.
-        if os.path.isfile(filename):
+        if check_uri_exists(filename):
             # skip this, if the recent manager is not available (e.g. GTK 2.12.1 on Windows)
             if self.recent_manager:
-                # Convert the local path to a URI filename style. This is
-                # specifically necessary under Windows (due to backslashs).
-                filename_url_local = urllib.pathname2url(
-                        os.path.abspath(filename))
-                # join the "file:" scheme with the url
-                filename_url = urlparse.urlunparse(("file", None,
-                        filename_url_local, None, None, None))
+                if os.path.exists(filename):
+                    # This is a local file.
+                    # Convert the local path to a URI filename style. This is
+                    # specifically necessary under Windows (due to backslashs).
+                    filename_url_local = urllib.pathname2url(
+                            os.path.abspath(filename))
+                    # join the "file:" scheme with the url
+                    filename_url = urlparse.urlunparse(("file", None,
+                            filename_url_local, None, None, None))
+                else:
+                    # this is a remote file - or it already contains "file://"
+                    filename_url = filename
                 self.recent_manager.add_item(filename_url)
             # store the directory of the last loaded file
             self.last_dirname = os.path.dirname(os.path.abspath(filename))

@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Importers.SVGImporter import convert_eps2dxf
 import pycam.Importers.DXFImporter
+from pycam.Utils import check_uri_exists, retrieve_uri
 import tempfile
 import os
 
@@ -29,9 +30,23 @@ log = pycam.Utils.log.get_logger()
 
 
 def import_model(filename, program_locations=None, unit="mm", callback=None):
-    if not os.path.isfile(filename):
+    if not check_uri_exists(filename):
         log.error("PSImporter: file (%s) does not exist" % filename)
         return None
+    if not os.path.isfile(filename):
+        # non-local file - write it to a temporary file first
+        local_file = False
+        uri = filename
+        ps_file_handle, ps_file_name = tempfile.mkstemp(suffix=".ps")
+        os.close(ps_file_handle)
+        log.debug("Retrieving PS file for local access: %s -> %s" % \
+                (uri, ps_file_name))
+        if not retrieve_uri(uri, ps_file_name, callback=callback):
+            log.error("PSImporter: Failed to retrieve the PS model file: " + \
+                    "%s -> %s" % (uri, ps_file_name))
+        filename = ps_file_name
+    else:
+        local_file = True
 
     if program_locations and "pstoedit" in program_locations:
         pstoedit_path = program_locations["pstoedit"]
@@ -51,6 +66,8 @@ def import_model(filename, program_locations=None, unit="mm", callback=None):
     os.close(dxf_file_handle)
     success = convert_eps2dxf(filename, dxf_file_name, unit=unit,
             location=pstoedit_path)
+    if not local_file:
+        remove_temp_file(ps_file_name)
     if not success:
         result = None
     elif callback and callback():

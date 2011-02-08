@@ -27,10 +27,11 @@ from pycam.Geometry.PointKdtree import PointKdtree
 from pycam.Geometry.utils import epsilon
 from pycam.Geometry.Model import Model
 import pycam.Utils.log
+from pycam.Utils import open_url
 
 from struct import unpack 
+import StringIO
 import re
-import os
 
 log = pycam.Utils.log.get_logger()
 
@@ -61,7 +62,11 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None,
     normal_conflict_warning_seen = False
 
     try:
-        f = open(filename, "rb")
+        url_file = open_url(filename)
+        # urllib.urlopen objects do not support "seek" - so we need to read the
+        # whole file at once. This is ugly - anyone with a better idea?
+        f = StringIO.StringIO(url_file.read())
+        url_file.close()
     except IOError, err_msg:
         log.error("STLImporter: Failed to read file (%s): %s" \
                 % (filename, err_msg))
@@ -85,9 +90,9 @@ def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None,
     numfacets = unpack("<I", f.read(4))[0]
     binary = False
 
-    if os.path.getsize(filename) == (84 + 50*numfacets):
+    if f.len == (84 + 50*numfacets):
         binary = True
-    elif header.find("solid")>=0 and header.find("facet")>=0:
+    elif header.find("solid") >= 0 and header.find("facet") >= 0:
         binary = False
         f.seek(0)
     else:

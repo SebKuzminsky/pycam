@@ -25,6 +25,7 @@ from pycam.Geometry.Line import Line
 import pycam.Geometry.Model
 import pycam.Geometry
 import pycam.Utils.log
+from pycam.Utils import open_url
 
 log = pycam.Utils.log.get_logger()
 
@@ -351,7 +352,7 @@ class DXFParser(object):
 def import_model(filename, program_locations=None, unit=None,
         color_as_height=False, callback=None):
     try:
-        infile = open(filename,"rb")
+        infile = open_url(filename)
     except IOError, err_msg:
         log.error("DXFImporter: Failed to read file (%s): %s" \
                 % (filename, err_msg))

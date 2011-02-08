@@ -6262,7 +6262,7 @@ Hotkey: &lt;p&gt;</property>
                                         <property name="visible">True</property>
                                         <property name="xalign">0</property>
                                         <property name="label" translatable="yes">&lt;span foreground="red"&gt;Warning: no local processes enabled.
-You will need a remote server.&lt;/span&gt;</property>
+You will need remote workers.&lt;/span&gt;</property>
                                         <property name="use_markup">True</property>
                                         <property name="wrap">True</property>
                                       </object>
@@ -6361,7 +6361,7 @@ PyCAM's default port is 1250.</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="tooltip_text" translatable="yes">Type in a hostname or IP address if you want to connect to a remote PyCAM server.
-Leave this field empty for a local-only server.</property>
+Leave this field empty for running a local server.</property>
                                                 <property name="invisible_char">&#x25CF;</property>
                                                 <property name="width_chars">18</property>
                                                 <property name="truncate_multiline">True</property>
@@ -6550,7 +6550,10 @@ Please check the following list of possible reasons and fix the problem, if poss
 1) You are using the Windows standalone executable.
 Sadly this problem is not too easy to solve. Future releases of PyCAM should remove this limitation.
 
-2) You are using Python 2.5 or below and the package "multiprocessing" is &lt;i&gt;not&lt;/i&gt; installed.</property>
+2) You are using Python 2.5 or below and the package "multiprocessing" is &lt;i&gt;not&lt;/i&gt; installed.
+
+See the &lt;a href="http://sf.net/apps/mediawiki/pycam/?title=Parallel_Processing_on_different_Platforms"&gt;platform feature matrix&lt;/a&gt; for details.
+</property>
                             <property name="use_markup">True</property>
                             <property name="wrap">True</property>
                           </object>

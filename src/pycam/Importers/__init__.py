@@ -34,25 +34,23 @@ import os
 log = pycam.Utils.log.get_logger()
 
 
-def detect_file_type(filename):
+def detect_file_type(filename, quiet=False):
     failure = (None, None)
-    if not os.path.isfile(filename):
-        return failure
+    # check all listed importers
+    # TODO: this should be done by evaluating the header of the file
+    if filename.lower().endswith(".stl"):
+        return ("stl", pycam.Importers.STLImporter.ImportModel)
+    elif filename.lower().endswith(".dxf"):
+        return ("dxf", pycam.Importers.DXFImporter.import_model)
+    elif filename.lower().endswith(".svg"):
+        return ("svg", pycam.Importers.SVGImporter.import_model)
+    elif filename.lower().endswith(".eps") \
+            or filename.lower().endswith(".ps"):
+        return ("ps", pycam.Importers.PSImporter.import_model)
     else:
-        # check all listed importers
-        # TODO: this should be done by evaluating the header of the file
-        if filename.lower().endswith(".stl"):
-            return ("stl", pycam.Importers.STLImporter.ImportModel)
-        elif filename.lower().endswith(".dxf"):
-            return ("dxf", pycam.Importers.DXFImporter.import_model)
-        elif filename.lower().endswith(".svg"):
-            return ("svg", pycam.Importers.SVGImporter.import_model)
-        elif filename.lower().endswith(".eps") \
-                or filename.lower().endswith(".ps"):
-            return ("ps", pycam.Importers.PSImporter.import_model)
-        else:
+        if not quiet:
             log.error(("Importers: Failed to detect the model type of '%s'. " \
                     + "Is the file extension (stl/dxf/svg/eps/ps) correct?") \
                     % filename)
-            return failure
+        return failure
 

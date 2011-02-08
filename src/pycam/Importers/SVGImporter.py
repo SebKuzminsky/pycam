@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Importers.DXFImporter
+from pycam.Utils import check_uri_exists, retrieve_uri
 import tempfile
 import subprocess
 import os
@@ -81,9 +82,23 @@ def convert_eps2dxf(eps_filename, dxf_filename, location=None, unit="mm"):
         return False
 
 def import_model(filename, program_locations=None, unit="mm", callback=None):
-    if not os.path.isfile(filename):
+    if not check_uri_exists(filename):
         log.error("SVGImporter: file (%s) does not exist" % filename)
         return None
+    if not os.path.isfile(filename):
+        # non-local file - write it to a temporary file first
+        local_file = False
+        uri = filename
+        svg_file_handle, svg_file_name = tempfile.mkstemp(suffix=".svg")
+        os.close(svg_file_handle)
+        log.debug("Retrieving SVG file for local access: %s -> %s" % \
+                (uri, svg_file_name))
+        if not retrieve_uri(uri, svg_file_name, callback=callback):
+            log.error("SVGImporter: Failed to retrieve the SVG model file: " + \
+                    "%s -> %s" % (uri, svg_file_name))
+        filename = svg_file_name
+    else:
+        local_file = True
 
     if program_locations and "inkscape" in program_locations:
         inkscape_path = program_locations["inkscape"]
@@ -112,6 +127,8 @@ def import_model(filename, program_locations=None, unit="mm", callback=None):
                 log.warn("SVGImporter: failed to remove temporary file " \
                         + "(%s): %s" % (filename, err_msg))
     # remove the temporary file
+    if not local_file:
+        remove_temp_file(svg_file_name)
     if not success:
         remove_temp_file(eps_file_name)
         return None

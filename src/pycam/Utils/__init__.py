@@ -27,6 +27,7 @@ __all__ = ["iterators", "polynomials", "ProgressCounter", "threading",
 import sys
 import os
 import socket
+import urllib
 # this is imported below on demand
 #import win32com
 #import win32api
@@ -54,6 +55,29 @@ def get_platform():
     else:
         return PLATFORM_UNKNOWN
 
+
+def open_url(uri):
+    return urllib.urlopen(uri)
+
+def check_uri_exists(uri):
+    try:
+        handle = open_url(uri)
+        handle.close()
+        return True
+    except IOError:
+        return False
+
+def retrieve_uri(uri, filename, callback=None):
+    if callback:
+        download_callback = lambda current_blocks, block_size, num_of_blocks: \
+            callback()
+    else:
+        download_callback = None
+    try:
+        urllib.urlretrieve(uri, filename, download_callback)
+        return True
+    except IOError:
+        return False
 
 def get_all_ips():
     """ try to get all IPs of this machine
@@ -109,7 +133,7 @@ def get_external_program_location(key):
         for one_dir in path_env.split(os.pathsep):
             for basename in potential_names:
                 location = os.path.join(one_dir, basename)
-                if os.path.isfile(location):
+                if check_uri_exists(location):
                     return location
     # do a manual scan in the programs directory (only for windows)
     try:
@@ -123,7 +147,7 @@ def get_external_program_location(key):
     for sub_dir in windows_program_directories[key]:
         for basename in potential_names:
             location = os.path.join(program_dir, sub_dir, basename)
-            if os.path.isfile(location):
+            if check_uri_exists(location):
                 return location
     # nothing found
     return None
