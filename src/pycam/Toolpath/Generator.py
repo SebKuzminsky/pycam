@@ -25,6 +25,7 @@ from pycam.PathGenerators import DropCutter, PushCutter, EngraveCutter, \
 from pycam.Geometry.utils import number
 from pycam.PathProcessors import PathAccumulator, SimpleCutter, ZigZagCutter, \
         PolygonCutter, ContourCutter
+from pycam.Cutters.CylindricalCutter import CylindricalCutter
 import pycam.Cutters
 import pycam.Toolpath.SupportGrid
 import pycam.Toolpath.MotionGrid
@@ -239,10 +240,10 @@ def generate_toolpath(model, tool_settings=None,
         if result is None:
             return None
         elif result:
-            warning = "The contour model contains colliding line groups. " \
-                    + "This is not allowed in combination with an " \
-                    + "engraving offset.\nA collision was detected at " \
-                    + "(%.2f, %.2f, %.2f)." % (result.x, result.y, result.z)
+            warning = "The contour model contains colliding line groups. " + \
+                    "This can cause problems with an engraving offset.\n" + \
+                    "A collision was detected at (%.2f, %.2f, %.2f)." % \
+                    (result.x, result.y, result.z)
             log.warning(warning)
         else:
             # no collisions and no user interruption
@@ -425,6 +426,10 @@ def _get_pathgenerator_instance(trimesh_models, contour_model, cutter,
         else:
             return ("Invalid postprocessor (%s) for 'ContourFollow' - it " \
                     + "should be: SimpleCutter") % str(pathprocessor)
+        if not isinstance(cutter, CylindricalCutter):
+            log.warn("The ContourFollow strategy only works reliably with " + \
+                    "the cylindrical cutter shape. Maybe you should use " + \
+                    "the alternative ContourPolygon strategy instead.")
         return ContourFollow.ContourFollow(cutter, trimesh_models, processor,
                 physics=physics)
     else:

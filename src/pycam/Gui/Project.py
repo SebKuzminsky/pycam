@@ -1052,7 +1052,7 @@ class ProjectGui:
         self.no_dialog = no_dialog
         if not self.no_dialog:
             # register a logging handler for displaying error messages
-            pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
+            pycam.Utils.log.add_gtk_gui(self.window, logging.WARN)
             # register a callback for the log window
             pycam.Utils.log.add_hook(self.add_log_message)
             self.window.show()
