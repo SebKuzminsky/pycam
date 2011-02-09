@@ -161,17 +161,16 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
         # server mode is disabled for the Windows pyinstaller standalone
         # due to "pickle errors". How to reproduce: run the standalone binary
         # with "--enable-server --server-auth-key foo".
-        server_mode_unavailable = "Server mode is not available for " \
-                + "the Windows standalone executable. Please use the " \
-                + "installer package instead (if possible)."
+        feature_matrix_text = "Take a look at the wiki for a matrix of " + \
+                "platforms and available features: " + \
+                "http://sf.net/apps/mediawiki/pycam/?title=" + \
+                "Parallel_Processing_on_different_Platforms"
         if enable_server:
-            log.warn("Unable to enable server mode with the Windows " \
-                    + "standalone executable. " \
-                    + server_mode_unavailable)
+            log.warn("Unable to enable server mode with your current " + \
+                    "setup.\n" + feature_matrix_text)
         elif run_server:
-            log.warn("Unable to run in server-only mode with the Windows " \
-                    + "standalone executable. " \
-                    + server_mode_unavailable)
+            log.warn("Unable to run in server-only mode with the Windows " + \
+                    "standalone executable.\n" + feature_matrix_text)
         else:
             # no further warnings required
             pass
@@ -187,7 +186,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
         # causes "WindowsError: invalid handle" error messages. The processes
         # can't communicate - thus no results are returned.
         # Reproduce with: "--number-of-processes 2"
-        log.warn("Multiprocessing capabilities are not available for the " \
+        log.info("Multiprocessing capabilities are not available for the " \
                 + "Windows standable executable. Use the installer package " \
                 + "instead (if possible).")
         mp_is_available = False
