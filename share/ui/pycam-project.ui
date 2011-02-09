@@ -6292,7 +6292,23 @@ You will need remote workers.&lt;/span&gt;</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkFrame" id="frame1">
+                              <object class="GtkLabel" id="ServerModeDisabledLabel">
+                                <property name="visible">True</property>
+                                <property name="xalign">0</property>
+                                <property name="label" translatable="yes">Server mode is currently not available on your system.
+You are probably using the Windows standalone executable.
+Instead you could use the PyCAM installer package along with the all-in-one installer of all dependencies.
+
+See the &lt;a href="http://sf.net/apps/mediawiki/pycam/?title=Parallel_Processing_on_different_Platforms"&gt;platform feature matrix&lt;/a&gt; for details.</property>
+                                <property name="use_markup">True</property>
+                                <property name="wrap">True</property>
+                              </object>
+                              <packing>
+                                <property name="position">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkFrame" id="ServerModeSettingsFrame">
                                 <property name="visible">True</property>
                                 <property name="label_xalign">0</property>
                                 <property name="shadow_type">none</property>
@@ -6530,7 +6546,7 @@ The default port is 1250.</property>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">False</property>
-                                <property name="position">2</property>
+                                <property name="position">3</property>
                               </packing>
                             </child>
                           </object>
@@ -6545,16 +6561,8 @@ The default port is 1250.</property>
                             <property name="visible">True</property>
                             <property name="xalign">0</property>
                             <property name="label" translatable="yes">Parallel processing is currently not available on your system.
-Please check the following list of possible reasons and fix the problem, if possible.
-
-1) You are using the Windows standalone executable.
-Sadly this problem is not too easy to solve. Future releases of PyCAM should remove this limitation.
-
-2) You are using Python 2.5 or below and the package "multiprocessing" is &lt;i&gt;not&lt;/i&gt; installed.
-
-See the &lt;a href="http://sf.net/apps/mediawiki/pycam/?title=Parallel_Processing_on_different_Platforms"&gt;platform feature matrix&lt;/a&gt; for details.
-</property>
-                            <property name="use_markup">True</property>
+You need to switch to Python v2.6 (or higher) or install the Python module "multiprocessing".
+    </property>
                             <property name="wrap">True</property>
                           </object>
                           <packing>

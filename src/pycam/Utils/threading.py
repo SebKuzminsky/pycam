@@ -82,22 +82,30 @@ def run_in_parallel(*args, **kwargs):
 def is_pool_available():
     return not __manager is None
 
-def is_multiprocessing_enabled():
-    return bool(__multiprocessing)
-
-def is_windows_parallel_processing_available():
-    # server mode is disabled for the Windows standalone executable
-    return not (hasattr(sys, "frozen") and sys.frozen)
-
-def is_parallel_processing_available():
-    if not is_windows_parallel_processing_available():
-        # Windows -> no parallel processing
-        return False
+def is_multiprocessing_available():
     try:
         import multiprocessing
         return True
     except ImportError:
         return False
+
+def is_multiprocessing_enabled():
+    return bool(__multiprocessing)
+
+def is_server_mode_available():
+    # the following definition should be kept in sync with the wiki:
+    # http://sf.net/apps/mediawiki/pycam/?title=Parallel_Processing_on_different_Platforms
+    if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
+        if hasattr(sys, "frozen") and sys.frozen:
+            return False
+        else:
+            return True
+    else:
+        try:
+            import multiprocessing
+            return True
+        except ImportError:
+            return False
 
 def get_number_of_processes():
     if __num_of_processes is None:
@@ -156,8 +164,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
     if __multiprocessing:
         # kill the manager and clean everything up for a re-initialization
         cleanup()
-    if (not is_windows_parallel_processing_available()) and \
-            (enable_server or run_server):
+    if (not is_server_mode_available()) and (enable_server or run_server):
         # server mode is disabled for the Windows pyinstaller standalone
         # due to "pickle errors". How to reproduce: run the standalone binary
         # with "--enable-server --server-auth-key foo".
@@ -181,21 +188,11 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
         remote = None
         run_server = None
         server_credentials = ""
-    if not is_windows_parallel_processing_available():
-        # Running multiple processes with the Windows standalone executable
-        # causes "WindowsError: invalid handle" error messages. The processes
-        # can't communicate - thus no results are returned.
-        # Reproduce with: "--number-of-processes 2"
-        log.info("Multiprocessing capabilities are not available for the " \
-                + "Windows standable executable. Use the installer package " \
-                + "instead (if possible).")
+    try:
+        import multiprocessing
+        mp_is_available = True
+    except ImportError:
         mp_is_available = False
-    else:
-        try:
-            import multiprocessing
-            mp_is_available = True
-        except ImportError:
-            mp_is_available = False
     if not mp_is_available:
         __multiprocessing = False
         # Maybe a multiprocessing feature was explicitely requested?

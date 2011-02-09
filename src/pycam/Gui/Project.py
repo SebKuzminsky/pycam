@@ -942,12 +942,15 @@ class ProjectGui:
         # parallel processing settings
         self.enable_parallel_processes = self.gui.get_object(
                 "EnableParallelProcesses")
-        if pycam.Utils.threading.is_parallel_processing_available():
+        if pycam.Utils.threading.is_multiprocessing_available():
             self.gui.get_object("ParallelProcessingDisabledLabel").hide()
+            if pycam.Utils.threading.is_server_mode_available():
+                self.gui.get_object("ServerModeDisabledLabel").hide()
+            else:
+                self.gui.get_object("ServerModeSettingsFrame").hide()
         else:
             self.gui.get_object("ParallelProcessSettingsBox").hide()
-            self.enable_parallel_processes.set_sensitive(False)
-            self.enable_parallel_processes.set_active(False)
+            self.gui.get_object("EnableParallelProcesses").hide()
         self.enable_parallel_processes.set_active(
                 pycam.Utils.threading.is_multiprocessing_enabled())
         self.enable_parallel_processes.connect("toggled",
