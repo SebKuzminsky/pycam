@@ -48,8 +48,11 @@ from pycam import VERSION
 import pycam.Utils.log
 from optparse import OptionParser
 import socket
+import warnings
 import logging
 import time
+# we need to import gtk.Warning to silence these warnings later
+#import gtk
 
 # we need the multiprocessing exception for remote connections
 try:
@@ -174,6 +177,15 @@ def execute(parser, opts, args, pycam):
         log.setLevel(logging.WARNING)
         # disable the progress bar
         opts.progress = "none"
+        # silence all warnings
+        warnings.filterwarnings("ignore")
+    else:
+        # silence gtk warnings
+        try:
+            import gtk
+            warnings.filterwarnings("ignore", category=gtk.Warning)
+        except ImportError:
+            pass
 
     # show version and exit
     if opts.show_version:
@@ -435,9 +447,7 @@ if __name__ == "__main__":
                 + "the '--export-?' parameters will cause PyCAM to start " \
                 + "in batch mode. Most parameters are useful only for " \
                 + "batch mode.",
-            epilog="Take a look at the wiki for more information: " \
-                + "http://sourceforge.net/apps/mediawiki/pycam/.\nBug reports" \
-                + ": http://sf.net/tracker/?group_id=237831&atid=1104176")
+            epilog="PyCAM website: http://pycam.sf.net")
     group_general = parser.add_option_group("General options")
     group_export = parser.add_option_group("Export formats",
             "Export the resulting toolpath or meta-data in various formats. " \

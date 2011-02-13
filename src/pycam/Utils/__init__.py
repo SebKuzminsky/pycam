@@ -57,7 +57,7 @@ def get_platform():
 
 
 def open_url(uri):
-    if (get_platform() == "PLATFORM_WINDOWS") and (uri[1:3] == ":\\"):
+    if (get_platform() == PLATFORM_WINDOWS) and (uri[1:3] == ":\\"):
         # We are on Windows and a local path is given. Open the file
         # normally. Otherwise "C:\\" is misinterpreted as a protocol.
         return open(uri)
