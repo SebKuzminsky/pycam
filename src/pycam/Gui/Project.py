@@ -3858,7 +3858,7 @@ class ProjectGui:
             for toolpath in export_toolpaths:
                 machine_time += toolpath.get_machine_time(safety_height)
             all_info = meta_data + os.linesep \
-                    + "Estimated machine time: %g minutes" % machine_time
+                    + "Estimated machine time: %.0f minutes" % machine_time
             minimum_steps = [self.settings.get("gcode_minimum_step_x"),  
                     self.settings.get("gcode_minimum_step_y"),  
                     self.settings.get("gcode_minimum_step_z")]
