@@ -2,7 +2,7 @@
 """
 $Id$
 
-Copyright 2010 Lars Kruse <devel@sumpfralle.de>
+Copyright 2010-2011 Lars Kruse <devel@sumpfralle.de>
 Copyright 2008-2009 Lode Leroy
 
 This file is part of PyCAM.
@@ -36,6 +36,7 @@ MAX_DIGITS = 12
 
 
 def _get_num_of_significant_digits(number):
+    """ Determine the number of significant digits of a float number. """
     # use only positive numbers
     number = abs(number)
     max_diff = 0.1 ** MAX_DIGITS
@@ -55,6 +56,9 @@ def _get_num_of_significant_digits(number):
 
 
 def _get_num_converter(step_width):
+    """ Return a float-to-decimal conversion function with a prevision suitable
+    for the given step width.
+    """
     digits=_get_num_of_significant_digits(step_width)
     format_string = "%%.%df" % digits
     return lambda number: decimal.Decimal(format_string % number)
@@ -185,8 +189,8 @@ class GCodeGenerator:
             if self.last_position[index] is None:
                 no_diff = False
                 break
-            diff = new_pos[index] - self.last_position[index]
-            if diff > self._axes_formatter[index][0]:
+            diff = abs(new_pos[index] - self.last_position[index])
+            if diff >= self._axes_formatter[index][0]:
                 no_diff = False
                 break
         if no_diff:
@@ -202,12 +206,13 @@ class GCodeGenerator:
                 pos_string.append("%s%s" % (axis_spec, new_pos[index]))
                 self.last_position[index] = new_pos[index]
         if rapid == self.last_rapid:
-            prefix = "   "
+            prefix = ""
         elif rapid:
             prefix = "G00"
         else:
             prefix = "G01"
-        self.append(prefix + " ".join(pos_string))
+        self.last_rapid = rapid
+        self.append("%s %s" % (prefix, " ".join(pos_string)))
 
     def finish(self):
         self.add_move_to_safety()

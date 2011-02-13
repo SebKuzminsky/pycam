@@ -13,6 +13,7 @@ Version 0.4.1 - UNRELEASED
  * added a configuration setting for automatically loading a custom task settings file on startup
  * added a simple "undo" feature for reversing model manipulations
  * added a minimum step width for GCode positions to be written
+  * GCode positioning precision (number of digits) is configurable
  * enabled drag'n'drop for loading models
  * support non-local file handling (e.g. http, ...)
  * the scroll wheel now behaves similarly to Inkscape's interface (pan and zoom)
