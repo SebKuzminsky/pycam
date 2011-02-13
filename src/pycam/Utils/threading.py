@@ -131,8 +131,12 @@ def get_task_statistics():
     global __manager
     result = {}
     if not __manager is None:
-        result["tasks"] = __manager.tasks().qsize()
-        result["results"] = __manager.results().qsize()
+        try:
+            result["tasks"] = __manager.tasks().qsize()
+            result["results"] = __manager.results().qsize()
+        except NotImplementedError:
+            # this can happen on MacOS (see multiprocessing doc)
+            pass
         result["pending"] = __manager.pending_tasks().length()
         result["cache"] = __manager.cache().length()
     return result
@@ -595,7 +599,12 @@ def run_in_parallel_remote(func, args_list, unordered=False,
 
 def _cleanup_job(job_id, tasks_queue, pending_tasks, finished_jobs):
     # flush the task queue
-    queue_len = tasks_queue.qsize()
+    try:
+        queue_len = tasks_queue.qsize()
+    except NotImplementedError:
+        # this can happen on MacOS (according to the multiprocessing doc)
+        # -> no cleanup of old processes
+        queue_len = 0
     # remove all remaining tasks with the current job id
     removed_job_counter = 0
     for index in range(queue_len):
