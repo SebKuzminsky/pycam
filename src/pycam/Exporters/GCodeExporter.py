@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Exporters.gcode import gcode
+import decimal
 import os
 
 
@@ -32,13 +32,41 @@ DEFAULT_HEADER = ("G40 (disable tool radius compensation)",
                 "G90 (use_absolute_coordinates)")
 
 PATH_MODES = {"exact_path": 0, "exact_stop": 1, "continuous": 2}
+MAX_DIGITS = 12
 
+
+def _get_num_of_significant_digits(number):
+    # use only positive numbers
+    number = abs(number)
+    max_diff = 0.1 ** MAX_DIGITS
+    if number <= max_diff:
+        # input value is smaller than the smallest usable number
+        return MAX_DIGITS
+    elif number >= 1:
+        # no negative number of significant digits
+        return 0
+    else:
+        for digit in range(1, MAX_DIGITS):
+            shifted = number * (10 ** digit)
+            if shifted - int(shifted) < max_diff:
+                return digit
+        else:
+            return MAX_DIGITS
+
+
+def _get_num_converter(step_width):
+    digits=_get_num_of_significant_digits(step_width)
+    format_string = "%%.%df" % digits
+    return lambda number: decimal.Decimal(format_string % number)
+    
 
 class GCodeGenerator:
 
+    NUM_OF_AXES = 3
+
     def __init__(self, destination, metric_units=True, safety_height=0.0,
             toggle_spindle_status=False, header=None, comment=None,
-            minimum_step_x=0.0001,  minimum_step_y=None,  minimum_step_z=None):
+            minimum_steps=None):
         if isinstance(destination, basestring):
             # open the file
             self.destination = file(destination,"w")
@@ -50,19 +78,20 @@ class GCodeGenerator:
             # don't close the stream if we did not open it on our own
             self._close_stream_on_exit = False
         self.safety_height = safety_height
-        self.gcode = gcode(safetyheight=self.safety_height)
         self.toggle_spindle_status = toggle_spindle_status
         self.comment = comment
-        self._minimum_step_x = minimum_step_x
-        # use x value as default for y and z (if not specified)
-        if minimum_step_y is None:
-            self._minimum_step_y = minimum_step_x
-        else:
-            self._minimum_step_y = minimum_step_y
-        if minimum_step_z is None:
-            self._minimum_step_z = minimum_step_x
-        else:
-            self._minimum_step_z = minimum_step_z
+        # define all axes steps and the corresponding formatters
+        self._axes_formatter = []
+        if not minimum_steps:
+            # default: minimum steps for all axes = 0.0001
+            minimum_steps = [0.0001]
+        for i in range(self.NUM_OF_AXES):
+            if i < len(minimum_steps):
+                step_width = minimum_steps[i]
+            else:
+                step_width = minimum_steps[-1]
+            conv = _get_num_converter(step_width)
+            self._axes_formatter.append((conv(step_width), conv))
         self._finished = False
         if comment:
             self.add_comment(comment)
@@ -74,6 +103,8 @@ class GCodeGenerator:
             self.append("G21 (metric)")
         else:
             self.append("G20 (imperial)")
+        self.last_position = [None, None, None]
+        self.last_rapid = None
 
     def set_speed(self, feedrate=None, spindle_speed=None):
         if not feedrate is None:
@@ -96,7 +127,7 @@ class GCodeGenerator:
                         % motion_tolerance
             else:
                 result = ("G64 P%f Q%f (continuous mode with tolerance and " \
-                        + "cleanup") % (motion_tolerance, naive_cam_tolerance)
+                        + "cleanup)") % (motion_tolerance, naive_cam_tolerance)
         else:
             raise ValueError("GCodeGenerator: invalid path mode (%s)" \
                     % str(mode))
@@ -106,39 +137,80 @@ class GCodeGenerator:
         if not comment is None:
             self.add_comment(comment)
         # move straight up to safety height
-        self.append(self.gcode.safety())
+        self.add_move_to_safety()
         if not tool_id is None:
             self.append("T%d M6" % tool_id)
         if self.toggle_spindle_status:
             self.append("M3 (start spindle)")
-            self.append(self.gcode.delay(2))
-        # At minimum this will stop the duplicate gcode
-        # And this is a place holder for when the GUI is linked
-        res_limit_x = self._minimum_step_x
-        #res_limit_y = self._minimum_step
-        #res_limit_z = self._minimum_step
-        res_limit_y = self._minimum_step_y
-        res_limit_z = self._minimum_step_z
-        old_position = None
+            self.append("G04 P%d (wait for %d seconds)" % (2, 2))
         for pos, rapid in moves:
-            new_position = pos
-            # make sure we arent putting out values with no motion
-            if old_position is None \
-                    or abs(new_position.x - old_position.x) >= res_limit_x \
-                    or abs(new_position.y - old_position.y) >= res_limit_y \
-                    or abs(new_position.z - old_position.z) >= res_limit_z:
-                if rapid:
-                    self.append(self.gcode.rapid(pos.x, pos.y, pos.z))
-                else:
-                    self.append(self.gcode.cut(pos.x, pos.y, pos.z))
-                old_position = pos
+            self.add_move(pos, rapid=rapid)
         # go back to safety height
-        self.append(self.gcode.safety())
+        self.add_move_to_safety()
         if self.toggle_spindle_status:
             self.append("M5 (stop spindle)")
+        # make sure that all sections are independent of each other
+        self.last_position = [None, None, None]
+        self.last_rapid = None
+
+    def add_move_to_safety(self):
+        new_pos = [None, None, self.safety_height]
+        self.add_move(new_pos, rapid=True)
+
+    def add_move(self, position, rapid=False):
+        """ add the GCode for a machine move to 'position'. Use rapid (G00) or
+        normal (G01) speed.
+
+        @value position: the new position
+        @type position: Point or list(float)
+        @value rapid: is this a rapid move?
+        @type rapid: bool
+        """
+        new_pos = []
+        for index, attr in enumerate("xyz"):
+            conv = self._axes_formatter[index][1]
+            if hasattr(position, attr):
+                value = getattr(position, attr)
+            else:
+                value = position[index]
+            if value is None:
+                new_pos.append(None)
+            else:
+                new_pos.append(conv(value))
+        # check if there was a significant move
+        no_diff = True
+        for index in range(len(new_pos)):
+            if new_pos[index] is None:
+                continue
+            if self.last_position[index] is None:
+                no_diff = False
+                break
+            diff = new_pos[index] - self.last_position[index]
+            if diff > self._axes_formatter[index][0]:
+                no_diff = False
+                break
+        if no_diff:
+            # we can safely skip this move
+            return
+        # compose the position string
+        pos_string = []
+        for index, axis_spec in enumerate("XYZ"):
+            if new_pos[index] is None:
+                continue
+            if not self.last_position or \
+                    (new_pos[index] != self.last_position[index]):
+                pos_string.append("%s%s" % (axis_spec, new_pos[index]))
+                self.last_position[index] = new_pos[index]
+        if rapid == self.last_rapid:
+            prefix = "   "
+        elif rapid:
+            prefix = "G00"
+        else:
+            prefix = "G01"
+        self.append(prefix + " ".join(pos_string))
 
     def finish(self):
-        self.append(self.gcode.safety())
+        self.add_move_to_safety()
         self.append("M2 (end program)")
         self._finished = True
 

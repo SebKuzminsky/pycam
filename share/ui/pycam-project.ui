@@ -5185,9 +5185,9 @@ Choose a small value to minimize rapid moves up and down.</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="invisible_char">&#x25CF;</property>
-                                        <property name="width_chars">7</property>
+                                        <property name="width_chars">10</property>
                                         <property name="adjustment">GCodeMinimumStepValue_x</property>
-                                        <property name="digits">5</property>
+                                        <property name="digits">8</property>
                                       </object>
                                       <packing>
                                         <property name="left_attach">1</property>
@@ -5201,9 +5201,9 @@ Choose a small value to minimize rapid moves up and down.</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="invisible_char">&#x25CF;</property>
-                                        <property name="width_chars">7</property>
+                                        <property name="width_chars">10</property>
                                         <property name="adjustment">GCodeMinimumStepValue_y</property>
-                                        <property name="digits">5</property>
+                                        <property name="digits">8</property>
                                       </object>
                                       <packing>
                                         <property name="left_attach">1</property>
@@ -5219,9 +5219,9 @@ Choose a small value to minimize rapid moves up and down.</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="invisible_char">&#x25CF;</property>
-                                        <property name="width_chars">7</property>
+                                        <property name="width_chars">10</property>
                                         <property name="adjustment">GCodeMinimumStepValue_z</property>
-                                        <property name="digits">5</property>
+                                        <property name="digits">8</property>
                                       </object>
                                       <packing>
                                         <property name="left_attach">1</property>

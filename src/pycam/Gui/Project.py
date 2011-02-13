@@ -3859,14 +3859,15 @@ class ProjectGui:
                 machine_time += toolpath.get_machine_time(safety_height)
             all_info = meta_data + os.linesep \
                     + "Estimated machine time: %g minutes" % machine_time
+            minimum_steps = [self.settings.get("gcode_minimum_step_x"),  
+                    self.settings.get("gcode_minimum_step_y"),  
+                    self.settings.get("gcode_minimum_step_z")]
             generator = GCodeGenerator(destination,
                     metric_units=(self.settings.get("unit") == "mm"),
                     safety_height=safety_height,
                     toggle_spindle_status=self.settings.get("gcode_start_stop_spindle"),
                     comment=all_info,
-                    minimum_step_x=self.settings.get("gcode_minimum_step_x"),  
-                    minimum_step_y=self.settings.get("gcode_minimum_step_y"),  
-                    minimum_step_z=self.settings.get("gcode_minimum_step_z"))
+                    minimum_steps=minimum_steps)
             path_mode = self.settings.get("gcode_path_mode")
             if path_mode == 0:
                 generator.set_path_mode(PATH_MODES["exact_path"])

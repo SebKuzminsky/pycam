@@ -405,7 +405,7 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
                         handler, metric_units = (opts.unit_size == "mm"),
                         safety_height=opts.safety_height,
                         toggle_spindle_status=opts.gcode_no_start_stop_spindle,
-                        minimum_step_x=opts.gcode_minimum_step)
+                        minimum_steps=[opts.gcode_minimum_step])
                 generator.set_speed(opts.tool_feedrate, opts.tool_spindle_speed)
                 path_mode = opts.gcode_path_mode
                 PATH_MODES = pycam.Exporters.GCodeExporter.PATH_MODES
