@@ -4,9 +4,8 @@ How to build a standalone exe file (on Windows only):
 1) install UPX (compression)
  * Debian/Ubuntu: apt-get install upx-ucl
  * Windows: http://upx.sourceforge.net
-2) download pyinstaller (v1.4 was used)
-3) patch pyinstaller (use pyinstaller_fix_module_exception.patch)
-   see http://www.pyinstaller.org/ticket/205 for details
+2) download pyinstaller (svn co http://svn.pyinstaller.org/trunk pyinstaller)
+3) fix http://www.pyinstaller.org/ticket/318 (in case it is not fixed already)
 4) run "cmd.exe" (or open a terminal)
 5) "cd PATH_TO_PYCAM"
 6) "python PYINSTALLER_PATH/utils/Configure.py"
@@ -18,4 +17,7 @@ Known issues:
 * python-setproctitle v1.0.1 causes a segfault - remove it from the build system
 * Linux: pre-built executable don't seem to work across different versions of libc 
 * Linux/MacOS?: you need to remove the reference to "windll" at the top of the "pycam" script (line 32-36)
+
+Debugging:
+* enable the "debug" parameter in the "EXE" call at the end of the spec file
 
