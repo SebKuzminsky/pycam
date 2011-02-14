@@ -108,7 +108,7 @@ class SVGExporter:
 #TODO: we need to create a unified "Exporter" interface and base class
 class SVGExporterContourModel(object):
 
-    def __init__(self, model, comment=None, unit="mm"):
+    def __init__(self, model, unit="mm", **kwargs):
         self.model = model
         self.unit = unit
 

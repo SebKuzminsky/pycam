@@ -2530,11 +2530,14 @@ class ProjectGui:
             return
         try:
             file_in = open(filename, "w")
-            model.export(comment=self.get_meta_data()).write(file_in)
+            model.export(comment=self.get_meta_data(),
+                    unit=self.settings.get("unit")).write(file_in)
             file_in.close()
         except IOError, err_msg:
             log.error("Failed to save model file: %s" % err_msg)
         else:
+            log.info("Successfully stored the current model as '%s'." % \
+                    str(filename))
             self.add_to_recent_file_list(filename)
 
     @gui_activity_guard

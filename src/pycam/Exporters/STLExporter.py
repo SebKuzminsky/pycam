@@ -28,8 +28,7 @@ import os
 class STLExporter:
 
     def __init__(self, model, name="model", created_by="pycam", linesep=None,
-            comment=None):
-        # sadly STL does not seem to support comments
+            **kwargs):
         self.model = model
         self.name = name
         self.created_by = created_by
@@ -56,7 +55,7 @@ class STLExporter:
             yield "  outer loop"
             # Triangle vertices are stored in clockwise order - thus we need
             # to reverse the order (STL expects counter-clockwise orientation).
-            for point in (triangle.p3, triangle.p2, triangle.p1):
+            for point in (triangle.p1, triangle.p3, triangle.p2):
                 yield "    vertex %f %f %f" % (point.x, point.y, point.z)
             yield "  endloop"
             yield "endfacet"
