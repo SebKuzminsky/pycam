@@ -291,15 +291,15 @@ class ProjectGui:
         self.window = self.gui.get_object("ProjectWindow")
         # increase the initial width of the window (due to hidden elements)
         self.window.set_default_size(400, -1)
-        # initialize the RecentManager
-        if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
+        # initialize the RecentManager (TODO: check for Windows)
+        if False and pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
             # The pyinstaller binary for Windows fails mysteriously when trying
             # to display the stock item.
             # Error message: Gtk:ERROR:gtkrecentmanager.c:1942:get_icon_fallback: assertion failed: (retval != NULL)
             self.recent_manager = None
         else:
             try:
-                self.recent_manager = gtk.RecentManager()
+                self.recent_manager = gtk.recent_manager_get_default()
             except AttributeError:
                 # GTK 2.12.1 seems to have problems with "RecentManager" on
                 # Windows. Sadly this is the version, that is shipped with the
@@ -1024,7 +1024,7 @@ class ProjectGui:
             recent_files_menu.add_filter(recent_menu_filter)
             recent_files_menu.set_show_numbers(True)
             # non-local files (without "file://") are not supported. yet
-            recent_files_menu.set_local_only(True)
+            recent_files_menu.set_local_only(False)
             # most recent files to the top
             recent_files_menu.set_sort_type(gtk.RECENT_SORT_MRU)
             # show only five files
@@ -3815,6 +3815,11 @@ class ProjectGui:
                 else:
                     # this is a remote file - or it already contains "file://"
                     filename_url = filename
+                if self.recent_manager.has_item(filename_url):
+                    try:
+                        self.recent_manager.remove_item(filename_url)
+                    except gobject.GError:
+                        pass
                 self.recent_manager.add_item(filename_url)
             # store the directory of the last loaded file
             self.last_dirname = os.path.dirname(os.path.abspath(filename))
