@@ -2009,6 +2009,9 @@ class ProjectGui:
             except TypeError:
                 new_message = re.sub("[^\w\s]", "", message)
                 self.status_bar.push(0, new_message)
+            # highlight the "warning" icon for warnings/errors
+            if record and record.levelno > 20:
+                self.gui.get_object("StatusBarWarning").show()
 
     @gui_activity_guard
     def copy_log_to_clipboard(self, widget=None):
@@ -2021,10 +2024,12 @@ class ProjectGui:
         self.log_model.foreach(copy_row, content)
         clipboard = gtk.Clipboard()
         clipboard.set_text(os.linesep.join(content))
+        self.gui.get_object("StatusBarWarning").hide()
 
     @gui_activity_guard
     def clear_log_window(self, widget=None):
         self.log_model.clear()
+        self.gui.get_object("StatusBarWarning").hide()
 
     @gui_activity_guard
     def toggle_log_window(self, widget=None, value=None, action=None):
@@ -2048,6 +2053,7 @@ class ProjectGui:
             self._log_window_position = self.log_window.get_position()
             self.log_window.hide()
         toggle_log_checkbox.set_active(new_state)
+        self.gui.get_object("StatusBarWarning").hide()
         # don't destroy the window with a "destroy" event
         return True
 

@@ -4425,10 +4425,26 @@ Usually you will want to use the cutter radius here to cut around the outline.</
           <object class="GtkEventBox" id="StatusBarEventBox">
             <property name="visible">True</property>
             <child>
-              <object class="GtkStatusbar" id="StatusBar">
+              <object class="GtkHBox" id="hbox37">
                 <property name="visible">True</property>
-                <property name="tooltip_text" translatable="yes">Click to open the log window.</property>
-                <property name="spacing">2</property>
+                <child>
+                  <object class="GtkImage" id="StatusBarWarning">
+                    <property name="stock">gtk-dialog-warning</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkStatusbar" id="StatusBar">
+                    <property name="visible">True</property>
+                    <property name="spacing">2</property>
+                  </object>
+                  <packing>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
               </object>
             </child>
           </object>
