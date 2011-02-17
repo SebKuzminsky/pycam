@@ -9,6 +9,7 @@ Version 0.4.1 - UNRELEASED
  * added a very simple "pocketing" mode for 2D models
  * added 2D projection of 3D models
  * added toolpath cropping 
+ * added toolpath grid pattern: clone a single toolpath in rows and columns
  * added support for DXF features "LWPOLYLINE" and "ARC"
  * added a configuration setting for automatically loading a custom task settings file on startup
  * added a simple "undo" feature for reversing model manipulations

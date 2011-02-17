@@ -32,6 +32,7 @@ import pycam.Importers.CXFImporter
 import pycam.Importers
 from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Plane import Plane
+import pycam.Geometry.Path
 import pycam.Utils.log
 import pycam.Utils
 from pycam.Geometry.utils import sqrt
@@ -43,7 +44,6 @@ from pycam.Utils import ProgressCounter, check_uri_exists
 from pycam.Toolpath import Bounds
 from pycam import VERSION
 import pycam.Physics.ode_physics
-import pycam.Toolpath.MotionGrid
 # this requires ODE - we import it later, if necessary
 #import pycam.Simulation.ODEBlocks
 import gtk
@@ -448,6 +448,7 @@ class ProjectGui:
         self.grid_adjustments_x = []
         self.grid_adjustments_y = []
         self._last_unit = None
+        self._toolpath_for_grid_data = {}
         # add some dummies - to be implemented later ...
         self.settings.add_item("model", lambda: self.model)
         self.settings.add_item("toolpath", lambda: self.toolpath)
@@ -672,6 +673,11 @@ class ProjectGui:
         self.settings.set("support_grid_minimum_bridges", 2)
         self.settings.set("support_grid_length", 5)
         self.grid_adjustment_axis_x_last = True
+        # toolpath grid pattern
+        for objname in ("GridYCount", "GridXCount", "GridYDistance",
+                "GridXDistance"):
+            self.gui.get_object(objname).connect("value-changed",
+                    self.update_toolpath_grid_window)
         # visual and general settings
         for name, objname in (("show_model", "ShowModelCheckBox"),
                 ("show_support_grid", "ShowSupportGridCheckBox"),
@@ -843,6 +849,7 @@ class ProjectGui:
         self.gui.get_object("toolpath_delete").connect("clicked", self.toolpath_table_event, "delete")
         self.gui.get_object("toolpath_simulate").connect("clicked", self.toolpath_table_event, "simulate")
         self.gui.get_object("toolpath_crop").connect("clicked", self.toolpath_table_event, "crop")
+        self.gui.get_object("ToolpathGrid").connect("clicked", self.toolpath_table_event, "grid")
         self.gui.get_object("ExitSimulationButton").connect("clicked", self.finish_toolpath_simulation)
         speed_factor_widget = self.gui.get_object("SimulationSpeedFactor")
         self.settings.add_item("simulation_speed_factor",
@@ -3223,13 +3230,66 @@ class ProjectGui:
             index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
             if not index is None:
                 self.crop_toolpath(self.toolpath[index])
+        elif action == "grid":
+            index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
+            if not index is None:
+                self.create_toolpath_grid(self.toolpath[index])
         # process the default operations (move, delete)
         self._treeview_button_event(self.toolpath_table, self.toolpath, action,
                 self.update_toolpath_table)
         # do some post-processing ...
-        if action in ("delete", "crop"):
-            # hide the deleted toolpath immediately
+        if action in ("delete", "crop", "grid"):
             self.update_view()
+
+    def update_toolpath_grid_window(self, widget=None):
+        data = self._toolpath_for_grid_data
+        x_dim = data["maxx"] - data["minx"]
+        y_dim = data["maxy"] - data["miny"]
+        x_count = self.gui.get_object("GridXCount").get_value()
+        x_space = self.gui.get_object("GridXDistance").get_value()
+        y_count = self.gui.get_object("GridYCount").get_value()
+        y_space = self.gui.get_object("GridYDistance").get_value()
+        x_width = x_dim * x_count + x_space * (x_count - 1)
+        y_width = y_dim * y_count + y_space * (y_count - 1)
+        self.gui.get_object("LabelGridXWidth").set_label("%g%s" % \
+                (x_width, self.settings.get("unit")))
+        self.gui.get_object("LabelGridYWidth").set_label("%g%s" % \
+                (y_width, self.settings.get("unit")))
+
+    def create_toolpath_grid(self, toolpath):
+        dialog = self.gui.get_object("ToolpathGridDialog")
+        data = self._toolpath_for_grid_data
+        data["minx"] = toolpath.minx()
+        data["maxx"] = toolpath.maxx()
+        data["miny"] = toolpath.miny()
+        data["maxy"] = toolpath.maxy()
+        self.gui.get_object("GridXCount").set_value(1)
+        self.gui.get_object("GridYCount").set_value(1)
+        self.update_toolpath_grid_window()
+        result = dialog.run()
+        if result == 1:
+            # "OK" was pressed
+            new_tp = []
+            x_count = int(self.gui.get_object("GridXCount").get_value())
+            y_count = int(self.gui.get_object("GridYCount").get_value())
+            x_space = self.gui.get_object("GridXDistance").get_value()
+            y_space = self.gui.get_object("GridYDistance").get_value()
+            x_dim = data["maxx"] - data["minx"]
+            y_dim = data["maxy"] - data["miny"]
+            for x in range(x_count):
+                for y in range(y_count):
+                    shift = Point(x * (x_space + x_dim),
+                            y * (y_space + y_dim), 0)
+                    for path in toolpath.get_paths():
+                        new_path = pycam.Geometry.Path.Path()
+                        new_path.points = [shift.add(p) for p in path.points]
+                        new_tp.append(new_path)
+            new_toolpath = pycam.Toolpath.Toolpath(new_tp, toolpath.name,
+                    toolpath.toolpath_settings)
+            toolpath.visible = False
+            new_toolpath.visible = True
+            self.toolpath.append(new_toolpath)
+        dialog.hide()
 
     @progress_activity_guard
     def crop_toolpath(self, toolpath):
@@ -3297,6 +3357,7 @@ class ProjectGui:
         self.gui.get_object("toolpath_down").set_sensitive((not new_index is None) and (new_index + 1 < len(self.toolpath)))
         self.gui.get_object("toolpath_simulate").set_sensitive(not new_index is None)
         self.gui.get_object("toolpath_crop").set_sensitive(not new_index is None)
+        self.gui.get_object("ToolpathGrid").set_sensitive(not new_index is None)
 
     @gui_activity_guard
     def save_task_settings_file(self, widget=None, filename=None):

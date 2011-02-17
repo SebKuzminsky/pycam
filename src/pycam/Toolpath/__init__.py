@@ -77,6 +77,31 @@ class Toolpath(object):
         # generate random color
         self.set_color()
 
+    def _get_limit_generic(self, attr, func):
+        path_min = []
+        for path in self.get_paths():
+            if path.points:
+                path_min.append(func([getattr(p, attr) for p in path.points]))
+        return func(path_min)
+
+    def minx(self):
+        return self._get_limit_generic("x", min)
+
+    def maxx(self):
+        return self._get_limit_generic("x", max)
+
+    def miny(self):
+        return self._get_limit_generic("y", min)
+
+    def maxy(self):
+        return self._get_limit_generic("y", max)
+
+    def minz(self):
+        return self._get_limit_generic("z", min)
+
+    def maxz(self):
+        return self._get_limit_generic("z", max)
+
     def get_paths(self):
         return self.toolpath
 
