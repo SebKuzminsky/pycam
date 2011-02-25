@@ -353,13 +353,21 @@ class ContourModel(BaseModel):
                 log.debug("merge_polygon_if_possible: ambiguous combinations " \
                         + "(%s - %s)" % (other_polygon, connectables))
 
-    def append(self, item, unify_overlaps=False):
+    def append(self, item, unify_overlaps=False, allow_reverse=False):
         super(ContourModel, self).append(item)
         if isinstance(item, Line):
+            item_list = [item]
+            if allow_reverse:
+                item_list.append(Line(item.p2, item.p1))
+            found = False
             for line_group in self._line_groups:
-                if line_group.is_connectable(item):
-                    line_group.append(item)
-                    self._merge_polygon_if_possible(line_group)
+                for candidate in item_list:
+                    if line_group.is_connectable(candidate):
+                        line_group.append(candidate)
+                        self._merge_polygon_if_possible(line_group)
+                        found = True
+                        break
+                if found:
                     break
             else:
                 # add a single line as part of a new group

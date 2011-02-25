@@ -126,7 +126,7 @@ class Charset(object):
                     new_model = ContourModel()
                     for line in charset_letter.get_positioned_lines(base,
                             skew=skew):
-                        new_model.append(line)
+                        new_model.append(line, allow_reverse=True)
                     for polygon in new_model.get_polygons():
                         # add polygons instead of lines -> more efficient
                         current_line.append(polygon)
