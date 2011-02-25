@@ -416,6 +416,8 @@ class ProjectGui:
                 self.import_from_font_dialog)
         self.gui.get_object("FontDialogSave").connect("clicked",
                 self.export_from_font_dialog)
+        self.gui.get_object("FontDialogCopy").connect("clicked",
+                self.copy_font_dialog_to_clipboard)
         self.gui.get_object("FontDialogInputBuffer").connect("changed",
                 self.update_font_dialog_preview)
         self.gui.get_object("FontDialogPreview").connect("configure_event",
@@ -1898,6 +1900,22 @@ class ProjectGui:
         text_model = self.get_font_dialog_text_rendered()
         if text_model and (not text_model.maxx is None):
             self.save_model(model=text_model)
+
+    def copy_font_dialog_to_clipboard(self, widget=None):
+        text_model = self.get_font_dialog_text_rendered()
+        if text_model and (not text_model.maxx is None):
+            text_buffer = StringIO.StringIO()
+            text_model.export(comment=self.get_meta_data(),
+                    unit=self.settings.get("unit")).write(text_buffer)
+            clipboard_target = "image/svg+xml"
+            clipboard = gtk.clipboard_get()
+            targets = [(clipboard_target, gtk.TARGET_OTHER_WIDGET, 0)]
+            def get_func(clipboard, selectiondata, info, text):
+                text.seek(0)
+                selectiondata.set("STRING", 8, text.read())
+            result = clipboard.set_with_data(targets, get_func,
+                    lambda *args: None, text_buffer)
+            clipboard.store()
 
     @gui_activity_guard
     def update_font_dialog_preview(self, widget=None, event=None):

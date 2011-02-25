@@ -7924,6 +7924,22 @@ Please read the description of the Server Mode (linked below) to understand the 
               </packing>
             </child>
             <child>
+              <object class="GtkButton" id="FontDialogCopy">
+                <property name="label">gtk-copy</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">Copy the current model to the clipboard (as SVG data).
+You can paste the result into Inkscape or other vector graphic editors.</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkButton" id="FontDialogSave">
                 <property name="label">Save as SVG</property>
                 <property name="visible">True</property>
@@ -7933,7 +7949,7 @@ Please read the description of the Server Mode (linked below) to understand the 
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
-                <property name="position">1</property>
+                <property name="position">2</property>
               </packing>
             </child>
             <child>
@@ -7947,7 +7963,7 @@ Please read the description of the Server Mode (linked below) to understand the 
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
-                <property name="position">2</property>
+                <property name="position">3</property>
               </packing>
             </child>
           </object>
@@ -7961,6 +7977,7 @@ Please read the description of the Server Mode (linked below) to understand the 
     </child>
     <action-widgets>
       <action-widget response="0">FontDialogCancel</action-widget>
+      <action-widget response="0">FontDialogCopy</action-widget>
       <action-widget response="0">FontDialogSave</action-widget>
       <action-widget response="0">FontDialogApply</action-widget>
     </action-widgets>
