@@ -859,8 +859,13 @@ class ProjectGui:
                 lambda value: speed_factor_widget.set_value(math.log10(max(0.001, value))))
         simulation_progress = self.gui.get_object("SimulationProgressTimelineValue")
         def update_simulation_progress(widget):
-            complete = self.settings.get("simulation_complete_distance")
-            self.settings.set("simulation_current_distance", widget.get_value() / 100.0 * complete)
+            if widget.get_value() == 100:
+                # a negative value indicates, that the simulation is finished
+                self.settings.set("simulation_current_distance", -1)
+            else:
+                complete = self.settings.get("simulation_complete_distance")
+                partial = widget.get_value() / 100.0 * complete
+                self.settings.set("simulation_current_distance", partial)
         simulation_progress.connect("value-changed", update_simulation_progress)
         # update the speed factor label
         speed_factor_widget.connect("value-changed",
@@ -3506,14 +3511,15 @@ class ProjectGui:
         return True
 
     def update_toolpath_simulation(self, widget=None, toolpath=None):
+        s = self.settings
         # update the GUI
         while gtk.events_pending():
             gtk.main_iteration()
-        if not self.settings.get("show_simulation"):
+        if not s.get("show_simulation"):
             # cancel
             return False
-        safety_height = self.settings.get("gcode_safety_height")
-        if not self.settings.get("simulation_toolpath"):
+        safety_height = s.get("gcode_safety_height")
+        if not s.get("simulation_toolpath"):
             # get the currently selected toolpath, if none is give
             if toolpath is None:
                 toolpath_index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
@@ -3521,35 +3527,44 @@ class ProjectGui:
                     return
                 else:
                     toolpath = self.toolpath[toolpath_index]
-            self.settings.set("simulation_toolpath", toolpath)
+            s.set("simulation_toolpath", toolpath)
             # set the current cutter
             self.cutter = toolpath.toolpath_settings.get_tool()
             # calculate steps
-            self.settings.set("simulation_machine_time",
+            s.set("simulation_machine_time",
                     toolpath.get_machine_time(safety_height=safety_height))
-            self.settings.set("simulation_complete_distance",
+            s.set("simulation_complete_distance",
                     toolpath.get_machine_movement_distance(
                         safety_height=safety_height))
-            self.settings.set("simulation_current_distance", 0)
+            s.set("simulation_current_distance", 0)
         else:
-            toolpath = self.settings.get("simulation_toolpath")
-        if (self.settings.get("simulation_current_distance") \
-                < self.settings.get("simulation_complete_distance")):
-            time_step = 1.0 / self.settings.get("drill_progress_max_fps")
-            feedrate = toolpath.toolpath_settings.get_tool_settings()["feedrate"]
-            distance_step = self.settings.get("simulation_speed_factor") * time_step * feedrate / 60
-            self.settings.set("simulation_current_distance",
-                    self.settings.get("simulation_current_distance") \
-                    + distance_step)
-            moves = toolpath.get_moves(safety_height=safety_height,
-                    max_movement=self.settings.get("simulation_current_distance"))
-            self.settings.set("simulation_toolpath_moves", moves)
-            if moves:
-                self.cutter.moveto(moves[-1][0])
-            self.update_view()
-        progress_value_percent = 100.0 * self.settings.get("simulation_current_distance") \
-                / self.settings.get("simulation_complete_distance")
-        self.gui.get_object("SimulationProgressTimelineValue").set_value(progress_value_percent)
+            toolpath = s.get("simulation_toolpath")
+        if (s.get("simulation_current_distance") \
+                < s.get("simulation_complete_distance")):
+            if s.get("simulation_current_distance") < 0:
+                # "-1" -> simulation is finished
+                updated_distance = s.get("simulation_complete_distance")
+            else:
+                time_step = 1.0 / s.get("drill_progress_max_fps")
+                feedrate = toolpath.toolpath_settings.get_tool_settings(
+                        )["feedrate"]
+                distance_step = s.get("simulation_speed_factor") * \
+                        time_step * feedrate / 60
+                updated_distance = min(distance_step + \
+                        s.get("simulation_current_distance"),
+                        s.get("simulation_complete_distance"))
+            if updated_distance != s.get("simulation_current_distance"):
+                s.set("simulation_current_distance", updated_distance)
+                moves = toolpath.get_moves(safety_height=safety_height,
+                        max_movement=updated_distance)
+                s.set("simulation_toolpath_moves", moves)
+                if moves:
+                    self.cutter.moveto(moves[-1][0])
+                self.update_view()
+        progress_value_percent = 100.0 * s.get("simulation_current_distance") \
+                / s.get("simulation_complete_distance")
+        self.gui.get_object("SimulationProgressTimelineValue").set_value(
+                progress_value_percent)
         return True
 
     @progress_activity_guard
