@@ -159,7 +159,7 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance,
 def get_fixed_grid(bounds, layer_distance, line_distance, step_width=None,
         grid_direction=GRID_DIRECTION_X, milling_style=MILLING_STYLE_IGNORE,
         start_position=START_Z):
-    """ Calculate the grid positions for toolpath movements
+    """ Calculate the grid positions for toolpath moves
     """
     low, high = bounds.get_absolute_limits()
     if isiterable(layer_distance):

@@ -1768,12 +1768,13 @@ class ProjectGui:
                 break
         else:
             raise ValueError("Invalid path strategy selected")
-        if strategy == "SurfaceStrategy" \
-                and get_obj("GridDirectionXY").get_active():
-            get_obj("GridDirectionX").set_active(True)
         if strategy == "ContourPolygonStrategy" \
                 and not get_obj("MillingStyleIgnore").get_active():
             get_obj("MillingStyleIgnore").set_active(True)
+        if strategy == "ContourPolygonStrategy" \
+                and not get_obj("GridDirectionX").get_active():
+            # only "x" direction for ContourPolygon
+            get_obj("GridDirectionX").set_active(True)
         if strategy in ("ContourFollowStrategy", "EngraveStrategy") \
                 and get_obj("MillingStyleIgnore").get_active():
             get_obj("MillingStyleConventional").set_active(True)
@@ -1795,9 +1796,9 @@ class ProjectGui:
             "ContourFollowStrategy": ("MillingStyleConventional",
                     "MillingStyleClimb", "MaxStepDownControl"),
             "SurfaceStrategy": ("GridDirectionX", "GridDirectionY",
-                    "MillingStyleConventional", "MillingStyleClimb",
-                    "MillingStyleIgnore", "MaterialAllowanceControl",
-                    "OverlapPercentControl"),
+                    "GridDirectionXY", "MillingStyleConventional",
+                    "MillingStyleClimb", "MillingStyleIgnore",
+                    "MaterialAllowanceControl", "OverlapPercentControl"),
             "EngraveStrategy": ("MaxStepDownControl", "EngraveOffsetControl",
                     "MillingStyleConventional", "MillingStyleClimb",
                     "PocketingControl"),

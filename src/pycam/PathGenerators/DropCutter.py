@@ -88,12 +88,10 @@ class DropCutter:
         # Transfer the grid (a generator) into a list of lists and count the
         # items.
         lines = []
-        # there should be only one layer for DropCutter
+        # usually there is only one layer - but an xy-grid consists of two
         for layer in motion_grid:
             for line in layer:
                 lines.append(line)
-            # ignore any other layers
-            break
 
         num_of_lines = len(lines)
         progress_counter = ProgressCounter(len(lines), draw_callback)
