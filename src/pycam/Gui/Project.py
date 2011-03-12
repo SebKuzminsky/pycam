@@ -3253,20 +3253,24 @@ class ProjectGui:
                 # hide/show toolpaths according to the new setting
                 self.update_view()
         elif action == "simulate":
-            index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
+            index = self._treeview_get_active_index(self.toolpath_table,
+                    self.toolpath)
             if not index is None:
                 self.show_toolpath_simulation(self.toolpath[index])
         elif action == "crop":
-            index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
+            index = self._treeview_get_active_index(self.toolpath_table,
+                    self.toolpath)
             if not index is None:
                 self.crop_toolpath(self.toolpath[index])
         elif action == "grid":
-            index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
+            index = self._treeview_get_active_index(self.toolpath_table,
+                    self.toolpath)
             if not index is None:
                 self.create_toolpath_grid(self.toolpath[index])
-        # process the default operations (move, delete)
-        self._treeview_button_event(self.toolpath_table, self.toolpath, action,
-                self.update_toolpath_table)
+        else:
+            # process the default operations (move, delete)
+            self._treeview_button_event(self.toolpath_table, self.toolpath,
+                    action, self.update_toolpath_table)
         # do some post-processing ...
         if action in ("delete", "crop", "grid"):
             self.update_view()
