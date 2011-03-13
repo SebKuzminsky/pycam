@@ -136,12 +136,23 @@ PREFERENCES_DEFAULTS = {
         "gcode_naive_tolerance": 0,
         "gcode_start_stop_spindle": True,
         "gcode_filename_extension": "",
+        "gcode_spindle_delay": 3,
         "external_program_inkscape": "",
         "external_program_pstoedit": "",
         "server_auth_key": "",
         "server_port_local": pycam.Utils.threading.DEFAULT_PORT,
         "server_port_remote": pycam.Utils.threading.DEFAULT_PORT,
         "server_hostname": "",
+        "touch_off_on_startup": False,
+        "touch_off_on_tool_change": False,
+        "touch_off_position_type": "absolute",
+        "touch_off_position_x": 0.0,
+        "touch_off_position_y": 0.0,
+        "touch_off_position_z": 0.0,
+        "touch_off_rapid_move": 0.0,
+        "touch_off_slow_move": 1.0,
+        "touch_off_slow_feedrate": 20,
+        "touch_off_height": 0.0,
 }
 """ the listed items will be loaded/saved via the preferences file in the
 user's home directory on startup/shutdown"""
@@ -920,29 +931,69 @@ class ProjectGui:
         gcode_safety_height = self.gui.get_object("SafetyHeightControl")
         self.settings.add_item("gcode_safety_height",
                 gcode_safety_height.get_value, gcode_safety_height.set_value)
-        for event, objname in (("toggled", "GCodeTouchOffOnStartup"),
-                ("toggled", "GCodeTouchOffOnToolChange"),
-                ("changed", "TouchOffLocationSelector")):
-            self.gui.get_object(objname).connect(event,
-                    self.update_gcode_tool_change_controls)
+        gcode_spindle_delay = self.gui.get_object("GCodeSpindleDelay")
+        self.settings.add_item("gcode_spindle_delay",
+                gcode_spindle_delay.get_value, gcode_spindle_delay.set_value)
+        for objname, setting in (
+                ("GCodeTouchOffOnStartup", "touch_off_on_startup"),
+                ("GCodeTouchOffOnToolChange", "touch_off_on_tool_change")):
+            obj = self.gui.get_object(objname)
+            obj.connect("toggled", self.update_gcode_controls)
+            self.settings.add_item(setting, obj.get_active, obj.set_active)
+        touch_off_pos_selector = self.gui.get_object("TouchOffLocationSelector")
+        def get_touch_off_position_type():
+            index = touch_off_pos_selector.get_active()
+            if index < 0:
+                return PREFERENCES_DEFAULTS["touch_off_position_type"]
+            else:
+                return touch_off_pos_selector.get_model()[index][0]
+        def set_touch_off_position_type(new_key):
+            model = touch_off_pos_selector.get_model()
+            for index, (key, value) in enumerate(model):
+                if key == new_key:
+                    touch_off_pos_selector.set_active(index)
+                    break
+            else:
+                touch_off_pos_selector.set_active(-1)
+        touch_off_pos_selector.connect("changed", self.update_gcode_controls)
+        self.settings.add_item("touch_off_position_type",
+                get_touch_off_position_type, set_touch_off_position_type)
+        for axis in "XYZ":
+            obj = self.gui.get_object("ToolChangePos%s" % axis.upper())
+            self.settings.add_item("touch_off_position_%s" % axis.lower(),
+                    obj.get_value, obj.set_value)
+        for objname, setting in (
+                ("ToolChangeRapidMoveDown", "touch_off_rapid_move"),
+                ("ToolChangeSlowMoveDown", "touch_off_slow_move"),
+                ("ToolChangeSlowMoveSpeed", "touch_off_slow_feedrate"),
+                ("TouchOffHeight", "touch_off_height")):
+            obj = self.gui.get_object(objname)
+            self.settings.add_item(setting, obj.get_value, obj.set_value)
         # redraw the toolpath if safety height changed
         gcode_safety_height.connect("value-changed", self.update_view)
         gcode_path_mode = self.gui.get_object("GCodeCornerStyleControl")
         self.settings.add_item("gcode_path_mode", gcode_path_mode.get_active,
                 gcode_path_mode.set_active)
         gcode_path_mode.connect("changed", self.update_gcode_controls)
-        gcode_motion_tolerance = self.gui.get_object("GCodeCornerStyleMotionTolerance")
+        gcode_motion_tolerance = self.gui.get_object(
+                "GCodeCornerStyleMotionTolerance")
         self.settings.add_item("gcode_motion_tolerance",
-                gcode_motion_tolerance.get_value, gcode_motion_tolerance.set_value)
-        gcode_naive_tolerance = self.gui.get_object("GCodeCornerStyleCAMTolerance")
+                gcode_motion_tolerance.get_value,
+                gcode_motion_tolerance.set_value)
+        gcode_naive_tolerance = self.gui.get_object(
+                "GCodeCornerStyleCAMTolerance")
         self.settings.add_item("gcode_naive_tolerance",
-                gcode_naive_tolerance.get_value, gcode_naive_tolerance.set_value)
+                gcode_naive_tolerance.get_value,
+                gcode_naive_tolerance.set_value)
         gcode_start_stop_spindle = self.gui.get_object("GCodeStartStopSpindle")
         self.settings.add_item("gcode_start_stop_spindle",
-                gcode_start_stop_spindle.get_active, gcode_start_stop_spindle.set_active)
+                gcode_start_stop_spindle.get_active,
+                gcode_start_stop_spindle.set_active)
+        gcode_start_stop_spindle.connect("toggled", self.update_gcode_controls)
         gcode_filename_extension = self.gui.get_object("GCodeFilenameExtension")
         self.settings.add_item("gcode_filename_extension",
-                gcode_filename_extension.get_text, gcode_filename_extension.set_text)
+                gcode_filename_extension.get_text,
+                gcode_filename_extension.set_text)
         # configure locations of external programs
         for auto_control_name, location_control_name, browse_button, key in (
                 ("ExternalProgramInkscapeAuto",
@@ -1094,9 +1145,16 @@ class ProjectGui:
         self.update_ode_settings()
         self.update_parallel_processes_settings()
         self.update_model_type_related_controls()
-        self.update_gcode_tool_change_controls()
 
-    def update_gcode_tool_change_controls(self, widget=None):
+    def update_gcode_controls(self, widget=None):
+        # path mode
+        path_mode = self.settings.get("gcode_path_mode")
+        self.gui.get_object("GCodeToleranceTable").set_sensitive(path_mode == 3)
+        # spindle delay
+        sensitive = self.settings.get("gcode_start_stop_spindle")
+        self.gui.get_object("GCodeSpindleDelayLabel").set_sensitive(sensitive)
+        self.gui.get_object("GCodeSpindleDelay").set_sensitive(sensitive)
+        # tool change controls
         pos_control = self.gui.get_object("TouchOffLocationSelector")
         tool_change_pos_model = pos_control.get_model()
         active_pos_index = pos_control.get_active()
@@ -1133,10 +1191,6 @@ class ProjectGui:
         is_projectable = (not self.model is None) \
                 and hasattr(self.model, "get_waterline_contour")
         self.gui.get_object("Projection2D").set_sensitive(is_projectable)
-
-    def update_gcode_controls(self, widget=None):
-        path_mode = self.settings.get("gcode_path_mode")
-        self.gui.get_object("GCodeToleranceTable").set_sensitive(path_mode == 3)
 
     def update_ode_settings(self, widget=None):
         if pycam.Utils.threading.is_multiprocessing_enabled() \
@@ -4013,12 +4067,29 @@ class ProjectGui:
             minimum_steps = [self.settings.get("gcode_minimum_step_x"),  
                     self.settings.get("gcode_minimum_step_y"),  
                     self.settings.get("gcode_minimum_step_z")]
+            getobj = self.gui.get_object
+            touch_off_pos_selector = getobj("TouchOffLocationSelector")
+            touch_off_type = touch_off_pos_selector.get_model()[touch_off_pos_selector.get_active()][0]
+            if touch_off_type == "absolute":
+                pos_x = getobj("ToolChangePosX").get_value()
+                pos_y = getobj("ToolChangePosY").get_value()
+                pos_z = getobj("ToolChangePosZ").get_value()
+                touch_off_pos = Point(pos_x, pos_y, pos_z)
+            else:
+                touch_off_pos = None
             generator = GCodeGenerator(destination,
                     metric_units=(self.settings.get("unit") == "mm"),
                     safety_height=safety_height,
                     toggle_spindle_status=self.settings.get("gcode_start_stop_spindle"),
-                    comment=all_info,
-                    minimum_steps=minimum_steps)
+                    spindle_delay=self.settings.get("gcode_spindle_delay"),
+                    comment=all_info, minimum_steps=minimum_steps,
+                    touch_off_on_startup=getobj("GCodeTouchOffOnStartup").get_active(),
+                    touch_off_on_tool_change=getobj("GCodeTouchOffOnToolChange").get_active(),
+                    touch_off_position=touch_off_pos,
+                    touch_off_rapid_move=getobj("ToolChangeRapidMoveDown").get_value(),
+                    touch_off_slow_move=getobj("ToolChangeSlowMoveDown").get_value(),
+                    touch_off_slow_feedrate=getobj("ToolChangeSlowMoveSpeed").get_value(),
+                    touch_off_height=getobj("TouchOffHeight").get_value())
             path_mode = self.settings.get("gcode_path_mode")
             if path_mode == 0:
                 generator.set_path_mode(PATH_MODES["exact_path"])

@@ -1,4 +1,4 @@
-Version 0.4.1 - UNRELEASED
+Version 0.5 - UNRELEASED
  * added support for EPS/PS contour files
  * added adaptive positioning for DropCutter strategy (improves precision)
  * allow conventional/climb milling style for ContourFollow and Engrave strategies
@@ -13,7 +13,9 @@ Version 0.4.1 - UNRELEASED
  * added support for DXF features "LWPOLYLINE" and "ARC"
  * added a configuration setting for automatically loading a custom task settings file on startup
  * added a simple "undo" feature for reversing model manipulations
- * added a minimum step width for GCode positions to be written
+ * GCode features:
+  * added basic support for "touch off" and length compensated tool change
+  * added a minimum step width for GCode positions to be written
   * GCode positioning precision (number of digits) is configurable
  * enabled drag'n'drop for loading models
  * support non-local file handling (e.g. http, ...)
