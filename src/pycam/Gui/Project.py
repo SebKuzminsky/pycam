@@ -920,6 +920,11 @@ class ProjectGui:
         gcode_safety_height = self.gui.get_object("SafetyHeightControl")
         self.settings.add_item("gcode_safety_height",
                 gcode_safety_height.get_value, gcode_safety_height.set_value)
+        for event, objname in (("toggled", "GCodeTouchOffOnStartup"),
+                ("toggled", "GCodeTouchOffOnToolChange"),
+                ("changed", "TouchOffLocationSelector")):
+            self.gui.get_object(objname).connect(event,
+                    self.update_gcode_tool_change_controls)
         # redraw the toolpath if safety height changed
         gcode_safety_height.connect("value-changed", self.update_view)
         gcode_path_mode = self.gui.get_object("GCodeCornerStyleControl")
@@ -1089,6 +1094,36 @@ class ProjectGui:
         self.update_ode_settings()
         self.update_parallel_processes_settings()
         self.update_model_type_related_controls()
+        self.update_gcode_tool_change_controls()
+
+    def update_gcode_tool_change_controls(self, widget=None):
+        pos_control = self.gui.get_object("TouchOffLocationSelector")
+        tool_change_pos_model = pos_control.get_model()
+        active_pos_index = pos_control.get_active()
+        if active_pos_index < 0:
+            pos_key = None
+        else:
+            pos_key = tool_change_pos_model[active_pos_index][0]
+        # show or hide the vbox containing the absolute tool change location
+        absolute_pos_box = self.gui.get_object("AbsoluteToolChangePositionBox")
+        if pos_key == "absolute":
+            absolute_pos_box.show()
+        else:
+            absolute_pos_box.hide()
+        # disable/enable the touch off position controls
+        position_controls_table = self.gui.get_object("TouchOffLocationTable")
+        touch_off_enabled = any([self.gui.get_object(objname).get_active()
+                for objname in ("GCodeTouchOffOnStartup",
+                    "GCodeTouchOffOnToolChange")])
+        position_controls_table.set_sensitive(touch_off_enabled)
+        # disable/enable touch probe height
+        if self.gui.get_object("GCodeTouchOffOnStartup").get_active():
+            update_func = "show"
+        else:
+            update_func = "hide"
+        for objname in ("TouchOffHeight", "TouchOffHeightLabel",
+                "LengthUnitTouchOffHeight"):
+            getattr(self.gui.get_object(objname), update_func)()
 
     def update_model_type_related_controls(self):
         is_reversible = (not self.model is None) \
@@ -2503,12 +2538,15 @@ class ProjectGui:
         self.update_view()
 
     def update_unit_labels(self, widget=None, data=None):
-        # we can't just use the "unit" setting, since we need the plural of "inch"
+        # don't use the "unit" setting, since we need the plural of "inch"
         if self.settings.get("unit") == "mm":
             base_unit = "mm"
         else:
             base_unit = "inches"
-        self.gui.get_object("SpeedLimitsUnitValue").set_text("%s/minute" % base_unit)
+        for key in ("SpeedUnit1", "SpeedUnit2"):
+            self.gui.get_object(key).set_text("%s/minute" % base_unit)
+        for key in ("LengthUnit1", "LengthUnit2", "LengthUnitTouchOffHeight"):
+            self.gui.get_object(key).set_text(base_unit)
 
     def get_filename_with_suffix(self, filename, type_filter):
         # use the first extension provided by the filter as the default

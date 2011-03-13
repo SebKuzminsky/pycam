@@ -276,6 +276,24 @@
       </row>
     </data>
   </object>
+  <object class="GtkListStore" id="TouchOffLocationModel">
+    <columns>
+      <!-- column-name key -->
+      <column type="gchararray"/>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">startup</col>
+        <col id="1" translatable="yes">Initial location (at startup)</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">absolute</col>
+        <col id="1" translatable="yes">Fixed location (absolute)</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkWindow" id="ProjectWindow">
     <property name="title" translatable="yes">PyCAM</property>
     <property name="destroy_with_parent">True</property>
@@ -1848,6 +1866,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">False</property>
                                         <property name="position">0</property>
                                       </packing>
                                     </child>
@@ -1861,6 +1880,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">False</property>
                                         <property name="position">1</property>
                                       </packing>
                                     </child>
@@ -1874,6 +1894,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">False</property>
                                         <property name="position">2</property>
                                       </packing>
                                     </child>
@@ -1887,6 +1908,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">False</property>
                                         <property name="position">3</property>
                                       </packing>
                                     </child>
@@ -2228,7 +2250,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                               </object>
                                             </child>
                                             <child>
-                                              <object class="GtkLabel" id="SpeedLimitsUnitValue">
+                                              <object class="GtkLabel" id="SpeedUnit1">
                                                 <property name="visible">True</property>
                                                 <property name="label" translatable="yes">inches/minute</property>
                                               </object>
@@ -2363,6 +2385,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">False</property>
                                         <property name="position">0</property>
                                       </packing>
                                     </child>
@@ -2376,6 +2399,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">False</property>
                                         <property name="position">1</property>
                                       </packing>
                                     </child>
@@ -2389,6 +2413,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">False</property>
                                         <property name="position">2</property>
                                       </packing>
                                     </child>
@@ -2402,6 +2427,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">False</property>
                                         <property name="position">3</property>
                                       </packing>
                                     </child>
@@ -3074,6 +3100,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">False</property>
                                     <property name="position">0</property>
                                   </packing>
                                 </child>
@@ -3087,6 +3114,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">False</property>
                                     <property name="position">1</property>
                                   </packing>
                                 </child>
@@ -3100,6 +3128,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">False</property>
                                     <property name="position">2</property>
                                   </packing>
                                 </child>
@@ -3113,6 +3142,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">False</property>
                                     <property name="position">3</property>
                                   </packing>
                                 </child>
@@ -3833,6 +3863,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">False</property>
                                         <property name="position">0</property>
                                       </packing>
                                     </child>
@@ -3847,6 +3878,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">False</property>
                                         <property name="position">1</property>
                                       </packing>
                                     </child>
@@ -3860,6 +3892,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">False</property>
                                         <property name="position">2</property>
                                       </packing>
                                     </child>
@@ -3873,6 +3906,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">False</property>
                                         <property name="position">3</property>
                                       </packing>
                                     </child>
@@ -3886,6 +3920,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">False</property>
                                         <property name="position">4</property>
                                       </packing>
                                     </child>
@@ -3899,6 +3934,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">False</property>
                                         <property name="position">5</property>
                                       </packing>
                                     </child>
@@ -4257,6 +4293,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">False</property>
                                     <property name="position">0</property>
                                   </packing>
                                 </child>
@@ -4270,6 +4307,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">False</property>
                                     <property name="position">1</property>
                                   </packing>
                                 </child>
@@ -4284,6 +4322,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">False</property>
                                     <property name="position">2</property>
                                   </packing>
                                 </child>
@@ -4298,6 +4337,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">False</property>
                                     <property name="position">3</property>
                                   </packing>
                                 </child>
@@ -4312,6 +4352,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">False</property>
                                     <property name="position">4</property>
                                   </packing>
                                 </child>
@@ -4326,6 +4367,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">False</property>
                                     <property name="position">5</property>
                                   </packing>
                                 </child>
@@ -5337,7 +5379,7 @@ Choose a small value to minimize rapid moves up and down.</property>
                                     <child>
                                       <object class="GtkHBox" id="hbox27">
                                         <property name="visible">True</property>
-                                        <property name="spacing">4</property>
+                                        <property name="spacing">3</property>
                                         <child>
                                           <object class="GtkLabel" id="GCodePathModeLabel">
                                             <property name="visible">True</property>
@@ -5469,6 +5511,343 @@ Choose a small value to minimize rapid moves up and down.</property>
                             <property name="expand">False</property>
                             <property name="fill">False</property>
                             <property name="position">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkExpander" id="expander2">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <child>
+                              <object class="GtkAlignment" id="alignment5">
+                                <property name="visible">True</property>
+                                <property name="left_padding">25</property>
+                                <child>
+                                  <object class="GtkVBox" id="vbox6">
+                                    <property name="visible">True</property>
+                                    <property name="orientation">vertical</property>
+                                    <child>
+                                      <object class="GtkCheckButton" id="GCodeTouchOffOnStartup">
+                                        <property name="label" translatable="yes">Touch off on startup (initializes coordinate system for Z)</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">False</property>
+                                        <property name="draw_indicator">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkCheckButton" id="GCodeTouchOffOnToolChange">
+                                        <property name="label" translatable="yes">Measure and compensate tool length on tool change</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">False</property>
+                                        <property name="draw_indicator">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkTable" id="TouchOffLocationTable">
+                                        <property name="visible">True</property>
+                                        <property name="n_rows">6</property>
+                                        <property name="n_columns">3</property>
+                                        <property name="column_spacing">3</property>
+                                        <property name="row_spacing">3</property>
+                                        <child>
+                                          <object class="GtkComboBox" id="TouchOffLocationSelector">
+                                            <property name="visible">True</property>
+                                            <property name="model">TouchOffLocationModel</property>
+                                            <property name="active">0</property>
+                                            <child>
+                                              <object class="GtkCellRendererText" id="cellrenderertext8"/>
+                                              <attributes>
+                                                <attribute name="text">1</attribute>
+                                              </attributes>
+                                            </child>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">1</property>
+                                            <property name="right_attach">3</property>
+                                            <property name="x_options">GTK_FILL</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="label1">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">Touch probe position:</property>
+                                          </object>
+                                          <packing>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="label3">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">Rapid move down:</property>
+                                          </object>
+                                          <packing>
+                                            <property name="top_attach">2</property>
+                                            <property name="bottom_attach">3</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="label4">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">Measure move down (limit):</property>
+                                          </object>
+                                          <packing>
+                                            <property name="top_attach">3</property>
+                                            <property name="bottom_attach">4</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkSpinButton" id="spinbutton1">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="adjustment">ToolChangeRapidMoveDownValue</property>
+                                            <property name="digits">1</property>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">1</property>
+                                            <property name="right_attach">2</property>
+                                            <property name="top_attach">2</property>
+                                            <property name="bottom_attach">3</property>
+                                            <property name="x_options">GTK_FILL</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkSpinButton" id="spinbutton2">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="adjustment">ToolChangeSlowMoveDownValue</property>
+                                            <property name="digits">1</property>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">1</property>
+                                            <property name="right_attach">2</property>
+                                            <property name="top_attach">3</property>
+                                            <property name="bottom_attach">4</property>
+                                            <property name="x_options">GTK_FILL</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="label5">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">Measure move speed:</property>
+                                          </object>
+                                          <packing>
+                                            <property name="top_attach">4</property>
+                                            <property name="bottom_attach">5</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkSpinButton" id="spinbutton3">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="adjustment">ToolChangeSlowMoveSpeedValue</property>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">1</property>
+                                            <property name="right_attach">2</property>
+                                            <property name="top_attach">4</property>
+                                            <property name="bottom_attach">5</property>
+                                            <property name="x_options">GTK_FILL</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="LengthUnit1">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">mm</property>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">2</property>
+                                            <property name="right_attach">3</property>
+                                            <property name="top_attach">2</property>
+                                            <property name="bottom_attach">3</property>
+                                            <property name="x_options">GTK_FILL</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="LengthUnit2">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">mm</property>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">2</property>
+                                            <property name="right_attach">3</property>
+                                            <property name="top_attach">3</property>
+                                            <property name="bottom_attach">4</property>
+                                            <property name="x_options">GTK_FILL</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="SpeedUnit2">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">mm/minute</property>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">2</property>
+                                            <property name="right_attach">3</property>
+                                            <property name="top_attach">4</property>
+                                            <property name="bottom_attach">5</property>
+                                            <property name="x_options">GTK_FILL</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkHBox" id="AbsoluteToolChangePositionBox">
+                                            <property name="visible">True</property>
+                                            <property name="spacing">2</property>
+                                            <child>
+                                              <object class="GtkLabel" id="label6">
+                                                <property name="visible">True</property>
+                                                <property name="xalign">0</property>
+                                                <property name="label" translatable="yes">Absolute touch off start position:</property>
+                                              </object>
+                                              <packing>
+                                                <property name="position">0</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkSpinButton" id="ToolChangePosX">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="tooltip_text" translatable="yes">X</property>
+                                                <property name="invisible_char">&#x25CF;</property>
+                                                <property name="width_chars">6</property>
+                                                <property name="adjustment">ToolChangePosXValue</property>
+                                                <property name="digits">3</property>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="position">1</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkSpinButton" id="ToolChangePosY">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="tooltip_text" translatable="yes">Y</property>
+                                                <property name="invisible_char">&#x25CF;</property>
+                                                <property name="width_chars">6</property>
+                                                <property name="adjustment">ToolChangePosYValue</property>
+                                                <property name="digits">3</property>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="position">2</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkSpinButton" id="ToolChangePosZ">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="tooltip_text" translatable="yes">Z</property>
+                                                <property name="invisible_char">&#x25CF;</property>
+                                                <property name="width_chars">6</property>
+                                                <property name="adjustment">ToolChangePosZValue</property>
+                                                <property name="digits">3</property>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="position">3</property>
+                                              </packing>
+                                            </child>
+                                          </object>
+                                          <packing>
+                                            <property name="right_attach">3</property>
+                                            <property name="top_attach">1</property>
+                                            <property name="bottom_attach">2</property>
+                                            <property name="x_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="TouchOffHeightLabel">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">Z level of touch probe:</property>
+                                          </object>
+                                          <packing>
+                                            <property name="top_attach">5</property>
+                                            <property name="bottom_attach">6</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkSpinButton" id="TouchOffHeight">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="tooltip_text" translatable="yes">This value specifies the desired height (Z) of the touch plate.
+The current coordinate system of the GCode interprete will
+be shifted accordingly.</property>
+                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="adjustment">TouchOffHeightValue</property>
+                                            <property name="digits">3</property>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">1</property>
+                                            <property name="right_attach">2</property>
+                                            <property name="top_attach">5</property>
+                                            <property name="bottom_attach">6</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="LengthUnitTouchOffHeight">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">0</property>
+                                            <property name="label" translatable="yes">mm</property>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">2</property>
+                                            <property name="right_attach">3</property>
+                                            <property name="top_attach">5</property>
+                                            <property name="bottom_attach">6</property>
+                                            <property name="x_options">GTK_FILL</property>
+                                            <property name="y_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child type="label">
+                              <object class="GtkLabel" id="GCodeTouchOffLabel">
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes">Touch off and tool length measurement</property>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">4</property>
                           </packing>
                         </child>
                       </object>
@@ -8512,5 +8891,41 @@ upon interesting bugs and weird results.</property>
   <object class="GtkImage" id="GenerateAllToolPathsIcon">
     <property name="visible">True</property>
     <property name="stock">gtk-execute</property>
+  </object>
+  <object class="GtkAdjustment" id="ToolChangeRapidMoveDownValue">
+    <property name="upper">10000</property>
+    <property name="step_increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="ToolChangeSlowMoveDownValue">
+    <property name="value">1</property>
+    <property name="lower">0.10000000000000001</property>
+    <property name="upper">10000</property>
+    <property name="step_increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="ToolChangeSlowMoveSpeedValue">
+    <property name="value">20</property>
+    <property name="lower">1</property>
+    <property name="upper">100000</property>
+    <property name="step_increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="ToolChangePosXValue">
+    <property name="lower">-10000</property>
+    <property name="upper">10000</property>
+    <property name="step_increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="ToolChangePosYValue">
+    <property name="lower">-10000</property>
+    <property name="upper">10000</property>
+    <property name="step_increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="ToolChangePosZValue">
+    <property name="lower">-10000</property>
+    <property name="upper">10000</property>
+    <property name="step_increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="TouchOffHeightValue">
+    <property name="lower">-10000</property>
+    <property name="upper">10000</property>
+    <property name="step_increment">1</property>
   </object>
 </interface>
