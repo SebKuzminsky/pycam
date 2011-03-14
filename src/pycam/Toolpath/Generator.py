@@ -321,7 +321,7 @@ def generate_toolpath(model, tool_settings=None,
             milling_style)
     if isinstance(generator, basestring):
         return generator
-    overlap = overlap_percent / 100
+    overlap = overlap_percent / 100.0
     if (overlap < 0) or (overlap >= 1):
         return "Invalid overlap value (%f): should be greater or equal 0 " \
                 + "and lower than 1"
