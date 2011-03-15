@@ -153,6 +153,7 @@ PREFERENCES_DEFAULTS = {
         "touch_off_slow_move": 1.0,
         "touch_off_slow_feedrate": 20,
         "touch_off_height": 0.0,
+        "touch_off_pause_execution": False,
 }
 """ the listed items will be loaded/saved via the preferences file in the
 user's home directory on startup/shutdown"""
@@ -969,6 +970,9 @@ class ProjectGui:
                 ("TouchOffHeight", "touch_off_height")):
             obj = self.gui.get_object(objname)
             self.settings.add_item(setting, obj.get_value, obj.set_value)
+        touch_off_pause = self.gui.get_object("TouchOffPauseExecution")
+        self.settings.add_item("touch_off_pause_execution",
+                touch_off_pause.get_active, touch_off_pause.set_active)
         # redraw the toolpath if safety height changed
         gcode_safety_height.connect("value-changed", self.update_view)
         gcode_path_mode = self.gui.get_object("GCodeCornerStyleControl")
@@ -4067,13 +4071,10 @@ class ProjectGui:
             minimum_steps = [self.settings.get("gcode_minimum_step_x"),  
                     self.settings.get("gcode_minimum_step_y"),  
                     self.settings.get("gcode_minimum_step_z")]
-            getobj = self.gui.get_object
-            touch_off_pos_selector = getobj("TouchOffLocationSelector")
-            touch_off_type = touch_off_pos_selector.get_model()[touch_off_pos_selector.get_active()][0]
-            if touch_off_type == "absolute":
-                pos_x = getobj("ToolChangePosX").get_value()
-                pos_y = getobj("ToolChangePosY").get_value()
-                pos_z = getobj("ToolChangePosZ").get_value()
+            if self.settings.get("touch_off_position_type") == "absolute":
+                pos_x = self.settings.get("touch_off_position_x")
+                pos_y = self.settings.get("touch_off_position_y")
+                pos_z = self.settings.get("touch_off_position_z")
                 touch_off_pos = Point(pos_x, pos_y, pos_z)
             else:
                 touch_off_pos = None
@@ -4083,13 +4084,14 @@ class ProjectGui:
                     toggle_spindle_status=self.settings.get("gcode_start_stop_spindle"),
                     spindle_delay=self.settings.get("gcode_spindle_delay"),
                     comment=all_info, minimum_steps=minimum_steps,
-                    touch_off_on_startup=getobj("GCodeTouchOffOnStartup").get_active(),
-                    touch_off_on_tool_change=getobj("GCodeTouchOffOnToolChange").get_active(),
+                    touch_off_on_startup=self.settings.get("touch_off_on_startup"),
+                    touch_off_on_tool_change=self.settings.get("touch_off_on_tool_change"),
                     touch_off_position=touch_off_pos,
-                    touch_off_rapid_move=getobj("ToolChangeRapidMoveDown").get_value(),
-                    touch_off_slow_move=getobj("ToolChangeSlowMoveDown").get_value(),
-                    touch_off_slow_feedrate=getobj("ToolChangeSlowMoveSpeed").get_value(),
-                    touch_off_height=getobj("TouchOffHeight").get_value())
+                    touch_off_rapid_move=self.settings.get("touch_off_rapid_move"),
+                    touch_off_slow_move=self.settings.get("touch_off_slow_move"),
+                    touch_off_slow_feedrate=self.settings.get("touch_off_slow_feedrate"),
+                    touch_off_height=self.settings.get("touch_off_height"),
+                    touch_off_pause_execution=self.settings.get("touch_off_pause_execution"))
             path_mode = self.settings.get("gcode_path_mode")
             if path_mode == 0:
                 generator.set_path_mode(PATH_MODES["exact_path"])

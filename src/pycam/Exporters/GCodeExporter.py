@@ -73,7 +73,8 @@ class GCodeGenerator:
             comment=None, minimum_steps=None, touch_off_on_startup=False,
             touch_off_on_tool_change=False, touch_off_position=None,
             touch_off_rapid_move=0, touch_off_slow_move=1,
-            touch_off_slow_feedrate=20, touch_off_height=0):
+            touch_off_slow_feedrate=20, touch_off_height=0,
+            touch_off_pause_execution=False):
         if isinstance(destination, basestring):
             # open the file
             self.destination = file(destination,"w")
@@ -121,6 +122,7 @@ class GCodeGenerator:
         self.touch_off_rapid_move = touch_off_rapid_move
         self.touch_off_slow_move = touch_off_slow_move
         self.touch_off_slow_feedrate = touch_off_slow_feedrate
+        self.touch_off_pause_execution = touch_off_pause_execution
         if touch_off_on_startup:
             self.run_touch_off(force_height=touch_off_height)
 
@@ -134,6 +136,9 @@ class GCodeGenerator:
         self.append("G28 (go to final touch off position)")
         self.append("G91 (enter incremental mode)")
         self.append("F%f (reduce feed rate during touch off)" % self.touch_off_slow_feedrate)
+        if self.touch_off_pause_execution:
+            self.append("(msg,Pausing before tool change)")
+            self.append("M0 (pause before touch off)")
         # measure the current tool length
         if self.touch_off_rapid_move > 0:
             self.append("G0 Z-%f (go down rapidly)" % self.touch_off_rapid_move)
@@ -153,6 +158,9 @@ class GCodeGenerator:
             self.append("G43.1 Z[#5063-#1000] (compensate the new tool length)")
         self.append("F%f (restore feed rate)" % self.last_feedrate)
         self.append("G90 (disable incremental mode)")
+        if self.touch_off_pause_execution:
+            self.append("(msg,Pausing after tool change)")
+            self.append("M0 (pause after touch off)")
         self.append("(End of touch off operation)")
         self.append("")
 
