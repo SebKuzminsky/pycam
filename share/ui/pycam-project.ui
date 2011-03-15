@@ -317,6 +317,7 @@
                     <child>
                       <object class="GtkVSeparator" id="vseparator6">
                         <property name="visible">True</property>
+                        <property name="orientation">vertical</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -422,6 +423,7 @@
                             <child>
                               <object class="GtkVSeparator" id="vseparator3">
                                 <property name="visible">True</property>
+                                <property name="orientation">vertical</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -507,6 +509,7 @@
                             <child>
                               <object class="GtkVSeparator" id="vseparator4">
                                 <property name="visible">True</property>
+                                <property name="orientation">vertical</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -788,6 +791,7 @@
                     <child>
                       <object class="GtkVSeparator" id="vseparator1">
                         <property name="visible">True</property>
+                        <property name="orientation">vertical</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -950,6 +954,7 @@
                     <child>
                       <object class="GtkVSeparator" id="vseparator12">
                         <property name="visible">True</property>
+                        <property name="orientation">vertical</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1151,6 +1156,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                         <child>
                                           <object class="GtkVSeparator" id="vseparator10">
                                             <property name="visible">True</property>
+                                            <property name="orientation">vertical</property>
                                           </object>
                                           <packing>
                                             <property name="expand">False</property>
@@ -1373,6 +1379,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                         <child>
                                           <object class="GtkVSeparator" id="vseparator2">
                                             <property name="visible">True</property>
+                                            <property name="orientation">vertical</property>
                                           </object>
                                           <packing>
                                             <property name="expand">False</property>
@@ -1462,6 +1469,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                             <child>
                                               <object class="GtkVSeparator" id="vseparator7">
                                                 <property name="visible">True</property>
+                                                <property name="orientation">vertical</property>
                                               </object>
                                               <packing>
                                                 <property name="expand">False</property>
@@ -1510,6 +1518,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                         <child>
                                           <object class="GtkVBox" id="vbox28">
                                             <property name="visible">True</property>
+                                            <property name="orientation">vertical</property>
                                             <child>
                                               <object class="GtkHBox" id="SupportGridPositionManualShiftBox">
                                                 <property name="visible">True</property>
@@ -2062,6 +2071,7 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                     <child>
                                       <object class="GtkVSeparator" id="vseparator5">
                                         <property name="visible">True</property>
+                                        <property name="orientation">vertical</property>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
@@ -2614,6 +2624,7 @@ Use the "Engrave Offset" to shift the position of the tool to the outside (posit
                                     <child>
                                       <object class="GtkVSeparator" id="vseparator9">
                                         <property name="visible">True</property>
+                                        <property name="orientation">vertical</property>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
@@ -2907,6 +2918,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                                 <child>
                                                   <object class="GtkVSeparator" id="vseparator8">
                                                     <property name="visible">True</property>
+                                                    <property name="orientation">vertical</property>
                                                   </object>
                                                   <packing>
                                                     <property name="expand">False</property>
@@ -3288,6 +3300,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                             <child>
                                               <object class="GtkVSeparator" id="vseparator11">
                                                 <property name="visible">True</property>
+                                                <property name="orientation">vertical</property>
                                               </object>
                                               <packing>
                                                 <property name="expand">False</property>
@@ -4555,6 +4568,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
             <child>
               <object class="GtkVSeparator" id="vseparator13">
                 <property name="visible">True</property>
+                <property name="orientation">vertical</property>
               </object>
               <packing>
                 <property name="expand">False</property>
