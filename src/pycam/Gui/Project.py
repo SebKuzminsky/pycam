@@ -2034,7 +2034,8 @@ class ProjectGui:
         drawing_area.draw_rectangle(preview_widget.get_style().white_gc, True,
                 0, 0, width, height)
         # carefully check if there are lines in the rendered text
-        if text_model and (not text_model.maxx is None):
+        if text_model and (not text_model.maxx is None) and \
+                (text_model.maxx > text_model.minx):
             # leave a small border around the preview
             border = 3
             x_fac = (width - 1 - 2 * border) / \
