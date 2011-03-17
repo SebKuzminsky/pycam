@@ -354,11 +354,14 @@ class ModelViewWindowGL:
         # reduce it a bit.
         for color, names in (
                 (pango.AttrForeground(65535, 0, 0, 0, 100),
-                        ("model_dim_x_label", "model_dim_x")),
+                        ("model_dim_x_label", "model_dim_x", "ModelCornerXMax",
+                            "ModelCornerXMin", "ModelCornerXSpaces")),
                 (pango.AttrForeground(0, 50000, 0, 0, 100),
-                        ("model_dim_y_label", "model_dim_y")),
+                        ("model_dim_y_label", "model_dim_y", "ModelCornerYMax",
+                            "ModelCornerYMin", "ModelCornerYSpaces")),
                 (pango.AttrForeground(0, 0, 65535, 0, 100),
-                        ("model_dim_z_label", "model_dim_z"))):
+                        ("model_dim_z_label", "model_dim_z", "ModelCornerZMax",
+                            "ModelCornerZMin", "ModelCornerZSpaces"))):
             attributes = pango.AttrList()
             attributes.insert(color)
             for name in names:

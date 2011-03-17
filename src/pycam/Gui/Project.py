@@ -568,7 +568,7 @@ class ProjectGui:
         scale_button.connect("clicked", self.scale_model)
         # scale model to an axis dimension
         self.gui.get_object("ScaleDimensionAxis").connect("changed",
-                self.update_scale_controls)
+                self.update_model_dimensions)
         scale_dimension_button = self.gui.get_object("ScaleDimensionButton")
         scale_dimension_button.connect("clicked", self.scale_model_axis_fit)
         scale_dimension_control = self.gui.get_object("ScaleDimensionControl")
@@ -579,9 +579,9 @@ class ProjectGui:
         self.gui.get_object("ToggleModelDirectionButton").connect("clicked",
                 self.reverse_model_direction)
         self.gui.get_object("ScaleInchMM").connect("clicked", self.scale_model,
-                100 * 25.4)
+                100 * 25.4, False)
         self.gui.get_object("ScaleMMInch").connect("clicked", self.scale_model,
-                100 / 25.4)
+                100 / 25.4, False)
         self.gui.get_object("Projection2D").connect("clicked",
                 self.projection_2d)
         # support grid
@@ -1149,7 +1149,7 @@ class ProjectGui:
         self.update_save_actions()
         self.update_unit_labels()
         self.update_support_controls()
-        self.update_scale_controls()
+        self.update_model_dimensions()
         self.update_gcode_controls()
         self.update_ode_settings()
         self.update_parallel_processes_settings()
@@ -2311,6 +2311,7 @@ class ProjectGui:
                 self.model.transform_by_template(value,
                         callback=self.update_progress_bar)
         self.append_to_queue(self.update_support_model)
+        self.append_to_queue(self.update_model_dimensions)
         self.append_to_queue(self.update_view)
 
     def _treeview_get_active_index(self, table, datalist):
@@ -2756,8 +2757,9 @@ class ProjectGui:
         self.disable_progress_cancel_button()
         self.model.shift(shift_x, shift_y, shift_z,
                 callback=self.update_progress_bar)
-        self.update_support_model()
-        self.update_view()
+        self.append_to_queue(self.update_support_model)
+        self.append_to_queue(self.update_model_dimensions)
+        self.append_to_queue(self.update_view)
 
     def _get_model_center(self):
         if self.model is None:
@@ -2799,7 +2801,7 @@ class ProjectGui:
 
     @progress_activity_guard
     @gui_activity_guard
-    def scale_model(self, widget=None, percent=None):
+    def scale_model(self, widget=None, percent=None, keep_center=True):
         if percent is None:
             percent = self.gui.get_object("ScalePercent").get_value()
         factor = percent / 100.0
@@ -2810,15 +2812,17 @@ class ProjectGui:
         self.update_progress_bar("Scaling model")
         self.disable_progress_cancel_button()
         self.model.scale(factor, callback=self.update_progress_bar)
-        self._set_model_center(old_center)
-        self.append_to_queue(self.update_scale_controls)
+        if keep_center:
+            self._set_model_center(old_center)
+        self.append_to_queue(self.update_model_dimensions)
         self.append_to_queue(self.update_support_model)
         self.append_to_queue(self.update_view)
 
     @gui_activity_guard
-    def update_scale_controls(self, widget=None):
+    def update_model_dimensions(self, widget=None):
         if self.model is None:
             return
+        # scale controls
         axis_control = self.gui.get_object("ScaleDimensionAxis")
         scale_button = self.gui.get_object("ScaleDimensionButton")
         scale_value = self.gui.get_object("ScaleDimensionControl")
@@ -2832,6 +2836,13 @@ class ProjectGui:
         scale_button.set_sensitive(enable_controls)
         scale_value.set_sensitive(enable_controls)
         scale_value.set_value(value)
+        # model corners in 3D view
+        for attr, label_suffix in (("minx", "XMin"), ("miny", "YMin"),
+                ("minz", "ZMin"), ("maxx", "XMax"), ("maxy", "YMax"),
+                ("maxz", "ZMax")):
+            label_name = "ModelCorner%s" % label_suffix
+            value = "%.3f" % getattr(self.model, attr)
+            self.gui.get_object(label_name).set_label(value)
 
     @progress_activity_guard
     @gui_activity_guard
@@ -2877,8 +2888,9 @@ class ProjectGui:
                     callback=self.update_progress_bar)
         # move the model to its previous center
         self._set_model_center(old_center)
-        self.update_support_model()
-        self.update_view()
+        self.append_to_queue(self.update_support_model)
+        self.append_to_queue(self.update_model_dimensions)
+        self.append_to_queue(self.update_view)
 
     def destroy(self, widget=None, data=None):
         self.update_view()
@@ -3022,7 +3034,7 @@ class ProjectGui:
         self.update_save_actions()
 
     def _update_all_model_attributes(self):
-        self.append_to_queue(self.update_scale_controls)
+        self.append_to_queue(self.update_model_dimensions)
         self.append_to_queue(self.update_model_type_related_controls)
         self.append_to_queue(self.update_support_controls)
         self.append_to_queue(self.toggle_3d_view, value=True)

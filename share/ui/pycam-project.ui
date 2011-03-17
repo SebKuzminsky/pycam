@@ -4845,32 +4845,157 @@ Usually you will want to use the cutter radius here to cut around the outline.</
           </packing>
         </child>
         <child>
-          <object class="GtkHBox" id="view3ddimension">
+          <object class="GtkAlignment" id="alignment22">
             <property name="visible">True</property>
-            <property name="spacing">6</property>
+            <property name="left_padding">2</property>
+            <property name="right_padding">2</property>
             <child>
-              <object class="GtkLabel" id="DimensionLabel">
+              <object class="GtkTable" id="view3ddimension">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">Bounding Box:</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="padding">3</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkHBox" id="hbox8">
-                <property name="visible">True</property>
-                <property name="spacing">12</property>
+                <property name="n_rows">2</property>
+                <property name="n_columns">6</property>
+                <property name="column_spacing">3</property>
                 <child>
-                  <object class="GtkHBox" id="hbox10">
+                  <object class="GtkLabel" id="label8">
                     <property name="visible">True</property>
+                    <property name="xalign">0</property>
+                    <property name="label" translatable="yes">Model corners:</property>
+                  </object>
+                  <packing>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
+                    <property name="x_options">GTK_FILL</property>
+                    <property name="y_options">GTK_FILL</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkVSeparator" id="vseparator16">
+                    <property name="visible">True</property>
+                    <property name="orientation">vertical</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">2</property>
+                    <property name="right_attach">3</property>
+                    <property name="bottom_attach">2</property>
+                    <property name="x_options">GTK_FILL</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkVSeparator" id="vseparator17">
+                    <property name="visible">True</property>
+                    <property name="orientation">vertical</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">4</property>
+                    <property name="right_attach">5</property>
+                    <property name="bottom_attach">2</property>
+                    <property name="x_options">GTK_FILL</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkHBox" id="hbox42">
+                    <property name="visible">True</property>
+                    <property name="spacing">2</property>
+                    <child>
+                      <object class="GtkLabel" id="ModelCornerXMin">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">xmin</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="ModelCornerXSpaces">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">..</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="ModelCornerXMax">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">xmax</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
+                    <property name="x_options">GTK_FILL</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkHBox" id="hbox44">
+                    <property name="visible">True</property>
+                    <property name="spacing">2</property>
+                    <child>
+                      <object class="GtkLabel" id="ModelCornerZMin">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">zmin</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="ModelCornerZSpaces">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">..</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="ModelCornerZMax">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">zmax</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">5</property>
+                    <property name="right_attach">6</property>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
+                    <property name="x_options">GTK_FILL</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="DimensionLabel">
+                    <property name="visible">True</property>
+                    <property name="xalign">0</property>
+                    <property name="label" translatable="yes">Bounding Box:</property>
+                  </object>
+                  <packing>
+                    <property name="x_options">GTK_FILL</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkHBox" id="hbox40">
+                    <property name="visible">True</property>
+                    <property name="spacing">2</property>
                     <child>
                       <object class="GtkLabel" id="model_dim_x_label">
                         <property name="visible">True</property>
                         <property name="xalign">0</property>
-                        <property name="xpad">3</property>
                         <property name="label" translatable="yes">&#x394;x:</property>
                       </object>
                       <packing>
@@ -4891,48 +5016,19 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                     </child>
                   </object>
                   <packing>
-                    <property name="position">0</property>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                    <property name="x_options">GTK_FILL</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkHBox" id="hbox14">
+                  <object class="GtkHBox" id="hbox41">
                     <property name="visible">True</property>
-                    <child>
-                      <object class="GtkLabel" id="model_dim_y_label">
-                        <property name="visible">True</property>
-                        <property name="xalign">0</property>
-                        <property name="xpad">3</property>
-                        <property name="label" translatable="yes">&#x394;y:</property>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="model_dim_y">
-                        <property name="visible">True</property>
-                        <property name="xalign">0</property>
-                        <property name="label" translatable="yes">y</property>
-                        <property name="single_line_mode">True</property>
-                      </object>
-                      <packing>
-                        <property name="position">1</property>
-                      </packing>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkHBox" id="hbox15">
-                    <property name="visible">True</property>
+                    <property name="spacing">2</property>
                     <child>
                       <object class="GtkLabel" id="model_dim_z_label">
                         <property name="visible">True</property>
                         <property name="xalign">0</property>
-                        <property name="xpad">3</property>
                         <property name="label" translatable="yes">&#x394;z:</property>
                       </object>
                       <packing>
@@ -4953,14 +5049,88 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                     </child>
                   </object>
                   <packing>
-                    <property name="position">2</property>
+                    <property name="left_attach">5</property>
+                    <property name="right_attach">6</property>
+                    <property name="x_options">GTK_FILL</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkHBox" id="hbox43">
+                    <property name="visible">True</property>
+                    <property name="spacing">2</property>
+                    <child>
+                      <object class="GtkLabel" id="model_dim_y_label">
+                        <property name="visible">True</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">&#x394;y:</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="model_dim_y">
+                        <property name="visible">True</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">y</property>
+                        <property name="single_line_mode">True</property>
+                      </object>
+                      <packing>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="right_attach">4</property>
+                    <property name="x_options">GTK_FILL</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkHBox" id="hbox45">
+                    <property name="visible">True</property>
+                    <property name="spacing">2</property>
+                    <child>
+                      <object class="GtkLabel" id="ModelCornerYMin">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">ymin</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="ModelCornerYSpaces">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">..</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="ModelCornerYMax">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">ymax</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="right_attach">4</property>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
+                    <property name="x_options">GTK_FILL</property>
                   </packing>
                 </child>
               </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="position">1</property>
-              </packing>
             </child>
           </object>
           <packing>
