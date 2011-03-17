@@ -331,7 +331,7 @@ class ProjectGui:
                 ("OpenModel", self.load_model_file, None, "<Control>o"),
                 ("SaveModel", self.save_model, lambda: self.last_model_filename, "<Control>s"),
                 ("SaveAsModel", self.save_model, None, "<Control><Shift>s"),
-                ("ExportGCodeAll", self.save_toolpath, None, "<Control><Shift>e"),
+                ("ExportGCodeAll", self.save_toolpath, False, "<Control><Shift>e"),
                 ("ExportGCodeVisible", self.save_toolpath, True, None),
                 ("ExportEMCToolDefinition", self.export_emc_tools, None, None),
                 ("Quit", self.destroy, None, "<Control>q"),
@@ -350,6 +350,7 @@ class ProjectGui:
                 ("HelpBoundsSettings", self.show_help, "BoundsSettings", None),
                 ("HelpTaskSetup", self.show_help, "TaskSetup", None),
                 ("HelpGCodeExport", self.show_help, "GCodeExport", None),
+                ("HelpTouchOff", self.show_help, "TouchOff", None),
                 ("HelpSimulation", self.show_help, "Simulation", None),
                 ("Help3DView", self.show_help, "3D_View", None),
                 ("HelpServerMode", self.show_help, "ServerMode", None),
@@ -865,6 +866,10 @@ class ProjectGui:
         self.gui.get_object("toolpath_crop").connect("clicked", self.toolpath_table_event, "crop")
         self.gui.get_object("ToolpathGrid").connect("clicked", self.toolpath_table_event, "grid")
         self.gui.get_object("ExitSimulationButton").connect("clicked", self.finish_toolpath_simulation)
+        self.gui.get_object("ExportAllToolpathsButton").connect("clicked",
+                self.save_toolpath, False)
+        self.gui.get_object("ExportVisibleToolpathsButton").connect("clicked",
+                self.save_toolpath, True)
         speed_factor_widget = self.gui.get_object("SimulationSpeedFactor")
         self.settings.add_item("simulation_speed_factor",
                 lambda: pow(10, speed_factor_widget.get_value()),
@@ -1149,6 +1154,7 @@ class ProjectGui:
         self.update_ode_settings()
         self.update_parallel_processes_settings()
         self.update_model_type_related_controls()
+        self.update_toolpath_related_controls()
 
     def update_gcode_controls(self, widget=None):
         # path mode
@@ -3350,8 +3356,9 @@ class ProjectGui:
                 path = None
             if (not path is None) and (path < len(self.toolpath)):
                 self.toolpath[path].visible = not self.toolpath[path].visible
-                # hide/show toolpaths according to the new setting
-                self.update_view()
+                tp_model = self.toolpath_table.get_model()
+                tp_model[path][2] = self.toolpath[path].visible
+                self.update_toolpath_related_controls()
         elif action == "simulate":
             index = self._treeview_get_active_index(self.toolpath_table,
                     self.toolpath)
@@ -3372,7 +3379,7 @@ class ProjectGui:
             self._treeview_button_event(self.toolpath_table, self.toolpath,
                     action, self.update_toolpath_table)
         # do some post-processing ...
-        if action in ("delete", "crop", "grid"):
+        if action in ("toggle_visibility", "delete", "crop", "grid"):
             self.update_view()
 
     def update_toolpath_grid_window(self, widget=None):
@@ -3423,6 +3430,7 @@ class ProjectGui:
             toolpath.visible = False
             new_toolpath.visible = True
             self.toolpath.append(new_toolpath)
+            self.update_toolpath_table()
         dialog.hide()
 
     @progress_activity_guard
@@ -3443,14 +3451,7 @@ class ProjectGui:
         self.update_progress_bar("Cropping the toolpath")
         toolpath.crop(contour.get_polygons(), callback=self.update_progress_bar)
 
-    def update_toolpath_table(self, new_index=None, skip_model_update=False):
-        def get_time_string(minutes):
-            if minutes > 180:
-                return "%d hours" % int(round(minutes / 60))
-            elif minutes > 3:
-                return "%d minutes" % int(round(minutes))
-            else:
-                return "%d seconds" % int(round(minutes * 60))
+    def update_toolpath_related_controls(self):
         # show or hide the "toolpath" tab
         toolpath_tab = self.gui.get_object("ToolPathTab")
         if not self.toolpath:
@@ -3461,8 +3462,21 @@ class ProjectGui:
             toolpath_tab.show()
         # enable/disable the export menu item
         self.gui.get_object("ExportGCodeAll").set_sensitive(len(self.toolpath) > 0)
-        visible_toolpaths = [tp for tp in self.toolpath if tp.visible]
-        self.gui.get_object("ExportGCodeVisible").set_sensitive(len(visible_toolpaths) > 0)
+        toolpaths_are_visible = any([tp.visible for tp in self.toolpath])
+        self.gui.get_object("ExportGCodeVisible").set_sensitive(
+                toolpaths_are_visible)
+        self.gui.get_object("ExportVisibleToolpathsButton").set_sensitive(
+                toolpaths_are_visible)
+
+    def update_toolpath_table(self, new_index=None, skip_model_update=False):
+        def get_time_string(minutes):
+            if minutes > 180:
+                return "%d hours" % int(round(minutes / 60))
+            elif minutes > 3:
+                return "%d minutes" % int(round(minutes))
+            else:
+                return "%d seconds" % int(round(minutes * 60))
+        self.update_toolpath_related_controls()
         # reset the model data and the selection
         if new_index is None:
             # keep the old selection - this may return "None" if nothing is selected

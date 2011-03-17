@@ -39,16 +39,17 @@
         <menuitem action="HelpModelTransformations"/>
         <menuitem action="HelpGCodeExport"/>
         <menuitem action="HelpSimulation"/>
-        <menuitem action="Help3DView"/>
         <menuitem action="HelpServerMode"/>
         <menuitem action="HelpCommandLine"/>
         <menuitem action="HelpHotkeys"/>
+        <menuitem action="HelpTouchOff"/>
       </menu>
       <menu action="HelpMenuGUI">
         <menuitem action="HelpToolTypes"/>
         <menuitem action="HelpProcessSettings"/>
         <menuitem action="HelpBoundsSettings"/>
         <menuitem action="HelpTaskSetup"/>
+        <menuitem action="Help3DView"/>
       </menu>
       <separator />
       <menuitem action="ProjectWebsite"/>

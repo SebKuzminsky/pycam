@@ -967,71 +967,92 @@
                         <property name="label_xalign">0</property>
                         <property name="shadow_type">none</property>
                         <child>
-                          <object class="GtkAlignment" id="alignment42">
+                          <object class="GtkVBox" id="vbox9">
                             <property name="visible">True</property>
-                            <property name="left_padding">12</property>
+                            <property name="orientation">vertical</property>
+                            <property name="spacing">3</property>
                             <child>
-                              <object class="GtkVBox" id="vbox29">
+                              <object class="GtkAlignment" id="alignment42">
                                 <property name="visible">True</property>
-                                <property name="orientation">vertical</property>
-                                <property name="spacing">3</property>
+                                <property name="left_padding">12</property>
                                 <child>
-                                  <object class="GtkButton" id="ToggleModelDirectionButton">
-                                    <property name="label" translatable="yes">Toggle direction</property>
+                                  <object class="GtkVBox" id="vbox29">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                    <property name="tooltip_text" translatable="yes">Toggle the direction of a 2D contour model.
-This can be useful if the imported model is technically broken (sometimes this happens with Inkscape).</property>
+                                    <property name="orientation">vertical</property>
+                                    <property name="spacing">3</property>
+                                    <child>
+                                      <object class="GtkButton" id="ToggleModelDirectionButton">
+                                        <property name="label" translatable="yes">Toggle direction</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="padding">2</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="ScaleInchMM">
+                                        <property name="label" translatable="yes">Inch -&gt; mm</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="ScaleMMInch">
+                                        <property name="label" translatable="yes">mm -&gt; Inch</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="Projection2D">
+                                        <property name="label" translatable="yes">2D Projection</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="position">3</property>
+                                      </packing>
+                                    </child>
                                   </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">False</property>
-                                    <property name="padding">2</property>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="ScaleInchMM">
-                                    <property name="label" translatable="yes">Inch -&gt; mm</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                    <property name="tooltip_text" translatable="yes">Scale the model by a factor of 25.4.</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="ScaleMMInch">
-                                    <property name="label" translatable="yes">mm -&gt; Inch</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                    <property name="tooltip_text" translatable="yes">Scale the model by a divider of 25.4.</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">2</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="Projection2D">
-                                    <property name="label" translatable="yes">2D Projection</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                    <property name="tooltip_text" translatable="yes">Reduce the 3D model down to a 2D projection.
-The projection plane is usually at z=0. Only in case of models completely above or below zero the bottom of the model is used instead.</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">3</property>
-                                  </packing>
                                 </child>
                               </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLinkButton" id="ModelTransformationsHelp">
+                                <property name="label">gtk-help</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">True</property>
+                                <property name="relief">none</property>
+                                <property name="use_stock">True</property>
+                                <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=ModelTransformations</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">1</property>
+                              </packing>
                             </child>
                           </object>
                         </child>
@@ -1861,64 +1882,89 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkVButtonBox" id="vbuttonbox1">
+                                  <object class="GtkVBox" id="vbox16">
                                     <property name="visible">True</property>
                                     <property name="orientation">vertical</property>
-                                    <property name="layout_style">center</property>
                                     <child>
-                                      <object class="GtkButton" id="ToolListAdd">
-                                        <property name="label">gtk-new</property>
+                                      <object class="GtkVButtonBox" id="vbuttonbox1">
                                         <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
-                                        <property name="use_stock">True</property>
+                                        <property name="orientation">vertical</property>
+                                        <property name="layout_style">center</property>
+                                        <child>
+                                          <object class="GtkButton" id="ToolListAdd">
+                                            <property name="label">gtk-new</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="use_stock">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkButton" id="ToolListDelete">
+                                            <property name="label">gtk-delete</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="use_stock">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkButton" id="ToolListMoveUp">
+                                            <property name="label">gtk-go-up</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="use_stock">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">2</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkButton" id="ToolListMoveDown">
+                                            <property name="label">gtk-go-down</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="use_stock">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">3</property>
+                                          </packing>
+                                        </child>
                                       </object>
                                       <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">False</property>
                                         <property name="position">0</property>
                                       </packing>
                                     </child>
                                     <child>
-                                      <object class="GtkButton" id="ToolListDelete">
-                                        <property name="label">gtk-delete</property>
+                                      <object class="GtkLinkButton" id="ToolHelp">
+                                        <property name="label">gtk-help</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
+                                        <property name="relief">none</property>
                                         <property name="use_stock">True</property>
+                                        <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=ToolTypes</property>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
                                         <property name="fill">False</property>
                                         <property name="position">1</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkButton" id="ToolListMoveUp">
-                                        <property name="label">gtk-go-up</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
-                                        <property name="use_stock">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">False</property>
-                                        <property name="position">2</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkButton" id="ToolListMoveDown">
-                                        <property name="label">gtk-go-down</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
-                                        <property name="use_stock">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">False</property>
-                                        <property name="position">3</property>
                                       </packing>
                                     </child>
                                   </object>
@@ -2381,64 +2427,89 @@ The projection plane is usually at z=0. Only in case of models completely above 
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkVButtonBox" id="vbuttonbox2">
+                                  <object class="GtkVBox" id="vbox20">
                                     <property name="visible">True</property>
                                     <property name="orientation">vertical</property>
-                                    <property name="layout_style">center</property>
                                     <child>
-                                      <object class="GtkButton" id="ProcessListAdd">
-                                        <property name="label">gtk-new</property>
+                                      <object class="GtkVButtonBox" id="vbuttonbox2">
                                         <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
-                                        <property name="use_stock">True</property>
+                                        <property name="orientation">vertical</property>
+                                        <property name="layout_style">center</property>
+                                        <child>
+                                          <object class="GtkButton" id="ProcessListAdd">
+                                            <property name="label">gtk-new</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="use_stock">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkButton" id="ProcessListDelete">
+                                            <property name="label">gtk-delete</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="use_stock">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkButton" id="ProcessListMoveUp">
+                                            <property name="label">gtk-go-up</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="use_stock">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">2</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkButton" id="ProcessListMoveDown">
+                                            <property name="label">gtk-go-down</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="use_stock">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">3</property>
+                                          </packing>
+                                        </child>
                                       </object>
                                       <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">False</property>
                                         <property name="position">0</property>
                                       </packing>
                                     </child>
                                     <child>
-                                      <object class="GtkButton" id="ProcessListDelete">
-                                        <property name="label">gtk-delete</property>
+                                      <object class="GtkLinkButton" id="ProcessHelp">
+                                        <property name="label">gtk-help</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
+                                        <property name="relief">none</property>
                                         <property name="use_stock">True</property>
+                                        <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=ProcessSettings</property>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
                                         <property name="fill">False</property>
                                         <property name="position">1</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkButton" id="ProcessListMoveUp">
-                                        <property name="label">gtk-go-up</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
-                                        <property name="use_stock">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">False</property>
-                                        <property name="position">2</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkButton" id="ProcessListMoveDown">
-                                        <property name="label">gtk-go-down</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
-                                        <property name="use_stock">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">False</property>
-                                        <property name="position">3</property>
                                       </packing>
                                     </child>
                                   </object>
@@ -3098,64 +3169,89 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkVButtonBox" id="vbuttonbox3">
+                              <object class="GtkVBox" id="vbox22">
                                 <property name="visible">True</property>
                                 <property name="orientation">vertical</property>
-                                <property name="layout_style">center</property>
                                 <child>
-                                  <object class="GtkButton" id="BoundsListAdd">
-                                    <property name="label">gtk-new</property>
+                                  <object class="GtkVButtonBox" id="vbuttonbox3">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                    <property name="use_stock">True</property>
+                                    <property name="orientation">vertical</property>
+                                    <property name="layout_style">center</property>
+                                    <child>
+                                      <object class="GtkButton" id="BoundsListAdd">
+                                        <property name="label">gtk-new</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <property name="use_stock">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="BoundsListDelete">
+                                        <property name="label">gtk-delete</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <property name="use_stock">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="BoundsListMoveUp">
+                                        <property name="label">gtk-go-up</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <property name="use_stock">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="BoundsListMoveDown">
+                                        <property name="label">gtk-go-down</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <property name="use_stock">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">3</property>
+                                      </packing>
+                                    </child>
                                   </object>
                                   <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">False</property>
                                     <property name="position">0</property>
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkButton" id="BoundsListDelete">
-                                    <property name="label">gtk-delete</property>
+                                  <object class="GtkLinkButton" id="BoundsHelp">
+                                    <property name="label">gtk-help</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
+                                    <property name="has_tooltip">True</property>
+                                    <property name="relief">none</property>
                                     <property name="use_stock">True</property>
+                                    <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=BoundsSettings</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
-                                    <property name="fill">False</property>
                                     <property name="position">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="BoundsListMoveUp">
-                                    <property name="label">gtk-go-up</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                    <property name="use_stock">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">False</property>
-                                    <property name="position">2</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="BoundsListMoveDown">
-                                    <property name="label">gtk-go-down</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                    <property name="use_stock">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">False</property>
-                                    <property name="position">3</property>
                                   </packing>
                                 </child>
                               </object>
@@ -3861,94 +3957,121 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkVButtonBox" id="vbuttonbox4">
+                                  <object class="GtkVBox" id="vbox35">
                                     <property name="visible">True</property>
                                     <property name="orientation">vertical</property>
-                                    <property name="layout_style">center</property>
                                     <child>
-                                      <object class="GtkButton" id="GenerateToolPathButton">
-                                        <property name="label" translatable="yes">_Generate Toolpath</property>
+                                      <object class="GtkVButtonBox" id="vbuttonbox4">
                                         <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
-                                        <property name="image">GenerateOneToolPathIcon</property>
-                                        <property name="use_underline">True</property>
+                                        <property name="orientation">vertical</property>
+                                        <property name="layout_style">center</property>
+                                        <child>
+                                          <object class="GtkButton" id="GenerateToolPathButton">
+                                            <property name="label" translatable="yes">_Generate Toolpath</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="tooltip_text" translatable="yes">Generate the currently selected toolpath</property>
+                                            <property name="image">GenerateOneToolPathIcon</property>
+                                            <property name="use_underline">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkButton" id="GenerateAllToolPathsButton">
+                                            <property name="label" translatable="yes">Generate _All</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="tooltip_text" translatable="yes">Generate all toolpaths that are marked as enabled</property>
+                                            <property name="image">GenerateAllToolPathsIcon</property>
+                                            <property name="use_underline">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkButton" id="TaskListAdd">
+                                            <property name="label">gtk-new</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="use_stock">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">2</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkButton" id="TaskListDelete">
+                                            <property name="label">gtk-delete</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="use_stock">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">3</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkButton" id="TaskListMoveUp">
+                                            <property name="label">gtk-go-up</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="use_stock">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">4</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkButton" id="TaskListMoveDown">
+                                            <property name="label">gtk-go-down</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="use_stock">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">5</property>
+                                          </packing>
+                                        </child>
                                       </object>
                                       <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">False</property>
                                         <property name="position">0</property>
                                       </packing>
                                     </child>
                                     <child>
-                                      <object class="GtkButton" id="GenerateAllToolPathsButton">
-                                        <property name="label" translatable="yes">Generate _All</property>
+                                      <object class="GtkLinkButton" id="TaskHelp">
+                                        <property name="label">gtk-help</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
-                                        <property name="image">GenerateAllToolPathsIcon</property>
-                                        <property name="use_underline">True</property>
+                                        <property name="has_tooltip">True</property>
+                                        <property name="relief">none</property>
+                                        <property name="use_stock">True</property>
+                                        <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=TaskSettings</property>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
-                                        <property name="fill">False</property>
                                         <property name="position">1</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkButton" id="TaskListAdd">
-                                        <property name="label">gtk-new</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
-                                        <property name="use_stock">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">False</property>
-                                        <property name="position">2</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkButton" id="TaskListDelete">
-                                        <property name="label">gtk-delete</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
-                                        <property name="use_stock">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">False</property>
-                                        <property name="position">3</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkButton" id="TaskListMoveUp">
-                                        <property name="label">gtk-go-up</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
-                                        <property name="use_stock">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">False</property>
-                                        <property name="position">4</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkButton" id="TaskListMoveDown">
-                                        <property name="label">gtk-go-down</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
-                                        <property name="use_stock">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">False</property>
-                                        <property name="position">5</property>
                                       </packing>
                                     </child>
                                   </object>
@@ -4138,6 +4261,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                 </child>
                               </object>
                               <packing>
+                                <property name="expand">False</property>
                                 <property name="position">1</property>
                               </packing>
                             </child>
@@ -4154,7 +4278,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                     </child>
                   </object>
                   <packing>
-                    <property name="expand">False</property>
                     <property name="position">0</property>
                   </packing>
                 </child>
@@ -4296,6 +4419,36 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                 <property name="orientation">vertical</property>
                                 <property name="layout_style">center</property>
                                 <child>
+                                  <object class="GtkButton" id="ExportAllToolpathsButton">
+                                    <property name="label" translatable="yes">Export all</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="image">ExportAllToolpathsIcon</property>
+                                    <property name="xalign">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="ExportVisibleToolpathsButton">
+                                    <property name="label" translatable="yes">Export visible</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="image">ExportVisibleToolpathsIcon</property>
+                                    <property name="xalign">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
                                   <object class="GtkButton" id="toolpath_simulate">
                                     <property name="label" translatable="yes">Simulate</property>
                                     <property name="visible">True</property>
@@ -4307,7 +4460,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   <packing>
                                     <property name="expand">False</property>
                                     <property name="fill">False</property>
-                                    <property name="position">0</property>
+                                    <property name="position">2</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -4317,11 +4470,12 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
                                     <property name="use_stock">True</property>
+                                    <property name="xalign">0</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
                                     <property name="fill">False</property>
-                                    <property name="position">1</property>
+                                    <property name="position">3</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -4336,7 +4490,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   <packing>
                                     <property name="expand">False</property>
                                     <property name="fill">False</property>
-                                    <property name="position">2</property>
+                                    <property name="position">4</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -4351,7 +4505,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   <packing>
                                     <property name="expand">False</property>
                                     <property name="fill">False</property>
-                                    <property name="position">3</property>
+                                    <property name="position">5</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -4366,7 +4520,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   <packing>
                                     <property name="expand">False</property>
                                     <property name="fill">False</property>
-                                    <property name="position">4</property>
+                                    <property name="position">6</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -4381,7 +4535,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   <packing>
                                     <property name="expand">False</property>
                                     <property name="fill">False</property>
-                                    <property name="position">5</property>
+                                    <property name="position">7</property>
                                   </packing>
                                 </child>
                               </object>
@@ -4576,9 +4730,8 @@ Usually you will want to use the cutter radius here to cut around the outline.</
               </packing>
             </child>
             <child>
-              <object class="GtkToolbar" id="PerspectiveControls">
+              <object class="GtkHBox" id="hbox38">
                 <property name="visible">True</property>
-                <property name="toolbar_style">text</property>
                 <child>
                   <object class="GtkToolButton" id="Reset View">
                     <property name="visible">True</property>
@@ -4587,7 +4740,8 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
                   </packing>
                 </child>
                 <child>
@@ -4598,7 +4752,8 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
+                    <property name="fill">False</property>
+                    <property name="position">1</property>
                   </packing>
                 </child>
                 <child>
@@ -4609,7 +4764,8 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
+                    <property name="fill">False</property>
+                    <property name="position">2</property>
                   </packing>
                 </child>
                 <child>
@@ -4620,7 +4776,8 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
+                    <property name="fill">False</property>
+                    <property name="position">3</property>
                   </packing>
                 </child>
                 <child>
@@ -4631,7 +4788,8 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
+                    <property name="fill">False</property>
+                    <property name="position">4</property>
                   </packing>
                 </child>
                 <child>
@@ -4642,7 +4800,8 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
+                    <property name="fill">False</property>
+                    <property name="position">5</property>
                   </packing>
                 </child>
                 <child>
@@ -4653,12 +4812,30 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
+                    <property name="fill">False</property>
+                    <property name="position">6</property>
                   </packing>
                 </child>
               </object>
               <packing>
                 <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLinkButton" id="3DViewHelp">
+                <property name="label">gtk-help</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="has_tooltip">True</property>
+                <property name="relief">none</property>
+                <property name="use_stock">True</property>
+                <property name="xalign">1</property>
+                <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=3D_View</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">3</property>
               </packing>
             </child>
           </object>
@@ -4883,7 +5060,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
     <property name="label">_Settings</property>
   </object>
   <object class="GtkAction" id="ExportGCodeVisible">
-    <property name="label">_Export visible Toolpaths</property>
+    <property name="label">Export _visible Toolpaths</property>
     <property name="tooltip">Write all visible toolpaths to a file.</property>
     <property name="stock_id">gtk-execute</property>
     <property name="always_show_image">True</property>
@@ -5623,7 +5800,7 @@ Choose a small value to minimize rapid moves up and down.</property>
                                     <child>
                                       <object class="GtkTable" id="TouchOffLocationTable">
                                         <property name="visible">True</property>
-                                        <property name="n_rows">7</property>
+                                        <property name="n_rows">8</property>
                                         <property name="n_columns">3</property>
                                         <property name="column_spacing">3</property>
                                         <property name="row_spacing">3</property>
@@ -5913,6 +6090,26 @@ Everyone else should use the option for M3/M5 (see above).</property>
                                             <property name="top_attach">6</property>
                                             <property name="bottom_attach">7</property>
                                             <property name="x_options">GTK_FILL</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLinkButton" id="TouchOffHelp">
+                                            <property name="label">gtk-help</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="has_tooltip">True</property>
+                                            <property name="relief">none</property>
+                                            <property name="use_stock">True</property>
+                                            <property name="xalign">1</property>
+                                            <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=TouchOff</property>
+                                          </object>
+                                          <packing>
+                                            <property name="right_attach">3</property>
+                                            <property name="top_attach">7</property>
+                                            <property name="bottom_attach">8</property>
+                                            <property name="x_options">GTK_FILL</property>
+                                            <property name="y_options">GTK_FILL</property>
                                           </packing>
                                         </child>
                                       </object>
@@ -6533,7 +6730,7 @@ Hotkey: &lt;p&gt;</property>
                     <child>
                       <object class="GtkTable" id="table11">
                         <property name="visible">True</property>
-                        <property name="n_rows">2</property>
+                        <property name="n_rows">3</property>
                         <property name="n_columns">4</property>
                         <property name="column_spacing">3</property>
                         <child>
@@ -6653,6 +6850,26 @@ Hotkey: &lt;p&gt;</property>
                             <property name="right_attach">2</property>
                             <property name="top_attach">1</property>
                             <property name="bottom_attach">2</property>
+                            <property name="y_options">GTK_FILL</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLinkButton" id="ExternalProgramsHelp">
+                            <property name="label">gtk-help</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <property name="has_tooltip">True</property>
+                            <property name="relief">none</property>
+                            <property name="use_stock">True</property>
+                            <property name="xalign">1</property>
+                            <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=Requirements#Optional_external_programs</property>
+                          </object>
+                          <packing>
+                            <property name="right_attach">4</property>
+                            <property name="top_attach">2</property>
+                            <property name="bottom_attach">3</property>
+                            <property name="x_options">GTK_FILL</property>
                             <property name="y_options">GTK_FILL</property>
                           </packing>
                         </child>
@@ -6896,7 +7113,7 @@ See the &lt;a href="http://sf.net/apps/mediawiki/pycam/?title=Parallel_Processin
                                         <child>
                                           <object class="GtkTable" id="ServerModeSettingsTable">
                                             <property name="visible">True</property>
-                                            <property name="n_rows">3</property>
+                                            <property name="n_rows">4</property>
                                             <property name="n_columns">3</property>
                                             <property name="column_spacing">3</property>
                                             <property name="row_spacing">2</property>
@@ -7067,6 +7284,26 @@ The default port is 1250.</property>
                                                 <property name="bottom_attach">3</property>
                                                 <property name="x_options"></property>
                                                 <property name="y_options"></property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkLinkButton" id="ServerModeHelp">
+                                                <property name="label">gtk-help</property>
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="receives_default">True</property>
+                                                <property name="has_tooltip">True</property>
+                                                <property name="relief">none</property>
+                                                <property name="use_stock">True</property>
+                                                <property name="xalign">1</property>
+                                                <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=ServerMode</property>
+                                              </object>
+                                              <packing>
+                                                <property name="right_attach">3</property>
+                                                <property name="top_attach">3</property>
+                                                <property name="bottom_attach">4</property>
+                                                <property name="x_options">GTK_FILL</property>
+                                                <property name="y_options">GTK_FILL</property>
                                               </packing>
                                             </child>
                                           </object>
@@ -7460,7 +7697,7 @@ Any selected group of dimensions will be scaled accordingly.</property>
     <property name="label">_Help</property>
   </object>
   <object class="GtkAction" id="HelpMenuMisc">
-    <property name="label">Miscellaneous</property>
+    <property name="label">Mis_cellaneous</property>
   </object>
   <object class="GtkAction" id="HelpMenuGUI">
     <property name="label">_GUI description</property>
@@ -7518,15 +7755,15 @@ Any selected group of dimensions will be scaled accordingly.</property>
     <property name="stock_id">gtk-network</property>
   </object>
   <object class="GtkAction" id="Forum">
-    <property name="label">Forum</property>
+    <property name="label">_Forum</property>
     <property name="stock_id">gtk-network</property>
   </object>
   <object class="GtkAction" id="BugTracker">
-    <property name="label">Report a Bug</property>
+    <property name="label">Report a _Bug</property>
     <property name="stock_id">gtk-network</property>
   </object>
   <object class="GtkAction" id="FeatureRequest">
-    <property name="label">Request a Feature</property>
+    <property name="label">Re_quest a Feature</property>
     <property name="stock_id">gtk-network</property>
   </object>
   <object class="GtkAdjustment" id="SupportGridDistanceY">
@@ -8020,7 +8257,7 @@ Please read the description of the Server Mode (linked below) to understand the 
     <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="DevelopmentBlog">
-    <property name="label">Development Blog</property>
+    <property name="label">_Development Blog</property>
     <property name="stock_id">gtk-network</property>
   </object>
   <object class="GtkAction" id="HelpServerMode">
@@ -8971,14 +9208,6 @@ upon interesting bugs and weird results.</property>
     <property name="visible">True</property>
     <property name="stock">gtk-zoom-fit</property>
   </object>
-  <object class="GtkImage" id="GenerateOneToolPathIcon">
-    <property name="visible">True</property>
-    <property name="stock">gtk-execute</property>
-  </object>
-  <object class="GtkImage" id="GenerateAllToolPathsIcon">
-    <property name="visible">True</property>
-    <property name="stock">gtk-execute</property>
-  </object>
   <object class="GtkAdjustment" id="ToolChangeRapidMoveDownValue">
     <property name="upper">10000</property>
     <property name="step_increment">1</property>
@@ -9018,5 +9247,26 @@ upon interesting bugs and weird results.</property>
   <object class="GtkAdjustment" id="GCodeSpindleDelayValue">
     <property name="upper">100</property>
     <property name="step_increment">1</property>
+  </object>
+  <object class="GtkImage" id="GenerateOneToolPathIcon">
+    <property name="visible">True</property>
+    <property name="stock">gtk-execute</property>
+  </object>
+  <object class="GtkImage" id="GenerateAllToolPathsIcon">
+    <property name="visible">True</property>
+    <property name="stock">gtk-execute</property>
+  </object>
+  <object class="GtkAction" id="HelpTouchOff">
+    <property name="label">_Touch off and tool change</property>
+    <property name="short_label">_Touch off</property>
+    <property name="stock_id">gtk-help</property>
+  </object>
+  <object class="GtkImage" id="ExportVisibleToolpathsIcon">
+    <property name="visible">True</property>
+    <property name="stock">gtk-save-as</property>
+  </object>
+  <object class="GtkImage" id="ExportAllToolpathsIcon">
+    <property name="visible">True</property>
+    <property name="stock">gtk-save-as</property>
   </object>
 </interface>
