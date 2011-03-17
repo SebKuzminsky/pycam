@@ -137,14 +137,14 @@ def generate_toolpath(model, tool_settings=None,
         minx, miny, minz = [number(value) for value in bounds_low]
         maxx, maxy, maxz = [number(value) for value in bounds_high]
     # trimesh model or contour model?
-    if isinstance(model, pycam.Geometry.Model.Model):
-        # trimesh model
-        trimesh_models = [model]
-        contour_model = None
-    else:
+    if isinstance(model, pycam.Geometry.Model.ContourModel):
         # contour model
         trimesh_models = []
         contour_model = model
+    else:
+        # trimesh model
+        trimesh_models = [model]
+        contour_model = None
     # Due to some weirdness the height of the drill must be bigger than the
     # object's size. Otherwise some collisions are not detected.
     cutter_height = 4 * abs(maxz - minz)

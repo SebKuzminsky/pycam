@@ -1195,6 +1195,9 @@ class ProjectGui:
         is_projectable = (not self.model is None) \
                 and hasattr(self.model, "get_waterline_contour")
         self.gui.get_object("Projection2D").set_sensitive(is_projectable)
+        # disable the lower boundary for contour models
+        is_contour = isinstance(self.model, pycam.Geometry.Model.ContourModel)
+        self.gui.get_object("boundary_z_low").set_sensitive(not is_contour)
 
     def update_ode_settings(self, widget=None):
         if pycam.Utils.threading.is_multiprocessing_enabled() \
