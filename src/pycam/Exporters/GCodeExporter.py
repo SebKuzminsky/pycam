@@ -118,13 +118,14 @@ class GCodeGenerator:
         self.last_feedrate = 100
         if touch_off_on_startup or touch_off_on_tool_change:
             self.store_touch_off_position(touch_off_position)
+        self.touch_off_on_startup = touch_off_on_startup
         self.touch_off_on_tool_change = touch_off_on_tool_change
         self.touch_off_rapid_move = touch_off_rapid_move
         self.touch_off_slow_move = touch_off_slow_move
         self.touch_off_slow_feedrate = touch_off_slow_feedrate
         self.touch_off_pause_execution = touch_off_pause_execution
-        if touch_off_on_startup:
-            self.run_touch_off(force_height=touch_off_height)
+        self.touch_off_height = touch_off_height
+        self._on_startup = True
 
     def run_touch_off(self, new_tool_id=None, force_height=None):
         # either "new_tool_id" or "force_height" should be specified
@@ -148,16 +149,30 @@ class GCodeGenerator:
         self.append("G28 (go up again)")
         if not new_tool_id is None:
             # compensate the length of the new tool
-            self.append("#1000=#5063 (store current tool length compensation)")
+            self.append("#100=#5063 (store current tool length compensation)")
             self.append("T%d M6" % new_tool_id)
             if self.touch_off_rapid_move > 0:
                 self.append("G0 Z-%f (go down rapidly)" % self.touch_off_rapid_move)
             self.append("G38.2 Z-%f (do the touch off)" % self.touch_off_slow_move)
             self.append("G28 (go up again)")
             # compensate the tool length difference
-            self.append("G43.1 Z[#5063-#1000] (compensate the new tool length)")
+            self.append("G43.1 Z[#5063-#100] (compensate the new tool length)")
         self.append("F%f (restore feed rate)" % self.last_feedrate)
         self.append("G90 (disable incremental mode)")
+        # Move up to a safe height. This is either "safety height" or the touch
+        # off start location. The highest value of these two is used.
+        if self.touch_off_on_startup and not self.touch_off_height is None:
+            touch_off_safety_height = self.touch_off_height + \
+                    self.touch_off_slow_move + self.touch_off_rapid_move
+            final_height = max(touch_off_safety_height, self.safety_height)
+            self.append("G0 Z%.3f" % final_height)
+        else:
+            # We assume, that the touch off start position is _above_ the
+            # top of the material. This is documented.
+            # A proper ("safer") implementation would compare "safety_height"
+            # with the touch off start location. But this requires "O"-Codes
+            # which are only usable for EMC2 (probably).
+            self.append("G53 G0 Z#5163 (go to touch off position: z)")
         if self.touch_off_pause_execution:
             self.append("(msg,Pausing after tool change)")
             self.append("M0 (pause after touch off)")
@@ -203,6 +218,7 @@ class GCodeGenerator:
     def add_moves(self, moves, tool_id=None, comment=None):
         if not comment is None:
             self.add_comment(comment)
+        skip_safety_height_move = False
         if not tool_id is None:
             if self.last_tool_id == tool_id:
                 # nothing to be done
@@ -210,11 +226,17 @@ class GCodeGenerator:
             elif self.touch_off_on_tool_change and \
                     not (self.last_tool_id is None):
                 self.run_touch_off(new_tool_id=tool_id)
+                skip_safety_height_move = True
             else:
                 self.append("T%d M6" % tool_id)
+                if self._on_startup and self.touch_off_on_startup:
+                    self.run_touch_off(force_height=self.touch_off_height)
+                    skip_safety_height_move = True
+                    self._on_startup = False
             self.last_tool_id = tool_id
         # move straight up to safety height
-        self.add_move_to_safety()
+        if not skip_safety_height_move:
+            self.add_move_to_safety()
         self.set_spindle_status(True)
         for pos, rapid in moves:
             self.add_move(pos, rapid=rapid)
