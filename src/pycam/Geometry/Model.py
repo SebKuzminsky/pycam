@@ -444,13 +444,14 @@ class ContourModel(BaseModel):
             return [group for group in self._line_groups if group.minz <= z]
 
     def detect_directions(self, callback=None):
+        finished = []
+        # handle only closed polygons
+        remaining_polys = [poly for poly in self.get_polygons() if poly.is_closed]
         if callback:
             progress_callback = pycam.Utils.ProgressCounter(
-                    2 * len(self.get_polygons()), callback).increment
+                    2 * len(remaining_polys), callback).increment
         else:
             progress_callback = None
-        finished = []
-        remaining_polys = list(self.get_polygons())
         remaining_polys.sort(key=lambda poly: abs(poly.get_area()))
         while remaining_polys:
             # pick the largest polygon
@@ -461,6 +462,7 @@ class ContourModel(BaseModel):
                     finished.insert(0, (current, not is_outer))
                     break
             else:
+                # no enclosing polygon was found
                 finished.insert(0, (current, True))
             if progress_callback and progress_callback():
                 return
