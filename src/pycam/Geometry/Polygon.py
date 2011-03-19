@@ -29,6 +29,12 @@ import pycam.Utils.log
 # import later to avoid circular imports
 #from pycam.Geometry.Model import ContourModel
 
+try:
+    import OpenGL.GL as GL
+    GL_enabled = True
+except ImportError:
+    GL_enabled = False
+
 
 log = pycam.Utils.log.get_logger()
 
@@ -332,8 +338,23 @@ class Polygon(TransformableContainer):
         return self._lines_cache[:]
 
     def to_OpenGL(self, **kwords):
-        for line in self.get_lines():
-            line.to_OpenGL(**kwords)
+        if not GL_enabled:
+            return
+        if self.is_closed:
+            is_outer = self.is_outer()
+            if not is_outer:
+                color = GL.glGetFloatv(GL.GL_CURRENT_COLOR)
+                GL.glColor(color[0], color[1], color[2], color[3] / 2)
+            GL.glBegin(GL.GL_LINE_LOOP)
+            for point in self._points:
+                GL.glVertex3f(point.x, point.y, point.z)
+            GL.glEnd()
+            if not is_outer:
+                GL.glColor(*color)
+        else:
+            for line in self.get_lines():
+                line.to_OpenGL(**kwords)
+
 
     def _update_limits(self, point):
         if self.minx is None:

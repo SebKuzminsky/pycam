@@ -8,6 +8,7 @@ Version 0.5 - UNRELEASED
  * changed "simulation mode" for visualizing the machine moves
  * added a very simple "pocketing" mode for 2D models
  * added 2D projection of 3D models
+ * added automatic repair of inconsistent polygon winding (inside/outside detection)
  * added toolpath cropping 
  * added toolpath grid pattern: clone a single toolpath in rows and columns
  * added support for DXF features "LWPOLYLINE" and "ARC"
@@ -28,6 +29,7 @@ Version 0.5 - UNRELEASED
   * via a button and via the context menu
  * improved stability of remote processing: disconnected nodes should not cause problems anymore
  * automatically distributed support bridges can now be placed at corners or edges
+ * visualize "inside" polygons (holes) through partial transparency
 
 Version 0.4.0.1 - 2010-10-24
  * disabled parallel processing for Windows standalone executable

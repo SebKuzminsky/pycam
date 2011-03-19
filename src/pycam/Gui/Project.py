@@ -578,6 +578,8 @@ class ProjectGui:
                 lambda widget, data: self.window.set_default(None))
         self.gui.get_object("ToggleModelDirectionButton").connect("clicked",
                 self.reverse_model_direction)
+        self.gui.get_object("DirectionsGuessButton").connect("clicked",
+                self.guess_model_directions)
         self.gui.get_object("ScaleInchMM").connect("clicked", self.scale_model,
                 100 * 25.4, False)
         self.gui.get_object("ScaleMMInch").connect("clicked", self.scale_model,
@@ -1196,11 +1198,18 @@ class ProjectGui:
     def update_model_type_related_controls(self):
         is_reversible = (not self.model is None) \
                 and hasattr(self.model, "reverse_directions")
-        self.gui.get_object("ToggleModelDirectionButton").set_sensitive(
-                is_reversible)
+        controls_2d = ("ToggleModelDirectionButton", "DirectionsGuessButton")
+        for control in controls_2d:
+            if is_reversible:
+                self.gui.get_object(control).show()
+            else:
+                self.gui.get_object(control).hide()
         is_projectable = (not self.model is None) \
                 and hasattr(self.model, "get_waterline_contour")
-        self.gui.get_object("Projection2D").set_sensitive(is_projectable)
+        if is_projectable:
+            self.gui.get_object("Projection2D").show()
+        else:
+            self.gui.get_object("Projection2D").hide()
         # disable the lower boundary for contour models
         is_contour = isinstance(self.model, pycam.Geometry.Model.ContourModel)
         self.gui.get_object("boundary_z_low").set_sensitive(not is_contour)
@@ -2846,16 +2855,24 @@ class ProjectGui:
 
     @progress_activity_guard
     @gui_activity_guard
+    def guess_model_directions(self, widget=None):
+        if (self.model is None) \
+                or not hasattr(self.model, "reverse_directions"):
+            return
+        self._store_undo_state()
+        self.update_progress_bar(text="Analyzing directions of contour model")
+        self.model.detect_directions(callback=self.update_progress_bar)
+        self.update_support_model()
+
+    @progress_activity_guard
+    @gui_activity_guard
     def reverse_model_direction(self, widget=None):
         if (self.model is None) \
                 or not hasattr(self.model, "reverse_directions"):
             return
         self._store_undo_state()
         self.update_progress_bar(text="Reversing directions of contour model")
-        progress_callback = pycam.Utils.ProgressCounter(
-                len(self.model.get_polygons()),
-                        self.update_progress_bar).increment
-        self.model.reverse_directions(callback=progress_callback)
+        self.model.reverse_directions(callback=self.update_progress_bar)
         self.update_support_model()
 
     @progress_activity_guard

@@ -443,11 +443,51 @@ class ContourModel(BaseModel):
         else:
             return [group for group in self._line_groups if group.minz <= z]
 
+    def detect_directions(self, callback=None):
+        if callback:
+            progress_callback = pycam.Utils.ProgressCounter(
+                    2 * len(self.get_polygons()), callback).increment
+        else:
+            progress_callback = None
+        finished = []
+        remaining_polys = list(self.get_polygons())
+        remaining_polys.sort(key=lambda poly: abs(poly.get_area()))
+        while remaining_polys:
+            # pick the largest polygon
+            current = remaining_polys.pop()
+            # start with the smallest finished polygon
+            for comp, is_outer in finished:
+                if comp.is_polygon_inside(current):
+                    finished.insert(0, (current, not is_outer))
+                    break
+            else:
+                finished.insert(0, (current, True))
+            if progress_callback and progress_callback():
+                return
+        # Adjust the directions of all polygons according to the result
+        # of the previous analysis.
+        change_counter = 0
+        for polygon, is_outer in finished:
+            if polygon.is_outer() != is_outer:
+                polygon.reverse_direction()
+                change_counter += 1
+            if progress_callback and progress_callback():
+                self.reset_cache()
+                return
+        log.info("The winding of %d polygons was fixed." % change_counter)
+        self.reset_cache()
+
     def reverse_directions(self, callback=None):
+        if callback:
+            progress_callback = pycam.Utils.ProgressCounter(
+                    len(self.get_polygons()), callback).increment
+        else:
+            progress_callback = None
         for polygon in self._line_groups:
             polygon.reverse_direction()
-            if callback and callback():
-                return None
+            if progress_callback and progress_callback():
+                self.reset_cache()
+                return
         self.reset_cache()
 
     def get_reversed(self):

@@ -995,27 +995,17 @@
                                       </packing>
                                     </child>
                                     <child>
-                                      <object class="GtkButton" id="ScaleInchMM">
-                                        <property name="label" translatable="yes">Inch -&gt; mm</property>
+                                      <object class="GtkButton" id="DirectionsGuessButton">
+                                        <property name="label" translatable="yes">Revise directions</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
+                                        <property name="tooltip_text" translatable="yes">Analyze the inside/outside relationships of all polygons.
+This usually fixes inconsistent polygon winding states
+caused by careless DXF/SVG exporting programs.</property>
                                       </object>
                                       <packing>
-                                        <property name="expand">False</property>
                                         <property name="position">1</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkButton" id="ScaleMMInch">
-                                        <property name="label" translatable="yes">mm -&gt; Inch</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="position">2</property>
                                       </packing>
                                     </child>
                                     <child>
@@ -1027,7 +1017,31 @@
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="ScaleMMInch">
+                                        <property name="label" translatable="yes">mm -&gt; Inch</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
                                         <property name="position">3</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="ScaleInchMM">
+                                        <property name="label" translatable="yes">Inch -&gt; mm</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="position">4</property>
                                       </packing>
                                     </child>
                                   </object>
