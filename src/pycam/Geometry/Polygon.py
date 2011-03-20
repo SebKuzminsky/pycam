@@ -122,18 +122,28 @@ class Polygon(TransformableContainer):
         result.reverse_direction()
         return result
 
-    def is_connectable(self, line):
+    def is_connectable(self, line_or_point):
         if self.is_closed:
             return False
         elif not self._points:
             # empty polygons can be connected with any line
             return True
-        elif line.p1 == self._points[-1]:
-            return True
-        elif line.p2 == self._points[0]:
-            return True
+        if hasattr(line_or_point, "get_length_line"):
+            # it is a line
+            line = line_or_point
+            if line.p1 == self._points[-1]:
+                return True
+            elif line.p2 == self._points[0]:
+                return True
+            else:
+                return False
         else:
-            return False
+            # it is a point
+            point = line_or_point
+            if (point == self._points[-1]) or (point == self._points[0]):
+                return True
+            else:
+                return False
 
     def next(self):
         for point in self._points:

@@ -328,22 +328,27 @@ class ContourModel(BaseModel):
         This function should be called after any "append" event, if the lines to
         be added are given in a random order (e.g. by the "waterline" function).
         """
-        connector1 = other_polygon.get_lines()[0]
-        connector2 = other_polygon.get_lines()[-1]
+        if other_polygon.is_closed:
+            return
+        connectors = []
+        connectors.append(other_polygon.get_points()[0])
+        connectors.append(other_polygon.get_points()[-1])
         # filter all polygons that can be combined with 'other_polygon'
         connectables = []
         for lg in self._line_groups:
             if lg is other_polygon:
                 continue
-            if lg.is_connectable(connector1) or lg.is_connectable(connector2):
-                connectables.append(lg)
+            for connector in connectors:
+                if lg.is_connectable(connector):
+                    connectables.append(lg)
+                    break
         # merge 'other_polygon' with all other connectable polygons
         for polygon in connectables:
-            if other_polygon.is_connectable(polygon.get_lines()[0]):
+            if other_polygon.get_points()[-1] == polygon.get_points()[0]:
                 for line in polygon.get_lines():
                     other_polygon.append(line)
                 self._line_groups.remove(polygon)
-            elif other_polygon.is_connectable(polygon.get_lines()[-1]):
+            elif other_polygon.get_points()[0] == polygon.get_points()[-1]:
                 lines = polygon.get_lines()
                 lines.reverse()
                 for line in lines:
