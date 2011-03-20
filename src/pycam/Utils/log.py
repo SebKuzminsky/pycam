@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import locale
 import logging
 import re
+import time
 
 
 def get_logger(suffix=None):
@@ -39,12 +40,16 @@ def init_logger(log, logfilename=None):
         datetime_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         logfile_handler = logging.FileHandler(logfilename)
         logfile_handler.setFormatter(datetime_format)
+        logfile_handler.addFilter(RepetitionsFilter(logfile_handler))
         log.addHandler(logfile_handler)
     console_output = logging.StreamHandler()
+    console_output.addFilter(RepetitionsFilter(console_output))
     log.addHandler(console_output)
     log.setLevel(logging.INFO)
     # store the latest log items in a queue (for pushing them into new handlers)
-    log.addHandler(BufferHandler())
+    buffer_handler = BufferHandler()
+    buffer_handler.addFilter(RepetitionsFilter(buffer_handler))
+    log.addHandler(buffer_handler)
 
 def _push_back_old_logs(new_handler):
     log = get_logger()
@@ -58,6 +63,7 @@ def add_stream(stream, level=None):
     logstream = logging.StreamHandler(stream)
     if not level is None:
         logstream.setLevel(level)
+    logstream.addFilter(RepetitionsFilter(logstream))
     log.addHandler(logstream)
     _push_back_old_logs(logstream)
 
@@ -66,6 +72,7 @@ def add_hook(callback, level=None):
     loghook = HookHandler(callback)
     if not level is None:
         loghook.setLevel(level)
+    loghook.addFilter(RepetitionsFilter(loghook))
     log.addHandler(loghook)
     _push_back_old_logs(loghook)
 
@@ -74,8 +81,44 @@ def add_gtk_gui(parent_window, level=None):
     loggui = GTKHandler(parent_window)
     if not level is None:
         loggui.setLevel(level)
+    loggui.addFilter(RepetitionsFilter(loggui))
     log.addHandler(loggui)
     _push_back_old_logs(loggui)
+
+
+class RepetitionsFilter(logging.Filter):
+
+    def __init__(self, handler, **kwargs):
+        logging.Filter.__init__(self, **kwargs)
+        self._last_timestamp = 0
+        self._last_record = None
+        # Every handler needs its own "filter" instance - this is not really
+        # a clean style.
+        self._handler = handler
+        self._suppressed_messages_counter = 0
+        self._cmp_len = 20
+        self._delay = 3
+
+    def filter(self, record):
+        now = time.time()
+        message_equal = self._last_record and \
+                record.getMessage().startswith(
+                    self._last_record.getMessage()[:self._cmp_len])
+        if (now - self._last_timestamp <= self._delay) and \
+                self._last_record and message_equal:
+            self._suppressed_messages_counter += 1
+            return False
+        else:
+            if self._suppressed_messages_counter > 0:
+                # inject a message regarding the previously suppressed messages
+                self._last_record.msg =  \
+                        "*** %d similar messages were suppressed ***" % \
+                        self._suppressed_messages_counter
+                self._handler.emit(self._last_record)
+            self._last_record = record
+            self._last_timestamp = now
+            self._suppressed_messages_counter = 0
+            return True
 
 
 class BufferHandler(logging.Handler):
@@ -142,6 +185,7 @@ class GTKHandler(logging.Handler):
         window.set_title(message_title)
         window.run()
         window.destroy()
+
 
 class HookHandler(logging.Handler):
 
