@@ -11,7 +11,9 @@ Version 0.5 - UNRELEASED
  * added automatic repair of inconsistent polygon winding (inside/outside detection)
  * added toolpath cropping 
  * added toolpath grid pattern: clone a single toolpath in rows and columns
- * added support for DXF features "LWPOLYLINE" and "ARC"
+ * added support for more DXF features:
+  * 2D: "LWPOLYLINE", "ARC", "TEXT", "MTEXT", "CIRCLE", "POLYLINE"
+  * 3D: "3DFACE"
  * added a configuration setting for automatically loading a custom task settings file on startup
  * added a simple "undo" feature for reversing model manipulations
  * GCode features:

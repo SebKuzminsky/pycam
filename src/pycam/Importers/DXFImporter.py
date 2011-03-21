@@ -20,14 +20,30 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.Point import Point
 from pycam.Geometry.Line import Line
 import pycam.Geometry.Model
+import pycam.Geometry.Matrix
 import pycam.Geometry
 import pycam.Utils.log
 from pycam.Utils import open_url
+import math
+import re
+import os
 
 log = pycam.Utils.log.get_logger()
+
+
+def _unescape_control_characters(text):
+    # see http://www.kxcad.net/autodesk/autocad/AutoCAD_2008_Command_Reference/d0e73428.htm
+    # and QCad: qcadlib/src/filters/rs_filterdxf.cpp
+    for src, dest in (("%%d", u"\u00B0"), ("%%p", u"\u00B1"),
+            ("%%c", u"\u2205"), (r"\P", os.linesep), (r"\~", " ")):
+        text = text.replace(src, dest)
+    # convert "\U+xxxx" to unicode characters
+    return re.sub(r"\\U\+([0-9a-fA-F]{4})",
+            lambda hex_in: unichr(int(hex_in.groups()[0], 16)), text)
 
 
 class DXFParser(object):
@@ -37,30 +53,63 @@ class DXFParser(object):
 
     KEYS = {
         "MARKER": 0,
-        "START_X": 10,
-        "START_Y": 20,
-        "START_Z": 30,
-        "END_X": 11,
-        "END_Y": 21,
-        "END_Z": 31,
+        "DEFAULT": 1,
+        "TEXT_MORE": 3,
+        "TEXT_FONT": 7,
+        "P1_X": 10,
+        "P1_Y": 20,
+        "P1_Z": 30,
+        "P2_X": 11,
+        "P2_Y": 21,
+        "P2_Z": 31,
+        "P3_X": 12,
+        "P3_Y": 22,
+        "P3_Z": 32,
+        "P4_X": 13,
+        "P4_Y": 23,
+        "P4_Z": 33,
         "RADIUS": 40,
+        "TEXT_HEIGHT": 40,
+        "TEXT_WIDTH_FINAL": 41,
         "ANGLE_START": 50,
+        "TEXT_ROTATION": 50,
         "ANGLE_END": 51,
+        "TEXT_SKEW_ANGLE": 51,
         "COLOR": 62,
+        "TEXT_MIRROR_FLAGS": 71,
+        "MTEXT_ALIGNMENT": 71,
+        "TEXT_ALIGN_HORIZONTAL": 72,
+        "TEXT_ALIGN_VERTICAL": 73,
     }
 
-    def __init__(self, inputstream, color_as_height=False, callback=None):
+    IGNORE_KEYS = ("DICTIONARY", "VPORT", "LTYPE", "STYLE", "APPID", "DIMSTYLE",
+            "BLOCK_RECORD", "BLOCK", "ENDBLK", "ACDBDICTIONARYWDFLT", "POINT",
+            "ACDBPLACEHOLDER", "LAYOUT", "MLINESTYLE", "DICTIONARYVAR", "CLASS",
+            "HATCH")
+
+    def __init__(self, inputstream, color_as_height=False, fonts_cache=None,
+            callback=None):
         self.inputstream = inputstream
         self.line_number = 0
         self.lines = []
+        self.triangles = []
         self._input_stack = []
         self._color_as_height = color_as_height
-        self.callback = callback
+        if callback:
+            # no "percent" updates - just pulse ...
+            callback_wrapper = lambda text="", percent=None: callback()
+            self.callback = callback_wrapper
+        else:
+            self.callback = None
+        self._fonts_cache = fonts_cache
+        self._open_sequence = None
+        self._open_sequence_items = []
+        # run the parser
         self.parse_content()
         self.optimize_line_order()
 
     def get_model(self):
-        return {"lines": self.lines}
+        return {"lines": self.lines, "triangles": self.triangles}
 
     def optimize_line_order(self):
         groups = []
@@ -132,9 +181,10 @@ class DXFParser(object):
             log.warn("DXFImporter: Invalid key in line " \
                     + "%d (int expected): %s" % (self.line_number, line1))
             return None, None
-        if line1 in [self.KEYS[key] for key in ("START_X", "START_Y", "START_Z",
-                "END_X", "END_Y", "END_Z", "RADIUS", "ANGLE_START",
-                "ANGLE_END")]:
+        if line1 in [self.KEYS[key] for key in ("P1_X", "P1_Y", "P1_Z",
+                "P2_X", "P2_Y", "P2_Z", "RADIUS", "ANGLE_START", "ANGLE_END",
+                "TEXT_HEIGHT", "TEXT_WIDTH_FINAL", "TEXT_ROTATION",
+                "TEXT_SKEW_ANGLE")]:
             try:
                 line2 = float(line2)
             except ValueError:
@@ -142,7 +192,9 @@ class DXFParser(object):
                         + "%d (float expected): %s" % (self.line_number, line2))
                 line1 = None
                 line2 = None
-        elif line1 in (self.KEYS["COLOR"],):
+        elif line1 in [self.KEYS[key] for key in ("COLOR", "TEXT_MIRROR_FLAGS",
+                "TEXT_ALIGN_HORIZONTAL", "TEXT_ALIGN_VERTICAL",
+                "MTEXT_ALIGNMENT")]:
             try:
                 line2 = int(line2)
             except ValueError:
@@ -150,6 +202,8 @@ class DXFParser(object):
                         + "%d (int expected): %s" % (self.line_number, line2))
                 line1 = None
                 line2 = None
+        elif line1 in [self.KEYS[key] for key in ("DEFAULT", "TEXT_MORE")]:
+            line2 = _unescape_control_characters(line2)
         else:
             line2 = line2.upper()
         self.line_number += 2
@@ -168,16 +222,93 @@ class DXFParser(object):
                 elif value == "LINE":
                     self.parse_line()
                 elif value == "LWPOLYLINE":
-                    self.parse_polyline()
+                    self.parse_lwpolyline()
+                elif value == "POLYLINE":
+                    self.parse_polyline(True)
+                elif value == "VERTEX":
+                    self.parse_vertex()
+                elif value == "SEQEND":
+                    self.close_sequence()
                 elif value == "ARC":
                     self.parse_arc()
+                elif value == "CIRCLE":
+                    self.parse_arc(circle=True)
+                elif value == "TEXT":
+                    self.parse_text()
+                elif value == "MTEXT":
+                    self.parse_mtext()
+                elif value == "3DFACE":
+                    self.parse_3dface()
+                elif value in self.IGNORE_KEYS:
+                    log.debug("DXFImporter: Ignored a blacklisted element " \
+                            + "in line %d: %s" % (self.line_number, value))
                 else:
                     # not supported
-                    log.warn("DXFImporter: Ignored unsupported element in " \
-                            + "line %d: %s" % (self.line_number, value))
+                    log.warn("DXFImporter: Ignored unsupported element " \
+                            + "in line %d: %s" % (self.line_number, value))
             key, value = self._read_key_value()
 
-    def parse_polyline(self):
+    def close_sequence(self):
+        start_line = self.line_number
+        if self._open_sequence == "POLYLINE":
+            self.parse_polyline(False)
+        else:
+            log.warn("DXFImporter: unexpected SEQEND found at line %d" + \
+                    start_line)
+
+    def parse_vertex(self):
+        start_line = self.line_number
+        point = [None, None, 0]
+        color = None
+        key, value = self._read_key_value()
+        while (not key is None) and (key != self.KEYS["MARKER"]):
+            if key == self.KEYS["P1_X"]:
+                point[0] = value
+            elif key == self.KEYS["P1_Y"]:
+                point[1] = value
+            elif key == self.KEYS["P1_Z"]:
+                point[2] = value
+            elif key == self.KEYS["COLOR"]:
+                color = value
+            else:
+                pass
+            key, value = self._read_key_value()
+        end_line = self.line_number
+        if not key is None:
+            self._push_on_stack(key, value)
+        if self._color_as_height and (not color is None):
+            # use the color code as the z coordinate
+            point[2] = float(color) / 255
+        if None in point:
+            log.warn("DXFImporter: Missing attribute of VERTEX item" + \
+                    "between line %d and %d" % (start_line, end_line))
+        else:
+            self._open_sequence_items.append(
+                    Point(point[0], point[1], point[2]))
+
+    def parse_polyline(self, init):
+        start_line = self.line_number
+        if init:
+            self._open_sequence = "POLYLINE"
+            self._open_sequence_items = []
+            key, value = self._read_key_value()
+            while (not key is None) and (key != self.KEYS["MARKER"]):
+                key, value = self._read_key_value()
+            if not key is None:
+                self._push_on_stack(key, value)
+        else:
+            # closing
+            points = self._open_sequence_items
+            for index in range(len(points) - 1):
+                point = points[index]
+                next_point = points[index + 1]
+                if point != next_point:
+                    self.lines.append(Line(point, next_point))
+            self._open_sequence_items = []
+            self._open_sequence = None
+
+    def parse_lwpolyline(self):
+        start_line = self.line_number
         points = []
         def add_point(p_array):
             # fill all "None" values with zero
@@ -189,15 +320,14 @@ class DXFParser(object):
                                 (self.line_number, p_array))
                     p_array[index] = 0
             points.append(Point(p_array[0], p_array[1], p_array[2]))
-        start_line = self.line_number
         current_point = [None, None, None]
         key, value = self._read_key_value()
         while (not key is None) and (key != self.KEYS["MARKER"]):
-            if key == self.KEYS["START_X"]:
+            if key == self.KEYS["P1_X"]:
                 axis = 0
-            elif key == self.KEYS["START_Y"]:
+            elif key == self.KEYS["P1_Y"]:
                 axis = 1
-            elif not self._color_as_height and (key == self.KEYS["START_Z"]):
+            elif not self._color_as_height and (key == self.KEYS["P1_Z"]):
                 axis = 2
             elif self._color_as_height and (key == self.KEYS["COLOR"]):
                 # interpret the color as the height
@@ -238,6 +368,352 @@ class DXFParser(object):
                             + "(between input line %d and %d): %s" \
                             % (start_line, end_line, point))
 
+    def parse_mtext(self):
+        start_line = self.line_number
+        # the z-level defaults to zero (for 2D models)
+        ref_point = [None, None, 0]
+        direction_vector = [None, None, None]
+        color = None
+        text_groups_start = []
+        text_end = []
+        text_height = None
+        rotation = 0
+        width_final = None
+        font_name = "normal"
+        alignment = 0
+        key, value = self._read_key_value()
+        while (not key is None) and (key != self.KEYS["MARKER"]):
+            if key == self.KEYS["DEFAULT"]:
+                text_end = value
+            elif key == self.KEYS["TEXT_MORE"]:
+                text_groups_start.append(value)
+            elif key == self.KEYS["P1_X"]:
+                ref_point[0] = value
+            elif key == self.KEYS["P1_Y"]:
+                ref_point[1] = value
+            elif key == self.KEYS["P1_Z"]:
+                ref_point[2] = value
+            elif key == self.KEYS["P2_X"]:
+                direction_vector[0] = value
+                # according to DXF spec: the last one wins
+                rotation = None
+            elif key == self.KEYS["P2_Y"]:
+                direction_vector[1] = value
+                # according to DXF spec: the last one wins
+                rotation = None
+            elif key == self.KEYS["P2_Z"]:
+                direction_vector[2] = value
+                # according to DXF spec: the last one wins
+                rotation = None
+            elif key == self.KEYS["COLOR"]:
+                color = value
+            elif key == self.KEYS["TEXT_HEIGHT"]:
+                text_height = value
+            elif key == self.KEYS["TEXT_ROTATION"]:
+                rotation = value
+                # according to DXF spec: the last one wins
+                direction_vector = [None, None, None]
+            elif key == self.KEYS["TEXT_FONT"]:
+                font_name = value
+            elif key == self.KEYS["MTEXT_ALIGNMENT"]:
+                alignment = value
+            elif key == self.KEYS["TEXT_WIDTH_FINAL"]:
+                width_final = value
+            else:
+                pass
+            key, value = self._read_key_value()
+        end_line = self.line_number
+        # The last lines were not used - they are just the marker for the next
+        # item.
+        text = "".join(text_groups_start) + text_end
+        if not key is None:
+            self._push_on_stack(key, value)
+        if None in ref_point:
+            log.warn("DXFImporter: Incomplete MTEXT definition between line " \
+                    + "%d and %d: missing location point" % \
+                    (start_line, end_line))
+        elif not text:
+            log.warn("DXFImporter: Incomplete MTEXT definition between line " \
+                    + "%d and %d: missing text" % (start_line, end_line))
+        elif not text_height:
+            log.warn("DXFImporter: Incomplete MTEXT definition between line " \
+                    + "%d and %d: missing height" % (start_line, end_line))
+        else:
+            if self._color_as_height and (not color is None):
+                # use the color code as the z coordinate
+                ref_point[2] = float(color) / 255
+            if self._fonts_cache:
+                font = self._fonts_cache.get_font(font_name)
+            else:
+                font = None
+            if not font:
+                log.warn("DXFImporter: No fonts are available - skipping " + \
+                        "MTEXT item between line %d and %d" % \
+                        (start_line, end_line))
+                return
+            model = font.render(text)
+            if (model.minx is None) or (model.miny is None) or \
+                    (model.minz is None) or (model.minx == model.maxx) or \
+                    (model.miny == model.maxy):
+                log.warn("DXFImporter: Empty rendered MTEXT item between " + \
+                        "line %d and %d" % (start_line, end_line))
+                return
+            model.scale(text_height / (model.maxy - model.miny),
+                    callback=self.callback)
+            # this setting seems to refer to a box - not the text width - ignore
+            if False and width_final:
+                scale_x = width_final / (model.maxx - model.minx)
+                model.scale(scale_x, callback=self.callback)
+            if rotation:
+                matrix = pycam.Geometry.Matrix.get_rotation_matrix_axis_angle(
+                        (0, 0, 1), rotation)
+            elif not None in direction_vector:
+                # Due to the parsing code above only "rotation" or
+                # "direction_vector" is set at the same time.
+                matrix = pycam.Geometry.Matrix.get_rotation_matrix_from_to(
+                        (1, 0, 0), direction_vector)
+            else:
+                matrix = None
+            if matrix:
+                model.transform_by_matrix(matrix, callback=self.callback)
+            # horizontal alignment
+            if alignment % 3 == 1:
+                offset_horiz = 0
+            elif alignment % 3 == 2:
+                offset_horiz = -(model.maxx - model.minx) / 2
+            else:
+                offset_horiz = -(model.maxx - model.minx)
+            # vertical alignment
+            if alignment <= 3:
+                offset_vert = -(model.maxy - model.miny)
+            elif alignment <= 6:
+                offset_vert = -(model.maxy - model.miny) / 2
+            else:
+                offset_vert = 0
+            # shift the text to its final destination
+            shift_x = ref_point[0] - model.minx + offset_horiz
+            shift_y = ref_point[1] - model.miny + offset_vert
+            shift_z = ref_point[2] - model.minz
+            model.shift(shift_x, shift_y, shift_z, callback=self.callback)
+            for polygon in model.get_polygons():
+                for line in polygon.get_lines():
+                    self.lines.append(line)
+
+    def parse_text(self):
+        start_line = self.line_number
+        # the z-level defaults to zero (for 2D models)
+        ref_point = [None, None, 0]
+        ref_point2 = [None, None, 0]
+        color = None
+        text = None
+        text_height = None
+        rotation = 0
+        width_final = None
+        skew_angle = 0
+        font_name = "normal"
+        mirror_flags = 0
+        align_horiz = 0
+        align_vert = 0
+        key, value = self._read_key_value()
+        while (not key is None) and (key != self.KEYS["MARKER"]):
+            if key == self.KEYS["DEFAULT"]:
+                text = value
+            elif key == self.KEYS["P1_X"]:
+                ref_point[0] = value
+            elif key == self.KEYS["P1_Y"]:
+                ref_point[1] = value
+            elif key == self.KEYS["P1_Z"]:
+                ref_point[2] = value
+            elif key == self.KEYS["P2_X"]:
+                ref_point2[0] = value
+            elif key == self.KEYS["P2_Y"]:
+                ref_point2[1] = value
+            elif key == self.KEYS["P2_Z"]:
+                ref_point2[2] = value
+            elif key == self.KEYS["COLOR"]:
+                color = value
+            elif key == self.KEYS["TEXT_HEIGHT"]:
+                text_height = value
+            elif key == self.KEYS["TEXT_ROTATION"]:
+                rotation = value
+            elif key == self.KEYS["TEXT_SKEW_ANGLE"]:
+                skew_angle = value
+            elif key == self.KEYS["TEXT_FONT"]:
+                font_name = value
+            elif key == self.KEYS["TEXT_MIRROR_FLAGS"]:
+                mirror_flags = value
+            elif key == self.KEYS["TEXT_ALIGN_HORIZONTAL"]:
+                align_horiz = value
+            elif key == self.KEYS["TEXT_ALIGN_VERTICAL"]:
+                align_vert = value
+            elif key == self.KEYS["TEXT_WIDTH_FINAL"]:
+                width_final = value
+            else:
+                pass
+            key, value = self._read_key_value()
+        end_line = self.line_number
+        # The last lines were not used - they are just the marker for the next
+        # item.
+        if not key is None:
+            self._push_on_stack(key, value)
+        if (None in ref_point2) and (ref_point != ref_point2):
+            # just a warning - continue as usual
+            log.warn("DXFImporter: Second alignment point is not " + \
+                    "implemented for TEXT items - the text specified " + \
+                    "between line %d and %d may be slightly misplaced" % \
+                    (start_line, end_line))
+        if None in ref_point:
+            log.warn("DXFImporter: Incomplete TEXT definition between line " \
+                    + "%d and %d: missing location point" % \
+                    (start_line, end_line))
+        elif not text:
+            log.warn("DXFImporter: Incomplete TEXT definition between line " \
+                    + "%d and %d: missing text" % (start_line, end_line))
+        elif not text_height:
+            log.warn("DXFImporter: Incomplete TEXT definition between line " \
+                    + "%d and %d: missing height" % (start_line, end_line))
+        else:
+            if self._color_as_height and (not color is None):
+                # use the color code as the z coordinate
+                ref_point[2] = float(color) / 255
+            if self._fonts_cache:
+                font = self._fonts_cache.get_font(font_name)
+            else:
+                font = None
+            if not font:
+                log.warn("DXFImporter: No fonts are available - skipping " + \
+                        "TEXT item between line %d and %d" % \
+                        (start_line, end_line))
+                return
+            if skew_angle:
+                # calculate the "skew" factor
+                if (skew_angle <= -90) or (skew_angle >= 90):
+                    log.warn("DXFImporter: Invalid skew angle for TEXT " + \
+                            "between line %d and %d" % (start_line, end_line))
+                    skew = 0
+                else:
+                    skew = math.tan(skew_angle)
+            else:
+                skew = 0
+            model = font.render(text, skew=skew)
+            if (model.minx is None) or (model.miny is None) or \
+                    (model.minz is None) or (model.minx == model.maxx) or \
+                    (model.miny == model.maxy):
+                log.warn("DXFImporter: Empty rendered TEXT item between " + \
+                        "line %d and %d" % (start_line, end_line))
+                return
+            model.scale(text_height / (model.maxy - model.miny),
+                    callback=self.callback)
+            if mirror_flags & 2:
+                # x mirror left/right
+                model.transform_by_template("yz_mirror", callback=self.callback)
+            if mirror_flags & 4:
+                # y mirror upside/down
+                model.transform_by_template("xz_mirror", callback=self.callback)
+            # this setting seems to refer to a box - not the text width - ignore
+            if False and width_final:
+                scale_x = width_final / (model.maxx - model.minx)
+                model.scale(scale_x, callback=self.callback)
+            if rotation:
+                matrix = pycam.Geometry.Matrix.get_rotation_matrix_axis_angle(
+                        (0, 0, 1), rotation)
+                model.transform_by_matrix(matrix, callback=self.callback)
+            # horizontal alignment
+            if align_horiz == 0:
+                offset_horiz = 0
+            elif align_horiz == 1:
+                offset_horiz = - (model.maxx - model.minx) / 2
+            elif align_horiz == 2:
+                offset_horiz = - (model.maxx - model.minx)
+            else:
+                log.warn("DXFImporter: Horizontal TEXT justifications " + \
+                        "(3..5) are not supported - ignoring (between line " + \
+                        "%d and %d)" % (start_line, end_line))
+                offset_horiz = 0
+            # vertical alignment
+            if align_vert in (0, 1):
+                # we don't distinguish between "bottom" and "base"
+                offset_vert = 0
+            elif align_vert == 2:
+                offset_vert = - (model.maxy - model.miny) / 2
+            elif align_vert == 3:
+                offset_vert = - (model.maxy - model.miny)
+            else:
+                log.warn("DXFImporter: Invalid vertical TEXT justification " + \
+                        " between line %d and %d" % (start_line, end_line))
+                offset_vert = 0
+            # shift the text to its final destination
+            shift_x = ref_point[0] - model.minx + offset_horiz
+            shift_y = ref_point[1] - model.miny + offset_vert
+            shift_z = ref_point[2] - model.minz
+            model.shift(shift_x, shift_y, shift_z, callback=self.callback)
+            for polygon in model.get_polygons():
+                for line in polygon.get_lines():
+                    self.lines.append(line)
+
+    def parse_3dface(self):
+        start_line = self.line_number
+        # the z-level defaults to zero (for 2D models)
+        p1 = [None, None, 0]
+        p2 = [None, None, 0]
+        p3 = [None, None, 0]
+        p4 = [None, None, 0]
+        color = None
+        key, value = self._read_key_value()
+        while (not key is None) and (key != self.KEYS["MARKER"]):
+            if key == self.KEYS["P1_X"]:
+                p1[0] = value
+            elif key == self.KEYS["P1_Y"]:
+                p1[1] = value
+            elif key == self.KEYS["P1_Z"]:
+                p1[2] = value
+            elif key == self.KEYS["P2_X"]:
+                p2[0] = value
+            elif key == self.KEYS["P2_Y"]:
+                p2[1] = value
+            elif key == self.KEYS["P2_Z"]:
+                p2[2] = value
+            elif key == self.KEYS["P3_X"]:
+                p3[0] = value
+            elif key == self.KEYS["P3_Y"]:
+                p3[1] = value
+            elif key == self.KEYS["P3_Z"]:
+                p3[2] = value
+            elif key == self.KEYS["P4_X"]:
+                p4[0] = value
+            elif key == self.KEYS["P4_Y"]:
+                p4[1] = value
+            elif key == self.KEYS["P4_Z"]:
+                p4[2] = value
+            else:
+                pass
+            key, value = self._read_key_value()
+        end_line = self.line_number
+        # The last lines were not used - they are just the marker for the next
+        # item.
+        if not key is None:
+            self._push_on_stack(key, value)
+        if (None in p1) or (None in p2) or (None in p3):
+            log.warn("DXFImporter: Incomplete 3DFACE definition between line " \
+                    + "%d and %d" % (start_line, end_line))
+        else:
+            # no color height adjustment for 3DFACE
+            point1 = Point(p1[0], p1[1], p1[2])
+            point2 = Point(p2[0], p2[1], p2[2])
+            point3 = Point(p3[0], p3[1], p3[2])
+            triangles = []
+            triangles.append((point1, point2, point3))
+            if not None in p4:
+                point4 = Point(p4[0], p4[1], p4[2])
+                triangles.append((point3, point4, point1))
+            for t in triangles:
+                if (t[0] != t[1]) and (t[0] != t[2]) and (t[1] != t[2]):
+                    self.triangles.append(Triangle(t[0], t[1], t[2]))
+                else:
+                    log.warn("DXFImporter: Ignoring zero-sized 3DFACE " + \
+                            "(between input line %d and %d): %s" % \
+                            (start_line, end_line, t))
+
     def parse_line(self):
         start_line = self.line_number
         # the z-level defaults to zero (for 2D models)
@@ -246,17 +722,17 @@ class DXFParser(object):
         color = None
         key, value = self._read_key_value()
         while (not key is None) and (key != self.KEYS["MARKER"]):
-            if key == self.KEYS["START_X"]:
+            if key == self.KEYS["P1_X"]:
                 p1[0] = value
-            elif key == self.KEYS["START_Y"]:
+            elif key == self.KEYS["P1_Y"]:
                 p1[1] = value
-            elif key == self.KEYS["START_Z"]:
+            elif key == self.KEYS["P1_Z"]:
                 p1[2] = value
-            elif key == self.KEYS["END_X"]:
+            elif key == self.KEYS["P2_X"]:
                 p2[0] = value
-            elif key == self.KEYS["END_Y"]:
+            elif key == self.KEYS["P2_Y"]:
                 p2[1] = value
-            elif key == self.KEYS["END_Z"]:
+            elif key == self.KEYS["P2_Z"]:
                 p2[2] = value
             elif key == self.KEYS["COLOR"]:
                 color = value
@@ -283,21 +759,26 @@ class DXFParser(object):
                 log.warn("DXFImporter: Ignoring zero-length LINE (between " \
                         + "input line %d and %d): %s" % (start_line, end_line,
                         line))
-    def parse_arc(self):
+
+    def parse_arc(self, circle=False):
         start_line = self.line_number
         # the z-level defaults to zero (for 2D models)
         center = [None, None, 0]
         color = None
         radius = None
-        angle_start = None
-        angle_end = None
+        if circle:
+            angle_start = 0
+            angle_end = 360
+        else:
+            angle_start = None
+            angle_end = None
         key, value = self._read_key_value()
         while (not key is None) and (key != self.KEYS["MARKER"]):
-            if key == self.KEYS["START_X"]:
+            if key == self.KEYS["P1_X"]:
                 center[0] = value
-            elif key == self.KEYS["START_Y"]:
+            elif key == self.KEYS["P1_Y"]:
                 center[1] = value
-            elif key == self.KEYS["START_Z"]:
+            elif key == self.KEYS["P1_Z"]:
                 center[2] = value
             elif key == self.KEYS["RADIUS"]:
                 radius = value
@@ -349,8 +830,8 @@ class DXFParser(object):
             return None
 
 
-def import_model(filename, program_locations=None, unit=None,
-        color_as_height=False, callback=None):
+def import_model(filename, color_as_height=False, fonts_cache=None,
+        callback=None, **kwargs):
     try:
         infile = open_url(filename)
     except IOError, err_msg:
@@ -359,15 +840,31 @@ def import_model(filename, program_locations=None, unit=None,
         return None
 
     result = DXFParser(infile, color_as_height=color_as_height,
-            callback=callback)
+            fonts_cache=fonts_cache, callback=callback)
 
-    lines = result.get_model()["lines"]
+    model_data = result.get_model()
+    lines = model_data["lines"]
+    triangles = model_data["triangles"]
 
     if callback and callback():
         log.warn("DXFImporter: load model operation was cancelled")
         return None
 
-    if lines:
+    # 3D models are preferred over 2D models
+    if triangles:
+        if lines:
+            log.warn("DXFImporter: Ignoring 2D elements in DXF file: " + \
+                    "%d lines" % len(lines))
+        model = pycam.Geometry.Model.Model()
+        for index, triangle in enumerate(triangles):
+            model.append(triangle)
+            # keep the GUI smooth
+            if callback and (index % 50 == 0):
+                callback()
+        log.info("DXFImporter: Imported DXF model (3D): %d triangles" % \
+                len(model.triangles()))
+        return model
+    elif lines:
         model = pycam.Geometry.Model.ContourModel()
         for index, line in enumerate(lines):
             model.append(line)
@@ -388,8 +885,9 @@ def import_model(filename, program_locations=None, unit=None,
             if callback:
                 callback(text="Shifting 2D model down to to z=0")
             model.shift(0, 0, -model.minz, callback=callback)
-        log.info("DXFImporter: Imported DXF model: %d lines / %d polygons" \
-                % (len(lines), len(model.get_polygons())))
+        log.info("DXFImporter: Imported DXF model (2D): " + \
+                "%d lines / %d polygons" % \
+                (len(lines), len(model.get_polygons())))
         return model
     else:
         link = "http://sf.net/apps/mediawiki/pycam/?title=SupportedFormats"

@@ -481,7 +481,7 @@ class ContourModel(BaseModel):
             if progress_callback and progress_callback():
                 self.reset_cache()
                 return
-        log.info("The winding of %d polygons was fixed." % change_counter)
+        log.info("The winding of %d polygon(s) was fixed." % change_counter)
         self.reset_cache()
 
     def reverse_directions(self, callback=None):

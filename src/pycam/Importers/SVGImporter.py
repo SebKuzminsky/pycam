@@ -81,7 +81,8 @@ def convert_eps2dxf(eps_filename, dxf_filename, location=None, unit="mm"):
                 process.stderr.read()))
         return False
 
-def import_model(filename, program_locations=None, unit="mm", callback=None):
+def import_model(filename, program_locations=None, unit="mm", callback=None,
+        **kwargs):
     if not check_uri_exists(filename):
         log.error("SVGImporter: file (%s) does not exist" % filename)
         return None

@@ -42,6 +42,7 @@ from pycam.Geometry.Letters import TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, \
 import pycam.Geometry.Model
 from pycam.Utils import ProgressCounter, check_uri_exists
 from pycam.Toolpath import Bounds
+import pycam.Utils.FontCache
 from pycam import VERSION
 import pycam.Physics.ode_physics
 # this requires ODE - we import it later, if necessary
@@ -99,6 +100,11 @@ FILTER_MODEL = (("All supported model filetypes",
         ("SVG contours", "*.svg"), ("PS contours", ("*.eps", "*.ps")))
 FILTER_CONFIG = (("Config files", "*.conf"),)
 FILTER_EMC_TOOL = (("EMC tool files", "*.tbl"),)
+
+CLIPBOARD_TARGETS = {
+        "svg": ("image/x-inkscape-svg", "image/svg+xml"),
+        "filename_drag": ("text/uri-list", "text-plain"),
+}
 
 PREFERENCES_DEFAULTS = {
         "enable_ode": False,
@@ -237,37 +243,6 @@ def get_font_dir():
                     + "No fonts will be available.") % FONT_DIR_FALLBACK)
             return None
 
-def get_font_files():
-    font_dir = get_font_dir()
-    if not font_dir:
-        return []
-    log.info("Loading font files from '%s'." % font_dir)
-    result = []
-    files = os.listdir(font_dir)
-    for fname in files:
-        filename = os.path.join(font_dir, fname)
-        if filename.lower().endswith(".cxf") and os.path.isfile(filename):
-            result.append(filename)
-    result.sort()
-    return result
-
-def load_fonts(callback=None):
-    fonts = {}
-    all_font_files = get_font_files()
-    if not callback is None:
-        progress_counter = ProgressCounter(len(all_font_files), callback)
-    else:
-        progress_counter = None
-    for font_file in all_font_files:
-        charset = pycam.Importers.CXFImporter.import_font(font_file,
-                callback=progress_counter.update)
-        if (not progress_counter is None) and progress_counter.increment():
-            break
-        if not charset is None:
-            for name in charset.get_names():
-                fonts[name] = charset
-    return fonts
-
 
 class ProjectGui:
 
@@ -295,6 +270,9 @@ class ProjectGui:
         self._progress_cancel_requested = False
         self._last_gtk_events_time = None
         self._undo_states = []
+        self.clipboard = gtk.clipboard_get()
+        self._fonts_cache = pycam.Utils.FontCache.FontCache(get_font_dir(),
+                callback=self.update_progress_bar)
         self.gui = gtk.Builder()
         gtk_build_file = get_data_file_location(GTKBUILD_FILE)
         if gtk_build_file is None:
@@ -451,7 +429,6 @@ class ProjectGui:
                     self.update_font_dialog_preview)
         self._font_dialog_window_visible = False
         self._font_dialog_window_position = None
-        self._fonts = None
         # set defaults
         self.model = None
         self.toolpath = pycam.Toolpath.ToolpathList()
@@ -1945,14 +1922,13 @@ class ProjectGui:
         if state is None:
             state = not self._font_dialog_window_visible
         if state:
-            if self._fonts is None:
+            if not self._fonts_cache.is_loading_complete():
                 self.update_progress_bar("Initializing fonts")
-                self._fonts = load_fonts(callback=self.update_progress_bar)
                 # create it manually to ease access
                 font_selector = gtk.combo_box_new_text()
                 self.gui.get_object("FontSelectionBox").pack_start(
                         font_selector, expand=False, fill=False)
-                sorted_keys = self._fonts.keys()
+                sorted_keys = list(self._fonts_cache.get_font_names())
                 sorted_keys.sort(key=lambda x: x.upper())
                 for name in sorted_keys:
                     font_selector.append_text(name)
@@ -1964,7 +1940,7 @@ class ProjectGui:
                         self.update_font_dialog_preview)
                 font_selector.show()
                 self.font_selector = font_selector
-            if self._fonts:
+            if len(self._fonts_cache) > 0:
                 # show the dialog only if fonts are available
                 if self._font_dialog_window_position:
                     self.font_dialog_window.move(
@@ -2002,8 +1978,9 @@ class ProjectGui:
                     align = value
                     input_field.set_justification(justification)
             font_name = self.font_selector.get_active_text()
-            return self._fonts[font_name].render(text, skew=skew,
-                    line_spacing=line_space, pitch=pitch, align=align)
+            charset = self._fonts_cache.get_font(font_name)
+            return charset.render(text, skew=skew, line_spacing=line_space,
+                    pitch=pitch, align=align)
         else:
             # empty text
             return None
@@ -2024,23 +2001,27 @@ class ProjectGui:
             text_buffer = StringIO.StringIO()
             text_model.export(comment=self.get_meta_data(),
                     unit=self.settings.get("unit")).write(text_buffer)
-            clipboard_target = "image/svg+xml"
-            clipboard = gtk.clipboard_get()
-            targets = [(clipboard_target, gtk.TARGET_OTHER_WIDGET, 0)]
-            def get_func(clipboard, selectiondata, info, text):
-                text.seek(0)
-                selectiondata.set("STRING", 8, text.read())
-            result = clipboard.set_with_data(targets, get_func,
-                    lambda *args: None, text_buffer)
-            clipboard.store()
+            text_buffer.seek(0)
+            text = text_buffer.read()
+            self._copy_text_to_clipboard(text, CLIPBOARD_TARGETS["svg"])
+
+    def _copy_text_to_clipboard(self, text, targets):
+        targets = [(key, gtk.TARGET_OTHER_WIDGET, index)
+                for index, key in enumerate(targets)]
+        def get_func(clipboard, selectiondata, info, text):
+            # Inkscape for Windows strictly requires the BITMAP type
+            selectiondata.set(gtk.gdk.SELECTION_TYPE_BITMAP, 8, text.read())
+        result = self.clipboard.set_with_data(targets, get_func,
+                lambda *args: None, text)
+        self.clipboard.store()
 
     @gui_activity_guard
     def update_font_dialog_preview(self, widget=None, event=None):
-        if not self._fonts:
-            # not initialized or empty
+        if len(self._fonts_cache) == 0:
+            # empty
             return
         font_name = self.font_selector.get_active_text()
-        font = self._fonts[font_name]
+        font = self._fonts_cache.get_font(font_name)
         self.gui.get_object("FontAuthorText").set_label(
                 "\n".join(font.get_authors()))
         preview_widget = self.gui.get_object("FontDialogPreview")
@@ -2158,8 +2139,7 @@ class ProjectGui:
                 columns.append(model.get_value(it, column))
             content.append(" ".join(columns))
         self.log_model.foreach(copy_row, content)
-        clipboard = gtk.Clipboard()
-        clipboard.set_text(os.linesep.join(content))
+        self.clipboard.set_text(os.linesep.join(content))
         self.gui.get_object("StatusBarWarning").hide()
 
     @gui_activity_guard
@@ -2932,8 +2912,8 @@ class ProjectGui:
     def configure_drag_and_drop(self, obj):
         obj.connect("drag-data-received", self.handle_data_drop)
         flags = gtk.DEST_DEFAULT_ALL
-        targets = [("text/uri-list", gtk.TARGET_OTHER_APP, 0),
-                ("text/plain", gtk.TARGET_OTHER_APP, 1)]
+        targets = [(key, gtk.TARGET_OTHER_APP, index)
+                for index, key in enumerate(CLIPBOARD_TARGETS["filename_drag"])]
         actions = gtk.gdk.ACTION_COPY | gtk.gdk.ACTION_LINK | \
                 gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_PRIVATE | \
                 gtk.gdk.ACTION_ASK
@@ -2998,6 +2978,7 @@ class ProjectGui:
                 if self.load_model(importer(filename,
                         program_locations=program_locations,
                         unit=self.settings.get("unit"),
+                        fonts_cache=self._fonts_cache,
                         callback=self.update_progress_bar)):
                     self.set_model_filename(filename)
                     self.add_to_recent_file_list(filename)
@@ -3565,7 +3546,7 @@ class ProjectGui:
             self.menubar.set_sensitive(False)
             self.task_pane.set_sensitive(False)
             self._progress_start_time = time.time()
-            self.update_progress_bar("", 0)
+            self.update_progress_bar(text="", percent=0)
             self.progress_cancel_button.set_sensitive(True)
             # enable "pulse" mode for a start (in case of unknown ETA)
             self.progress_bar.pulse()
@@ -3585,7 +3566,7 @@ class ProjectGui:
         if not percent is None:
             percent = min(max(percent, 0.0), 100.0)
             self.progress_bar.set_fraction(percent/100.0)
-        if (percent is None) and (self.progress_bar.get_fraction() == 0):
+        if (not percent) and (self.progress_bar.get_fraction() == 0):
             # use "pulse" mode until we reach 1% of the work to be done
             self.progress_bar.pulse()
         # update the GUI

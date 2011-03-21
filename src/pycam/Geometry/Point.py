@@ -58,8 +58,10 @@ class Point(object):
         Otherwise the result is based on the individual x/y/z comparisons.
         """
         if self.__class__ == other.__class__:
-            if (_is_near(self.x, other.x)) and (_is_near(self.y, other.y)) \
-                    and (_is_near(self.z, other.z)):
+            if (self.id == other.id) or \
+                    ((_is_near(self.x, other.x)) and \
+                        (_is_near(self.y, other.y)) and \
+                        (_is_near(self.z, other.z))):
                 return 0
             elif not _is_near(self.x, other.x):
                 return cmp(self.x, other.x)
@@ -71,12 +73,19 @@ class Point(object):
             return cmp(str(self), str(other))
 
     def transform_by_matrix(self, matrix, transformed_list=None, callback=None):
+        # accept 3x4 matrices as well as 3x3 matrices
+        offsets = []
+        for column in matrix:
+            if len(column) < 4:
+                offsets.append(0)
+            else:
+                offsets.append(column[3])
         x = self.x * matrix[0][0] + self.y * matrix[0][1] \
-                + self.z * matrix[0][2] + matrix[0][3]
+                + self.z * matrix[0][2] + offsets[0]
         y = self.x * matrix[1][0] + self.y * matrix[1][1] \
-                + self.z * matrix[1][2] + matrix[1][3]
+                + self.z * matrix[1][2] + offsets[1]
         z = self.x * matrix[2][0] + self.y * matrix[2][1] \
-                + self.z * matrix[2][2] + matrix[2][3]
+                + self.z * matrix[2][2] + offsets[2]
         self.x = x
         self.y = y
         self.z = z

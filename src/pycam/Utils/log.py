@@ -112,7 +112,7 @@ class RepetitionsFilter(logging.Filter):
             if self._suppressed_messages_counter > 0:
                 # inject a message regarding the previously suppressed messages
                 self._last_record.msg =  \
-                        "*** %d similar messages were suppressed ***" % \
+                        "*** skipped %d similar message(s) ***" % \
                         self._suppressed_messages_counter
                 self._handler.emit(self._last_record)
             self._last_record = record

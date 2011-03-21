@@ -52,8 +52,7 @@ def UniqueVertex(x, y, z):
         vertices += 1
         return Point(x, y, z)
 
-def ImportModel(filename, use_kdtree=True, program_locations=None, unit=None,
-        callback=None):
+def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
     global vertices, edges, kdtree
     vertices = 0
     edges = 0

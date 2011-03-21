@@ -29,7 +29,8 @@ import os
 log = pycam.Utils.log.get_logger()
 
 
-def import_model(filename, program_locations=None, unit="mm", callback=None):
+def import_model(filename, program_locations=None, unit="mm", callback=None,
+        **kwargs):
     if not check_uri_exists(filename):
         log.error("PSImporter: file (%s) does not exist" % filename)
         return None
