@@ -13,6 +13,9 @@
     </menu>
     <menu action="EditMenu">
       <menuitem action="UndoButton"/>
+      <separator />
+      <menuitem action="CopyModelToClipboard"/>
+      <menuitem action="PasteModelFromClipboard"/>
     </menu>
     <menu action="SettingsMenu">
       <menuitem action="LoadTaskSettings"/>

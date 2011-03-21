@@ -832,12 +832,15 @@ class DXFParser(object):
 
 def import_model(filename, color_as_height=False, fonts_cache=None,
         callback=None, **kwargs):
-    try:
-        infile = open_url(filename)
-    except IOError, err_msg:
-        log.error("DXFImporter: Failed to read file (%s): %s" \
-                % (filename, err_msg))
-        return None
+    if hasattr(filename, "read"):
+        infile = filename
+    else:
+        try:
+            infile = open_url(filename)
+        except IOError, err_msg:
+            log.error("DXFImporter: Failed to read file (%s): %s" \
+                    % (filename, err_msg))
+            return None
 
     result = DXFParser(infile, color_as_height=color_as_height,
             fonts_cache=fonts_cache, callback=callback)

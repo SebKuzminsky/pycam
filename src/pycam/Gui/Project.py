@@ -40,7 +40,7 @@ from pycam.Gui.OpenGLTools import ModelViewWindowGL
 from pycam.Geometry.Letters import TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, \
         TEXT_ALIGN_RIGHT
 import pycam.Geometry.Model
-from pycam.Utils import ProgressCounter, check_uri_exists
+from pycam.Utils import check_uri_exists
 from pycam.Toolpath import Bounds
 import pycam.Utils.FontCache
 from pycam import VERSION
@@ -102,6 +102,9 @@ FILTER_CONFIG = (("Config files", "*.conf"),)
 FILTER_EMC_TOOL = (("EMC tool files", "*.tbl"),)
 
 CLIPBOARD_TARGETS = {
+        "dxf": ("image/vnd.dxf", ),
+        "ps": ("application/postscript", ),
+        "stl": ("application/sla", ),
         "svg": ("image/x-inkscape-svg", "image/svg+xml"),
         "filename_drag": ("text/uri-list", "text-plain"),
 }
@@ -190,8 +193,8 @@ def get_data_file_location(filename, silent=False):
 
 def report_exception():
     log.error("An unexpected exception occoured: please send the " \
-            + "text below to the developers of PyCAM. Thanks a lot!\n" \
-            + traceback.format_exc())
+            + "text below to the developers of PyCAM. Thanks a lot!" \
+            + os.linesep + traceback.format_exc())
 
 def get_filters_from_list(filter_list):
     result = []
@@ -270,7 +273,6 @@ class ProjectGui:
         self._progress_cancel_requested = False
         self._last_gtk_events_time = None
         self._undo_states = []
-        self.clipboard = gtk.clipboard_get()
         self._fonts_cache = pycam.Utils.FontCache.FontCache(get_font_dir(),
                 callback=self.update_progress_bar)
         self.gui = gtk.Builder()
@@ -319,6 +321,8 @@ class ProjectGui:
                 ("ToggleProcessPoolWindow", self.toggle_process_pool_window, None, None),
                 ("ShowFontDialog", self.toggle_font_dialog_window, None, "<Control><Shift>t"),
                 ("UndoButton", self._restore_undo_state, None, "<Control>z"),
+                ("CopyModelToClipboard", self.copy_model_to_clipboard, None, "<Control>c"),
+                ("PasteModelFromClipboard", self.paste_model_from_clipboard, None, "<Control>v"),
                 ("HelpUserManual", self.show_help, "User_Manual", "F1"),
                 ("HelpIntroduction", self.show_help, "Introduction", None),
                 ("HelpSupportedFormats", self.show_help, "SupportedFormats", None),
@@ -345,7 +349,10 @@ class ProjectGui:
                 action = "toggled"
             else:
                 action = "activate"
-            item.connect(action, callback, data)
+            if data is None:
+                item.connect(action, callback)
+            else:
+                item.connect(action, callback, data)
             if accel_key:
                 key, mod = gtk.accelerator_parse(accel_key)
                 accel_path = "<pycam>/%s" % objname
@@ -355,6 +362,8 @@ class ProjectGui:
         self.gui.get_object("UndoButton").set_sensitive(False)
         # configure drag-n-drop for config files and models
         self.configure_drag_and_drop(self.window)
+        self.clipboard = gtk.clipboard_get()
+        self.clipboard.connect("owner-change", self.update_clipboard_state)
         # other events
         self.window.connect("destroy", self.destroy)
         # the settings window
@@ -439,6 +448,7 @@ class ProjectGui:
         self.task_list = []
         self.grid_adjustments_x = []
         self.grid_adjustments_y = []
+        self.font_selector = None
         self._last_unit = None
         self._toolpath_for_grid_data = {}
         # add some dummies - to be implemented later ...
@@ -1134,6 +1144,7 @@ class ProjectGui:
         self.update_parallel_processes_settings()
         self.update_model_type_related_controls()
         self.update_toolpath_related_controls()
+        self.update_clipboard_state()
 
     def update_gcode_controls(self, widget=None):
         # path mode
@@ -1190,6 +1201,9 @@ class ProjectGui:
         # disable the lower boundary for contour models
         is_contour = isinstance(self.model, pycam.Geometry.Model.ContourModel)
         self.gui.get_object("boundary_z_low").set_sensitive(not is_contour)
+        # copy button
+        self.gui.get_object("CopyModelToClipboard").set_sensitive(
+                bool(self.model and self.model.is_export_supported()))
 
     def update_ode_settings(self, widget=None):
         if pycam.Utils.threading.is_multiprocessing_enabled() \
@@ -1540,8 +1554,9 @@ class ProjectGui:
                 if self.number_of_processes.get_value() > 0:
                     log.warn("Mixed local and remote processes are " + \
                         "currently not available on the Windows platform. " + \
-                        "Setting the number of local processes to zero.\n" + \
-                        "See <a href=\"" + HELP_WIKI_URL % "Parallel_Processing_on_different_Platforms" + \
+                        "Setting the number of local processes to zero." + \
+                        os.linesep + "See <a href=\"" + \
+                        HELP_WIKI_URL % "Parallel_Processing_on_different_Platforms" + \
                         "\">platform feature matrix</a> for more details.")
                     self.number_of_processes.set_value(0)
                 self.number_of_processes.set_sensitive(False)
@@ -1580,7 +1595,8 @@ class ProjectGui:
         location = pycam.Utils.get_external_program_location(key)
         if not location:
             log.error("Failed to locate the external program '%s'. " % key \
-                    + "Please install the program and try again.\n" \
+                    + "Please install the program and try again." \
+                    + os.linesep \
                     + "Or maybe you need to specify the location manually.")
         else:
             # store the new setting
@@ -1922,7 +1938,7 @@ class ProjectGui:
         if state is None:
             state = not self._font_dialog_window_visible
         if state:
-            if not self._fonts_cache.is_loading_complete():
+            if self.font_selector is None:
                 self.update_progress_bar("Initializing fonts")
                 # create it manually to ease access
                 font_selector = gtk.combo_box_new_text()
@@ -2005,25 +2021,84 @@ class ProjectGui:
             text = text_buffer.read()
             self._copy_text_to_clipboard(text, CLIPBOARD_TARGETS["svg"])
 
+    def update_clipboard_state(self, clipboard=None, event=None):
+        data, importer = self._get_data_and_importer_from_clipboard()
+        paste_button = self.gui.get_object("PasteModelFromClipboard")
+        paste_button.set_sensitive(not data is None)
+
     def _copy_text_to_clipboard(self, text, targets):
-        targets = [(key, gtk.TARGET_OTHER_WIDGET, index)
+        clip_targets = [(key, gtk.TARGET_OTHER_WIDGET, index)
                 for index, key in enumerate(targets)]
-        def get_func(clipboard, selectiondata, info, text):
+        def get_func(clipboard, selectiondata, info, (text, clip_type)):
+            selectiondata.set(clip_type, 8, text)
+        if "svg" in "".join(targets).lower():
             # Inkscape for Windows strictly requires the BITMAP type
-            selectiondata.set(gtk.gdk.SELECTION_TYPE_BITMAP, 8, text.read())
-        result = self.clipboard.set_with_data(targets, get_func,
-                lambda *args: None, text)
+            clip_type = gtk.gdk.SELECTION_TYPE_BITMAP
+        else:
+            clip_type = gtk.gdk.SELECTION_TYPE_STRING
+        result = self.clipboard.set_with_data(clip_targets, get_func,
+                lambda *args: None, (text, clip_type))
         self.clipboard.store()
+
+    def copy_model_to_clipboard(self, widget=None):
+        if not self.model.is_export_supported():
+            return
+        text_buffer = StringIO.StringIO()
+        self.model.export(comment=self.get_meta_data(),
+                unit=self.settings.get("unit")).write(text_buffer)
+        text_buffer.seek(0)
+        is_contour = isinstance(self.model, pycam.Geometry.Model.ContourModel)
+        # TODO: this should not be decided here
+        if is_contour:
+            targets = CLIPBOARD_TARGETS["svg"]
+        else:
+            targets = CLIPBOARD_TARGETS["stl"]
+        self._copy_text_to_clipboard(text_buffer.read(), targets)
+
+    def _get_data_and_importer_from_clipboard(self):
+        for targets, filename in ((CLIPBOARD_TARGETS["svg"], "foo.svg"),
+               (CLIPBOARD_TARGETS["stl"], "foo.stl"),
+               (CLIPBOARD_TARGETS["ps"], "foo.ps"),
+               (CLIPBOARD_TARGETS["dxf"], "foo.dxf")):
+            for target in targets:
+                data = self.clipboard.wait_for_contents(target)
+                if not data is None:
+                    importer = pycam.Importers.detect_file_type(filename)[1]
+                    return data, importer
+        return None, None
+
+    @progress_activity_guard
+    @gui_activity_guard
+    def paste_model_from_clipboard(self, widget=None):
+        data, importer = self._get_data_and_importer_from_clipboard()
+        if data:
+            self.update_progress_bar(text="Loading model from clipboard")
+            text_buffer = StringIO.StringIO(data.data)
+            model = importer(text_buffer,
+                    program_locations=self._get_program_locations(),
+                    unit=self.settings.get("unit"),
+                    fonts_cache=self._fonts_cache,
+                    callback=self.update_progress_bar)
+            if model:
+                log.info("Loaded a model from clipboard")
+                self.load_model(model)
+            else:
+                log.warn("Failed to load a model from clipboard")
+        else:
+            log.warn("The clipboard does not contain suitable data")
 
     @gui_activity_guard
     def update_font_dialog_preview(self, widget=None, event=None):
+        if not self.font_selector:
+            # not initialized
+            return
         if len(self._fonts_cache) == 0:
             # empty
             return
         font_name = self.font_selector.get_active_text()
         font = self._fonts_cache.get_font(font_name)
         self.gui.get_object("FontAuthorText").set_label(
-                "\n".join(font.get_authors()))
+                os.linesep.join(font.get_authors()))
         preview_widget = self.gui.get_object("FontDialogPreview")
         final_drawing_area = preview_widget.window
         text_model = self.get_font_dialog_text_rendered()
@@ -2955,6 +3030,15 @@ class ProjectGui:
         uri = widget.get_current_uri()
         self.load_model_file(filename=uri)
 
+    def _get_program_locations(self):
+        # import all external program locations into a dict
+        program_locations = {}
+        prefix = "external_program_"
+        for key in self.settings.get_keys():
+            if key.startswith(prefix) and self.settings.get(key):
+                program_locations[key[len(prefix):]] = self.settings.get(key)
+        return program_locations
+
     @gui_activity_guard
     @progress_activity_guard
     def load_model_file(self, widget=None, filename=None):
@@ -2964,19 +3048,13 @@ class ProjectGui:
             filename = self.get_filename_via_dialog("Loading model ...",
                     mode_load=True, type_filter=FILTER_MODEL)
         if filename:
-            # import all external program locations into a dict
-            program_locations = {}
-            prefix = "external_program_"
-            for key in self.settings.get_keys():
-                if key.startswith(prefix) and self.settings.get(key):
-                    program_locations[key[len(prefix):]] = self.settings.get(key)
             file_type, importer = pycam.Importers.detect_file_type(filename)
             if file_type and callable(importer):
-                self.update_progress_bar(text="Loading model file ...")
+                self.update_progress_bar(text="Loading model ...")
                 # "cancel" is not allowed
                 self.disable_progress_cancel_button()
                 if self.load_model(importer(filename,
-                        program_locations=program_locations,
+                        program_locations=self._get_program_locations(),
                         unit=self.settings.get("unit"),
                         fonts_cache=self._fonts_cache,
                         callback=self.update_progress_bar)):

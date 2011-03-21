@@ -31,23 +31,37 @@ log = pycam.Utils.log.get_logger()
 
 def import_model(filename, program_locations=None, unit="mm", callback=None,
         **kwargs):
-    if not check_uri_exists(filename):
-        log.error("PSImporter: file (%s) does not exist" % filename)
-        return None
-    if not os.path.isfile(filename):
-        # non-local file - write it to a temporary file first
-        local_file = False
-        uri = filename
+    local_file = False
+    if hasattr(filename, "read"):
+        infile = filename
         ps_file_handle, ps_file_name = tempfile.mkstemp(suffix=".ps")
-        os.close(ps_file_handle)
-        log.debug("Retrieving PS file for local access: %s -> %s" % \
-                (uri, ps_file_name))
-        if not retrieve_uri(uri, ps_file_name, callback=callback):
-            log.error("PSImporter: Failed to retrieve the PS model file: " + \
-                    "%s -> %s" % (uri, ps_file_name))
+        try:
+            temp_file = os.fdopen(ps_file_handle, "w")
+            temp_file.write(infile.read())
+            temp_file.close()
+        except IOError, err_msg:
+            log.error("PSImporter: Failed to create temporary local file " + \
+                    "(%s): %s" % (ps_file_name, err_msg))
+            return
         filename = ps_file_name
     else:
-        local_file = True
+        if not check_uri_exists(filename):
+            log.error("PSImporter: file (%s) does not exist" % filename)
+            return None
+        if not os.path.isfile(filename):
+            # non-local file - write it to a temporary file first
+            uri = filename
+            ps_file_handle, ps_file_name = tempfile.mkstemp(suffix=".ps")
+            os.close(ps_file_handle)
+            log.debug("Retrieving PS file for local access: %s -> %s" % \
+                    (uri, ps_file_name))
+            if not retrieve_uri(uri, ps_file_name, callback=callback):
+                log.error("PSImporter: Failed to retrieve the PS model file: " + \
+                        "%s -> %s" % (uri, ps_file_name))
+                return
+            filename = ps_file_name
+        else:
+            local_file = True
 
     if program_locations and "pstoedit" in program_locations:
         pstoedit_path = program_locations["pstoedit"]

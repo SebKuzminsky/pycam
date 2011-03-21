@@ -83,23 +83,36 @@ def convert_eps2dxf(eps_filename, dxf_filename, location=None, unit="mm"):
 
 def import_model(filename, program_locations=None, unit="mm", callback=None,
         **kwargs):
-    if not check_uri_exists(filename):
-        log.error("SVGImporter: file (%s) does not exist" % filename)
-        return None
-    if not os.path.isfile(filename):
-        # non-local file - write it to a temporary file first
-        local_file = False
-        uri = filename
+    local_file = False
+    if hasattr(filename, "read"):
+        infile = filename
         svg_file_handle, svg_file_name = tempfile.mkstemp(suffix=".svg")
-        os.close(svg_file_handle)
-        log.debug("Retrieving SVG file for local access: %s -> %s" % \
-                (uri, svg_file_name))
-        if not retrieve_uri(uri, svg_file_name, callback=callback):
-            log.error("SVGImporter: Failed to retrieve the SVG model file: " + \
-                    "%s -> %s" % (uri, svg_file_name))
+        try:
+            temp_file = os.fdopen(svg_file_handle, "w")
+            temp_file.write(infile.read())
+            temp_file.close()
+        except IOError, err_msg:
+            log.error("SVGImporter: Failed to create temporary local file " + \
+                    "(%s): %s" % (svg_file_name, err_msg))
+            return
         filename = svg_file_name
     else:
-        local_file = True
+        if not check_uri_exists(filename):
+            log.error("SVGImporter: file (%s) does not exist" % filename)
+            return None
+        if not os.path.isfile(filename):
+            # non-local file - write it to a temporary file first
+            uri = filename
+            svg_file_handle, svg_file_name = tempfile.mkstemp(suffix=".svg")
+            os.close(svg_file_handle)
+            log.debug("Retrieving SVG file for local access: %s -> %s" % \
+                    (uri, svg_file_name))
+            if not retrieve_uri(uri, svg_file_name, callback=callback):
+                log.error("SVGImporter: Failed to retrieve the SVG model " + \
+                        "file: %s -> %s" % (uri, svg_file_name))
+            filename = svg_file_name
+        else:
+            local_file = True
 
     if program_locations and "inkscape" in program_locations:
         inkscape_path = program_locations["inkscape"]

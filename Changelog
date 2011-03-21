@@ -32,6 +32,7 @@ Version 0.5 - UNRELEASED
  * improved stability of remote processing: disconnected nodes should not cause problems anymore
  * automatically distributed support bridges can now be placed at corners or edges
  * visualize "inside" polygons (holes) through partial transparency
+ * added copy/paste of model to and from the clipboard
 
 Version 0.4.0.1 - 2010-10-24
  * disabled parallel processing for Windows standalone executable

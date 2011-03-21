@@ -60,16 +60,21 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
 
     normal_conflict_warning_seen = False
 
-    try:
-        url_file = open_url(filename)
-        # urllib.urlopen objects do not support "seek" - so we need to read the
-        # whole file at once. This is ugly - anyone with a better idea?
-        f = StringIO.StringIO(url_file.read())
-        url_file.close()
-    except IOError, err_msg:
-        log.error("STLImporter: Failed to read file (%s): %s" \
-                % (filename, err_msg))
-        return None
+    if hasattr(filename, "read"):
+        f = filename
+        # useful for later error messages
+        filename = "input data"
+    else:
+        try:
+            url_file = open_url(filename)
+            # urllib.urlopen objects do not support "seek" - so we need to read
+            # the whole file at once. This is ugly - anyone with a better idea?
+            f = StringIO.StringIO(url_file.read())
+            url_file.close()
+        except IOError, err_msg:
+            log.error("STLImporter: Failed to read file (%s): %s" \
+                    % (filename, err_msg))
+            return None
     # Read the first two lines of (potentially non-binary) input - they should
     # contain "solid" and "facet".
     header_lines = []

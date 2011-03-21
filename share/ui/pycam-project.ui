@@ -9501,6 +9501,7 @@ upon interesting bugs and weird results.</property>
     <property name="label">_Touch off and tool change</property>
     <property name="short_label">_Touch off</property>
     <property name="stock_id">gtk-help</property>
+    <property name="always_show_image">True</property>
   </object>
   <object class="GtkImage" id="ExportVisibleToolpathsIcon">
     <property name="visible">True</property>
@@ -9509,5 +9510,19 @@ upon interesting bugs and weird results.</property>
   <object class="GtkImage" id="ExportAllToolpathsIcon">
     <property name="visible">True</property>
     <property name="stock">gtk-save-as</property>
+  </object>
+  <object class="GtkAction" id="CopyModelToClipboard">
+    <property name="label">_Copy</property>
+    <property name="short_label">_Copy</property>
+    <property name="tooltip">Copy model to clipboard</property>
+    <property name="stock_id">gtk-copy</property>
+    <property name="always_show_image">True</property>
+  </object>
+  <object class="GtkAction" id="PasteModelFromClipboard">
+    <property name="label">_Paste</property>
+    <property name="short_label">_Paste</property>
+    <property name="tooltip">Paste a model from clipboard</property>
+    <property name="stock_id">gtk-paste</property>
+    <property name="always_show_image">True</property>
   </object>
 </interface>
