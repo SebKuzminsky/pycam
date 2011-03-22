@@ -703,7 +703,9 @@ class DXFParser(object):
             point3 = Point(p3[0], p3[1], p3[2])
             triangles = []
             triangles.append((point1, point2, point3))
-            if not None in p4:
+            # DXF specifies, that p3=p4 if triangles (instead of quads) are
+            # written.
+            if (not None in p4) and (p3 != p4):
                 point4 = Point(p4[0], p4[1], p4[2])
                 triangles.append((point3, point4, point1))
             for t in triangles:
