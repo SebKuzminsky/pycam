@@ -2916,7 +2916,7 @@ class ProjectGui:
             return
         self._store_undo_state()
         self.update_progress_bar(text="Analyzing directions of contour model")
-        self.model.detect_directions(callback=self.update_progress_bar)
+        self.model.revise_directions(callback=self.update_progress_bar)
         self.update_support_model()
 
     @progress_activity_guard

@@ -322,7 +322,7 @@ class ContourModel(BaseModel):
         # reset the offset model cache
         self._cached_offset_models = {}
 
-    def _merge_polygon_if_possible(self, other_polygon):
+    def _merge_polygon_if_possible(self, other_polygon, allow_reverse=False):
         """ Check if the given 'other_polygon' can be connected to another
         polygon of the the current model. Both polygons are merged if possible.
         This function should be called after any "append" event, if the lines to
@@ -354,9 +354,23 @@ class ContourModel(BaseModel):
                 for line in lines:
                     other_polygon.append(line)
                 self._line_groups.remove(polygon)
+            elif allow_reverse:
+                if other_polygon.get_points()[-1] == polygon.get_points()[-1]:
+                    polygon.reverse_direction()
+                    for line in polygon.get_lines():
+                        other_polygon.append(line)
+                    self._line_groups.remove(polygon)
+                elif other_polygon.get_points()[0] == polygon.get_points()[0]:
+                    polygon.reverse_direction()
+                    lines = polygon.get_lines()
+                    lines.reverse()
+                    for line in lines:
+                        other_polygon.append(line)
+                    self._line_groups.remove(polygon)
+                else:
+                    pass
             else:
-                log.debug("merge_polygon_if_possible: ambiguous combinations " \
-                        + "(%s - %s)" % (other_polygon, connectables))
+                pass
 
     def append(self, item, unify_overlaps=False, allow_reverse=False):
         super(ContourModel, self).append(item)
@@ -369,7 +383,8 @@ class ContourModel(BaseModel):
                 for candidate in item_list:
                     if line_group.is_connectable(candidate):
                         line_group.append(candidate)
-                        self._merge_polygon_if_possible(line_group)
+                        self._merge_polygon_if_possible(line_group,
+                                allow_reverse=allow_reverse)
                         found = True
                         break
                 if found:
@@ -448,10 +463,33 @@ class ContourModel(BaseModel):
         else:
             return [group for group in self._line_groups if group.minz <= z]
 
-    def detect_directions(self, callback=None):
+    def revise_directions(self, callback=None):
+        """ Go through all open polygons and try to merge them regardless of
+        their direction. Afterwards all closed polygons are analyzed regarding
+        their inside/outside relationships.
+        Beware: never use this function if the direction of lines may not
+        change.
+        """
+        # try to connect all open polygons
+        open_polygons = [poly for poly in self.get_polygons()
+                if not poly.is_closed]
+        for poly in open_polygons:
+            self._line_groups.remove(poly)
+        poly_open_before = len(open_polygons)
+        for poly in open_polygons:
+            for line in poly.get_lines():
+                self.append(line, allow_reverse=True)
+        poly_open_after = len([poly for poly in self.get_polygons()
+                if not poly.is_closed])
+        if poly_open_before != poly_open_after:
+            log.info("Reduced the number of open polygons from " + \
+                    "%d down to %d" % (poly_open_before, poly_open_after))
+        else:
+            log.debug("No combineable open polygons found")
+        # auto-detect directions of closed polygons: inside and outside
         finished = []
-        # handle only closed polygons
-        remaining_polys = [poly for poly in self.get_polygons() if poly.is_closed]
+        remaining_polys = [poly for poly in self.get_polygons()
+                if poly.is_closed]
         if callback:
             progress_callback = pycam.Utils.ProgressCounter(
                     2 * len(remaining_polys), callback).increment

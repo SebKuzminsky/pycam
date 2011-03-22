@@ -8150,7 +8150,7 @@ Any selected group of dimensions will be scaled accordingly.</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAction" id="OpenRecentModel">
-    <property name="label">Open _Recent Model</property>
+    <property name="label">Open _Recent</property>
     <property name="stock_id">gtk-open</property>
     <property name="always_show_image">True</property>
   </object>
