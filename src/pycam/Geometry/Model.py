@@ -344,20 +344,33 @@ class ContourModel(BaseModel):
                     break
         # merge 'other_polygon' with all other connectable polygons
         for polygon in connectables:
+            # check again, if the polygon is still connectable
+            for connector in connectors:
+                if polygon.is_connectable(connector):
+                    break
+            else:
+                # skip this polygon
+                continue
             if other_polygon.get_points()[-1] == polygon.get_points()[0]:
                 for line in polygon.get_lines():
+                    if other_polygon.is_closed:
+                        return
                     other_polygon.append(line)
                 self._line_groups.remove(polygon)
             elif other_polygon.get_points()[0] == polygon.get_points()[-1]:
                 lines = polygon.get_lines()
                 lines.reverse()
                 for line in lines:
+                    if other_polygon.is_closed:
+                        return
                     other_polygon.append(line)
                 self._line_groups.remove(polygon)
             elif allow_reverse:
                 if other_polygon.get_points()[-1] == polygon.get_points()[-1]:
                     polygon.reverse_direction()
                     for line in polygon.get_lines():
+                        if other_polygon.is_closed:
+                            return
                         other_polygon.append(line)
                     self._line_groups.remove(polygon)
                 elif other_polygon.get_points()[0] == polygon.get_points()[0]:
@@ -365,12 +378,17 @@ class ContourModel(BaseModel):
                     lines = polygon.get_lines()
                     lines.reverse()
                     for line in lines:
+                        if other_polygon.is_closed:
+                            return
                         other_polygon.append(line)
                     self._line_groups.remove(polygon)
                 else:
                     pass
             else:
                 pass
+            if other_polygon.is_closed:
+                # we are finished
+                return
 
     def append(self, item, unify_overlaps=False, allow_reverse=False):
         super(ContourModel, self).append(item)
@@ -379,7 +397,11 @@ class ContourModel(BaseModel):
             if allow_reverse:
                 item_list.append(Line(item.p2, item.p1))
             found = False
-            for line_group in self._line_groups:
+            # Going back from the end to start. The last line_group always has
+            # the highest chance of being suitable for the next line.
+            line_group_indexes = xrange(len(self._line_groups) - 1, -1, -1)
+            for line_group_index in line_group_indexes:
+                line_group = self._line_groups[line_group_index]
                 for candidate in item_list:
                     if line_group.is_connectable(candidate):
                         line_group.append(candidate)
@@ -470,15 +492,25 @@ class ContourModel(BaseModel):
         Beware: never use this function if the direction of lines may not
         change.
         """
-        # try to connect all open polygons
+        number_of_initial_closed_polygons = len([poly
+                for poly in self.get_polygons() if poly.is_closed])
         open_polygons = [poly for poly in self.get_polygons()
                 if not poly.is_closed]
+        if callback:
+            progress_callback = pycam.Utils.ProgressCounter(
+                    2 * number_of_initial_closed_polygons + len(open_polygons),
+                    callback).increment
+        else:
+            progress_callback = None
+        # try to connect all open polygons
         for poly in open_polygons:
             self._line_groups.remove(poly)
         poly_open_before = len(open_polygons)
         for poly in open_polygons:
             for line in poly.get_lines():
                 self.append(line, allow_reverse=True)
+            if progress_callback and progress_callback():
+                return
         poly_open_after = len([poly for poly in self.get_polygons()
                 if not poly.is_closed])
         if poly_open_before != poly_open_after:
@@ -490,11 +522,10 @@ class ContourModel(BaseModel):
         finished = []
         remaining_polys = [poly for poly in self.get_polygons()
                 if poly.is_closed]
-        if callback:
-            progress_callback = pycam.Utils.ProgressCounter(
-                    2 * len(remaining_polys), callback).increment
-        else:
-            progress_callback = None
+        if progress_callback:
+            # shift the counter back by the number of new closed polygons
+            progress_callback(2 * (number_of_initial_closed_polygons - \
+                    len(remaining_polys)))
         remaining_polys.sort(key=lambda poly: abs(poly.get_area()))
         while remaining_polys:
             # pick the largest polygon

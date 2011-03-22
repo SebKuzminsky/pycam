@@ -85,7 +85,7 @@ class DXFParser(object):
     IGNORE_KEYS = ("DICTIONARY", "VPORT", "LTYPE", "STYLE", "APPID", "DIMSTYLE",
             "BLOCK_RECORD", "BLOCK", "ENDBLK", "ACDBDICTIONARYWDFLT", "POINT",
             "ACDBPLACEHOLDER", "LAYOUT", "MLINESTYLE", "DICTIONARYVAR", "CLASS",
-            "HATCH")
+            "HATCH", "VIEW", "VIEWPORT")
 
     def __init__(self, inputstream, color_as_height=False, fonts_cache=None,
             callback=None):
@@ -203,7 +203,20 @@ class DXFParser(object):
                 line1 = None
                 line2 = None
         elif line1 in [self.KEYS[key] for key in ("DEFAULT", "TEXT_MORE")]:
-            line2 = _unescape_control_characters(line2)
+            # check the string for invalid characters
+            try:
+                text = unicode(line2)
+            except UnicodeDecodeError:
+                log.warn("DXFImporter: Invalid character in string in " + \
+                        "line %d" % self.line_number)
+                text_chars = []
+                for char in line2:
+                    try:
+                        text_chars.append(unicode(char))
+                    except:
+                        pass
+                text = u"".join(text_chars)
+            line2 = _unescape_control_characters(text)
         else:
             line2 = line2.upper()
         self.line_number += 2
@@ -253,7 +266,7 @@ class DXFParser(object):
         if self._open_sequence == "POLYLINE":
             self.parse_polyline(False)
         else:
-            log.warn("DXFImporter: unexpected SEQEND found at line %d" + \
+            log.warn("DXFImporter: unexpected SEQEND found at line %d" % \
                     start_line)
 
     def parse_vertex(self):
@@ -556,7 +569,7 @@ class DXFParser(object):
         # item.
         if not key is None:
             self._push_on_stack(key, value)
-        if (None in ref_point2) and (ref_point != ref_point2):
+        if (not None in ref_point2) and (ref_point != ref_point2):
             # just a warning - continue as usual
             log.warn("DXFImporter: Second alignment point is not " + \
                     "implemented for TEXT items - the text specified " + \
@@ -755,7 +768,7 @@ class DXFParser(object):
                 p1[2] = float(color) / 255
                 p2[2] = float(color) / 255
             line = Line(Point(p1[0], p1[1], p1[2]), Point(p2[0], p2[1], p2[2]))
-            if line.len > 0:
+            if line.p1 != line.p2:
                 self.lines.append(line)
             else:
                 log.warn("DXFImporter: Ignoring zero-length LINE (between " \
@@ -817,7 +830,8 @@ class DXFParser(object):
                     p1 = Point(p1[0], p1[1], center.z)
                     p2 = xy_point_coords[index + 1]
                     p2 = Point(p2[0], p2[1], center.z)
-                    self.lines.append(Line(p1, p2))
+                    if p1 != p2:
+                        self.lines.append(Line(p1, p2))
             else:
                 log.warn("DXFImporter: Ignoring tiny ARC (between input " + \
                         "line %d and %d): %s / %s (%s - %s)" % (start_line,

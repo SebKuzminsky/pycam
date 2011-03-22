@@ -62,7 +62,7 @@ class Polygon(TransformableContainer):
     def append(self, line):
         if not self.is_connectable(line):
             raise ValueError("This line does not fit to the polygon")
-        elif line.len == 0:
+        elif line.len < epsilon:
             raise ValueError("A line with zero length may not be part of a " \
                     + "polygon")
         else:
@@ -364,7 +364,6 @@ class Polygon(TransformableContainer):
         else:
             for line in self.get_lines():
                 line.to_OpenGL(**kwords)
-
 
     def _update_limits(self, point):
         if self.minx is None:
