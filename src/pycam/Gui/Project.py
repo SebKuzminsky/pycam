@@ -29,6 +29,7 @@ import pycam.Cutters
 import pycam.Toolpath.Generator
 import pycam.Toolpath
 import pycam.Importers.CXFImporter
+import pycam.Importers.TestModel
 import pycam.Importers
 from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Plane import Plane
@@ -439,7 +440,8 @@ class ProjectGui:
         self._font_dialog_window_visible = False
         self._font_dialog_window_position = None
         # set defaults
-        self.model = None
+        # fallback - in case of a failure when opening a model file
+        self.model = pycam.Importers.TestModel.get_test_model()
         self.toolpath = pycam.Toolpath.ToolpathList()
         self.cutter = None
         self.tool_list = []

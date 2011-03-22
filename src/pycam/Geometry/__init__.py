@@ -105,6 +105,8 @@ def get_points_of_arc(center, radius, a1, a2, plane=None, cords=32):
     angle_diff = a2 - a1
     if angle_diff < 0:
         angle_diff += 2 * math.pi
+    if angle_diff == 0:
+        return []
     num_of_segments = ceil(angle_diff / (2 * math.pi) * cords)
     angle_segment = angle_diff / num_of_segments
     points = []
