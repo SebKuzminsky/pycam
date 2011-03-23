@@ -25,6 +25,7 @@ from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Line import Line
 from pycam.Geometry import TransformableContainer
+import pycam.Utils.log
 
 
 try:
@@ -134,7 +135,7 @@ class Triangle(TransformableContainer):
                 self._sphere = GLU.gluNewQuadric()
             GLU.gluSphere(self._sphere, self.radius, 10, 10)
             GL.glPopMatrix()
-        if False: # draw triangle id on triangle face
+        if pycam.Utils.log.is_debug(): # draw triangle id on triangle face
             GL.glPushMatrix()
             cc = GL.glGetFloatv(GL.GL_CURRENT_COLOR)
             c = self.center
@@ -147,7 +148,10 @@ class Triangle(TransformableContainer):
                     p3_12.z, 0, pn.x, pn.y, pn.z, 0, 0, 0, 0, 1))
             n = self.normal.mul(0.01)
             GL.glTranslatef(n.x, n.y, n.z)
-            GL.glScalef(0.003, 0.003, 0.003)
+            maxdim = max((self.maxx - self.minx), (self.maxy - self.miny),
+                    (self.maxz - self.minz))
+            factor = 0.001
+            GL.glScalef(factor * maxdim, factor * maxdim, factor * maxdim)
             w = 0
             id_string = "%s." % str(self.id)
             for ch in id_string:

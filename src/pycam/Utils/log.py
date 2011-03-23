@@ -26,6 +26,10 @@ import re
 import time
 
 
+def is_debug():
+    log = get_logger()
+    return log.level <= logging.DEBUG
+
 def get_logger(suffix=None):
     name = "PyCAM"
     if suffix:
