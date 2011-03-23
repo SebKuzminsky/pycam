@@ -1,38 +1,43 @@
 Version 0.5 - UNRELEASED
- * added support for EPS/PS contour files
- * added adaptive positioning for DropCutter strategy (improves precision)
- * allow conventional/climb milling style for ContourFollow and Engrave strategies
- * added support for single-line fonts text (based on fonts from QCAD)
- * parallel and distributed processing is configurable in a dialog
- * visualize movements up to safety height properly
- * changed "simulation mode" for visualizing the machine moves
- * added a very simple "pocketing" mode for 2D models
- * added 2D projection of 3D models
- * added automatic repair of inconsistent polygon winding (inside/outside detection)
- * added toolpath cropping 
- * added toolpath grid pattern: clone a single toolpath in rows and columns
- * added support for more DXF features:
-  * 2D: "LWPOLYLINE", "ARC", "TEXT", "MTEXT", "CIRCLE", "POLYLINE"
-  * 3D: "3DFACE"
- * added a configuration setting for automatically loading a custom task settings file on startup
- * added a simple "undo" feature for reversing model manipulations
- * GCode features:
+ * Toolpaths:
+  * added adaptive positioning for DropCutter strategy (improves precision)
+  * allow conventional/climb milling style for ContourFollow and Engrave strategies
+  * added a very simple "pocketing" mode for 2D models
+  * added toolpath cropping 
+  * added toolpath grid pattern: clone a single toolpath in rows and columns
+  * unify DropCutter behaviour for models that are higher than the defined bounding box
+ * Model handling:
+  * added support for simple multi-layered 2D models
+  * added 2D projection of 3D models
+  * added automatic repair of inconsistent polygon winding (inside/outside detection)
+  * automatically distributed support bridges can now be placed at corners or edges
+ * GCode:
   * added basic support for "touch off" and length compensated tool change
-  * added a minimum step width for GCode positions to be written
   * GCode positioning precision (number of digits) is configurable
- * enabled drag'n'drop for loading models
- * support non-local file handling (e.g. http, ...)
- * the scroll wheel now behaves similarly to Inkscape's interface (pan and zoom)
- * the default filename extension for exported GCode files is now configurable
- * unify DropCutter behaviour for models that are higher than the defined bounding box
-  * always move up to safety height in this case
- * optional visualization of toolpath direction
- * visibility of 3D view items is now configurable in the 3D window
-  * via a button and via the context menu
- * improved stability of remote processing: disconnected nodes should not cause problems anymore
- * automatically distributed support bridges can now be placed at corners or edges
- * visualize "inside" polygons (holes) through partial transparency
- * added copy/paste of model to and from the clipboard
+  * the default filename extension for exported GCode files is now configurable
+ * Visualization:
+  * changed "simulation mode" for visualizing the machine moves (before: material removal)
+  * visualize toolpath moves up to safety height properly
+  * the scroll wheel now behaves similarly to Inkscape's interface (pan and zoom)
+  * optional visualization of toolpath direction
+  * visualize "inside" polygons (holes) via partial transparency
+ * Usability:
+  * added a configuration setting for automatically loading a custom task settings file on startup
+  * added a simple "undo" feature for reversing model manipulations
+  * enabled drag'n'drop for loading models
+  * visibility of 3D view items is now configurable in the 3D window
+   * via a button and via the context menu
+  * added copy/paste of model to and from the clipboard
+ * Distributed processing:
+  * parallel and distributed processing is configurable in a dialog
+  * improved stability of remote processing: disconnected nodes should not cause problems anymore
+ * Miscellaneous:
+  * added support for single-line fonts text (based on fonts from QCAD)
+  * support non-local file handling (e.g. http, ...)
+  * added support for more DXF features:
+   * 2D: "LWPOLYLINE", "POLYLINE", "CIRCLE", "ARC", "TEXT", "MTEXT"
+   * 3D: "3DFACE"
+  * added support for EPS/PS contour files
 
 Version 0.4.0.1 - 2010-10-24
  * disabled parallel processing for Windows standalone executable

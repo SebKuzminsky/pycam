@@ -4131,6 +4131,7 @@ class ProjectGui:
                         pass
                 self.recent_manager.add_item(filename_url)
             # store the directory of the last loaded file
+            # TODO: make sure that the filename is not a URL
             self.last_dirname = os.path.dirname(os.path.abspath(filename))
 
     @gui_activity_guard

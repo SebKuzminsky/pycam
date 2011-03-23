@@ -4859,6 +4859,15 @@ Usually you will want to use the cutter radius here to cut around the outline.</
           </packing>
         </child>
         <child>
+          <object class="GtkHSeparator" id="hseparator16">
+            <property name="visible">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkAlignment" id="alignment22">
             <property name="visible">True</property>
             <property name="left_padding">2</property>
@@ -5149,7 +5158,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
           </object>
           <packing>
             <property name="expand">False</property>
-            <property name="position">1</property>
+            <property name="position">2</property>
           </packing>
         </child>
         <child>
@@ -5232,7 +5241,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
     <property name="step_increment">1</property>
   </object>
   <object class="GtkAction" id="OpenModel">
-    <property name="label">_Open Model</property>
+    <property name="label">_Open Model ...</property>
     <property name="tooltip">Opens a model file.</property>
     <property name="stock_id">gtk-open</property>
     <property name="always_show_image">True</property>
@@ -5244,19 +5253,19 @@ Usually you will want to use the cutter radius here to cut around the outline.</
     <property name="label">_Settings</property>
   </object>
   <object class="GtkAction" id="ExportGCodeVisible">
-    <property name="label">Export _visible Toolpaths</property>
+    <property name="label">Export _visible Toolpaths ...</property>
     <property name="tooltip">Write all visible toolpaths to a file.</property>
     <property name="stock_id">gtk-execute</property>
     <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="ExportGCodeAll">
-    <property name="label">_Export all Toolpaths</property>
+    <property name="label">_Export all Toolpaths ...</property>
     <property name="tooltip">Write all toolpaths to a file.</property>
     <property name="stock_id">gtk-execute</property>
     <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="LoadTaskSettings">
-    <property name="label">_Load Task Settings</property>
+    <property name="label">_Load Task Settings ...</property>
     <property name="tooltip">Load tool, process and task definitions from a file.</property>
     <property name="stock_id">gtk-open</property>
     <property name="always_show_image">True</property>
@@ -7683,7 +7692,7 @@ You should have received a copy of the GNU General Public License along with thi
     <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="ExportEMCToolDefinition">
-    <property name="label">_Export EMC tools</property>
+    <property name="label">_Export EMC tools ...</property>
     <property name="stock_id">gtk-execute</property>
     <property name="always_show_image">True</property>
   </object>
@@ -8952,7 +8961,7 @@ You can paste the result into Inkscape or other vector graphic editors.</propert
     <property name="step_increment">5</property>
   </object>
   <object class="GtkAction" id="ShowFontDialog">
-    <property name="label">_Engrave text</property>
+    <property name="label">_Engrave text ...</property>
     <property name="stock_id">gtk-select-font</property>
     <property name="always_show_image">True</property>
   </object>

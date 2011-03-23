@@ -621,11 +621,11 @@ class ModelViewWindowGL:
         if (event.direction == gtk.gdk.SCROLL_RIGHT) or \
                 ((event.direction == gtk.gdk.SCROLL_UP) and shift_pressed):
             # horizontal move right
-            self.camera.shift_view(x_dist=1)
+            self.camera.shift_view(x_dist=-1)
         elif (event.direction == gtk.gdk.SCROLL_LEFT) or \
                 ((event.direction == gtk.gdk.SCROLL_DOWN) and shift_pressed):
             # horizontal move left
-            self.camera.shift_view(x_dist=-1)
+            self.camera.shift_view(x_dist=1)
         elif (event.direction == gtk.gdk.SCROLL_UP) and control_pressed:
             # zoom in
             self.camera.zoom_in()
