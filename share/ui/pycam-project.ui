@@ -3279,6 +3279,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">False</property>
                                         <property name="position">0</property>
                                       </packing>
                                     </child>
@@ -6061,7 +6062,7 @@ Choose a small value to minimize rapid moves up and down.</property>
                                           <object class="GtkLabel" id="label4">
                                             <property name="visible">True</property>
                                             <property name="xalign">0</property>
-                                            <property name="label" translatable="yes">Measure move down (limit):</property>
+                                            <property name="label" translatable="yes">Probing distance (limit):</property>
                                           </object>
                                           <packing>
                                             <property name="top_attach">3</property>
@@ -6107,7 +6108,7 @@ Choose a small value to minimize rapid moves up and down.</property>
                                           <object class="GtkLabel" id="label5">
                                             <property name="visible">True</property>
                                             <property name="xalign">0</property>
-                                            <property name="label" translatable="yes">Measure move speed:</property>
+                                            <property name="label" translatable="yes">Probing speed:</property>
                                           </object>
                                           <packing>
                                             <property name="top_attach">4</property>

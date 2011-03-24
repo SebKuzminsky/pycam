@@ -9,12 +9,15 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="816.28906"
+   width="759.75781"
    height="672.92279"
    id="svg2"
    version="1.1"
    inkscape:version="0.47 r22583"
-   sodipodi:docname="touch_off.svg">
+   sodipodi:docname="touch_off.svg"
+   inkscape:export-filename="/home/lars/subversion/pycam/trunk/artwork/touch_off.png"
+   inkscape:export-xdpi="72.57"
+   inkscape:export-ydpi="72.57">
   <defs
      id="defs4">
     <inkscape:path-effect
@@ -136,8 +139,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.55639836"
-     inkscape:cx="369.29806"
-     inkscape:cy="375.28502"
+     inkscape:cx="312.76681"
+     inkscape:cy="371.69049"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -162,7 +165,7 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(174.04099,-479.71086)">
+     transform="translate(117.50974,-479.71086)">
     <g
        id="g3209"
        transform="matrix(0,-1,1,0,55.306701,703.12526)">
@@ -288,11 +291,11 @@
          sodipodi:role="line"
          id="tspan4691"
          x="82.927757"
-         y="862.50269">Measure move down (limit)</tspan><tspan
+         y="862.50269">Probing distance (limit)</tspan><tspan
          sodipodi:role="line"
          x="82.927757"
          y="882.50269"
-         id="tspan5493">Feed rate: Measure move speed</tspan></text>
+         id="tspan5493">Feed rate: Probing speed</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1, 2;stroke-dashoffset:0;marker-start:url(#TriangleInL)"
        d="m 215.78609,1014.2363 0,116.9195"
