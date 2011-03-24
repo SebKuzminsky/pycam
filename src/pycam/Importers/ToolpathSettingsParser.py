@@ -23,7 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import pycam.Gui.Settings
 import pycam.Gui.Project
 import pycam.Utils.log
-from pycam.Utils import open_url
+import pycam.Utils
 import re
 import os
 import sys
@@ -59,7 +59,7 @@ def parse_toolpath_settings(filename):
     else:
         # open the file
         try:
-            infile = open_url(filename)
+            infile = pycam.Utils.URIHandler(filename).open()
         except IOError, err_msg:
             log.warn("ToolpathSettingsParser: Failed to read file (%s): %s" % \
                     (filename, err_msg))

@@ -27,7 +27,7 @@ import pycam.Geometry.Model
 import pycam.Geometry.Matrix
 import pycam.Geometry
 import pycam.Utils.log
-from pycam.Utils import open_url
+import pycam.Utils
 import math
 import re
 import os
@@ -852,8 +852,9 @@ def import_model(filename, color_as_height=False, fonts_cache=None,
         infile = filename
     else:
         try:
-            infile = open_url(filename)
+            infile = pycam.Utils.URIHandler(filename).open()
         except IOError, err_msg:
+            print pycam.Utils.URIHandler(filename)
             log.error("DXFImporter: Failed to read file (%s): %s" \
                     % (filename, err_msg))
             return None

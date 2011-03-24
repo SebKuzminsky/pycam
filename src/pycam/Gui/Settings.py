@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.Toolpath import Bounds
 import pycam.Cutters
 import pycam.Utils.log
+import pycam.Utils
 import pycam.Toolpath
 import ConfigParser
 import StringIO
@@ -331,17 +332,19 @@ process: 3
         self.config.readfp(config_text)
 
     def load_file(self, filename):
+        uri = pycam.Utils.URIHandler(filename)
         try:
-            content = file(filename).read()
+            handle = uri.open()
+            content = handle.read()
         except IOError, err_msg:
             log.error("Settings: Failed to read config file '%s': %s" \
-                    % (filename, err_msg))
+                    % (uri, err_msg))
             return False
         try:
             self.reset(content)
         except ConfigParser.ParsingError, err_msg:
             log.error("Settings: Failed to parse config file '%s': %s" \
-                    % (filename, err_msg))
+                    % (uri, err_msg))
             return False
         return True
 
@@ -357,9 +360,10 @@ process: 3
 
     def write_to_file(self, filename, tools=None, processes=None, bounds=None,
             tasks=None):
+        uri = pycam.Utils.URIHandler(filename)
         text = self.get_config_text(tools, processes, bounds, tasks)
         try:
-            handle = open(filename, "w")
+            handle = open(uri.get_local_path(), "w")
             handle.write(text)
             handle.close()
         except IOError, err_msg:

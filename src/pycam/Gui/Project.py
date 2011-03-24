@@ -41,7 +41,6 @@ from pycam.Gui.OpenGLTools import ModelViewWindowGL
 from pycam.Geometry.Letters import TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, \
         TEXT_ALIGN_RIGHT
 import pycam.Geometry.Model
-from pycam.Utils import check_uri_exists
 from pycam.Toolpath import Bounds
 import pycam.Utils.FontCache
 from pycam import VERSION
@@ -301,16 +300,16 @@ class ProjectGui:
                 self.recent_manager = None
         # file loading
         self.last_dirname = None
-        self.last_task_settings_file = None
-        self.last_model_filename = None
+        self.last_task_settings_uri = None
+        self.last_model_uri = None
         self.last_toolpath_file = None
         # define callbacks and accelerator keys for the menu actions
         for objname, callback, data, accel_key in (
                 ("LoadTaskSettings", self.load_task_settings_file, None, "<Control>t"),
-                ("SaveTaskSettings", self.save_task_settings_file, lambda: self.last_task_settings_file, None),
+                ("SaveTaskSettings", self.save_task_settings_file, lambda: self.last_task_settings_uri, None),
                 ("SaveAsTaskSettings", self.save_task_settings_file, None, None),
                 ("OpenModel", self.load_model_file, None, "<Control>o"),
-                ("SaveModel", self.save_model, lambda: self.last_model_filename, "<Control>s"),
+                ("SaveModel", self.save_model, lambda: self.last_model_uri, "<Control>s"),
                 ("SaveAsModel", self.save_model, None, "<Control><Shift>s"),
                 ("ExportGCodeAll", self.save_toolpath, False, "<Control><Shift>e"),
                 ("ExportGCodeVisible", self.save_toolpath, True, None),
@@ -1120,7 +1119,8 @@ class ProjectGui:
         autoload_task_filename = self.settings.get("default_task_settings_file")
         if autoload_task_filename:
             self.load_task_settings_file(filename=autoload_task_filename)
-            self.last_task_settings_file = autoload_task_filename
+            self.last_task_settings_uri = pycam.Utils.URIHandler(
+                    autoload_task_filename)
         self.update_all_controls()
         self.no_dialog = no_dialog
         if not self.no_dialog:
@@ -1287,23 +1287,29 @@ class ProjectGui:
         Additionally the window's title is adjusted and the "save" buttons are
         updated.
         """
-        self.last_model_filename = filename
-        if self.last_model_filename is None:
+        uri = pycam.Utils.URIHandler(filename)
+        self.last_model_uri = uri
+        if self.last_model_uri:
             self.window.set_title("PyCAM")
         else:
-            short_name = os.path.basename(filename)
+            short_name = os.path.basename(uri.get_path())
             self.window.set_title("%s - PyCAM" % short_name)
         self.update_save_actions()
 
     def update_save_actions(self):
-        self.gui.get_object("SaveTaskSettings").set_sensitive(not self.last_task_settings_file is None)
+        self.gui.get_object("SaveTaskSettings").set_sensitive(
+            bool(self.last_task_settings_uri and \
+                self.last_task_settings_uri.is_writable()))
         save_as_possible = (not self.model is None) \
                 and self.model.is_export_supported()
         self.gui.get_object("SaveAsModel").set_sensitive(save_as_possible)
-        save_possible = (not self.last_model_filename is None) and save_as_possible
+        save_possible = bool(self.last_model_uri and save_as_possible and \
+                self.last_model_uri.is_writable())
         #TODO: fix this dirty hack to avoid silent overwrites of PS/DXF files as SVG
         if save_possible:
-            extension = os.path.splitext(self.last_model_filename)[-1].lower()
+            extension = os.path.splitext(self.last_model_uri.get_path(
+                    ))[-1].lower()
+            # TODO: fix these hard-coded file extensions
             if extension[1:] in ("eps", "ps", "dxf"):
                 # can't save 2D formats except SVG
                 save_possible = False
@@ -2732,7 +2738,7 @@ class ProjectGui:
                         if "SVG" in name.upper()]
             filename = self.get_filename_via_dialog("Save model to ...",
                     mode_load=False, type_filter=type_filter,
-                    filename_templates=(self.last_model_filename,))
+                    filename_templates=(self.last_model_uri,))
             if filename:
                 self.set_model_filename(filename)
         # no filename given -> exit
@@ -3076,7 +3082,7 @@ class ProjectGui:
         if not filename:
             filename = self.get_filename_via_dialog("Exporting EMC tool definition ...",
                     mode_load=False, type_filter=FILTER_EMC_TOOL,
-                    filename_templates=(self.last_model_filename,))
+                    filename_templates=(self.last_model_uri,))
         if filename:
             export = pycam.Exporters.EMCToolExporter.EMCToolExporter(self.tool_list)
             text = export.get_tool_definition_string()
@@ -3091,7 +3097,7 @@ class ProjectGui:
 
     def open_task_settings_file(self, filename):
         """ This function is used by the commandline handler """
-        self.last_task_settings_file = filename
+        self.last_task_settings_uri = pycam.Utils.URIHandler(filename)
         self.load_task_settings_file(filename=filename)
         self.update_save_actions()
 
@@ -3104,7 +3110,8 @@ class ProjectGui:
                     mode_load=True, type_filter=FILTER_CONFIG)
             # Only update the last_task_settings attribute if the task file was
             # loaded interactively. E.g. ignore the initial task file loading.
-            self.last_task_settings_file = filename
+            if filename:
+                self.last_task_settings_uri = pycam.Utils.URIHandler(filename)
         if filename:
             log.info("Loading task settings file: %s" % str(filename))
             self.load_task_settings(filename)
@@ -3114,6 +3121,7 @@ class ProjectGui:
     def _update_all_model_attributes(self):
         self.append_to_queue(self.update_model_dimensions)
         self.append_to_queue(self.update_model_type_related_controls)
+        self.append_to_queue(self.update_save_actions)
         self.append_to_queue(self.update_support_controls)
         self.append_to_queue(self.toggle_3d_view, value=True)
         self.append_to_queue(self.update_view)
@@ -3123,6 +3131,7 @@ class ProjectGui:
         if not model is None:
             self._store_undo_state()
             self.model = model
+            self.last_model_uri = None
             # do some initialization
             self._update_all_model_attributes()
             if self.model and self.view3d and self.view3d.enabled:
@@ -3605,9 +3614,9 @@ class ProjectGui:
             # we open a dialog
             filename = self.get_filename_via_dialog("Save settings to ...",
                     mode_load=False, type_filter=FILTER_CONFIG,
-                    filename_templates=(self.last_task_settings_file, self.last_model_filename))
+                    filename_templates=(self.last_task_settings_uri, self.last_model_uri))
             if filename:
-                self.last_task_settings_file = filename
+                self.last_task_settings_uri = pycam.Utils.URIHandler(filename)
                 self.update_save_actions()
         # no filename given -> exit
         if not filename:
@@ -4037,10 +4046,13 @@ class ProjectGui:
             for file_filter in get_filters_from_list(type_filter):
                 dialog.add_filter(file_filter)
         # guess the export filename based on the model's filename
-        if filename_templates is None:
-            valid_templates = []
-        else:
-            valid_templates = [t for t in filename_templates if t]
+        valid_templates = []
+        if filename_templates:
+            for template in filename_templates:
+                if hasattr(template, "get_local_path"):
+                    valid_templates.append(template.get_local_path())
+                else:
+                    valid_templates.append(template)
         if valid_templates:
             filename_template = valid_templates[0]
             # remove the extension
@@ -4075,6 +4087,7 @@ class ProjectGui:
             dialog.set_filter(dialog.list_filters()[0])
             response = dialog.run()
             filename = dialog.get_filename()
+            uri = pycam.Utils.URIHandler(filename)
             dialog.hide()
             if response != gtk.RESPONSE_OK:
                 dialog.destroy()
@@ -4090,7 +4103,7 @@ class ProjectGui:
                 response = overwrite_window.run()
                 overwrite_window.destroy()
                 done = (response == gtk.RESPONSE_YES)
-            elif mode_load and not check_uri_exists(filename):
+            elif mode_load and not uri.exists():
                 not_found_window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_ERROR,
                         buttons=gtk.BUTTONS_OK,
                         message_format="This file does not exist. Please choose a different filename.")
@@ -4109,30 +4122,19 @@ class ProjectGui:
     def add_to_recent_file_list(self, filename):
         # Add the item to the recent files list - if it already exists.
         # Otherwise it will be added later after writing the file.
-        if check_uri_exists(filename):
+        uri = pycam.Utils.URIHandler(filename)
+        if uri.exists():
             # skip this, if the recent manager is not available (e.g. GTK 2.12.1 on Windows)
             if self.recent_manager:
-                if os.path.exists(filename):
-                    # This is a local file.
-                    # Convert the local path to a URI filename style. This is
-                    # specifically necessary under Windows (due to backslashs).
-                    filename_url_local = urllib.pathname2url(
-                            os.path.abspath(filename))
-                    # join the "file:" scheme with the url
-                    filename_url = urlparse.urlunparse(("file", None,
-                            filename_url_local, None, None, None))
-                else:
-                    # this is a remote file - or it already contains "file://"
-                    filename_url = filename
-                if self.recent_manager.has_item(filename_url):
+                if self.recent_manager.has_item(uri.get_url()):
                     try:
-                        self.recent_manager.remove_item(filename_url)
+                        self.recent_manager.remove_item(uri.get_url())
                     except gobject.GError:
                         pass
-                self.recent_manager.add_item(filename_url)
+                self.recent_manager.add_item(uri.get_url())
             # store the directory of the last loaded file
-            # TODO: make sure that the filename is not a URL
-            self.last_dirname = os.path.dirname(os.path.abspath(filename))
+            if uri.is_local():
+                self.last_dirname = os.path.dirname(uri.get_local_path())
 
     @gui_activity_guard
     def save_toolpath(self, widget=None, only_visible=False):
@@ -4150,7 +4152,7 @@ class ProjectGui:
                 filename_extension = None
             filename = self.get_filename_via_dialog("Save toolpath to ...",
                     mode_load=False, type_filter=FILTER_GCODE,
-                    filename_templates=(self.last_toolpath_file, self.last_model_filename),
+                    filename_templates=(self.last_toolpath_file, self.last_model_uri),
                     filename_extension=filename_extension)
             if filename:
                 self.last_toolpath_file = filename
@@ -4230,7 +4232,7 @@ class ProjectGui:
             self.add_to_recent_file_list(filename)
 
     def get_meta_data(self):
-        filename = "Filename: %s" % str(self.last_model_filename)
+        filename = "Filename: %s" % str(self.last_model_uri)
         timestamp = "Timestamp: %s" % str(datetime.datetime.now())
         version = "Version: %s" % VERSION
         result = []

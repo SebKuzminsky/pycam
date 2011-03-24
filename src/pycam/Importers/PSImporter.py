@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Importers.SVGImporter import convert_eps2dxf
 import pycam.Importers.DXFImporter
-from pycam.Utils import check_uri_exists, retrieve_uri
+import pycam.Utils
 import tempfile
 import os
 
@@ -45,17 +45,17 @@ def import_model(filename, program_locations=None, unit="mm", callback=None,
             return
         filename = ps_file_name
     else:
-        if not check_uri_exists(filename):
+        uri = pycam.Utils.URIHandler(filename)
+        if not uri.exists():
             log.error("PSImporter: file (%s) does not exist" % filename)
             return None
-        if not os.path.isfile(filename):
+        if not uri.is_local():
             # non-local file - write it to a temporary file first
-            uri = filename
             ps_file_handle, ps_file_name = tempfile.mkstemp(suffix=".ps")
             os.close(ps_file_handle)
             log.debug("Retrieving PS file for local access: %s -> %s" % \
                     (uri, ps_file_name))
-            if not retrieve_uri(uri, ps_file_name, callback=callback):
+            if not uri.retrieve_remote_file(ps_file_name, callback=callback):
                 log.error("PSImporter: Failed to retrieve the PS model file: " + \
                         "%s -> %s" % (uri, ps_file_name))
                 return

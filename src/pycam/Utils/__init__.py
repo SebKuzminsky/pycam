@@ -21,13 +21,15 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 __all__ = ["iterators", "polynomials", "ProgressCounter", "threading",
-        "get_platform", "get_external_program_location", "PLATFORM_WINDOWS",
-        "PLATFORM_MACOS", "PLATFORM_LINUX", "PLATFORM_UNKNOWN"]
+        "get_platform", "get_external_program_location", "URIHandler",
+        "PLATFORM_WINDOWS", "PLATFORM_MACOS", "PLATFORM_LINUX",
+        "PLATFORM_UNKNOWN"]
 
 import sys
 import os
 import socket
 import urllib
+import urlparse
 # this is imported below on demand
 #import win32com
 #import win32api
@@ -56,33 +58,102 @@ def get_platform():
         return PLATFORM_UNKNOWN
 
 
-def open_url(uri):
-    if (get_platform() == PLATFORM_WINDOWS) and (uri[1:3] == ":\\"):
-        # We are on Windows and a local path is given. Open the file
-        # normally. Otherwise "C:\\" is misinterpreted as a protocol.
-        return open(uri)
-    else:
-        return urllib.urlopen(uri)
+class URIHandler(object):
 
-def check_uri_exists(uri):
-    try:
-        handle = open_url(uri)
-        handle.close()
-        return True
-    except IOError:
-        return False
+    DEFAULT_PREFIX = "file://"
 
-def retrieve_uri(uri, filename, callback=None):
-    if callback:
-        download_callback = lambda current_blocks, block_size, num_of_blocks: \
-            callback()
-    else:
-        download_callback = None
-    try:
-        urllib.urlretrieve(uri, filename, download_callback)
-        return True
-    except IOError:
-        return False
+    def __init__(self, location):
+        self._uri = None
+        self.set_location(location)
+
+    def __str__(self):
+        url = self._uri.geturl()
+        if url.startswith(self.DEFAULT_PREFIX):
+            return url[len(self.DEFAULT_PREFIX):]
+        else:
+            return url
+
+    def set_location(self, location):
+        if isinstance(location, URIHandler):
+            self._uri = location._uri
+        elif (get_platform() == PLATFORM_WINDOWS) and (location[1:3] == ":\\"):
+            self._uri = urlparse.urlparse(self.DEFAULT_PREFIX + location)
+        else:
+            self._uri = urlparse.urlparse(location)
+            if not self._uri.scheme:
+                # always fill the "scheme" field - some functions expect this
+                self._uri = urlparse.urlparse(self.DEFAULT_PREFIX + \
+                        os.path.realpath(os.path.abspath(location)))
+
+    def is_local(self):
+        return bool(self and not self._uri.scheme or \
+                (self._uri.scheme == "file"))
+
+    def get_local_path(self):
+        if self.is_local():
+            print "LOCAL:", self._uri.path
+            return self._uri.path
+        else:
+            return None
+
+    def get_path(self):
+        return self._uri.path
+
+    def get_url(self):
+        return self._uri.geturl()
+
+    def open(self):
+        if self.is_local():
+            return open(self.get_local_path())
+        else:
+            return urllib.urlopen(self._uri.geturl())
+
+    def retrieve_remote_file(uri, destination, callback=None):
+        if callback:
+            download_callback = lambda current_blocks, block_size, \
+                num_of_blocks: callback()
+        else:
+            download_callback = None
+        try:
+            urllib.urlretrieve(uri, destination, download_callback)
+            return True
+        except IOError:
+            return False
+
+    def __eq__(self, other):
+        if isinstance(other, basestring):
+            return self == URIHandler(other)
+        elif self.__class__ == other.__class__:
+            if self.is_local() and other.is_local():
+                return self._uri.path == other._uri.path
+            else:
+                return tuple(self) == tuple(other)
+        else:
+            return hash(self) == hash(other)
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __nonzero__(self):
+        return self.get_url() != self.DEFAULT_PREFIX
+
+    def exists(self):
+        if not self:
+            return False
+        elif self.is_local():
+            return os.path.exists(self._uri.path)
+        else:
+            try:
+                handle = self.open()
+                handle.close()
+                return True
+            except IOError:
+                return False
+
+    def is_writable(self):
+        return bool(self.is_local() and os.path.isfile(self._uri.path) and \
+                os.access(self._uri.path, os.W_OK))
+
 
 def get_all_ips():
     """ try to get all IPs of this machine

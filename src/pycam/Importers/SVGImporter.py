@@ -21,7 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Importers.DXFImporter
-from pycam.Utils import check_uri_exists, retrieve_uri
+import pycam.Utils
 import tempfile
 import subprocess
 import os
@@ -97,17 +97,17 @@ def import_model(filename, program_locations=None, unit="mm", callback=None,
             return
         filename = svg_file_name
     else:
-        if not check_uri_exists(filename):
+        uri = pycam.Utils.URIHandler(filename)
+        if not uri.exists():
             log.error("SVGImporter: file (%s) does not exist" % filename)
             return None
-        if not os.path.isfile(filename):
+        if not uri.is_local():
             # non-local file - write it to a temporary file first
-            uri = filename
             svg_file_handle, svg_file_name = tempfile.mkstemp(suffix=".svg")
             os.close(svg_file_handle)
             log.debug("Retrieving SVG file for local access: %s -> %s" % \
                     (uri, svg_file_name))
-            if not retrieve_uri(uri, svg_file_name, callback=callback):
+            if not uri.retrieve_remote_file(svg_file_name, callback=callback):
                 log.error("SVGImporter: Failed to retrieve the SVG model " + \
                         "file: %s -> %s" % (uri, svg_file_name))
             filename = svg_file_name

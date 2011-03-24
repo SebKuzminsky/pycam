@@ -25,7 +25,7 @@ from pycam.Geometry.Line import Line
 from pycam.Geometry.Point import Point
 from pycam.Geometry import get_points_of_arc
 import pycam.Utils.log
-from pycam.Utils import open_url
+import pycam.Utils
 
 log = pycam.Utils.log.get_logger()
 
@@ -174,7 +174,7 @@ class CXFParser(object):
 
 def import_font(filename, callback=None):
     try:
-        infile = open_url(filename)
+        infile = pycam.Utils.URIHandler(filename).open()
     except IOError, err_msg:
         log.error("CXFImporter: Failed to read file (%s): %s" \
                 % (filename, err_msg))

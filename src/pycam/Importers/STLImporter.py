@@ -27,7 +27,7 @@ from pycam.Geometry.PointKdtree import PointKdtree
 from pycam.Geometry.utils import epsilon
 from pycam.Geometry.Model import Model
 import pycam.Utils.log
-from pycam.Utils import open_url
+import pycam.Utils
 
 from struct import unpack 
 import StringIO
@@ -63,10 +63,10 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
     if hasattr(filename, "read"):
         f = filename
         # useful for later error messages
-        filename = "input data"
+        filename = "input stream"
     else:
         try:
-            url_file = open_url(filename)
+            url_file = pycam.Utils.URIHandler(filename).open()
             # urllib.urlopen objects do not support "seek" - so we need to read
             # the whole file at once. This is ugly - anyone with a better idea?
             f = StringIO.StringIO(url_file.read())
