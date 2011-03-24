@@ -24,6 +24,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 __all__ = ["STLImporter", "DXFImporter", "SVGImporter", "TestModel"]
 
 import pycam.Utils.log
+import pycam.Utils
 import pycam.Importers.DXFImporter
 import pycam.Importers.STLImporter
 import pycam.Importers.SVGImporter
@@ -35,6 +36,9 @@ log = pycam.Utils.log.get_logger()
 
 
 def detect_file_type(filename, quiet=False):
+    # also accept URI input
+    uri = pycam.Utils.URIHandler(filename)
+    filename = uri.get_path()
     failure = (None, None)
     # check all listed importers
     # TODO: this should be done by evaluating the header of the file

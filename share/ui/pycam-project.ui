@@ -1053,18 +1053,28 @@ caused by careless DXF/SVG exporting programs.</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkLinkButton" id="ModelTransformationsHelp">
-                                <property name="label">gtk-help</property>
+                              <object class="GtkVButtonBox" id="vbuttonbox6">
                                 <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">True</property>
-                                <property name="relief">none</property>
-                                <property name="use_stock">True</property>
-                                <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=ModelTransformations</property>
+                                <property name="orientation">vertical</property>
+                                <property name="layout_style">end</property>
+                                <child>
+                                  <object class="GtkLinkButton" id="ModelTransformationsHelp">
+                                    <property name="label">gtk-help</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="relief">none</property>
+                                    <property name="use_stock">True</property>
+                                    <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=ModelTransformations</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
                               </object>
                               <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
                                 <property name="position">1</property>
                               </packing>
                             </child>
@@ -3253,18 +3263,27 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkLinkButton" id="BoundsHelp">
-                                    <property name="label">gtk-help</property>
+                                  <object class="GtkVButtonBox" id="vbuttonbox7">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                    <property name="has_tooltip">True</property>
-                                    <property name="relief">none</property>
-                                    <property name="use_stock">True</property>
-                                    <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=BoundsSettings</property>
+                                    <property name="orientation">vertical</property>
+                                    <property name="layout_style">end</property>
+                                    <child>
+                                      <object class="GtkLinkButton" id="BoundsHelp">
+                                        <property name="label">gtk-help</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <property name="relief">none</property>
+                                        <property name="use_stock">True</property>
+                                        <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=BoundsSettings</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
                                   </object>
                                   <packing>
-                                    <property name="expand">False</property>
                                     <property name="position">1</property>
                                   </packing>
                                 </child>

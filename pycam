@@ -100,10 +100,10 @@ def show_gui(inputfile=None, task_settings_file=None):
     gui = gui_class()
 
     # load the given model or the default
-    if inputfile is None:
+    if not inputfile:
         default_model = get_default_model()
-        if isinstance(default_model, basestring):
-            gui.load_model_file(filename=default_model)
+        if isinstance(default_model, (basestring, pycam.Utils.URIHandler)):
+            gui.load_model_file(filename=default_model, store_filename=False)
         else:
             gui.load_model(default_model)
     else:
@@ -112,6 +112,9 @@ def show_gui(inputfile=None, task_settings_file=None):
     # load task settings file
     if not task_settings_file is None:
         gui.open_task_settings_file(task_settings_file)
+
+    # tell the GUI to empty the "undo" queue
+    gui.finish_startup()
 
     # open the GUI
     gui.mainloop()
@@ -134,14 +137,16 @@ def get_default_model():
         return pycam.Importers.TestModel.get_test_model()
 
 def load_model_file(filename, program_locations, unit=None):
-    filename = os.path.expanduser(filename)
-    if not os.path.isfile(filename):
-        log.warn("The input file ('%s') was not found!" % filename)
+    uri = pycam.Utils.URIHandler(filename)
+    if uri.is_local():
+        uri = pycam.Utils.URIHandler(os.path.expanduser(str(filename)))
+    if not uri.exists():
+        log.warn("The input file ('%s') was not found!" % uri)
         return None
-    importer = pycam.Importers.detect_file_type(filename)[1]
-    model = importer(filename, program_locations=program_locations, unit=unit)
+    importer = pycam.Importers.detect_file_type(uri)[1]
+    model = importer(uri, program_locations=program_locations, unit=unit)
     if model is None:
-        log.warn("Failed to load the model file (%s)." % filename)
+        log.warn("Failed to load the model file (%s)." % uri)
         return None
     else:
         return model
@@ -167,7 +172,7 @@ def execute(parser, opts, args, pycam):
     pycam.Utils.setproctitle("pycam")
 
     if len(args) > 0:
-        inputfile = os.path.expanduser(args[0])
+        inputfile = pycam.Utils.URIHandler(args[0])
     else:
         inputfile = None
 

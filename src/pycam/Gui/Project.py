@@ -1289,7 +1289,7 @@ class ProjectGui:
         """
         uri = pycam.Utils.URIHandler(filename)
         self.last_model_uri = uri
-        if self.last_model_uri:
+        if not self.last_model_uri:
             self.window.set_title("PyCAM")
         else:
             short_name = os.path.basename(uri.get_path())
@@ -2017,7 +2017,7 @@ class ProjectGui:
     def export_from_font_dialog(self, widget=None):
         text_model = self.get_font_dialog_text_rendered()
         if text_model and (not text_model.maxx is None):
-            self.save_model(model=text_model)
+            self.save_model(model=text_model, store_filename=False)
 
     def copy_font_dialog_to_clipboard(self, widget=None):
         text_model = self.get_font_dialog_text_rendered()
@@ -2713,7 +2713,8 @@ class ProjectGui:
             return filename
 
     @gui_activity_guard
-    def save_model(self, widget=None, filename=None, model=None):
+    def save_model(self, widget=None, filename=None, model=None,
+            store_filename=True):
         if model is None:
             model = self.model
         if not model.is_export_supported():
@@ -2723,7 +2724,8 @@ class ProjectGui:
         # get the filename
         if callable(filename):
             filename = filename()
-        if not isinstance(filename, basestring):
+        uri = None
+        if not isinstance(filename, (basestring, pycam.Utils.URIHandler)):
             # we open a dialog
             # determine the file type
             # TODO: this needs to be decided by the exporter code
@@ -2740,21 +2742,30 @@ class ProjectGui:
                     mode_load=False, type_filter=type_filter,
                     filename_templates=(self.last_model_uri,))
             if filename:
-                self.set_model_filename(filename)
-        # no filename given -> exit
-        if not filename:
-            return
-        try:
-            file_in = open(filename, "w")
-            model.export(comment=self.get_meta_data(),
-                    unit=self.settings.get("unit")).write(file_in)
-            file_in.close()
-        except IOError, err_msg:
-            log.error("Failed to save model file: %s" % err_msg)
+                uri = pycam.Utils.URIHandler(filename)
+                if uri.is_local() and store_filename:
+                    self.set_model_filename(filename)
         else:
-            log.info("Successfully stored the current model as '%s'." % \
-                    str(filename))
-            self.add_to_recent_file_list(filename)
+            uri = pycam.Utils.URIHandler(filename)
+        # no filename given -> exit
+        if not uri:
+            return
+        if not uri.is_local():
+            log.error("Unable to write file to a non-local " + \
+                    "destination: %s" % uri)
+        else:
+            try:
+                file_in = open(uri.get_local_path(), "w")
+                model.export(comment=self.get_meta_data(),
+                        unit=self.settings.get("unit")).write(file_in)
+                file_in.close()
+            except IOError, err_msg:
+                log.error("Failed to save model file: %s" % err_msg)
+            else:
+                log.info("Successfully stored the current model as '%s'." % \
+                        str(filename))
+                self.update_save_actions()
+                self.add_to_recent_file_list(filename)
 
     @gui_activity_guard
     def reset_preferences(self, widget=None):
@@ -3049,7 +3060,7 @@ class ProjectGui:
 
     @gui_activity_guard
     @progress_activity_guard
-    def load_model_file(self, widget=None, filename=None):
+    def load_model_file(self, widget=None, filename=None, store_filename=True):
         if callable(filename):
             filename = filename()
         if not filename:
@@ -3066,7 +3077,8 @@ class ProjectGui:
                         unit=self.settings.get("unit"),
                         fonts_cache=self._fonts_cache,
                         callback=self.update_progress_bar)):
-                    self.set_model_filename(filename)
+                    if store_filename:
+                        self.set_model_filename(filename)
                     self.add_to_recent_file_list(filename)
                     return True
                 else:
@@ -3094,6 +3106,14 @@ class ProjectGui:
                 log.error("Failed to save EMC tool file: %s" % err_msg)
             else:
                 self.add_to_recent_file_list(filename)
+
+    def finish_startup(self):
+        """ This function is called by the pycam script after everything is
+        set up properly.
+        """
+        # empty the "undo" states (accumulated by loading the defualt model)
+        while self._undo_states:
+            self._undo_states.pop(0)
 
     def open_task_settings_file(self, filename):
         """ This function is used by the commandline handler """
@@ -3610,7 +3630,7 @@ class ProjectGui:
     def save_task_settings_file(self, widget=None, filename=None):
         if callable(filename):
             filename = filename()
-        if not isinstance(filename, basestring):
+        if not isinstance(filename, (basestring, pycam.Utils.URIHandler)):
             # we open a dialog
             filename = self.get_filename_via_dialog("Save settings to ...",
                     mode_load=False, type_filter=FILTER_CONFIG,
@@ -3626,7 +3646,9 @@ class ProjectGui:
                 self.process_list, self.bounds_list, self.task_list):
             log.error("Failed to save settings file")
         else:
+            log.info("Task settings written to %s" % filename)
             self.add_to_recent_file_list(filename)
+        self.update_save_actions()
 
     def toggle_progress_bar(self, status):
         # always hide the progress button - it will be enabled later
@@ -4049,8 +4071,10 @@ class ProjectGui:
         valid_templates = []
         if filename_templates:
             for template in filename_templates:
-                if hasattr(template, "get_local_path"):
-                    valid_templates.append(template.get_local_path())
+                if not template:
+                    continue
+                elif hasattr(template, "get_path"):
+                    valid_templates.append(template.get_path())
                 else:
                     valid_templates.append(template)
         if valid_templates:

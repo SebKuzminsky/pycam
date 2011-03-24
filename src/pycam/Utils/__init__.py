@@ -76,6 +76,8 @@ class URIHandler(object):
     def set_location(self, location):
         if isinstance(location, URIHandler):
             self._uri = location._uri
+        elif not location:
+            self._uri = urlparse.urlparse(self.DEFAULT_PREFIX)
         elif (get_platform() == PLATFORM_WINDOWS) and (location[1:3] == ":\\"):
             self._uri = urlparse.urlparse(self.DEFAULT_PREFIX + location)
         else:
@@ -91,7 +93,6 @@ class URIHandler(object):
 
     def get_local_path(self):
         if self.is_local():
-            print "LOCAL:", self._uri.path
             return self._uri.path
         else:
             return None
@@ -184,7 +185,6 @@ def get_all_ips():
             return cmp(ip1, ip2)
     # non-local IPs first
     filtered_result.sort(cmp=sort_ip_by_relevance)
-    print filtered_result
     return filtered_result
 
 
