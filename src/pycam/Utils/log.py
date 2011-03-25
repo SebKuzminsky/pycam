@@ -100,7 +100,7 @@ class RepetitionsFilter(logging.Filter):
         # a clean style.
         self._handler = handler
         self._suppressed_messages_counter = 0
-        self._cmp_len = 20
+        self._cmp_len = 30
         self._delay = 3
 
     def filter(self, record):

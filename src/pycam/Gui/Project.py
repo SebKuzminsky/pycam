@@ -281,6 +281,7 @@ class ProjectGui:
             gtk.main_quit()
         self.gui.add_from_file(gtk_build_file)
         self.window = self.gui.get_object("ProjectWindow")
+        # show stock items on buttons
         # increase the initial width of the window (due to hidden elements)
         self.window.set_default_size(400, -1)
         # initialize the RecentManager (TODO: check for Windows)
@@ -1593,7 +1594,8 @@ class ProjectGui:
 
     def _browse_external_program_location(self, widget=None, key=None):
         location = self.get_filename_via_dialog(title="Select the executable " \
-                + "for '%s'" % key, mode_load=True)
+                + "for '%s'" % key, mode_load=True,
+                parent=self.preferences_window)
         if not location is None:
             self.settings.set("external_program_%s" % key, location)
 
@@ -4048,11 +4050,13 @@ class ProjectGui:
         return toolpath_settings
 
     def get_filename_via_dialog(self, title, mode_load=False, type_filter=None,
-            filename_templates=None, filename_extension=None):
+            filename_templates=None, filename_extension=None, parent=None):
+        if parent is None:
+            parent = self.window
         # we open a dialog
         if mode_load:
             dialog = gtk.FileChooserDialog(title=title,
-                    parent=self.window, action=gtk.FILE_CHOOSER_ACTION_OPEN,
+                    parent=parent, action=gtk.FILE_CHOOSER_ACTION_OPEN,
                     buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                         gtk.STOCK_OPEN, gtk.RESPONSE_OK))
         else:
@@ -4267,6 +4271,10 @@ class ProjectGui:
     def mainloop(self):
         # run the mainloop only if a GUI was requested
         if not self.no_dialog:
+            gtk_settings = gtk.settings_get_default()
+            # force the icons to be displayed
+            gtk_settings.props.gtk_menu_images = True
+            gtk_settings.props.gtk_button_images = True
             try:
                 gtk.main()
             except KeyboardInterrupt:

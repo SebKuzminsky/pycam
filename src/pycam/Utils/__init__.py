@@ -209,7 +209,7 @@ def get_external_program_location(key):
         for one_dir in path_env.split(os.pathsep):
             for basename in potential_names:
                 location = os.path.join(one_dir, basename)
-                if check_uri_exists(location):
+                if os.path.isfile(location):
                     return location
     # do a manual scan in the programs directory (only for windows)
     try:
@@ -223,7 +223,7 @@ def get_external_program_location(key):
     for sub_dir in windows_program_directories[key]:
         for basename in potential_names:
             location = os.path.join(program_dir, sub_dir, basename)
-            if check_uri_exists(location):
+            if os.path.isfile(location):
                 return location
     # nothing found
     return None

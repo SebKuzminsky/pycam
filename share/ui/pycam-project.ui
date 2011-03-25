@@ -4022,7 +4022,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                             <property name="can_focus">True</property>
                                             <property name="receives_default">True</property>
                                             <property name="tooltip_text" translatable="yes">Generate all toolpaths that are marked as enabled</property>
-                                            <property name="image">GenerateAllToolPathsIcon</property>
                                             <property name="use_underline">True</property>
                                           </object>
                                           <packing>
@@ -4459,7 +4458,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
                                     <property name="image">ExportAllToolpathsIcon</property>
-                                    <property name="xalign">0</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -4473,8 +4471,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
-                                    <property name="image">ExportVisibleToolpathsIcon</property>
-                                    <property name="xalign">0</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -4488,8 +4484,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
-                                    <property name="image">ShowToolPathSimulation</property>
-                                    <property name="xalign">0</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -4499,12 +4493,10 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                 </child>
                                 <child>
                                   <object class="GtkButton" id="ToolpathGrid">
-                                    <property name="label">gtk-page-setup</property>
+                                    <property name="label">Clone grid</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
-                                    <property name="use_stock">True</property>
-                                    <property name="xalign">0</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -4518,8 +4510,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
-                                    <property name="image">CropToolpath</property>
-                                    <property name="xalign">0</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -4534,7 +4524,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
                                     <property name="use_stock">True</property>
-                                    <property name="xalign">0</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -4549,7 +4538,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
                                     <property name="use_stock">True</property>
-                                    <property name="xalign">0</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -4564,7 +4552,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
                                     <property name="use_stock">True</property>
-                                    <property name="xalign">0</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -5264,7 +5251,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
     <property name="label">_Open Model ...</property>
     <property name="tooltip">Opens a model file.</property>
     <property name="stock_id">gtk-open</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="FileMenu">
     <property name="label">_File</property>
@@ -5275,50 +5261,38 @@ Usually you will want to use the cutter radius here to cut around the outline.</
   <object class="GtkAction" id="ExportGCodeVisible">
     <property name="label">Export _visible Toolpaths ...</property>
     <property name="tooltip">Write all visible toolpaths to a file.</property>
-    <property name="stock_id">gtk-execute</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="ExportGCodeAll">
     <property name="label">_Export all Toolpaths ...</property>
     <property name="tooltip">Write all toolpaths to a file.</property>
     <property name="stock_id">gtk-execute</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="LoadTaskSettings">
     <property name="label">_Load Task Settings ...</property>
     <property name="tooltip">Load tool, process and task definitions from a file.</property>
-    <property name="stock_id">gtk-open</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="SaveTaskSettings">
     <property name="label">_Save Task Settings</property>
     <property name="tooltip">Save the tool, process and task definitions.</property>
-    <property name="stock_id">gtk-save</property>
-    <property name="always_show_image">True</property>
+    <property name="stock_id">gtk-save-as</property>
   </object>
   <object class="GtkAction" id="SaveAsTaskSettings">
     <property name="label">Save Task Settings _as ...</property>
     <property name="tooltip">Save the tool, process and task definitions to a new file.</property>
-    <property name="stock_id">gtk-save-as</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="GeneralSettings">
     <property name="label">_Preferences</property>
     <property name="tooltip">Configure PyCAM</property>
     <property name="stock_id">gtk-preferences</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="Quit">
     <property name="label">_Quit</property>
     <property name="tooltip">Exit PyCAM</property>
     <property name="stock_id">gtk-quit</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="SaveModel">
     <property name="label">_Save Model</property>
     <property name="tooltip">Save the current model to the STL file.</property>
-    <property name="stock_id">gtk-save</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="WindowMenu">
     <property name="label">_Windows</property>
@@ -5332,7 +5306,6 @@ Usually you will want to use the cutter radius here to cut around the outline.</
     <property name="short_label">Save Model as ...</property>
     <property name="tooltip">Save the current model to a new STL file.</property>
     <property name="stock_id">gtk-save-as</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkDialog" id="GeneralSettingsWindow">
     <property name="border_width">5</property>
@@ -7327,7 +7300,16 @@ See the &lt;a href="http://sf.net/apps/mediawiki/pycam/?title=Parallel_Processin
                                           </packing>
                                         </child>
                                         <child>
-                                          <placeholder/>
+                                          <object class="GtkAlignment" id="alignment48">
+                                            <property name="visible">True</property>
+                                            <child>
+                                              <placeholder/>
+                                            </child>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
                                         </child>
                                       </object>
                                       <packing>
@@ -7345,7 +7327,7 @@ See the &lt;a href="http://sf.net/apps/mediawiki/pycam/?title=Parallel_Processin
                                         <child>
                                           <object class="GtkTable" id="ServerModeSettingsTable">
                                             <property name="visible">True</property>
-                                            <property name="n_rows">4</property>
+                                            <property name="n_rows">5</property>
                                             <property name="n_columns">3</property>
                                             <property name="column_spacing">3</property>
                                             <property name="row_spacing">2</property>
@@ -7415,97 +7397,18 @@ Leave this field empty for running a local server.</property>
                                               </object>
                                               <packing>
                                                 <property name="top_attach">2</property>
-                                                <property name="bottom_attach">3</property>
+                                                <property name="bottom_attach">4</property>
                                                 <property name="x_options">GTK_FILL</property>
                                                 <property name="y_options">GTK_FILL</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkSpinButton" id="ServerPortLocal">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="tooltip_text" translatable="yes">PyCAM will try to bind to this local TCP port. Other PyCAM clients may connect to this port if they know the shared secret.
-Remember that you need administrative permissions for ports below 1024.
-The default port is 1250.</property>
-                                                <property name="invisible_char">&#x25CF;</property>
-                                                <property name="adjustment">ServerPortLocalValue</property>
-                                              </object>
-                                              <packing>
-                                                <property name="left_attach">1</property>
-                                                <property name="right_attach">2</property>
-                                                <property name="top_attach">1</property>
-                                                <property name="bottom_attach">2</property>
-                                                <property name="x_options">GTK_FILL</property>
-                                                <property name="y_options">GTK_FILL</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkViewport" id="viewport1">
-                                                <property name="visible">True</property>
-                                                <property name="resize_mode">queue</property>
-                                                <property name="shadow_type">none</property>
-                                                <child>
-                                                  <placeholder/>
-                                                </child>
-                                              </object>
-                                              <packing>
-                                                <property name="left_attach">2</property>
-                                                <property name="right_attach">3</property>
-                                                <property name="top_attach">1</property>
-                                                <property name="bottom_attach">2</property>
-                                                <property name="x_options">GTK_FILL</property>
-                                                <property name="y_options">GTK_FILL</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkVBox" id="vbox37">
-                                                <property name="visible">True</property>
-                                                <property name="orientation">vertical</property>
-                                                <child>
-                                                  <object class="GtkEntry" id="ServerPassword">
-                                                    <property name="visible">True</property>
-                                                    <property name="can_focus">True</property>
-                                                    <property name="tooltip_text" translatable="yes">All servers and clients of a processing cloud must use the same shared secret.</property>
-                                                    <property name="visibility">False</property>
-                                                    <property name="invisible_char">&#x25CF;</property>
-                                                    <property name="truncate_multiline">True</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">False</property>
-                                                    <property name="position">0</property>
-                                                  </packing>
-                                                </child>
-                                                <child>
-                                                  <object class="GtkCheckButton" id="ServerPasswordShow">
-                                                    <property name="label" translatable="yes">Show password</property>
-                                                    <property name="visible">True</property>
-                                                    <property name="can_focus">True</property>
-                                                    <property name="receives_default">False</property>
-                                                    <property name="tooltip_text" translatable="yes">Show or hide the shared secret in the password field.</property>
-                                                    <property name="draw_indicator">True</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">False</property>
-                                                    <property name="fill">False</property>
-                                                    <property name="position">1</property>
-                                                  </packing>
-                                                </child>
-                                              </object>
-                                              <packing>
-                                                <property name="left_attach">1</property>
-                                                <property name="right_attach">2</property>
-                                                <property name="top_attach">2</property>
-                                                <property name="bottom_attach">3</property>
                                               </packing>
                                             </child>
                                             <child>
                                               <object class="GtkButton" id="ServerPasswordGenerate">
-                                                <property name="label">gtk-new</property>
+                                                <property name="label">Generate</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">True</property>
                                                 <property name="tooltip_text" translatable="yes">Generate a new random shared secret.</property>
-                                                <property name="use_stock">True</property>
                                                 <property name="xalign">0</property>
                                                 <property name="yalign">0</property>
                                               </object>
@@ -7519,21 +7422,113 @@ The default port is 1250.</property>
                                               </packing>
                                             </child>
                                             <child>
+                                              <object class="GtkCheckButton" id="ServerPasswordShow">
+                                                <property name="label" translatable="yes">Show password</property>
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="receives_default">False</property>
+                                                <property name="draw_indicator">True</property>
+                                              </object>
+                                              <packing>
+                                                <property name="left_attach">1</property>
+                                                <property name="right_attach">2</property>
+                                                <property name="top_attach">3</property>
+                                                <property name="bottom_attach">4</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkEntry" id="ServerPassword">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="visibility">False</property>
+                                                <property name="invisible_char">&#x25CF;</property>
+                                                <property name="truncate_multiline">True</property>
+                                              </object>
+                                              <packing>
+                                                <property name="left_attach">1</property>
+                                                <property name="right_attach">2</property>
+                                                <property name="top_attach">2</property>
+                                                <property name="bottom_attach">3</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkAlignment" id="alignment24">
+                                                <property name="visible">True</property>
+                                                <child>
+                                                  <placeholder/>
+                                                </child>
+                                              </object>
+                                              <packing>
+                                                <property name="left_attach">2</property>
+                                                <property name="right_attach">3</property>
+                                                <property name="top_attach">3</property>
+                                                <property name="bottom_attach">4</property>
+                                                <property name="x_options">GTK_FILL</property>
+                                                <property name="y_options">GTK_FILL</property>
+                                              </packing>
+                                            </child>
+                                            <child>
                                               <object class="GtkLinkButton" id="ServerModeHelp">
                                                 <property name="label">gtk-help</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">True</property>
-                                                <property name="has_tooltip">True</property>
                                                 <property name="relief">none</property>
                                                 <property name="use_stock">True</property>
-                                                <property name="xalign">1</property>
                                                 <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=ServerMode</property>
                                               </object>
                                               <packing>
+                                                <property name="left_attach">2</property>
                                                 <property name="right_attach">3</property>
-                                                <property name="top_attach">3</property>
-                                                <property name="bottom_attach">4</property>
+                                                <property name="top_attach">4</property>
+                                                <property name="bottom_attach">5</property>
+                                                <property name="x_options">GTK_FILL</property>
+                                                <property name="y_options">GTK_FILL</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkAlignment" id="alignment25">
+                                                <property name="visible">True</property>
+                                                <child>
+                                                  <placeholder/>
+                                                </child>
+                                              </object>
+                                              <packing>
+                                                <property name="right_attach">2</property>
+                                                <property name="top_attach">4</property>
+                                                <property name="bottom_attach">5</property>
+                                                <property name="x_options">GTK_FILL</property>
+                                                <property name="y_options">GTK_FILL</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkSpinButton" id="ServerPortLocal">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="invisible_char">&#x25CF;</property>
+                                                <property name="adjustment">ServerPortLocalValue</property>
+                                              </object>
+                                              <packing>
+                                                <property name="left_attach">2</property>
+                                                <property name="right_attach">3</property>
+                                                <property name="top_attach">1</property>
+                                                <property name="bottom_attach">2</property>
+                                                <property name="x_options">GTK_FILL</property>
+                                                <property name="y_options">GTK_FILL</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkAlignment" id="alignment49">
+                                                <property name="visible">True</property>
+                                                <child>
+                                                  <placeholder/>
+                                                </child>
+                                              </object>
+                                              <packing>
+                                                <property name="left_attach">1</property>
+                                                <property name="right_attach">2</property>
+                                                <property name="top_attach">1</property>
+                                                <property name="bottom_attach">2</property>
                                                 <property name="x_options">GTK_FILL</property>
                                                 <property name="y_options">GTK_FILL</property>
                                               </packing>
@@ -7709,12 +7704,9 @@ You should have received a copy of the GNU General Public License along with thi
   <object class="GtkAction" id="About">
     <property name="label">_About</property>
     <property name="stock_id">gtk-about</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="ExportEMCToolDefinition">
     <property name="label">_Export EMC tools ...</property>
-    <property name="stock_id">gtk-execute</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAdjustment" id="ScaleDimensionValue">
     <property name="upper">10000</property>
@@ -7940,47 +7932,36 @@ Any selected group of dimensions will be scaled accordingly.</property>
   </object>
   <object class="GtkAction" id="HelpIntroduction">
     <property name="label">_Introduction</property>
-    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpSupportedFormats">
     <property name="label">Supported _Formats</property>
-    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpModelTransformations">
     <property name="label">_Model Transformations</property>
-    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpToolTypes">
     <property name="label">T_ool Types</property>
-    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpProcessSettings">
     <property name="label">_Process Settings</property>
-    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpBoundsSettings">
     <property name="label">_Bounds Settings</property>
-    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpTaskSetup">
     <property name="label">_Task Setup</property>
-    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpGCodeExport">
     <property name="label">_GCode Export</property>
-    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpSimulation">
     <property name="label">_Simulation</property>
-    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="Help3DView">
     <property name="label">3D _View</property>
-    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="HelpCommandLine">
     <property name="label">_Command Line Usage</property>
-    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAction" id="ProjectWebsite">
     <property name="label">Project _Website</property>
@@ -7988,15 +7969,12 @@ Any selected group of dimensions will be scaled accordingly.</property>
   </object>
   <object class="GtkAction" id="Forum">
     <property name="label">_Forum</property>
-    <property name="stock_id">gtk-network</property>
   </object>
   <object class="GtkAction" id="BugTracker">
     <property name="label">Report a _Bug</property>
-    <property name="stock_id">gtk-network</property>
   </object>
   <object class="GtkAction" id="FeatureRequest">
     <property name="label">Re_quest a Feature</property>
-    <property name="stock_id">gtk-network</property>
   </object>
   <object class="GtkAdjustment" id="SupportGridDistanceY">
     <property name="upper">1000</property>
@@ -8015,8 +7993,6 @@ Any selected group of dimensions will be scaled accordingly.</property>
   <object class="GtkToggleAction" id="ToggleLogWindow">
     <property name="label">_Log Window</property>
     <property name="tooltip">Show the event protocol of PyCAM.</property>
-    <property name="stock_id">gtk-dialog-info</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkDialog" id="LogWindow">
     <property name="border_width">5</property>
@@ -8151,7 +8127,6 @@ Any selected group of dimensions will be scaled accordingly.</property>
   </object>
   <object class="GtkAction" id="HelpHotkeys">
     <property name="label">_Keyboard Shortcuts</property>
-    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkAdjustment" id="SupportGridAverageDistance">
     <property name="value">30</property>
@@ -8180,8 +8155,6 @@ Any selected group of dimensions will be scaled accordingly.</property>
   </object>
   <object class="GtkAction" id="OpenRecentModel">
     <property name="label">Open _Recent</property>
-    <property name="stock_id">gtk-open</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkDialog" id="ProcessPoolWindow">
     <property name="border_width">5</property>
@@ -8485,12 +8458,9 @@ Please read the description of the Server Mode (linked below) to understand the 
   <object class="GtkToggleAction" id="ToggleProcessPoolWindow">
     <property name="label">_Process Pool Window</property>
     <property name="tooltip">Show the current pool of workers</property>
-    <property name="stock_id">gtk-network</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="DevelopmentBlog">
     <property name="label">_Development Blog</property>
-    <property name="stock_id">gtk-network</property>
   </object>
   <object class="GtkAction" id="HelpServerMode">
     <property name="label">Server Mode</property>
@@ -8983,7 +8953,6 @@ You can paste the result into Inkscape or other vector graphic editors.</propert
   <object class="GtkAction" id="ShowFontDialog">
     <property name="label">_Engrave text ...</property>
     <property name="stock_id">gtk-select-font</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkTextBuffer" id="FontDialogInputBuffer"/>
   <object class="GtkAction" id="ExtrasMenu">
@@ -8995,7 +8964,6 @@ You can paste the result into Inkscape or other vector graphic editors.</propert
   <object class="GtkAction" id="UndoButton">
     <property name="label">Undo latest model change</property>
     <property name="stock_id">gtk-undo</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAdjustment" id="FontCharacterSpacingValue">
     <property name="value">1</property>
@@ -9470,14 +9438,6 @@ upon interesting bugs and weird results.</property>
     <property name="upper">1000</property>
     <property name="step_increment">1</property>
   </object>
-  <object class="GtkImage" id="ShowToolPathSimulation">
-    <property name="visible">True</property>
-    <property name="stock">gtk-execute</property>
-  </object>
-  <object class="GtkImage" id="CropToolpath">
-    <property name="visible">True</property>
-    <property name="stock">gtk-zoom-fit</property>
-  </object>
   <object class="GtkAdjustment" id="ToolChangeRapidMoveDownValue">
     <property name="upper">10000</property>
     <property name="step_increment">1</property>
@@ -9522,19 +9482,9 @@ upon interesting bugs and weird results.</property>
     <property name="visible">True</property>
     <property name="stock">gtk-execute</property>
   </object>
-  <object class="GtkImage" id="GenerateAllToolPathsIcon">
-    <property name="visible">True</property>
-    <property name="stock">gtk-execute</property>
-  </object>
   <object class="GtkAction" id="HelpTouchOff">
     <property name="label">_Touch off and tool change</property>
     <property name="short_label">_Touch off</property>
-    <property name="stock_id">gtk-help</property>
-    <property name="always_show_image">True</property>
-  </object>
-  <object class="GtkImage" id="ExportVisibleToolpathsIcon">
-    <property name="visible">True</property>
-    <property name="stock">gtk-save-as</property>
   </object>
   <object class="GtkImage" id="ExportAllToolpathsIcon">
     <property name="visible">True</property>
@@ -9545,13 +9495,11 @@ upon interesting bugs and weird results.</property>
     <property name="short_label">_Copy</property>
     <property name="tooltip">Copy model to clipboard</property>
     <property name="stock_id">gtk-copy</property>
-    <property name="always_show_image">True</property>
   </object>
   <object class="GtkAction" id="PasteModelFromClipboard">
     <property name="label">_Paste</property>
     <property name="short_label">_Paste</property>
     <property name="tooltip">Paste a model from clipboard</property>
     <property name="stock_id">gtk-paste</property>
-    <property name="always_show_image">True</property>
   </object>
 </interface>
