@@ -443,7 +443,12 @@ def _get_physics(models, cutter, calculation_backend):
         return None
     elif calculation_backend == "ODE":
         import pycam.Physics.ode_physics as ode_physics
-        return ode_physics.generate_physics(models, cutter)
+        try:
+            return ode_physics.generate_physics(models, cutter)
+        except MemoryError:
+            return "The ODE library returned an unexpected error " + \
+                    "condition. You need to to disable ODE for this " + \
+                    "calculation. Sorry!"
     else:
         return "Invalid calculation backend (%s): not one of %s" \
                 % (calculation_backend, CALCULATION_BACKENDS)
