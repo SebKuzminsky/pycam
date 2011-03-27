@@ -1119,9 +1119,7 @@ class ProjectGui:
             gtk.main_iteration()
         autoload_task_filename = self.settings.get("default_task_settings_file")
         if autoload_task_filename:
-            self.load_task_settings_file(filename=autoload_task_filename)
-            self.last_task_settings_uri = pycam.Utils.URIHandler(
-                    autoload_task_filename)
+            self.open_task_settings_file(autoload_task_filename)
         self.update_all_controls()
         self.no_dialog = no_dialog
         if not self.no_dialog:
