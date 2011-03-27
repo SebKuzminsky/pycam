@@ -29,6 +29,7 @@ from pycam.Cutters.CylindricalCutter import CylindricalCutter
 import pycam.Cutters
 import pycam.Toolpath.SupportGrid
 import pycam.Toolpath.MotionGrid
+import pycam.Toolpath
 import pycam.Geometry.Model
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
@@ -130,12 +131,12 @@ def generate_toolpath(model, tool_settings=None,
     engrave_offset = number(engrave_offset)
     if bounds is None:
         # no bounds were given - we use the boundaries of the model
-        minx, miny, minz = (model.minx, model.miny, model.minz)
-        maxx, maxy, maxz = (model.maxx, model.maxy, model.maxz)
-    else:
-        bounds_low, bounds_high = bounds.get_absolute_limits()
-        minx, miny, minz = [number(value) for value in bounds_low]
-        maxx, maxy, maxz = [number(value) for value in bounds_high]
+        bounds = pycam.Toolpath.Bounds(pycam.Toolpath.Bounds.TYPE_CUSTOM,
+                (model.minx, model.miny, model.minz),
+                (model.maxx, model.maxy, model.maxz))
+    bounds_low, bounds_high = bounds.get_absolute_limits()
+    minx, miny, minz = [number(value) for value in bounds_low]
+    maxx, maxy, maxz = [number(value) for value in bounds_high]
     # trimesh model or contour model?
     if isinstance(model, pycam.Geometry.Model.ContourModel):
         # contour model
@@ -210,7 +211,7 @@ def generate_toolpath(model, tool_settings=None,
                 model, minz, support_grid_average_distance,
                 support_grid_minimum_bridges, support_grid_thickness,
                 support_grid_height, support_grid_length,
-                start_at_corners=start_at_corners)
+                bounds, start_at_corners=start_at_corners)
         trimesh_models.append(support_grid_model)
     elif (not support_grid_type) or (support_grid_type == "none"):
         pass

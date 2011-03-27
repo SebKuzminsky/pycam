@@ -151,17 +151,19 @@ def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness,
     return grid_model
 
 def get_support_distributed(model, z_plane, average_distance,
-        min_bridges_per_polygon, thickness, height, length,
+        min_bridges_per_polygon, thickness, height, length, bounds,
         start_at_corners=False):
     if (average_distance == 0) or (length == 0) or (thickness == 0) \
             or (height == 0):
         return
     result = Model()
     if hasattr(model, "get_polygons"):
-        polygons = model.get_polygons(z=z_plane, ignore_below=False)
+        polygons = model.get_cropped_model_by_bounds(bounds).get_polygons(
+                z=z_plane, ignore_below=False)
     else:
         polygons = model.get_waterline_contour(Plane(Point(0, 0, z_plane),
-                Vector(0, 0, 1))).get_polygons()
+                Vector(0, 0, 1))).get_cropped_model_by_bounds(bounds)\
+                        .get_polygons()
     # minimum required distance between two bridge start points
     avoid_distance = 1.5 * (abs(length) + thickness)
     if start_at_corners:

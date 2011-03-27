@@ -572,6 +572,11 @@ class ContourModel(BaseModel):
             result.append(poly.get_reversed())
         return result
 
+    def get_cropped_model_by_bounds(self, bounds):
+        low, high = bounds.get_absolute_limits()
+        return self.get_cropped_model(low[0], high[0], low[1], high[1],
+                low[2], high[2])
+
     def get_cropped_model(self, minx, maxx, miny, maxy, minz, maxz):
         new_line_groups = []
         for group in self._line_groups:

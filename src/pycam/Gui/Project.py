@@ -878,7 +878,7 @@ class ProjectGui:
         # update the speed factor label
         speed_factor_widget.connect("value-changed",
                 lambda widget: self.gui.get_object("SimulationSpeedFactorValueLabel").set_label(
-                        "%g" % self.settings.get("simulation_speed_factor")))
+                        "%.2f" % self.settings.get("simulation_speed_factor")))
         self.simulation_window = self.gui.get_object("SimulationDialog")
         self.simulation_window.connect("delete-event", self.finish_toolpath_simulation)
         # store the original content (for adding the number of current toolpaths in "update_toolpath_table")
@@ -1401,6 +1401,7 @@ class ProjectGui:
                             s.get("support_grid_thickness"),
                             s.get("support_grid_height"),
                             s.get("support_grid_length"),
+                            bounds.get_referenced_bounds(s.get("model").get_bounds()),
                             start_at_corners=corner_start)
         elif grid_type == GRID_TYPES["none"]:
             pass
@@ -3257,14 +3258,23 @@ class ProjectGui:
             for index in range(3):
                 # enabled, if dimension is non-zero
                 state = model_dims[index] != 0
-                get_control(index, "low").set_sensitive(state)
                 get_control(index, "high").set_sensitive(state)
+                if (index == 2) and isinstance(self.model,
+                        pycam.Geometry.Model.ContourModel):
+                    # disable lower z for contour models
+                    state = False
+                get_control(index, "low").set_sensitive(state)
         else:
             # non-relative margins: enable all controls
             for index in range(3):
-                get_control(index, "low").set_sensitive(True)
                 get_control(index, "high").set_sensitive(True)
-
+                if (index == 2) and isinstance(self.model,
+                        pycam.Geometry.Model.ContourModel):
+                    # disable lower z for contour models
+                    state = False
+                else:
+                    state = True
+                get_control(index, "low").set_sensitive(state)
 
     def update_bounds_table(self, new_index=None, skip_model_update=False):
         # reset the model data and the selection

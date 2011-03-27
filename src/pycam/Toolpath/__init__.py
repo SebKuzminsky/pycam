@@ -355,6 +355,10 @@ class Bounds:
         else:
             self.bounds_type = bounds_type
 
+    def get_referenced_bounds(self, reference):
+        return Bounds(bounds_type=self.bounds_type, bounds_low=self.bounds_low,
+                bounds_high=self.bounds_high, reference=reference)
+
     def get_bounds(self):
         return self.bounds_low[:], self.bounds_high[:]
 
@@ -392,7 +396,7 @@ class Bounds:
                 in (Bounds.TYPE_RELATIVE_MARGIN, Bounds.TYPE_FIXED_MARGIN):
             if reference is None:
                 raise ValueError, "any non-custom boundary definition " \
-                        + "requires an a reference object for caluclating " \
+                        + "requires a reference object for caluclating " \
                         + "absolute limits"
             else:
                 ref_low, ref_high = reference.get_absolute_limits()
