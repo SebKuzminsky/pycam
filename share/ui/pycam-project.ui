@@ -296,6 +296,7 @@
   </object>
   <object class="GtkWindow" id="ProjectWindow">
     <property name="title" translatable="yes">PyCAM</property>
+    <property name="role">pycam-main</property>
     <property name="destroy_with_parent">True</property>
     <child>
       <object class="GtkVBox" id="WindowBox">
@@ -4720,6 +4721,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
   </object>
   <object class="GtkWindow" id="view3dwindow">
     <property name="title" translatable="yes">PyCAM Visualization</property>
+    <property name="role">pycam-view</property>
     <child>
       <object class="GtkVBox" id="view3dbox">
         <property name="visible">True</property>
@@ -5310,6 +5312,7 @@ Usually you will want to use the cutter radius here to cut around the outline.</
   <object class="GtkDialog" id="GeneralSettingsWindow">
     <property name="border_width">5</property>
     <property name="title" translatable="yes">PyCAM Preferences</property>
+    <property name="role">pycam-preferences</property>
     <property name="destroy_with_parent">True</property>
     <property name="icon_name">preferences-desktop</property>
     <property name="type_hint">normal</property>
@@ -7661,6 +7664,7 @@ You need to switch to Python v2.6 (or higher) or install the Python module "mult
   <object class="GtkAboutDialog" id="AboutWindow">
     <property name="border_width">5</property>
     <property name="title" translatable="yes">About PyCAM</property>
+    <property name="role">pycam-about</property>
     <property name="window_position">center-on-parent</property>
     <property name="type_hint">normal</property>
     <property name="gravity">center</property>
@@ -7721,6 +7725,7 @@ You should have received a copy of the GNU General Public License along with thi
   <object class="GtkDialog" id="UnitChangeDialog">
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Unit change compensation</property>
+    <property name="role">pycam-units</property>
     <property name="modal">True</property>
     <property name="icon_name">accessories-calculator</property>
     <property name="type_hint">normal</property>
@@ -7997,6 +8002,7 @@ Any selected group of dimensions will be scaled accordingly.</property>
   <object class="GtkDialog" id="LogWindow">
     <property name="border_width">5</property>
     <property name="title" translatable="yes">PyCAM event log</property>
+    <property name="role">pycam-log</property>
     <property name="type_hint">normal</property>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox6">
@@ -8159,6 +8165,7 @@ Any selected group of dimensions will be scaled accordingly.</property>
   <object class="GtkDialog" id="ProcessPoolWindow">
     <property name="border_width">5</property>
     <property name="title" translatable="yes">PyCAM pool of processes</property>
+    <property name="role">pycam-processes</property>
     <property name="type_hint">normal</property>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox5">
@@ -8469,6 +8476,7 @@ Please read the description of the Server Mode (linked below) to understand the 
   <object class="GtkDialog" id="FontDialog">
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Engrave text</property>
+    <property name="role">pycam-fonts</property>
     <property name="window_position">center</property>
     <property name="destroy_with_parent">True</property>
     <property name="icon_name">accessories-character-map</property>
@@ -9000,6 +9008,7 @@ You can paste the result into Inkscape or other vector graphic editors.</propert
   <object class="GtkDialog" id="SimulationDialog">
     <property name="border_width">5</property>
     <property name="title" translatable="yes">PyCAM simulation</property>
+    <property name="role">pycam-simulation</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
@@ -9102,7 +9111,7 @@ upon interesting bugs and weird results.</property>
                 <child>
                   <object class="GtkLabel" id="SimulationSpeedFactorValueLabel">
                     <property name="visible">True</property>
-                    <property name="label" translatable="yes">1</property>
+                    <property name="label" translatable="yes">1.00</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -9142,6 +9151,8 @@ upon interesting bugs and weird results.</property>
                 <property name="label">gtk-close</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="can_default">True</property>
+                <property name="has_default">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
               </object>
@@ -9185,6 +9196,7 @@ upon interesting bugs and weird results.</property>
   <object class="GtkDialog" id="ToolpathGridDialog">
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Toolpath Grid</property>
+    <property name="role">pycam-toolpath-grid</property>
     <property name="destroy_with_parent">True</property>
     <property name="icon_name">document-page-setup</property>
     <property name="type_hint">normal</property>
