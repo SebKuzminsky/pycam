@@ -575,6 +575,8 @@ class ProjectGui:
                 100 / 25.4, False)
         self.gui.get_object("Projection2D").connect("clicked",
                 self.projection_2d)
+        self.gui.get_object("ExtrudeSphereButton").connect("clicked",
+                self.extrude_sphere)
         # support grid
         support_grid_type_control = self.gui.get_object(
                 "SupportGridTypesControl")
@@ -1187,7 +1189,9 @@ class ProjectGui:
     def update_model_type_related_controls(self):
         is_reversible = (not self.model is None) \
                 and hasattr(self.model, "reverse_directions")
-        controls_2d = ("ToggleModelDirectionButton", "DirectionsGuessButton")
+        controls_2d = ("ToggleModelDirectionButton", "DirectionsGuessButton",
+                # TODO: currently disabled: "ExtrudeSphereButton",
+                )
         for control in controls_2d:
             if is_reversible:
                 self.gui.get_object(control).show()
@@ -2870,6 +2874,14 @@ class ProjectGui:
         else:
             plane_z = 0
         return Plane(Point(0, 0, plane_z), Vector(0, 0, 1))
+
+    @progress_activity_guard
+    @gui_activity_guard
+    def extrude_sphere(self, widget=None):
+        self.update_progress_bar("Calculating spherical extrusion")
+        model = self.model.extrude_to_sphere(callback=self.update_progress_bar)
+        if model:
+            self.load_model(model)
 
     @progress_activity_guard
     @gui_activity_guard

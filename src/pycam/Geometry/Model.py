@@ -36,6 +36,7 @@ from pycam.Geometry import TransformableContainer
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
 import uuid
+import math
 
 log = pycam.Utils.log.get_logger()
 
@@ -691,4 +692,124 @@ class ContourModel(BaseModel):
             return intersections
         else:
             return False
+
+    def extrude_to_sphere(self, height_factor=1.0, stepping=None, callback=None):
+        """ do a spherical extrusion of a 2D model.
+        This is mainly useful for extruding text in a visually pleasent way ...
+        BEWARE: currently not working correctly - see "calculate_point_height" below ...
+        """
+        outer_polygons = [(poly, []) for poly in self._line_groups
+                if poly.is_outer()]
+        for poly in self._line_groups:
+            # ignore open polygons
+            if not poly.is_closed:
+                continue
+            if poly.is_outer():
+                continue
+            for outer_poly, children in outer_polygons:
+                if outer_poly == poly:
+                    break
+                if outer_poly.is_polygon_inside(poly):
+                    children.append(poly)
+                    break
+        model = Model()
+        for poly, children in outer_polygons:
+            if callback and callback():
+                return None
+            group = PolygonGroup(poly, children, callback=callback)
+            new_model = group.extrude_to_sphere(height_factor=height_factor,
+                    stepping=stepping)
+            if new_model:
+                model += new_model
+        return model
+
+
+class PolygonGroup(object):
+
+    def __init__(self, outer, inner_list, callback=None):
+        self.outer = outer
+        self.inner = inner_list
+        self.callback = callback
+        self.lines = outer.get_lines()
+        for poly in inner_list:
+            self.lines.extend(poly.get_lines())
+
+    def extrude_to_sphere(self, height_factor=1.0, stepping=None):
+        if stepping is None:
+            stepping = min(self.outer.maxx - self.outer.minx,
+                    self.outer.maxy - self.outer.miny) / 50
+        grid = []
+        for line in self._get_grid_matrix(stepping=stepping):
+            line_points = []
+            for x, y in line:
+                z = self.calculate_point_height(x, y, height_factor)
+                if z is None:
+                    line_points.append(None)
+                else:
+                    line_points.append(Point(x, y, z))
+            if self.callback:
+                self.callback()
+            grid.append(line_points)
+        # calculate the triangles within the grid
+        model = Model()
+        for line in range(len(grid) - 1):
+            for row in range(len(grid[0]) - 1):
+                p1 = grid[line][row]
+                p2 = grid[line][row + 1]
+                p3 = grid[line + 1][row]
+                p4 = grid[line + 1][row + 1]
+                if p1 and p2 and p3:
+                    model.append(Triangle(p1, p2, p3))
+                if p2 and p4 and p3:
+                    model.append(Triangle(p2, p4, p3))
+        # TODO: the connections between the outline and these triangles needs to be done
+        return model
+
+    def _get_grid_matrix(self, stepping):
+        x_dim = self.outer.maxx - self.outer.minx
+        y_dim = self.outer.maxy - self.outer.miny
+        x_points_num = int(max(4, math.ceil(x_dim / stepping)))
+        y_points_num = int(max(4, math.ceil(y_dim / stepping)))
+        x_step = x_dim / x_points_num
+        y_step = y_dim / y_points_num
+        grid = []
+        for x_index in range(x_points_num):
+            line = []
+            for y_index in range(y_points_num):
+                x_value = self.outer.minx + x_index * x_step + x_step / 2
+                y_value = self.outer.miny + y_index * y_step + y_step / 2
+                line.append((x_value, y_value))
+            grid.append(line)
+        return grid
+
+    def calculate_point_height(self, x, y, height_factor):
+        point = Point(x, y, self.outer.minz)
+        if not self.outer.is_point_inside(point):
+            return None
+        for poly in self.inner:
+            if poly.is_point_inside(point):
+                return None
+        point = Point(x, y, self.outer.minz)
+        line_distances = []
+        for line in self.lines:
+            if line.dir.cross(point.sub(line.p1)).z > 0:
+                # TODO: this is currently somehow broken
+                close_point = line.closest_point(point)
+                if not line.is_point_inside(close_point):
+                    continue
+                dist = line.dist_to_point(point)
+                direction = close_point.sub(point)
+                line_distances.append((dist, direction))
+        line_distances.sort(key=lambda item: item[0])
+        dist1, vector1 = line_distances.pop(0)
+        for dist2, vector2 in line_distances:
+            if vector1.dot(vector2) <= 0:
+                break
+        else:
+            # no suitable line found
+            return None
+        radius = (dist1 + dist2) / 2
+        min_dist = min(dist1, dist2)
+        angle = math.acos((radius - min_dist) / radius)
+        return height_factor * math.sin(angle) * radius
 

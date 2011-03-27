@@ -990,7 +990,6 @@
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
-                                        <property name="fill">False</property>
                                         <property name="padding">2</property>
                                         <property name="position">0</property>
                                       </packing>
@@ -1006,7 +1005,20 @@ This usually fixes inconsistent polygon winding states
 caused by careless DXF/SVG exporting programs.</property>
                                       </object>
                                       <packing>
+                                        <property name="expand">False</property>
                                         <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="ExtrudeSphereButton">
+                                        <property name="label" translatable="yes">Extrude (sphere)</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <property name="no_show_all">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="position">2</property>
                                       </packing>
                                     </child>
                                     <child>
@@ -1018,7 +1030,7 @@ caused by careless DXF/SVG exporting programs.</property>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
-                                        <property name="position">2</property>
+                                        <property name="position">3</property>
                                       </packing>
                                     </child>
                                     <child>
@@ -1030,7 +1042,7 @@ caused by careless DXF/SVG exporting programs.</property>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
-                                        <property name="position">3</property>
+                                        <property name="position">4</property>
                                       </packing>
                                     </child>
                                     <child>
@@ -1042,7 +1054,7 @@ caused by careless DXF/SVG exporting programs.</property>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
-                                        <property name="position">4</property>
+                                        <property name="position">5</property>
                                       </packing>
                                     </child>
                                   </object>
@@ -1070,12 +1082,12 @@ caused by careless DXF/SVG exporting programs.</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
-                                    <property name="fill">False</property>
                                     <property name="position">0</property>
                                   </packing>
                                 </child>
                               </object>
                               <packing>
+                                <property name="expand">False</property>
                                 <property name="position">1</property>
                               </packing>
                             </child>
