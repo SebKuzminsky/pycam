@@ -6,6 +6,7 @@ Version 0.5 - UNRELEASED
   * added toolpath cropping 
   * added toolpath grid pattern: clone a single toolpath in rows and columns
   * unify DropCutter behaviour for models that are higher than the defined bounding box
+  * more efficient tool moves for Engraving
  * Model handling:
   * added support for simple multi-layered 2D models
   * added 2D projection of 3D models
@@ -35,9 +36,12 @@ Version 0.5 - UNRELEASED
   * added support for single-line fonts text (based on fonts from QCAD)
   * support non-local file handling (e.g. http, ...)
   * added support for more DXF features:
-   * 2D: "LWPOLYLINE", "POLYLINE", "CIRCLE", "ARC", "TEXT", "MTEXT"
-   * 3D: "3DFACE"
+   * 2D: LWPOLYLINE, POLYLINE, CIRCLE, ARC, TEXT, MTEXT
+   * 3D: 3DFACE
   * added support for EPS/PS contour files
+ * noteworthy changes:
+  * bounding box for 2D models must be _above_ the model (before: below or above)
+  * simulation mode: the stock material removal simulation was removed
 
 Version 0.4.0.1 - 2010-10-24
  * disabled parallel processing for Windows standalone executable

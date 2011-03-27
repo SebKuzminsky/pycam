@@ -25,6 +25,7 @@ import pycam.PathProcessors.PathAccumulator
 from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
+from pycam.Geometry.Polygon import PolygonSorter
 from pycam.Geometry.utils import ceil
 from pycam.PathGenerators import get_max_height_dynamic, get_free_paths_ode, \
         get_free_paths_triangles
@@ -47,10 +48,8 @@ class EngraveCutter:
                 self.combined_model += model
         else:
             self.combined_model = []
-        if clockwise:
-            self.contour_model = contour_model.get_reversed()
-        else:
-            self.contour_model = contour_model
+        self.clockwise = clockwise
+        self.contour_model = contour_model
         self.pa_push = path_processor
         # We use a separated path processor for the last "drop" layer.
         # This path processor does not need to be configurable.
@@ -77,7 +76,24 @@ class EngraveCutter:
         progress_counter = ProgressCounter(len(z_steps) * num_of_lines,
                 draw_callback)
 
-        line_groups = self.contour_model.get_polygons()
+        if draw_callback:
+            draw_callback(text="Engrave: optimizing polygon order")
+        # Sort the polygons according to their directions (first inside, then
+        # outside. This reduces the problem of break-away pieces.
+        inner_polys = []
+        outer_polys = []
+        for poly in self.contour_model.get_polygons():
+            if poly.get_area() <= 0:
+                inner_polys.append(poly)
+            else:
+                outer_polys.append(poly)
+        inner_sorter = PolygonSorter(inner_polys, callback=draw_callback)
+        outer_sorter = PolygonSorter(outer_polys, callback=draw_callback)
+        line_groups = inner_sorter.get_polygons() + outer_sorter.get_polygons()
+        if self.clockwise:
+            for line_group in line_groups:
+                line_group.reverse_direction()
+
         # push slices for all layers above ground
         if maxz == minz:
             # only one layer - use PushCutter instead of DropCutter
@@ -94,7 +110,7 @@ class EngraveCutter:
         for z in push_steps:
             # update the progress bar and check, if we should cancel the process
             if draw_callback and draw_callback(text="Engrave: processing" \
-                        + " layer %d/%d" % (current_layer, num_of_layers)):
+                        + " layer %d/%d" % (current_layer + 1, num_of_layers)):
                 # cancel immediately
                 break
             for line_group in line_groups:
@@ -116,40 +132,13 @@ class EngraveCutter:
 
         if quit_requested:
             return self.pa_push.paths
-        if draw_callback:
-            draw_callback(text="Engrave: processing layer %d/%d" \
-                    % (current_layer + 1, num_of_layers))
-
-        # Sort the polygons according to their directions (first inside, then
-        # outside.
-        # This reduces the problem of break-away pieces.
-        # We do the sorting just before the final layer (breakage does not
-        # happen before).
-        def polygon_priority(poly1, poly2):
-            """ polygon priority comparison: first holes and open polygons, then
-            outlines (roughly sorted by ascending area size)
-            TODO: ordering according to the locations and groups of polygons
-            would be even better.
-            """
-            area1 = poly1.get_area()
-            area2 = poly2.get_area()
-            if (area1 <= 0) and (area2 > 0):
-                return -1
-            elif (area2 <= 0) and (area1 > 0):
-                return 1
-            else:
-                # do a "relaxed" sorting by size
-                if abs(area1) < 2 * abs(area2):
-                    return -1
-                elif abs(area2) < 2 * abs(area1):
-                    return 1
-                else:
-                    return 0
-        line_groups.sort(cmp=polygon_priority)
 
         for z in drop_steps:
+            if draw_callback:
+                draw_callback(text="Engrave: processing layer %d/%d" \
+                        % (current_layer + 1, num_of_layers))
             # process the final layer with a drop cutter
-            for line_group in self.contour_model.get_polygons():
+            for line_group in line_groups:
                 self.pa_drop.new_direction(0)
                 self.pa_drop.new_scanline()
                 for line in line_group.get_lines():
@@ -164,6 +153,7 @@ class EngraveCutter:
                 # break the outer loop if requested
                 if quit_requested:
                     break
+            current_layer += 1
             last_z = z
         self.pa_drop.finish()
         

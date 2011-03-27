@@ -39,6 +39,174 @@ except ImportError:
 log = pycam.Utils.log.get_logger()
 
 
+class PolygonInTree(object):
+    """ This class is a wrapper around Polygon objects that is used for sorting.
+    """
+
+    next_id = 0
+
+    def __init__(self, polygon):
+        self.id = PolygonInTree.next_id
+        PolygonInTree.next_id += 1
+        self.start = polygon.get_points()[0]
+        self.end = polygon.get_points()[-1]
+        self.polygon = polygon
+        self.area = polygon.get_area()
+        self.children = []
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __cmp__(self, other):
+        return cmp(self.area, other.area)
+
+    def insert_if_child(self, other):
+        if self.polygon.is_polygon_inside(other.polygon):
+            self.children.append(other)
+
+    def remove_child(self, other):
+        try:
+            self.children.remove(other)
+        except ValueError:
+            pass
+
+    def get_cost(self, other):
+        return other.start.sub(self.end).norm
+
+
+class PolygonPositionSorter(object):
+    """ sort PolygonInTree objects for a minimized way length.
+    The sorter takes care that no polygons are processed before their children
+    (inside polygons).
+    """
+
+    def __init__(self, polygons):
+        self.polygons = []
+        for poly in polygons:
+            self._append(poly)
+        self.optimize_order()
+        self.branches = []
+        for poly in self.polygons:
+            self.branches.append([poly])
+
+    def _append(self, poly):
+        if self.polygons:
+            min_cost = poly.get_cost(self.polygons[0])
+            min_index = -1
+            for index in range(len(self.polygons)):
+                prev_item = self.polygons[index]
+                cost = prev_item.get_cost(poly)
+                try:
+                    next_item = self.polygons[index + 1]
+                except IndexError:
+                    pass
+                else:
+                    cost += poly.get_cost(next_item)
+                    cost -= prev_item.get_cost(next_item)
+                if cost < min_cost:
+                    min_cost = cost
+                    min_index = index
+            self.polygons.insert(min_index + 1, poly)
+        else:
+            self.polygons.append(poly)
+
+    def append(self, poly):
+        min_cost = None
+        min_branch = None
+        for branch_index in range(len(self.branches) - 1, -1, -1):
+            this_branch = self.branches[branch_index]
+            cost = this_branch[-1].get_cost(poly)
+            try:
+                next_branch = self.branches[branch_index + 1]
+            except IndexError:
+                pass
+            else:
+                cost += poly.get_cost(next_branch[0])
+                cost -= this_branch[-1].get_cost(next_branch[0])
+            if (min_cost is None) or (cost < min_cost):
+                min_cost = cost
+                min_branch = this_branch
+            for child in poly.children:
+                if child in this_branch:
+                    break
+            else:
+                continue
+            break
+        if min_branch:
+            min_branch.append(poly)
+
+
+    def optimize_order(self):
+        """ re-insert all items until their order stabilizes """
+        finished = False
+        counter_left = len(self.polygons)
+        while not finished and (counter_left > 0):
+            finished = True
+            for index in range(len(self.polygons)):
+                item = self.polygons.pop(index)
+                self._append(item)
+                if self.polygons[index] != item:
+                    finished = False
+            counter_left -= 1
+
+    def get_polygons(self):
+        result = []
+        for branch in self.branches:
+            result.extend(branch)
+        return result
+
+
+class PolygonSorter(object):
+    """ sort Plygon instances according to the following rules:
+    * inner polygons first (with no inside polygons)
+    * inner polygons with inside polygons that are already processed
+    * outer polygons (with no polygons inside that are not yet processed)
+    * remaining outer polygons
+    The order of polygons is slightly optimized (minimizing the way length).
+    """
+
+    def __init__(self, polygons, callback=None):
+        self.polygons = []
+        self.sorter = None
+        self.callback = callback
+        for poly in polygons:
+            self._append(poly)
+        self.optimize_order()
+
+    def _append(self, polygon):
+        new_item = PolygonInTree(polygon)
+        for item in self.polygons:
+            item.insert_if_child(new_item)
+            new_item.insert_if_child(item)
+        self.polygons.append(new_item)
+
+    def optimize_order(self):
+        self.polygons.sort()
+        remaining_polygons = list(self.polygons)
+        done_polygons = []
+        while remaining_polygons:
+            if self.callback:
+                self.callback()
+            usable_polys = []
+            for poly in remaining_polygons:
+                for child in poly.children:
+                    if not child in done_polygons:
+                        break
+                else:
+                    usable_polys.append(poly)
+            for poly in usable_polys:
+                remaining_polygons.remove(poly)
+            if self.sorter is None:
+                self.sorter = PolygonPositionSorter(usable_polys)
+            else:
+                for poly in usable_polys:
+                    self.sorter.append(poly)
+            done_polygons.extend(usable_polys)
+
+    def get_polygons(self):
+        return [poly.polygon for poly in self.sorter.get_polygons()]
+
+
 class Polygon(TransformableContainer):
 
     def __init__(self, plane=None):
@@ -271,6 +439,12 @@ class Polygon(TransformableContainer):
         return self.get_area() > 0
 
     def is_polygon_inside(self, polygon):
+        if not self.is_closed:
+            return False
+        if (self.minx > polygon.maxx) or (self.maxx < polygon.minx) or \
+                (self.miny > polygon.maxy) or (self.maxy < polygon.miny) or \
+                (self.minz > polygon.maxz) or (self.maxz < polygon.minz):
+            return False
         for point in polygon._points:
             if not self.is_point_inside(point):
                 return False
@@ -286,6 +460,8 @@ class Polygon(TransformableContainer):
         """ Test if a given point is inside of the polygon.
         The result is True if the point is on a line (or very close to it).
         """
+        if not self.is_closed:
+            return False
         # First: check if the point is within the boundary of the polygon.
         if not p.is_inside(self.minx, self.maxx, self.miny, self.maxy,
                 self.minz, self.maxz):
