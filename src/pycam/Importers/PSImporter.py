@@ -61,6 +61,7 @@ def import_model(filename, program_locations=None, unit="mm", callback=None,
                 return
             filename = ps_file_name
         else:
+            filename = uri.get_local_path()
             local_file = True
 
     if program_locations and "pstoedit" in program_locations:

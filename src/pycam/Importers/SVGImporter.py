@@ -112,6 +112,7 @@ def import_model(filename, program_locations=None, unit="mm", callback=None,
                         "file: %s -> %s" % (uri, svg_file_name))
             filename = svg_file_name
         else:
+            filename = uri.get_local_path()
             local_file = True
 
     if program_locations and "inkscape" in program_locations:
