@@ -39,6 +39,7 @@ Version 0.5 - UNRELEASED
    * 2D: LWPOLYLINE, POLYLINE, CIRCLE, ARC, TEXT, MTEXT
    * 3D: 3DFACE
   * added support for EPS/PS contour files
+  * fixed offset of SVG export
  * noteworthy changes:
   * bounding box for 2D models must be _above_ the model (before: below or above)
   * simulation mode: the stock material removal simulation was removed

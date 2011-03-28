@@ -47,6 +47,8 @@ setup(
     long_description="""IMPORTANT NOTE: Please read the list of requirements:
 http://sourceforge.net/apps/mediawiki/pycam/index.php?title=Requirements
 Basically you will need Python, GTK and OpenGL.
+
+Windows: select Python 2.5 in the following dialog.
 """,
     # full list of classifiers at:
     #   http://pypi.python.org/pypi?:action=list_classifiers
@@ -78,7 +80,7 @@ Basically you will need Python, GTK and OpenGL.
         "pycam.Toolpath",
         "pycam.Utils",
     ],
-    scripts = ['pycam', 'pycam_win32_postinstall.py'],
+    scripts = ['pycam-loader.py', 'pycam_win32_postinstall.py'],
     data_files=[("share/pycam/doc", [
             "COPYING.TXT",
             "INSTALL.TXT",
