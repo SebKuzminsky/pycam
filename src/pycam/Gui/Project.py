@@ -3030,12 +3030,17 @@ class ProjectGui:
             timestamp):
         if info != 0:
             uris = [str(selection_data.data)]
+        elif pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
+            uris = selection_data.data.splitlines()
         else:
             uris = selection_data.get_uris()
         if not uris:
             # empty selection
             return True
         for uri in uris:
+            if not uri or (uri == chr(0)):
+                continue
+            uri = pycam.Utils.URIHandler(uri)
             file_type, importer = pycam.Importers.detect_file_type(uri,
                     quiet=True)
             if importer:

@@ -27,6 +27,7 @@ __all__ = ["iterators", "polynomials", "ProgressCounter", "threading",
 
 import sys
 import os
+import re
 import socket
 import urllib
 import urlparse
@@ -67,11 +68,10 @@ class URIHandler(object):
         self.set_location(location)
 
     def __str__(self):
-        url = self._uri.geturl()
-        if url.startswith(self.DEFAULT_PREFIX):
-            return url[len(self.DEFAULT_PREFIX):]
+        if self.is_local():
+            return self.get_local_path()
         else:
-            return url
+            return self._uri.geturl()
 
     def set_location(self, location):
         if isinstance(location, URIHandler):
@@ -79,7 +79,7 @@ class URIHandler(object):
         elif not location:
             self._uri = urlparse.urlparse(self.DEFAULT_PREFIX)
         elif (get_platform() == PLATFORM_WINDOWS) and (location[1:3] == ":\\"):
-            self._uri = urlparse.urlparse(self.DEFAULT_PREFIX + location)
+            self._uri = urlparse.urlparse(self.DEFAULT_PREFIX + location.replace("\\", "/"))
         else:
             self._uri = urlparse.urlparse(location)
             if not self._uri.scheme:
@@ -88,17 +88,22 @@ class URIHandler(object):
                         os.path.realpath(os.path.abspath(location)))
 
     def is_local(self):
-        return bool(self and not self._uri.scheme or \
-                (self._uri.scheme == "file"))
+        return bool(self and (not self._uri.scheme or \
+                (self._uri.scheme == "file")))
 
     def get_local_path(self):
         if self.is_local():
-            return self._uri.path
+            return self.get_path()
         else:
             return None
 
     def get_path(self):
-        return self._uri.path
+        if get_platform() == PLATFORM_WINDOWS:
+            text = self._uri.netloc + self._uri.path
+            text = text.lstrip("/").replace("/", "\\")
+            return re.sub("%([0-9a-fA-F]{2})", lambda token: chr(int(token.groups()[0], 16)), text)
+        else:
+            return self._uri.path
 
     def get_url(self):
         return self._uri.geturl()
@@ -142,7 +147,7 @@ class URIHandler(object):
         if not self:
             return False
         elif self.is_local():
-            return os.path.exists(self._uri.path)
+            return os.path.exists(self.get_local_path())
         else:
             try:
                 handle = self.open()
@@ -152,8 +157,8 @@ class URIHandler(object):
                 return False
 
     def is_writable(self):
-        return bool(self.is_local() and os.path.isfile(self._uri.path) and \
-                os.access(self._uri.path, os.W_OK))
+        return bool(self.is_local() and os.path.isfile(self.get_local_path()) and \
+                os.access(self.get_local_path(), os.W_OK))
 
 
 def get_all_ips():
