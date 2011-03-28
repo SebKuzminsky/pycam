@@ -38,6 +38,8 @@ svn_export: clean
 		then svn export --quiet "$(SVN_REPO_BASE)" "$(EXPORT_DIR)";\
 		else svk co "$(SVK_REPO_BASE)" "$(EXPORT_DIR)";\
 	fi
+	# Windows needs a different name for the startup script - due to process creation (no fork/exec)
+	@cp "$(EXPORT_DIR)/pycam" "$(EXPORT_DIR)/pycam-loader.py"
 
 create_archive_dir:
 	@mkdir -p "$(ARCHIVE_DIR)"
