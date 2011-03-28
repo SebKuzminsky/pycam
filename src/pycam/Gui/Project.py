@@ -1099,8 +1099,8 @@ class ProjectGui:
             recent_files_menu.set_local_only(False)
             # most recent files to the top
             recent_files_menu.set_sort_type(gtk.RECENT_SORT_MRU)
-            # show only five files
-            recent_files_menu.set_limit(5)
+            # show only ten files
+            recent_files_menu.set_limit(10)
             uimanager.get_widget("/MenuBar/FileMenu/OpenRecentModelMenu").set_submenu(recent_files_menu)
             recent_files_menu.connect("item-activated",
                     self.load_recent_model_file)
@@ -3510,6 +3510,7 @@ class ProjectGui:
                     self.toolpath)
             if not index is None:
                 self.crop_toolpath(self.toolpath[index])
+                self.update_toolpath_table()
         elif action == "grid":
             index = self._treeview_get_active_index(self.toolpath_table,
                     self.toolpath)

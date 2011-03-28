@@ -4,7 +4,7 @@
 # use something like "VERSION=0.2 make" to override the VERSION on the command line
 VERSION ?= $(shell sed -n "s/^.*[\t ]*VERSION[\t ]*=[\t ]*[\"']\([^\"']*\)[\"'].*/\1/gp" src/pycam/__init__.py)
 SVN_REPO_BASE ?= $(shell svn info --xml 2>/dev/null | grep "^<url>" | cut -f 2 -d ">" | cut -f 1 -d "<")
-SVK_REPO_BASE ?= $(shell LANG= svk info | grep "^Depot Path:" | cut -f 3- -d " ")
+SVK_REPO_BASE ?= $(shell LANG= svk info 2>/dev/null| grep "^Depot Path:" | cut -f 3- -d " ")
 REPO_TAGS ?= https://pycam.svn.sourceforge.net/svnroot/pycam/tags
 RELEASE_PREFIX ?= pycam-
 ARCHIVE_DIR_RELATIVE ?= release-archives
@@ -40,7 +40,7 @@ svn_export: clean
 	fi
 
 create_archive_dir:
-	mkdir -p "$(ARCHIVE_DIR)"
+	@mkdir -p "$(ARCHIVE_DIR)"
 
 zip: create_archive_dir man svn_export
 	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py sdist --format zip --dist-dir "$(ARCHIVE_DIR)"

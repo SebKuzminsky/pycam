@@ -54,14 +54,12 @@ PYTHON_DOC_DIR = os.path.join(SHARE_DIR, "doc")
 ICON_FILE = os.path.join(SHARE_DIR, "pycam.ico")
 
 # add some more doc files
-DOC_FILES = [
-        ("LICENSE.TXT", "License"),
-        ("README.TXT", "Readme")]
+DOC_FILES = [("LICENSE.TXT", "License"),]
 WEB_LINKS = [
         (r"http://sourceforge.net/projects/pycam/", "Project's Website"),
         (r"http://sourceforge.net/tracker/?group_id=237831&atid=1104176", "Report a Bug"),
         (r"http://sourceforge.net/projects/pycam/forums", "Forum Discussions"),
-        (r"http://sourceforge.net/apps/mediawiki/pycam/", "Wiki Documentation")]
+        (r"http://sourceforge.net/apps/mediawiki/pycam/index.php?title=User_Manual", "User Manual")]
 
 MENU_ITEMS = map(lambda v: (os.path.join(PYTHON_DOC_DIR, v[0]), v[1]), DOC_FILES)
 MENU_ITEMS.extend(WEB_LINKS)

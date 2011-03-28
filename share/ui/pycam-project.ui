@@ -1082,12 +1082,12 @@ caused by careless DXF/SVG exporting programs.</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">False</property>
                                     <property name="position">0</property>
                                   </packing>
                                 </child>
                               </object>
                               <packing>
-                                <property name="expand">False</property>
                                 <property name="position">1</property>
                               </packing>
                             </child>
@@ -8483,7 +8483,6 @@ Please read the description of the Server Mode (linked below) to understand the 
   </object>
   <object class="GtkAction" id="HelpServerMode">
     <property name="label">Server Mode</property>
-    <property name="stock_id">gtk-help</property>
   </object>
   <object class="GtkDialog" id="FontDialog">
     <property name="border_width">5</property>
