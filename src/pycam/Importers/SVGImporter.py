@@ -30,7 +30,9 @@ log = pycam.Utils.log.get_logger()
 
 def convert_svg2eps(svg_filename, eps_filename, location=None):
     if location is None:
-        location = "inkscape"
+        location = pycam.Utils.get_external_program_location("inkscape")
+        if location is None:
+            location = "inkscape"
     try:
         process = subprocess.Popen(stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -51,7 +53,9 @@ def convert_svg2eps(svg_filename, eps_filename, location=None):
 
 def convert_eps2dxf(eps_filename, dxf_filename, location=None, unit="mm"):
     if location is None:
-        location = "pstoedit"
+        location = pycam.Utils.get_external_program_location("pstoedit")
+        if location is None:
+            location = "pstoedit"
     args = [location, "-dt", "-nc", "-f", "dxf:-polyaslines"]
     if unit == "mm":
         # eps uses inch by default - we need to scale
