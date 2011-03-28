@@ -146,7 +146,8 @@ for file_list in (data, a.datas):
             file_list.append(fentry)
 
 
-exe = EXE(pyz, data,
+exe = EXE(pyz,
+          data,
           a.scripts,
           a.binaries,
           a.zipfiles,

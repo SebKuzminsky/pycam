@@ -39,7 +39,7 @@ try:
 except OSError:
     START_MENU_BASEDIR = get_special_folder_path("CSIDL_PROGRAMS")
 except NameError:
-    START_MENU_BASEDIR = "HELO"
+    START_MENU_BASEDIR = "C:\\"
 START_MENU_SUBDIR = os.path.join(START_MENU_BASEDIR, "PyCAM")
 
 # create a start menu item for pycam
@@ -56,7 +56,7 @@ ICON_FILE = os.path.join(SHARE_DIR, "pycam.ico")
 # add some more doc files
 DOC_FILES = [("LICENSE.TXT", "License"),]
 WEB_LINKS = [
-        (r"http://sourceforge.net/projects/pycam/", "Project's Website"),
+        (r"http://pycam.sourceforge.net/", "Project's Website"),
         (r"http://sourceforge.net/tracker/?group_id=237831&atid=1104176", "Report a Bug"),
         (r"http://sourceforge.net/projects/pycam/forums", "Forum Discussions"),
         (r"http://sourceforge.net/apps/mediawiki/pycam/index.php?title=User_Manual", "User Manual")]

@@ -83,6 +83,9 @@ def is_pool_available():
     return not __manager is None
 
 def is_multiprocessing_available():
+    if (pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS) and \
+            hasattr(sys, "frozen") and sys.frozen:
+        return False
     try:
         import multiprocessing
         return True
