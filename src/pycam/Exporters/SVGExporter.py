@@ -26,7 +26,7 @@ SVG_OUTPUT_DPI = 90
 
 class SVGExporter:
 
-    def __init__(self, output, unit="mm"):
+    def __init__(self, output, unit="mm", maxx=None, maxy=None):
         if isinstance(output, basestring):
             # a filename was given
             self.output = file(output,"w")
@@ -37,10 +37,22 @@ class SVGExporter:
             dots_per_px = SVG_OUTPUT_DPI / 25.4
         else:
             dots_per_px = SVG_OUTPUT_DPI
+        if maxx is None:
+            width = 640
+        else:
+            width = dots_per_px * maxx
+            if width <= 0:
+                width = 640
+        if maxy is None:
+            height = 800
+        else:
+            height = dots_per_px * maxy
+            if height <= 0:
+                height = 800
         self.output.write("""<?xml version='1.0'?>
-<svg xmlns='http://www.w3.org/2000/svg' width='640' height='800'>
-<g transform='scale(%f)' stroke-width='0.01' font-size='0.2'>
-""" % dots_per_px)
+<svg xmlns='http://www.w3.org/2000/svg' width='%f' height='%f'>
+<g transform='translate(0,%f) scale(%.10f)' stroke-width='0.05' font-size='0.2'>
+""" % (width, height, height, dots_per_px))
         self._fill = 'none'
         self._stroke = 'black'
 
@@ -58,10 +70,6 @@ class SVGExporter:
         self._fill = fill
 
     def AddDot(self, x, y):
-        if x < -1000:
-            x = -7
-        if y < -1000:
-            y = -7
         l = "<circle fill='" + self._fill +"'" + (" cx='%g'" % x) \
                 + (" cy='%g'" % -y) + " r='0.04'/>\n"
         self.output.write(l)
@@ -73,13 +81,9 @@ class SVGExporter:
         
 
     def AddLine(self, x1, y1, x2, y2):
-        if y1 < -1000:
-            y1 = -7
-        if y2 < -1000:
-            y2 = -7
         l = "<line fill='" + self._fill +"' stroke='" + self._stroke + "'" \
-                + (" x1='%g'" % x1) + (" y1='%g'" % -y1) + (" x2='%g'" % x2) \
-                + (" y2='%g'" % -y2) + " />\n"
+                + (" x1='%.8f'" % x1) + (" y1='%.8f'" % -y1) + (" x2='%.8f'" % x2) \
+                + (" y2='%.8f'" % -y2) + " />\n"
         self.output.write(l)
         
     def AddPoint(self, p):
@@ -96,7 +100,7 @@ class SVGExporter:
                 l += "M "
             else:
                 l += " L "
-            l += "%g %g" % (p.x, -p.y-5)
+            l += "%.8f %.8f" % (p.x, -p.y)
         l += "'/>\n"
         self.output.write(l)
 
@@ -113,7 +117,8 @@ class SVGExporterContourModel(object):
         self.unit = unit
 
     def write(self, stream):
-        writer = SVGExporter(stream, unit=self.unit)
+        writer = SVGExporter(stream, unit=self.unit, maxx=self.model.maxx,
+                maxy=self.model.maxy)
         for polygon in self.model.get_polygons():
             points = polygon.get_points()
             if polygon.is_closed:
