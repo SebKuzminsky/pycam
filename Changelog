@@ -1,4 +1,4 @@
-Version 0.5 - UNRELEASED
+Version 0.5 - 2011-03-28
  * Toolpaths:
   * added adaptive positioning for DropCutter strategy (improves precision)
   * allow conventional/climb milling style for ContourFollow and Engrave strategies
