@@ -405,6 +405,19 @@ class ProjectGui:
         self.gui.get_object("ProcessPoolWindowClose").connect("clicked", self.toggle_process_pool_window, False)
         self.gui.get_object("ProcessPoolRefreshInterval").set_value(3)
         self.process_pool_model = self.gui.get_object("ProcessPoolStatisticsModel")
+        # extrusion dialog
+        self._extrusion_dialog_position = None
+        self._extrusion_dialog_visible = False
+        self.extrusion_dialog_window = self.gui.get_object("ExtrusionDialog")
+        self.extrusion_dialog_window.connect("delete-event",
+                self.toggle_extrusion_dialog, False)
+        self.gui.get_object("ExtrusionCancel").connect("clicked",
+                self.toggle_extrusion_dialog, False)
+        self.gui.get_object("ExtrusionSubmit").connect("clicked",
+                self.extrude_model)
+        self.gui.get_object("ExtrusionHeight").set_value(1)
+        self.gui.get_object("ExtrusionWidth").set_value(1)
+        self.gui.get_object("ExtrusionGrid").set_value(0.5)
         # "font dialog" window
         self.font_dialog_window = self.gui.get_object("FontDialog")
         self.font_dialog_window.connect("delete-event",
@@ -575,8 +588,8 @@ class ProjectGui:
                 100 / 25.4, False)
         self.gui.get_object("Projection2D").connect("clicked",
                 self.projection_2d)
-        self.gui.get_object("ExtrudeSphereButton").connect("clicked",
-                self.extrude_sphere)
+        self.gui.get_object("ExtrudeButton").connect("clicked",
+                self.toggle_extrusion_dialog, True)
         # support grid
         support_grid_type_control = self.gui.get_object(
                 "SupportGridTypesControl")
@@ -1189,14 +1202,19 @@ class ProjectGui:
     def update_model_type_related_controls(self):
         is_reversible = (not self.model is None) \
                 and hasattr(self.model, "reverse_directions")
-        controls_2d = ("ToggleModelDirectionButton", "DirectionsGuessButton",
-                # TODO: currently disabled: "ExtrudeSphereButton",
-                )
+        controls_2d = ("ToggleModelDirectionButton", "DirectionsGuessButton")
         for control in controls_2d:
             if is_reversible:
                 self.gui.get_object(control).show()
             else:
                 self.gui.get_object(control).hide()
+        is_extrudable = (not self.model is None) \
+               and hasattr(self.model, "extrude")
+        extrude_button = self.gui.get_object("ExtrudeButton")
+        if is_extrudable:
+            extrude_button.show()
+        else:
+            extrude_button.hide()
         is_projectable = (not self.model is None) \
                 and hasattr(self.model, "get_waterline_contour")
         if is_projectable:
@@ -2174,6 +2192,52 @@ class ProjectGui:
         # don't close the window - just hide it (for "delete-event")
         return True
 
+    @progress_activity_guard
+    @gui_activity_guard
+    def extrude_model(self, widget=None):
+        self.update_progress_bar("Calculating extrusion")
+        extrusion_type_selector = self.gui.get_object("ExtrusionTypeSelector")
+        type_model = extrusion_type_selector.get_model()
+        type_active = extrusion_type_selector.get_active()
+        if type_active >= 0:
+            type_string = type_model[type_active][0]
+            height = self.gui.get_object("ExtrusionHeight").get_value()
+            width = self.gui.get_object("ExtrusionWidth").get_value()
+            grid_size = self.gui.get_object("ExtrusionGrid").get_value()
+            if type_string == "radius_up":
+                func = lambda x: height * math.sqrt((width ** 2 - max(0, width - x) ** 2))
+            elif type_string == "radius_down":
+                func = lambda x: height * (1 - math.sqrt((width ** 2 - min(width, x) ** 2)) / width)
+            elif type_string == "skewed":
+                func = lambda x: height * min(1, x / width)
+            else:
+                log.error("Unknown extrusion type selected: %s" % type_string)
+                return
+            self.toggle_extrusion_dialog(False)
+            model = self.model.extrude(stepping=grid_size, func=func,
+                    callback=self.update_progress_bar)
+            if model:
+                self.load_model(model)
+            else:
+                self.toggle_extrusion_dialog(True)
+
+    def toggle_extrusion_dialog(self, widget=None, event=None, state=None):
+        if state is None:
+            # the "delete-event" issues the additional "event" argument
+            state = event
+        if state is None:
+            state = not self._extrusion_dialog_visible
+        if state:
+            if self._extrusion_dialog_position:
+                self.extrusion_dialog_window.move(*self._extrusion_dialog_position)
+            self.extrusion_dialog_window.show()
+        else:
+            self._extrusion_dialog_position = self.extrusion_dialog_window.get_position()
+            self.extrusion_dialog_window.hide()
+        self._extrusion_dialog_visible = state
+        # don't close the window - just hide it (for "delete-event")
+        return True
+
     @gui_activity_guard
     def toggle_preferences_window(self, widget=None, event=None, state=None):
         if state is None:
@@ -2874,14 +2938,6 @@ class ProjectGui:
         else:
             plane_z = 0
         return Plane(Point(0, 0, plane_z), Vector(0, 0, 1))
-
-    @progress_activity_guard
-    @gui_activity_guard
-    def extrude_sphere(self, widget=None):
-        self.update_progress_bar("Calculating spherical extrusion")
-        model = self.model.extrude_to_sphere(callback=self.update_progress_bar)
-        if model:
-            self.load_model(model)
 
     @progress_activity_guard
     @gui_activity_guard

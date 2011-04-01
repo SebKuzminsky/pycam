@@ -693,7 +693,7 @@ class ContourModel(BaseModel):
         else:
             return False
 
-    def extrude_to_sphere(self, height_factor=1.0, stepping=None, callback=None):
+    def extrude(self, stepping=None, func=None, callback=None):
         """ do a spherical extrusion of a 2D model.
         This is mainly useful for extruding text in a visually pleasent way ...
         BEWARE: currently not working correctly - see "calculate_point_height" below ...
@@ -717,8 +717,7 @@ class ContourModel(BaseModel):
             if callback and callback():
                 return None
             group = PolygonGroup(poly, children, callback=callback)
-            new_model = group.extrude_to_sphere(height_factor=height_factor,
-                    stepping=stepping)
+            new_model = group.extrude(func=func, stepping=stepping)
             if new_model:
                 model += new_model
         return model
@@ -731,58 +730,160 @@ class PolygonGroup(object):
         self.inner = inner_list
         self.callback = callback
         self.lines = outer.get_lines()
+        self.z_level = self.lines[0].p1.z
         for poly in inner_list:
             self.lines.extend(poly.get_lines())
 
-    def extrude_to_sphere(self, height_factor=1.0, stepping=None):
+    def extrude(self, func=None, stepping=None):
         if stepping is None:
             stepping = min(self.outer.maxx - self.outer.minx,
-                    self.outer.maxy - self.outer.miny) / 50
+                    self.outer.maxy - self.outer.miny) / 80
         grid = []
         for line in self._get_grid_matrix(stepping=stepping):
             line_points = []
             for x, y in line:
-                z = self.calculate_point_height(x, y, height_factor)
-                if z is None:
-                    line_points.append(None)
-                else:
-                    line_points.append(Point(x, y, z))
-            if self.callback:
-                self.callback()
+                z = self.calculate_point_height(x, y, func)
+                line_points.append((x, y, z))
+            if self.callback and self.callback():
+                return None
             grid.append(line_points)
         # calculate the triangles within the grid
         model = Model()
         for line in range(len(grid) - 1):
             for row in range(len(grid[0]) - 1):
-                p1 = grid[line][row]
-                p2 = grid[line][row + 1]
-                p3 = grid[line + 1][row]
-                p4 = grid[line + 1][row + 1]
-                if p1 and p2 and p3:
-                    model.append(Triangle(p1, p2, p3))
-                if p2 and p4 and p3:
-                    model.append(Triangle(p2, p4, p3))
-        # TODO: the connections between the outline and these triangles needs to be done
+                coords = []
+                coords.append(grid[line][row])
+                coords.append(grid[line][row + 1])
+                coords.append(grid[line + 1][row + 1])
+                coords.append(grid[line + 1][row])
+                items = self._fill_grid_positions(coords)
+                for item in items:
+                    model.append(item)
+            if self.callback and self.callback():
+                return None
         return model
+
+    def _get_closest_line_collision(self, probe_line):
+        min_dist = None
+        min_cp = None
+        for line in self.lines:
+            cp, dist = probe_line.get_intersection(line)
+            if cp and ((min_dist is None) or (dist < min_dist)):
+                min_dist = dist
+                min_cp = cp
+        if min_dist > 0:
+            return min_cp
+        else:
+            return None
+
+    def _fill_grid_positions(self, coords):
+        """ Try to find suitable alternatives, if any of the corners of this
+        square grid is not valid.
+        The current strategy: find the points of intersection with the contour
+        on all incomplete edges of the square.
+        The _good_ strategy would be: crop the square by using all related
+        lines of the contour.
+        """
+        def get_line(i1, i2):
+            a = list(coords[i1 % 4])
+            b = list(coords[i2 % 4])
+            # the contour points of the model will always be at level zero
+            a[2] = self.z_level
+            b[2] = self.z_level
+            return Line(Point(*a), Point(*b))
+        valid_indices = [index for index, p in enumerate(coords)
+                if not p[2] is None]
+        none_indices = [index for index, p in enumerate(coords) if p[2] is None]
+        valid_count = len(valid_indices)
+        final_points = []
+        if valid_count == 0:
+            final_points.extend([None, None, None, None])
+        elif valid_count == 1:
+            fan_points = []
+            for index in range(4):
+                if index in none_indices:
+                    probe_line = get_line(valid_indices[0], index)
+                    cp = self._get_closest_line_collision(probe_line)
+                    if cp:
+                        fan_points.append(cp)
+                    final_points.append(cp)
+                else:
+                    final_points.append(Point(*coords[index]))
+            # check if the three fan_points are in line
+            if len(fan_points) == 3:
+                fan_points.sort()
+                if Line(fan_points[0], fan_points[2]).is_point_inside(
+                        fan_points[1]):
+                    final_points.remove(fan_points[1])
+        elif valid_count == 2:
+            if sum(valid_indices) % 2 == 0:
+                # the points are on opposite corners
+                # The strategy below is not really good, but this special case
+                # is hardly possible, anyway.
+                for index in range(4):
+                    if index in valid_indices:
+                        final_points.append(Point(*coords[index]))
+                    else:
+                        probe_line = get_line(index - 1, index)
+                        cp = self._get_closest_line_collision(probe_line)
+                        final_points.append(cp)
+            else:
+                for index in range(4):
+                    if index in valid_indices:
+                        final_points.append(Point(*coords[index]))
+                    else:
+                        if ((index + 1) % 4) in valid_indices:
+                            other_index = index + 1
+                        else:
+                            other_index = index - 1
+                        probe_line = get_line(other_index, index)
+                        cp = self._get_closest_line_collision(probe_line)
+                        final_points.append(cp)
+        elif valid_count == 3:
+            for index in range(4):
+                if index in valid_indices:
+                    final_points.append(Point(*coords[index]))
+                else:
+                    # add two points
+                    for other_index in (index - 1, index + 1):
+                        probe_line = get_line(other_index, index)
+                        cp = self._get_closest_line_collision(probe_line)
+                        final_points.append(cp)
+        else:
+            final_points.extend([Point(*coord) for coord in coords])
+        valid_points = [p for p in final_points if not p is None]
+        if len(valid_points) < 3:
+            result = []
+        elif len(valid_points) == 3:
+           result = [Triangle(*valid_points)]
+        else:
+           # create a simple star-like fan of triangles - not perfect, but ok
+           result = []
+           start = valid_points.pop(0)
+           while len(valid_points) > 1:
+               p2, p3 = valid_points[0:2]
+               result.append(Triangle(start, p2, p3))
+               valid_points.pop(0)
+        return result
 
     def _get_grid_matrix(self, stepping):
         x_dim = self.outer.maxx - self.outer.minx
         y_dim = self.outer.maxy - self.outer.miny
         x_points_num = int(max(4, math.ceil(x_dim / stepping)))
         y_points_num = int(max(4, math.ceil(y_dim / stepping)))
-        x_step = x_dim / x_points_num
-        y_step = y_dim / y_points_num
+        x_step = x_dim / (x_points_num - 1)
+        y_step = y_dim / (y_points_num - 1)
         grid = []
         for x_index in range(x_points_num):
             line = []
             for y_index in range(y_points_num):
-                x_value = self.outer.minx + x_index * x_step + x_step / 2
-                y_value = self.outer.miny + y_index * y_step + y_step / 2
+                x_value = self.outer.minx + x_index * x_step
+                y_value = self.outer.miny + y_index * y_step
                 line.append((x_value, y_value))
             grid.append(line)
         return grid
 
-    def calculate_point_height(self, x, y, height_factor):
+    def calculate_point_height(self, x, y, func):
         point = Point(x, y, self.outer.minz)
         if not self.outer.is_point_inside(point):
             return None
@@ -793,23 +894,17 @@ class PolygonGroup(object):
         line_distances = []
         for line in self.lines:
             if line.dir.cross(point.sub(line.p1)).z > 0:
-                # TODO: this is currently somehow broken
+                close_points = []
                 close_point = line.closest_point(point)
                 if not line.is_point_inside(close_point):
-                    continue
-                dist = line.dist_to_point(point)
-                direction = close_point.sub(point)
-                line_distances.append((dist, direction))
-        line_distances.sort(key=lambda item: item[0])
-        dist1, vector1 = line_distances.pop(0)
-        for dist2, vector2 in line_distances:
-            if vector1.dot(vector2) <= 0:
-                break
-        else:
-            # no suitable line found
-            return None
-        radius = (dist1 + dist2) / 2
-        min_dist = min(dist1, dist2)
-        angle = math.acos((radius - min_dist) / radius)
-        return height_factor * math.sin(angle) * radius
+                    close_points.append(line.p1)
+                    close_points.append(line.p2)
+                else:
+                    close_points.append(close_point)
+                for p in close_points:
+                    direction = point.sub(p)
+                    dist = direction.norm
+                    line_distances.append(dist)
+        line_distances.sort()
+        return self.z_level + func(line_distances[0])
 

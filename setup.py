@@ -55,7 +55,7 @@ Windows: select Python 2.5 in the following dialog.
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",
-        "Development Status :: Development Status :: 4 - Beta",
+        "Development Status :: 4 - Beta",
         "License :: OSI Approved :: GNU General Public License (GPL)",
         "Topic :: Scientific/Engineering",
         "Environment :: Win32 (MS Windows)",

@@ -294,6 +294,28 @@
       </row>
     </data>
   </object>
+  <object class="GtkListStore" id="ExtrusionTypeModel">
+    <columns>
+      <!-- column-name key -->
+      <column type="gchararray"/>
+      <!-- column-name label -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">radius_up</col>
+        <col id="1" translatable="yes">Radius (up)</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">radius_down</col>
+        <col id="1" translatable="yes">Radius (down)</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">skewed</col>
+        <col id="1" translatable="yes">Chamfer</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkWindow" id="ProjectWindow">
     <property name="title" translatable="yes">PyCAM</property>
     <property name="role">pycam-main</property>
@@ -1010,11 +1032,13 @@ caused by careless DXF/SVG exporting programs.</property>
                                       </packing>
                                     </child>
                                     <child>
-                                      <object class="GtkButton" id="ExtrudeSphereButton">
-                                        <property name="label" translatable="yes">Extrude (sphere)</property>
+                                      <object class="GtkButton" id="ExtrudeButton">
+                                        <property name="label" translatable="yes">Extrude ...</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
                                         <property name="no_show_all">True</property>
+                                        <property name="tooltip_text" translatable="yes">Extrude the current 2D model into a 3D model.
+Spherical and skewed extrusion are supported.</property>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
@@ -6346,7 +6370,7 @@ Everyone else should use the option for M3/M5 (see above).</property>
                               <object class="GtkLabel" id="GCodeTouchOffLabel">
                                 <property name="visible">True</property>
                                 <property name="label" translatable="yes">Touch off and tool length measurement</property>
-	                            <property name="use_markup">True</property>
+                                <property name="use_markup">True</property>
                               </object>
                             </child>
                           </object>
@@ -9527,5 +9551,207 @@ upon interesting bugs and weird results.</property>
     <property name="short_label">_Paste</property>
     <property name="tooltip">Paste a model from clipboard</property>
     <property name="stock_id">gtk-paste</property>
+  </object>
+  <object class="GtkDialog" id="ExtrusionDialog">
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">Extrude 2D model</property>
+    <property name="role">pycam-extrusion</property>
+    <property name="type_hint">normal</property>
+    <property name="has_separator">False</property>
+    <child internal-child="vbox">
+      <object class="GtkVBox" id="dialog-vbox11">
+        <property name="visible">True</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child>
+          <object class="GtkTable" id="table18">
+            <property name="visible">True</property>
+            <property name="n_rows">4</property>
+            <property name="n_columns">2</property>
+            <property name="column_spacing">3</property>
+            <property name="row_spacing">4</property>
+            <child>
+              <object class="GtkLabel" id="ExtrusionTypeLabel">
+                <property name="visible">True</property>
+                <property name="xalign">0</property>
+                <property name="label" translatable="yes">Type:</property>
+              </object>
+              <packing>
+                <property name="x_options">GTK_FILL</property>
+                <property name="y_options">GTK_FILL</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="ExtrusionHeightLabel">
+                <property name="visible">True</property>
+                <property name="xalign">0</property>
+                <property name="label" translatable="yes">Height:</property>
+              </object>
+              <packing>
+                <property name="top_attach">1</property>
+                <property name="bottom_attach">2</property>
+                <property name="x_options">GTK_FILL</property>
+                <property name="y_options">GTK_FILL</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="ExtrusionWidthLabel">
+                <property name="visible">True</property>
+                <property name="xalign">0</property>
+                <property name="label" translatable="yes">Width:</property>
+              </object>
+              <packing>
+                <property name="top_attach">2</property>
+                <property name="bottom_attach">3</property>
+                <property name="x_options">GTK_FILL</property>
+                <property name="y_options">GTK_FILL</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBox" id="ExtrusionTypeSelector">
+                <property name="visible">True</property>
+                <property name="model">ExtrusionTypeModel</property>
+                <property name="active">0</property>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertext9"/>
+                  <attributes>
+                    <attribute name="text">1</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="right_attach">2</property>
+                <property name="x_options">GTK_FILL</property>
+                <property name="y_options">GTK_FILL</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSpinButton" id="ExtrusionHeight">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="invisible_char">&#x25CF;</property>
+                <property name="adjustment">ExtrusionHeightValue</property>
+                <property name="digits">3</property>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="right_attach">2</property>
+                <property name="top_attach">1</property>
+                <property name="bottom_attach">2</property>
+                <property name="x_options">GTK_FILL</property>
+                <property name="y_options">GTK_FILL</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSpinButton" id="ExtrusionWidth">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="invisible_char">&#x25CF;</property>
+                <property name="adjustment">ExtrusionWidthValue</property>
+                <property name="digits">3</property>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="right_attach">2</property>
+                <property name="top_attach">2</property>
+                <property name="bottom_attach">3</property>
+                <property name="x_options">GTK_FILL</property>
+                <property name="y_options">GTK_FILL</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="ExtrusionGridLabel">
+                <property name="visible">True</property>
+                <property name="xalign">0</property>
+                <property name="label" translatable="yes">Accuracy:</property>
+              </object>
+              <packing>
+                <property name="top_attach">3</property>
+                <property name="bottom_attach">4</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSpinButton" id="ExtrusionGrid">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="invisible_char">&#x25CF;</property>
+                <property name="adjustment">ExtrusionGridValue</property>
+                <property name="digits">3</property>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="right_attach">2</property>
+                <property name="top_attach">3</property>
+                <property name="bottom_attach">4</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child internal-child="action_area">
+          <object class="GtkHButtonBox" id="dialog-action_area10">
+            <property name="visible">True</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="ExtrusionCancel">
+                <property name="label">gtk-cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="ExtrusionSubmit">
+                <property name="label">gtk-ok</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="0">ExtrusionCancel</action-widget>
+      <action-widget response="0">ExtrusionSubmit</action-widget>
+    </action-widgets>
+  </object>
+  <object class="GtkAdjustment" id="ExtrusionHeightValue">
+    <property name="value">1</property>
+    <property name="lower">0.001</property>
+    <property name="upper">1000</property>
+    <property name="step_increment">0.5</property>
+  </object>
+  <object class="GtkAdjustment" id="ExtrusionWidthValue">
+    <property name="value">1</property>
+    <property name="upper">1000</property>
+    <property name="step_increment">0.5</property>
+  </object>
+  <object class="GtkAdjustment" id="ExtrusionGridValue">
+    <property name="value">1</property>
+    <property name="lower">0.001</property>
+    <property name="upper">1000</property>
+    <property name="step_increment">0.1</property>
   </object>
 </interface>

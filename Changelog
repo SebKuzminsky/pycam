@@ -1,3 +1,6 @@
+Version 0.6 - UNRELEASED
+ * added extrusion for 2D models
+
 Version 0.5 - 2011-03-28
  * Toolpaths:
   * added adaptive positioning for DropCutter strategy (improves precision)
