@@ -204,7 +204,10 @@ class PolygonSorter(object):
             done_polygons.extend(usable_polys)
 
     def get_polygons(self):
-        return [poly.polygon for poly in self.sorter.get_polygons()]
+        if not self.sorter:
+            return []
+        else:
+            return [poly.polygon for poly in self.sorter.get_polygons()]
 
 
 class Polygon(TransformableContainer):

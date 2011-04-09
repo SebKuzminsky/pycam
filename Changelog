@@ -1,5 +1,8 @@
-Version 0.6 - UNRELEASED
+Version 0.5.1 - UNRELEASED
  * added extrusion for 2D models
+ * 2D projection of multi-layered 2D models
+ * improved detection of library locations for Windows package
+ * minor bugs fixed
 
 Version 0.5 - 2011-03-28
  * Toolpaths:
