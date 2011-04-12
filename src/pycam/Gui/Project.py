@@ -151,7 +151,6 @@ PREFERENCES_DEFAULTS = {
 """ the listed items will be loaded/saved via the preferences file in the
 user's home directory on startup/shutdown"""
 
-GRID_TYPES = {"none": 0, "grid": 1, "automatic_edge": 2, "automatic_corner": 3}
 POCKETING_TYPES = ["none", "holes", "enclosed"]
 MAX_UNDO_STATES = 10
 
@@ -423,14 +422,13 @@ class ProjectGui(object):
         self.gui.get_object("UndoButton").set_sensitive(False)
         self.settings.register_event("model-change-before", self._store_undo_state)
         self.settings.register_event("model-change-after", self.update_model_dimensions)
-        self.settings.register_event("model-change-after", self.update_support_model)
         self.settings.register_event("model-change-after", self.update_save_actions)
         self.settings.register_event("model-change-after", self.update_model_type_related_controls)
-        self.settings.register_event("model-change-after", self.update_support_controls)
         self.settings.register_event("model-change-after", self.update_view)
         self.settings.set("update_progress", self.update_progress_bar)
         self.settings.set("disable_progress_cancel_button", self.disable_progress_cancel_button)
         self.settings.set("load_model", self.load_model)
+        self.settings.register_event("boundary-updated", self.update_view)
         # configure drag-n-drop for config files and models
         self.configure_drag_and_drop(self.window)
         self.clipboard = gtk.clipboard_get()
@@ -518,8 +516,6 @@ class ProjectGui(object):
         self.process_list = []
         self.bounds_list = []
         self.task_list = []
-        self.grid_adjustments_x = []
-        self.grid_adjustments_y = []
         self.font_selector = None
         self._last_unit = None
         self._toolpath_for_grid_data = {}
@@ -609,110 +605,6 @@ class ProjectGui(object):
             # create a new variable "key" to avoid re-using the same object "key"
             # (due to the lambda name scope)
             self.settings.add_item(key, lambda key=key: get_absolute_limit(key))
-        # support grid
-        support_grid_type_control = self.gui.get_object(
-                "SupportGridTypesControl")
-        support_grid_type_control.connect("changed",
-                self.update_support_controls)
-        self.settings.add_item("support_grid_type",
-                support_grid_type_control.get_active,
-                support_grid_type_control.set_active)
-        self.settings.set("support_grid_type", GRID_TYPES["none"])
-        grid_distance_x = self.gui.get_object("SupportGridDistanceX")
-        grid_distance_x.connect("value-changed", self.update_support_controls)
-        self.settings.add_item("support_grid_distance_x",
-                grid_distance_x.get_value, grid_distance_x.set_value)
-        grid_distance_square = self.gui.get_object("SupportGridDistanceSquare")
-        grid_distance_square.connect("clicked", self.update_support_controls)
-        grid_distance_y = self.gui.get_object("SupportGridDistanceY")
-        grid_distance_y.connect("value-changed", self.update_support_controls)
-        def get_support_grid_distance_y():
-            if grid_distance_square.get_active():
-                return self.settings.get("support_grid_distance_x")
-            else:
-                return grid_distance_y.get_value()
-        self.settings.add_item("support_grid_distance_y",
-                get_support_grid_distance_y, grid_distance_y.set_value)
-        grid_thickness = self.gui.get_object("SupportGridThickness")
-        grid_thickness.connect("value-changed", self.update_support_model)
-        self.settings.add_item("support_grid_thickness",
-                grid_thickness.get_value, grid_thickness.set_value)
-        grid_height = self.gui.get_object("SupportGridHeight")
-        grid_height.connect("value-changed", self.update_support_model)
-        self.settings.add_item("support_grid_height",
-                grid_height.get_value, grid_height.set_value)
-        grid_length = self.gui.get_object("SupportGridLength")
-        grid_length.connect("value-changed", self.update_support_model)
-        self.settings.add_item("support_grid_length",
-                grid_length.get_value, grid_length.set_value)
-        grid_offset_x = self.gui.get_object("SupportGridOffsetX")
-        grid_offset_x.connect("value-changed", self.update_support_model)
-        self.settings.add_item("support_grid_offset_x",
-                grid_offset_x.get_value, grid_offset_x.set_value)
-        grid_offset_y = self.gui.get_object("SupportGridOffsetY")
-        grid_offset_y.connect("value-changed", self.update_support_model)
-        self.settings.add_item("support_grid_offset_y",
-                grid_offset_y.get_value, grid_offset_y.set_value)
-        grid_average_distance = self.gui.get_object("GridAverageDistance")
-        grid_average_distance.connect("value-changed",
-                self.update_support_model)
-        self.settings.add_item("support_grid_average_distance",
-                grid_average_distance.get_value,
-                grid_average_distance.set_value)
-        grid_minimum_bridges = self.gui.get_object("GridMinBridgesPerPolygon")
-        grid_minimum_bridges.connect("value-changed", self.update_support_model)
-        self.settings.add_item("support_grid_minimum_bridges",
-                grid_minimum_bridges.get_value, grid_minimum_bridges.set_value)
-        # manual grid adjustments
-        self.grid_adjustment_axis_x = self.gui.get_object("SupportGridPositionManualAxisX")
-        self.grid_adjustment_axis_x.connect("toggled",
-                self.switch_support_grid_manual_selector)
-        self.gui.get_object("SupportGridPositionManualResetOne").connect(
-                "clicked", self.reset_support_grid_manual, False)
-        self.gui.get_object("SupportGridPositionManualResetAll").connect(
-                "clicked", self.reset_support_grid_manual, True)
-        self.grid_adjustment_model = self.gui.get_object(
-                "SupportGridPositionManualList")
-        self.grid_adjustment_selector = self.gui.get_object(
-                "SupportGridPositionManualSelector")
-        self.grid_adjustment_selector.connect("changed",
-                self.switch_support_grid_manual_selector)
-        self.grid_adjustment_value = self.gui.get_object(
-                "SupportGridPositionManualAdjustment")
-        self.grid_adjustment_value_control = self.gui.get_object(
-                "SupportGridPositionManualShiftControl")
-        self.grid_adjustment_value_control.connect("move-slider",
-                self.update_support_grid_manual_adjust)
-        self.grid_adjustment_value_control.connect("value-changed",
-                self.update_support_grid_manual_adjust)
-        self.gui.get_object("SupportGridPositionManualShiftControl2").connect(
-                "value-changed", self.update_support_grid_manual_adjust)
-        def get_set_grid_adjustment_value(value=None):
-            if self.grid_adjustment_axis_x.get_active():
-                adjustments = self.grid_adjustments_x
-            else:
-                adjustments = self.grid_adjustments_y
-            index = self.grid_adjustment_selector.get_active()
-            if value is None:
-                if 0 <= index < len(adjustments):
-                    return adjustments[index]
-                else:
-                    return 0
-            else:
-                while len(adjustments) <= index:
-                    adjustments.append(0)
-                adjustments[index] = value
-        self.settings.add_item("support_grid_adjustment_value",
-                get_set_grid_adjustment_value, get_set_grid_adjustment_value)
-        # support grid defaults
-        grid_distance_square.set_active(True)
-        self.settings.set("support_grid_distance_x", 10.0)
-        self.settings.set("support_grid_thickness", 0.5)
-        self.settings.set("support_grid_height", 0.5)
-        self.settings.set("support_grid_average_distance", 30)
-        self.settings.set("support_grid_minimum_bridges", 2)
-        self.settings.set("support_grid_length", 5)
-        self.grid_adjustment_axis_x_last = True
         # toolpath grid pattern
         for objname in ("GridYCount", "GridXCount", "GridYDistance",
                 "GridXDistance"):
@@ -720,8 +612,8 @@ class ProjectGui(object):
                     self.update_toolpath_grid_window)
         # visual and general settings
         for name, objname in (("show_model", "ShowModelCheckBox"),
-                ("show_support_grid", "ShowSupportGridCheckBox"),
                 ("show_axes", "ShowAxesCheckBox"),
+                ("show_support_grid", "ShowSupportGridCheckBox"),
                 ("show_dimensions", "ShowDimensionsCheckBox"),
                 ("show_bounding_box", "ShowBoundingCheckBox"),
                 ("show_toolpath", "ShowToolPathCheckBox"),
@@ -730,7 +622,8 @@ class ProjectGui(object):
             obj = self.gui.get_object(objname)
             self.settings.add_item(name, obj.get_active, obj.set_active)
             # all of the objects above should trigger redraw
-            obj.connect("toggled", self.update_view)
+            obj.connect("toggled", lambda widget: \
+                    self.settings.emit_event("model-change-after"))
         self.show_progress_button = self.gui.get_object("ShowToolpathProgressButton")
         self.settings.add_item("show_drill_progress",
                 self.show_progress_button.get_active,
@@ -840,7 +733,7 @@ class ProjectGui(object):
                     self.append_to_queue(self.switch_tasklist_table_selection)
         # the boundary manager
         self.settings.add_item("current_bounds",
-                lambda: get_current_item(self.bounds_editor_table, self.bounds_list),
+                lambda: get_current_item(self.bounds_editor_table, self.bounds_list) or (self.bounds_list and self.bounds_list[0]),
                 lambda bounds: set_current_item(self.bounds_editor_table, self.bounds_list, bounds))
         self.bounds_editor_table = self.gui.get_object("BoundsEditorTable")
         self.bounds_editor_table.get_selection().connect("changed", self.switch_bounds_table_selection)
@@ -1172,7 +1065,6 @@ class ProjectGui(object):
         self.update_tasklist_table()
         self.update_save_actions()
         self.update_unit_labels()
-        self.update_support_controls()
         self.update_model_dimensions()
         self.update_gcode_controls()
         self.update_ode_settings()
@@ -1335,181 +1227,6 @@ class ProjectGui(object):
         self.gui.get_object("SaveModel").set_sensitive(save_possible)
 
     @gui_activity_guard
-    def update_support_controls(self, widget=None):
-        controls = {"GridProfileExpander": ("grid", "automatic_edge",
-                    "automatic_corner"),
-                "GridPatternExpander": ("grid", ),
-                "GridPositionExpander": ("grid", ),
-                "GridManualShiftExpander": ("grid", ),
-                "GridAverageDistanceExpander": ("automatic_edge",
-                    "automatic_corner"),
-        }
-        grid_type = self.settings.get("support_grid_type")
-        if grid_type == GRID_TYPES["grid"]:
-            grid_square = self.gui.get_object("SupportGridDistanceSquare")
-            distance_y = self.gui.get_object("SupportGridDistanceYControl")
-            distance_y.set_sensitive(not grid_square.get_active())
-            if grid_square.get_active():
-                # We let "distance_y" track the value of "distance_x".
-                self.settings.set("support_grid_distance_y",
-                        self.settings.get("support_grid_distance_x"))
-            self.update_support_grid_manual_model()
-            self.switch_support_grid_manual_selector()
-        elif grid_type in (GRID_TYPES["automatic_edge"],
-                GRID_TYPES["automatic_corner"], GRID_TYPES["none"]):
-            pass
-        elif grid_type < 0:
-            # not initialized
-            pass
-        else:
-            log.error("Invalid grid type: %d" % grid_type)
-        # show and hide all controls according to the current type
-        for key, grid_types in controls.iteritems():
-            obj = self.gui.get_object(key)
-            if grid_type in [GRID_TYPES[allowed] for allowed in grid_types]:
-                obj.show()
-            else:
-                obj.hide()
-        self.settings.emit_event("model-change-after")
-
-    def update_support_model(self, widget=None):
-        grid_type = self.settings.get("support_grid_type")
-        s = self.settings
-        support_grid = None
-        if grid_type == GRID_TYPES["grid"]: 
-            if (s.get("support_grid_thickness") > 0) \
-                    and ((s.get("support_grid_distance_x") > 0) \
-                        or (s.get("support_grid_distance_y") > 0)) \
-                    and ((s.get("support_grid_distance_x") == 0) \
-                        or (s.get("support_grid_distance_x") \
-                            > s.get("support_grid_thickness"))) \
-                    and ((s.get("support_grid_distance_y") == 0) \
-                        or (s.get("support_grid_distance_y") \
-                            > s.get("support_grid_thickness"))) \
-                    and (s.get("support_grid_height") > 0):
-                support_grid = pycam.Toolpath.SupportGrid.get_support_grid(
-                        s.get("minx"), s.get("maxx"), s.get("miny"), s.get("maxy"),
-                        s.get("minz"), s.get("support_grid_distance_x"),
-                        s.get("support_grid_distance_y"),
-                        s.get("support_grid_thickness"),
-                        s.get("support_grid_height"),
-                        offset_x=s.get("support_grid_offset_x"),
-                        offset_y=s.get("support_grid_offset_y"),
-                        adjustments_x=self.grid_adjustments_x,
-                        adjustments_y=self.grid_adjustments_y)
-        elif grid_type in (GRID_TYPES["automatic_edge"],
-                GRID_TYPES["automatic_corner"]):
-            if (s.get("support_grid_thickness") > 0) \
-                    and (s.get("support_grid_height") > 0) \
-                    and (s.get("support_grid_average_distance") > 0) \
-                    and (s.get("support_grid_minimum_bridges") > 0):
-                # get the minimum z value of the bounding box
-                bounds = self.settings.get("current_bounds")
-                if (bounds is None) and (len(self.bounds_list) > 0):
-                    bounds = self.bounds_list[0]
-                if not bounds is None:
-                    minz = bounds.get_absolute_limits(
-                            reference=self.model.get_bounds())[0][2]
-                    corner_start = (grid_type == GRID_TYPES["automatic_corner"])
-                    support_grid = pycam.Toolpath.SupportGrid.get_support_distributed(
-                            s.get("model"), minz,
-                            s.get("support_grid_average_distance"),
-                            s.get("support_grid_minimum_bridges"),
-                            s.get("support_grid_thickness"),
-                            s.get("support_grid_height"),
-                            s.get("support_grid_length"),
-                            bounds.get_referenced_bounds(s.get("model").get_bounds()),
-                            start_at_corners=corner_start)
-        elif grid_type == GRID_TYPES["none"]:
-            pass
-        s.set("support_grid", support_grid)
-        self.settings.emit_event("model-change-after")
-
-    def switch_support_grid_manual_selector(self, widget=None):
-        old_axis_was_x = self.grid_adjustment_axis_x_last
-        self.grid_adjustment_axis_x_last = \
-                self.grid_adjustment_axis_x.get_active()
-        if self.grid_adjustment_axis_x.get_active():
-            # x axis is selected
-            if not old_axis_was_x:
-                self.update_support_grid_manual_model()
-            max_distance = self.settings.get("support_grid_distance_x")
-        else:
-            # y axis
-            if old_axis_was_x:
-                self.update_support_grid_manual_model()
-            max_distance = self.settings.get("support_grid_distance_y")
-        # we allow an individual adjustment of 66% of the distance
-        max_distance /= 1.5
-        if hasattr(self.grid_adjustment_value, "set_lower"):
-            # gtk 2.14 is required for "set_lower" and "set_upper"
-            self.grid_adjustment_value.set_lower(-max_distance)
-            self.grid_adjustment_value.set_upper(max_distance)
-        if self.grid_adjustment_value.get_value() \
-                != self.settings.get("support_grid_adjustment_value"):
-            self.grid_adjustment_value.set_value(self.settings.get(
-                    "support_grid_adjustment_value"))
-        self.gui.get_object("SupportGridPositionManualShiftBox").set_sensitive(
-                self.grid_adjustment_selector.get_active() >= 0)
-        
-    def update_support_grid_manual_adjust(self, widget=None, data1=None,
-            data2=None):
-        new_value = self.grid_adjustment_value.get_value()
-        self.settings.set("support_grid_adjustment_value", new_value)
-        tree_iter = self.grid_adjustment_selector.get_active_iter()
-        if not tree_iter is None:
-            value_string = "(%+.1f)" % new_value
-            self.grid_adjustment_model.set(tree_iter, 1, value_string)
-        self.settings.emit_event("model-change-after")
-
-    def reset_support_grid_manual(self, widget=None, reset_all=False):
-        if reset_all:
-            self.grid_adjustments_x = []
-            self.grid_adjustments_y = []
-        else:
-            self.settings.set("support_grid_adjustment_value", 0)
-        self.update_support_grid_manual_model()
-        self.switch_support_grid_manual_selector()
-        self.settings.emit_event("model-change-after")
-
-    def update_support_grid_manual_model(self):
-        old_index = self.grid_adjustment_selector.get_active()
-        model = self.grid_adjustment_model
-        model.clear()
-        s = self.settings
-        # get the toolpath without adjustments
-        base_x, base_y = pycam.Toolpath.SupportGrid.get_support_grid_locations(
-                s.get("minx"), s.get("maxx"), s.get("miny"), s.get("maxy"),
-                s.get("support_grid_distance_x"),
-                s.get("support_grid_distance_y"),
-                offset_x=s.get("support_grid_offset_x"),
-                offset_y=s.get("support_grid_offset_y"))
-        # fill the adjustment lists
-        while len(self.grid_adjustments_x) < len(base_x):
-            self.grid_adjustments_x.append(0)
-        while len(self.grid_adjustments_y) < len(base_y):
-            self.grid_adjustments_y.append(0)
-        # select the currently active list
-        if self.grid_adjustment_axis_x.get_active():
-            base = base_x
-            adjustments = self.grid_adjustments_x
-        else:
-            base = base_y
-            adjustments = self.grid_adjustments_y
-        # generate the model content
-        for index, base_value in enumerate(base):
-            position = "%.2f%s" % (base_value, s.get("unit"))
-            if (0 <= index < len(adjustments)) and (adjustments[index] != 0):
-                diff = "(%+.1f)" % adjustments[index]
-            else:
-                diff = ""
-            model.append((position, diff))
-        if old_index < len(base):
-            self.grid_adjustment_selector.set_active(old_index)
-        else:
-            self.grid_adjustment_selector.set_active(-1)
-
-    @gui_activity_guard
     def generate_random_server_password(self, widget=None):
         all_characters = string.letters + string.digits
         random_pw = "".join([random.choice(all_characters) for i in range(12)])
@@ -1665,7 +1382,7 @@ class ProjectGui(object):
         # update the controls
         self._put_bounds_settings_to_gui(bounds)
         # update the visualization
-        self.append_to_queue(self.update_boundary_limits)
+        self.settings.emit_event("boundary-updated")
 
     @gui_activity_guard
     def switch_bounds_type(self, widget=None):
@@ -1683,14 +1400,7 @@ class ProjectGui(object):
         self._put_bounds_settings_to_gui(bounds)
         # update the descriptive label for each margin type
         self.update_bounds_controls()
-        self.append_to_queue(self.update_boundary_limits)
-
-    @gui_activity_guard
-    def update_boundary_limits(self, widget=None):
-        # update the values in the manual support grid adjustment list
-        self.update_support_grid_manual_model()
-        # the support grid depends on the boundary
-        self.settings.emit_event("model-change-after")
+        self.settings.emit_event("boundary-updated")
 
     def update_tasklist_controls(self):
         # en/disable some buttons
@@ -1809,7 +1519,7 @@ class ProjectGui(object):
         task["bounds"] = self.bounds_list[bounds_id]
         # update the current boundary limit, if it was changed
         if bounds_id != old_bounds_id:
-            self.append_to_queue(self.update_boundary_limits)
+            self.settings.emit_event("boundary-updated")
         # update the tasklist table (especially for name changes)
         self.update_tasklist_table()
         # the task_name input control seems to loose focus somehow
@@ -2475,7 +2185,7 @@ class ProjectGui(object):
         # any new item can influence the "New task" button
         self.append_to_queue(self.update_tasklist_controls)
         # removing or adding "bounds" may change the visualization
-        self.append_to_queue(self.update_boundary_limits)
+        self.settings.emit_event("boundary-updated")
         update_func(new_index=future_selection_index,
                 skip_model_update=skip_model_update)
 
@@ -3080,7 +2790,7 @@ class ProjectGui(object):
         if not current_index is None:
             self._load_bounds_settings_from_gui(self.bounds_list[current_index])
             self.update_bounds_table()
-        self.append_to_queue(self.update_boundary_limits)
+        self.settings.emit_event("boundary-updated")
 
     def update_bounds_controls(self):
         current_index = self._treeview_get_active_index(
@@ -3172,7 +2882,7 @@ class ProjectGui(object):
             self.update_bounds_table()
         else:
             self.gui.get_object("BoundsSettingsControlsBox").hide()
-        self.append_to_queue(self.update_boundary_limits)
+        self.settings.emit_event("boundary-updated")
 
     @gui_activity_guard
     def handle_bounds_table_event(self, widget, data, action=None):
@@ -3861,33 +3571,11 @@ class ProjectGui(object):
                 tool_settings["tool_radius"], tool_settings["torus_radius"],
                 tool_settings["speed"], tool_settings["feedrate"])
 
-        # get the support grid options
-        grid_type = self.settings.get("support_grid_type")
-        if grid_type == GRID_TYPES["grid"]:
-            toolpath_settings.set_support_grid(
-                    self.settings.get("support_grid_distance_x"),
-                    self.settings.get("support_grid_distance_y"),
-                    self.settings.get("support_grid_thickness"),
-                    self.settings.get("support_grid_height"),
-                    offset_x=self.settings.get("support_grid_offset_x"),
-                    offset_y=self.settings.get("support_grid_offset_y"),
-                    adjustments_x=self.grid_adjustments_x,
-                    adjustments_y=self.grid_adjustments_y)
-        elif grid_type in (GRID_TYPES["automatic_edge"],
-                GRID_TYPES["automatic_corner"]):
-            corner_start = (grid_type == GRID_TYPES["automatic_corner"])
-            toolpath_settings.set_support_distributed(
-                    self.settings.get("support_grid_average_distance"),
-                    self.settings.get("support_grid_minimum_bridges"),
-                    self.settings.get("support_grid_thickness"),
-                    self.settings.get("support_grid_height"),
-                    self.settings.get("support_grid_length"),
-                    start_at_corners=corner_start)
-        elif grid_type == GRID_TYPES["none"]:
-            pass
-        else:
-            log.error("Invalid support grid type: %d" % grid_type)
-        
+        support_factory = self.settings.get("get_support_model")
+        if support_factory:
+            # TODO: this is not a good approach - "toolpath_settings" should just have a "set_support" method
+            support_factory(toolpath_settings)
+
         # calculation backend: ODE / None
         if self.settings.get("enable_ode"):
             toolpath_settings.set_calculation_backend("ODE")
