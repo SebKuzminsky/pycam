@@ -72,6 +72,12 @@
                             <attribute name="text">1</attribute>
                           </attributes>
                         </child>
+                        <child>
+                          <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf1"/>
+                          <attributes>
+                            <attribute name="pixbuf">2</attribute>
+                          </attributes>
+                        </child>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -164,6 +170,7 @@
                       </object>
                       <packing>
                         <property name="expand">False</property>
+                        <property name="fill">False</property>
                         <property name="position">0</property>
                       </packing>
                     </child>
@@ -201,26 +208,34 @@
     <property name="upper">1000</property>
     <property name="step_increment">0.5</property>
   </object>
+  <object class="GtkImage" id="ExtrusionSigmoidIcon">
+    <property name="visible">True</property>
+    <property name="pixbuf">extrusion_sigmoidal.png</property>
+  </object>
+  <object class="GtkImage" id="ExtrusionRadiusUpIcon">
+    <property name="visible">True</property>
+    <property name="pixbuf">extrusion_radius_up.png</property>
+  </object>
+  <object class="GtkImage" id="ExtrusionRadiusDownIcon">
+    <property name="visible">True</property>
+    <property name="pixbuf">extrusion_radius_down.png</property>
+  </object>
+  <object class="GtkImage" id="ExtrusionChamferIcon">
+    <property name="visible">True</property>
+    <property name="pixbuf">extrusion_chamfer.png</property>
+  </object>
+  <object class="GtkImage" id="ExtrusionSineIcon">
+    <property name="visible">True</property>
+    <property name="pixbuf">extrusion_sine.png</property>
+  </object>
   <object class="GtkListStore" id="ExtrusionTypeModel">
     <columns>
       <!-- column-name key -->
       <column type="gchararray"/>
       <!-- column-name label -->
       <column type="gchararray"/>
+      <!-- column-name icon -->
+      <column type="GdkPixbuf"/>
     </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">radius_up</col>
-        <col id="1" translatable="yes">Radius (up)</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">radius_down</col>
-        <col id="1" translatable="yes">Radius (down)</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">skewed</col>
-        <col id="1" translatable="yes">Chamfer</col>
-      </row>
-    </data>
   </object>
 </interface>

@@ -31,7 +31,7 @@ from pycam.Geometry.Point import Point
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
 from pycam.Geometry.Matrix import TRANSFORMATIONS
 from pycam.Toolpath import Bounds
-from pycam.Geometry.utils import INFINITE
+from pycam.Geometry.utils import INFINITE, epsilon
 from pycam.Geometry import TransformableContainer
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
@@ -696,7 +696,6 @@ class ContourModel(BaseModel):
     def extrude(self, stepping=None, func=None, callback=None):
         """ do a spherical extrusion of a 2D model.
         This is mainly useful for extruding text in a visually pleasent way ...
-        BEWARE: currently not working correctly - see "calculate_point_height" below ...
         """
         outer_polygons = [(poly, []) for poly in self._line_groups
                 if poly.is_outer()]
@@ -724,6 +723,9 @@ class ContourModel(BaseModel):
 
 
 class PolygonGroup(object):
+    """ A PolygonGroup consists of one outer and maybe multiple inner polygons.
+    It is mainly used for 3D extrusion of polygons.
+    """
 
     def __init__(self, outer, inner_list, callback=None):
         self.outer = outer
@@ -748,7 +750,7 @@ class PolygonGroup(object):
                 return None
             grid.append(line_points)
         # calculate the triangles within the grid
-        model = Model()
+        triangle_optimizer = TriangleOptimizer(callback=self.callback)
         for line in range(len(grid) - 1):
             for row in range(len(grid[0]) - 1):
                 coords = []
@@ -758,9 +760,18 @@ class PolygonGroup(object):
                 coords.append(grid[line + 1][row])
                 items = self._fill_grid_positions(coords)
                 for item in items:
-                    model.append(item)
+                    triangle_optimizer.append(item)
+                    # create the backside plane
+                    backside_points = []
+                    for p in item.get_points():
+                        backside_points.insert(0, Point(p.x, p.y, self.z_level))
+                    triangle_optimizer.append(Triangle(*backside_points))
             if self.callback and self.callback():
                 return None
+        triangle_optimizer.optimize()
+        model = Model()
+        for triangle in triangle_optimizer.get_triangles():
+            model.append(triangle)
         return model
 
     def _get_closest_line_collision(self, probe_line):
@@ -893,7 +904,8 @@ class PolygonGroup(object):
         point = Point(x, y, self.outer.minz)
         line_distances = []
         for line in self.lines:
-            if line.dir.cross(point.sub(line.p1)).z > 0:
+            cross_product = line.dir.cross(point.sub(line.p1))
+            if cross_product.z > 0:
                 close_points = []
                 close_point = line.closest_point(point)
                 if not line.is_point_inside(close_point):
@@ -905,6 +917,188 @@ class PolygonGroup(object):
                     direction = point.sub(p)
                     dist = direction.norm
                     line_distances.append(dist)
+            elif cross_product.z == 0:
+                # the point is on the line
+                line_distances.append(0.0)
+                # no other line can get closer than this
+                break
+            else:
+                # the point is in the left of this line
+                pass
         line_distances.sort()
         return self.z_level + func(line_distances[0])
+
+
+class TriangleOptimizer(object):
+
+    def __init__(self, callback=None):
+        self.groups = {}
+        self.callback = callback
+
+    def append(self, triangle):
+        # use a simple tuple instead of an object as the dict's key
+        normal_coords = triangle.normal.x, triangle.normal.y, triangle.normal.z
+        if not normal_coords in self.groups:
+            self.groups[normal_coords] = []
+        self.groups[normal_coords].append(triangle)
+
+    def optimize(self):
+        for group in self.groups.values():
+            finished_triangles = []
+            rect_pool = []
+            triangles = list(group)
+            while triangles:
+                if self.callback and self.callback():
+                    return
+                current = triangles.pop(0)
+                for t in triangles:
+                    combined = Rectangle.combine_triangles(current, t)
+                    if combined:
+                        triangles.remove(t)
+                        rect_pool.append(combined)
+                        break
+                else:
+                    finished_triangles.append(current)
+            finished_rectangles = []
+            while rect_pool:
+                if self.callback and self.callback():
+                    return
+                current = rect_pool.pop(0)
+                for r in rect_pool:
+                    combined = Rectangle.combine_rectangles(current, r)
+                    if combined:
+                        rect_pool.remove(r)
+                        rect_pool.append(combined)
+                        break
+                else:
+                    finished_rectangles.append(current)
+            while group:
+                group.pop()
+            for rect in finished_rectangles:
+                group.extend(rect.get_triangles())
+            group.extend(finished_triangles)
+
+    def get_triangles(self):
+        result = []
+        for group in self.groups.values():
+            result.extend(group)
+        return result
+
+
+class Rectangle(TransformableContainer):
+
+    id = 0
+
+    def __init__(self, p1, p2, p3, p4, normal=None):
+        if normal:
+            orders = ((p1, p2, p3, p4), (p1, p2, p4, p3), (p1, p3, p2, p4),
+                    (p1, p3, p4, p2), (p1, p4, p2, p3), (p1, p4, p3, p2))
+            for order in orders:
+                if abs(order[0].sub(order[2]).norm - order[1].sub(order[3]).norm) < epsilon:
+                    t1 = Triangle(order[0], order[1], order[2])
+                    t2 = Triangle(order[2], order[3], order[0])
+                    if t1.normal == t2.normal == normal:
+                        self.p1, self.p2, self.p3, self.p4 = order
+                        break
+            else:
+                raise ValueError("Invalid vertices for given normal: " + \
+                        "%s, %s, %s, %s, %s" % (p1, p2, p3, p4, normal))
+        else:
+            self.p1 = p1
+            self.p2 = p2
+            self.p3 = p3
+            self.p4 = p4
+        self.id = Rectangle.id
+        Rectangle.id += 1
+        self.reset_cache()
+
+    def reset_cache(self):
+        self.maxx = max([p.x for p in self.get_points()])
+        self.minx = max([p.x for p in self.get_points()])
+        self.maxy = max([p.y for p in self.get_points()])
+        self.miny = max([p.y for p in self.get_points()])
+        self.maxz = max([p.z for p in self.get_points()])
+        self.minz = max([p.z for p in self.get_points()])
+        self.normal = Triangle(self.p1, self.p2, self.p3).normal.normalized()
+
+    def get_points(self):
+        return (self.p1, self.p2, self.p3, self.p4)
+
+    def next(self):
+        yield self.p1
+        yield self.p2
+        yield self.p3
+        yield self.p4
+
+    def __repr__(self):
+        return "Rectangle%d<%s,%s,%s,%s>" % (self.id, self.p1, self.p2,
+                self.p3, self.p4)
+
+    def get_triangles(self):
+        return (Triangle(self.p1, self.p2, self.p3),
+                Triangle(self.p3, self.p4, self.p1))
+
+    @staticmethod
+    def combine_triangles(t1, t2):
+        unique_vertices = []
+        shared_vertices = []
+        for point in t1.get_points():
+            for point2 in t2.get_points():
+                if point == point2:
+                    shared_vertices.append(point)
+                    break
+            else:
+                unique_vertices.append(point)
+        if len(shared_vertices) != 2:
+            return None
+        for point in t2.get_points():
+            for point2 in shared_vertices:
+                if point == point2:
+                    break
+            else:
+                unique_vertices.append(point)
+        if len(unique_vertices) != 2:
+            log.error("Invalid number of vertices: %s" % unique_vertices)
+            return None
+        if abs(unique_vertices[0].sub(unique_vertices[1]).norm - shared_vertices[0].sub(shared_vertices[1]).norm) < epsilon:
+            try:
+                return Rectangle(unique_vertices[0], unique_vertices[1], shared_vertices[0], shared_vertices[1], normal=t1.normal)
+            except ValueError:
+                log.warn("Triangles not combined: %s, %s" % (unique_vertices, shared_vertices))
+                return None
+        else:
+            return None
+
+    @staticmethod
+    def combine_rectangles(r1, r2):
+        shared_vertices = []
+        shared_vertices2 = []
+        for point in r1.get_points():
+            for point2 in r2.get_points():
+                if point == point2:
+                    shared_vertices.append(point)
+                    shared_vertices2.append(point2)
+                    break
+        if len(shared_vertices) != 2:
+            return None
+        # check if the two points form an edge (and not a diagonal line)
+        corners = []
+        for rectangle, vertices in ((r1, shared_vertices),
+                (r2, shared_vertices2)):
+            i1 = rectangle.get_points().index(vertices[0])
+            i2 = rectangle.get_points().index(vertices[1])
+            if i1 + i2 % 2 == 0:
+                # shared vertices are at opposite corners
+                return None
+            # collect all non-shared vertices
+            corners.extend([p for p in rectangle.get_points()
+                    if not p in vertices])
+        if len(corners) != 4:
+            log.error("Unexpected corner count: %s / %s / %s" % (r1, r2, corners))
+            return None
+        try:
+            return Rectangle(*corners, normal=r1.normal)
+        except ValueError:
+            log.error("No valid rectangle found: %s" % corners)
+            return None
 

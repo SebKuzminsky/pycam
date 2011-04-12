@@ -29,6 +29,13 @@ import pycam.Utils.log
 
 log = pycam.Utils.log.get_logger()
 
+EXTRUSION_TYPES = (("radius_up", "Radius (bulge)", "ExtrusionRadiusUpIcon"),
+        ("radius_down", "Radius (valley)", "ExtrusionRadiusDownIcon"),
+        ("skewed", "Chamfer", "ExtrusionChamferIcon"),
+        ("sine", "Sine", "ExtrusionSineIcon"),
+        ("sigmoid", "Sigmoid", "ExtrusionSigmoidIcon"),
+)
+
 
 class ModelExtrusion(pycam.Plugins.PluginBase):
 
@@ -47,6 +54,11 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
             self.gui.get_object("ExtrusionHeight").set_value(1)
             self.gui.get_object("ExtrusionWidth").set_value(1)
             self.gui.get_object("ExtrusionGrid").set_value(0.5)
+            extrusion_model = self.gui.get_object("ExtrusionTypeModel")
+            for row in EXTRUSION_TYPES:
+                extrusion_model.append((row[0], row[1],
+                        self.gui.get_object(row[2]).get_pixbuf()))
+            self.gui.get_object("ExtrusionTypeSelector").set_active(0)
         return True
 
     def teardown(self):
@@ -85,6 +97,10 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
                 func = lambda x: height * (1 - math.sqrt((width ** 2 - min(width, x) ** 2)) / width)
             elif type_string == "skewed":
                 func = lambda x: height * min(1, x / width)
+            elif type_string == "sine":
+                func = lambda x: height * math.sin(min(x, width) / width * math.pi / 2)
+            elif type_string == "sigmoid":
+                func = lambda x: height * ((math.sin(((min(x, width) / width) - 0.5) * math.pi) + 1) / 2)
             else:
                 log.error("Unknown extrusion type selected: %s" % type_string)
                 return
