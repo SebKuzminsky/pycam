@@ -31,7 +31,7 @@ except ImportError:
     GL_enabled = False
 
 
-class ODEBlocks:
+class ODEBlocks(object):
 
     def __init__(self, tool_settings, (minx, maxx, miny, maxy, minz, maxz),
             x_steps=None, y_steps=None):

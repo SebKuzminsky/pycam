@@ -39,7 +39,7 @@ except ImportError:
     get_point_object = lambda point: point
 
 
-class Path:
+class Path(object):
     id = 0
     def __init__(self):
         self.id = Path.id

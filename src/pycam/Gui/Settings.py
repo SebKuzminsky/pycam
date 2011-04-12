@@ -60,7 +60,7 @@ def get_config_filename(filename=None):
         return os.path.join(config_dir, filename)
 
 
-class Settings:
+class Settings(object):
 
     GET_INDEX = 0
     SET_INDEX = 1
@@ -118,7 +118,7 @@ class Settings:
         return self.items.keys()
 
 
-class ProcessSettings:
+class ProcessSettings(object):
 
     BASIC_DEFAULT_CONFIG = """
 [ToolDefault]
@@ -556,7 +556,7 @@ process: 3
         return os.linesep.join(result)
 
 
-class ToolpathSettings:
+class ToolpathSettings(object):
 
     SECTIONS = {
         "Bounds": {

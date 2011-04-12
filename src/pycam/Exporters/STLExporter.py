@@ -25,7 +25,7 @@ from pycam import VERSION
 import datetime
 import os
 
-class STLExporter:
+class STLExporter(object):
 
     def __init__(self, model, name="model", created_by="pycam", linesep=None,
             **kwargs):

@@ -193,7 +193,7 @@ def keyPressed(key, x, y):
     elif _KeyHandlerFunc:
         _KeyHandlerFunc(key, x, y)
 
-class mouseState:
+class mouseState(object):
     button = None
     state = None
     x = 0

@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-class Iterator:
+class Iterator(object):
     def __init__(self, seq, start=0):
         self.seq = seq
         self.ind = start
@@ -73,7 +73,7 @@ class Iterator:
         return len(self.seq) - self.ind
 
 
-class CyclicIterator:
+class CyclicIterator(object):
     def __init__(self, seq, start=0):
         self.seq = seq
         self.ind = start

@@ -86,7 +86,7 @@ def connect_button_handlers(signal, original_button, derived_button):
             original_button)
 
 
-class Camera:
+class Camera(object):
 
     def __init__(self, settings, get_dim_func, view=None):
         self.view = None
@@ -281,7 +281,7 @@ class Camera:
         return (factors_x, factors_y)
 
 
-class ModelViewWindowGL:
+class ModelViewWindowGL(object):
     def __init__(self, gui, settings, notify_destroy=None, accel_group=None,
             item_buttons=None, context_menu_actions=None):
         # assume, that initialization will fail

@@ -150,7 +150,7 @@ def get_dependency_report(details, prefix=""):
     return os.linesep.join(result)
 
 
-class EmergencyDialog:
+class EmergencyDialog(object):
     """ This graphical message window requires no external dependencies.
     The Tk interface package is part of the main python distribution.
     Use this class for displaying dependency errors (especially on Windows).

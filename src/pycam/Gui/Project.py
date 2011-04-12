@@ -35,6 +35,8 @@ from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Plane import Plane
 import pycam.Geometry.Path
 import pycam.Utils.log
+from pycam.Utils.locations import get_data_file_location, \
+        get_ui_file_location, get_font_dir
 import pycam.Utils
 from pycam.Geometry.utils import sqrt
 from pycam.Gui.OpenGLTools import ModelViewWindowGL
@@ -43,6 +45,7 @@ from pycam.Geometry.Letters import TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, \
 import pycam.Geometry.Model
 from pycam.Toolpath import Bounds
 import pycam.Utils.FontCache
+import pycam.Plugins
 from pycam import VERSION
 import pycam.Physics.ode_physics
 # this requires ODE - we import it later, if necessary
@@ -66,28 +69,9 @@ import re
 import os
 import sys
 
-DATA_DIR_ENVIRON_KEY = "PYCAM_DATA_DIR"
-FONT_DIR_ENVIRON_KEY = "PYCAM_FONT_DIR"
-DATA_BASE_DIRS = [os.path.realpath(os.path.join(os.path.dirname(__file__),
-            os.pardir, os.pardir, os.pardir, "share")),
-        os.path.join(sys.prefix, "local", "share", "pycam"),
-        os.path.join(sys.prefix, "share", "pycam")]
-UI_SUBDIR = "ui"
-FONTS_SUBDIR = "fonts"
-# necessary for "pyinstaller"
-if "_MEIPASS2" in os.environ:
-    DATA_BASE_DIRS.insert(0, os.path.join(os.path.normpath(os.environ["_MEIPASS2"]), "share"))
-# respect an override via an environment setting
-if DATA_DIR_ENVIRON_KEY in os.environ:
-    DATA_BASE_DIRS.insert(0, os.path.normpath(os.environ[DATA_DIR_ENVIRON_KEY]))
-if FONT_DIR_ENVIRON_KEY in os.environ:
-    FONT_DIR_OVERRIDE = os.path.normpath(os.environ[FONT_DIR_ENVIRON_KEY])
-else:
-    FONT_DIR_OVERRIDE = None
-FONT_DIR_FALLBACK = "/usr/share/qcad/fonts"
 
-GTKBUILD_FILE = os.path.join(UI_SUBDIR, "pycam-project.ui")
-GTKMENU_FILE = os.path.join(UI_SUBDIR, "menubar.xml")
+GTKBUILD_FILE = "pycam-project.ui"
+GTKMENU_FILE = "menubar.xml"
 
 WINDOW_ICON_FILENAMES = ["logo_%dpx.png" % pixels for pixels in (16, 32, 48, 64, 128)]
 
@@ -176,21 +160,6 @@ GTK_COLOR_MAX = 65535.0
 
 log = pycam.Utils.log.get_logger()
 
-def get_data_file_location(filename, silent=False):
-    for base_dir in DATA_BASE_DIRS:
-        test_path = os.path.join(base_dir, filename)
-        if os.path.exists(test_path):
-            return test_path
-    else:
-        if not silent:
-            lines = []
-            lines.append("Failed to locate a resource file (%s) in %s!" \
-                    % (filename, DATA_BASE_DIRS))
-            lines.append("You can extend the search path by setting the " \
-                    + "environment variable '%s'." % str(DATA_DIR_ENVIRON_KEY))
-            log.error(os.linesep.join(lines))
-        return None
-
 def report_exception():
     log.error("An unexpected exception occoured: please send the " \
             + "text below to the developers of PyCAM. Thanks a lot!" \
@@ -212,8 +181,7 @@ def get_filters_from_list(filter_list):
 def get_icons_pixbuffers():
     result = []
     for icon_filename in WINDOW_ICON_FILENAMES:
-        icon_subdir_filename = os.path.join(UI_SUBDIR, icon_filename)
-        abs_filename = get_data_file_location(icon_subdir_filename, silent=True)
+        abs_filename = get_ui_file_location(icon_filename, silent=True)
         if abs_filename:
             try:
                 result.append(gtk.gdk.pixbuf_new_from_file(abs_filename))
@@ -225,29 +193,119 @@ def get_icons_pixbuffers():
             log.debug("Failed to locate window icon: %s" % icon_filename)
     return result
 
-def get_font_dir():
-    if FONT_DIR_OVERRIDE:
-        if os.path.isdir(FONT_DIR_OVERRIDE):
-            return FONT_DIR_OVERRIDE
+
+UI_FUNC_INDEX = 0
+UI_WIDGET_INDEX = 1
+WIDGET_NAME_INDEX = 0
+WIDGET_OBJ_INDEX = 1
+WIDGET_WEIGHT_INDEX = 2
+HANDLER_FUNC_INDEX = 0
+HANDLER_ARG_INDEX = 1
+EVENT_HANDLER_INDEX = 0
+EVENT_BLOCKER_INDEX = 1
+
+class EventCore(pycam.Gui.Settings.Settings):
+
+    def __init__(self):
+        super(EventCore, self).__init__()
+        self.event_handlers = {}
+        self.ui_sections = {}
+
+    def register_event(self, event, func, *args):
+        if not event in self.event_handlers:
+            assert EVENT_HANDLER_INDEX == 0
+            assert EVENT_BLOCKER_INDEX == 1
+            self.event_handlers[event] = [[], 0]
+        assert HANDLER_FUNC_INDEX == 0
+        assert HANDLER_ARG_INDEX == 1
+        self.event_handlers[event][EVENT_HANDLER_INDEX].append((func, args))
+
+    def unregister_event(self, event, func):
+        if event in self.event_handlers:
+            removal_list = []
+            for index, item in enumerate(self.event_handlers[event][EVENT_HANDLER_INDEX]):
+                if func == item[HANDLER_FUNC_INDEX]:
+                    removal_list.append(index)
+            removal_list.reverse()
+            for index in removal_list:
+                self.event_handlers[event].pop(index)
         else:
-            log.warn(("You specified a font dir that does not exist (%s). " \
-                    + "I will ignore it.") % FONT_DIR_OVERRIDE)
-    font_dir = get_data_file_location(FONTS_SUBDIR, silent=True)
-    if not font_dir is None:
-        return font_dir
-    else:
-        log.warn(("Failed to locate the fonts directory '%s' below '%s'. " \
-                + "Falling back to '%s'.") \
-                % (FONTS_SUBDIR, DATA_BASE_DIRS, FONT_DIR_FALLBACK))
-        if os.path.isdir(FONT_DIR_FALLBACK):
-            return FONT_DIR_FALLBACK
+            log.debug("Trying to unregister an unknown event: %s" % event)
+
+    def emit_event(self, event):
+        if event in self.event_handlers:
+            if self.event_handlers[event][EVENT_BLOCKER_INDEX] != 0:
+                return
+            self.block_event(event)
+            for handler in self.event_handlers[event][EVENT_HANDLER_INDEX]:
+                func = handler[HANDLER_FUNC_INDEX]
+                args = handler[HANDLER_ARG_INDEX]
+                # prevent infinite recursion
+                func(*args)
+            self.unblock_event(event)
         else:
-            log.warn(("The fallback font directory (%s) does not exist. " \
-                    + "No fonts will be available.") % FONT_DIR_FALLBACK)
-            return None
+            log.debug("No events registered for event '%s'" % str(event))
+
+    def block_event(self, event):
+        if event in self.event_handlers:
+            self.event_handlers[event][EVENT_BLOCKER_INDEX] += 1
+        else:
+            log.debug("Trying to block an unknown event: %s" % str(event))
+
+    def unblock_event(self, event):
+        if event in self.event_handlers:
+            if self.event_handlers[event][EVENT_BLOCKER_INDEX] > 0:
+                self.event_handlers[event][EVENT_BLOCKER_INDEX] -= 1
+            else:
+                log.debug("Trying to unblock non-blocked event '%s'" % str(event))
+        else:
+            log.debug("Trying to unblock an unknown event: %s" % str(event))
+
+    def register_ui_section(self, section, add_action, clear_action):
+        if not section in self.ui_sections:
+            self.ui_sections[section] = [None, None, None]
+            self.ui_sections[section][UI_WIDGET_INDEX] = []
+        self.ui_sections[section][UI_FUNC_INDEX] = (add_action, clear_action)
+        self._rebuild_ui_section(section)
+
+    def _rebuild_ui_section(self, section):
+        if section in self.ui_sections:
+            ui_section = self.ui_sections[section]
+            if ui_section[UI_FUNC_INDEX]:
+                add_func, clear_func = ui_section[UI_FUNC_INDEX]
+                ui_section[UI_WIDGET_INDEX].sort(key=lambda x: x[WIDGET_WEIGHT_INDEX])
+                clear_func()
+                for item in ui_section[UI_WIDGET_INDEX]:
+                    add_func(item[WIDGET_OBJ_INDEX], item[WIDGET_NAME_INDEX])
+        else:
+            log.debug("Failed to rebuild unknown ui section: %s" % str(section))
+
+    def register_ui(self, section, name, widget, weight=0):
+        if not section in self.ui_sections:
+            self.ui_sections[section] = [None, []]
+        ui_section = self.ui_sections[section]
+        assert WIDGET_NAME_INDEX == 0
+        assert WIDGET_OBJ_INDEX == 1
+        assert WIDGET_WEIGHT_INDEX == 2
+        ui_section[UI_WIDGET_INDEX].append((name, widget, weight))
+
+    def unregister_ui(self, section, widget):
+        if (section in self.ui_sections) or (None in self.ui_sections):
+            if not section in self.ui_sections:
+                section = None
+            ui_section = self.ui_sections[section]
+            removal_list = []
+            for index, item in enumerate(ui_section[UI_WIDGET_INDEX]):
+                if item[WIDGET_OBJ_INDEX] == widget:
+                    removal_list.append(index)
+            removal_list.reverse()
+            for index in removal_list:
+                ui_section[UI_WIDGET_INDEX].pop(index)
+        else:
+            log.debug("Trying to unregister unknown ui section: %s" % str(section))
 
 
-class ProjectGui:
+class ProjectGui(object):
 
     BOUNDARY_MODES = {
             "inside": -1,
@@ -262,7 +320,9 @@ class ProjectGui:
     META_DATA_PREFIX = "PYCAM-META-DATA:"
 
     def __init__(self, no_dialog=False):
-        self.settings = pycam.Gui.Settings.Settings()
+        self.settings = EventCore()
+        self.plugin_manager = pycam.Plugins.PluginManager(core=self.settings)
+        self.plugin_manager.import_plugins()
         self.gui_is_active = False
         self.view3d = None
         # during initialization any dialog (e.g. "Unit change") is not allowed
@@ -276,7 +336,7 @@ class ProjectGui:
         self._fonts_cache = pycam.Utils.FontCache.FontCache(get_font_dir(),
                 callback=self.update_progress_bar)
         self.gui = gtk.Builder()
-        gtk_build_file = get_data_file_location(GTKBUILD_FILE)
+        gtk_build_file = get_ui_file_location(GTKBUILD_FILE)
         if gtk_build_file is None:
             gtk.main_quit()
         self.gui.add_from_file(gtk_build_file)
@@ -361,6 +421,16 @@ class ProjectGui:
                 gtk.accel_map_change_entry(accel_path, key, mod, True)
         # no undo is allowed at the beginning
         self.gui.get_object("UndoButton").set_sensitive(False)
+        self.settings.register_event("model-change-before", self._store_undo_state)
+        self.settings.register_event("model-change-after", self.update_model_dimensions)
+        self.settings.register_event("model-change-after", self.update_support_model)
+        self.settings.register_event("model-change-after", self.update_save_actions)
+        self.settings.register_event("model-change-after", self.update_model_type_related_controls)
+        self.settings.register_event("model-change-after", self.update_support_controls)
+        self.settings.register_event("model-change-after", self.update_view)
+        self.settings.set("update_progress", self.update_progress_bar)
+        self.settings.set("disable_progress_cancel_button", self.disable_progress_cancel_button)
+        self.settings.set("load_model", self.load_model)
         # configure drag-n-drop for config files and models
         self.configure_drag_and_drop(self.window)
         self.clipboard = gtk.clipboard_get()
@@ -405,19 +475,6 @@ class ProjectGui:
         self.gui.get_object("ProcessPoolWindowClose").connect("clicked", self.toggle_process_pool_window, False)
         self.gui.get_object("ProcessPoolRefreshInterval").set_value(3)
         self.process_pool_model = self.gui.get_object("ProcessPoolStatisticsModel")
-        # extrusion dialog
-        self._extrusion_dialog_position = None
-        self._extrusion_dialog_visible = False
-        self.extrusion_dialog_window = self.gui.get_object("ExtrusionDialog")
-        self.extrusion_dialog_window.connect("delete-event",
-                self.toggle_extrusion_dialog, False)
-        self.gui.get_object("ExtrusionCancel").connect("clicked",
-                self.toggle_extrusion_dialog, False)
-        self.gui.get_object("ExtrusionSubmit").connect("clicked",
-                self.extrude_model)
-        self.gui.get_object("ExtrusionHeight").set_value(1)
-        self.gui.get_object("ExtrusionWidth").set_value(1)
-        self.gui.get_object("ExtrusionGrid").set_value(0.5)
         # "font dialog" window
         self.font_dialog_window = self.gui.get_object("FontDialog")
         self.font_dialog_window.connect("delete-event",
@@ -470,6 +527,14 @@ class ProjectGui:
         self.settings.add_item("model", lambda: self.model)
         self.settings.add_item("toolpath", lambda: self.toolpath)
         self.settings.add_item("cutter", lambda: self.cutter)
+        model_handling_obj = self.gui.get_object("ModelHandlingNotebook")
+        def clear_model_handling_obj():
+            for index in range(model_handling_obj.get_n_pages()):
+                model_handling_obj.remove_page(0)
+        def add_model_handling_item(item, name):
+            model_handling_obj.append_page(item, gtk.Label(name))
+        self.settings.register_ui_section("model_handling",
+                add_model_handling_item, clear_model_handling_obj)
         # unit control (mm/inch)
         unit_field = self.gui.get_object("unit_control")
         unit_field.connect("changed", self.change_unit_init)
@@ -544,52 +609,6 @@ class ProjectGui:
             # create a new variable "key" to avoid re-using the same object "key"
             # (due to the lambda name scope)
             self.settings.add_item(key, lambda key=key: get_absolute_limit(key))
-        # Transformations
-        self.gui.get_object("Rotate").connect("clicked", self.transform_model)
-        self.gui.get_object("Flip").connect("clicked", self.transform_model)
-        self.gui.get_object("Swap").connect("clicked", self.transform_model)
-        shift_model_button = self.gui.get_object("Shift Model")
-        shift_model_button.connect("clicked", self.shift_model, True)
-        # Make the "shift" button the default while one of the x/y/z values is
-        # active.
-        for objname in ("shift_x", "shift_y", "shift_z"):
-            self.gui.get_object(objname).connect("focus-in-event",
-                    lambda widget, data: shift_model_button.grab_default())
-            self.gui.get_object(objname).connect("focus-out-event",
-                    lambda widget, data: self.window.set_default(None))
-        self.gui.get_object("Shift To Origin").connect("clicked",
-                self.shift_model, False)
-        # scale model
-        scale_percent = self.gui.get_object("ScalePercent")
-        scale_button = self.gui.get_object("ScaleModelButton")
-        scale_percent.set_value(100)
-        scale_percent.connect("focus-in-event",
-                lambda widget, data: scale_button.grab_default())
-        scale_percent.connect("focus-out-event",
-                lambda widget, data: self.window.set_default(None))
-        scale_button.connect("clicked", self.scale_model)
-        # scale model to an axis dimension
-        self.gui.get_object("ScaleDimensionAxis").connect("changed",
-                self.update_model_dimensions)
-        scale_dimension_button = self.gui.get_object("ScaleDimensionButton")
-        scale_dimension_button.connect("clicked", self.scale_model_axis_fit)
-        scale_dimension_control = self.gui.get_object("ScaleDimensionControl")
-        scale_dimension_control.connect("focus-in-event",
-                lambda widget, data: scale_dimension_button.grab_default())
-        scale_dimension_control.connect("focus-out-event",
-                lambda widget, data: self.window.set_default(None))
-        self.gui.get_object("ToggleModelDirectionButton").connect("clicked",
-                self.reverse_model_direction)
-        self.gui.get_object("DirectionsGuessButton").connect("clicked",
-                self.guess_model_directions)
-        self.gui.get_object("ScaleInchMM").connect("clicked", self.scale_model,
-                100 * 25.4, False)
-        self.gui.get_object("ScaleMMInch").connect("clicked", self.scale_model,
-                100 / 25.4, False)
-        self.gui.get_object("Projection2D").connect("clicked",
-                self.projection_2d)
-        self.gui.get_object("ExtrudeButton").connect("clicked",
-                self.toggle_extrusion_dialog, True)
         # support grid
         support_grid_type_control = self.gui.get_object(
                 "SupportGridTypesControl")
@@ -1085,7 +1104,7 @@ class ProjectGui:
         # set the icons (in different sizes) for all windows
         gtk.window_set_default_icon_list(*get_icons_pixbuffers())
         # load menu data
-        gtk_menu_file = get_data_file_location(GTKMENU_FILE)
+        gtk_menu_file = get_ui_file_location(GTKMENU_FILE)
         if gtk_menu_file is None:
             gtk.main_quit()
         uimanager.add_ui_from_file(gtk_menu_file)
@@ -1200,27 +1219,6 @@ class ProjectGui:
             getattr(self.gui.get_object(objname), update_func)()
 
     def update_model_type_related_controls(self):
-        is_reversible = (not self.model is None) \
-                and hasattr(self.model, "reverse_directions")
-        controls_2d = ("ToggleModelDirectionButton", "DirectionsGuessButton")
-        for control in controls_2d:
-            if is_reversible:
-                self.gui.get_object(control).show()
-            else:
-                self.gui.get_object(control).hide()
-        is_extrudable = (not self.model is None) \
-               and hasattr(self.model, "extrude")
-        extrude_button = self.gui.get_object("ExtrudeButton")
-        if is_extrudable:
-            extrude_button.show()
-        else:
-            extrude_button.hide()
-        is_projectable = (not self.model is None) \
-                and hasattr(self.model, "get_waterline_contour")
-        if is_projectable:
-            self.gui.get_object("Projection2D").show()
-        else:
-            self.gui.get_object("Projection2D").hide()
         # disable the lower boundary for contour models
         is_contour = isinstance(self.model, pycam.Geometry.Model.ContourModel)
         self.gui.get_object("boundary_z_low").set_sensitive(not is_contour)
@@ -1286,7 +1284,7 @@ class ProjectGui:
             self.gui.get_object("UndoButton").set_sensitive(
                     len(self._undo_states) > 0)
             log.info("Restored the previous state of the model")
-            self._update_all_model_attributes()
+            self.settings.emit_event("model-change-after")
         else:
             log.info("No previous undo state available - request ignored")
 
@@ -1315,7 +1313,7 @@ class ProjectGui:
         else:
             short_name = os.path.basename(uri.get_path())
             self.window.set_title("%s - PyCAM" % short_name)
-        self.update_save_actions()
+        self.settings.emit_event("model-change-after")
 
     def update_save_actions(self):
         self.gui.get_object("SaveTaskSettings").set_sensitive(
@@ -1372,8 +1370,7 @@ class ProjectGui:
                 obj.show()
             else:
                 obj.hide()
-        self.update_support_model()
-        self.update_view()
+        self.settings.emit_event("model-change-after")
 
     def update_support_model(self, widget=None):
         grid_type = self.settings.get("support_grid_type")
@@ -1426,7 +1423,7 @@ class ProjectGui:
         elif grid_type == GRID_TYPES["none"]:
             pass
         s.set("support_grid", support_grid)
-        self.update_view()
+        self.settings.emit_event("model-change-after")
 
     def switch_support_grid_manual_selector(self, widget=None):
         old_axis_was_x = self.grid_adjustment_axis_x_last
@@ -1463,8 +1460,7 @@ class ProjectGui:
         if not tree_iter is None:
             value_string = "(%+.1f)" % new_value
             self.grid_adjustment_model.set(tree_iter, 1, value_string)
-        self.update_support_model()
-        self.update_view()
+        self.settings.emit_event("model-change-after")
 
     def reset_support_grid_manual(self, widget=None, reset_all=False):
         if reset_all:
@@ -1474,8 +1470,7 @@ class ProjectGui:
             self.settings.set("support_grid_adjustment_value", 0)
         self.update_support_grid_manual_model()
         self.switch_support_grid_manual_selector()
-        self.update_support_model()
-        self.update_view()
+        self.settings.emit_event("model-change-after")
 
     def update_support_grid_manual_model(self):
         old_index = self.grid_adjustment_selector.get_active()
@@ -1695,8 +1690,7 @@ class ProjectGui:
         # update the values in the manual support grid adjustment list
         self.update_support_grid_manual_model()
         # the support grid depends on the boundary
-        self.update_support_model()
-        self.update_view()
+        self.settings.emit_event("model-change-after")
 
     def update_tasklist_controls(self):
         # en/disable some buttons
@@ -2192,52 +2186,6 @@ class ProjectGui:
         # don't close the window - just hide it (for "delete-event")
         return True
 
-    @progress_activity_guard
-    @gui_activity_guard
-    def extrude_model(self, widget=None):
-        self.update_progress_bar("Calculating extrusion")
-        extrusion_type_selector = self.gui.get_object("ExtrusionTypeSelector")
-        type_model = extrusion_type_selector.get_model()
-        type_active = extrusion_type_selector.get_active()
-        if type_active >= 0:
-            type_string = type_model[type_active][0]
-            height = self.gui.get_object("ExtrusionHeight").get_value()
-            width = self.gui.get_object("ExtrusionWidth").get_value()
-            grid_size = self.gui.get_object("ExtrusionGrid").get_value()
-            if type_string == "radius_up":
-                func = lambda x: height * math.sqrt((width ** 2 - max(0, width - x) ** 2))
-            elif type_string == "radius_down":
-                func = lambda x: height * (1 - math.sqrt((width ** 2 - min(width, x) ** 2)) / width)
-            elif type_string == "skewed":
-                func = lambda x: height * min(1, x / width)
-            else:
-                log.error("Unknown extrusion type selected: %s" % type_string)
-                return
-            self.toggle_extrusion_dialog(False)
-            model = self.model.extrude(stepping=grid_size, func=func,
-                    callback=self.update_progress_bar)
-            if model:
-                self.load_model(model)
-            else:
-                self.toggle_extrusion_dialog(True)
-
-    def toggle_extrusion_dialog(self, widget=None, event=None, state=None):
-        if state is None:
-            # the "delete-event" issues the additional "event" argument
-            state = event
-        if state is None:
-            state = not self._extrusion_dialog_visible
-        if state:
-            if self._extrusion_dialog_position:
-                self.extrusion_dialog_window.move(*self._extrusion_dialog_position)
-            self.extrusion_dialog_window.show()
-        else:
-            self._extrusion_dialog_position = self.extrusion_dialog_window.get_position()
-            self.extrusion_dialog_window.hide()
-        self._extrusion_dialog_visible = state
-        # don't close the window - just hide it (for "delete-event")
-        return True
-
     @gui_activity_guard
     def toggle_preferences_window(self, widget=None, event=None, state=None):
         if state is None:
@@ -2424,36 +2372,12 @@ class ProjectGui:
             else:
                 # the window is just hidden
                 self.view3d.show()
-            self.update_view()
+            self.settings.emit_event("model-change-after")
         else:
             self.view3d.hide()
         # enable the toggle button only, if the 3d view is available
         # (e.g. disabled if no OpenGL support is available)
         toggle_3d_checkbox.set_active(self.view3d.enabled and new_state)
-
-    @progress_activity_guard
-    @gui_activity_guard
-    def transform_model(self, widget):
-        if widget is self.gui.get_object("Rotate"):
-            controls = (("x-axis", "x"), ("y-axis", "y"), ("z-axis", "z"))
-        elif widget is self.gui.get_object("Flip"):
-            controls = (("xy-plane", "xy"), ("xz-plane", "xz"), ("yz-plane", "yz"))
-        elif widget is self.gui.get_object("Swap"):
-            controls = (("x <-> y", "x_swap_y"), ("x <-> z", "x_swap_z"), ("y <-> z", "y_swap_z"))
-        else:
-            # broken gui
-            log.warn("Unknown button action: %s" % str(widget.get_name()))
-            return
-        for obj, value in controls:
-            if self.gui.get_object(obj).get_active():
-                self._store_undo_state()
-                self.disable_progress_cancel_button()
-                self.update_progress_bar("Transforming model")
-                self.model.transform_by_template(value,
-                        callback=self.update_progress_bar)
-        self.append_to_queue(self.update_support_model)
-        self.append_to_queue(self.update_model_dimensions)
-        self.append_to_queue(self.update_view)
 
     def _treeview_get_active_index(self, table, datalist):
         if len(datalist) == 0:
@@ -2697,7 +2621,7 @@ class ProjectGui:
                     # transform the model if it is selected
                     # keep the original center of the model
                     old_center = self._get_model_center()
-                    self._store_undo_state()
+                    self.settings.emit_event("model-change-before")
                     self.model.scale(factor)
                     self._set_model_center(old_center)
                 if self.gui.get_object("UnitChangeProcesses").get_active():
@@ -2745,7 +2669,7 @@ class ProjectGui:
         self.switch_bounds_table_selection()
         self.switch_tasklist_table_selection()
         # redraw the model
-        self.update_view()
+        self.settings.emit_event("model-change-after")
 
     def update_unit_labels(self, widget=None, data=None):
         # don't use the "unit" setting, since we need the plural of "inch"
@@ -2842,7 +2766,7 @@ class ProjectGui:
         for key, value in PREFERENCES_DEFAULTS.items():
             self.settings.set(key, value)
         # redraw the model due to changed colors, display items ...
-        self.update_view()
+        self.settings.emit_event("model-change-after")
 
     def load_preferences(self):
         """ load all settings that are available in the Preferences window from
@@ -2893,26 +2817,6 @@ class ProjectGui:
         except IOError, err_msg:
             log.warn("Failed to write preferences file (%s): %s" % (config_filename, err_msg))
 
-    @progress_activity_guard
-    @gui_activity_guard
-    def shift_model(self, widget, use_form_values=True):
-        if use_form_values:
-            shift_x = self.gui.get_object("shift_x").get_value()
-            shift_y = self.gui.get_object("shift_y").get_value()
-            shift_z = self.gui.get_object("shift_z").get_value()
-        else:
-            shift_x = -self.model.minx
-            shift_y = -self.model.miny
-            shift_z = -self.model.minz
-        self._store_undo_state()
-        self.update_progress_bar("Shifting model")
-        self.disable_progress_cancel_button()
-        self.model.shift(shift_x, shift_y, shift_z,
-                callback=self.update_progress_bar)
-        self.append_to_queue(self.update_support_model)
-        self.append_to_queue(self.update_model_dimensions)
-        self.append_to_queue(self.update_view)
-
     def _get_model_center(self):
         if self.model is None:
             return None
@@ -2929,65 +2833,10 @@ class ProjectGui:
         self.model.shift(new_x - old_x, new_y - old_y, new_z - old_z,
                 callback=self.update_progress_bar)
 
-
-    def _get_projection_plane(self):
-        # determine projection plane
-        if (self.model.maxz < 0) or (self.model.minz > 0):
-            # completely above or below zero
-            plane_z = self.model.minz
-        else:
-            plane_z = 0
-        return Plane(Point(0, 0, plane_z), Vector(0, 0, 1))
-
-    @progress_activity_guard
-    @gui_activity_guard
-    def projection_2d(self, widget=None):
-        self.update_progress_bar("Calculating 2D projection")
-        plane = self._get_projection_plane()
-        log.info("Projecting 3D model at level z=%g" % plane.p.z)
-        projection = self.model.get_waterline_contour(plane)
-        if projection.get_num_of_lines() > 0:
-            self.load_model(projection)
-        else:
-            log.warn("The 2D projection at z=%g is empty. Aborted." % plane.p.z)
-
-    @progress_activity_guard
-    @gui_activity_guard
-    def scale_model(self, widget=None, percent=None, keep_center=True):
-        if percent is None:
-            percent = self.gui.get_object("ScalePercent").get_value()
-        factor = percent / 100.0
-        if (factor <= 0) or (factor == 1):
-            return
-        old_center = self._get_model_center()
-        self._store_undo_state()
-        self.update_progress_bar("Scaling model")
-        self.disable_progress_cancel_button()
-        self.model.scale(factor, callback=self.update_progress_bar)
-        if keep_center:
-            self._set_model_center(old_center)
-        self.append_to_queue(self.update_model_dimensions)
-        self.append_to_queue(self.update_support_model)
-        self.append_to_queue(self.update_view)
-
     @gui_activity_guard
     def update_model_dimensions(self, widget=None):
         if self.model is None:
             return
-        # scale controls
-        axis_control = self.gui.get_object("ScaleDimensionAxis")
-        scale_button = self.gui.get_object("ScaleDimensionButton")
-        scale_value = self.gui.get_object("ScaleDimensionControl")
-        index = axis_control.get_active()
-        dims = (self.model.maxx - self.model.minx,
-                self.model.maxy - self.model.miny,
-                self.model.maxz - self.model.minz)
-        value = dims[index]
-        non_zero_dimensions = [i for i, dim in enumerate(dims) if dim > 0]
-        enable_controls = index in non_zero_dimensions
-        scale_button.set_sensitive(enable_controls)
-        scale_value.set_sensitive(enable_controls)
-        scale_value.set_value(value)
         # model corners in 3D view
         for attr, label_suffix in (("minx", "XMin"), ("miny", "YMin"),
                 ("minz", "ZMin"), ("maxx", "XMax"), ("maxy", "YMax"),
@@ -2995,62 +2844,6 @@ class ProjectGui:
             label_name = "ModelCorner%s" % label_suffix
             value = "%.3f" % getattr(self.model, attr)
             self.gui.get_object(label_name).set_label(value)
-
-    @progress_activity_guard
-    @gui_activity_guard
-    def guess_model_directions(self, widget=None):
-        if (self.model is None) \
-                or not hasattr(self.model, "reverse_directions"):
-            return
-        self._store_undo_state()
-        self.update_progress_bar(text="Analyzing directions of contour model")
-        self.model.revise_directions(callback=self.update_progress_bar)
-        self.update_support_model()
-
-    @progress_activity_guard
-    @gui_activity_guard
-    def reverse_model_direction(self, widget=None):
-        if (self.model is None) \
-                or not hasattr(self.model, "reverse_directions"):
-            return
-        self._store_undo_state()
-        self.update_progress_bar(text="Reversing directions of contour model")
-        self.model.reverse_directions(callback=self.update_progress_bar)
-        self.update_support_model()
-
-    @progress_activity_guard
-    @gui_activity_guard
-    def scale_model_axis_fit(self, widget=None):
-        proportionally = self.gui.get_object("ScaleDimensionsProportionally").get_active()
-        value = self.gui.get_object("ScaleDimensionValue").get_value()
-        index = self.gui.get_object("ScaleDimensionAxis").get_active()
-        axes = "xyz"
-        axis_suffix = axes[index]
-        factor = value / (getattr(self.model, "max" + axis_suffix) - getattr(self.model, "min" + axis_suffix))
-        # store the original center of the model
-        old_center = self._get_model_center()
-        self._store_undo_state()
-        self.update_progress_bar("Scaling model")
-        self.disable_progress_cancel_button()
-        if proportionally:
-            self.model.scale(factor, callback=self.update_progress_bar)
-        else:
-            factor_x, factor_y, factor_z = (1, 1, 1)
-            if index == 0:
-                factor_x = factor
-            elif index == 1:
-                factor_y = factor
-            elif index == 2:
-                factor_z = factor
-            else:
-                return
-            self.model.scale(factor_x, factor_y, factor_z,
-                    callback=self.update_progress_bar)
-        # move the model to its previous center
-        self._set_model_center(old_center)
-        self.append_to_queue(self.update_support_model)
-        self.append_to_queue(self.update_model_dimensions)
-        self.append_to_queue(self.update_view)
 
     def destroy(self, widget=None, data=None):
         self.update_view()
@@ -3212,22 +3005,14 @@ class ProjectGui:
             self.add_to_recent_file_list(filename)
         self.update_save_actions()
 
-    def _update_all_model_attributes(self):
-        self.append_to_queue(self.update_model_dimensions)
-        self.append_to_queue(self.update_model_type_related_controls)
-        self.append_to_queue(self.update_save_actions)
-        self.append_to_queue(self.update_support_controls)
-        self.append_to_queue(self.toggle_3d_view, value=True)
-        self.append_to_queue(self.update_view)
-
     def load_model(self, model):
         # load the new model only if the import worked
         if not model is None:
-            self._store_undo_state()
+            self.settings.emit_event("model-change-before")
             self.model = model
             self.last_model_uri = None
             # do some initialization
-            self._update_all_model_attributes()
+            self.settings.emit_event("model-change-after")
             if self.model and self.view3d and self.view3d.enabled:
                 self.append_to_queue(self.view3d.reset_view)
             return True
@@ -3967,7 +3752,7 @@ class ProjectGui:
         start_time = time.time()
         self.update_progress_bar("Preparing toolpath generation")
         parent = self
-        class UpdateView:
+        class UpdateView(object):
             def __init__(self, func, max_fps=1):
                 self.last_update = time.time()
                 self.max_fps = max_fps

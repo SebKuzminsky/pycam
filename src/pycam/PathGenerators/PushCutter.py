@@ -43,7 +43,7 @@ def _process_one_line((p1, p2, depth, models, cutter, physics)):
     return points
 
 
-class PushCutter:
+class PushCutter(object):
 
     def __init__(self, cutter, models, path_processor, physics=None):
         if physics is None:

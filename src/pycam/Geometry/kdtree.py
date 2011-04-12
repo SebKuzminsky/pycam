@@ -28,7 +28,7 @@ except ImportError:
     GL_enabled = False
 
 
-class Node:
+class Node(object):
     def __repr__(self):
         s = ""
         for bound in self.bound:

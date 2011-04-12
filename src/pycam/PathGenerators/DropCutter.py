@@ -39,7 +39,7 @@ def _process_one_grid_line((positions, minz, maxz, model, cutter, physics)):
     return get_max_height_dynamic(model, cutter, positions, minz, maxz, physics)
 
 
-class Dimension:
+class Dimension(object):
     def __init__(self, start, end):
         self.start = float(start)
         self.end = float(end)
@@ -70,7 +70,7 @@ class Dimension:
         return self.value
 
 
-class DropCutter:
+class DropCutter(object):
 
     def __init__(self, cutter, models, path_processor, physics=None):
         self.cutter = cutter

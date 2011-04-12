@@ -32,7 +32,7 @@ DEBUG_POLYGONEXTRACTOR2 = False
 DEBUG_POLYGONEXTRACTOR3 = False
 
 
-class PolygonExtractor:
+class PolygonExtractor(object):
     CONTOUR = 1
     MONOTONE = 2
 

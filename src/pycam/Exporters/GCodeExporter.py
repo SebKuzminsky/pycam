@@ -64,7 +64,7 @@ def _get_num_converter(step_width):
     return lambda number: decimal.Decimal(format_string % number)
     
 
-class GCodeGenerator:
+class GCodeGenerator(object):
 
     NUM_OF_AXES = 3
 

@@ -33,9 +33,6 @@ TRANSFORMATIONS = {
     "x": ((1, 0, 0, 0), (0, 0, 1, 0), (0, -1, 0, 0)),
     "y": ((0, 0, -1, 0), (0, 1, 0, 0), (1, 0, 0, 0)),
     "z": ((0, 1, 0, 0), (-1, 0, 0, 0), (0, 0, 1, 0)),
-    "xy": ((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, -1, 0)),
-    "xz": ((1, 0, 0, 0), (0, -1, 0, 0), (0, 0, 1, 0)),
-    "yz": ((-1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0)),
     "x_swap_y": ((0, 1, 0, 0), (1, 0, 0, 0), (0, 0, 1, 0)),
     "x_swap_z": ((0, 0, 1, 0), (0, 1, 0, 0), (1, 0, 0, 0)),
     "y_swap_z": ((1, 0, 0, 0), (0, 0, 1, 0), (0, 1, 0, 0)),
@@ -141,7 +138,7 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
             t * rot_axis.y * rot_axis.z + s * rot_axis.x,
             t * rot_axis.z * rot_axis.z + c)
 
-def get_rotation_matrix_axis_angle(rot_axis, rot_angle):
+def get_rotation_matrix_axis_angle(rot_axis, rot_angle, use_radians=True):
     """ calculate rotation matrix for a normalized vector and an angle
 
     see http://mathworld.wolfram.com/RotationMatrix.html
@@ -153,6 +150,8 @@ def get_rotation_matrix_axis_angle(rot_axis, rot_angle):
     @rtype: tuple(float)
     @return: the roation
     """
+    if not use_radians:
+        rot_angle *= math.pi / 180
     sin = number(math.sin(rot_angle))
     cos = number(math.cos(rot_angle))
     return ((cos + rot_axis[0]*rot_axis[0]*(1-cos),

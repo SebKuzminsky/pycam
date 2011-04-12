@@ -281,7 +281,7 @@ class Toolpath(object):
         self.toolpath = new_paths
 
 
-class Bounds:
+class Bounds(object):
 
     TYPE_RELATIVE_MARGIN = 0
     TYPE_FIXED_MARGIN = 1

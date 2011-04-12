@@ -35,7 +35,7 @@ import pycam.Utils.log
 log = pycam.Utils.log.get_logger()
 
 
-class EngraveCutter:
+class EngraveCutter(object):
 
     def __init__(self, cutter, trimesh_models, contour_model, path_processor,
             clockwise=False, physics=None):

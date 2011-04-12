@@ -237,7 +237,7 @@ def get_external_program_location(key):
     return None
 
 
-class ProgressCounter:
+class ProgressCounter(object):
 
     def __init__(self, max_value, update_callback):
         self.max_value = max_value

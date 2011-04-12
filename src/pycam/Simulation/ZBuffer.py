@@ -41,18 +41,18 @@ NUM_CELL_X = 0
 NUM_CELL_Y = 0
 
 
-class ZBufferItem:
+class ZBufferItem(object):
     def __init__(self, z=0.0):
         self.z = float(z)
         self.changed = True
         self.list = -1
 
-class ZCellItem:
+class ZCellItem(object):
     def __init__(self):
         self.list = -1
         self.array = None
 
-class ZBuffer:
+class ZBuffer(object):
     def __init__(self, minx, maxx, xres, miny, maxy, yres, minz, maxz):
         global NUM_CELL_X, NUM_CELL_Y
         self.minx = float(minx)

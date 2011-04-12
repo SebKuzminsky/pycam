@@ -28,7 +28,7 @@ from pycam.Geometry.Point import Point
 import pycam.Utils.threading
 
 
-class Hit:
+class Hit(object):
     def __init__(self, cl, cp, t, d, direction):
         self.cl = cl
         self.cp = cp
