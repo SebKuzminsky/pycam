@@ -80,9 +80,13 @@ class BaseModel(TransformableContainer):
         result = 0
         for item_group in self._item_groups:
             for item in item_group:
-                result += 1
                 if hasattr(item, "get_children_count"):
                     result += item.get_children_count()
+                else:
+                    try:
+                        result += len(item)
+                    except TypeError:
+                        result += 1
         return result
 
     def to_OpenGL(self, visible_filter=None, show_directions=False):
@@ -203,6 +207,12 @@ class Model(BaseModel):
         self.__flat_groups_cache = {}
         self.__uuid = None
         
+    def __len__(self):
+        """ Return the number of available items in the model.
+        This is mainly useful for evaluating an empty model as False.
+        """
+        return len(self._triangles)
+
     @property
     def uuid(self):
         if (self.__uuid is None) or self._dirty:
@@ -317,6 +327,12 @@ class ContourModel(BaseModel):
         self._cached_offset_models = {}
         self._export_function = \
                 pycam.Exporters.SVGExporter.SVGExporterContourModel
+
+    def __len__(self):
+        """ Return the number of available items in the model.
+        This is mainly useful for evaluating an empty model as False.
+        """
+        return len(self._line_groups)
 
     def reset_cache(self):
         super(ContourModel, self).reset_cache()
@@ -720,6 +736,14 @@ class ContourModel(BaseModel):
             if new_model:
                 model += new_model
         return model
+
+    def get_flat_projection(self, plane):
+        result = ContourModel(plane)
+        for polygon in self.get_polygons():
+            new_polygon = polygon.get_plane_projection(plane)
+            if new_polygon:
+                result.append(new_polygon)
+        return result or None
 
 
 class PolygonGroup(object):
