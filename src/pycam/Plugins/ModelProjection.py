@@ -71,12 +71,14 @@ class ModelProjection(pycam.Plugins.PluginBase):
                 ("ProjectionModelBottom", model.minz),
                 ("ProjectionModelCustom",
                     self.gui.get_object("ProjectionZLevel").get_value())):
-            plane = Plane(Point(0, 0, z_level), Vector(0, 0, 1))
-            log.info("Projecting 3D model at level z=%g" % plane.p.z)
-            projection = model.get_waterline_contour(plane)
-            if projection:
-                self.core.get("load_model")(projection)
-            else:
-                log.warn("The 2D projection at z=%g is empty. Aborted." % \
-                        plane.p.z)
+            if self.gui.get_object(objname).get_active():
+                plane = Plane(Point(0, 0, z_level), Vector(0, 0, 1))
+                log.info("Projecting 3D model at level z=%g" % plane.p.z)
+                projection = model.get_waterline_contour(plane)
+                if projection:
+                    self.core.get("load_model")(projection)
+                else:
+                    log.warn("The 2D projection at z=%g is empty. Aborted." % \
+                            plane.p.z)
+                break
 
