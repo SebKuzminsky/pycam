@@ -1084,11 +1084,15 @@ class Rectangle(TransformableContainer):
         if len(unique_vertices) != 2:
             log.error("Invalid number of vertices: %s" % unique_vertices)
             return None
-        if abs(unique_vertices[0].sub(unique_vertices[1]).norm - shared_vertices[0].sub(shared_vertices[1]).norm) < epsilon:
+        if abs(unique_vertices[0].sub(unique_vertices[1]).norm - \
+                shared_vertices[0].sub(shared_vertices[1]).norm) < epsilon:
             try:
-                return Rectangle(unique_vertices[0], unique_vertices[1], shared_vertices[0], shared_vertices[1], normal=t1.normal)
+                return Rectangle(unique_vertices[0], unique_vertices[1],
+                        shared_vertices[0], shared_vertices[1],
+                        normal=t1.normal)
             except ValueError:
-                log.warn("Triangles not combined: %s, %s" % (unique_vertices, shared_vertices))
+                log.warn("Triangles not combined: %s, %s" % (unique_vertices,
+                        shared_vertices))
                 return None
         else:
             return None
@@ -1121,7 +1125,8 @@ class Rectangle(TransformableContainer):
             log.error("Unexpected corner count: %s / %s / %s" % (r1, r2, corners))
             return None
         try:
-            return Rectangle(*corners, normal=r1.normal)
+            return Rectangle(corners[0], corners[1], corners[2], corners[3],
+                    normal=r1.normal)
         except ValueError:
             log.error("No valid rectangle found: %s" % corners)
             return None

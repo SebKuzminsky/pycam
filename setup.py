@@ -27,9 +27,24 @@ import distutils.sysconfig
 import glob
 import os.path
 import sys
+import shutil
 # add the local pycam source directory to the PYTHONPATH
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+BASE_DIR = os.path.realpath(os.path.abspath(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(BASE_DIR, "src"))
 from pycam import VERSION
+
+WINDOWS_START_SCRIPT = "pycam-loader.py"
+DEFAULT_START_SCRIPT = "pycam"
+
+# we don't want to include the windows postinstall script in other installers
+is_windows_installer = "bdist_wininst" in sys.argv
+
+if is_windows_installer:
+    shutil.copy2(os.path.join(BASE_DIR, DEFAULT_START_SCRIPT),
+            os.path.join(BASE_DIR, WINDOWS_START_SCRIPT))
+    PLATFORM_SCRIPTS = [WINDOWS_START_SCRIPT, "pycam_win32_postinstall.py"]
+else:
+    PLATFORM_SCRIPTS = [DEFAULT_START_SCRIPT]
 
 
 setup(
@@ -80,7 +95,7 @@ Windows: select Python 2.5 in the following dialog.
         "pycam.Toolpath",
         "pycam.Utils",
     ],
-    scripts = ['pycam-loader.py', 'pycam_win32_postinstall.py'],
+    scripts = PLATFORM_SCRIPTS,
     data_files=[("share/pycam/doc", [
             "COPYING.TXT",
             "INSTALL.TXT",
@@ -94,5 +109,8 @@ Windows: select Python 2.5 in the following dialog.
         ("share/pycam/samples", glob.glob(os.path.join("samples", "*"))),
     ],
 )
+
+if is_windows_installer:
+    os.remove(os.path.join(BASE_DIR, WINDOWS_START_SCRIPT))
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
