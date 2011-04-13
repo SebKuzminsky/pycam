@@ -1062,6 +1062,7 @@ class ProjectGui(object):
             # register a callback for the log window
             pycam.Utils.log.add_hook(self.add_log_message)
             self.window.show()
+            self.toggle_3d_view(value=True)
 
     def update_all_controls(self):
         self.update_toolpath_table()
@@ -2732,6 +2733,7 @@ class ProjectGui(object):
             self.settings.emit_event("model-change-after")
             if self.model and self.view3d and self.view3d.enabled:
                 self.append_to_queue(self.view3d.reset_view)
+                self.append_to_queue(self.toggle_3d_view, value=True)
             return True
         else:
             return False

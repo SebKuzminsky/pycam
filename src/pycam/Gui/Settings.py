@@ -599,6 +599,7 @@ class ToolpathSettings(object):
         self.bounds = {}
         self.tool_settings = {}
         self.process_settings = {}
+        self.support_model = None
 
     def set_bounds(self, bounds):
         low, high = bounds.get_absolute_limits()
