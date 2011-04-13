@@ -926,9 +926,9 @@ def draw_complete_model_view(settings):
         """
         model.to_OpenGL(show_directions=settings.get("show_directions"))
     # draw the support grid
-    if settings.get("show_support_grid") and settings.get("support_grid"):
+    if settings.get("show_support_grid") and settings.get("current_support_model"):
         GL.glColor4f(*settings.get("color_support_grid"))
-        settings.get("support_grid").to_OpenGL()
+        settings.get("current_support_model").to_OpenGL()
     # draw the toolpath simulation
     if settings.get("show_simulation"):
         moves = settings.get("simulation_toolpath_moves")

@@ -47,7 +47,7 @@ CALCULATION_BACKENDS = frozenset((None, "ODE"))
 
 def generate_toolpath_from_settings(model, tp_settings, callback=None):
     process = tp_settings.get_process_settings()
-    grid = tp_settings.get_support_grid()
+    support_model = tp_settings.get_support_model()
     backend = tp_settings.get_calculation_backend()
     return generate_toolpath(model, tp_settings.get_tool_settings(),
             tp_settings.get_bounds(), process["path_direction"],
@@ -55,24 +55,14 @@ def generate_toolpath_from_settings(model, tp_settings, callback=None):
             process["material_allowance"], process["overlap_percent"],
             process["step_down"], process["engrave_offset"],
             process["milling_style"], process["pocketing_type"],
-            grid["type"], grid["distance_x"], grid["distance_y"],
-            grid["thickness"], grid["height"], grid["offset_x"],
-            grid["offset_y"], grid["adjustments_x"], grid["adjustments_y"],
-            grid["average_distance"], grid["minimum_bridges"], grid["length"],
-            backend, callback)
+            support_model, backend, callback)
 
 def generate_toolpath(model, tool_settings=None,
         bounds=None, direction="x",
         path_generator="DropCutter", path_postprocessor="ZigZagCutter",
         material_allowance=0, overlap_percent=0, step_down=0, engrave_offset=0,
         milling_style="ignore", pocketing_type="none",
-        support_grid_type=None, support_grid_distance_x=None,
-        support_grid_distance_y=None, support_grid_thickness=None,
-        support_grid_height=None, support_grid_offset_x=None,
-        support_grid_offset_y=None, support_grid_adjustments_x=None,
-        support_grid_adjustments_y=None, support_grid_average_distance=None,
-        support_grid_minimum_bridges=None, support_grid_length=None,
-        calculation_backend=None, callback=None):
+        support_model=None, calculation_backend=None, callback=None):
     """ abstract interface for generating a toolpath
 
     @type model: pycam.Geometry.Model.Model
@@ -103,22 +93,6 @@ def generate_toolpath(model, tool_settings=None,
     @value step_down: maximum height of each layer (for PushCutter)
     @type engrave_offset: float
     @value engrave_offset: toolpath distance to the contour model
-    @type support_grid_distance_x: float
-    @value support_grid_distance_x: distance between support grid lines along x
-    @type support_grid_distance_y: float
-    @value support_grid_distance_y: distance between support grid lines along y
-    @type support_grid_thickness: float
-    @value support_grid_thickness: thickness of the support grid
-    @type support_grid_height: float
-    @value support_grid_height: height of the support grid
-    @type support_grid_offset_x: float
-    @value support_grid_offset_x: shift the support grid by this value along x
-    @type support_grid_offset_y: float
-    @value support_grid_offset_y: shift the support grid by this value along y
-    @type support_grid_adjustments_x: list(float)
-    @value support_grid_adjustments_x: manual adjustment of each x-grid bar
-    @type support_grid_adjustments_y: list(float)
-    @value support_grid_adjustments_y: manual adjustment of each y-grid bar
     @type calculation_backend: str | None
     @value calculation_backend: any member of the CALCULATION_BACKENDS set
         The default is the triangular collision detection.
@@ -156,67 +130,8 @@ def generate_toolpath(model, tool_settings=None,
         # material allowance is not available for these two strategies
         cutter.set_required_distance(material_allowance)
     # create the grid model if requested
-    if (support_grid_type == "grid") \
-            and (((not support_grid_distance_x is None) \
-            or (not support_grid_distance_y is None)) \
-            and (not support_grid_thickness is None)):
-        # grid height defaults to the thickness
-        if support_grid_height is None:
-            support_grid_height = support_grid_thickness
-        if (support_grid_distance_x < 0) or (support_grid_distance_y < 0):
-            return "The distance of the support grid must be a positive value"
-        if not ((support_grid_distance_x > 0) or (support_grid_distance_y > 0)):
-            return "Both distance values for the support grid may not be " \
-                    + "zero at the same time"
-        if support_grid_thickness <= 0:
-            return "The thickness of the support grid must be a positive value"
-        if support_grid_height <= 0:
-            return "The height of the support grid must be a positive value"
-        if not callback is None:
-            callback(text="Preparing support grid model ...")
-        support_grid_model = pycam.Toolpath.SupportGrid.get_support_grid(
-                minx, maxx, miny, maxy, minz, support_grid_distance_x,
-                support_grid_distance_y, support_grid_thickness,
-                support_grid_height, offset_x=support_grid_offset_x,
-                offset_y=support_grid_offset_y,
-                adjustments_x=support_grid_adjustments_x,
-                adjustments_y=support_grid_adjustments_y)
-        trimesh_models.append(support_grid_model)
-    elif (support_grid_type in ("distributed_edges", "distributed_corners")) \
-            and (not support_grid_average_distance is None) \
-            and (not support_grid_thickness is None) \
-            and (not support_grid_length is None):
-        if support_grid_height is None:
-            support_grid_height = support_grid_thickness
-        if support_grid_minimum_bridges is None:
-            support_grid_minimum_bridges = 2
-        if support_grid_average_distance <= 0:
-            return "The average support grid distance must be a positive value"
-        if support_grid_minimum_bridges <= 0:
-            return "The minimum number of bridged per polygon must be a " \
-                    + "positive value"
-        if support_grid_thickness <= 0:
-            return "The thickness of the support grid must be a positive value"
-        if support_grid_height <= 0:
-            return "The height of the support grid must be a positive value"
-        if not callback is None:
-            callback(text="Preparing support grid model ...")
-        # check which model to choose
-        if not contour_model is None:
-            model = contour_model
-        else:
-            model = trimesh_models[0]
-        start_at_corners = (support_grid_type == "distributed_corners")
-        support_grid_model = pycam.Toolpath.SupportGrid.get_support_distributed(
-                model, minz, support_grid_average_distance,
-                support_grid_minimum_bridges, support_grid_thickness,
-                support_grid_height, support_grid_length,
-                bounds, start_at_corners=start_at_corners)
-        trimesh_models.append(support_grid_model)
-    elif (not support_grid_type) or (support_grid_type == "none"):
-        pass
-    else:
-        return "Invalid support grid type selected: %s" % support_grid_type
+    if support_model:
+        trimesh_models.append(support_model)
     # Adapt the contour_model to the engraving offset. This offset is
     # considered to be part of the material_allowance.
     if (not contour_model is None) and (engrave_offset != 0):

@@ -574,20 +574,6 @@ class ToolpathSettings(object):
             "speed": float,
             "feedrate": float,
         },
-        "SupportGrid": {
-            "type": str,
-            "distance_x": float,
-            "distance_y": float,
-            "thickness": float,
-            "height": float,
-            "offset_x": float,
-            "offset_y": float,
-            "adjustments_x": "list_of_float",
-            "adjustments_y": "list_of_float",
-            "average_distance": float,
-            "minimum_bridges": int,
-            "length": float,
-        },
         "Program": {
             "unit": str,
             "enable_ode": bool,
@@ -612,7 +598,6 @@ class ToolpathSettings(object):
         self.program = {}
         self.bounds = {}
         self.tool_settings = {}
-        self.support_grid = {}
         self.process_settings = {}
 
     def set_bounds(self, bounds):
@@ -647,48 +632,11 @@ class ToolpathSettings(object):
     def get_tool_settings(self):
         return self.tool_settings
 
-    def set_support_grid(self, distance_x, distance_y, thickness, height,
-            offset_x=0.0, offset_y=0.0, adjustments_x=None,
-            adjustments_y=None):
-        if adjustments_x is None:
-            adjustments_x = []
-        if adjustments_y is None:
-            adjustments_y = []
-        self.support_grid["type"] = "grid"
-        self.support_grid["distance_x"] = distance_x
-        self.support_grid["distance_y"] = distance_y
-        self.support_grid["offset_x"] = offset_x
-        self.support_grid["offset_y"] = offset_y
-        self.support_grid["thickness"] = thickness
-        self.support_grid["height"] = height
-        self.support_grid["adjustments_x"] = adjustments_x
-        self.support_grid["adjustments_y"] = adjustments_y
+    def set_support_model(self, model):
+        self.support_model = model
 
-    def set_support_distributed(self, average_distance, minimum_bridges,
-            thickness, height, length, start_at_corners=False):
-        if start_at_corners:
-            self.support_grid["type"] = "distributed_corners"
-        else:
-            self.support_grid["type"] = "distributed_edges"
-        self.support_grid["average_distance"] = average_distance
-        self.support_grid["minimum_bridges"] = minimum_bridges
-        self.support_grid["thickness"] = thickness
-        self.support_grid["height"] = height
-        self.support_grid["length"] = length
-
-    def get_support_grid(self):
-        result = {}
-        if self.support_grid:
-            options = self.support_grid
-        else:
-            options = {}
-        # add all keys from the default list
-        for key in self.SECTIONS["SupportGrid"].keys():
-            if options.has_key(key):
-                result[key] = options[key]
-            else:
-                result[key] = None
-        return result
+    def get_support_model(self):
+        return self.support_model
 
     def set_calculation_backend(self, backend=None):
         self.program["enable_ode"] = (backend.upper() == "ODE")
@@ -738,7 +686,6 @@ class ToolpathSettings(object):
         config.readfp(text_stream)
         for config_dict, section in ((self.bounds, "Bounds"),
                 (self.tool_settings, "Tool"),
-                (self.support_grid, "SupportGrid"),
                 (self.process_settings, "Process")):
             for key, value_type in self.SECTIONS[section].items():
                 value_raw = config.get(section, key, None)
@@ -775,7 +722,6 @@ class ToolpathSettings(object):
         result = []
         for config_dict, section in ((self.bounds, "Bounds"),
                 (self.tool_settings, "Tool"),
-                (self.support_grid, "SupportGrid"),
                 (self.process_settings, "Process")):
             # skip empty sections
             if not config_dict:

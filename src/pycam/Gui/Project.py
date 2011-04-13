@@ -232,6 +232,7 @@ class EventCore(pycam.Gui.Settings.Settings):
             log.debug("Trying to unregister an unknown event: %s" % event)
 
     def emit_event(self, event):
+        log.debug("Event emitted: %s" % str(event))
         if event in self.event_handlers:
             if self.event_handlers[event][EVENT_BLOCKER_INDEX] != 0:
                 return
@@ -256,13 +257,14 @@ class EventCore(pycam.Gui.Settings.Settings):
             if self.event_handlers[event][EVENT_BLOCKER_INDEX] > 0:
                 self.event_handlers[event][EVENT_BLOCKER_INDEX] -= 1
             else:
-                log.debug("Trying to unblock non-blocked event '%s'" % str(event))
+                log.debug("Trying to unblock non-blocked event '%s'" % \
+                        str(event))
         else:
             log.debug("Trying to unblock an unknown event: %s" % str(event))
 
     def register_ui_section(self, section, add_action, clear_action):
         if not section in self.ui_sections:
-            self.ui_sections[section] = [None, None, None]
+            self.ui_sections[section] = [None, None]
             self.ui_sections[section][UI_WIDGET_INDEX] = []
         self.ui_sections[section][UI_FUNC_INDEX] = (add_action, clear_action)
         self._rebuild_ui_section(section)
@@ -272,7 +274,8 @@ class EventCore(pycam.Gui.Settings.Settings):
             ui_section = self.ui_sections[section]
             if ui_section[UI_FUNC_INDEX]:
                 add_func, clear_func = ui_section[UI_FUNC_INDEX]
-                ui_section[UI_WIDGET_INDEX].sort(key=lambda x: x[WIDGET_WEIGHT_INDEX])
+                ui_section[UI_WIDGET_INDEX].sort(
+                        key=lambda x: x[WIDGET_WEIGHT_INDEX])
                 clear_func()
                 for item in ui_section[UI_WIDGET_INDEX]:
                     add_func(item[WIDGET_OBJ_INDEX], item[WIDGET_NAME_INDEX])
@@ -281,12 +284,14 @@ class EventCore(pycam.Gui.Settings.Settings):
 
     def register_ui(self, section, name, widget, weight=0):
         if not section in self.ui_sections:
-            self.ui_sections[section] = [None, []]
-        ui_section = self.ui_sections[section]
+            self.ui_sections[section] = [None, None]
+            self.ui_sections[section][UI_WIDGET_INDEX] = []
         assert WIDGET_NAME_INDEX == 0
         assert WIDGET_OBJ_INDEX == 1
         assert WIDGET_WEIGHT_INDEX == 2
-        ui_section[UI_WIDGET_INDEX].append((name, widget, weight))
+        self.ui_sections[section][UI_WIDGET_INDEX].append((name, widget,
+                weight))
+        self._rebuild_ui_section(section)
 
     def unregister_ui(self, section, widget):
         if (section in self.ui_sections) or (None in self.ui_sections):
@@ -301,7 +306,8 @@ class EventCore(pycam.Gui.Settings.Settings):
             for index in removal_list:
                 ui_section[UI_WIDGET_INDEX].pop(index)
         else:
-            log.debug("Trying to unregister unknown ui section: %s" % str(section))
+            log.debug("Trying to unregister unknown ui section: %s" % \
+                    str(section))
 
 
 class ProjectGui(object):
@@ -425,6 +431,7 @@ class ProjectGui(object):
         self.settings.register_event("model-change-after", self.update_save_actions)
         self.settings.register_event("model-change-after", self.update_model_type_related_controls)
         self.settings.register_event("model-change-after", self.update_view)
+        self.settings.register_event("visual-item-updated", self.update_view)
         self.settings.set("update_progress", self.update_progress_bar)
         self.settings.set("disable_progress_cancel_button", self.disable_progress_cancel_button)
         self.settings.set("load_model", self.load_model)
@@ -2717,7 +2724,7 @@ class ProjectGui(object):
 
     def load_model(self, model):
         # load the new model only if the import worked
-        if not model is None:
+        if model:
             self.settings.emit_event("model-change-before")
             self.model = model
             self.last_model_uri = None
@@ -3130,6 +3137,15 @@ class ProjectGui(object):
             self.toolpath.append(new_toolpath)
             self.update_toolpath_table()
         dialog.hide()
+
+    def _get_projection_plane(self):
+        # determine projection plane
+        if (self.model.maxz < 0) or (self.model.minz > 0):
+            # completely above or below zero
+            plane_z = self.model.minz
+        else:
+            plane_z = 0
+        return Plane(Point(0, 0, plane_z), Vector(0, 0, 1))
 
     @progress_activity_guard
     def crop_toolpath(self, toolpath):
@@ -3571,10 +3587,9 @@ class ProjectGui(object):
                 tool_settings["tool_radius"], tool_settings["torus_radius"],
                 tool_settings["speed"], tool_settings["feedrate"])
 
-        support_factory = self.settings.get("get_support_model")
-        if support_factory:
-            # TODO: this is not a good approach - "toolpath_settings" should just have a "set_support" method
-            support_factory(toolpath_settings)
+        support_model = self.settings.get("current_support_model")
+        if support_model:
+            toolpath_settings.set_support_model(support_model)
 
         # calculation backend: ODE / None
         if self.settings.get("enable_ode"):
