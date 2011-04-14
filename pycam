@@ -100,7 +100,7 @@ EXAMPLE_MODEL_LOCATIONS = [
 if "_MEIPASS2" in os.environ:
     EXAMPLE_MODEL_LOCATIONS.insert(0, os.path.join(os.path.normpath(
             os.environ["_MEIPASS2"]), "samples"))
-DEFAULT_MODEL_FILE = "pycam.stl"
+DEFAULT_MODEL_FILE = "pycam-textbox.stl"
 EXIT_CODES = {"ok": 0, "requirements": 1, "load_model_failed": 2,
         "write_output_failed": 3, "parsing_failed": 4,
         "server_without_password": 5, "connection_error": 6}

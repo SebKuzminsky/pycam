@@ -39,8 +39,9 @@ def convert_svg2eps(svg_filename, eps_filename, location=None):
                 args = [location, "--export-area-page", "--export-eps",
                         eps_filename, svg_filename])
     except OSError, err_msg:
-        log.error("SVGImporter: failed to execute 'inkscape' (%s): %s" \
-                % (location, err_msg))
+        log.error(("SVGImporter: failed to execute 'inkscape' (%s): %s%s" + \
+                "Maybe you need to install Inkscape (http://inkscape.org)?") % \
+                (location, err_msg, os.linesep))
         return False
     returncode = process.wait()
     if returncode == 0:
@@ -66,8 +67,9 @@ def convert_eps2dxf(eps_filename, dxf_filename, location=None, unit="mm"):
         process = subprocess.Popen(stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, args=args)
     except OSError, err_msg:
-        log.error("SVGImporter: failed to execute 'pstoedit' (%s): %s" \
-                % (location, err_msg))
+        log.error(("SVGImporter: failed to execute 'pstoedit' (%s): %s%s" + \
+                "Maybe you need to install pstoedit (http://pstoedit.net)?") % \
+                (location, err_msg, os.linesep))
         return False
     returncode = process.wait()
     if returncode == 0:

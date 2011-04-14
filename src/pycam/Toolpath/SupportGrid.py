@@ -157,16 +157,18 @@ def get_support_distributed(model, z_plane, average_distance,
             or (height == 0):
         return
     result = Model()
-    if hasattr(model, "get_polygons"):
-        polygons = model.get_cropped_model_by_bounds(bounds).get_polygons(
-                z=z_plane, ignore_below=False)
+    if not hasattr(model, "get_polygons"):
+        model = model.get_waterline_contour(
+                Plane(Point(0, 0, max(model.minz, z_plane)), Vector(0, 0, 1)))
+    if model:
+        model = model.get_flat_projection(Plane(Point(0, 0, z_plane),
+                Vector(0, 0, 1)))
+    if model:
+        model = model.get_cropped_model_by_bounds(bounds)
+    if model:
+        polygons = model.get_polygons()
     else:
-        waterline_model = model.get_waterline_contour(Plane(Point(0, 0, z_plane),
-                Vector(0, 0, 1))).get_cropped_model_by_bounds(bounds)
-        if not waterline_model:
-            return
-        else:
-            polygons = waterline_model.get_polygons()
+        return None
     # minimum required distance between two bridge start points
     avoid_distance = 1.5 * (abs(length) + thickness)
     if start_at_corners:
