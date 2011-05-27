@@ -108,8 +108,10 @@ class SphericalCutter(BaseCutter):
                 # rotate cylinder vector
                 cyl_original_vector = (0, 0, hypotenuse_3d)
                 cyl_destination_vector = (diff_x, diff_y, diff_z)
-                geom_cyl.setRotation(Matrix.get_rotation_matrix_from_to(
-                        cyl_original_vector, cyl_destination_vector))
+                matrix = Matrix.get_rotation_matrix_from_to(
+                        cyl_original_vector, cyl_destination_vector)
+                flat_matrix = matrix[0] + matrix[1] + matrix[2]
+                geom_cyl.setRotation(flat_matrix)
                 # The rotation is around the center - thus we ignore negative
                 # diff values.
                 geom_cyl.setPosition((abs(diff_x / 2), abs(diff_y / 2),

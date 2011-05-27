@@ -92,16 +92,14 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
     along the x axis, while the destination vectors goes along the y axis:
         get_rotation_matrix((1, 0, 0), (0, 1, 0))
     Basically this describes a rotation around the z axis by 90 degrees.
-    The resulting 3x3 matrix (tuple of 9 floats) can be multiplied with any
-    other vector to rotate it in the same way around the z axis.
+    The resulting 3x3 matrix (tuple of tuple of floats) can be multiplied with
+    any other vector to rotate it in the same way around the z axis.
     @type v_orig: tuple(float) | list(float) | pycam.Geometry.Point
     @value v_orig: the original 3d vector
     @type v_dest: tuple(float) | list(float) | pycam.Geometry.Point
     @value v_dest: the destination 3d vector
-    @rtype: tuple(float)
-    @return: the tuple of 9 floats represents a 3x3 matrix, that can be
-        multiplied with any vector to rotate it in the same way, as you would
-        rotate v_orig to the position of v_dest
+    @rtype: tuple(tuple(float))
+    @return: the roation matrix (3x3)
     """
     if isinstance(v_orig, Point):
         v_orig = (v_orig.x, v_orig.y, v_orig.z)
@@ -110,7 +108,10 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
     v_orig_length = get_length(v_orig)
     v_dest_length = get_length(v_dest)
     cross_product = get_length(get_cross_product(v_orig, v_dest))
-    arcsin = cross_product / (v_orig_length * v_dest_length)
+    try:
+        arcsin = cross_product / (v_orig_length * v_dest_length)
+    except ZeroDivisionError:
+        return None
     # prevent float inaccuracies to crash the calculation (within limits)
     if 1 < arcsin < 1 + epsilon:
         arcsin = 1.0
@@ -123,20 +124,22 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
     rot_axis = Point(v_orig[1] * v_dest[2] - v_orig[2] * v_dest[1],
             v_orig[2] * v_dest[0] - v_orig[0] * v_dest[2],
             v_orig[0] * v_dest[1] - v_orig[1] * v_dest[0]).normalized()
+    if not rot_axis:
+        return None
     # get the rotation matrix
     # see http://www.fastgraph.com/makegames/3drotation/
     c = math.cos(rot_angle)
     s = math.sin(rot_angle)
     t = 1 - c
-    return (t * rot_axis.x * rot_axis.x + c,
+    return ((t * rot_axis.x * rot_axis.x + c,
             t * rot_axis.x * rot_axis.y - s * rot_axis.z,
-            t * rot_axis.x * rot_axis.z + s * rot_axis.y,
-            t * rot_axis.x * rot_axis.y + s * rot_axis.z,
+            t * rot_axis.x * rot_axis.z + s * rot_axis.y),
+            (t * rot_axis.x * rot_axis.y + s * rot_axis.z,
             t * rot_axis.y * rot_axis.y + c,
-            t * rot_axis.y * rot_axis.z - s * rot_axis.x,
-            t * rot_axis.x * rot_axis.z - s * rot_axis.y,
+            t * rot_axis.y * rot_axis.z - s * rot_axis.x),
+            (t * rot_axis.x * rot_axis.z - s * rot_axis.y,
             t * rot_axis.y * rot_axis.z + s * rot_axis.x,
-            t * rot_axis.z * rot_axis.z + c)
+            t * rot_axis.z * rot_axis.z + c))
 
 def get_rotation_matrix_axis_angle(rot_axis, rot_angle, use_radians=True):
     """ calculate rotation matrix for a normalized vector and an angle
@@ -147,8 +150,8 @@ def get_rotation_matrix_axis_angle(rot_axis, rot_angle, use_radians=True):
         be 1.0 (normalized).
     @type rot_angle: float
     @value rot_angle: rotation angle (radiant)
-    @rtype: tuple(float)
-    @return: the roation
+    @rtype: tuple(tuple(float))
+    @return: the roation matrix (3x3)
     """
     if not use_radians:
         rot_angle *= math.pi / 180
