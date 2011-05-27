@@ -240,7 +240,11 @@ def get_external_program_location(key):
 class ProgressCounter(object):
 
     def __init__(self, max_value, update_callback):
-        self.max_value = max_value
+        if max_value <= 0:
+            # prevent divide-by-zero in "get_percent"
+            self.max_value = 100
+        else:
+            self.max_value = max_value
         self.current_value = 0
         self.update_callback = update_callback
 
@@ -256,5 +260,5 @@ class ProgressCounter(object):
             return False
 
     def get_percent(self):
-        return 100.0 * self.current_value / self.max_value
+        return min(100, max(0, 100.0 * self.current_value / self.max_value))
 
