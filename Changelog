@@ -1,6 +1,7 @@
 Version 0.5.1 - UNRELEASED
  * added extrusion for 2D models
  * 2D projection of multi-layered 2D models
+ * significantly improved performance of 3D visualization
  * improved detection of library locations for Windows package
  * minor bugs fixed
 

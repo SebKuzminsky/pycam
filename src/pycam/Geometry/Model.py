@@ -37,6 +37,16 @@ from pycam.Utils import ProgressCounter
 import pycam.Utils.log
 import uuid
 import math
+# OpenGLTools will be imported later, if necessary
+#import pycam.Gui.OpenGLTools
+
+
+try:
+    import OpenGL.GL as GL
+    GL_enabled = True
+except ImportError:
+    GL_enabled = False
+
 
 log = pycam.Utils.log.get_logger()
 
@@ -57,6 +67,7 @@ class BaseModel(TransformableContainer):
         self.maxz = None
         # derived classes should override this
         self._export_function = None
+        self._opengl_display_cache = {}
 
     def __add__(self, other_model):
         """ combine two models """
@@ -90,19 +101,35 @@ class BaseModel(TransformableContainer):
         return result
 
     def to_OpenGL(self, visible_filter=None, show_directions=False):
-        def paint_item_filtered(item):
-            do_paint, color = visible_filter(item)
-            if do_paint:
-                item.to_OpenGL(color, show_directions=show_directions)
-        if visible_filter is None:
-            paint_item = lambda item: item.to_OpenGL(
-                    show_directions=show_directions)
+        if not GL_enabled:
+            return
+        if not visible_filter is None:
+            for item in self.next():
+                # ignore invisble things like the normal of a ContourModel
+                if hasattr(item, "to_OpenGL"):
+                    do_paint, color = visible_filter(item)
+                    if do_paint:
+                        item.to_OpenGL(color, show_directions=show_directions)
+        elif not show_directions in self._opengl_display_cache:
+            # compile an OpenGL display list
+            # Rendering a display list takes less than 5% of the time for a
+            # complete rebuild.
+            list_index = GL.glGenLists(1)
+            print list_index
+            if list_index > 0:
+                self._opengl_display_cache[show_directions] = list_index
+                # somehow "GL_COMPILE_AND_EXECUTE" fails - we render it later
+                GL.glNewList(list_index, GL.GL_COMPILE)
+            for item in self.next():
+                # ignore invisble things like the normal of a ContourModel
+                if hasattr(item, "to_OpenGL"):
+                    item.to_OpenGL(show_directions=show_directions)
+            if list_index > 0:
+                GL.glEndList()
+                GL.glCallList(list_index)
         else:
-            paint_item = paint_item_filtered
-        for item in self.next():
-            # ignore invisble things like the normal of a ContourModel
-            if hasattr(item, "to_OpenGL"):
-                paint_item(item)
+            # render a previously compiled display list
+            GL.glCallList(self._opengl_display_cache[show_directions])
 
     def is_export_supported(self):
         return not self._export_function is None
@@ -160,6 +187,15 @@ class BaseModel(TransformableContainer):
         self.maxz = None
         for item in self.next():
             self._update_limits(item)
+        self._reset_opengl_display_cache()
+
+    def _reset_opengl_display_cache(self):
+        for index in self._opengl_display_cache.values():
+            GL.glDeleteLists(index, 1)
+        self._opengl_display_cache = {}
+
+    def __del__(self):
+        self._reset_opengl_display_cache()
 
     def _get_progress_callback(self, update_callback):
         if update_callback:
