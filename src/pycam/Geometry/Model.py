@@ -115,7 +115,6 @@ class BaseModel(TransformableContainer):
             # Rendering a display list takes less than 5% of the time for a
             # complete rebuild.
             list_index = GL.glGenLists(1)
-            print list_index
             if list_index > 0:
                 self._opengl_display_cache[show_directions] = list_index
                 # somehow "GL_COMPILE_AND_EXECUTE" fails - we render it later
@@ -195,7 +194,10 @@ class BaseModel(TransformableContainer):
         self._opengl_display_cache = {}
 
     def __del__(self):
-        self._reset_opengl_display_cache()
+        # Somehow remote pycam servers complain about this missing attribute
+        # during cleanup.
+        if hasattr(self, "_opengl_display_cache"):
+            self._reset_opengl_display_cache()
 
     def _get_progress_callback(self, update_callback):
         if update_callback:

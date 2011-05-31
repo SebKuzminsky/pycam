@@ -137,7 +137,6 @@ class Triangle(TransformableContainer):
             GL.glPopMatrix()
         if pycam.Utils.log.is_debug(): # draw triangle id on triangle face
             GL.glPushMatrix()
-            cc = GL.glGetFloatv(GL.GL_CURRENT_COLOR)
             c = self.center
             GL.glTranslate(c.x, c.y, c.z)
             p12 = self.p1.add(self.p2).mul(0.5)
@@ -157,13 +156,10 @@ class Triangle(TransformableContainer):
             for ch in id_string:
                 w += GLUT.glutStrokeWidth(GLUT.GLUT_STROKE_ROMAN, ord(ch))
             GL.glTranslate(-w/2, 0, 0)
-            GL.glColor4f(1, 1, 1, 1)
             for ch in id_string:
                 GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(ch))
             GL.glPopMatrix()
-            GL.glColor4f(cc[0], cc[1], cc[2], cc[3])
         if False: # draw point id on triangle face
-            cc = GL.glGetFloatv(GL.GL_CURRENT_COLOR)
             c = self.center
             p12 = self.p1.add(self.p2).mul(0.5)
             p3_12 = self.p3.sub(p12).normalized()
@@ -182,11 +178,9 @@ class Triangle(TransformableContainer):
                 for ch in str(p.id):
                     w += GLUT.glutStrokeWidth(GLUT.GLUT_STROKE_ROMAN, ord(ch))
                     GL.glTranslate(-w/2, 0, 0)
-                GL.glColor4f(0.5, 1, 0.5, 1.0)
                 for ch in str(p.id):
                     GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(ch))
                 GL.glPopMatrix()
-            GL.glColor4f(cc[0], cc[1], cc[2], cc[3])
 
     def is_point_inside(self, p):
         # http://www.blackpawn.com/texts/pointinpoly/default.html
