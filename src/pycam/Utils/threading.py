@@ -797,7 +797,7 @@ class PendingTasks(object):
         stale_start_time = time.time() - self._stale_timeout
         stale_tasks = []
         # use a copy to prevent "dictionary changed size in iteration" errors
-        current_jobs = self._jobs.iteritems()[:]
+        current_jobs = list(self._jobs.iteritems())
         for (job_id, task_id), (start_time, info) in current_jobs:
             if start_time < stale_start_time:
                 stale_tasks.append((job_id, task_id, info))
