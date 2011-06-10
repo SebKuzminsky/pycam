@@ -424,6 +424,11 @@ class ProjectGui(object):
                 accel_path = "<pycam>/%s" % objname
                 item.set_accel_path(accel_path)
                 gtk.accel_map_change_entry(accel_path, key, mod, True)
+        # LinkButton does not work on Windows: https://bugzilla.gnome.org/show_bug.cgi?id=617874
+        if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
+            def open_url(widget, data=None):
+                webbrowser.open(widget.get_uri())
+            gtk.link_button_set_uri_hook(open_url)
         # no undo is allowed at the beginning
         self.gui.get_object("UndoButton").set_sensitive(False)
         self.settings.register_event("model-change-before", self._store_undo_state)
