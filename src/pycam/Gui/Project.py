@@ -1121,7 +1121,12 @@ class ProjectGui(object):
     def update_model_type_related_controls(self):
         # disable the lower boundary for contour models
         is_contour = isinstance(self.model, pycam.Geometry.Model.ContourModel)
-        self.gui.get_object("boundary_z_low").set_sensitive(not is_contour)
+        margin_type = self._load_bounds_settings_from_gui().get_type()
+        z_low_control = self.gui.get_object("boundary_z_low")
+        if is_contour and (margin_type != Bounds.TYPE_CUSTOM):
+            z_low_control.set_sensitive(False)
+        else:
+            z_low_control.set_sensitive(True)
         # copy button
         self.gui.get_object("CopyModelToClipboard").set_sensitive(
                 bool(self.model and self.model.is_export_supported()))
@@ -1408,6 +1413,8 @@ class ProjectGui(object):
         self._put_bounds_settings_to_gui(bounds)
         # update the descriptive label for each margin type
         self.update_bounds_controls()
+        # update the sensitivity of the lower z margin for contour models
+        self.update_model_type_related_controls()
         self.settings.emit_event("boundary-updated")
 
     def update_tasklist_controls(self):
@@ -2760,7 +2767,7 @@ class ProjectGui(object):
         self.gui.get_object(self.BOUNDARY_TYPES[settings.get_type()]).set_active(True)
         low, high = settings.get_bounds()
         # relative margins are given in percent
-        if settings.get_type() == pycam.Toolpath.Bounds.TYPE_RELATIVE_MARGIN:
+        if settings.get_type() == Bounds.TYPE_RELATIVE_MARGIN:
             factor = 100
         else:
             factor = 1
@@ -2780,7 +2787,7 @@ class ProjectGui(object):
         low = [None] * 3
         high = [None] * 3
         # relative margins are given in percent
-        if settings.get_type() == pycam.Toolpath.Bounds.TYPE_RELATIVE_MARGIN:
+        if settings.get_type() == Bounds.TYPE_RELATIVE_MARGIN:
             factor = 0.01
         else:
             factor = 1
@@ -2844,7 +2851,8 @@ class ProjectGui(object):
             for index in range(3):
                 get_control(index, "high").set_sensitive(True)
                 if (index == 2) and isinstance(self.model,
-                        pycam.Geometry.Model.ContourModel):
+                        pycam.Geometry.Model.ContourModel) and \
+                        (current_type != Bounds.TYPE_CUSTOM):
                     # disable lower z for contour models
                     state = False
                 else:
