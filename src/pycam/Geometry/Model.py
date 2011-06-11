@@ -196,7 +196,7 @@ class BaseModel(TransformableContainer):
     def __del__(self):
         # Somehow remote pycam servers complain about this missing attribute
         # during cleanup.
-        if hasattr(self, "_opengl_display_cache"):
+        if GL_enabled and hasattr(self, "_opengl_display_cache"):
             self._reset_opengl_display_cache()
 
     def _get_progress_callback(self, update_callback):
