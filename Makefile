@@ -34,7 +34,7 @@ man: svn_export
 	@make -C "$(EXPORT_DIR)/man"
 
 svn_export: clean
-	@if svn info &>/dev/null;\
+	@if svn info 2>/dev/null >&2;\
 		then svn export --quiet "$(SVN_REPO_BASE)" "$(EXPORT_DIR)";\
 		else svk co "$(SVK_REPO_BASE)" "$(EXPORT_DIR)";\
 	fi
@@ -52,7 +52,7 @@ tgz: create_archive_dir man svn_export
 
 win32: create_archive_dir man svn_export
 	# this is a binary release
-	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py bdist --format wininst --dist-dir "$(ARCHIVE_DIR)" $(DISTUTILS_PLAT_NAME)
+	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py bdist_wininst --user-access-control force --dist-dir "$(ARCHIVE_DIR)" $(DISTUTILS_PLAT_NAME)
 
 upload:
 	svn cp "$(SVN_REPO_BASE)" "$(REPO_TAGS)/release-$(VERSION)" -m "tag release $(VERSION)"
