@@ -26,6 +26,7 @@ else:
 data = [(os.path.join(UI_DATA_RELATIVE, "pycam-project.ui"), os.path.join(UI_DATA_DIR, "pycam-project.ui"), "DATA"),
         (os.path.join(UI_DATA_RELATIVE, "menubar.xml"), os.path.join(UI_DATA_DIR, "menubar.xml"), "DATA"),
         (os.path.join(UI_DATA_RELATIVE, "logo_gui.png"), os.path.join(UI_DATA_DIR, "logo_gui.png"), "DATA"),
+        (os.path.join(UI_DATA_RELATIVE, "gtkrc_windows"), os.path.join(UI_DATA_DIR, "gtkrc_windows"), "DATA"),
 ]
 
 # sample models
@@ -41,13 +42,13 @@ if get_platform() == PLATFORM_WINDOWS:
     start_dirs = (os.path.join(os.environ["PROGRAMFILES"], "Common files", "Gtk"),
             os.path.join(os.environ["COMMONPROGRAMFILES"], "Gtk"),
             r"C:\\")
-    def find_gtk_pixbuf_dir(dirs):
+    def find_filename_below_dirs(dirs, filename):
         for start_dir in dirs:
             for root, dirs, files in os.walk(start_dir):
-                if "libpixbufloader-png.dll" in files:
+                if filename in files:
                     return root
         return None
-    gtk_loaders_dir = find_gtk_pixbuf_dir(start_dirs)
+    gtk_loaders_dir = find_filename_below_dirs(start_dirs, "libpixbufloader-png.dll")
     if gtk_loaders_dir is None:
         print >>sys.stderr, "Failed to locate Gtk installation (looking for libpixbufloader-png.dll)"
         #sys.exit(1)
@@ -68,6 +69,33 @@ if get_platform() == PLATFORM_WINDOWS:
     if config_dir:
         gtk_pixbuf_config_file = os.path.join(config_dir, config_relative)
         data.append((config_relative, os.path.join(config_dir, config_relative), "DATA"))
+
+
+    # look for the GTK theme "MS-Windows"
+    # the required gtkrc file is loaded during startup
+    import _winreg
+    try:
+        k = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 'Software\\GTK2-Runtime')
+    except EnvironmentError:
+        print "Failed to detect the GTK2 runtime environment - the Windows theme will be missing"
+        gtkdir = None
+    else:
+        gtkdir = str(_winreg.QueryValueEx(k, 'InstallationDirectory')[0])
+
+    if gtkdir:
+        # we only need this dll file
+        wimp_engine_file = "libwimp.dll"
+        engine_dir = find_filename_below_dirs([gtkdir], wimp_engine_file)
+        if engine_dir:
+            if engine_dir.startswith(gtkdir):
+                relative_engine_dir = engine_dir[len(gtkdir):]
+            else:
+                relative_engine_dir = engine_dir
+            engine_dll = os.path.join(engine_dir, wimp_engine_file)
+            relative_engine_dll = os.path.join(relative_engine_dir,
+                    wimp_engine_file)
+            data.append((relative_engine_dll, engine_dll, "BINARY"))
+
 
     # somehow we need to add glut32.dll manually
     def find_glut32(start_dir, filename="glut32.dll"):

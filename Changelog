@@ -3,6 +3,7 @@ Version 0.5.1 - UNRELEASED
  * 2D projection of multi-layered 2D models
  * significantly improved performance of 3D visualization
  * fixed "help" links for Windows users
+ * added GTK theme with a native look&feel for Windows
  * improved detection of library locations for Windows package
  * minor bugs fixed
 

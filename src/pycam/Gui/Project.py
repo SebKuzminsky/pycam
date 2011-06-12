@@ -72,6 +72,7 @@ import sys
 
 GTKBUILD_FILE = "pycam-project.ui"
 GTKMENU_FILE = "menubar.xml"
+GTKRC_FILE_WINDOWS = os.path.join(UI_SUBDIR, "gtkrc_windows")
 
 WINDOW_ICON_FILENAMES = ["logo_%dpx.png" % pixels for pixels in (16, 32, 48, 64, 128)]
 
@@ -345,6 +346,12 @@ class ProjectGui(object):
         if gtk_build_file is None:
             gtk.main_quit()
         self.gui.add_from_file(gtk_build_file)
+        if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
+            gtkrc_file = get_data_file_location(GTKRC_FILE_WINDOWS)
+            if gtkrc_file:
+                print "GTKRC: %s" % str(gtkrc_file)
+                gtk.rc_add_default_file(gtkrc_file)
+                gtk.rc_reparse_all_for_settings(gtk.settings_get_default(), True)
         self.window = self.gui.get_object("ProjectWindow")
         # show stock items on buttons
         # increase the initial width of the window (due to hidden elements)
