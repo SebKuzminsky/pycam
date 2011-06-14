@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Lars Kruse <devel@sumpfralle.de>
 Build-Depends: python, debhelper (>= 7), cdbs, patchutils
 Build-Depends-Indep: python-support, help2man
-Standards-Version: 3.9.1
+Standards-Version: 3.9.2
 Homepage: http://sourceforge.net/projects/pycam/
 
 Package: pycam
@@ -12,18 +12,20 @@ Architecture: all
 Depends: python-gtk2, python-opengl (>>3.0.0~b6-3), python-gtkglext1,
  ${misc:Depends}, ${python:Depends}
 Recommends: python-pyode (>>1.2.0-3), python-psyco, python-setproctitle
-Description: CAM program & library written in Python
- This is a set of Python modules for toolpath generation for 3-Axis
- CNC machining, and a GUI program that uses them.
+Suggests: inkscape, pstoedit, qcad-data
+Description: CAM program & Python library for generating toolpaths
+ PyCAM is a toolpath generator for 3 axis machines. The generated
+ GCode can be used with EMC2 and other machine controllers.
+ The included Python library can be used independently from the GUI.
  .
  Features:
-    * read and write STL model files
-    * limited support for 2D models (SVG or DXF)
-    * generate and export toolpaths (gcode) for various strategies and
-      drill definitions
-    * manage processing templates (e.g. rough, semi-finish and finish
-      operations)
+    * read and write STL model files (3D)
+    * support for 2D models (DXF/SVG/PS)
+    * generate toolpaths (GCode) for various strategies and drill
+	  definitions
+    * manage and store processing templates
     * scale, move, rotate, flip and transform the model
-    * interactive 3D model view
+    * interactive 3D model view based on OpenGL
     * non-interactive generation of GCode via commandline
+	* render single-line fonts (provided by QCAD)
 

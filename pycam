@@ -95,6 +95,7 @@ log = pycam.Utils.log.get_logger()
 EXAMPLE_MODEL_LOCATIONS = [
         os.path.join(BASE_DIR, "samples"),
         os.path.join(sys.prefix, "share", "pycam", "samples"),
+        os.path.join(sys.prefix, "local", "share", "pycam", "samples"),
         os.path.join("usr", "share", "pycam", "samples")]
 # for pyinstaller (windows distribution)
 if "_MEIPASS2" in os.environ:

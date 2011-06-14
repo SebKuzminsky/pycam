@@ -1,35 +1,7 @@
-pycam (0.4-2) unstable; urgency=low
+pycam (0.5.1-1) unstable; urgency=low
 
-  * Improved the packaging based on suggestions by Benoît Knecht:
-   * Changed the copyright file to the format specified by DEP5
-   * Removed postinst and prerm placeholders
-   * Added descriptions to the patches
-   * Added a watch file
+  * initial debian package
+  * Closes: #600779
 
- -- Lars Kruse <devel@sumpfralle.de>  Sun, 14 Nov 2010 15:46:01 +0100
+ -- Lars Kruse <devel@sumpfralle.de>  Mon, 13 Jun 2011 02:04:59 +0200
 
-pycam (0.4-1) unstable; urgency=low
-
-  * new upstream release
-
- -- Lars Kruse <devel@sumpfralle.de>  Tue, 19 Oct 2010 12:11:27 +0200
-
-pycam (0.3-1) unstable; urgency=low
-
-  * new upstream release
-  * Switch to dpkg-source 3.0 (quilt) format
-  * Updated policy to 3.9.1 (no changes)
-
- -- Lars Kruse <devel@sumpfralle.de>  Mon, 16 Aug 2010 15:57:45 +0200
-
-pycam (0.2.3-1) unstable; urgency=low
-
-  * new upstream release
-
- -- Lars Kruse <devel@sumpfralle.de>  Mon, 05 Apr 2010 02:48:36 +0200
-
-pycam (0.2.2-1) unstable; urgency=low
-
-  * Initial debianization of r243 of the SVN repo on sourceforge
-
- -- Sebastian Kuzminsky <seb@highlab.com>  Tue, 16 Mar 2010 22:14:56 -0600

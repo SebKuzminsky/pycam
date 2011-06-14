@@ -1,10 +1,11 @@
-Version 0.5.1 - UNRELEASED
+Version 0.5.1 - 2011-06-13
  * added extrusion for 2D models
  * 2D projection of multi-layered 2D models
  * significantly improved performance of 3D visualization
  * fixed "help" links for Windows users
  * added GTK theme with a native look&feel for Windows
  * improved detection of library locations for Windows package
+ * added file type associations (mime) to the debian package
  * minor bugs fixed
 
 Version 0.5 - 2011-03-28

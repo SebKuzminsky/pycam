@@ -4,12 +4,12 @@ Maintainer: Lars Kruse <devel@sumpfralle.de>
 Source: http://pycam.sourceforge.net
 
 Files: *
-Copyright: 2010, Lars Kruse <devel@sumpfralle.de>
+Copyright: 2010-2011, Lars Kruse <devel@sumpfralle.de>
            2006-2010, Lode Leroy
 License: GPL-3+
 
 Files: debian/*
-Copyright: 2010, Lars Kruse <devel@sumpfralle.de>
+Copyright: 2010-2011, Lars Kruse <devel@sumpfralle.de>
            2010, Sebastian Kuzminsky <seb@highlab.com>
 License: GPL-3+
 

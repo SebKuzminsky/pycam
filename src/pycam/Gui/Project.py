@@ -50,12 +50,11 @@ from pycam import VERSION
 import pycam.Physics.ode_physics
 # this requires ODE - we import it later, if necessary
 #import pycam.Simulation.ODEBlocks
+
 import gtk
 import gobject
 import webbrowser
 import ConfigParser
-import urllib
-import urlparse
 import string
 import StringIO
 import pickle
@@ -69,10 +68,9 @@ import re
 import os
 import sys
 
-
 GTKBUILD_FILE = "pycam-project.ui"
 GTKMENU_FILE = "menubar.xml"
-GTKRC_FILE_WINDOWS = os.path.join(UI_SUBDIR, "gtkrc_windows")
+GTKRC_FILE_WINDOWS = "gtkrc_windows"
 
 WINDOW_ICON_FILENAMES = ["logo_%dpx.png" % pixels for pixels in (16, 32, 48, 64, 128)]
 
@@ -347,7 +345,7 @@ class ProjectGui(object):
             gtk.main_quit()
         self.gui.add_from_file(gtk_build_file)
         if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
-            gtkrc_file = get_data_file_location(GTKRC_FILE_WINDOWS)
+            gtkrc_file = get_ui_file_location(GTKRC_FILE_WINDOWS)
             if gtkrc_file:
                 print "GTKRC: %s" % str(gtkrc_file)
                 gtk.rc_add_default_file(gtkrc_file)

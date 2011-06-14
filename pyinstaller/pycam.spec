@@ -9,6 +9,7 @@ from pycam.Utils import get_platform, PLATFORM_LINUX, PLATFORM_WINDOWS, PLATFORM
 from pycam import VERSION
 
 
+USE_DEBUG=False
 UI_DATA_RELATIVE = os.path.join("share", "ui")
 UI_DATA_DIR = os.path.join(BASE_DIR, UI_DATA_RELATIVE)
 ORIGINAL_STARTUP_SCRIPT = os.path.join(BASE_DIR, "pycam")
@@ -23,11 +24,8 @@ if rename_startup_script:
 else:
     STARTUP_SCRIPT = ORIGINAL_STARTUP_SCRIPT
 
-data = [(os.path.join(UI_DATA_RELATIVE, "pycam-project.ui"), os.path.join(UI_DATA_DIR, "pycam-project.ui"), "DATA"),
-        (os.path.join(UI_DATA_RELATIVE, "menubar.xml"), os.path.join(UI_DATA_DIR, "menubar.xml"), "DATA"),
-        (os.path.join(UI_DATA_RELATIVE, "logo_gui.png"), os.path.join(UI_DATA_DIR, "logo_gui.png"), "DATA"),
-        (os.path.join(UI_DATA_RELATIVE, "gtkrc_windows"), os.path.join(UI_DATA_DIR, "gtkrc_windows"), "DATA"),
-]
+data = []
+data.extend(Tree(UI_DATA_DIR, prefix=UI_DATA_RELATIVE))
 
 # sample models
 data.extend(Tree(os.path.join(BASE_DIR, "samples"), prefix="samples"))
@@ -183,10 +181,10 @@ exe = EXE(pyz,
           exclude_binaries=False,
           name=output_name,
           icon=icon_file,
-          debug=True,
+          debug=USE_DEBUG,
           strip=False,
-          upx=False,
-          console=True,
+          upx=True,
+          console=USE_DEBUG,
       )
 
 

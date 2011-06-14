@@ -37,7 +37,7 @@ WINDOWS_START_SCRIPT = "pycam-loader.py"
 DEFAULT_START_SCRIPT = "pycam"
 
 # we don't want to include the windows postinstall script in other installers
-is_windows_installer = "bdist_wininst" in sys.argv
+is_windows_installer = "bdist_wininst" in sys.argv or "bdist_msi" in sys.argv
 
 if is_windows_installer:
     shutil.copy2(os.path.join(BASE_DIR, DEFAULT_START_SCRIPT),

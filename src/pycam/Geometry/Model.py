@@ -928,15 +928,15 @@ class PolygonGroup(object):
         if len(valid_points) < 3:
             result = []
         elif len(valid_points) == 3:
-           result = [Triangle(*valid_points)]
+            result = [Triangle(*valid_points)]
         else:
-           # create a simple star-like fan of triangles - not perfect, but ok
-           result = []
-           start = valid_points.pop(0)
-           while len(valid_points) > 1:
-               p2, p3 = valid_points[0:2]
-               result.append(Triangle(start, p2, p3))
-               valid_points.pop(0)
+            # create a simple star-like fan of triangles - not perfect, but ok
+            result = []
+            start = valid_points.pop(0)
+            while len(valid_points) > 1:
+                p2, p3 = valid_points[0:2]
+                result.append(Triangle(start, p2, p3))
+                valid_points.pop(0)
         return result
 
     def _get_grid_matrix(self, stepping):

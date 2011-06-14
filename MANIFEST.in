@@ -8,7 +8,7 @@ include release_info.txt
 include pycam
 recursive-include desktop *
 recursive-include man *
-recursive-include src *
+recursive-include src *.py
 recursive-include share *
 recursive-include samples *
 recursive-include Tests *

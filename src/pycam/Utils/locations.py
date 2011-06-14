@@ -23,6 +23,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import sys
 
+import pycam.Utils.log
+
 
 DATA_DIR_ENVIRON_KEY = "PYCAM_DATA_DIR"
 FONT_DIR_ENVIRON_KEY = "PYCAM_FONT_DIR"
@@ -44,7 +46,10 @@ if FONT_DIR_ENVIRON_KEY in os.environ:
     FONT_DIR_OVERRIDE = os.path.normpath(os.environ[FONT_DIR_ENVIRON_KEY])
 else:
     FONT_DIR_OVERRIDE = None
-FONT_DIR_FALLBACK = "/usr/share/qcad/fonts"
+FONT_DIRS_FALLBACK = ["/usr/share/librecad/fonts", "/usr/share/qcad/fonts"]
+
+
+log = pycam.Utils.log.get_logger()
 
 
 def get_ui_file_location(filename, silent=False):
@@ -78,11 +83,13 @@ def get_font_dir():
     else:
         log.warn(("Failed to locate the fonts directory '%s' below '%s'. " \
                 + "Falling back to '%s'.") \
-                % (FONTS_SUBDIR, DATA_BASE_DIRS, FONT_DIR_FALLBACK))
-        if os.path.isdir(FONT_DIR_FALLBACK):
-            return FONT_DIR_FALLBACK
+                 % (FONTS_SUBDIR, DATA_BASE_DIRS, ":".join(FONT_DIRS_FALLBACK)))
+        for font_dir_fallback in FONT_DIRS_FALLBACK:
+            if os.path.isdir(font_dir_fallback):
+                return font_dir_fallback
         else:
-            log.warn(("The fallback font directory (%s) does not exist. " \
-                    + "No fonts will be available.") % FONT_DIR_FALLBACK)
+            log.warn(("None of the fallback font directories (%s) exist. " + \
+                    "No fonts will be available.") % \
+                    ":".join(FONT_DIRS_FALLBACK))
             return None
 

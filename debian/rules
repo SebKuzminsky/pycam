@@ -27,6 +27,14 @@ build/pycam::
 
 # install the .desktop file
 install/pycam::
-	cp -v desktop/pycam.desktop `pwd`/debian/pycam/usr/share/applications/
+	# "desktop" file
+	cp -v share/desktop/pycam.desktop `pwd`/debian/pycam/usr/share/applications/
+	# application logo for the menu entry
+	cp -v share/ui/logo_scalable.svg `pwd`/debian/pycam/usr/share/icons/hicolor/scalable/apps/pycam.svg
+	# remove "doc" directory from /usr/share/pycam/
 	rm -rf `pwd`/debian/pycam/usr/share/pycam/doc
+	# the CXF fonts are distributed by QCAD - use them instead of the embedded ones
+	rm -rf `pwd`/debian/pycam/usr/share/pycam/fonts
+	# the gtkrc file for Windows is useless
+	rm `pwd`/debian/pycam/usr/share/pycam/ui/gtkrc_windows
 

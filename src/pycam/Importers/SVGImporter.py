@@ -73,10 +73,27 @@ def convert_eps2dxf(eps_filename, dxf_filename, location=None, unit="mm"):
         return False
     returncode = process.wait()
     if returncode == 0:
-        return True
+        try:
+            # pstoedit fails with exitcode=0 if ghostscript is not installed.
+            # The resulting file seems to be quite small (268 byte). But it is
+            # not certain, that this filesize is fixed in case of this problem.
+            if os.path.getsize(dxf_filename) < 280:
+                log.warn(("SVGImporter: maybe there was a problem with " + \
+                        "the conversion from EPS (%s) to DXF.\nProbably " + \
+                        "you need to install 'ghostscript' " + \
+                        "(http://pages.cs.wisc.edu/~ghost).") % \
+                        str(eps_filename))
+            return True
+        except OSError:
+            # The dxf file was not created.
+            log.warn("SVGImporter: no DXF file was created, even though " + \
+                    "no error code was returned. This seems to be a bug " + \
+                    "of 'pstoedit'. Please send the original model file " + \
+                    "to the PyCAM developers. Thanks!")
+            return False
     elif returncode == -11:
         log.warn(("SVGImporter: maybe there was a problem with the " + \
-                "conversion from EPS (%s) to DXF\n Users of Ubuntu 'lucid' " + \
+                "conversion from EPS (%s) to DXF.\n Users of Ubuntu 'lucid' " + \
                 "should install the package 'libpstoedit0c2a' from the " + \
                 "'maverick' repository to avoid this warning.") % \
                 str(eps_filename))

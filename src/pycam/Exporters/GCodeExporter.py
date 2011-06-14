@@ -59,7 +59,7 @@ def _get_num_converter(step_width):
     """ Return a float-to-decimal conversion function with a prevision suitable
     for the given step width.
     """
-    digits=_get_num_of_significant_digits(step_width)
+    digits = _get_num_of_significant_digits(step_width)
     format_string = "%%.%df" % digits
     return lambda number: decimal.Decimal(format_string % number)
     
