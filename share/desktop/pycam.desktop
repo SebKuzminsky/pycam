@@ -7,7 +7,7 @@ Exec=pycam %u
 TryExec=pycam
 Terminal=false
 Type=Application
-Categories=Development;Engineering;Robotics;Education;Science;2DGraphics;VectorGraphics;3DGraphics
-MimeType=application/sla;image/svg+xml;application/postscript;image/vnd.dxf
+Categories=Development;Engineering;Robotics;Education;Science;2DGraphics;VectorGraphics;3DGraphics;
+MimeType=application/sla;image/svg+xml;application/postscript;image/vnd.dxf;
 Icon=pycam
 
