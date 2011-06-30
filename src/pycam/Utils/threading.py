@@ -98,17 +98,7 @@ def is_multiprocessing_enabled():
 def is_server_mode_available():
     # the following definition should be kept in sync with the wiki:
     # http://sf.net/apps/mediawiki/pycam/?title=Parallel_Processing_on_different_Platforms
-    if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
-        if hasattr(sys, "frozen") and sys.frozen:
-            return False
-        else:
-            return True
-    else:
-        try:
-            import multiprocessing
-            return True
-        except ImportError:
-            return False
+    return is_multiprocessing_available()
 
 def get_number_of_processes():
     if __num_of_processes is None:
@@ -195,12 +185,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
         remote = None
         run_server = None
         server_credentials = ""
-    try:
-        import multiprocessing
-        mp_is_available = True
-    except ImportError:
-        mp_is_available = False
-    if not mp_is_available:
+    if not is_multiprocessing_available():
         __multiprocessing = False
         # Maybe a multiprocessing feature was explicitely requested?
         # Issue some warnings if necessary.

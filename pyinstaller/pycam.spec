@@ -96,14 +96,14 @@ if get_platform() == PLATFORM_WINDOWS:
 
 
     # somehow we need to add glut32.dll manually
-    def find_glut32(start_dir, filename="glut32.dll"):
-        for root, dirs, files in os.walk(start_dir):
-            if filename in files:
-                return os.path.join(root, filename)
-        return None
-    glut32_dll = find_glut32(sys.prefix)
+    glut32_dll = find_filename_below_dirs([sys.prefix], "glut32.dll")
     if glut32_dll:
         data.append((os.path.basename(glut32_dll), glut32_dll, "BINARY"))
+    sys_path_dirs = os.environ["PATH"].split(os.path.pathsep)
+    gdkglext_dll = find_filename_below_dirs(sys_path_dirs,
+            "libgdkglext-win32-1.0-0.dll")
+    if gdkglext_dll:
+        data.append((os.path.basename(gdkglext_dll), gdkglext_dll, "BINARY"))
 
     def get_pixbuf_loaders_prefix(gtk_loaders_dir):
         prefix = []
