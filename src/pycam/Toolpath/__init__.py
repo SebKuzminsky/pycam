@@ -233,6 +233,21 @@ class Toolpath(object):
             current_position = new_pos
         return result
 
+    def get_cropped_copy(self, polygons, callback=None):
+        # create a deep copy of the current toolpath
+        new_paths = []
+        for path in self.toolpath:
+            if path:
+                new_path = Path()
+                for point in path.points:
+                    new_path.append(point)
+                new_paths.append(new_path)
+        tp = Toolpath(new_paths, "%s (cropped)" % self.name,
+                self.toolpath_settings)
+        tp.visible = self.visible
+        tp.crop(polygons, callback=callback)
+        return tp
+
     def crop(self, polygons, callback=None):
         # collect all existing toolpath lines
         open_lines = []

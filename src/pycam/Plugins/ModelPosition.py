@@ -27,6 +27,7 @@ import pycam.Plugins
 class ModelPosition(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_position.ui"
+    DEPENDS = ["Models"]
 
     def setup(self):
         if self.gui:

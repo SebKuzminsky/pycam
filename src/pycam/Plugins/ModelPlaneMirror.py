@@ -27,6 +27,7 @@ import pycam.Plugins
 class ModelPlaneMirror(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_plane_mirror.ui"
+    DEPENDS = ["Models"]
 
     def setup(self):
         if self.gui:

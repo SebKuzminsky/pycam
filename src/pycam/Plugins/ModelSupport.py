@@ -27,6 +27,7 @@ import pycam.Plugins
 class ModelSupport(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_support.ui"
+    DEPENDS = ["Models"]
 
     def setup(self):
         if self.gui:

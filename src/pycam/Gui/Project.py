@@ -192,15 +192,11 @@ def get_icons_pixbuffers():
     return result
 
 
-UI_FUNC_INDEX = 0
-UI_WIDGET_INDEX = 1
-WIDGET_NAME_INDEX = 0
-WIDGET_OBJ_INDEX = 1
-WIDGET_WEIGHT_INDEX = 2
-HANDLER_FUNC_INDEX = 0
-HANDLER_ARG_INDEX = 1
-EVENT_HANDLER_INDEX = 0
-EVENT_BLOCKER_INDEX = 1
+UI_FUNC_INDEX, UI_WIDGET_INDEX = range(2)
+WIDGET_NAME_INDEX, WIDGET_OBJ_INDEX, WIDGET_WEIGHT_INDEX = range(3)
+HANDLER_FUNC_INDEX, HANDLER_ARG_INDEX = range(2)
+EVENT_HANDLER_INDEX, EVENT_BLOCKER_INDEX = range(2)
+
 
 class EventCore(pycam.Gui.Settings.Settings):
 
@@ -526,7 +522,8 @@ class ProjectGui(object):
         self._font_dialog_window_position = None
         # set defaults
         # fallback - in case of a failure when opening a model file
-        self.model = pycam.Importers.TestModel.get_test_model()
+        model = pycam.Importers.TestModel.get_test_model()
+        self.settings.get("models").append(model)
         self.toolpath = pycam.Toolpath.ToolpathList()
         self.cutter = None
         self.tool_list = []
@@ -537,17 +534,24 @@ class ProjectGui(object):
         self._last_unit = None
         self._toolpath_for_grid_data = {}
         # add some dummies - to be implemented later ...
-        self.settings.add_item("model", lambda: self.model)
         self.settings.add_item("toolpath", lambda: self.toolpath)
         self.settings.add_item("cutter", lambda: self.cutter)
-        model_handling_obj = self.gui.get_object("ModelHandlingNotebook")
-        def clear_model_handling_obj():
-            for index in range(model_handling_obj.get_n_pages()):
-                model_handling_obj.remove_page(0)
-        def add_model_handling_item(item, name):
-            model_handling_obj.append_page(item, gtk.Label(name))
-        self.settings.register_ui_section("model_handling",
-                add_model_handling_item, clear_model_handling_obj)
+        main_tab = self.gui.get_object("MainTabs")
+        def clear_main_tab():
+            for index in range(main_tab.get_n_pages()):
+                main_tab.remove_page(0)
+        def add_main_tab_item(item, name):
+            main_tab.append_page(item, gtk.Label(name))
+        # TODO: move these to plugins, as well
+        tab_names = ("Tools", "Processes", "Bounds", "Tasks", "Toolpaths")
+        for name in tab_names:
+            item = self.gui.get_object(name + "Tab")
+            item.unparent()
+        self.settings.register_ui_section("main", add_main_tab_item,
+                clear_main_tab)
+        for name in tab_names:
+            item = self.gui.get_object(name + "Tab")
+            self.settings.register_ui("main", name, item, tab_names.index(name))
         # unit control (mm/inch)
         unit_field = self.gui.get_object("unit_control")
         unit_field.connect("changed", self.change_unit_init)
@@ -606,18 +610,26 @@ class ProjectGui(object):
         # Calculate the "minx, ..." settings based on a (potentially) selected
         # bounds setting.
         def get_absolute_limit(key):
-            if self.model is None:
+            if not self.settings.get("models"):
                 # avoid problems if no model is loaded
                 return 0
             bounds = self.settings.get("current_bounds")
-            if bounds is None:
-                return getattr(self.model, key)
-            low, high = bounds.get_absolute_limits(reference=self.model.get_bounds())
-            index = "xyz".index(key[-1])
             if key.startswith("min"):
-                return low[index]
+                func = min
             else:
-                return high[index]
+                func = max
+            if bounds is None:
+                return func([getattr(model, key) for model in self.settings.get("models")])
+            lows, highs = [], []
+            index = "xyz".index(key[-1])
+            for model in self.settings.get("models"):
+                low, high = bounds.get_absolute_limits(reference=model.get_bounds())
+                lows.append(low[index])
+                highs.append(high[index])
+            if key.startswith("min"):
+                return func(lows)
+            else:
+                return func(highs)
         for key in ("minx", "maxx", "miny", "maxy", "minz", "maxz"):
             # create a new variable "key" to avoid re-using the same object "key"
             # (due to the lambda name scope)
@@ -826,7 +838,7 @@ class ProjectGui(object):
         self.simulation_window = self.gui.get_object("SimulationDialog")
         self.simulation_window.connect("delete-event", self.finish_toolpath_simulation)
         # store the original content (for adding the number of current toolpaths in "update_toolpath_table")
-        self._original_toolpath_tab_label = self.gui.get_object("ToolPathTabLabel").get_text()
+        self._original_toolpath_tab_label = self.gui.get_object("ToolpathsTabLabel").get_text()
         # tool editor
         self.settings.add_item("current_tool",
                 lambda: get_current_item(self.tool_editor_table, self.tool_list),
@@ -1130,7 +1142,11 @@ class ProjectGui(object):
 
     def update_model_type_related_controls(self):
         # disable the lower boundary for contour models
-        is_contour = isinstance(self.model, pycam.Geometry.Model.ContourModel)
+        models = self.settings.get("models")
+        if not models:
+            return
+        model = models[0]
+        is_contour = isinstance(model, pycam.Geometry.Model.ContourModel)
         margin_type = self._load_bounds_settings_from_gui().get_type()
         z_low_control = self.gui.get_object("boundary_z_low")
         if is_contour and (margin_type != Bounds.TYPE_CUSTOM):
@@ -1139,7 +1155,7 @@ class ProjectGui(object):
             z_low_control.set_sensitive(True)
         # copy button
         self.gui.get_object("CopyModelToClipboard").set_sensitive(
-                bool(self.model and self.model.is_export_supported()))
+                bool(model and model.is_export_supported()))
 
     def update_ode_settings(self, widget=None):
         if pycam.Utils.threading.is_multiprocessing_enabled() \
@@ -1184,9 +1200,9 @@ class ProjectGui(object):
 
     def _store_undo_state(self):
         # for now we only store the model
-        if not self.model:
+        if not self.settings.get("models"):
             return
-        self._undo_states.append(pickle.dumps(self.model))
+        self._undo_states.append(pickle.dumps(self.settings.get("models")[0]))
         log.debug("Stored the current state of the model for undo")
         while len(self._undo_states) > MAX_UNDO_STATES:
             self._undo_states.pop(0)
@@ -1195,7 +1211,8 @@ class ProjectGui(object):
     def _restore_undo_state(self, widget=None, event=None):
         if len(self._undo_states) > 0:
             latest = StringIO.StringIO(self._undo_states.pop(-1))
-            self.model = pickle.Unpickler(latest).load()
+            model = pickle.Unpickler(latest).load()
+            self.load_model(model)
             self.gui.get_object("UndoButton").set_sensitive(
                     len(self._undo_states) > 0)
             log.info("Restored the previous state of the model")
@@ -1234,8 +1251,8 @@ class ProjectGui(object):
         self.gui.get_object("SaveTaskSettings").set_sensitive(
             bool(self.last_task_settings_uri and \
                 self.last_task_settings_uri.is_writable()))
-        save_as_possible = (not self.model is None) \
-                and self.model.is_export_supported()
+        model = self.settings.get("models") and self.settings.get("models")[0]
+        save_as_possible = (not model is None) and model.is_export_supported()
         self.gui.get_object("SaveAsModel").set_sensitive(save_as_possible)
         save_possible = bool(self.last_model_uri and save_as_possible and \
                 self.last_model_uri.is_writable())
@@ -1371,25 +1388,26 @@ class ProjectGui(object):
     @gui_activity_guard
     def adjust_bounds(self, widget, axis, change):
         bounds = self.settings.get("current_bounds")
+        model = self.settings.get("models")[0]
         abs_bounds_low, abs_bounds_high = bounds.get_absolute_limits(
-                reference=self.model.get_bounds())
+                reference=model.get_bounds())
         # calculate the "change" for +/- (10% of this axis' model dimension)
         if bounds is None:
             return
         if axis == "x":
-            change_value = (self.model.maxx - self.model.minx) * 0.1
+            change_value = (model.maxx - model.minx) * 0.1
         elif axis == "y":
-            change_value = (self.model.maxy - self.model.miny) * 0.1
+            change_value = (model.maxy - model.miny) * 0.1
         elif axis == "z":
-            change_value = (self.model.maxz - self.model.minz) * 0.1
+            change_value = (model.maxz - model.minz) * 0.1
         else:
             # not allowed
             return
         # calculate the new bounds
         axis_index = "xyz".index(axis)
         if change == "0":
-            abs_bounds_low[axis_index] = getattr(self.model, "min%s" % axis)
-            abs_bounds_high[axis_index] = getattr(self.model, "max%s" % axis)
+            abs_bounds_low[axis_index] = getattr(model, "min%s" % axis)
+            abs_bounds_high[axis_index] = getattr(model, "max%s" % axis)
         elif change == "+":
             abs_bounds_low[axis_index] -= change_value
             abs_bounds_high[axis_index] += change_value
@@ -1401,7 +1419,7 @@ class ProjectGui(object):
             return
         # transfer the new bounds values to the old settings
         bounds.adjust_bounds_to_absolute_limits(abs_bounds_low, abs_bounds_high,
-                reference=self.model.get_bounds())
+                reference=model.get_bounds())
         # update the controls
         self._put_bounds_settings_to_gui(bounds)
         # update the visualization
@@ -1410,16 +1428,17 @@ class ProjectGui(object):
     @gui_activity_guard
     def switch_bounds_type(self, widget=None):
         bounds = self.settings.get("current_bounds")
+        model = self.settings.get("models")[0]
         new_type = self._load_bounds_settings_from_gui().get_type()
         if new_type == bounds.get_type():
             # no change
             return
         # calculate the absolute bounds of the previous configuration
         abs_bounds_low, abs_bounds_high = bounds.get_absolute_limits(
-                reference=self.model.get_bounds())
+                reference=model.get_bounds())
         bounds.set_type(new_type)
         bounds.adjust_bounds_to_absolute_limits(abs_bounds_low, abs_bounds_high,
-                reference=self.model.get_bounds())
+                reference=model.get_bounds())
         self._put_bounds_settings_to_gui(bounds)
         # update the descriptive label for each margin type
         self.update_bounds_controls()
@@ -1801,13 +1820,14 @@ class ProjectGui(object):
         self.clipboard.store()
 
     def copy_model_to_clipboard(self, widget=None):
-        if not self.model.is_export_supported():
+        model = self.settings.get("models")[0]
+        if not model.is_export_supported():
             return
         text_buffer = StringIO.StringIO()
-        self.model.export(comment=self.get_meta_data(),
+        model.export(comment=self.get_meta_data(),
                 unit=self.settings.get("unit")).write(text_buffer)
         text_buffer.seek(0)
-        is_contour = isinstance(self.model, pycam.Geometry.Model.ContourModel)
+        is_contour = isinstance(model, pycam.Geometry.Model.ContourModel)
         # TODO: this should not be decided here
         if is_contour:
             targets = CLIPBOARD_TARGETS["svg"]
@@ -2074,7 +2094,7 @@ class ProjectGui(object):
         if self.view3d and not self.view3d.enabled:
             # initialization failed - don't do anything
             return
-        if not self.model:
+        if not self.settings.get("models"):
             # no model loaded - don't enable the window
             return
         current_state = not ((self.view3d is None) or (not self.view3d.is_visible))
@@ -2098,7 +2118,7 @@ class ProjectGui(object):
                         item_buttons=item_buttons,
                         context_menu_actions=[self.gui.get_object(name)
                                 for name in ("GeneralSettings", "Help3DView")])
-                if self.model and self.view3d.enabled:
+                if self.view3d.enabled:
                     self.view3d.reset_view()
                 # configure drag-and-drop for the 3D window
                 self.configure_drag_and_drop(self.view3d.window)
@@ -2355,10 +2375,17 @@ class ProjectGui(object):
                 if self.gui.get_object("UnitChangeModel").get_active():
                     # transform the model if it is selected
                     # keep the original center of the model
-                    old_center = self._get_model_center()
                     self.settings.emit_event("model-change-before")
-                    self.model.scale(factor)
-                    self._set_model_center(old_center)
+                    for model in self.settings.get("models").get_selected():
+                        new_x, new_y, new_z = ((model.maxx + model.minx) / 2,
+                                (model.maxy + model.miny) / 2,
+                                (model.maxz + model.minz) / 2)
+                        model.scale(factor)
+                        cur_x, cur_y, cur_z = self._get_model_center()
+                        self.update_progress_bar("Centering model")
+                        model.shift(new_x - cur_x, new_y - cur_y,
+                                new_z - cur_z,
+                                callback=self.update_progress_bar)
                 if self.gui.get_object("UnitChangeProcesses").get_active():
                     # scale the process settings
                     for process in self.process_list:
@@ -2444,7 +2471,9 @@ class ProjectGui(object):
     def save_model(self, widget=None, filename=None, model=None,
             store_filename=True):
         if model is None:
-            model = self.model
+            models = self.settings.get("models").get_selected()
+            # TODO: merge multiple models
+            model = models[0]
         if not model.is_export_supported():
             log.warn(("Saving this type of model (%s) is currently not " \
                     + "implemented!") % str(type(model)))
@@ -2552,32 +2581,27 @@ class ProjectGui(object):
         except IOError, err_msg:
             log.warn("Failed to write preferences file (%s): %s" % (config_filename, err_msg))
 
-    def _get_model_center(self):
-        if self.model is None:
-            return None
-        else:
-            return ((self.model.maxx + self.model.minx) / 2,
-                    (self.model.maxy + self.model.miny) / 2,
-                    (self.model.maxz + self.model.minz) / 2)
-
-    def _set_model_center(self, center):
-        new_x, new_y, new_z = center
-        old_x, old_y, old_z = self._get_model_center()
-        self.update_progress_bar("Centering model")
-        # undo state should be stored in the caller function
-        self.model.shift(new_x - old_x, new_y - old_y, new_z - old_z,
-                callback=self.update_progress_bar)
-
     @gui_activity_guard
     def update_model_dimensions(self, widget=None):
-        if self.model is None:
+        models = self.settings.get("models").get_selected()
+        if not models:
             return
         # model corners in 3D view
+        values = {}
+        for model in models:
+            for coord in ("minx", "miny", "minz", "maxx", "maxy", "maxz"):
+                if not coord in values:
+                    values[coord] = []
+                values[coord].append(getattr(model, coord))
         for attr, label_suffix in (("minx", "XMin"), ("miny", "YMin"),
                 ("minz", "ZMin"), ("maxx", "XMax"), ("maxy", "YMax"),
                 ("maxz", "ZMax")):
+            if attr.startswith("min"):
+                func = min
+            else:
+                func = max
             label_name = "ModelCorner%s" % label_suffix
-            value = "%.3f" % getattr(self.model, attr)
+            value = "%.3f" % func(values[attr])
             self.gui.get_object(label_name).set_label(value)
 
     def destroy(self, widget=None, data=None):
@@ -2744,11 +2768,11 @@ class ProjectGui(object):
         # load the new model only if the import worked
         if model:
             self.settings.emit_event("model-change-before")
-            self.model = model
+            self.settings.get("models").append(model)
             self.last_model_uri = None
             # do some initialization
             self.settings.emit_event("model-change-after")
-            if self.model and self.view3d and self.view3d.enabled:
+            if self.view3d and self.view3d.enabled:
                 self.append_to_queue(self.view3d.reset_view)
                 self.append_to_queue(self.toggle_3d_view, value=True)
             return True
@@ -2842,16 +2866,17 @@ class ProjectGui(object):
         def get_control(index, side):
             return self.gui.get_object("boundary_%s_%s" % ("xyz"[index], side))
         # disable each zero-dimension in relative margin mode
+        model = self.settings.get("models")[0]
         if current_type == Bounds.TYPE_RELATIVE_MARGIN:
-            model_dims = (self.model.maxx - self.model.minx,
-                    self.model.maxy - self.model.miny,
-                    self.model.maxz - self.model.minz)
+            model_dims = (model.maxx - model.minx,
+                    model.maxy - model.miny,
+                    model.maxz - model.minz)
             # disable the low/high controls for each zero-dimension
             for index in range(3):
                 # enabled, if dimension is non-zero
                 state = model_dims[index] != 0
                 get_control(index, "high").set_sensitive(state)
-                if (index == 2) and isinstance(self.model,
+                if (index == 2) and isinstance(model,
                         pycam.Geometry.Model.ContourModel):
                     # disable lower z for contour models
                     state = False
@@ -2860,7 +2885,7 @@ class ProjectGui(object):
             # non-relative margins: enable all controls
             for index in range(3):
                 get_control(index, "high").set_sensitive(True)
-                if (index == 2) and isinstance(self.model,
+                if (index == 2) and isinstance(model,
                         pycam.Geometry.Model.ContourModel) and \
                         (current_type != Bounds.TYPE_CUSTOM):
                     # disable lower z for contour models
@@ -3158,40 +3183,13 @@ class ProjectGui(object):
             self.update_toolpath_table()
         dialog.hide()
 
-    def _get_projection_plane(self):
-        # determine projection plane
-        if (self.model.maxz < 0) or (self.model.minz > 0):
-            # completely above or below zero
-            plane_z = self.model.minz
-        else:
-            plane_z = 0
-        return Plane(Point(0, 0, plane_z), Vector(0, 0, 1))
-
-    @progress_activity_guard
-    def crop_toolpath(self, toolpath):
-        if hasattr(self.model, "get_polygons"):
-            contour = self.model
-        elif hasattr(self.model, "get_waterline_contour"):
-            plane = self._get_projection_plane()
-            self.update_progress_bar("Calculating the 2D projection")
-            contour = self.model.get_waterline_contour(plane)
-            self.update_progress_bar("Applying the tool diameter offset")
-            contour = contour.get_offset_model(
-                    2 * toolpath.get_tool_settings()["tool_radius"])
-        else:
-            log.warn(("The current model (%s) does not support " \
-                    + "projections") % str(type(self.model)))
-            return
-        self.update_progress_bar("Cropping the toolpath")
-        toolpath.crop(contour.get_polygons(), callback=self.update_progress_bar)
-
     def update_toolpath_related_controls(self):
         # show or hide the "toolpath" tab
-        toolpath_tab = self.gui.get_object("ToolPathTab")
+        toolpath_tab = self.gui.get_object("ToolpathsTab")
         if not self.toolpath:
             toolpath_tab.hide()
         else:
-            self.gui.get_object("ToolPathTabLabel").set_text(
+            self.gui.get_object("ToolpathsTabLabel").set_text(
                     "%s (%d)" % (self._original_toolpath_tab_label, len(self.toolpath)))
             toolpath_tab.show()
         # enable/disable the export menu item
@@ -3476,11 +3474,7 @@ class ProjectGui(object):
             self.gui.get_object("SimulationTab").set_sensitive(True)
 
     def toggle_tabs_for_simulation(self, new_state):
-        for objname in ("ModelTab", "ModelTabLabel", "TasksTab",
-                "TasksTabLabel", "ToolPathTab", "ToolPathTabLabel", "ToolTab",
-                "ToolTabLabel", "ProcessTab", "ProcessTabLabel", "BoundsTab",
-                "BoundsTabLabel"):
-            self.gui.get_object(objname).set_sensitive(new_state)
+        self.gui.get_object("MainTabs").set_sensitive(new_state)
 
     def show_toolpath_simulation(self, toolpath=None):
         # disable the main controls
@@ -3531,11 +3525,14 @@ class ProjectGui(object):
 
         self.cutter = toolpath_settings.get_tool()
 
+        # TODO: find the right model
+        model = self.settings.get("models")[0]
+
         # run the toolpath generation
         self.update_progress_bar("Starting the toolpath generation")
         try:
             toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(
-                    self.model, toolpath_settings, callback=draw_callback)
+                    model, toolpath_settings, callback=draw_callback)
         except Exception:
             # catch all non-system-exiting exceptions
             report_exception()
@@ -3588,8 +3585,10 @@ class ProjectGui(object):
             # this should never happen
             log.error("Assertion failed: invalid boundary_mode (%s)" % str(self.settings.get("boundary_mode")))
 
+        # TODO: find the right model
+        model = self.settings.get("models")[0]
         border = (offset, offset, 0)
-        bounds.set_reference(self.model.get_bounds())
+        bounds.set_reference(model.get_bounds())
         processing_bounds = Bounds(Bounds.TYPE_FIXED_MARGIN, border, border,
                 reference=bounds)
 

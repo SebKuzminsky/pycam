@@ -28,6 +28,7 @@ import pycam.Geometry.Matrix
 class ModelRotation(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_rotation.ui"
+    DEPENDS = ["Models"]
 
     def setup(self):
         if self.gui:

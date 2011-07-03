@@ -27,6 +27,7 @@ import pycam.Plugins
 class ModelSupportDistributed(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_support_distributed.ui"
+    DEPENDS = ["Models"]
 
     def setup(self):
         if self.gui:

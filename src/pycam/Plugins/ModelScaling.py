@@ -27,6 +27,7 @@ import pycam.Plugins
 class ModelScaling(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_scaling.ui"
+    DEPENDS = ["Models"]
 
     def setup(self):
         if self.gui:

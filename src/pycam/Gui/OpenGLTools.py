@@ -216,10 +216,15 @@ class Camera(object):
         v = self.view
         # position the light according to the current bounding box
         light_pos = range(3)
-        model = self.settings.get("model")
-        light_pos[0] = 2 * model.maxx - model.minx
-        light_pos[1] = 2 * model.maxy - model.miny
-        light_pos[2] = 2 * model.maxz - model.minz
+        values = {}
+        for model in self.settings.get("models"):
+            for key in ("minx", "miny", "minz", "maxx", "maxy", "maxz"):
+                if not key in values:
+                    values[key] = []
+                values[key].append(getattr(model, key))
+        light_pos[0] = 2 * max(values["maxx"]) - min(values["minx"])
+        light_pos[1] = 2 * max(values["maxy"]) - min(values["miny"])
+        light_pos[2] = 2 * max(values["maxz"]) - min(values["minz"])
         GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, (light_pos[0], light_pos[1],
                 light_pos[2], 1.0))
         # position the camera
@@ -907,24 +912,24 @@ def draw_complete_model_view(settings):
             and not (settings.get("show_simulation") \
                 and settings.get("simulation_toolpath_moves")):
         GL.glColor4f(*settings.get("color_model"))
-        model = settings.get("model")
-        """
-        min_area = abs(model.maxx - model.minx) * abs(model.maxy - model.miny) / 100
-        # example for coloring specific triangles
-        groups = model.get_flat_areas(min_area)
-        all_flat_ids = []
-        for group in groups:
-            all_flat_ids.extend([t.id for t in group])
-        flat_color = (1.0, 0.0, 0.0, 1.0)
-        normal_color = settings.get("color_model")
-        def check_triangle_draw(triangle):
-            if triangle.id in all_flat_ids:
-                return True, flat_color
-            else:
-                return True, normal_color
-        model.to_OpenGL(visible_filter=check_triangle_draw)
-        """
-        model.to_OpenGL(show_directions=settings.get("show_directions"))
+        for model in settings.get("models"):
+            """
+            min_area = abs(model.maxx - model.minx) * abs(model.maxy - model.miny) / 100
+            # example for coloring specific triangles
+            groups = model.get_flat_areas(min_area)
+            all_flat_ids = []
+            for group in groups:
+                all_flat_ids.extend([t.id for t in group])
+            flat_color = (1.0, 0.0, 0.0, 1.0)
+            normal_color = settings.get("color_model")
+            def check_triangle_draw(triangle):
+                if triangle.id in all_flat_ids:
+                    return True, flat_color
+                else:
+                    return True, normal_color
+            model.to_OpenGL(visible_filter=check_triangle_draw)
+            """
+            model.to_OpenGL(show_directions=settings.get("show_directions"))
     # draw the support grid
     if settings.get("show_support_grid") and settings.get("current_support_model"):
         GL.glColor4f(*settings.get("color_support_grid"))

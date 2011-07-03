@@ -24,10 +24,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import math
 
 import pycam.Plugins
-import pycam.Utils.log
 
-
-log = pycam.Utils.log.get_logger()
 
 EXTRUSION_TYPES = (("radius_up", "Radius (bulge)", "ExtrusionRadiusUpIcon"),
         ("radius_down", "Radius (valley)", "ExtrusionRadiusDownIcon"),
@@ -40,6 +37,7 @@ EXTRUSION_TYPES = (("radius_up", "Radius (bulge)", "ExtrusionRadiusUpIcon"),
 class ModelExtrusion(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_extrusion.ui"
+    DEPENDS = ["Models"]
 
     def setup(self):
         if self.gui:
@@ -102,7 +100,7 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
             elif type_string == "sigmoid":
                 func = lambda x: height * ((math.sin(((min(x, width) / width) - 0.5) * math.pi) + 1) / 2)
             else:
-                log.error("Unknown extrusion type selected: %s" % type_string)
+                self.log.error("Unknown extrusion type selected: %s" % type_string)
                 return
             new_model = model.extrude(stepping=grid_size, func=func,
                     callback=self.core.get("update_progress"))

@@ -29,10 +29,12 @@ from pycam.Geometry.Point import Vector
 
 class Plane(TransformableContainer):
     id = 0
-    def __init__(self, point, normal):
+    def __init__(self, point, normal=None):
         super(Plane, self).__init__()
         self.id = Plane.id
         Plane.id += 1
+        if normal is None:
+            normal = Vector(0, 0, 1)
         self.p = point
         self.n = normal
         if not isinstance(self.n, Vector):

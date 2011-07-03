@@ -24,14 +24,12 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import pycam.Plugins
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Point import Point, Vector
-import pycam.Utils.log
-
-log = pycam.Utils.log.get_logger()
 
 
 class ModelProjection(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_projection.ui"
+    DEPENDS = ["Models"]
 
     def setup(self):
         if self.gui:
@@ -73,12 +71,12 @@ class ModelProjection(pycam.Plugins.PluginBase):
                     self.gui.get_object("ProjectionZLevel").get_value())):
             if self.gui.get_object(objname).get_active():
                 plane = Plane(Point(0, 0, z_level), Vector(0, 0, 1))
-                log.info("Projecting 3D model at level z=%g" % plane.p.z)
+                self.log.info("Projecting 3D model at level z=%g" % plane.p.z)
                 projection = model.get_waterline_contour(plane)
                 if projection:
                     self.core.get("load_model")(projection)
                 else:
-                    log.warn("The 2D projection at z=%g is empty. Aborted." % \
+                    self.log.warn("The 2D projection at z=%g is empty. Aborted." % \
                             plane.p.z)
                 break
 

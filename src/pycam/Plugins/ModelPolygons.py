@@ -27,6 +27,7 @@ import pycam.Plugins
 class ModelPolygons(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_polygons.ui"
+    DEPENDS = ["Models"]
 
     def setup(self):
         if self.gui:

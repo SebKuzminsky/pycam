@@ -27,6 +27,7 @@ import pycam.Plugins
 class ModelSwapAxes(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_swap_axes.ui"
+    DEPENDS = ["Models"]
 
     def setup(self):
         if self.gui:

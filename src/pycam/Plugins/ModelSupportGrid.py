@@ -20,15 +20,16 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+# gtk is imported later (on demand)
+#import gtk
 
 import pycam.Plugins
-# gtk is imported later
-#import gtk
 
 
 class ModelSupportGrid(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_support_grid.ui"
+    DEPENDS = ["Models"]
 
     def setup(self):
         if self.gui:
