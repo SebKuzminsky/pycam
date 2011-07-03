@@ -204,6 +204,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
             # no further warnings required
             pass
     else:
+        import multiprocessing
         if number_of_processes is None:
             # use defaults
             # don't enable threading for a single cpu
