@@ -44,6 +44,8 @@ BUTTON_MOVE = gtk.gdk.BUTTON2_MASK
 BUTTON_ZOOM = gtk.gdk.BUTTON3_MASK
 BUTTON_RIGHT = 3
 
+GTK_COLOR_MAX = 65535.0
+
 # The length of the distance vector does not matter - it will be normalized and
 # multiplied later anyway.
 VIEWS = {
@@ -909,13 +911,21 @@ def draw_complete_model_view(settings):
         obj = settings.get("simulation_object")
         if not obj is None:
             GL.glColor4f(*settings.get("color_material"))
+            # we need to wait until the color change is active
+            GL.glFinish()
             obj.to_OpenGL()
     # draw the model
     if settings.get("show_model") \
             and not (settings.get("show_simulation") \
                 and settings.get("simulation_toolpath_moves")):
-        GL.glColor4f(*settings.get("color_model"))
         for model in settings.get("models").get_visible():
+            color_str = settings.get("models").get_attr(model, "color")
+            alpha = settings.get("models").get_attr(model, "alpha")
+            col = gtk.gdk.color_parse(color_str)
+            GL.glColor4f(col.red / GTK_COLOR_MAX, col.green / GTK_COLOR_MAX,
+                    col.blue / GTK_COLOR_MAX, alpha / GTK_COLOR_MAX)
+            # we need to wait until the color change is active
+            GL.glFinish()
             """
             min_area = abs(model.maxx - model.minx) * abs(model.maxy - model.miny) / 100
             # example for coloring specific triangles
@@ -936,6 +946,8 @@ def draw_complete_model_view(settings):
     # draw the support grid
     if settings.get("show_support_grid") and settings.get("current_support_model"):
         GL.glColor4f(*settings.get("color_support_grid"))
+        # we need to wait until the color change is active
+        GL.glFinish()
         settings.get("current_support_model").to_OpenGL()
     # draw the toolpath simulation
     if settings.get("show_simulation"):
@@ -962,6 +974,8 @@ def draw_complete_model_view(settings):
         cutter = settings.get("cutter")
         if not cutter is None:
             GL.glColor4f(*settings.get("color_cutter"))
+            # we need to wait until the color change is active
+            GL.glFinish()
             cutter.to_OpenGL()
     if settings.get("show_drill_progress") \
             and settings.get("toolpath_in_progress"):
@@ -992,6 +1006,8 @@ def draw_toolpath(moves, color_cut, color_rapid, show_directions=False):
                 GL.glColor4f(*color_rapid)
             else:
                 GL.glColor4f(*color_cut)
+            # we need to wait until the color change is active
+            GL.glFinish()
             GL.glBegin(GL.GL_LINE_STRIP)
             if not last_position is None:
                 GL.glVertex3f(last_position.x, last_position.y, last_position.z)
