@@ -61,6 +61,11 @@ class Models(pycam.Plugins.ListPluginBase):
                     self._visualize_visible_state)
             self.gui.get_object("ModelNameColumn").connect("edited",
                     self._edit_model_name)
+            selection = self._modelview.get_selection()
+            selection.connect("changed",
+                    lambda widget, event: self.core.emit_event(event), 
+                    "model-selection-changed")
+            selection.set_mode(gtk.SELECTION_MULTIPLE)
             self._treemodel = self.gui.get_object("ModelList")
             self._treemodel.clear()
             def update_model():

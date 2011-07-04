@@ -35,7 +35,7 @@ class ModelScaling(pycam.Plugins.PluginBase):
             scale_box.unparent()
             self.core.register_ui("model_handling", "Scale", scale_box, -5)
             self.core.register_event("model-change-after",
-                    self._update_scale_dimensions)
+                    self._update_scale_controls)
             update_model = lambda widget=None: self.core.emit_event(
                     "model-change-after")
             scale_percent = self.gui.get_object("ScalePercent")
@@ -65,6 +65,9 @@ class ModelScaling(pycam.Plugins.PluginBase):
                     self._scale_model, 100 * 25.4)
             self.gui.get_object("ScaleMMInch").connect("clicked",
                     self._scale_model, 100 / 25.4)
+            self.core.register_event("model-selection-changed",
+                    self._update_scale_controls)
+            self._update_scale_controls()
         return True
 
     def teardown(self):
@@ -72,27 +75,33 @@ class ModelScaling(pycam.Plugins.PluginBase):
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelScaleBox"))
 
-    def _update_scale_dimensions(self):
-        model = self.core.get("model")
-        if not model:
+    def _update_scale_controls(self):
+        models = self.core.get("models").get_selected()
+        scale_box = self.gui.get_object("ModelScaleBox")
+        if not models:
+            scale_box.hide()
             return
-        # scale controls
-        axis_control = self.gui.get_object("ScaleDimensionAxis")
-        scale_button = self.gui.get_object("ScaleSelectedAxisButton")
-        scale_value = self.gui.get_object("ScaleDimensionControl")
-        index = axis_control.get_active()
-        dims = (model.maxx - model.minx, model.maxy - model.miny,
-                model.maxz - model.minz)
-        value = dims[index]
-        non_zero_dimensions = [i for i, dim in enumerate(dims) if dim > 0]
-        enable_controls = index in non_zero_dimensions
-        scale_button.set_sensitive(enable_controls)
-        scale_value.set_sensitive(enable_controls)
-        scale_value.set_value(value)
+        else:
+            scale_box.show()
+            # scale controls
+            axis_control = self.gui.get_object("ScaleDimensionAxis")
+            scale_button = self.gui.get_object("ScaleSelectedAxisButton")
+            scale_value = self.gui.get_object("ScaleDimensionControl")
+            index = axis_control.get_active()
+            # TODO: get dimension of multiple models
+            model = models[0]
+            dims = (model.maxx - model.minx, model.maxy - model.miny,
+                    model.maxz - model.minz)
+            value = dims[index]
+            non_zero_dimensions = [i for i, dim in enumerate(dims) if dim > 0]
+            enable_controls = index in non_zero_dimensions
+            scale_button.set_sensitive(enable_controls)
+            scale_value.set_sensitive(enable_controls)
+            scale_value.set_value(value)
 
     def _scale_model(self, widget=None, percent=None):
-        model = self.core.get("model")
-        if not model:
+        models = self.core.get("models").get_selected()
+        if not models:
             return
         if percent is None:
             percent = self.gui.get_object("ScalePercent").get_value()
@@ -102,36 +111,41 @@ class ModelScaling(pycam.Plugins.PluginBase):
         self.core.emit_event("model-change-before")
         self.core.get("update_progress")("Scaling model")
         self.core.get("disable_progress_cancel_button")()
-        model.scale(factor, callback=self.core.get("update_progress"))
+        # TODO: main/sub progress for multiple models
+        for model in models:
+            model.scale(factor, callback=self.core.get("update_progress"))
         self.core.emit_event("model-change-after")
 
     def _scale_model_axis_fit(self, widget=None, proportionally=False):
-        model = self.core.get("model")
-        if not model:
+        models = self.core.get("models").get_selected()
+        if not models:
             return
         value = self.gui.get_object("ScaleDimensionValue").get_value()
         index = self.gui.get_object("ScaleDimensionAxis").get_active()
         axes = "xyz"
         axis_suffix = axes[index]
+        # TODO: use dimension of multiple models
+        model = models[0]
         factor = value / (getattr(model, "max" + axis_suffix) - \
                 getattr(model, "min" + axis_suffix))
         self.core.emit_event("model-change-before")
         self.core.get("update_progress")("Scaling model")
         self.core.get("disable_progress_cancel_button")()
-        if proportionally:
-            model.scale(factor, callback=self.core.get("update_progress"))
-        else:
-            factor_x, factor_y, factor_z = (1, 1, 1)
-            if index == 0:
-                factor_x = factor
-            elif index == 1:
-                factor_y = factor
-            elif index == 2:
-                factor_z = factor
+        # TODO: main/sub progress for multiple models
+        for model in models:
+            if proportionally:
+                model.scale(factor, callback=self.core.get("update_progress"))
             else:
-                return
-            model.scale(factor_x, factor_y, factor_z,
-                    callback=self.core.get("update_progress"))
-        # move the model to its previous center
+                factor_x, factor_y, factor_z = (1, 1, 1)
+                if index == 0:
+                    factor_x = factor
+                elif index == 1:
+                    factor_y = factor
+                elif index == 2:
+                    factor_z = factor
+                else:
+                    return
+                model.scale(factor_x, factor_y, factor_z,
+                        callback=self.core.get("update_progress"))
         self.core.emit_event("model-change-after")
 

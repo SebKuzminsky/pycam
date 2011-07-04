@@ -38,6 +38,9 @@ class ModelRotation(pycam.Plugins.PluginBase):
                     -10)
             self.gui.get_object("RotateModelButton").connect("clicked",
                     self._rotate_model)
+            self.core.register_event("model-selection-changed",
+                    self._update_controls)
+            self._update_controls()
         return True
 
     def teardown(self):
@@ -45,9 +48,16 @@ class ModelRotation(pycam.Plugins.PluginBase):
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelRotationBox"))
 
+    def _update_controls(self):
+        widget = self.gui.get_object("ModelRotationBox")
+        if self.core.get("models").get_selected():
+            widget.show()
+        else:
+            widget.hide()
+
     def _rotate_model(self, widget=None):
-        model = self.core.get("model")
-        if not model:
+        models = self.core.get("models").get_selected()
+        if not models:
             return
         self.core.emit_event("model-change-before")
         self.core.get("update_progress")("Rotating model")
@@ -65,7 +75,9 @@ class ModelRotation(pycam.Plugins.PluginBase):
                 break
         matrix = pycam.Geometry.Matrix.get_rotation_matrix_axis_angle(
                 axis_vector, angle, use_radians=False)
-        model.transform_by_matrix(matrix,
-                callback=self.core.get("update_progress"))
+        # TODO: main/sub progress for multiple models
+        for model in models:
+            model.transform_by_matrix(matrix,
+                    callback=self.core.get("update_progress"))
         self.core.emit_event("model-change-after")
 

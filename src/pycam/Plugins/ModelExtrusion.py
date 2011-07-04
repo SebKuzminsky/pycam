@@ -45,6 +45,8 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
             extrusion_frame.unparent()
             self.core.register_event("model-change-after",
                     self._update_extrude_widgets)
+            self.core.register_event("model-selection-changed",
+                    self._update_extrude_widgets)
             self.core.register_ui("model_handling", "Extrusion",
                     extrusion_frame, 5)
             self.gui.get_object("ExtrudeButton").connect("clicked",
@@ -66,24 +68,30 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
             self.core.unregister_event("model-change-after",
                     self._update_extrude_widgets)
 
+    def _get_extrudable_models(self):
+        models = self.core.get("models").get_selected()
+        extrudables = []
+        for model in models:
+            if (not model is None) and hasattr(model, "extrude"):
+                extrudables.append(model)
+        return extrudables
+
     def _update_extrude_widgets(self):
-        model = self.core.get("model")
-        is_extrudable = (not model is None) \
-               and hasattr(model, "extrude")
         extrude_widget = self.gui.get_object("ModelExtrusionFrame")
-        if is_extrudable:
+        if self._get_extrudable_models():
             extrude_widget.show()
         else:
             extrude_widget.hide()
 
     def _extrude_model(self, widget=None):
-        model = self.core.get("model")
-        if not model:
+        models = self._get_extrudable_models()
+        if not models:
             return
-        self.core.get("update_progress")("Extruding model")
+        self.core.get("update_progress")("Extruding models")
         extrusion_type_selector = self.gui.get_object("ExtrusionTypeSelector")
         type_model = extrusion_type_selector.get_model()
         type_active = extrusion_type_selector.get_active()
+        # TODO: progress bar for main/sub if more than one model is selected
         if type_active >= 0:
             type_string = type_model[type_active][0]
             height = self.gui.get_object("ExtrusionHeight").get_value()
@@ -102,8 +110,9 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
             else:
                 self.log.error("Unknown extrusion type selected: %s" % type_string)
                 return
-            new_model = model.extrude(stepping=grid_size, func=func,
-                    callback=self.core.get("update_progress"))
-            if new_model:
-                self.core.get("load_model")(new_model)
+            for model in models:
+                new_model = model.extrude(stepping=grid_size, func=func,
+                        callback=self.core.get("update_progress"))
+                if new_model:
+                    self.core.get("load_model")(new_model)
 

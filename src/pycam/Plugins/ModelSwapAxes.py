@@ -36,6 +36,9 @@ class ModelSwapAxes(pycam.Plugins.PluginBase):
             self.core.register_ui("model_handling", "Swap axes", swap_box, 0)
             self.gui.get_object("SwapAxesButton").connect("clicked",
                     self._swap_axes)
+            self.core.register_event("model-selection-changed",
+                    self._update_controls)
+            self._update_controls()
         return True
 
     def teardown(self):
@@ -43,9 +46,16 @@ class ModelSwapAxes(pycam.Plugins.PluginBase):
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelSwapBox"))
 
+    def _update_controls(self):
+        box = self.gui.get_object("ModelSwapBox")
+        if self.core.get("models").get_selected():
+            box.show()
+        else:
+            box.hide()
+
     def _swap_axes(self, widget=None):
-        model = self.core.get("model")
-        if not model:
+        models = self.core.get("models").get_selected()
+        if not models:
             return
         self.core.emit_event("model-change-before")
         self.core.get("update_progress")("Swap axes of model")
@@ -54,9 +64,9 @@ class ModelSwapAxes(pycam.Plugins.PluginBase):
                 ("YZ", "y_swap_z")):
             if self.gui.get_object("SwapAxes%s" % axes).get_active():
                 break
-        model.transform_by_template(template,
-                callback=self.core.get("update_progress"))
+        # TODO: main/sub progress for multiple models
+        for model in models:
+            model.transform_by_template(template,
+                    callback=self.core.get("update_progress"))
         self.core.emit_event("model-change-after")
-
-
 

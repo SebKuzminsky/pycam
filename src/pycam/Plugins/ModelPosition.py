@@ -53,6 +53,9 @@ class ModelPosition(pycam.Plugins.PluginBase):
                             align_model_button.grab_default())
                     obj.connect("focus-out-event", lambda widget, data: \
                             align_model_button.get_toplevel().set_default(None))
+            self.core.register_event("model-selection-changed",
+                    self._update_position_widgets)
+            self._update_position_widgets()
         return True
 
     def teardown(self):
@@ -60,22 +63,31 @@ class ModelPosition(pycam.Plugins.PluginBase):
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelPositionBox"))
 
+    def _update_position_widgets(self):
+        widget = self.gui.get_object("ModelPositionBox")
+        if self.core.get("models").get_selected():
+            widget.show()
+        else:
+            widget.hide()
+
     def _shift_model(self, widget=None):
-        model = self.core.get("model")
-        if not model:
+        models = self.core.get("models").get_selected()
+        if not models:
             return
         self.core.emit_event("model-change-before")
         self.core.get("update_progress")("Aligning model")
         self.core.get("disable_progress_cancel_button")()
         shift = [self.gui.get_object("ShiftPosition%s" % axis).get_value()
                 for axis in "XYZ"]
-        model.shift(shift[0], shift[1], shift[2],
-                callback=self.core.get("update_progress"))
+        # TODO: main/sub progress bar for multiple models
+        for model in models:
+            model.shift(shift[0], shift[1], shift[2],
+                    callback=self.core.get("update_progress"))
         self.core.emit_event("model-change-after")
 
     def _align_model(self, widget=None):
-        model = self.core.get("model")
-        if not model:
+        models = self.core.get("models").get_selected()
+        if not models:
             return
         self.core.emit_event("model-change-before")
         self.core.get("update_progress")("Shifting model")
@@ -98,8 +110,10 @@ class ModelPosition(pycam.Plugins.PluginBase):
                     else:
                         shift = dest - max_axis
                     shift_values.append(shift)
-        model.shift(shift_values[0], shift_values[1], shift_values[2],
-                callback=self.core.get("update_progress"))
+        # TODO: main/sub progress bar for multiple models
+        for model in models:
+            model.shift(shift_values[0], shift_values[1], shift_values[2],
+                    callback=self.core.get("update_progress"))
         self.core.emit_event("model-change-after")
 
 

@@ -41,6 +41,9 @@ class ModelProjection(pycam.Plugins.PluginBase):
                     self._update_controls)
             self.gui.get_object("ProjectionButton").connect("clicked",
                     self._projection)
+            self.core.register_event("model-selection-changed",
+                    self._update_controls)
+            self._update_controls()
         return True
 
     def teardown(self):
@@ -50,33 +53,42 @@ class ModelProjection(pycam.Plugins.PluginBase):
             self.core.unregister_event("model-change-after",
                     self._update_controls)
 
+    def _get_projectable_models(self):
+        models = self.core.get("models").get_selected()
+        projectables = []
+        for model in models:
+            if (not model is None) and hasattr(model, "get_waterline_contour"):
+                projectables.append(model)
+        return projectables
+
     def _update_controls(self):
-        model = self.core.get("model")
-        is_projectable = model and hasattr(model, "get_waterline_contour")
+        models = self._get_projectable_models()
         control = self.gui.get_object("ModelProjectionFrame")
-        if is_projectable:
+        if models:
             control.show()
         else:
             control.hide()
 
     def _projection(self, widget=None):
-        model = self.core.get("model")
-        if not model or not hasattr(model, "get_waterline_contour"):
+        models = self._get_projectable_models()
+        if not models:
             return
         self.core.get("update_progress")("Calculating 2D projection")
-        for objname, z_level in (("ProjectionModelTop", model.maxz),
-                ("ProjectionModelMiddle", (model.minz + model.maxz) / 2.0),
-                ("ProjectionModelBottom", model.minz),
-                ("ProjectionModelCustom",
-                    self.gui.get_object("ProjectionZLevel").get_value())):
-            if self.gui.get_object(objname).get_active():
-                plane = Plane(Point(0, 0, z_level), Vector(0, 0, 1))
-                self.log.info("Projecting 3D model at level z=%g" % plane.p.z)
-                projection = model.get_waterline_contour(plane)
-                if projection:
-                    self.core.get("load_model")(projection)
-                else:
-                    self.log.warn("The 2D projection at z=%g is empty. Aborted." % \
-                            plane.p.z)
-                break
+        # TODO: main/sub progress for multiple models
+        for model in models:
+            for objname, z_level in (("ProjectionModelTop", model.maxz),
+                    ("ProjectionModelMiddle", (model.minz + model.maxz) / 2.0),
+                    ("ProjectionModelBottom", model.minz),
+                    ("ProjectionModelCustom",
+                        self.gui.get_object("ProjectionZLevel").get_value())):
+                if self.gui.get_object(objname).get_active():
+                    plane = Plane(Point(0, 0, z_level), Vector(0, 0, 1))
+                    self.log.info("Projecting 3D model at level z=%g" % plane.p.z)
+                    projection = model.get_waterline_contour(plane)
+                    if projection:
+                        self.core.get("load_model")(projection)
+                    else:
+                        self.log.warn("The 2D projection at z=%g is empty. Aborted." % \
+                                plane.p.z)
+                    break
 
