@@ -25,14 +25,13 @@
                     <property name="model">ModelList</property>
                     <property name="headers_visible">False</property>
                     <child>
-                      <object class="GtkTreeViewColumn" id="treeviewcolumn1">
+                      <object class="GtkTreeViewColumn" id="ModelVisibleColumn">
                         <property name="title">column</property>
                         <property name="clickable">True</property>
                         <child>
-                          <object class="GtkCellRendererToggle" id="ModelVisibleToggle"/>
-                          <attributes>
-                            <attribute name="active">2</attribute>
-                          </attributes>
+                          <object class="GtkCellRendererPixbuf" id="ModelVisibleSymbol">
+                            <property name="stock_size">2</property>
+                          </object>
                         </child>
                       </object>
                     </child>
@@ -40,7 +39,9 @@
                       <object class="GtkTreeViewColumn" id="treeviewcolumn2">
                         <property name="title">column</property>
                         <child>
-                          <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                          <object class="GtkCellRendererText" id="ModelNameColumn">
+                            <property name="editable">True</property>
+                          </object>
                           <attributes>
                             <attribute name="text">1</attribute>
                           </attributes>

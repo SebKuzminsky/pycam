@@ -23,7 +23,9 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import imp
 import inspect
+# TODO: load these modules only on demand
 import gtk
+import gobject
 
 import pycam.Utils.log
 import pycam.Utils.locations
@@ -36,6 +38,8 @@ class PluginBase(object):
 
     UI_FILE = None
     DEPENDS = []
+    ICONS = {}
+    ICON_SIZE = 23
 
     def __init__(self, core, name):
         self.enabled = True
@@ -52,6 +56,20 @@ class PluginBase(object):
                     self.gui.add_from_file(gtk_build_file)
                 except RuntimeError:
                     self.gui = None
+        for key in self.ICONS:
+            icon_location = pycam.Utils.locations.get_ui_file_location(
+                    self.ICONS[key])
+            if icon_location:
+                try:
+                    pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(
+                            icon_location, self.ICON_SIZE, self.ICON_SIZE)
+                except gobject.GError:
+                    self.ICONS[key] = None
+                else:
+                    self.ICONS[key] = pixbuf
+            else:
+                self.log.debug("Failed to locate icon: %s" % self.ICONS[key])
+                self.ICONS[key] = None
 
     def setup(self):
         raise NotImplementedError(("Module %s (%s) does not implement " + \

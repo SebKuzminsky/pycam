@@ -29,11 +29,13 @@ import pycam.Plugins
 class Models(pycam.Plugins.ListPluginBase):
 
     UI_FILE = "models.ui"
-    COLUMN_VISIBLE = 2
+    COLUMN_ID, COLUMN_NAME, COLUMN_VISIBLE = range(3)
+    ICONS = {"visible": "visible.svg", "hidden": "visible_off.svg"}
 
     def setup(self):
         if self.gui:
             import gtk
+            self._gtk = gtk
             model_frame = self.gui.get_object("ModelBox")
             model_frame.unparent()
             self.core.register_ui("main", "Models", model_frame, -50)
@@ -42,7 +44,7 @@ class Models(pycam.Plugins.ListPluginBase):
                 for index in range(model_handling_obj.get_n_pages()):
                     model_handling_obj.remove_page(0)
             def add_model_handling_item(item, name):
-                model_handling_obj.append_page(item, gtk.Label(name))
+                model_handling_obj.append_page(item, self._gtk.Label(name))
             self.core.register_ui_section("model_handling",
                     add_model_handling_item, clear_model_handling_obj)
             self._modelview = self.gui.get_object("ModelView")
@@ -52,8 +54,13 @@ class Models(pycam.Plugins.ListPluginBase):
                     (self.ACTION_CLEAR, "ModelDeleteAll")):
                 self.register_list_action_button(action, self._modelview,
                         self.gui.get_object(obj_name))
-            self.gui.get_object("ModelVisibleToggle").connect("toggled",
-                    self._list_action_toggle, self.COLUMN_VISIBLE)
+            self._modelview.connect("row-activated",
+                    self._list_action_toggle_custom, self.COLUMN_VISIBLE)
+            self.gui.get_object("ModelVisibleColumn").set_cell_data_func(
+                    self.gui.get_object("ModelVisibleSymbol"),
+                    self._visualize_visible_state)
+            self.gui.get_object("ModelNameColumn").connect("edited",
+                    self._edit_model_name)
             self._treemodel = self.gui.get_object("ModelList")
             self._treemodel.clear()
             def update_model():
@@ -71,6 +78,26 @@ class Models(pycam.Plugins.ListPluginBase):
             self.register_model_update(update_model)
         self.core.add_item("models", lambda: self)
         return True
+
+    def _edit_model_name(self, cell, path, new_text):
+        path = int(path)
+        if new_text != self._treemodel[path][self.COLUMN_NAME]:
+            self._treemodel[path][self.COLUMN_NAME] = new_text
+
+    def _visualize_visible_state(self, column, cell, model, m_iter):
+        visible = model.get_value(m_iter, self.COLUMN_VISIBLE)
+        if visible:
+            cell.set_property("pixbuf", self.ICONS["visible"])
+        else:
+            cell.set_property("pixbuf", self.ICONS["hidden"])
+
+    def _list_action_toggle_custom(self, treeview, path, clicked_column,
+            force_column=None):
+        if force_column is None:
+            column = self._modelview.get_columns().index(clicked_column)
+        else:
+            column = force_column
+        self._list_action_toggle(clicked_column, str(path[0]), column)
 
     def _list_action_toggle(self, widget, path, column):
         path = int(path)
