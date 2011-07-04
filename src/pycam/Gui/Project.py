@@ -438,6 +438,7 @@ class ProjectGui(object):
         self.settings.register_event("model-change-after", self.update_model_type_related_controls)
         self.settings.register_event("model-change-after", self.update_view)
         self.settings.register_event("visual-item-updated", self.update_view)
+        self.settings.register_event("visual-item-updated", self.update_model_dimensions)
         self.settings.set("update_progress", self.update_progress_bar)
         self.settings.set("disable_progress_cancel_button", self.disable_progress_cancel_button)
         self.settings.set("load_model", self.load_model)
@@ -610,8 +611,9 @@ class ProjectGui(object):
         # Calculate the "minx, ..." settings based on a (potentially) selected
         # bounds setting.
         def get_absolute_limit(key):
-            if not self.settings.get("models"):
-                # avoid problems if no model is loaded
+            models = self.settings.get("models").get_visible()
+            if not models:
+                # avoid problems if no model is visible
                 return 0
             bounds = self.settings.get("current_bounds")
             if key.startswith("min"):
@@ -619,10 +621,10 @@ class ProjectGui(object):
             else:
                 func = max
             if bounds is None:
-                return func([getattr(model, key) for model in self.settings.get("models")])
+                return func([getattr(model, key) for model in models])
             lows, highs = [], []
             index = "xyz".index(key[-1])
-            for model in self.settings.get("models"):
+            for model in models:
                 low, high = bounds.get_absolute_limits(reference=model.get_bounds())
                 lows.append(low[index])
                 highs.append(high[index])
@@ -1142,9 +1144,10 @@ class ProjectGui(object):
 
     def update_model_type_related_controls(self):
         # disable the lower boundary for contour models
-        models = self.settings.get("models")
+        models = self.settings.get("models").get_selected()
         if not models:
             return
+        # TODO: choose the right model
         model = models[0]
         is_contour = isinstance(model, pycam.Geometry.Model.ContourModel)
         margin_type = self._load_bounds_settings_from_gui().get_type()
@@ -1202,6 +1205,7 @@ class ProjectGui(object):
         # for now we only store the model
         if not self.settings.get("models"):
             return
+        # TODO: store all models
         self._undo_states.append(pickle.dumps(self.settings.get("models")[0]))
         log.debug("Stored the current state of the model for undo")
         while len(self._undo_states) > MAX_UNDO_STATES:
@@ -1251,6 +1255,7 @@ class ProjectGui(object):
         self.gui.get_object("SaveTaskSettings").set_sensitive(
             bool(self.last_task_settings_uri and \
                 self.last_task_settings_uri.is_writable()))
+        # TODO: choose all models
         model = self.settings.get("models") and self.settings.get("models")[0]
         save_as_possible = (not model is None) and model.is_export_supported()
         self.gui.get_object("SaveAsModel").set_sensitive(save_as_possible)
@@ -1388,6 +1393,7 @@ class ProjectGui(object):
     @gui_activity_guard
     def adjust_bounds(self, widget, axis, change):
         bounds = self.settings.get("current_bounds")
+        # TODO: choose the right model
         model = self.settings.get("models")[0]
         abs_bounds_low, abs_bounds_high = bounds.get_absolute_limits(
                 reference=model.get_bounds())
@@ -1428,6 +1434,7 @@ class ProjectGui(object):
     @gui_activity_guard
     def switch_bounds_type(self, widget=None):
         bounds = self.settings.get("current_bounds")
+        # TODO: choose the right model
         model = self.settings.get("models")[0]
         new_type = self._load_bounds_settings_from_gui().get_type()
         if new_type == bounds.get_type():
@@ -1820,7 +1827,8 @@ class ProjectGui(object):
         self.clipboard.store()
 
     def copy_model_to_clipboard(self, widget=None):
-        model = self.settings.get("models")[0]
+        # TODO: use all selected models (incl. merge?)
+        model = self.settings.get("models").get_selected()[0]
         if not model.is_export_supported():
             return
         text_buffer = StringIO.StringIO()
@@ -2376,7 +2384,7 @@ class ProjectGui(object):
                     # transform the model if it is selected
                     # keep the original center of the model
                     self.settings.emit_event("model-change-before")
-                    for model in self.settings.get("models").get_selected():
+                    for model in self.settings.get("models"):
                         new_x, new_y, new_z = ((model.maxx + model.minx) / 2,
                                 (model.maxy + model.miny) / 2,
                                 (model.maxz + model.minz) / 2)
@@ -2471,9 +2479,8 @@ class ProjectGui(object):
     def save_model(self, widget=None, filename=None, model=None,
             store_filename=True):
         if model is None:
-            models = self.settings.get("models").get_selected()
             # TODO: merge multiple models
-            model = models[0]
+            model = self.settings.get("models").get_selected()[0]
         if not model.is_export_supported():
             log.warn(("Saving this type of model (%s) is currently not " \
                     + "implemented!") % str(type(model)))
@@ -2583,7 +2590,7 @@ class ProjectGui(object):
 
     @gui_activity_guard
     def update_model_dimensions(self, widget=None):
-        models = self.settings.get("models").get_selected()
+        models = self.settings.get("models").get_visible()
         if not models:
             return
         # model corners in 3D view
@@ -2866,7 +2873,8 @@ class ProjectGui(object):
         def get_control(index, side):
             return self.gui.get_object("boundary_%s_%s" % ("xyz"[index], side))
         # disable each zero-dimension in relative margin mode
-        model = self.settings.get("models")[0]
+        # TODO: select the specific model
+        model = self.settings.get("models").get_visible()[0]
         if current_type == Bounds.TYPE_RELATIVE_MARGIN:
             model_dims = (model.maxx - model.minx,
                     model.maxy - model.miny,

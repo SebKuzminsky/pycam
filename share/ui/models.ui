@@ -19,16 +19,33 @@
                 <property name="vscrollbar_policy">automatic</property>
                 <property name="shadow_type">etched-out</property>
                 <child>
-                  <object class="GtkIconView" id="ModelView">
+                  <object class="GtkTreeView" id="ModelView">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="selection_mode">multiple</property>
                     <property name="model">ModelList</property>
+                    <property name="headers_visible">False</property>
                     <child>
-                      <object class="GtkCellRendererText" id="cellrenderertext1"/>
-                      <attributes>
-                        <attribute name="text">0</attribute>
-                      </attributes>
+                      <object class="GtkTreeViewColumn" id="treeviewcolumn1">
+                        <property name="title">column</property>
+                        <property name="clickable">True</property>
+                        <child>
+                          <object class="GtkCellRendererToggle" id="ModelVisibleToggle"/>
+                          <attributes>
+                            <attribute name="active">2</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="treeviewcolumn2">
+                        <property name="title">column</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                          <attributes>
+                            <attribute name="text">1</attribute>
+                          </attributes>
+                        </child>
+                      </object>
                     </child>
                   </object>
                 </child>
@@ -143,12 +160,18 @@
   </object>
   <object class="GtkListStore" id="ModelList">
     <columns>
+      <!-- column-name id -->
+      <column type="gint"/>
       <!-- column-name name -->
       <column type="gchararray"/>
+      <!-- column-name state -->
+      <column type="gboolean"/>
     </columns>
     <data>
       <row>
-        <col id="0" translatable="yes">Model 1</col>
+        <col id="0">0</col>
+        <col id="1" translatable="yes">Model #1</col>
+        <col id="2">False</col>
       </row>
     </data>
   </object>

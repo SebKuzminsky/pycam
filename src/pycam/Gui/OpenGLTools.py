@@ -217,14 +217,17 @@ class Camera(object):
         # position the light according to the current bounding box
         light_pos = range(3)
         values = {}
-        for model in self.settings.get("models"):
+        for model in self.settings.get("models").get_visible():
             for key in ("minx", "miny", "minz", "maxx", "maxy", "maxz"):
                 if not key in values:
                     values[key] = []
                 values[key].append(getattr(model, key))
-        light_pos[0] = 2 * max(values["maxx"]) - min(values["minx"])
-        light_pos[1] = 2 * max(values["maxy"]) - min(values["miny"])
-        light_pos[2] = 2 * max(values["maxz"]) - min(values["minz"])
+        if values:
+            light_pos[0] = 2 * max(values["maxx"]) - min(values["minx"])
+            light_pos[1] = 2 * max(values["maxy"]) - min(values["miny"])
+            light_pos[2] = 2 * max(values["maxz"]) - min(values["minz"])
+        else:
+            light_pos = (0, 0, 0)
         GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, (light_pos[0], light_pos[1],
                 light_pos[2], 1.0))
         # position the camera
@@ -912,7 +915,7 @@ def draw_complete_model_view(settings):
             and not (settings.get("show_simulation") \
                 and settings.get("simulation_toolpath_moves")):
         GL.glColor4f(*settings.get("color_model"))
-        for model in settings.get("models"):
+        for model in settings.get("models").get_visible():
             """
             min_area = abs(model.maxx - model.minx) * abs(model.maxy - model.miny) / 100
             # example for coloring specific triangles
