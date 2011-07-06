@@ -110,9 +110,20 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
             else:
                 self.log.error("Unknown extrusion type selected: %s" % type_string)
                 return
+            model_manager = self.core.get("models")
             for model in models:
                 new_model = model.extrude(stepping=grid_size, func=func,
                         callback=self.core.get("update_progress"))
                 if new_model:
                     self.core.get("load_model")(new_model)
+                    try:
+                        # add the name of the original model to the new name
+                        original_name = model_manager.get_attr(model,
+                                "name").split("(")[0].strip()
+                        new_name = model_manager.get_attr(new_model, "name")
+                        model_manager.set_attr(new_model, "name",
+                                "%s (extrusion of %s)" % \
+                                (new_name, original_name))
+                    except LookupError:
+                        pass
 

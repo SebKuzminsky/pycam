@@ -84,9 +84,20 @@ class ModelProjection(pycam.Plugins.PluginBase):
                 if self.gui.get_object(objname).get_active():
                     plane = Plane(Point(0, 0, z_level), Vector(0, 0, 1))
                     self.log.info("Projecting 3D model at level z=%g" % plane.p.z)
-                    projection = model.get_waterline_contour(plane)
-                    if projection:
-                        self.core.get("load_model")(projection)
+                    new_model = model.get_waterline_contour(plane)
+                    if new_model:
+                        self.core.get("load_model")(new_model)
+                        model_manager = self.core.get("models")
+                        try:
+                            # add the name of the original model to the new name
+                            original_name = model_manager.get_attr(model,
+                                    "name").split("(")[0].strip()
+                            new_name = model_manager.get_attr(new_model, "name")
+                            model_manager.set_attr(new_model, "name",
+                                    "%s (projection of %s)" % \
+                                    (new_name, original_name))
+                        except LookupError:
+                            pass
                     else:
                         self.log.warn("The 2D projection at z=%g is empty. Aborted." % \
                                 plane.p.z)
