@@ -25,12 +25,17 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 
+_GTK_COLOR_MAX = 65535.0
+
 
 class Models(pycam.Plugins.ListPluginBase):
 
     UI_FILE = "models.ui"
-    COLUMN_ID, COLUMN_NAME, COLUMN_VISIBLE = range(3)
+    COLUMN_ID, COLUMN_NAME, COLUMN_VISIBLE, COLUMN_COLOR, COLUMN_ALPHA = range(5)
+    ATTRIBUTE_MAP = {"name": COLUMN_NAME, "visible": COLUMN_VISIBLE,
+            "color": COLUMN_COLOR, "alpha": COLUMN_ALPHA}
     ICONS = {"visible": "visible.svg", "hidden": "visible_off.svg"}
+    DEFAULT_COLOR = (0.5, 0.5, 1.0, 1.0)
 
     def setup(self):
         if self.gui:
@@ -54,6 +59,10 @@ class Models(pycam.Plugins.ListPluginBase):
                     (self.ACTION_CLEAR, "ModelDeleteAll")):
                 self.register_list_action_button(action, self._modelview,
                         self.gui.get_object(obj_name))
+            self.gui.get_object("ModelColorButton").connect("color-set",
+                    self._set_colors_of_selected_models)
+            self.core.register_event("model-selection-changed",
+                    self._get_colors_of_selected_models)
             self._modelview.connect("row-activated",
                     self._list_action_toggle_custom, self.COLUMN_VISIBLE)
             self.gui.get_object("ModelVisibleColumn").set_cell_data_func(
@@ -73,16 +82,64 @@ class Models(pycam.Plugins.ListPluginBase):
                     self._model_cache = {}
                 cache = self._model_cache
                 for row in self._treemodel:
-                    cache[row[0]] = list(row)
+                    cache[row[self.COLUMN_ID]] = list(row)
                 self._treemodel.clear()
                 for index, item in enumerate(self):
                     if id(item) in cache:
                         self._treemodel.append(cache[id(item)])
                     else:
-                        self._treemodel.append((id(item), "Model #%d" % index, True))
+                        color = "#%04x%04x%04x" % tuple([int(col * _GTK_COLOR_MAX)
+                                for col in self.DEFAULT_COLOR[:3]])
+                        self._treemodel.append((id(item), "Model #%d" % index,
+                                True, color,
+                                int(self.DEFAULT_COLOR[3] * _GTK_COLOR_MAX)))
+            self._get_colors_of_selected_models()
             self.register_model_update(update_model)
         self.core.add_item("models", lambda: self)
         return True
+
+    def get_attr(self, model, attr):
+        return self.__get_set_attr(model, attr, write=False)
+
+    def set_attr(self, model, attr, value):
+        return self.__get_set_attr(model, attr, value=value, write=True)
+
+    def __get_set_attr(self, model, attr, value=None, write=True):
+        if attr in self.ATTRIBUTE_MAP:
+            col = self.ATTRIBUTE_MAP[attr]
+            for index in range(len(self)):
+                if self._treemodel[index][self.COLUMN_ID] == id(model):
+                    if write:
+                        self._treemodel[index][col] = value
+                        return
+                    else:
+                        return self._treemodel[index][col]
+            raise IndexError("Model not found: %s" % str(model))
+        else:
+            raise KeyError("Attribute '%s' is not part of this list: %s" % \
+                    (attr, ", ".join(self.ATTRIBUTE_MAP.keys())))
+
+    def _get_colors_of_selected_models(self, widget=None):
+        color_button = self.gui.get_object("ModelColorButton")
+        models = self.get_selected()
+        color_button.set_sensitive(bool(models))
+        if models:
+            # use the color of the first model
+            model = models[0]
+            color_str = self.get_attr(model, "color")
+            alpha_val = self.get_attr(model, "alpha")
+            color_button.set_color(self._gtk.gdk.color_parse(color_str))
+            color_button.set_alpha(alpha_val)
+
+    def _set_colors_of_selected_models(self, widget=None):
+        color_button = self.gui.get_object("ModelColorButton")
+        models = self.get_selected()
+        color_str = color_button.get_color().to_string()
+        alpha_val = color_button.get_alpha()
+        for model in models:
+            self.set_attr(model, "color", color_str)
+            self.set_attr(model, "alpha", alpha_val)
+        self.core.emit_event("visual-item-updated")
 
     def _edit_model_name(self, cell, path, new_text):
         path = int(path)

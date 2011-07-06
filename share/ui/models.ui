@@ -32,6 +32,9 @@
                           <object class="GtkCellRendererPixbuf" id="ModelVisibleSymbol">
                             <property name="stock_size">2</property>
                           </object>
+                          <attributes>
+                            <attribute name="cell-background">3</attribute>
+                          </attributes>
                         </child>
                       </object>
                     </child>
@@ -67,6 +70,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Remove the selected models</property>
                     <property name="use_stock">True</property>
                   </object>
                   <packing>
@@ -81,12 +85,28 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Remove all models</property>
                     <property name="use_stock">True</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">False</property>
                     <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkColorButton" id="ModelColorButton">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Change the color of the selected models</property>
+                    <property name="use_alpha">True</property>
+                    <property name="color">#000000000000</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">2</property>
                   </packing>
                 </child>
                 <child>
@@ -100,7 +120,7 @@
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">False</property>
-                    <property name="position">2</property>
+                    <property name="position">3</property>
                   </packing>
                 </child>
                 <child>
@@ -114,7 +134,7 @@
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">False</property>
-                    <property name="position">3</property>
+                    <property name="position">4</property>
                   </packing>
                 </child>
                 <child>
@@ -130,7 +150,7 @@
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">False</property>
-                    <property name="position">4</property>
+                    <property name="position">5</property>
                   </packing>
                 </child>
               </object>
@@ -167,12 +187,18 @@
       <column type="gchararray"/>
       <!-- column-name state -->
       <column type="gboolean"/>
+      <!-- column-name color -->
+      <column type="gchararray"/>
+      <!-- column-name alpha -->
+      <column type="guint"/>
     </columns>
     <data>
       <row>
         <col id="0">0</col>
         <col id="1" translatable="yes">Model #1</col>
         <col id="2">False</col>
+        <col id="3" translatable="yes">#ffff00000000</col>
+        <col id="4">0</col>
       </row>
     </data>
   </object>
