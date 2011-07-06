@@ -93,3 +93,46 @@ def get_font_dir():
                     ":".join(FONT_DIRS_FALLBACK))
             return None
 
+def get_external_program_location(key):
+    extensions = ["", ".exe"]
+    potential_names = ["%s%s" % (key, ext) for ext in extensions]
+    windows_program_directories = {'inkscape': ['Inkscape'],
+            'pstoedit': ['pstoedit']}
+    # check the windows path via win32api
+    try:
+        import win32api
+        location = win32api.FindExecutable(key)[1]
+        if location:
+            return location
+    except Exception:
+        # Wildcard (non-system exiting) exeception to match "ImportError" and
+        # "pywintypes.error" (for "not found").
+        pass
+    # go through the PATH environment variable
+    if "PATH" in os.environ:
+        path_env = os.environ["PATH"]
+        for one_dir in path_env.split(os.pathsep):
+            for basename in potential_names:
+                location = os.path.join(one_dir, basename)
+                if os.path.isfile(location):
+                    return location
+    # do a manual scan in the programs directory (only for windows)
+    program_dirs = ["C:\\Program Files", "C:\\Programme"]
+    try:
+        from win32com.shell import shellcon, shell            
+        # The frozen application somehow dows not provide this setting.
+        program_dirs.insert(0, shell.SHGetFolderPath(0,
+                shellcon.CSIDL_PROGRAM_FILES, 0, 0))
+    except ImportError:
+        # no other options for non-windows systems
+        pass
+    # scan the program directory
+    for program_dir in program_dirs:
+        for sub_dir in windows_program_directories[key]:
+            for basename in potential_names:
+                location = os.path.join(program_dir, sub_dir, basename)
+                if os.path.isfile(location):
+                    return location
+    # nothing found
+    return None
+
