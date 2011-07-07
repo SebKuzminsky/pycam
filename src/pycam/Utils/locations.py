@@ -136,3 +136,13 @@ def get_external_program_location(key):
     # nothing found
     return None
 
+def get_all_program_locations(core):
+    # TODO: this should move to a plugin
+    # import all external program locations into a dict
+    program_locations = {}
+    prefix = "external_program_"
+    for key in core.get_keys():
+        if key.startswith(prefix) and core.get(key):
+            program_locations[key[len(prefix):]] = core.get(key)
+    return program_locations
+

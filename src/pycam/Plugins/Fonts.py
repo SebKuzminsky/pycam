@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+import StringIO
 # imported later (on demand)
 #import gtk
 
@@ -34,6 +35,7 @@ from pycam.Geometry.Letters import TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, \
 class Fonts(pycam.Plugins.PluginBase):
 
     UI_FILE = "fonts.ui"
+    DEPENDS = ["Clipboard"]
 
     def setup(self):
         self._fonts_cache = pycam.Utils.FontCache.FontCache(get_font_dir(),
@@ -113,7 +115,7 @@ class Fonts(pycam.Plugins.PluginBase):
                 if sorted_keys:
                     font_selector.set_active(0)
                 else:
-                    log.warn("No single-line fonts found!")
+                    self.log.warn("No single-line fonts found!")
                 font_selector.connect("changed",
                         self.update_font_dialog_preview)
                 font_selector.show()
@@ -126,7 +128,7 @@ class Fonts(pycam.Plugins.PluginBase):
                 self.font_dialog_window.show()
                 self._font_dialog_window_visible = True
             else:
-                log.error("No fonts were found on your system. " \
+                self.log.error("No fonts were found on your system. " \
                         + "Please check the Log Window for details.")
         else:
             self._font_dialog_window_position = \
@@ -176,11 +178,12 @@ class Fonts(pycam.Plugins.PluginBase):
         text_model = self.get_font_dialog_text_rendered()
         if text_model and (not text_model.maxx is None):
             text_buffer = StringIO.StringIO()
-            text_model.export(comment=self.get_meta_data(),
-                    unit=self.settings.get("unit")).write(text_buffer)
+            # TODO: add "comment=get_meta_data()"
+            text_model.export(unit=self.core.get("unit")).write(text_buffer)
             text_buffer.seek(0)
             text = text_buffer.read()
-            self._copy_text_to_clipboard(text, CLIPBOARD_TARGETS["svg"])
+            self.core.get("clipboard-set")(text,
+                    targets="svg")
 
     def update_font_dialog_preview(self, widget=None, event=None):
         if not self.font_selector:

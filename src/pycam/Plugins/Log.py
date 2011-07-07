@@ -30,6 +30,7 @@ import pycam.Plugins
 class Log(pycam.Plugins.PluginBase):
 
     UI_FILE = "log.ui"
+    DEPENDS = ["Clipboard"]
 
     def setup(self):
         if self.gui:
@@ -103,7 +104,7 @@ class Log(pycam.Plugins.PluginBase):
                 columns.append(model.get_value(it, column))
             content.append(" ".join(columns))
         self.log_model.foreach(copy_row, content)
-        self.clipboard.set_text(os.linesep.join(content))
+        self.core.get("clipboard-set")(os.linesep.join(content))
         self.gui.get_object("StatusBarWarning").hide()
 
     def clear_log_window(self, widget=None):

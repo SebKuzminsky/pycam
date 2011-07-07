@@ -4348,18 +4348,6 @@ upon interesting bugs and weird results.</property>
     <property name="label">_Touch off and tool change</property>
     <property name="short_label">_Touch off</property>
   </object>
-  <object class="GtkAction" id="CopyModelToClipboard">
-    <property name="label">_Copy</property>
-    <property name="short_label">_Copy</property>
-    <property name="tooltip">Copy model to clipboard</property>
-    <property name="stock_id">gtk-copy</property>
-  </object>
-  <object class="GtkAction" id="PasteModelFromClipboard">
-    <property name="label">_Paste</property>
-    <property name="short_label">_Paste</property>
-    <property name="tooltip">Paste a model from clipboard</property>
-    <property name="stock_id">gtk-paste</property>
-  </object>
   <object class="GtkWindow" id="DummyWindow">
     <child>
       <object class="GtkVBox" id="vbox2">

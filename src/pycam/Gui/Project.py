@@ -36,7 +36,8 @@ from pycam.Geometry.Plane import Plane
 import pycam.Geometry.Path
 import pycam.Utils.log
 from pycam.Utils.locations import get_data_file_location, \
-        get_ui_file_location, get_external_program_location
+        get_ui_file_location, get_external_program_location, \
+        get_all_program_locations
 import pycam.Utils
 from pycam.Geometry.utils import sqrt
 from pycam.Gui.OpenGLTools import ModelViewWindowGL
@@ -80,14 +81,6 @@ FILTER_MODEL = (("All supported model filetypes",
         ("SVG contours", "*.svg"), ("PS contours", ("*.eps", "*.ps")))
 FILTER_CONFIG = (("Config files", "*.conf"),)
 FILTER_EMC_TOOL = (("EMC tool files", "*.tbl"),)
-
-CLIPBOARD_TARGETS = {
-        "dxf": ("image/vnd.dxf", ),
-        "ps": ("application/postscript", ),
-        "stl": ("application/sla", ),
-        "svg": ("image/x-inkscape-svg", "image/svg+xml"),
-        "filename_drag": ("text/uri-list", "text-plain"),
-}
 
 PREFERENCES_DEFAULTS = {
         "enable_ode": False,
@@ -149,6 +142,7 @@ user's home directory on startup/shutdown"""
 
 POCKETING_TYPES = ["none", "holes", "enclosed"]
 MAX_UNDO_STATES = 10
+FILENAME_DRAG_TARGETS = ("text/uri-list", "text-plain")
 
 # floating point color values are only available since gtk 2.16
 GTK_COLOR_MAX = 65535.0
@@ -383,8 +377,6 @@ class ProjectGui(object):
                 ("Toggle3DView", self.toggle_3d_view, None, "<Control><Shift>v"),
                 ("ToggleProcessPoolWindow", self.toggle_process_pool_window, None, None),
                 ("UndoButton", self._restore_undo_state, None, "<Control>z"),
-                ("CopyModelToClipboard", self.copy_model_to_clipboard, None, "<Control>c"),
-                ("PasteModelFromClipboard", self.paste_model_from_clipboard, None, "<Control>v"),
                 ("HelpUserManual", self.show_help, "User_Manual", "F1"),
                 ("HelpIntroduction", self.show_help, "Introduction", None),
                 ("HelpSupportedFormats", self.show_help, "SupportedFormats", None),
@@ -437,8 +429,6 @@ class ProjectGui(object):
         self.settings.register_event("boundary-updated", self.update_view)
         # configure drag-n-drop for config files and models
         self.configure_drag_and_drop(self.window)
-        self.clipboard = gtk.clipboard_get()
-        self.clipboard.connect("owner-change", self.update_clipboard_state)
         # other events
         self.window.connect("destroy", self.destroy)
         # the settings window
@@ -1056,7 +1046,6 @@ class ProjectGui(object):
         self.update_parallel_processes_settings()
         self.update_model_type_related_controls()
         self.update_toolpath_related_controls()
-        self.update_clipboard_state()
 
     def update_gcode_controls(self, widget=None):
         # path mode
@@ -1109,9 +1098,6 @@ class ProjectGui(object):
             z_low_control.set_sensitive(False)
         else:
             z_low_control.set_sensitive(True)
-        # copy button
-        self.gui.get_object("CopyModelToClipboard").set_sensitive(
-                bool(model and model.is_export_supported()))
 
     def update_ode_settings(self, widget=None):
         if pycam.Utils.threading.is_multiprocessing_enabled() \
@@ -1651,75 +1637,6 @@ class ProjectGui(object):
                 # set the value to the configured minimum
                 obj.set_value(default_value)
         self.gui.get_object("ExportEMCToolDefinition").set_sensitive(len(self.tool_list) > 0)
-
-    def update_clipboard_state(self, clipboard=None, event=None):
-        data, importer = self._get_data_and_importer_from_clipboard()
-        paste_button = self.gui.get_object("PasteModelFromClipboard")
-        paste_button.set_sensitive(not data is None)
-
-    def _copy_text_to_clipboard(self, text, targets):
-        clip_targets = [(key, gtk.TARGET_OTHER_WIDGET, index)
-                for index, key in enumerate(targets)]
-        def get_func(clipboard, selectiondata, info, (text, clip_type)):
-            selectiondata.set(clip_type, 8, text)
-        if "svg" in "".join(targets).lower():
-            # Inkscape for Windows strictly requires the BITMAP type
-            clip_type = gtk.gdk.SELECTION_TYPE_BITMAP
-        else:
-            clip_type = gtk.gdk.SELECTION_TYPE_STRING
-        result = self.clipboard.set_with_data(clip_targets, get_func,
-                lambda *args: None, (text, clip_type))
-        self.clipboard.store()
-
-    def copy_model_to_clipboard(self, widget=None):
-        # TODO: use all selected models (incl. merge?)
-        model = self.settings.get("models").get_selected()[0]
-        if not model.is_export_supported():
-            return
-        text_buffer = StringIO.StringIO()
-        model.export(comment=self.get_meta_data(),
-                unit=self.settings.get("unit")).write(text_buffer)
-        text_buffer.seek(0)
-        is_contour = isinstance(model, pycam.Geometry.Model.ContourModel)
-        # TODO: this should not be decided here
-        if is_contour:
-            targets = CLIPBOARD_TARGETS["svg"]
-        else:
-            targets = CLIPBOARD_TARGETS["stl"]
-        self._copy_text_to_clipboard(text_buffer.read(), targets)
-
-    def _get_data_and_importer_from_clipboard(self):
-        for targets, filename in ((CLIPBOARD_TARGETS["svg"], "foo.svg"),
-               (CLIPBOARD_TARGETS["stl"], "foo.stl"),
-               (CLIPBOARD_TARGETS["ps"], "foo.ps"),
-               (CLIPBOARD_TARGETS["dxf"], "foo.dxf")):
-            for target in targets:
-                data = self.clipboard.wait_for_contents(target)
-                if not data is None:
-                    importer = pycam.Importers.detect_file_type(filename)[1]
-                    return data, importer
-        return None, None
-
-    @gui_activity_guard
-    def paste_model_from_clipboard(self, widget=None):
-        data, importer = self._get_data_and_importer_from_clipboard()
-        progress = self.settings.get("progress")
-        if data:
-            progress.update(text="Loading model from clipboard")
-            text_buffer = StringIO.StringIO(data.data)
-            model = importer(text_buffer,
-                    program_locations=self._get_program_locations(),
-                    unit=self.settings.get("unit"),
-                    fonts_cache=self.settings.get("fonts"),
-                    callback=progress.update)
-            if model:
-                log.info("Loaded a model from clipboard")
-                self.load_model(model)
-            else:
-                log.warn("Failed to load a model from clipboard")
-        else:
-            log.warn("The clipboard does not contain suitable data")
-        progress.finish()
 
     @gui_activity_guard
     def toggle_about_window(self, widget=None, event=None, state=None):
@@ -2344,7 +2261,7 @@ class ProjectGui(object):
         obj.connect("drag-data-received", self.handle_data_drop)
         flags = gtk.DEST_DEFAULT_ALL
         targets = [(key, gtk.TARGET_OTHER_APP, index)
-                for index, key in enumerate(CLIPBOARD_TARGETS["filename_drag"])]
+                for index, key in enumerate(FILENAME_DRAG_TARGETS)]
         actions = gtk.gdk.ACTION_COPY | gtk.gdk.ACTION_LINK | \
                 gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_PRIVATE | \
                 gtk.gdk.ACTION_ASK
@@ -2391,15 +2308,6 @@ class ProjectGui(object):
         uri = widget.get_current_uri()
         self.load_model_file(filename=uri)
 
-    def _get_program_locations(self):
-        # import all external program locations into a dict
-        program_locations = {}
-        prefix = "external_program_"
-        for key in self.settings.get_keys():
-            if key.startswith(prefix) and self.settings.get(key):
-                program_locations[key[len(prefix):]] = self.settings.get(key)
-        return program_locations
-
     @gui_activity_guard
     def load_model_file(self, widget=None, filename=None, store_filename=True):
         if callable(filename):
@@ -2415,7 +2323,7 @@ class ProjectGui(object):
                 # "cancel" is not allowed
                 progress.disable_cancel()
                 if self.load_model(importer(filename,
-                        program_locations=self._get_program_locations(),
+                        program_locations=get_all_program_locations(self.settings),
                         unit=self.settings.get("unit"),
                         fonts_cache=self.settings.get("fonts"),
                         callback=progress.update)):
