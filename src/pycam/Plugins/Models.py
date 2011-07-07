@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-$Id: __init__.py 1061 2011-04-12 13:14:12Z sumpfralle $
+$Id$
 
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
@@ -43,7 +43,7 @@ class Models(pycam.Plugins.ListPluginBase):
             self._gtk = gtk
             model_frame = self.gui.get_object("ModelBox")
             model_frame.unparent()
-            self.core.register_ui("main", "Models", model_frame, -50)
+            self.core.register_ui("main", "Models", model_frame, weight=-50)
             model_handling_obj = self.gui.get_object("ModelHandlingNotebook")
             def clear_model_handling_obj():
                 for index in range(model_handling_obj.get_n_pages()):

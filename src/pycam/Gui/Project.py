@@ -36,7 +36,7 @@ from pycam.Geometry.Plane import Plane
 import pycam.Geometry.Path
 import pycam.Utils.log
 from pycam.Utils.locations import get_data_file_location, \
-        get_ui_file_location, get_font_dir
+        get_ui_file_location, get_font_dir, get_external_program_location
 import pycam.Utils
 from pycam.Geometry.utils import sqrt
 from pycam.Gui.OpenGLTools import ModelViewWindowGL
@@ -193,7 +193,8 @@ def get_icons_pixbuffers():
 
 
 UI_FUNC_INDEX, UI_WIDGET_INDEX = range(2)
-WIDGET_NAME_INDEX, WIDGET_OBJ_INDEX, WIDGET_WEIGHT_INDEX = range(3)
+WIDGET_NAME_INDEX, WIDGET_OBJ_INDEX, WIDGET_WEIGHT_INDEX, WIDGET_ARGS_INDEX = \
+        range(4)
 HANDLER_FUNC_INDEX, HANDLER_ARG_INDEX = range(2)
 EVENT_HANDLER_INDEX, EVENT_BLOCKER_INDEX = range(2)
 
@@ -226,7 +227,7 @@ class EventCore(pycam.Gui.Settings.Settings):
         else:
             log.debug("Trying to unregister an unknown event: %s" % event)
 
-    def emit_event(self, event):
+    def emit_event(self, event, *args, **kwargs):
         log.debug("Event emitted: %s" % str(event))
         if event in self.event_handlers:
             if self.event_handlers[event][EVENT_BLOCKER_INDEX] != 0:
@@ -234,9 +235,9 @@ class EventCore(pycam.Gui.Settings.Settings):
             self.block_event(event)
             for handler in self.event_handlers[event][EVENT_HANDLER_INDEX]:
                 func = handler[HANDLER_FUNC_INDEX]
-                args = handler[HANDLER_ARG_INDEX]
+                data = handler[HANDLER_ARG_INDEX]
                 # prevent infinite recursion
-                func(*args)
+                func(*(data + args), **kwargs)
             self.unblock_event(event)
         else:
             log.debug("No events registered for event '%s'" % str(event))
@@ -273,19 +274,25 @@ class EventCore(pycam.Gui.Settings.Settings):
                         key=lambda x: x[WIDGET_WEIGHT_INDEX])
                 clear_func()
                 for item in ui_section[UI_WIDGET_INDEX]:
-                    add_func(item[WIDGET_OBJ_INDEX], item[WIDGET_NAME_INDEX])
+                    if item[WIDGET_ARGS_INDEX]:
+                        args = item[WIDGET_ARGS_INDEX]
+                    else:
+                        args = {}
+                    add_func(item[WIDGET_OBJ_INDEX], item[WIDGET_NAME_INDEX],
+                            **args)
         else:
             log.debug("Failed to rebuild unknown ui section: %s" % str(section))
 
-    def register_ui(self, section, name, widget, weight=0):
+    def register_ui(self, section, name, widget, weight=0, args_dict=None):
         if not section in self.ui_sections:
             self.ui_sections[section] = [None, None]
             self.ui_sections[section][UI_WIDGET_INDEX] = []
         assert WIDGET_NAME_INDEX == 0
         assert WIDGET_OBJ_INDEX == 1
         assert WIDGET_WEIGHT_INDEX == 2
+        assert WIDGET_ARGS_INDEX == 3
         self.ui_sections[section][UI_WIDGET_INDEX].append((name, widget,
-                weight))
+                weight, args_dict))
         self._rebuild_ui_section(section)
 
     def unregister_ui(self, section, widget):
@@ -329,12 +336,9 @@ class ProjectGui(object):
         # we set the final value later
         self.no_dialog = True
         self._batch_queue = []
-        self._progress_running = False
-        self._progress_cancel_requested = False
-        self._last_gtk_events_time = None
         self._undo_states = []
         self._fonts_cache = pycam.Utils.FontCache.FontCache(get_font_dir(),
-                callback=self.update_progress_bar)
+                core=self.settings)
         self.gui = gtk.Builder()
         gtk_build_file = get_ui_file_location(GTKBUILD_FILE)
         if gtk_build_file is None:
@@ -439,8 +443,6 @@ class ProjectGui(object):
         self.settings.register_event("model-change-after", self.update_view)
         self.settings.register_event("visual-item-updated", self.update_view)
         self.settings.register_event("visual-item-updated", self.update_model_dimensions)
-        self.settings.set("update_progress", self.update_progress_bar)
-        self.settings.set("disable_progress_cancel_button", self.disable_progress_cancel_button)
         self.settings.set("load_model", self.load_model)
         self.settings.register_event("boundary-updated", self.update_view)
         # configure drag-n-drop for config files and models
@@ -553,6 +555,22 @@ class ProjectGui(object):
         for name in tab_names:
             item = self.gui.get_object(name + "Tab")
             self.settings.register_ui("main", name, item, tab_names.index(name))
+        main_window = self.gui.get_object("WindowBox")
+        event_bar = self.gui.get_object("StatusBarEventBox")
+        def clear_main_window():
+            main_window.foreach(lambda x: main_window.remove(x))
+        def add_main_window_item(item, name, **extra_args):
+            # some widgets may want to override the defaults
+            args = {"expand": False, "fill": False}
+            args.update(extra_args)
+            main_window.pack_start(item, **args)
+        main_tab.unparent()
+        event_bar.unparent()
+        self.settings.register_ui_section("main_window", add_main_window_item,
+                clear_main_window)
+        self.settings.register_ui("main_window", "Tabs", main_tab, -20,
+                args_dict={"expand": True, "fill": True})
+        self.settings.register_ui("main_window", "Status", event_bar, 100)
         # unit control (mm/inch)
         unit_field = self.gui.get_object("unit_control")
         unit_field.connect("changed", self.change_unit_init)
@@ -655,10 +673,14 @@ class ProjectGui(object):
             # all of the objects above should trigger redraw
             obj.connect("toggled", lambda widget: \
                     self.settings.emit_event("model-change-after"))
-        self.show_progress_button = self.gui.get_object("ShowToolpathProgressButton")
-        self.settings.add_item("show_drill_progress",
-                self.show_progress_button.get_active,
-                self.show_progress_button.set_active)
+        def disable_gui():
+            self.menubar.set_sensitive(False)
+            main_tab.set_sensitive(False)
+        def enable_gui():
+            self.menubar.set_sensitive(True)
+            main_tab.set_sensitive(True)
+        self.settings.register_event("gui-disable", disable_gui)
+        self.settings.register_event("gui-enable", enable_gui)
         for name, objname in (
                 ("view_light", "OpenGLLight"),
                 ("view_shadow", "OpenGLShadow"),
@@ -798,12 +820,6 @@ class ProjectGui(object):
         self.gui.get_object("ProcessListMoveDown").connect("clicked", self.handle_process_table_event, "move_down")
         self.gui.get_object("ProcessListAdd").connect("clicked", self.handle_process_table_event, "add")
         self.gui.get_object("ProcessListDelete").connect("clicked", self.handle_process_table_event, "delete")
-        # progress bar and task pane
-        self.progress_bar = self.gui.get_object("ProgressBar")
-        self.progress_widget = self.gui.get_object("ProgressWidget")
-        self.task_pane = self.gui.get_object("MainTabs")
-        self.progress_cancel_button = self.gui.get_object("ProgressCancelButton")
-        self.progress_cancel_button.connect("clicked", self.cancel_progress)
         # make sure that the toolpath settings are consistent
         self.toolpath_table = self.gui.get_object("ToolPathTable")
         self.toolpath_table.get_selection().connect("changed", self.toolpath_table_event, "update_buttons")
@@ -1064,9 +1080,7 @@ class ProjectGui(object):
             self.gui.get_object("OpenRecentModel").set_visible(False)
         # load the menubar and connect functions to its items
         self.menubar = uimanager.get_widget("/MenuBar")
-        window_box = self.gui.get_object("WindowBox")
-        window_box.pack_start(self.menubar, False)
-        window_box.reorder_child(self.menubar, 0)
+        self.settings.register_ui("main_window", "Main", self.menubar, -100)
         # some more initialization
         self.reset_preferences()
         self.load_preferences()
@@ -1167,19 +1181,6 @@ class ProjectGui(object):
             self.enable_ode_control.set_active(False)
         else:
             self.enable_ode_control.set_sensitive(True)
-
-    def progress_activity_guard(func):
-        def progress_activity_guard_wrapper(self, *args, **kwargs):
-            if self._progress_running:
-                return
-            self._progress_running = True
-            self._progress_cancel_requested = False
-            self.toggle_progress_bar(True)
-            result = func(self, *args, **kwargs)
-            self.toggle_progress_bar(False)
-            self._progress_running = False
-            return result
-        return progress_activity_guard_wrapper
 
     def gui_activity_guard(func):
         def gui_activity_guard_wrapper(self, *args, **kwargs):
@@ -1380,7 +1381,7 @@ class ProjectGui(object):
 
     def _locate_external_program(self, widget=None, key=None):
         # the button was just activated
-        location = pycam.Utils.get_external_program_location(key)
+        location = get_external_program_location(key)
         if not location:
             log.error("Failed to locate the external program '%s'. " % key \
                     + "Please install the program and try again." \
@@ -1635,17 +1636,15 @@ class ProjectGui(object):
             task = task_list[index]
             if task["enabled"]:
                 enabled_tasks.append(task)
-        progress_bar = self.gui.get_object("MultipleProgressBar")
-        progress_bar.show()
-        for index in range(len(enabled_tasks)):
-            progress_bar.set_fraction(float(index) / len(enabled_tasks))
-            progress_bar.set_text("Toolpath %d/%d" % (index, len(enabled_tasks)))
-            task = enabled_tasks[index]
+        progress = self.settings.get("progress")
+        progress.set_multiple(len(enabled_tasks), "Toolpath")
+        for task in enabled_tasks:
             if not self.generate_toolpath(task["tool"], task["process"],
-                    task["bounds"]):
+                    task["bounds"], progress=progress):
                 # break out of the loop, if cancel was requested
                 break
-        progress_bar.hide()
+            progress.update_multiple()
+        progress.finish()
 
     def update_process_controls(self, widget=None, data=None):
         # possible dependencies of the DropCutter
@@ -1715,7 +1714,6 @@ class ProjectGui(object):
         self.gui.get_object("ExportEMCToolDefinition").set_sensitive(len(self.tool_list) > 0)
 
     @gui_activity_guard
-    @progress_activity_guard
     def toggle_font_dialog_window(self, widget=None, event=None, state=None):
         # only "delete-event" uses four arguments
         # TODO: unify all these "toggle" functions for different windows into one single function (including storing the position)
@@ -1725,7 +1723,6 @@ class ProjectGui(object):
             state = not self._font_dialog_window_visible
         if state:
             if self.font_selector is None:
-                self.update_progress_bar("Initializing fonts")
                 # create it manually to ease access
                 font_selector = gtk.combo_box_new_text()
                 self.gui.get_object("FontSelectionBox").pack_start(
@@ -1855,18 +1852,18 @@ class ProjectGui(object):
                     return data, importer
         return None, None
 
-    @progress_activity_guard
     @gui_activity_guard
     def paste_model_from_clipboard(self, widget=None):
         data, importer = self._get_data_and_importer_from_clipboard()
+        progress = self.settings.get("progress")
         if data:
-            self.update_progress_bar(text="Loading model from clipboard")
+            progress.update(text="Loading model from clipboard")
             text_buffer = StringIO.StringIO(data.data)
             model = importer(text_buffer,
                     program_locations=self._get_program_locations(),
                     unit=self.settings.get("unit"),
                     fonts_cache=self._fonts_cache,
-                    callback=self.update_progress_bar)
+                    callback=progress.update)
             if model:
                 log.info("Loaded a model from clipboard")
                 self.load_model(model)
@@ -1874,6 +1871,7 @@ class ProjectGui(object):
                 log.warn("Failed to load a model from clipboard")
         else:
             log.warn("The clipboard does not contain suitable data")
+        progress.finish()
 
     @gui_activity_guard
     def update_font_dialog_preview(self, widget=None, event=None):
@@ -2384,16 +2382,21 @@ class ProjectGui(object):
                     # transform the model if it is selected
                     # keep the original center of the model
                     self.settings.emit_event("model-change-before")
-                    for model in self.settings.get("models"):
+                    models = self.settings.get("models")
+                    progress = self.settings.get("progress")
+                    progress.disable_cancel()
+                    progress.set_multiple(len(models), "Scaling model")
+                    for model in models:
                         new_x, new_y, new_z = ((model.maxx + model.minx) / 2,
                                 (model.maxy + model.miny) / 2,
                                 (model.maxz + model.minz) / 2)
-                        model.scale(factor)
+                        model.scale(factor, callback=progress.update)
                         cur_x, cur_y, cur_z = self._get_model_center()
-                        self.update_progress_bar("Centering model")
                         model.shift(new_x - cur_x, new_y - cur_y,
                                 new_z - cur_z,
-                                callback=self.update_progress_bar)
+                                callback=progress.update)
+                        progress.update_multiple()
+                    progress.finish()
                 if self.gui.get_object("UnitChangeProcesses").get_active():
                     # scale the process settings
                     for process in self.process_list:
@@ -2613,18 +2616,6 @@ class ProjectGui(object):
 
     def destroy(self, widget=None, data=None):
         self.update_view()
-        # check if there is a running process
-        # BEWARE: this is useless without threading - but we keep it for now
-        if self._progress_running:
-            self.cancel_progress()
-            # wait steps
-            delay = 0.5
-            # timeout in seconds
-            timeout = 5
-            # wait until if is finished
-            while self._progress_running and (timeout > 0):
-                time.sleep(delay)
-                timeout -= delay
         gtk.main_quit()
         self.quit()
 
@@ -2692,7 +2683,6 @@ class ProjectGui(object):
         return program_locations
 
     @gui_activity_guard
-    @progress_activity_guard
     def load_model_file(self, widget=None, filename=None, store_filename=True):
         if callable(filename):
             filename = filename()
@@ -2702,20 +2692,23 @@ class ProjectGui(object):
         if filename:
             file_type, importer = pycam.Importers.detect_file_type(filename)
             if file_type and callable(importer):
-                self.update_progress_bar(text="Loading model ...")
+                progress = self.settings.get("progress")
+                progress.update(text="Loading model ...")
                 # "cancel" is not allowed
-                self.disable_progress_cancel_button()
+                progress.disable_cancel()
                 if self.load_model(importer(filename,
                         program_locations=self._get_program_locations(),
                         unit=self.settings.get("unit"),
                         fonts_cache=self._fonts_cache,
-                        callback=self.update_progress_bar)):
+                        callback=progress.update)):
                     if store_filename:
                         self.set_model_filename(filename)
                     self.add_to_recent_file_list(filename)
-                    return True
+                    result = True
                 else:
-                    return False
+                    result = False
+                progress.finish()
+                return result
             else:
                 log.error("Failed to detect filetype!")
                 return False
@@ -3271,93 +3264,6 @@ class ProjectGui(object):
             self.add_to_recent_file_list(filename)
         self.update_save_actions()
 
-    def toggle_progress_bar(self, status):
-        # always hide the progress button - it will be enabled later
-        self.show_progress_button.hide()
-        if status:
-            self.menubar.set_sensitive(False)
-            self.task_pane.set_sensitive(False)
-            self._progress_start_time = time.time()
-            self.update_progress_bar(text="", percent=0)
-            self.progress_cancel_button.set_sensitive(True)
-            # enable "pulse" mode for a start (in case of unknown ETA)
-            self.progress_bar.pulse()
-            self.progress_widget.show()
-        else:
-            self.progress_widget.hide()
-            self.task_pane.set_sensitive(True)
-            self.menubar.set_sensitive(True)
-
-    def disable_progress_cancel_button(self):
-        """ mainly useful for non-interruptable operations (e.g. model
-        transformations)
-        """
-        self.progress_cancel_button.set_sensitive(False)
-
-    def update_progress_bar(self, text=None, percent=None):
-        if not percent is None:
-            percent = min(max(percent, 0.0), 100.0)
-            self.progress_bar.set_fraction(percent/100.0)
-        if (not percent) and (self.progress_bar.get_fraction() == 0):
-            # use "pulse" mode until we reach 1% of the work to be done
-            self.progress_bar.pulse()
-        # update the GUI
-        current_time = time.time()
-        # Don't update the GUI more often than once per second.
-        # Exception: text-only updates
-        # This restriction improves performance and reduces the
-        # "snappiness" of the GUI.
-        if (self._last_gtk_events_time is None) \
-                or text \
-                or (self._last_gtk_events_time + 1 <= current_time):
-            # "estimated time of arrival" text
-            time_estimation_suffix = " remaining ..."
-            if self.progress_bar.get_fraction() > 0:
-                eta_full = (time.time() - self._progress_start_time) / self.progress_bar.get_fraction()
-                if eta_full > 0:
-                    eta_delta = eta_full - (time.time() - self._progress_start_time)
-                    eta_delta = int(round(eta_delta))
-                    if hasattr(self, "_last_eta_delta"):
-                        previous_eta_delta = self._last_eta_delta
-                        if eta_delta == previous_eta_delta + 1:
-                            # We are currently toggling between two numbers.
-                            # We want to avoid screen flicker, thus we just live
-                            # with the slight inaccuracy.
-                            eta_delta = self._last_eta_delta
-                    self._last_eta_delta = eta_delta
-                    eta_delta_obj = datetime.timedelta(seconds=eta_delta)
-                    eta_text = "%s%s" % (eta_delta_obj, time_estimation_suffix)
-                else:
-                    eta_text = None
-            else:
-                eta_text = None
-            if not text is None:
-                lines = [text]
-            else:
-                old_lines = self.progress_bar.get_text().split(os.linesep)
-                # skip the time estimation line
-                lines = [line for line in old_lines
-                        if not line.endswith(time_estimation_suffix)]
-            if eta_text:
-                lines.append(eta_text)
-            self.progress_bar.set_text(os.linesep.join(lines))
-            # show the "show_tool_button" ("hide" is called in the progress decorator)
-            if self.settings.get("toolpath_in_progress"):
-                self.show_progress_button.show()
-            while gtk.events_pending():
-                gtk.main_iteration()
-            if not text or (self._progress_start_time + 5 < current_time):
-                # We don't store the timining if the text was changed.
-                # This is especially nice for the snappines during font
-                # initialization. This exception is only valid for the first
-                # five seconds of the operation.
-                self._last_gtk_events_time = current_time
-        # return if the user requested a break
-        return self._progress_cancel_requested
-
-    def cancel_progress(self, widget=None):
-        self._progress_cancel_requested = True
-
     def finish_toolpath_simulation(self, widget=None, data=None):
         # hide the simulation tab
         self.simulation_window.hide()
@@ -3428,7 +3334,6 @@ class ProjectGui(object):
                 progress_value_percent)
         return True
 
-    @progress_activity_guard
     def update_toolpath_simulation_ode(self, widget=None, toolpath=None):
         import pycam.Simulation.ODEBlocks as ODEBlocks
         # get the currently selected toolpath, if none is give
@@ -3460,10 +3365,11 @@ class ProjectGui(object):
         # update the view
         self.update_view()
         # calculate the simulation and show it simulteneously
+        progress = self.settings.get("progress")
         for path_index, path in enumerate(paths):
             progress_text = "Simulating path %d/%d" % (path_index, len(paths))
             progress_value_percent = 100.0 * path_index / len(paths)
-            if self.update_progress_bar(progress_text, progress_value_percent):
+            if progress.update(text=progress_text, percent=progress_value_percent):
                 # break if the user pressed the "cancel" button
                 break
             for index in range(len(path.points)):
@@ -3475,8 +3381,9 @@ class ProjectGui(object):
                         simulation_backend.process_cutter_movement(start, end)
                 self.update_view()
                 # break the loop if someone clicked the "cancel" button
-                if self.update_progress_bar():
+                if progress.update():
                     break
+            progress.finish()
         # enable the simulation widget again (if we were started from the GUI)
         if not widget is None:
             self.gui.get_object("SimulationTab").set_sensitive(True)
@@ -3495,10 +3402,15 @@ class ProjectGui(object):
         # update the toolpath simulation repeatedly
         gobject.timeout_add(time_step, self.update_toolpath_simulation)
 
-    @progress_activity_guard
-    def generate_toolpath(self, tool_settings, process_settings, bounds):
+    def generate_toolpath(self, tool_settings, process_settings, bounds,
+                progress=None):
         start_time = time.time()
-        self.update_progress_bar("Preparing toolpath generation")
+        if progress:
+            use_multi_progress = True
+        else:
+            use_multi_progress = False
+            progress = self.settings.get("progress")
+        progress.update(text="Preparing toolpath generation")
         parent = self
         class UpdateView(object):
             def __init__(self, func, max_fps=1):
@@ -3518,17 +3430,19 @@ class ProjectGui(object):
                         if self.func:
                             self.func()
                 # break the loop if someone clicked the "cancel" button
-                return parent.update_progress_bar(text, percent)
+                return progress.update(text=text, percent=percent)
         draw_callback = UpdateView(self.update_view,
                 max_fps=self.settings.get("drill_progress_max_fps")).update
 
-        self.update_progress_bar("Generating collision model")
+        progress.update(text="Generating collision model")
 
         # turn the toolpath settings into a dict
         toolpath_settings = self.get_toolpath_settings(tool_settings,
                 process_settings, bounds)
         if toolpath_settings is None:
             # behave as if "cancel" was requested
+            if not use_multi_progress:
+                progress.finish()
             return True
 
         self.cutter = toolpath_settings.get_tool()
@@ -3537,13 +3451,15 @@ class ProjectGui(object):
         model = self.settings.get("models")[0]
 
         # run the toolpath generation
-        self.update_progress_bar("Starting the toolpath generation")
+        progress.update(text="Starting the toolpath generation")
         try:
             toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(
                     model, toolpath_settings, callback=draw_callback)
         except Exception:
             # catch all non-system-exiting exceptions
             report_exception()
+            if not use_multi_progress:
+                progress.finish()
             return False
 
         log.info("Toolpath generation time: %f" % (time.time() - start_time))
@@ -3553,12 +3469,12 @@ class ProjectGui(object):
         if toolpath is None:
             # user interruption
             # return "False" if the action was cancelled
-            return not self.update_progress_bar()
+            result = not progress.update()
         elif isinstance(toolpath, basestring):
             # an error occoured - "toolpath" contains the error message
             log.error("Failed to generate toolpath: %s" % toolpath)
             # we were not successful (similar to a "cancel" request)
-            return False
+            result = False
         else:
             # hide the previous toolpath if it is the only visible one (automatic mode)
             if (len([True for path in self.toolpath if path.visible]) == 1) \
@@ -3572,7 +3488,11 @@ class ProjectGui(object):
             self.update_toolpath_table()
             self.update_view()
             # return "False" if the action was cancelled
-            return not self.update_progress_bar()
+            cancelled = progress.update()
+            result = not cancelled
+        if not use_multi_progress:
+            progress.finish()
+        return result
 
     def get_toolpath_settings(self, tool_settings, process_settings, bounds):
         toolpath_settings = pycam.Gui.Settings.ToolpathSettings()

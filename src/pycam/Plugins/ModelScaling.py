@@ -109,11 +109,14 @@ class ModelScaling(pycam.Plugins.PluginBase):
         if (factor <= 0) or (factor == 1):
             return
         self.core.emit_event("model-change-before")
-        self.core.get("update_progress")("Scaling model")
-        self.core.get("disable_progress_cancel_button")()
-        # TODO: main/sub progress for multiple models
+        progress = self.core.get("progress")
+        progress.update(text="Scaling model")
+        progress.disable_cancel()
+        progress.set_multiple(len(models), "Model")
         for model in models:
-            model.scale(factor, callback=self.core.get("update_progress"))
+            model.scale(factor, callback=progress.update)
+            progress.update_multiple()
+        progress.finish()
         self.core.emit_event("model-change-after")
 
     def _scale_model_axis_fit(self, widget=None, proportionally=False):
@@ -129,12 +132,14 @@ class ModelScaling(pycam.Plugins.PluginBase):
         factor = value / (getattr(model, "max" + axis_suffix) - \
                 getattr(model, "min" + axis_suffix))
         self.core.emit_event("model-change-before")
-        self.core.get("update_progress")("Scaling model")
-        self.core.get("disable_progress_cancel_button")()
-        # TODO: main/sub progress for multiple models
+        progress = self.core.get("progress")
+        progress.update(text="Scaling model")
+        progress.disable_cancel()
+        progress.set_multiple(len(models), "Model")
         for model in models:
+            # TODO: use different scaling for multiple models
             if proportionally:
-                model.scale(factor, callback=self.core.get("update_progress"))
+                model.scale(factor, callback=progress.update)
             else:
                 factor_x, factor_y, factor_z = (1, 1, 1)
                 if index == 0:
@@ -146,6 +151,8 @@ class ModelScaling(pycam.Plugins.PluginBase):
                 else:
                     return
                 model.scale(factor_x, factor_y, factor_z,
-                        callback=self.core.get("update_progress"))
+                        callback=progress.update)
+            progress.update_multiple()
+        progress.finish()
         self.core.emit_event("model-change-after")
 

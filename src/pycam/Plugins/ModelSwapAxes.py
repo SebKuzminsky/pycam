@@ -58,15 +58,18 @@ class ModelSwapAxes(pycam.Plugins.PluginBase):
         if not models:
             return
         self.core.emit_event("model-change-before")
-        self.core.get("update_progress")("Swap axes of model")
-        self.core.get("disable_progress_cancel_button")()
         for axes, template in (("XY", "x_swap_y"), ("XZ", "x_swap_z"),
                 ("YZ", "y_swap_z")):
             if self.gui.get_object("SwapAxes%s" % axes).get_active():
                 break
-        # TODO: main/sub progress for multiple models
+        progress = self.core.get("progress")
+        progress.update(text="Swap axes of model")
+        progress.disable_cancel()
+        progress.set_multiple(len(models), "Model")
         for model in models:
             model.transform_by_template(template,
-                    callback=self.core.get("update_progress"))
+                    callback=progress.update)
+            progress.update_multiple()
+        progress.finish()
         self.core.emit_event("model-change-after")
 

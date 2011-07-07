@@ -84,14 +84,12 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
             extrude_widget.hide()
 
     def _extrude_model(self, widget=None):
-        models = self._get_extrudable_models()
-        if not models:
+        selected_models = self._get_extrudable_models()
+        if not selected_models:
             return
-        self.core.get("update_progress")("Extruding models")
         extrusion_type_selector = self.gui.get_object("ExtrusionTypeSelector")
         type_model = extrusion_type_selector.get_model()
         type_active = extrusion_type_selector.get_active()
-        # TODO: progress bar for main/sub if more than one model is selected
         if type_active >= 0:
             type_string = type_model[type_active][0]
             height = self.gui.get_object("ExtrusionHeight").get_value()
@@ -111,9 +109,12 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
                 self.log.error("Unknown extrusion type selected: %s" % type_string)
                 return
             model_manager = self.core.get("models")
-            for model in models:
+            progress = self.core.get("progress")
+            progress.update(text="Extruding models")
+            progress.set_multiple(len(selected_models), "Model")
+            for model in selected_models:
                 new_model = model.extrude(stepping=grid_size, func=func,
-                        callback=self.core.get("update_progress"))
+                        callback=progress.update)
                 if new_model:
                     self.core.get("load_model")(new_model)
                     try:
@@ -126,4 +127,6 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
                                 (new_name, original_name))
                     except LookupError:
                         pass
+                progress.update_multiple()
+            progress.finish()
 

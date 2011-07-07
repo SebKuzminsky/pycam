@@ -54,16 +54,21 @@ class ModelPlaneMirror(pycam.Plugins.PluginBase):
             plane_widget.hide()
 
     def _plane_mirror(self, widget=None):
-        model = self.core.get("model")
-        if not model:
+        models = self.core.get("models").get_selected()
+        if not models:
             return
         self.core.emit_event("model-change-before")
-        self.core.get("update_progress")("Mirroring model")
-        self.core.get("disable_progress_cancel_button")()
+        progress = self.core.get("progress")
+        progress.update(text="Mirroring model")
+        progress.disable_cancel()
+        progress.set_multiple(len(models), "Model")
         for plane in ("XY", "XZ", "YZ"):
             if self.gui.get_object("MirrorPlane%s" % plane).get_active():
                 break
-        model.transform_by_template("%s_mirror" % plane.lower(),
-                callback=self.core.get("update_progress"))
+        for model in models:
+            model.transform_by_template("%s_mirror" % plane.lower(),
+                    callback=progress.update)
+            progress.update_multiple()
+        progress.finish()
         self.core.emit_event("model-change-after")
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-$Id: __init__.py 1061 2011-04-12 13:14:12Z sumpfralle $
+$Id$
 
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 

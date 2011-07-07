@@ -73,8 +73,9 @@ class ModelProjection(pycam.Plugins.PluginBase):
         models = self._get_projectable_models()
         if not models:
             return
-        self.core.get("update_progress")("Calculating 2D projection")
-        # TODO: main/sub progress for multiple models
+        progress = self.core.get("progress")
+        progress.update(text="Calculating 2D projection")
+        progress.set_multiple(len(models), "Model")
         for model in models:
             for objname, z_level in (("ProjectionModelTop", model.maxz),
                     ("ProjectionModelMiddle", (model.minz + model.maxz) / 2.0),
@@ -84,7 +85,8 @@ class ModelProjection(pycam.Plugins.PluginBase):
                 if self.gui.get_object(objname).get_active():
                     plane = Plane(Point(0, 0, z_level), Vector(0, 0, 1))
                     self.log.info("Projecting 3D model at level z=%g" % plane.p.z)
-                    new_model = model.get_waterline_contour(plane)
+                    new_model = model.get_waterline_contour(plane,
+                            callback=progress.update)
                     if new_model:
                         self.core.get("load_model")(new_model)
                         model_manager = self.core.get("models")
@@ -102,4 +104,6 @@ class ModelProjection(pycam.Plugins.PluginBase):
                         self.log.warn("The 2D projection at z=%g is empty. Aborted." % \
                                 plane.p.z)
                     break
+            progress.update_multiple()
+        progress.finish()
 

@@ -60,8 +60,6 @@ class ModelRotation(pycam.Plugins.PluginBase):
         if not models:
             return
         self.core.emit_event("model-change-before")
-        self.core.get("update_progress")("Rotating model")
-        self.core.get("disable_progress_cancel_button")()
         for axis in "XYZ":
             if self.gui.get_object("RotationAxis%s" % axis).get_active():
                 break
@@ -75,9 +73,13 @@ class ModelRotation(pycam.Plugins.PluginBase):
                 break
         matrix = pycam.Geometry.Matrix.get_rotation_matrix_axis_angle(
                 axis_vector, angle, use_radians=False)
-        # TODO: main/sub progress for multiple models
+        progress = self.core.get("progress")
+        progress.update(text="Rotating model")
+        progress.disable_cancel()
+        progress.set_multiple(len(models), "Model")
         for model in models:
-            model.transform_by_matrix(matrix,
-                    callback=self.core.get("update_progress"))
+            model.transform_by_matrix(matrix, callback=progress.update)
+            progress.update_multiple()
         self.core.emit_event("model-change-after")
+        progress.finish()
 

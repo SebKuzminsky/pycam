@@ -142,7 +142,7 @@ class PluginManager(object):
         _log.debug("Initializing module %s (%s)" % (plugin_name, filename))
         new_plugin = obj(self.core, plugin_name)
         if not new_plugin.setup():
-            raise RuntimeError("Failed to load plugin '%s'" % str(name))
+            raise RuntimeError("Failed to load plugin '%s'" % str(plugin_name))
         else:
             self.modules[plugin_name] = new_plugin
 

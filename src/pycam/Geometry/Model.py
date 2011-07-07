@@ -103,6 +103,9 @@ class BaseModel(TransformableContainer):
     def to_OpenGL(self, visible_filter=None, show_directions=False):
         if not GL_enabled:
             return
+        gl_color = tuple([float(val) for val in GL.glGetFloatv(GL.GL_CURRENT_COLOR)])
+        # the index should contain all relevant context details
+        cache_index = (show_directions, gl_color)
         if not visible_filter is None:
             for item in self.next():
                 # ignore invisble things like the normal of a ContourModel
@@ -110,17 +113,17 @@ class BaseModel(TransformableContainer):
                     do_paint, color = visible_filter(item)
                     if do_paint:
                         item.to_OpenGL(color, show_directions=show_directions)
-        elif not show_directions in self._opengl_display_cache:
+        elif not cache_index in self._opengl_display_cache:
             # compile an OpenGL display list
             # Rendering a display list takes less than 5% of the time for a
             # complete rebuild.
             list_index = GL.glGenLists(1)
             if list_index > 0:
-                self._opengl_display_cache[show_directions] = list_index
+                self._opengl_display_cache[cache_index] = list_index
                 # somehow "GL_COMPILE_AND_EXECUTE" fails - we render it later
                 GL.glNewList(list_index, GL.GL_COMPILE)
             for item in self.next():
-                # ignore invisble things like the normal of a ContourModel
+                # ignore invisible things like the normal of a ContourModel
                 if hasattr(item, "to_OpenGL"):
                     item.to_OpenGL(show_directions=show_directions)
             if list_index > 0:
@@ -128,7 +131,7 @@ class BaseModel(TransformableContainer):
                 GL.glCallList(list_index)
         else:
             # render a previously compiled display list
-            GL.glCallList(self._opengl_display_cache[show_directions])
+            GL.glCallList(self._opengl_display_cache[cache_index])
 
     def is_export_supported(self):
         return not self._export_function is None
@@ -289,16 +292,26 @@ class Model(BaseModel):
             return self._t_kdtree.Search(minx, maxx, miny, maxy)
         return self._triangles
 
-    def get_waterline_contour(self, plane):
+    def get_waterline_contour(self, plane, callback=None):
         collision_lines = []
+        progress_max = 2 * len(self._triangles)
+        counter = 0
         for t in self._triangles:
+            if callback and callback(percent=100.0 * counter / progress_max):
+                return
             collision_line = plane.intersect_triangle(t, counter_clockwise=True)
             if not collision_line is None:
                 collision_lines.append(collision_line)
+            else:
+                counter += 1
+            counter += 1
         # combine these lines into polygons
         contour = ContourModel(plane=plane)
         for line in collision_lines:
+            if callback and callback(percent=100.0 * counter / progress_max):
+                return
             contour.append(line)
+            counter += 1
         log.debug("Waterline: %f - %d - %s" % (plane.p.z,
                 len(contour.get_polygons()),
                 [len(p.get_lines()) for p in contour.get_polygons()]))

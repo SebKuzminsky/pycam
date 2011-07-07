@@ -75,14 +75,17 @@ class ModelPosition(pycam.Plugins.PluginBase):
         if not models:
             return
         self.core.emit_event("model-change-before")
-        self.core.get("update_progress")("Aligning model")
-        self.core.get("disable_progress_cancel_button")()
+        progress = self.core.get("progress")
+        progress.update(text="Aligning model")
+        progress.disable_cancel()
+        progress.set_multiple(len(models), "Model")
         shift = [self.gui.get_object("ShiftPosition%s" % axis).get_value()
                 for axis in "XYZ"]
-        # TODO: main/sub progress bar for multiple models
         for model in models:
             model.shift(shift[0], shift[1], shift[2],
-                    callback=self.core.get("update_progress"))
+                    callback=progress.update)
+            progress.update_multiple()
+        progress.finish()
         self.core.emit_event("model-change-after")
 
     def _align_model(self, widget=None):
@@ -90,8 +93,6 @@ class ModelPosition(pycam.Plugins.PluginBase):
         if not models:
             return
         self.core.emit_event("model-change-before")
-        self.core.get("update_progress")("Shifting model")
-        self.core.get("disable_progress_cancel_button")()
         dest = [self.gui.get_object("AlignPosition%s" % axis).get_value()
                 for axis in "XYZ"]
         shift_values = []
@@ -110,10 +111,14 @@ class ModelPosition(pycam.Plugins.PluginBase):
                     else:
                         shift = dest - max_axis
                     shift_values.append(shift)
-        # TODO: main/sub progress bar for multiple models
+        progress = self.core.get("progress")
+        progress.update(text="Shifting model")
+        progress.disable_cancel()
+        progress.set_multiple(len(models), "Model")
         for model in models:
             model.shift(shift_values[0], shift_values[1], shift_values[2],
-                    callback=self.core.get("update_progress"))
+                    callback=progress.update)
+            progress.update_multiple()
+        progress.finish()
         self.core.emit_event("model-change-after")
-
 
