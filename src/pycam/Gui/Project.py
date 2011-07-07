@@ -36,15 +36,12 @@ from pycam.Geometry.Plane import Plane
 import pycam.Geometry.Path
 import pycam.Utils.log
 from pycam.Utils.locations import get_data_file_location, \
-        get_ui_file_location, get_font_dir, get_external_program_location
+        get_ui_file_location, get_external_program_location
 import pycam.Utils
 from pycam.Geometry.utils import sqrt
 from pycam.Gui.OpenGLTools import ModelViewWindowGL
-from pycam.Geometry.Letters import TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, \
-        TEXT_ALIGN_RIGHT
 import pycam.Geometry.Model
 from pycam.Toolpath import Bounds
-import pycam.Utils.FontCache
 import pycam.Plugins
 from pycam import VERSION
 import pycam.Physics.ode_physics
@@ -328,8 +325,6 @@ class ProjectGui(object):
 
     def __init__(self, no_dialog=False):
         self.settings = EventCore()
-        self.plugin_manager = pycam.Plugins.PluginManager(core=self.settings)
-        self.plugin_manager.import_plugins()
         self.gui_is_active = False
         self.view3d = None
         # during initialization any dialog (e.g. "Unit change") is not allowed
@@ -337,8 +332,6 @@ class ProjectGui(object):
         self.no_dialog = True
         self._batch_queue = []
         self._undo_states = []
-        self._fonts_cache = pycam.Utils.FontCache.FontCache(get_font_dir(),
-                core=self.settings)
         self.gui = gtk.Builder()
         gtk_build_file = get_ui_file_location(GTKBUILD_FILE)
         if gtk_build_file is None:
@@ -390,7 +383,6 @@ class ProjectGui(object):
                 ("Toggle3DView", self.toggle_3d_view, None, "<Control><Shift>v"),
                 ("ToggleLogWindow", self.toggle_log_window, None, "<Control>l"),
                 ("ToggleProcessPoolWindow", self.toggle_process_pool_window, None, None),
-                ("ShowFontDialog", self.toggle_font_dialog_window, None, "<Control><Shift>t"),
                 ("UndoButton", self._restore_undo_state, None, "<Control>z"),
                 ("CopyModelToClipboard", self.copy_model_to_clipboard, None, "<Control>c"),
                 ("PasteModelFromClipboard", self.paste_model_from_clipboard, None, "<Control>v"),
@@ -489,51 +481,21 @@ class ProjectGui(object):
         self.gui.get_object("ProcessPoolWindowClose").connect("clicked", self.toggle_process_pool_window, False)
         self.gui.get_object("ProcessPoolRefreshInterval").set_value(3)
         self.process_pool_model = self.gui.get_object("ProcessPoolStatisticsModel")
-        # "font dialog" window
-        self.font_dialog_window = self.gui.get_object("FontDialog")
-        self.font_dialog_window.connect("delete-event",
-                self.toggle_font_dialog_window, False)
-        self.font_dialog_window.connect("destroy",
-                self.toggle_font_dialog_window, False)
-        self.gui.get_object("FontDialogCancel").connect("clicked",
-                self.toggle_font_dialog_window, False)
-        self.gui.get_object("FontDialogApply").connect("clicked",
-                self.import_from_font_dialog)
-        self.gui.get_object("FontDialogSave").connect("clicked",
-                self.export_from_font_dialog)
-        self.gui.get_object("FontDialogCopy").connect("clicked",
-                self.copy_font_dialog_to_clipboard)
-        self.gui.get_object("FontDialogInputBuffer").connect("changed",
-                self.update_font_dialog_preview)
-        self.gui.get_object("FontDialogPreview").connect("configure_event",
-                self.update_font_dialog_preview)
-        self.gui.get_object("FontDialogPreview").connect("expose_event",
-                self.update_font_dialog_preview)
-        for objname in ("FontSideSkewValue", "FontCharacterSpacingValue",
-                "FontLineSpacingValue"):
-            obj = self.gui.get_object(objname)
-            # set default value before connecting the change-handler
-            if objname != "FontSideSkewValue":
-                obj.set_value(1.0)
-            obj.connect("value-changed",
-                    self.update_font_dialog_preview)
-        for objname in ("FontTextAlignLeft", "FontTextAlignCenter",
-                "FontTextAlignRight"):
-            self.gui.get_object(objname).connect("toggled",
-                    self.update_font_dialog_preview)
-        self._font_dialog_window_visible = False
-        self._font_dialog_window_position = None
+        # menu bar
+        uimanager = gtk.UIManager()
+        self.settings.set("gtk-uimanager", uimanager)
+        self._accel_group = uimanager.get_accel_group()
+        self.settings.add_item("gtk-accel-group", lambda: self._accel_group)
+        for window in (self.window, self.about_window, self.preferences_window,
+                self.log_window, self.process_pool_window):
+            window.add_accel_group(self._accel_group)
         # set defaults
-        # fallback - in case of a failure when opening a model file
-        model = pycam.Importers.TestModel.get_test_model()
-        self.settings.get("models").append(model)
         self.toolpath = pycam.Toolpath.ToolpathList()
         self.cutter = None
         self.tool_list = []
         self.process_list = []
         self.bounds_list = []
         self.task_list = []
-        self.font_selector = None
         self._last_unit = None
         self._toolpath_for_grid_data = {}
         # add some dummies - to be implemented later ...
@@ -1034,13 +996,6 @@ class ProjectGui(object):
         self.status_bar = self.gui.get_object("StatusBar")
         self.gui.get_object("StatusBarEventBox").connect("button-press-event",
                 self.toggle_log_window)
-        # menu bar
-        uimanager = gtk.UIManager()
-        self._accel_group = uimanager.get_accel_group()
-        for window in (self.window, self.about_window, self.preferences_window,
-                self.log_window, self.process_pool_window,
-                self.font_dialog_window):
-            window.add_accel_group(self._accel_group)
         # set the icons (in different sizes) for all windows
         gtk.window_set_default_icon_list(*get_icons_pixbuffers())
         # load menu data
@@ -1081,6 +1036,12 @@ class ProjectGui(object):
         # load the menubar and connect functions to its items
         self.menubar = uimanager.get_widget("/MenuBar")
         self.settings.register_ui("main_window", "Main", self.menubar, -100)
+        # initialize plugins
+        self.plugin_manager = pycam.Plugins.PluginManager(core=self.settings)
+        self.plugin_manager.import_plugins()
+        # fallback - in case of a failure when opening a model file
+        model = pycam.Importers.TestModel.get_test_model()
+        self.settings.get("models").append(model)
         # some more initialization
         self.reset_preferences()
         self.load_preferences()
@@ -1713,97 +1674,6 @@ class ProjectGui(object):
                 obj.set_value(default_value)
         self.gui.get_object("ExportEMCToolDefinition").set_sensitive(len(self.tool_list) > 0)
 
-    @gui_activity_guard
-    def toggle_font_dialog_window(self, widget=None, event=None, state=None):
-        # only "delete-event" uses four arguments
-        # TODO: unify all these "toggle" functions for different windows into one single function (including storing the position)
-        if state is None:
-            state = event
-        if state is None:
-            state = not self._font_dialog_window_visible
-        if state:
-            if self.font_selector is None:
-                # create it manually to ease access
-                font_selector = gtk.combo_box_new_text()
-                self.gui.get_object("FontSelectionBox").pack_start(
-                        font_selector, expand=False, fill=False)
-                sorted_keys = list(self._fonts_cache.get_font_names())
-                sorted_keys.sort(key=lambda x: x.upper())
-                for name in sorted_keys:
-                    font_selector.append_text(name)
-                if sorted_keys:
-                    font_selector.set_active(0)
-                else:
-                    log.warn("No single-line fonts found!")
-                font_selector.connect("changed",
-                        self.update_font_dialog_preview)
-                font_selector.show()
-                self.font_selector = font_selector
-            if len(self._fonts_cache) > 0:
-                # show the dialog only if fonts are available
-                if self._font_dialog_window_position:
-                    self.font_dialog_window.move(
-                            *self._font_dialog_window_position)
-                self.font_dialog_window.show()
-                self._font_dialog_window_visible = True
-            else:
-                log.error("No fonts were found on your system. " \
-                        + "Please check the Log Window for details.")
-        else:
-            self._font_dialog_window_position = \
-                    self.font_dialog_window.get_position()
-            self.font_dialog_window.hide()
-            self._font_dialog_window_visible = False
-        # don't close the window - just hide it (for "delete-event")
-        return True
-
-    def get_font_dialog_text_rendered(self):
-        input_field = self.gui.get_object("FontDialogInput")
-        text_buffer = input_field.get_buffer()
-        text = text_buffer.get_text(text_buffer.get_start_iter(),
-                text_buffer.get_end_iter())
-        text = unicode(text)
-        if text:
-            skew = self.gui.get_object("FontSideSkewValue").get_value()
-            line_space = self.gui.get_object("FontLineSpacingValue").get_value()
-            pitch = self.gui.get_object("FontCharacterSpacingValue").get_value()
-            # get the active align setting
-            for objname, value, justification in (
-                    ("FontTextAlignLeft", TEXT_ALIGN_LEFT, gtk.JUSTIFY_LEFT),
-                    ("FontTextAlignCenter", TEXT_ALIGN_CENTER, gtk.JUSTIFY_CENTER),
-                    ("FontTextAlignRight", TEXT_ALIGN_RIGHT, gtk.JUSTIFY_RIGHT)):
-                obj = self.gui.get_object(objname)
-                if obj.get_active():
-                    align = value
-                    input_field.set_justification(justification)
-            font_name = self.font_selector.get_active_text()
-            charset = self._fonts_cache.get_font(font_name)
-            return charset.render(text, skew=skew, line_spacing=line_space,
-                    pitch=pitch, align=align)
-        else:
-            # empty text
-            return None
-
-    @gui_activity_guard
-    def import_from_font_dialog(self, widget=None):
-        self.load_model(self.get_font_dialog_text_rendered())
-        self.append_to_queue(self.toggle_font_dialog_window)
-
-    def export_from_font_dialog(self, widget=None):
-        text_model = self.get_font_dialog_text_rendered()
-        if text_model and (not text_model.maxx is None):
-            self.save_model(model=text_model, store_filename=False)
-
-    def copy_font_dialog_to_clipboard(self, widget=None):
-        text_model = self.get_font_dialog_text_rendered()
-        if text_model and (not text_model.maxx is None):
-            text_buffer = StringIO.StringIO()
-            text_model.export(comment=self.get_meta_data(),
-                    unit=self.settings.get("unit")).write(text_buffer)
-            text_buffer.seek(0)
-            text = text_buffer.read()
-            self._copy_text_to_clipboard(text, CLIPBOARD_TARGETS["svg"])
-
     def update_clipboard_state(self, clipboard=None, event=None):
         data, importer = self._get_data_and_importer_from_clipboard()
         paste_button = self.gui.get_object("PasteModelFromClipboard")
@@ -1862,7 +1732,7 @@ class ProjectGui(object):
             model = importer(text_buffer,
                     program_locations=self._get_program_locations(),
                     unit=self.settings.get("unit"),
-                    fonts_cache=self._fonts_cache,
+                    fonts_cache=self.settings.get("fonts"),
                     callback=progress.update)
             if model:
                 log.info("Loaded a model from clipboard")
@@ -1872,67 +1742,6 @@ class ProjectGui(object):
         else:
             log.warn("The clipboard does not contain suitable data")
         progress.finish()
-
-    @gui_activity_guard
-    def update_font_dialog_preview(self, widget=None, event=None):
-        if not self.font_selector:
-            # not initialized
-            return
-        if len(self._fonts_cache) == 0:
-            # empty
-            return
-        font_name = self.font_selector.get_active_text()
-        font = self._fonts_cache.get_font(font_name)
-        self.gui.get_object("FontAuthorText").set_label(
-                os.linesep.join(font.get_authors()))
-        preview_widget = self.gui.get_object("FontDialogPreview")
-        final_drawing_area = preview_widget.window
-        text_model = self.get_font_dialog_text_rendered()
-        # always clean the background
-        x, y, width, height = preview_widget.get_allocation()
-        drawing_area = gtk.gdk.Pixmap(final_drawing_area, width, height)
-        drawing_area.draw_rectangle(preview_widget.get_style().white_gc, True,
-                0, 0, width, height)
-        # carefully check if there are lines in the rendered text
-        if text_model and (not text_model.maxx is None) and \
-                (text_model.maxx > text_model.minx):
-            # leave a small border around the preview
-            border = 3
-            x_fac = (width - 1 - 2 * border) / \
-                    (text_model.maxx - text_model.minx)
-            y_fac = (height - 1 - 2 * border) / \
-                    (text_model.maxy - text_model.miny)
-            factor = min(x_fac, y_fac)
-            # vertically centered preview
-            y_offset = int((height - 2 * border - \
-                    factor * (text_model.maxy - text_model.miny)) // 2)
-            gc = drawing_area.new_gc()
-            if text_model.minx == 0:
-                # left align
-                get_virtual_x = lambda x: int(x * factor) + border
-            elif text_model.maxx == 0:
-                # right align
-                get_virtual_x = lambda x: width + int(x * factor) - 1 - border
-            else:
-                # center align
-                get_virtual_x = lambda x: \
-                        int(width / 2.0 + x * factor) - 1 - border
-            get_virtual_y = lambda y: -y_offset + \
-                    height - int((y - text_model.miny) * factor) - 1 - border
-            for polygon in text_model.get_polygons():
-                draw_points = []
-                points = polygon.get_points()
-                if polygon.is_closed:
-                    # add the first point again to close the polygon
-                    points.append(points[0])
-                for point in points:
-                    x = get_virtual_x(point.x)
-                    y = get_virtual_y(point.y)
-                    draw_points.append((x, y))
-                drawing_area.draw_lines(gc, draw_points)
-        final_gc = final_drawing_area.new_gc()
-        final_drawing_area.draw_drawable(final_gc, drawing_area, 0, 0, 0, 0,
-                -1, -1)
 
     @gui_activity_guard
     def toggle_about_window(self, widget=None, event=None, state=None):
@@ -2699,7 +2508,7 @@ class ProjectGui(object):
                 if self.load_model(importer(filename,
                         program_locations=self._get_program_locations(),
                         unit=self.settings.get("unit"),
-                        fonts_cache=self._fonts_cache,
+                        fonts_cache=self.settings.get("fonts"),
                         callback=progress.update)):
                     if store_filename:
                         self.set_model_filename(filename)

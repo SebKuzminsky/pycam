@@ -26,7 +26,7 @@ import pycam.Plugins
 class Toolpaths(pycam.Plugins.ListPluginBase):
 
     def setup(self):
-        self.core.add_item("toolpaths", self)
+        self.core.add_item("toolpaths", lambda: self)
         return True
 
     def teardown(self):

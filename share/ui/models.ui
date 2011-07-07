@@ -5,7 +5,7 @@
   <object class="GtkListStore" id="ModelList">
     <columns>
       <!-- column-name id -->
-      <column type="gint"/>
+      <column type="gulong"/>
       <!-- column-name name -->
       <column type="gchararray"/>
       <!-- column-name state -->

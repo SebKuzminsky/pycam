@@ -94,9 +94,14 @@ class Settings(object):
 
     def get(self, key, default=None):
         if self.items.has_key(key):
-            return self.items[key][self.GET_INDEX]()
+            try:
+                result = self.items[key][self.GET_INDEX]()
+            except TypeError, err_msg:
+                log.info("Failed to retrieve setting '%s': %s" % (key, err_msg))
+                result = None
         else:
-            return default
+            result = default
+        return result
 
     def set(self, key, value):
         if not self.items.has_key(key):

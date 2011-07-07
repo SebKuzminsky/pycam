@@ -99,11 +99,13 @@ class FontCache(object):
         if self.core:
             progress = self.core.get("progress")
             progress.set_multiple(len(self._unused_font_files), "Loading font")
+        else:
+            progress = None
         while not self.is_loading_complete():
-            if self.core:
-                progress.update_multiple()
             self._load_next_file(progress=progress)
-        if self.core:
+            if progress:
+                progress.update_multiple()
+        if progress:
             progress.finish()
 
     def _load_next_file(self, progress=None):
@@ -112,11 +114,11 @@ class FontCache(object):
         filename = self._unused_font_files.pop(0)
         if progress:
             callback = progress.update
+            progress.update(text="Loading font file %s" % \
+                    os.path.basename(filename))
         else:
             callback = None
         charset = pycam.Importers.CXFImporter.import_font(filename, callback=callback)
-        if progress:
-            progress.finish()
         if not charset is None:
             for name in charset.get_names():
                 self.fonts[name] = charset

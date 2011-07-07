@@ -35,6 +35,7 @@ class Models(pycam.Plugins.ListPluginBase):
     ATTRIBUTE_MAP = {"name": COLUMN_NAME, "visible": COLUMN_VISIBLE,
             "color": COLUMN_COLOR, "alpha": COLUMN_ALPHA}
     ICONS = {"visible": "visible.svg", "hidden": "visible_off.svg"}
+    # TODO: move this to the preferences dialog
     DEFAULT_COLOR = (0.5, 0.5, 1.0, 1.0)
 
     def setup(self):
