@@ -150,13 +150,14 @@ class PluginManager(object):
 class ListPluginBase(PluginBase, list):
 
     ACTION_UP, ACTION_DOWN, ACTION_DELETE, ACTION_CLEAR = range(4)
+    LIST_ATTRIBUTE_MAP = {}
 
     def __init__(self, *args, **kwargs):
         super(ListPluginBase, self).__init__(*args, **kwargs)
         self._update_model_funcs = []
         def get_function(func_name):
             return lambda *args, **kwargs: self._change_wrapper(func_name, *args, **kwargs)
-        for name in "append", "insert", "pop", "reverse", "sort":
+        for name in ("append", "insert", "pop", "reverse", "sort"):
             setattr(self, name, get_function(name))
 
     def _change_wrapper(self, func_name, *args, **kwargs):
@@ -278,4 +279,25 @@ class ListPluginBase(PluginBase, list):
             model.connect(signal, self._update_list_action_button_state,
                     modelview, action, button)
         button.connect("clicked", self._list_action, modelview, action)
+
+    def get_attr(self, model, attr):
+        return self.__get_set_attr(model, attr, write=False)
+
+    def set_attr(self, model, attr, value):
+        return self.__get_set_attr(model, attr, value=value, write=True)
+
+    def __get_set_attr(self, model, attr, value=None, write=True):
+        if attr in self.LIST_ATTRIBUTE_MAP:
+            col = self.LIST_ATTRIBUTE_MAP[attr]
+            for index in range(len(self)):
+                if self._treemodel[index][self.COLUMN_ID] == id(model):
+                    if write:
+                        self._treemodel[index][col] = value
+                        return
+                    else:
+                        return self._treemodel[index][col]
+            raise IndexError("Model not found: %s" % str(model))
+        else:
+            raise KeyError("Attribute '%s' is not part of this list: %s" % \
+                    (attr, ", ".join(self.LIST_ATTRIBUTE_MAP.keys())))
 

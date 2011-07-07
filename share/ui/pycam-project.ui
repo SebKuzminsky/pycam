@@ -22,23 +22,6 @@
       <column type="gchararray"/>
     </columns>
   </object>
-  <object class="GtkListStore" id="ToolList">
-    <columns>
-      <!-- column-name index -->
-      <column type="guint"/>
-      <!-- column-name id -->
-      <column type="guint"/>
-      <!-- column-name description -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0">0</col>
-        <col id="1">1</col>
-        <col id="2" translatable="yes">SphericalDrill 12mm</col>
-      </row>
-    </data>
-  </object>
   <object class="GtkListStore" id="ProcessList">
     <columns>
       <!-- column-name index -->
@@ -748,26 +731,6 @@
     <property name="lower">-2000</property>
     <property name="upper">2000</property>
     <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="feedrate">
-    <property name="lower">1</property>
-    <property name="upper">10000</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="speed">
-    <property name="lower">1</property>
-    <property name="upper">10000</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="tooldiameter">
-    <property name="lower">0.0001</property>
-    <property name="upper">500</property>
-    <property name="step_increment">0.10000000000000001</property>
-  </object>
-  <object class="GtkAdjustment" id="torusdiameter">
-    <property name="lower">0.0001</property>
-    <property name="upper">500</property>
-    <property name="step_increment">0.050000000000000003</property>
   </object>
   <object class="GtkAdjustment" id="DrillProgressMaxFPS">
     <property name="lower">1</property>
@@ -4358,557 +4321,6 @@ upon interesting bugs and weird results.</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <child>
-              <object class="GtkVBox" id="ToolsTab">
-                <property name="visible">True</property>
-                <property name="orientation">vertical</property>
-                <property name="spacing">2</property>
-                <child>
-                  <object class="GtkFrame" id="ToolEditorFrame">
-                    <property name="visible">True</property>
-                    <property name="label_xalign">0</property>
-                    <property name="shadow_type">none</property>
-                    <child>
-                      <object class="GtkAlignment" id="alignment12">
-                        <property name="visible">True</property>
-                        <property name="top_padding">4</property>
-                        <property name="left_padding">12</property>
-                        <child>
-                          <object class="GtkVBox" id="vbox8">
-                            <property name="visible">True</property>
-                            <property name="orientation">vertical</property>
-                            <property name="spacing">4</property>
-                            <child>
-                              <object class="GtkHBox" id="hbox9">
-                                <property name="visible">True</property>
-                                <property name="spacing">4</property>
-                                <child>
-                                  <object class="GtkScrolledWindow" id="scrolledwindow6">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="hscrollbar_policy">automatic</property>
-                                    <property name="vscrollbar_policy">automatic</property>
-                                    <property name="shadow_type">etched-in</property>
-                                    <child>
-                                      <object class="GtkTreeView" id="ToolEditorTable">
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="model">ToolList</property>
-                                        <property name="headers_clickable">False</property>
-                                        <property name="search_column">0</property>
-                                        <child>
-                                          <object class="GtkTreeViewColumn" id="tool_table_id">
-                                            <property name="title">Tool ID</property>
-                                            <child>
-                                              <object class="GtkCellRendererText" id="tool_table_id_column"/>
-                                              <attributes>
-                                                <attribute name="text">1</attribute>
-                                              </attributes>
-                                            </child>
-                                          </object>
-                                        </child>
-                                        <child>
-                                          <object class="GtkTreeViewColumn" id="tool_table_name">
-                                            <property name="title">Name</property>
-                                            <child>
-                                              <object class="GtkCellRendererText" id="tool_table_name_column"/>
-                                              <attributes>
-                                                <attribute name="text">2</attribute>
-                                              </attributes>
-                                            </child>
-                                          </object>
-                                        </child>
-                                      </object>
-                                    </child>
-                                  </object>
-                                  <packing>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkVBox" id="vbox16">
-                                    <property name="visible">True</property>
-                                    <property name="orientation">vertical</property>
-                                    <child>
-                                      <object class="GtkVButtonBox" id="vbuttonbox1">
-                                        <property name="visible">True</property>
-                                        <property name="orientation">vertical</property>
-                                        <property name="layout_style">center</property>
-                                        <child>
-                                          <object class="GtkButton" id="ToolListAdd">
-                                            <property name="label">gtk-new</property>
-                                            <property name="visible">True</property>
-                                            <property name="can_focus">True</property>
-                                            <property name="receives_default">True</property>
-                                            <property name="use_stock">True</property>
-                                          </object>
-                                          <packing>
-                                            <property name="expand">False</property>
-                                            <property name="fill">False</property>
-                                            <property name="position">0</property>
-                                          </packing>
-                                        </child>
-                                        <child>
-                                          <object class="GtkButton" id="ToolListDelete">
-                                            <property name="label">gtk-delete</property>
-                                            <property name="visible">True</property>
-                                            <property name="can_focus">True</property>
-                                            <property name="receives_default">True</property>
-                                            <property name="use_stock">True</property>
-                                          </object>
-                                          <packing>
-                                            <property name="expand">False</property>
-                                            <property name="fill">False</property>
-                                            <property name="position">1</property>
-                                          </packing>
-                                        </child>
-                                        <child>
-                                          <object class="GtkButton" id="ToolListMoveUp">
-                                            <property name="label">gtk-go-up</property>
-                                            <property name="visible">True</property>
-                                            <property name="can_focus">True</property>
-                                            <property name="receives_default">True</property>
-                                            <property name="use_stock">True</property>
-                                          </object>
-                                          <packing>
-                                            <property name="expand">False</property>
-                                            <property name="fill">False</property>
-                                            <property name="position">2</property>
-                                          </packing>
-                                        </child>
-                                        <child>
-                                          <object class="GtkButton" id="ToolListMoveDown">
-                                            <property name="label">gtk-go-down</property>
-                                            <property name="visible">True</property>
-                                            <property name="can_focus">True</property>
-                                            <property name="receives_default">True</property>
-                                            <property name="use_stock">True</property>
-                                          </object>
-                                          <packing>
-                                            <property name="expand">False</property>
-                                            <property name="fill">False</property>
-                                            <property name="position">3</property>
-                                          </packing>
-                                        </child>
-                                      </object>
-                                      <packing>
-                                        <property name="position">0</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLinkButton" id="ToolHelp">
-                                        <property name="label">gtk-help</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">True</property>
-                                        <property name="relief">none</property>
-                                        <property name="use_stock">True</property>
-                                        <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=ToolTypes</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">False</property>
-                                        <property name="position">1</property>
-                                      </packing>
-                                    </child>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkVBox" id="ToolSettingsControlsBox">
-                                <property name="visible">True</property>
-                                <property name="orientation">vertical</property>
-                                <property name="spacing">4</property>
-                                <child>
-                                  <object class="GtkHSeparator" id="hseparator8">
-                                    <property name="visible">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkHBox" id="hbox16">
-                                    <property name="visible">True</property>
-                                    <property name="spacing">3</property>
-                                    <child>
-                                      <object class="GtkLabel" id="ToolNameLabel">
-                                        <property name="visible">True</property>
-                                        <property name="label" translatable="yes">Name:</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="position">0</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkEntry" id="ToolName">
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="invisible_char">&#x25CF;</property>
-                                        <property name="width_chars">30</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="position">1</property>
-                                      </packing>
-                                    </child>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkHSeparator" id="hseparator10">
-                                    <property name="visible">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">2</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkHBox" id="hbox3">
-                                    <property name="visible">True</property>
-                                    <property name="spacing">3</property>
-                                    <child>
-                                      <object class="GtkFrame" id="frame6">
-                                        <property name="visible">True</property>
-                                        <property name="label_xalign">0</property>
-                                        <property name="shadow_type">none</property>
-                                        <child>
-                                          <object class="GtkAlignment" id="alignment14">
-                                            <property name="visible">True</property>
-                                            <property name="yalign">0</property>
-                                            <property name="yscale">0</property>
-                                            <property name="top_padding">3</property>
-                                            <property name="bottom_padding">3</property>
-                                            <property name="left_padding">12</property>
-                                            <child>
-                                              <object class="GtkVBox" id="vbox19">
-                                                <property name="visible">True</property>
-                                                <property name="orientation">vertical</property>
-                                                <property name="spacing">4</property>
-                                                <property name="homogeneous">True</property>
-                                                <child>
-                                                  <object class="GtkRadioButton" id="SphericalCutter">
-                                                    <property name="label" translatable="yes">Spherical Cutter</property>
-                                                    <property name="visible">True</property>
-                                                    <property name="can_focus">True</property>
-                                                    <property name="receives_default">False</property>
-                                                    <property name="active">True</property>
-                                                    <property name="draw_indicator">True</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">False</property>
-                                                    <property name="position">0</property>
-                                                  </packing>
-                                                </child>
-                                                <child>
-                                                  <object class="GtkRadioButton" id="CylindricalCutter">
-                                                    <property name="label" translatable="yes">Cylindrical Cutter</property>
-                                                    <property name="visible">True</property>
-                                                    <property name="can_focus">True</property>
-                                                    <property name="receives_default">False</property>
-                                                    <property name="draw_indicator">True</property>
-                                                    <property name="group">SphericalCutter</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">False</property>
-                                                    <property name="position">1</property>
-                                                  </packing>
-                                                </child>
-                                                <child>
-                                                  <object class="GtkRadioButton" id="ToroidalCutter">
-                                                    <property name="label" translatable="yes">Toroidal Cutter</property>
-                                                    <property name="visible">True</property>
-                                                    <property name="can_focus">True</property>
-                                                    <property name="receives_default">False</property>
-                                                    <property name="draw_indicator">True</property>
-                                                    <property name="group">SphericalCutter</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">False</property>
-                                                    <property name="position">2</property>
-                                                  </packing>
-                                                </child>
-                                              </object>
-                                            </child>
-                                          </object>
-                                        </child>
-                                        <child type="label">
-                                          <object class="GtkLabel" id="ToolTypeLabel">
-                                            <property name="visible">True</property>
-                                            <property name="label" translatable="yes">&lt;b&gt;Shape&lt;/b&gt;</property>
-                                            <property name="use_markup">True</property>
-                                          </object>
-                                        </child>
-                                      </object>
-                                      <packing>
-                                        <property name="position">0</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkVSeparator" id="vseparator5">
-                                        <property name="visible">True</property>
-                                        <property name="orientation">vertical</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="position">1</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkFrame" id="frame10">
-                                        <property name="visible">True</property>
-                                        <property name="label_xalign">0</property>
-                                        <property name="shadow_type">none</property>
-                                        <child>
-                                          <object class="GtkAlignment" id="alignment18">
-                                            <property name="visible">True</property>
-                                            <property name="yalign">0</property>
-                                            <property name="yscale">0</property>
-                                            <property name="top_padding">3</property>
-                                            <property name="bottom_padding">3</property>
-                                            <property name="left_padding">12</property>
-                                            <child>
-                                              <object class="GtkTable" id="table3">
-                                                <property name="visible">True</property>
-                                                <property name="n_rows">2</property>
-                                                <property name="n_columns">2</property>
-                                                <property name="column_spacing">2</property>
-                                                <property name="row_spacing">4</property>
-                                                <child>
-                                                  <object class="GtkLabel" id="ToolDiameterLabel">
-                                                    <property name="visible">True</property>
-                                                    <property name="xalign">0</property>
-                                                    <property name="label" translatable="yes">Tool Diameter:</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="x_options">GTK_FILL</property>
-                                                  </packing>
-                                                </child>
-                                                <child>
-                                                  <object class="GtkLabel" id="TorusDiameterLabel">
-                                                    <property name="visible">True</property>
-                                                    <property name="xalign">0</property>
-                                                    <property name="label" translatable="yes">Torus Diameter:</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="top_attach">1</property>
-                                                    <property name="bottom_attach">2</property>
-                                                    <property name="x_options">GTK_FILL</property>
-                                                  </packing>
-                                                </child>
-                                                <child>
-                                                  <object class="GtkSpinButton" id="ToolDiameterControl">
-                                                    <property name="visible">True</property>
-                                                    <property name="can_focus">True</property>
-                                                    <property name="invisible_char">&#x25CF;</property>
-                                                    <property name="adjustment">tooldiameter</property>
-                                                    <property name="digits">4</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="left_attach">1</property>
-                                                    <property name="right_attach">2</property>
-                                                    <property name="x_options">GTK_FILL</property>
-                                                    <property name="y_options">GTK_FILL</property>
-                                                  </packing>
-                                                </child>
-                                                <child>
-                                                  <object class="GtkSpinButton" id="TorusDiameterControl">
-                                                    <property name="visible">True</property>
-                                                    <property name="can_focus">True</property>
-                                                    <property name="invisible_char">&#x25CF;</property>
-                                                    <property name="adjustment">torusdiameter</property>
-                                                    <property name="digits">4</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="left_attach">1</property>
-                                                    <property name="right_attach">2</property>
-                                                    <property name="top_attach">1</property>
-                                                    <property name="bottom_attach">2</property>
-                                                    <property name="x_options">GTK_FILL</property>
-                                                    <property name="y_options">GTK_FILL</property>
-                                                  </packing>
-                                                </child>
-                                              </object>
-                                            </child>
-                                          </object>
-                                        </child>
-                                        <child type="label">
-                                          <object class="GtkLabel" id="DimensionsLabel">
-                                            <property name="visible">True</property>
-                                            <property name="label" translatable="yes">&lt;b&gt;Dimensions&lt;/b&gt;</property>
-                                            <property name="use_markup">True</property>
-                                          </object>
-                                        </child>
-                                      </object>
-                                      <packing>
-                                        <property name="position">2</property>
-                                      </packing>
-                                    </child>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">3</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkHSeparator" id="hseparator1">
-                                    <property name="visible">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">4</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkFrame" id="frame12">
-                                    <property name="visible">True</property>
-                                    <property name="label_xalign">0</property>
-                                    <property name="shadow_type">none</property>
-                                    <child>
-                                      <object class="GtkAlignment" id="alignment19">
-                                        <property name="visible">True</property>
-                                        <property name="xalign">0</property>
-                                        <property name="xscale">0</property>
-                                        <property name="top_padding">3</property>
-                                        <property name="left_padding">12</property>
-                                        <child>
-                                          <object class="GtkTable" id="table5">
-                                            <property name="visible">True</property>
-                                            <property name="n_rows">3</property>
-                                            <property name="n_columns">2</property>
-                                            <property name="column_spacing">4</property>
-                                            <property name="row_spacing">4</property>
-                                            <child>
-                                              <object class="GtkLabel" id="FeedrateLabel">
-                                                <property name="visible">True</property>
-                                                <property name="xalign">0</property>
-                                                <property name="label" translatable="yes">Feedrate:</property>
-                                              </object>
-                                              <packing>
-                                                <property name="top_attach">1</property>
-                                                <property name="bottom_attach">2</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkLabel" id="SpindleSpeedLabel">
-                                                <property name="visible">True</property>
-                                                <property name="xalign">0</property>
-                                                <property name="label" translatable="yes">Spindle Speed:</property>
-                                              </object>
-                                              <packing>
-                                                <property name="top_attach">2</property>
-                                                <property name="bottom_attach">3</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkSpinButton" id="FeedrateControl">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="invisible_char">&#x25CF;</property>
-                                                <property name="adjustment">feedrate</property>
-                                              </object>
-                                              <packing>
-                                                <property name="left_attach">1</property>
-                                                <property name="right_attach">2</property>
-                                                <property name="top_attach">1</property>
-                                                <property name="bottom_attach">2</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkSpinButton" id="SpindleSpeedControl">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="invisible_char">&#x25CF;</property>
-                                                <property name="adjustment">speed</property>
-                                              </object>
-                                              <packing>
-                                                <property name="left_attach">1</property>
-                                                <property name="right_attach">2</property>
-                                                <property name="top_attach">2</property>
-                                                <property name="bottom_attach">3</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkLabel" id="SpeedLimitsUnitLabel">
-                                                <property name="visible">True</property>
-                                                <property name="xalign">0</property>
-                                                <property name="label" translatable="yes">Unit:</property>
-                                              </object>
-                                            </child>
-                                            <child>
-                                              <object class="GtkLabel" id="SpeedUnit1">
-                                                <property name="visible">True</property>
-                                                <property name="label" translatable="yes">inches/minute</property>
-                                              </object>
-                                              <packing>
-                                                <property name="left_attach">1</property>
-                                                <property name="right_attach">2</property>
-                                              </packing>
-                                            </child>
-                                          </object>
-                                        </child>
-                                      </object>
-                                    </child>
-                                    <child type="label">
-                                      <object class="GtkLabel" id="ProcessingSpeedLabel">
-                                        <property name="visible">True</property>
-                                        <property name="label" translatable="yes">&lt;b&gt;Speed&lt;/b&gt;</property>
-                                        <property name="use_markup">True</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="position">5</property>
-                                  </packing>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child type="label">
-                      <object class="GtkLabel" id="ToolEditorFrameLabel">
-                        <property name="visible">True</property>
-                        <property name="label" translatable="yes">&lt;b&gt;Tool Settings&lt;/b&gt;</property>
-                        <property name="use_markup">True</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-              </object>
-            </child>
-            <child type="tab">
-              <object class="GtkLabel" id="ToolsTabLabel">
-                <property name="visible">True</property>
-                <property name="label" translatable="yes">Tools</property>
-              </object>
-              <packing>
-                <property name="tab_fill">False</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkVBox" id="ProcessesTab">
                 <property name="visible">True</property>
                 <property name="orientation">vertical</property>
@@ -5626,9 +5038,6 @@ upon interesting bugs and weird results.</property>
                   </packing>
                 </child>
               </object>
-              <packing>
-                <property name="position">1</property>
-              </packing>
             </child>
             <child type="tab">
               <object class="GtkLabel" id="ProcessesTabLabel">
@@ -5636,7 +5045,6 @@ upon interesting bugs and weird results.</property>
                 <property name="label" translatable="yes">Processes</property>
               </object>
               <packing>
-                <property name="position">1</property>
                 <property name="tab_fill">False</property>
               </packing>
             </child>
@@ -6409,7 +5817,7 @@ upon interesting bugs and weird results.</property>
                 </child>
               </object>
               <packing>
-                <property name="position">2</property>
+                <property name="position">1</property>
               </packing>
             </child>
             <child type="tab">
@@ -6418,7 +5826,7 @@ upon interesting bugs and weird results.</property>
                 <property name="label" translatable="yes">Bounds</property>
               </object>
               <packing>
-                <property name="position">2</property>
+                <property name="position">1</property>
                 <property name="tab_fill">False</property>
               </packing>
             </child>
@@ -6674,7 +6082,6 @@ upon interesting bugs and weird results.</property>
                                     <child>
                                       <object class="GtkComboBox" id="TaskToolSelector">
                                         <property name="visible">True</property>
-                                        <property name="model">ToolList</property>
                                         <child>
                                           <object class="GtkCellRendererText" id="ToolListCell"/>
                                           <attributes>
@@ -6756,6 +6163,109 @@ upon interesting bugs and weird results.</property>
                                   </packing>
                                 </child>
                                 <child>
+                                  <object class="GtkFrame" id="frame12">
+                                    <property name="visible">True</property>
+                                    <property name="label_xalign">0</property>
+                                    <property name="shadow_type">none</property>
+                                    <child>
+                                      <object class="GtkAlignment" id="alignment19">
+                                        <property name="visible">True</property>
+                                        <property name="xalign">0</property>
+                                        <property name="xscale">0</property>
+                                        <property name="top_padding">3</property>
+                                        <property name="left_padding">12</property>
+                                        <child>
+                                          <object class="GtkTable" id="table5">
+                                            <property name="visible">True</property>
+                                            <property name="n_rows">3</property>
+                                            <property name="n_columns">2</property>
+                                            <property name="column_spacing">4</property>
+                                            <property name="row_spacing">4</property>
+                                            <child>
+                                              <object class="GtkLabel" id="FeedrateLabel">
+                                                <property name="visible">True</property>
+                                                <property name="xalign">0</property>
+                                                <property name="label" translatable="yes">Feedrate:</property>
+                                              </object>
+                                              <packing>
+                                                <property name="top_attach">1</property>
+                                                <property name="bottom_attach">2</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkLabel" id="SpindleSpeedLabel">
+                                                <property name="visible">True</property>
+                                                <property name="xalign">0</property>
+                                                <property name="label" translatable="yes">Spindle Speed:</property>
+                                              </object>
+                                              <packing>
+                                                <property name="top_attach">2</property>
+                                                <property name="bottom_attach">3</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkSpinButton" id="FeedrateControl">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="invisible_char">&#x25CF;</property>
+                                                <property name="adjustment">feedrate</property>
+                                              </object>
+                                              <packing>
+                                                <property name="left_attach">1</property>
+                                                <property name="right_attach">2</property>
+                                                <property name="top_attach">1</property>
+                                                <property name="bottom_attach">2</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkSpinButton" id="SpindleSpeedControl">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="invisible_char">&#x25CF;</property>
+                                                <property name="adjustment">speed</property>
+                                              </object>
+                                              <packing>
+                                                <property name="left_attach">1</property>
+                                                <property name="right_attach">2</property>
+                                                <property name="top_attach">2</property>
+                                                <property name="bottom_attach">3</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkLabel" id="SpeedLimitsUnitLabel">
+                                                <property name="visible">True</property>
+                                                <property name="xalign">0</property>
+                                                <property name="label" translatable="yes">Unit:</property>
+                                              </object>
+                                            </child>
+                                            <child>
+                                              <object class="GtkLabel" id="SpeedUnit1">
+                                                <property name="visible">True</property>
+                                                <property name="label" translatable="yes">inches/minute</property>
+                                              </object>
+                                              <packing>
+                                                <property name="left_attach">1</property>
+                                                <property name="right_attach">2</property>
+                                              </packing>
+                                            </child>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child type="label">
+                                      <object class="GtkLabel" id="ProcessingSpeedLabel">
+                                        <property name="visible">True</property>
+                                        <property name="label" translatable="yes">&lt;b&gt;Speed&lt;/b&gt;</property>
+                                        <property name="use_markup">True</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="position">2</property>
+                                  </packing>
+                                </child>
+                                <child>
                                   <object class="GtkFrame" id="CurrentTaskSummaryFrame">
                                     <property name="visible">True</property>
                                     <property name="label_xalign">0</property>
@@ -6785,7 +6295,7 @@ upon interesting bugs and weird results.</property>
                                   </object>
                                   <packing>
                                     <property name="padding">10</property>
-                                    <property name="position">2</property>
+                                    <property name="position">3</property>
                                   </packing>
                                 </child>
                               </object>
@@ -6812,7 +6322,7 @@ upon interesting bugs and weird results.</property>
                 </child>
               </object>
               <packing>
-                <property name="position">3</property>
+                <property name="position">2</property>
               </packing>
             </child>
             <child type="tab">
@@ -6821,7 +6331,7 @@ upon interesting bugs and weird results.</property>
                 <property name="label" translatable="yes">Tasks</property>
               </object>
               <packing>
-                <property name="position">3</property>
+                <property name="position">2</property>
                 <property name="tab_fill">False</property>
               </packing>
             </child>
@@ -7080,7 +6590,7 @@ upon interesting bugs and weird results.</property>
                 </child>
               </object>
               <packing>
-                <property name="position">4</property>
+                <property name="position">3</property>
               </packing>
             </child>
             <child type="tab">
@@ -7089,7 +6599,7 @@ upon interesting bugs and weird results.</property>
                 <property name="label" translatable="yes">Toolpaths</property>
               </object>
               <packing>
-                <property name="position">4</property>
+                <property name="position">3</property>
                 <property name="tab_fill">False</property>
               </packing>
             </child>
@@ -7122,5 +6632,15 @@ upon interesting bugs and weird results.</property>
   <object class="GtkImage" id="ExportAllToolpathsIcon">
     <property name="visible">True</property>
     <property name="stock">gtk-save-as</property>
+  </object>
+  <object class="GtkAdjustment" id="feedrate">
+    <property name="lower">1</property>
+    <property name="upper">10000</property>
+    <property name="step_increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="speed">
+    <property name="lower">1</property>
+    <property name="upper">10000</property>
+    <property name="step_increment">1</property>
   </object>
 </interface>

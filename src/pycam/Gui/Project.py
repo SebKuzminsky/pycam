@@ -425,6 +425,10 @@ class ProjectGui(object):
         self.settings.register_event("model-change-after", self.update_view)
         self.settings.register_event("visual-item-updated", self.update_view)
         self.settings.register_event("visual-item-updated", self.update_model_dimensions)
+        def update_emc_tool_button():
+            tool_num = len(self.settings.get("tools"))
+            self.gui.get_object("ExportEMCToolDefinition").set_sensitive(tool_num > 0)
+        self.settings.register_event("tool-selection-changed", update_emc_tool_button)
         self.settings.set("load_model", self.load_model)
         self.settings.register_event("boundary-updated", self.update_view)
         # configure drag-n-drop for config files and models
@@ -469,7 +473,6 @@ class ProjectGui(object):
         # set defaults
         self.toolpath = pycam.Toolpath.ToolpathList()
         self.cutter = None
-        self.tool_list = []
         self.process_list = []
         self.bounds_list = []
         self.task_list = []
@@ -485,7 +488,7 @@ class ProjectGui(object):
         def add_main_tab_item(item, name):
             main_tab.append_page(item, gtk.Label(name))
         # TODO: move these to plugins, as well
-        tab_names = ("Tools", "Processes", "Bounds", "Tasks", "Toolpaths")
+        tab_names = ("Processes", "Bounds", "Tasks", "Toolpaths")
         for name in tab_names:
             item = self.gui.get_object(name + "Tab")
             item.unparent()
@@ -493,7 +496,7 @@ class ProjectGui(object):
                 clear_main_tab)
         for name in tab_names:
             item = self.gui.get_object(name + "Tab")
-            self.settings.register_ui("main", name, item, tab_names.index(name))
+            self.settings.register_ui("main", name, item, tab_names.index(name) + 100)
         main_window = self.gui.get_object("WindowBox")
         def clear_main_window():
             main_window.foreach(lambda x: main_window.remove(x))
@@ -668,13 +671,6 @@ class ProjectGui(object):
         self.settings.add_item("drill_progress_max_fps", skip_obj.get_value, skip_obj.set_value)
         sim_detail_obj = self.gui.get_object("SimulationDetailsValue")
         self.settings.add_item("simulation_details_level", sim_detail_obj.get_value, sim_detail_obj.set_value)
-        # drill settings
-        for objname in ("ToolDiameterControl", "TorusDiameterControl",
-                "FeedrateControl", "SpindleSpeedControl"):
-            self.gui.get_object(objname).connect("value-changed", self.handle_tool_settings_change)
-        for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
-            self.gui.get_object(name).connect("clicked", self.handle_tool_settings_change)
-        self.gui.get_object("ToolName").connect("changed", self.handle_tool_settings_change)
         # connect the "consistency check" and the update-handler with all toolpath settings
         for objname in ("PushRemoveStrategy", "ContourPolygonStrategy",
                 "ContourFollowStrategy", "SurfaceStrategy",
@@ -714,9 +710,7 @@ class ProjectGui(object):
             else:
                 self._treeview_set_active_index(table, new_index)
                 # update all controls related the (possibly changed) item
-                if item_list is self.tool_list:
-                    self.append_to_queue(self.switch_tool_table_selection)
-                elif item_list is self.process_list:
+                if item_list is self.process_list:
                     self.append_to_queue(self.switch_process_table_selection)
                 elif item_list is self.task_list:
                     self.append_to_queue(self.switch_tasklist_table_selection)
@@ -793,16 +787,6 @@ class ProjectGui(object):
         self.simulation_window.connect("delete-event", self.finish_toolpath_simulation)
         # store the original content (for adding the number of current toolpaths in "update_toolpath_table")
         self._original_toolpath_tab_label = self.gui.get_object("ToolpathsTabLabel").get_text()
-        # tool editor
-        self.settings.add_item("current_tool",
-                lambda: get_current_item(self.tool_editor_table, self.tool_list),
-                lambda tool: set_current_item(self.tool_editor_table, self.tool_list, tool))
-        self.tool_editor_table = self.gui.get_object("ToolEditorTable")
-        self.tool_editor_table.get_selection().connect("changed", self.switch_tool_table_selection)
-        self.gui.get_object("ToolListMoveUp").connect("clicked", self._tool_editor_button_event, "move_up")
-        self.gui.get_object("ToolListMoveDown").connect("clicked", self._tool_editor_button_event, "move_down")
-        self.gui.get_object("ToolListAdd").connect("clicked", self._tool_editor_button_event, "add")
-        self.gui.get_object("ToolListDelete").connect("clicked", self._tool_editor_button_event, "delete")
         # the task list manager
         self.settings.add_item("current_task",
                 lambda: get_current_item(self.tasklist_table, self.task_list),
@@ -1033,7 +1017,6 @@ class ProjectGui(object):
 
     def update_all_controls(self):
         self.update_toolpath_table()
-        self.update_tool_table()
         self.update_process_controls()
         self.update_process_table()
         self.update_bounds_table()
@@ -1389,7 +1372,7 @@ class ProjectGui(object):
         self.gui.get_object("GenerateToolPathButton").set_sensitive(selection_active)
         # "add" is only allowed, if there are any tools, processes and bounds
         self.gui.get_object("TaskListAdd").set_sensitive(
-                (len(self.tool_list) > 0) \
+                (len(self.settings.get("tools")) > 0) \
                 and (len(self.process_list) > 0) \
                 and (len(self.bounds_list) > 0))
         details_box = self.gui.get_object("TaskDetails")
@@ -1414,7 +1397,7 @@ class ProjectGui(object):
                 obj.handler_block(signal_handler)
             self.gui.get_object("TaskNameControl").set_text(task["name"])
             tool = task["tool"]
-            self.gui.get_object("TaskToolSelector").set_active(self.tool_list.index(tool))
+            self.gui.get_object("TaskToolSelector").set_active(self.settings.get("tools").index(tool))
             process = task["process"]
             self.gui.get_object("TaskProcessSelector").set_active(self.process_list.index(process))
             bounds = task["bounds"]
@@ -1454,7 +1437,7 @@ class ProjectGui(object):
             tasklist_model.clear()
             # remove broken tasks from the list (tool or process was deleted)
             self.task_list = [task for task in self.task_list
-                    if (task["tool"] in self.tool_list) \
+                    if (task["tool"] in self.settings.get("tools")) \
                             and (task["process"] in self.process_list) \
                             and (task["bounds"] in self.bounds_list)]
             counter = 0
@@ -1468,8 +1451,7 @@ class ProjectGui(object):
     def switch_tasklist_table_selection(self, widget=None):
         current_task = self.settings.get("current_task")
         if not current_task is None:
-            self.settings.set("current_tool", current_task["tool"])
-            self.update_tool_table(skip_model_update=True)
+            self.settings.get("tools").select(current_task["tool"])
             self.settings.set("current_process", current_task["process"])
             self.update_process_table(skip_model_update=True)
             self.settings.set("current_bounds", current_task["bounds"])
@@ -1488,7 +1470,7 @@ class ProjectGui(object):
         if old_name != new_name:
             task["name"] = new_name
         tool_id = self.gui.get_object("TaskToolSelector").get_active()
-        task["tool"] = self.tool_list[tool_id]
+        task["tool"] = self.settings.get("tools")[tool_id]
         process_id = self.gui.get_object("TaskProcessSelector").get_active()
         task["process"] = self.process_list[process_id]
         bounds_id = self.gui.get_object("TaskBoundsSelector").get_active()
@@ -1523,7 +1505,7 @@ class ProjectGui(object):
             while [True for task in self.task_list if task["name"] == "%s%d" % (prefix, index)]:
                 index += 1
             new_task["name"] = "%s%d" % (prefix, index)
-            new_task["tool"] = self.tool_list[0]
+            new_task["tool"] = self.settings.get("tools")[0]
             new_task["process"] = self.process_list[0]
             new_task["bounds"] = self.bounds_list[0]
             new_task["enabled"] = True
@@ -1619,24 +1601,6 @@ class ProjectGui(object):
         }
         for one_control in all_controls:
             get_obj(one_control).set_sensitive(one_control in active_controls[strategy])
-
-    def update_tool_controls(self, widget=None, data=None):
-        # disable the toroidal radius if the toroidal cutter is not enabled
-        if self.gui.get_object("ToroidalCutter").get_active():
-            self.gui.get_object("TorusDiameterControl").show()
-            self.gui.get_object("TorusDiameterLabel").show()
-        else:
-            self.gui.get_object("TorusDiameterControl").hide()
-            self.gui.get_object("TorusDiameterLabel").hide()
-        for objname, default_value in (("ToolDiameterControl", 1.0),
-                ("TorusDiameterControl", 0.25),
-                ("SpindleSpeedControl", 1000),
-                ("FeedrateControl", 200)):
-            obj = self.gui.get_object(objname)
-            if obj.get_value() == 0:
-                # set the value to the configured minimum
-                obj.set_value(default_value)
-        self.gui.get_object("ExportEMCToolDefinition").set_sensitive(len(self.tool_list) > 0)
 
     @gui_activity_guard
     def toggle_about_window(self, widget=None, event=None, state=None):
@@ -1819,8 +1783,7 @@ class ProjectGui(object):
             item = datalist[index]
             # Check if we need to remove items that depended on the currently
             # deleted one.
-            if not datalist in (self.tool_list, self.process_list,
-                    self.bounds_list):
+            if not datalist in (self.process_list, self.bounds_list):
                 # tasks do not depend on this list - just continue
                 pass
             elif len(datalist) == 1:
@@ -1836,7 +1799,7 @@ class ProjectGui(object):
                 # Replace all references to the to-be-deleted item with the
                 # alternative.
                 for task in self.task_list:
-                    for sublist in ("tool", "process", "bounds"):
+                    for sublist in ("process", "bounds"):
                         if item is task[sublist]:
                             task[sublist] = alternative
             # Delete the object. Maybe this is not necessary, if it was the
@@ -1852,12 +1815,10 @@ class ProjectGui(object):
                     future_selection_index = len(datalist) - 1
             # update the tasklist table (maybe we removed some items)
             self.update_tasklist_table()
-            # also update the specific description of the tool/process/bounds
+            # also update the specific description of the process/bounds
             if not future_selection_index is None:
-                if datalist is self.tool_list:
-                    self.settings.set("current_tool",
-                            self.tool_list[future_selection_index])
-                    self.switch_tool_table_selection()
+                if datalist is self.settings.get("tools"):
+                    self.settings.get("tools").select(future_selection_index)
                 elif datalist is self.process_list:
                     self.settings.set("current_process",
                             self.process_list[future_selection_index])
@@ -1874,111 +1835,6 @@ class ProjectGui(object):
         self.settings.emit_event("boundary-updated")
         update_func(new_index=future_selection_index,
                 skip_model_update=skip_model_update)
-
-    def _put_tool_settings_to_gui(self, settings):
-        self.gui.get_object("ToolName").set_text(settings["name"])
-        # cutter shapes
-        def set_cutter_shape_name(value):
-            self.gui.get_object(value).set_active(True)
-        set_cutter_shape_name(settings["shape"])
-        for objname, key in (
-                ("FeedrateControl", "feedrate"),
-                ("SpindleSpeedControl", "speed")):
-            self.gui.get_object(objname).set_value(settings[key])
-        # radius -> diameter
-        for objname, key in (
-                ("ToolDiameterControl", "tool_radius"),
-                ("TorusDiameterControl", "torus_radius")):
-            self.gui.get_object(objname).set_value(2 * settings[key])
-
-    def _load_tool_settings_from_gui(self, settings=None):
-        if settings is None:
-            settings = {}
-        settings["name"] = self.gui.get_object("ToolName").get_text()
-        def get_cutter_shape_name():
-            for name in ("SphericalCutter", "CylindricalCutter", "ToroidalCutter"):
-                if self.gui.get_object(name).get_active():
-                    return name
-        settings["shape"] = get_cutter_shape_name()
-        for objname, key in (
-                ("FeedrateControl", "feedrate"),
-                ("SpindleSpeedControl", "speed")):
-            settings[key] = self.gui.get_object(objname).get_value()
-        # diameter -> radius
-        for objname, key in (
-                ("ToolDiameterControl", "tool_radius"),
-                ("TorusDiameterControl", "torus_radius")):
-            settings[key] = 0.5 * self.gui.get_object(objname).get_value()
-        return settings
-
-    @gui_activity_guard
-    def handle_tool_settings_change(self, widget=None, data=None):
-        current_tool = self.settings.get("current_tool")
-        if not current_tool is None:
-            self._load_tool_settings_from_gui(current_tool)
-            self.update_tool_table()
-        self.update_tool_controls()
-
-    @gui_activity_guard
-    def switch_tool_table_selection(self, widget=None, data=None):
-        current_tool = self.settings.get("current_tool")
-        # hide all controls if no process is defined
-        if not current_tool is None:
-            self.gui.get_object("ToolSettingsControlsBox").show()
-            self._put_tool_settings_to_gui(current_tool)
-            self.update_tool_table()
-        else:
-            self.gui.get_object("ToolSettingsControlsBox").hide()
-        
-    @gui_activity_guard
-    def _tool_editor_button_event(self, widget, data, action=None):
-        # "toggle" uses two parameters - all other actions have only one
-        if action is None:
-            action = data
-        self._treeview_button_event(self.tool_editor_table, self.tool_list, action, self.update_tool_table)
-        if action == "add":
-            # look for the first unused default name
-            prefix = "New Tool "
-            index = 1
-            # loop while the current name is in use
-            while [True for process in self.tool_list if process["name"] == "%s%d" % (prefix, index)]:
-                index += 1
-            new_settings = self._load_tool_settings_from_gui()
-            new_settings["name"] = "%s%d" % (prefix, index)
-            self.tool_list.append(new_settings)
-            self.update_tool_table(self.tool_list.index(new_settings))
-            self._put_tool_settings_to_gui(new_settings)
-        elif action == "delete":
-            self.append_to_queue(self.switch_tool_table_selection)
-
-    def update_tool_table(self, new_index=None, skip_model_update=False):
-        tool_model = self.gui.get_object("ToolList")
-        if new_index is None:
-            # keep the old selection - this may return "None" if nothing is selected
-            new_index = self._treeview_get_active_index(self.tool_editor_table, self.tool_list)
-        if not skip_model_update:
-            tool_model.clear()
-            counter = 0
-            for tool in self.tool_list:
-                # add the tool size to the descriptive text
-                description = "%s (d=%s)" % (tool["name"], 2 * tool["tool_radius"])
-                tool_model.append((counter, counter + 1, description))
-                counter += 1
-            if not new_index is None:
-                self._treeview_set_active_index(self.tool_editor_table, new_index)
-        # en/disable some buttons
-        selection_active = not new_index is None
-        self.gui.get_object("ToolListDelete").set_sensitive(selection_active)
-        self.gui.get_object("ToolListMoveUp").set_sensitive(selection_active and new_index > 0)
-        self.gui.get_object("ToolListMoveDown").set_sensitive(selection_active and new_index < len(self.tool_list) - 1)
-        # hide all controls if no process is defined
-        if new_index is None:
-            self.gui.get_object("ToolSettingsControlsBox").hide()
-        else:
-            self.gui.get_object("ToolSettingsControlsBox").show()
-        # remove any broken tasks and update changed names
-        self.update_tool_controls()
-        self.update_task_description()
 
     def change_unit_init(self, widget=None):
         new_unit = self.gui.get_object("unit_control").get_active_text()
@@ -2063,8 +1919,9 @@ class ProjectGui(object):
                             pass
                 if self.gui.get_object("UnitChangeTools").get_active():
                     # scale all tool dimensions
-                    for tool in self.tool_list:
+                    for tool in self.settings.get("tools"):
                         for key in ("tool_radius", "torus_radius"):
+                            # TODO: fix this invalid access
                             tool[key] *= factor
         self.unit_change_window.hide()
         # store the current unit (for the next run of this function)
@@ -2072,7 +1929,6 @@ class ProjectGui(object):
         # update all labels containing the unit size
         self.update_unit_labels()
         # update all controls and redraw the boundaries
-        self.switch_tool_table_selection()
         self.switch_process_table_selection()
         self.switch_bounds_table_selection()
         self.switch_tasklist_table_selection()
@@ -2339,7 +2195,6 @@ class ProjectGui(object):
                 log.error("Failed to detect filetype!")
                 return False
 
-    @gui_activity_guard
     def export_emc_tools(self, widget=None, filename=None):
         if callable(filename):
             filename = filename()
@@ -2348,7 +2203,7 @@ class ProjectGui(object):
                     mode_load=False, type_filter=FILTER_EMC_TOOL,
                     filename_templates=(self.last_model_uri,))
         if filename:
-            export = pycam.Exporters.EMCToolExporter.EMCToolExporter(self.tool_list)
+            export = pycam.Exporters.EMCToolExporter.EMCToolExporter(self.settings.get("tools"))
             text = export.get_tool_definition_string()
             try:
                 out = file(filename, "w")
@@ -2410,14 +2265,13 @@ class ProjectGui(object):
         if not filename is None:
             settings.load_file(filename)
         # flush all tables (without re-assigning new objects)
-        for one_list in (self.tool_list, self.process_list, self.bounds_list, self.task_list):
+        for one_list in (self.settings.get("tools"), self.process_list, self.bounds_list, self.task_list):
             while len(one_list) > 0:
                 one_list.pop()
-        self.tool_list.extend(settings.get_tools())
+        #self.settings.get("tools").extend(settings.get_tools())
         self.process_list.extend(settings.get_processes())
         self.bounds_list.extend(settings.get_bounds())
         self.task_list.extend(settings.get_tasks())
-        self.update_tool_table()
         self.update_process_table()
         self.update_bounds_table()
         self.update_tasklist_table()
@@ -2882,7 +2736,7 @@ class ProjectGui(object):
         if not filename:
             return
         settings = pycam.Gui.Settings.ProcessSettings()
-        if not settings.write_to_file(filename, self.tool_list,
+        if not settings.write_to_file(filename, self.settings.get("tools"),
                 self.process_list, self.bounds_list, self.task_list):
             log.error("Failed to save settings file")
         else:
@@ -3155,7 +3009,8 @@ class ProjectGui(object):
         toolpath_settings.set_bounds(processing_bounds)
 
         # put the tool settings together
-        tool_id = self.tool_list.index(tool_settings) + 1
+        tools = self.settings.get("tools")
+        tool_id = tools.get_attr("id")
         toolpath_settings.set_tool(tool_id, tool_settings["shape"],
                 tool_settings["tool_radius"], tool_settings["torus_radius"],
                 tool_settings["speed"], tool_settings["feedrate"])

@@ -32,7 +32,7 @@ class Models(pycam.Plugins.ListPluginBase):
 
     UI_FILE = "models.ui"
     COLUMN_ID, COLUMN_NAME, COLUMN_VISIBLE, COLUMN_COLOR, COLUMN_ALPHA = range(5)
-    ATTRIBUTE_MAP = {"name": COLUMN_NAME, "visible": COLUMN_VISIBLE,
+    LIST_ATTRIBUTE_MAP = {"name": COLUMN_NAME, "visible": COLUMN_VISIBLE,
             "color": COLUMN_COLOR, "alpha": COLUMN_ALPHA}
     ICONS = {"visible": "visible.svg", "hidden": "visible_off.svg"}
     # TODO: move this to the preferences dialog
@@ -75,7 +75,7 @@ class Models(pycam.Plugins.ListPluginBase):
             selection.connect("changed",
                     lambda widget, event: self.core.emit_event(event), 
                     "model-selection-changed")
-            selection.set_mode(gtk.SELECTION_MULTIPLE)
+            selection.set_mode(self._gtk.SELECTION_MULTIPLE)
             self._treemodel = self.gui.get_object("ModelList")
             self._treemodel.clear()
             def update_model():
@@ -96,29 +96,8 @@ class Models(pycam.Plugins.ListPluginBase):
                                 int(self.DEFAULT_COLOR[3] * _GTK_COLOR_MAX)))
             self._get_colors_of_selected_models()
             self.register_model_update(update_model)
-        self.core.add_item("models", lambda: self)
+        self.core.set("models", self)
         return True
-
-    def get_attr(self, model, attr):
-        return self.__get_set_attr(model, attr, write=False)
-
-    def set_attr(self, model, attr, value):
-        return self.__get_set_attr(model, attr, value=value, write=True)
-
-    def __get_set_attr(self, model, attr, value=None, write=True):
-        if attr in self.ATTRIBUTE_MAP:
-            col = self.ATTRIBUTE_MAP[attr]
-            for index in range(len(self)):
-                if self._treemodel[index][self.COLUMN_ID] == id(model):
-                    if write:
-                        self._treemodel[index][col] = value
-                        return
-                    else:
-                        return self._treemodel[index][col]
-            raise IndexError("Model not found: %s" % str(model))
-        else:
-            raise KeyError("Attribute '%s' is not part of this list: %s" % \
-                    (attr, ", ".join(self.ATTRIBUTE_MAP.keys())))
 
     def _get_colors_of_selected_models(self, widget=None):
         color_button = self.gui.get_object("ModelColorButton")
@@ -144,7 +123,8 @@ class Models(pycam.Plugins.ListPluginBase):
 
     def _edit_model_name(self, cell, path, new_text):
         path = int(path)
-        if new_text != self._treemodel[path][self.COLUMN_NAME]:
+        if (new_text != self._treemodel[path][self.COLUMN_NAME]) and \
+                new_text:
             self._treemodel[path][self.COLUMN_NAME] = new_text
 
     def _visualize_visible_state(self, column, cell, model, m_iter):
