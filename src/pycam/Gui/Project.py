@@ -381,7 +381,6 @@ class ProjectGui(object):
                 ("Quit", self.destroy, None, "<Control>q"),
                 ("GeneralSettings", self.toggle_preferences_window, None, "<Control>p"),
                 ("Toggle3DView", self.toggle_3d_view, None, "<Control><Shift>v"),
-                ("ToggleLogWindow", self.toggle_log_window, None, "<Control>l"),
                 ("ToggleProcessPoolWindow", self.toggle_process_pool_window, None, None),
                 ("UndoButton", self._restore_undo_state, None, "<Control>z"),
                 ("CopyModelToClipboard", self.copy_model_to_clipboard, None, "<Control>c"),
@@ -407,8 +406,7 @@ class ProjectGui(object):
                 ("BugTracker", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104176", None),
                 ("FeatureRequest", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104179", None)):
             item = self.gui.get_object(objname)
-            if objname in ("Toggle3DView", "ToggleLogWindow",
-                    "ToggleProcessPoolWindow"):
+            if objname in ("Toggle3DView", "ToggleProcessPoolWindow"):
                 action = "toggled"
             else:
                 action = "activate"
@@ -450,7 +448,6 @@ class ProjectGui(object):
         self.preferences_window.connect("delete-event", self.toggle_preferences_window, False)
         self._preferences_window_position = None
         self._preferences_window_visible = False
-        self._log_window_position = None
         # "about" window
         self.about_window = self.gui.get_object("AboutWindow")
         self.about_window.set_version(VERSION)
@@ -463,16 +460,6 @@ class ProjectGui(object):
         # TODO: fix this ugly hack!
         self.gui.get_object("AboutWindowButtons").get_children()[-1].connect("clicked", self.toggle_about_window, False)
         self.about_window.connect("delete-event", self.toggle_about_window, False)
-        # "log" window
-        self.log_window = self.gui.get_object("LogWindow")
-        self.log_window.set_default_size(500, 400)
-        self.log_window.connect("delete-event", self.toggle_log_window, False)
-        self.log_window.connect("destroy", self.toggle_log_window, False)
-        self.gui.get_object("LogWindowClose").connect("clicked", self.toggle_log_window, False)
-        self.gui.get_object("LogWindowClear").connect("clicked", self.clear_log_window)
-        self.gui.get_object("LogWindowCopyToClipboard").connect("clicked",
-                self.copy_log_to_clipboard)
-        self.log_model = self.gui.get_object("LogWindowList")
         # "process pool" window
         self.process_pool_window = self.gui.get_object("ProcessPoolWindow")
         self.process_pool_window.set_default_size(500, 400)
@@ -487,7 +474,7 @@ class ProjectGui(object):
         self._accel_group = uimanager.get_accel_group()
         self.settings.add_item("gtk-accel-group", lambda: self._accel_group)
         for window in (self.window, self.about_window, self.preferences_window,
-                self.log_window, self.process_pool_window):
+                self.process_pool_window):
             window.add_accel_group(self._accel_group)
         # set defaults
         self.toolpath = pycam.Toolpath.ToolpathList()
@@ -518,7 +505,6 @@ class ProjectGui(object):
             item = self.gui.get_object(name + "Tab")
             self.settings.register_ui("main", name, item, tab_names.index(name))
         main_window = self.gui.get_object("WindowBox")
-        event_bar = self.gui.get_object("StatusBarEventBox")
         def clear_main_window():
             main_window.foreach(lambda x: main_window.remove(x))
         def add_main_window_item(item, name, **extra_args):
@@ -527,12 +513,10 @@ class ProjectGui(object):
             args.update(extra_args)
             main_window.pack_start(item, **args)
         main_tab.unparent()
-        event_bar.unparent()
         self.settings.register_ui_section("main_window", add_main_window_item,
                 clear_main_window)
         self.settings.register_ui("main_window", "Tabs", main_tab, -20,
                 args_dict={"expand": True, "fill": True})
-        self.settings.register_ui("main_window", "Status", event_bar, 100)
         # unit control (mm/inch)
         unit_field = self.gui.get_object("unit_control")
         unit_field.connect("changed", self.change_unit_init)
@@ -992,10 +976,6 @@ class ProjectGui(object):
         if cpu_cores is None:
             cpu_cores = "unknown"
         self.gui.get_object("AvailableCores").set_label(str(cpu_cores))
-        # status bar
-        self.status_bar = self.gui.get_object("StatusBar")
-        self.gui.get_object("StatusBarEventBox").connect("button-press-event",
-                self.toggle_log_window)
         # set the icons (in different sizes) for all windows
         gtk.window_set_default_icon_list(*get_icons_pixbuffers())
         # load menu data
@@ -1058,8 +1038,6 @@ class ProjectGui(object):
         if not self.no_dialog:
             # register a logging handler for displaying error messages
             pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
-            # register a callback for the log window
-            pycam.Utils.log.add_hook(self.add_log_message)
             self.window.show()
             self.toggle_3d_view(value=True)
 
@@ -1772,75 +1750,6 @@ class ProjectGui(object):
             self.preferences_window.hide()
         self._preferences_window_visible = state
         # don't close the window - just hide it (for "delete-event")
-        return True
-
-    def add_log_message(self, title, message, record=None):
-        timestamp = datetime.datetime.fromtimestamp(
-                record.created).strftime("%H:%M")
-        # avoid the ugly character for a linefeed
-        message = " ".join(message.splitlines())
-        try:
-            message = message.encode("utf-8")
-        except UnicodeDecodeError:
-            # remove all non-ascii characters
-            clean_char = lambda c: (32 <= ord(c) < 128) and c or " "
-            message = "".join([clean_char(char) for char in message])
-        self.log_model.append((timestamp, title, message))
-        # update the status bar (if the GTK interface is still active)
-        if not self.status_bar.window is None:
-            # remove the last message from the stack (probably not necessary)
-            self.status_bar.pop(0)
-            # push the new message
-            try:
-                self.status_bar.push(0, message)
-            except TypeError:
-                new_message = re.sub("[^\w\s]", "", message)
-                self.status_bar.push(0, new_message)
-            # highlight the "warning" icon for warnings/errors
-            if record and record.levelno > 20:
-                self.gui.get_object("StatusBarWarning").show()
-
-    @gui_activity_guard
-    def copy_log_to_clipboard(self, widget=None):
-        content = []
-        def copy_row(model, path, it, content):
-            columns = []
-            for column in range(model.get_n_columns()):
-                columns.append(model.get_value(it, column))
-            content.append(" ".join(columns))
-        self.log_model.foreach(copy_row, content)
-        self.clipboard.set_text(os.linesep.join(content))
-        self.gui.get_object("StatusBarWarning").hide()
-
-    @gui_activity_guard
-    def clear_log_window(self, widget=None):
-        self.log_model.clear()
-        self.gui.get_object("StatusBarWarning").hide()
-
-    @gui_activity_guard
-    def toggle_log_window(self, widget=None, value=None, action=None):
-        toggle_log_checkbox = self.gui.get_object("ToggleLogWindow")
-        checkbox_state = toggle_log_checkbox.get_active()
-        if value is None:
-            new_state = checkbox_state
-        elif isinstance(value, gtk.gdk.Event):
-            # someone clicked at the status bar -> toggle the window state
-            new_state = not checkbox_state
-        else:
-            if action is None:
-                new_state = value
-            else:
-                new_state = action
-        if new_state:
-            if self._log_window_position:
-                self.log_window.move(*self._log_window_position)
-            self.log_window.show()
-        else:
-            self._log_window_position = self.log_window.get_position()
-            self.log_window.hide()
-        toggle_log_checkbox.set_active(new_state)
-        self.gui.get_object("StatusBarWarning").hide()
-        # don't destroy the window with a "destroy" event
         return True
 
     @gui_activity_guard
