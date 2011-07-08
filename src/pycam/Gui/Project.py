@@ -140,7 +140,6 @@ PREFERENCES_DEFAULTS = {
 """ the listed items will be loaded/saved via the preferences file in the
 user's home directory on startup/shutdown"""
 
-POCKETING_TYPES = ["none", "holes", "enclosed"]
 MAX_UNDO_STATES = 10
 FILENAME_DRAG_TARGETS = ("text/uri-list", "text-plain")
 
@@ -488,7 +487,7 @@ class ProjectGui(object):
         def add_main_tab_item(item, name):
             main_tab.append_page(item, gtk.Label(name))
         # TODO: move these to plugins, as well
-        tab_names = ("Processes", "Bounds", "Tasks", "Toolpaths")
+        tab_names = ("Bounds", "Tasks", "Toolpaths")
         for name in tab_names:
             item = self.gui.get_object(name + "Tab")
             item.unparent()
@@ -671,27 +670,6 @@ class ProjectGui(object):
         self.settings.add_item("drill_progress_max_fps", skip_obj.get_value, skip_obj.set_value)
         sim_detail_obj = self.gui.get_object("SimulationDetailsValue")
         self.settings.add_item("simulation_details_level", sim_detail_obj.get_value, sim_detail_obj.set_value)
-        # connect the "consistency check" and the update-handler with all toolpath settings
-        for objname in ("PushRemoveStrategy", "ContourPolygonStrategy",
-                "ContourFollowStrategy", "SurfaceStrategy",
-                "EngraveStrategy", "GridDirectionX", "GridDirectionY",
-                "GridDirectionXY", "MillingStyleConventional",
-                "MillingStyleClimb", "MillingStyleIgnore"):
-            self.gui.get_object(objname).connect("toggled",
-                    self.update_process_controls)
-            self.gui.get_object(objname).connect("toggled",
-                    self.handle_process_settings_change)
-        for objname in ("OverlapPercentControl", "MaterialAllowanceControl",
-                "MaxStepDownControl", "EngraveOffsetControl"):
-            self.gui.get_object(objname).connect("value-changed",
-                    self.handle_process_settings_change)
-        self.gui.get_object("ProcessSettingName").connect("changed",
-                self.handle_process_settings_change)
-        pocketing_selector = self.gui.get_object("PocketingControl")
-        self.settings.add_item("pocketing_type", pocketing_selector.get_active,
-                pocketing_selector.set_active)
-        pocketing_selector.connect("changed",
-                self.handle_process_settings_change)
         # get/set functions for the current tool/process/bounds/task
         def get_current_item(table, item_list):
             index = self._treeview_get_active_index(table, item_list)
@@ -710,9 +688,7 @@ class ProjectGui(object):
             else:
                 self._treeview_set_active_index(table, new_index)
                 # update all controls related the (possibly changed) item
-                if item_list is self.process_list:
-                    self.append_to_queue(self.switch_process_table_selection)
-                elif item_list is self.task_list:
+                if item_list is self.task_list:
                     self.append_to_queue(self.switch_tasklist_table_selection)
         # the boundary manager
         self.settings.add_item("current_bounds",
@@ -744,12 +720,6 @@ class ProjectGui(object):
         self.settings.add_item("current_process",
                 lambda: get_current_item(self.process_editor_table, self.process_list),
                 lambda process: set_current_item(self.process_editor_table, self.process_list, process))
-        self.process_editor_table = self.gui.get_object("ProcessEditorTable")
-        self.process_editor_table.get_selection().connect("changed", self.switch_process_table_selection)
-        self.gui.get_object("ProcessListMoveUp").connect("clicked", self.handle_process_table_event, "move_up")
-        self.gui.get_object("ProcessListMoveDown").connect("clicked", self.handle_process_table_event, "move_down")
-        self.gui.get_object("ProcessListAdd").connect("clicked", self.handle_process_table_event, "add")
-        self.gui.get_object("ProcessListDelete").connect("clicked", self.handle_process_table_event, "delete")
         # make sure that the toolpath settings are consistent
         self.toolpath_table = self.gui.get_object("ToolPathTable")
         self.toolpath_table.get_selection().connect("changed", self.toolpath_table_event, "update_buttons")
@@ -1017,8 +987,6 @@ class ProjectGui(object):
 
     def update_all_controls(self):
         self.update_toolpath_table()
-        self.update_process_controls()
-        self.update_process_table()
         self.update_bounds_table()
         self.update_tasklist_table()
         self.update_save_actions()
@@ -1452,8 +1420,7 @@ class ProjectGui(object):
         current_task = self.settings.get("current_task")
         if not current_task is None:
             self.settings.get("tools").select(current_task["tool"])
-            self.settings.set("current_process", current_task["process"])
-            self.update_process_table(skip_model_update=True)
+            self.settings.get("processes").select(current_task["process"])
             self.settings.set("current_bounds", current_task["bounds"])
             self.update_bounds_table(skip_model_update=True)
         self.update_tasklist_controls()
@@ -1552,55 +1519,6 @@ class ProjectGui(object):
                 break
             progress.update_multiple()
         progress.finish()
-
-    def update_process_controls(self, widget=None, data=None):
-        # possible dependencies of the DropCutter
-        get_obj = self.gui.get_object
-        strategy = None
-        for one_strategy in ("PushRemoveStrategy", "ContourPolygonStrategy",
-                "ContourFollowStrategy", "SurfaceStrategy", "EngraveStrategy"):
-            if get_obj(one_strategy).get_active():
-                strategy = one_strategy
-                break
-        else:
-            raise ValueError("Invalid path strategy selected")
-        if strategy == "ContourPolygonStrategy" \
-                and not get_obj("MillingStyleIgnore").get_active():
-            get_obj("MillingStyleIgnore").set_active(True)
-        if strategy == "ContourPolygonStrategy" \
-                and not get_obj("GridDirectionX").get_active():
-            # only "x" direction for ContourPolygon
-            get_obj("GridDirectionX").set_active(True)
-        if strategy in ("ContourFollowStrategy", "EngraveStrategy") \
-                and get_obj("MillingStyleIgnore").get_active():
-            get_obj("MillingStyleConventional").set_active(True)
-        all_controls = ("GridDirectionX", "GridDirectionY", "GridDirectionXY",
-                "MillingStyleConventional", "MillingStyleClimb",
-                "MillingStyleIgnore", "MaxStepDownControl",
-                "MaterialAllowanceControl", "OverlapPercentControl",
-                "EngraveOffsetControl", "PocketingControl")
-        active_controls = {
-            "PushRemoveStrategy": ("GridDirectionX", "GridDirectionY",
-                    "GridDirectionXY", "MillingStyleConventional",
-                    "MillingStyleClimb", "MillingStyleIgnore",
-                    "MaxStepDownControl", "MaterialAllowanceControl",
-                    "OverlapPercentControl"),
-            # TODO: direction y and xy currently don't work for ContourPolygonStrategy
-            "ContourPolygonStrategy": ("GridDirectionX",
-                    "MillingStyleIgnore", "MaxStepDownControl",
-                    "MaterialAllowanceControl", "OverlapPercentControl"),
-            "ContourFollowStrategy": ("MillingStyleConventional",
-                    "MillingStyleClimb", "MaxStepDownControl"),
-            "SurfaceStrategy": ("GridDirectionX", "GridDirectionY",
-                    "GridDirectionXY", "MillingStyleConventional",
-                    "MillingStyleClimb", "MillingStyleIgnore",
-                    "MaterialAllowanceControl", "OverlapPercentControl"),
-            "EngraveStrategy": ("MaxStepDownControl", "EngraveOffsetControl",
-                    "MillingStyleConventional", "MillingStyleClimb",
-                    "PocketingControl"),
-        }
-        for one_control in all_controls:
-            get_obj(one_control).set_sensitive(one_control in active_controls[strategy])
 
     @gui_activity_guard
     def toggle_about_window(self, widget=None, event=None, state=None):
@@ -1890,9 +1808,10 @@ class ProjectGui(object):
                     progress.finish()
                 if self.gui.get_object("UnitChangeProcesses").get_active():
                     # scale the process settings
-                    for process in self.process_list:
-                        for key in ("material_allowance", "step_down",
-                                "engrave_offset"):
+                    for process in self.processes:
+                        for key in ("MaterialAllowanceControl",
+                                "MaxStepDownControl",
+                                "EngraveOffsetControl"):
                             process[key] *= factor
                 if self.gui.get_object("UnitChangeBounds").get_active():
                     # scale the boundaries and keep their center
@@ -2265,14 +2184,12 @@ class ProjectGui(object):
         if not filename is None:
             settings.load_file(filename)
         # flush all tables (without re-assigning new objects)
-        for one_list in (self.settings.get("tools"), self.process_list, self.bounds_list, self.task_list):
+        for one_list in (self.settings.get("tools"), self.settings.get("processes"), self.bounds_list, self.task_list):
             while len(one_list) > 0:
                 one_list.pop()
         #self.settings.get("tools").extend(settings.get_tools())
-        self.process_list.extend(settings.get_processes())
         self.bounds_list.extend(settings.get_bounds())
         self.task_list.extend(settings.get_tasks())
-        self.update_process_table()
         self.update_bounds_table()
         self.update_tasklist_table()
 
@@ -2441,6 +2358,7 @@ class ProjectGui(object):
         elif action == "delete":
             self.append_to_queue(self.switch_bounds_table_selection)
 
+    # TODO: PROCESS-PLUGIN
     def _load_process_settings_from_gui(self, settings=None):
         if settings is None:
             settings = {}
@@ -2477,6 +2395,7 @@ class ProjectGui(object):
                 self.gui.get_object("PocketingControl").get_active()]
         return settings
 
+    # TODO: PROCESS-PLUGIN
     def _put_process_settings_to_gui(self, settings):
         self.gui.get_object("ProcessSettingName").set_text(settings["name"])
         # path direction
@@ -2505,73 +2424,6 @@ class ProjectGui(object):
         if settings["pocketing_type"] in POCKETING_TYPES:
             self.gui.get_object("PocketingControl").set_active(
                     POCKETING_TYPES.index(settings["pocketing_type"]))
-
-    @gui_activity_guard
-    def handle_process_settings_change(self, widget=None, data=None):
-        current_process = self.settings.get("current_process")
-        if not current_process is None:
-            self._load_process_settings_from_gui(current_process)
-            self.update_process_table()
-
-    def update_process_table(self, new_index=None, skip_model_update=False):
-        # reset the model data and the selection
-        if new_index is None:
-            # keep the old selection - this may return "None" if nothing is selected
-            new_index = self._treeview_get_active_index(self.process_editor_table, self.process_list)
-        if not skip_model_update:
-            # update the TreeModel data
-            model = self.gui.get_object("ProcessList")
-            model.clear()
-            # columns: index, description
-            for index in range(len(self.process_list)):
-                process = self.process_list[index]
-                items = (index, process["name"])
-                model.append(items)
-            if not new_index is None:
-                self._treeview_set_active_index(self.process_editor_table, new_index)
-        # enable/disable the modification buttons
-        self.gui.get_object("ProcessListMoveUp").set_sensitive((not new_index is None) and (new_index > 0))
-        self.gui.get_object("ProcessListDelete").set_sensitive(not new_index is None)
-        self.gui.get_object("ProcessListMoveDown").set_sensitive((not new_index is None) and (new_index + 1 < len(self.process_list)))
-        # hide all controls if no process is defined
-        if new_index is None:
-            self.gui.get_object("ProcessSettingsControlsBox").hide()
-        else:
-            self.gui.get_object("ProcessSettingsControlsBox").show()
-        # remove any broken tasks and update changed names
-        self.update_task_description()
-
-    @gui_activity_guard
-    def switch_process_table_selection(self, widget=None, data=None):
-        current_process = self.settings.get("current_process")
-        if not current_process is None:
-            self.gui.get_object("ProcessSettingsControlsBox").show()
-            self._put_process_settings_to_gui(current_process)
-            self.update_process_table()
-        else:
-            self.gui.get_object("ProcessSettingsControlsBox").hide()
-        
-    @gui_activity_guard
-    def handle_process_table_event(self, widget, data, action=None):
-        # "toggle" uses two parameters - all other actions have only one
-        if action is None:
-            action = data
-        self._treeview_button_event(self.process_editor_table, self.process_list, action, self.update_process_table)
-        # do some post-processing ...
-        if action == "add":
-            # look for the first unused default name
-            prefix = "New Process "
-            index = 1
-            # loop while the current name is in use
-            while [True for process in self.process_list if process["name"] == "%s%d" % (prefix, index)]:
-                index += 1
-            new_settings = self._load_process_settings_from_gui()
-            new_settings["name"] = "%s%d" % (prefix, index)
-            self.process_list.append(new_settings)
-            self.update_process_table(self.process_list.index(new_settings))
-            self._put_process_settings_to_gui(new_settings)
-        elif action == "delete":
-            self.append_to_queue(self.switch_process_table_selection)
 
     @gui_activity_guard
     def toolpath_table_event(self, widget, data, action=None):

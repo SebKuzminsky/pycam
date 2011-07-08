@@ -68,11 +68,10 @@ class Tools(pycam.Plugins.ListPluginBase):
                     cache[row[self.COLUMN_ID]] = list(row)
                 self._treemodel.clear()
                 for index, item in enumerate(self):
-                    if id(item) in cache:
-                        self._treemodel.append(cache[id(item)])
-                    else:
-                        self._treemodel.append((id(item), index + 1,
-                                "Tool #%d" % index))
+                    if not id(item) in cache:
+                        cache[id(item)] = [id(item), index + 1,
+                                "Tool #%d" % index]
+                    self._treemodel.append(cache[id(item)])
             self.register_model_update(update_model)
             # drill settings
             self._detail_handlers = []
@@ -109,7 +108,8 @@ class Tools(pycam.Plugins.ListPluginBase):
     def select(self, tool):
         if tool in self:
             selection = self._modelview.get_selection()
-            index = self.index(tool)
+            # check for identity instead of equality
+            index = [id(t) for t in self].index(id(tool))
             selection.unselect_all()
             selection.select_path((index,))
 
@@ -165,8 +165,13 @@ class Tools(pycam.Plugins.ListPluginBase):
         else:
             args = []
         new_tool = cutter_class(radius, *args)
-        self.pop(tool_index)
+        old_tool = self.pop(tool_index)
         self.insert(tool_index, new_tool)
+        if hasattr(self, "_model_cache"):
+            # move the cache item
+            cache = self._model_cache
+            cache[id(new_tool)] = cache[id(old_tool)]
+            del cache[id(old_tool)]
         self.select(new_tool)
 
     def _tool_change(self, widget=None, data=None):
@@ -202,6 +207,6 @@ class Tools(pycam.Plugins.ListPluginBase):
         if current_tool_index is None:
             current_tool_index = 0
         new_tool = CylindricalCutter(1.0)
-        self.insert(current_tool_index, new_tool)
+        self.append(new_tool)
         self.select(new_tool)
 
