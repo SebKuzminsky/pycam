@@ -576,7 +576,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkHBox" id="hbox1">
+                      <object class="GtkHBox" id="MarginControlsX">
                         <property name="visible">True</property>
                         <property name="spacing">3</property>
                         <property name="homogeneous">True</property>
@@ -622,7 +622,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkHBox" id="hbox2">
+                      <object class="GtkHBox" id="MarginControlsY">
                         <property name="visible">True</property>
                         <property name="spacing">3</property>
                         <property name="homogeneous">True</property>
@@ -668,7 +668,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkHBox" id="hbox3">
+                      <object class="GtkHBox" id="MarginControlsZ">
                         <property name="visible">True</property>
                         <property name="spacing">3</property>
                         <property name="homogeneous">True</property>

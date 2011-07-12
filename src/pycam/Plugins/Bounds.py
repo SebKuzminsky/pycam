@@ -116,17 +116,25 @@ class Bounds(pycam.Plugins.ListPluginBase):
             # register all controls
             for obj_name in self.CONTROL_BUTTONS:
                 obj = self.gui.get_object(obj_name)
-                for signal in self.CONTROL_SIGNALS:
-                    try:
-                        handler = obj.connect(signal,
-                                lambda *args: self.core.emit_event(args[-1]),
-                                "bounds-changed")
-                        self._detail_handlers.append((obj, handler))
-                        break
-                    except TypeError:
-                        continue
+                if obj_name == "TypeRelativeMargin":
+                    handler = obj.connect("toggled",
+                            self._switch_relative_custom)
+                elif obj_name == "RelativeUnit":
+                    handler = obj.connect("changed",
+                            self._switch_percent_absolute)
                 else:
-                    self.log.info("Failed to connect to widget '%s'" % str(obj_name))
+                    for signal in self.CONTROL_SIGNALS:
+                        try:
+                            handler = obj.connect(signal, lambda *args: \
+                                    self.core.emit_event(args[-1]),
+                                    "bounds-changed")
+                            break
+                        except TypeError:
+                            continue
+                    else:
+                        self.log.info("Failed to connect to widget '%s'" % str(obj_name))
+                        continue
+                self._detail_handlers.append((obj, handler))
             self.gui.get_object("NameCell").connect("edited",
                     self._edit_bounds_name)
             self.gui.get_object("ModelDescriptionColumn").set_cell_data_func(
@@ -175,11 +183,9 @@ class Bounds(pycam.Plugins.ListPluginBase):
                 remaining.pop(model_ids.index(row[0]))
                 if not selection.path_is_selected(path):
                     selection.select_path(path)
-                    print "Selected: %d" % index
             else:
                 if selection.path_is_selected(path):
                     selection.unselect_path(path)
-                    print "Unselected: %d" % index
         # remove all models that are not available anymore
         for not_found in remaining:
             models.remove(not_found)
@@ -233,14 +239,104 @@ class Bounds(pycam.Plugins.ListPluginBase):
         relative_label = self.gui.get_object("MarginTypeRelativeLabel")
         custom_label = self.gui.get_object("MarginTypeCustomLabel")
         model_list = self.gui.get_object("ModelsTableFrame")
+        percent_switch = self.gui.get_object("RelativeUnit")
+        controls_x = self.gui.get_object("MarginControlsX")
+        controls_y = self.gui.get_object("MarginControlsY")
+        controls_z = self.gui.get_object("MarginControlsZ")
         if self.gui.get_object("TypeRelativeMargin").get_active():
             relative_label.show()
             custom_label.hide()
             model_list.show()
+            percent_switch.show()
+            if self.get_selected_models():
+                controls_x.show()
+                controls_y.show()
+                controls_z.show()
+            else:
+                controls_x.hide()
+                controls_y.hide()
+                controls_z.hide()
         else:
             relative_label.hide()
             custom_label.show()
             model_list.hide()
+            percent_switch.hide()
+            controls_x.hide()
+            controls_y.hide()
+            controls_z.hide()
+
+    def _switch_relative_custom(self, widget=None):
+        bounds = self.get_selected()
+        if not bounds:
+            return
+        models = bounds["Models"]
+        if self.gui.get_object("TypeRelativeMargin").get_active():
+            # no models are currently selected
+            func_low = lambda value, axis: 0
+            func_high = func_low
+        else:
+            # relative margins -> absolute coordinates
+            # calculate the model bounds
+            low, high = pycam.Geometry.Model.get_combined_bounds(models)
+            if None in low or None in high:
+                # zero-sized models -> no action
+                return
+            dim = []
+            for axis in range(3):
+                dim.append(high[axis] - low[axis])
+            if self._is_percent():
+                func_low = lambda value, axis: low[axis] - (value / 100.0 * dim[axis])
+                func_high = lambda value, axis: high[axis] + (value / 100.0 * dim[axis])
+            else:
+                func_low = lambda value, axis: low[axis] - value
+                func_high = lambda value, axis: high[axis] + value
+            # absolute mode -> no models may be selected
+            self._modelview.get_selection().unselect_all()
+        for axis in "XYZ":
+            for func, name in ((func_low, "BoundaryLow"),
+                    (func_high, "BoundaryHigh")):
+                try:
+                    result = func(bounds[name + axis], "XYZ".index(axis))
+                except ZeroDivisionError:
+                    # this happens for flat models
+                    result = 0
+                self.gui.get_object(name + axis).set_value(result)
+
+    def _switch_percent_absolute(self, widget=None):
+        """ re-calculate the values of the controls for the lower and upper
+        margin of each axis. This is only necessary, if there are referenced
+        models.
+        Switching between percent and absolute values changes only numbers,
+        but not the extend of margins.
+        """
+        bounds = self.get_selected()
+        if not bounds:
+            return
+        models = bounds["Models"]
+        # calculate the model bounds
+        low, high = pycam.Geometry.Model.get_combined_bounds(models)
+        if None in low or None in high:
+            # zero-sized models -> no action
+            return
+        dim = []
+        for axis in range(3):
+            dim.append(high[axis] - low[axis])
+        if self._is_percent():
+            # switched from absolute to percent
+            func = lambda value, axis: value / dim[axis] * 100.0
+        else:
+            func = lambda value, axis: (value / 100.0) * dim[axis]
+        for axis in "XYZ":
+            for name in ("BoundaryLow", "BoundaryHigh"):
+                try:
+                    result = func(bounds[name + axis], "XYZ".index(axis))
+                except ZeroDivisionError:
+                    # this happens for flat models
+                    result = 0
+                self.gui.get_object(name + axis).set_value(result)
+        # Make sure that the new state of %/mm is always stored - even if no
+        # control value has really changed (e.g. if all margins were zero).
+        self._store_bounds_settings()
 
     def _adjust_bounds(self, widget, axis, change):
         bounds = self.get_selected()
@@ -248,7 +344,10 @@ class Bounds(pycam.Plugins.ListPluginBase):
             return
         axis_index = "xyz".index(axis)
         change_factor = {"0": 0, "+": 1, "-": -1}[change]
-        if self._is_relative():
+        if change == "0":
+            bounds["BoundaryLow%s" % axis.upper()] = 0
+            bounds["BoundaryHigh%s" % axis.upper()] = 0
+        elif self._is_percent():
             # % margin
             bounds["BoundaryLow%s" % axis.upper()] += change_factor * 10
             bounds["BoundaryHigh%s" % axis.upper()] += change_factor * 10
@@ -264,7 +363,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         self._update_controls()
         self.core.emit_event("bounds-changed")
 
-    def _is_relative(self):
+    def _is_percent(self):
         return self.RELATIVE_UNIT[self.gui.get_object("RelativeUnit").get_active()] == "%"
 
     def _update_controls(self):
