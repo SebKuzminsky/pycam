@@ -1,0 +1,328 @@
+# -*- coding: utf-8 -*-
+"""
+$Id$
+
+Copyright 2011 Lars Kruse <devel@sumpfralle.de>
+
+This file is part of PyCAM.
+
+PyCAM is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+PyCAM is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+import pycam.Plugins
+# TODO: move Toolpath.Bounds here?
+import pycam.Toolpath
+
+
+class Bounds(pycam.Plugins.ListPluginBase):
+
+    UI_FILE = "bounds.ui"
+    DEPENDS = ["Models"]
+    COLUMN_REF, COLUMN_NAME = range(2)
+    LIST_ATTRIBUTE_MAP = {"ref": COLUMN_REF, "name": COLUMN_NAME}
+
+    BOUNDARY_MODES = ("inside", "along", "around")
+    # mapping of boundary types and GUI control elements
+    BOUNDARY_TYPES = {
+            pycam.Toolpath.Bounds.TYPE_RELATIVE_MARGIN: "TypeRelativeMargin",
+            pycam.Toolpath.Bounds.TYPE_CUSTOM: "TypeCustom"}
+    RELATIVE_UNIT = ("%", "mm")
+    CONTROL_BUTTONS = ("TypeRelativeMargin", "TypeCustom",
+            "ToolLimit", "RelativeUnit", "BoundaryLowX",
+            "BoundaryLowY", "BoundaryLowZ", "BoundaryHighX",
+            "BoundaryHighY", "BoundaryHighZ")
+    CONTROL_SIGNALS = ("toggled", "value-changed", "changed")
+    CONTROL_GET = ("get_active", "get_value")
+    CONTROL_SET = ("set_active", "set_value")
+
+    def setup(self):
+        if self.gui:
+            import gtk
+            bounds_box = self.gui.get_object("BoundsBox")
+            bounds_box.unparent()
+            self.core.register_ui("main", "Bounds", bounds_box, 30)
+            self._boundsview = self.gui.get_object("BoundsEditTable")
+            self._modelview = self.gui.get_object("BoundsModelsTable")
+            model_selection = self._modelview.get_selection()
+            model_selection.set_mode(gtk.SELECTION_MULTIPLE)
+            self._detail_handlers = []
+            handler = model_selection.connect("changed",
+                    lambda widget: self.core.emit_event("bounds-changed"))
+            self._detail_handlers.append((model_selection, handler))
+            selection = self._boundsview.get_selection()
+            selection.connect("changed",
+                    lambda widget: self.core.emit_event("bounds-selection-changed"))
+            self._treemodel = self._boundsview.get_model()
+            self._treemodel.clear()
+            def update_model():
+                if not hasattr(self, "_model_cache"):
+                    self._model_cache = {}
+                cache = self._model_cache
+                for row in self._treemodel:
+                    cache[row[self.COLUMN_REF]] = list(row)
+                self._treemodel.clear()
+                for index, item in enumerate(self):
+                    if not id(item) in cache:
+                        cache[id(item)] = [id(item), "Bounds #%d" % index]
+                    self._treemodel.append(cache[id(item)])
+            self.register_model_update(update_model)
+            for action, obj_name in ((self.ACTION_UP, "BoundsMoveUp"),
+                    (self.ACTION_DOWN, "BoundsMoveDown"),
+                    (self.ACTION_DELETE, "BoundsDelete")):
+                self.register_list_action_button(action, self._boundsview,
+                        self.gui.get_object(obj_name))
+            self.gui.get_object("BoundsNew").connect("clicked",
+                    self._bounds_new)
+            # Trigger a re-calculation of the bounds values after changing its type.
+            # TODO: recalculate %/mm
+            """
+            for obj_name in ("TypeRelativeMargin", "TypeCustom"):
+                self.gui.get_object(obj_name).connect("toggled",
+                        self._store_bounds_settings)
+            """
+            # the boundary manager
+            for obj_name in ("MarginIncreaseX", "MarginIncreaseY",
+                    "MarginIncreaseZ", "MarginDecreaseX", "MarginDecreaseY",
+                    "MarginDecreaseZ", "MarginResetX", "MarginResetY",
+                    "MarginResetZ"):
+                axis = obj_name[-1].lower()
+                if "Increase" in obj_name:
+                    args = "+"
+                elif "Decrease" in obj_name:
+                    args = "-"
+                else:
+                    args = "0"
+                self.gui.get_object(obj_name).connect("clicked",
+                        self._adjust_bounds, axis, args)
+            # connect change handler for boundary settings
+            for axis in "XYZ":
+                for value in ("Low", "High"):
+                    obj_name = "Boundary%s%s" % (value, axis)
+                    obj = self.gui.get_object(obj_name)
+                    handler = obj.connect("value-changed",
+                            lambda widget: self.core.emit_event("bounds-changed"))
+                    self._detail_handlers.append((obj, handler))
+            # register all controls
+            for obj_name in self.CONTROL_BUTTONS:
+                obj = self.gui.get_object(obj_name)
+                for signal in self.CONTROL_SIGNALS:
+                    try:
+                        handler = obj.connect(signal,
+                                lambda *args: self.core.emit_event(args[-1]),
+                                "bounds-changed")
+                        self._detail_handlers.append((obj, handler))
+                        break
+                    except TypeError:
+                        continue
+                else:
+                    self.log.info("Failed to connect to widget '%s'" % str(obj_name))
+            self.gui.get_object("NameCell").connect("edited",
+                    self._edit_bounds_name)
+            self.gui.get_object("ModelDescriptionColumn").set_cell_data_func(
+                    self.gui.get_object("ModelNameCell"), self._render_model_name)
+            self.core.register_event("bounds-selection-changed",
+                    self._switch_bounds)
+            self.core.register_event("bounds-changed",
+                    self._store_bounds_settings)
+            self.core.register_event("model-list-changed",
+                    self._update_model_list)
+            self._switch_bounds()
+            self._update_model_list()
+        self.core.set("bounds", self)
+        self.core.register_event("bounds-changed",
+                lambda: self.core.emit_event("visual-item-updated"))
+        return True
+
+    def teardown(self):
+        if self.gui:
+            self.core.unregister_ui("main", self.gui.get_object("BoundsBox"))
+        self.core.set("bounds", None)
+        return True
+
+    def get_selected(self, index=False):
+        return self._get_selected(self._boundsview, index=index)
+
+    def select(self, bounds):
+        if bounds in self:
+            selection = self._boundsview.get_selection()
+            index = [id(b) for b in self].index(id(b))
+            selection.unselect_all()
+            selection.select_path((index,))
+
+    def get_selected_models(self, index=False):
+        return self._get_selected(self._modelview,
+                content=self.core.get("models"), index=index,
+                force_list=True)
+
+    def select_models(self, models):
+        selection = self._modelview.get_selection()
+        remaining = models[:]
+        for index, row in enumerate(self._modelview.get_model()):
+            model_ids = [id(m) for m in remaining]
+            path = (index, )
+            if row[0] in model_ids:
+                remaining.pop(model_ids.index(row[0]))
+                if not selection.path_is_selected(path):
+                    selection.select_path(path)
+                    print "Selected: %d" % index
+            else:
+                if selection.path_is_selected(path):
+                    selection.unselect_path(path)
+                    print "Unselected: %d" % index
+        # remove all models that are not available anymore
+        for not_found in remaining:
+            models.remove(not_found)
+
+    def _render_model_name(self, column, cell, model, m_iter):
+        path = model.get_path(m_iter)
+        all_models = self.core.get("models")
+        model_id = model[path[0]][0]
+        model_ids = [id(m) for m in all_models]
+        if model_id in model_ids:
+            this_model = all_models[model_ids.index(model_id)]
+            cell.set_property("text", all_models.get_attr(this_model, "name"))
+
+    def _update_model_list(self):
+        model_ids = [id(m) for m in self.core.get("models")]
+        model_list = self._modelview.get_model()
+        for index, model_id in enumerate(model_ids):
+            while (len(model_list) > index) and \
+                    (model_list[index][0] != model_id):
+                index_iter = model_list.get_iter((index, ))
+                if model_list[index][0] in model_ids:
+                    # move it to the end of the list
+                    model_list.move_before(index_iter, None)
+                else:
+                    model_list.remove(index_iter)
+            if len(model_list) <= index:
+                model_list.append((model_id,))
+
+    def _store_bounds_settings(self, widget=None):
+        data = self.get_selected()
+        control_box = self.gui.get_object("BoundsSettingsControlsBox")
+        if data is None:
+            control_box.hide()
+            return
+        else:
+            for obj_name in self.CONTROL_BUTTONS:
+                obj = self.gui.get_object(obj_name)
+                for get_func in self.CONTROL_GET:
+                    if hasattr(obj, get_func):
+                        value = getattr(obj, get_func)()
+                        data[obj_name] = value
+                        break
+                else:
+                    self.log.info("Failed to update value of control %s" % obj_name)
+            data["Models"] = self.get_selected_models()
+            control_box.show()
+        self._hide_and_show_controls()
+
+    def _hide_and_show_controls(self):
+        # show the proper descriptive label for the current margin type
+        relative_label = self.gui.get_object("MarginTypeRelativeLabel")
+        custom_label = self.gui.get_object("MarginTypeCustomLabel")
+        model_list = self.gui.get_object("ModelsTableFrame")
+        if self.gui.get_object("TypeRelativeMargin").get_active():
+            relative_label.show()
+            custom_label.hide()
+            model_list.show()
+        else:
+            relative_label.hide()
+            custom_label.show()
+            model_list.hide()
+
+    def _adjust_bounds(self, widget, axis, change):
+        bounds = self.get_selected()
+        if not bounds:
+            return
+        axis_index = "xyz".index(axis)
+        change_factor = {"0": 0, "+": 1, "-": -1}[change]
+        if self._is_relative():
+            # % margin
+            bounds["BoundaryLow%s" % axis.upper()] += change_factor * 10
+            bounds["BoundaryHigh%s" % axis.upper()] += change_factor * 10
+        else:
+            # absolute margin
+            models = self.get_selected_models()
+            model_low, model_high = pycam.Geometry.Model.get_combined_bounds(models)
+            if None in model_low or None in model_high:
+                return
+            change_value = (model_high[axis_index] - model_low[axis_index]) * 0.1
+            bounds["BoundaryLow%s" % axis.upper()] += change_value * change_factor
+            bounds["BoundaryHigh%s" % axis.upper()] += change_value * change_factor
+        self._update_controls()
+        self.core.emit_event("bounds-changed")
+
+    def _is_relative(self):
+        return self.RELATIVE_UNIT[self.gui.get_object("RelativeUnit").get_active()] == "%"
+
+    def _update_controls(self):
+        bounds = self.get_selected()
+        control_box = self.gui.get_object("BoundsSettingsControlsBox")
+        if not bounds:
+            control_box.hide()
+        else:
+            for obj, handler in self._detail_handlers:
+                obj.handler_block(handler)
+            for obj_name, value in bounds.iteritems():
+                if obj_name == "Models":
+                    self.select_models(value)
+                    continue
+                obj = self.gui.get_object(obj_name)
+                for set_func in self.CONTROL_SET:
+                    if hasattr(obj, set_func):
+                        if (value is False) and hasattr(obj, "get_group"):
+                            # no "False" for radio buttons
+                            pass
+                        else:
+                            getattr(obj, set_func)(value)
+                        break
+                else:
+                    self.log.info("Failed to set value of control %s" % obj_name)
+            for obj, handler in self._detail_handlers:
+                obj.handler_unblock(handler)
+            self._hide_and_show_controls()
+            control_box.show()
+
+    def _switch_bounds(self, widget=None):
+        self._update_controls()
+        # update the sensitivity of the lower z margin for contour models
+        self.core.emit_event("bounds-changed")
+
+    def _bounds_new(self, *args):
+        current_bounds_index = self.get_selected(index=True)
+        if current_bounds_index is None:
+            current_bounds_index = 0
+        new_bounds = {
+                "BoundaryLowX": 0,
+                "BoundaryLowY": 0,
+                "BoundaryLowZ": 0,
+                "BoundaryHighX": 0,
+                "BoundaryHighY": 0,
+                "BoundaryHighZ": 0,
+                "TypeRelativeMargin": True,
+                "TypeCustom": False,
+                "RelativeUnit": self.RELATIVE_UNIT.index("%"),
+                "ToolLimit": self.BOUNDARY_MODES.index("along"),
+                "Models": [],
+        }
+        self.append(new_bounds)
+        self.select(new_bounds)
+
+    def _edit_bounds_name(self, cell, path, new_text):
+        path = int(path)
+        if (new_text != self._treemodel[path][self.COLUMN_NAME]) and \
+                new_text:
+            self._treemodel[path][self.COLUMN_NAME] = new_text
+

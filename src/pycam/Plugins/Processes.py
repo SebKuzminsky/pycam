@@ -21,10 +21,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Plugins
-from pycam.PathGenerators.PushCutter import PushCutter
-from pycam.PathGenerators.ContourFollow import ContourFollow
-from pycam.PathGenerators.DropCutter import DropCutter
-from pycam.PathGenerators.EngraveCutter import EngraveCutter
 
 
 class Processes(pycam.Plugins.ListPluginBase):
@@ -84,8 +80,8 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.register_model_update(update_model)
             # process settings
             self._detail_handlers = []
-            for objname in self.CONTROL_BUTTONS:
-                obj = self.gui.get_object(objname)
+            for obj_name in self.CONTROL_BUTTONS:
+                obj = self.gui.get_object(obj_name)
                 for signal in self.CONTROL_SIGNALS:
                     try:
                         handler = obj.connect(signal,
@@ -96,12 +92,12 @@ class Processes(pycam.Plugins.ListPluginBase):
                     except TypeError:
                         continue
                 else:
-                    self.log.info("Failed to connect to widget '%s'" % str(objname))
+                    self.log.info("Failed to connect to widget '%s'" % str(obj_name))
             self.core.register_event("process-selection-changed",
-                    self._process_change)
+                    self._process_switch)
             self.core.register_event("process-changed",
-                    self._update_process_controls)
-            self._update_process_controls()
+                    self._store_process_settings)
+            self._store_process_settings()
         self.core.set("processes", self)
         return True
 
@@ -153,7 +149,7 @@ class Processes(pycam.Plugins.ListPluginBase):
                 new_text:
             self._treemodel[path][self.COLUMN_NAME] = new_text
 
-    def _update_process_controls(self):
+    def _store_process_settings(self):
         data = self.get_selected()
         if data is None:
             self.gui.get_object("ProcessSettingsControlsBox").hide()
@@ -167,7 +163,7 @@ class Processes(pycam.Plugins.ListPluginBase):
                         data[obj_name] = value
                         break
                 else:
-                    log.info("Failed to update value of control %s" % objname)
+                    self.log.info("Failed to update value of control %s" % obj_name)
             self.gui.get_object("ProcessSettingsControlsBox").show()
             while not self._validate_process_consistency():
                 pass
@@ -176,7 +172,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             renderer = self.gui.get_object("DescriptionCell")
             cell.set_cell_data_func(renderer, self._render_process_description)
 
-    def _process_change(self, widget=None, data=None):
+    def _process_switch(self, widget=None, data=None):
         process = self.get_selected()
         control_box = self.gui.get_object("ProcessSettingsControlsBox")
         if not process:
@@ -195,7 +191,7 @@ class Processes(pycam.Plugins.ListPluginBase):
                             getattr(obj, set_func)(value)
                         break
                 else:
-                    log.info("Failed to set value of control %s" % objname)
+                    self.log.info("Failed to set value of control %s" % obj_name)
             for obj, handler in self._detail_handlers:
                 obj.handler_unblock(handler)
             control_box.show()

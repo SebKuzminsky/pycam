@@ -94,6 +94,7 @@ class Models(pycam.Plugins.ListPluginBase):
                         self._treemodel.append((id(item), "Model #%d" % index,
                                 True, color,
                                 int(self.DEFAULT_COLOR[3] * _GTK_COLOR_MAX)))
+                self.core.emit_event("model-list-changed")
             self._get_colors_of_selected_models()
             self.register_model_update(update_model)
         self.core.set("models", self)

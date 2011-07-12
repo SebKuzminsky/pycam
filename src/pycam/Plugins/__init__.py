@@ -165,7 +165,9 @@ class ListPluginBase(PluginBase, list):
         self._update_model()
         return value
 
-    def _get_selected(self, modelview, index=False, force_list=False):
+    def _get_selected(self, modelview, index=False, force_list=False, content=None):
+        if content is None:
+            content = self
         if hasattr(modelview, "get_selection"):
             # a treeview selection
             selection = modelview.get_selection()
@@ -178,7 +180,7 @@ class ListPluginBase(PluginBase, list):
         if index:
             get_result = lambda path: path[0]
         else:
-            get_result = lambda path: self[path[0]]
+            get_result = lambda path: content[path[0]]
         if (selection_mode == gtk.SELECTION_MULTIPLE) or force_list:
             result = []
             for path in paths:

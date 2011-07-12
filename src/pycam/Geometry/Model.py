@@ -51,6 +51,25 @@ except ImportError:
 log = pycam.Utils.log.get_logger()
 
 
+def get_combined_bounds(models):
+    low = [None, None, None]
+    high = [None, None, None]
+    for model in models:
+        if (low[0] is None) or (model.minx < low[0]):
+            low[0] = model.minx
+        if (low[1] is None) or (model.miny < low[1]):
+            low[1] = model.miny
+        if (low[2] is None) or (model.minz < low[2]):
+            low[2] = model.minz
+        if (high[0] is None) or (model.maxx > high[0]):
+            high[0] = model.maxx
+        if (high[1] is None) or (model.maxy > high[1]):
+            high[1] = model.maxy
+        if (high[2] is None) or (model.maxz > high[2]):
+            high[2] = model.maxz
+    return low, high
+
+
 class BaseModel(TransformableContainer):
     id = 0
 

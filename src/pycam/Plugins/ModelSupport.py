@@ -38,7 +38,7 @@ class ModelSupport(pycam.Plugins.PluginBase):
                     "support-model-changed")
             self.core.register_event("model-change-after",
                     support_model_changed)
-            self.core.register_event("boundary-updated",
+            self.core.register_event("bounds-changed",
                     support_model_changed)
             self.core.register_event("support-model-changed",
                     self.update_support_model)
