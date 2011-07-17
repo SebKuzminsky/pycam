@@ -1,3 +1,6 @@
+Version 0.6 - UNRELEASED
+ * greatly improved OpenGL visualization (contributed by Mattes)
+
 Version 0.5.1 - 2011-06-13
  * added extrusion for 2D models
  * 2D projection of multi-layered 2D models

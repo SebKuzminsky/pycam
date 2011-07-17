@@ -147,10 +147,38 @@ class BaseModel(TransformableContainer):
                 self._opengl_display_cache[cache_index] = list_index
                 # somehow "GL_COMPILE_AND_EXECUTE" fails - we render it later
                 GL.glNewList(list_index, GL.GL_COMPILE)
-            for item in self.next():
-                # ignore invisible things like the normal of a ContourModel
-                if hasattr(item, "to_OpenGL"):
-                    item.to_OpenGL(show_directions=show_directions)
+            if isinstance(self, Model):
+                get_coords = lambda p: (p.x, p.y, p.z)
+                def calc_normal(main, normals):
+                    suitable = Vector(0, 0, 0)
+                    for normal, weight in normals:
+                        dot = main.dot(normal)
+                        if dot > 0:
+                            suitable = suitable.add(normal.mul(weight * dot))
+                    return suitable.normalized()
+                vertices = {}
+                for t in self.triangles():
+                    for p in (t.p1, t.p2, t.p3):
+                        coords = get_coords(p)
+                        if not coords in vertices:
+                            vertices[coords] = []
+                        vertices[coords].append((t.normal.normalized(), t.get_area()))
+                print "Triangles: %d / Vertices: %d" % (len(self.triangles()), len(vertices))
+                GL.glBegin(GL.GL_TRIANGLES)
+                for t in self.triangles():
+                    # The triangle's points are in clockwise order, but GL expects
+                    # counter-clockwise sorting.
+                    for p in (t.p1, t.p3, t.p2):
+                        coords = get_coords(p)
+                        normal = calc_normal(t.normal.normalized(), vertices[coords])
+                        GL.glNormal3f(normal.x, normal.y, normal.z)
+                        GL.glVertex3f(p.x, p.y, p.z)
+                GL.glEnd()
+            else:
+                for item in self.next():
+                    # ignore invisble things like the normal of a ContourModel
+                    if hasattr(item, "to_OpenGL"):
+                        item.to_OpenGL(show_directions=show_directions)
             if list_index > 0:
                 GL.glEndList()
                 GL.glCallList(list_index)

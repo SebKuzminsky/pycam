@@ -231,11 +231,14 @@ class Camera(object):
         else:
             light_pos = (0, 0, 0)
         GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, (light_pos[0], light_pos[1],
-                light_pos[2], 1.0))
+                light_pos[2], 0.0))
         # position the camera
         camera_position = (v["center"][0] + v["distance"][0],
                 v["center"][1] + v["distance"][1],
                 v["center"][2] + v["distance"][2])
+        # position a second light at camera position
+        GL.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, (camera_position[0],
+                camera_position[1], camera_position[2], 0.0))
         if self.settings.get("view_perspective"):
             # perspective view
             GLU.gluPerspective(v["fovy"], (0.0 + width) / height, v["znear"],
@@ -519,6 +522,12 @@ class ModelViewWindowGL(object):
             GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
             result = func(self, *args, **kwargs)
             self.camera.position_camera()
+            # adjust Light #2
+            v = self.camera.view
+            lightpos = (v["center"][0] + v["distance"][0],
+                    v["center"][1] + v["distance"][1],
+                    v["center"][2] + v["distance"][2])
+            GL.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, lightpos)
             self._paint_raw()
             GL.glMatrixMode(prev_mode)
             GL.glFlush()
@@ -528,23 +537,43 @@ class ModelViewWindowGL(object):
 
     def glsetup(self):
         GLUT.glutInit()
+        GLUT.glutInitDisplayMode(GLUT.GLUT_RGBA | GLUT.GLUT_DOUBLE | \
+                GLUT.GLUT_DEPTH | GLUT.GLUT_MULTISAMPLE | GLUT.GLUT_ALPHA | \
+                GLUT.GLUT_ACCUM)
         if self.settings.get("view_shadow"):
-            GL.glShadeModel(GL.GL_FLAT)
-        else:
-            GL.glShadeModel(GL.GL_SMOOTH)
+            # TODO: implement shadowing (or remove the setting)
+            pass
+        # use vertex normals for smooth rendering
+        GL.glShadeModel(GL.GL_SMOOTH)
         bg_col = self.settings.get("color_background")
         GL.glClearColor(bg_col[0], bg_col[1], bg_col[2], 0.0)
-        GL.glClearDepth(1.)
-        GL.glEnable(GL.GL_DEPTH_TEST)
-        GL.glDepthFunc(GL.GL_LEQUAL)
-        GL.glDepthMask(GL.GL_TRUE)
         GL.glHint(GL.GL_PERSPECTIVE_CORRECTION_HINT, GL.GL_NICEST)
         GL.glMatrixMode(GL.GL_MODELVIEW)
-        #GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT,
-        #        (0.1, 0.1, 0.1, 1.0))
+        # enable blending/transparency (alpha) for colors
+        GL.glEnable(GL.GL_BLEND)
+        # see http://wiki.delphigl.com/index.php/glBlendFunc
+        GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+        GL.glEnable(GL.GL_DEPTH_TEST)        
+        # "less" is OpenGL's default
+        GL.glDepthFunc(GL.GL_LESS)   
+        # slightly improved performance: ignore all faces inside the objects
+        GL.glCullFace(GL.GL_BACK);
+        GL.glEnable(GL.GL_CULL_FACE);
+        # enable antialiasing
+        GL.glEnable(GL.GL_LINE_SMOOTH)
+        #GL.glEnable(GL.GL_POLYGON_SMOOTH)
+        GL.glHint(GL.GL_LINE_SMOOTH_HINT, GL.GL_NICEST)
+        GL.glHint(GL.GL_POLYGON_SMOOTH_HINT, GL.GL_NICEST)
+        # TODO: move to toolpath drawing
+        GL.glLineWidth(0.8)
+        #GL.glEnable(GL.GL_MULTISAMPLE_ARB)
+        GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
+        GL.glPolygonOffset(1.0, 1.0)
+        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT_AND_DIFFUSE,
+                self.settings.get("color_model") )
         GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR,
-                (0.1, 0.1, 0.1, 1.0))
-        #GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (0.5))
+                (1.0, 1.0, 1.0, 1.0))
+        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (100.0))
         if self.settings.get("view_polygon"):
             GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
         else:
@@ -556,27 +585,42 @@ class ModelViewWindowGL(object):
         GL.glViewport(0, 0, self.area.allocation.width,
                 self.area.allocation.height)
         # lighting
-        # Setup The Ambient Light
-        GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0.3, 0.3, 0.3, 3.))
-        # Setup The Diffuse Light
-        GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, (1., 1., 1., .0))
-        # Setup The SpecularLight
-        GL.glLightfv(GL.GL_LIGHT0, GL.GL_SPECULAR, (.3, .3, .3, 1.0))
+        GL.glLightModeli(GL.GL_LIGHT_MODEL_LOCAL_VIEWER, GL.GL_TRUE)
+        # Light #1
+        # setup the ambient light
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0.3, 0.3, 0.3, 1.0))
+        # setup the diffuse light
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, (0.8, 0.8, 0.8, 1.0))
+        # setup the specular light
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_SPECULAR, (0.1, 0.1, 0.1, 1.0))
+        # enable Light #1
         GL.glEnable(GL.GL_LIGHT0)
-        # Enable Light One
+        # Light #2
+        # spotlight with small light cone (like a desk lamp)
+        #GL.glLightfv(GL.GL_LIGHT1, GL.GL_SPOT_CUTOFF, 10.0)
+        # ... directed at the object
+        v = self.camera.view
+        GL.glLightfv(GL.GL_LIGHT1, GL.GL_SPOT_DIRECTION,
+                (v["center"][0], v["center"][1], v["center"][2]))
+        GL.glLightfv(GL.GL_LIGHT1, GL.GL_AMBIENT, (0.3, 0.3, 0.3, 1.0))
+        # and dark outside of the light cone
+        #GL.glLightfv(GL.GL_LIGHT1, GL.GL_SPOT_EXPONENT, 100.0)
+        #GL.glLightf(GL.GL_LIGHT1, GL.GL_QUADRATIC_ATTENUATION, 0.5) 
+        # setup the diffuse light
+        GL.glLightfv(GL.GL_LIGHT1, GL.GL_DIFFUSE, (0.9, 0.9, 0.9, 1.0))
+        # setup the specular light
+        GL.glLightfv(GL.GL_LIGHT1, GL.GL_SPECULAR, (1.0, 1.0, 1.0, 1.0))
+        # enable Light #2
+        GL.glEnable(GL.GL_LIGHT1)       
         if self.settings.get("view_light"):
             GL.glEnable(GL.GL_LIGHTING)
         else:
             GL.glDisable(GL.GL_LIGHTING)
         GL.glEnable(GL.GL_NORMALIZE)
         GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT_AND_DIFFUSE)
-        #GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR)
+        GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR)
         #GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_EMISSION)
         GL.glEnable(GL.GL_COLOR_MATERIAL)
-        # enable blending/transparency (alpha) for colors
-        GL.glEnable(GL.GL_BLEND)
-        # see http://wiki.delphigl.com/index.php/glBlendFunc
-        GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
 
     def destroy(self, widget=None, data=None):
         if self.notify_destroy_func:
@@ -851,8 +895,15 @@ def draw_axes(settings):
     # the divider is just based on playing with numbers
     scale = size / number(1500.0)
     string_distance = number(1.1) * size
+    #GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+    #GL.glMaterialfv(GL.GL_FRONT, GL.GL_AMBIENT, (0.0,0.0,0.0,1.0)); # no ambient light
+    #GL.glMaterialfv(GL.GL_FRONT, GL.GL_DIFFUSE, (1.0,0.0,0.0,1.0)); # diffuse red
+    #GL.glMaterialfv(GL.GL_FRONT, GL.GL_SPECULAR, (1.0,1.0,1.0,1.0)); # highly specular
+    # otherwise plain colors like the next glColor4f wouldn't work
+    if settings.get("view_light"):
+        GL.glDisable(GL.GL_LIGHTING)
     GL.glBegin(GL.GL_LINES)
-    GL.glColor3f(1, 0, 0)
+    GL.glColor4f(1, 0, 0, 1)
     GL.glVertex3f(0, 0, 0)
     GL.glVertex3f(size, 0, 0)
     GL.glEnd()
@@ -869,9 +920,11 @@ def draw_axes(settings):
     GL.glVertex3f(0, 0, size)
     GL.glEnd()
     draw_string(0, 0, string_distance, 'xz', "Z", scale=scale)
+    if settings.get("view_light"):
+        GL.glEnable(GL.GL_LIGHTING)
 
 @keep_matrix
-def draw_bounding_box(minx, miny, minz, maxx, maxy, maxz, color):
+def draw_bounding_box(minx, miny, minz, maxx, maxy, maxz, color, lighting=True):
     p1 = [minx, miny, minz]
     p2 = [minx, maxy, minz]
     p3 = [maxx, maxy, minz]
@@ -880,6 +933,8 @@ def draw_bounding_box(minx, miny, minz, maxx, maxy, maxz, color):
     p6 = [minx, maxy, maxz]
     p7 = [maxx, maxy, maxz]
     p8 = [maxx, miny, maxz]
+    if lighting:
+        GL.glDisable(GL.GL_LIGHTING)
     # lower rectangle
     GL.glBegin(GL.GL_LINES)
     GL.glColor4f(*color)
@@ -890,6 +945,8 @@ def draw_bounding_box(minx, miny, minz, maxx, maxy, maxz, color):
         GL.glVertex3f(*(corner_pair[0]))
         GL.glVertex3f(*(corner_pair[1]))
     GL.glEnd()
+    if lighting:
+        GL.glEnable(GL.GL_LIGHTING)
 
 @keep_gl_mode
 @keep_matrix
@@ -905,7 +962,8 @@ def draw_complete_model_view(settings):
                 float(settings.get("minx")), float(settings.get("miny")),
                 float(settings.get("minz")), float(settings.get("maxx")),
                 float(settings.get("maxy")), float(settings.get("maxz")),
-                settings.get("color_bounding_box"))
+                settings.get("color_bounding_box"),
+                lighting=settings.get("view_light"))
     # draw the material (for simulation mode)
     if settings.get("show_simulation"):
         obj = settings.get("simulation_object")
@@ -955,7 +1013,8 @@ def draw_complete_model_view(settings):
         if not moves is None:
             draw_toolpath(moves, settings.get("color_toolpath_cut"),
                     settings.get("color_toolpath_return"),
-                    show_directions=settings.get("show_directions"))
+                    show_directions=settings.get("show_directions"),
+                    lighting=settings.get("view_light"))
     # draw the toolpath
     # don't do it, if a new toolpath is just being calculated
     safety_height = settings.get("gcode_safety_height")
@@ -968,14 +1027,13 @@ def draw_complete_model_view(settings):
                 draw_toolpath(toolpath_obj.get_moves(safety_height),
                         settings.get("color_toolpath_cut"),
                         settings.get("color_toolpath_return"),
-                        show_directions=settings.get("show_directions"))
+                        show_directions=settings.get("show_directions"),
+                        lighting=settings.get("view_light"))
     # draw the drill
     if settings.get("show_drill"):
         cutter = settings.get("cutter")
         if not cutter is None:
             GL.glColor4f(*settings.get("color_cutter"))
-            # we need to wait until the color change is active
-            GL.glFinish()
             cutter.to_OpenGL()
     if settings.get("show_drill_progress") \
             and settings.get("toolpath_in_progress"):
@@ -989,15 +1047,18 @@ def draw_complete_model_view(settings):
         if not toolpath_in_progress is None:
             draw_toolpath(moves, settings.get("color_toolpath_cut"),
                     settings.get("color_toolpath_return"),
-                    show_directions=settings.get("show_directions"))
+                    show_directions=settings.get("show_directions"),
+                    lighting=settings.get("view_light"))
 
 @keep_gl_mode
 @keep_matrix
-def draw_toolpath(moves, color_cut, color_rapid, show_directions=False):
+def draw_toolpath(moves, color_cut, color_rapid, show_directions=False, lighting=True):
     GL.glMatrixMode(GL.GL_MODELVIEW)
     GL.glLoadIdentity()
     last_position = None
     last_rapid = None
+    if lighting:
+        GL.glDisable(GL.GL_LIGHTING)
     GL.glBegin(GL.GL_LINE_STRIP)
     for position, rapid in moves:
         if last_rapid != rapid:
@@ -1015,6 +1076,8 @@ def draw_toolpath(moves, color_cut, color_rapid, show_directions=False):
         GL.glVertex3f(position.x, position.y, position.z)
         last_position = position
     GL.glEnd()
+    if lighting:
+        GL.glEnable(GL.GL_LIGHTING)
     if show_directions:
         for index in range(len(moves) - 1):
             p1 = moves[index][0]
