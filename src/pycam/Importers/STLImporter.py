@@ -282,7 +282,7 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
     edges = 0
     kdtree = None
 
-    if model.minx is None:
+    if not model:
         # no valid items added to the model
         return None
     else:

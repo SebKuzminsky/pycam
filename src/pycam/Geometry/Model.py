@@ -27,7 +27,7 @@ from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Polygon import Polygon
-from pycam.Geometry.Point import Point
+from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
 from pycam.Geometry.Matrix import TRANSFORMATIONS
 from pycam.Toolpath import Bounds
@@ -96,6 +96,12 @@ class BaseModel(TransformableContainer):
         for item in other_model.next():
             result.append(item)
         return result
+
+    def __len__(self):
+        """ Return the number of available items in the model.
+        This is mainly useful for evaluating an empty model as False.
+        """
+        return sum([len(igroup) for igroup in self._item_groups])
 
     def next(self):
         for item_group in self._item_groups:
@@ -1183,8 +1189,9 @@ class Rectangle(TransformableContainer):
         corners = []
         for rectangle, vertices in ((r1, shared_vertices),
                 (r2, shared_vertices2)):
-            i1 = rectangle.get_points().index(vertices[0])
-            i2 = rectangle.get_points().index(vertices[1])
+            # turn the tuple into a list (".index" was introduced in Python 2.6)
+            i1 = list(rectangle.get_points()).index(vertices[0])
+            i2 = list(rectangle.get_points()).index(vertices[1])
             if i1 + i2 % 2 == 0:
                 # shared vertices are at opposite corners
                 return None

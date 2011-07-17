@@ -134,12 +134,12 @@ def generate_toolpath(model, tool_settings=None,
         trimesh_models.append(support_model)
     # Adapt the contour_model to the engraving offset. This offset is
     # considered to be part of the material_allowance.
-    if (not contour_model is None) and (engrave_offset != 0):
+    if contour_model and (engrave_offset != 0):
         if not callback is None:
             callback(text="Preparing contour model with offset ...")
         contour_model = contour_model.get_offset_model(engrave_offset,
                 callback=callback)
-        if contour_model is None:
+        if contour_model:
             return "Failed to calculate offset polygons"
         if not callback is None:
             # reset percentage counter after the contour model calculation
@@ -165,7 +165,7 @@ def generate_toolpath(model, tool_settings=None,
             # no collisions and no user interruption
             pass
     # check the pocketing type
-    if (not contour_model is None) and (pocketing_type != "none"):
+    if contour_model and (pocketing_type != "none"):
         if not callback is None:
             callback(text="Generating pocketing polygons ...")
         pocketing_offset = cutter.radius * 1.8
@@ -227,7 +227,7 @@ def generate_toolpath(model, tool_settings=None,
         # use minz/maxz of the contour model (in other words: ignore z)
         contour_model = contour_model.get_cropped_model(minx, maxx, miny, maxy,
                 contour_model.minz, contour_model.maxz)
-        if contour_model is None:
+        if contour_model:
             return "No part of the contour model is within the bounding box."
     physics = _get_physics(trimesh_models, cutter, calculation_backend)
     if isinstance(physics, basestring):

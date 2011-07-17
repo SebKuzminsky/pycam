@@ -174,7 +174,7 @@ def load_model_file(filename, program_locations, unit=None):
         return None
     importer = pycam.Importers.detect_file_type(uri)[1]
     model = importer(uri, program_locations=program_locations, unit=unit)
-    if model is None:
+    if not model:
         log.warn("Failed to load the model file (%s)." % uri)
         return None
     else:
@@ -355,7 +355,7 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
         else:
             model = load_model_file(inputfile,
                     program_locations=program_locations, unit=opts.unit_size)
-        if model is None:
+        if not model:
             # something went wrong - we quit
             return EXIT_CODES["load_model_failed"]
         # calculate the processing boundary
