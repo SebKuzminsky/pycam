@@ -358,8 +358,6 @@ class ProjectGui(object):
                 ("OpenModel", self.load_model_file, None, "<Control>o"),
                 ("SaveModel", self.save_model, lambda: self.last_model_uri, "<Control>s"),
                 ("SaveAsModel", self.save_model, None, "<Control><Shift>s"),
-                ("ExportGCodeAll", self.save_toolpath, False, "<Control><Shift>e"),
-                ("ExportGCodeVisible", self.save_toolpath, True, None),
                 ("ExportEMCToolDefinition", self.export_emc_tools, None, None),
                 ("Quit", self.destroy, None, "<Control>q"),
                 ("GeneralSettings", self.toggle_preferences_window, None, "<Control>p"),
@@ -459,13 +457,9 @@ class ProjectGui(object):
                 self.process_pool_window):
             window.add_accel_group(self._accel_group)
         # set defaults
-        self.toolpath = pycam.Toolpath.ToolpathList()
         self.cutter = None
-        self.task_list = []
         self._last_unit = None
-        self._toolpath_for_grid_data = {}
         # add some dummies - to be implemented later ...
-        self.settings.add_item("toolpath", lambda: self.toolpath)
         self.settings.add_item("cutter", lambda: self.cutter)
         main_tab = self.gui.get_object("MainTabs")
         def clear_main_tab():
@@ -474,15 +468,8 @@ class ProjectGui(object):
         def add_main_tab_item(item, name):
             main_tab.append_page(item, gtk.Label(name))
         # TODO: move these to plugins, as well
-        tab_names = ("Tasks", "Toolpaths")
-        for name in tab_names:
-            item = self.gui.get_object(name + "Tab")
-            item.unparent()
         self.settings.register_ui_section("main", add_main_tab_item,
                 clear_main_tab)
-        for name in tab_names:
-            item = self.gui.get_object(name + "Tab")
-            self.settings.register_ui("main", name, item, tab_names.index(name) + 100)
         main_window = self.gui.get_object("WindowBox")
         def clear_main_window():
             main_window.foreach(lambda x: main_window.remove(x))
@@ -537,11 +524,6 @@ class ProjectGui(object):
                 autoload_box)
         self.settings.add_item("default_task_settings_file",
                 get_autoload_task_file, set_autoload_task_file)
-        # toolpath grid pattern
-        for objname in ("GridYCount", "GridXCount", "GridYDistance",
-                "GridXDistance"):
-            self.gui.get_object(objname).connect("value-changed",
-                    self.update_toolpath_grid_window)
         # visual and general settings
         for name, objname in (("show_model", "ShowModelCheckBox"),
                 ("show_axes", "ShowAxesCheckBox"),
@@ -615,85 +597,6 @@ class ProjectGui(object):
         self.settings.add_item("drill_progress_max_fps", skip_obj.get_value, skip_obj.set_value)
         sim_detail_obj = self.gui.get_object("SimulationDetailsValue")
         self.settings.add_item("simulation_details_level", sim_detail_obj.get_value, sim_detail_obj.set_value)
-        # get/set functions for the current tool/process/bounds/task
-        def get_current_item(table, item_list):
-            index = self._treeview_get_active_index(table, item_list)
-            if index is None:
-                return None
-            else:
-                return item_list[index]
-        def set_current_item(table, item_list, item):
-            old_index = self._treeview_get_active_index(table, item_list)
-            try:
-                new_index = item_list.index(item)
-            except ValueError:
-                return
-            if old_index == new_index:
-                return
-            else:
-                self._treeview_set_active_index(table, new_index)
-                # update all controls related the (possibly changed) item
-                if item_list is self.task_list:
-                    self.append_to_queue(self.switch_tasklist_table_selection)
-        # make sure that the toolpath settings are consistent
-        self.toolpath_table = self.gui.get_object("ToolPathTable")
-        self.toolpath_table.get_selection().connect("changed", self.toolpath_table_event, "update_buttons")
-        self.gui.get_object("toolpath_visible").connect("toggled", self.toolpath_table_event, "toggle_visibility")
-        self.gui.get_object("toolpath_up").connect("clicked", self.toolpath_table_event, "move_up")
-        self.gui.get_object("toolpath_down").connect("clicked", self.toolpath_table_event, "move_down")
-        self.gui.get_object("toolpath_delete").connect("clicked", self.toolpath_table_event, "delete")
-        self.gui.get_object("toolpath_simulate").connect("clicked", self.toolpath_table_event, "simulate")
-        self.gui.get_object("toolpath_crop").connect("clicked", self.toolpath_table_event, "crop")
-        self.gui.get_object("ToolpathGrid").connect("clicked", self.toolpath_table_event, "grid")
-        self.gui.get_object("ExitSimulationButton").connect("clicked", self.finish_toolpath_simulation)
-        self.gui.get_object("ExportAllToolpathsButton").connect("clicked",
-                self.save_toolpath, False)
-        self.gui.get_object("ExportVisibleToolpathsButton").connect("clicked",
-                self.save_toolpath, True)
-        speed_factor_widget = self.gui.get_object("SimulationSpeedFactor")
-        self.settings.add_item("simulation_speed_factor",
-                lambda: pow(10, speed_factor_widget.get_value()),
-                lambda value: speed_factor_widget.set_value(math.log10(max(0.001, value))))
-        simulation_progress = self.gui.get_object("SimulationProgressTimelineValue")
-        def update_simulation_progress(widget):
-            if widget.get_value() == 100:
-                # a negative value indicates, that the simulation is finished
-                self.settings.set("simulation_current_distance", -1)
-            else:
-                complete = self.settings.get("simulation_complete_distance")
-                partial = widget.get_value() / 100.0 * complete
-                self.settings.set("simulation_current_distance", partial)
-        simulation_progress.connect("value-changed", update_simulation_progress)
-        # update the speed factor label
-        speed_factor_widget.connect("value-changed",
-                lambda widget: self.gui.get_object("SimulationSpeedFactorValueLabel").set_label(
-                        "%.2f" % self.settings.get("simulation_speed_factor")))
-        self.simulation_window = self.gui.get_object("SimulationDialog")
-        self.simulation_window.connect("delete-event", self.finish_toolpath_simulation)
-        # store the original content (for adding the number of current toolpaths in "update_toolpath_table")
-        self._original_toolpath_tab_label = self.gui.get_object("ToolpathsTabLabel").get_text()
-        # the task list manager
-        self.settings.add_item("current_task",
-                lambda: get_current_item(self.tasklist_table, self.task_list),
-                lambda task: set_current_item(self.tasklist_table, self.task_list, task))
-        self.tasklist_table = self.gui.get_object("TaskListTable")
-        self.tasklist_table.get_selection().connect("changed", self.switch_tasklist_table_selection)
-        self.gui.get_object("tasklist_enabled").connect("toggled", self._handle_tasklist_button_event, "toggle_enabled")
-        self.gui.get_object("TaskListMoveUp").connect("clicked", self._handle_tasklist_button_event, "move_up")
-        self.gui.get_object("TaskListMoveDown").connect("clicked", self._handle_tasklist_button_event, "move_down")
-        self.gui.get_object("TaskListAdd").connect("clicked", self._handle_tasklist_button_event, "add")
-        self.gui.get_object("TaskListDelete").connect("clicked", self._handle_tasklist_button_event, "delete")
-        self.gui.get_object("GenerateToolPathButton").connect("clicked", self._handle_tasklist_button_event, "generate_one_toolpath")
-        self.gui.get_object("GenerateAllToolPathsButton").connect("clicked", self._handle_tasklist_button_event, "generate_all_toolpaths")
-        # We need to collect the signal handles to block them during
-        # programmatical changes. The "self._task_property_signals" list allows
-        # us to track all handlers that need to be blocked.
-        self._task_property_signals = []
-        for objname in ("TaskNameControl", "TaskToolSelector",
-                "TaskProcessSelector", "TaskBoundsSelector"):
-            obj = self.gui.get_object(objname)
-            self._task_property_signals.append((obj,
-                    obj.connect("changed", self._handle_task_setting_change)))
         # gcode settings
         gcode_minimum_step_x = self.gui.get_object("GCodeMinimumStep_x")
         self.settings.add_item("gcode_minimum_step_x",
@@ -901,15 +804,12 @@ class ProjectGui(object):
             self.toggle_3d_view(value=True)
 
     def update_all_controls(self):
-        self.update_toolpath_table()
-        self.update_tasklist_table()
         self.update_save_actions()
         self.update_unit_labels()
         self.update_model_dimensions()
         self.update_gcode_controls()
         self.update_ode_settings()
         self.update_parallel_processes_settings()
-        self.update_toolpath_related_controls()
 
     def update_gcode_controls(self, widget=None):
         # path mode
@@ -1165,195 +1065,6 @@ class ProjectGui(object):
             # store the new setting
             self.settings.set("external_program_%s" % key, location)
 
-    def update_tasklist_controls(self):
-        # en/disable some buttons
-        index = self._treeview_get_active_index(self.tasklist_table, self.task_list)
-        selection_active = not index is None
-        self.gui.get_object("TaskListDelete").set_sensitive(selection_active)
-        self.gui.get_object("TaskListMoveUp").set_sensitive(selection_active and index > 0)
-        self.gui.get_object("TaskListMoveDown").set_sensitive(selection_active and index < len(self.task_list) - 1)
-        self.gui.get_object("GenerateToolPathButton").set_sensitive(selection_active)
-        # "add" is only allowed, if there are any tools, processes and bounds
-        self.gui.get_object("TaskListAdd").set_sensitive(
-                (len(self.settings.get("tools")) > 0) \
-                and (len(self.settings.get("processes")) > 0) \
-                and (len(self.settings.get("bounds")) > 0))
-        details_box = self.gui.get_object("TaskDetails")
-        if selection_active:
-            details_box.show()
-        else:
-            details_box.hide()
-        # check if any of the tasks is marked as "enabled"
-        enabled_count = len([True for task in self.task_list if task["enabled"]])
-        self.gui.get_object("GenerateAllToolPathsButton").set_sensitive(enabled_count > 0)
-        # update the summary description of the currently active task
-        self.update_task_description()
-
-    def update_task_description(self):
-        # update the task description
-        lines = []
-        task_index = self._treeview_get_active_index(self.tasklist_table, self.task_list)
-        if (not task_index is None) and (task_index < len(self.task_list)):
-            task = self.task_list[task_index]
-            # block all "change" signals for the task controls
-            for obj, signal_handler in self._task_property_signals:
-                obj.handler_block(signal_handler)
-            self.gui.get_object("TaskNameControl").set_text(task["name"])
-            tool = task["tool"]
-            self.gui.get_object("TaskToolSelector").set_active(self.settings.get("tools").index(tool))
-            process = task["process"]
-            self.gui.get_object("TaskProcessSelector").set_active(self.settings.get("processes").index(process))
-            bounds = task["bounds"]
-            self.gui.get_object("TaskBoundsSelector").set_active(self.settings.get("bounds").index(bounds))
-            # unblock the signals again
-            for obj, signal_handler in self._task_property_signals:
-                obj.handler_unblock(signal_handler)
-            unit = self.settings.get("unit")
-            tool_desc = "Tool: %s " % tool["shape"]
-            if tool["shape"] != "ToroidalCutter":
-                tool_desc += "(%.4f%s)" % (2 * tool["tool_radius"], unit)
-            else:
-                tool_desc += "(%.4f%s / %.4f%s)" % ( 2 * tool["tool_radius"], unit, 2 * tool["torus_radius"], unit)
-            lines.append(tool_desc)
-            lines.append("Spindle speed: %drpm / Feedrate: %d%s/minute" % (tool["speed"], tool["feedrate"], unit))
-            lines.append("Strategy: %s" % process["path_strategy"])
-            if process["path_strategy"] == "EngraveStrategy":
-                lines.append("Engrave offset: %.3f" % process["engrave_offset"])
-            else:
-                lines.append("Milling style: %s" % process["milling_style"])
-                if process["path_strategy"] != "ContourFollowStrategy":
-                    lines.append("Overlap: %d%%" % process["overlap_percent"])
-                    lines.append("Material allowance: %.2f%s" \
-                            % (process["material_allowance"], unit))
-            if process["path_strategy"] != "SurfaceStrategy":
-                lines.append("Maximum step down: %.2f%s" % (process["step_down"], unit))
-        else:
-            lines.append("No task selected")
-        self.gui.get_object("CurrentTaskSummary").set_text(os.linesep.join(lines))
-
-    def update_tasklist_table(self, new_index=None, skip_model_update=False):
-        tasklist_model = self.gui.get_object("TaskList")
-        if new_index is None:
-            # keep the old selection - this may return "None" if nothing is selected
-            new_index = self._treeview_get_active_index(self.tasklist_table, self.task_list)
-        if not skip_model_update:
-            tasklist_model.clear()
-            # remove broken tasks from the list (tool or process was deleted)
-            self.task_list = [task for task in self.task_list
-                    if (task["tool"] in self.settings.get("tools")) \
-                            and (task["process"] in self.settings.get("processes")) \
-                            and (task["bounds"] in self.settings.get("bounds"))]
-            counter = 0
-            for task in self.task_list:
-                tasklist_model.append((counter, task["name"], task["enabled"]))
-                counter += 1
-            if not new_index is None:
-                self._treeview_set_active_index(self.tasklist_table, new_index)
-        self.update_tasklist_controls()
-
-    def switch_tasklist_table_selection(self, widget=None):
-        current_task = self.settings.get("current_task")
-        if not current_task is None:
-            self.settings.get("tools").select(current_task["tool"])
-            self.settings.get("processes").select(current_task["process"])
-            self.settings.get("bounds").select(current_task["bounds"])
-        self.update_tasklist_controls()
-
-    @gui_activity_guard
-    def _handle_task_setting_change(self, widget, data=None):
-        # get the index of the currently selected task
-        task = self.settings.get("current_task")
-        if task is None:
-            return
-        task_name_obj = self.gui.get_object("TaskNameControl")
-        old_name = task["name"]
-        new_name = task_name_obj.get_text()
-        if old_name != new_name:
-            task["name"] = new_name
-        tool_id = self.gui.get_object("TaskToolSelector").get_active()
-        task["tool"] = self.settings.get("tools")[tool_id]
-        process_id = self.gui.get_object("TaskProcessSelector").get_active()
-        task["process"] = self.settings.get("processes")[process_id]
-        bounds_id = self.gui.get_object("TaskBoundsSelector").get_active()
-        old_bounds_id = self.bounds_list.index(task["bounds"])
-        task["bounds"] = self.bounds_list[bounds_id]
-        # update the current boundary limit, if it was changed
-        if bounds_id != old_bounds_id:
-            self.settings.emit_event("bounds-changed")
-        # update the tasklist table (especially for name changes)
-        self.update_tasklist_table()
-        # the task_name input control seems to loose focus somehow
-        if old_name != new_name:
-            task_name_obj.grab_focus()
-
-    @gui_activity_guard
-    def _handle_tasklist_button_event(self, widget, data, action=None):
-        # "toggle" uses two parameters - all other actions have only one
-        if action is None:
-            action = data
-        # get the index of the currently selected task
-        try:
-            current_task_index = self._treeview_get_active_index(self.tasklist_table, self.task_list)
-        except ValueError:
-            current_task_index = None
-        self._treeview_button_event(self.tasklist_table, self.task_list, action, self.update_tasklist_table)
-        if action == "add":
-            new_task = {}
-            # look for the first unused default name
-            prefix = "New Task "
-            index = 1
-            # loop while the current name is in use
-            while [True for task in self.task_list if task["name"] == "%s%d" % (prefix, index)]:
-                index += 1
-            new_task["name"] = "%s%d" % (prefix, index)
-            new_task["tool"] = self.settings.get("tools")[0]
-            new_task["process"] = self.settings.get("processes")[0]
-            new_task["bounds"] = self.settings.get("bounds")[0]
-            new_task["enabled"] = True
-            self.task_list.append(new_task)
-            self.update_tasklist_table(self.task_list.index(new_task))
-        elif action == "toggle_enabled":
-            # "data" contains the row of the clicked checkbox
-            if not data is None:
-                current_task_index = int(data)
-                if (not current_task_index is None) and (current_task_index < len(self.task_list)):
-                    self.task_list[current_task_index]["enabled"] = not self.task_list[current_task_index]["enabled"]
-                # update the table values
-                self.update_tasklist_table(current_task_index)
-        elif action == "generate_all_toolpaths":
-            self.process_multiple_tasks()
-        elif action == "generate_one_toolpath":
-            self.process_one_task(current_task_index)
-        else:
-            pass
-
-    def process_one_task(self, task_index):
-        try:
-            task = self.task_list[task_index]
-        except IndexError:
-            # this should only happen, if we were called in batch mode (command line)
-            log.warn("The given task ID (%d) does not exist. Valid values are: %s." % (task_index, range(len(self.task_list))))
-            return
-        self.generate_toolpath(task["tool"], task["process"], task["bounds"])
-
-    def process_multiple_tasks(self, task_list=None):
-        if task_list is None:
-            task_list = self.task_list[:]
-        enabled_tasks = []
-        for index in range(len(task_list)):
-            task = task_list[index]
-            if task["enabled"]:
-                enabled_tasks.append(task)
-        progress = self.settings.get("progress")
-        progress.set_multiple(len(enabled_tasks), "Toolpath")
-        for task in enabled_tasks:
-            if not self.generate_toolpath(task["tool"], task["process"],
-                    task["bounds"], progress=progress):
-                # break out of the loop, if cancel was requested
-                break
-            progress.update_multiple()
-        progress.finish()
-
     @gui_activity_guard
     def toggle_about_window(self, widget=None, event=None, state=None):
         # only "delete-event" uses four arguments
@@ -1504,83 +1215,6 @@ class ProjectGui(object):
                 result = None
         return result
 
-    def _treeview_set_active_index(self, table, index):
-        treeselection = table.get_selection()
-        treeselection.select_path((index,))
-
-    def _treeview_button_event(self, table, datalist, action, update_func):
-        future_selection_index = None
-        index = self._treeview_get_active_index(table, datalist)
-        skip_model_update = False
-        if action == "update_buttons":
-            skip_model_update = True
-        elif action == "move_up":
-            if index > 0:
-                # move an item one position up the list
-                selected = datalist[index]
-                above = datalist[index-1]
-                datalist[index] = above
-                datalist[index-1] = selected
-                future_selection_index = index - 1
-        elif action == "move_down":
-            if index + 1 < len(datalist):
-                # move an item one position down the list
-                selected = datalist[index]
-                below = datalist[index+1]
-                datalist[index] = below
-                datalist[index+1] = selected
-                future_selection_index = index + 1
-        elif action == "delete":
-            # delete one item from the list
-            item = datalist[index]
-            # Check if we need to remove items that depended on the currently
-            # deleted one.
-            if len(datalist) == 1:
-                # There are no replacements available for this item.
-                # Thus we need to remove _all_ tasks.
-                while len(self.task_list) > 0:
-                    self.task_list.remove(self.task_list[0])
-            else:
-                if index > 0:
-                    alternative = datalist[0]
-                else:
-                    alternative = datalist[1]
-                # Replace all references to the to-be-deleted item with the
-                # alternative.
-                for task in self.task_list:
-                    for sublist in ("tool", "process", "bounds"):
-                        if item is task[sublist]:
-                            task[sublist] = alternative
-            # Delete the object. Maybe this is not necessary, if it was the
-            # last remaining task item (see above).
-            if item in datalist:
-                datalist.remove(item)
-            # don't set a new index, if the list is empty now
-            if len(datalist) > 0:
-                if index < len(datalist):
-                    future_selection_index = index
-                else:
-                    # the last item was removed
-                    future_selection_index = len(datalist) - 1
-            # update the tasklist table (maybe we removed some items)
-            self.update_tasklist_table()
-            # also update the specific description of the process/bounds
-            if not future_selection_index is None:
-                if datalist is self.settings.get("tools"):
-                    self.settings.get("tools").select(future_selection_index)
-                elif datalist is self.settings.get("processes"):
-                    self.settings.get("processes").select(future_selection_index)
-                elif datalist is self.settings.get("bounds"):
-                    self.settings.get("bounds").select(future_selection_index)
-        else:
-            pass
-        # any new item can influence the "New task" button
-        self.append_to_queue(self.update_tasklist_controls)
-        # removing or adding "bounds" may change the visualization
-        self.settings.emit_event("bounds-changed")
-        update_func(new_index=future_selection_index,
-                skip_model_update=skip_model_update)
-
     def change_unit_init(self, widget=None):
         new_unit = self.gui.get_object("unit_control").get_active_text()
         if self._last_unit is None:
@@ -1674,8 +1308,6 @@ class ProjectGui(object):
         self._last_unit = new_unit
         # update all labels containing the unit size
         self.update_unit_labels()
-        # update all controls and redraw the boundaries
-        self.switch_tasklist_table_selection()
         # redraw the model
         self.settings.emit_event("model-change-after")
 
@@ -1685,7 +1317,7 @@ class ProjectGui(object):
             base_unit = "mm"
         else:
             base_unit = "inches"
-        for key in ("SpeedUnit1", "SpeedUnit2"):
+        for key in ("SpeedUnit2", ):
             self.gui.get_object(key).set_text("%s/minute" % base_unit)
         for key in ("LengthUnit1", "LengthUnit2", "LengthUnitTouchOffHeight"):
             self.gui.get_object(key).set_text(base_unit)
@@ -2004,159 +1636,11 @@ class ProjectGui(object):
         if not filename is None:
             settings.load_file(filename)
         # flush all tables (without re-assigning new objects)
-        for one_list in (self.settings.get("tools"), self.settings.get("processes"), self.settings.get("bounds"), self.task_list):
+        for one_list_name in ("tools", "processes", "bounds", "tasks"):
+            one_list = self.settings.get(one_list_name)
             while len(one_list) > 0:
                 one_list.pop()
         # TODO: load default tools/processes/bounds
-        self.task_list.extend(settings.get_tasks())
-        self.update_tasklist_table()
-
-    @gui_activity_guard
-    def toolpath_table_event(self, widget, data, action=None):
-        # "toggle" uses two parameters - all other actions have only one
-        if action is None:
-            action = data
-        if action == "toggle_visibility":
-            # get the id of the currently selected toolpath
-            try:
-                path = int(data)
-            except ValueError:
-                path = None
-            if (not path is None) and (path < len(self.toolpath)):
-                self.toolpath[path].visible = not self.toolpath[path].visible
-                tp_model = self.toolpath_table.get_model()
-                tp_model[path][2] = self.toolpath[path].visible
-                self.update_toolpath_related_controls()
-        elif action == "simulate":
-            index = self._treeview_get_active_index(self.toolpath_table,
-                    self.toolpath)
-            if not index is None:
-                self.show_toolpath_simulation(self.toolpath[index])
-        elif action == "crop":
-            index = self._treeview_get_active_index(self.toolpath_table,
-                    self.toolpath)
-            if not index is None:
-                self.crop_toolpath(self.toolpath[index])
-                self.update_toolpath_table()
-        elif action == "grid":
-            index = self._treeview_get_active_index(self.toolpath_table,
-                    self.toolpath)
-            if not index is None:
-                self.create_toolpath_grid(self.toolpath[index])
-        else:
-            # process the default operations (move, delete)
-            self._treeview_button_event(self.toolpath_table, self.toolpath,
-                    action, self.update_toolpath_table)
-        # do some post-processing ...
-        if action in ("toggle_visibility", "delete", "crop", "grid"):
-            self.update_view()
-
-    def update_toolpath_grid_window(self, widget=None):
-        data = self._toolpath_for_grid_data
-        x_dim = data["maxx"] - data["minx"]
-        y_dim = data["maxy"] - data["miny"]
-        x_count = self.gui.get_object("GridXCount").get_value()
-        x_space = self.gui.get_object("GridXDistance").get_value()
-        y_count = self.gui.get_object("GridYCount").get_value()
-        y_space = self.gui.get_object("GridYDistance").get_value()
-        x_width = x_dim * x_count + x_space * (x_count - 1)
-        y_width = y_dim * y_count + y_space * (y_count - 1)
-        self.gui.get_object("LabelGridXWidth").set_label("%g%s" % \
-                (x_width, self.settings.get("unit")))
-        self.gui.get_object("LabelGridYWidth").set_label("%g%s" % \
-                (y_width, self.settings.get("unit")))
-
-    def create_toolpath_grid(self, toolpath):
-        dialog = self.gui.get_object("ToolpathGridDialog")
-        data = self._toolpath_for_grid_data
-        data["minx"] = toolpath.minx()
-        data["maxx"] = toolpath.maxx()
-        data["miny"] = toolpath.miny()
-        data["maxy"] = toolpath.maxy()
-        self.gui.get_object("GridXCount").set_value(1)
-        self.gui.get_object("GridYCount").set_value(1)
-        self.update_toolpath_grid_window()
-        result = dialog.run()
-        if result == 1:
-            # "OK" was pressed
-            new_tp = []
-            x_count = int(self.gui.get_object("GridXCount").get_value())
-            y_count = int(self.gui.get_object("GridYCount").get_value())
-            x_space = self.gui.get_object("GridXDistance").get_value()
-            y_space = self.gui.get_object("GridYDistance").get_value()
-            x_dim = data["maxx"] - data["minx"]
-            y_dim = data["maxy"] - data["miny"]
-            for x in range(x_count):
-                for y in range(y_count):
-                    shift = Point(x * (x_space + x_dim),
-                            y * (y_space + y_dim), 0)
-                    for path in toolpath.get_paths():
-                        new_path = pycam.Geometry.Path.Path()
-                        new_path.points = [shift.add(p) for p in path.points]
-                        new_tp.append(new_path)
-            new_toolpath = pycam.Toolpath.Toolpath(new_tp, toolpath.name,
-                    toolpath.toolpath_settings)
-            toolpath.visible = False
-            new_toolpath.visible = True
-            self.toolpath.append(new_toolpath)
-            self.update_toolpath_table()
-        dialog.hide()
-
-    def update_toolpath_related_controls(self):
-        # show or hide the "toolpath" tab
-        toolpath_tab = self.gui.get_object("ToolpathsTab")
-        if not self.toolpath:
-            toolpath_tab.hide()
-        else:
-            self.gui.get_object("ToolpathsTabLabel").set_text(
-                    "%s (%d)" % (self._original_toolpath_tab_label, len(self.toolpath)))
-            toolpath_tab.show()
-        # enable/disable the export menu item
-        self.gui.get_object("ExportGCodeAll").set_sensitive(len(self.toolpath) > 0)
-        toolpaths_are_visible = any([tp.visible for tp in self.toolpath])
-        self.gui.get_object("ExportGCodeVisible").set_sensitive(
-                toolpaths_are_visible)
-        self.gui.get_object("ExportVisibleToolpathsButton").set_sensitive(
-                toolpaths_are_visible)
-
-    def update_toolpath_table(self, new_index=None, skip_model_update=False):
-        def get_time_string(minutes):
-            if minutes > 180:
-                return "%d hours" % int(round(minutes / 60))
-            elif minutes > 3:
-                return "%d minutes" % int(round(minutes))
-            else:
-                return "%d seconds" % int(round(minutes * 60))
-        self.update_toolpath_related_controls()
-        # reset the model data and the selection
-        if new_index is None:
-            # keep the old selection - this may return "None" if nothing is selected
-            new_index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
-        if not skip_model_update:
-            # update the TreeModel data
-            model = self.gui.get_object("ToolPathListModel")
-            model.clear()
-            # columns: name, visible, drill_size, drill_id, allowance, speed, feedrate
-            for index in range(len(self.toolpath)):
-                tp = self.toolpath[index]
-                toolpath_settings = tp.get_toolpath_settings()
-                tool = toolpath_settings.get_tool_settings()
-                process = toolpath_settings.get_process_settings()
-                items = (index, tp.name, tp.visible, tool["tool_radius"],
-                        tool["id"], process["material_allowance"],
-                        tool["speed"], tool["feedrate"],
-                        get_time_string(tp.get_machine_time(
-                                self.settings.get("gcode_safety_height"))))
-                model.append(items)
-            if not new_index is None:
-                self._treeview_set_active_index(self.toolpath_table, new_index)
-        # enable/disable the modification buttons
-        self.gui.get_object("toolpath_up").set_sensitive((not new_index is None) and (new_index > 0))
-        self.gui.get_object("toolpath_delete").set_sensitive(not new_index is None)
-        self.gui.get_object("toolpath_down").set_sensitive((not new_index is None) and (new_index + 1 < len(self.toolpath)))
-        self.gui.get_object("toolpath_simulate").set_sensitive(not new_index is None)
-        self.gui.get_object("toolpath_crop").set_sensitive(not new_index is None)
-        self.gui.get_object("ToolpathGrid").set_sensitive(not new_index is None)
 
     @gui_activity_guard
     def save_task_settings_file(self, widget=None, filename=None):
@@ -2176,150 +1660,12 @@ class ProjectGui(object):
         settings = pycam.Gui.Settings.ProcessSettings()
         if not settings.write_to_file(filename, self.settings.get("tools"),
                 self.settings.get("processes"), self.settings.get("bounds"),
-                self.task_list):
+                self.settings.get("tasks")):
             log.error("Failed to save settings file")
         else:
             log.info("Task settings written to %s" % filename)
             self.add_to_recent_file_list(filename)
         self.update_save_actions()
-
-    def finish_toolpath_simulation(self, widget=None, data=None):
-        # hide the simulation tab
-        self.simulation_window.hide()
-        # enable all other tabs again
-        self.toggle_tabs_for_simulation(True)
-        self.settings.set("simulation_object", None)
-        self.settings.set("simulation_toolpath_moves", None)
-        self.settings.set("show_simulation", False)
-        self.settings.set("simulation_toolpath", None)
-        self.update_view()
-        # don't destroy the simulation window (for "destroy" event)
-        return True
-
-    def update_toolpath_simulation(self, widget=None, toolpath=None):
-        s = self.settings
-        # update the GUI
-        while gtk.events_pending():
-            gtk.main_iteration()
-        if not s.get("show_simulation"):
-            # cancel
-            return False
-        safety_height = s.get("gcode_safety_height")
-        if not s.get("simulation_toolpath"):
-            # get the currently selected toolpath, if none is give
-            if toolpath is None:
-                toolpath_index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
-                if toolpath_index is None:
-                    return
-                else:
-                    toolpath = self.toolpath[toolpath_index]
-            s.set("simulation_toolpath", toolpath)
-            # set the current cutter
-            self.cutter = toolpath.toolpath_settings.get_tool()
-            # calculate steps
-            s.set("simulation_machine_time",
-                    toolpath.get_machine_time(safety_height=safety_height))
-            s.set("simulation_complete_distance",
-                    toolpath.get_machine_movement_distance(
-                        safety_height=safety_height))
-            s.set("simulation_current_distance", 0)
-        else:
-            toolpath = s.get("simulation_toolpath")
-        if (s.get("simulation_current_distance") \
-                < s.get("simulation_complete_distance")):
-            if s.get("simulation_current_distance") < 0:
-                # "-1" -> simulation is finished
-                updated_distance = s.get("simulation_complete_distance")
-            else:
-                time_step = 1.0 / s.get("drill_progress_max_fps")
-                feedrate = toolpath.toolpath_settings.get_tool_settings(
-                        )["feedrate"]
-                distance_step = s.get("simulation_speed_factor") * \
-                        time_step * feedrate / 60
-                updated_distance = min(distance_step + \
-                        s.get("simulation_current_distance"),
-                        s.get("simulation_complete_distance"))
-            if updated_distance != s.get("simulation_current_distance"):
-                s.set("simulation_current_distance", updated_distance)
-                moves = toolpath.get_moves(safety_height=safety_height,
-                        max_movement=updated_distance)
-                s.set("simulation_toolpath_moves", moves)
-                if moves:
-                    self.cutter.moveto(moves[-1][0])
-                self.update_view()
-        progress_value_percent = 100.0 * s.get("simulation_current_distance") \
-                / s.get("simulation_complete_distance")
-        self.gui.get_object("SimulationProgressTimelineValue").set_value(
-                progress_value_percent)
-        return True
-
-    def update_toolpath_simulation_ode(self, widget=None, toolpath=None):
-        import pycam.Simulation.ODEBlocks as ODEBlocks
-        # get the currently selected toolpath, if none is give
-        if toolpath is None:
-            toolpath_index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
-            if toolpath_index is None:
-                return
-            else:
-                toolpath = self.toolpath[toolpath_index]
-        paths = toolpath.get_paths()
-        # set the current cutter
-        self.cutter = pycam.Cutters.get_tool_from_settings(
-                toolpath.get_tool_settings())
-        # calculate steps
-        detail_level = self.gui.get_object("SimulationDetailsValue").get_value()
-        grid_size = 100 * pow(2, detail_level - 1)
-        bounding_box = toolpath.get_toolpath_settings().get_bounds()
-        (minx, miny, minz), (maxx, maxy, maxz) = bounding_box.get_bounds()
-        # proportion = dimension_x / dimension_y
-        proportion = (maxx - minx) / (maxy - miny)
-        x_steps = int(sqrt(grid_size) * proportion)
-        y_steps = int(sqrt(grid_size) / proportion)
-        simulation_backend = ODEBlocks.ODEBlocks(toolpath.get_tool_settings(),
-                toolpath.get_bounding_box(), x_steps=x_steps, y_steps=y_steps)
-        self.settings.set("simulation_object", simulation_backend)
-        # disable the simulation widget (avoids confusion regarding "cancel")
-        if not widget is None:
-            self.gui.get_object("SimulationTab").set_sensitive(False)
-        # update the view
-        self.update_view()
-        # calculate the simulation and show it simulteneously
-        progress = self.settings.get("progress")
-        for path_index, path in enumerate(paths):
-            progress_text = "Simulating path %d/%d" % (path_index, len(paths))
-            progress_value_percent = 100.0 * path_index / len(paths)
-            if progress.update(text=progress_text, percent=progress_value_percent):
-                # break if the user pressed the "cancel" button
-                break
-            for index in range(len(path.points)):
-                self.cutter.moveto(path.points[index])
-                if index != 0:
-                    start = path.points[index - 1]
-                    end = path.points[index]
-                    if start != end:
-                        simulation_backend.process_cutter_movement(start, end)
-                self.update_view()
-                # break the loop if someone clicked the "cancel" button
-                if progress.update():
-                    break
-            progress.finish()
-        # enable the simulation widget again (if we were started from the GUI)
-        if not widget is None:
-            self.gui.get_object("SimulationTab").set_sensitive(True)
-
-    def toggle_tabs_for_simulation(self, new_state):
-        self.gui.get_object("MainTabs").set_sensitive(new_state)
-
-    def show_toolpath_simulation(self, toolpath=None):
-        # disable the main controls
-        self.toggle_tabs_for_simulation(False)
-        # show the simulation controls
-        self.simulation_window.show()
-        # start the simulation
-        self.settings.set("show_simulation", True)
-        time_step = int(1000 / self.settings.get("drill_progress_max_fps"))
-        # update the toolpath simulation repeatedly
-        gobject.timeout_add(time_step, self.update_toolpath_simulation)
 
     def generate_toolpath(self, tool_settings, process_settings, bounds,
                 progress=None):

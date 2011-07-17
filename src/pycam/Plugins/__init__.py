@@ -141,10 +141,14 @@ class PluginManager(object):
             self.modules[plugin_name].teardown()
         _log.debug("Initializing module %s (%s)" % (plugin_name, filename))
         new_plugin = obj(self.core, plugin_name)
-        if not new_plugin.setup():
-            raise RuntimeError("Failed to load plugin '%s'" % str(plugin_name))
-        else:
-            self.modules[plugin_name] = new_plugin
+        try:
+            if not new_plugin.setup():
+                _log.info("Failed to setup plugin '%s'" % str(plugin_name))
+            else:
+                self.modules[plugin_name] = new_plugin
+        except NotImplementedError, err_msg:
+            _log.info("Skipping incomplete plugin '%s': %s" % \
+                    (plugin_name, err_msg))
 
 
 class ListPluginBase(PluginBase, list):
@@ -173,6 +177,14 @@ class ListPluginBase(PluginBase, list):
             selection = modelview.get_selection()
             selection_mode = selection.get_mode()
             paths = selection.get_selected_rows()[1]
+        elif hasattr(modelview, "get_active"):
+            # combobox
+            selection_mode = gtk.SELECTION_SINGLE
+            active = modelview.get_active()
+            if active < 0:
+                paths = []
+            else:
+                paths = [[active]]
         else:
             # an iconview
             selection_mode = modelview.get_selection_mode()
@@ -282,23 +294,28 @@ class ListPluginBase(PluginBase, list):
                     modelview, action, button)
         button.connect("clicked", self._list_action, modelview, action)
 
-    def get_attr(self, model, attr):
-        return self.__get_set_attr(model, attr, write=False)
+    def get_attr(self, item, attr, model=None, id_col=None):
+        return self.__get_set_attr(item, attr, write=False, model=model, id_col=id_col)
 
-    def set_attr(self, model, attr, value):
-        return self.__get_set_attr(model, attr, value=value, write=True)
+    def set_attr(self, item, attr, value, model=None, id_col=None):
+        return self.__get_set_attr(item, attr, value=value, write=True, model=model, id_col=id_col)
 
-    def __get_set_attr(self, model, attr, value=None, write=True):
+    def __get_set_attr(self, item, attr, value=None, write=True, model=None, id_col=None):
+        if model is None:
+            # TODO: "self.treemodel" should not be used here
+            model = self._treemodel
+        if id_col is None:
+            id_col = self.COLUMN_ID
         if attr in self.LIST_ATTRIBUTE_MAP:
             col = self.LIST_ATTRIBUTE_MAP[attr]
-            for index in range(len(self)):
-                if self._treemodel[index][self.COLUMN_ID] == id(model):
+            for index in range(len(model)):
+                if model[index][id_col] == id(item):
                     if write:
-                        self._treemodel[index][col] = value
+                        model[index][col] = value
                         return
                     else:
-                        return self._treemodel[index][col]
-            raise IndexError("Model not found: %s" % str(model))
+                        return model[index][col]
+            raise IndexError("Item '%s' not found in %s" % (item, list(model)))
         else:
             raise KeyError("Attribute '%s' is not part of this list: %s" % \
                     (attr, ", ".join(self.LIST_ATTRIBUTE_MAP.keys())))

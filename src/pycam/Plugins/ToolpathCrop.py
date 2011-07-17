@@ -42,13 +42,11 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
             action_button = self.gui.get_object("ToolpathCropButton")
             action_button.unparent()
             self.core.register_ui("toolpath_crop", "Crop", action_button, -3)
-            self.core.register_event("model-change-after",
-                    self._update_model_type_controls)
         return True
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("toolpath__crop",
+            self.core.unregister_ui("toolpath_crop",
                     self.gui.get_object("ToolpathCropButton"))
 
     def _update_model_type_controls(self):

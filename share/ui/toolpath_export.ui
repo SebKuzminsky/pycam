@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<interface>
+  <!-- interface-requires gtk+ 2.12 -->
+  <!-- interface-naming-policy project-wide -->
+  <object class="GtkButton" id="ExportAllToolpathsButton">
+    <property name="label" translatable="yes">Export all</property>
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="receives_default">True</property>
+    <property name="image">ExportAllToolpathsIcon</property>
+  </object>
+  <object class="GtkImage" id="ExportAllToolpathsIcon">
+    <property name="visible">True</property>
+    <property name="stock">gtk-save-as</property>
+  </object>
+  <object class="GtkButton" id="ExportVisibleToolpathsButton">
+    <property name="label" translatable="yes">Export visible</property>
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="receives_default">True</property>
+  </object>
+</interface>

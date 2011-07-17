@@ -76,6 +76,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
                     if not id(item) in cache:
                         cache[id(item)] = [id(item), "Bounds #%d" % index]
                     self._treemodel.append(cache[id(item)])
+                self.core.emit_event("bounds-list-changed")
             self.register_model_update(update_model)
             for action, obj_name in ((self.ACTION_UP, "BoundsMoveUp"),
                     (self.ACTION_DOWN, "BoundsMoveDown"),
@@ -84,14 +85,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
                         self.gui.get_object(obj_name))
             self.gui.get_object("BoundsNew").connect("clicked",
                     self._bounds_new)
-            # Trigger a re-calculation of the bounds values after changing its type.
-            # TODO: recalculate %/mm
-            """
-            for obj_name in ("TypeRelativeMargin", "TypeCustom"):
-                self.gui.get_object(obj_name).connect("toggled",
-                        self._store_bounds_settings)
-            """
-            # the boundary manager
+            # quickly adjust the bounds via buttons
             for obj_name in ("MarginIncreaseX", "MarginIncreaseY",
                     "MarginIncreaseZ", "MarginDecreaseX", "MarginDecreaseY",
                     "MarginDecreaseZ", "MarginResetX", "MarginResetY",
@@ -164,7 +158,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
     def select(self, bounds):
         if bounds in self:
             selection = self._boundsview.get_selection()
-            index = [id(b) for b in self].index(id(b))
+            index = [id(b) for b in self].index(id(bounds))
             selection.unselect_all()
             selection.select_path((index,))
 

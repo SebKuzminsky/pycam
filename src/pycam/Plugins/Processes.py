@@ -77,6 +77,7 @@ class Processes(pycam.Plugins.ListPluginBase):
                     if not id(item) in cache:
                         cache[id(item)] = [id(item), "Process #%d" % index]
                     self._treemodel.append(cache[id(item)])
+                self.core.emit_event("process-list-changed")
             self.register_model_update(update_model)
             # process settings
             self._detail_handlers = []

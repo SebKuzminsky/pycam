@@ -177,14 +177,10 @@
     <property name="upper">1000</property>
     <property name="step_increment">1</property>
   </object>
-  <object class="GtkWindow" id="window1">
-    <child>
-      <object class="GtkButton" id="ToolpathCropButton">
-        <property name="label" translatable="yes">Crop</property>
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="receives_default">True</property>
-      </object>
-    </child>
+  <object class="GtkButton" id="ToolpathCropButton">
+    <property name="label" translatable="yes">Crop</property>
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="receives_default">True</property>
   </object>
 </interface>

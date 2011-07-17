@@ -72,6 +72,7 @@ class Tools(pycam.Plugins.ListPluginBase):
                         cache[id(item)] = [id(item), index + 1,
                                 "Tool #%d" % index]
                     self._treemodel.append(cache[id(item)])
+                self.core.emit_event("tool-list-changed")
             self.register_model_update(update_model)
             # drill settings
             self._detail_handlers = []
