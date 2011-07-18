@@ -40,7 +40,6 @@ from pycam.Utils.locations import get_data_file_location, \
         get_all_program_locations
 import pycam.Utils
 from pycam.Geometry.utils import sqrt
-from pycam.Gui.OpenGLTools import ModelViewWindowGL
 import pycam.Geometry.Model
 from pycam.Toolpath import Bounds
 import pycam.Plugins
@@ -309,7 +308,6 @@ class ProjectGui(object):
     def __init__(self, no_dialog=False):
         self.settings = EventCore()
         self.gui_is_active = False
-        self.view3d = None
         # during initialization any dialog (e.g. "Unit change") is not allowed
         # we set the final value later
         self.no_dialog = True
@@ -361,7 +359,6 @@ class ProjectGui(object):
                 ("ExportEMCToolDefinition", self.export_emc_tools, None, None),
                 ("Quit", self.destroy, None, "<Control>q"),
                 ("GeneralSettings", self.toggle_preferences_window, None, "<Control>p"),
-                ("Toggle3DView", self.toggle_3d_view, None, "<Control><Shift>v"),
                 ("ToggleProcessPoolWindow", self.toggle_process_pool_window, None, None),
                 ("UndoButton", self._restore_undo_state, None, "<Control>z"),
                 ("HelpUserManual", self.show_help, "User_Manual", "F1"),
@@ -385,7 +382,7 @@ class ProjectGui(object):
                 ("BugTracker", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104176", None),
                 ("FeatureRequest", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104179", None)):
             item = self.gui.get_object(objname)
-            if objname in ("Toggle3DView", "ToggleProcessPoolWindow"):
+            if objname == "ToggleProcessPoolWindow":
                 action = "toggled"
             else:
                 action = "activate"
@@ -405,20 +402,23 @@ class ProjectGui(object):
             gtk.link_button_set_uri_hook(open_url)
         # no undo is allowed at the beginning
         self.gui.get_object("UndoButton").set_sensitive(False)
-        self.settings.register_event("model-change-before", self._store_undo_state)
-        self.settings.register_event("model-change-after", self.update_model_dimensions)
-        self.settings.register_event("model-change-after", self.update_save_actions)
-        self.settings.register_event("model-change-after", self.update_view)
-        self.settings.register_event("visual-item-updated", self.update_view)
-        self.settings.register_event("visual-item-updated", self.update_model_dimensions)
+        self.settings.register_event("model-change-before",
+                self._store_undo_state)
+        self.settings.register_event("model-change-after",
+                self.update_save_actions)
+        self.settings.register_event("model-selection-changed",
+                self.update_save_actions)
+        self.settings.register_event("model-change-after",
+                lambda: self.settings.emit_event("visual-item-updated"))
         def update_emc_tool_button():
             tool_num = len(self.settings.get("tools"))
             self.gui.get_object("ExportEMCToolDefinition").set_sensitive(tool_num > 0)
         self.settings.register_event("tool-selection-changed", update_emc_tool_button)
         self.settings.set("load_model", self.load_model)
-        self.settings.register_event("bounds-changed", self.update_view)
         # configure drag-n-drop for config files and models
-        self.configure_drag_and_drop(self.window)
+        self.settings.set("configure-drag-drop-func",
+                self.configure_drag_and_drop)
+        self.settings.get("configure-drag-drop-func")(self.window)
         # other events
         self.window.connect("destroy", self.destroy)
         # the settings window
@@ -554,7 +554,8 @@ class ProjectGui(object):
             obj = self.gui.get_object(objname)
             self.settings.add_item(name, obj.get_active, obj.set_active)
             # send "True" to trigger a re-setup of GL settings
-            obj.connect("toggled", self.update_view, True)
+            obj.connect("toggled", lambda widget: \
+                    self.settings.emit_event("visual-item-updated"))
         # color selectors
         def get_color_wrapper(obj):
             def gtk_color_to_float():
@@ -588,7 +589,8 @@ class ProjectGui(object):
             obj = self.gui.get_object(objname)
             self.settings.add_item(name, get_color_wrapper(obj), set_color_wrapper(obj))
             # repaint the 3d view after a color change
-            obj.connect("color-set", self.update_view)
+            obj.connect("color-set", lambda widget: \
+                    self.settings.emit_event("visual-item-updated"))
         # set the availability of ODE
         self.enable_ode_control = self.gui.get_object("SettingEnableODE")
         self.settings.add_item("enable_ode", self.enable_ode_control.get_active,
@@ -652,7 +654,8 @@ class ProjectGui(object):
         self.settings.add_item("touch_off_pause_execution",
                 touch_off_pause.get_active, touch_off_pause.set_active)
         # redraw the toolpath if safety height changed
-        gcode_safety_height.connect("value-changed", self.update_view)
+        gcode_safety_height.connect("value-changed", lambda widget:
+                self.settings.emit_event("visual-item-updated"))
         gcode_path_mode = self.gui.get_object("GCodeCornerStyleControl")
         self.settings.add_item("gcode_path_mode", gcode_path_mode.get_active,
                 gcode_path_mode.set_active)
@@ -801,12 +804,10 @@ class ProjectGui(object):
             # register a logging handler for displaying error messages
             pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
             self.window.show()
-            self.toggle_3d_view(value=True)
 
     def update_all_controls(self):
         self.update_save_actions()
         self.update_unit_labels()
-        self.update_model_dimensions()
         self.update_gcode_controls()
         self.update_ode_settings()
         self.update_parallel_processes_settings()
@@ -906,12 +907,6 @@ class ProjectGui(object):
             url = page
         webbrowser.open(url)
 
-    def update_view(self, widget=None, data=None):
-        if self.view3d and self.view3d.is_visible and not self.no_dialog:
-            if data:
-                self.view3d.glsetup()
-            self.view3d.paint()
-
     def set_model_filename(self, filename):
         """ Store the given filename for a possible later "save model" action.
         Additionally the window's title is adjusted and the "save" buttons are
@@ -931,8 +926,8 @@ class ProjectGui(object):
             bool(self.last_task_settings_uri and \
                 self.last_task_settings_uri.is_writable()))
         # TODO: choose all models
-        model = self.settings.get("models") and self.settings.get("models")[0]
-        save_as_possible = (not model is None) and model.is_export_supported()
+        models = self.settings.get("models").get_selected()
+        save_as_possible = bool(models) and models[0].is_export_supported()
         self.gui.get_object("SaveAsModel").set_sensitive(save_as_possible)
         save_possible = bool(self.last_model_uri and save_as_possible and \
                 self.last_model_uri.is_writable())
@@ -1152,68 +1147,6 @@ class ProjectGui(object):
         else:
             # don't repeat, if the window is hidden
             return self.gui.get_object("ToggleProcessPoolWindow").get_active()
-
-    @gui_activity_guard
-    def toggle_3d_view(self, widget=None, value=None):
-        toggle_3d_checkbox = self.gui.get_object("Toggle3DView")
-        # no interactive mode
-        if self.no_dialog:
-            return
-        if self.view3d and not self.view3d.enabled:
-            # initialization failed - don't do anything
-            return
-        if not self.settings.get("models"):
-            # no model loaded - don't enable the window
-            return
-        current_state = not ((self.view3d is None) or (not self.view3d.is_visible))
-        if value is None:
-            new_state = not current_state
-        else:
-            new_state = value
-        if new_state == current_state:
-            return
-        elif new_state:
-            if self.view3d is None:
-                # These buttons are replicated to appear in the 3D view - for
-                # easier configuration of visible items without the Preferences
-                # window.
-                item_buttons = self.gui.get_object(
-                        "PreferencesVisibleItemsBox").get_children()
-                # do the gl initialization
-                self.view3d = ModelViewWindowGL(self.gui, self.settings,
-                        notify_destroy=self.toggle_3d_view,
-                        accel_group=self._accel_group,
-                        item_buttons=item_buttons,
-                        context_menu_actions=[self.gui.get_object(name)
-                                for name in ("GeneralSettings", "Help3DView")])
-                if self.view3d.enabled:
-                    self.view3d.reset_view()
-                # configure drag-and-drop for the 3D window
-                self.configure_drag_and_drop(self.view3d.window)
-                # disable the "toggle" button, if the 3D view does not work
-                toggle_3d_checkbox.set_sensitive(self.view3d.enabled)
-            else:
-                # the window is just hidden
-                self.view3d.show()
-            self.settings.emit_event("model-change-after")
-        else:
-            self.view3d.hide()
-        # enable the toggle button only, if the 3d view is available
-        # (e.g. disabled if no OpenGL support is available)
-        toggle_3d_checkbox.set_active(self.view3d.enabled and new_state)
-
-    def _treeview_get_active_index(self, table, datalist):
-        if len(datalist) == 0:
-            result = None
-        else:
-            treeselection = table.get_selection()
-            (model, iteration) = treeselection.get_selected()
-            # the first item in the model is the index within the list
-            try:
-                result = model[iteration][0]
-            except TypeError:
-                result = None
-        return result
 
     def change_unit_init(self, widget=None):
         new_unit = self.gui.get_object("unit_control").get_active_text()
@@ -1458,26 +1391,7 @@ class ProjectGui(object):
         except IOError, err_msg:
             log.warn("Failed to write preferences file (%s): %s" % (config_filename, err_msg))
 
-    @gui_activity_guard
-    def update_model_dimensions(self, widget=None):
-        models = self.settings.get("models").get_visible()
-        if not models:
-            return
-        # model corners in 3D view
-        values = {}
-        low, high = pycam.Geometry.Model.get_combined_bounds(models)
-        if None in low or None in high:
-            # all models are empty
-            return
-        for value, label_suffix in ((low[0], "XMin"), (low[1], "YMin"),
-                (low[2], "ZMin"), (high[0], "XMax"), (high[1], "YMax"),
-                (high[2], "ZMax")):
-            label_name = "ModelCorner%s" % label_suffix
-            value = "%.3f" % value
-            self.gui.get_object(label_name).set_label(value)
-
     def destroy(self, widget=None, data=None):
-        self.update_view()
         gtk.main_quit()
         self.quit()
 
@@ -1622,11 +1536,6 @@ class ProjectGui(object):
             self.settings.emit_event("model-change-before")
             self.settings.get("models").append(model)
             self.last_model_uri = None
-            # do some initialization
-            self.settings.emit_event("model-change-after")
-            if self.view3d and self.view3d.enabled:
-                self.append_to_queue(self.view3d.reset_view)
-                self.append_to_queue(self.toggle_3d_view, value=True)
             return True
         else:
             return False
@@ -1696,7 +1605,8 @@ class ProjectGui(object):
                             self.func()
                 # break the loop if someone clicked the "cancel" button
                 return progress.update(text=text, percent=percent)
-        draw_callback = UpdateView(self.update_view,
+        draw_callback = UpdateView(
+                lambda: self.settings.emit_event("visual-item-updated"),
                 max_fps=self.settings.get("drill_progress_max_fps")).update
 
         progress.update(text="Generating collision model")
@@ -1751,7 +1661,6 @@ class ProjectGui(object):
             # the tool id numbering should start with 1 instead of zero
             self.toolpath.add_toolpath(toolpath, description, toolpath_settings)
             self.update_toolpath_table()
-            self.update_view()
             # return "False" if the action was cancelled
             cancelled = progress.update()
             result = not cancelled

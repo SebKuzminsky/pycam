@@ -78,17 +78,10 @@ class Fonts(pycam.Plugins.PluginBase):
                         self.update_font_dialog_preview)
             # use global key accel map
             self.font_dialog_window.add_accel_group(self.core.get("gtk-accel-group"))
-            # menu item and shortcut
-            actiongroup = self._gtk.ActionGroup("fonts")
             font_action = self.gui.get_object("ShowFontDialog")
+            self.register_gtk_accelerator("fonts", font_action,
+                    "<Control><Shift>t", "ShowFontDialog")
             font_action.connect("activate", self.toggle_font_dialog_window)
-            key, mod = self._gtk.accelerator_parse("<Control><Shift>t")
-            # TODO: move the "<pycam>" accel path somewhere else
-            accel_path = "<pycam>/ShowFontDialog"
-            font_action.set_accel_path(accel_path)
-            self._gtk.accel_map_change_entry(accel_path, key, mod, True)
-            actiongroup.add_action(font_action)
-            self.core.get("gtk-uimanager").insert_action_group(actiongroup, pos=-1)
             # store window position
             self._font_dialog_window_visible = False
             self._font_dialog_window_position = None

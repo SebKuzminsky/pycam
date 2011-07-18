@@ -95,27 +95,27 @@ class ModelPosition(pycam.Plugins.PluginBase):
         self.core.emit_event("model-change-before")
         dest = [self.gui.get_object("AlignPosition%s" % axis).get_value()
                 for axis in "XYZ"]
-        shift_values = []
-        for axis in "XYZ":
-            dest = self.gui.get_object("AlignPosition%s" % axis).get_value()
-            alignments = ("Min", "Center", "Max")
-            for alignment in alignments:
-                objname = "AlignPosition%s%s" % (axis, alignment)
-                min_axis = getattr(model, "min%s" % axis.lower())
-                max_axis = getattr(model, "max%s" % axis.lower())
-                if self.gui.get_object(objname).get_active():
-                    if alignment == "Min":
-                        shift = dest - min_axis
-                    elif alignment == "Center":
-                        shift = dest - (min_axis + max_axis) / 2.0
-                    else:
-                        shift = dest - max_axis
-                    shift_values.append(shift)
         progress = self.core.get("progress")
         progress.update(text="Shifting model")
         progress.disable_cancel()
         progress.set_multiple(len(models), "Model")
         for model in models:
+            shift_values = []
+            for axis in "XYZ":
+                dest = self.gui.get_object("AlignPosition%s" % axis).get_value()
+                alignments = ("Min", "Center", "Max")
+                for alignment in alignments:
+                    objname = "AlignPosition%s%s" % (axis, alignment)
+                    min_axis = getattr(model, "min%s" % axis.lower())
+                    max_axis = getattr(model, "max%s" % axis.lower())
+                    if self.gui.get_object(objname).get_active():
+                        if alignment == "Min":
+                            shift = dest - min_axis
+                        elif alignment == "Center":
+                            shift = dest - (min_axis + max_axis) / 2.0
+                        else:
+                            shift = dest - max_axis
+                        shift_values.append(shift)
             model.shift(shift_values[0], shift_values[1], shift_values[2],
                     callback=progress.update)
             progress.update_multiple()

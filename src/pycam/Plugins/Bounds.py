@@ -184,6 +184,34 @@ class Bounds(pycam.Plugins.ListPluginBase):
         for not_found in remaining:
             models.remove(not_found)
 
+    def get_bounds_limit(self, bounds):
+        default = (None, None, None), (None, None, None)
+        get_low_value = lambda axis: bounds["BoundaryLow%s" % "XYZ"[axis]]
+        get_high_value = lambda axis: bounds["BoundaryHigh%s" % "XYZ"[axis]]
+        if bounds["TypeRelativeMargin"]:
+            low_model, high_model = pycam.Geometry.Model.get_combined_bounds(
+                    bounds["Models"])
+            if None in low_model or None in high_model:
+                # zero-sized models -> no action
+                return default
+            is_percent = self.RELATIVE_UNIT[bounds["RelativeUnit"]] == "%"
+            low, high = [], []
+            if is_percent:
+                for axis in range(3):
+                    dim = high_model[axis] - low_model[axis]
+                    low.append(low_model[axis] - (get_low_value(axis) / 100.0 * dim))
+                    high.append(high_model[axis] + (get_high_value(axis) / 100.0 * dim))
+            else:
+                for axis in range(3):
+                    low.append(low_model[axis] - get_low_value(axis))
+                    high.append(high_model[axis] + get_high_value(axis))
+        else:
+            low, high = [], []
+            for axis in range(3):
+                low.append(get_low_value(axis))
+                high.append(get_high_value(axis))
+        return low, high
+
     def _render_model_name(self, column, cell, model, m_iter):
         path = model.get_path(m_iter)
         all_models = self.core.get("models")

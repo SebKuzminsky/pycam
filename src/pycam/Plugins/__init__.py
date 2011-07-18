@@ -76,8 +76,23 @@ class PluginBase(object):
                 "'setup'") % (self.name, __file__))
 
     def teardown(self):
-        raise NotImplementedError("Module %s (%s) does not implement " + \
-                "'teardown'" % (self.name, __file__))
+        raise NotImplementedError(("Module %s (%s) does not implement " + \
+                "'teardown'") % (self.name, __file__))
+
+    def register_gtk_accelerator(self, groupname, action, accel_string,
+            accel_name):
+        # menu item and shortcut
+        try:
+            import gtk
+        except ImportError:
+            return
+        actiongroup = gtk.ActionGroup(groupname)
+        key, mod = gtk.accelerator_parse(accel_string)
+        accel_path = "<pycam>/%s" % accel_name
+        action.set_accel_path(accel_path)
+        gtk.accel_map_change_entry(accel_path, key, mod, True)
+        actiongroup.add_action(action)
+        self.core.get("gtk-uimanager").insert_action_group(actiongroup, pos=-1)
 
 
 class PluginManager(object):
