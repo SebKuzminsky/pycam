@@ -47,6 +47,9 @@ class Line(TransformableContainer):
         self.p2 = p2
         self.reset_cache()
 
+    def copy(self):
+        return self.__class__(self.p1.copy(), self.p2.copy())
+
     @property
     def vector(self):
         if self._vector is None:

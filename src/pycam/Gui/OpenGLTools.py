@@ -22,8 +22,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.Point import Point
 from pycam.Geometry.utils import sqrt
-import pycam.Geometry.Model
-import pycam.Utils.log
 
 # careful import
 try:
@@ -32,30 +30,7 @@ try:
 except (ImportError, RuntimeError):
     pass
 
-import gtk
 import math
-
-
-log = pycam.Utils.log.get_logger()
-
-
-def connect_button_handlers(signal, original_button, derived_button):
-    """ Join two buttons (probably "toggle" buttons) to keep their values
-    synchronized.
-    """
-    def derived_handler(widget, original_button=original_button):
-        original_button.set_active(not original_button.get_active())
-    derived_handler_id = derived_button.connect_object_after(
-            signal, derived_handler, derived_button)
-    def original_handler(original_button, derived_button=derived_button,
-            derived_handler_id=derived_handler_id):
-        derived_button.handler_block(derived_handler_id)
-        # prevent any recursive handler-triggering
-        if derived_button.get_active() != original_button.get_active():
-            derived_button.set_active(not derived_button.get_active())
-        derived_button.handler_unblock(derived_handler_id)
-    original_button.connect_object_after(signal, original_handler,
-            original_button)
 
 
 def keep_gl_mode(func):
@@ -143,20 +118,6 @@ def draw_complete_model_view(settings):
                     settings.get("color_toolpath_return"),
                     show_directions=settings.get("show_directions"),
                     lighting=settings.get("view_light"))
-    # draw the toolpath
-    # don't do it, if a new toolpath is just being calculated
-    safety_height = settings.get("gcode_safety_height")
-    if settings.get("toolpath") and settings.get("show_toolpath") \
-            and not settings.get("toolpath_in_progress") \
-            and not (settings.get("show_simulation") \
-                    and settings.get("simulation_toolpath_moves")):
-        for toolpath_obj in settings.get("toolpath"):
-            if toolpath_obj.visible:
-                draw_toolpath(toolpath_obj.get_moves(safety_height),
-                        settings.get("color_toolpath_cut"),
-                        settings.get("color_toolpath_return"),
-                        show_directions=settings.get("show_directions"),
-                        lighting=settings.get("view_light"))
     # draw the drill
     if settings.get("show_drill"):
         cutter = settings.get("cutter")
@@ -178,38 +139,4 @@ def draw_complete_model_view(settings):
                     settings.get("color_toolpath_return"),
                     show_directions=settings.get("show_directions"),
                     lighting=settings.get("view_light"))
-
-@keep_gl_mode
-@keep_matrix
-def draw_toolpath(moves, color_cut, color_rapid, show_directions=False, lighting=True):
-    GL.glMatrixMode(GL.GL_MODELVIEW)
-    GL.glLoadIdentity()
-    last_position = None
-    last_rapid = None
-    if lighting:
-        GL.glDisable(GL.GL_LIGHTING)
-    GL.glBegin(GL.GL_LINE_STRIP)
-    for position, rapid in moves:
-        if last_rapid != rapid:
-            GL.glEnd()
-            if rapid:
-                GL.glColor4f(*color_rapid)
-            else:
-                GL.glColor4f(*color_cut)
-            # we need to wait until the color change is active
-            GL.glFinish()
-            GL.glBegin(GL.GL_LINE_STRIP)
-            if not last_position is None:
-                GL.glVertex3f(last_position.x, last_position.y, last_position.z)
-            last_rapid = rapid
-        GL.glVertex3f(position.x, position.y, position.z)
-        last_position = position
-    GL.glEnd()
-    if lighting:
-        GL.glEnable(GL.GL_LIGHTING)
-    if show_directions:
-        for index in range(len(moves) - 1):
-            p1 = moves[index][0]
-            p2 = moves[index + 1][0]
-            draw_direction_cone(p1, p2)
 

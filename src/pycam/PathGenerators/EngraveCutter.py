@@ -25,7 +25,6 @@ import pycam.PathProcessors.PathAccumulator
 from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
-from pycam.Geometry.Polygon import PolygonSorter
 from pycam.Geometry.utils import ceil
 from pycam.PathGenerators import get_max_height_dynamic, get_free_paths_ode, \
         get_free_paths_triangles
@@ -37,19 +36,7 @@ log = pycam.Utils.log.get_logger()
 
 class EngraveCutter(object):
 
-    def __init__(self, cutter, trimesh_models, contour_model, path_processor,
-            clockwise=False, physics=None):
-        self.cutter = cutter
-        self.models = trimesh_models
-        # combine the models (if there is more than one)
-        if self.models:
-            self.combined_model = self.models[0]
-            for model in self.models[1:]:
-                self.combined_model += model
-        else:
-            self.combined_model = []
-        self.clockwise = clockwise
-        self.contour_model = contour_model
+    def __init__(self, path_processor, physics=None):
         self.pa_push = path_processor
         # We use a separated path processor for the last "drop" layer.
         # This path processor does not need to be configurable.
@@ -57,199 +44,44 @@ class EngraveCutter(object):
                 reverse=self.pa_push.reverse)
         self.physics = physics
 
-    def GenerateToolPath(self, minz, maxz, horiz_step, dz, draw_callback=None):
+    def GenerateToolPath(self, cutter, models, motion_grid, minz=None,
+            maxz=None, draw_callback=None):
         quit_requested = False
-        # calculate the number of steps
-        num_of_layers = 1 + ceil(abs(maxz - minz) / dz)
-        if num_of_layers > 1:
-            z_step = abs(maxz - minz) / (num_of_layers - 1)
-            z_steps = [(maxz - i * z_step) for i in range(num_of_layers)]
-            # The top layer is treated as the current surface - thus it does not
-            # require engraving.
-            z_steps = z_steps[1:]
-        else:
-            z_steps = [minz]
-        num_of_layers = len(z_steps)
 
-        current_layer = 0
-        num_of_lines = self.contour_model.get_num_of_lines()
-        progress_counter = ProgressCounter(len(z_steps) * num_of_lines,
-                draw_callback)
+        model = pycam.Geometry.Model.get_combined_model(models)
 
         if draw_callback:
             draw_callback(text="Engrave: optimizing polygon order")
-        # Sort the polygons according to their directions (first inside, then
-        # outside. This reduces the problem of break-away pieces.
-        inner_polys = []
-        outer_polys = []
-        for poly in self.contour_model.get_polygons():
-            if poly.get_area() <= 0:
-                inner_polys.append(poly)
-            else:
-                outer_polys.append(poly)
-        inner_sorter = PolygonSorter(inner_polys, callback=draw_callback)
-        outer_sorter = PolygonSorter(outer_polys, callback=draw_callback)
-        line_groups = inner_sorter.get_polygons() + outer_sorter.get_polygons()
-        if self.clockwise:
-            for line_group in line_groups:
-                line_group.reverse_direction()
 
-        # push slices for all layers above ground
-        if maxz == minz:
-            # only one layer - use PushCutter instead of DropCutter
-            # put "last_z" clearly above the model plane
-            last_z = maxz + 1
-            push_steps = z_steps
-            drop_steps = []
-        else:
-            # multiple layers
-            last_z = maxz
-            push_steps = z_steps[:-1]
-            drop_steps = [z_steps[-1]]
+        num_of_layers = len(motion_grid)
 
-        for z in push_steps:
+        push_layers = motion_grid[:-1]
+        push_generator = pycam.PathGenerators.PushCutter(self.pa_push,
+                physics=self.physics)
+        current_layer = 0
+        for push_layer in push_layers:
             # update the progress bar and check, if we should cancel the process
             if draw_callback and draw_callback(text="Engrave: processing" \
                         + " layer %d/%d" % (current_layer + 1, num_of_layers)):
                 # cancel immediately
+                quit_requested = True
                 break
-            for line_group in line_groups:
-                for line in line_group.get_lines():
-                    self.GenerateToolPathLinePush(self.pa_push, line, z, last_z,
-                            draw_callback=draw_callback)
-                    if progress_counter.increment():
-                        # cancel requested
-                        quit_requested = True
-                        # finish the current path
-                        self.pa_push.finish()
-                        break
-            self.pa_push.finish()
-            # break the outer loop if requested
-            if quit_requested:
+            # no callback: otherwise the status text gets lost
+            push_generator.GenerateToolpath(cutter, [model], push_layer)
+            if draw_callback and draw_callback():
+                # cancel requested
+                quit_requested = True
                 break
             current_layer += 1
-            last_z = z
 
         if quit_requested:
             return self.pa_push.paths
 
-        for z in drop_steps:
-            if draw_callback:
-                draw_callback(text="Engrave: processing layer %d/%d" \
-                        % (current_layer + 1, num_of_layers))
-            # process the final layer with a drop cutter
-            for line_group in line_groups:
-                self.pa_drop.new_direction(0)
-                self.pa_drop.new_scanline()
-                for line in line_group.get_lines():
-                    self.GenerateToolPathLineDrop(self.pa_drop, line, z, maxz,
-                            horiz_step, last_z, draw_callback=draw_callback)
-                    if progress_counter.increment():
-                        # quit requested
-                        quit_requested = True
-                        break
-                self.pa_drop.end_scanline()
-                self.pa_drop.end_direction()
-                # break the outer loop if requested
-                if quit_requested:
-                    break
-            current_layer += 1
-            last_z = z
-        self.pa_drop.finish()
-        
+        drop_generator = pycam.PathGenerators.PushCutter(self.pa_drop)
+        if draw_callback:
+            draw_callback(text="Engrave: processing layer" + \
+                "%d/%d" % (current_layer + 1, num_of_layers))
+        push_generator.GenerateToolpath(cutter, [model], push_layer,
+                minz=None, maxz=None)
         return self.pa_push.paths + self.pa_drop.paths
-
-    def GenerateToolPathLinePush(self, pa, line, z, previous_z,
-            draw_callback=None):
-        if previous_z <= line.minz:
-            # the line is completely above the previous level
-            pass
-        elif line.minz < z < line.maxz:
-            # Split the line at the point at z level and do the calculation
-            # for both point pairs.
-            factor = (z - line.p1.z) / (line.p2.z - line.p1.z)
-            plane_point = line.p1.add(line.vector.mul(factor))
-            self.GenerateToolPathLinePush(pa, Line(line.p1, plane_point), z,
-                    previous_z, draw_callback=draw_callback)
-            self.GenerateToolPathLinePush(pa, Line(plane_point, line.p2), z,
-                    previous_z, draw_callback=draw_callback)
-        elif line.minz < previous_z < line.maxz:
-            plane = Plane(Point(0, 0, previous_z), Vector(0, 0, 1))
-            cp = plane.intersect_point(line.dir, line.p1)[0]
-            # we can be sure that there is an intersection
-            if line.p1.z > previous_z:
-                p1, p2 = cp, line.p2
-            else:
-                p1, p2 = line.p1, cp
-            self.GenerateToolPathLinePush(pa, Line(p1, p2), z, previous_z,
-                    draw_callback=draw_callback)
-        else:
-            if line.maxz <= z:
-                # the line is completely below z
-                p1 = Point(line.p1.x, line.p1.y, z)
-                p2 = Point(line.p2.x, line.p2.y, z)
-            elif line.minz >= z:
-                p1 = line.p1
-                p2 = line.p2
-            else:
-                log.warn("Unexpected condition EC_GTPLP: %s / %s / %s / %s" % \
-                        (line.p1, line.p2, z, previous_z))
-                return
-            # no model -> no possible obstacles
-            # model is completely below z (e.g. support bridges) -> no obstacles
-            relevant_models = [m for m in self.models if m.maxz >= z]
-            if not relevant_models:
-                points = [p1, p2]
-            elif self.physics:
-                points = get_free_paths_ode(self.physics, p1, p2)
-            else:
-                points = get_free_paths_triangles(relevant_models, self.cutter,
-                        p1, p2)
-            if points:
-                for point in points:
-                    pa.append(point)
-                if draw_callback:
-                    draw_callback(tool_position=points[-1], toolpath=pa.paths)
-
-
-    def GenerateToolPathLineDrop(self, pa, line, minz, maxz, horiz_step,
-            previous_z, draw_callback=None):
-        if line.minz >= previous_z:
-            # the line is not below maxz -> nothing to be done
-            return
-        pa.new_direction(0)
-        pa.new_scanline()
-        if not self.combined_model:
-            # no obstacle -> minimum height
-            # TODO: this "max(..)" is not correct for inclined lines
-            points = [Point(line.p1.x, line.p1.y, max(minz, line.p1.z)),
-                    Point(line.p2.x, line.p2.y, max(minz, line.p2.z))]
-        else:
-            # TODO: this "max(..)" is not correct for inclined lines.
-            p1 = Point(line.p1.x, line.p1.y, max(minz, line.p1.z))
-            p2 = Point(line.p2.x, line.p2.y, max(minz, line.p2.z))
-            distance = line.len
-            # we want to have at least five steps each
-            num_of_steps = max(5, 1 + ceil(distance / horiz_step))
-            # steps may be negative
-            x_step = (p2.x - p1.x) / (num_of_steps - 1)
-            y_step = (p2.y - p1.y) / (num_of_steps - 1)
-            x_steps = [(p1.x + i * x_step) for i in range(num_of_steps)]
-            y_steps = [(p1.y + i * y_step) for i in range(num_of_steps)]
-            step_coords = zip(x_steps, y_steps)
-            # TODO: this "min(..)" is not correct for inclided lines. This
-            # should be fixed in "get_max_height".
-            points = get_max_height_dynamic(self.combined_model, self.cutter,
-                    step_coords, min(p1.z, p2.z), maxz, self.physics)
-        for point in points:
-            if point is None:
-                # exceeded maxz - the cutter has to skip this point
-                pa.end_scanline()
-                pa.new_scanline()
-                continue
-            pa.append(point)
-        if draw_callback and points:
-            draw_callback(tool_position=points[-1], toolpath=pa.paths)
-        pa.end_scanline()
-        pa.end_direction()
 

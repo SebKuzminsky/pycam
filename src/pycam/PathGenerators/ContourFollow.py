@@ -195,9 +195,7 @@ class CollisionPaths(object):
 
 class ContourFollow(object):
 
-    def __init__(self, cutter, models, path_processor, physics=None):
-        self.cutter = cutter
-        self.models = models
+    def __init__(self, path_processor, physics=None):
         self.pa = path_processor
         self._up_vector = Vector(0, 0, 1)
         self.physics = physics
@@ -205,6 +203,7 @@ class ContourFollow(object):
         if self.physics:
             accuracy = 20
             max_depth = 16
+            # TODO: migrate to new interface
             maxx = max([m.maxx for m in self.models])
             minx = max([m.minx for m in self.models])
             maxy = max([m.maxy for m in self.models])
@@ -214,15 +213,15 @@ class ContourFollow(object):
                     math.log(2)
             self._physics_maxdepth = min(max_depth, max(ceil(depth), 4))
 
-    def _get_free_paths(self, p1, p2):
+    def _get_free_paths(self, cutter, models, p1, p2):
         if self.physics:
             return get_free_paths_ode(self.physics, p1, p2,
                     depth=self._physics_maxdepth)
         else:
-            return get_free_paths_triangles(self.models, self.cutter, p1, p2)
+            return get_free_paths_triangles(models, cutter, p1, p2)
 
-    def GenerateToolPath(self, minx, maxx, miny, maxy, minz, maxz, dz,
-            draw_callback=None):
+    def GenerateToolPath(self, cutter, models, minx, maxx, miny, maxy, minz,
+            maxz, dz, draw_callback=None):
         # reset the list of processed triangles
         self._processed_triangles = []
         # calculate the number of steps
@@ -236,7 +235,8 @@ class ContourFollow(object):
         z_step = diff_z / max(1, (num_of_layers - 1))
 
         # only the first model is used for the contour-follow algorithm
-        num_of_triangles = len(self.models[0].triangles(minx=minx, miny=miny,
+        # TODO: should we combine all models?
+        num_of_triangles = len(models[0].triangles(minx=minx, miny=miny,
                 maxx=maxx, maxy=maxy))
         progress_counter = ProgressCounter(2 * num_of_layers * num_of_triangles,
                 draw_callback)
@@ -254,16 +254,16 @@ class ContourFollow(object):
                     # cancel immediately
                     break
             self.pa.new_direction(0)
-            self.GenerateToolPathSlice(minx, maxx, miny, maxy, z,
+            self.GenerateToolPathSlice(cutter, models[0], minx, maxx, miny, maxy, z,
                     draw_callback, progress_counter, num_of_triangles)
             self.pa.end_direction()
             self.pa.finish()
             current_layer += 1
         return self.pa.paths
 
-    def GenerateToolPathSlice(self, minx, maxx, miny, maxy, z,
+    def GenerateToolPathSlice(self, cutter, model, minx, maxx, miny, maxy, z,
             draw_callback=None, progress_counter=None, num_of_triangles=None):
-        shifted_lines = self.get_potential_contour_lines(minx, maxx, miny, maxy,
+        shifted_lines = self.get_potential_contour_lines(cutter, model, minx, maxx, miny, maxy,
                 z, progress_counter=progress_counter)
         if num_of_triangles is None:
             num_of_triangles = len(shifted_lines)
@@ -296,14 +296,14 @@ class ContourFollow(object):
         self.pa.end_scanline()
         return self.pa.paths
 
-    def get_potential_contour_lines(self, minx, maxx, miny, maxy, z,
+    def get_potential_contour_lines(self, cutter, model, minx, maxx, miny, maxy, z,
             progress_counter=None):
         # use only the first model for the contour
-        follow_model = self.models[0]
+        follow_model = model
         waterline_triangles = CollisionPaths()
         triangles = follow_model.triangles(minx=minx, miny=miny, maxx=maxx,
                 maxy=maxy)
-        args = [(follow_model, self.cutter, self._up_vector, t, z)
+        args = [(follow_model, cutter, self._up_vector, t, z)
                 for t in triangles if not id(t) in self._processed_triangles]
         results_iter = run_in_parallel(_process_one_triangle, args,
                 unordered=True, callback=progress_counter.update)

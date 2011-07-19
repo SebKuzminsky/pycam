@@ -2,10 +2,10 @@
 <interface>
   <!-- interface-requires gtk+ 2.12 -->
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkAction" id="ExportGCodeVisible">
-    <property name="label">Export _visible Toolpaths ...</property>
-    <property name="short_label">Export _visible Toolpaths ...</property>
-    <property name="tooltip">Write all visible toolpaths to a file.</property>
+  <object class="GtkAction" id="ExportGCodeSelected">
+    <property name="label">Export _selected Toolpaths ...</property>
+    <property name="short_label">Export _selected Toolpaths ...</property>
+    <property name="tooltip">Write all selected toolpaths to a file.</property>
   </object>
   <object class="GtkAction" id="ExportGCodeAll">
     <property name="label">_Export all Toolpaths ...</property>
@@ -13,53 +13,29 @@
     <property name="tooltip">Write all toolpaths to a file.</property>
     <property name="stock_id">gtk-execute</property>
   </object>
-  <object class="GtkListStore" id="ToolPathListModel">
+  <object class="GtkListStore" id="ToolpathListModel">
     <columns>
-      <!-- column-name index -->
-      <column type="guint"/>
+      <!-- column-name ref -->
+      <column type="gulong"/>
       <!-- column-name name -->
       <column type="gchararray"/>
       <!-- column-name visible -->
       <column type="gboolean"/>
-      <!-- column-name drill_size -->
-      <column type="gfloat"/>
-      <!-- column-name drill_id -->
-      <column type="guint"/>
-      <!-- column-name allowance -->
-      <column type="gfloat"/>
-      <!-- column-name speed -->
-      <column type="gfloat"/>
-      <!-- column-name feedrate -->
-      <column type="gfloat"/>
-      <!-- column-name machine_time -->
-      <column type="gchararray"/>
     </columns>
     <data>
       <row>
         <col id="0">0</col>
-        <col id="1" translatable="yes">Rough</col>
+        <col id="1" translatable="yes">#1</col>
         <col id="2">True</col>
-        <col id="3">12</col>
-        <col id="4">0</col>
-        <col id="5">0</col>
-        <col id="6">0</col>
-        <col id="7">0</col>
-        <col id="8">0</col>
       </row>
       <row>
         <col id="0">0</col>
-        <col id="1" translatable="yes">test</col>
+        <col id="1" translatable="yes">#2</col>
         <col id="2">False</col>
-        <col id="3">0</col>
-        <col id="4">0</col>
-        <col id="5">0</col>
-        <col id="6">0</col>
-        <col id="7">0</col>
-        <col id="8">0</col>
       </row>
     </data>
   </object>
-  <object class="GtkVBox" id="ToolpathsTab">
+  <object class="GtkVBox" id="ToolpathsBox">
     <property name="orientation">vertical</property>
     <property name="spacing">3</property>
     <child>
@@ -84,28 +60,30 @@
                     <property name="vscrollbar_policy">automatic</property>
                     <property name="shadow_type">etched-in</property>
                     <child>
-                      <object class="GtkTreeView" id="ToolPathTable">
+                      <object class="GtkTreeView" id="ToolpathTable">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="model">ToolPathListModel</property>
+                        <property name="model">ToolpathListModel</property>
                         <property name="headers_clickable">False</property>
                         <property name="search_column">0</property>
                         <child>
-                          <object class="GtkTreeViewColumn" id="Visibility">
+                          <object class="GtkTreeViewColumn" id="ToolpathVisibleColumn">
                             <property name="title">Visible</property>
                             <child>
-                              <object class="GtkCellRendererToggle" id="toolpath_visible"/>
+                              <object class="GtkCellRendererPixbuf" id="ToolpathVisibleSymbol">
+                                <property name="stock_size">2</property>
+                              </object>
                               <attributes>
-                                <attribute name="active">2</attribute>
+                                <attribute name="cell-background">3</attribute>
                               </attributes>
                             </child>
                           </object>
                         </child>
                         <child>
-                          <object class="GtkTreeViewColumn" id="Operation">
+                          <object class="GtkTreeViewColumn" id="ToolpathNameColumn">
                             <property name="title">Operation</property>
                             <child>
-                              <object class="GtkCellRendererText" id="name"/>
+                              <object class="GtkCellRendererText" id="ToolpathNameCell"/>
                               <attributes>
                                 <attribute name="text">1</attribute>
                               </attributes>
@@ -113,59 +91,10 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkTreeViewColumn" id="Machine Time">
+                          <object class="GtkTreeViewColumn" id="ToolpathTimeColumn">
                             <property name="title">Machine Time</property>
                             <child>
-                              <object class="GtkCellRendererText" id="machine_time"/>
-                              <attributes>
-                                <attribute name="text">8</attribute>
-                              </attributes>
-                            </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkTreeViewColumn" id="Drill">
-                            <property name="title">Drill</property>
-                            <child>
-                              <object class="GtkCellRendererText" id="drill_id"/>
-                              <attributes>
-                                <attribute name="text">4</attribute>
-                              </attributes>
-                            </child>
-                            <child>
-                              <object class="GtkCellRendererText" id="drill_size"/>
-                              <attributes>
-                                <attribute name="text">3</attribute>
-                              </attributes>
-                            </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkTreeViewColumn" id="Speed">
-                            <property name="visible">False</property>
-                            <property name="title">Speed</property>
-                            <child>
-                              <object class="GtkCellRendererText" id="speed-speed"/>
-                              <attributes>
-                                <attribute name="text">6</attribute>
-                              </attributes>
-                            </child>
-                            <child>
-                              <object class="GtkCellRendererText" id="speed-feedrate"/>
-                              <attributes>
-                                <attribute name="text">7</attribute>
-                              </attributes>
-                            </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkTreeViewColumn" id="Material Allowance">
-                            <property name="title">Material Allowance</property>
-                            <child>
-                              <object class="GtkCellRendererText" id="allowance"/>
-                              <attributes>
-                                <attribute name="text">5</attribute>
-                              </attributes>
+                              <object class="GtkCellRendererText" id="ToolpathTimeCell"/>
                             </child>
                           </object>
                         </child>
@@ -182,7 +111,7 @@
                     <property name="orientation">vertical</property>
                     <property name="layout_style">center</property>
                     <child>
-                      <object class="GtkButton" id="toolpath_delete">
+                      <object class="GtkButton" id="ToolpathDelete">
                         <property name="label">gtk-delete</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
@@ -196,8 +125,8 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="toolpath_up">
-                        <property name="label">gtk-go-up</property>
+                      <object class="GtkButton" id="ToolpathDeleteAll">
+                        <property name="label">gtk-clear</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
@@ -210,8 +139,8 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="toolpath_down">
-                        <property name="label">gtk-go-down</property>
+                      <object class="GtkButton" id="ToolpathMoveUp">
+                        <property name="label">gtk-go-up</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
@@ -221,6 +150,20 @@
                         <property name="expand">False</property>
                         <property name="fill">False</property>
                         <property name="position">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="ToolpathMoveDown">
+                        <property name="label">gtk-go-down</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="use_stock">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">3</property>
                       </packing>
                     </child>
                   </object>

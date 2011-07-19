@@ -30,8 +30,8 @@ class Processes(pycam.Plugins.ListPluginBase):
     LIST_ATTRIBUTE_MAP = {"ref": COLUMN_REF, "name": COLUMN_NAME}
     CONTROL_BUTTONS = ("PushRemoveStrategy", "ContourPolygonStrategy",
             "ContourFollowStrategy", "SurfaceStrategy", "EngraveStrategy",
-            "OverlapPercentControl", "MaterialAllowanceControl",
-            "MaxStepDownControl", "EngraveOffsetControl",
+            "OverlapPercent", "MaterialAllowance",
+            "MaxStepDown", "EngraveOffset",
             "PocketingControl", "GridDirectionX", "GridDirectionY",
             "GridDirectionXY", "MillingStyleConventional", "MillingStyleClimb",
             "MillingStyleIgnore")
@@ -128,19 +128,19 @@ class Processes(pycam.Plugins.ListPluginBase):
                 strategy = key
                 break
         if strategy == "PushRemoveStrategy":
-            text = "Slice %g%s %d%%" % (data["MaxStepDownControl"],
-                    self.core.get("unit"), data["OverlapPercentControl"])
+            text = "Slice %g%s %d%%" % (data["MaxStepDown"],
+                    self.core.get("unit"), data["OverlapPercent"])
         elif strategy == "ContourPolygonStrategy":
-            text = "Contour (polygon) %g%s" % (data["MaxStepDownControl"],
+            text = "Contour (polygon) %g%s" % (data["MaxStepDown"],
                     self.core.get("unit"))
         elif strategy == "ContourFollowStrategy":
-            text = "Contour (follow) %g%s" % (data["MaxStepDownControl"],
+            text = "Contour (follow) %g%s" % (data["MaxStepDown"],
                     self.core.get("unit"))
         elif strategy == "SurfaceStrategy":
-            text = "Surface %d%%" % data["OverlapPercentControl"]
+            text = "Surface %d%%" % data["OverlapPercent"]
         else:
             # EngraveStrategy
-            text = "Engrave %g%s" % (data["EngraveOffsetControl"],
+            text = "Engrave %g%s" % (data["EngraveOffset"],
                     self.core.get("unit"))
         cell.set_property("text", text)
 
@@ -206,10 +206,10 @@ class Processes(pycam.Plugins.ListPluginBase):
                 "ContourFollowStrategy": False,
                 "SurfaceStrategy": False,
                 "EngraveStrategy": False,
-                "OverlapPercentControl": 10,
-                "MaterialAllowanceControl": 0,
-                "MaxStepDownControl": 1,
-                "EngraveOffsetControl": 0,
+                "OverlapPercent": 10,
+                "MaterialAllowance": 0,
+                "MaxStepDown": 1,
+                "EngraveOffset": 0,
                 "PocketingControl": self.POCKETING_TYPES.index("none"),
                 "GridDirectionX": True,
                 "GridDirectionY": False,
@@ -250,26 +250,26 @@ class Processes(pycam.Plugins.ListPluginBase):
             return False
         all_controls = ("GridDirectionX", "GridDirectionY", "GridDirectionXY",
                 "MillingStyleConventional", "MillingStyleClimb",
-                "MillingStyleIgnore", "MaxStepDownControl",
-                "MaterialAllowanceControl", "OverlapPercentControl",
-                "EngraveOffsetControl", "PocketingControl")
+                "MillingStyleIgnore", "MaxStepDown",
+                "MaterialAllowance", "OverlapPercent",
+                "EngraveOffset", "PocketingControl")
         active_controls = {
             "PushRemoveStrategy": ("GridDirectionX", "GridDirectionY",
                     "GridDirectionXY", "MillingStyleConventional",
                     "MillingStyleClimb", "MillingStyleIgnore",
-                    "MaxStepDownControl", "MaterialAllowanceControl",
-                    "OverlapPercentControl"),
+                    "MaxStepDown", "MaterialAllowance",
+                    "OverlapPercent"),
             # TODO: direction y and xy currently don't work for ContourPolygonStrategy
             "ContourPolygonStrategy": ("GridDirectionX",
-                    "MillingStyleIgnore", "MaxStepDownControl",
-                    "MaterialAllowanceControl", "OverlapPercentControl"),
+                    "MillingStyleIgnore", "MaxStepDown",
+                    "MaterialAllowance", "OverlapPercent"),
             "ContourFollowStrategy": ("MillingStyleConventional",
-                    "MillingStyleClimb", "MaxStepDownControl"),
+                    "MillingStyleClimb", "MaxStepDown"),
             "SurfaceStrategy": ("GridDirectionX", "GridDirectionY",
                     "GridDirectionXY", "MillingStyleConventional",
                     "MillingStyleClimb", "MillingStyleIgnore",
-                    "MaterialAllowanceControl", "OverlapPercentControl"),
-            "EngraveStrategy": ("MaxStepDownControl", "EngraveOffsetControl",
+                    "MaterialAllowance", "OverlapPercent"),
+            "EngraveStrategy": ("MaxStepDown", "EngraveOffset",
                     "MillingStyleConventional", "MillingStyleClimb",
                     "PocketingControl"),
         }

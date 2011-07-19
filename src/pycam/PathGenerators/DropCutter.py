@@ -24,6 +24,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.PathGenerators import get_max_height_dynamic
 from pycam.Utils import ProgressCounter
 from pycam.Utils.threading import run_in_parallel
+import pycam.Geometry.Model
 import pycam.Utils.log
 
 log = pycam.Utils.log.get_logger()
@@ -39,51 +40,17 @@ def _process_one_grid_line((positions, minz, maxz, model, cutter, physics)):
     return get_max_height_dynamic(model, cutter, positions, minz, maxz, physics)
 
 
-class Dimension(object):
-    def __init__(self, start, end):
-        self.start = float(start)
-        self.end = float(end)
-        self.min = float(min(start, end))
-        self.max = float(max(start, end))
-        self.downward = start > end
-        self.value = 0.0
-
-    def check_bounds(self, value=None, tolerance=None):
-        if value is None:
-            value = self.value
-        if tolerance is None:
-            return (value >= self.min) and (value <= self.max)
-        else:
-            return (value > self.min - tolerance) \
-                    and (value < self.max + tolerance)
-
-    def shift(self, distance):
-        if self.downward:
-            self.value -= distance
-        else:
-            self.value += distance
-
-    def set(self, value):
-        self.value = float(value)
-
-    def get(self):
-        return self.value
-
-
 class DropCutter(object):
 
-    def __init__(self, cutter, models, path_processor, physics=None):
-        self.cutter = cutter
-        # combine the models (if there is more than one)
-        self.model = models[0]
-        for model in models[1:]:
-            self.model += model
+    def __init__(self, path_processor, physics=None):
         self.pa = path_processor
         self.physics = physics
-        # remember if we already reported an invalid boundary
 
-    def GenerateToolPath(self, motion_grid, minz, maxz, draw_callback=None):
+    def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None, draw_callback=None):
         quit_requested = False
+        model = pycam.Geometry.Model.get_combined_model(models)
+        if not model:
+            return
 
         # Transfer the grid (a generator) into a list of lists and count the
         # items.
@@ -103,7 +70,7 @@ class DropCutter(object):
         for one_grid_line in lines:
             # simplify the data (useful for remote processing)
             xy_coords = [(pos.x, pos.y) for pos in one_grid_line]
-            args.append((xy_coords, minz, maxz, self.model, self.cutter,
+            args.append((xy_coords, minz, maxz, model, cutter,
                     self.physics))
         for points in run_in_parallel(_process_one_grid_line, args,
                 callback=progress_counter.update):

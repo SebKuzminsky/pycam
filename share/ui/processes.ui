@@ -37,6 +37,14 @@
       </row>
     </data>
   </object>
+  <object class="GtkListStore" id="ProcessList">
+    <columns>
+      <!-- column-name ref -->
+      <column type="gulong"/>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkWindow" id="window1">
     <child>
       <object class="GtkVPaned" id="ProcessBox">
@@ -343,7 +351,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkSpinButton" id="OverlapPercentControl">
+                              <object class="GtkSpinButton" id="OverlapPercent">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="invisible_char">&#x25CF;</property>
@@ -370,7 +378,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkSpinButton" id="MaterialAllowanceControl">
+                              <object class="GtkSpinButton" id="MaterialAllowance">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="invisible_char">&#x25CF;</property>
@@ -387,7 +395,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkSpinButton" id="MaxStepDownControl">
+                              <object class="GtkSpinButton" id="MaxStepDown">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="invisible_char">&#x25CF;</property>
@@ -430,7 +438,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkSpinButton" id="EngraveOffsetControl">
+                              <object class="GtkSpinButton" id="EngraveOffset">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="invisible_char">&#x25CF;</property>
@@ -696,13 +704,5 @@
         </child>
       </object>
     </child>
-  </object>
-  <object class="GtkListStore" id="ProcessList">
-    <columns>
-      <!-- column-name ref -->
-      <column type="gulong"/>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-    </columns>
   </object>
 </interface>

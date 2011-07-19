@@ -91,6 +91,10 @@ class Triangle(TransformableContainer):
     def __repr__(self):
         return "Triangle%d<%s,%s,%s>" % (self.id, self.p1, self.p2, self.p3)
 
+    def copy(self):
+        return self.__class__(self.p1.copy(), self.p2.copy(), self.p3.copy(),
+                self.n.copy())
+
     def next(self):
         yield self.p1
         yield self.p2

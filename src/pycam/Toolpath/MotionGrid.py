@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.Point import Point
 from pycam.Geometry.utils import epsilon
+from pycam.Geometry.Polygon import PolygonSorter
 import math
 
 
@@ -156,7 +157,7 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance,
         return result, end_position
     return get_lines(start, end, end_position)
 
-def get_fixed_grid(bounds, layer_distance, line_distance, step_width=None,
+def get_fixed_grid(bounds, layer_distance, line_distance=None, step_width=None,
         grid_direction=GRID_DIRECTION_X, milling_style=MILLING_STYLE_IGNORE,
         start_position=START_Z):
     """ Calculate the grid positions for toolpath moves
@@ -172,6 +173,7 @@ def get_fixed_grid(bounds, layer_distance, line_distance, step_width=None,
                 reverse=bool(start_position & START_Z))
     def get_layers_with_direction(layers):
         for layer in layers:
+            # this will produce a nice xy-grid, as well as simple x and y grids
             if grid_direction != GRID_DIRECTION_Y:
                 yield (layer, GRID_DIRECTION_X)
             if grid_direction != GRID_DIRECTION_X:
@@ -182,4 +184,107 @@ def get_fixed_grid(bounds, layer_distance, line_distance, step_width=None,
                 grid_direction=direction, milling_style=milling_style,
                 start_position=start_position)
         yield result
+
+def get_lines_layer(lines, z, last_z=None, step_width=None,
+        milling_style=MILLING_STYLE_CONVENTIONAL):
+    get_proj_point = lambda proj_point: Point(proj_point.x, proj_point.y, z)
+    projected_lines = []
+    for line in lines:
+        if (not last_z is None) and (last_z < line.minz):
+            # the line was processed before
+            continue
+        elif line.minz < z < line.maxz:
+            # Split the line at the point at z level and do the calculation
+            # for both point pairs.
+            factor = (z - line.p1.z) / (line.p2.z - line.p1.z)
+            plane_point = line.p1.add(line.vector.mul(factor))
+            if line.p1.z < z:
+                p1 = get_proj_point(line.p1)
+                p2 = line.p2
+            else:
+                p1 = line.p1
+                p2 = get_proj_point(line.p2)
+            projected_lines.append(Line(p1, plane_point))
+            yield Line(plane_point, p2)
+        elif line.minz < last_z < line.maxz:
+            plane = Plane(Point(0, 0, last_z), Vector(0, 0, 1))
+            cp = plane.intersect_point(line.dir, line.p1)[0]
+            # we can be sure that there is an intersection
+            if line.p1.z > last_z:
+                p1, p2 = cp, line.p2
+            else:
+                p1, p2 = line.p1, cp
+            projected_lines.append(Line(p1, p2))
+        else:
+            if line.maxz <= z:
+                # the line is completely below z
+                projected_lines.append(Line(get_proj_point(line.p1),
+                        get_proj_point(line.p2)))
+            elif line.minz >= z:
+                projected_lines.append(line)
+            else:
+                log.warn("Unexpected condition 'get_lines_layer': " + \
+                        "%s / %s / %s / %s" % (line.p1, line.p2, z, last_z))
+    # process all projected lines
+    for line in projected_lines:
+        if step_width is None:
+            yield line.p1
+            yield line.p2
+        else:
+            if isiterable(step_width):
+                steps = step_width
+            else:
+                steps = floatrange(0.0, line.len, inc=step_width)
+            for step in steps:
+                yield line.p1.add(line.dir.mul(step))
+
+def _get_sorted_polygons(models, callback=None):
+    # Sort the polygons according to their directions (first inside, then
+    # outside. This reduces the problem of break-away pieces.
+    inner_polys = []
+    outer_polys = []
+    for model in models:
+        for poly in model.get_polygons():
+            if poly.get_area() <= 0:
+                inner_polys.append(poly)
+            else:
+                outer_polys.append(poly)
+    inner_sorter = PolygonSorter(inner_polys, callback=callback)
+    outer_sorter = PolygonSorter(outer_polys, callback=callback)
+    return inner_sorter.get_polygons() + outer_sorter.get_polygons()
+
+def get_lines_grid(models, bounds, layer_distance, line_distance=None,
+        step_width=None, grid_direction=None, 
+        milling_style=MILLING_STYLE_CONVENTIONAL,
+        start_position=None, callback=None):
+    lines = []
+    for polygon in _get_sorted_polygons(models, callback=callback):
+        if polygon.is_closed and \
+                (milling_style == MILLING_STYLE_CONVENTIONAL):
+            polygon = polygon.copy()
+            polygon.reverse()
+        for line in polygon.get_lines():
+            lines.append(line)
+    low, high = bounds.get_absolute_limits()
+    # the lower limit is never below the model
+    low_limit_lines = min([line.minz for line in lines])
+    low[2] = max(low[2], low_limit_lines)
+    if isiterable(layer_distance):
+        layers = layer_distance
+    elif layer_distance is None:
+        # only one layer
+        layers = [low[2]]
+    else:
+        layers = floatrange(low[2], high[2], inc=layer_distance,
+                reverse=bool(start_position & START_Z))
+    last_z = None
+    if layers:
+        # the upper layers are used for PushCutter operations
+        for z in layers[:-1]:
+            yield get_lines_layer(lines, z, last_z=last_z,
+                    step_width=None, milling_style=milling_style)
+            last_z = z
+        # the last layer is used for a DropCutter operation
+        yield get_lines_layer(lines, layers[-1], last_z=last_z,
+                step_width=step_width, milling_style=milling_style)
 

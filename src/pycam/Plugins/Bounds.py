@@ -25,6 +25,10 @@ import pycam.Plugins
 import pycam.Toolpath
 
 
+_RELATIVE_UNIT = ("%", "mm")
+_BOUNDARY_MODES = ("inside", "along", "around")
+
+
 class Bounds(pycam.Plugins.ListPluginBase):
 
     UI_FILE = "bounds.ui"
@@ -32,12 +36,10 @@ class Bounds(pycam.Plugins.ListPluginBase):
     COLUMN_REF, COLUMN_NAME = range(2)
     LIST_ATTRIBUTE_MAP = {"ref": COLUMN_REF, "name": COLUMN_NAME}
 
-    BOUNDARY_MODES = ("inside", "along", "around")
     # mapping of boundary types and GUI control elements
     BOUNDARY_TYPES = {
             pycam.Toolpath.Bounds.TYPE_RELATIVE_MARGIN: "TypeRelativeMargin",
             pycam.Toolpath.Bounds.TYPE_CUSTOM: "TypeCustom"}
-    RELATIVE_UNIT = ("%", "mm")
     CONTROL_BUTTONS = ("TypeRelativeMargin", "TypeCustom",
             "ToolLimit", "RelativeUnit", "BoundaryLowX",
             "BoundaryLowY", "BoundaryLowZ", "BoundaryHighX",
@@ -183,34 +185,6 @@ class Bounds(pycam.Plugins.ListPluginBase):
         # remove all models that are not available anymore
         for not_found in remaining:
             models.remove(not_found)
-
-    def get_bounds_limit(self, bounds):
-        default = (None, None, None), (None, None, None)
-        get_low_value = lambda axis: bounds["BoundaryLow%s" % "XYZ"[axis]]
-        get_high_value = lambda axis: bounds["BoundaryHigh%s" % "XYZ"[axis]]
-        if bounds["TypeRelativeMargin"]:
-            low_model, high_model = pycam.Geometry.Model.get_combined_bounds(
-                    bounds["Models"])
-            if None in low_model or None in high_model:
-                # zero-sized models -> no action
-                return default
-            is_percent = self.RELATIVE_UNIT[bounds["RelativeUnit"]] == "%"
-            low, high = [], []
-            if is_percent:
-                for axis in range(3):
-                    dim = high_model[axis] - low_model[axis]
-                    low.append(low_model[axis] - (get_low_value(axis) / 100.0 * dim))
-                    high.append(high_model[axis] + (get_high_value(axis) / 100.0 * dim))
-            else:
-                for axis in range(3):
-                    low.append(low_model[axis] - get_low_value(axis))
-                    high.append(high_model[axis] + get_high_value(axis))
-        else:
-            low, high = [], []
-            for axis in range(3):
-                low.append(get_low_value(axis))
-                high.append(get_high_value(axis))
-        return low, high
 
     def _render_model_name(self, column, cell, model, m_iter):
         path = model.get_path(m_iter)
@@ -386,7 +360,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         self.core.emit_event("bounds-changed")
 
     def _is_percent(self):
-        return self.RELATIVE_UNIT[self.gui.get_object("RelativeUnit").get_active()] == "%"
+        return _RELATIVE_UNIT[self.gui.get_object("RelativeUnit").get_active()] == "%"
 
     def _update_controls(self):
         bounds = self.get_selected()
@@ -425,19 +399,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         current_bounds_index = self.get_selected(index=True)
         if current_bounds_index is None:
             current_bounds_index = 0
-        new_bounds = {
-                "BoundaryLowX": 0,
-                "BoundaryLowY": 0,
-                "BoundaryLowZ": 0,
-                "BoundaryHighX": 0,
-                "BoundaryHighY": 0,
-                "BoundaryHighZ": 0,
-                "TypeRelativeMargin": True,
-                "TypeCustom": False,
-                "RelativeUnit": self.RELATIVE_UNIT.index("%"),
-                "ToolLimit": self.BOUNDARY_MODES.index("along"),
-                "Models": [],
-        }
+        new_bounds = BoundsDict()
         self.append(new_bounds)
         self.select(new_bounds)
 
@@ -446,4 +408,51 @@ class Bounds(pycam.Plugins.ListPluginBase):
         if (new_text != self._treemodel[path][self.COLUMN_NAME]) and \
                 new_text:
             self._treemodel[path][self.COLUMN_NAME] = new_text
+
+
+class BoundsDict(dict):
+
+    def __init__(self, *args, **kwargs):
+        super(BoundsDict, self).__init__(*args, **kwargs)
+        self.update({
+                "BoundaryLowX": 0,
+                "BoundaryLowY": 0,
+                "BoundaryLowZ": 0,
+                "BoundaryHighX": 0,
+                "BoundaryHighY": 0,
+                "BoundaryHighZ": 0,
+                "TypeRelativeMargin": True,
+                "TypeCustom": False,
+                "RelativeUnit": _RELATIVE_UNIT.index("%"),
+                "ToolLimit": _BOUNDARY_MODES.index("along"),
+                "Models": [],
+        })
+
+    def get_absolute_limits(self):
+        default = (None, None, None), (None, None, None)
+        get_low_value = lambda axis: self["BoundaryLow%s" % "XYZ"[axis]]
+        get_high_value = lambda axis: self["BoundaryHigh%s" % "XYZ"[axis]]
+        if self["TypeRelativeMargin"]:
+            low_model, high_model = pycam.Geometry.Model.get_combined_bounds(
+                    self["Models"])
+            if None in low_model or None in high_model:
+                # zero-sized models -> no action
+                return default
+            is_percent = _RELATIVE_UNIT[self["RelativeUnit"]] == "%"
+            low, high = [], []
+            if is_percent:
+                for axis in range(3):
+                    dim = high_model[axis] - low_model[axis]
+                    low.append(low_model[axis] - (get_low_value(axis) / 100.0 * dim))
+                    high.append(high_model[axis] + (get_high_value(axis) / 100.0 * dim))
+            else:
+                for axis in range(3):
+                    low.append(low_model[axis] - get_low_value(axis))
+                    high.append(high_model[axis] + get_high_value(axis))
+        else:
+            low, high = [], []
+            for axis in range(3):
+                low.append(get_low_value(axis))
+                high.append(get_high_value(axis))
+        return low, high
 

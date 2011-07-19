@@ -69,6 +69,14 @@ def get_combined_bounds(models):
             high[2] = model.maxz
     return low, high
 
+def get_combined_model(models):
+    if not models:
+        return None
+    result = models.pop(0).copy()
+    while models:
+        result += models.pop(0)
+    return result
+
 
 class BaseModel(TransformableContainer):
     id = 0
@@ -90,11 +98,9 @@ class BaseModel(TransformableContainer):
 
     def __add__(self, other_model):
         """ combine two models """
-        result = self.__class__()
-        for item in self.next():
-            result.append(item)
+        result = self.copy()
         for item in other_model.next():
-            result.append(item)
+            result.append(item.copy())
         return result
 
     def __len__(self):
@@ -307,6 +313,12 @@ class Model(BaseModel):
         """
         return len(self._triangles)
 
+    def copy(self):
+        result = self.__class__(use_kdtree=self._use_kdtree)
+        for triangle in self.triangles():
+            result.append(triangle.copy())
+        return result
+
     @property
     def uuid(self):
         if (self.__uuid is None) or self._dirty:
@@ -421,7 +433,7 @@ class ContourModel(BaseModel):
         self.name = "contourmodel%d" % self.id
         if plane is None:
             # the default plane points upwards along the z axis
-            plane = Plane(Point(0, 0, 0), Point(0, 0, 1))
+            plane = Plane(Point(0, 0, 0), Vector(0, 0, 1))
         self._plane = plane
         self._line_groups = []
         self._item_groups.append(self._line_groups)
@@ -437,6 +449,12 @@ class ContourModel(BaseModel):
         This is mainly useful for evaluating an empty model as False.
         """
         return len(self._line_groups)
+
+    def copy(self):
+        result = self.__class__(plane=self._plane.copy())
+        for polygon in self.get_polygons():
+            result.append(polygon.copy())
+        return result
 
     def reset_cache(self):
         super(ContourModel, self).reset_cache()

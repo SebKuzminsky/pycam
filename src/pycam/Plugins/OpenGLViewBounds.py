@@ -43,7 +43,7 @@ class OpenGLViewBounds(pycam.Plugins.PluginBase):
         bounds = self.core.get("bounds").get_selected()
         if not bounds:
             return
-        low, high = self.core.get("bounds").get_bounds_limit(bounds)
+        low, high = bounds.get_absolute_limits()
         if None in low or None in high:
             return
         minx, miny, minz = low[0], low[1], low[2]

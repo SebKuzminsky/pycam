@@ -230,6 +230,9 @@ class Polygon(TransformableContainer):
         self._area_cache = None
         self._cached_offset_polygons = {}
 
+    def copy(self):
+        return self.__class__(plane=self.plane.copy())
+
     def append(self, line):
         if not self.is_connectable(line):
             raise ValueError("This line does not fit to the polygon")

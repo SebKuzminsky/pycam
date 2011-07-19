@@ -52,6 +52,9 @@ class Plane(TransformableContainer):
         else:
             return cmp(str(self), str(other))
 
+    def copy(self):
+        return self.__class__(self.p.copy(), self.n.copy())
+
     def next(self):
         yield self.p
         yield self.n

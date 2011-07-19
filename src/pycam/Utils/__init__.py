@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = ["iterators", "polynomials", "ProgressCounter", "threading",
         "get_platform", "URIHandler", "PLATFORM_WINDOWS", "PLATFORM_MACOS",
-        "PLATFORM_LINUX", "PLATFORM_UNKNOWN"]
+        "PLATFORM_LINUX", "PLATFORM_UNKNOWN", "get_exception_report"]
 
 import sys
 import os
@@ -30,6 +30,7 @@ import re
 import socket
 import urllib
 import urlparse
+import traceback
 # this is imported below on demand
 #import win32com
 #import win32api
@@ -38,6 +39,7 @@ PLATFORM_LINUX = 0
 PLATFORM_WINDOWS = 1
 PLATFORM_MACOS = 2
 PLATFORM_UNKNOWN = 3
+
 
 # setproctitle is (optionally) imported
 try:
@@ -190,6 +192,11 @@ def get_all_ips():
     # non-local IPs first
     filtered_result.sort(cmp=sort_ip_by_relevance)
     return filtered_result
+
+def get_exception_report():
+    return "An unexpected exception occoured: please send the " \
+            + "text below to the developers of PyCAM. Thanks a lot!" \
+            + os.linesep + traceback.format_exc()
 
 
 class ProgressCounter(object):

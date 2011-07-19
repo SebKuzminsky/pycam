@@ -87,10 +87,12 @@ class PluginBase(object):
         except ImportError:
             return
         actiongroup = gtk.ActionGroup(groupname)
-        key, mod = gtk.accelerator_parse(accel_string)
         accel_path = "<pycam>/%s" % accel_name
         action.set_accel_path(accel_path)
-        gtk.accel_map_change_entry(accel_path, key, mod, True)
+        # it is a bit pointless, but we allow an empty accel_string anyway ...
+        if accel_string:
+            key, mod = gtk.accelerator_parse(accel_string)
+            gtk.accel_map_change_entry(accel_path, key, mod, True)
         actiongroup.add_action(action)
         self.core.get("gtk-uimanager").insert_action_group(actiongroup, pos=-1)
 

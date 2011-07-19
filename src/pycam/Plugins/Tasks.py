@@ -20,8 +20,21 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import time
 
 import pycam.Plugins
+import pycam.Utils
+from pycam.Exporters.GCodeExporter import GCodeGenerator
+from pycam.Toolpath.MotionGrid import MILLING_STYLE_IGNORE, \
+        MILLING_STYLE_CONVENTIONAL, MILLING_STYLE_CLIMB, GRID_DIRECTION_X, \
+        GRID_DIRECTION_Y, GRID_DIRECTION_XY, get_lines_grid, get_fixed_grid
+import pycam.PathProcessors.SimpleCutter
+import pycam.PathGenerators.PushCutter
+import pycam.PathProcessors.ContourCutter
+import pycam.PathGenerators.ContourFollow
+import pycam.PathProcessors.PathAccumulator
+import pycam.PathGenerators.DropCutter
+import pycam.PathGenerators.EngraveCutter
 
 
 class Tasks(pycam.Plugins.ListPluginBase):
@@ -29,7 +42,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
     UI_FILE = "tasks.ui"
     COLUMN_REF, COLUMN_NAME = range(2)
     LIST_ATTRIBUTE_MAP = {"id": COLUMN_REF, "name": COLUMN_NAME}
-    DEPENDS = ["Models", "Tools", "Processes", "Bounds"]
+    DEPENDS = ["Models", "Tools", "Processes", "Bounds", "Toolpaths"]
 
     def setup(self):
         if self.gui:
@@ -46,6 +59,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
                         self.gui.get_object(obj_name))
             self.gui.get_object("TaskNew").connect("clicked",
                     self._task_new)
+            # handle table events
             self.core.register_event("task-selection-changed",
                     self._switch_task)
             self.gui.get_object("TaskNameCell").connect("edited",
@@ -57,6 +71,12 @@ class Tasks(pycam.Plugins.ListPluginBase):
             selection.set_mode(self._gtk.SELECTION_MULTIPLE)
             self._treemodel = self.gui.get_object("TaskList")
             self._treemodel.clear()
+            # generate toolpaths
+            self.gui.get_object("GenerateToolPathButton").connect("clicked",
+                    self._generate_selected_toolpaths)
+            self.gui.get_object("GenerateAllToolPathsButton").connect("clicked",
+                    self._generate_all_toolpaths)
+            # manage the treemodel
             def update_model():
                 if not hasattr(self, "_model_cache"):
                     self._model_cache = {}
@@ -76,6 +96,8 @@ class Tasks(pycam.Plugins.ListPluginBase):
                 handler = obj.connect("value-changed",
                         lambda widget: self.core.emit_event("task-changed"))
                 self._detail_handlers.append((obj, handler))
+            self.gui.get_object("Models").get_selection().set_mode(
+                    self._gtk.SELECTION_MULTIPLE)
             for obj_name in ("Models", "ToolSelector", "ProcessSelector", "BoundsSelector"):
                 obj = self.gui.get_object(obj_name)
                 obj.get_model().clear()
@@ -214,30 +236,148 @@ class Tasks(pycam.Plugins.ListPluginBase):
         self.append(new_task)
         self.select(new_task)
 
-    def process_one_task(self, task_index):
-        try:
-            task = self.task_list[task_index]
-        except IndexError:
-            # this should only happen, if we were called in batch mode (command line)
-            log.warn("The given task ID (%d) does not exist. Valid values are: %s." % (task_index, range(len(self.task_list))))
-            return
-        self.generate_toolpath(task["tool"], task["process"], task["bounds"])
-
-    def process_multiple_tasks(self, task_list=None):
-        if task_list is None:
-            task_list = self.task_list[:]
-        enabled_tasks = []
-        for index in range(len(task_list)):
-            task = task_list[index]
-            if task["enabled"]:
-                enabled_tasks.append(task)
+    def generate_toolpaths(self, tasks):
         progress = self.core.get("progress")
-        progress.set_multiple(len(enabled_tasks), "Toolpath")
-        for task in enabled_tasks:
-            if not self.generate_toolpath(task["tool"], task["process"],
-                    task["bounds"], progress=progress):
+        progress.set_multiple(len(tasks), "Toolpath")
+        for task in tasks:
+            if not self.generate_toolpath(task, progress=progress):
                 # break out of the loop, if cancel was requested
                 break
             progress.update_multiple()
         progress.finish()
+
+    def _generate_selected_toolpaths(self, widget=None):
+        tasks = self.get_selected()
+        self.generate_toolpaths(self.get_selected())
+
+    def _generate_all_toolpaths(self, widget=None):
+        self.generate_toolpaths(self)
+
+    def _get_path_generator(self, process):
+        if process["PushRemoveStrategy"]:
+            processor = pycam.PathProcessors.SimpleCutter.SimpleCutter
+            generator = pycam.PathGenerators.PushCutter.PushCutter
+        elif process["ContourPolygonStrategy"]:
+            processor = pycam.PathProcessors.ContourCutter.ContourCutter
+            generator = pycam.PathGenerators.PushCutter.PushCutter
+        elif process["ContourFollowStrategy"]:
+            processor = pycam.PathProcessors.SimpleCutter.SimpleCutter
+            generator = pycam.PathGenerators.ContourFollow.ContourFollow
+        elif process["SurfaceStrategy"]:
+            processor = pycam.PathProcessors.PathAccumulator.PathAccumulator
+            generator = pycam.PathGenerators.DropCutter.DropCutter
+        elif process["EngraveStrategy"]:
+            processor = pycam.PathProcessors.SimpleCutter.SimpleCutter
+            generator = pycam.PathGenerators.EngraveCutter.EngraveCutter
+        else:
+            self.log.error("Unknown path strategy: %s" % str(process))
+            return
+        # TODO: "physics" should be set, as well
+        return generator(processor(), physics=None)
+
+    def _get_motion_grid(self, tool, process, bounds, models):
+        step_width = float(tool.radius) / 4.0
+        milling_style_map = {
+                "MillingStyleConventional": MILLING_STYLE_CONVENTIONAL,
+                "MillingStyleClimb": MILLING_STYLE_CLIMB,
+                "MillingStyleIgnore": MILLING_STYLE_IGNORE,
+        }
+        for key in milling_style_map:
+            if process[key]:
+                milling_style = milling_style_map[key]
+                break
+        grid_direction_map = {"GridDirectionX": GRID_DIRECTION_X,
+                "GridDirectionY": GRID_DIRECTION_Y,
+                "GridDirectionXY": GRID_DIRECTION_XY,
+        }
+        for key in grid_direction_map:
+            if process[key]:
+                grid_direction = grid_direction_map[key]
+                break
+        line_distance = 2 * float(tool.radius) * \
+                (1 - 0.01 * float(process["OverlapPercent"]))
+        # TODO: handle offset and pocketing
+        if process["EngraveStrategy"]:
+            return get_lines_grid(models, bounds, process["MaxStepDown"],
+                    step_width=step_width, milling_style=milling_style)
+        else:
+            return get_fixed_grid(bounds, process["MaxStepDown"],
+                    line_distance=line_distance, grid_direction=grid_direction,
+                    milling_style=milling_style)
+
+    def generate_toolpath(self, task, progress=None):
+        models = task["models"]
+        tool = task["tool"]
+        process = task["process"]
+        bounds = task["bounds"]
+        path_generator = self._get_path_generator(process)
+        motion_grid = self._get_motion_grid(tool, process, bounds, models)
+        start_time = time.time()
+        if progress:
+            use_multi_progress = True
+        else:
+            use_multi_progress = False
+            progress = self.core.get("progress")
+        progress.update(text="Preparing toolpath generation")
+        parent = self
+        class UpdateView(object):
+            def __init__(self, func, max_fps=1):
+                self.last_update = time.time()
+                self.max_fps = max_fps
+                self.func = func
+            def update(self, text=None, percent=None, tool_position=None,
+                    toolpath=None):
+                if parent.core.get("show_drill_progress"):
+                    if not tool_position is None:
+                        parent.cutter.moveto(tool_position)
+                    if not toolpath is None:
+                        parent.core.set("toolpath_in_progress", toolpath)
+                    current_time = time.time()
+                    if (current_time - self.last_update) > 1.0/self.max_fps:
+                        self.last_update = current_time
+                        if self.func:
+                            self.func()
+                # break the loop if someone clicked the "cancel" button
+                return progress.update(text=text, percent=percent)
+        draw_callback = UpdateView(
+                lambda: self.core.emit_event("visual-item-updated"),
+                max_fps=self.core.get("drill_progress_max_fps")).update
+
+        progress.update(text="Generating collision model")
+
+        # run the toolpath generation
+        progress.update(text="Starting the toolpath generation")
+        low, high = bounds.get_absolute_limits()
+        try:
+            toolpath = path_generator.GenerateToolPath(tool,
+                    models, motion_grid, minz=low[2], maxz=high[2],
+                    draw_callback=draw_callback)
+        except Exception:
+            # catch all non-system-exiting exceptions
+            self.log.error(pycam.Utils.get_exception_report())
+            if not use_multi_progress:
+                progress.finish()
+            return False
+
+        self.log.info("Toolpath generation time: %f" % (time.time() - start_time))
+        # don't show the new toolpath anymore
+        self.core.set("toolpath_in_progress", None)
+
+        if toolpath is None:
+            # user interruption
+            # return "False" if the action was cancelled
+            result = not progress.update()
+        elif isinstance(toolpath, basestring):
+            # an error occoured - "toolpath" contains the error message
+            self.log.error("Failed to generate toolpath: %s" % toolpath)
+            # we were not successful (similar to a "cancel" request)
+            result = False
+        else:
+            # TODO: create a real toolpath object
+            self.core.get("toolpaths").append(toolpath)
+            # return "False" if the action was cancelled
+            result = not progress.update()
+        if not use_multi_progress:
+            progress.finish()
+        return result
 

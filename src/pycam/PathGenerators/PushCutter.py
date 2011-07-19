@@ -45,21 +45,17 @@ def _process_one_line((p1, p2, depth, models, cutter, physics)):
 
 class PushCutter(object):
 
-    def __init__(self, cutter, models, path_processor, physics=None):
+    def __init__(self, path_processor, physics=None):
         if physics is None:
             log.debug("Starting PushCutter (without ODE)")
         else:
             log.debug("Starting PushCutter (with ODE)")
-        self.cutter = cutter
-        self.models = models
         self.pa = path_processor
         self.physics = physics
         # check if we use a PolygonExtractor
         self._use_polygon_extractor = hasattr(self.pa, "pe")
 
-    def GenerateToolPath(self, motion_grid, draw_callback=None):
-        # calculate the number of steps
-
+    def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None, draw_callback=None):
         # Transfer the grid (a generator) into a list of lists and count the
         # items.
         grid = []
@@ -85,15 +81,15 @@ class PushCutter(object):
                 break
 
             self.pa.new_direction(0)
-            self.GenerateToolPathSlice(layer_grid, draw_callback,
+            self.GenerateToolPathSlice(cutter, models, layer_grid, draw_callback,
                     progress_counter)
             self.pa.end_direction()
             self.pa.finish()
 
             current_layer += 1
 
-        if self._use_polygon_extractor and (len(self.models) > 1):
-            other_models = self.models[1:]
+        if self._use_polygon_extractor and (len(models) > 1):
+            other_models = models[1:]
             # TODO: this is complicated and hacky :(
             # we don't use parallelism or ODE (for the sake of simplicity)
             final_pa = pycam.PathProcessors.SimpleCutter.SimpleCutter(
@@ -105,7 +101,7 @@ class PushCutter(object):
                     pairs.append((path.points[index], path.points[index + 1]))
                 for p1, p2 in pairs:
                     free_points = get_free_paths_triangles(other_models,
-                            self.cutter, p1, p2)
+                            cutter, p1, p2)
                     for point in free_points:
                         final_pa.append(point)
                 final_pa.end_scanline()
@@ -114,7 +110,7 @@ class PushCutter(object):
         else:
             return self.pa.paths
 
-    def GenerateToolPathSlice(self, layer_grid, draw_callback=None,
+    def GenerateToolPathSlice(self, cutter, models, layer_grid, draw_callback=None,
             progress_counter=None):
         """ only dx or (exclusive!) dy may be bigger than zero
         """
@@ -131,14 +127,14 @@ class PushCutter(object):
 
         # the ContourCutter pathprocessor does not work with combined models
         if self._use_polygon_extractor:
-            models = self.models[:1]
+            models = models[:1]
         else:
-            models = self.models
+            models = models
 
         args = []
         for line in layer_grid:
             p1, p2 = line
-            args.append((p1, p2, depth, models, self.cutter, self.physics))
+            args.append((p1, p2, depth, models, cutter, self.physics))
 
         for points in run_in_parallel(_process_one_line, args,
                 callback=progress_counter.update):

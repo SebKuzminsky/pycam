@@ -50,6 +50,9 @@ class Point(object):
             self._normsq = self.dot(self)
         return self._normsq
 
+    def copy(self):
+        return self.__class__(float(self.x), float(self.y), float(self.z))
+
     def __repr__(self):
         return "Point%d<%g,%g,%g>" % (self.id, self.x, self.y, self.z)
 

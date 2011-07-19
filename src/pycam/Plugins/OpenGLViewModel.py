@@ -26,7 +26,7 @@ import pycam.Plugins
 GTK_COLOR_MAX = 65535.0
 
 
-class OpenGLWindow(pycam.Plugins.PluginBase):
+class OpenGLViewModel(pycam.Plugins.PluginBase):
 
     DEPENDS = ["OpenGLWindow", "Models"]
 

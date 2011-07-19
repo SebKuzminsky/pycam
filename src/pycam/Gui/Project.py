@@ -22,7 +22,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-from pycam.Exporters.GCodeExporter import PATH_MODES, GCodeGenerator
 import pycam.Exporters.EMCToolExporter
 import pycam.Gui.Settings
 import pycam.Cutters
@@ -58,7 +57,6 @@ import pickle
 import time
 import logging
 import datetime
-import traceback
 import random
 import math
 import re
@@ -146,11 +144,6 @@ FILENAME_DRAG_TARGETS = ("text/uri-list", "text-plain")
 GTK_COLOR_MAX = 65535.0
 
 log = pycam.Utils.log.get_logger()
-
-def report_exception():
-    log.error("An unexpected exception occoured: please send the " \
-            + "text below to the developers of PyCAM. Thanks a lot!" \
-            + os.linesep + traceback.format_exc())
 
 def get_filters_from_list(filter_list):
     result = []
@@ -867,7 +860,7 @@ class ProjectGui(object):
             except Exception:
                 # Catch possible exceptions (except system-exit ones) and
                 # report them.
-                report_exception()
+                log.error(pycam.Utils.get_exception_report())
                 result = None
             self.gui_is_active = False
             while self._batch_queue:
@@ -1576,152 +1569,6 @@ class ProjectGui(object):
             self.add_to_recent_file_list(filename)
         self.update_save_actions()
 
-    def generate_toolpath(self, tool_settings, process_settings, bounds,
-                progress=None):
-        start_time = time.time()
-        if progress:
-            use_multi_progress = True
-        else:
-            use_multi_progress = False
-            progress = self.settings.get("progress")
-        progress.update(text="Preparing toolpath generation")
-        parent = self
-        class UpdateView(object):
-            def __init__(self, func, max_fps=1):
-                self.last_update = time.time()
-                self.max_fps = max_fps
-                self.func = func
-            def update(self, text=None, percent=None, tool_position=None,
-                    toolpath=None):
-                if parent.settings.get("show_drill_progress"):
-                    if not tool_position is None:
-                        parent.cutter.moveto(tool_position)
-                    if not toolpath is None:
-                        parent.settings.set("toolpath_in_progress", toolpath)
-                    current_time = time.time()
-                    if (current_time - self.last_update) > 1.0/self.max_fps:
-                        self.last_update = current_time
-                        if self.func:
-                            self.func()
-                # break the loop if someone clicked the "cancel" button
-                return progress.update(text=text, percent=percent)
-        draw_callback = UpdateView(
-                lambda: self.settings.emit_event("visual-item-updated"),
-                max_fps=self.settings.get("drill_progress_max_fps")).update
-
-        progress.update(text="Generating collision model")
-
-        # turn the toolpath settings into a dict
-        toolpath_settings = self.get_toolpath_settings(tool_settings,
-                process_settings, bounds)
-        if toolpath_settings is None:
-            # behave as if "cancel" was requested
-            if not use_multi_progress:
-                progress.finish()
-            return True
-
-        self.cutter = toolpath_settings.get_tool()
-
-        # TODO: find the right model
-        model = self.settings.get("models")[0]
-
-        # run the toolpath generation
-        progress.update(text="Starting the toolpath generation")
-        try:
-            toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(
-                    model, toolpath_settings, callback=draw_callback)
-        except Exception:
-            # catch all non-system-exiting exceptions
-            report_exception()
-            if not use_multi_progress:
-                progress.finish()
-            return False
-
-        log.info("Toolpath generation time: %f" % (time.time() - start_time))
-        # don't show the new toolpath anymore
-        self.settings.set("toolpath_in_progress", None)
-
-        if toolpath is None:
-            # user interruption
-            # return "False" if the action was cancelled
-            result = not progress.update()
-        elif isinstance(toolpath, basestring):
-            # an error occoured - "toolpath" contains the error message
-            log.error("Failed to generate toolpath: %s" % toolpath)
-            # we were not successful (similar to a "cancel" request)
-            result = False
-        else:
-            # hide the previous toolpath if it is the only visible one (automatic mode)
-            if (len([True for path in self.toolpath if path.visible]) == 1) \
-                    and self.toolpath[-1].visible:
-                self.toolpath[-1].visible = False
-            # add the new toolpath
-            description = "%s / %s" % (tool_settings["name"],
-                    process_settings["name"])
-            # the tool id numbering should start with 1 instead of zero
-            self.toolpath.add_toolpath(toolpath, description, toolpath_settings)
-            self.update_toolpath_table()
-            # return "False" if the action was cancelled
-            cancelled = progress.update()
-            result = not cancelled
-        if not use_multi_progress:
-            progress.finish()
-        return result
-
-    def get_toolpath_settings(self, tool_settings, process_settings, bounds):
-        toolpath_settings = pycam.Gui.Settings.ToolpathSettings()
-
-        # TODO: find the right model
-        model = self.settings.get("models")[0]
-        bounds.set_reference(model.get_bounds())
-
-        # check if the boundary limits are valid
-        if not bounds.is_valid():
-            # don't generate a toolpath if the area is too small (e.g. due to the tool size)
-            log.error("Processing boundaries are too small for this tool size.")
-            return None
-
-        toolpath_settings.set_bounds(bounds)
-
-        # put the tool settings together
-        tools = self.settings.get("tools")
-        tool_id = tools.get_attr("id")
-        toolpath_settings.set_tool(tool_id, tool_settings["shape"],
-                tool_settings["tool_radius"], tool_settings["torus_radius"],
-                tool_settings["speed"], tool_settings["feedrate"])
-
-        support_model = self.settings.get("current_support_model")
-        if support_model:
-            toolpath_settings.set_support_model(support_model)
-
-        # calculation backend: ODE / None
-        if self.settings.get("enable_ode"):
-            toolpath_settings.set_calculation_backend("ODE")
-
-        # unit size
-        toolpath_settings.set_unit_size(self.settings.get("unit"))
-
-        STRATEGY_GENERATORS = {
-                "PushRemoveStrategy": ("PushCutter", "SimpleCutter"),
-                "ContourPolygonStrategy": ("PushCutter", "ContourCutter"),
-                "ContourFollowStrategy": ("ContourFollow", "SimpleCutter"),
-                "SurfaceStrategy": ("DropCutter", "PathAccumulator"),
-                "EngraveStrategy": ("EngraveCutter", "SimpleCutter")}
-        generator, postprocessor = STRATEGY_GENERATORS[
-                process_settings["path_strategy"]]
-
-        # process settings
-        toolpath_settings.set_process_settings(
-                generator, postprocessor, process_settings["path_direction"],
-                process_settings["material_allowance"],
-                process_settings["overlap_percent"],
-                process_settings["step_down"],
-                process_settings["engrave_offset"],
-                process_settings["milling_style"],
-                process_settings["pocketing_type"])
-
-        return toolpath_settings
-
     def get_filename_via_dialog(self, title, mode_load=False, type_filter=None,
             filename_templates=None, filename_extension=None, parent=None):
         if parent is None:
@@ -1836,101 +1683,6 @@ class ProjectGui(object):
             # store the directory of the last loaded file
             if uri.is_local():
                 self.last_dirname = os.path.dirname(uri.get_local_path())
-
-    @gui_activity_guard
-    def save_toolpath(self, widget=None, only_visible=False):
-        if not self.toolpath:
-            return
-        if callable(widget):
-            widget = widget()
-        if isinstance(widget, basestring):
-            filename = widget
-        else:
-            # we open a dialog
-            if self.settings.get("gcode_filename_extension"):
-                filename_extension = self.settings.get("gcode_filename_extension")
-            else:
-                filename_extension = None
-            filename = self.get_filename_via_dialog("Save toolpath to ...",
-                    mode_load=False, type_filter=FILTER_GCODE,
-                    filename_templates=(self.last_toolpath_file, self.last_model_uri),
-                    filename_extension=filename_extension)
-            if filename:
-                self.last_toolpath_file = filename
-        self.update_save_actions()
-        # no filename given -> exit
-        if not filename:
-            return
-        if self.settings.get("gcode_safety_height") < self.settings.get("maxz"):
-            log.warn(("Safety height (%.4f) is below the top of the model " \
-                    + "(%.4f) - this can cause collisions of the tool with " \
-                    + "the material.") % (self.settings.get(
-                    "gcode_safety_height"), self.settings.get("maxz")))
-        try:
-            if only_visible:
-                export_toolpaths = [tp for tp in self.toolpath if tp.visible]
-            else:
-                export_toolpaths = self.toolpath
-            destination = open(filename, "w")
-            safety_height = self.settings.get("gcode_safety_height")
-            meta_data = self.get_meta_data()
-            machine_time = 0
-            # calculate the machine time and store it in the GCode header
-            for toolpath in export_toolpaths:
-                machine_time += toolpath.get_machine_time(safety_height)
-            all_info = meta_data + os.linesep \
-                    + "Estimated machine time: %.0f minutes" % machine_time
-            minimum_steps = [self.settings.get("gcode_minimum_step_x"),  
-                    self.settings.get("gcode_minimum_step_y"),  
-                    self.settings.get("gcode_minimum_step_z")]
-            if self.settings.get("touch_off_position_type") == "absolute":
-                pos_x = self.settings.get("touch_off_position_x")
-                pos_y = self.settings.get("touch_off_position_y")
-                pos_z = self.settings.get("touch_off_position_z")
-                touch_off_pos = Point(pos_x, pos_y, pos_z)
-            else:
-                touch_off_pos = None
-            generator = GCodeGenerator(destination,
-                    metric_units=(self.settings.get("unit") == "mm"),
-                    safety_height=safety_height,
-                    toggle_spindle_status=self.settings.get("gcode_start_stop_spindle"),
-                    spindle_delay=self.settings.get("gcode_spindle_delay"),
-                    comment=all_info, minimum_steps=minimum_steps,
-                    touch_off_on_startup=self.settings.get("touch_off_on_startup"),
-                    touch_off_on_tool_change=self.settings.get("touch_off_on_tool_change"),
-                    touch_off_position=touch_off_pos,
-                    touch_off_rapid_move=self.settings.get("touch_off_rapid_move"),
-                    touch_off_slow_move=self.settings.get("touch_off_slow_move"),
-                    touch_off_slow_feedrate=self.settings.get("touch_off_slow_feedrate"),
-                    touch_off_height=self.settings.get("touch_off_height"),
-                    touch_off_pause_execution=self.settings.get("touch_off_pause_execution"))
-            path_mode = self.settings.get("gcode_path_mode")
-            if path_mode == 0:
-                generator.set_path_mode(PATH_MODES["exact_path"])
-            elif path_mode == 1:
-                generator.set_path_mode(PATH_MODES["exact_stop"])
-            elif path_mode == 2:
-                generator.set_path_mode(PATH_MODES["continuous"])
-            else:
-                naive_tolerance = self.settings.get("gcode_naive_tolerance")
-                if naive_tolerance == 0:
-                    naive_tolerance = None
-                generator.set_path_mode(PATH_MODES["continuous"],
-                        self.settings.get("gcode_motion_tolerance"),
-                        naive_tolerance)
-            for toolpath in export_toolpaths:
-                settings = toolpath.get_toolpath_settings()
-                tool = settings.get_tool_settings()
-                generator.set_speed(tool["feedrate"], tool["speed"])
-                generator.add_moves(toolpath.get_moves(safety_height),
-                        tool_id=tool["id"], comment=toolpath.get_meta_data())
-            generator.finish()
-            destination.close()
-            log.info("GCode file successfully written: %s" % str(filename))
-        except IOError, err_msg:
-            log.error("Failed to save toolpath file: %s" % err_msg)
-        else:
-            self.add_to_recent_file_list(filename)
 
     def get_meta_data(self):
         filename = "Filename: %s" % str(self.last_model_uri)
