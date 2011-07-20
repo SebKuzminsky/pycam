@@ -239,7 +239,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 self.reset_view()
             else:
                 # the window is just hidden
-                self.view3d.show()
+                self.show()
         else:
             self.hide()
 

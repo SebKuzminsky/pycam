@@ -152,33 +152,6 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
                 self.core.get("gcode_safety_height")))
         cell.set_property("text", text)
 
-    def _update_toolpath_table(self, new_index=None, skip_model_update=False):
-        self._update_widgets()
-        # reset the model data and the selection
-        if new_index is None:
-            # keep the old selection - this may return "None" if nothing is selected
-            new_index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
-        if not skip_model_update:
-            # update the TreeModel data
-            self._treemodel.clear()
-            # columns: name, visible, drill_size, drill_id, allowance, speed, feedrate
-            for index in range(len(self.toolpath)):
-                tp = self.toolpath[index]
-                toolpath_settings = tp.get_toolpath_settings()
-                tool = toolpath_settings.get_tool_settings()
-                process = toolpath_settings.get_process_settings()
-                items = (index, tp.name, tp.visible, tool["tool_radius"],
-                        tool["id"], process["material_allowance"],
-                        tool["speed"], tool["feedrate"],
-                        get_time_string(tp.get_machine_time(
-                                self.core.get("gcode_safety_height"))))
-                self._treemodel.append(items)
-            if not new_index is None:
-                self._treeview_set_active_index(self.toolpath_table, new_index)
-        # enable/disable the modification buttons
-        self.gui.get_object("toolpath_simulate").set_sensitive(not new_index is None)
-        self.gui.get_object("ToolpathGrid").set_sensitive(not new_index is None)
-
     def save_toolpath(self, widget=None, only_visible=False):
         if only_visible:
             toolpaths = self.get_selected()

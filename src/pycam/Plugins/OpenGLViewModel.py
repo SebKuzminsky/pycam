@@ -43,6 +43,7 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
         return True
 
     def draw_model(self):
+        GL = self._GL
         if self.core.get("show_model") \
                 and not (self.core.get("show_simulation") \
                     and self.core.get("simulation_toolpath_moves")):
@@ -50,9 +51,13 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
                 color_str = self.core.get("models").get_attr(model, "color")
                 alpha = self.core.get("models").get_attr(model, "alpha")
                 col = self._gtk.gdk.color_parse(color_str)
-                self._GL.glColor4f(col.red / GTK_COLOR_MAX, col.green / GTK_COLOR_MAX,
+                color = (col.red / GTK_COLOR_MAX, col.green / GTK_COLOR_MAX,
                         col.blue / GTK_COLOR_MAX, alpha / GTK_COLOR_MAX)
+                GL.glColor4f(*color)
+                # reset the material color
+                GL.glMaterial(GL.GL_FRONT_AND_BACK,
+                        GL.GL_AMBIENT_AND_DIFFUSE, color)
                 # we need to wait until the color change is active
-                self._GL.glFinish()
+                GL.glFinish()
                 model.to_OpenGL(show_directions=self.core.get("show_directions"))
 

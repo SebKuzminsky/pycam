@@ -21,6 +21,10 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import uuid
+import math
+
+
 import pycam.Exporters.STLExporter
 import pycam.Exporters.SVGExporter
 from pycam.Geometry.Triangle import Triangle
@@ -35,10 +39,6 @@ from pycam.Geometry.utils import INFINITE, epsilon
 from pycam.Geometry import TransformableContainer
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
-import uuid
-import math
-# OpenGLTools will be imported later, if necessary
-#import pycam.Gui.OpenGLTools
 
 
 try:
@@ -169,7 +169,6 @@ class BaseModel(TransformableContainer):
                         if not coords in vertices:
                             vertices[coords] = []
                         vertices[coords].append((t.normal.normalized(), t.get_area()))
-                print "Triangles: %d / Vertices: %d" % (len(self.triangles()), len(vertices))
                 GL.glBegin(GL.GL_TRIANGLES)
                 for t in self.triangles():
                     # The triangle's points are in clockwise order, but GL expects

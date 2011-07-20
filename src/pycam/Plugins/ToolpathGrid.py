@@ -28,8 +28,16 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
 
     UI_FILE = "toolpath_grid.ui"
 
+    def setup(self):
+        if self.gui:
+            for objname in ("GridYCount", "GridXCount", "GridYDistance",
+                    "GridXDistance"):
+                self.gui.get_object(objname).connect("value-changed",
+                        self.update_toolpath_grid_window)
+            # TODO: add a button to the toolpath action UI
+        return True
+
     def update_toolpath_grid_window(self, widget=None):
-        return False
         data = self._toolpath_for_grid_data
         x_dim = data["maxx"] - data["minx"]
         y_dim = data["maxy"] - data["miny"]
@@ -43,10 +51,6 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
                 (x_width, self.settings.get("unit")))
         self.gui.get_object("LabelGridYWidth").set_label("%g%s" % \
                 (y_width, self.settings.get("unit")))
-        for objname in ("GridYCount", "GridXCount", "GridYDistance",
-                "GridXDistance"):
-            self.gui.get_object(objname).connect("value-changed",
-                    self.update_toolpath_grid_window)
 
     def create_toolpath_grid(self, toolpath):
         dialog = self.gui.get_object("ToolpathGridDialog")
@@ -80,6 +84,7 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
                     toolpath.toolpath_settings)
             toolpath.visible = False
             new_toolpath.visible = True
+            # TODO: emit "toolpath-list-changed"
             self.toolpath.append(new_toolpath)
             self.update_toolpath_table()
         dialog.hide()
