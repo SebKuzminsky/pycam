@@ -22,6 +22,20 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
+import os
+import sys
+import re
+import math
+import time
+import datetime
+import gtk
+import gobject
+import webbrowser
+import ConfigParser
+import StringIO
+import pickle
+import logging
+
 import pycam.Exporters.EMCToolExporter
 import pycam.Gui.Settings
 import pycam.Cutters
@@ -44,24 +58,6 @@ from pycam.Toolpath import Bounds
 import pycam.Plugins
 from pycam import VERSION
 import pycam.Physics.ode_physics
-# this requires ODE - we import it later, if necessary
-#import pycam.Simulation.ODEBlocks
-
-import gtk
-import gobject
-import webbrowser
-import ConfigParser
-import string
-import StringIO
-import pickle
-import time
-import logging
-import datetime
-import random
-import math
-import re
-import os
-import sys
 
 GTKBUILD_FILE = "pycam-project.ui"
 GTKMENU_FILE = "menubar.xml"
@@ -81,7 +77,6 @@ FILTER_EMC_TOOL = (("EMC tool files", "*.tbl"),)
 
 PREFERENCES_DEFAULTS = {
         "enable_ode": False,
-        "boundary_mode": -1,
         "unit": "mm",
         "default_task_settings_file": "",
         "show_model": True,
@@ -104,7 +99,6 @@ PREFERENCES_DEFAULTS = {
         "view_shadow": True,
         "view_polygon": True,
         "view_perspective": True,
-        "simulation_details_level": 3,
         "drill_progress_max_fps": 2,
         "gcode_safety_height": 25.0,
         "gcode_minimum_step_x": 0.0001,
@@ -118,10 +112,6 @@ PREFERENCES_DEFAULTS = {
         "gcode_spindle_delay": 3,
         "external_program_inkscape": "",
         "external_program_pstoedit": "",
-        "server_auth_key": "",
-        "server_port_local": pycam.Utils.threading.DEFAULT_PORT,
-        "server_port_remote": pycam.Utils.threading.DEFAULT_PORT,
-        "server_hostname": "",
         "touch_off_on_startup": False,
         "touch_off_on_tool_change": False,
         "touch_off_position_type": "absolute",
@@ -314,7 +304,6 @@ class ProjectGui(object):
         if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
             gtkrc_file = get_ui_file_location(GTKRC_FILE_WINDOWS)
             if gtkrc_file:
-                print "GTKRC: %s" % str(gtkrc_file)
                 gtk.rc_add_default_file(gtkrc_file)
                 gtk.rc_reparse_all_for_settings(gtk.settings_get_default(), True)
         self.window = self.gui.get_object("ProjectWindow")
@@ -340,7 +329,6 @@ class ProjectGui(object):
         self.last_dirname = None
         self.last_task_settings_uri = None
         self.last_model_uri = None
-        self.last_toolpath_file = None
         # define callbacks and accelerator keys for the menu actions
         for objname, callback, data, accel_key in (
                 ("LoadTaskSettings", self.load_task_settings_file, None, "<Control>t"),
@@ -352,7 +340,6 @@ class ProjectGui(object):
                 ("ExportEMCToolDefinition", self.export_emc_tools, None, None),
                 ("Quit", self.destroy, None, "<Control>q"),
                 ("GeneralSettings", self.toggle_preferences_window, None, "<Control>p"),
-                ("ToggleProcessPoolWindow", self.toggle_process_pool_window, None, None),
                 ("UndoButton", self._restore_undo_state, None, "<Control>z"),
                 ("HelpUserManual", self.show_help, "User_Manual", "F1"),
                 ("HelpIntroduction", self.show_help, "Introduction", None),
@@ -375,10 +362,7 @@ class ProjectGui(object):
                 ("BugTracker", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104176", None),
                 ("FeatureRequest", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104179", None)):
             item = self.gui.get_object(objname)
-            if objname == "ToggleProcessPoolWindow":
-                action = "toggled"
-            else:
-                action = "activate"
+            action = "activate"
             if data is None:
                 item.connect(action, callback)
             else:
@@ -408,6 +392,12 @@ class ProjectGui(object):
             self.gui.get_object("ExportEMCToolDefinition").set_sensitive(tool_num > 0)
         self.settings.register_event("tool-selection-changed", update_emc_tool_button)
         self.settings.set("load_model", self.load_model)
+        # set the availability of ODE
+        self.enable_ode_control = self.gui.get_object("SettingEnableODE")
+        self.settings.add_item("enable_ode", self.enable_ode_control.get_active,
+                self.enable_ode_control.set_active)
+        self.settings.register_event("parallel-processing-changed",
+                self.update_ode_settings)
         # configure drag-n-drop for config files and models
         self.settings.set("configure-drag-drop-func",
                 self.configure_drag_and_drop)
@@ -433,22 +423,31 @@ class ProjectGui(object):
         # TODO: fix this ugly hack!
         self.gui.get_object("AboutWindowButtons").get_children()[-1].connect("clicked", self.toggle_about_window, False)
         self.about_window.connect("delete-event", self.toggle_about_window, False)
-        # "process pool" window
-        self.process_pool_window = self.gui.get_object("ProcessPoolWindow")
-        self.process_pool_window.set_default_size(500, 400)
-        self.process_pool_window.connect("delete-event", self.toggle_process_pool_window, False)
-        self.process_pool_window.connect("destroy", self.toggle_process_pool_window, False)
-        self.gui.get_object("ProcessPoolWindowClose").connect("clicked", self.toggle_process_pool_window, False)
-        self.gui.get_object("ProcessPoolRefreshInterval").set_value(3)
-        self.process_pool_model = self.gui.get_object("ProcessPoolStatisticsModel")
         # menu bar
         uimanager = gtk.UIManager()
         self.settings.set("gtk-uimanager", uimanager)
         self._accel_group = uimanager.get_accel_group()
         self.settings.add_item("gtk-accel-group", lambda: self._accel_group)
-        for window in (self.window, self.about_window, self.preferences_window,
-                self.process_pool_window):
+        for window in (self.window, self.about_window, self.preferences_window):
             window.add_accel_group(self._accel_group)
+        preferences_book = self.gui.get_object("PreferencesNotebook")
+        def clear_preferences():
+            for index in range(preferences_book.get_n_pages()):
+                preferences_book.remove_page(0)
+        def add_preferences_item(item, name):
+            preferences_book.append_page(item, gtk.Label(name))
+        self.settings.register_ui_section("preferences",
+                add_preferences_item, clear_preferences)
+        for obj_name, label, priority in (
+                ("GeneralSettingsPrefTab", "General", -50),
+                ("GCodePrefTab", "GCode", 10),
+                ("DisplayItemsPrefTab", "Display Items", 20),
+                ("ColorPrefTab", "Colors", 30),
+                ("OpenGLPrefTab", "OpenGL", 40),
+                ("ProgramsPrefTab", "Programs", 50)):
+            obj = self.gui.get_object(obj_name)
+            obj.unparent()
+            self.settings.register_ui("preferences", label, obj, priority)
         # set defaults
         self.cutter = None
         self._last_unit = None
@@ -584,14 +583,8 @@ class ProjectGui(object):
             # repaint the 3d view after a color change
             obj.connect("color-set", lambda widget: \
                     self.settings.emit_event("visual-item-updated"))
-        # set the availability of ODE
-        self.enable_ode_control = self.gui.get_object("SettingEnableODE")
-        self.settings.add_item("enable_ode", self.enable_ode_control.get_active,
-                self.enable_ode_control.set_active)
         skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
         self.settings.add_item("drill_progress_max_fps", skip_obj.get_value, skip_obj.set_value)
-        sim_detail_obj = self.gui.get_object("SimulationDetailsValue")
-        self.settings.add_item("simulation_details_level", sim_detail_obj.get_value, sim_detail_obj.set_value)
         # gcode settings
         gcode_minimum_step_x = self.gui.get_object("GCodeMinimumStep_x")
         self.settings.add_item("gcode_minimum_step_x",
@@ -687,53 +680,6 @@ class ProjectGui(object):
                     location_control.get_text, location_control.set_text)
             self.gui.get_object(browse_button).connect("clicked",
                     self._browse_external_program_location, key)
-        # parallel processing settings
-        self.enable_parallel_processes = self.gui.get_object(
-                "EnableParallelProcesses")
-        if pycam.Utils.threading.is_multiprocessing_available():
-            self.gui.get_object("ParallelProcessingDisabledLabel").hide()
-            if pycam.Utils.threading.is_server_mode_available():
-                self.gui.get_object("ServerModeDisabledLabel").hide()
-            else:
-                self.gui.get_object("ServerModeSettingsFrame").hide()
-        else:
-            self.gui.get_object("ParallelProcessSettingsBox").hide()
-            self.gui.get_object("EnableParallelProcesses").hide()
-        self.enable_parallel_processes.set_active(
-                pycam.Utils.threading.is_multiprocessing_enabled())
-        self.enable_parallel_processes.connect("toggled",
-                self.handle_parallel_processes_settings)
-        self.number_of_processes = self.gui.get_object(
-                "NumberOfProcesses")
-        self.number_of_processes.set_value(
-                pycam.Utils.threading.get_number_of_processes())
-        server_port_local_obj = self.gui.get_object("ServerPortLocal")
-        self.settings.add_item("server_port_local",
-                server_port_local_obj.get_value,
-                server_port_local_obj.set_value)
-        server_port_remote_obj = self.gui.get_object("RemoteServerPort")
-        self.settings.add_item("server_port_remote",
-                server_port_remote_obj.get_value,
-                server_port_remote_obj.set_value)
-        self.number_of_processes.connect("value-changed",
-                self.handle_parallel_processes_settings)
-        self.gui.get_object("EnableServerMode").connect("toggled",
-                self.initialize_multiprocessing)
-        self.gui.get_object("ServerPasswordGenerate").connect("clicked",
-                self.generate_random_server_password)
-        self.gui.get_object("ServerPasswordShow").connect("toggled",
-                self.update_parallel_processes_settings)
-        auth_key_obj = self.gui.get_object("ServerPassword")
-        self.settings.add_item("server_auth_key", auth_key_obj.get_text,
-                auth_key_obj.set_text)
-        server_hostname = self.gui.get_object("RemoteServerHostname")
-        self.settings.add_item("server_hostname",
-                server_hostname.get_text,
-                server_hostname.set_text)
-        cpu_cores = pycam.Utils.threading.get_number_of_cores()
-        if cpu_cores is None:
-            cpu_cores = "unknown"
-        self.gui.get_object("AvailableCores").set_label(str(cpu_cores))
         # set the icons (in different sizes) for all windows
         gtk.window_set_default_icon_list(*get_icons_pixbuffers())
         # load menu data
@@ -803,7 +749,6 @@ class ProjectGui(object):
         self.update_unit_labels()
         self.update_gcode_controls()
         self.update_ode_settings()
-        self.update_parallel_processes_settings()
 
     def update_gcode_controls(self, widget=None):
         # path mode
@@ -934,105 +879,6 @@ class ProjectGui(object):
                 save_possible = False
         self.gui.get_object("SaveModel").set_sensitive(save_possible)
 
-    @gui_activity_guard
-    def generate_random_server_password(self, widget=None):
-        all_characters = string.letters + string.digits
-        random_pw = "".join([random.choice(all_characters) for i in range(12)])
-        self.gui.get_object("ServerPassword").set_text(random_pw)
-
-    @gui_activity_guard
-    def update_parallel_processes_settings(self, widget=None):
-        parallel_settings = self.gui.get_object("ParallelProcessSettingsBox")
-        server_enabled = self.gui.get_object("EnableServerMode")
-        server_mode_settings = self.gui.get_object("ServerModeSettingsTable")
-        # update the show/hide state of the password
-        hide_password = self.gui.get_object("ServerPasswordShow").get_active()
-        self.gui.get_object("ServerPassword").set_visibility(hide_password)
-        if (self.gui.get_object("NumberOfProcesses").get_value() == 0) \
-                and self.enable_parallel_processes.get_active():
-            self.gui.get_object("ZeroProcessesWarning").show()
-        else:
-            self.gui.get_object("ZeroProcessesWarning").hide()
-        if self.enable_parallel_processes.get_active():
-            parallel_settings.set_sensitive(True)
-            if server_enabled.get_active():
-                # don't allow changes for an active connection
-                server_mode_settings.set_sensitive(False)
-            else:
-                server_mode_settings.set_sensitive(True)
-        else:
-            parallel_settings.set_sensitive(False)
-            server_enabled.set_active(False)
-        # check availability of ODE again (conflicts with multiprocessing)
-        self.update_ode_settings()
-
-    def handle_parallel_processes_settings(self, widget=None):
-        new_num_of_processes = self.number_of_processes.get_value()
-        new_enable_parallel = self.enable_parallel_processes.get_active()
-        old_num_of_processes = pycam.Utils.threading.get_number_of_processes()
-        old_enable_parallel = pycam.Utils.threading.is_multiprocessing_enabled()
-        if (old_num_of_processes != new_num_of_processes) \
-                or (old_enable_parallel != new_enable_parallel):
-            self.initialize_multiprocessing()
-
-    @gui_activity_guard
-    def initialize_multiprocessing(self, widget=None):
-        complete_area = self.gui.get_object("MultiprocessingFrame")
-        # prevent any further actions while the connection is established
-        complete_area.set_sensitive(False)
-        # wait for the above "set_sensitive" to finish
-        while gtk.events_pending():
-            gtk.main_iteration()
-        enable_parallel = self.enable_parallel_processes.get_active()
-        enable_server_obj = self.gui.get_object("EnableServerMode")
-        enable_server = enable_server_obj.get_active()
-        remote_host = self.gui.get_object("RemoteServerHostname").get_text()
-        if remote_host:
-            remote_port = int(self.gui.get_object(
-                    "RemoteServerPort").get_value())
-            remote = "%s:%s" % (remote_host, remote_port)
-        else:
-            remote = None
-        local_port = int(self.gui.get_object("ServerPortLocal").get_value())
-        auth_key = self.gui.get_object("ServerPassword").get_text()
-        if not auth_key and enable_parallel and enable_server:
-            log.error("You need to provide a password for this connection.")
-            enable_server_obj.set_active(False)
-        elif enable_parallel:
-            if enable_server and \
-                    (pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS):
-                if self.number_of_processes.get_value() > 0:
-                    log.warn("Mixed local and remote processes are " + \
-                        "currently not available on the Windows platform. " + \
-                        "Setting the number of local processes to zero." + \
-                        os.linesep + "See <a href=\"" + \
-                        HELP_WIKI_URL % "Parallel_Processing_on_different_Platforms" + \
-                        "\">platform feature matrix</a> for more details.")
-                    self.number_of_processes.set_value(0)
-                self.number_of_processes.set_sensitive(False)
-            else:
-                self.number_of_processes.set_sensitive(True)
-            num_of_processes = int(self.number_of_processes.get_value())
-            error = pycam.Utils.threading.init_threading(
-                    number_of_processes=num_of_processes,
-                    enable_server=enable_server, remote=remote,
-                    server_credentials=auth_key, local_port=local_port)
-            if error:
-                log.error("Failed to start server: %s" % error)
-                pycam.Utils.threading.cleanup()
-                enable_server_obj.set_active(False)
-        else:
-            pycam.Utils.threading.cleanup()
-            log.info("Multiprocessing disabled")
-        # set the label of the "connect" button
-        if enable_server_obj.get_active():
-            info = gtk.stock_lookup(gtk.STOCK_DISCONNECT)
-        else:
-            info = gtk.stock_lookup(gtk.STOCK_CONNECT)
-        enable_server_obj.set_label(info[0])
-        complete_area.set_sensitive(True)
-        self.append_to_queue(self.update_parallel_processes_settings)
-
     def _browse_external_program_location(self, widget=None, key=None):
         location = self.get_filename_via_dialog(title="Select the executable " \
                 + "for '%s'" % key, mode_load=True,
@@ -1083,63 +929,6 @@ class ProjectGui(object):
         self._preferences_window_visible = state
         # don't close the window - just hide it (for "delete-event")
         return True
-
-    @gui_activity_guard
-    def toggle_process_pool_window(self, widget=None, value=None, action=None):
-        toggle_process_pool_checkbox = self.gui.get_object("ToggleProcessPoolWindow")
-        checkbox_state = toggle_process_pool_checkbox.get_active()
-        if value is None:
-            new_state = checkbox_state
-        else:
-            if action is None:
-                new_state = value
-            else:
-                new_state = action
-        if new_state:
-            is_available = pycam.Utils.threading.is_pool_available()
-            disabled_box = self.gui.get_object("ProcessPoolDisabledBox")
-            statistics_box = self.gui.get_object("ProcessPoolStatisticsBox")
-            if is_available:
-                disabled_box.hide()
-                statistics_box.show()
-                # start the refresh function
-                interval = int(max(1, self.gui.get_object(
-                        "ProcessPoolRefreshInterval").get_value()))
-                gobject.timeout_add_seconds(interval,
-                        self.update_process_pool_statistics, interval)
-            else:
-                disabled_box.show()
-                statistics_box.hide()
-            self.process_pool_window.show()
-        else:
-            self.process_pool_window.hide()
-        toggle_process_pool_checkbox.set_active(new_state)
-        # don't destroy the window with a "destroy" event
-        return True
-
-    def update_process_pool_statistics(self, original_interval):
-        stats = pycam.Utils.threading.get_pool_statistics()
-        model = self.process_pool_model
-        model.clear()
-        for item in stats:
-            model.append(item)
-        self.gui.get_object("ProcessPoolConnectedWorkersValue").set_text(
-                str(len(stats)))
-        details = pycam.Utils.threading.get_task_statistics()
-        detail_text = os.linesep.join(["%s: %s" % (key, value)
-                for (key, value) in details.iteritems()])
-        self.gui.get_object("ProcessPoolDetails").set_text(detail_text)
-        current_interval = int(max(1, self.gui.get_object(
-                "ProcessPoolRefreshInterval").get_value()))
-        if original_interval != current_interval:
-            # initiate a new repetition
-            gobject.timeout_add_seconds(current_interval,
-                    self.update_process_pool_statistics, current_interval)
-            # stop the current repetition
-            return False
-        else:
-            # don't repeat, if the window is hidden
-            return self.gui.get_object("ToggleProcessPoolWindow").get_active()
 
     def change_unit_init(self, widget=None):
         new_unit = self.gui.get_object("unit_control").get_active_text()

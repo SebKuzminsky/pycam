@@ -22,6 +22,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import pycam.Plugins
+# this requires ODE - we import it later, if necessary
+#import pycam.Simulation.ODEBlocks
 
 
 class ToolpathSimulation(pycam.Plugins.PluginBase):
@@ -29,43 +31,50 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
     UI_FILE = "toolpath_simulation.ui"
 
     def setup(self):
-        return False
-        speed_factor_widget = self.gui.get_object("SimulationSpeedFactor")
-        self.settings.add_item("simulation_speed_factor",
-                lambda: pow(10, speed_factor_widget.get_value()),
-                lambda value: speed_factor_widget.set_value(math.log10(max(0.001, value))))
-        simulation_progress = self.gui.get_object("SimulationProgressTimelineValue")
-        def update_simulation_progress(widget):
-            if widget.get_value() == 100:
-                # a negative value indicates, that the simulation is finished
-                self.settings.set("simulation_current_distance", -1)
-            else:
-                complete = self.settings.get("simulation_complete_distance")
-                partial = widget.get_value() / 100.0 * complete
-                self.settings.set("simulation_current_distance", partial)
-        simulation_progress.connect("value-changed", update_simulation_progress)
-        # update the speed factor label
-        speed_factor_widget.connect("value-changed",
-                lambda widget: self.gui.get_object("SimulationSpeedFactorValueLabel").set_label(
-                        "%.2f" % self.settings.get("simulation_speed_factor")))
-        self.simulation_window = self.gui.get_object("SimulationDialog")
-        self.simulation_window.connect("delete-event", self.finish_toolpath_simulation)
+        if self.gui:
+            speed_factor_widget = self.gui.get_object("SimulationSpeedFactor")
+            self.core.add_item("simulation_speed_factor",
+                    lambda: pow(10, speed_factor_widget.get_value()),
+                    lambda value: speed_factor_widget.set_value(math.log10(
+                            max(0.001, value))))
+            simulation_progress = self.gui.get_object(
+                    "SimulationProgressTimelineValue")
+            def update_simulation_progress(widget):
+                if widget.get_value() == 100:
+                    # a negative value indicates, that the simulation is finished
+                    self.core.set("simulation_current_distance", -1)
+                else:
+                    complete = self.core.get("simulation_complete_distance")
+                    partial = widget.get_value() / 100.0 * complete
+                    self.core.set("simulation_current_distance", partial)
+            simulation_progress.connect("value-changed", update_simulation_progress)
+            # update the speed factor label
+            speed_factor_widget.connect("value-changed", lambda widget: \
+                    self.gui.get_object("SimulationSpeedFactorValueLabel").\
+                    set_label("%.2f" % self.core.get("simulation_speed_factor")))
+            self.simulation_window = self.gui.get_object("SimulationDialog")
+            self.simulation_window.connect("delete-event",
+                    self.finish_toolpath_simulation)
+            sim_detail_obj = self.gui.get_object("SimulationDetailsValue")
+            self.core.add_item("simulation_details_level",
+                    sim_detail_obj.get_value, sim_detail_obj.set_value)
+        return True
 
     def finish_toolpath_simulation(self, widget=None, data=None):
         # hide the simulation tab
         self.simulation_window.hide()
         # enable all other tabs again
         self.toggle_tabs_for_simulation(True)
-        self.settings.set("simulation_object", None)
-        self.settings.set("simulation_toolpath_moves", None)
-        self.settings.set("show_simulation", False)
-        self.settings.set("simulation_toolpath", None)
+        self.core.set("simulation_object", None)
+        self.core.set("simulation_toolpath_moves", None)
+        self.core.set("show_simulation", False)
+        self.core.set("simulation_toolpath", None)
         self.update_view()
         # don't destroy the simulation window (for "destroy" event)
         return True
 
     def update_toolpath_simulation(self, widget=None, toolpath=None):
-        s = self.settings
+        s = self.core
         # update the GUI
         while gtk.events_pending():
             gtk.main_iteration()
@@ -127,8 +136,8 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
         # show the simulation controls
         self.simulation_window.show()
         # start the simulation
-        self.settings.set("show_simulation", True)
-        time_step = int(1000 / self.settings.get("drill_progress_max_fps"))
+        self.core.set("show_simulation", True)
+        time_step = int(1000 / self.core.get("drill_progress_max_fps"))
         # update the toolpath simulation repeatedly
         gobject.timeout_add(time_step, self.update_toolpath_simulation)
 
@@ -156,14 +165,14 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
         y_steps = int(sqrt(grid_size) / proportion)
         simulation_backend = ODEBlocks.ODEBlocks(toolpath.get_tool_settings(),
                 toolpath.get_bounding_box(), x_steps=x_steps, y_steps=y_steps)
-        self.settings.set("simulation_object", simulation_backend)
+        self.core.set("simulation_object", simulation_backend)
         # disable the simulation widget (avoids confusion regarding "cancel")
         if not widget is None:
             self.gui.get_object("SimulationTab").set_sensitive(False)
         # update the view
         self.update_view()
-        # calculate the simulation and show it simulteneously
-        progress = self.settings.get("progress")
+        # calculate the simulation and show it simultaneously
+        progress = self.core.get("progress")
         for path_index, path in enumerate(paths):
             progress_text = "Simulating path %d/%d" % (path_index, len(paths))
             progress_value_percent = 100.0 * path_index / len(paths)

@@ -52,22 +52,6 @@
       </row>
     </data>
   </object>
-  <object class="GtkListStore" id="ProcessPoolStatisticsModel">
-    <columns>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-      <!-- column-name last_notify -->
-      <column type="guint"/>
-      <!-- column-name tasks -->
-      <column type="guint"/>
-      <!-- column-name process_time -->
-      <column type="gfloat"/>
-      <!-- column-name avg_process_time -->
-      <column type="gfloat"/>
-      <!-- column-name avg_transfer_time -->
-      <column type="gfloat"/>
-    </columns>
-  </object>
   <object class="GtkListStore" id="TouchOffLocationModel">
     <columns>
       <!-- column-name key -->
@@ -180,143 +164,119 @@
           </packing>
         </child>
         <child>
-          <object class="GtkNotebook" id="notebook1">
+          <object class="GtkNotebook" id="PreferencesNotebook">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="tab_pos">left</property>
             <child>
-              <object class="GtkVBox" id="vbox7">
+              <object class="GtkFrame" id="GeneralSettingsPrefTab">
                 <property name="visible">True</property>
-                <property name="orientation">vertical</property>
-                <property name="spacing">3</property>
+                <property name="label_xalign">0</property>
+                <property name="shadow_type">none</property>
                 <child>
-                  <object class="GtkFrame" id="GeneralSettingsFrame">
+                  <object class="GtkAlignment" id="alignment6">
                     <property name="visible">True</property>
-                    <property name="label_xalign">0</property>
-                    <property name="shadow_type">none</property>
+                    <property name="left_padding">12</property>
                     <child>
-                      <object class="GtkAlignment" id="alignment6">
+                      <object class="GtkVBox" id="vbox14">
                         <property name="visible">True</property>
-                        <property name="left_padding">12</property>
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">2</property>
                         <child>
-                          <object class="GtkVBox" id="vbox14">
+                          <object class="GtkCheckButton" id="SettingEnableODE">
+                            <property name="label" translatable="yes">Enable experimental ODE calculations</property>
                             <property name="visible">True</property>
-                            <property name="orientation">vertical</property>
-                            <property name="spacing">2</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkTable" id="table8">
+                            <property name="visible">True</property>
+                            <property name="n_columns">2</property>
+                            <property name="column_spacing">5</property>
+                            <property name="row_spacing">3</property>
                             <child>
-                              <object class="GtkCheckButton" id="SettingEnableODE">
-                                <property name="label" translatable="yes">Enable experimental ODE calculations</property>
+                              <object class="GtkLabel" id="UnitLabel">
                                 <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="tooltip_text" translatable="yes">The toolpath generation is based on detecting collisions.
-The Open-Dynamic-Engine (ODE) is an alternative to the manual computation of these collisions.
-It is significantly faster, but the current release of ODE contains a nasty bug that rarely causes erroneous toolpaths at the corner of the model. Thus ODE is disabled by default.
-ODE can't be used in combination with parallel processing or server mode.</property>
-                                <property name="draw_indicator">True</property>
+                                <property name="xalign">0</property>
+                                <property name="label" translatable="yes">Unit (for all dimensions):</property>
                               </object>
                               <packing>
-                                <property name="expand">False</property>
-                                <property name="position">0</property>
+                                <property name="x_options">GTK_FILL</property>
+                                <property name="y_options">GTK_FILL</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkTable" id="table8">
+                              <object class="GtkComboBox" id="unit_control">
                                 <property name="visible">True</property>
-                                <property name="n_columns">2</property>
-                                <property name="column_spacing">5</property>
-                                <property name="row_spacing">3</property>
+                                <property name="model">unit_model</property>
+                                <property name="active">0</property>
                                 <child>
-                                  <object class="GtkLabel" id="UnitLabel">
-                                    <property name="visible">True</property>
-                                    <property name="xalign">0</property>
-                                    <property name="label" translatable="yes">Unit (for all dimensions):</property>
-                                  </object>
-                                  <packing>
-                                    <property name="x_options">GTK_FILL</property>
-                                    <property name="y_options">GTK_FILL</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkComboBox" id="unit_control">
-                                    <property name="visible">True</property>
-                                    <property name="model">unit_model</property>
-                                    <property name="active">0</property>
-                                    <child>
-                                      <object class="GtkCellRendererText" id="unit_name"/>
-                                      <attributes>
-                                        <attribute name="text">0</attribute>
-                                      </attributes>
-                                    </child>
-                                  </object>
-                                  <packing>
-                                    <property name="left_attach">1</property>
-                                    <property name="right_attach">2</property>
-                                    <property name="x_options">GTK_FILL</property>
-                                    <property name="y_options">GTK_FILL</property>
-                                  </packing>
+                                  <object class="GtkCellRendererText" id="unit_name"/>
+                                  <attributes>
+                                    <attribute name="text">0</attribute>
+                                  </attributes>
                                 </child>
                               </object>
                               <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkHBox" id="unit_box">
-                                <property name="visible">True</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
-                                <property name="position">2</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="AutoLoadTaskFile">
-                                <property name="label" translatable="yes">Load custom task settings on startup</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="position">3</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkAlignment" id="StartupTaskFileBox">
-                                <property name="visible">True</property>
-                                <property name="left_padding">20</property>
-                                <child>
-                                  <object class="GtkFileChooserButton" id="StartupTaskFile">
-                                    <property name="visible">True</property>
-                                    <property name="title" translatable="yes">Choose custom task settings file loading on startup</property>
-                                  </object>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">4</property>
+                                <property name="left_attach">1</property>
+                                <property name="right_attach">2</property>
+                                <property name="x_options">GTK_FILL</property>
+                                <property name="y_options">GTK_FILL</property>
                               </packing>
                             </child>
                           </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="AutoLoadTaskFile">
+                            <property name="label" translatable="yes">Load custom task settings on startup</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkAlignment" id="StartupTaskFileBox">
+                            <property name="visible">True</property>
+                            <property name="left_padding">20</property>
+                            <child>
+                              <object class="GtkFileChooserButton" id="StartupTaskFile">
+                                <property name="visible">True</property>
+                                <property name="title" translatable="yes">Choose custom task settings file loading on startup</property>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="position">3</property>
+                          </packing>
                         </child>
                       </object>
                     </child>
-                    <child type="label">
-                      <object class="GtkLabel" id="GeneralSettingsFrameLabel">
-                        <property name="visible">True</property>
-                        <property name="label" translatable="yes">&lt;b&gt;General Settings&lt;/b&gt;</property>
-                        <property name="use_markup">True</property>
-                      </object>
-                    </child>
                   </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="position">0</property>
-                  </packing>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel" id="GeneralSettingsFrameLabel">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">&lt;b&gt;General Settings&lt;/b&gt;</property>
+                    <property name="use_markup">True</property>
+                  </object>
                 </child>
               </object>
             </child>
@@ -330,7 +290,7 @@ ODE can't be used in combination with parallel processing or server mode.</prope
               </packing>
             </child>
             <child>
-              <object class="GtkFrame" id="GCodeTabFrame">
+              <object class="GtkFrame" id="GCodePrefTab">
                 <property name="visible">True</property>
                 <property name="label_xalign">0</property>
                 <property name="shadow_type">none</property>
@@ -1182,7 +1142,7 @@ Everyone else should use the option for M3/M5 (see above).</property>
               </packing>
             </child>
             <child>
-              <object class="GtkFrame" id="frame13">
+              <object class="GtkFrame" id="DisplayItemsPrefTab">
                 <property name="visible">True</property>
                 <property name="label_xalign">0</property>
                 <property name="shadow_type">none</property>
@@ -1328,7 +1288,7 @@ for contour lines and toolpaths, triangle's normals, et cetera).</property>
               </packing>
             </child>
             <child>
-              <object class="GtkFrame" id="ColorSelectionFrame">
+              <object class="GtkFrame" id="ColorPrefTab">
                 <property name="visible">True</property>
                 <property name="label_xalign">0</property>
                 <property name="shadow_type">none</property>
@@ -1606,7 +1566,7 @@ for contour lines and toolpaths, triangle's normals, et cetera).</property>
               </packing>
             </child>
             <child>
-              <object class="GtkFrame" id="OpenGLSettingsFrame">
+              <object class="GtkFrame" id="OpenGLPrefTab">
                 <property name="visible">True</property>
                 <property name="label_xalign">0</property>
                 <property name="shadow_type">none</property>
@@ -1739,7 +1699,7 @@ Hotkey: &lt;p&gt;</property>
               </packing>
             </child>
             <child>
-              <object class="GtkFrame" id="ProgramsSettingsFrame">
+              <object class="GtkFrame" id="ProgramsPrefTab">
                 <property name="visible">True</property>
                 <property name="label_xalign">0</property>
                 <property name="shadow_type">none</property>
@@ -1919,509 +1879,6 @@ Hotkey: &lt;p&gt;</property>
                 <property name="tab_fill">False</property>
               </packing>
             </child>
-            <child>
-              <object class="GtkFrame" id="MultiprocessingFrame">
-                <property name="visible">True</property>
-                <property name="label_xalign">0</property>
-                <property name="shadow_type">none</property>
-                <child>
-                  <object class="GtkAlignment" id="alignment15">
-                    <property name="visible">True</property>
-                    <property name="left_padding">12</property>
-                    <child>
-                      <object class="GtkVBox" id="vbox34">
-                        <property name="visible">True</property>
-                        <property name="orientation">vertical</property>
-                        <property name="spacing">5</property>
-                        <child>
-                          <object class="GtkCheckButton" id="EnableParallelProcesses">
-                            <property name="label" translatable="yes">Enable parallel processes</property>
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="receives_default">False</property>
-                            <property name="draw_indicator">True</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="position">0</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkVBox" id="ParallelProcessSettingsBox">
-                            <property name="visible">True</property>
-                            <property name="orientation">vertical</property>
-                            <property name="spacing">5</property>
-                            <child>
-                              <object class="GtkAlignment" id="alignment45">
-                                <property name="visible">True</property>
-                                <property name="xalign">0</property>
-                                <property name="yalign">0</property>
-                                <property name="left_padding">10</property>
-                                <child>
-                                  <object class="GtkTable" id="table13">
-                                    <property name="visible">True</property>
-                                    <property name="n_rows">3</property>
-                                    <property name="n_columns">2</property>
-                                    <property name="column_spacing">3</property>
-                                    <property name="row_spacing">2</property>
-                                    <child>
-                                      <object class="GtkLabel" id="AvailableCoresLabel">
-                                        <property name="visible">True</property>
-                                        <property name="xalign">0</property>
-                                        <property name="label" translatable="yes">Available cores:</property>
-                                      </object>
-                                      <packing>
-                                        <property name="top_attach">2</property>
-                                        <property name="bottom_attach">3</property>
-                                        <property name="x_options">GTK_FILL</property>
-                                        <property name="y_options">GTK_FILL</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel" id="AvailableCores">
-                                        <property name="visible">True</property>
-                                        <property name="xalign">0</property>
-                                        <property name="label" translatable="yes">1</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">1</property>
-                                        <property name="right_attach">2</property>
-                                        <property name="top_attach">2</property>
-                                        <property name="bottom_attach">3</property>
-                                        <property name="x_options">GTK_FILL</property>
-                                        <property name="y_options">GTK_FILL</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkSpinButton" id="NumberOfProcesses">
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="invisible_char">&#x25CF;</property>
-                                        <property name="adjustment">NumberOfProcessesValue</property>
-                                        <property name="numeric">True</property>
-                                        <property name="update_policy">if-valid</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">1</property>
-                                        <property name="right_attach">2</property>
-                                        <property name="x_options">GTK_FILL</property>
-                                        <property name="y_options">GTK_FILL</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel" id="NumberOfProcessesLabel">
-                                        <property name="visible">True</property>
-                                        <property name="xalign">0</property>
-                                        <property name="label" translatable="yes">Number of processes:</property>
-                                      </object>
-                                      <packing>
-                                        <property name="x_options">GTK_FILL</property>
-                                        <property name="y_options">GTK_FILL</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkViewport" id="viewport2">
-                                        <property name="visible">True</property>
-                                        <property name="resize_mode">queue</property>
-                                        <property name="shadow_type">none</property>
-                                        <child>
-                                          <placeholder/>
-                                        </child>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">1</property>
-                                        <property name="right_attach">2</property>
-                                        <property name="top_attach">1</property>
-                                        <property name="bottom_attach">2</property>
-                                        <property name="x_options">GTK_FILL</property>
-                                        <property name="y_options">GTK_FILL</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel" id="ZeroProcessesWarning">
-                                        <property name="visible">True</property>
-                                        <property name="xalign">0</property>
-                                        <property name="label" translatable="yes">&lt;span foreground="red"&gt;Warning: no local processes enabled.
-You will need remote workers.&lt;/span&gt;</property>
-                                        <property name="use_markup">True</property>
-                                        <property name="wrap">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="top_attach">1</property>
-                                        <property name="bottom_attach">2</property>
-                                        <property name="x_options">GTK_FILL</property>
-                                        <property name="y_options">GTK_FILL</property>
-                                      </packing>
-                                    </child>
-                                  </object>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkHSeparator" id="hseparator15">
-                                <property name="visible">True</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="ServerModeDisabledLabel">
-                                <property name="visible">True</property>
-                                <property name="xalign">0</property>
-                                <property name="label" translatable="yes">Server mode is currently not available on your system.
-You are probably using the Windows standalone executable.
-Instead you could use the PyCAM installer package along with the all-in-one installer of all dependencies.
-
-See the &lt;a href="http://sf.net/apps/mediawiki/pycam/?title=Parallel_Processing_on_different_Platforms"&gt;platform feature matrix&lt;/a&gt; for details.</property>
-                                <property name="use_markup">True</property>
-                                <property name="wrap">True</property>
-                              </object>
-                              <packing>
-                                <property name="position">2</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkFrame" id="ServerModeSettingsFrame">
-                                <property name="visible">True</property>
-                                <property name="label_xalign">0</property>
-                                <property name="shadow_type">none</property>
-                                <child>
-                                  <object class="GtkVBox" id="vbox36">
-                                    <property name="visible">True</property>
-                                    <property name="orientation">vertical</property>
-                                    <child>
-                                      <object class="GtkHBox" id="hbox34">
-                                        <property name="visible">True</property>
-                                        <child>
-                                          <object class="GtkCheckButton" id="EnableServerMode">
-                                            <property name="label">gtk-connect</property>
-                                            <property name="visible">True</property>
-                                            <property name="can_focus">True</property>
-                                            <property name="receives_default">False</property>
-                                            <property name="use_stock">True</property>
-                                            <property name="draw_indicator">True</property>
-                                          </object>
-                                          <packing>
-                                            <property name="expand">False</property>
-                                            <property name="fill">False</property>
-                                            <property name="position">0</property>
-                                          </packing>
-                                        </child>
-                                        <child>
-                                          <object class="GtkAlignment" id="alignment48">
-                                            <property name="visible">True</property>
-                                            <child>
-                                              <placeholder/>
-                                            </child>
-                                          </object>
-                                          <packing>
-                                            <property name="expand">False</property>
-                                            <property name="position">1</property>
-                                          </packing>
-                                        </child>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">False</property>
-                                        <property name="position">0</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkAlignment" id="alignment46">
-                                        <property name="visible">True</property>
-                                        <property name="xalign">0</property>
-                                        <property name="yalign">0</property>
-                                        <property name="left_padding">10</property>
-                                        <child>
-                                          <object class="GtkTable" id="ServerModeSettingsTable">
-                                            <property name="visible">True</property>
-                                            <property name="n_rows">5</property>
-                                            <property name="n_columns">3</property>
-                                            <property name="column_spacing">3</property>
-                                            <property name="row_spacing">2</property>
-                                            <child>
-                                              <object class="GtkSpinButton" id="RemoteServerPort">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="tooltip_text" translatable="yes">The TCP port of the remote server. You need to set a hostname or IP as well.
-PyCAM's default port is 1250.</property>
-                                                <property name="invisible_char">&#x25CF;</property>
-                                                <property name="adjustment">RemoteServerPortValue</property>
-                                              </object>
-                                              <packing>
-                                                <property name="left_attach">2</property>
-                                                <property name="right_attach">3</property>
-                                                <property name="x_options">GTK_FILL</property>
-                                                <property name="y_options">GTK_FILL</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkEntry" id="RemoteServerHostname">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="tooltip_text" translatable="yes">Type in a hostname or IP address if you want to connect to a remote PyCAM server.
-Leave this field empty for running a local server.</property>
-                                                <property name="invisible_char">&#x25CF;</property>
-                                                <property name="width_chars">18</property>
-                                                <property name="truncate_multiline">True</property>
-                                              </object>
-                                              <packing>
-                                                <property name="left_attach">1</property>
-                                                <property name="right_attach">2</property>
-                                                <property name="x_options">GTK_FILL</property>
-                                                <property name="y_options">GTK_FILL</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkLabel" id="RemoteServerLabel">
-                                                <property name="visible">True</property>
-                                                <property name="xalign">0</property>
-                                                <property name="label" translatable="yes">Remote server:</property>
-                                              </object>
-                                              <packing>
-                                                <property name="x_options">GTK_FILL</property>
-                                                <property name="y_options">GTK_FILL</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkLabel" id="ServerPortLocalLabel">
-                                                <property name="visible">True</property>
-                                                <property name="xalign">0</property>
-                                                <property name="label" translatable="yes">Local port:</property>
-                                              </object>
-                                              <packing>
-                                                <property name="top_attach">1</property>
-                                                <property name="bottom_attach">2</property>
-                                                <property name="x_options">GTK_FILL</property>
-                                                <property name="y_options">GTK_FILL</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkLabel" id="ServerPasswordLabel">
-                                                <property name="visible">True</property>
-                                                <property name="xalign">0</property>
-                                                <property name="yalign">0</property>
-                                                <property name="label" translatable="yes">Password:</property>
-                                              </object>
-                                              <packing>
-                                                <property name="top_attach">2</property>
-                                                <property name="bottom_attach">4</property>
-                                                <property name="x_options">GTK_FILL</property>
-                                                <property name="y_options">GTK_FILL</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkButton" id="ServerPasswordGenerate">
-                                                <property name="label">Generate</property>
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="receives_default">True</property>
-                                                <property name="tooltip_text" translatable="yes">Generate a new random shared secret.</property>
-                                                <property name="xalign">0</property>
-                                                <property name="yalign">0</property>
-                                              </object>
-                                              <packing>
-                                                <property name="left_attach">2</property>
-                                                <property name="right_attach">3</property>
-                                                <property name="top_attach">2</property>
-                                                <property name="bottom_attach">3</property>
-                                                <property name="x_options"></property>
-                                                <property name="y_options"></property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkCheckButton" id="ServerPasswordShow">
-                                                <property name="label" translatable="yes">Show password</property>
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="receives_default">False</property>
-                                                <property name="draw_indicator">True</property>
-                                              </object>
-                                              <packing>
-                                                <property name="left_attach">1</property>
-                                                <property name="right_attach">2</property>
-                                                <property name="top_attach">3</property>
-                                                <property name="bottom_attach">4</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkEntry" id="ServerPassword">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="visibility">False</property>
-                                                <property name="invisible_char">&#x25CF;</property>
-                                                <property name="truncate_multiline">True</property>
-                                              </object>
-                                              <packing>
-                                                <property name="left_attach">1</property>
-                                                <property name="right_attach">2</property>
-                                                <property name="top_attach">2</property>
-                                                <property name="bottom_attach">3</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkAlignment" id="alignment24">
-                                                <property name="visible">True</property>
-                                                <child>
-                                                  <placeholder/>
-                                                </child>
-                                              </object>
-                                              <packing>
-                                                <property name="left_attach">2</property>
-                                                <property name="right_attach">3</property>
-                                                <property name="top_attach">3</property>
-                                                <property name="bottom_attach">4</property>
-                                                <property name="x_options">GTK_FILL</property>
-                                                <property name="y_options">GTK_FILL</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkLinkButton" id="ServerModeHelp">
-                                                <property name="label">gtk-help</property>
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="receives_default">True</property>
-                                                <property name="relief">none</property>
-                                                <property name="use_stock">True</property>
-                                                <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=ServerMode</property>
-                                              </object>
-                                              <packing>
-                                                <property name="left_attach">2</property>
-                                                <property name="right_attach">3</property>
-                                                <property name="top_attach">4</property>
-                                                <property name="bottom_attach">5</property>
-                                                <property name="x_options">GTK_FILL</property>
-                                                <property name="y_options">GTK_FILL</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkAlignment" id="alignment25">
-                                                <property name="visible">True</property>
-                                                <child>
-                                                  <placeholder/>
-                                                </child>
-                                              </object>
-                                              <packing>
-                                                <property name="right_attach">2</property>
-                                                <property name="top_attach">4</property>
-                                                <property name="bottom_attach">5</property>
-                                                <property name="x_options">GTK_FILL</property>
-                                                <property name="y_options">GTK_FILL</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkSpinButton" id="ServerPortLocal">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="invisible_char">&#x25CF;</property>
-                                                <property name="adjustment">ServerPortLocalValue</property>
-                                              </object>
-                                              <packing>
-                                                <property name="left_attach">2</property>
-                                                <property name="right_attach">3</property>
-                                                <property name="top_attach">1</property>
-                                                <property name="bottom_attach">2</property>
-                                                <property name="x_options">GTK_FILL</property>
-                                                <property name="y_options">GTK_FILL</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkAlignment" id="alignment49">
-                                                <property name="visible">True</property>
-                                                <child>
-                                                  <placeholder/>
-                                                </child>
-                                              </object>
-                                              <packing>
-                                                <property name="left_attach">1</property>
-                                                <property name="right_attach">2</property>
-                                                <property name="top_attach">1</property>
-                                                <property name="bottom_attach">2</property>
-                                                <property name="x_options">GTK_FILL</property>
-                                                <property name="y_options">GTK_FILL</property>
-                                              </packing>
-                                            </child>
-                                          </object>
-                                        </child>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">False</property>
-                                        <property name="position">1</property>
-                                      </packing>
-                                    </child>
-                                  </object>
-                                </child>
-                                <child type="label">
-                                  <object class="GtkLabel" id="ServerModeFrameLabel">
-                                    <property name="visible">True</property>
-                                    <property name="label" translatable="yes">&lt;b&gt;Distributed processing&lt;/b&gt;</property>
-                                    <property name="use_markup">True</property>
-                                  </object>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
-                                <property name="position">3</property>
-                              </packing>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">False</property>
-                            <property name="position">1</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="ParallelProcessingDisabledLabel">
-                            <property name="visible">True</property>
-                            <property name="xalign">0</property>
-                            <property name="label" translatable="yes">Parallel processing is currently not available on your system.
-You need to switch to Python v2.6 (or higher) or install the Python module "multiprocessing".
-
-Note: The Windows standalone executable does not support parallel processing. Please install PyCAM's package for Windows and its dependencies if you need this feature.
-    </property>
-                            <property name="wrap">True</property>
-                          </object>
-                          <packing>
-                            <property name="position">2</property>
-                          </packing>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child type="label">
-                  <object class="GtkLabel" id="MultiprocessingFrameLabel">
-                    <property name="visible">True</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Settings for parallel processing&lt;/b&gt;</property>
-                    <property name="use_markup">True</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="position">6</property>
-                <property name="tab_fill">False</property>
-              </packing>
-            </child>
-            <child type="tab">
-              <object class="GtkLabel" id="MultiprocessingSettings">
-                <property name="visible">True</property>
-                <property name="label" translatable="yes">Parallel processing</property>
-              </object>
-              <packing>
-                <property name="position">6</property>
-                <property name="tab_fill">False</property>
-              </packing>
-            </child>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -2525,12 +1982,6 @@ You should have received a copy of the GNU General Public License along with thi
   </object>
   <object class="GtkAction" id="ExportEMCToolDefinition">
     <property name="label">_Export EMC tools ...</property>
-  </object>
-  <object class="GtkAdjustment" id="SimulationDetailsValue">
-    <property name="value">1</property>
-    <property name="lower">1</property>
-    <property name="upper">10</property>
-    <property name="step_increment">1</property>
   </object>
   <object class="GtkDialog" id="UnitChangeDialog">
     <property name="border_width">5</property>
@@ -2783,310 +2234,6 @@ Any selected group of dimensions will be scaled accordingly.</property>
   <object class="GtkAction" id="OpenRecentModel">
     <property name="label">Open _Recent</property>
   </object>
-  <object class="GtkDialog" id="ProcessPoolWindow">
-    <property name="border_width">5</property>
-    <property name="title" translatable="yes">PyCAM pool of processes</property>
-    <property name="role">pycam-processes</property>
-    <property name="type_hint">normal</property>
-    <child internal-child="vbox">
-      <object class="GtkVBox" id="dialog-vbox5">
-        <property name="visible">True</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-        <child>
-          <object class="GtkVBox" id="vbox32">
-            <property name="visible">True</property>
-            <property name="orientation">vertical</property>
-            <child>
-              <object class="GtkVBox" id="ProcessPoolStatisticsBox">
-                <property name="visible">True</property>
-                <property name="orientation">vertical</property>
-                <property name="spacing">3</property>
-                <child>
-                  <object class="GtkScrolledWindow" id="scrolledwindow4">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="hscrollbar_policy">automatic</property>
-                    <property name="vscrollbar_policy">automatic</property>
-                    <property name="shadow_type">etched-in</property>
-                    <child>
-                      <object class="GtkTreeView" id="ProcessPoolView">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="model">ProcessPoolStatisticsModel</property>
-                        <property name="search_column">0</property>
-                        <child>
-                          <object class="GtkTreeViewColumn" id="ProcessPoolColumn1">
-                            <property name="resizable">True</property>
-                            <property name="title">Name</property>
-                            <property name="clickable">True</property>
-                            <property name="sort_indicator">True</property>
-                            <property name="sort_column_id">0</property>
-                            <child>
-                              <object class="GtkCellRendererText" id="cellrenderertext1"/>
-                              <attributes>
-                                <attribute name="text">0</attribute>
-                              </attributes>
-                            </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkTreeViewColumn" id="ProcessPoolColumn2">
-                            <property name="resizable">True</property>
-                            <property name="title">Ping age</property>
-                            <property name="clickable">True</property>
-                            <property name="sort_indicator">True</property>
-                            <property name="sort_column_id">1</property>
-                            <child>
-                              <object class="GtkCellRendererText" id="cellrenderertext2"/>
-                              <attributes>
-                                <attribute name="text">1</attribute>
-                              </attributes>
-                            </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkTreeViewColumn" id="ProcessPoolColumn3">
-                            <property name="resizable">True</property>
-                            <property name="title">Processed</property>
-                            <property name="clickable">True</property>
-                            <property name="sort_indicator">True</property>
-                            <property name="sort_column_id">2</property>
-                            <child>
-                              <object class="GtkCellRendererText" id="cellrenderertext3"/>
-                              <attributes>
-                                <attribute name="text">2</attribute>
-                              </attributes>
-                            </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkTreeViewColumn" id="ProcessPoolColumn4">
-                            <property name="resizable">True</property>
-                            <property name="title">Processing time</property>
-                            <property name="clickable">True</property>
-                            <property name="sort_indicator">True</property>
-                            <property name="sort_column_id">3</property>
-                            <child>
-                              <object class="GtkCellRendererText" id="cellrenderertext4"/>
-                              <attributes>
-                                <attribute name="text">3</attribute>
-                              </attributes>
-                            </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkTreeViewColumn" id="ProcessPoolColumn5">
-                            <property name="resizable">True</property>
-                            <property name="title">Avg. process time</property>
-                            <property name="clickable">True</property>
-                            <property name="sort_indicator">True</property>
-                            <property name="sort_column_id">4</property>
-                            <child>
-                              <object class="GtkCellRendererText" id="cellrenderertext5"/>
-                              <attributes>
-                                <attribute name="text">4</attribute>
-                              </attributes>
-                            </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkTreeViewColumn" id="ProcessPoolColumn6">
-                            <property name="resizable">True</property>
-                            <property name="title">Avg. transfer time</property>
-                            <property name="clickable">True</property>
-                            <property name="sort_indicator">True</property>
-                            <property name="sort_column_id">5</property>
-                            <child>
-                              <object class="GtkCellRendererText" id="cellrenderertext6"/>
-                              <attributes>
-                                <attribute name="text">5</attribute>
-                              </attributes>
-                            </child>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkHBox" id="hbox32">
-                    <property name="visible">True</property>
-                    <property name="spacing">3</property>
-                    <child>
-                      <object class="GtkLabel" id="ProcessPoolConnectedWorkersLabel">
-                        <property name="visible">True</property>
-                        <property name="xalign">0</property>
-                        <property name="label" translatable="yes">Number of connected workers:</property>
-                        <property name="pattern">&lt;b&gt;____&lt;/b&gt;</property>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="ProcessPoolConnectedWorkersValue">
-                        <property name="visible">True</property>
-                        <property name="label" translatable="yes">0</property>
-                        <property name="use_markup">True</property>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="position">1</property>
-                      </packing>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="ProcessPoolDetails">
-                    <property name="visible">True</property>
-                    <property name="xalign">0</property>
-                    <property name="use_markup">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">2</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkVBox" id="ProcessPoolDisabledBox">
-                <property name="visible">True</property>
-                <property name="orientation">vertical</property>
-                <child>
-                  <object class="GtkLabel" id="ProcessPoolDisabledLabel">
-                    <property name="visible">True</property>
-                    <property name="xalign">0</property>
-                    <property name="label" translatable="yes">The server mode is currently not enabled on your system.
-Take a look at the &lt;i&gt;Preferences&lt;/i&gt; for &lt;i&gt;Parallel processing&lt;/i&gt; if you want to enable it.
-Please read the description of the Server Mode (linked below) to understand the related security implications.</property>
-                    <property name="use_markup">True</property>
-                    <property name="wrap">True</property>
-                    <property name="width_chars">60</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLinkButton" id="ProcessPoolHelpLink">
-                    <property name="label" translatable="yes">Read more about the Server Mode.</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="has_tooltip">True</property>
-                    <property name="relief">none</property>
-                    <property name="xalign">0</property>
-                    <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=ServerMode</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="dialog-action_area6">
-            <property name="visible">True</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkHBox" id="hbox30">
-                <property name="visible">True</property>
-                <child>
-                  <object class="GtkLabel" id="ProcessPoolRefreshIntervalLabel">
-                    <property name="visible">True</property>
-                    <property name="label" translatable="yes">Refresh interval:</property>
-                  </object>
-                  <packing>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkSpinButton" id="ProcessPoolRefreshInterval">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="invisible_char">&#x25CF;</property>
-                    <property name="adjustment">ProcessPoolRefreshIntervalValue</property>
-                    <property name="numeric">True</property>
-                  </object>
-                  <packing>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="ProcessPoolWindowClose">
-                <property name="label">gtk-close</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-    <action-widgets>
-      <action-widget response="0">ProcessPoolWindowClose</action-widget>
-    </action-widgets>
-  </object>
-  <object class="GtkAdjustment" id="ProcessPoolRefreshIntervalValue">
-    <property name="value">3</property>
-    <property name="lower">1</property>
-    <property name="upper">60</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkToggleAction" id="ToggleProcessPoolWindow">
-    <property name="label">_Process Pool Window</property>
-    <property name="tooltip">Show the current pool of workers</property>
-  </object>
   <object class="GtkAction" id="DevelopmentBlog">
     <property name="label">_Development Blog</property>
   </object>
@@ -3102,200 +2249,6 @@ Please read the description of the Server Mode (linked below) to understand the 
   <object class="GtkAction" id="UndoButton">
     <property name="label">Undo latest model change</property>
     <property name="stock_id">gtk-undo</property>
-  </object>
-  <object class="GtkAdjustment" id="NumberOfProcessesValue">
-    <property name="upper">1000</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="RemoteServerPortValue">
-    <property name="value">1250</property>
-    <property name="upper">65535</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="ServerPortLocalValue">
-    <property name="value">1250</property>
-    <property name="upper">65535</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="SimulationSpeedFactorValueExponential">
-    <property name="value">1</property>
-    <property name="lower">-2</property>
-    <property name="upper">4</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkDialog" id="SimulationDialog">
-    <property name="border_width">5</property>
-    <property name="title" translatable="yes">PyCAM simulation</property>
-    <property name="role">pycam-simulation</property>
-    <property name="destroy_with_parent">True</property>
-    <property name="type_hint">dialog</property>
-    <child internal-child="vbox">
-      <object class="GtkVBox" id="dialog-vbox9">
-        <property name="visible">True</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-        <child>
-          <object class="GtkVBox" id="vbox23">
-            <property name="visible">True</property>
-            <property name="orientation">vertical</property>
-            <property name="spacing">3</property>
-            <child>
-              <object class="GtkHBox" id="hbox20">
-                <property name="spacing">2</property>
-                <child>
-                  <object class="GtkLabel" id="SimulationDetailsControlLabel">
-                    <property name="visible">True</property>
-                    <property name="xalign">0</property>
-                    <property name="xpad">5</property>
-                    <property name="label" translatable="yes">Simulation detail level (1..10):</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkSpinButton" id="SimulationDetailsControl">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="max_length">6</property>
-                    <property name="invisible_char">&#x25CF;</property>
-                    <property name="adjustment">SimulationDetailsValue</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label2">
-                <property name="xalign">0</property>
-                <property name="label" translatable="yes">&lt;b&gt;Hint:&lt;/b&gt; take a look at the "show drill" and
-"OpenGL: polygon" settings in preferences.
-&lt;b&gt;Beware:&lt;/b&gt; the simulation feature is new and
-experimental. Thus you will quite probably stumble
-upon interesting bugs and weird results.</property>
-                <property name="use_markup">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="SimulationProgressTimelineLabel">
-                <property name="visible">True</property>
-                <property name="xalign">0</property>
-                <property name="label" translatable="yes">Progress:</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkHScale" id="SimulationProgressTimeline">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="adjustment">SimulationProgressTimelineValue</property>
-                <property name="draw_value">False</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="position">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkHBox" id="hbox36">
-                <property name="visible">True</property>
-                <property name="spacing">4</property>
-                <child>
-                  <object class="GtkLabel" id="SimulationSpeedFactorLabel">
-                    <property name="visible">True</property>
-                    <property name="xalign">0</property>
-                    <property name="label" translatable="yes">Simulation speed factor:</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="SimulationSpeedFactorValueLabel">
-                    <property name="visible">True</property>
-                    <property name="label" translatable="yes">1.00</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="position">4</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkHScale" id="SimulationSpeedFactor">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="adjustment">SimulationSpeedFactorValueExponential</property>
-                <property name="draw_value">False</property>
-                <property name="value_pos">bottom</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="position">5</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="dialog-action_area8">
-            <property name="visible">True</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="ExitSimulationButton">
-                <property name="label">gtk-close</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="can_default">True</property>
-                <property name="has_default">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-    <action-widgets>
-      <action-widget response="0">ExitSimulationButton</action-widget>
-    </action-widgets>
-  </object>
-  <object class="GtkAdjustment" id="SimulationProgressTimelineValue">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
   </object>
   <object class="GtkAdjustment" id="GCodeMinimumStepValue_x">
     <property name="upper">100</property>
