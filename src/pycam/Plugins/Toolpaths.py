@@ -68,13 +68,12 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             self.register_gtk_accelerator("toolpaths", export_all,
                     "<Control><Shift>e", "ExportGCodeAll")
             export_all.connect("activate", self.save_toolpath, False)
-            export_visible = self.gui.get_object("ExportGCodeSelected")
-            self.register_gtk_accelerator("toolpaths", export_visible,
+            export_selected = self.gui.get_object("ExportGCodeSelected")
+            self.register_gtk_accelerator("toolpaths", export_selected,
                     None, "ExportGCodeSelected")
-            export_visible.connect("activate", self.save_toolpath, True)
+            export_selected.connect("activate", self.save_toolpath, True)
             # model handling
             def update_model():
-                print "UPDATE"
                 if not hasattr(self, "_model_cache"):
                     self._model_cache = {}
                 cache = self._model_cache
@@ -96,8 +95,15 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
         return True
 
     def teardown(self):
+        if self.gui:
+            self.core.unregister_ui("main", self.gui.get_object("ToolpathsBox"))
+            self.unregister_gtk_accelerator("toolpaths",
+                    self.gui.get_object("ExportGCodeAll"))
+            self.unregister_gtk_accelerator("toolpaths",
+                    self.gui.get_object("ExportGCodeSelected"))
+            self.core.unregister_event("toolpath-list-changed",
+                    self._update_widgets)
         self.core.set("toolpaths", None)
-        return True
 
     def get_selected(self):
         return self._get_selected(self._modelview, force_list=True)
@@ -152,8 +158,8 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
                 self.core.get("gcode_safety_height")))
         cell.set_property("text", text)
 
-    def save_toolpath(self, widget=None, only_visible=False):
-        if only_visible:
+    def save_toolpath(self, widget=None, only_selected=False):
+        if only_selected:
             toolpaths = self.get_selected()
         else:
             toolpaths = self

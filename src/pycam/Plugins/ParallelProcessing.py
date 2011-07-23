@@ -91,8 +91,12 @@ class Toolpaths(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
-        self.core.unregister_ui("preferences",
-                self.gui.get_object("MultiprocessingFrame"))
+        if self.gui:
+            self.process_pool_window.hide()
+            self.core.unregister_ui("preferences",
+                    self.gui.get_object("MultiprocessingFrame"))
+            self.unregister_gtk_accelerator("processes",
+                    self.gui.get_object("ToggleProcessPoolWindow"))
 
     def toggle_process_pool_window(self, widget=None, value=None, action=None):
         toggle_process_pool_checkbox = self.gui.get_object("ToggleProcessPoolWindow")

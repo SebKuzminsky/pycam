@@ -36,6 +36,7 @@ TODO:
 class ToolpathCrop(pycam.Plugins.PluginBase):
 
     UI_FILE = "toolpath_crop.ui"
+    DEPENDS = ["Toolpaths"]
 
     def setup(self):
         if self.gui:

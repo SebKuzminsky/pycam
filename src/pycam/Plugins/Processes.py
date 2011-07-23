@@ -105,6 +105,10 @@ class Processes(pycam.Plugins.ListPluginBase):
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("ProcessBox"))
+            self.core.unregister_event("process-selection-changed",
+                    self._process_switch)
+            self.core.unregister_event("process-changed",
+                    self._store_process_settings)
         self.core.set("processes", None)
         return True
 

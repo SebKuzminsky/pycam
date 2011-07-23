@@ -38,12 +38,16 @@ class ProgressBar(pycam.Plugins.PluginBase):
             self.core.register_ui("main_window", "Progress", box, 50)
             self.core.add_item("progress", lambda: ProgressGTK(self.core, self.gui))
             show_progress_button = self.gui.get_object("ShowToolpathProgressButton")
+            # TODO: move this setting somewhere else or rename it
             self.core.add_item("show_drill_progress",
                     show_progress_button.get_active,
                     show_progress_button.set_active)
         return True
 
     def teardown(self):
+        if self.gui:
+            self.core.unregister_ui("main_window",
+                    self.gui.get_object("ProgressBox"))
         self.core.set("progress", None)
 
 

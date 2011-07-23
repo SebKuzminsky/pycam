@@ -49,6 +49,10 @@ class ModelPolygons(pycam.Plugins.PluginBase):
         if self.gui:
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelPolygonFrame"))
+            self.core.unregister_event("model-change-after",
+                    self._update_polygon_controls)
+            self.core.unregister_event("model-selection-changed",
+                    self._update_polygon_controls)
 
     def _get_polygon_models(self):
         models = []

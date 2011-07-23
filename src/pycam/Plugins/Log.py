@@ -37,16 +37,10 @@ class Log(pycam.Plugins.PluginBase):
             import gtk
             self._gtk = gtk
             # menu item and shortcut
-            actiongroup = self._gtk.ActionGroup("log")
             log_action = self.gui.get_object("ToggleLogWindow")
             log_action.connect("toggled", self.toggle_log_window)
-            key, mod = self._gtk.accelerator_parse("<Control>l")
-            # TODO: move the "<pycam>" accel path somewhere else
-            accel_path = "<pycam>/ToggleLogWindow"
-            log_action.set_accel_path(accel_path)
-            self._gtk.accel_map_change_entry(accel_path, key, mod, True)
-            actiongroup.add_action(log_action)
-            self.core.get("gtk-uimanager").insert_action_group(actiongroup, pos=-1)
+            self.register_gtk_accelerator("log", log_action,
+                    "<Control>l", "ToggleLogWindow")
             # status bar
             self.status_bar = self.gui.get_object("StatusBar")
             self.gui.get_object("StatusBarEventBox").connect("button-press-event",
@@ -69,6 +63,15 @@ class Log(pycam.Plugins.PluginBase):
             # register a callback for the log window
             pycam.Utils.log.add_hook(self.add_log_message)
         return True
+
+    def teardown(self):
+        if self.gui:
+            self.log_window.hide()
+            self.unregister_gtk_accelerator("log",
+                    self.gui.get_object("ToggleLogWindow"))
+            self.core.unregister_ui("main_window",
+                    self.gui.get_object("StatusBarEventBox"))
+            # TODO: disconnect the log handler
 
     def add_log_message(self, title, message, record=None):
         timestamp = datetime.datetime.fromtimestamp(

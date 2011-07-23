@@ -51,8 +51,10 @@ class Toolpaths(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
-        self.core.unregister_ui("preferences_general",
-                self.gui.get_object("UnitPrefBox"))
+        if self.gui:
+            self.core.unregister_ui("preferences_general",
+                    self.gui.get_object("UnitPrefBox"))
+            # TODO: reset setting "unit" back to a default value?
 
     def change_unit_init(self, widget=None):
         new_unit = self.gui.get_object("unit_control").get_active_text()

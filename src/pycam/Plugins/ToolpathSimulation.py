@@ -60,6 +60,9 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
                     sim_detail_obj.get_value, sim_detail_obj.set_value)
         return True
 
+    def teardown(self):
+        pass
+
     def finish_toolpath_simulation(self, widget=None, data=None):
         # hide the simulation tab
         self.simulation_window.hide()

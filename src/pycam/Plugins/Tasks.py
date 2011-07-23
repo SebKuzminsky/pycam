@@ -119,6 +119,15 @@ class Tasks(pycam.Plugins.ListPluginBase):
         self.core.set("tasks", self)
         return True
 
+    def teardown(self):
+        if self.gui:
+            self.core.unregister_ui("main", self.gui.get_object("TaskBox"))
+            self.core.unregister_event("task-selection-changed",
+                    self._switch_task)
+            self.core.unregister_event("task-selection-changed",
+                    self._switch_task)
+            self.core.unregister_event("task-changed", self._store_task)
+
     def _get_modelview_and_content(self, category):
         model = {None: self._taskview,
                 "tool": self.gui.get_object("ToolSelector"),

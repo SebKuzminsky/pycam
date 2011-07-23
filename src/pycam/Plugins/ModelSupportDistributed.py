@@ -55,10 +55,20 @@ class ModelSupportDistributed(pycam.Plugins.PluginBase):
             minimum_bridges.connect("value-changed", self.update_support_model)
             self.core.add_item("support_grid_minimum_bridges",
                     minimum_bridges.get_value, minimum_bridges.set_value)
+            # TODO: remove these public settings
             self.core.set("support_grid_average_distance", 30)
             self.core.set("support_grid_minimum_bridges", 2)
             self.core.set("support_grid_length", 5)
         return True
+
+    def teardown(self):
+        if self.gui:
+            self.core.unregister_ui("support_model_type_selector",
+                    "distributed_edges")
+            self.core.unregister_ui("support_model_type_selector",
+                    "distributed_corners")
+            self.core.unregister_ui("support_model_settings",
+                    self.gui.get_object("DistributedSupportExpander"))
 
     def update_support_controls(self):
         grid_type = self.core.get("support_model_type")

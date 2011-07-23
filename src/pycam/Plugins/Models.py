@@ -100,6 +100,15 @@ class Models(pycam.Plugins.ListPluginBase):
         self.core.set("models", self)
         return True
 
+    def teardown(self):
+        if self.gui:
+            self.core.unregister_event("model-selection-changed",
+                    self._get_colors_of_selected_models)
+            self.core.unregister_ui_section("model_handling")
+            self.core.unregister_ui("main", self.gui.get_object("ModelBox"))
+        self.core.set("models", None)
+        return True
+
     def _get_colors_of_selected_models(self, widget=None):
         color_button = self.gui.get_object("ModelColorButton")
         models = self.get_selected()
@@ -155,11 +164,4 @@ class Models(pycam.Plugins.ListPluginBase):
     def get_visible(self):
         return [self[index] for index, item in enumerate(self._treemodel)
                 if item[self.COLUMN_VISIBLE]]
-
-    def teardown(self):
-        if self.gui:
-            self.core.unregister_ui("main", self.gui.get_object("ModelBox"))
-            self.core.unregister_ui_section("main", "model_handling")
-        self.core.set("models", None)
-        return True
 

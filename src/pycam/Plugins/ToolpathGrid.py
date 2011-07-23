@@ -37,6 +37,9 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
             # TODO: add a button to the toolpath action UI
         return True
 
+    def teardown(self):
+        pass
+
     def update_toolpath_grid_window(self, widget=None):
         data = self._toolpath_for_grid_data
         x_dim = data["maxx"] - data["minx"]

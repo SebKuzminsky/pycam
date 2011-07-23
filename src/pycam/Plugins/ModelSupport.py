@@ -34,18 +34,16 @@ class ModelSupport(pycam.Plugins.PluginBase):
             support_frame = self.gui.get_object("ModelExtensionsFrame")
             support_frame.unparent()
             self.core.register_ui("model_handling", "Support", support_frame, 0)
-            support_model_changed = lambda widget=None: self.core.emit_event(
-                    "support-model-changed")
             self.core.register_event("model-change-after",
-                    support_model_changed)
+                    self._support_model_changed)
             self.core.register_event("bounds-changed",
-                    support_model_changed)
+                    self._support_model_changed)
             self.core.register_event("support-model-changed",
                     self.update_support_model)
             support_model_type_selector = self.gui.get_object(
                     "SupportGridTypesControl")
             support_model_type_selector.connect("changed",
-                    support_model_changed)
+                    self._support_model_changed)
             def add_support_type(obj, name):
                 types_model = support_model_type_selector.get_model()
                 types_model.append((obj, name))
@@ -80,15 +78,16 @@ class ModelSupport(pycam.Plugins.PluginBase):
                         break
                 else:
                     support_model_type_selector.set_active(-1)
+            # TODO: remove public settings
             self.core.add_item("support_model_type",
                     get_support_model_type,
                     set_support_model_type)
             grid_thickness = self.gui.get_object("SupportGridThickness")
-            grid_thickness.connect("value-changed", support_model_changed)
+            grid_thickness.connect("value-changed", self._support_model_changed)
             self.core.add_item("support_grid_thickness",
                     grid_thickness.get_value, grid_thickness.set_value)
             grid_height = self.gui.get_object("SupportGridHeight")
-            grid_height.connect("value-changed", support_model_changed)
+            grid_height.connect("value-changed", self._support_model_changed)
             self.core.add_item("support_grid_height",
                     grid_height.get_value, grid_height.set_value)
             # support grid defaults
@@ -101,8 +100,16 @@ class ModelSupport(pycam.Plugins.PluginBase):
         if self.gui:
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelExtensionsFrame"))
+            self.core.unregister_ui("support_model_type_selector", "none")
+            self.core.unregister_event("model-change-after",
+                    self._support_model_changed)
+            self.core.unregister_event("bounds-changed",
+                    self._support_model_changed)
             self.core.unregister_event("support-model-changed",
                     self.update_support_model)
+
+    def _support_model_changed(self, widget=None):
+        self.core.emit_event("support-model-changed")
 
     def update_support_model(self, widget=None):
         grid_type = self.core.get("support_model_type")

@@ -190,12 +190,13 @@ class EventCore(pycam.Gui.Settings.Settings):
     def unregister_event(self, event, func):
         if event in self.event_handlers:
             removal_list = []
-            for index, item in enumerate(self.event_handlers[event][EVENT_HANDLER_INDEX]):
+            handlers = self.event_handlers[event]
+            for index, item in enumerate(handlers[EVENT_HANDLER_INDEX]):
                 if func == item[HANDLER_FUNC_INDEX]:
                     removal_list.append(index)
             removal_list.reverse()
             for index in removal_list:
-                self.event_handlers[event].pop(index)
+                handlers[EVENT_HANDLER_INDEX].pop(index)
         else:
             log.debug("Trying to unregister an unknown event: %s" % event)
 
@@ -236,6 +237,16 @@ class EventCore(pycam.Gui.Settings.Settings):
             self.ui_sections[section][UI_WIDGET_INDEX] = []
         self.ui_sections[section][UI_FUNC_INDEX] = (add_action, clear_action)
         self._rebuild_ui_section(section)
+
+    def unregister_ui_section(self, section):
+        if section in self.ui_sections:
+            ui_section = self.ui_sections[section]
+            while ui_section[UI_WIDGET_INDEX]:
+                ui_section[UI_WIDGET_INDEX].pop()
+            del self.ui_sections[section]
+        else:
+            log.debug("Trying to unregister a non-existent ui section: %s" % \
+                    str(section))
 
     def _rebuild_ui_section(self, section):
         if section in self.ui_sections:

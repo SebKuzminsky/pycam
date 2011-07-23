@@ -113,6 +113,7 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
                     while len(adjustments) <= index:
                         adjustments.append(0)
                     adjustments[index] = value
+            # TODO: remove these public settings
             self.core.add_item("support_grid_adjustment_value",
                     get_set_grid_adjustment_value, get_set_grid_adjustment_value)
             self.core.register_event("support-model-changed",
@@ -120,6 +121,14 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
             grid_distance_square.set_active(True)
             self.core.set("support_grid_distance_x", 10.0)
         return True
+
+    def teardown(self):
+        if self.gui:
+            self.core.unregister_ui("support_model_type_selector", "grid")
+            self.core.unregister_ui("support_model_settings",
+                    self.gui.get_object("SupportModelGridBox"))
+            self.core.unregister_event("support-model-changed",
+                    self.update_support_model)
 
     def update_support_model(self, widget=None):
         grid_type = self.core.get("support_model_type")

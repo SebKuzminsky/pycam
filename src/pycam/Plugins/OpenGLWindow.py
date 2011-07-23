@@ -86,7 +86,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.initialized = False
             self.busy = False
             self.is_visible = False
-            self._position = [100, 100]
+            self._position = [200, 200]
             toggle_3d = self.gui.get_object("Toggle3DView")
             handler = toggle_3d.connect("toggled", self.toggle_3d_view)
             self._toggle_action_handler = (toggle_3d, handler)
@@ -187,10 +187,13 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 self.context_menu.show_all()
             else:
                 self.context_menu = None
-            self.core.register_event("model-change-after", self.update_model_dimensions)
-            self.core.register_event("visual-item-updated", self.update_model_dimensions)
+            self.core.register_event("model-change-after",
+                    self.update_model_dimensions)
+            self.core.register_event("visual-item-updated",
+                    self.update_model_dimensions)
             self.core.register_event("visual-item-updated", self.update_view)
-            self.core.register_event("visualization-state-changed", self._update_widgets)
+            self.core.register_event("visualization-state-changed",
+                    self._update_widgets)
             # show the window
             self.area.show()
             self.container.show()
@@ -198,7 +201,17 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
-        return True
+        if self.gui:
+            self.window.hide()
+            self.unregister_gtk_accelerator("opengl",
+                    self.gui.get_object("Toggle3DView"))
+            self.core.unregister_event("model-change-after",
+                    self.update_model_dimensions)
+            self.core.unregister_event("visual-item-updated",
+                    self.update_model_dimensions)
+            self.core.unregister_event("visual-item-updated", self.update_view)
+            self.core.unregister_event("visualization-state-changed",
+                    self._update_widgets)
 
     def update_view(self, widget=None, data=None):
         if self.is_visible:

@@ -100,6 +100,10 @@ class Tools(pycam.Plugins.ListPluginBase):
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("ToolBox"))
+            self.core.unregister_event("tool-selection-changed",
+                    self._tool_change)
+            self.core.unregister_event("tool-changed",
+                    self._update_tool_controls)
         self.core.set("tools", None)
         return True
 

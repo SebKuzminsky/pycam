@@ -67,6 +67,8 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
                     self.gui.get_object("ModelExtrusionFrame"))
             self.core.unregister_event("model-change-after",
                     self._update_extrude_widgets)
+            self.core.unregister_event("model-selection-changed",
+                    self._update_extrude_widgets)
 
     def _get_extrudable_models(self):
         models = self.core.get("models").get_selected()

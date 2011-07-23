@@ -45,6 +45,8 @@ class ModelPlaneMirror(pycam.Plugins.PluginBase):
         if self.gui:
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelMirrorBox"))
+            self.core.unregister_event("model-selection-changed",
+                    self._update_plane_widgets)
 
     def _update_plane_widgets(self):
         plane_widget = self.gui.get_object("ModelMirrorBox")

@@ -36,8 +36,6 @@ class ModelScaling(pycam.Plugins.PluginBase):
             self.core.register_ui("model_handling", "Scale", scale_box, -5)
             self.core.register_event("model-change-after",
                     self._update_scale_controls)
-            update_model = lambda widget=None: self.core.emit_event(
-                    "model-change-after")
             scale_percent = self.gui.get_object("ScalePercent")
             scale_button = self.gui.get_object("ScaleModelButton")
             scale_percent.set_value(100)
@@ -48,7 +46,8 @@ class ModelScaling(pycam.Plugins.PluginBase):
             scale_button.connect("clicked", self._scale_model)
             # scale model to an axis dimension
             self.gui.get_object("ScaleDimensionAxis").connect("changed",
-                    update_model)
+                    lambda widget=None: self.core.emit_event(
+                            "model-change-after"))
             scale_dimension_button = self.gui.get_object("ScaleAllAxesButton")
             scale_dimension_control = self.gui.get_object(
                     "ScaleDimensionControl")
@@ -74,6 +73,10 @@ class ModelScaling(pycam.Plugins.PluginBase):
         if self.gui:
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelScaleBox"))
+            self.core.unregister_event("model-change-after",
+                    self._update_scale_controls)
+            self.core.unregister_event("model-selection-changed",
+                    self._update_scale_controls)
 
     def _update_scale_controls(self):
         models = self.core.get("models").get_selected()

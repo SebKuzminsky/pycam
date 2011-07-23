@@ -33,6 +33,7 @@
       <menuitem action="Toggle3DView"/>
       <menuitem action="ToggleLogWindow"/>
       <menuitem action="ToggleProcessPoolWindow"/>
+      <menuitem action="TogglePluginWindow"/>
     </menu>
     <menu action="HelpMenu">
       <menuitem action="HelpUserManual"/>

@@ -50,6 +50,8 @@ class ModelProjection(pycam.Plugins.PluginBase):
         if self.gui:
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelProjectionFrame"))
+            self.core.unregister_event("model-selection-changed",
+                    self._update_controls)
             self.core.unregister_event("model-change-after",
                     self._update_controls)
 

@@ -70,6 +70,7 @@ class PluginBase(object):
             else:
                 self.log.debug("Failed to locate icon: %s" % self.ICONS[key])
                 self.ICONS[key] = None
+        self.enabled = True
 
     def setup(self):
         raise NotImplementedError(("Module %s (%s) does not implement " + \
@@ -96,12 +97,19 @@ class PluginBase(object):
         actiongroup.add_action(action)
         self.core.get("gtk-uimanager").insert_action_group(actiongroup, pos=-1)
 
+    def unregister_gtk_accelerator(self, groupname, action):
+        actiongroup = gtk.ActionGroup(groupname)
+        actiongroup.remove_action(action)
+        if len(actiongroup.list_actions()) == 0:
+            self.core.get("gtk-uimanager").remove_action_group(actiongroup)
+
 
 class PluginManager(object):
 
     def __init__(self, core):
         self.core = core
         self.modules = {}
+        self.core.set("plugin-manager", self)
 
     def import_plugins(self, directory=None):
         if directory is None:
@@ -163,9 +171,74 @@ class PluginManager(object):
                 _log.info("Failed to setup plugin '%s'" % str(plugin_name))
             else:
                 self.modules[plugin_name] = new_plugin
+                self.core.emit_event("plugin-list-changed")
         except NotImplementedError, err_msg:
             _log.info("Skipping incomplete plugin '%s': %s" % \
                     (plugin_name, err_msg))
+
+    def get_plugin(self, name):
+        long_name = "%s.%s" % (name, name) 
+        if name in self.modules:
+            return self.modules[name]
+        elif long_name in self.modules:
+            return self.modules[long_name]
+        else:
+            raise KeyError("Plugin '%s' is not available" % name)
+
+    def enable_plugin(self, name):
+        plugin = self.get_plugin(name)
+        if plugin.enabled:
+            self.log.debug("Refused to enable an active plugin: %s" % name)
+            return
+        else:
+            plugin.enabled = plugin.setup()
+
+    def disable_plugin(self, name):
+        plugin = self.get_plugin(name)
+        if not plugin.enabled:
+            self.log.debug("Refused to disable an active plugin: %s" % name)
+            return
+        else:
+            plugin.teardown()
+            plugin.enabled = False
+
+    def get_plugin_state(self, name):
+        plugin = self.get_plugin(name)
+        return plugin.enabled
+
+    def get_plugins(self):
+        return list(self.modules.values())
+
+    def get_plugin_names(self):
+        names = self.modules.keys()
+        names.sort()
+        return names
+
+    def is_plugin_required(self, name):
+        long_name = "%s.%s." % (name, name)
+        for plugin in self.modules.values():
+            if not plugin.enabled:
+                continue
+            if (name in plugin.DEPENDS) or \
+                   (long_name in plugin.DEPENDS):
+                break
+        else:
+            return False
+        return True
+
+    def get_plugin_missing_dependencies(self, name):
+        plugin = self.get_plugin(name)
+        missing = []
+        for depend in plugin.DEPENDS:
+            long_depend = "%s.%s" % (depend, depend)
+            if (depend in self.modules) and self.modules[depend].enabled:
+                continue
+            elif (long_depend in self.modules) and \
+                    (self.modules[long_depend].enabled):
+                continue
+            else:
+                missing.append(depend)
+        return missing
 
 
 class ListPluginBase(PluginBase, list):
