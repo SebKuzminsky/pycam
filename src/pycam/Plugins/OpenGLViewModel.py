@@ -36,11 +36,19 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
         self._gtk = gtk
         self._GL = OpenGL.GL
         self.core.register_event("visualize-items", self.draw_model)
+        self.core.emit_event("visual-item-updated")
+        self._cache = {}
         return True
 
     def teardown(self):
         self.core.unregister_event("visualize-items", self.draw_model)
-        return True
+        self.core.emit_event("visual-item-updated")
+
+    def _get_cache_key(self, model, *args, **kwargs):
+        if hasattr(model, "uuid"):
+            return "%s - %s - %s" % (model.uuid, repr(args), repr(kwargs))
+        else:
+            return None
 
     def draw_model(self):
         GL = self._GL
@@ -59,5 +67,27 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
                         GL.GL_AMBIENT_AND_DIFFUSE, color)
                 # we need to wait until the color change is active
                 GL.glFinish()
-                model.to_OpenGL(show_directions=self.core.get("show_directions"))
+                key = self._get_cache_key(model, color=color,
+                        show_directions=self.core.get("show_directions"))
+                do_caching = not key is None
+                if do_caching and not key in self._cache:
+                    # Rendering a display list takes less than 5% of the time for a
+                    # complete rebuild.
+                    list_index = GL.glGenLists(1)
+                    if list_index > 0:
+                        # somehow "GL_COMPILE_AND_EXECUTE" fails - we render it later
+                        GL.glNewList(list_index, GL.GL_COMPILE)
+                    else:
+                        do_caching = False
+                    # next: compile an OpenGL display list
+                if not do_caching or (not key in self._cache):
+                    model.to_OpenGL(show_directions=self.core.get("show_directions"))
+                if do_caching:
+                    if not key in self._cache:
+                        GL.glEndList()
+                        GL.glCallList(list_index)
+                        self._cache[key] = list_index
+                    else:
+                        # render a previously compiled display list
+                        GL.glCallList(self._cache[key])
 
