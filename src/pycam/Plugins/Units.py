@@ -23,7 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 
-class Toolpaths(pycam.Plugins.PluginBase):
+class Units(pycam.Plugins.PluginBase):
 
     UI_FILE = "units.ui"
 

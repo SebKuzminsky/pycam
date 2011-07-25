@@ -55,10 +55,14 @@ class Clipboard(pycam.Plugins.PluginBase):
             self.copy_action.connect("activate", self.copy_model_to_clipboard)
             self.register_gtk_accelerator("clipboard", self.copy_action,
                     "<Control>c", "CopyModelToClipboard")
+            self.core.register_ui("edit_menu", "CopyModelToClipboard",
+                    self.copy_action, 20)
             self.paste_action = self.gui.get_object("PasteModelFromClipboard")
             self.paste_action.connect("activate", self.paste_model_from_clipboard)
             self.register_gtk_accelerator("clipboard", self.paste_action,
                     "<Control>v", "PasteModelFromClipboard")
+            self.core.register_ui("edit_menu", "PasteModelFromClipboard",
+                    self.paste_action, 25)
             self._update_clipboard_widget()
         return True
 

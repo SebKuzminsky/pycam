@@ -31,10 +31,12 @@ class OpenGLViewBounds(pycam.Plugins.PluginBase):
         import OpenGL.GL
         self._GL = OpenGL.GL
         self.core.register_event("visualize-items", self.draw_bounds)
+        self.core.emit_event("visual-item-updated")
         return True
 
     def teardown(self):
         self.core.unregister_event("visualize-items", self.draw_bounds)
+        self.core.emit_event("visual-item-updated")
 
     def draw_bounds(self):
         GL = self._GL

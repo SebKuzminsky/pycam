@@ -41,10 +41,11 @@ class Log(pycam.Plugins.PluginBase):
             log_action.connect("toggled", self.toggle_log_window)
             self.register_gtk_accelerator("log", log_action,
                     "<Control>l", "ToggleLogWindow")
+            self.core.register_ui("view_menu", "ToggleLogWindow", log_action, 100)
             # status bar
             self.status_bar = self.gui.get_object("StatusBar")
-            self.gui.get_object("StatusBarEventBox").connect("button-press-event",
-                    self.toggle_log_window)
+            self.gui.get_object("StatusBarEventBox").connect(
+                    "button-press-event", self.toggle_log_window)
             event_bar = self.gui.get_object("StatusBarEventBox")
             event_bar.unparent()
             self.core.register_ui("main_window", "Status", event_bar, 100)
@@ -67,10 +68,13 @@ class Log(pycam.Plugins.PluginBase):
     def teardown(self):
         if self.gui:
             self.log_window.hide()
-            self.unregister_gtk_accelerator("log",
-                    self.gui.get_object("ToggleLogWindow"))
+            log_action = self.gui.get_object("ToggleLogWindow")
+            self.core.unregister_ui("view_menu", log_action)
+            self.unregister_gtk_accelerator("log", log_action)
             self.core.unregister_ui("main_window",
                     self.gui.get_object("StatusBarEventBox"))
+            self.core.unregister_ui("view_menu",
+                    self.gui.get_object("ToggleLogWindow"))
             # TODO: disconnect the log handler
 
     def add_log_message(self, title, message, record=None):

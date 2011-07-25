@@ -6,16 +6,10 @@
       <menuitem action="SaveModel"/>
       <menuitem action="SaveAsModel"/>
       <separator />
-      <menuitem action="ExportGCodeVisible"/>
-      <menuitem action="ExportGCodeAll"/>
-      <separator />
-      <menuitem action="Quit"/>
     </menu>
     <menu action="EditMenu">
       <menuitem action="UndoButton"/>
       <separator />
-      <menuitem action="CopyModelToClipboard"/>
-      <menuitem action="PasteModelFromClipboard"/>
     </menu>
     <menu action="SettingsMenu">
       <menuitem action="LoadTaskSettings"/>
@@ -26,15 +20,7 @@
       <separator />
       <menuitem action="GeneralSettings"/>
     </menu>
-    <menu action="ExtrasMenu">
-      <menuitem action="ShowFontDialog"/>
-    </menu>
-    <menu action="WindowMenu">
-      <menuitem action="Toggle3DView"/>
-      <menuitem action="ToggleLogWindow"/>
-      <menuitem action="ToggleProcessPoolWindow"/>
-      <menuitem action="TogglePluginWindow"/>
-    </menu>
+    <menu action="ViewMenu" />
     <menu action="HelpMenu">
       <menuitem action="HelpUserManual"/>
       <menuitem action="HelpIntroduction"/>

@@ -201,7 +201,7 @@ class EventCore(pycam.Gui.Settings.Settings):
             log.debug("Trying to unregister an unknown event: %s" % event)
 
     def emit_event(self, event, *args, **kwargs):
-        log.debug("Event emitted: %s" % str(event))
+        log.debug2("Event emitted: %s" % str(event))
         if event in self.event_handlers:
             if self.event_handlers[event][EVENT_BLOCKER_INDEX] != 0:
                 return
@@ -290,6 +290,7 @@ class EventCore(pycam.Gui.Settings.Settings):
             removal_list.reverse()
             for index in removal_list:
                 ui_section[UI_WIDGET_INDEX].pop(index)
+            self._rebuild_ui_section(section)
         else:
             log.debug("Trying to unregister unknown ui section: %s" % \
                     str(section))
@@ -477,7 +478,7 @@ class ProjectGui(object):
         self.settings.add_item("cutter", lambda: self.cutter)
         main_tab = self.gui.get_object("MainTabs")
         def clear_main_tab():
-            for index in range(main_tab.get_n_pages()):
+            while main_tab.get_n_pages() > 0:
                 main_tab.remove_page(0)
         def add_main_tab_item(item, name):
             main_tab.append_page(item, gtk.Label(name))
@@ -730,6 +731,40 @@ class ProjectGui(object):
             self.gui.get_object("OpenRecentModel").set_visible(False)
         # load the menubar and connect functions to its items
         self.menubar = uimanager.get_widget("/MenuBar")
+        # view menu
+        menu_merges = {}
+        def clear_menu(menu_key):
+            for merge in menu_merges.get(menu_key, []):
+                uimanager.remove_ui(merge)
+        def append_menu_item(menu_key, base_path, widget, name):
+            merge_id = uimanager.new_merge_id()
+            if widget:
+                action_group = widget.props.action_group
+                if not action_group in uimanager.get_action_groups():
+                    uimanager.insert_action_group(action_group, -1)
+                widget_name = widget.get_name()
+                item_type = gtk.UI_MANAGER_MENUITEM
+            else:
+                widget_name = name
+                item_type = gtk.UI_MANAGER_SEPARATOR
+            uimanager.add_ui(merge_id, base_path, name, widget_name, item_type,
+                    False)
+            if not menu_key in menu_merges:
+                menu_merges[menu_key] = []
+            menu_merges[menu_key].append(merge_id)
+        def get_menu_funcs(menu_key, base_path):
+            append_func = lambda widget, name: \
+                    append_menu_item(menu_key, base_path, widget, name)
+            clear_func = lambda: clear_menu(menu_key)
+            return append_func, clear_func
+        for ui_name, base_path in (("view_menu", "/MenuBar/ViewMenu"),
+                ("file_menu", "/MenuBar/FileMenu"),
+                ("edit_menu", "/MenuBar/EditMenu")):
+            append_func, clear_func = get_menu_funcs(ui_name, base_path)
+            self.settings.register_ui_section(ui_name, append_func, clear_func)
+        self.settings.register_ui("file_menu", "Quit",
+                self.gui.get_object("Quit"), 100)
+        self.settings.register_ui("file_menu", "QuitSeparator", None, 95)
         self.settings.register_ui("main_window", "Main", self.menubar, -100)
         # initialize plugins
         self.plugin_manager = pycam.Plugins.PluginManager(core=self.settings)

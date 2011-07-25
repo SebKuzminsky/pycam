@@ -92,6 +92,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self._toggle_action_handler = (toggle_3d, handler)
             self.register_gtk_accelerator("opengl", toggle_3d,
                     "<Control><Shift>v", "ToggleOpenGLView")
+            self.core.register_ui("view_menu", "ViewOpenGL", toggle_3d, -20)
             self.mouse = {"start_pos": None, "button": None,
                     "event_timestamp": 0, "last_timestamp": 0,
                     "pressed_pos": None, "pressed_timestamp": 0,
@@ -197,14 +198,17 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # show the window
             self.area.show()
             self.container.show()
-            self.show()
+            toggle_3d.set_active(True)
+            self.core.emit_event("visual-item-updated")
         return True
 
     def teardown(self):
         if self.gui:
             self.window.hide()
-            self.unregister_gtk_accelerator("opengl",
-                    self.gui.get_object("Toggle3DView"))
+            toggle_3d = self.gui.get_object("Toggle3DView")
+            self.core.unregister_ui("view_menu", toggle_3d)
+            self.unregister_gtk_accelerator("opengl", toggle_3d)
+            self.core.unregister_ui("view_menu", toggle_3d)
             self.core.unregister_event("model-change-after",
                     self.update_model_dimensions)
             self.core.unregister_event("visual-item-updated",
@@ -212,6 +216,9 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.core.unregister_event("visual-item-updated", self.update_view)
             self.core.unregister_event("visualization-state-changed",
                     self._update_widgets)
+            # the area will be created during setup again
+            self.container.remove(self.area)
+            self.area = None
 
     def update_view(self, widget=None, data=None):
         if self.is_visible:

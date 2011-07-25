@@ -10,7 +10,6 @@
     <property name="destroy_with_parent">True</property>
     <property name="icon_name">accessories-character-map</property>
     <property name="type_hint">dialog</property>
-    <property name="transient_for">ProjectWindow</property>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox8">
         <property name="visible">True</property>

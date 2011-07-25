@@ -116,8 +116,8 @@
     <property name="label">_Save Model</property>
     <property name="tooltip">Save the current model to the STL file.</property>
   </object>
-  <object class="GtkAction" id="WindowMenu">
-    <property name="label">_Windows</property>
+  <object class="GtkAction" id="ViewMenu">
+    <property name="label">_View</property>
   </object>
   <object class="GtkAction" id="SaveAsModel">
     <property name="label">Save Model _as ...</property>
@@ -2014,9 +2014,6 @@ You should have received a copy of the GNU General Public License along with thi
   </object>
   <object class="GtkAction" id="HelpServerMode">
     <property name="label">Server Mode</property>
-  </object>
-  <object class="GtkAction" id="ExtrasMenu">
-    <property name="label">E_xtras</property>
   </object>
   <object class="GtkAction" id="EditMenu">
     <property name="label">_Edit</property>

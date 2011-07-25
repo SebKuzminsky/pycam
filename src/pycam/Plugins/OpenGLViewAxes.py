@@ -34,10 +34,12 @@ class OpenGLViewAxes(pycam.Plugins.PluginBase):
         self._GL = OpenGL.GL
         self._GLUT = OpenGL.GLUT
         self.core.register_event("visualize-items", self.draw_axes)
+        self.core.emit_event("visual-item-updated")
         return True
 
     def teardown(self):
         self.core.unregister_event("visualize-items", self.draw_axes)
+        self.core.emit_event("visual-item-updated")
 
     def draw_axes(self):
         if not self.core.get("show_axes"):

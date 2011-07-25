@@ -28,7 +28,7 @@ import gobject
 import pycam.Plugins
 
 
-class Toolpaths(pycam.Plugins.PluginBase):
+class ParallelProcessing(pycam.Plugins.PluginBase):
 
     UI_FILE = "parallel_processing.ui"
 
@@ -88,6 +88,8 @@ class Toolpaths(pycam.Plugins.PluginBase):
             toggle_button.connect("toggled", self.toggle_process_pool_window)
             self.register_gtk_accelerator("processes", toggle_button,
                     None, "ToggleProcessPoolWindow")
+            self.core.register_ui("view_menu", "ToggleProcessPoolWindow",
+                    toggle_button, 40)
         return True
 
     def teardown(self):
@@ -95,8 +97,9 @@ class Toolpaths(pycam.Plugins.PluginBase):
             self.process_pool_window.hide()
             self.core.unregister_ui("preferences",
                     self.gui.get_object("MultiprocessingFrame"))
-            self.unregister_gtk_accelerator("processes",
-                    self.gui.get_object("ToggleProcessPoolWindow"))
+            toggle_button = self.gui.get_object("ToggleProcessPoolWindow")
+            self.core.unregister_ui("view_menu", toggle_button)
+            self.unregister_gtk_accelerator("processes", toggle_button)
 
     def toggle_process_pool_window(self, widget=None, value=None, action=None):
         toggle_process_pool_checkbox = self.gui.get_object("ToggleProcessPoolWindow")

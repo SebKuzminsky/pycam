@@ -52,6 +52,7 @@ class PluginSelector(pycam.Plugins.PluginBase):
             action.connect("toggled", self.toggle_plugin_window)
             self.register_gtk_accelerator("plugins", action, None,
                     "TogglePluginWindow")
+            self.core.register_ui("view_menu", "TogglePluginWindow", action, 60)
             self.gui.get_object("PluginsEnabledCell").connect("toggled",
                     self.toggle_plugin_state)
             self.core.register_event("plugin-list-changed",
@@ -62,6 +63,8 @@ class PluginSelector(pycam.Plugins.PluginBase):
     def teardown(self):
         if self.gui:
             self.plugin_window.hide()
+            action = self.gui.get_object("TogglePluginWindow")
+            self.core.register_ui("view_menu", action)
             self.core.unregister_event("plugin-list-changed",
                     self._update_plugin_model)
 
@@ -106,7 +109,7 @@ class PluginSelector(pycam.Plugins.PluginBase):
                     depends_markup.append(depend)
             model.append((name, "Beschreibung", enabled,
                     os.linesep.join(depends_markup), satisfied,
-                    str(plugin.__class__)))
+                    "Hint"))
         self.gui.get_object("PluginsDescriptionColumn").queue_resize()
         self.gui.get_object("PluginsTable").queue_resize()
 

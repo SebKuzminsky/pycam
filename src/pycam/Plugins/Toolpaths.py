@@ -68,10 +68,13 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             self.register_gtk_accelerator("toolpaths", export_all,
                     "<Control><Shift>e", "ExportGCodeAll")
             export_all.connect("activate", self.save_toolpath, False)
+            self.core.register_ui("file_menu", "ExportGCodeAll", export_all, 60)
             export_selected = self.gui.get_object("ExportGCodeSelected")
             self.register_gtk_accelerator("toolpaths", export_selected,
                     None, "ExportGCodeSelected")
             export_selected.connect("activate", self.save_toolpath, True)
+            self.core.register_ui("file_menu", "ExportGCodeSelected",
+                    export_selected, 65)
             # model handling
             def update_model():
                 if not hasattr(self, "_model_cache"):

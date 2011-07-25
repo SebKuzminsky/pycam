@@ -50,6 +50,7 @@ def init_logger(log, logfilename=None):
     console_output.addFilter(RepetitionsFilter(console_output))
     log.addHandler(console_output)
     log.setLevel(logging.INFO)
+    log.debug2 = lambda *args, **kwargs: log.log(logging.DEBUG - 1, *args, **kwargs)
     # store the latest log items in a queue (for pushing them into new handlers)
     buffer_handler = BufferHandler()
     buffer_handler.addFilter(RepetitionsFilter(buffer_handler))

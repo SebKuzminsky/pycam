@@ -100,7 +100,8 @@ class PluginBase(object):
     def unregister_gtk_accelerator(self, groupname, action):
         actiongroup = gtk.ActionGroup(groupname)
         actiongroup.remove_action(action)
-        if len(actiongroup.list_actions()) == 0:
+        if (len(actiongroup.list_actions()) == 0) and (actiongroup in \
+                self.core.get("gtk-uimanager").get_action_groups()):
             self.core.get("gtk-uimanager").remove_action_group(actiongroup)
 
 

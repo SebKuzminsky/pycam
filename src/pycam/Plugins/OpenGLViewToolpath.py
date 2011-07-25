@@ -31,10 +31,12 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
         import OpenGL.GL
         self._GL = OpenGL.GL
         self.core.register_event("visualize-items", self.draw_toolpath)
+        self.core.emit_event("visual-item-updated")
         return True
 
     def teardown(self):
         self.core.unregister_event("visualize-items", self.draw_toolpath)
+        self.core.emit_event("visual-item-updated")
 
     def draw_toolpath(self):
         if self.core.get("show_toolpath") \

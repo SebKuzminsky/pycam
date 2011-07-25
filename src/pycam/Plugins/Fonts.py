@@ -82,6 +82,10 @@ class Fonts(pycam.Plugins.PluginBase):
             self.register_gtk_accelerator("fonts", font_action,
                     "<Control><Shift>t", "ShowFontDialog")
             font_action.connect("activate", self.toggle_font_dialog_window)
+            self.core.register_ui("edit_menu", "ShowFontDialogSeparator",
+                    None, 55)
+            self.core.register_ui("edit_menu", "ShowFontDialog", font_action,
+                    60)
             # store window position
             self._font_dialog_window_visible = False
             self._font_dialog_window_position = None
@@ -91,8 +95,9 @@ class Fonts(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.add_item("fonts", None)
         if self.gui:
-            self.unregister_gtk_accelerator("fonts",
-                    self.gui.get_object("ShowFontDialog"))
+            font_toggle = self.gui.get_object("ShowFontDialog")
+            self.core.unregister_ui("edit_menu", font_toggle)
+            self.unregister_gtk_accelerator("fonts", font_toggle)
 
     def toggle_font_dialog_window(self, widget=None, event=None, state=None):
         # only "delete-event" uses four arguments
