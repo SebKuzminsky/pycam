@@ -29,7 +29,7 @@ import pycam.Plugins
 class ModelSupportGrid(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_support_grid.ui"
-    DEPENDS = ["Models"]
+    DEPENDS = ["Models", "ModelSupport"]
 
     def setup(self):
         if self.gui:

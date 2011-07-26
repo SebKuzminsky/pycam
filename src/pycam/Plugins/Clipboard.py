@@ -71,7 +71,9 @@ class Clipboard(pycam.Plugins.PluginBase):
             self.core.unregister_event("model-selection-changed",
                     self._update_clipboard_widget)
             self.unregister_gtk_accelerator("clipboard", self.copy_action)
+            self.core.unregister_ui("edit_menu", self.copy_action)
             self.unregister_gtk_accelerator("clipboard", self.paste_action)
+            self.core.unregister_ui("edit_menu", self.paste_action)
             self.core.set("clipboard-set", None)
             # TODO: check if this disconnects the clipboard-change-handler
             self.clipboard = None
