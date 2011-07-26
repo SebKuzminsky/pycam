@@ -86,6 +86,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.initialized = False
             self.busy = False
             self.is_visible = False
+            self._last_view = VIEWS["reset"]
             self._position = [200, 200]
             toggle_3d = self.gui.get_object("Toggle3DView")
             handler = toggle_3d.connect("toggled", self.toggle_3d_view)
@@ -195,6 +196,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.core.register_event("visual-item-updated", self.update_view)
             self.core.register_event("visualization-state-changed",
                     self._update_widgets)
+            self.core.register_event("model-list-changed",
+                    self._restore_latest_view)
             # show the window
             self.area.show()
             self.container.show()
@@ -298,6 +301,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 ord("L"): (-1, 0),
         }
         if key_string and (key_string in '1234567'):
+            self._last_view = None
             names = ["reset", "front", "back", "left", "right", "top", "bottom"]
             index = '1234567'.index(key_string)
             self.rotate_view(view=VIEWS[names[index]])
@@ -319,12 +323,14 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.glsetup()
             self.paint()
         elif key_string in ("+", "-"):
+            self._last_view = None
             if key_string == "+":
                 self.camera.zoom_in()
             else:
                 self.camera.zoom_out()
             self._paint_ignore_busy()
         elif keyval in move_keys_dict.keys():
+            self._last_view = None
             move_x, move_y = move_keys_dict[keyval]
             if get_state() & gtk.gdk.SHIFT_MASK:
                 # shift key pressed -> rotation
@@ -483,6 +489,17 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             return result
         return gtkgl_functionwrapper_function
 
+    def _restore_latest_view(self):
+        """ this function is called whenever the model list changes
+
+        The function will restore the latest selected view - including
+        automatic distance adjustment. The latest view is always reset to
+        None, if any manual change (e.g. panning via mouse or keyboard)
+        occoured.
+        """
+        if self._last_view:
+            self.rotate_view(view=self._last_view)
+
     @check_busy
     @gtkgl_functionwrapper
     def context_menu_handler(self, widget, event):
@@ -504,6 +521,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         shift key: horizontal pan instead of vertical
         control key: zoom
         """
+        remember_last_view = self._last_view
+        self._last_view = None
         try:
             modifier_state = event.get_state()
         except AttributeError:
@@ -533,6 +552,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.camera.shift_view(y_dist=-1)
         else:
             # no interesting event -> no re-painting
+            self._last_view = remember_last_view
             return
         self._paint_ignore_busy()
 
@@ -557,6 +577,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             if event.get_time() - self.mouse["event_timestamp"] < 40:
                 return
             elif state & self.mouse["button"] & BUTTON_ZOOM:
+                self._last_view = None
                 # the start button is still active: update the view
                 start_x, start_y = self.mouse["start_pos"]
                 self.mouse["start_pos"] = [x, y]
@@ -573,6 +594,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 self._paint_ignore_busy()
             elif (state & self.mouse["button"] & BUTTON_MOVE) \
                     or (state & self.mouse["button"] & BUTTON_ROTATE):
+                self._last_view = None
                 start_x, start_y = self.mouse["start_pos"]
                 self.mouse["start_pos"] = [x, y]
                 if (state & BUTTON_MOVE):
@@ -601,10 +623,12 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
     @gtkgl_functionwrapper
     @gtkgl_refresh
     def rotate_view(self, widget=None, view=None):
+        if view:
+            self._last_view = view.copy()
         self.camera.set_view(view)
 
     def reset_view(self):
-        self.rotate_view(None, None)
+        self.rotate_view(view=None)
 
     @check_busy
     @gtkgl_functionwrapper
