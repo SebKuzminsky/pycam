@@ -139,8 +139,11 @@ class Bounds(pycam.Plugins.ListPluginBase):
                     self._switch_bounds)
             self.core.register_event("bounds-changed",
                     self._store_bounds_settings)
+            self.core.register_event("bounds-changed",
+                    self._trigger_table_update)
             self.core.register_event("model-list-changed",
                     self._update_model_list)
+            self._trigger_table_update()
             self._switch_bounds()
             self._update_model_list()
         self.core.set("bounds", self)
@@ -195,6 +198,21 @@ class Bounds(pycam.Plugins.ListPluginBase):
             this_model = all_models[model_ids.index(model_id)]
             cell.set_property("text", all_models.get_attr(this_model, "name"))
 
+    def _render_bounds_size(self, column, cell, model, m_iter):
+        path = model.get_path(m_iter)
+        bounds = self[path[0]]
+        low, high = bounds.get_absolute_limits()
+        if None in low or None in high:
+            text = ""
+        else:
+            text = "%g x %g x %g" % tuple([high[i] - low[i] for i in range(3)])
+        cell.set_property("text", text)
+
+    def _trigger_table_update(self):
+        # trigger an update of the table - ugly!
+        self.gui.get_object("SizeColumn").set_cell_data_func(
+                self.gui.get_object("SizeCell"), self._render_bounds_size)
+
     def _update_model_list(self):
         model_ids = [id(m) for m in self.core.get("models")]
         model_list = self._modelview.get_model()
@@ -244,14 +262,9 @@ class Bounds(pycam.Plugins.ListPluginBase):
             custom_label.hide()
             model_list.show()
             percent_switch.show()
-            if self.get_selected_models():
-                controls_x.show()
-                controls_y.show()
-                controls_z.show()
-            else:
-                controls_x.hide()
-                controls_y.hide()
-                controls_z.hide()
+            controls_x.show()
+            controls_y.show()
+            controls_z.show()
         else:
             relative_label.hide()
             custom_label.show()
@@ -399,7 +412,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         current_bounds_index = self.get_selected(index=True)
         if current_bounds_index is None:
             current_bounds_index = 0
-        new_bounds = BoundsDict()
+        new_bounds = BoundsDict(self.core)
         self.append(new_bounds)
         self.select(new_bounds)
 
@@ -412,8 +425,9 @@ class Bounds(pycam.Plugins.ListPluginBase):
 
 class BoundsDict(dict):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, core, *args, **kwargs):
         super(BoundsDict, self).__init__(*args, **kwargs)
+        self.core = core
         self.update({
                 "BoundaryLowX": 0,
                 "BoundaryLowY": 0,
@@ -433,8 +447,12 @@ class BoundsDict(dict):
         get_low_value = lambda axis: self["BoundaryLow%s" % "XYZ"[axis]]
         get_high_value = lambda axis: self["BoundaryHigh%s" % "XYZ"[axis]]
         if self["TypeRelativeMargin"]:
+            # use the currently selected models or all visible ones
+            models = self["Models"]
+            if not models:
+                models = self.core.get("models").get_visible()
             low_model, high_model = pycam.Geometry.Model.get_combined_bounds(
-                    self["Models"])
+                    models)
             if None in low_model or None in high_model:
                 # zero-sized models -> no action
                 return default

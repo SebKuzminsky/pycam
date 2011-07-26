@@ -102,6 +102,7 @@
                 <child>
                   <object class="GtkTreeViewColumn" id="DescriptionColumn">
                     <property name="title">Name</property>
+                    <property name="expand">True</property>
                     <child>
                       <object class="GtkCellRendererText" id="NameCell">
                         <property name="editable">True</property>
@@ -109,6 +110,15 @@
                       <attributes>
                         <attribute name="text">1</attribute>
                       </attributes>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="SizeColumn">
+                    <property name="title">Size</property>
+                    <property name="expand">True</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="SizeCell"/>
                     </child>
                   </object>
                 </child>
@@ -740,23 +750,60 @@
                         <property name="visible">True</property>
                         <property name="spacing">3</property>
                         <child>
-                          <object class="GtkTreeView" id="BoundsModelsTable">
+                          <object class="GtkVBox" id="vbox2">
                             <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="model">BoundsModelsList</property>
-                            <property name="headers_visible">False</property>
-                            <property name="headers_clickable">False</property>
-                            <property name="search_column">0</property>
+                            <property name="orientation">vertical</property>
                             <child>
-                              <object class="GtkTreeViewColumn" id="ModelDescriptionColumn">
-                                <property name="title">Model</property>
+                              <object class="GtkViewport" id="viewport2">
+                                <property name="visible">True</property>
+                                <property name="resize_mode">queue</property>
+                                <property name="shadow_type">etched-out</property>
                                 <child>
-                                  <object class="GtkCellRendererText" id="ModelNameCell"/>
+                                  <object class="GtkTreeView" id="BoundsModelsTable">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="model">BoundsModelsList</property>
+                                    <property name="headers_visible">False</property>
+                                    <property name="headers_clickable">False</property>
+                                    <property name="search_column">0</property>
+                                    <child>
+                                      <object class="GtkTreeViewColumn" id="ModelDescriptionColumn">
+                                        <property name="title">Model</property>
+                                        <child>
+                                          <object class="GtkCellRendererText" id="ModelNameCell"/>
+                                        </child>
+                                      </object>
+                                    </child>
+                                  </object>
                                 </child>
                               </object>
+                              <packing>
+                                <property name="padding">3</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="label4">
+                                <property name="visible">True</property>
+                                <property name="xalign">0</property>
+                                <property name="yalign">0</property>
+                                <property name="xpad">3</property>
+                                <property name="ypad">3</property>
+                                <property name="label" translatable="yes">Do not select a model if you want to use all models involved in this task.</property>
+                                <property name="wrap">True</property>
+                                <property name="width_chars">21</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">1</property>
+                              </packing>
                             </child>
                           </object>
                           <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="padding">3</property>
                             <property name="position">0</property>
                           </packing>
                         </child>
@@ -764,7 +811,8 @@
                           <object class="GtkLabel" id="MarginTypeRelativeLabel">
                             <property name="visible">True</property>
                             <property name="xalign">0</property>
-                            <property name="xpad">2</property>
+                            <property name="xpad">3</property>
+                            <property name="ypad">3</property>
                             <property name="label" translatable="yes">&lt;i&gt;Relative margins are given in percent respectively mm/inch relative to the size of the selected models. Positive values create a margin around the model. Negative values create a bounding box that is smaller than the models.&lt;/i&gt;</property>
                             <property name="use_markup">True</property>
                             <property name="wrap">True</property>
@@ -788,6 +836,7 @@
                 </child>
               </object>
               <packing>
+                <property name="expand">False</property>
                 <property name="position">1</property>
               </packing>
             </child>
@@ -795,7 +844,8 @@
               <object class="GtkLabel" id="MarginTypeCustomLabel">
                 <property name="visible">True</property>
                 <property name="xalign">0</property>
-                <property name="xpad">2</property>
+                <property name="xpad">3</property>
+                <property name="ypad">3</property>
                 <property name="label" translatable="yes">&lt;i&gt;These values are absolute coordinates of the processing bounding box. They do not depend on any model.&lt;/i&gt;</property>
                 <property name="use_markup">True</property>
                 <property name="wrap">True</property>
