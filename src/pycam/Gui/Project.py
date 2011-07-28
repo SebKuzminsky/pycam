@@ -731,7 +731,7 @@ class ProjectGui(object):
             self.gui.get_object("OpenRecentModel").set_visible(False)
         # load the menubar and connect functions to its items
         self.menubar = uimanager.get_widget("/MenuBar")
-        # view menu
+        # dict of all merge-ids
         menu_merges = {}
         def clear_menu(menu_key):
             for merge in menu_merges.get(menu_key, []):
@@ -766,16 +766,16 @@ class ProjectGui(object):
                 self.gui.get_object("Quit"), 100)
         self.settings.register_ui("file_menu", "QuitSeparator", None, 95)
         self.settings.register_ui("main_window", "Main", self.menubar, -100)
+        # some more initialization
+        self.reset_preferences()
+        self.load_preferences()
+        self.load_task_settings()
         # initialize plugins
         self.plugin_manager = pycam.Plugins.PluginManager(core=self.settings)
         self.plugin_manager.import_plugins()
         # fallback - in case of a failure when opening a model file
         model = pycam.Importers.TestModel.get_test_model()
         self.settings.get("models").append(model)
-        # some more initialization
-        self.reset_preferences()
-        self.load_preferences()
-        self.load_task_settings()
         # Without this "gkt.main_iteration" loop the task settings file
         # control would not be updated in time.
         while gtk.events_pending():
@@ -909,7 +909,8 @@ class ProjectGui(object):
             bool(self.last_task_settings_uri and \
                 self.last_task_settings_uri.is_writable()))
         # TODO: choose all models
-        models = self.settings.get("models").get_selected()
+        models = self.settings.get("models") and \
+                self.settings.get("models").get_selected()
         save_as_possible = bool(models) and models[0].is_export_supported()
         self.gui.get_object("SaveAsModel").set_sensitive(save_as_possible)
         save_possible = bool(self.last_model_uri and save_as_possible and \
@@ -1267,7 +1268,7 @@ class ProjectGui(object):
         # flush all tables (without re-assigning new objects)
         for one_list_name in ("tools", "processes", "bounds", "tasks"):
             one_list = self.settings.get(one_list_name)
-            while len(one_list) > 0:
+            while one_list:
                 one_list.pop()
         # TODO: load default tools/processes/bounds
 
