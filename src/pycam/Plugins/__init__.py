@@ -54,7 +54,9 @@ class PluginBase(object):
                 self.gui = gtk.Builder()
                 try:
                     self.gui.add_from_file(gtk_build_file)
-                except RuntimeError:
+                except RuntimeError, err_msg:
+                    self.log.info("Failed to import UI file (%s): %s" % \
+                            (gtk_build_file, err_msg))
                     self.gui = None
         for key in self.ICONS:
             icon_location = pycam.Utils.locations.get_ui_file_location(
