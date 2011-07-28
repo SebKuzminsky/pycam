@@ -129,9 +129,11 @@
     <property name="border_width">5</property>
     <property name="title" translatable="yes">PyCAM Preferences</property>
     <property name="role">pycam-preferences</property>
+    <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
     <property name="icon_name">preferences-desktop</property>
     <property name="type_hint">normal</property>
+    <property name="transient_for">ProjectWindow</property>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox1">
         <property name="visible">True</property>
@@ -1892,6 +1894,7 @@ Hotkey: &lt;p&gt;</property>
     <property name="window_position">center-on-parent</property>
     <property name="type_hint">normal</property>
     <property name="gravity">center</property>
+    <property name="transient_for">ProjectWindow</property>
     <property name="program_name">PyCAM</property>
     <property name="version">0.1</property>
     <property name="copyright" translatable="yes">Copyright &#xA9; 2008-2010 Lode Leroy

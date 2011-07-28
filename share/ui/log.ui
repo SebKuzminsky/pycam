@@ -16,6 +16,7 @@
     <property name="border_width">5</property>
     <property name="title" translatable="yes">PyCAM event log</property>
     <property name="role">pycam-log</property>
+    <property name="window_position">center</property>
     <property name="type_hint">normal</property>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox6">
