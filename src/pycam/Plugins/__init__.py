@@ -158,8 +158,15 @@ class PluginManager(object):
             plugins = postponed_plugins
         for plugin, filename, name in plugins:
             # module failed to load due to missing dependencies
+            missing = []
+            for depend in plugin.DEPENDS:
+                try:
+                    # check if this dependency is available
+                    self.get_plugin(depend)
+                except KeyError:
+                    missing.append(depend)
             _log.info("Skipping plugin '%s' due to missing dependencies: %s" % \
-                    (name, ", ".join(plugin.DEPENDS)))
+                    (name, ", ".join(missing)))
 
     def _load_plugin(self, obj, filename, plugin_name):
         if plugin_name in self.modules:
