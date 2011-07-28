@@ -25,20 +25,11 @@ import pycam.Plugins
 
 class Processes(pycam.Plugins.ListPluginBase):
 
+    DEPENDS = ["ProcessStrategyManager"]
+
     UI_FILE = "processes.ui"
     COLUMN_REF, COLUMN_NAME = range(2)
     LIST_ATTRIBUTE_MAP = {"ref": COLUMN_REF, "name": COLUMN_NAME}
-    CONTROL_BUTTONS = ("PushRemoveStrategy", "ContourPolygonStrategy",
-            "ContourFollowStrategy", "SurfaceStrategy", "EngraveStrategy",
-            "OverlapPercent", "MaterialAllowance",
-            "MaxStepDown", "EngraveOffset",
-            "PocketingControl", "GridDirectionX", "GridDirectionY",
-            "GridDirectionXY", "MillingStyleConventional", "MillingStyleClimb",
-            "MillingStyleIgnore")
-    POCKETING_TYPES = ["none", "holes", "enclosed"]
-    CONTROL_SIGNALS = ("toggled", "value-changed", "changed")
-    CONTROL_GET = ("get_active", "get_value")
-    CONTROL_SET = ("set_active", "set_value")
 
     def setup(self):
         if self.gui:
@@ -55,15 +46,31 @@ class Processes(pycam.Plugins.ListPluginBase):
                         self.gui.get_object(obj_name))
             self.gui.get_object("ProcessNew").connect("clicked",
                     self._process_new)
+            # parameters
+            parameters_box = self.gui.get_object("ProcessParametersBox")
+            def clear_parameter_widgets():
+                parameters_box.foreach(
+                        lambda widget: parameters_box.remove(widget))
+            def add_parameter_widget(item, name):
+                # create a frame with an align and the item inside
+                frame_label = gtk.Label()
+                frame_label.set_markup("<b>%s</b>" % name)
+                frame = gtk.Frame()
+                frame.set_label_widget(frame_label)
+                align = gtk.Alignment()
+                frame.add(align)
+                align.set_padding(0, 0, 12, 0)
+                align.add(item)
+                frame.show_all()
+                parameters_box.pack_start(frame, expand=False)
+            self.core.register_ui_section("process_parameters",
+                    add_parameter_widget, clear_parameter_widgets)
             selection = self._modelview.get_selection()
             selection.connect("changed", 
                     lambda widget, event: self.core.emit_event(event),
                     "process-selection-changed")
             self.gui.get_object("NameCell").connect("edited",
                     self._edit_process_name)
-            cell = self.gui.get_object("DescriptionCell")
-            self.gui.get_object("DescriptionColumn").set_cell_data_func(
-                    cell, self._render_process_description)
             self._treemodel = self.gui.get_object("ProcessList")
             self._treemodel.clear()
             def update_model():
@@ -78,27 +85,23 @@ class Processes(pycam.Plugins.ListPluginBase):
                         cache[id(item)] = [id(item), "Process #%d" % index]
                     self._treemodel.append(cache[id(item)])
                 self.core.emit_event("process-list-changed")
+            self.gui.get_object("StrategySelector").connect("changed",
+                    lambda widget: self.core.emit_event(
+                            "process-strategy-changed"))
+            self.core.register_event("process-strategy-list-changed",
+                    self._update_widgets)
             self.register_model_update(update_model)
-            # process settings
-            self._detail_handlers = []
-            for obj_name in self.CONTROL_BUTTONS:
-                obj = self.gui.get_object(obj_name)
-                for signal in self.CONTROL_SIGNALS:
-                    try:
-                        handler = obj.connect(signal,
-                                lambda *args: self.core.emit_event(args[-1]),
-                                "process-changed")
-                        self._detail_handlers.append((obj, handler))
-                        break
-                    except TypeError:
-                        continue
-                else:
-                    self.log.info("Failed to connect to widget '%s'" % str(obj_name))
             self.core.register_event("process-selection-changed",
                     self._process_switch)
-            self.core.register_event("process-changed",
+            self.core.register_event("pathgenerator-parameter-changed",
                     self._store_process_settings)
+            self.core.register_event("process-strategy-changed",
+                    self._store_process_settings)
+            self.core.add_item("current-strategy", lambda: self._get_strategy())
+            self._update_widgets()
+            self._process_switch()
             self._store_process_settings()
+            self._trigger_table_update()
         self.core.set("processes", self)
         return True
 
@@ -126,26 +129,7 @@ class Processes(pycam.Plugins.ListPluginBase):
         path = model.get_path(m_iter)
         data = self[path[0]]
         # find the current strategy
-        for key in ("PushRemoveStrategy", "ContourPolygonStrategy",
-                "ContourFollowStrategy", "SurfaceStrategy", "EngraveStrategy"):
-            if data[key]:
-                strategy = key
-                break
-        if strategy == "PushRemoveStrategy":
-            text = "Slice %g%s %d%%" % (data["MaxStepDown"],
-                    self.core.get("unit"), data["OverlapPercent"])
-        elif strategy == "ContourPolygonStrategy":
-            text = "Contour (polygon) %g%s" % (data["MaxStepDown"],
-                    self.core.get("unit"))
-        elif strategy == "ContourFollowStrategy":
-            text = "Contour (follow) %g%s" % (data["MaxStepDown"],
-                    self.core.get("unit"))
-        elif strategy == "SurfaceStrategy":
-            text = "Surface %d%%" % data["OverlapPercent"]
-        else:
-            # EngraveStrategy
-            text = "Engrave %g%s" % (data["EngraveOffset"],
-                    self.core.get("unit"))
+        text = "TODO"
         cell.set_property("text", text)
 
     def _edit_process_name(self, cell, path, new_text):
@@ -154,136 +138,96 @@ class Processes(pycam.Plugins.ListPluginBase):
                 new_text:
             self._treemodel[path][self.COLUMN_NAME] = new_text
 
-    def _store_process_settings(self):
-        data = self.get_selected()
-        if data is None:
-            self.gui.get_object("ProcessSettingsControlsBox").hide()
-            return
+    def _trigger_table_update(self):
+        # trigger a table update - this is clumsy!
+        cell = self.gui.get_object("DescriptionColumn")
+        renderer = self.gui.get_object("DescriptionCell")
+        cell.set_cell_data_func(renderer, self._render_process_description)
+
+    def _update_widgets(self):
+        # TODO: keep the current selection
+        model = self.gui.get_object("StrategyModel")
+        model.clear()
+        strategies = self.core.get("process-strategies")
+        for strategy in strategies:
+            model.append((strategy["label"], strategy["name"]))
+        # check if any on the processes became obsolete due to a missing plugin
+        removal = []
+        strat_names = [strat["name"] for strat in strategies]
+        for index, process in enumerate(self):
+            if not process["strategy"] in strat_names:
+                removal.append(index)
+        removal.reverse()
+        for index in removal:
+            self.pop(index)
+        # show "new" only if a strategy is available
+        self.gui.get_object("ProcessNew").set_sensitive(len(model) > 0)
+
+    def _get_strategy(self, name=None):
+        strategies = self.core.get("process-strategies")
+        if name is None:
+            # find the currently selected one
+            model = self.gui.get_object("StrategyModel")
+            selector = self.gui.get_object("StrategySelector")
+            index = selector.get_active()
+            if index < 0:
+                return None
+            strategy_name = model[index][1]
         else:
-            for obj_name in self.CONTROL_BUTTONS:
-                obj = self.gui.get_object(obj_name)
-                for get_func in self.CONTROL_GET:
-                    if hasattr(obj, get_func):
-                        value = getattr(obj, get_func)()
-                        data[obj_name] = value
-                        break
-                else:
-                    self.log.info("Failed to update value of control %s" % obj_name)
-            self.gui.get_object("ProcessSettingsControlsBox").show()
-            while not self._validate_process_consistency():
-                pass
-            # trigger a table update - this is clumsy!
-            cell = self.gui.get_object("DescriptionColumn")
-            renderer = self.gui.get_object("DescriptionCell")
-            cell.set_cell_data_func(renderer, self._render_process_description)
+            strategy_name = name
+        for strategy in strategies:
+            if strategy_name == strategy["name"]:
+                return strategy
+        else:
+            return None
+
+    def select_strategy(self, name):
+        selector = self.gui.get_object("StrategySelector")
+        for index, row in enumerate(self.gui.get_object("StrategyModel")):
+            if row[1] == name:
+                selector.set_active(index)
+                break
+        else:
+            selector.set_active(-1)
+
+    def _store_process_settings(self):
+        process = self.get_selected()
+        control_box = self.gui.get_object("ProcessSettingsControlsBox")
+        strategy = self._get_strategy()
+        if process is None or strategy is None:
+            control_box.hide()
+        else:
+            process["strategy"] = strategy["name"]
+            parameters = process["parameters"]
+            for parameter in self.core.get("pathgenerator_parameters"):
+                if parameter["name"] in strategy["parameters"]:
+                    parameters[parameter["name"]] = \
+                            parameter["control"].get_value()
+            control_box.show()
+            self._trigger_table_update()
 
     def _process_switch(self, widget=None, data=None):
         process = self.get_selected()
         control_box = self.gui.get_object("ProcessSettingsControlsBox")
+        self.core.block_event("pathgenerator-parameter-changed")
         if not process:
             control_box.hide()
         else:
-            for obj, handler in self._detail_handlers:
-                obj.handler_block(handler)
-            for obj_name, value in process.iteritems():
-                obj = self.gui.get_object(obj_name)
-                for set_func in self.CONTROL_SET:
-                    if hasattr(obj, set_func):
-                        if (value is False) and hasattr(obj, "get_group"):
-                            # no "False" for radio buttons
-                            pass
-                        else:
-                            getattr(obj, set_func)(value)
-                        break
-                else:
-                    self.log.info("Failed to set value of control %s" % obj_name)
-            for obj, handler in self._detail_handlers:
-                obj.handler_unblock(handler)
+            strategy_name = process["strategy"]
+            self.select_strategy(strategy_name)
+            strategy = self._get_strategy(strategy_name)
+            for parameter in self.core.get("pathgenerator_parameters"):
+                if parameter["name"] in strategy["parameters"]:
+                    parameter["control"].set_value(
+                            process["parameters"][parameter["name"]])
             control_box.show()
+        self.core.unblock_event("pathgenerator-parameter-changed")
         
     def _process_new(self, *args):
-        current_process_index = self.get_selected(index=True)
-        if current_process_index is None:
-            current_process_index = 0
-        new_process = {"PushRemoveStrategy": True,
-                "ContourPolygonStrategy": False,
-                "ContourFollowStrategy": False,
-                "SurfaceStrategy": False,
-                "EngraveStrategy": False,
-                "OverlapPercent": 10,
-                "MaterialAllowance": 0,
-                "MaxStepDown": 1,
-                "EngraveOffset": 0,
-                "PocketingControl": self.POCKETING_TYPES.index("none"),
-                "GridDirectionX": True,
-                "GridDirectionY": False,
-                "GridDirectionXY": False,
-                "MillingStyleConventional": False,
-                "MillingStyleClimb": False,
-                "MillingStyleIgnore": True,
+        strategy = self.core.get("process-strategies")[0]
+        new_process = {"strategy": strategy["name"],
+                "parameters": strategy["parameters"].copy()
         }
         self.append(new_process)
         self.select(new_process)
-        # loop until the process is valid
-        while not self._validate_process_consistency():
-            pass
-
-    def _validate_process_consistency(self):
-        data = self.get_selected()
-        if not data:
-            return True
-        if data["ContourPolygonStrategy"] and not data["MillingStyleIgnore"]:
-            data["MillingStyleConventional"] = False
-            data["MillingStyleIgnore"] = True
-            data["MillingStyleClimb"] = False
-            self.gui.get_object("MillingStyleIgnore").set_active(True)
-            return False
-        if data["ContourPolygonStrategy"] and not data["GridDirectionX"]:
-            # only "x" direction for ContourPolygon
-            data["GridDirectionX"] = True
-            data["GridDirectionY"] = False
-            data["GridDirectionXY"] = False
-            self.gui.get_object("GridDirectionX").set_active(True)
-            return False
-        if (data["ContourFollowStrategy"] or data["EngraveStrategy"]) \
-                and data["MillingStyleIgnore"]:
-            data["MillingStyleConventional"] = True
-            data["MillingStyleIgnore"] = False
-            data["MillingStyleClimb"] = False
-            self.gui.get_object("MillingStyleConventional").set_active(True)
-            return False
-        all_controls = ("GridDirectionX", "GridDirectionY", "GridDirectionXY",
-                "MillingStyleConventional", "MillingStyleClimb",
-                "MillingStyleIgnore", "MaxStepDown",
-                "MaterialAllowance", "OverlapPercent",
-                "EngraveOffset", "PocketingControl")
-        active_controls = {
-            "PushRemoveStrategy": ("GridDirectionX", "GridDirectionY",
-                    "GridDirectionXY", "MillingStyleConventional",
-                    "MillingStyleClimb", "MillingStyleIgnore",
-                    "MaxStepDown", "MaterialAllowance",
-                    "OverlapPercent"),
-            # TODO: direction y and xy currently don't work for ContourPolygonStrategy
-            "ContourPolygonStrategy": ("GridDirectionX",
-                    "MillingStyleIgnore", "MaxStepDown",
-                    "MaterialAllowance", "OverlapPercent"),
-            "ContourFollowStrategy": ("MillingStyleConventional",
-                    "MillingStyleClimb", "MaxStepDown"),
-            "SurfaceStrategy": ("GridDirectionX", "GridDirectionY",
-                    "GridDirectionXY", "MillingStyleConventional",
-                    "MillingStyleClimb", "MillingStyleIgnore",
-                    "MaterialAllowance", "OverlapPercent"),
-            "EngraveStrategy": ("MaxStepDown", "EngraveOffset",
-                    "MillingStyleConventional", "MillingStyleClimb",
-                    "PocketingControl"),
-        }
-        # find the current strategy
-        for key in active_controls:
-            if data[key]:
-                strategy = key
-                break
-        # disable all invalid controls
-        for one_control in all_controls:
-            self.gui.get_object(one_control).set_sensitive(one_control in active_controls[strategy])
-        return True
 
