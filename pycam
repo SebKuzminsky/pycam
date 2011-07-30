@@ -205,7 +205,9 @@ def execute(parser, opts, args, pycam):
     else:
         inputfile = None
 
-    if opts.debug:
+    if opts.trace:
+        log.setLevel(logging.DEBUG / 2)
+    elif opts.debug:
         log.setLevel(logging.DEBUG)
     elif opts.quiet:
         log.setLevel(logging.WARNING)
@@ -563,6 +565,9 @@ if __name__ == "__main__":
     group_general.add_option("-d", "--debug", dest="debug",
             default=False, action="store_true", help="enable output of debug " \
             + "messages.")
+    group_general.add_option("", "--trace", dest="trace",
+            default=False, action="store_true", help="enable more verbose " + \
+            "debug messages.")
     group_general.add_option("", "--progress", dest="progress",
             default="text", action="store", type="choice",
             choices=["none", "text", "bar", "dot"],

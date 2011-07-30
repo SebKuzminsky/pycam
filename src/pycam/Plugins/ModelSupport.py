@@ -31,13 +31,16 @@ class ModelSupport(pycam.Plugins.PluginBase):
 
     def setup(self):
         if self.gui:
-            support_frame = self.gui.get_object("ModelExtensionsFrame")
-            support_frame.unparent()
-            self.core.register_ui("model_handling", "Support", support_frame, 0)
+            self._support_frame = self.gui.get_object("ModelExtensionsFrame")
+            self._support_frame.unparent()
+            self.core.register_ui("model_handling", "Support",
+                    self._support_frame, 0)
             self.core.register_event("model-change-after",
                     self._support_model_changed)
             self.core.register_event("bounds-changed",
                     self._support_model_changed)
+            self.core.register_event("model-selection-changed",
+                    self._update_widgets)
             self.core.register_event("support-model-changed",
                     self.update_support_model)
             support_model_type_selector = self.gui.get_object(
@@ -94,6 +97,8 @@ class ModelSupport(pycam.Plugins.PluginBase):
             self.core.set("support_grid_thickness", 0.5)
             self.core.set("support_grid_height", 0.5)
             self.core.set("support_grid_type", "none")
+            # prepare GUI
+            self._update_widgets()
         return True
 
     def teardown(self):
@@ -107,6 +112,12 @@ class ModelSupport(pycam.Plugins.PluginBase):
                     self._support_model_changed)
             self.core.unregister_event("support-model-changed",
                     self.update_support_model)
+
+    def _update_widgets(self):
+        if self.core.get("models").get_selected():
+            self._support_frame.show()
+        else:
+            self._support_frame.hide()
 
     def _support_model_changed(self, widget=None):
         self.core.emit_event("support-model-changed")

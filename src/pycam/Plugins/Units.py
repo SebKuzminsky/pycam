@@ -40,6 +40,8 @@ class Units(pycam.Plugins.PluginBase):
                 unit_field.set_active(0 if text == "mm" else 1)
                 self._last_unit = text
             self.core.add_item("unit", unit_field.get_active_text, set_unit)
+            # other plugins should use "unit_string" for human readable output
+            self.core.add_item("unit_string", unit_field.get_active_text)
             self.gui.get_object("UnitChangeSelectAll").connect("clicked",
                     self.change_unit_set_selection, True)
             self.gui.get_object("UnitChangeSelectNone").connect("clicked",

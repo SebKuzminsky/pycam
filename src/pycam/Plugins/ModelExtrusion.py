@@ -59,6 +59,7 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
                 extrusion_model.append((row[0], row[1],
                         self.gui.get_object(row[2]).get_pixbuf()))
             self.gui.get_object("ExtrusionTypeSelector").set_active(0)
+            self._update_extrude_widgets()
         return True
 
     def teardown(self):
