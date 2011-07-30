@@ -26,7 +26,7 @@ import pycam.Plugins
 
 class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["ProcessStrategyManager", "PathParamStepDown",
+    DEPENDS = ["ParameterGroupManager", "PathParamStepDown",
             "PathParamMillingStyle", "PathParamRadiusCompensation",
             "PathParamTraceModel"]
 
@@ -34,10 +34,11 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
         parameters = {"step_down": 1.0,
                 "milling_style": "ignore",
                 "radius_compensation": False,
-                "trace_model": None
+                "trace_models": [],
         }
-        self.core.get("register_strategy")("engraving", "Engraving",
-                self.run_strategy, parameters=parameters, weight=80)
+        self.core.get("register_parameter_set")("process", "engraving",
+                "Engraving", self.run_strategy, parameters=parameters,
+                weight=80)
         return True
 
     def teardown(self):

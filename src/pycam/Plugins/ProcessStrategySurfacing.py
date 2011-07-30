@@ -26,18 +26,19 @@ import pycam.Plugins
 
 class ProcessStrategySurfacing(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["ProcessStrategyManager", "PathParamOverlap",
+    DEPENDS = ["ParameterGroupManager", "PathParamOverlap",
             "PathParamMaterialAllowance", "PathParamMillingStyle",
             "PathParamGridDirection"]
 
     def setup(self):
-        parameters = {"overlap": 60,
+        parameters = {"overlap": 0.6,
                 "material_allowance": 0,
                 "milling_style": "ignore",
                 "grid_direction": "x",
         }
-        self.core.get("register_strategy")("surfacing", "Surfacing",
-                self.run_strategy, parameters=parameters, weight=50)
+        self.core.get("register_parameter_set")("process", "surfacing",
+                "Surfacing", self.run_strategy, parameters=parameters,
+                weight=50)
         return True
 
     def teardown(self):

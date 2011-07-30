@@ -26,19 +26,20 @@ import pycam.Plugins
 
 class ProcessStrategySlicing(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["ProcessStrategyManager", "PathParamOverlap",
+    DEPENDS = ["ParameterGroupManager", "PathParamOverlap",
             "PathParamStepDown", "PathParamMaterialAllowance",
             "PathParamMillingStyle", "PathParamGridDirection"]
 
     def setup(self):
-        parameters = {"overlap": 10,
+        parameters = {"overlap": 0.1,
                 "step_down": 1.0,
                 "material_allowance": 0,
                 "milling_style": "ignore",
                 "grid_direction": "x",
         }
-        self.core.get("register_strategy")("slicing", "Slice removal",
-                self.run_strategy, parameters=parameters, weight=10)
+        self.core.get("register_parameter_set")("process", "slicing",
+                "Slice removal", self.run_strategy, parameters=parameters,
+                weight=10)
         return True
 
     def teardown(self):

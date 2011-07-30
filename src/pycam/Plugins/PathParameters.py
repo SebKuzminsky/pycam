@@ -27,133 +27,138 @@ import pycam.Gui.ControlsGTK
 
 class PathParamOverlap(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["ProcessStrategyManager"]
+    DEPENDS = ["Processes"]
 
     def setup(self):
-        # TODO: check if gtk is in use
-        self.core.get("register_pathgenerator_parameter")("overlap",
-                "Overlap [%]", pycam.Gui.ControlsGTK.InputNumber(
-                    lower=0, upper=99, digits=0,
-                    change_handler=lambda widget=None: self.core.emit_event(
-                            "pathgenerator-parameter-changed")),
-                    weight=10)
+        # configure the input/output converter
+        widget = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=99, digits=0,
+                increment=10, change_handler=lambda widget=None: \
+                    self.core.emit_event("process-parameter-changed"))
+        widget.set_conversion(
+                set_conv=lambda float_value: int(float_value * 100.0),
+                get_conv=lambda percent: percent / 100.0)
+        self.core.get("register_parameter")("process", "pathgenerator",
+                "overlap", "Overlap [%]", widget, weight=10)
         return True
 
     def teardown(self):
-        self.core.get("unregister_pathgenerator_parameter")("overlap")
+        self.core.get("unregister_parameter")("process", "pathgenerator",
+                "overlap")
 
 
 class PathParamStepDown(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["ProcessStrategyManager"]
+    DEPENDS = ["Processes"]
 
     def setup(self):
-        # TODO: check if gtk is in use
-        self.core.get("register_pathgenerator_parameter")("step_down",
-                "Step down", pycam.Gui.ControlsGTK.InputNumber(lower=0.01,
-                upper=1000, digits=2, start=1,
-                change_handler=lambda widget=None: \
-                    self.core.emit_event("pathgenerator-parameter-changed")),
-                weight=20)
+        widget = pycam.Gui.ControlsGTK.InputNumber(lower=0.01, upper=1000,
+                digits=2, start=1, change_handler=lambda widget=None: \
+                    self.core.emit_event("process-parameter-changed"))
+        self.core.get("register_parameter")("process", "pathgenerator",
+                "step_down", "Step down", widget, weight=20)
         return True
 
     def teardown(self):
-        self.core.get("unregister_pathgenerator_parameter")("step_down")
+        self.core.get("unregister_parameter")("process", "pathgenerator",
+                "step_down")
 
 
 class PathParamMaterialAllowance(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["ProcessStrategyManager"]
+    DEPENDS = ["Processes"]
 
     def setup(self):
-        # TODO: check if gtk is in use
-        self.core.get("register_pathgenerator_parameter")("material_allowance",
-                "Material allowance", pycam.Gui.ControlsGTK.InputNumber(
-                    start=0, lower=0, upper=100, digits=2,
-                    change_handler=lambda widget=None: self.core.emit_event(
-                            "pathgenerator-parameter-changed")),
-                    weight=30)
+        widget = pycam.Gui.ControlsGTK.InputNumber(start=0, lower=0, upper=100,
+                digits=2, change_handler=lambda widget=None: \
+                    self.core.emit_event("process-parameter-changed"))
+        self.core.get("register_parameter")("process", "pathgenerator",
+                "material_allowance", "Material allowance", widget, weight=30)
         return True
 
     def teardown(self):
-        self.core.get("unregister_pathgenerator_parameter")("overlap")
+        self.core.get("unregister_parameter")("process", "pathgenerator",
+                "material_allowance")
 
 
 class PathParamMillingStyle(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["ProcessStrategyManager"]
+    DEPENDS = ["Processes"]
 
     def setup(self):
-        # TODO: check if gtk is in use
         input_control = pycam.Gui.ControlsGTK.InputChoice(
                     (("ignore", "ignore"),
                     ("climb / down", "climb"),
                     ("conventional / up", "conventional")),
                 change_handler=lambda widget=None: self.core.emit_event(
-                        "pathgenerator-parameter-changed"))
-        self.core.get("register_pathgenerator_parameter")("milling_style",
-                "Milling style", input_control, weight=50)
+                        "process-parameter-changed"))
+        self.core.get("register_parameter")("process", "pathgenerator",
+                "milling_style", "Milling style", input_control, weight=50)
         return True
 
     def teardown(self):
-        self.core.get("unregister_pathgenerator_parameter")("milling_style")
+        self.core.get("unregister_parameter")("process", "pathgenerator",
+                "milling_style")
 
 
 class PathParamGridDirection(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["ProcessStrategyManager"]
+    DEPENDS = ["Processes"]
 
     def setup(self):
-        # TODO: check if gtk is in use
         input_control = pycam.Gui.ControlsGTK.InputChoice(
                 (("x", "x"), ("y", "y"), ("xy", "xy")),
                 change_handler=lambda widget=None: self.core.emit_event(
-                        "pathgenerator-parameter-changed"))
-        self.core.get("register_pathgenerator_parameter")("grid_direction",
-                "Direction", input_control, weight=40)
+                        "process-parameter-changed"))
+        self.core.get("register_parameter")("process", "pathgenerator",
+                "grid_direction", "Direction", input_control, weight=40)
         return True
 
     def teardown(self):
-        self.core.get("unregister_pathgenerator_parameter")("grid_direction")
+        self.core.get("unregister_parameter")("process", "pathgenerator",
+                "grid_direction")
 
 
 class PathParamRadiusCompensation(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["ProcessStrategyManager"]
+    DEPENDS = ["Processes"]
 
     def setup(self):
-        # TODO: check if gtk is in use
-        self.core.get("register_pathgenerator_parameter")("radius_compensation",
-                "Radius compensation",
-                pycam.Gui.ControlsGTK.InputCheckBox(
-                    change_handler=lambda widget=None: self.core.emit_event(
-                            "pathgenerator-parameter-changed")),
-                weight=80)
+        widget = pycam.Gui.ControlsGTK.InputCheckBox(
+                change_handler=lambda widget=None: self.core.emit_event(
+                    "process-parameter-changed"))
+        self.core.get("register_parameter")("process", "pathgenerator",
+                "radius_compensation", "Radius compensation", widget, weight=80)
         return True
 
     def teardown(self):
-        self.core.get("unregister_pathgenerator_parameter")("radius_compensation")
+        self.core.get("unregister_parameter")("process", "pathgenerator",
+                "radius_compensation")
 
 
 class PathParamTraceModel(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["ProcessStrategyManager", "Models"]
+    DEPENDS = ["Processes", "Models"]
 
     def setup(self):
-        class InputModelSelection(pycam.Gui.ControlsGTK.InputChoice):
-            def get_value(inner_self):
-                ref = super(InputModelSelection, inner_self).get_value()
-                for model in self.core.get("models"):
-                    if id(model) == ref:
-                        return model
-                return None
         # TODO: check if gtk is in use
-        self.input_control = InputModelSelection([], force_type=long,
+        self.input_control = pycam.Gui.ControlsGTK.InputTable([], force_type=long,
                 change_handler=lambda widget=None: self.core.emit_event(
-                        "pathgenerator-parameter-changed"))
-        self.input_control
-        self.core.get("register_pathgenerator_parameter")("trace_model",
-                "Trace model", self.input_control, weight=5)
+                        "process-parameter-changed"))
+        # configure the input/output converter
+        def get_converter(model_refs):
+            models_dict = {}
+            for model in self.core.get("models"):
+                models_dict[id(model)] = model
+            models = []
+            for model_ref in model_refs:
+                models.append(models_dict[model_ref])
+            return models
+        def set_converter(models):
+            return [id(model) for model in models]
+        self.input_control.set_conversion(set_conv=set_converter,
+                get_conv=get_converter)
+        self.core.get("register_parameter")("process", "pathgenerator",
+                "trace_models", "Trace models (2D)", self.input_control, weight=5)
         self.core.register_event("model-list-changed", self._update_models)
         return True
 
@@ -166,5 +171,6 @@ class PathParamTraceModel(pycam.Plugins.PluginBase):
         self.input_control.update_choices(choices)
 
     def teardown(self):
-        self.core.get("unregister_pathgenerator_parameter")("trace_model")
+        self.core.get("unregister_parameter")("process", "pathgenerator",
+                "trace_models")
 

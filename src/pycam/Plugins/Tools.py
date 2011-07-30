@@ -29,14 +29,12 @@ from pycam.Cutters.ToroidalCutter import ToroidalCutter
 class Tools(pycam.Plugins.ListPluginBase):
 
     UI_FILE = "tools.ui"
-    COLUMN_REF, COLUMN_ID, COLUMN_NAME = range(3)
-    LIST_ATTRIBUTE_MAP = {"id": COLUMN_ID, "name": COLUMN_NAME}
-    SHAPE_MAP = {CylindricalCutter: ("CylindricalCutter", "Flat end"),
-            SphericalCutter: ("SphericalCutter", "Ball nose"),
-            ToroidalCutter: ("ToroidalCutter", "Bull nose")}
+    COLUMN_REF, COLUMN_TOOL_ID, COLUMN_NAME = range(3)
+    LIST_ATTRIBUTE_MAP = {"id": COLUMN_TOOL_ID, "name": COLUMN_NAME}
 
     def setup(self):
         if self.gui:
+            import gtk
             tool_frame = self.gui.get_object("ToolBox")
             tool_frame.unparent()
             self.core.register_ui("main", "Tools", tool_frame, weight=10)
@@ -47,13 +45,44 @@ class Tools(pycam.Plugins.ListPluginBase):
                 self.register_list_action_button(action, self._modelview,
                         self.gui.get_object(obj_name))
             self.gui.get_object("ToolNew").connect("clicked", self._tool_new)
-            selection = self._modelview.get_selection()
-            selection.connect("changed", 
-                    lambda widget, event: self.core.emit_event(event),
-                    "tool-selection-changed")
+            # parameters
+            parameters_box = self.gui.get_object("ToolParameterBox")
+            def clear_parameter_widgets():
+                parameters_box.foreach(
+                        lambda widget: parameters_box.remove(widget))
+            def add_parameter_widget(item, name):
+                # create a frame with an align and the item inside
+                if len(parameters_box.get_children()) > 0:
+                    # add a separator between two content blocks
+                    parameters_box.pack_start(gtk.VSeparator())
+                frame_label = gtk.Label()
+                frame_label.set_markup("<b>%s</b>" % name)
+                frame = gtk.Frame()
+                frame.set_label_widget(frame_label)
+                align = gtk.Alignment()
+                frame.add(align)
+                align.set_padding(0, 3, 12, 3)
+                align.add(item)
+                frame.show_all()
+                parameters_box.pack_start(frame, expand=True)
+            self.core.register_ui_section("tool_parameters",
+                    add_parameter_widget, clear_parameter_widgets)
+            selector = self.gui.get_object("ToolShapeSelector")
+            self.core.get("register_parameter_group")("tool",
+                    changed_set_event="tool-shape-changed",
+                    changed_set_list_event="tool-shape-list-changed",
+                    get_current_set_func=self._get_shape)
+            size_parameter_widget = self.core.get("register_parameter_section")(
+                    "tool", "size")
+            self.core.register_ui("tool_parameters", "Size",
+                    size_parameter_widget, weight=10)
+            speed_parameter_widget = self.core.get("register_parameter_section")(
+                    "tool", "speed")
+            self.core.register_ui("tool_parameters", "Speed",
+                    speed_parameter_widget, weight=20)
             cell = self.gui.get_object("ToolTableShapeCell")
             self.gui.get_object("ToolTableShapeColumn").set_cell_data_func(
-                    cell, self._visualize_tool_size)
+                    cell, self._render_tool_shape)
             self.gui.get_object("ToolTableIDCell").connect("edited",
                     self._edit_tool_id)
             self.gui.get_object("ToolTableNameCell").connect("edited",
@@ -65,7 +94,7 @@ class Tools(pycam.Plugins.ListPluginBase):
                     self._model_cache = {}
                 cache = self._model_cache
                 for row in self._treemodel:
-                    cache[row[self.COLUMN_ID]] = list(row)
+                    cache[row[self.COLUMN_REF]] = list(row)
                 self._treemodel.clear()
                 for index, item in enumerate(self):
                     if not id(item) in cache:
@@ -73,27 +102,25 @@ class Tools(pycam.Plugins.ListPluginBase):
                                 "Tool #%d" % index]
                     self._treemodel.append(cache[id(item)])
                 self.core.emit_event("tool-list-changed")
+            # selector
+            selection = self._modelview.get_selection()
+            selection.connect("changed", 
+                    lambda widget, event: self.core.emit_event(event),
+                    "tool-selection-changed")
+            shape_selector = self.gui.get_object("ToolShapeSelector")
+            shape_selector.connect("changed", lambda widget: \
+                    self.core.emit_event("tool-shape-changed"))
+            self.core.register_event("tool-shape-list-changed",
+                    self._update_widgets)
             self.register_model_update(update_model)
-            # drill settings
-            self._detail_handlers = []
-            for objname in ("ToolDiameterControl", "TorusDiameterControl"):
-                obj = self.gui.get_object(objname)
-                handler = obj.connect("value-changed",
-                        lambda *args: self.core.emit_event(args[-1]),
-                        "tool-changed")
-                self._detail_handlers.append((obj, handler))
-            for objname in ("SphericalCutter", "CylindricalCutter",
-                    "ToroidalCutter"):
-                obj = self.gui.get_object(objname)
-                handler = obj.connect("toggled",
-                        lambda *args: self.core.emit_event(args[-1]),
-                        "tool-changed")
-                self._detail_handlers.append((obj, handler))
             self.core.register_event("tool-selection-changed",
                     self._tool_change)
-            self.core.register_event("tool-changed",
-                    self._update_tool_controls)
-            self._update_tool_controls()
+            self.core.register_event("tool-parameter-changed",
+                    self._store_tool_settings)
+            self.core.register_event("tool-shape-changed",
+                    self._store_tool_settings)
+            self._update_widgets()
+            self._tool_change()
         self.core.set("tools", self)
         return True
 
@@ -102,8 +129,6 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.core.unregister_ui("main", self.gui.get_object("ToolBox"))
             self.core.unregister_event("tool-selection-changed",
                     self._tool_change)
-            self.core.unregister_event("tool-changed",
-                    self._update_tool_controls)
         self.core.set("tools", None)
         return True
 
@@ -118,13 +143,14 @@ class Tools(pycam.Plugins.ListPluginBase):
             selection.unselect_all()
             selection.select_path((index,))
 
-    def _visualize_tool_size(self, column, cell, model, m_iter):
+    def _render_tool_shape(self, column, cell, model, m_iter):
         path = model.get_path(m_iter)
         tool = self[path[0]]
-        for cutter_class, (objname, desc) in self.SHAPE_MAP.iteritems():
-            if isinstance(tool, cutter_class):
-                break
-        text = "%s (%g%s)" % (desc, 2 * tool.radius, self.core.get("unit"))
+        parameters = tool["parameters"]
+        if "radius" in parameters:
+            text = "%g%s" % (2 * parameters["radius"], self.core.get("unit"))
+        else:
+            text = ""
         cell.set_property("text", text)
 
     def _edit_tool_name(self, cell, path, new_text):
@@ -139,45 +165,73 @@ class Tools(pycam.Plugins.ListPluginBase):
             new_value = int(new_text)
         except ValueError:
             return
-        if str(new_value) != self._treemodel[path][self.COLUMN_ID]:
-            self._treemodel[path][self.COLUMN_ID] = new_value
+        if str(new_value) != self._treemodel[path][self.COLUMN_TOOL_ID]:
+            self._treemodel[path][self.COLUMN_TOOL_ID] = new_value
 
-    def _update_tool_controls(self):
-        tool_index = self.get_selected(index=True)
-        if tool_index is None:
-            self.gui.get_object("ToolSettingsControlsBox").hide()
-            return
-        # disable the toroidal radius if the toroidal cutter is not enabled
-        if self.gui.get_object("ToroidalCutter").get_active():
-            self.gui.get_object("TorusDiameterControl").show()
-            self.gui.get_object("TorusDiameterLabel").show()
+    def _get_shape(self, name=None):
+        shapes = self.core.get("get_parameter_sets")("tool")
+        if name is None:
+            # find the currently selected one
+            selector = self.gui.get_object("ToolShapeSelector")
+            model = selector.get_model()
+            index = selector.get_active()
+            if index < 0:
+                return None
+            shape_name = model[index][1]
         else:
-            self.gui.get_object("TorusDiameterControl").hide()
-            self.gui.get_object("TorusDiameterLabel").hide()
-        for objname, default_value in (("ToolDiameterControl", 1.0),
-                ("TorusDiameterControl", 0.25)):
-            obj = self.gui.get_object(objname)
-            if obj.get_value() == 0:
-                # set the value to the configured minimum
-                obj.set_value(default_value)
-        # update the tool object
-        for cutter_class, (objname, desc) in self.SHAPE_MAP.iteritems():
-            if self.gui.get_object(objname).get_active():
+            shape_name = name
+        if shape_name in shapes:
+            return shapes[shape_name]
+        else:
+            return None
+
+    def select_shape(self, name):
+        selector = self.gui.get_object("ToolShapeSelector")
+        for index, row in enumerate(selector.get_model()):
+            if row[1] == name:
+                selector.set_active(index)
                 break
-        radius = 0.5 * self.gui.get_object("ToolDiameterControl").get_value()
-        if cutter_class is ToroidalCutter:
-            args = [0.5 * self.gui.get_object("TorusDiameterControl").get_value()]
         else:
-            args = []
-        new_tool = cutter_class(radius, *args)
-        old_tool = self.pop(tool_index)
-        self.insert(tool_index, new_tool)
-        if hasattr(self, "_model_cache"):
-            # move the cache item
-            cache = self._model_cache
-            cache[id(new_tool)] = cache[id(old_tool)]
-            del cache[id(old_tool)]
-        self.select(new_tool)
+            selector.set_active(-1)
+
+    def _trigger_table_update(self):
+        # trigger a table update - this is clumsy!
+        cell = self.gui.get_object("ToolTableShapeColumn")
+        renderer = self.gui.get_object("ToolTableShapeCell")
+        cell.set_cell_data_func(renderer, self._render_tool_shape)
+
+    def _update_widgets(self):
+        # TODO: keep the current selection
+        model = self.gui.get_object("ToolShapeList")
+        model.clear()
+        shapes = list(self.core.get("get_parameter_sets")("tool").values())
+        shapes.sort(key=lambda item: item["weight"])
+        for shape in shapes:
+            model.append((shape["label"], shape["name"]))
+        # check if any on the processes became obsolete due to a missing plugin
+        removal = []
+        shape_names = [shape["name"] for shape in shapes]
+        for index, tool in enumerate(self):
+            if not tool["shape"] in shape_names:
+                removal.append(index)
+        removal.reverse()
+        for index in removal:
+            self.pop(index)
+        # show "new" only if a strategy is available
+        self.gui.get_object("ToolNew").set_sensitive(len(model) > 0)
+
+    def _store_tool_settings(self):
+        tool = self.get_selected()
+        control_box = self.gui.get_object("ToolSettingsControlsBox")
+        shape = self._get_shape()
+        if tool is None or shape is None:
+            control_box.hide()
+        else:
+            tool["shape"] = shape["name"]
+            parameters = tool["parameters"]
+            parameters.update(self.core.get("get_parameter_values")("tool"))
+            control_box.show()
+            self._trigger_table_update()
 
     def _tool_change(self, widget=None, data=None):
         tool = self.get_selected()
@@ -185,33 +239,24 @@ class Tools(pycam.Plugins.ListPluginBase):
         if not tool:
             control_box.hide()
         else:
-            for obj, handler in self._detail_handlers:
-                obj.handler_block(handler)
-            # cutter shapes
-            for cutter_class, (objname, desc) in self.SHAPE_MAP.iteritems():
-                if isinstance(tool, cutter_class):
-                    self.gui.get_object(objname).set_active(True)
-            # radius -> diameter
-            self.gui.get_object("ToolDiameterControl").set_value(2 * tool.radius)
-            torus_control = self.gui.get_object("TorusDiameterControl")
-            torus_label = self.gui.get_object("TorusDiameterLabel")
-            if hasattr(tool, "minorradius"):
-                torus_control.set_value(2 * tool.minorradius)
-                torus_control.show()
-                torus_label.show()
-            else:
-                torus_control.set_value(0.25)
-                torus_control.hide()
-                torus_label.hide()
-            for obj, handler in self._detail_handlers:
-                obj.handler_unblock(handler)
+            self.core.block_event("tool-parameter-changed")
+            self.core.block_event("tool-shape-changed")
+            shape_name = tool["shape"]
+            self.select_shape(shape_name)
+            shape = self._get_shape(shape_name)
+            self.core.get("set_parameter_values")("tool", tool["parameters"])
             control_box.show()
+            self.core.unblock_event("tool-shape-changed")
+            self.core.unblock_event("tool-parameter-changed")
+            # trigger a widget update
+            self.core.emit_event("tool-shape-changed")
         
     def _tool_new(self, *args):
-        current_tool_index = self.get_selected(index=True)
-        if current_tool_index is None:
-            current_tool_index = 0
-        new_tool = CylindricalCutter(1.0)
+        shapes = self.core.get("get_parameter_sets")("tool").values()
+        shapes.sort(key=lambda item: item["weight"])
+        shape = shapes[0]
+        new_tool = {"shape": shape["name"],
+                "parameters": shape["parameters"].copy(),
+        }
         self.append(new_tool)
         self.select(new_tool)
-

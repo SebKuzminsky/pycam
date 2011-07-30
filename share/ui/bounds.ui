@@ -19,7 +19,7 @@
   <object class="GtkListStore" id="BoundsModelsList">
     <columns>
       <!-- column-name ref_model -->
-      <column type="guint"/>
+      <column type="gulong"/>
     </columns>
   </object>
   <object class="GtkListStore" id="ToolLimitModeList">

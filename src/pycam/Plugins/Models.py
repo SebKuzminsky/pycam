@@ -71,11 +71,6 @@ class Models(pycam.Plugins.ListPluginBase):
                     self._visualize_visible_state)
             self.gui.get_object("ModelNameColumn").connect("edited",
                     self._edit_model_name)
-            selection = self._modelview.get_selection()
-            selection.connect("changed",
-                    lambda widget, event: self.core.emit_event(event), 
-                    "model-selection-changed")
-            selection.set_mode(self._gtk.SELECTION_MULTIPLE)
             self._treemodel = self.gui.get_object("ModelList")
             self._treemodel.clear()
             def update_model():
@@ -95,6 +90,11 @@ class Models(pycam.Plugins.ListPluginBase):
                                 True, color,
                                 int(self.DEFAULT_COLOR[3] * _GTK_COLOR_MAX)))
                 self.core.emit_event("model-list-changed")
+            selection = self._modelview.get_selection()
+            selection.set_mode(self._gtk.SELECTION_MULTIPLE)
+            selection.connect("changed",
+                    lambda widget, event: self.core.emit_event(event), 
+                    "model-selection-changed")
             self._get_colors_of_selected_models()
             self.register_model_update(update_model)
         self.core.set("models", self)
@@ -136,6 +136,7 @@ class Models(pycam.Plugins.ListPluginBase):
         if (new_text != self._treemodel[path][self.COLUMN_NAME]) and \
                 new_text:
             self._treemodel[path][self.COLUMN_NAME] = new_text
+            self.core.emit_event("model-list-changed")
 
     def _visualize_visible_state(self, column, cell, model, m_iter):
         visible = model.get_value(m_iter, self.COLUMN_VISIBLE)

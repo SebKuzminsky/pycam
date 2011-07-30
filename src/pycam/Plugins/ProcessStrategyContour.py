@@ -26,7 +26,7 @@ import pycam.Plugins
 
 class ProcessStrategyContour(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["ProcessStrategyManager", "PathParamStepDown",
+    DEPENDS = ["Processes", "PathParamStepDown",
             "PathParamMaterialAllowance", "PathParamMillingStyle"]
 
     def setup(self):
@@ -34,15 +34,14 @@ class ProcessStrategyContour(pycam.Plugins.PluginBase):
                 "material_allowance": 0,
                 "milling_style": "ignore",
         }
-        self.core.get("register_strategy")("contour", "Waterline",
-                self.run_strategy, parameters=parameters, weight=20)
+        self.core.get("register_parameter_set")("process", "contour",
+                "Waterline", self.run_strategy, parameters=parameters,
+                weight=20)
         return True
 
     def teardown(self):
-        self.core.get("unregister_strategy")("contour")
+        self.core.get("unregister_parameter_set")("process", "contour")
 
     def run_strategy(self):
         pass
-
-
 

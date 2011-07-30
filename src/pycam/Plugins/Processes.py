@@ -25,7 +25,7 @@ import pycam.Plugins
 
 class Processes(pycam.Plugins.ListPluginBase):
 
-    DEPENDS = ["ProcessStrategyManager"]
+    DEPENDS = ["ParameterGroupManager"]
 
     UI_FILE = "processes.ui"
     COLUMN_REF, COLUMN_NAME = range(2)
@@ -59,12 +59,20 @@ class Processes(pycam.Plugins.ListPluginBase):
                 frame.set_label_widget(frame_label)
                 align = gtk.Alignment()
                 frame.add(align)
-                align.set_padding(0, 0, 12, 0)
+                align.set_padding(0, 3, 12, 3)
                 align.add(item)
                 frame.show_all()
                 parameters_box.pack_start(frame, expand=False)
             self.core.register_ui_section("process_parameters",
                     add_parameter_widget, clear_parameter_widgets)
+            self.core.get("register_parameter_group")("process",
+                    changed_set_event="process-strategy-changed",
+                    changed_set_list_event="process-strategy-list-changed",
+                    get_current_set_func=self._get_strategy)
+            parameter_widget = self.core.get("register_parameter_section")(
+                    "process", "pathgenerator")
+            self.core.register_ui("process_parameters", "Path parameters",
+                    parameter_widget, weight=10)
             selection = self._modelview.get_selection()
             selection.connect("changed", 
                     lambda widget, event: self.core.emit_event(event),
@@ -85,23 +93,18 @@ class Processes(pycam.Plugins.ListPluginBase):
                         cache[id(item)] = [id(item), "Process #%d" % index]
                     self._treemodel.append(cache[id(item)])
                 self.core.emit_event("process-list-changed")
-            self.gui.get_object("StrategySelector").connect("changed",
-                    lambda widget: self.core.emit_event(
-                            "process-strategy-changed"))
+            strategy_selector = self.gui.get_object("StrategySelector")
+            strategy_selector.connect("changed", lambda widget: \
+                    self.core.emit_event("process-strategy-changed"))
             self.core.register_event("process-strategy-list-changed",
                     self._update_widgets)
             self.register_model_update(update_model)
             self.core.register_event("process-selection-changed",
                     self._process_switch)
-            self.core.register_event("pathgenerator-parameter-changed",
+            self.core.register_event("process-parameter-changed",
                     self._store_process_settings)
             self.core.register_event("process-strategy-changed",
                     self._store_process_settings)
-            self.core.add_item("current-strategy", lambda: self._get_strategy())
-            self._update_widgets()
-            self._process_switch()
-            self._store_process_settings()
-            self._trigger_table_update()
         self.core.set("processes", self)
         return True
 
@@ -148,7 +151,8 @@ class Processes(pycam.Plugins.ListPluginBase):
         # TODO: keep the current selection
         model = self.gui.get_object("StrategyModel")
         model.clear()
-        strategies = self.core.get("process-strategies")
+        strategies = list(self.core.get("get_parameter_sets")("process").values())
+        strategies.sort(key=lambda item: item["weight"])
         for strategy in strategies:
             model.append((strategy["label"], strategy["name"]))
         # check if any on the processes became obsolete due to a missing plugin
@@ -164,26 +168,25 @@ class Processes(pycam.Plugins.ListPluginBase):
         self.gui.get_object("ProcessNew").set_sensitive(len(model) > 0)
 
     def _get_strategy(self, name=None):
-        strategies = self.core.get("process-strategies")
+        strategies = self.core.get("get_parameter_sets")("process")
         if name is None:
             # find the currently selected one
-            model = self.gui.get_object("StrategyModel")
             selector = self.gui.get_object("StrategySelector")
+            model = selector.get_model()
             index = selector.get_active()
             if index < 0:
                 return None
             strategy_name = model[index][1]
         else:
             strategy_name = name
-        for strategy in strategies:
-            if strategy_name == strategy["name"]:
-                return strategy
+        if strategy_name in strategies:
+            return strategies[strategy_name]
         else:
             return None
 
     def select_strategy(self, name):
         selector = self.gui.get_object("StrategySelector")
-        for index, row in enumerate(self.gui.get_object("StrategyModel")):
+        for index, row in enumerate(selector.get_model()):
             if row[1] == name:
                 selector.set_active(index)
                 break
@@ -199,34 +202,33 @@ class Processes(pycam.Plugins.ListPluginBase):
         else:
             process["strategy"] = strategy["name"]
             parameters = process["parameters"]
-            for parameter in self.core.get("pathgenerator_parameters"):
-                if parameter["name"] in strategy["parameters"]:
-                    parameters[parameter["name"]] = \
-                            parameter["control"].get_value()
+            parameters.update(self.core.get("get_parameter_values")("process"))
             control_box.show()
             self._trigger_table_update()
 
     def _process_switch(self, widget=None, data=None):
         process = self.get_selected()
         control_box = self.gui.get_object("ProcessSettingsControlsBox")
-        self.core.block_event("pathgenerator-parameter-changed")
         if not process:
             control_box.hide()
         else:
+            self.core.block_event("process-parameter-changed")
+            self.core.block_event("process-strategy-changed")
             strategy_name = process["strategy"]
             self.select_strategy(strategy_name)
             strategy = self._get_strategy(strategy_name)
-            for parameter in self.core.get("pathgenerator_parameters"):
-                if parameter["name"] in strategy["parameters"]:
-                    parameter["control"].set_value(
-                            process["parameters"][parameter["name"]])
+            self.core.get("set_parameter_values")("process", process["parameters"])
             control_box.show()
-        self.core.unblock_event("pathgenerator-parameter-changed")
+            self.core.unblock_event("process-strategy-changed")
+            self.core.unblock_event("process-parameter-changed")
+            self.core.emit_event("process-strategy-changed")
         
     def _process_new(self, *args):
-        strategy = self.core.get("process-strategies")[0]
+        strategies = self.core.get("get_parameter_sets")("process").values()
+        strategies.sort(key=lambda item: item["weight"])
+        strategy = strategies[0]
         new_process = {"strategy": strategy["name"],
-                "parameters": strategy["parameters"].copy()
+                "parameters": strategy["parameters"].copy(),
         }
         self.append(new_process)
         self.select(new_process)
