@@ -28,6 +28,22 @@ import pycam.Utils.log
 _log = pycam.Utils.log.get_logger()
 
 
+def _input_conversion(func):
+    def _input_conversion_wrapper(self, value):
+        if hasattr(self, "_input_converter") and self._input_converter:
+            value = self._input_converter(value)
+        return func(self, value)
+    return _input_conversion_wrapper
+
+def _output_conversion(func):
+    def _output_conversion_wrapper(self):
+        result = func(self)
+        if hasattr(self, "_output_converter") and self._output_converter:
+            result = self._output_converter(result)
+        return result
+    return _output_conversion_wrapper
+
+
 class InputBaseClass(object):
 
     def get_widget(self):
@@ -38,6 +54,10 @@ class InputBaseClass(object):
             self.control.show()
         else:
             self.control.hide()
+
+    def set_conversion(self, set_conv=None, get_conv=None):
+        self._input_converter = set_conv
+        self._output_converter = get_conv
 
 
 class InputNumber(InputBaseClass):
@@ -52,9 +72,11 @@ class InputNumber(InputBaseClass):
         if change_handler:
             self.control.connect("changed", change_handler)
 
+    @_output_conversion
     def get_value(self):
         return self.control.get_value()
 
+    @_input_conversion
     def set_value(self, value):
         self.control.set_value(value)
 
@@ -64,8 +86,22 @@ class InputChoice(InputBaseClass):
     def __init__(self, choices, force_type=None, change_handler=None):
         import gtk
         import gobject
+        g_type = self._get_column_type(choices, force_type=force_type)
+        self.model = gtk.ListStore(gobject.TYPE_STRING, g_type)
+        for label, value in choices:
+            self.model.append((label, value))
+        renderer = gtk.CellRendererText()
+        self.control = gtk.ComboBox(self.model)
+        self.control.pack_start(renderer)
+        self.control.set_attributes(renderer, text=0)
+        self.control.set_active(0)
+        if change_handler:
+            self.control.connect("changed", change_handler)
+
+    def _get_column_type(self, choices, force_type=None):
+        import gobject
         type_mapper = {int: gobject.TYPE_INT,
-                long: gobject.TYPE_LONG,
+                long: gobject.TYPE_INT64,
                 basestring: gobject.TYPE_STRING,
                 bool: gobject.TYPE_BOOLEAN
         }
@@ -81,17 +117,9 @@ class InputChoice(InputBaseClass):
             g_type = type_mapper[force_type]
         else:
             raise TypeError("Invalid type forced: %s" % str(force_type))
-        self.model = gtk.ListStore(gobject.TYPE_STRING, g_type)
-        self.control = gtk.ComboBox(self.model)
-        renderer = gtk.CellRendererText()
-        self.control.pack_start(renderer)
-        self.control.set_attributes(renderer, text=0)
-        for label, value in choices:
-            self.model.append((label, value))
-        self.control.set_active(0)
-        if change_handler:
-            self.control.connect("changed", change_handler)
+        return g_type
 
+    @_output_conversion
     def get_value(self):
         index = self.control.get_active()
         if index < 0:
@@ -99,6 +127,7 @@ class InputChoice(InputBaseClass):
         else:
             return self.model[index][1]
 
+    @_input_conversion
     def set_value(self, value):
         if value is None:
             self.control.set_active(-1)
@@ -107,16 +136,10 @@ class InputChoice(InputBaseClass):
                 if row[1] == value:
                     self.control.set_active(index)
                     break
-            else:
-                _log.debug("Tried to set an invalid value: %s" % str(value))
 
     def update_choices(self, choices):
         # TODO: selection restore does not work currently; there seems to be a glitch during "delete model"
-        old_selection_index = self.control.get_active()
-        if old_selection_index < 0:
-            old_selection = None
-        else:
-            old_selection = self.model[old_selection_index][1]
+        selected = self.get_value()
         for choice_index, (label, value) in enumerate(choices):
             for index, row in enumerate(self.model):
                 if row[1] == value:
@@ -136,14 +159,51 @@ class InputChoice(InputBaseClass):
         while len(self.model) > len(choices):
             m_iter = self.model.get_iter((len(choices),))
             self.model.remove(m_iter)
-        # restore the previous selection
-        for index, row in enumerate(self.model):
-            if row[1] == old_selection:
-                self.control.set_active(index)
-                print "Restored: %d" % index
-                break
-        else:
-            self.control.set_active(-1)
+        self.set_value(selected)
+
+
+class InputTable(InputChoice):
+
+    def __init__(self, choices, force_type=None, change_handler=None):
+        import gtk
+        import gobject
+        g_type = self._get_column_type(choices, force_type=force_type)
+        self.model = gtk.ListStore(gobject.TYPE_STRING, g_type)
+        for label, value in choices:
+            self.model.append((label, value))
+        renderer = gtk.CellRendererText()
+        self.control = gtk.ScrolledWindow()
+        self._treeview = gtk.TreeView(self.model)
+        self.control.add(self._treeview)
+        self.control.set_shadow_type(gtk.SHADOW_ETCHED_OUT)
+        self.control.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        column = gtk.TreeViewColumn()
+        column.pack_start(renderer, expand=False)
+        column.set_attributes(renderer, text=0)
+        self._treeview.append_column(column)
+        self._treeview.set_headers_visible(False)
+        self._selection = self._treeview.get_selection()
+        self._selection.set_mode(gtk.SELECTION_MULTIPLE)
+        self.control.show_all()
+        if change_handler:
+            self._selection.connect("changed", change_handler)
+
+    @_output_conversion
+    def get_value(self):
+        model, rows = self._selection.get_selected_rows()
+        return [self.model[path[0]][1] for path in rows]
+
+    @_input_conversion
+    def set_value(self, items):
+        self._selection.unselect_all()
+        if items is None:
+            items = []
+        for item in items:
+            for index, row in enumerate(self.model):
+                if row[1] == item:
+                    self._selection.select_path((index, ))
+                    break
+
 
 class InputCheckBox(InputBaseClass):
 
@@ -154,9 +214,11 @@ class InputCheckBox(InputBaseClass):
         if change_handler:
             self.control.connect("toggled", change_handler)
 
+    @_output_conversion
     def get_value(self):
         return self.control.get_active()
 
+    @_input_conversion
     def set_value(self, value):
         self.control.set_active(value)
 
