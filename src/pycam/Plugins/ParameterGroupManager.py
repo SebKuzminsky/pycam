@@ -267,6 +267,9 @@ class ParameterSectionGTK(object):
                 widget.set_label(param["label"])
                 self._table.attach(widget, 0, 2, index, index + 1,
                         xoptions=gtk.FILL, yoptions=gtk.FILL)
+            elif not param["label"]:
+                self._table.attach(widget, 0, 2, index, index + 1,
+                        xoptions=gtk.FILL, yoptions=gtk.FILL)
             else:
                 # spinbutton, combobox, ...
                 label = gtk.Label("%s:" % param["label"])

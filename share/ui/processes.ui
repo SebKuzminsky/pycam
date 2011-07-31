@@ -187,7 +187,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkAlignment" id="alignment1">
+          <object class="GtkAlignment" id="ProcessSelectorBox">
             <property name="visible">True</property>
             <property name="xscale">0</property>
             <property name="yscale">0</property>

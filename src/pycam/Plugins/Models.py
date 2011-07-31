@@ -31,7 +31,7 @@ _GTK_COLOR_MAX = 65535.0
 class Models(pycam.Plugins.ListPluginBase):
 
     UI_FILE = "models.ui"
-    COLUMN_ID, COLUMN_NAME, COLUMN_VISIBLE, COLUMN_COLOR, COLUMN_ALPHA = range(5)
+    COLUMN_REF, COLUMN_NAME, COLUMN_VISIBLE, COLUMN_COLOR, COLUMN_ALPHA = range(5)
     LIST_ATTRIBUTE_MAP = {"name": COLUMN_NAME, "visible": COLUMN_VISIBLE,
             "color": COLUMN_COLOR, "alpha": COLUMN_ALPHA}
     ICONS = {"visible": "visible.svg", "hidden": "visible_off.svg"}
@@ -78,7 +78,7 @@ class Models(pycam.Plugins.ListPluginBase):
                     self._model_cache = {}
                 cache = self._model_cache
                 for row in self._treemodel:
-                    cache[row[self.COLUMN_ID]] = list(row)
+                    cache[row[self.COLUMN_REF]] = list(row)
                 self._treemodel.clear()
                 for index, item in enumerate(self):
                     if id(item) in cache:

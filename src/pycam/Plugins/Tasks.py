@@ -25,16 +25,6 @@ import time
 import pycam.Plugins
 import pycam.Utils
 from pycam.Exporters.GCodeExporter import GCodeGenerator
-from pycam.Toolpath.MotionGrid import MILLING_STYLE_IGNORE, \
-        MILLING_STYLE_CONVENTIONAL, MILLING_STYLE_CLIMB, GRID_DIRECTION_X, \
-        GRID_DIRECTION_Y, GRID_DIRECTION_XY, get_lines_grid, get_fixed_grid
-import pycam.PathProcessors.SimpleCutter
-import pycam.PathGenerators.PushCutter
-import pycam.PathProcessors.ContourCutter
-import pycam.PathGenerators.ContourFollow
-import pycam.PathProcessors.PathAccumulator
-import pycam.PathGenerators.DropCutter
-import pycam.PathGenerators.EngraveCutter
 
 
 class Tasks(pycam.Plugins.ListPluginBase):
@@ -59,9 +49,40 @@ class Tasks(pycam.Plugins.ListPluginBase):
                         self.gui.get_object(obj_name))
             self.gui.get_object("TaskNew").connect("clicked",
                     self._task_new)
+            # parameters
+            parameters_box = self.gui.get_object("TaskParameterBox")
+            def clear_parameter_widgets():
+                parameters_box.foreach(
+                        lambda widget: parameters_box.remove(widget))
+            def add_parameter_widget(item, name):
+                # create a frame within an alignment and the item inside
+                frame_label = gtk.Label()
+                frame_label.set_markup("<b>%s</b>" % name)
+                frame = gtk.Frame()
+                frame.set_label_widget(frame_label)
+                align = gtk.Alignment()
+                frame.add(align)
+                align.set_padding(0, 3, 12, 3)
+                align.add(item)
+                frame.show_all()
+                parameters_box.pack_start(frame, expand=False)
+            self.core.register_ui_section("task_parameters",
+                    add_parameter_widget, clear_parameter_widgets)
+            self.core.get("register_parameter_group")("task",
+                    changed_set_event="task-type-changed",
+                    changed_set_list_event="task-type-list-changed",
+                    get_current_set_func=self._get_type)
+            models_parameter_widget = self.core.get(
+                    "register_parameter_section")("task", "models")
+            self.core.register_ui("task_parameters", "Collision models",
+                    models_parameter_widget, weight=20)
+            components_parameter_widget = self.core.get(
+                    "register_parameter_section")("task", "components")
+            self.core.register_ui("task_parameters", "Components",
+                    components_parameter_widget, weight=10)
             # handle table events
             self.core.register_event("task-selection-changed",
-                    self._switch_task)
+                    self._task_switch)
             self.gui.get_object("TaskNameCell").connect("edited",
                     self._edit_task_name)
             selection = self._taskview.get_selection()
@@ -90,32 +111,19 @@ class Tasks(pycam.Plugins.ListPluginBase):
                     else:
                         self._treemodel.append((id(item), "Task #%d" % index))
                 self.core.emit_event("task-list-changed")
-            self._detail_handlers = []
-            for obj_name in ("FeedrateControl", "SpindleSpeedControl"):
-                obj = self.gui.get_object(obj_name)
-                handler = obj.connect("value-changed",
-                        lambda widget: self.core.emit_event("task-changed"))
-                self._detail_handlers.append((obj, handler))
-            self.gui.get_object("Models").get_selection().set_mode(
-                    self._gtk.SELECTION_MULTIPLE)
-            for obj_name in ("Models", "ToolSelector", "ProcessSelector", "BoundsSelector"):
-                obj = self.gui.get_object(obj_name)
-                obj.get_model().clear()
-                if hasattr(obj, "get_selection"):
-                    obj = obj.get_selection()
-                handler = obj.connect("changed",
-                        lambda widget: self.core.emit_event("task-changed"))
-                self._detail_handlers.append((obj, handler))
-            for category, event in (("models", "model-list-changed"),
-                    ("tool", "tool-list-changed"),
-                    ("process", "process-list-changed"),
-                    ("bounds", "bounds-list-changed")):
-                self.core.register_event(event, self._update_external_model,
-                        category)
-                self._update_external_model(category)
+            # shape selector
+            type_selector = self.gui.get_object("TaskTypeSelector")
+            type_selector.connect("changed", lambda widget: \
+                    self.core.emit_event("task-type-changed"))
+            self.core.register_event("task-type-list-changed",
+                    self._update_widgets)
+            self.core.register_event("task-selection-changed",
+                    self._task_switch)
             self.core.register_event("task-changed", self._store_task)
+            self.core.register_event("task-type-changed", self._store_task)
             self.register_model_update(update_model)
-            self._switch_task()
+            self._update_widgets()
+            self._task_switch()
         self.core.set("tasks", self)
         return True
 
@@ -123,53 +131,24 @@ class Tasks(pycam.Plugins.ListPluginBase):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("TaskBox"))
             self.core.unregister_event("task-selection-changed",
-                    self._switch_task)
+                    self._task_switch)
             self.core.unregister_event("task-selection-changed",
-                    self._switch_task)
+                    self._task_switch)
             self.core.unregister_event("task-changed", self._store_task)
 
-    def _get_modelview_and_content(self, category):
-        model = {None: self._taskview,
-                "tool": self.gui.get_object("ToolSelector"),
-                "process": self.gui.get_object("ProcessSelector"),
-                "bounds": self.gui.get_object("BoundsSelector"),
-                "models": self.gui.get_object("Models")}[category]
-        content = {None: self,
-                "tool": self.core.get("tools"),
-                "process": self.core.get("processes"),
-                "bounds": self.core.get("bounds"),
-                "models": self.core.get("models")}[category]
-        return model, content
+    def get_selected(self, index=False):
+        return self._get_selected(self._taskview, index=index)
 
-    def get_selected(self, category=None, index=False):
-        modelview, content = self._get_modelview_and_content(category)
-        return self._get_selected(modelview, index=index, content=content)
-
-    def select(self, item, category=None, keep=False):
-        if isinstance(item, list):
-            keep = False
-            if not item:
-                self.select(None, category=category)
+    def select(self, tasks):
+        print "Tasks: %s" % str(tasks)
+        selection = self._taskview.get_selection()
+        if not isinstance(tasks, (list, tuple)):
+            tasks = [tasks]
+        for index, task in enumerate(self):
+            if task in tasks:
+                selection.select_path((index,))
             else:
-                for one in item:
-                    self.select(one, category=category, keep=keep)
-                    keep = True
-        else:
-            modelview, content = self._get_modelview_and_content(category)
-            if (item is None) or (item in content):
-                if not item is None:
-                    index = [id(entry) for entry in content].index(id(item))
-                if hasattr(modelview, "get_selection"):
-                    selection = modelview.get_selection()
-                    if not keep:
-                        selection.unselect_all()
-                    if not item is None:
-                        selection.select_path((index,))
-                else:
-                    if item is None:
-                        modelview.set_active(-1)
-                    else:
-                        modelview.set_active(index)
+                selection.unselect_path((index,))
 
     def _edit_task_name(self, cell, path, new_text):
         path = int(path)
@@ -177,70 +156,94 @@ class Tasks(pycam.Plugins.ListPluginBase):
                 new_text:
             self._treemodel[path][self.COLUMN_NAME] = new_text
 
-    def _switch_task(self):
-        tasks = self.get_selected()
-        if tasks:
-            task = tasks[0]
+    def _get_type(self, name=None):
+        types = self.core.get("get_parameter_sets")("task")
+        if name is None:
+            # find the currently selected one
+            selector = self.gui.get_object("TaskTypeSelector")
+            model = selector.get_model()
+            index = selector.get_active()
+            if index < 0:
+                return None
+            type_name = model[index][1]
         else:
-            task = None
-        details_box = self.gui.get_object("TaskDetails")
-        if task:
-            # block all "change" signals for the task controls
-            for obj, signal_handler in self._detail_handlers:
-                obj.handler_block(signal_handler)
-            for key in ("tool", "process", "bounds", "models"):
-                self.select(task[key], category=key)
-            self.gui.get_object("FeedrateControl").set_value(task["feedrate"])
-            self.gui.get_object("SpindleSpeedControl").set_value(task["spindlespeed"])
-            # unblock the signals again
-            for obj, signal_handler in self._detail_handlers:
-                obj.handler_unblock(signal_handler)
-            details_box.show()
+            type_name = name
+        if type_name in types:
+            return types[type_name]
         else:
-            details_box.hide()
+            return None
 
+    def select_type(self, name):
+        selector = self.gui.get_object("TaskTypeSelector")
+        for index, row in enumerate(selector.get_model()):
+            if row[1] == name:
+                selector.set_active(index)
+                break
+        else:
+            selector.set_active(-1)
+
+    def _update_widgets(self):
+        model = self.gui.get_object("TaskTypeList")
+        model.clear()
+        types = self.core.get("get_parameter_sets")("task").values()
+        types.sort(key=lambda item: item["weight"])
+        for one_type in types:
+            model.append((one_type["label"], one_type["name"]))
+        # check if any on the processes became obsolete due to a missing plugin
+        removal = []
+        type_names = [one_type["name"] for one_type in types]
+        for index, task in enumerate(self):
+            if not task["type"] in tape_names:
+                removal.append(index)
+        removal.reverse()
+        for index in removal:
+            self.pop(index)
+        # show "new" only if a strategy is available
+        self.gui.get_object("TaskNew").set_sensitive(len(model) > 0)
+        selector_box = self.gui.get_object("TaskChooserBox")
+        if len(model) < 2:
+            selector_box.hide()
+        else:
+            selector_box.show()
+
+    def _task_switch(self):
+        tasks = self.get_selected()
+        control_box = self.gui.get_object("TaskDetails")
+        if len(tasks) != 1:
+            control_box.hide()
+        else:
+            task = tasks[0]
+            self.core.block_event("task-changed")
+            self.core.block_event("task-type-changed")
+            type_name = task["type"]
+            self.select_type(type_name)
+            one_type = self._get_type(type_name)
+            self.core.get("set_parameter_values")("task", task["parameters"])
+            control_box.show()
+            self.core.unblock_event("task-type-changed")
+            self.core.unblock_event("task-changed")
+            # trigger a widget update
+            self.core.emit_event("task-type-changed")
+        
     def _store_task(self, widget=None):
         tasks = self.get_selected()
-        if tasks:
-            task = tasks[0]
-        else:
-            task = None
         details_box = self.gui.get_object("TaskDetails")
-        if task is None:
+        task_type = self._get_type()
+        if (len(tasks) != 1) or not task_type:
             details_box.hide()
-            return
         else:
-            task["feedrate"] = self.gui.get_object("FeedrateControl").get_value()
-            task["spindlespeed"] = self.gui.get_object("SpindleSpeedControl").get_value()
-            for key in ("tool", "process", "bounds", "models"):
-                task[key] = self.get_selected(category=key)
+            task = tasks[0]
+            task["type"] = task_type["name"]
+            parameters = task["parameters"]
+            parameters.update(self.core.get("get_parameter_values")("task"))
             details_box.show()
 
-    def _update_external_model(self, category):
-        modelview, content = self._get_modelview_and_content(category)
-        ids = [id(item) for item in content]
-        model = modelview.get_model()
-        for index, one_id in enumerate(ids):
-            while (len(model) > index) and \
-                    (model[index][self.COLUMN_REF] != one_id):
-                index_iter = model.get_iter((index, ))
-                if model[index][self.COLUMN_REF] in ids:
-                    # move it to the end of the list
-                    model.move_before(index_iter, None)
-                else:
-                    model.remove(index_iter)
-            if len(model) <= index:
-                name = content.get_attr(content[index], "name", id_col=self.COLUMN_REF)
-                model.append((one_id, name))
-
     def _task_new(self, *args):
-        new_task = {
-                "models": [],
-                "tool": [],
-                "process": [],
-                "bounds": [],
-                "feedrate": 300,
-                "spindlespeed": 1000,
+        types = self.core.get("get_parameter_sets")("task").values()
+        types.sort(key=lambda item: item["weight"])
+        one_type = types[0]
+        new_task = {"type": one_type["name"],
+                "parameters": one_type["parameters"].copy(),
         }
         self.append(new_task)
         self.select(new_task)
@@ -261,58 +264,6 @@ class Tasks(pycam.Plugins.ListPluginBase):
 
     def _generate_all_toolpaths(self, widget=None):
         self.generate_toolpaths(self)
-
-    def _get_path_generator(self, process):
-        if process["PushRemoveStrategy"]:
-            processor = pycam.PathProcessors.SimpleCutter.SimpleCutter
-            generator = pycam.PathGenerators.PushCutter.PushCutter
-        elif process["ContourPolygonStrategy"]:
-            processor = pycam.PathProcessors.ContourCutter.ContourCutter
-            generator = pycam.PathGenerators.PushCutter.PushCutter
-        elif process["ContourFollowStrategy"]:
-            processor = pycam.PathProcessors.SimpleCutter.SimpleCutter
-            generator = pycam.PathGenerators.ContourFollow.ContourFollow
-        elif process["SurfaceStrategy"]:
-            processor = pycam.PathProcessors.PathAccumulator.PathAccumulator
-            generator = pycam.PathGenerators.DropCutter.DropCutter
-        elif process["EngraveStrategy"]:
-            processor = pycam.PathProcessors.SimpleCutter.SimpleCutter
-            generator = pycam.PathGenerators.EngraveCutter.EngraveCutter
-        else:
-            self.log.error("Unknown path strategy: %s" % str(process))
-            return
-        # TODO: "physics" should be set, as well
-        return generator(processor(), physics=None)
-
-    def _get_motion_grid(self, tool, process, bounds, models):
-        step_width = float(tool.radius) / 4.0
-        milling_style_map = {
-                "MillingStyleConventional": MILLING_STYLE_CONVENTIONAL,
-                "MillingStyleClimb": MILLING_STYLE_CLIMB,
-                "MillingStyleIgnore": MILLING_STYLE_IGNORE,
-        }
-        for key in milling_style_map:
-            if process[key]:
-                milling_style = milling_style_map[key]
-                break
-        grid_direction_map = {"GridDirectionX": GRID_DIRECTION_X,
-                "GridDirectionY": GRID_DIRECTION_Y,
-                "GridDirectionXY": GRID_DIRECTION_XY,
-        }
-        for key in grid_direction_map:
-            if process[key]:
-                grid_direction = grid_direction_map[key]
-                break
-        line_distance = 2 * float(tool.radius) * \
-                (1 - 0.01 * float(process["OverlapPercent"]))
-        # TODO: handle offset and pocketing
-        if process["EngraveStrategy"]:
-            return get_lines_grid(models, bounds, process["MaxStepDown"],
-                    step_width=step_width, milling_style=milling_style)
-        else:
-            return get_fixed_grid(bounds, process["MaxStepDown"],
-                    line_distance=line_distance, grid_direction=grid_direction,
-                    milling_style=milling_style)
 
     def generate_toolpath(self, task, progress=None):
         models = task["models"]

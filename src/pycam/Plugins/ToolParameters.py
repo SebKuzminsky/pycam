@@ -32,7 +32,7 @@ class ToolParamRadius(pycam.Plugins.PluginBase):
     def setup(self):
         control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=99, digits=0,
                 change_handler=lambda widget=None: self.core.emit_event(
-                    "tool-parameter-changed"))
+                    "tool-changed"))
         control.set_conversion(set_conv=lambda value: value * 2.0,
                 get_conv=lambda value: value / 2.0)
         self.core.get("register_parameter")("tool", "size", "radius",
@@ -50,7 +50,7 @@ class ToolParamTorusRadius(pycam.Plugins.PluginBase):
     def setup(self):
         control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=99, digits=0,
                 change_handler=lambda widget=None: self.core.emit_event(
-                    "tool-parameter-changed"))
+                    "tool-changed"))
         self.core.get("register_parameter")("tool", "size", "torus_radius",
                 "Torus radius", control, weight=20)
         return True
@@ -66,7 +66,7 @@ class ToolParamFeedrate(pycam.Plugins.PluginBase):
     def setup(self):
         control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=10000,
                 digits=0, change_handler=lambda widget=None: \
-                    self.core.emit_event("tool-parameter-changed"))
+                    self.core.emit_event("tool-changed"))
         self.core.get("register_parameter")("tool", "speed", "feedrate",
                 "Feedrate", control, weight=10)
         return True
@@ -82,7 +82,7 @@ class ToolParamSpindleSpeed(pycam.Plugins.PluginBase):
     def setup(self):
         control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=100000,
                 digits=0, change_handler=lambda widget=None: \
-                    self.core.emit_event("tool-parameter-changed"))
+                    self.core.emit_event("tool-changed"))
         self.core.get("register_parameter")("tool", "speed", "spindle_speed",
                 "Spindle speed", control, weight=20)
         return True

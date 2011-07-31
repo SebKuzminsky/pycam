@@ -222,7 +222,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkAlignment" id="alignment1">
+          <object class="GtkAlignment" id="ToolSelectorBox">
             <property name="visible">True</property>
             <property name="xscale">0</property>
             <property name="yscale">0</property>
@@ -267,7 +267,7 @@
         <child>
           <object class="GtkHBox" id="ToolParameterBox">
             <property name="visible">True</property>
-            <property name="spacing">3</property>
+            <property name="spacing">5</property>
             <child>
               <placeholder/>
             </child>

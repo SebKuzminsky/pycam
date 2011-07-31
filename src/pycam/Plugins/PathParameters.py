@@ -33,7 +33,7 @@ class PathParamOverlap(pycam.Plugins.PluginBase):
         # configure the input/output converter
         widget = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=99, digits=0,
                 increment=10, change_handler=lambda widget=None: \
-                    self.core.emit_event("process-parameter-changed"))
+                    self.core.emit_event("process-changed"))
         widget.set_conversion(
                 set_conv=lambda float_value: int(float_value * 100.0),
                 get_conv=lambda percent: percent / 100.0)
@@ -53,7 +53,7 @@ class PathParamStepDown(pycam.Plugins.PluginBase):
     def setup(self):
         widget = pycam.Gui.ControlsGTK.InputNumber(lower=0.01, upper=1000,
                 digits=2, start=1, change_handler=lambda widget=None: \
-                    self.core.emit_event("process-parameter-changed"))
+                    self.core.emit_event("process-changed"))
         self.core.get("register_parameter")("process", "pathgenerator",
                 "step_down", "Step down", widget, weight=20)
         return True
@@ -70,7 +70,7 @@ class PathParamMaterialAllowance(pycam.Plugins.PluginBase):
     def setup(self):
         widget = pycam.Gui.ControlsGTK.InputNumber(start=0, lower=0, upper=100,
                 digits=2, change_handler=lambda widget=None: \
-                    self.core.emit_event("process-parameter-changed"))
+                    self.core.emit_event("process-changed"))
         self.core.get("register_parameter")("process", "pathgenerator",
                 "material_allowance", "Material allowance", widget, weight=30)
         return True
@@ -90,7 +90,7 @@ class PathParamMillingStyle(pycam.Plugins.PluginBase):
                     ("climb / down", "climb"),
                     ("conventional / up", "conventional")),
                 change_handler=lambda widget=None: self.core.emit_event(
-                        "process-parameter-changed"))
+                        "process-changed"))
         self.core.get("register_parameter")("process", "pathgenerator",
                 "milling_style", "Milling style", input_control, weight=50)
         return True
@@ -108,7 +108,7 @@ class PathParamGridDirection(pycam.Plugins.PluginBase):
         input_control = pycam.Gui.ControlsGTK.InputChoice(
                 (("x", "x"), ("y", "y"), ("xy", "xy")),
                 change_handler=lambda widget=None: self.core.emit_event(
-                        "process-parameter-changed"))
+                        "process-changed"))
         self.core.get("register_parameter")("process", "pathgenerator",
                 "grid_direction", "Direction", input_control, weight=40)
         return True
@@ -125,7 +125,7 @@ class PathParamRadiusCompensation(pycam.Plugins.PluginBase):
     def setup(self):
         widget = pycam.Gui.ControlsGTK.InputCheckBox(
                 change_handler=lambda widget=None: self.core.emit_event(
-                    "process-parameter-changed"))
+                    "process-changed"))
         self.core.get("register_parameter")("process", "pathgenerator",
                 "radius_compensation", "Radius compensation", widget, weight=80)
         return True
@@ -140,10 +140,9 @@ class PathParamTraceModel(pycam.Plugins.PluginBase):
     DEPENDS = ["Processes", "Models"]
 
     def setup(self):
-        # TODO: check if gtk is in use
-        self.input_control = pycam.Gui.ControlsGTK.InputTable([], force_type=long,
-                change_handler=lambda widget=None: self.core.emit_event(
-                        "process-parameter-changed"))
+        self.input_control = pycam.Gui.ControlsGTK.InputTable([],
+                force_type=long, change_handler=lambda widget=None: \
+                    self.core.emit_event("process-changed"))
         # configure the input/output converter
         def get_converter(model_refs):
             models_dict = {}

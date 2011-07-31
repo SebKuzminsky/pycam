@@ -405,7 +405,7 @@ class ListPluginBase(PluginBase, list):
             # TODO: "self.treemodel" should not be used here
             model = self._treemodel
         if id_col is None:
-            id_col = self.COLUMN_ID
+            id_col = self.COLUMN_REF
         if attr in self.LIST_ATTRIBUTE_MAP:
             col = self.LIST_ATTRIBUTE_MAP[attr]
             for index in range(len(model)):

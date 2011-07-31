@@ -101,7 +101,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.register_model_update(update_model)
             self.core.register_event("process-selection-changed",
                     self._process_switch)
-            self.core.register_event("process-parameter-changed",
+            self.core.register_event("process-changed",
                     self._store_process_settings)
             self.core.register_event("process-strategy-changed",
                     self._store_process_settings)
@@ -166,6 +166,11 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.pop(index)
         # show "new" only if a strategy is available
         self.gui.get_object("ProcessNew").set_sensitive(len(model) > 0)
+        selector_box = self.gui.get_object("ProcessSelectorBox")
+        if len(model) < 2:
+            selector_box.hide()
+        else:
+            selector_box.show()
 
     def _get_strategy(self, name=None):
         strategies = self.core.get("get_parameter_sets")("process")
@@ -212,7 +217,7 @@ class Processes(pycam.Plugins.ListPluginBase):
         if not process:
             control_box.hide()
         else:
-            self.core.block_event("process-parameter-changed")
+            self.core.block_event("process-changed")
             self.core.block_event("process-strategy-changed")
             strategy_name = process["strategy"]
             self.select_strategy(strategy_name)
@@ -220,7 +225,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.core.get("set_parameter_values")("process", process["parameters"])
             control_box.show()
             self.core.unblock_event("process-strategy-changed")
-            self.core.unblock_event("process-parameter-changed")
+            self.core.unblock_event("process-changed")
             self.core.emit_event("process-strategy-changed")
         
     def _process_new(self, *args):

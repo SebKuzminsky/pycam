@@ -51,10 +51,7 @@ class Tools(pycam.Plugins.ListPluginBase):
                 parameters_box.foreach(
                         lambda widget: parameters_box.remove(widget))
             def add_parameter_widget(item, name):
-                # create a frame with an align and the item inside
-                if len(parameters_box.get_children()) > 0:
-                    # add a separator between two content blocks
-                    parameters_box.pack_start(gtk.VSeparator())
+                # create a frame within an alignment and the item inside
                 frame_label = gtk.Label()
                 frame_label.set_markup("<b>%s</b>" % name)
                 frame = gtk.Frame()
@@ -67,7 +64,6 @@ class Tools(pycam.Plugins.ListPluginBase):
                 parameters_box.pack_start(frame, expand=True)
             self.core.register_ui_section("tool_parameters",
                     add_parameter_widget, clear_parameter_widgets)
-            selector = self.gui.get_object("ToolShapeSelector")
             self.core.get("register_parameter_group")("tool",
                     changed_set_event="tool-shape-changed",
                     changed_set_list_event="tool-shape-list-changed",
@@ -80,6 +76,7 @@ class Tools(pycam.Plugins.ListPluginBase):
                     "tool", "speed")
             self.core.register_ui("tool_parameters", "Speed",
                     speed_parameter_widget, weight=20)
+            # table updates
             cell = self.gui.get_object("ToolTableShapeCell")
             self.gui.get_object("ToolTableShapeColumn").set_cell_data_func(
                     cell, self._render_tool_shape)
@@ -107,20 +104,21 @@ class Tools(pycam.Plugins.ListPluginBase):
             selection.connect("changed", 
                     lambda widget, event: self.core.emit_event(event),
                     "tool-selection-changed")
+            # shape selector
             shape_selector = self.gui.get_object("ToolShapeSelector")
             shape_selector.connect("changed", lambda widget: \
                     self.core.emit_event("tool-shape-changed"))
             self.core.register_event("tool-shape-list-changed",
                     self._update_widgets)
-            self.register_model_update(update_model)
             self.core.register_event("tool-selection-changed",
-                    self._tool_change)
-            self.core.register_event("tool-parameter-changed",
+                    self._tool_switch)
+            self.core.register_event("tool-changed",
                     self._store_tool_settings)
             self.core.register_event("tool-shape-changed",
                     self._store_tool_settings)
+            self.register_model_update(update_model)
             self._update_widgets()
-            self._tool_change()
+            self._tool_switch()
         self.core.set("tools", self)
         return True
 
@@ -128,7 +126,7 @@ class Tools(pycam.Plugins.ListPluginBase):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("ToolBox"))
             self.core.unregister_event("tool-selection-changed",
-                    self._tool_change)
+                    self._tool_switch)
         self.core.set("tools", None)
         return True
 
@@ -201,10 +199,9 @@ class Tools(pycam.Plugins.ListPluginBase):
         cell.set_cell_data_func(renderer, self._render_tool_shape)
 
     def _update_widgets(self):
-        # TODO: keep the current selection
         model = self.gui.get_object("ToolShapeList")
         model.clear()
-        shapes = list(self.core.get("get_parameter_sets")("tool").values())
+        shapes = self.core.get("get_parameter_sets")("tool").values()
         shapes.sort(key=lambda item: item["weight"])
         for shape in shapes:
             model.append((shape["label"], shape["name"]))
@@ -219,6 +216,11 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.pop(index)
         # show "new" only if a strategy is available
         self.gui.get_object("ToolNew").set_sensitive(len(model) > 0)
+        selector_box = self.gui.get_object("ToolSelectorBox")
+        if len(model) < 2:
+            selector_box.hide()
+        else:
+            selector_box.show()
 
     def _store_tool_settings(self):
         tool = self.get_selected()
@@ -233,13 +235,13 @@ class Tools(pycam.Plugins.ListPluginBase):
             control_box.show()
             self._trigger_table_update()
 
-    def _tool_change(self, widget=None, data=None):
+    def _tool_switch(self, widget=None, data=None):
         tool = self.get_selected()
         control_box = self.gui.get_object("ToolSettingsControlsBox")
         if not tool:
             control_box.hide()
         else:
-            self.core.block_event("tool-parameter-changed")
+            self.core.block_event("tool-changed")
             self.core.block_event("tool-shape-changed")
             shape_name = tool["shape"]
             self.select_shape(shape_name)
@@ -247,7 +249,7 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.core.get("set_parameter_values")("tool", tool["parameters"])
             control_box.show()
             self.core.unblock_event("tool-shape-changed")
-            self.core.unblock_event("tool-parameter-changed")
+            self.core.unblock_event("tool-changed")
             # trigger a widget update
             self.core.emit_event("tool-shape-changed")
         
@@ -260,3 +262,4 @@ class Tools(pycam.Plugins.ListPluginBase):
         }
         self.append(new_tool)
         self.select(new_tool)
+
