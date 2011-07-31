@@ -37,9 +37,9 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         self.core.set("register_parameter_section", self.register_parameter_section)
         self.core.set("register_parameter", self.register_parameter)
         self.core.set("unregister_parameter_group",
-                self.unregister_parameter_section)
+                self.unregister_parameter_group)
         self.core.set("unregister_parameter_set",
-                self.unregister_parameter_section)
+                self.unregister_parameter_set)
         self.core.set("unregister_parameter_section",
                 self.unregister_parameter_section)
         self.core.set("unregister_parameter",
@@ -209,6 +209,9 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
                     "set '%s' from group '%s'" % (set_name, group_name))
             return
         del group["sets"][set_name]
+        event = group["changed_set_list_event"]
+        if event:
+            self.core.emit_event(event)
 
     def unregister_parameter(self, group_name, section_name, name):
         if not group_name in self._groups:
