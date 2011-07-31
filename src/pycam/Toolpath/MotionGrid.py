@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.Point import Point
+from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import epsilon
 from pycam.Geometry.Polygon import PolygonSorter
 import math
@@ -162,7 +163,11 @@ def get_fixed_grid(bounds, layer_distance, line_distance=None, step_width=None,
         start_position=START_Z):
     """ Calculate the grid positions for toolpath moves
     """
-    low, high = bounds.get_absolute_limits()
+    #TODO: remove the obsolete "get_absolute_limits" call
+    if hasattr(bounds, "get_absolute_limits"):
+        low, high = bounds.get_absolute_limits()
+    else:
+        low, high = bounds
     if isiterable(layer_distance):
         layers = layer_distance
     elif layer_distance is None:
@@ -254,9 +259,13 @@ def _get_sorted_polygons(models, callback=None):
     return inner_sorter.get_polygons() + outer_sorter.get_polygons()
 
 def get_lines_grid(models, bounds, layer_distance, line_distance=None,
-        step_width=None, grid_direction=None, 
-        milling_style=MILLING_STYLE_CONVENTIONAL,
-        start_position=None, callback=None):
+        step_width=None, milling_style=MILLING_STYLE_CONVENTIONAL,
+        start_position=START_Z, callback=None):
+    #TODO: remove the obsolete "get_absolute_limits" call
+    if hasattr(bounds, "get_absolute_limits"):
+        low, high = bounds.get_absolute_limits()
+    else:
+        low, high = bounds
     lines = []
     for polygon in _get_sorted_polygons(models, callback=callback):
         if polygon.is_closed and \
@@ -265,7 +274,6 @@ def get_lines_grid(models, bounds, layer_distance, line_distance=None,
             polygon.reverse()
         for line in polygon.get_lines():
             lines.append(line)
-    low, high = bounds.get_absolute_limits()
     # the lower limit is never below the model
     low_limit_lines = min([line.minz for line in lines])
     low[2] = max(low[2], low_limit_lines)
@@ -278,6 +286,8 @@ def get_lines_grid(models, bounds, layer_distance, line_distance=None,
         layers = floatrange(low[2], high[2], inc=layer_distance,
                 reverse=bool(start_position & START_Z))
     last_z = None
+    # turn the generator into a list - otherwise the slicing fails
+    layers = list(layers)
     if layers:
         # the upper layers are used for PushCutter operations
         for z in layers[:-1]:

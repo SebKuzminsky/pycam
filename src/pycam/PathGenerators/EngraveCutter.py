@@ -53,11 +53,13 @@ class EngraveCutter(object):
         if draw_callback:
             draw_callback(text="Engrave: optimizing polygon order")
 
+        # resolve the generator
+        motion_grid = list(motion_grid)
         num_of_layers = len(motion_grid)
 
         push_layers = motion_grid[:-1]
-        push_generator = pycam.PathGenerators.PushCutter(self.pa_push,
-                physics=self.physics)
+        push_generator = pycam.PathGenerators.PushCutter.PushCutter(
+                self.pa_push, physics=self.physics)
         current_layer = 0
         for push_layer in push_layers:
             # update the progress bar and check, if we should cancel the process
@@ -67,7 +69,7 @@ class EngraveCutter(object):
                 quit_requested = True
                 break
             # no callback: otherwise the status text gets lost
-            push_generator.GenerateToolpath(cutter, [model], push_layer)
+            push_generator.GenerateToolPath(cutter, [model], [push_layer])
             if draw_callback and draw_callback():
                 # cancel requested
                 quit_requested = True
@@ -78,10 +80,11 @@ class EngraveCutter(object):
             return self.pa_push.paths
 
         drop_generator = pycam.PathGenerators.PushCutter(self.pa_drop)
+        drop_layers = motion_grid[-1:]
         if draw_callback:
             draw_callback(text="Engrave: processing layer" + \
                 "%d/%d" % (current_layer + 1, num_of_layers))
-        push_generator.GenerateToolpath(cutter, [model], push_layer,
+        drop_generator.GenerateToolPath(cutter, [model], drop_layers,
                 minz=None, maxz=None)
         return self.pa_push.paths + self.pa_drop.paths
 

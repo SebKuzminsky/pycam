@@ -43,7 +43,20 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter_set")("task", "milling")
 
-    def run_task(self):
-        pass
-
+    def run_task(self, task):
+        environment = {}
+        for key in task["parameters"]:
+            environment[key] = task["parameters"][key]
+        funcs = {}
+        for key, set_name in (("tool", "shape"), ("process", "strategy")):
+            funcs[key] = self.core.get("get_parameter_sets")(
+                    key)[environment[key][set_name]]["func"]
+        tool = funcs["tool"](tool=environment["tool"], environment=environment)
+        path_generator, motion_grid, (low, high) = funcs["process"](
+                environment["process"], environment=environment)
+        models = task["parameters"]["collision_models"]
+        # TODO: low[2]/high[2]
+        toolpath = path_generator.GenerateToolPath(tool, models, motion_grid,
+                minz=low[2], maxz=high[2])
+        return toolpath
 

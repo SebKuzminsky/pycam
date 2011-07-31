@@ -22,6 +22,9 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import pycam.Plugins
+import pycam.Cutters.SphericalCutter
+import pycam.Cutters.ToroidalCutter
+import pycam.Cutters.CylindricalCutter
 
 
 class ToolTypeBallNose(pycam.Plugins.PluginBase):
@@ -41,8 +44,8 @@ class ToolTypeBallNose(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter_set")("tool", "ballnose")
 
-    def get_tool(self):
-        pass
+    def get_tool(self, tool, environment=None):
+        return pycam.Cutters.SphericalCutter(tool["parameters"]["radius"])
 
 
 class ToolTypeBullNose(pycam.Plugins.PluginBase):
@@ -64,8 +67,10 @@ class ToolTypeBullNose(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter_set")("tool", "bullnose")
 
-    def get_tool(self):
-        pass
+    def get_tool(self, tool, environment=None):
+        return pycam.Cutters.ToroidalCutter(
+                tool["parameters"]["radius"],
+                tool["parameters"]["torus_radius"])
 
 
 class ToolTypeFlat(pycam.Plugins.PluginBase):
@@ -84,6 +89,6 @@ class ToolTypeFlat(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter_set")("tool", "flat")
 
-    def get_tool(self):
-        pass
+    def get_tool(self, tool, environment=None):
+        return pycam.Cutters.CylindricalCutter(tool["parameters"]["radius"])
 
