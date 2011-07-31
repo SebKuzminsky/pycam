@@ -148,7 +148,7 @@ class Processes(pycam.Plugins.ListPluginBase):
         cell.set_cell_data_func(renderer, self._render_process_description)
 
     def _update_widgets(self):
-        # TODO: keep the current selection
+        selected = self._get_strategy()
         model = self.gui.get_object("StrategyModel")
         model.clear()
         strategies = list(self.core.get("get_parameter_sets")("process").values())
@@ -171,6 +171,8 @@ class Processes(pycam.Plugins.ListPluginBase):
             selector_box.hide()
         else:
             selector_box.show()
+        if selected:
+            self.select_strategy(selected["name"])
 
     def _get_strategy(self, name=None):
         strategies = self.core.get("get_parameter_sets")("process")

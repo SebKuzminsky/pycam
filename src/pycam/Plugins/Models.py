@@ -97,6 +97,8 @@ class Models(pycam.Plugins.ListPluginBase):
                     "model-selection-changed")
             self._get_colors_of_selected_models()
             self.register_model_update(update_model)
+            # update the model list
+            self.core.emit_event("model-list-changed")
         self.core.set("models", self)
         return True
 

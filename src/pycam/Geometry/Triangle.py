@@ -93,7 +93,7 @@ class Triangle(TransformableContainer):
 
     def copy(self):
         return self.__class__(self.p1.copy(), self.p2.copy(), self.p3.copy(),
-                self.n.copy())
+                self.normal.copy())
 
     def next(self):
         yield self.p1

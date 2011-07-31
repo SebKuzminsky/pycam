@@ -28,6 +28,7 @@ from pycam.Cutters.ToroidalCutter import ToroidalCutter
 
 class Tools(pycam.Plugins.ListPluginBase):
 
+    DEPENDS = ["ParameterGroupManager"]
     UI_FILE = "tools.ui"
     COLUMN_REF, COLUMN_TOOL_ID, COLUMN_NAME = range(3)
     LIST_ATTRIBUTE_MAP = {"id": COLUMN_TOOL_ID, "name": COLUMN_NAME}
@@ -199,6 +200,7 @@ class Tools(pycam.Plugins.ListPluginBase):
         cell.set_cell_data_func(renderer, self._render_tool_shape)
 
     def _update_widgets(self):
+        selected = self._get_shape()
         model = self.gui.get_object("ToolShapeList")
         model.clear()
         shapes = self.core.get("get_parameter_sets")("tool").values()
@@ -221,6 +223,8 @@ class Tools(pycam.Plugins.ListPluginBase):
             selector_box.hide()
         else:
             selector_box.show()
+        if selected:
+            self.select_shape(selected["name"])
 
     def _store_tool_settings(self):
         tool = self.get_selected()
