@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 import pycam.Gui.ControlsGTK
+import pycam.Toolpath.MotionGrid
 
 
 class PathParamOverlap(pycam.Plugins.PluginBase):
@@ -86,9 +87,9 @@ class PathParamMillingStyle(pycam.Plugins.PluginBase):
 
     def setup(self):
         input_control = pycam.Gui.ControlsGTK.InputChoice(
-                    (("ignore", "ignore"),
-                    ("climb / down", "climb"),
-                    ("conventional / up", "conventional")),
+                    (("ignore", pycam.Toolpath.MotionGrid.MILLING_STYLE_IGNORE),
+                    ("climb / down", pycam.Toolpath.MotionGrid.MILLING_STYLE_CLIMB),
+                    ("conventional / up", pycam.Toolpath.MotionGrid.MILLING_STYLE_CONVENTIONAL)),
                 change_handler=lambda widget=None: self.core.emit_event(
                         "process-changed"))
         self.core.get("register_parameter")("process", "pathgenerator",
@@ -106,7 +107,9 @@ class PathParamGridDirection(pycam.Plugins.PluginBase):
 
     def setup(self):
         input_control = pycam.Gui.ControlsGTK.InputChoice(
-                (("x", "x"), ("y", "y"), ("xy", "xy")),
+                    (("x", pycam.Toolpath.MotionGrid.GRID_DIRECTION_X),
+                    ("y", pycam.Toolpath.MotionGrid.GRID_DIRECTION_Y),
+                    ("xy", pycam.Toolpath.MotionGrid.GRID_DIRECTION_XY)),
                 change_handler=lambda widget=None: self.core.emit_event(
                         "process-changed"))
         self.core.get("register_parameter")("process", "pathgenerator",
@@ -166,7 +169,7 @@ class PathParamTraceModel(pycam.Plugins.PluginBase):
         models = self.core.get("models")
         for model in models:
             if hasattr(model, "get_polygons"):
-                choices.append((models.get_attr(model, "name"), id(model)))
+                choices.append((models.get_attr(model, "name"), model))
         self.input_control.update_choices(choices)
 
     def teardown(self):

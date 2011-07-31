@@ -30,15 +30,20 @@ _log = pycam.Utils.log.get_logger()
 
 def _input_conversion(func):
     def _input_conversion_wrapper(self, value):
-        if hasattr(self, "_input_converter") and self._input_converter:
-            value = self._input_converter(value)
-        return func(self, value)
+        if value is None:
+            new_value = None
+        elif hasattr(self, "_input_converter") and self._input_converter:
+            new_value = self._input_converter(value)
+        else:
+            new_value = value
+        return func(self, new_value)
     return _input_conversion_wrapper
 
 def _output_conversion(func):
     def _output_conversion_wrapper(self):
         result = func(self)
-        if hasattr(self, "_output_converter") and self._output_converter:
+        if not (result is None) and hasattr(self, "_output_converter") and \
+                self._output_converter:
             result = self._output_converter(result)
         return result
     return _output_conversion_wrapper
@@ -58,6 +63,11 @@ class InputBaseClass(object):
     def set_conversion(self, set_conv=None, get_conv=None):
         self._input_converter = set_conv
         self._output_converter = get_conv
+
+    @_input_conversion
+    def _get_input_conversion_result(self, value):
+        # a simple dummy replicating the behaviour of _input_conversion
+        return value
 
 
 class InputNumber(InputBaseClass):
@@ -89,7 +99,8 @@ class InputChoice(InputBaseClass):
         g_type = self._get_column_type(choices, force_type=force_type)
         self.model = gtk.ListStore(gobject.TYPE_STRING, g_type)
         for label, value in choices:
-            self.model.append((label, value))
+            self.model.append((label,
+                    self._get_input_conversion_result(value)))
         renderer = gtk.CellRendererText()
         self.control = gtk.ComboBox(self.model)
         self.control.pack_start(renderer)
@@ -136,6 +147,8 @@ class InputChoice(InputBaseClass):
                 if row[1] == value:
                     self.control.set_active(index)
                     break
+            else:
+                _log.debug("Unknown value: %s" % str(value))
 
     def update_choices(self, choices):
         # TODO: selection restore does not work currently; there seems to be a glitch during "delete model"
@@ -146,7 +159,8 @@ class InputChoice(InputBaseClass):
                     break
             else:
                 # this choice is new
-                self.model.insert(choice_index, (label, value))
+                self.model.insert(choice_index, (label,
+                        self._get_input_conversion_result(value)))
                 continue
             # the current choice is preceded by some obsolete items
             while index > choice_index:
@@ -170,7 +184,8 @@ class InputTable(InputChoice):
         g_type = self._get_column_type(choices, force_type=force_type)
         self.model = gtk.ListStore(gobject.TYPE_STRING, g_type)
         for label, value in choices:
-            self.model.append((label, value))
+            self.model.append((label,
+                    self._get_input_conversion_result(value)))
         renderer = gtk.CellRendererText()
         self.control = gtk.ScrolledWindow()
         self._treeview = gtk.TreeView(self.model)
@@ -187,6 +202,10 @@ class InputTable(InputChoice):
         self.control.show_all()
         if change_handler:
             self._selection.connect("changed", change_handler)
+
+    def _get_input_conversion_result(self, value):
+        # handle a list instead of single items
+        return super(InputTable, self)._get_input_conversion_result([value])[0]
 
     @_output_conversion
     def get_value(self):

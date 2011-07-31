@@ -62,7 +62,7 @@ class TaskParamCollisionModels(pycam.Plugins.PluginBase):
         models = self.core.get("models")
         for model in models:
             if hasattr(model, "triangles"):
-                choices.append((models.get_attr(model, "name"), id(model)))
+                choices.append((models.get_attr(model, "name"), model))
         self.input_control.update_choices(choices)
 
 
@@ -74,6 +74,9 @@ class TaskParamTool(pycam.Plugins.PluginBase):
         self.input_control = pycam.Gui.ControlsGTK.InputChoice([],
                 force_type=long, change_handler=lambda widget=None: \
                     self.core.emit_event("task-changed"))
+        self.input_control.set_conversion(
+                get_conv=lambda ref: ([tool for tool in self.core.get("tools") if id(tool) == ref] + [None])[0],
+                set_conv=lambda tool: id(tool))
         self.core.get("register_parameter")("task", "components", "tool",
                 "Tool", self.input_control, weight=10)
         self.core.register_event("tool-list-changed", self._update_tools)
@@ -86,7 +89,7 @@ class TaskParamTool(pycam.Plugins.PluginBase):
         choices = []
         tools = self.core.get("tools")
         for tool in tools:
-            choices.append((tools.get_attr(tool, "name"), id(tool)))
+            choices.append((tools.get_attr(tool, "name"), tool))
         self.input_control.update_choices(choices)
 
 
@@ -98,6 +101,9 @@ class TaskParamProcess(pycam.Plugins.PluginBase):
         self.input_control = pycam.Gui.ControlsGTK.InputChoice([],
                 force_type=long, change_handler=lambda widget=None: \
                     self.core.emit_event("task-changed"))
+        self.input_control.set_conversion(
+                get_conv=lambda ref: ([process for process in self.core.get("processes") if id(process) == ref] + [None])[0],
+                set_conv=lambda process: id(process))
         self.core.get("register_parameter")("task", "components", "process",
                 "Process", self.input_control, weight=20)
         self.core.register_event("process-list-changed", self._update_processes)
@@ -110,7 +116,7 @@ class TaskParamProcess(pycam.Plugins.PluginBase):
         choices = []
         processes = self.core.get("processes")
         for process in processes:
-            choices.append((processes.get_attr(process, "name"), id(process)))
+            choices.append((processes.get_attr(process, "name"), process))
         self.input_control.update_choices(choices)
 
 
@@ -122,6 +128,9 @@ class TaskParamBounds(pycam.Plugins.PluginBase):
         self.input_control = pycam.Gui.ControlsGTK.InputChoice([],
                 force_type=long, change_handler=lambda widget=None: \
                     self.core.emit_event("task-changed"))
+        self.input_control.set_conversion(
+                get_conv=lambda ref: ([bounds for bounds in self.core.get("bounds") if id(bounds) == ref] + [None])[0],
+                set_conv=lambda bounds: id(bounds))
         self.core.get("register_parameter")("task", "components", "bounds",
                 "Bounds", self.input_control, weight=30)
         self.core.register_event("bounds-list-changed", self._update_bounds)
@@ -134,6 +143,6 @@ class TaskParamBounds(pycam.Plugins.PluginBase):
         choices = []
         bounds = self.core.get("bounds")
         for bound in bounds:
-            choices.append((bounds.get_attr(bound, "name"), id(bound)))
+            choices.append((bounds.get_attr(bound, "name"), bound))
         self.input_control.update_choices(choices)
 
