@@ -80,9 +80,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
                     "register_parameter_section")("task", "components")
             self.core.register_ui("task_parameters", "Components",
                     components_parameter_widget, weight=10)
-            # handle table events
-            self.core.register_event("task-selection-changed",
-                    self._task_switch)
+            # table
             self.gui.get_object("TaskNameCell").connect("edited",
                     self._edit_task_name)
             selection = self._taskview.get_selection()
@@ -130,22 +128,28 @@ class Tasks(pycam.Plugins.ListPluginBase):
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("TaskBox"))
-            self.core.unregister_event("task-selection-changed",
-                    self._task_switch)
+            self.core.unregister_event("task-type-list-changed",
+                    self._update_widgets)
             self.core.unregister_event("task-selection-changed",
                     self._task_switch)
             self.core.unregister_event("task-changed", self._store_task)
+            self.core.unregister_event("task-type-changed", self._store_task)
+            self.core.unregister_ui("task_parameters", models_parameter_widget,
+                    weight=20)
+            self.core.unregister_ui("task_parameters",
+                    components_parameter_widget, weight=10)
 
     def get_selected(self, index=False):
         return self._get_selected(self._taskview, index=index)
 
     def select(self, tasks):
-        print "Tasks: %s" % str(tasks)
         selection = self._taskview.get_selection()
+        model = self._taskview.get_model()
         if not isinstance(tasks, (list, tuple)):
             tasks = [tasks]
-        for index, task in enumerate(self):
-            if task in tasks:
+        tasks_ref = [id(task) for task in tasks]
+        for index, row in enumerate(model):
+            if row[self.COLUMN_REF] in tasks_ref:
                 selection.select_path((index,))
             else:
                 selection.unselect_path((index,))
@@ -183,6 +187,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             selector.set_active(-1)
 
     def _update_widgets(self):
+        selected = self._get_type()
         model = self.gui.get_object("TaskTypeList")
         model.clear()
         types = self.core.get("get_parameter_sets")("task").values()
@@ -193,7 +198,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
         removal = []
         type_names = [one_type["name"] for one_type in types]
         for index, task in enumerate(self):
-            if not task["type"] in tape_names:
+            if not task["type"] in type_names:
                 removal.append(index)
         removal.reverse()
         for index in removal:
@@ -205,6 +210,8 @@ class Tasks(pycam.Plugins.ListPluginBase):
             selector_box.hide()
         else:
             selector_box.show()
+        if selected:
+            self.select_type(selected["name"])
 
     def _task_switch(self):
         tasks = self.get_selected()
@@ -266,6 +273,10 @@ class Tasks(pycam.Plugins.ListPluginBase):
         self.generate_toolpaths(self)
 
     def generate_toolpath(self, task, progress=None):
+        func = self.core.get("get_parameter_sets")("task")[task["type"]]["func"]
+        toolpath = func(task)
+        return toolpath
+        # TODO: remove this obsolete code as soon as toolpath generation works
         models = task["models"]
         tool = task["tool"]
         process = task["process"]
