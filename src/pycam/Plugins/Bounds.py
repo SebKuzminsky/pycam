@@ -442,14 +442,20 @@ class BoundsDict(dict):
                 "Models": [],
         })
 
-    def get_absolute_limits(self):
+    def get_absolute_limits(self, tool=None, models=None):
         default = (None, None, None), (None, None, None)
         get_low_value = lambda axis: self["BoundaryLow%s" % "XYZ"[axis]]
         get_high_value = lambda axis: self["BoundaryHigh%s" % "XYZ"[axis]]
         if self["TypeRelativeMargin"]:
-            # use the currently selected models or all visible ones
-            models = self["Models"]
-            if not models:
+            # choose the appropriate set of models
+            if self["Models"]:
+                # configured models always take precedence
+                models = self["Models"]
+            elif models:
+                # use the supplied models (e.g. for toolpath calculation)
+                pass
+            else:
+                # use all visible models -> for live visualization
                 models = self.core.get("models").get_visible()
             low_model, high_model = pycam.Geometry.Model.get_combined_bounds(
                     models)
@@ -472,5 +478,17 @@ class BoundsDict(dict):
             for axis in range(3):
                 low.append(get_low_value(axis))
                 high.append(get_high_value(axis))
+        tool_limit = _BOUNDARY_MODES[self["ToolLimit"]]
+        # apply inside/along/outside
+        if tool_limit != "along":
+            tool_radius = tool["parameters"]["radius"]
+            if tool_limit == "inside":
+                offset = -tool_radius
+            else:
+                offset = tool_radius
+            # apply offset only for x and y
+            for index in range(2):
+                low[index] -= offset
+                high[index] += offset
         return low, high
 
