@@ -59,6 +59,8 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             # handle table changes
             self._modelview.connect("row-activated",
                     self._list_action_toggle_custom, self.COLUMN_VISIBLE)
+            self._modelview.connect("row-activated",
+                    lambda *args: self.core.emit_event("toolpath-changed"))
             self.gui.get_object("ToolpathVisibleColumn").set_cell_data_func(
                     self.gui.get_object("ToolpathVisibleSymbol"),
                     self._visualize_visible_state)
@@ -73,18 +75,6 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
                     lambda widget, event: self.core.emit_event(event), 
                     "toolpath-selection-changed")
             selection.set_mode(gtk.SELECTION_MULTIPLE)
-            # configure "export" actions
-            export_all = self.gui.get_object("ExportGCodeAll")
-            self.register_gtk_accelerator("toolpaths", export_all,
-                    "<Control><Shift>e", "ExportGCodeAll")
-            export_all.connect("activate", self.save_toolpath, False)
-            self.core.register_ui("file_menu", "ExportGCodeAll", export_all, 60)
-            export_selected = self.gui.get_object("ExportGCodeSelected")
-            self.register_gtk_accelerator("toolpaths", export_selected,
-                    None, "ExportGCodeSelected")
-            export_selected.connect("activate", self.save_toolpath, True)
-            self.core.register_ui("file_menu", "ExportGCodeSelected",
-                    export_selected, 65)
             # model handling
             def update_model():
                 if not hasattr(self, "_model_cache"):
@@ -191,94 +181,4 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
         text = get_time_string(toolpath.get_machine_time(
                 self.core.get("gcode_safety_height")))
         cell.set_property("text", text)
-
-    def save_toolpath(self, widget=None, only_selected=False):
-        if only_selected:
-            toolpaths = self.get_selected()
-        else:
-            toolpaths = self
-        if not toolpaths:
-            return
-        if callable(widget):
-            widget = widget()
-        if isinstance(widget, basestring):
-            filename = widget
-        else:
-            # we open a dialog
-            if self.core.get("gcode_filename_extension"):
-                filename_extension = self.core.get("gcode_filename_extension")
-            else:
-                filename_extension = None
-            # TODO: separate this away from Gui/Project.py
-            filename = self.get_filename_via_dialog("Save toolpath to ...",
-                    mode_load=False, type_filter=FILTER_GCODE,
-                    filename_templates=(self.last_toolpath_file, self.last_model_uri),
-                    filename_extension=filename_extension)
-            if filename:
-                self.last_toolpath_file = filename
-        self._update_widgets()
-        # no filename given -> exit
-        if not filename:
-            return
-        try:
-            destination = open(filename, "w")
-            safety_height = self.core.get("gcode_safety_height")
-            meta_data = self.get_meta_data()
-            machine_time = 0
-            # calculate the machine time and store it in the GCode header
-            for toolpath in toolpaths:
-                machine_time += toolpath.get_machine_time(safety_height)
-            all_info = meta_data + os.linesep \
-                    + "Estimated machine time: %.0f minutes" % machine_time
-            minimum_steps = [self.core.get("gcode_minimum_step_x"),  
-                    self.core.get("gcode_minimum_step_y"),  
-                    self.core.get("gcode_minimum_step_z")]
-            if self.core.get("touch_off_position_type") == "absolute":
-                pos_x = self.core.get("touch_off_position_x")
-                pos_y = self.core.get("touch_off_position_y")
-                pos_z = self.core.get("touch_off_position_z")
-                touch_off_pos = Point(pos_x, pos_y, pos_z)
-            else:
-                touch_off_pos = None
-            generator = GCodeGenerator(destination,
-                    metric_units=(self.core.get("unit") == "mm"),
-                    safety_height=safety_height,
-                    toggle_spindle_status=self.core.get("gcode_start_stop_spindle"),
-                    spindle_delay=self.core.get("gcode_spindle_delay"),
-                    comment=all_info, minimum_steps=minimum_steps,
-                    touch_off_on_startup=self.core.get("touch_off_on_startup"),
-                    touch_off_on_tool_change=self.core.get("touch_off_on_tool_change"),
-                    touch_off_position=touch_off_pos,
-                    touch_off_rapid_move=self.core.get("touch_off_rapid_move"),
-                    touch_off_slow_move=self.core.get("touch_off_slow_move"),
-                    touch_off_slow_feedrate=self.core.get("touch_off_slow_feedrate"),
-                    touch_off_height=self.core.get("touch_off_height"),
-                    touch_off_pause_execution=self.core.get("touch_off_pause_execution"))
-            path_mode = self.core.get("gcode_path_mode")
-            if path_mode == 0:
-                generator.set_path_mode(PATH_MODES["exact_path"])
-            elif path_mode == 1:
-                generator.set_path_mode(PATH_MODES["exact_stop"])
-            elif path_mode == 2:
-                generator.set_path_mode(PATH_MODES["continuous"])
-            else:
-                naive_tolerance = self.core.get("gcode_naive_tolerance")
-                if naive_tolerance == 0:
-                    naive_tolerance = None
-                generator.set_path_mode(PATH_MODES["continuous"],
-                        self.core.get("gcode_motion_tolerance"),
-                        naive_tolerance)
-            for toolpath in toolpaths:
-                settings = toolpath.get_toolpath_settings()
-                tool = settings.get_tool_settings()
-                generator.set_speed(tool["feedrate"], tool["speed"])
-                generator.add_moves(toolpath.get_moves(safety_height),
-                        tool_id=tool["id"], comment=toolpath.get_meta_data())
-            generator.finish()
-            destination.close()
-            log.info("GCode file successfully written: %s" % str(filename))
-        except IOError, err_msg:
-            log.error("Failed to save toolpath file: %s" % err_msg)
-        else:
-            self.add_to_recent_file_list(filename)
 

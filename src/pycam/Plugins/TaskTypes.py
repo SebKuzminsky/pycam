@@ -66,6 +66,17 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
             kwargs["feedrate"] = environment["tool"]["feedrate"]
         except KeyError:
             pass
+        try:
+            kwargs["spindle_speed"] = environment["tool"]["spindle_speed"]
+        except KeyError:
+            # TODO: somehow spindle_speed is not available???
+            kwargs["spindle_speed"] = 1000
+            pass
+        try:
+            # TODO: get the tool_id!
+            kwargs["tool_id"] = 1
+        except KeyError:
+            pass
         tp = pycam.Toolpath.Toolpath(moves, **kwargs)
         return tp
 

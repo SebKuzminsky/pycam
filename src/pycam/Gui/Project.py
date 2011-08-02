@@ -67,7 +67,6 @@ WINDOW_ICON_FILENAMES = ["logo_%dpx.png" % pixels for pixels in (16, 32, 48, 64,
 
 HELP_WIKI_URL = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=%s"
 
-FILTER_GCODE = (("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode")),)
 FILTER_MODEL = (("All supported model filetypes",
                 ("*.stl", "*.dxf", "*.svg", "*.eps", "*.ps")),
         ("STL models", "*.stl"), ("DXF contours", "*.dxf"),
@@ -785,6 +784,8 @@ class ProjectGui(object):
             self.open_task_settings_file(autoload_task_filename)
         self.update_all_controls()
         self.no_dialog = no_dialog
+        # TODO: move this to /Gui/...
+        self.settings.set("get_filename_via_dialog", self.get_filename_via_dialog)
         if not self.no_dialog:
             # register a logging handler for displaying error messages
             pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
