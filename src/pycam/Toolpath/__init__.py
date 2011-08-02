@@ -60,73 +60,54 @@ def simplify_toolpath(path):
             index += 1
 
 
-class ToolpathList(list):
-
-    def add_toolpath(self, toolpath, name, toolpath_settings):
-        self.append(Toolpath(toolpath, name, toolpath_settings))
-
-
 class Toolpath(object):
 
-    def __init__(self, toolpath, name, toolpath_settings):
-        self.toolpath = toolpath
-        self.name = name
-        self.toolpath_settings = toolpath_settings
-        self.visible = True
-        self.color = None
-        # generate random color
-        self.set_color()
+    def __init__(self, paths, max_safe_distance=0, feedrate=300):
+        self.paths = paths
+        self._max_safe_distance = max_safe_distance
+        self._feedrate = feedrate
+
+    def get_params(self):
+        return {"max_safe_distance": self._max_safe_distance,
+                "feedrate": self._feedrate,
+        }
 
     def _get_limit_generic(self, attr, func):
         path_min = []
-        for path in self.get_paths():
+        for path in self.paths:
             if path.points:
                 path_min.append(func([getattr(p, attr) for p in path.points]))
         return func(path_min)
 
+    @property
     def minx(self):
         return self._get_limit_generic("x", min)
 
+    @property
     def maxx(self):
         return self._get_limit_generic("x", max)
 
+    @property
     def miny(self):
         return self._get_limit_generic("y", min)
 
+    @property
     def maxy(self):
         return self._get_limit_generic("y", max)
 
+    @property
     def minz(self):
         return self._get_limit_generic("z", min)
 
+    @property
     def maxz(self):
         return self._get_limit_generic("z", max)
-
-    def get_paths(self):
-        return self.toolpath
-
-    def get_bounding_box(self):
-        box = self.toolpath_settings.get_bounds()
-        (minx, miny, minz), (maxx, maxy, maxz) = box.get_bounds()
-        return (minx, maxx, miny, maxy, minz, maxz)
-
-    def get_tool_settings(self):
-        return self.toolpath_settings.get_tool_settings()
-
-    def get_toolpath_settings(self):
-        return self.toolpath_settings
 
     def get_meta_data(self):
         meta = self.toolpath_settings.get_string()
         start_marker = self.toolpath_settings.META_MARKER_START
         end_marker = self.toolpath_settings.META_MARKER_END
         return os.linesep.join((start_marker, meta, end_marker))
-
-    def set_color(self, color=None):
-        if color is None:
-            self.color = (random.random(), random.random(), random.random())
-        else:
-            self.color = color
 
     def get_moves(self, safety_height, max_movement=None):
         class MoveContainer(object):
@@ -165,10 +146,8 @@ class Toolpath(object):
                 self.moves.append((new_position, rapid))
                 return True
         p_last = None
-        max_safe_distance = 2 * self.toolpath_settings.get_tool().radius \
-                + epsilon
         result = MoveContainer(max_movement)
-        for path in self.get_paths():
+        for path in self.paths:
             if not path:
                 # ignore empty paths
                 continue
@@ -182,7 +161,8 @@ class Toolpath(object):
                 # Draw the connection between the last and the next path.
                 # Respect the safety height.
                 if (abs(p_last.z - p_next.z) > epsilon) \
-                        or (p_last.sub(p_next).norm > max_safe_distance):
+                        or (p_last.sub(p_next).norm > \
+                            self._max_safe_distance + epsilon):
                     # The distance between these two points is too far.
                     # This condition helps to prevent moves up/down for
                     # adjacent lines.
@@ -211,14 +191,12 @@ class Toolpath(object):
         @returns: the machine time used for processing the toolpath in minutes
         """
         result = 0
-        feedrate = self.toolpath_settings.get_tool_settings()["feedrate"]
-        feedrate = number(feedrate)
         safety_height = number(safety_height)
         current_position = None
         # go through all points of the path
         for new_pos, rapid in self.get_moves(safety_height):
             if not current_position is None:
-                result += new_pos.sub(current_position).norm / feedrate
+                result += new_pos.sub(current_position).norm / self._feedrate
             current_position = new_pos
         return result
 
@@ -236,22 +214,20 @@ class Toolpath(object):
     def get_cropped_copy(self, polygons, callback=None):
         # create a deep copy of the current toolpath
         new_paths = []
-        for path in self.toolpath:
+        for path in self.paths:
             if path:
                 new_path = Path()
                 for point in path.points:
                     new_path.append(point)
                 new_paths.append(new_path)
-        tp = Toolpath(new_paths, "%s (cropped)" % self.name,
-                self.toolpath_settings)
-        tp.visible = self.visible
+        tp = Toolpath(new_paths, **self.get_params())
         tp.crop(polygons, callback=callback)
         return tp
 
     def crop(self, polygons, callback=None):
         # collect all existing toolpath lines
         open_lines = []
-        for path in self.toolpath:
+        for path in self.paths:
             if path:
                 for index in range(len(path.points) - 1):
                     open_lines.append(Line(path.points[index],
@@ -268,7 +244,7 @@ class Toolpath(object):
                 inner_lines.extend(inner)
                 new_open_lines.extend(outer)
             open_lines = new_open_lines
-        # turn all "inner_lines" into toolpath movements
+        # turn all "inner_lines" into toolpath moves
         new_paths = []
         current_path = Path()
         if inner_lines:
@@ -293,7 +269,7 @@ class Toolpath(object):
                 current_path.append(line.p2)
         if current_path.points:
             new_paths.append(current_path)
-        self.toolpath = new_paths
+        self.paths = new_paths
 
 
 class Bounds(object):

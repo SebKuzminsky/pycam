@@ -233,15 +233,18 @@ def get_lines_layer(lines, z, last_z=None, step_width=None,
     # process all projected lines
     for line in projected_lines:
         if step_width is None:
-            yield line.p1
-            yield line.p2
+            yield (line.p1, line.p2)
         else:
             if isiterable(step_width):
                 steps = step_width
             else:
                 steps = floatrange(0.0, line.len, inc=step_width)
+            prior = None
             for step in steps:
-                yield line.p1.add(line.dir.mul(step))
+                next_point = line.p1.add(line.dir.mul(step))
+                if not prior is None:
+                    yield (prior, next_point)
+                prior = next_point
 
 def _get_sorted_polygons(models, callback=None):
     # Sort the polygons according to their directions (first inside, then
@@ -266,17 +269,18 @@ def get_lines_grid(models, bounds, layer_distance, line_distance=None,
         low, high = bounds.get_absolute_limits()
     else:
         low, high = bounds
+    # the lower limit is never below the model
+    polygons = _get_sorted_polygons(models, callback=callback)
+    low_limit_lines = min([polygon.minz for polygon in polygons])
+    low[2] = max(low[2], low_limit_lines)
     lines = []
-    for polygon in _get_sorted_polygons(models, callback=callback):
+    for polygon in polygons:
         if polygon.is_closed and \
                 (milling_style == MILLING_STYLE_CONVENTIONAL):
             polygon = polygon.copy()
             polygon.reverse()
         for line in polygon.get_lines():
             lines.append(line)
-    # the lower limit is never below the model
-    low_limit_lines = min([line.minz for line in lines])
-    low[2] = max(low[2], low_limit_lines)
     if isiterable(layer_distance):
         layers = layer_distance
     elif layer_distance is None:
@@ -291,8 +295,8 @@ def get_lines_grid(models, bounds, layer_distance, line_distance=None,
     if layers:
         # the upper layers are used for PushCutter operations
         for z in layers[:-1]:
-            yield get_lines_layer(lines, z, last_z=last_z,
-                    step_width=None, milling_style=milling_style)
+            yield get_lines_layer(lines, z, last_z=last_z, step_width=None,
+                    milling_style=milling_style)
             last_z = z
         # the last layer is used for a DropCutter operation
         yield get_lines_layer(lines, layers[-1], last_z=last_z,
