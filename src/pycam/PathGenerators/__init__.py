@@ -42,7 +42,9 @@ class Hit(object):
 
 
 def get_free_paths_triangles(models, cutter, p1, p2, return_triangles=False):
-    if len(models) == 1:
+    if (len(models) == 0) or ((len(models) == 1) and (models[0] is None)):
+        return (p1, p2)
+    elif len(models) == 1:
         # only one model is left - just continue
         model = models[0]
     else:
@@ -224,6 +226,8 @@ def get_max_height_ode(physics, x, y, minz, maxz):
         return Point(x, y, safe_z)
 
 def get_max_height_triangles(model, cutter, x, y, minz, maxz):
+    if model is None:
+        return Point(x, y, minz)
     p = Point(x, y, maxz)
     height_max = None
     box_x_min = cutter.get_minx(p)

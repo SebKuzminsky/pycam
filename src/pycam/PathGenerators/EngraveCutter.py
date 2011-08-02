@@ -79,7 +79,8 @@ class EngraveCutter(object):
         if quit_requested:
             return self.pa_push.paths
 
-        drop_generator = pycam.PathGenerators.PushCutter(self.pa_drop)
+        drop_generator = pycam.PathGenerators.DropCutter.DropCutter(self.pa_drop,
+                physics=self.physics)
         drop_layers = motion_grid[-1:]
         if draw_callback:
             draw_callback(text="Engrave: processing layer" + \

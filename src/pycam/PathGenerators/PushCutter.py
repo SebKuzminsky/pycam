@@ -112,18 +112,10 @@ class PushCutter(object):
 
     def GenerateToolPathSlice(self, cutter, models, layer_grid, draw_callback=None,
             progress_counter=None):
-        """ only dx or (exclusive!) dy may be bigger than zero
-        """
-        # max_deviation_x = dx/accuracy
+        # settings for calculation of depth
         accuracy = 20
         max_depth = 20
-
-        # calculate the required number of steps in each direction
-        distance = layer_grid[0][-1].sub(layer_grid[0][0]).norm
-        step_width = distance / len(layer_grid[0])
-        depth = math.log(accuracy * distance / step_width) / math.log(2)
-        depth = max(ceil(depth), 4)
-        depth = min(depth, max_depth)
+        min_depth = 4
 
         # the ContourCutter pathprocessor does not work with combined models
         if self._use_polygon_extractor:
@@ -134,6 +126,11 @@ class PushCutter(object):
         args = []
         for line in layer_grid:
             p1, p2 = line
+            # calculate the required calculation depth (recursion)
+            distance = p2.sub(p1).norm
+            # TODO: accessing cutter.radius here is slightly ugly
+            depth = math.log(accuracy * distance / cutter.radius) / math.log(2)
+            depth = min(max(ceil(depth), 4), max_depth)
             args.append((p1, p2, depth, models, cutter, self.physics))
 
         for points in run_in_parallel(_process_one_line, args,
