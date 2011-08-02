@@ -260,8 +260,10 @@ class ListPluginBase(PluginBase, list):
         super(ListPluginBase, self).__init__(*args, **kwargs)
         self._update_model_funcs = []
         def get_function(func_name):
-            return lambda *args, **kwargs: self._change_wrapper(func_name, *args, **kwargs)
-        for name in ("append", "insert", "pop", "reverse", "sort"):
+            return lambda *args, **kwargs: \
+                    self._change_wrapper(func_name, *args, **kwargs)
+        for name in ("append", "extend", "insert", "pop", "reverse", "remove",
+                "sort"):
             setattr(self, name, get_function(name))
 
     def _change_wrapper(self, func_name, *args, **kwargs):
@@ -348,7 +350,8 @@ class ListPluginBase(PluginBase, list):
                         new_selection.append(index + 1)
                 elif action == self.ACTION_DELETE:
                     self.pop(index)
-                    new_selection.append(min(index, len(self) - 1))
+                    if len(self) > 0:
+                        new_selection.append(min(index, len(self) - 1))
                 else:
                     pass
         self._update_model()

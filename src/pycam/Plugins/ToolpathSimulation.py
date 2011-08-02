@@ -153,7 +153,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
                 return
             else:
                 toolpath = self.toolpath[toolpath_index]
-        paths = toolpath.get_paths()
+        paths = toolpath.paths
         # set the current cutter
         self.cutter = pycam.Cutters.get_tool_from_settings(
                 toolpath.get_tool_settings())
