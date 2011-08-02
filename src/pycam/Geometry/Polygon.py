@@ -231,7 +231,10 @@ class Polygon(TransformableContainer):
         self._cached_offset_polygons = {}
 
     def copy(self):
-        return self.__class__(plane=self.plane.copy())
+        result = self.__class__(plane=self.plane.copy())
+        for line in self.get_lines():
+            result.append(line.copy())
+        return result
 
     def append(self, line):
         if not self.is_connectable(line):

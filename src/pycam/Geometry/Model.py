@@ -70,6 +70,8 @@ def get_combined_bounds(models):
     return low, high
 
 def get_combined_model(models):
+    # remove all "None" models
+    models = [model for model in models if not model is None]
     if not models:
         return None
     result = models.pop(0).copy()
