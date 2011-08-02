@@ -92,12 +92,12 @@
                     <property name="orientation">vertical</property>
                     <property name="layout_style">center</property>
                     <child>
-                      <object class="GtkButton" id="ModelDelete">
-                        <property name="label">gtk-delete</property>
+                      <object class="GtkColorButton" id="ModelColorButton">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
-                        <property name="use_stock">True</property>
+                        <property name="use_alpha">True</property>
+                        <property name="color">#000000000000</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -106,8 +106,8 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="ModelDeleteAll">
-                        <property name="label">gtk-clear</property>
+                      <object class="GtkButton" id="ModelDelete">
+                        <property name="label">gtk-delete</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
@@ -120,12 +120,12 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkColorButton" id="ModelColorButton">
+                      <object class="GtkButton" id="ModelDeleteAll">
+                        <property name="label">gtk-clear</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
-                        <property name="use_alpha">True</property>
-                        <property name="color">#000000000000</property>
+                        <property name="use_stock">True</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>

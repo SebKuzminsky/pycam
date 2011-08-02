@@ -1898,10 +1898,10 @@ Hotkey: &lt;p&gt;</property>
     <property name="program_name">PyCAM</property>
     <property name="version">0.1</property>
     <property name="copyright" translatable="yes">Copyright &#xA9; 2008-2010 Lode Leroy
-Copyright &#xA9; 2010 Lars Kruse</property>
+Copyright &#xA9; 2010-2011 Lars Kruse</property>
     <property name="comments" translatable="yes">Toolpath Generation for 3-Axis CNC machining</property>
-    <property name="website">http://sourceforge.net/projects/pycam/</property>
-    <property name="website_label" translatable="yes">Webseite des PyCAM-Projekts</property>
+    <property name="website">http://pycam.sourceforge.net/</property>
+    <property name="website_label" translatable="yes">Website of the PyCAM project</property>
     <property name="license" translatable="yes">This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 PyCAM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

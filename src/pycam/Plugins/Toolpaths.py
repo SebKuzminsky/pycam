@@ -46,12 +46,22 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
                     (self.ACTION_CLEAR, "ToolpathDeleteAll")):
                 self.register_list_action_button(action, self._modelview,
                         self.gui.get_object(obj_name))
+            # toolpath operations
+            toolpath_handling_obj = self.gui.get_object(
+                    "ToolpathHandlingNotebook")
+            def clear_toolpath_handling_obj():
+                for index in range(toolpath_handling_obj.get_n_pages()):
+                    toolpath_handling_obj.remove_page(0)
+            def add_toolpath_handling_item(item, name):
+                toolpath_handling_obj.append_page(item, gtk.Label(name))
+            self.core.register_ui_section("toolpath_handling",
+                    add_toolpath_handling_item, clear_toolpath_handling_obj)
             # handle table changes
             self._modelview.connect("row-activated",
                     self._list_action_toggle_custom, self.COLUMN_VISIBLE)
             self.gui.get_object("ToolpathVisibleColumn").set_cell_data_func(
                     self.gui.get_object("ToolpathVisibleSymbol"),
-                    self._visualize_machine_time)
+                    self._visualize_visible_state)
             self.gui.get_object("ToolpathNameCell").connect("edited",
                     self._edit_toolpath_name)
             self.gui.get_object("ToolpathTimeColumn").set_cell_data_func(
@@ -93,8 +103,10 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             self.register_model_update(update_model)
             self.core.register_event("toolpath-list-changed",
                     self._update_widgets)
+            self.core.register_event("toolpath-list-changed",
+                    lambda: self.core.emit_event("visual-item-updated"))
             self._update_widgets()
-        self.core.add_item("toolpaths", lambda: self)
+        self.core.set("toolpaths", self)
         return True
 
     def teardown(self):
@@ -114,6 +126,18 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
     def get_visible(self):
         return [self[index] for index, item in enumerate(self._treemodel)
                 if item[self.COLUMN_VISIBLE]]
+
+    def select(self, toolpaths):
+        selection = self._modelview.get_selection()
+        model = self._modelview.get_model()
+        if not isinstance(toolpaths, (list, tuple)):
+            toolpaths = [toolpaths]
+        tp_refs = [id(tp) for tp in toolpaths]
+        for index, row in enumerate(model):
+            if row[self.COLUMN_REF] in tp_refs:
+                selection.select_path((index,))
+            else:
+                selection.unselect_path((index,))
 
     def _update_widgets(self):
         toolpaths = self
@@ -146,6 +170,13 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
         if (new_text != self._treemodel[path][self.COLUMN_NAME]) and \
                 new_text:
             self._treemodel[path][self.COLUMN_NAME] = new_text
+
+    def _visualize_visible_state(self, column, cell, model, m_iter):
+        visible = model.get_value(m_iter, self.COLUMN_VISIBLE)
+        if visible:
+            cell.set_property("pixbuf", self.ICONS["visible"])
+        else:
+            cell.set_property("pixbuf", self.ICONS["hidden"])
 
     def _visualize_machine_time(self, column, cell, model, m_iter):
         path = model.get_path(m_iter)

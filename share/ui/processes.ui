@@ -50,7 +50,6 @@
                 <child>
                   <object class="GtkTreeViewColumn" id="NameColumn">
                     <property name="title">Name</property>
-                    <property name="expand">True</property>
                     <child>
                       <object class="GtkCellRendererText" id="NameCell"/>
                       <attributes>
@@ -62,6 +61,7 @@
                 <child>
                   <object class="GtkTreeViewColumn" id="DescriptionColumn">
                     <property name="title">Description</property>
+                    <property name="expand">True</property>
                     <child>
                       <object class="GtkCellRendererText" id="DescriptionCell"/>
                     </child>

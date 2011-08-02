@@ -273,16 +273,6 @@ class Tasks(pycam.Plugins.ListPluginBase):
         self.generate_toolpaths(self)
 
     def generate_toolpath(self, task, progress=None):
-        func = self.core.get("get_parameter_sets")("task")[task["type"]]["func"]
-        toolpath = func(task)
-        return toolpath
-        # TODO: remove this obsolete code as soon as toolpath generation works
-        models = task["models"]
-        tool = task["tool"]
-        process = task["process"]
-        bounds = task["bounds"]
-        path_generator = self._get_path_generator(process)
-        motion_grid = self._get_motion_grid(tool, process, bounds, models)
         start_time = time.time()
         if progress:
             use_multi_progress = True
@@ -318,11 +308,10 @@ class Tasks(pycam.Plugins.ListPluginBase):
 
         # run the toolpath generation
         progress.update(text="Starting the toolpath generation")
-        low, high = bounds.get_absolute_limits()
         try:
-            toolpath = path_generator.GenerateToolPath(tool,
-                    models, motion_grid, minz=low[2], maxz=high[2],
-                    draw_callback=draw_callback)
+            func = self.core.get("get_parameter_sets")(
+                    "task")[task["type"]]["func"]
+            toolpath = func(task, callback=draw_callback)
         except Exception:
             # catch all non-system-exiting exceptions
             self.log.error(pycam.Utils.get_exception_report())
