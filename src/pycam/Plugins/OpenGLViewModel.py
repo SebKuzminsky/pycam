@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Plugins
+import pycam.Geometry.Point
 
 
 GTK_COLOR_MAX = 65535.0
@@ -81,7 +82,7 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
                         do_caching = False
                     # next: compile an OpenGL display list
                 if not do_caching or (not key in self._cache):
-                    model.to_OpenGL(show_directions=self.core.get("show_directions"))
+                    self.core.call_chain("draw_models", [model])
                 if do_caching:
                     if not key in self._cache:
                         GL.glEndList()
@@ -90,4 +91,83 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
                     else:
                         # render a previously compiled display list
                         GL.glCallList(self._cache[key])
+
+
+class OpenGLViewModelTriangle(pycam.Plugins.PluginBase):
+
+    DEPENDS = ["OpenGLViewModel"]
+
+    def setup(self):
+        import OpenGL.GL
+        self._GL = OpenGL.GL
+        self.core.register_chain("draw_models", self.draw_triangle_model, 10)
+        return True
+
+    def teardown(self):
+        self.core.unregister_chain("draw_models", self.draw_triangle_model)
+
+    def draw_triangle_model(self, models):
+        if not models:
+            return
+        GL = self._GL
+        removal_list = []
+        for index in range(len(models)):
+            model = models[index]
+            if not hasattr(model, "triangles"):
+                continue
+            get_coords = lambda p: (p.x, p.y, p.z)
+            def calc_normal(main, normals):
+                suitable = pycam.Geometry.Point.Vector(0, 0, 0)
+                for normal, weight in normals:
+                    dot = main.dot(normal)
+                    if dot > 0:
+                        suitable = suitable.add(normal.mul(weight * dot))
+                return suitable.normalized()
+            vertices = {}
+            for t in model.triangles():
+                for p in (t.p1, t.p2, t.p3):
+                    coords = get_coords(p)
+                    if not coords in vertices:
+                        vertices[coords] = []
+                    vertices[coords].append((t.normal.normalized(), t.get_area()))
+            GL.glBegin(GL.GL_TRIANGLES)
+            for t in model.triangles():
+                # The triangle's points are in clockwise order, but GL expects
+                # counter-clockwise sorting.
+                for p in (t.p1, t.p3, t.p2):
+                    coords = get_coords(p)
+                    normal = calc_normal(t.normal.normalized(), vertices[coords])
+                    GL.glNormal3f(normal.x, normal.y, normal.z)
+                    GL.glVertex3f(p.x, p.y, p.z)
+            GL.glEnd()
+            removal_list.append(index)
+        # remove all models that we processed
+        removal_list.reverse()
+        for index in removal_list:
+            models.pop(index)
+
+
+class OpenGLViewModelGeneric(pycam.Plugins.PluginBase):
+
+    DEPENDS = ["OpenGLViewModel"]
+
+    def setup(self):
+        self.core.register_chain("draw_models", self.draw_generic_model, 100)
+        return True
+
+    def teardown(self):
+        self.core.unregister_chain("draw_models", self.draw_generic_model)
+
+    def draw_generic_model(self, models):
+        removal_list = []
+        for index in range(len(models)):
+            model = models[index]
+            for item in model.next():
+                # ignore invisble things like the normal of a ContourModel
+                if hasattr(item, "to_OpenGL"):
+                    item.to_OpenGL(show_directions=self.core.get("show_directions"))
+            removal_list.append(index)
+        removal_list.reverse()
+        for index in removal_list:
+            removal_list.pop(index)
 

@@ -168,6 +168,7 @@ WIDGET_NAME_INDEX, WIDGET_OBJ_INDEX, WIDGET_WEIGHT_INDEX, WIDGET_ARGS_INDEX = \
         range(4)
 HANDLER_FUNC_INDEX, HANDLER_ARG_INDEX = range(2)
 EVENT_HANDLER_INDEX, EVENT_BLOCKER_INDEX = range(2)
+CHAIN_FUNC_INDEX, CHAIN_WEIGHT_INDEX = range(2)
 
 
 class EventCore(pycam.Gui.Settings.Settings):
@@ -176,6 +177,7 @@ class EventCore(pycam.Gui.Settings.Settings):
         super(EventCore, self).__init__()
         self.event_handlers = {}
         self.ui_sections = {}
+        self.chains = {}
 
     def register_event(self, event, func, *args):
         if not event in self.event_handlers:
@@ -291,8 +293,32 @@ class EventCore(pycam.Gui.Settings.Settings):
                 ui_section[UI_WIDGET_INDEX].pop(index)
             self._rebuild_ui_section(section)
         else:
-            log.debug("Trying to unregister unknown ui section: %s" % \
-                    str(section))
+            log.debug("Trying to unregister unknown ui section: %s" % section)
+
+    def register_chain(self, name, func, weight):
+        if not name in self.chains:
+            self.chains[name] = []
+        self.chains[name].append((func, weight))
+        self.chains[name].sort(key=lambda item: item[CHAIN_WEIGHT_INDEX])
+
+    def unregister_chain(self, name, func):
+        if name in self.chains:
+            for index, data in self.chains[name]:
+                if data[CHAIN_FUNC_INDEX] == func:
+                    self.chains[name].pop(index)
+                    break
+            else:
+                log.debug("Trying to unregister unknown function from " + \
+                        "%s: %s" % (name, func))
+        else:
+            log.debug("Trying to unregister from unknown chain: %s" % name)
+
+    def call_chain(self, name, *args, **kwargs):
+        if name in self.chains:
+            for data in self.chains[name]:
+                data[CHAIN_FUNC_INDEX](*args, **kwargs)
+        else:
+            log.debug("Called an unknown chain: %s" % name)
 
 
 class ProjectGui(object):
