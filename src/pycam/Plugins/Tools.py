@@ -39,6 +39,8 @@ class Tools(pycam.Plugins.ListPluginBase):
             tool_frame = self.gui.get_object("ToolBox")
             tool_frame.unparent()
             self.core.register_ui("main", "Tools", tool_frame, weight=10)
+            self.core.register_chain("get_toolpath_information",
+                    self.get_toolpath_information)
             self._modelview = self.gui.get_object("ToolEditorTable")
             for action, obj_name in ((self.ACTION_UP, "ToolMoveUp"),
                     (self.ACTION_DOWN, "ToolMoveDown"),
@@ -128,6 +130,8 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.core.unregister_ui("main", self.gui.get_object("ToolBox"))
             self.core.unregister_event("tool-selection-changed",
                     self._tool_switch)
+            self.core.unregister_chain("get_toolpath_information",
+                    self.get_toolpath_information)
         self.core.set("tools", None)
         return True
 
@@ -141,6 +145,10 @@ class Tools(pycam.Plugins.ListPluginBase):
             index = [id(t) for t in self].index(id(tool))
             selection.unselect_all()
             selection.select_path((index,))
+
+    def get_toolpath_information(self, item, data):
+        if item in self:
+            data["tool_id"] = self.get_attr(item, "id")
 
     def _render_tool_shape(self, column, cell, model, m_iter):
         path = model.get_path(m_iter)

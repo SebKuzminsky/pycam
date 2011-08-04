@@ -295,7 +295,7 @@ class EventCore(pycam.Gui.Settings.Settings):
         else:
             log.debug("Trying to unregister unknown ui section: %s" % section)
 
-    def register_chain(self, name, func, weight):
+    def register_chain(self, name, func, weight=100):
         if not name in self.chains:
             self.chains[name] = []
         self.chains[name].append((func, weight))

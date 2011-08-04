@@ -210,9 +210,10 @@ class ToolpathExport(pycam.Plugins.PluginBase):
                         self.core.get("gcode_motion_tolerance"),
                         naive_tolerance)
             for toolpath in toolpaths:
-                tool_id = toolpath.get_params()["tool_id"]
-                feedrate = toolpath.get_params()["feedrate"]
-                spindle_speed = toolpath.get_params()["spindle_speed"]
+                params = toolpath.get_params()
+                tool_id = params.get("tool_id", 1)
+                feedrate = params.get("tool_feedrate", 300)
+                spindle_speed = params.get("spindle_speed", 1000)
                 generator.set_speed(feedrate, spindle_speed)
                 # TODO: implement toolpath.get_meta_data()
                 generator.add_moves(toolpath.get_moves(safety_height),

@@ -62,18 +62,17 @@ def simplify_toolpath(path):
 
 class Toolpath(object):
 
-    def __init__(self, paths, max_safe_distance=0, feedrate=300, **kwargs):
+    def __init__(self, paths, parameters=None):
         self.paths = paths
-        self._max_safe_distance = max_safe_distance
-        self._feedrate = feedrate
-        self._other_params = kwargs
+        if parameters:
+            self.parameters = parameters
+        else:
+            self.parameters = {}
+        self._max_safe_distance = 2 * parameters.get("tool_radius", 0)
+        self._feedrate = parameters.get("tool_feedrate", 300)
 
     def get_params(self):
-        result = {"max_safe_distance": self._max_safe_distance,
-                "feedrate": self._feedrate,
-        }
-        result.update(self._other_params)
-        return result
+        return dict(self.parameters)
 
     def _get_limit_generic(self, attr, func):
         path_min = []

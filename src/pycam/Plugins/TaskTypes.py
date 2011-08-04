@@ -57,26 +57,10 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
         models = task["parameters"]["collision_models"]
         moves = path_generator.GenerateToolPath(tool, models, motion_grid,
                 minz=low[2], maxz=high[2], draw_callback=callback)
-        kwargs = {}
-        try:
-            kwargs["max_safe_distance"] = 2 * environment["tool"]["radius"]
-        except KeyError:
-            pass
-        try:
-            kwargs["feedrate"] = environment["tool"]["feedrate"]
-        except KeyError:
-            pass
-        try:
-            kwargs["spindle_speed"] = environment["tool"]["spindle_speed"]
-        except KeyError:
-            # TODO: somehow spindle_speed is not available???
-            kwargs["spindle_speed"] = 1000
-            pass
-        try:
-            # TODO: get the tool_id!
-            kwargs["tool_id"] = 1
-        except KeyError:
-            pass
-        tp = pycam.Toolpath.Toolpath(moves, **kwargs)
+        data = {}
+        for item_name in ("tool", "process", "bounds"):
+            self.core.call_chain("get_toolpath_information",
+                    environment[item_name], data)
+        tp = pycam.Toolpath.Toolpath(moves, parameters=data)
         return tp
 

@@ -37,10 +37,19 @@ class ToolParamRadius(pycam.Plugins.PluginBase):
                 get_conv=lambda value: value / 2.0)
         self.core.get("register_parameter")("tool", "size", "radius",
                 "Tool diameter", control, weight=10)
+        self.core.register_chain("get_toolpath_information",
+                self.get_toolpath_information)
         return True
 
     def teardown(self):
         self.core.get("unregister_parameter")("tool", "size", "radius")
+        self.core.unregister_chain("get_toolpath_information",
+                self.get_toolpath_information)
+
+    def get_toolpath_information(self, item, data):
+        if item in self.core.get("tools") and \
+                "radius" in item["parameters"]:
+            data["tool_radius"] = item["parameters"]["radius"]
 
 
 class ToolParamTorusRadius(pycam.Plugins.PluginBase):
@@ -69,11 +78,19 @@ class ToolParamFeedrate(pycam.Plugins.PluginBase):
                     self.core.emit_event("tool-changed"))
         self.core.get("register_parameter")("tool", "speed", "feedrate",
                 "Feedrate", control, weight=10)
+        self.core.register_chain("get_toolpath_information",
+                self.get_toolpath_information)
         return True
 
     def teardown(self):
         self.core.get("unregister_parameter")("tool", "speed", "feedrate")
+        self.core.unregister_chain("get_toolpath_information",
+                self.get_toolpath_information)
 
+    def get_toolpath_information(self, item, data):
+        if item in self.core.get("tools") and \
+                "feedrate" in item["parameters"]:
+            data["tool_feedrate"] = item["parameters"]["feedrate"]
 
 class ToolParamSpindleSpeed(pycam.Plugins.PluginBase):
 
@@ -85,8 +102,17 @@ class ToolParamSpindleSpeed(pycam.Plugins.PluginBase):
                     self.core.emit_event("tool-changed"))
         self.core.get("register_parameter")("tool", "speed", "spindle_speed",
                 "Spindle speed", control, weight=20)
+        self.core.register_chain("get_toolpath_information",
+                self.get_toolpath_information)
         return True
 
     def teardown(self):
         self.core.get("unregister_parameter")("tool", "speed", "spindle_speed")
+        self.core.unregister_chain("get_toolpath_information",
+                self.get_toolpath_information)
+
+    def get_toolpath_information(self, item, data):
+        if item in self.core.get("tools") and \
+                "spindle_speed" in item["parameters"]:
+            data["spindle_speed"] = item["parameters"]["spindle_speed"]
 
