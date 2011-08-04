@@ -53,6 +53,13 @@ class PluginSelector(pycam.Plugins.PluginBase):
             self.register_gtk_accelerator("plugins", action, None,
                     "TogglePluginWindow")
             self.core.register_ui("view_menu", "TogglePluginWindow", action, 60)
+            # model filters
+            model_filter = self.gui.get_object("PluginsModel").filter_new()
+            for obj_name in ("StatusFilter", "CategoryFilter"):
+                self.gui.get_object(obj_name).connect("changed",
+                        lambda widget: model_filter.refilter())
+            self.gui.get_object("PluginsTable").set_model(model_filter)
+            model_filter.set_visible_func(self._filter_set_visible)
             self.gui.get_object("PluginsEnabledCell").connect("toggled",
                     self.toggle_plugin_state)
             self.core.register_event("plugin-list-changed",
@@ -86,13 +93,53 @@ class PluginSelector(pycam.Plugins.PluginBase):
         # don't destroy the window with a "destroy" event
         return True
 
+    def _filter_set_visible(self, model, m_iter):
+        manager = self.core.get("plugin-manager")
+        status_filter = self.gui.get_object("StatusFilter")
+        status_index = status_filter.get_active()
+        if status_index > 0:
+            status_name = status_filter.get_model()[status_index][1]
+        cat_filter = self.gui.get_object("CategoryFilter")
+        cat_index = cat_filter.get_active()
+        if cat_index > 0:
+            cat_name = cat_filter.get_model()[cat_index][0]
+        plugin_name = model.get_value(m_iter, 0)
+        if not plugin_name:
+            return False
+        plugin = manager.get_plugin(plugin_name)
+        if (cat_index > 0) and (not cat_name in plugin.CATEGORIES):
+            return False
+        elif (status_index > 0):
+            if (status_name == "enabled") and \
+                    not manager.get_plugin_state(plugin_name):
+                return False
+            elif (status_name == "disabled") and \
+                    manager.get_plugin_state(plugin_name):
+                return False
+            elif (status_name == "dep_missing") and \
+                    not manager.get_plugin_missing_dependencies(plugin_name):
+                return False
+            elif (status_name == "dep_satisfied") and \
+                    (manager.get_plugin_state(plugin_name) or \
+                        manager.get_plugin_missing_dependencies(plugin_name)):
+                return False
+            elif (status_name == "not_required") and \
+                    (not manager.get_plugin_state(plugin_name) or \
+                        manager.is_plugin_required(plugin_name) or \
+                        (plugin_name == "PluginSelector")):
+                return False
+        return True
+
     def _update_plugin_model(self):
         manager = self.core.get("plugin-manager")
         names = manager.get_plugin_names()
         model = self._treemodel
         model.clear()
+        categories = {}
         for name in names:
             plugin = manager.get_plugin(name)
+            for cat_name in plugin.CATEGORIES:
+                categories[cat_name] = True
             enabled = manager.get_plugin_state(name)
             depends_missing = manager.get_plugin_missing_dependencies(name)
             is_required = manager.is_plugin_required(name)
@@ -112,9 +159,34 @@ class PluginSelector(pycam.Plugins.PluginBase):
                     "Hint"))
         self.gui.get_object("PluginsDescriptionColumn").queue_resize()
         self.gui.get_object("PluginsTable").queue_resize()
+        # update the category filter
+        categories = categories.keys()
+        categories.sort()
+        categories.insert(0, "All categories")
+        model = self.gui.get_object("CategoryList")
+        cat_index = self.gui.get_object("CategoryFilter").get_active()
+        if cat_index >= 0:
+            cat_selection = model[cat_index][0]
+        else:
+            cat_selection = None
+        model.clear()
+        for cat_name in categories:
+            model.append((cat_name, ))
+        if cat_selection in categories:
+            cat_index = categories.index(cat_selection)
+        else:
+            cat_index = 0
+        self.gui.get_object("CategoryFilter").set_active(cat_index)
+        # status selection
+        status_selector = self.gui.get_object("StatusFilter")
+        if status_selector.get_active() < 0:
+            status_selector.set_active(0)
+        # trigger an update of the filter model
+        self.gui.get_object("PluginsTable").get_model().refilter()
 
     def toggle_plugin_state(self, cell, path):
-        plugin_name = self._treemodel[int(path)][self.COLUMN_NAME]
+        filter_model = self.gui.get_object("PluginsTable").get_model()
+        plugin_name = filter_model[int(path)][self.COLUMN_NAME]
         manager = self.core.get("plugin-manager")
         enabled = manager.get_plugin_state(plugin_name)
         if enabled:

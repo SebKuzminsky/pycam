@@ -30,7 +30,7 @@ import pycam.Gui.ControlsGTK
 class ToolpathCrop(pycam.Plugins.PluginBase):
 
     UI_FILE = "toolpath_crop.ui"
-    DEPENDS = ["Toolpaths"]
+    DEPENDS = ["Models", "Toolpaths"]
     CATEGORIES = ["Toolpath"]
 
     def setup(self):

@@ -222,6 +222,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.core.unregister_event("visual-item-updated", self.update_view)
             self.core.unregister_event("visualization-state-changed",
                     self._update_widgets)
+            self.core.unregister_event("model-list-changed",
+                    self._restore_latest_view)
             # the area will be created during setup again
             self.container.remove(self.area)
             self.area = None

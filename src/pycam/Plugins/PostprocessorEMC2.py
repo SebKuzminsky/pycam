@@ -34,5 +34,5 @@ class PostprocessorEMC2(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
-        self.core.get("unregister_postprocessor")("emc2", "EMC2")
+        self.core.get("unregister_postprocessor")("emc2")
 

@@ -182,4 +182,5 @@ class PathParamTraceModel(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter")("process", "pathgenerator",
                 "trace_models")
+        self.core.unregister_event("model-list-changed", self._update_models)
 

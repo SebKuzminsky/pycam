@@ -155,6 +155,14 @@ class Bounds(pycam.Plugins.ListPluginBase):
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("BoundsBox"))
+            self.core.unregister_event("bounds-selection-changed",
+                    self._switch_bounds)
+            self.core.unregister_event("bounds-changed",
+                    self._store_bounds_settings)
+            self.core.unregister_event("bounds-changed",
+                    self._trigger_table_update)
+            self.core.unregister_event("model-list-changed",
+                    self._update_model_list)
         self.core.set("bounds", None)
         return True
 

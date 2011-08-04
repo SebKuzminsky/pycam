@@ -57,6 +57,7 @@ class TaskParamCollisionModels(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter")("task", "models",
                 "collision_models")
+        self.core.unregister_event("model-list-changed", self._update_models)
 
     def _update_models(self):
         choices = []

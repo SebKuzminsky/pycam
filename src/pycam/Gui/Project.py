@@ -303,7 +303,7 @@ class EventCore(pycam.Gui.Settings.Settings):
 
     def unregister_chain(self, name, func):
         if name in self.chains:
-            for index, data in self.chains[name]:
+            for index, data in enumerate(self.chains[name]):
                 if data[CHAIN_FUNC_INDEX] == func:
                     self.chains[name].pop(index)
                     break

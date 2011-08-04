@@ -73,14 +73,14 @@ class Tasks(pycam.Plugins.ListPluginBase):
                     changed_set_event="task-type-changed",
                     changed_set_list_event="task-type-list-changed",
                     get_current_set_func=self._get_type)
-            models_parameter_widget = self.core.get(
+            self.models_parameter_widget = self.core.get(
                     "register_parameter_section")("task", "models")
             self.core.register_ui("task_parameters", "Collision models",
-                    models_parameter_widget, weight=20)
-            components_parameter_widget = self.core.get(
+                    self.models_parameter_widget, weight=20)
+            self.components_parameter_widget = self.core.get(
                     "register_parameter_section")("task", "components")
             self.core.register_ui("task_parameters", "Components",
-                    components_parameter_widget, weight=10)
+                    self.components_parameter_widget, weight=10)
             # table
             self.gui.get_object("TaskNameCell").connect("edited",
                     self._edit_task_name)
@@ -135,10 +135,10 @@ class Tasks(pycam.Plugins.ListPluginBase):
                     self._task_switch)
             self.core.unregister_event("task-changed", self._store_task)
             self.core.unregister_event("task-type-changed", self._store_task)
-            self.core.unregister_ui("task_parameters", models_parameter_widget,
-                    weight=20)
             self.core.unregister_ui("task_parameters",
-                    components_parameter_widget, weight=10)
+                    self.models_parameter_widget)
+            self.core.unregister_ui("task_parameters",
+                    self.components_parameter_widget)
 
     def get_selected(self, index=False):
         return self._get_selected(self._taskview, index=index)

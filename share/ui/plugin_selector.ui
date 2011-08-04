@@ -36,6 +36,51 @@
       </row>
     </data>
   </object>
+  <object class="GtkListStore" id="StatusList">
+    <columns>
+      <!-- column-name label -->
+      <column type="gchararray"/>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">All</col>
+        <col id="1" translatable="yes">all</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Enabled</col>
+        <col id="1" translatable="yes">enabled</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Disabled</col>
+        <col id="1" translatable="yes">disabled</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Dependencies missing</col>
+        <col id="1" translatable="yes">dep_missing</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Dependencies satisfied</col>
+        <col id="1" translatable="yes">dep_satisfied</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Not required</col>
+        <col id="1" translatable="yes">not_required</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkListStore" id="CategoryList">
+    <columns>
+      <!-- column-name label -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Model</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkDialog" id="PluginManagerWindow">
     <property name="width_request">640</property>
     <property name="height_request">500</property>
@@ -48,7 +93,51 @@
       <object class="GtkVBox" id="dialog-vbox1">
         <property name="visible">True</property>
         <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
+        <property name="spacing">3</property>
+        <child>
+          <object class="GtkHButtonBox" id="hbuttonbox1">
+            <property name="visible">True</property>
+            <property name="layout_style">spread</property>
+            <child>
+              <object class="GtkComboBox" id="StatusFilter">
+                <property name="visible">True</property>
+                <property name="model">StatusList</property>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                  <attributes>
+                    <attribute name="text">0</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBox" id="CategoryFilter">
+                <property name="visible">True</property>
+                <property name="model">CategoryList</property>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertext2"/>
+                  <attributes>
+                    <attribute name="text">0</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
         <child>
           <object class="GtkScrolledWindow" id="scrolledwindow1">
             <property name="visible">True</property>
@@ -125,7 +214,7 @@
             </child>
           </object>
           <packing>
-            <property name="position">1</property>
+            <property name="position">2</property>
           </packing>
         </child>
         <child internal-child="action_area">
