@@ -38,6 +38,7 @@ class PluginBase(object):
 
     UI_FILE = None
     DEPENDS = []
+    CATEGORIES = []
     ICONS = {}
     ICON_SIZE = 23
 

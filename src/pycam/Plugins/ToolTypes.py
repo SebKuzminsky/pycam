@@ -30,6 +30,7 @@ import pycam.Cutters.CylindricalCutter
 class ToolTypeBallNose(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Tools", "ToolParamRadius", "ToolParamFeedrate"]
+    CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
         parameters = {"radius": 1.0,
@@ -52,6 +53,7 @@ class ToolTypeBullNose(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Tools", "ToolParamRadius", "ToolParamTorusRadius",
             "ToolParamFeedrate"]
+    CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
         parameters = {"radius": 1.0,
@@ -76,6 +78,7 @@ class ToolTypeBullNose(pycam.Plugins.PluginBase):
 class ToolTypeFlat(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Tools", "ToolParamRadius", "ToolParamFeedrate"]
+    CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
         parameters = {"radius": 1.0,

@@ -34,6 +34,7 @@ class ToolpathExport(pycam.Plugins.PluginBase):
 
     UI_FILE = "toolpath_export.ui"
     DEPENDS = ["Toolpaths"]
+    CATEGORIES = ["Toolpath", "Export"]
 
     def setup(self):
         self._postprocessors = {}

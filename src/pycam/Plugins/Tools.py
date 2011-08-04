@@ -29,6 +29,7 @@ from pycam.Cutters.ToroidalCutter import ToroidalCutter
 class Tools(pycam.Plugins.ListPluginBase):
 
     DEPENDS = ["ParameterGroupManager"]
+    CATEGORIES = ["Tool"]
     UI_FILE = "tools.ui"
     COLUMN_REF, COLUMN_TOOL_ID, COLUMN_NAME = range(3)
     LIST_ATTRIBUTE_MAP = {"id": COLUMN_TOOL_ID, "name": COLUMN_NAME}

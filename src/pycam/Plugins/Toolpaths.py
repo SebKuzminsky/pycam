@@ -26,6 +26,7 @@ import pycam.Plugins
 class Toolpaths(pycam.Plugins.ListPluginBase):
 
     UI_FILE = "toolpaths.ui"
+    CATEGORIES = ["Toolpath"]
     COLUMN_REF, COLUMN_NAME, COLUMN_VISIBLE = range(3)
     LIST_ATTRIBUTE_MAP = {"name": COLUMN_NAME, "visible": COLUMN_VISIBLE}
     ICONS = {"visible": "visible.svg", "hidden": "visible_off.svg"}

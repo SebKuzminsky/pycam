@@ -26,6 +26,7 @@ import pycam.Plugins
 class OpenGLViewToolpath(pycam.Plugins.PluginBase):
 
     DEPENDS = ["OpenGLWindow", "Toolpaths"]
+    CATEGORIES = ["Toolpath", "Visualization", "OpenGL"]
 
     def setup(self):
         import OpenGL.GL

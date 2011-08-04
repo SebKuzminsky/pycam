@@ -73,6 +73,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
     UI_FILE = "opengl.ui"
     # TODO: drop the dependecy on "Models" as soon as the calls for get("models") are gone
     DEPENDS = ["Models"]
+    CATEGORIES = ["Visualization", "OpenGL"]
 
     def setup(self):
         if not GL_ENABLED:

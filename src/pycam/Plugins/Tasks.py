@@ -30,6 +30,7 @@ from pycam.Exporters.GCodeExporter import GCodeGenerator
 class Tasks(pycam.Plugins.ListPluginBase):
 
     UI_FILE = "tasks.ui"
+    CATEGORIES = ["Task"]
     COLUMN_REF, COLUMN_NAME = range(2)
     LIST_ATTRIBUTE_MAP = {"id": COLUMN_REF, "name": COLUMN_NAME}
     DEPENDS = ["Models", "Tools", "Processes", "Bounds", "Toolpaths"]

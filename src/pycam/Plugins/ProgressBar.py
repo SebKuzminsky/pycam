@@ -30,6 +30,7 @@ import pycam.Plugins
 class ProgressBar(pycam.Plugins.PluginBase):
 
     UI_FILE = "progress_bar.ui"
+    CATEGORIES = ["System"]
 
     def setup(self):
         if self.gui:

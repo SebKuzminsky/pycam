@@ -29,6 +29,7 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
 
     UI_FILE = "toolpath_grid.ui"
     DEPENDS = ["Toolpaths"]
+    CATEGORIES = ["Toolpath"]
 
     def setup(self):
         if self.gui:

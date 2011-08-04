@@ -27,6 +27,7 @@ from pycam.Exporters.GCodeExporter import GCodeGenerator
 class PostprocessorEMC2(pycam.Plugins.PluginBase):
 
     DEPENDS = ["ToolpathExport"]
+    CATEGORIES = ["Postprocessor"]
 
     def setup(self):
         self.core.get("register_postprocessor")("emc2", "EMC2", GCodeGenerator)

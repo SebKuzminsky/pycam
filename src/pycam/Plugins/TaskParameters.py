@@ -28,6 +28,7 @@ import pycam.Gui.ControlsGTK
 class TaskParamCollisionModels(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Models", "Tasks"]
+    CATEGORIES = ["Model", "Task", "Parameter"]
 
     def setup(self):
         self.input_control = pycam.Gui.ControlsGTK.InputTable([],
@@ -69,6 +70,7 @@ class TaskParamCollisionModels(pycam.Plugins.PluginBase):
 class TaskParamTool(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Tools", "Tasks"]
+    CATEGORIES = ["Tool", "Task", "Parameter"]
 
     def setup(self):
         self.input_control = pycam.Gui.ControlsGTK.InputChoice([],
@@ -96,6 +98,7 @@ class TaskParamTool(pycam.Plugins.PluginBase):
 class TaskParamProcess(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Processes", "Tasks"]
+    CATEGORIES = ["Process", "Task", "Parameter"]
 
     def setup(self):
         self.input_control = pycam.Gui.ControlsGTK.InputChoice([],
@@ -123,6 +126,7 @@ class TaskParamProcess(pycam.Plugins.PluginBase):
 class TaskParamBounds(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Bounds", "Tasks"]
+    CATEGORIES = ["Bounds", "Task", "Parameter"]
 
     def setup(self):
         self.input_control = pycam.Gui.ControlsGTK.InputChoice([],

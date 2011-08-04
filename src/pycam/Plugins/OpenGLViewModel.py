@@ -30,6 +30,7 @@ GTK_COLOR_MAX = 65535.0
 class OpenGLViewModel(pycam.Plugins.PluginBase):
 
     DEPENDS = ["OpenGLWindow", "Models"]
+    CATEGORIES = ["Model", "Visualization", "OpenGL"]
 
     def setup(self):
         import gtk
@@ -96,6 +97,7 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
 class OpenGLViewModelTriangle(pycam.Plugins.PluginBase):
 
     DEPENDS = ["OpenGLViewModel"]
+    CATEGORIES = ["Model", "Visualization", "OpenGL"]
 
     def setup(self):
         import OpenGL.GL
@@ -150,6 +152,7 @@ class OpenGLViewModelTriangle(pycam.Plugins.PluginBase):
 class OpenGLViewModelGeneric(pycam.Plugins.PluginBase):
 
     DEPENDS = ["OpenGLViewModel"]
+    CATEGORIES = ["Model", "Visualization", "OpenGL"]
 
     def setup(self):
         self.core.register_chain("draw_models", self.draw_generic_model, 100)

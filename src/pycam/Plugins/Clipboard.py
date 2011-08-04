@@ -40,6 +40,7 @@ class Clipboard(pycam.Plugins.PluginBase):
 
     UI_FILE = "clipboard.ui"
     DEPENDS = ["Models"]
+    CATEGORIES = ["System"]
 
     def setup(self):
         if self.gui:

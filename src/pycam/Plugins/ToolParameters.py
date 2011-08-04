@@ -28,6 +28,7 @@ import pycam.Gui.ControlsGTK
 class ToolParamRadius(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Tools"]
+    CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
         control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=99, digits=0,
@@ -55,6 +56,7 @@ class ToolParamRadius(pycam.Plugins.PluginBase):
 class ToolParamTorusRadius(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Tools"]
+    CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
         control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=99, digits=0,
@@ -71,6 +73,7 @@ class ToolParamTorusRadius(pycam.Plugins.PluginBase):
 class ToolParamFeedrate(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Tools"]
+    CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
         control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=10000,
@@ -95,6 +98,7 @@ class ToolParamFeedrate(pycam.Plugins.PluginBase):
 class ToolParamSpindleSpeed(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Tools"]
+    CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
         control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=100000,

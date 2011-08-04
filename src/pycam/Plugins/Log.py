@@ -31,6 +31,7 @@ class Log(pycam.Plugins.PluginBase):
 
     UI_FILE = "log.ui"
     DEPENDS = ["Clipboard"]
+    CATEGORIES = ["System"]
 
     def setup(self):
         if self.gui:

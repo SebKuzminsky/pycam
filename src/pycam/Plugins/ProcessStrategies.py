@@ -32,6 +32,7 @@ class ProcessStrategySlicing(pycam.Plugins.PluginBase):
     DEPENDS = ["ParameterGroupManager", "PathParamOverlap",
             "PathParamStepDown", "PathParamMaterialAllowance",
             "PathParamMillingStyle", "PathParamGridDirection"]
+    CATEGORIES = ["Process"]
 
     def setup(self):
         parameters = {"overlap": 0.1,
@@ -69,6 +70,7 @@ class ProcessStrategyContour(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Processes", "PathParamStepDown",
             "PathParamMaterialAllowance", "PathParamMillingStyle"]
+    CATEGORIES = ["Process"]
 
     def setup(self):
         parameters = {"step_down": 1.0,
@@ -92,6 +94,7 @@ class ProcessStrategySurfacing(pycam.Plugins.PluginBase):
     DEPENDS = ["ParameterGroupManager", "PathParamOverlap",
             "PathParamMaterialAllowance", "PathParamMillingStyle",
             "PathParamGridDirection"]
+    CATEGORIES = ["Process"]
 
     def setup(self):
         parameters = {"overlap": 0.6,
@@ -130,6 +133,7 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
     DEPENDS = ["ParameterGroupManager", "PathParamStepDown",
             "PathParamMillingStyle", "PathParamRadiusCompensation",
             "PathParamTraceModel"]
+    CATEGORIES = ["Process"]
 
     def setup(self):
         parameters = {"step_down": 1.0,

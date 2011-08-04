@@ -26,6 +26,8 @@ import pycam.Plugins
 
 class ParameterGroupManager(pycam.Plugins.PluginBase):
 
+    CATEGORIES = ["Plugins"]
+
     def setup(self):
         self._groups = {}
         self.core.set("get_parameters", self.get_parameters)

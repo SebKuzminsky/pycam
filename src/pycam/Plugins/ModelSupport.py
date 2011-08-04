@@ -28,6 +28,7 @@ class ModelSupport(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_support.ui"
     DEPENDS = ["Models"]
+    CATEGORIES = ["Model", "Support bridges"]
 
     def setup(self):
         if self.gui:

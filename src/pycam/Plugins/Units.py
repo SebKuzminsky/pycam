@@ -26,6 +26,7 @@ import pycam.Plugins
 class Units(pycam.Plugins.PluginBase):
 
     UI_FILE = "units.ui"
+    CATEGORIES = ["System"]
 
     def setup(self):
         if self.gui:

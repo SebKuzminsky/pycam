@@ -31,6 +31,7 @@ _GTK_COLOR_MAX = 65535.0
 class Models(pycam.Plugins.ListPluginBase):
 
     UI_FILE = "models.ui"
+    CATEGORIES = ["Model"]
     COLUMN_REF, COLUMN_NAME, COLUMN_VISIBLE, COLUMN_COLOR, COLUMN_ALPHA = range(5)
     LIST_ATTRIBUTE_MAP = {"name": COLUMN_NAME, "visible": COLUMN_VISIBLE,
             "color": COLUMN_COLOR, "alpha": COLUMN_ALPHA}

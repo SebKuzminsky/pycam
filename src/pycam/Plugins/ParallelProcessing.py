@@ -31,6 +31,7 @@ import pycam.Plugins
 class ParallelProcessing(pycam.Plugins.PluginBase):
 
     UI_FILE = "parallel_processing.ui"
+    CATEGORIES = ["System"]
 
     def setup(self):
         if self.gui:

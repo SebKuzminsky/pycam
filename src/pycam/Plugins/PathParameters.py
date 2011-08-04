@@ -29,6 +29,7 @@ import pycam.Toolpath.MotionGrid
 class PathParamOverlap(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Processes"]
+    CATEGORIES = ["Process", "Parameter"]
 
     def setup(self):
         # configure the input/output converter
@@ -50,6 +51,7 @@ class PathParamOverlap(pycam.Plugins.PluginBase):
 class PathParamStepDown(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Processes"]
+    CATEGORIES = ["Process", "Parameter"]
 
     def setup(self):
         widget = pycam.Gui.ControlsGTK.InputNumber(lower=0.01, upper=1000,
@@ -67,6 +69,7 @@ class PathParamStepDown(pycam.Plugins.PluginBase):
 class PathParamMaterialAllowance(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Processes"]
+    CATEGORIES = ["Process", "Parameter"]
 
     def setup(self):
         widget = pycam.Gui.ControlsGTK.InputNumber(start=0, lower=0, upper=100,
@@ -84,6 +87,7 @@ class PathParamMaterialAllowance(pycam.Plugins.PluginBase):
 class PathParamMillingStyle(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Processes"]
+    CATEGORIES = ["Process", "Parameter"]
 
     def setup(self):
         input_control = pycam.Gui.ControlsGTK.InputChoice(
@@ -104,6 +108,7 @@ class PathParamMillingStyle(pycam.Plugins.PluginBase):
 class PathParamGridDirection(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Processes"]
+    CATEGORIES = ["Process", "Parameter"]
 
     def setup(self):
         input_control = pycam.Gui.ControlsGTK.InputChoice(
@@ -124,6 +129,7 @@ class PathParamGridDirection(pycam.Plugins.PluginBase):
 class PathParamRadiusCompensation(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Processes"]
+    CATEGORIES = ["Process", "Parameter"]
 
     def setup(self):
         widget = pycam.Gui.ControlsGTK.InputCheckBox(
@@ -141,6 +147,7 @@ class PathParamRadiusCompensation(pycam.Plugins.PluginBase):
 class PathParamTraceModel(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Processes", "Models"]
+    CATEGORIES = ["Process", "Parameter"]
 
     def setup(self):
         self.input_control = pycam.Gui.ControlsGTK.InputTable([],

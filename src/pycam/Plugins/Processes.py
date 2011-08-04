@@ -26,7 +26,7 @@ import pycam.Plugins
 class Processes(pycam.Plugins.ListPluginBase):
 
     DEPENDS = ["ParameterGroupManager"]
-
+    CATEGORIES = ["Process"]
     UI_FILE = "processes.ui"
     COLUMN_REF, COLUMN_NAME = range(2)
     LIST_ATTRIBUTE_MAP = {"ref": COLUMN_REF, "name": COLUMN_NAME}

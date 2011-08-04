@@ -26,6 +26,7 @@ import pycam.Plugins
 class OpenGLViewBounds(pycam.Plugins.PluginBase):
 
     DEPENDS = ["OpenGLWindow", "Bounds"]
+    CATEGORIES = ["Bounds", "Visualization", "OpenGL"]
 
     def setup(self):
         import OpenGL.GL

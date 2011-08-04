@@ -27,6 +27,7 @@ from pycam.Geometry.utils import number
 class OpenGLViewAxes(pycam.Plugins.PluginBase):
 
     DEPENDS = ["OpenGLWindow"]
+    CATEGORIES = ["Visualization", "OpenGL"]
 
     def setup(self):
         import OpenGL.GL

@@ -33,6 +33,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
 
     UI_FILE = "bounds.ui"
     DEPENDS = ["Models"]
+    CATEGORIES = ["Bounds"]
     COLUMN_REF, COLUMN_NAME = range(2)
     LIST_ATTRIBUTE_MAP = {"ref": COLUMN_REF, "name": COLUMN_NAME}
 

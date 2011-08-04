@@ -30,6 +30,7 @@ class ModelProjection(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_projection.ui"
     DEPENDS = ["Models"]
+    CATEGORIES = ["Model"]
 
     def setup(self):
         if self.gui:

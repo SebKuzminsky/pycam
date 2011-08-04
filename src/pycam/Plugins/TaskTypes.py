@@ -28,6 +28,7 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Tasks", "TaskParamCollisionModels", "TaskParamTool",
             "TaskParamProcess", "TaskParamBounds"]
+    CATEGORIES = ["Task"]
 
     def setup(self):
         parameters = {"collision_models": [],

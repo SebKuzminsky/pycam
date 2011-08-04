@@ -30,7 +30,7 @@ import pycam.Plugins
 class PluginSelector(pycam.Plugins.PluginBase):
 
     UI_FILE = "plugin_selector.ui"
-
+    CATEGORIES = ["Plugins"]
     COLUMN_NAME, COLUMN_DESCRIPTION, COLUMN_ENABLED, COLUMN_DEPENDS, \
             COLUMN_DEPENDS_OK, COLUMN_SOURCE = range(6)
 

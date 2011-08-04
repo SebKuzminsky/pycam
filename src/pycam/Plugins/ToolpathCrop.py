@@ -27,17 +27,11 @@ from pycam.Geometry.Plane import Plane
 import pycam.Gui.ControlsGTK
 
 
-"""
-TODO:
-    - get the currently selected toolpath (from the table)
-    - update the current crop-polygons instantly (3D)
-    - update the ToolpathCropInfoLabel content if no polygons are found
-"""
-
 class ToolpathCrop(pycam.Plugins.PluginBase):
 
     UI_FILE = "toolpath_crop.ui"
     DEPENDS = ["Toolpaths"]
+    CATEGORIES = ["Toolpath"]
 
     def setup(self):
         if self.gui:

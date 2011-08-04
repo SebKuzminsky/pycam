@@ -29,6 +29,7 @@ import pycam.Plugins
 class ToolpathSimulation(pycam.Plugins.PluginBase):
 
     UI_FILE = "toolpath_simulation.ui"
+    CATEGORIES = ["Toolpath"]
 
     def setup(self):
         if self.gui:

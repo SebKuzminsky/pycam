@@ -36,6 +36,7 @@ class Fonts(pycam.Plugins.PluginBase):
 
     UI_FILE = "fonts.ui"
     DEPENDS = ["Clipboard"]
+    CATEGORIES = ["Fonts"]
 
     def setup(self):
         self._fonts_cache = pycam.Utils.FontCache.FontCache(get_font_dir(),

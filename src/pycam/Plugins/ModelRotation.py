@@ -29,6 +29,7 @@ class ModelRotation(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_rotation.ui"
     DEPENDS = ["Models"]
+    CATEGORIES = ["Model"]
 
     def setup(self):
         if self.gui:

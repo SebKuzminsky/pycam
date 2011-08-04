@@ -38,6 +38,7 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
 
     UI_FILE = "model_extrusion.ui"
     DEPENDS = ["Models"]
+    CATEGORIES = ["Model"]
 
     def setup(self):
         if self.gui:
