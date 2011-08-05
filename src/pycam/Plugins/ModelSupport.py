@@ -111,6 +111,8 @@ class ModelSupport(pycam.Plugins.PluginBase):
                     self._support_model_changed)
             self.core.unregister_event("bounds-changed",
                     self._support_model_changed)
+            self.core.unregister_event("model-selection-changed",
+                    self._update_widgets)
             self.core.unregister_event("support-model-changed",
                     self.update_support_model)
 

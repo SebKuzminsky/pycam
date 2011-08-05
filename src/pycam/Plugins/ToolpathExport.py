@@ -72,6 +72,14 @@ class ToolpathExport(pycam.Plugins.PluginBase):
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("toolpath_handling", self._frame)
+            self.core.unregister_event("postprocessors-list-changed",
+                    self._update_postprocessors)
+            self.core.unregister_event("toolpath-list-changed",
+                    self._update_widgets)
+            self.core.unregister_event("toolpath-selection-changed",
+                    self._update_widgets)
+            self.core.unregister_event("toolpath-changed",
+                    self._update_widgets)
 
     def register_postprocessor(self, name, label, func):
         if name in self._postprocessors:

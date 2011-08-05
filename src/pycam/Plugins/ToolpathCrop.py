@@ -168,8 +168,8 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
                     self.core.get("toolpaths").append(new_tp)
                 else:
                     toolpath.paths = new_tp.paths
+                    self.core.emit_event("toolpath-changed")
             else:
                 self.log.info("Toolpath cropping: the result is empty")
-        self.core.emit_event("visual-item-updated")
         self.core.get("toolpaths").select(selected)
 

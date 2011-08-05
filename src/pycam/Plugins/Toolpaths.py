@@ -67,9 +67,6 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
                     self._visualize_visible_state)
             self.gui.get_object("ToolpathNameCell").connect("edited",
                     self._edit_toolpath_name)
-            self.gui.get_object("ToolpathTimeColumn").set_cell_data_func(
-                    self.gui.get_object("ToolpathTimeCell"),
-                    self._visualize_machine_time)
             # handle selection changes
             selection = self._modelview.get_selection()
             selection.connect("changed",
@@ -92,10 +89,15 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
                                 "Toolpath #%d" % index, True))
                 self.core.emit_event("toolpath-list-changed")
             self.register_model_update(update_model)
-            self.core.register_event("toolpath-list-changed",
+            self.core.register_event("toolpath-changed",
                     self._update_widgets)
             self.core.register_event("toolpath-list-changed",
+                    self._update_widgets)
+            self.core.register_event("toolpath-changed",
                     lambda: self.core.emit_event("visual-item-updated"))
+            self.core.register_event("toolpath-list-changed",
+                    lambda: self.core.emit_event("visual-item-updated"))
+            self._trigger_toolpath_time_update()
             self._update_widgets()
         self.core.set("toolpaths", self)
         return True
@@ -107,6 +109,8 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
                     self.gui.get_object("ExportGCodeAll"))
             self.unregister_gtk_accelerator("toolpaths",
                     self.gui.get_object("ExportGCodeSelected"))
+            self.core.unregister_event("toolpath-changed",
+                    self._update_widgets)
             self.core.unregister_event("toolpath-list-changed",
                     self._update_widgets)
         self.core.set("toolpaths", None)
@@ -141,6 +145,11 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
         selected_toolpaths = self.get_selected()
         self.gui.get_object("ExportGCodeSelected").set_sensitive(
                 len(selected_toolpaths) > 0)
+
+    def _trigger_toolpath_time_update(self):
+        self.gui.get_object("ToolpathTimeColumn").set_cell_data_func(
+                self.gui.get_object("ToolpathTimeCell"),
+                self._visualize_machine_time)
 
     def _list_action_toggle_custom(self, treeview, path, clicked_column,
             force_column=None):
