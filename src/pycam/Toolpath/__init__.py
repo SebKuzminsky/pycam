@@ -74,6 +74,15 @@ class Toolpath(object):
     def get_params(self):
         return dict(self.parameters)
 
+    def copy(self):
+        new_paths = []
+        for path in self.paths:
+            new_path = Path()
+            for point in path.points:
+                new_path.append(point)
+            new_paths.append(new_path)
+        return Toolpath(new_paths, parameters=self.get_params())
+
     def _get_limit_generic(self, attr, func):
         path_min = []
         for path in self.paths:
@@ -215,14 +224,7 @@ class Toolpath(object):
 
     def get_cropped_copy(self, polygons, callback=None):
         # create a deep copy of the current toolpath
-        new_paths = []
-        for path in self.paths:
-            if path:
-                new_path = Path()
-                for point in path.points:
-                    new_path.append(point)
-                new_paths.append(new_path)
-        tp = Toolpath(new_paths, **self.get_params())
+        tp = self.copy()
         tp.crop(polygons, callback=callback)
         return tp
 
