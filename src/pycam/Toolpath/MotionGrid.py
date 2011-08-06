@@ -271,10 +271,13 @@ def get_lines_grid(models, bounds, layer_distance, line_distance=None,
         low, high = bounds
     # the lower limit is never below the model
     polygons = _get_sorted_polygons(models, callback=callback)
-    low_limit_lines = min([polygon.minz for polygon in polygons])
-    low[2] = max(low[2], low_limit_lines)
+    if polygons:
+        low_limit_lines = min([polygon.minz for polygon in polygons])
+        low[2] = max(low[2], low_limit_lines)
     lines = []
     for polygon in polygons:
+        if callback:
+            callback()
         if polygon.is_closed and \
                 (milling_style == MILLING_STYLE_CONVENTIONAL):
             polygon = polygon.copy()
@@ -295,10 +298,14 @@ def get_lines_grid(models, bounds, layer_distance, line_distance=None,
     if layers:
         # the upper layers are used for PushCutter operations
         for z in layers[:-1]:
+            if callback:
+                callback()
             yield get_lines_layer(lines, z, last_z=last_z, step_width=None,
                     milling_style=milling_style)
             last_z = z
         # the last layer is used for a DropCutter operation
+        if callback:
+            callback()
         yield get_lines_layer(lines, layers[-1], last_z=last_z,
                 step_width=step_width, milling_style=milling_style)
 

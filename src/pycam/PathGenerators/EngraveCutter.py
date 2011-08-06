@@ -86,6 +86,6 @@ class EngraveCutter(object):
             draw_callback(text="Engrave: processing layer" + \
                 "%d/%d" % (current_layer + 1, num_of_layers))
         drop_generator.GenerateToolPath(cutter, [model], drop_layers,
-                minz=None, maxz=None)
+                minz=minz, maxz=maxz)
         return self.pa_push.paths + self.pa_drop.paths
 

@@ -24,6 +24,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 #import gtk
 
 import pycam.Plugins
+import pycam.Geometry.Model
 
 
 class ModelSupportGrid(pycam.Plugins.PluginBase):
@@ -135,6 +136,8 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
         grid_type = self.core.get("support_model_type")
         if grid_type == "grid": 
             s = self.core
+            support_grid = None
+            low, high = self._get_bounds()
             if (s.get("support_grid_thickness") > 0) \
                     and ((s.get("support_grid_distance_x") > 0) \
                         or (s.get("support_grid_distance_y") > 0)) \
@@ -146,8 +149,8 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
                             > s.get("support_grid_thickness"))) \
                     and (s.get("support_grid_height") > 0):
                 support_grid = pycam.Toolpath.SupportGrid.get_support_grid(
-                        s.get("minx"), s.get("maxx"), s.get("miny"), s.get("maxy"),
-                        s.get("minz"), s.get("support_grid_distance_x"),
+                        low[0], high[0], low[1], high[1], low[2],
+                        s.get("support_grid_distance_x"),
                         s.get("support_grid_distance_y"),
                         s.get("support_grid_thickness"),
                         s.get("support_grid_height"),
@@ -239,8 +242,9 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
         model.clear()
         s = self.core
         # get the toolpath without adjustments
+        low, high = self._get_bounds()
         base_x, base_y = pycam.Toolpath.SupportGrid.get_support_grid_locations(
-                s.get("minx"), s.get("maxx"), s.get("miny"), s.get("maxy"),
+                low[0], high[0], low[1], high[1],
                 s.get("support_grid_distance_x"),
                 s.get("support_grid_distance_y"),
                 offset_x=s.get("support_grid_offset_x"),
@@ -270,3 +274,14 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
         else:
             self.grid_adjustment_selector.set_active(-1)
 
+    def _get_bounds(self):
+        models = self.core.get("models").get_selected()
+        low, high = pycam.Geometry.Model.get_combined_bounds(models)
+        if None in low or None in high:
+            return [0, 0, 0], [0, 0, 0]
+        else:
+            # TODO: the x/y offset should be configurable via a control
+            for index in range(2):
+                low[index] -= 5
+                high[index] += 5
+            return low, high

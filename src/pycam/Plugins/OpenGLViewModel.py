@@ -38,6 +38,10 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
         self._gtk = gtk
         self._GL = OpenGL.GL
         self.core.register_event("visualize-items", self.draw_model)
+        self.core.register_event("model-changed",
+                lambda: self.core.emit_event("visual-item-updated"))
+        self.core.register_event("model-list-changed",
+                lambda: self.core.emit_event("visual-item-updated"))
         self.core.emit_event("visual-item-updated")
         self._cache = {}
         return True

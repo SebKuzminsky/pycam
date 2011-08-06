@@ -99,6 +99,8 @@ class ModelSupport(pycam.Plugins.PluginBase):
             self.core.set("support_grid_height", 0.5)
             self.core.set("support_grid_type", "none")
             # prepare GUI
+            self.gui.get_object("CreateSupportModel").connect("clicked",
+                    self._add_support_model)
             self._update_widgets()
         return True
 
@@ -124,6 +126,11 @@ class ModelSupport(pycam.Plugins.PluginBase):
 
     def _support_model_changed(self, widget=None):
         self.core.emit_event("support-model-changed")
+
+    def _add_support_model(self, widget=None):
+        model = self.core.get("current_support_model")
+        if model:
+            self.core.get("models").append(model)
 
     def update_support_model(self, widget=None):
         grid_type = self.core.get("support_model_type")
