@@ -156,11 +156,23 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
                 tool=tool, models=environment["collision_models"])
         path_generator = pycam.PathGenerators.EngraveCutter.EngraveCutter(
                 pycam.PathProcessors.SimpleCutter.SimpleCutter())
-        # TODO: handle radius compensation
-        motion_grid = pycam.Toolpath.MotionGrid.get_lines_grid(
-                process["parameters"]["trace_models"],
+        models = list(process["parameters"]["trace_models"])
+        progress = self.core.get("progress")
+        if process["parameters"]["radius_compensation"]:
+            progress.update(text="Offsetting models")
+            progress.set_multiple(len(models), "Model")
+            compensated_models = []
+            for index in range(len(models)):
+                models[index] = models[index].get_offset_model(
+                        tool_params["radius"], callback=progress.update)
+                progress.update_multiple()
+            progress.finish()
+        progress.update(text="Calculating moves")
+        motion_grid = pycam.Toolpath.MotionGrid.get_lines_grid(models,
                 (low, high), process["parameters"]["step_down"],
                 step_width=(tool_params["radius"] / 4.0),
-                milling_style=process["parameters"]["milling_style"])
+                milling_style=process["parameters"]["milling_style"],
+                callback=progress.update)
+        progress.finish()
         return path_generator, motion_grid, (low, high)
 
