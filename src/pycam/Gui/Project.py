@@ -132,19 +132,6 @@ GTK_COLOR_MAX = 65535.0
 
 log = pycam.Utils.log.get_logger()
 
-def get_filters_from_list(filter_list):
-    result = []
-    for one_filter in filter_list:
-        current_filter = gtk.FileFilter()
-        current_filter.set_name(one_filter[0])
-        file_extensions = one_filter[1]
-        if not isinstance(file_extensions, (list, tuple)):
-            file_extensions = [file_extensions]
-        for ext in file_extensions:
-            current_filter.add_pattern(ext)
-        result.append(current_filter)
-    return result
-
 def get_icons_pixbuffers():
     result = []
     for icon_filename in WINDOW_ICON_FILENAMES:
@@ -204,11 +191,11 @@ class EventCore(pycam.Gui.Settings.Settings):
         if event in self.event_handlers:
             if self.event_handlers[event][EVENT_BLOCKER_INDEX] != 0:
                 return
+            # prevent infinite recursion
             self.block_event(event)
             for handler in self.event_handlers[event][EVENT_HANDLER_INDEX]:
                 func = handler[HANDLER_FUNC_INDEX]
                 data = handler[HANDLER_ARG_INDEX]
-                # prevent infinite recursion
                 func(*(data + args), **kwargs)
             self.unblock_event(event)
         else:
@@ -342,6 +329,7 @@ class ProjectGui(object):
                 gtk.rc_add_default_file(gtkrc_file)
                 gtk.rc_reparse_all_for_settings(gtk.settings_get_default(), True)
         self.window = self.gui.get_object("ProjectWindow")
+        self.settings.set("main_window", self.window)
         # show stock items on buttons
         # increase the initial width of the window (due to hidden elements)
         self.window.set_default_size(400, -1)
@@ -520,9 +508,10 @@ class ProjectGui(object):
         autoload_enable = self.gui.get_object("AutoLoadTaskFile")
         autoload_box = self.gui.get_object("StartupTaskFileBox")
         autoload_source = self.gui.get_object("StartupTaskFile")
-        for one_filter in get_filters_from_list(FILTER_CONFIG):
-            autoload_source.add_filter(one_filter)
-            autoload_source.set_filter(one_filter)
+        # TODO: fix the extension filter
+        #for one_filter in get_filters_from_list(FILTER_CONFIG):
+        #    autoload_source.add_filter(one_filter)
+        #    autoload_source.set_filter(one_filter)
         def get_autoload_task_file(autoload_source=autoload_source):
             if autoload_enable.get_active():
                 return autoload_source.get_filename()
@@ -791,6 +780,8 @@ class ProjectGui(object):
         self.load_task_settings()
         self.settings.register_event("notify-file-saved",
                 self.add_to_recent_file_list)
+        self.settings.register_event("notify-file-opened",
+                self.add_to_recent_file_list)
         # initialize plugins
         self.plugin_manager = pycam.Plugins.PluginManager(core=self.settings)
         self.plugin_manager.import_plugins()
@@ -806,8 +797,6 @@ class ProjectGui(object):
             self.open_task_settings_file(autoload_task_filename)
         self.update_all_controls()
         self.no_dialog = no_dialog
-        # TODO: move this to /Gui/...
-        self.settings.set("get_filename_via_dialog", self.get_filename_via_dialog)
         if not self.no_dialog:
             # register a logging handler for displaying error messages
             pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
@@ -949,7 +938,7 @@ class ProjectGui(object):
         self.gui.get_object("SaveModel").set_sensitive(save_possible)
 
     def _browse_external_program_location(self, widget=None, key=None):
-        location = self.get_filename_via_dialog(title="Select the executable " \
+        location = self.settings.get("get_filename_func")(title="Select the executable " \
                 + "for '%s'" % key, mode_load=True,
                 parent=self.preferences_window)
         if not location is None:
@@ -999,30 +988,6 @@ class ProjectGui(object):
         # don't close the window - just hide it (for "delete-event")
         return True
 
-    def get_filename_with_suffix(self, filename, type_filter):
-        # use the first extension provided by the filter as the default
-        if isinstance(type_filter[0], (tuple, list)):
-            filter_ext = type_filter[0][1]
-        else:
-            filter_ext = type_filter[1]
-        if isinstance(filter_ext, (list, tuple)):
-            filter_ext = filter_ext[0]
-        if not filter_ext.startswith("*"):
-            # weird filter content
-            return filename
-        else:
-            filter_ext = filter_ext[1:]
-        basename = os.path.basename(filename)
-        if (basename.rfind(".") == -1) or (basename[-6:].rfind(".") == -1):
-            # The filename does not contain a dot or the dot is not within the
-            # last five characters. Dots within the start of the filename are
-            # ignored.
-            return filename + filter_ext
-        else:
-            # contains at least one dot
-            return filename
-
-    @gui_activity_guard
     def save_model(self, widget=None, filename=None, model=None,
             store_filename=True):
         if model is None:
@@ -1049,7 +1014,7 @@ class ProjectGui(object):
                 type_filter = [(name, patterns)
                         for name, patterns in FILTER_MODEL
                         if "SVG" in name.upper()]
-            filename = self.get_filename_via_dialog("Save model to ...",
+            filename = self.settings.get("get_filename_func")("Save model to ...",
                     mode_load=False, type_filter=type_filter,
                     filename_templates=(self.last_model_uri,))
             if filename:
@@ -1198,8 +1163,8 @@ class ProjectGui(object):
         if callable(filename):
             filename = filename()
         if not filename:
-            filename = self.get_filename_via_dialog("Loading model ...",
-                    mode_load=True, type_filter=FILTER_MODEL)
+            filename = self.settings.get("get_filename_func")("Loading model ...",
+                    mode_load=True, type_filter=FILTER_MODEL, extra_widget=gtk.Label("Test"))
         if filename:
             file_type, importer = pycam.Importers.detect_file_type(filename)
             if file_type and callable(importer):
@@ -1243,7 +1208,7 @@ class ProjectGui(object):
         if callable(filename):
             filename = filename()
         if not filename:
-            filename = self.get_filename_via_dialog("Loading settings ...",
+            filename = self.settings.get("get_filename_func")("Loading settings ...",
                     mode_load=True, type_filter=FILTER_CONFIG)
             # Only update the last_task_settings attribute if the task file was
             # loaded interactively. E.g. ignore the initial task file loading.
@@ -1282,7 +1247,7 @@ class ProjectGui(object):
             filename = filename()
         if not isinstance(filename, (basestring, pycam.Utils.URIHandler)):
             # we open a dialog
-            filename = self.get_filename_via_dialog("Save settings to ...",
+            filename = self.settings.get("get_filename_func")("Save settings to ...",
                     mode_load=False, type_filter=FILTER_CONFIG,
                     filename_templates=(self.last_task_settings_uri, self.last_model_uri))
             if filename:
@@ -1300,104 +1265,6 @@ class ProjectGui(object):
             log.info("Task settings written to %s" % filename)
             self.add_to_recent_file_list(filename)
         self.update_save_actions()
-
-    def get_filename_via_dialog(self, title, mode_load=False, type_filter=None,
-            filename_templates=None, filename_extension=None, parent=None):
-        if parent is None:
-            parent = self.window
-        # we open a dialog
-        if mode_load:
-            dialog = gtk.FileChooserDialog(title=title,
-                    parent=parent, action=gtk.FILE_CHOOSER_ACTION_OPEN,
-                    buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                        gtk.STOCK_OPEN, gtk.RESPONSE_OK))
-        else:
-            dialog = gtk.FileChooserDialog(title=title,
-                    parent=self.window, action=gtk.FILE_CHOOSER_ACTION_SAVE,
-                    buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                        gtk.STOCK_SAVE, gtk.RESPONSE_OK))
-        # set the initial directory to the last one used
-        if self.last_dirname and os.path.isdir(self.last_dirname):
-            dialog.set_current_folder(self.last_dirname)
-        # add filter for files
-        if type_filter:
-            for file_filter in get_filters_from_list(type_filter):
-                dialog.add_filter(file_filter)
-        # guess the export filename based on the model's filename
-        valid_templates = []
-        if filename_templates:
-            for template in filename_templates:
-                if not template:
-                    continue
-                elif hasattr(template, "get_path"):
-                    valid_templates.append(template.get_path())
-                else:
-                    valid_templates.append(template)
-        if valid_templates:
-            filename_template = valid_templates[0]
-            # remove the extension
-            default_filename = os.path.splitext(filename_template)[0]
-            if filename_extension:
-                default_filename += os.path.extsep + filename_extension
-            elif type_filter:
-                for one_type in type_filter:
-                    extension = one_type[1]
-                    if isinstance(extension, (list, tuple, set)):
-                        extension = extension[0]
-                    # use only the extension of the type filter string
-                    extension = os.path.splitext(extension)[1]
-                    if extension:
-                        default_filename += extension
-                        # finish the loop
-                        break
-            dialog.select_filename(default_filename)
-            try:
-                dialog.set_current_name(
-                        os.path.basename(default_filename).encode("utf-8"))
-            except UnicodeError:
-                # ignore
-                pass
-        # add filter for all files
-        ext_filter = gtk.FileFilter()
-        ext_filter.set_name("All files")
-        ext_filter.add_pattern("*")
-        dialog.add_filter(ext_filter)
-        done = False
-        while not done:
-            dialog.set_filter(dialog.list_filters()[0])
-            response = dialog.run()
-            filename = dialog.get_filename()
-            uri = pycam.Utils.URIHandler(filename)
-            dialog.hide()
-            if response != gtk.RESPONSE_OK:
-                dialog.destroy()
-                return None
-            if not mode_load and filename:
-                # check if we want to add a default suffix
-                filename = self.get_filename_with_suffix(filename, type_filter)
-            if not mode_load and os.path.exists(filename):
-                overwrite_window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_WARNING,
-                        buttons=gtk.BUTTONS_YES_NO,
-                        message_format="This file exists. Do you want to overwrite it?")
-                overwrite_window.set_title("Confirm overwriting existing file")
-                response = overwrite_window.run()
-                overwrite_window.destroy()
-                done = (response == gtk.RESPONSE_YES)
-            elif mode_load and not uri.exists():
-                not_found_window = gtk.MessageDialog(self.window, type=gtk.MESSAGE_ERROR,
-                        buttons=gtk.BUTTONS_OK,
-                        message_format="This file does not exist. Please choose a different filename.")
-                not_found_window.set_title("Invalid filename selected")
-                response = not_found_window.run()
-                not_found_window.destroy()
-                done = False
-            else:
-                done = True
-        dialog.destroy()
-        # add the file to the list of recently used ones
-        if filename:
-            self.add_to_recent_file_list(filename)
-        return filename
 
     def add_to_recent_file_list(self, filename):
         # Add the item to the recent files list - if it already exists.

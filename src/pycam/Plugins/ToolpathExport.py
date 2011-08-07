@@ -33,7 +33,7 @@ FILTER_GCODE = (("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode")),)
 class ToolpathExport(pycam.Plugins.PluginBase):
 
     UI_FILE = "toolpath_export.ui"
-    DEPENDS = ["Toolpaths"]
+    DEPENDS = ["Toolpaths", "FilenameDialog"]
     CATEGORIES = ["Toolpath", "Export"]
 
     def setup(self):
@@ -159,7 +159,7 @@ class ToolpathExport(pycam.Plugins.PluginBase):
             filename_extension = None
         # TODO: separate this away from Gui/Project.py
         # TODO: implement "last_model_filename" in core
-        filename = self.core.get("get_filename_via_dialog")("Save toolpath to ...",
+        filename = self.core.get("get_filename_func")("Save toolpath to ...",
                 mode_load=False, type_filter=FILTER_GCODE,
                 filename_templates=(self._last_toolpath_file, self.core.get("last_model_filename")),
                 filename_extension=filename_extension)
