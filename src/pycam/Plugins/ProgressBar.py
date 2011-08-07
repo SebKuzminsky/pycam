@@ -27,6 +27,7 @@ import datetime
 import pycam.Plugins
 
 
+
 class ProgressBar(pycam.Plugins.PluginBase):
 
     UI_FILE = "progress_bar.ui"
@@ -54,8 +55,12 @@ class ProgressBar(pycam.Plugins.PluginBase):
 
 class ProgressGTK(object):
 
+    _PROGRESS_STACK = []
+
     def __init__(self, core, gui):
+        ProgressGTK._PROGRESS_STACK.append(self)
         import gtk
+        self._finished = False
         self._gtk = gtk
         self._gui = gui
         self.core = core
@@ -73,6 +78,8 @@ class ProgressGTK(object):
         self._progress_button = self._gui.get_object("ShowToolpathProgressButton")
         self._start_time = time.time()
         self._progress_button.show()
+        self._last_text = None
+        self._last_percent = None
         self.update(text="", percent=0)
         self._cancel_button.set_sensitive(True)
         self._progress_button.hide()
@@ -93,13 +100,14 @@ class ProgressGTK(object):
         if count > 1:
             self._multi_maximum = count
             self.update_multiple(increment=False)
-            self._multi_widget.show()
         else:
             self._multi_maximum = 0
 
     def update_multiple(self, increment=True):
         if self._multi_maximum <= 1:
+            self._multi_widget.hide()
             return
+        self._multi_widget.show()
         if increment:
             self._multi_counter += 1
             self._progress_bar.set_fraction(0)
@@ -119,21 +127,38 @@ class ProgressGTK(object):
         self._cancel_requested = True
 
     def finish(self):
-        self._main_widget.hide()
-        self._multi_widget.hide()
-        widget = self._main_widget
-        while widget:
-            if hasattr(widget, "resize_children"):
-                widget.resize_children()
-            if hasattr(widget, "check_resize"):
-                widget.check_resize()
-            widget = widget.get_parent()
-        self.core.emit_event("gui-enable")
+        if self._finished:
+            self.log.debug("Called progressbar 'finish' twice: %s" % self)
+            return
+        ProgressGTK._PROGRESS_STACK.remove(self)
+        if ProgressGTK._PROGRESS_STACK:
+            # restore the latest state of the previous progress
+            current = ProgressGTK._PROGRESS_STACK[-1]
+            current.update(text=current._last_text,
+                    percent=current._last_percent)
+            current.update_multiple(increment=False)
+        else:
+            # hide the widget
+            self._main_widget.hide()
+            self._multi_widget.hide()
+            widget = self._main_widget
+            while widget:
+                if hasattr(widget, "resize_children"):
+                    widget.resize_children()
+                if hasattr(widget, "check_resize"):
+                    widget.check_resize()
+                widget = widget.get_parent()
+            self.core.emit_event("gui-enable")
+        self._finished = True
 
     def __del__(self):
         self.finish()
 
     def update(self, text=None, percent=None):
+        if text:
+            self._last_text = text
+        if percent:
+            self._last_percent = percent
         if not percent is None:
             percent = min(max(percent, 0.0), 100.0)
             self._progress_bar.set_fraction(percent/100.0)

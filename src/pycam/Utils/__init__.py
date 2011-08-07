@@ -198,6 +198,10 @@ def get_exception_report():
             + "text below to the developers of PyCAM. Thanks a lot!" \
             + os.linesep + traceback.format_exc()
 
+def print_stack_trace():
+    # for debug purposes
+    traceback.print_stack()
+
 
 class ProgressCounter(object):
 
