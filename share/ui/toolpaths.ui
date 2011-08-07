@@ -2,17 +2,6 @@
 <interface>
   <!-- interface-requires gtk+ 2.12 -->
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkAction" id="ExportGCodeSelected">
-    <property name="label">Export _selected Toolpaths ...</property>
-    <property name="short_label">Export _selected Toolpaths ...</property>
-    <property name="tooltip">Write all selected toolpaths to a file.</property>
-  </object>
-  <object class="GtkAction" id="ExportGCodeAll">
-    <property name="label">_Export all Toolpaths ...</property>
-    <property name="short_label">_Export all Toolpaths ...</property>
-    <property name="tooltip">Write all toolpaths to a file.</property>
-    <property name="stock_id">gtk-execute</property>
-  </object>
   <object class="GtkListStore" id="ToolpathListModel">
     <columns>
       <!-- column-name ref -->

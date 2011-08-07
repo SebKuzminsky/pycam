@@ -36,7 +36,6 @@ import StringIO
 import pickle
 import logging
 
-import pycam.Exporters.EMCToolExporter
 import pycam.Gui.Settings
 import pycam.Cutters
 import pycam.Toolpath.Generator
@@ -72,7 +71,6 @@ FILTER_MODEL = (("All supported model filetypes",
         ("STL models", "*.stl"), ("DXF contours", "*.dxf"),
         ("SVG contours", "*.svg"), ("PS contours", ("*.eps", "*.ps")))
 FILTER_CONFIG = (("Config files", "*.conf"),)
-FILTER_EMC_TOOL = (("EMC tool files", "*.tbl"),)
 
 PREFERENCES_DEFAULTS = {
         "enable_ode": False,
@@ -374,7 +372,6 @@ class ProjectGui(object):
                 ("OpenModel", self.load_model_file, None, "<Control>o"),
                 ("SaveModel", self.save_model, lambda: self.last_model_uri, "<Control>s"),
                 ("SaveAsModel", self.save_model, None, "<Control><Shift>s"),
-                ("ExportEMCToolDefinition", self.export_emc_tools, None, None),
                 ("Quit", self.destroy, None, "<Control>q"),
                 ("GeneralSettings", self.toggle_preferences_window, None, "<Control>p"),
                 ("UndoButton", self._restore_undo_state, None, "<Control>z"),
@@ -424,10 +421,6 @@ class ProjectGui(object):
                 self.update_save_actions)
         self.settings.register_event("model-change-after",
                 lambda: self.settings.emit_event("visual-item-updated"))
-        def update_emc_tool_button():
-            tool_num = len(self.settings.get("tools"))
-            self.gui.get_object("ExportEMCToolDefinition").set_sensitive(tool_num > 0)
-        self.settings.register_event("tool-selection-changed", update_emc_tool_button)
         self.settings.set("load_model", self.load_model)
         # set the availability of ODE
         self.enable_ode_control = self.gui.get_object("SettingEnableODE")
@@ -784,7 +777,8 @@ class ProjectGui(object):
             return append_func, clear_func
         for ui_name, base_path in (("view_menu", "/MenuBar/ViewMenu"),
                 ("file_menu", "/MenuBar/FileMenu"),
-                ("edit_menu", "/MenuBar/EditMenu")):
+                ("edit_menu", "/MenuBar/EditMenu"),
+                ("export_menu", "/MenuBar/FileMenu/ExportMenu")):
             append_func, clear_func = get_menu_funcs(ui_name, base_path)
             self.settings.register_ui_section(ui_name, append_func, clear_func)
         self.settings.register_ui("file_menu", "Quit",
@@ -795,6 +789,8 @@ class ProjectGui(object):
         self.reset_preferences()
         self.load_preferences()
         self.load_task_settings()
+        self.settings.register_event("notify-file-saved",
+                self.add_to_recent_file_list)
         # initialize plugins
         self.plugin_manager = pycam.Plugins.PluginManager(core=self.settings)
         self.plugin_manager.import_plugins()
@@ -1227,25 +1223,6 @@ class ProjectGui(object):
             else:
                 log.error("Failed to detect filetype!")
                 return False
-
-    def export_emc_tools(self, widget=None, filename=None):
-        if callable(filename):
-            filename = filename()
-        if not filename:
-            filename = self.get_filename_via_dialog("Exporting EMC tool definition ...",
-                    mode_load=False, type_filter=FILTER_EMC_TOOL,
-                    filename_templates=(self.last_model_uri,))
-        if filename:
-            export = pycam.Exporters.EMCToolExporter.EMCToolExporter(self.settings.get("tools"))
-            text = export.get_tool_definition_string()
-            try:
-                out = file(filename, "w")
-                out.write(text)
-                out.close()
-            except IOError, err_msg:
-                log.error("Failed to save EMC tool file: %s" % err_msg)
-            else:
-                self.add_to_recent_file_list(filename)
 
     def finish_startup(self):
         """ This function is called by the pycam script after everything is

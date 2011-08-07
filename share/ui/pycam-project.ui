@@ -1936,9 +1936,6 @@ You should have received a copy of the GNU General Public License along with thi
     <property name="label">_About</property>
     <property name="stock_id">gtk-about</property>
   </object>
-  <object class="GtkAction" id="ExportEMCToolDefinition">
-    <property name="label">_Export EMC tools ...</property>
-  </object>
   <object class="GtkAction" id="HelpMenu">
     <property name="label">_Help</property>
   </object>
@@ -2090,5 +2087,9 @@ You should have received a copy of the GNU General Public License along with thi
   <object class="GtkNotebook" id="MainTabs">
     <property name="visible">True</property>
     <property name="can_focus">True</property>
+  </object>
+  <object class="GtkAction" id="ExportMenu">
+    <property name="label">_Export</property>
+    <property name="short_label">_Export</property>
   </object>
 </interface>

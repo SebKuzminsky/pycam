@@ -233,7 +233,5 @@ class ToolpathExport(pycam.Plugins.PluginBase):
         except IOError, err_msg:
             self.log.error("Failed to save toolpath file: %s" % err_msg)
         else:
-            # TODO: add to recent file list
-            #self.add_to_recent_file_list(filename)
-            pass
+            self.core.emit_event("notify-file-saved", filename)
 

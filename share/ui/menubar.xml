@@ -6,6 +6,8 @@
       <menuitem action="SaveModel"/>
       <menuitem action="SaveAsModel"/>
       <separator />
+      <menu action="ExportMenu" />
+      <separator />
     </menu>
     <menu action="EditMenu">
       <menuitem action="UndoButton"/>
@@ -15,8 +17,6 @@
       <menuitem action="LoadTaskSettings"/>
       <menuitem action="SaveTaskSettings"/>
       <menuitem action="SaveAsTaskSettings"/>
-      <separator />
-      <menuitem action="ExportEMCToolDefinition"/>
       <separator />
       <menuitem action="GeneralSettings"/>
     </menu>

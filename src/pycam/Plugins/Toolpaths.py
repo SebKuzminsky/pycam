@@ -105,10 +105,6 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("ToolpathsBox"))
-            self.unregister_gtk_accelerator("toolpaths",
-                    self.gui.get_object("ExportGCodeAll"))
-            self.unregister_gtk_accelerator("toolpaths",
-                    self.gui.get_object("ExportGCodeSelected"))
             self.core.unregister_event("toolpath-changed",
                     self._update_widgets)
             self.core.unregister_event("toolpath-list-changed",
@@ -140,11 +136,6 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             self.tp_box.hide()
         else:
             self.tp_box.show()
-        # enable/disable the export menu item
-        self.gui.get_object("ExportGCodeAll").set_sensitive(len(toolpaths) > 0)
-        selected_toolpaths = self.get_selected()
-        self.gui.get_object("ExportGCodeSelected").set_sensitive(
-                len(selected_toolpaths) > 0)
 
     def _trigger_toolpath_time_update(self):
         self.gui.get_object("ToolpathTimeColumn").set_cell_data_func(
