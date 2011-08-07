@@ -49,8 +49,6 @@ class DropCutter(object):
     def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None, draw_callback=None):
         quit_requested = False
         model = pycam.Geometry.Model.get_combined_model(models)
-        if not model:
-            return
 
         # Transfer the grid (a generator) into a list of lists and count the
         # items.

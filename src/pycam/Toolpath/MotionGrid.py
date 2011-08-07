@@ -158,16 +158,11 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance,
         return result, end_position
     return get_lines(start, end, end_position)
 
-def get_fixed_grid(bounds, layer_distance, line_distance=None, step_width=None,
+def get_fixed_grid((low, high), layer_distance, line_distance=None, step_width=None,
         grid_direction=GRID_DIRECTION_X, milling_style=MILLING_STYLE_IGNORE,
         start_position=START_Z):
     """ Calculate the grid positions for toolpath moves
     """
-    #TODO: remove the obsolete "get_absolute_limits" call
-    if hasattr(bounds, "get_absolute_limits"):
-        low, high = bounds.get_absolute_limits()
-    else:
-        low, high = bounds
     if isiterable(layer_distance):
         layers = layer_distance
     elif layer_distance is None:
@@ -232,19 +227,19 @@ def get_lines_layer(lines, z, last_z=None, step_width=None,
                         "%s / %s / %s / %s" % (line.p1, line.p2, z, last_z))
     # process all projected lines
     for line in projected_lines:
+        points = []
         if step_width is None:
-            yield (line.p1, line.p2)
+            points.append(line.p1)
+            points.append(line.p2)
         else:
             if isiterable(step_width):
                 steps = step_width
             else:
                 steps = floatrange(0.0, line.len, inc=step_width)
-            prior = None
             for step in steps:
                 next_point = line.p1.add(line.dir.mul(step))
-                if not prior is None:
-                    yield (prior, next_point)
-                prior = next_point
+                points.append(next_point)
+        yield points
 
 def _get_sorted_polygons(models, callback=None):
     # Sort the polygons according to their directions (first inside, then
@@ -261,14 +256,9 @@ def _get_sorted_polygons(models, callback=None):
     outer_sorter = PolygonSorter(outer_polys, callback=callback)
     return inner_sorter.get_polygons() + outer_sorter.get_polygons()
 
-def get_lines_grid(models, bounds, layer_distance, line_distance=None,
+def get_lines_grid(models, (low, high), layer_distance, line_distance=None,
         step_width=None, milling_style=MILLING_STYLE_CONVENTIONAL,
         start_position=START_Z, callback=None):
-    #TODO: remove the obsolete "get_absolute_limits" call
-    if hasattr(bounds, "get_absolute_limits"):
-        low, high = bounds.get_absolute_limits()
-    else:
-        low, high = bounds
     # the lower limit is never below the model
     polygons = _get_sorted_polygons(models, callback=callback)
     if polygons:

@@ -260,9 +260,9 @@ def generate_toolpath(model, tool_settings=None,
             "conventional": pycam.Toolpath.MotionGrid.MILLING_STYLE_CONVENTIONAL,
             "climb": pycam.Toolpath.MotionGrid.MILLING_STYLE_CLIMB}
     if path_generator in ("DropCutter", "PushCutter"):
-        motion_grid = pycam.Toolpath.MotionGrid.get_fixed_grid(bounds,
-                layer_distance, line_stepping, step_width=step_width,
-                grid_direction=direction_dict[direction],
+        motion_grid = pycam.Toolpath.MotionGrid.get_fixed_grid(
+                (bounds_low, bounds_high), layer_distance, line_stepping,
+                step_width=step_width, grid_direction=direction_dict[direction],
                 milling_style=milling_style_grid[milling_style])
         if path_generator == "DropCutter":
             toolpath = generator.GenerateToolPath(motion_grid, minz, maxz,
