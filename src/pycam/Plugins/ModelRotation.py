@@ -37,10 +37,12 @@ class ModelRotation(pycam.Plugins.PluginBase):
             rotation_box.unparent()
             self.core.register_ui("model_handling", "Rotation", rotation_box,
                     -10)
-            self.gui.get_object("RotateModelButton").connect("clicked",
-                    self._rotate_model)
-            self.core.register_event("model-selection-changed",
-                    self._update_controls)
+            self._gtk_handlers = ((self.gui.get_object("RotateModelButton"),
+                    "clicked", self._rotate_model), )
+            self._event_handlers = (("model-selection-changed",
+                    self._update_controls), )
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
             self._update_controls()
         return True
 
@@ -48,8 +50,8 @@ class ModelRotation(pycam.Plugins.PluginBase):
         if self.gui:
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelRotationBox"))
-            self.core.unregister_event("model-selection-changed",
-                    self._update_controls)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
 
     def _update_controls(self):
         widget = self.gui.get_object("ModelRotationBox")

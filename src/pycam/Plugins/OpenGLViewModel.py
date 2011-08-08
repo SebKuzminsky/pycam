@@ -37,17 +37,16 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
         import OpenGL.GL
         self._gtk = gtk
         self._GL = OpenGL.GL
-        self.core.register_event("visualize-items", self.draw_model)
-        self.core.register_event("model-changed",
-                lambda: self.core.emit_event("visual-item-updated"))
-        self.core.register_event("model-list-changed",
-                lambda: self.core.emit_event("visual-item-updated"))
+        self._event_handlers = (("visualize-items", self.draw_model),
+                ("model-changed","visual-item-updated"),
+                ("model-list-changed","visual-item-updated"))
+        self.register_event_handlers(self._event_handlers)
         self.core.emit_event("visual-item-updated")
         self._cache = {}
         return True
 
     def teardown(self):
-        self.core.unregister_event("visualize-items", self.draw_model)
+        self.unregister_event_handlers(self._event_handlers)
         self.core.emit_event("visual-item-updated")
 
     def _get_cache_key(self, model, *args, **kwargs):

@@ -61,17 +61,18 @@ class Models(pycam.Plugins.ListPluginBase):
                     (self.ACTION_CLEAR, "ModelDeleteAll")):
                 self.register_list_action_button(action, self._modelview,
                         self.gui.get_object(obj_name))
-            self.gui.get_object("ModelColorButton").connect("color-set",
-                    self._set_colors_of_selected_models)
-            self.core.register_event("model-selection-changed",
-                    self._get_colors_of_selected_models)
-            self._modelview.connect("row-activated",
-                    self._list_action_toggle_custom, self.COLUMN_VISIBLE)
+            self._gtk_handlers = []
+            self._gtk_handlers.extend((
+                    (self.gui.get_object("ModelColorButton"), "color-set",
+                        self._set_colors_of_selected_models),
+                    (self._modelview, "row-activated", lambda *args:
+                        self._list_action_toggle_custom(
+                            *(args + [self.COLUMN_VISIBLE]))),
+                    (self.gui.get_object("ModelNameColumn"), "edited",
+                        self._edit_model_name)))
             self.gui.get_object("ModelVisibleColumn").set_cell_data_func(
                     self.gui.get_object("ModelVisibleSymbol"),
                     self._visualize_visible_state)
-            self.gui.get_object("ModelNameColumn").connect("edited",
-                    self._edit_model_name)
             self._treemodel = self.gui.get_object("ModelList")
             self._treemodel.clear()
             def update_model():
@@ -93,9 +94,12 @@ class Models(pycam.Plugins.ListPluginBase):
                 self.core.emit_event("model-list-changed")
             selection = self._modelview.get_selection()
             selection.set_mode(self._gtk.SELECTION_MULTIPLE)
-            selection.connect("changed",
-                    lambda widget, event: self.core.emit_event(event), 
-                    "model-selection-changed")
+            self._gtk_handlers.append((selection, "changed",
+                    "model-selection-changed"))
+            self._event_handlers = (("model-selection-changed",
+                    self._get_colors_of_selected_models), )
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
             self._get_colors_of_selected_models()
             self.register_model_update(update_model)
             # update the model list
@@ -105,10 +109,10 @@ class Models(pycam.Plugins.ListPluginBase):
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_event("model-selection-changed",
-                    self._get_colors_of_selected_models)
             self.core.unregister_ui_section("model_handling")
             self.core.unregister_ui("main", self.gui.get_object("ModelBox"))
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
         self.core.set("models", None)
         return True
 

@@ -38,12 +38,13 @@ class ModelProjection(pycam.Plugins.PluginBase):
             projection_frame.unparent()
             self.core.register_ui("model_handling", "Projection",
                     projection_frame, 10)
-            self.core.register_event("model-change-after",
-                    self._update_controls)
-            self.gui.get_object("ProjectionButton").connect("clicked",
-                    self._projection)
-            self.core.register_event("model-selection-changed",
-                    self._update_controls)
+            self._gtk_handlers = ((self.gui.get_object("ProjectionButton"),
+                    "clicked", self._projection), )
+            self._event_handlers = (
+                    ("model-change-after", self._update_controls),
+                    ("model-selection-changed", self._update_controls))
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
             self._update_controls()
         return True
 
@@ -51,10 +52,8 @@ class ModelProjection(pycam.Plugins.PluginBase):
         if self.gui:
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelProjectionFrame"))
-            self.core.unregister_event("model-selection-changed",
-                    self._update_controls)
-            self.core.unregister_event("model-change-after",
-                    self._update_controls)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
 
     def _get_projectable_models(self):
         models = self.core.get("models").get_selected()

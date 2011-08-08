@@ -136,14 +136,11 @@ class Bounds(pycam.Plugins.ListPluginBase):
                     self._edit_bounds_name)
             self.gui.get_object("ModelDescriptionColumn").set_cell_data_func(
                     self.gui.get_object("ModelNameCell"), self._render_model_name)
-            self.core.register_event("bounds-selection-changed",
-                    self._switch_bounds)
-            self.core.register_event("bounds-changed",
-                    self._store_bounds_settings)
-            self.core.register_event("bounds-changed",
-                    self._trigger_table_update)
-            self.core.register_event("model-list-changed",
-                    self._update_model_list)
+            self._event_handlers = (("bounds-selection-changed", self._switch_bounds),
+                    ("bounds-changed", self._store_bounds_settings),
+                    ("bounds-changed", self._trigger_table_update),
+                    ("model-list-changed", self._update_model_list))
+            self.register_event_handlers(self._event_handlers)
             self._trigger_table_update()
             self._switch_bounds()
             self._update_model_list()
@@ -155,14 +152,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("BoundsBox"))
-            self.core.unregister_event("bounds-selection-changed",
-                    self._switch_bounds)
-            self.core.unregister_event("bounds-changed",
-                    self._store_bounds_settings)
-            self.core.unregister_event("bounds-changed",
-                    self._trigger_table_update)
-            self.core.unregister_event("model-list-changed",
-                    self._update_model_list)
+            self.unregister_event_handlers(self._event_handlers)
         self.core.set("bounds", None)
         return True
 

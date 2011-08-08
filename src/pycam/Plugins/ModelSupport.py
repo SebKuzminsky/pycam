@@ -36,18 +36,11 @@ class ModelSupport(pycam.Plugins.PluginBase):
             self._support_frame.unparent()
             self.core.register_ui("model_handling", "Support",
                     self._support_frame, 0)
-            self.core.register_event("model-change-after",
-                    self._support_model_changed)
-            self.core.register_event("bounds-changed",
-                    self._support_model_changed)
-            self.core.register_event("model-selection-changed",
-                    self._update_widgets)
-            self.core.register_event("support-model-changed",
-                    self.update_support_model)
             support_model_type_selector = self.gui.get_object(
                     "SupportGridTypesControl")
-            support_model_type_selector.connect("changed",
-                    self._support_model_changed)
+            self._gtk_handlers = []
+            self._gtk_handlers.append((support_model_type_selector, "changed",
+                    self._support_model_changed))
             def add_support_type(obj, name):
                 types_model = support_model_type_selector.get_model()
                 types_model.append((obj, name))
@@ -87,20 +80,30 @@ class ModelSupport(pycam.Plugins.PluginBase):
                     get_support_model_type,
                     set_support_model_type)
             grid_thickness = self.gui.get_object("SupportGridThickness")
-            grid_thickness.connect("value-changed", self._support_model_changed)
+            self._gtk_handlers.append((grid_thickness, "value-changed",
+                    self._support_model_changed))
             self.core.add_item("support_grid_thickness",
                     grid_thickness.get_value, grid_thickness.set_value)
             grid_height = self.gui.get_object("SupportGridHeight")
-            grid_height.connect("value-changed", self._support_model_changed)
+            self._gtk_handlers.append((grid_height, "value-changed",
+                    self._support_model_changed))
             self.core.add_item("support_grid_height",
                     grid_height.get_value, grid_height.set_value)
+            self._gtk_handlers.append((
+                    self.gui.get_object("CreateSupportModel"), "clicked",
+                        self._add_support_model))
             # support grid defaults
             self.core.set("support_grid_thickness", 0.5)
             self.core.set("support_grid_height", 0.5)
             self.core.set("support_grid_type", "none")
-            # prepare GUI
-            self.gui.get_object("CreateSupportModel").connect("clicked",
-                    self._add_support_model)
+            # handlers
+            self._event_handlers = (
+                    ("model-change-after", self._support_model_changed),
+                    ("bounds-changed", self._support_model_changed),
+                    ("model-selection-changed", self._update_widgets),
+                    ("support-model-changed", self.update_support_model))
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
             self._update_widgets()
         return True
 
@@ -109,14 +112,8 @@ class ModelSupport(pycam.Plugins.PluginBase):
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelExtensionsFrame"))
             self.core.unregister_ui("support_model_type_selector", "none")
-            self.core.unregister_event("model-change-after",
-                    self._support_model_changed)
-            self.core.unregister_event("bounds-changed",
-                    self._support_model_changed)
-            self.core.unregister_event("model-selection-changed",
-                    self._update_widgets)
-            self.core.unregister_event("support-model-changed",
-                    self.update_support_model)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
 
     def _update_widgets(self):
         if self.core.get("models").get_selected():

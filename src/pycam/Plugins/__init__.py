@@ -73,7 +73,33 @@ class PluginBase(object):
             else:
                 self.log.debug("Failed to locate icon: %s" % self.ICONS[key])
                 self.ICONS[key] = None
+        self._lambda_handlers = {}
         self.enabled = True
+
+    def __get_handler_func(self, func):
+        if isinstance(func, basestring):
+            if not func in self._lambda_handlers:
+                self._lambda_handlers[func] = lambda *args: \
+                        self.core.emit_event(func)
+            return self._lambda_handlers[func]
+        else:
+            return func
+
+    def register_event_handlers(self, event_handlers):
+        for name, func in event_handlers:
+            self.core.register_event(name, self.__get_handler_func(func))
+
+    def register_gtk_handlers(self, gtk_widget_handlers):
+        for obj, signal, func in gtk_widget_handlers:
+            obj.connect(signal, self.__get_handler_func(func))
+
+    def unregister_event_handlers(self, event_handlers):
+        for name, func in event_handlers:
+            self.core.unregister_event(name, self.__get_handler_func(func))
+
+    def unregister_gtk_handlers(self, gtk_widget_handlers):
+        for obj, signal, func in gtk_widget_handlers:
+            obj.connect(signal, self.__get_handler_func(func))
 
     def setup(self):
         raise NotImplementedError(("Module %s (%s) does not implement " + \

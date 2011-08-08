@@ -46,38 +46,42 @@ class Clipboard(pycam.Plugins.PluginBase):
         if self.gui:
             import gtk
             self._gtk = gtk
+            self._gtk_handlers = []
             self.clipboard = self._gtk.clipboard_get()
             self.core.set("clipboard-set", self._copy_text_to_clipboard)
-            self.clipboard.connect("owner-change", self._update_clipboard_widget)
-            self.core.register_event("model-selection-changed",
-                    self._update_clipboard_widget)
+            self._gtk_handlers.append((self.clipboard, "owner-change",
+                    self._update_clipboard_widget))
             # menu item and shortcut
             self.copy_action = self.gui.get_object("CopyModelToClipboard")
-            self.copy_action.connect("activate", self.copy_model_to_clipboard)
+            self._gtk_handlers.append((self.copy_action, "activate",
+                    self.copy_model_to_clipboard))
             self.register_gtk_accelerator("clipboard", self.copy_action,
                     "<Control>c", "CopyModelToClipboard")
             self.core.register_ui("edit_menu", "CopyModelToClipboard",
                     self.copy_action, 20)
             self.paste_action = self.gui.get_object("PasteModelFromClipboard")
-            self.paste_action.connect("activate", self.paste_model_from_clipboard)
+            self._gtk_handlers.append((self.paste_action, "activate",
+                    self.paste_model_from_clipboard))
             self.register_gtk_accelerator("clipboard", self.paste_action,
                     "<Control>v", "PasteModelFromClipboard")
             self.core.register_ui("edit_menu", "PasteModelFromClipboard",
                     self.paste_action, 25)
+            self._event_handlers = (("model-selection-changed",
+                    self._update_clipboard_widget), )
+            self.register_event_handlers(self._event_handlers)
+            self.register_gtk_handlers(self._gtk_handlers)
             self._update_clipboard_widget()
         return True
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_event("model-selection-changed",
-                    self._update_clipboard_widget)
+            self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_gtk_accelerator("clipboard", self.copy_action)
             self.core.unregister_ui("edit_menu", self.copy_action)
             self.unregister_gtk_accelerator("clipboard", self.paste_action)
             self.core.unregister_ui("edit_menu", self.paste_action)
             self.core.set("clipboard-set", None)
-            # TODO: check if this disconnects the clipboard-change-handler
-            self.clipboard = None
 
     def _get_exportable_models(self):
         models = self.core.get("models").get_selected()

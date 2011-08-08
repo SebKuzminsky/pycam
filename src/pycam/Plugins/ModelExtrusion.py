@@ -44,14 +44,13 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
         if self.gui:
             extrusion_frame = self.gui.get_object("ModelExtrusionFrame")
             extrusion_frame.unparent()
-            self.core.register_event("model-change-after",
-                    self._update_extrude_widgets)
-            self.core.register_event("model-selection-changed",
-                    self._update_extrude_widgets)
+            self._gtk_handlers = ((self.gui.get_object("ExtrudeButton"),
+                    "clicked", self._extrude_model), )
+            self._event_handlers = (
+                    ("model-change-after", self._update_extrude_widgets),
+                    ("model-selection-changed", self._update_extrude_widgets))
             self.core.register_ui("model_handling", "Extrusion",
                     extrusion_frame, 5)
-            self.gui.get_object("ExtrudeButton").connect("clicked",
-                    self._extrude_model)
             self.gui.get_object("ExtrusionHeight").set_value(1)
             self.gui.get_object("ExtrusionWidth").set_value(1)
             self.gui.get_object("ExtrusionGrid").set_value(0.5)
@@ -60,6 +59,8 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
                 extrusion_model.append((row[0], row[1],
                         self.gui.get_object(row[2]).get_pixbuf()))
             self.gui.get_object("ExtrusionTypeSelector").set_active(0)
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
             self._update_extrude_widgets()
         return True
 
@@ -67,10 +68,8 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
         if self.gui:
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelExtrusionFrame"))
-            self.core.unregister_event("model-change-after",
-                    self._update_extrude_widgets)
-            self.core.unregister_event("model-selection-changed",
-                    self._update_extrude_widgets)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
 
     def _get_extrudable_models(self):
         models = self.core.get("models").get_selected()

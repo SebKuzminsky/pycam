@@ -34,28 +34,36 @@ class ModelPosition(pycam.Plugins.PluginBase):
         if self.gui:
             position_box = self.gui.get_object("ModelPositionBox")
             position_box.unparent()
-            self.core.register_ui("model_handling", "Position", position_box, -20)
-            shift_model_button = self.gui.get_object("ShiftModelButton")
-            shift_model_button.connect("clicked", self._shift_model)
-            align_model_button = self.gui.get_object("AlignPositionButton")
-            align_model_button.connect("clicked", self._align_model)
+            self._gtk_handlers = []
+            self.core.register_ui("model_handling", "Position", position_box,
+                    -20)
+            shift_button = self.gui.get_object("ShiftModelButton")
+            self._gtk_handlers.append((shift_button, "clicked",
+                    self._shift_model))
+            align_button = self.gui.get_object("AlignPositionButton")
+            self._gtk_handlers.append((align_button, "clicked",
+                    self._align_model))
             # grab default button for shift/align controls
             for axis in "XYZ":
                 obj = self.gui.get_object("ShiftPosition%s" % axis)
-                obj.connect("focus-in-event", lambda widget, data: \
-                        shift_model_button.grab_default())
-                obj.connect("focus-out-event", lambda widget, data: \
-                        shift_model_button.get_toplevel().set_default(None))
+                self._gtk_handlers.extend((
+                        (obj, "focus-in-event", lambda widget, data: \
+                            shift_button.grab_default()),
+                        (obj, "focus-out-event", lambda widget, data: \
+                            shift_button.get_toplevel().set_default(None))))
             for axis in "XYZ":
                 for name_template in ("AlignPosition%s", "AlignPosition%sMin",
                         "AlignPosition%sCenter", "AlignPosition%sMax"):
                     obj = self.gui.get_object("AlignPosition%s" % axis)
-                    obj.connect("focus-in-event", lambda widget, data: \
-                            align_model_button.grab_default())
-                    obj.connect("focus-out-event", lambda widget, data: \
-                            align_model_button.get_toplevel().set_default(None))
-            self.core.register_event("model-selection-changed",
-                    self._update_position_widgets)
+                    self._gtk_handlers.extend((
+                            (obj, "focus-in-event", lambda widget, data: \
+                                align_button.grab_default()),
+                            (obj, "focus-out-event", lambda widget, data: \
+                                align_button.get_toplevel().set_default(None))))
+            self._event_handlers = (("model-selection-changed",
+                    self._update_position_widgets), )
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
             self._update_position_widgets()
         return True
 
@@ -63,8 +71,8 @@ class ModelPosition(pycam.Plugins.PluginBase):
         if self.gui:
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelPositionBox"))
-            self.core.unregister_event("model-selection-changed",
-                    self._update_position_widgets)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
 
     def _update_position_widgets(self):
         widget = self.gui.get_object("ModelPositionBox")

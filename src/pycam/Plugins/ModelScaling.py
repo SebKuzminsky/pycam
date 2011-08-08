@@ -35,38 +35,29 @@ class ModelScaling(pycam.Plugins.PluginBase):
             scale_box = self.gui.get_object("ModelScaleBox")
             scale_box.unparent()
             self.core.register_ui("model_handling", "Scale", scale_box, -5)
-            self.core.register_event("model-change-after",
-                    self._update_scale_controls)
             scale_percent = self.gui.get_object("ScalePercent")
             scale_button = self.gui.get_object("ScaleModelButton")
             scale_percent.set_value(100)
-            scale_percent.connect("focus-in-event",
-                    lambda widget, data: scale_button.grab_default())
-            scale_percent.connect("focus-out-event", lambda widget, data: \
-                    scale_box.get_toplevel().set_default(None))
-            scale_button.connect("clicked", self._scale_model)
-            # scale model to an axis dimension
-            self.gui.get_object("ScaleDimensionAxis").connect("changed",
-                    lambda widget=None: self.core.emit_event(
-                            "model-change-after"))
             scale_dimension_button = self.gui.get_object("ScaleAllAxesButton")
             scale_dimension_control = self.gui.get_object(
                     "ScaleDimensionControl")
-            scale_dimension_control.connect("focus-in-event",
-                    lambda widget, data: scale_dimension_button.grab_default())
-            scale_dimension_control.connect("focus-out-event",
-                    lambda widget, data: \
-                            scale_box.get_toplevel().set_default(None))
-            scale_dimension_button.connect("clicked",
-                    self._scale_model_axis_fit, True)
-            self.gui.get_object("ScaleSelectedAxisButton").connect("clicked",
-                    self._scale_model_axis_fit, False)
-            self.gui.get_object("ScaleInchMM").connect("clicked",
-                    self._scale_model, 100 * 25.4)
-            self.gui.get_object("ScaleMMInch").connect("clicked",
-                    self._scale_model, 100 / 25.4)
-            self.core.register_event("model-selection-changed",
-                    self._update_scale_controls)
+            self._gtk_handlers = []
+            self._gtk_handlers.extend((
+                    (scale_percent, "focus-in-event", lambda widget, data: scale_button.grab_default()),
+                    (scale_percent, "focus-out-event", lambda widget, data: scale_box.get_toplevel().set_default(None)),
+                    (scale_button, "clicked", self._scale_model),
+                    (self.gui.get_object("ScaleDimensionAxis"), "changed", lambda widget=None: self.core.emit_event( "model-change-after")),
+                    (scale_dimension_control, "focus-in-event", lambda widget, data: scale_dimension_button.grab_default()),
+                    (scale_dimension_control, "focus-out-event", lambda widget, data: scale_box.get_toplevel().set_default(None)),
+                    (scale_dimension_button, "clicked", lambda widget: self._scale_model_axis_fit(proportionally=True)),
+                    (self.gui.get_object("ScaleSelectedAxisButton"), "clicked", lambda widget: self._scale_model_axis_fit(proportionally=False)),
+                    (self.gui.get_object("ScaleInchMM"), "clicked", lambda widget: self._scale_model(percent=(100 * 25.4))),
+                    (self.gui.get_object("ScaleMMInch"), "clicked", lambda widget: self._scale_model(percent=(100 / 25.4)))))
+            self._event_handlers = (
+                    ("model-selection-changed", self._update_scale_controls),
+                    ("model-change-after", self._update_scale_controls))
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
             self._update_scale_controls()
         return True
 
@@ -74,10 +65,8 @@ class ModelScaling(pycam.Plugins.PluginBase):
         if self.gui:
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelScaleBox"))
-            self.core.unregister_event("model-change-after",
-                    self._update_scale_controls)
-            self.core.unregister_event("model-selection-changed",
-                    self._update_scale_controls)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
 
     def _update_scale_controls(self):
         models = self.core.get("models").get_selected()

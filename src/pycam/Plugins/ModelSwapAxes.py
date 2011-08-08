@@ -35,10 +35,12 @@ class ModelSwapAxes(pycam.Plugins.PluginBase):
             swap_box = self.gui.get_object("ModelSwapBox")
             swap_box.unparent()
             self.core.register_ui("model_handling", "Swap axes", swap_box, 0)
-            self.gui.get_object("SwapAxesButton").connect("clicked",
-                    self._swap_axes)
-            self.core.register_event("model-selection-changed",
-                    self._update_controls)
+            self._gtk_handlers = ((self.gui.get_object("SwapAxesButton"),
+                    "clicked", self._swap_axes), )
+            self._event_handlers = (("model-selection-changed",
+                    self._update_controls), )
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
             self._update_controls()
         return True
 
@@ -46,8 +48,8 @@ class ModelSwapAxes(pycam.Plugins.PluginBase):
         if self.gui:
             self.core.unregister_ui("model_handling",
                     self.gui.get_object("ModelSwapBox"))
-            self.core.unregister_event("model-selection-changed",
-                    self._update_controls)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
 
     def _update_controls(self):
         box = self.gui.get_object("ModelSwapBox")

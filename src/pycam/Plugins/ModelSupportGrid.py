@@ -42,23 +42,25 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
                     "grid", weight=-10)
             self.core.register_ui("support_model_settings", "Grid settings",
                     grid_box)
-            self.core.register_event("support-model-changed",
-                    self.update_support_model)
             support_model_changed = lambda widget=None: self.core.emit_event(
                     "support-model-changed")
+            self._gtk_handlers = []
             # support grid
             self.grid_adjustments_x = []
             self.grid_adjustments_y = []
             self.grid_adjustment_axis_x_last = True
             self._block_manual_adjust_update = False
             grid_distance_x = self.gui.get_object("SupportGridDistanceX")
-            grid_distance_x.connect("value-changed", support_model_changed)
+            self._gtk_handlers.append((grid_distance_x, "value-changed",
+                    support_model_changed))
             self.core.add_item("support_grid_distance_x",
                     grid_distance_x.get_value, grid_distance_x.set_value)
             grid_distance_square = self.gui.get_object("SupportGridDistanceSquare")
-            grid_distance_square.connect("clicked", self.update_support_controls)
+            self._gtk_handlers.append((grid_distance_square, "clicked",
+                    self.update_support_controls))
             grid_distance_y = self.gui.get_object("SupportGridDistanceY")
-            grid_distance_y.connect("value-changed", support_model_changed)
+            self._gtk_handlers.append((grid_distance_y, "value-changed",
+                    support_model_changed))
             def get_support_grid_distance_y():
                 if grid_distance_square.get_active():
                     return self.core.get("support_grid_distance_x")
@@ -67,39 +69,46 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
             self.core.add_item("support_grid_distance_y",
                     get_support_grid_distance_y, grid_distance_y.set_value)
             grid_offset_x = self.gui.get_object("SupportGridOffsetX")
-            grid_offset_x.connect("value-changed", support_model_changed)
+            self._gtk_handlers.append((grid_offset_x, "value-changed",
+                    support_model_changed))
             self.core.add_item("support_grid_offset_x",
                     grid_offset_x.get_value, grid_offset_x.set_value)
             grid_offset_y = self.gui.get_object("SupportGridOffsetY")
-            grid_offset_y.connect("value-changed", support_model_changed)
+            self._gtk_handlers.append((grid_offset_y, "value-changed",
+                    support_model_changed))
             self.core.add_item("support_grid_offset_y",
                     grid_offset_y.get_value, grid_offset_y.set_value)
             # manual grid adjustments
-            self.grid_adjustment_axis_x = self.gui.get_object("SupportGridPositionManualAxisX")
-            self.grid_adjustment_axis_x.connect("toggled",
-                    self.switch_support_grid_manual_selector)
-            self.gui.get_object("SupportGridPositionManualResetOne").connect(
-                    "clicked", self.reset_support_grid_manual, False)
-            self.gui.get_object("SupportGridPositionManualResetAll").connect(
-                    "clicked", self.reset_support_grid_manual, True)
+            self.grid_adjustment_axis_x = self.gui.get_object(
+                    "SupportGridPositionManualAxisX")
+            self._gtk_handlers.extend((
+                    (self.grid_adjustment_axis_x, "toggled",
+                        self.switch_support_grid_manual_selector),
+                    (self.gui.get_object("SupportGridPositionManualResetOne"),
+                         "clicked", lambda *args: \
+                            self.reset_support_grid_manual(reset_all=False)),
+                    (self.gui.get_object("SupportGridPositionManualResetAll"),
+                         "clicked", lambda *args: \
+                            self.reset_support_grid_manual(True))))
             self.grid_adjustment_model = self.gui.get_object(
                     "SupportGridPositionManualList")
             self.grid_adjustment_selector = self.gui.get_object(
                     "SupportGridPositionManualSelector")
-            self.grid_adjustment_selector.connect("changed",
-                    self.switch_support_grid_manual_selector)
+            self._gtk_handlers.append((self.grid_adjustment_selector,
+                    "changed", self.switch_support_grid_manual_selector))
             self.grid_adjustment_value = self.gui.get_object(
                     "SupportGridPositionManualAdjustment")
             self.grid_adjustment_value_control = self.gui.get_object(
                     "SupportGridPositionManualShiftControl")
             self.grid_adjustment_value_control.set_update_policy(
                     gtk.UPDATE_DISCONTINUOUS)
-            self.grid_adjustment_value_control.connect("move-slider",
-                    self.update_support_grid_manual_adjust)
-            self.grid_adjustment_value_control.connect("value-changed",
-                    self.update_support_grid_manual_adjust)
-            self.gui.get_object("SupportGridPositionManualShiftControl2").connect(
-                    "value-changed", self.update_support_grid_manual_adjust)
+            self._gtk_handlers.extend((
+                    (self.grid_adjustment_value_control, "move-slider",
+                        self.update_support_grid_manual_adjust),
+                    (self.grid_adjustment_value_control, "value-changed",
+                        self.update_support_grid_manual_adjust),
+                    (self.gui.get_object("SupportGridPositionManualShiftControl2"),
+                        "value-changed", self.update_support_grid_manual_adjust)))
             def get_set_grid_adjustment_value(value=None):
                 if self.grid_adjustment_axis_x.get_active():
                     adjustments = self.grid_adjustments_x
@@ -118,10 +127,14 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
             # TODO: remove these public settings
             self.core.add_item("support_grid_adjustment_value",
                     get_set_grid_adjustment_value, get_set_grid_adjustment_value)
-            self.core.register_event("support-model-changed",
-                    self.update_support_controls)
             grid_distance_square.set_active(True)
             self.core.set("support_grid_distance_x", 10.0)
+            # handlers
+            self._event_handlers = ((
+                    ("support-model-changed", self.update_support_controls),
+                    ("support-model-changed", self.update_support_model)))
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
         return True
 
     def teardown(self):
@@ -129,8 +142,8 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
             self.core.unregister_ui("support_model_type_selector", "grid")
             self.core.unregister_ui("support_model_settings",
                     self.gui.get_object("SupportModelGridBox"))
-            self.core.unregister_event("support-model-changed",
-                    self.update_support_model)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
 
     def update_support_model(self, widget=None):
         grid_type = self.core.get("support_model_type")

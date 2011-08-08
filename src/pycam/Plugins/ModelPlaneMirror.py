@@ -35,19 +35,19 @@ class ModelPlaneMirror(pycam.Plugins.PluginBase):
             mirror_box = self.gui.get_object("ModelMirrorBox")
             mirror_box.unparent()
             self.core.register_ui("model_handling", "Mirror", mirror_box, 0)
-            self.gui.get_object("PlaneMirrorButton").connect("clicked",
-                    self._plane_mirror)
-            self.core.register_event("model-selection-changed",
-                    self._update_plane_widgets)
+            self._gtk_handlers = ((self.gui.get_object("PlaneMirrorButton"),
+                    "clicked", self._plane_mirror), )
+            self._event_handlers = (("model-selection-changed",
+                    self._update_plane_widgets), )
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
             self._update_plane_widgets()
         return True
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("model_handling",
-                    self.gui.get_object("ModelMirrorBox"))
-            self.core.unregister_event("model-selection-changed",
-                    self._update_plane_widgets)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
 
     def _update_plane_widgets(self):
         plane_widget = self.gui.get_object("ModelMirrorBox")

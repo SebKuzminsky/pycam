@@ -41,48 +41,51 @@ class Fonts(pycam.Plugins.PluginBase):
     def setup(self):
         self._fonts_cache = pycam.Utils.FontCache.FontCache(get_font_dir(),
                 core=self.core)
-        self.core.add_item("fonts", lambda: self._fonts_cache)
+        self.core.set("fonts", self._fonts_cache)
         # "font dialog" window
         if self.gui:
             import gtk
             self._gtk = gtk
             self.font_dialog_window = self.gui.get_object("FontDialog")
-            self.font_dialog_window.connect("delete-event",
-                    self.toggle_font_dialog_window, False)
-            self.font_dialog_window.connect("destroy",
-                    self.toggle_font_dialog_window, False)
-            self.gui.get_object("FontDialogCancel").connect("clicked",
-                    self.toggle_font_dialog_window, False)
-            self.gui.get_object("FontDialogApply").connect("clicked",
-                    self.import_from_font_dialog)
-            self.gui.get_object("FontDialogSave").connect("clicked",
-                    self.export_from_font_dialog)
-            self.gui.get_object("FontDialogCopy").connect("clicked",
-                    self.copy_font_dialog_to_clipboard)
-            self.gui.get_object("FontDialogInputBuffer").connect("changed",
-                    self.update_font_dialog_preview)
-            self.gui.get_object("FontDialogPreview").connect("configure_event",
-                    self.update_font_dialog_preview)
-            self.gui.get_object("FontDialogPreview").connect("expose_event",
-                    self.update_font_dialog_preview)
+            window = self.font_dialog_window
+            hide_window = lambda *args: \
+                    self.toggle_font_dialog_window(state=False)
+            self._gtk_handlers = [(window, "delete-event", hide_window),
+                    (window, "destroy", hide_window),
+                    (self.gui.get_object("FontDialogCancel"), "clicked",
+                        hide_window),
+                    (self.gui.get_object("FontDialogApply"), "clicked",
+                        self.import_from_font_dialog),
+                    (self.gui.get_object("FontDialogSave"), "clicked",
+                        self.export_from_font_dialog),
+                    (self.gui.get_object("FontDialogCopy"), "clicked",
+                        self.copy_font_dialog_to_clipboard),
+                    (self.gui.get_object("FontDialogInputBuffer"), "changed",
+                        self.update_font_dialog_preview),
+                    (self.gui.get_object("FontDialogPreview"),
+                        "configure_event", self.update_font_dialog_preview),
+                    (self.gui.get_object("FontDialogPreview"), "expose_event",
+                        self.update_font_dialog_preview)]
             for objname in ("FontSideSkewValue", "FontCharacterSpacingValue",
                     "FontLineSpacingValue"):
                 obj = self.gui.get_object(objname)
                 # set default value before connecting the change-handler
                 if objname != "FontSideSkewValue":
                     obj.set_value(1.0)
-                obj.connect("value-changed",
-                        self.update_font_dialog_preview)
+                self._gtk_handlers.append((obj, "value-changed",
+                        self.update_font_dialog_preview))
             for objname in ("FontTextAlignLeft", "FontTextAlignCenter",
                     "FontTextAlignRight"):
-                self.gui.get_object(objname).connect("toggled",
-                        self.update_font_dialog_preview)
+                self._gtk_handlers.append((self.gui.get_object(objname),
+                        "toggled", self.update_font_dialog_preview))
             # use global key accel map
-            self.font_dialog_window.add_accel_group(self.core.get("gtk-accel-group"))
+            self.font_dialog_window.add_accel_group(
+                    self.core.get("gtk-accel-group"))
             font_action = self.gui.get_object("ShowFontDialog")
             self.register_gtk_accelerator("fonts", font_action,
                     "<Control><Shift>t", "ShowFontDialog")
-            font_action.connect("activate", self.toggle_font_dialog_window)
+            self._gtk_handlers.append((font_action, "activate",
+                    self.toggle_font_dialog_window))
             self.core.register_ui("edit_menu", "ShowFontDialogSeparator",
                     None, 55)
             self.core.register_ui("edit_menu", "ShowFontDialog", font_action,
@@ -91,6 +94,7 @@ class Fonts(pycam.Plugins.PluginBase):
             self._font_dialog_window_visible = False
             self._font_dialog_window_position = None
             self.font_selector = None
+            self.register_gtk_handlers(self._gtk_handlers)
         return True
 
     def teardown(self):
@@ -99,6 +103,7 @@ class Fonts(pycam.Plugins.PluginBase):
             font_toggle = self.gui.get_object("ShowFontDialog")
             self.core.unregister_ui("edit_menu", font_toggle)
             self.unregister_gtk_accelerator("fonts", font_toggle)
+            self.unregister_gtk_handlers(self._gtk_handlers)
 
     def toggle_font_dialog_window(self, widget=None, event=None, state=None):
         # only "delete-event" uses four arguments

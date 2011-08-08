@@ -38,8 +38,10 @@ class ProgressBar(pycam.Plugins.PluginBase):
             box = self.gui.get_object("ProgressBox")
             box.unparent()
             self.core.register_ui("main_window", "Progress", box, 50)
-            self.core.add_item("progress", lambda: ProgressGTK(self.core, self.gui))
-            show_progress_button = self.gui.get_object("ShowToolpathProgressButton")
+            self.core.add_item("progress", lambda: ProgressGTK(self.core,
+                    self.gui, self.log))
+            show_progress_button = self.gui.get_object(
+                    "ShowToolpathProgressButton")
             # TODO: move this setting somewhere else or rename it
             self.core.add_item("show_drill_progress",
                     show_progress_button.get_active,
@@ -57,12 +59,13 @@ class ProgressGTK(object):
 
     _PROGRESS_STACK = []
 
-    def __init__(self, core, gui):
+    def __init__(self, core, gui, log):
         ProgressGTK._PROGRESS_STACK.append(self)
         import gtk
         self._finished = False
         self._gtk = gtk
         self._gui = gui
+        self.log = log
         self.core = core
         self._cancel_requested = False
         self._start_time = 0
@@ -75,7 +78,8 @@ class ProgressGTK(object):
         self._cancel_button = self._gui.get_object("ProgressCancelButton")
         self._cancel_button.connect("clicked", self.cancel)
         self._progress_bar = self._gui.get_object("ProgressBar")
-        self._progress_button = self._gui.get_object("ShowToolpathProgressButton")
+        self._progress_button = self._gui.get_object(
+                "ShowToolpathProgressButton")
         self._start_time = time.time()
         self._progress_button.show()
         self._last_text = None
@@ -117,8 +121,8 @@ class ProgressGTK(object):
         else:
             text = "%d/%d" % (self._multi_counter, self._multi_maximum)
         self._multi_widget.set_text(text)
-        self._multi_widget.set_fraction(
-                float(self._multi_counter) / self._multi_maximum)
+        self._multi_widget.set_fraction(min(1.0,
+                float(self._multi_counter) / self._multi_maximum))
 
     def disable_cancel(self):
         self._cancel_button.set_sensitive(False)
@@ -152,7 +156,8 @@ class ProgressGTK(object):
         self._finished = True
 
     def __del__(self):
-        self.finish()
+        if not self._finished:
+            self.finish()
 
     def update(self, text=None, percent=None):
         if text:
@@ -178,6 +183,7 @@ class ProgressGTK(object):
             time_estimation_suffix = " remaining ..."
             if self._progress_bar.get_fraction() > 0:
                 total_fraction = (self._progress_bar.get_fraction() + self._multi_counter) / max(1, self._multi_maximum)
+                total_fraction = max(0.0, min(total_fraction, 1.0))
                 eta_full = (time.time() - self._start_time) / total_fraction
                 if eta_full > 0:
                     eta_delta = eta_full - (time.time() - self._start_time)

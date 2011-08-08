@@ -38,11 +38,14 @@ class EMCToolExport(pycam.Plugins.PluginBase):
             self.export_action = self.gui.get_object("ExportEMCToolDefinition")
             self.register_gtk_accelerator("export", self.export_action, None,
                     "ExportEMCToolDefinition")
-            self.export_action.connect("activate", self.export_emc_tools)
+            self._gtk_handlers = ((self.export_action, "activate",
+                    self.export_emc_tools), )
             self.core.register_ui("export_menu", "ExportEMCToolDefinition",
                     self.export_action, 80)
-            self.core.register_event("tool-selection-changed",
-                    self._update_emc_tool_button)
+            self._event_handlers = (("tool-selection-changed",
+                    self._update_emc_tool_button), )
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
             self._update_emc_tool_button()
         return True
     
@@ -50,8 +53,8 @@ class EMCToolExport(pycam.Plugins.PluginBase):
         if self.gui:
             self.core.unregister_ui("export_menu", self.export_emc_tools)
             self.unregister_gtk_accelerator("fonts", self.export_emc_tools)
-            self.core.unregister_event("tool-selection-changed",
-                    self._update_emc_tool_button)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
 
     def _update_emc_tool_button(self, widget=None):
         exportable = len(self.core.get("tools")) > 0

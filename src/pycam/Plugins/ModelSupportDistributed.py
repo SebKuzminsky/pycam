@@ -34,36 +34,44 @@ class ModelSupportDistributed(pycam.Plugins.PluginBase):
         if self.gui:
             support_expander = self.gui.get_object("DistributedSupportExpander")
             support_expander.unparent()
+            self._gtk_handlers = []
             self.core.register_ui("support_model_type_selector",
                     "Distributed (edges)", "distributed_edges", weight=0)
             self.core.register_ui("support_model_type_selector",
                     "Distributed (corners)", "distributed_corners", weight=10)
             self.core.register_ui("support_model_settings", "Grid settings",
                     support_expander)
-            self.core.register_event("support-model-changed",
-                    self.update_support_controls)
-            self.core.register_event("support-model-changed",
-                    self.update_support_model)
             grid_length = self.gui.get_object("SupportGridLength")
-            grid_length.connect("value-changed", self.update_support_model)
+            self._gtk_handlers.append((grid_length, "value-changed",
+                    self.update_support_model))
             self.core.add_item("support_grid_length",
                     grid_length.get_value, grid_length.set_value)
             average_distance = self.gui.get_object("GridAverageDistance")
-            average_distance.connect("value-changed", self.update_support_model)
+            self._gtk_handlers.append((average_distance, "value-changed",
+                    self.update_support_model))
             self.core.add_item("support_grid_average_distance",
                     average_distance.get_value, average_distance.set_value)
             minimum_bridges = self.gui.get_object("GridMinBridgesPerPolygon")
-            minimum_bridges.connect("value-changed", self.update_support_model)
+            self._gtk_handlers.append((minimum_bridges, "value-changed",
+                    self.update_support_model))
             self.core.add_item("support_grid_minimum_bridges",
                     minimum_bridges.get_value, minimum_bridges.set_value)
             # TODO: remove these public settings
             self.core.set("support_grid_average_distance", 30)
             self.core.set("support_grid_minimum_bridges", 2)
             self.core.set("support_grid_length", 5)
+            # register handlers
+            self._event_handlers = (
+                    ("support-model-changed", self.update_support_controls),
+                    ("support-model-changed", self.update_support_model))
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
         return True
 
     def teardown(self):
         if self.gui:
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
             self.core.unregister_ui("support_model_type_selector",
                     "distributed_edges")
             self.core.unregister_ui("support_model_type_selector",
