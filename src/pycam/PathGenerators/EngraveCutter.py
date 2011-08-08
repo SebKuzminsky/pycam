@@ -63,8 +63,8 @@ class EngraveCutter(object):
         current_layer = 0
         for push_layer in push_layers:
             # update the progress bar and check, if we should cancel the process
-            if draw_callback and draw_callback(text="Engrave: processing" \
-                        + " layer %d/%d" % (current_layer + 1, num_of_layers)):
+            if draw_callback and draw_callback(text="Engrave: processing " \
+                        + "layer %d/%d" % (current_layer + 1, num_of_layers)):
                 # cancel immediately
                 quit_requested = True
                 break
@@ -83,9 +83,9 @@ class EngraveCutter(object):
                 physics=self.physics)
         drop_layers = motion_grid[-1:]
         if draw_callback:
-            draw_callback(text="Engrave: processing layer" + \
+            draw_callback(text="Engrave: processing layer " + \
                 "%d/%d" % (current_layer + 1, num_of_layers))
         drop_generator.GenerateToolPath(cutter, [model], drop_layers,
-                minz=minz, maxz=maxz)
+                minz=minz, maxz=maxz, draw_callback=draw_callback)
         return self.pa_push.paths + self.pa_drop.paths
 
