@@ -35,11 +35,14 @@ class OpenGLViewAxes(pycam.Plugins.PluginBase):
         self._GL = OpenGL.GL
         self._GLUT = OpenGL.GLUT
         self.core.register_event("visualize-items", self.draw_axes)
+        self.core.get("register_display_item")("show_axes",
+                "Show Coordinate System", 50)
         self.core.emit_event("visual-item-updated")
         return True
 
     def teardown(self):
         self.core.unregister_event("visualize-items", self.draw_axes)
+        self.core.get("unregister_display_item")("show_axes")
         self.core.emit_event("visual-item-updated")
 
     def draw_axes(self):
@@ -59,10 +62,6 @@ class OpenGLViewAxes(pycam.Plugins.PluginBase):
         # the divider is just based on playing with numbers
         scale = size / number(1500.0)
         string_distance = number(1.1) * size
-        #GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-        #GL.glMaterialfv(GL.GL_FRONT, GL.GL_AMBIENT, (0.0,0.0,0.0,1.0)); # no ambient light
-        #GL.glMaterialfv(GL.GL_FRONT, GL.GL_DIFFUSE, (1.0,0.0,0.0,1.0)); # diffuse red
-        #GL.glMaterialfv(GL.GL_FRONT, GL.GL_SPECULAR, (1.0,1.0,1.0,1.0)); # highly specular
         # otherwise plain colors like the next glColor4f wouldn't work
         if self.core.get("view_light"):
             GL.glDisable(GL.GL_LIGHTING)

@@ -32,11 +32,19 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
         import OpenGL.GL
         self._GL = OpenGL.GL
         self.core.register_event("visualize-items", self.draw_toolpath)
+        self.core.get("register_color")("color_toolpath_cut", "Toolpath cut",
+                60)
+        self.core.get("register_color")("color_toolpath_return",
+                "Toolpath rapid", 70)
+        self.core.get("register_display_item")("show_toolpath", "Show Toolpath", 30),
         self.core.emit_event("visual-item-updated")
         return True
 
     def teardown(self):
         self.core.unregister_event("visualize-items", self.draw_toolpath)
+        self.core.get("unregister_color")("color_toolpath_cut")
+        self.core.get("unregister_color")("color_toolpath_return")
+        self.core.get("unregister_display_item")("show_toolpath")
         self.core.emit_event("visual-item-updated")
 
     def draw_toolpath(self):

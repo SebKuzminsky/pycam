@@ -31,8 +31,7 @@ try:
 except (ImportError, RuntimeError):
     GL_ENABLED = False
 
-# imported later (on demand)
-#import gtk
+import gtk
 import math
 
 from pycam.Gui.OpenGLTools import draw_complete_model_view
@@ -66,6 +65,9 @@ BUTTON_ROTATE = gtk.gdk.BUTTON1_MASK
 BUTTON_MOVE = gtk.gdk.BUTTON2_MASK
 BUTTON_ZOOM = gtk.gdk.BUTTON3_MASK
 BUTTON_RIGHT = 3
+
+# floating point color values are only available since gtk 2.16
+GTK_COLOR_MAX = 65535.0
 
 
 class OpenGLWindow(pycam.Plugins.PluginBase):
@@ -111,6 +113,40 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
             self.core.add_item("drill_progress_max_fps",
                     skip_obj.get_value, skip_obj.set_value)
+            # color box
+            color_frame = self.gui.get_object("ColorPrefTab")
+            color_frame.unparent()
+            self._color_settings = {}
+            self.core.register_ui("preferences", "Colors", color_frame, 30)
+            self.core.set("register_color", self.register_color_setting)
+            self.core.set("unregister_color", self.unregister_color_setting)
+            # TODO: move the "tool" color to a separate plugin
+            # TODO: move "material" to simulation viewer
+            # TODO: move "support grid" to support grid visualization
+            for name, label, weight in (
+                    ("color_background", "Background", 10),
+                    ("color_model", "Model", 20),
+                    ("color_support_grid", "Support grid", 30),
+                    ("color_cutter", "Tool", 50),
+                    ("color_material", "Material", 80)):
+                self.core.get("register_color")(name, label, weight)
+            # display items
+            items_frame = self.gui.get_object("DisplayItemsPrefTab")
+            items_frame.unparent()
+            self._display_items = {}
+            self.core.register_ui("preferences", "Display Items", items_frame,
+                    20)
+            self.core.set("register_display_item", self.register_display_item)
+            self.core.set("unregister_display_item",
+                    self.unregister_display_item)
+            # visual and general settings
+            # TODO: move support grid and drill to a separate plugin
+            for name, label, weight in (
+                    ("show_support_grid", "Show Support Grid", 20),
+                    ("show_dimensions", "Show Dimensions", 60),
+                    ("show_drill", "Show Tool", 70),
+                    ("show_directions", "Show Directions", 80)):
+                self.core.get("register_display_item")(name, label, weight)
             # toggle window state
             toggle_3d = self.gui.get_object("Toggle3DView")
             self._gtk_handlers.append((toggle_3d, "toggled",
@@ -236,11 +272,18 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.window.hide()
             toggle_3d = self.gui.get_object("Toggle3DView")
+            # hide the window
+            toggle_3d.set_active(False)
             self.core.unregister_ui("view_menu", toggle_3d)
             self.unregister_gtk_accelerator("opengl", toggle_3d)
             self.core.unregister_ui("view_menu", toggle_3d)
+            for name in ("color_background", "color_model",
+                    "color_support_grid", "color_cutter", "color_material"):
+                self.core.get("unregister_color")(name)
+            for name in ("show_support_grid", "show_dimensions", "show_drill",
+                    "show_directions"):
+                self.core.get("unregister_display_item")(name)
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
             # the area will be created during setup again
@@ -271,6 +314,94 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             label_name = "ModelCorner%s" % label_suffix
             value = "%.3f" % value
             self.gui.get_object(label_name).set_label(value)
+
+    def register_display_item(self, name, label, weight=100):
+        if name in self._display_items:
+            self.log.debug("Tried to register display item '%s' twice" % name)
+            return
+        widget = gtk.CheckButton(label)
+        widget.connect("toggled", lambda widget: \
+                self.core.emit_event("visual-item-updated"))
+        self._display_items[name] = {"name": name, "label": label,
+                "weight": weight, "widget": widget}
+        self.core.add_item(name, widget.get_active, widget.set_active)
+        self._rebuild_display_items()
+
+    def unregister_display_item(self, name):
+        if not name in self._display_items:
+            self.log.debug("Failed to unregister unknown display item: %s" % \
+                    name)
+            return
+        del self._display_items[name]
+        self._rebuild_display_items()
+
+    def _rebuild_display_items(self):
+        box = self.gui.get_object("PreferencesVisibleItemsBox")
+        for child in box.get_children():
+            box.remove(child)
+        items = self._display_items.values()
+        items.sort(key=lambda item: item["weight"])
+        for item in items:
+            box.pack_start(item["widget"], expand=False)
+        box.show_all()
+    
+    def register_color_setting(self, name, label, weight=100):
+        if name in self._color_settings:
+            self.log.debug("Tried to register color '%s' twice" % name)
+            return
+        # color selectors
+        def get_color_wrapper(obj):
+            def gtk_color_to_float():
+                gtk_color = obj.get_color()
+                alpha = obj.get_alpha()
+                return (gtk_color.red / GTK_COLOR_MAX,
+                        gtk_color.green / GTK_COLOR_MAX,
+                        gtk_color.blue / GTK_COLOR_MAX,
+                        alpha / GTK_COLOR_MAX)
+            return gtk_color_to_float
+        def set_color_wrapper(obj):
+            def set_gtk_color_by_float(components):
+                # use alpha if it was given
+                if len(components) == 3:
+                    alpha = 1.0
+                else:
+                    alpha = components[3]
+                red, green, blue = components[:3]
+                obj.set_color(gtk.gdk.Color(int(red * GTK_COLOR_MAX),
+                        int(green * GTK_COLOR_MAX), int(blue * GTK_COLOR_MAX)))
+                obj.set_alpha(int(alpha * GTK_COLOR_MAX))
+            return set_gtk_color_by_float
+        widget = gtk.ColorButton()
+        widget.set_use_alpha(True)
+        self._color_settings[name] = {"name": name, "label": label,
+                "weight": weight, "widget": widget}
+        widget.connect("color-set", lambda widget: \
+                self.core.emit_event("visual-item-updated"))
+        self.core.add_item(name, get_color_wrapper(widget),
+                set_color_wrapper(widget))
+        self._rebuild_color_settings()
+
+    def unregister_color_setting(self, name):
+        if not name in self._color_settings:
+            self.log.debug("Failed to unregister unknown color item: %s" % name)
+            return
+        del self._color_settings[name]
+        self._rebuild_color_settings()
+    
+    def _rebuild_color_settings(self):
+        color_table = self.gui.get_object("ColorTable")
+        for child in color_table.get_children():
+            color_table.remove(child)
+        items = self._color_settings.values()
+        items.sort(key=lambda item: item["weight"])
+        for index, item in enumerate(items):
+            label = gtk.Label("%s:" % item["label"])
+            label.set_alignment(0.0, 0.5)
+            color_table.attach(label, 0, 1, index, index + 1,
+                    xoptions=gtk.FILL, yoptions=gtk.FILL)
+            color_table.attach(item["widget"], 1, 2, index, index + 1,
+                    xoptions=gtk.FILL, yoptions=gtk.FILL)
+        color_table.show_all()
 
     def toggle_3d_view(self, widget=None, value=None):
         current_state = self.is_visible

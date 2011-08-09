@@ -127,8 +127,6 @@ user's home directory on startup/shutdown"""
 MAX_UNDO_STATES = 10
 FILENAME_DRAG_TARGETS = ("text/uri-list", "text-plain")
 
-# floating point color values are only available since gtk 2.16
-GTK_COLOR_MAX = 65535.0
 
 log = pycam.Utils.log.get_logger()
 
@@ -455,8 +453,6 @@ class ProjectGui(object):
         for obj_name, label, priority in (
                 ("GeneralSettingsPrefTab", "General", -50),
                 ("GCodePrefTab", "GCode", 10),
-                ("DisplayItemsPrefTab", "Display Items", 20),
-                ("ColorPrefTab", "Colors", 30),
                 ("ProgramsPrefTab", "Programs", 50)):
             obj = self.gui.get_object(obj_name)
             obj.unparent()
@@ -533,20 +529,6 @@ class ProjectGui(object):
                 autoload_box)
         self.settings.add_item("default_task_settings_file",
                 get_autoload_task_file, set_autoload_task_file)
-        # visual and general settings
-        for name, objname in (("show_model", "ShowModelCheckBox"),
-                ("show_axes", "ShowAxesCheckBox"),
-                ("show_support_grid", "ShowSupportGridCheckBox"),
-                ("show_dimensions", "ShowDimensionsCheckBox"),
-                ("show_bounding_box", "ShowBoundingCheckBox"),
-                ("show_toolpath", "ShowToolPathCheckBox"),
-                ("show_drill", "ShowDrillCheckBox"),
-                ("show_directions", "ShowDirectionsCheckBox")):
-            obj = self.gui.get_object(objname)
-            self.settings.add_item(name, obj.get_active, obj.set_active)
-            # all of the objects above should trigger redraw
-            obj.connect("toggled", lambda widget: \
-                    self.settings.emit_event("model-change-after"))
         def disable_gui():
             self.menubar.set_sensitive(False)
             main_tab.set_sensitive(False)
@@ -555,41 +537,6 @@ class ProjectGui(object):
             main_tab.set_sensitive(True)
         self.settings.register_event("gui-disable", disable_gui)
         self.settings.register_event("gui-enable", enable_gui)
-        # color selectors
-        def get_color_wrapper(obj):
-            def gtk_color_to_float():
-                gtk_color = obj.get_color()
-                alpha = obj.get_alpha()
-                return (gtk_color.red / GTK_COLOR_MAX,
-                        gtk_color.green / GTK_COLOR_MAX,
-                        gtk_color.blue / GTK_COLOR_MAX,
-                        alpha / GTK_COLOR_MAX)
-            return gtk_color_to_float
-        def set_color_wrapper(obj):
-            def set_gtk_color_by_float(components):
-                # use alpha if it was given
-                if len(components) == 3:
-                    alpha = 1.0
-                else:
-                    alpha = components[3]
-                red, green, blue = components[:3]
-                obj.set_color(gtk.gdk.Color(int(red * GTK_COLOR_MAX),
-                        int(green * GTK_COLOR_MAX), int(blue * GTK_COLOR_MAX)))
-                obj.set_alpha(int(alpha * GTK_COLOR_MAX))
-            return set_gtk_color_by_float
-        for name, objname in (("color_background", "ColorBackground"),
-                ("color_model", "ColorModel"),
-                ("color_support_grid", "ColorSupportGrid"),
-                ("color_bounding_box", "ColorBoundingBox"),
-                ("color_cutter", "ColorDrill"),
-                ("color_toolpath_cut", "ColorToolpathCut"),
-                ("color_toolpath_return", "ColorToolpathReturn"),
-                ("color_material", "ColorMaterial")):
-            obj = self.gui.get_object(objname)
-            self.settings.add_item(name, get_color_wrapper(obj), set_color_wrapper(obj))
-            # repaint the 3d view after a color change
-            obj.connect("color-set", lambda widget: \
-                    self.settings.emit_event("visual-item-updated"))
         # gcode settings
         gcode_minimum_step_x = self.gui.get_object("GCodeMinimumStep_x")
         self.settings.add_item("gcode_minimum_step_x",
@@ -760,6 +707,9 @@ class ProjectGui(object):
                 self.gui.get_object("Quit"), 100)
         self.settings.register_ui("file_menu", "QuitSeparator", None, 95)
         self.settings.register_ui("main_window", "Main", self.menubar, -100)
+        # initialize plugins
+        self.plugin_manager = pycam.Plugins.PluginManager(core=self.settings)
+        self.plugin_manager.import_plugins()
         # some more initialization
         self.reset_preferences()
         self.load_preferences()
@@ -768,9 +718,6 @@ class ProjectGui(object):
                 self.add_to_recent_file_list)
         self.settings.register_event("notify-file-opened",
                 self.add_to_recent_file_list)
-        # initialize plugins
-        self.plugin_manager = pycam.Plugins.PluginManager(core=self.settings)
-        self.plugin_manager.import_plugins()
         # fallback - in case of a failure when opening a model file
         model = pycam.Importers.TestModel.get_test_model()
         self.settings.get("models").append(model)
