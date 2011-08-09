@@ -64,11 +64,6 @@ class InputBaseClass(object):
         self._input_converter = set_conv
         self._output_converter = get_conv
 
-    @_input_conversion
-    def _get_input_conversion_result(self, value):
-        # a simple dummy replicating the behaviour of _input_conversion
-        return value
-
 
 class InputNumber(InputBaseClass):
 
@@ -93,14 +88,14 @@ class InputNumber(InputBaseClass):
 
 class InputChoice(InputBaseClass):
 
-    def __init__(self, choices, force_type=None, change_handler=None):
+    def __init__(self, choices, change_handler=None):
         import gtk
         import gobject
-        g_type = self._get_column_type(choices, force_type=force_type)
-        self.model = gtk.ListStore(gobject.TYPE_STRING, g_type)
+        self.model = gtk.ListStore(gobject.TYPE_STRING)
+        self._values = []
         for label, value in choices:
-            self.model.append((label,
-                    self._get_input_conversion_result(value)))
+            self.model.append((label, ))
+            self._values.append(value)
         renderer = gtk.CellRendererText()
         self.control = gtk.ComboBox(self.model)
         self.control.pack_start(renderer)
@@ -109,63 +104,37 @@ class InputChoice(InputBaseClass):
         if change_handler:
             self.control.connect("changed", change_handler)
 
-    def _get_column_type(self, choices, force_type=None):
-        import gobject
-        type_mapper = {int: gobject.TYPE_INT,
-                long: gobject.TYPE_INT64,
-                basestring: gobject.TYPE_STRING,
-                bool: gobject.TYPE_BOOLEAN
-        }
-        if force_type is None:
-            value_sample = choices[0][1]
-            for key, g_type in type_mapper.iteritems():
-                if isinstance(value_sample, key):
-                    break
-            else:
-                raise TypeError("Invalid sample type give: %s - %s" % \
-                        (sample_value, type(sample_value)))
-        elif force_type in type_mapper:
-            g_type = type_mapper[force_type]
-        else:
-            raise TypeError("Invalid type forced: %s" % str(force_type))
-        return g_type
-
-    @_output_conversion
     def get_value(self):
         index = self.control.get_active()
         if index < 0:
             return None
         else:
-            return self.model[index][1]
+            return self._values[index]
 
-    @_input_conversion
     def set_value(self, value):
         if value is None:
             self.control.set_active(-1)
         else:
-            for index, row in enumerate(self.model):
-                if row[1] == value:
-                    self.control.set_active(index)
-                    break
+            if value in self._values:
+                self.control.set_active(self._values.index(value))
             else:
                 _log.debug("Unknown value: %s" % str(value))
 
     def update_choices(self, choices):
-        # TODO: selection restore does not work currently; there seems to be a glitch during "delete model"
         selected = self.get_value()
         for choice_index, (label, value) in enumerate(choices):
-            for index, row in enumerate(self.model):
-                if row[1] == value:
-                    break
-            else:
+            if not value in self._values:
                 # this choice is new
-                self.model.insert(choice_index, (label,
-                        self._get_input_conversion_result(value)))
+                self.model.insert(choice_index, (label, ))
+                self._values.insert(choice_index, value)
                 continue
+            index = self._values.index(value)
+            row = self.model[index]
             # the current choice is preceded by some obsolete items
             while index > choice_index:
                 m_iter = self.model.get_iter((index,))
                 self.model.remove(m_iter)
+                self._values.pop(index)
                 index -= 1
             # update the label column
             row[0] = label
@@ -173,19 +142,20 @@ class InputChoice(InputBaseClass):
         while len(self.model) > len(choices):
             m_iter = self.model.get_iter((len(choices),))
             self.model.remove(m_iter)
+            self._values.pop(-1)
         self.set_value(selected)
 
 
 class InputTable(InputChoice):
 
-    def __init__(self, choices, force_type=None, change_handler=None):
+    def __init__(self, choices, change_handler=None):
         import gtk
         import gobject
-        g_type = self._get_column_type(choices, force_type=force_type)
-        self.model = gtk.ListStore(gobject.TYPE_STRING, g_type)
+        self.model = gtk.ListStore(gobject.TYPE_STRING)
+        self._values = []
         for label, value in choices:
-            self.model.append((label,
-                    self._get_input_conversion_result(value)))
+            self.model.append((label,))
+            self._values.append(value)
         renderer = gtk.CellRendererText()
         self.control = gtk.ScrolledWindow()
         self._treeview = gtk.TreeView(self.model)
@@ -203,25 +173,19 @@ class InputTable(InputChoice):
         if change_handler:
             self._selection.connect("changed", change_handler)
 
-    def _get_input_conversion_result(self, value):
-        # handle a list instead of single items
-        return super(InputTable, self)._get_input_conversion_result([value])[0]
-
-    @_output_conversion
     def get_value(self):
         model, rows = self._selection.get_selected_rows()
-        return [self.model[path[0]][1] for path in rows]
+        return [self._values[path[0]] for path in rows]
 
-    @_input_conversion
     def set_value(self, items):
-        self._selection.unselect_all()
+        selection = self._selection
         if items is None:
             items = []
-        for item in items:
-            for index, row in enumerate(self.model):
-                if row[1] == item:
-                    self._selection.select_path((index, ))
-                    break
+        for index, value in enumerate(self._values):
+            if value in items:
+                selection.select_path((index, ))
+            else:
+                selection.unselect_path((index, ))
 
 
 class InputCheckBox(InputBaseClass):

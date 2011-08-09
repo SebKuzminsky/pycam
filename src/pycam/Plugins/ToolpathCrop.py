@@ -48,7 +48,7 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
                     "clicked", self.crop_toolpath))
             # model selector
             self.models_widget = pycam.Gui.ControlsGTK.InputTable([],
-                    force_type=long, change_handler=self._update_widgets)
+                    change_handler=self._update_widgets)
             # configure the input/output converter
             def get_converter(model_refs):
                 models_dict = {}

@@ -32,21 +32,8 @@ class TaskParamCollisionModels(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.input_control = pycam.Gui.ControlsGTK.InputTable([],
-                force_type=long, change_handler=lambda widget=None: \
+                change_handler=lambda widget=None: \
                     self.core.emit_event("task-changed"))
-        # configure the input/output converter
-        def get_converter(model_refs):
-            models_dict = {}
-            for model in self.core.get("models"):
-                models_dict[id(model)] = model
-            models = []
-            for model_ref in model_refs:
-                models.append(models_dict[model_ref])
-            return models
-        def set_converter(models):
-            return [id(model) for model in models]
-        self.input_control.set_conversion(set_conv=set_converter,
-                get_conv=get_converter)
         self.input_control.get_widget().set_size_request(240, -1)
         self.core.get("register_parameter")("task", "models",
                 "collision_models", "", self.input_control,
@@ -75,11 +62,8 @@ class TaskParamTool(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.input_control = pycam.Gui.ControlsGTK.InputChoice([],
-                force_type=long, change_handler=lambda widget=None: \
+                change_handler=lambda widget=None: \
                     self.core.emit_event("task-changed"))
-        self.input_control.set_conversion(
-                get_conv=lambda ref: ([tool for tool in self.core.get("tools") if id(tool) == ref] + [None])[0],
-                set_conv=lambda tool: id(tool))
         self.core.get("register_parameter")("task", "components", "tool",
                 "Tool", self.input_control, weight=10)
         self.core.register_event("tool-list-changed", self._update_tools)
@@ -104,11 +88,8 @@ class TaskParamProcess(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.input_control = pycam.Gui.ControlsGTK.InputChoice([],
-                force_type=long, change_handler=lambda widget=None: \
+                change_handler=lambda widget=None: \
                     self.core.emit_event("task-changed"))
-        self.input_control.set_conversion(
-                get_conv=lambda ref: ([process for process in self.core.get("processes") if id(process) == ref] + [None])[0],
-                set_conv=lambda process: id(process))
         self.core.get("register_parameter")("task", "components", "process",
                 "Process", self.input_control, weight=20)
         self.core.register_event("process-list-changed", self._update_processes)
@@ -133,11 +114,8 @@ class TaskParamBounds(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.input_control = pycam.Gui.ControlsGTK.InputChoice([],
-                force_type=long, change_handler=lambda widget=None: \
+                change_handler=lambda widget=None: \
                     self.core.emit_event("task-changed"))
-        self.input_control.set_conversion(
-                get_conv=lambda ref: ([bounds for bounds in self.core.get("bounds") if id(bounds) == ref] + [None])[0],
-                set_conv=lambda bounds: id(bounds))
         self.core.get("register_parameter")("task", "components", "bounds",
                 "Bounds", self.input_control, weight=30)
         self.core.register_event("bounds-list-changed", self._update_bounds)

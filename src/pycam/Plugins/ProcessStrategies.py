@@ -31,7 +31,8 @@ class ProcessStrategySlicing(pycam.Plugins.PluginBase):
 
     DEPENDS = ["ParameterGroupManager", "PathParamOverlap",
             "PathParamStepDown", "PathParamMaterialAllowance",
-            "PathParamMillingStyle", "PathParamGridDirection"]
+            "PathParamMillingStyle", "PathParamGridDirection",
+            "PathParamPattern"]
     CATEGORIES = ["Process"]
 
     def setup(self):
@@ -40,6 +41,7 @@ class ProcessStrategySlicing(pycam.Plugins.PluginBase):
                 "material_allowance": 0,
                 "milling_style": pycam.Toolpath.MotionGrid.MILLING_STYLE_IGNORE,
                 "grid_direction": pycam.Toolpath.MotionGrid.GRID_DIRECTION_X,
+                "path_pattern": "grid",
         }
         self.core.get("register_parameter_set")("process", "slicing",
                 "Slice removal", self.run_process, parameters=parameters,
@@ -58,7 +60,9 @@ class ProcessStrategySlicing(pycam.Plugins.PluginBase):
                 (1.0 - process["parameters"]["overlap"])
         path_generator = pycam.PathGenerators.PushCutter.PushCutter(
                 pycam.PathProcessors.PathAccumulator.PathAccumulator())
-        motion_grid = pycam.Toolpath.MotionGrid.get_fixed_grid(
+        grid_func = {"grid": pycam.Toolpath.MotionGrid.get_fixed_grid,
+                "spiral": pycam.Toolpath.MotionGrid.get_spiral}
+        motion_grid = grid_func[process["parameters"]["path_pattern"]](
                 (low, high), process["parameters"]["step_down"],
                 line_distance=line_distance,
                 grid_direction=process["parameters"]["grid_direction"],

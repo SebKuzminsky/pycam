@@ -126,6 +126,25 @@ class PathParamGridDirection(pycam.Plugins.PluginBase):
                 "grid_direction")
 
 
+class PathParamPattern(pycam.Plugins.PluginBase):
+
+    DEPENDS = ["Processes"]
+    CATEGORIES = ["Process", "Parameter"]
+
+    def setup(self):
+        widget = pycam.Gui.ControlsGTK.InputChoice(
+                (("grid", "grid"), ("spiral", "spiral")),
+                change_handler=lambda widget=None: self.core.emit_event(
+                    "process-changed"))
+        self.core.get("register_parameter")("process", "pathgenerator",
+                "path_pattern", "Pattern", widget, weight=5)
+        return True
+
+    def teardown(self):
+        self.core.get("unregister_parameter")("process", "pathgenerator",
+                "path_pattern")
+
+
 class PathParamRadiusCompensation(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Processes"]
@@ -151,7 +170,7 @@ class PathParamTraceModel(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.input_control = pycam.Gui.ControlsGTK.InputTable([],
-                force_type=long, change_handler=lambda widget=None: \
+                change_handler=lambda widget=None: \
                     self.core.emit_event("process-changed"))
         # configure the input/output converter
         def get_converter(model_refs):

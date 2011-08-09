@@ -158,9 +158,9 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance,
         return result, end_position
     return get_lines(start, end, end_position)
 
-def get_fixed_grid((low, high), layer_distance, line_distance=None, step_width=None,
-        grid_direction=GRID_DIRECTION_X, milling_style=MILLING_STYLE_IGNORE,
-        start_position=START_Z):
+def get_fixed_grid((low, high), layer_distance, line_distance=None,
+        step_width=None, grid_direction=GRID_DIRECTION_X,
+        milling_style=MILLING_STYLE_IGNORE, start_position=START_Z):
     """ Calculate the grid positions for toolpath moves
     """
     if isiterable(layer_distance):
@@ -184,6 +184,99 @@ def get_fixed_grid((low, high), layer_distance, line_distance=None, step_width=N
                 grid_direction=direction, milling_style=milling_style,
                 start_position=start_position)
         yield result
+
+def _get_position(minx, maxx, miny, maxy, z, position):
+    if position & START_X > 0:
+        x = minx
+    else:
+        x = maxx
+    if position & START_Y > 0:
+        y = miny
+    else:
+        y = maxy
+    return Point(x, y, z)
+
+def get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x,
+        line_distance_y, grid_direction, start_position,
+        current_location):
+    xor_map = {GRID_DIRECTION_X: START_X, GRID_DIRECTION_Y: START_Y}
+    end_position = start_position ^ xor_map[grid_direction]
+    end_location = _get_position(minx, maxx, miny, maxy, z, end_position)
+    if grid_direction == GRID_DIRECTION_X:
+        next_grid_direction = GRID_DIRECTION_Y
+        if start_position & START_Y > 0:
+            miny += line_distance_y
+        else:
+            maxy -= line_distance_y
+    else:
+        next_grid_direction = GRID_DIRECTION_X
+        if start_position & START_X > 0:
+            minx += line_distance_x
+        else:
+            maxx -= line_distance_x
+    lines = [(current_location, end_location)]
+    if (minx - epsilon <= maxx ) and (miny - epsilon <= maxy):
+        # recursively compute the next lines
+        lines.extend(get_spiral_layer_lines(minx, maxx, miny, maxy, z,
+                line_distance_x, line_distance_y, next_grid_direction,
+                end_position, end_location))
+    return lines
+
+def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width,
+        grid_direction, start_position=START_Z):
+    current_location = _get_position(minx, maxx, miny, maxy, z,
+            start_position)
+    if line_distance > 0:
+        line_steps_x = math.ceil((float(maxx - minx) / line_distance))
+        line_steps_y = math.ceil((float(maxy - miny) / line_distance))
+        line_distance_x = (maxx - minx) / line_steps_x
+        line_distance_y = (maxy - miny) / line_steps_y
+        lines = get_spiral_layer_lines(minx, maxx, miny, maxy, z,
+                line_distance_x, line_distance_y, grid_direction,
+                start_position, current_location)
+        # turn the lines into steps
+        for start, end in lines:
+            points = []
+            if step_width is None:
+                points.append(start)
+                points.append(end)
+            else:
+                line = Line(start, end)
+                if isiterable(step_width):
+                    steps = step_width
+                else:
+                    steps = floatrange(0.0, line.len, inc=step_width)
+                for step in steps:
+                    next_point = line.p1.add(line.dir.mul(step))
+                    points.append(next_point)
+            yield points
+
+def get_spiral((low, high), layer_distance, line_distance=None,
+        step_width=None, grid_direction=GRID_DIRECTION_X,
+        milling_style=MILLING_STYLE_IGNORE, start_position=START_Z):
+    """ Calculate the grid positions for toolpath moves
+    """
+    if isiterable(layer_distance):
+        layers = layer_distance
+    elif layer_distance is None:
+        # useful for DropCutter
+        layers = [low[2]]
+    else:
+        layers = floatrange(low[2], high[2], inc=layer_distance,
+                reverse=bool(start_position & START_Z))
+    # only X _or_ Y are allowed
+    if grid_direction != GRID_DIRECTION_X:
+        grid_direction = GRID_DIRECTION_Y
+    if ((milling_style == MILLING_STYLE_CLIMB),
+            (grid_direction == GRID_DIRECTION_X),
+            (start_position & START_X > 0)).count(True) % 2 == 0:
+        start_direction = GRID_DIRECTION_X
+    else:
+        start_direction = GRID_DIRECTION_Y
+    for z in layers:
+        yield get_spiral_layer(low[0], high[0], low[1], high[1], z,
+                line_distance, step_width=step_width,
+                grid_direction=start_direction, start_position=start_position)
 
 def get_lines_layer(lines, z, last_z=None, step_width=None,
         milling_style=MILLING_STYLE_CONVENTIONAL):
