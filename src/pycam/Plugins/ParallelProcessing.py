@@ -43,10 +43,16 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
             # "process pool" window
             self.process_pool_window = self.gui.get_object("ProcessPoolWindow")
             self.process_pool_window.set_default_size(500, 400)
-            self.process_pool_window.connect("delete-event", self.toggle_process_pool_window, False)
-            self.process_pool_window.connect("destroy", self.toggle_process_pool_window, False)
+            self._gtk_handlers = []
+            self._gtk_handlers.extend((
+                    (self.process_pool_window, "delete-event",
+                            self.toggle_process_pool_window, False),
+                    (self.process_pool_window, "destroy",
+                            self.toggle_process_pool_window, False)))
             self.process_pool_window.add_accel_group(self.core.get("gtk-accel-group"))
-            self.gui.get_object("ProcessPoolWindowClose").connect("clicked", self.toggle_process_pool_window, False)
+            self._gtk_handlers.append((
+                    self.gui.get_object("ProcessPoolWindowClose"), "clicked",
+                    self.toggle_process_pool_window, False))
             self.gui.get_object("ProcessPoolRefreshInterval").set_value(3)
             self.process_pool_model = self.gui.get_object("ProcessPoolStatisticsModel")
             # show/hide controls
@@ -63,22 +69,23 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
                 self.gui.get_object("EnableParallelProcesses").hide()
             self.enable_parallel_processes.set_active(
                     pycam.Utils.threading.is_multiprocessing_enabled())
-            self.enable_parallel_processes.connect("toggled",
-                    self.handle_parallel_processes_settings)
+            self._gtk_handlers.append((self.enable_parallel_processes,
+                    "toggled", self.handle_parallel_processes_settings))
             self.number_of_processes = self.gui.get_object(
                     "NumberOfProcesses")
             self.number_of_processes.set_value(
                     pycam.Utils.threading.get_number_of_processes())
             server_port_local_obj = self.gui.get_object("ServerPortLocal")
             server_port_remote_obj = self.gui.get_object("RemoteServerPort")
-            self.number_of_processes.connect("value-changed",
-                    self.handle_parallel_processes_settings)
-            self.gui.get_object("EnableServerMode").connect("toggled",
-                    self.initialize_multiprocessing)
-            self.gui.get_object("ServerPasswordGenerate").connect("clicked",
-                    self.generate_random_server_password)
-            self.gui.get_object("ServerPasswordShow").connect("toggled",
-                    self.update_parallel_processes_settings)
+            self._gtk_handlers.extend((
+                    (self.number_of_processes, "value-changed",
+                        self.handle_parallel_processes_settings),
+                    (self.gui.get_object("EnableServerMode"), "toggled",
+                        self.initialize_multiprocessing),
+                    (self.gui.get_object("ServerPasswordGenerate"), "clicked",
+                        self.generate_random_server_password),
+                    (self.gui.get_object("ServerPasswordShow"), "toggled",
+                        self.update_parallel_processes_settings)))
             auth_key_obj = self.gui.get_object("ServerPassword")
             server_hostname = self.gui.get_object("RemoteServerHostname")
             cpu_cores = pycam.Utils.threading.get_number_of_cores()
@@ -86,11 +93,13 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
                 cpu_cores = "unknown"
             self.gui.get_object("AvailableCores").set_label(str(cpu_cores))
             toggle_button = self.gui.get_object("ToggleProcessPoolWindow")
-            toggle_button.connect("toggled", self.toggle_process_pool_window)
+            self._gtk_handlers.append((toggle_button, "toggled",
+                    self.toggle_process_pool_window))
             self.register_gtk_accelerator("processes", toggle_button,
                     None, "ToggleProcessPoolWindow")
             self.core.register_ui("view_menu", "ToggleProcessPoolWindow",
                     toggle_button, 40)
+            self.register_gtk_handlers(self._gtk_handlers)
         return True
 
     def teardown(self):
@@ -101,6 +110,7 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
             toggle_button = self.gui.get_object("ToggleProcessPoolWindow")
             self.core.unregister_ui("view_menu", toggle_button)
             self.unregister_gtk_accelerator("processes", toggle_button)
+            self.unregister_gtk_handlers(self._gtk_handlers)
 
     def toggle_process_pool_window(self, widget=None, value=None, action=None):
         toggle_process_pool_checkbox = self.gui.get_object("ToggleProcessPoolWindow")

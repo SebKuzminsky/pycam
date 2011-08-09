@@ -38,6 +38,7 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             self.tp_box = self.gui.get_object("ToolpathsBox")
             self.tp_box.unparent()
             self.core.register_ui("main", "Toolpaths", self.tp_box, weight=50)
+            self._gtk_handlers = []
             self._modelview = self.gui.get_object("ToolpathTable")
             self._treemodel = self.gui.get_object("ToolpathListModel")
             self._treemodel.clear()
@@ -58,20 +59,19 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             self.core.register_ui_section("toolpath_handling",
                     add_toolpath_handling_item, clear_toolpath_handling_obj)
             # handle table changes
-            self._modelview.connect("row-activated",
-                    self._list_action_toggle_custom, self.COLUMN_VISIBLE)
-            self._modelview.connect("row-activated",
-                    lambda *args: self.core.emit_event("toolpath-changed"))
+            self._gtk_handlers.extend((
+                    (self._modelview, "row-activated",
+                        self._list_action_toggle_custom, self.COLUMN_VISIBLE),
+                    (self._modelview, "row-activated", "toolpath-changed"),
+                    (self.gui.get_object("ToolpathNameCell"), "edited",
+                        self._edit_toolpath_name)))
             self.gui.get_object("ToolpathVisibleColumn").set_cell_data_func(
                     self.gui.get_object("ToolpathVisibleSymbol"),
                     self._visualize_visible_state)
-            self.gui.get_object("ToolpathNameCell").connect("edited",
-                    self._edit_toolpath_name)
             # handle selection changes
             selection = self._modelview.get_selection()
-            selection.connect("changed",
-                    lambda widget, event: self.core.emit_event(event), 
-                    "toolpath-selection-changed")
+            self._gtk_handlers.append((selection, "changed",
+                    "toolpath-selection-changed"))
             selection.set_mode(gtk.SELECTION_MULTIPLE)
             # model handling
             def update_model():
@@ -89,14 +89,13 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
                                 "Toolpath #%d" % index, True))
                 self.core.emit_event("toolpath-list-changed")
             self.register_model_update(update_model)
-            self.core.register_event("toolpath-changed",
-                    self._update_widgets)
-            self.core.register_event("toolpath-list-changed",
-                    self._update_widgets)
-            self.core.register_event("toolpath-changed",
-                    lambda: self.core.emit_event("visual-item-updated"))
-            self.core.register_event("toolpath-list-changed",
-                    lambda: self.core.emit_event("visual-item-updated"))
+            self._event_handlers = (
+                    ("toolpath-changed", self._update_widgets),
+                    ("toolpath-list-changed", self._update_widgets),
+                    ("toolpath-changed", "visual-item-updated"),
+                    ("toolpath-list-changed", "visual-item-updated"))
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
             self._trigger_toolpath_time_update()
             self._update_widgets()
         self.core.set("toolpaths", self)
@@ -105,10 +104,8 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("ToolpathsBox"))
-            self.core.unregister_event("toolpath-changed",
-                    self._update_widgets)
-            self.core.unregister_event("toolpath-list-changed",
-                    self._update_widgets)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
         self.core.set("toolpaths", None)
 
     def get_selected(self):

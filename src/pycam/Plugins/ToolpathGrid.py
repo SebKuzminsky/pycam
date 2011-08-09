@@ -33,6 +33,7 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
 
     def setup(self):
         if self.gui:
+            self._gtk_handlers = []
             self._frame = self.gui.get_object("ToolpathGridFrame")
             self.core.register_ui("toolpath_handling", "Clone grid",
                     self._frame, 30)
@@ -40,21 +41,22 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
                 self.gui.get_object(objname).set_value(1)
             for objname in ("GridYCount", "GridXCount", "GridYDistance",
                     "GridXDistance"):
-                self.gui.get_object(objname).connect("value-changed",
-                        self._update_widgets)
-            self.gui.get_object("GridCreate").connect("clicked",
-                    self.create_toolpath_grid)
+                self._gtk_handlers.append((self.gui.get_object(objname),
+                        "value-changed", self._update_widgets))
+            self._gtk_handlers.append((self.gui.get_object("GridCreate"),
+                    "clicked", self.create_toolpath_grid))
             self.core.register_event("toolpath-selection-changed",
                     self._update_widgets)
+            self.register_gtk_handlers(self._gtk_handlers)
             self._update_widgets()
         return True
 
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("toolpath_handling", self._frame)
+            self.unregister_gtk_handlers(self._gtk_handlers)
             self.core.unregister_event("toolpath-selection-changed",
                     self._update_widgets)
-        pass
 
     def _get_toolpaths_dim(self, toolpaths):
         if toolpaths:

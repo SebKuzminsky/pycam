@@ -37,6 +37,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             self._gtk = gtk
             process_frame = self.gui.get_object("ProcessBox")
             process_frame.unparent()
+            self._gtk_handlers = []
             self.core.register_ui("main", "Processs", process_frame, weight=20)
             self._modelview = self.gui.get_object("ProcessEditorTable")
             for action, obj_name in ((self.ACTION_UP, "ProcessMoveUp"),
@@ -44,8 +45,8 @@ class Processes(pycam.Plugins.ListPluginBase):
                     (self.ACTION_DELETE, "ProcessDelete")):
                 self.register_list_action_button(action, self._modelview,
                         self.gui.get_object(obj_name))
-            self.gui.get_object("ProcessNew").connect("clicked",
-                    self._process_new)
+            self._gtk_handlers.append((self.gui.get_object("ProcessNew"),
+                    "clicked", self._process_new))
             # parameters
             parameters_box = self.gui.get_object("ProcessParametersBox")
             def clear_parameter_widgets():
@@ -77,8 +78,8 @@ class Processes(pycam.Plugins.ListPluginBase):
             selection.connect("changed", 
                     lambda widget, event: self.core.emit_event(event),
                     "process-selection-changed")
-            self.gui.get_object("NameCell").connect("edited",
-                    self._edit_process_name)
+            self._gtk_handlers.append((self.gui.get_object("NameCell"),
+                    "edited", self._edit_process_name))
             self._treemodel = self.gui.get_object("ProcessList")
             self._treemodel.clear()
             def update_model():
@@ -93,29 +94,27 @@ class Processes(pycam.Plugins.ListPluginBase):
                         cache[id(item)] = [id(item), "Process #%d" % index]
                     self._treemodel.append(cache[id(item)])
                 self.core.emit_event("process-list-changed")
-            strategy_selector = self.gui.get_object("StrategySelector")
-            strategy_selector.connect("changed", lambda widget: \
-                    self.core.emit_event("process-strategy-changed"))
-            self.core.register_event("process-strategy-list-changed",
-                    self._update_widgets)
+            self._gtk_handlers.append((self.gui.get_object("StrategySelector"),
+                    "changed", "process-strategy-changed"))
             self.register_model_update(update_model)
-            self.core.register_event("process-selection-changed",
-                    self._process_switch)
-            self.core.register_event("process-changed",
-                    self._store_process_settings)
-            self.core.register_event("process-strategy-changed",
-                    self._store_process_settings)
+            self._event_handlers = (
+                    ("process-strategy-list-changed", self._update_widgets),
+                    ("process-selection-changed", self._process_switch),
+                    ("process-changed", self._store_process_settings),
+                    ("process-strategy-changed", self._store_process_settings))
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
         self.core.set("processes", self)
         return True
 
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("ProcessBox"))
-            self.core.unregister_event("process-selection-changed",
-                    self._process_switch)
-            self.core.unregister_event("process-changed",
-                    self._store_process_settings)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
         self.core.set("processes", None)
+        while len(self) > 0:
+            self.pop()
         return True
 
     def get_selected(self, index=False):

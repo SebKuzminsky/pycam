@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import math
 
 import pycam.Plugins
 # this requires ODE - we import it later, if necessary
@@ -33,6 +34,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
 
     def setup(self):
         if self.gui:
+            self._gtk_handlers = []
             speed_factor_widget = self.gui.get_object("SimulationSpeedFactor")
             self.core.add_item("simulation_speed_factor",
                     lambda: pow(10, speed_factor_widget.get_value()),
@@ -48,21 +50,27 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
                     complete = self.core.get("simulation_complete_distance")
                     partial = widget.get_value() / 100.0 * complete
                     self.core.set("simulation_current_distance", partial)
-            simulation_progress.connect("value-changed", update_simulation_progress)
+            self._gtk_handlers.append((simulation_progress, "value-changed",
+                    update_simulation_progress))
             # update the speed factor label
-            speed_factor_widget.connect("value-changed", lambda widget: \
-                    self.gui.get_object("SimulationSpeedFactorValueLabel").\
-                    set_label("%.2f" % self.core.get("simulation_speed_factor")))
+            self._gtk_handlers.append((speed_factor_widget, "value-changed",
+                    lambda widget: self.gui.get_object(
+                        "SimulationSpeedFactorValueLabel").set_label("%.2f" % \
+                            self.core.get("simulation_speed_factor"))))
             self.simulation_window = self.gui.get_object("SimulationDialog")
-            self.simulation_window.connect("delete-event",
-                    self.finish_toolpath_simulation)
+            self._gtk_handlers.append((self.simulation_window, "delete-event",
+                    self.finish_toolpath_simulation))
             sim_detail_obj = self.gui.get_object("SimulationDetailsValue")
             self.core.add_item("simulation_details_level",
                     sim_detail_obj.get_value, sim_detail_obj.set_value)
+            self.register_gtk_handlers(self._gtk_handlers)
         return True
 
     def teardown(self):
-        pass
+        if self.gui:
+            for name in ("simulation_speed_factor", "simulation_details_level"):
+                self.core.add_item(name, None, lambda value: None)
+            self.unregister_gtk_handlers(self._gtk_handlers)
 
     def finish_toolpath_simulation(self, widget=None, data=None):
         # hide the simulation tab

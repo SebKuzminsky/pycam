@@ -40,6 +40,7 @@ class Tools(pycam.Plugins.ListPluginBase):
             tool_frame = self.gui.get_object("ToolBox")
             tool_frame.unparent()
             self.core.register_ui("main", "Tools", tool_frame, weight=10)
+            self._gtk_handlers = []
             self.core.register_chain("get_toolpath_information",
                     self.get_toolpath_information)
             self._modelview = self.gui.get_object("ToolEditorTable")
@@ -48,7 +49,8 @@ class Tools(pycam.Plugins.ListPluginBase):
                     (self.ACTION_DELETE, "ToolDelete")):
                 self.register_list_action_button(action, self._modelview,
                         self.gui.get_object(obj_name))
-            self.gui.get_object("ToolNew").connect("clicked", self._tool_new)
+            self._gtk_handlers.append((self.gui.get_object("ToolNew"),
+                    "clicked", self._tool_new))
             # parameters
             parameters_box = self.gui.get_object("ToolParameterBox")
             def clear_parameter_widgets():
@@ -84,10 +86,10 @@ class Tools(pycam.Plugins.ListPluginBase):
             cell = self.gui.get_object("ToolTableShapeCell")
             self.gui.get_object("ToolTableShapeColumn").set_cell_data_func(
                     cell, self._render_tool_shape)
-            self.gui.get_object("ToolTableIDCell").connect("edited",
-                    self._edit_tool_id)
-            self.gui.get_object("ToolTableNameCell").connect("edited",
-                    self._edit_tool_name)
+            self._gtk_handlers.append((self.gui.get_object("ToolTableIDCell"),
+                    "edited", self._edit_tool_id))
+            self._gtk_handlers.append((self.gui.get_object("ToolTableNameCell"),
+                    "edited", self._edit_tool_name))
             self._treemodel = self.gui.get_object("ToolList")
             self._treemodel.clear()
             def update_model():
@@ -104,23 +106,20 @@ class Tools(pycam.Plugins.ListPluginBase):
                     self._treemodel.append(cache[id(item)])
                 self.core.emit_event("tool-list-changed")
             # selector
-            selection = self._modelview.get_selection()
-            selection.connect("changed", 
-                    lambda widget, event: self.core.emit_event(event),
-                    "tool-selection-changed")
+            self._gtk_handlers.append((self._modelview.get_selection(),
+                    "changed", "tool-selection-changed"))
             # shape selector
-            shape_selector = self.gui.get_object("ToolShapeSelector")
-            shape_selector.connect("changed", lambda widget: \
-                    self.core.emit_event("tool-shape-changed"))
-            self.core.register_event("tool-shape-list-changed",
-                    self._update_widgets)
-            self.core.register_event("tool-selection-changed",
-                    self._tool_switch)
-            self.core.register_event("tool-changed",
-                    self._store_tool_settings)
-            self.core.register_event("tool-shape-changed",
-                    self._store_tool_settings)
+            self._gtk_handlers.append((
+                    self.gui.get_object("ToolShapeSelector"), "changed",
+                    "tool-shape-changed"))
+            self._event_handlers = (
+                    ("tool-shape-list-changed", self._update_widgets),
+                    ("tool-selection-changed", self._tool_switch),
+                    ("tool-changed", self._store_tool_settings),
+                    ("tool-shape-changed", self._store_tool_settings))
             self.register_model_update(update_model)
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
             self._update_widgets()
             self._tool_switch()
         self.core.set("tools", self)
@@ -129,11 +128,13 @@ class Tools(pycam.Plugins.ListPluginBase):
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("ToolBox"))
-            self.core.unregister_event("tool-selection-changed",
-                    self._tool_switch)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
             self.core.unregister_chain("get_toolpath_information",
                     self.get_toolpath_information)
         self.core.set("tools", None)
+        while len(self) > 0:
+            self.pop()
         return True
 
     def get_selected(self, index=False):

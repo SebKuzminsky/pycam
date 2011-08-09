@@ -113,6 +113,8 @@ class Models(pycam.Plugins.ListPluginBase):
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
         self.core.set("models", None)
+        while len(self) > 0:
+            self.pop()
         return True
 
     def _get_colors_of_selected_models(self, widget=None):

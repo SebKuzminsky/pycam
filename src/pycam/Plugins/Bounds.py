@@ -154,6 +154,8 @@ class Bounds(pycam.Plugins.ListPluginBase):
             self.unregister_gtk_handlers(self._gtk_handlers)
         self.unregister_event_handlers(self._event_handlers)
         self.core.set("bounds", None)
+        while len(self) > 0:
+            self.pop()
 
     def get_selected(self, index=False):
         return self._get_selected(self._boundsview, index=index)
@@ -194,7 +196,11 @@ class Bounds(pycam.Plugins.ListPluginBase):
         model_ids = [id(m) for m in all_models]
         if model_id in model_ids:
             this_model = all_models[model_ids.index(model_id)]
-            cell.set_property("text", all_models.get_attr(this_model, "name"))
+            try:
+                label = all_models.get_attr(this_model, "name")
+            except IndexError:
+                label = ""
+            cell.set_property("text", label)
 
     def _render_bounds_size(self, column, cell, model, m_iter):
         path = model.get_path(m_iter)
@@ -225,6 +231,16 @@ class Bounds(pycam.Plugins.ListPluginBase):
                     model_list.remove(index_iter)
             if len(model_list) <= index:
                 model_list.append((model_id,))
+        # remove missing models from all bounds
+        for bounds in self:
+            removal_list = []
+            for index, model in enumerate(bounds["Models"]):
+                if not model in self.core.get("models"):
+                    removal_list.append(index)
+            removal_list.reverse()
+            for index in removal_list:
+                bounds["Models"].pop(index)
+                print "Removed model %d" % index
 
     def _store_bounds_settings(self, widget=None):
         data = self.get_selected()

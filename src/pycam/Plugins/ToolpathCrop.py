@@ -38,12 +38,14 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
             self._frame = self.gui.get_object("ToolpathCropFrame")
             self.core.register_ui("toolpath_handling", "Crop",
                     self._frame, 40)
+            self._gtk_handlers = []
             for objname in ("ToolpathCropZSlice", "ToolpathCropMargin"):
                 obj = self.gui.get_object(objname)
                 obj.set_value(0)
-                obj.connect("value-changed", self._update_widgets)
-            self.gui.get_object("CropButton").connect("clicked",
-                    self.crop_toolpath)
+                self._gtk_handlers.append((obj, "value-changed",
+                        self._update_widgets))
+            self._gtk_handlers.append((self.gui.get_object("CropButton"),
+                    "clicked", self.crop_toolpath))
             # model selector
             self.models_widget = pycam.Gui.ControlsGTK.InputTable([],
                     force_type=long, change_handler=self._update_widgets)
@@ -62,10 +64,11 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
                     get_conv=get_converter)
             self.gui.get_object("ModelTableContainer").add(
                     self.models_widget.get_widget())
-            self.core.register_event("model-list-changed",
-                    self._update_models_list)
-            self.core.register_event("toolpath-selection-changed",
-                    self._update_visibility)
+            self._event_handlers = (
+                    ("model-list-changed", self._update_models_list),
+                    ("toolpath-selection-changed", self._update_visibility))
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
             self._update_widgets()
             self._update_visibility()
         return True
@@ -75,10 +78,8 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
             self.gui.get_object("ModelTableContainer").remove(
                     self.models_widget.get_widget())
             self.core.unregister_ui("toolpath_handling", self._frame)
-            self.core.unregister_event("model-list-changed",
-                    self._update_models_list)
-            self.core.unregister_event("toolpath-selection-changed",
-                    self._update_visibility)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
 
     def _update_models_list(self):
         choices = []

@@ -160,7 +160,8 @@ class PathParamTraceModel(pycam.Plugins.PluginBase):
                 models_dict[id(model)] = model
             models = []
             for model_ref in model_refs:
-                models.append(models_dict[model_ref])
+                if model_ref in models_dict:
+                    models.append(models_dict[model_ref])
             return models
         def set_converter(models):
             return [id(model) for model in models]

@@ -39,6 +39,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
         if self.gui:
             import gtk
             self._gtk = gtk
+            self._gtk_handlers = []
             task_frame = self.gui.get_object("TaskBox")
             task_frame.unparent()
             self.core.register_ui("main", "Tasks", task_frame, weight=40)
@@ -48,8 +49,8 @@ class Tasks(pycam.Plugins.ListPluginBase):
                     (self.ACTION_DELETE, "TaskDelete")):
                 self.register_list_action_button(action, self._taskview,
                         self.gui.get_object(obj_name))
-            self.gui.get_object("TaskNew").connect("clicked",
-                    self._task_new)
+            self._gtk_handlers.append((self.gui.get_object("TaskNew"),
+                    "clicked", self._task_new))
             # parameters
             parameters_box = self.gui.get_object("TaskParameterBox")
             def clear_parameter_widgets():
@@ -82,20 +83,20 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self.core.register_ui("task_parameters", "Components",
                     self.components_parameter_widget, weight=10)
             # table
-            self.gui.get_object("TaskNameCell").connect("edited",
-                    self._edit_task_name)
+            self._gtk_handlers.append((self.gui.get_object("TaskNameCell"),
+                    "edited", self._edit_task_name))
             selection = self._taskview.get_selection()
-            selection.connect("changed",
-                    lambda widget, event: self.core.emit_event(event), 
-                    "task-selection-changed")
+            self._gtk_handlers.append((selection, "changed",
+                    "task-selection-changed"))
             selection.set_mode(self._gtk.SELECTION_MULTIPLE)
             self._treemodel = self.gui.get_object("TaskList")
             self._treemodel.clear()
             # generate toolpaths
-            self.gui.get_object("GenerateToolPathButton").connect("clicked",
-                    self._generate_selected_toolpaths)
-            self.gui.get_object("GenerateAllToolPathsButton").connect("clicked",
-                    self._generate_all_toolpaths)
+            self._gtk_handlers.extend((
+                    (self.gui.get_object("GenerateToolPathButton"), "clicked",
+                        self._generate_selected_toolpaths),
+                    (self.gui.get_object("GenerateAllToolPathsButton"), "clicked",
+                        self._generate_all_toolpaths)))
             # manage the treemodel
             def update_model():
                 if not hasattr(self, "_model_cache"):
@@ -111,16 +112,16 @@ class Tasks(pycam.Plugins.ListPluginBase):
                         self._treemodel.append((id(item), "Task #%d" % index))
                 self.core.emit_event("task-list-changed")
             # shape selector
-            type_selector = self.gui.get_object("TaskTypeSelector")
-            type_selector.connect("changed", lambda widget: \
-                    self.core.emit_event("task-type-changed"))
-            self.core.register_event("task-type-list-changed",
-                    self._update_widgets)
-            self.core.register_event("task-selection-changed",
-                    self._task_switch)
-            self.core.register_event("task-changed", self._store_task)
-            self.core.register_event("task-type-changed", self._store_task)
+            self._gtk_handlers.append((self.gui.get_object("TaskTypeSelector"),
+                    "changed", "task-type-changed"))
+            self._event_handlers = (
+                    ("task-type-list-changed", self._update_widgets),
+                    ("task-selection-changed", self._task_switch),
+                    ("task-changed", self._store_task),
+                    ("task-type-changed", self._store_task))
             self.register_model_update(update_model)
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
             self._update_widgets()
             self._task_switch()
         self.core.set("tasks", self)
@@ -129,16 +130,14 @@ class Tasks(pycam.Plugins.ListPluginBase):
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("TaskBox"))
-            self.core.unregister_event("task-type-list-changed",
-                    self._update_widgets)
-            self.core.unregister_event("task-selection-changed",
-                    self._task_switch)
-            self.core.unregister_event("task-changed", self._store_task)
-            self.core.unregister_event("task-type-changed", self._store_task)
             self.core.unregister_ui("task_parameters",
                     self.models_parameter_widget)
             self.core.unregister_ui("task_parameters",
                     self.components_parameter_widget)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
+        while len(self) > 0:
+            self.pop()
 
     def get_selected(self, index=False):
         return self._get_selected(self._taskview, index=index)

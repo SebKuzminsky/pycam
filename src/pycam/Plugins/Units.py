@@ -30,33 +30,41 @@ class Units(pycam.Plugins.PluginBase):
 
     def setup(self):
         if self.gui:
+            self._gtk_handlers = []
             unit_pref_box = self.gui.get_object("UnitPrefBox")
             unit_pref_box.unparent()
             self.core.register_ui("preferences_general", "Units",
                     unit_pref_box, 20)
             # unit control (mm/inch)
             unit_field = self.gui.get_object("unit_control")
-            unit_field.connect("changed", self.change_unit_init)
+            self._gtk_handlers.append((unit_field, "changed",
+                    self.change_unit_init))
             def set_unit(text):
                 unit_field.set_active(0 if text == "mm" else 1)
                 self._last_unit = text
             self.core.add_item("unit", unit_field.get_active_text, set_unit)
             # other plugins should use "unit_string" for human readable output
             self.core.add_item("unit_string", unit_field.get_active_text)
-            self.gui.get_object("UnitChangeSelectAll").connect("clicked",
-                    self.change_unit_set_selection, True)
-            self.gui.get_object("UnitChangeSelectNone").connect("clicked",
-                    self.change_unit_set_selection, False)
+            self._gtk_handlers.extend((
+                    (self.gui.get_object("UnitChangeSelectAll"), "clicked",
+                        self.change_unit_set_selection, True),
+                    (self.gui.get_object("UnitChangeSelectNone"), "clicked",
+                        self.change_unit_set_selection, False)))
             # "unit change" window
             self.unit_change_window = self.gui.get_object("UnitChangeDialog")
-            self.gui.get_object("UnitChangeApply").connect("clicked", self.change_unit_apply)
-            self.unit_change_window.connect("delete_event", self.change_unit_apply, False)
+            self._gtk_handlers.extend((
+                    (self.gui.get_object("UnitChangeApply"), "clicked",
+                        self.change_unit_apply),
+                    (self.unit_change_window, "delete_event",
+                        self.change_unit_apply, False)))
+            self.register_gtk_handlers(self._gtk_handlers)
         return True
 
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("preferences_general",
                     self.gui.get_object("UnitPrefBox"))
+            self.unregister_gtk_handlers(self._gtk_handlers)
             # TODO: reset setting "unit" back to a default value?
 
     def change_unit_init(self, widget=None):

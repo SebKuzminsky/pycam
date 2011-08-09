@@ -51,20 +51,20 @@ class ToolpathExport(pycam.Plugins.PluginBase):
             self._postproc_model = self.gui.get_object("PostprocessorList")
             self._postproc_selector = self.gui.get_object(
                     "PostprocessorSelector")
-            self.gui.get_object("ExportGCodeAll").connect("clicked",
-                    self.export_all)
-            self.gui.get_object("ExportGCodeSelected").connect("clicked",
-                    self.export_selected)
-            self.gui.get_object("ExportGCodeVisible").connect("clicked",
-                    self.export_visible)
-            self.core.register_event("postprocessors-list-changed",
-                    self._update_postprocessors)
-            self.core.register_event("toolpath-list-changed",
-                    self._update_widgets)
-            self.core.register_event("toolpath-selection-changed",
-                    self._update_widgets)
-            self.core.register_event("toolpath-changed",
-                    self._update_widgets)
+            self._gtk_handlers = (
+                    (self.gui.get_object("ExportGCodeAll"), "clicked",
+                        self.export_all),
+                    (self.gui.get_object("ExportGCodeSelected"), "clicked",
+                        self.export_selected),
+                    (self.gui.get_object("ExportGCodeVisible"), "clicked",
+                        self.export_visible))
+            self._event_handlers = (
+                    ("postprocessors-list-changed", self._update_postprocessors),
+                    ("toolpath-list-changed", self._update_widgets),
+                    ("toolpath-selection-changed", self._update_widgets),
+                    ("toolpath-changed", self._update_widgets))
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
             self._update_postprocessors()
             self._update_widgets()
         return True
@@ -72,14 +72,8 @@ class ToolpathExport(pycam.Plugins.PluginBase):
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("toolpath_handling", self._frame)
-            self.core.unregister_event("postprocessors-list-changed",
-                    self._update_postprocessors)
-            self.core.unregister_event("toolpath-list-changed",
-                    self._update_widgets)
-            self.core.unregister_event("toolpath-selection-changed",
-                    self._update_widgets)
-            self.core.unregister_event("toolpath-changed",
-                    self._update_widgets)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
 
     def register_postprocessor(self, name, label, func):
         if name in self._postprocessors:

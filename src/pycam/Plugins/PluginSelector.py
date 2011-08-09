@@ -38,32 +38,38 @@ class PluginSelector(pycam.Plugins.PluginBase):
         if self.gui:
             import gtk
             self.plugin_window = self.gui.get_object("PluginManagerWindow")
-            self.plugin_window.connect("delete-event",
-                    self.toggle_plugin_window, False)
-            self.plugin_window.connect("destroy",
-                    self.toggle_plugin_window, False)
+            self._gtk_handlers = []
+            self._gtk_handlers.extend((
+                    (self.plugin_window, "delete-event",
+                        self.toggle_plugin_window, False),
+                    (self.plugin_window, "destroy",
+                        self.toggle_plugin_window, False)))
             self.plugin_window.add_accel_group(
                     self.core.get("gtk-accel-group"))
-            self.gui.get_object("ClosePluginManager").connect("clicked",
-                    self.toggle_plugin_window, False)
+            self._gtk_handlers.append((
+                    self.gui.get_object("ClosePluginManager"), "clicked",
+                        self.toggle_plugin_window, False))
             self._treemodel = self.gui.get_object("PluginsModel")
             self._treemodel.clear()
             action = self.gui.get_object("TogglePluginWindow")
-            action.connect("toggled", self.toggle_plugin_window)
+            self._gtk_handlers.append((action, "toggled",
+                    self.toggle_plugin_window))
             self.register_gtk_accelerator("plugins", action, None,
                     "TogglePluginWindow")
             self.core.register_ui("view_menu", "TogglePluginWindow", action, 60)
             # model filters
             model_filter = self.gui.get_object("PluginsModel").filter_new()
             for obj_name in ("StatusFilter", "CategoryFilter"):
-                self.gui.get_object(obj_name).connect("changed",
-                        lambda widget: model_filter.refilter())
+                self._gtk_handlers.append((self.gui.get_object(obj_name),
+                        "changed", lambda widget: model_filter.refilter()))
             self.gui.get_object("PluginsTable").set_model(model_filter)
             model_filter.set_visible_func(self._filter_set_visible)
-            self.gui.get_object("PluginsEnabledCell").connect("toggled",
-                    self.toggle_plugin_state)
+            self._gtk_handlers.append((
+                    self.gui.get_object("PluginsEnabledCell"), "toggled",
+                        self.toggle_plugin_state))
             self.core.register_event("plugin-list-changed",
                     self._update_plugin_model)
+            self.register_gtk_handlers(self._gtk_handlers)
             self._update_plugin_model()
         return True
 
@@ -74,6 +80,7 @@ class PluginSelector(pycam.Plugins.PluginBase):
             self.core.register_ui("view_menu", action)
             self.core.unregister_event("plugin-list-changed",
                     self._update_plugin_model)
+            self.unregister_gtk_handlers(self._gtk_handlers)
 
     def toggle_plugin_window(self, widget=None, value=None, action=None):
         toggle_plugin_button = self.gui.get_object("TogglePluginWindow")

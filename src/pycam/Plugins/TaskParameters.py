@@ -87,6 +87,7 @@ class TaskParamTool(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.core.get("unregister_parameter")("task", "components", "tool")
+        self.core.unregister_event("tool-list-changed", self._update_tools)
 
     def _update_tools(self):
         choices = []
@@ -115,6 +116,7 @@ class TaskParamProcess(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.core.get("unregister_parameter")("task", "components", "process")
+        self.core.unregister_event("process-list-changed", self._update_processes)
 
     def _update_processes(self):
         choices = []
@@ -143,6 +145,7 @@ class TaskParamBounds(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.core.get("unregister_parameter")("task", "components", "bounds")
+        self.core.unregister_event("bounds-list-changed", self._update_bounds)
 
     def _update_bounds(self):
         choices = []
