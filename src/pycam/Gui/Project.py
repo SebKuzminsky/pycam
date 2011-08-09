@@ -409,7 +409,6 @@ class ProjectGui(object):
                 self.update_save_actions)
         self.settings.register_event("model-change-after",
                 lambda: self.settings.emit_event("visual-item-updated"))
-        self.settings.set("load_model", self.load_model)
         # set the availability of ODE
         self.enable_ode_control = self.gui.get_object("SettingEnableODE")
         self.settings.add_item("enable_ode", self.enable_ode_control.get_active,
@@ -458,7 +457,6 @@ class ProjectGui(object):
                 ("GCodePrefTab", "GCode", 10),
                 ("DisplayItemsPrefTab", "Display Items", 20),
                 ("ColorPrefTab", "Colors", 30),
-                ("OpenGLPrefTab", "OpenGL", 40),
                 ("ProgramsPrefTab", "Programs", 50)):
             obj = self.gui.get_object(obj_name)
             obj.unparent()
@@ -557,16 +555,6 @@ class ProjectGui(object):
             main_tab.set_sensitive(True)
         self.settings.register_event("gui-disable", disable_gui)
         self.settings.register_event("gui-enable", enable_gui)
-        for name, objname in (
-                ("view_light", "OpenGLLight"),
-                ("view_shadow", "OpenGLShadow"),
-                ("view_polygon", "OpenGLPolygon"),
-                ("view_perspective", "OpenGLPerspective")):
-            obj = self.gui.get_object(objname)
-            self.settings.add_item(name, obj.get_active, obj.set_active)
-            # send "True" to trigger a re-setup of GL settings
-            obj.connect("toggled", lambda widget: \
-                    self.settings.emit_event("visual-item-updated"))
         # color selectors
         def get_color_wrapper(obj):
             def gtk_color_to_float():
@@ -602,8 +590,6 @@ class ProjectGui(object):
             # repaint the 3d view after a color change
             obj.connect("color-set", lambda widget: \
                     self.settings.emit_event("visual-item-updated"))
-        skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
-        self.settings.add_item("drill_progress_max_fps", skip_obj.get_value, skip_obj.set_value)
         # gcode settings
         gcode_minimum_step_x = self.gui.get_object("GCodeMinimumStep_x")
         self.settings.add_item("gcode_minimum_step_x",

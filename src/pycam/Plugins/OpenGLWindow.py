@@ -91,8 +91,28 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.is_visible = False
             self._last_view = VIEWS["reset"]
             self._position = [200, 200]
-            toggle_3d = self.gui.get_object("Toggle3DView")
+            box = self.gui.get_object("OpenGLPrefTab")
+            self.core.register_ui("preferences", "OpenGL", box, 40)
             self._gtk_handlers = []
+            # options
+            # TODO: move the default value somewhere else
+            for name, objname, default in (
+                    ("view_light", "OpenGLLight", True),
+                    ("view_shadow", "OpenGLShadow", True),
+                    ("view_polygon", "OpenGLPolygon", True),
+                    ("view_perspective", "OpenGLPerspective", True)):
+                obj = self.gui.get_object(objname)
+                self.core.add_item(name, obj.get_active, obj.set_active)
+                obj.set_active(default)
+                self._gtk_handlers.append((obj, "toggled", self.glsetup))
+                self._gtk_handlers.append((obj, "toggled",
+                        "visual-item-updated"))
+            # frames per second
+            skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
+            self.core.add_item("drill_progress_max_fps",
+                    skip_obj.get_value, skip_obj.set_value)
+            # toggle window state
+            toggle_3d = self.gui.get_object("Toggle3DView")
             self._gtk_handlers.append((toggle_3d, "toggled",
                     self.toggle_3d_view))
             self.register_gtk_accelerator("opengl", toggle_3d,
@@ -331,7 +351,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 self.camera.zoom_in()
             else:
                 self.camera.zoom_out()
-            self._paint_ignore_busy()
+            self.paint()
         elif keyval in move_keys_dict.keys():
             self._last_view = None
             move_x, move_y = move_keys_dict[keyval]
@@ -344,7 +364,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             else:
                 # no shift key -> moving
                 self.camera.shift_view(x_dist=move_x, y_dist=move_y)
-            self._paint_ignore_busy()
+            self.paint()
         else:
             # see dir(gtk.keysyms)
             #print "Key pressed: %s (%s)" % (keyval, get_state())
@@ -383,7 +403,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             return result
         return gtkgl_refresh_wrapper
 
-    def glsetup(self):
+    def glsetup(self, widget=None):
         GLUT.glutInit()
         GLUT.glutInitDisplayMode(GLUT.GLUT_RGBA | GLUT.GLUT_DOUBLE | \
                 GLUT.GLUT_DEPTH | GLUT.GLUT_MULTISAMPLE | GLUT.GLUT_ALPHA | \

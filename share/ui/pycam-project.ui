@@ -68,11 +68,6 @@
       </object>
     </child>
   </object>
-  <object class="GtkAdjustment" id="DrillProgressMaxFPS">
-    <property name="lower">1</property>
-    <property name="upper">25</property>
-    <property name="step_increment">1</property>
-  </object>
   <object class="GtkAdjustment" id="SafetyHeightValue">
     <property name="lower">-2000</property>
     <property name="upper">2000</property>
@@ -1521,139 +1516,6 @@ for contour lines and toolpaths, triangle's normals, et cetera).</property>
               </packing>
             </child>
             <child>
-              <object class="GtkFrame" id="OpenGLPrefTab">
-                <property name="visible">True</property>
-                <property name="label_xalign">0</property>
-                <property name="shadow_type">none</property>
-                <child>
-                  <object class="GtkAlignment" id="alignment11">
-                    <property name="visible">True</property>
-                    <property name="left_padding">12</property>
-                    <child>
-                      <object class="GtkVBox" id="vbox1">
-                        <property name="visible">True</property>
-                        <property name="orientation">vertical</property>
-                        <property name="spacing">2</property>
-                        <child>
-                          <object class="GtkCheckButton" id="OpenGLPolygon">
-                            <property name="label" translatable="yes">Polygon fill</property>
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="receives_default">False</property>
-                            <property name="tooltip_text" translatable="yes">Toggle between polygon fill or polygon outline rendering.
-Hotkey: &lt;m&gt;</property>
-                            <property name="draw_indicator">True</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="position">0</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkCheckButton" id="OpenGLLight">
-                            <property name="label" translatable="yes">Lighting</property>
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="receives_default">False</property>
-                            <property name="tooltip_text" translatable="yes">Toggle the OpenGL lighting.
-Hotkey: &lt;i&gt;</property>
-                            <property name="draw_indicator">True</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="position">1</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkCheckButton" id="OpenGLShadow">
-                            <property name="label" translatable="yes">Shadows</property>
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="receives_default">False</property>
-                            <property name="tooltip_text" translatable="yes">Toggle the OpenGL shadow effect.
-Hotkey: &lt;s&gt;</property>
-                            <property name="draw_indicator">True</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="position">2</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkCheckButton" id="OpenGLPerspective">
-                            <property name="label" translatable="yes">Perspective view</property>
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="receives_default">False</property>
-                            <property name="tooltip_text" translatable="yes">Toggle between orthogonal and perspective view.
-Hotkey: &lt;p&gt;</property>
-                            <property name="draw_indicator">True</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="position">3</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkHBox" id="hbox7">
-                            <property name="visible">True</property>
-                            <property name="spacing">2</property>
-                            <child>
-                              <object class="GtkLabel" id="DrillUpdateFPSLabel">
-                                <property name="visible">True</property>
-                                <property name="tooltip_text" translatable="yes">Maximum number of frame updates per second for drill progress visualization.</property>
-                                <property name="label" translatable="yes">Maximum Frames per Second:</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkSpinButton" id="DrillProgressFrameSkipControl">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="invisible_char">&#x2022;</property>
-                                <property name="adjustment">DrillProgressMaxFPS</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="position">4</property>
-                          </packing>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child type="label">
-                  <object class="GtkLabel" id="OpenGLSettingsFrameLabel">
-                    <property name="visible">True</property>
-                    <property name="label" translatable="yes">&lt;b&gt;OpenGL Settings&lt;/b&gt;</property>
-                    <property name="use_markup">True</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="position">4</property>
-              </packing>
-            </child>
-            <child type="tab">
-              <object class="GtkLabel" id="GLSettingsTabLabel">
-                <property name="visible">True</property>
-                <property name="label" translatable="yes">OpenGL</property>
-              </object>
-              <packing>
-                <property name="position">4</property>
-                <property name="tab_fill">False</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkFrame" id="ProgramsPrefTab">
                 <property name="visible">True</property>
                 <property name="label_xalign">0</property>
@@ -1821,7 +1683,7 @@ Hotkey: &lt;p&gt;</property>
                 </child>
               </object>
               <packing>
-                <property name="position">5</property>
+                <property name="position">4</property>
               </packing>
             </child>
             <child type="tab">
@@ -1830,7 +1692,7 @@ Hotkey: &lt;p&gt;</property>
                 <property name="label" translatable="yes">Programs</property>
               </object>
               <packing>
-                <property name="position">5</property>
+                <property name="position">4</property>
                 <property name="tab_fill">False</property>
               </packing>
             </child>
