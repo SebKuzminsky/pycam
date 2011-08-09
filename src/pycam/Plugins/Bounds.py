@@ -50,6 +50,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
     CONTROL_SET = ("set_active", "set_value")
 
     def setup(self):
+        self._event_handlers = []
         if self.gui:
             import gtk
             bounds_box = self.gui.get_object("BoundsBox")
@@ -59,13 +60,11 @@ class Bounds(pycam.Plugins.ListPluginBase):
             self._modelview = self.gui.get_object("BoundsModelsTable")
             model_selection = self._modelview.get_selection()
             model_selection.set_mode(gtk.SELECTION_MULTIPLE)
-            self._detail_handlers = []
-            handler = model_selection.connect("changed",
-                    lambda widget: self.core.emit_event("bounds-changed"))
-            self._detail_handlers.append((model_selection, handler))
-            selection = self._boundsview.get_selection()
-            selection.connect("changed",
-                    lambda widget: self.core.emit_event("bounds-selection-changed"))
+            self._gtk_handlers = []
+            self._gtk_handlers.append((model_selection, "changed",
+                    "bounds-changed"))
+            self._gtk_handlers.append((self._boundsview.get_selection(),
+                    "changed", "bounds-selection-changed"))
             self._treemodel = self._boundsview.get_model()
             self._treemodel.clear()
             def update_model():
@@ -86,8 +85,8 @@ class Bounds(pycam.Plugins.ListPluginBase):
                     (self.ACTION_DELETE, "BoundsDelete")):
                 self.register_list_action_button(action, self._boundsview,
                         self.gui.get_object(obj_name))
-            self.gui.get_object("BoundsNew").connect("clicked",
-                    self._bounds_new)
+            self._gtk_handlers.append((self.gui.get_object("BoundsNew"),
+                    "clicked", self._bounds_new))
             # quickly adjust the bounds via buttons
             for obj_name in ("MarginIncreaseX", "MarginIncreaseY",
                     "MarginIncreaseZ", "MarginDecreaseX", "MarginDecreaseY",
@@ -100,61 +99,61 @@ class Bounds(pycam.Plugins.ListPluginBase):
                     args = "-"
                 else:
                     args = "0"
-                self.gui.get_object(obj_name).connect("clicked",
-                        self._adjust_bounds, axis, args)
+                self._gtk_handlers.append((self.gui.get_object(obj_name),
+                        "clicked", self._adjust_bounds, axis, args))
             # connect change handler for boundary settings
             for axis in "XYZ":
                 for value in ("Low", "High"):
                     obj_name = "Boundary%s%s" % (value, axis)
-                    obj = self.gui.get_object(obj_name)
-                    handler = obj.connect("value-changed",
-                            lambda widget: self.core.emit_event("bounds-changed"))
-                    self._detail_handlers.append((obj, handler))
+                    self._gtk_handlers.append((self.gui.get_object(obj_name),
+                            "value-changed", "bounds-changed"))
             # register all controls
             for obj_name in self.CONTROL_BUTTONS:
                 obj = self.gui.get_object(obj_name)
                 if obj_name == "TypeRelativeMargin":
-                    handler = obj.connect("toggled",
-                            self._switch_relative_custom)
+                    self._gtk_handlers.append((obj, "toggled",
+                            self._switch_relative_custom))
                 elif obj_name == "RelativeUnit":
-                    handler = obj.connect("changed",
-                            self._switch_percent_absolute)
+                    self._gtk_handlers.append((obj, "changed",
+                            self._switch_percent_absolute))
                 else:
                     for signal in self.CONTROL_SIGNALS:
                         try:
-                            handler = obj.connect(signal, lambda *args: \
-                                    self.core.emit_event(args[-1]),
-                                    "bounds-changed")
+                            handler = obj.connect(signal, lambda *args: None)
+                            obj.disconnect(handler)
+                            self._gtk_handlers.append((obj, signal,
+                                    "bounds-changed"))
                             break
                         except TypeError:
                             continue
                     else:
-                        self.log.info("Failed to connect to widget '%s'" % str(obj_name))
+                        self.log.info("Failed to connect to widget '%s'" % \
+                                str(obj_name))
                         continue
-                self._detail_handlers.append((obj, handler))
-            self.gui.get_object("NameCell").connect("edited",
-                    self._edit_bounds_name)
+            self._gtk_handlers.append((self.gui.get_object("NameCell"),
+                    "edited", self._edit_bounds_name))
             self.gui.get_object("ModelDescriptionColumn").set_cell_data_func(
                     self.gui.get_object("ModelNameCell"), self._render_model_name)
-            self._event_handlers = (("bounds-selection-changed", self._switch_bounds),
+            self._event_handlers.extend((
+                    ("bounds-selection-changed", self._switch_bounds),
                     ("bounds-changed", self._store_bounds_settings),
                     ("bounds-changed", self._trigger_table_update),
-                    ("model-list-changed", self._update_model_list))
-            self.register_event_handlers(self._event_handlers)
+                    ("model-list-changed", self._update_model_list)))
+            self.register_gtk_handlers(self._gtk_handlers)
             self._trigger_table_update()
             self._switch_bounds()
             self._update_model_list()
         self.core.set("bounds", self)
-        self.core.register_event("bounds-changed",
-                lambda: self.core.emit_event("visual-item-updated"))
+        self._event_handlers.append(("bounds-changed", "visual-item-updated"))
+        self.register_event_handlers(self._event_handlers)
         return True
 
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("BoundsBox"))
-            self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+        self.unregister_event_handlers(self._event_handlers)
         self.core.set("bounds", None)
-        return True
 
     def get_selected(self, index=False):
         return self._get_selected(self._boundsview, index=index)
@@ -380,8 +379,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         if not bounds:
             control_box.hide()
         else:
-            for obj, handler in self._detail_handlers:
-                obj.handler_block(handler)
+            self.unregister_gtk_handlers(self._gtk_handlers)
             for obj_name, value in bounds.iteritems():
                 if obj_name == "Models":
                     self.select_models(value)
@@ -397,8 +395,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
                         break
                 else:
                     self.log.info("Failed to set value of control %s" % obj_name)
-            for obj, handler in self._detail_handlers:
-                obj.handler_unblock(handler)
+            self.register_gtk_handlers(self._gtk_handlers)
             self._hide_and_show_controls()
             control_box.show()
 

@@ -65,9 +65,8 @@ class Models(pycam.Plugins.ListPluginBase):
             self._gtk_handlers.extend((
                     (self.gui.get_object("ModelColorButton"), "color-set",
                         self._set_colors_of_selected_models),
-                    (self._modelview, "row-activated", lambda *args:
-                        self._list_action_toggle_custom(
-                            *(args + [self.COLUMN_VISIBLE]))),
+                    (self._modelview, "row-activated",
+                        self._list_action_toggle_custom, self.COLUMN_VISIBLE),
                     (self.gui.get_object("ModelNameColumn"), "edited",
                         self._edit_model_name)))
             self.gui.get_object("ModelVisibleColumn").set_cell_data_func(

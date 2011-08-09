@@ -73,33 +73,66 @@ class PluginBase(object):
             else:
                 self.log.debug("Failed to locate icon: %s" % self.ICONS[key])
                 self.ICONS[key] = None
-        self._lambda_handlers = {}
+        self._func_cache = {}
+        self._gtk_handler_id_cache = []
         self.enabled = True
 
-    def __get_handler_func(self, func):
-        if isinstance(func, basestring):
-            if not func in self._lambda_handlers:
-                self._lambda_handlers[func] = lambda *args: \
-                        self.core.emit_event(func)
-            return self._lambda_handlers[func]
-        else:
-            return func
+    def __get_handler_func(self, func, params=None):
+        if params is None:
+            params = []
+        params = tuple(params)
+        try:
+            key = (hash(func), repr(params))
+        except TypeError:
+            key = (id(func), repr(params))
+        if not key in self._func_cache:
+            if isinstance(func, basestring):
+                result = lambda *args: \
+                        self.core.emit_event(func, *params)
+            else:
+                if not params:
+                    result = func
+                else:
+                    result = lambda *args, **kwargs: \
+                            func(*(args + params), **kwargs)
+            self._func_cache[key] = result
+        return self._func_cache[key]
 
     def register_event_handlers(self, event_handlers):
-        for name, func in event_handlers:
-            self.core.register_event(name, self.__get_handler_func(func))
+        for data in event_handlers:
+            name, func = data[:2]
+            if len(data) > 2:
+                params = data[2:]
+            else:
+                params = []
+            self.core.register_event(name,
+                    self.__get_handler_func(func, params))
 
     def register_gtk_handlers(self, gtk_widget_handlers):
-        for obj, signal, func in gtk_widget_handlers:
-            obj.connect(signal, self.__get_handler_func(func))
+        for data in gtk_widget_handlers:
+            obj, signal, func = data[:3]
+            if len(data) > 3:
+                params = data[3:]
+            else:
+                params = []
+            handler_id = obj.connect(signal,
+                    self.__get_handler_func(func, params))
+            self._gtk_handler_id_cache.append((obj, handler_id))
 
     def unregister_event_handlers(self, event_handlers):
-        for name, func in event_handlers:
-            self.core.unregister_event(name, self.__get_handler_func(func))
+        for data in event_handlers:
+            name, func = data[:2]
+            if len(data) > 2:
+                params = data[2:]
+            else:
+                params = []
+            self.core.unregister_event(name,
+                    self.__get_handler_func(func, params))
 
     def unregister_gtk_handlers(self, gtk_widget_handlers):
-        for obj, signal, func in gtk_widget_handlers:
-            obj.connect(signal, self.__get_handler_func(func))
+        while self._gtk_handler_id_cache:
+            obj, handler_id = self._gtk_handler_id_cache.pop()
+            obj.disconnect(handler_id)
 
     def setup(self):
         raise NotImplementedError(("Module %s (%s) does not implement " + \

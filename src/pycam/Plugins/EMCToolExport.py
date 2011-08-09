@@ -52,7 +52,7 @@ class EMCToolExport(pycam.Plugins.PluginBase):
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("export_menu", self.export_emc_tools)
-            self.unregister_gtk_accelerator("fonts", self.export_emc_tools)
+            self.unregister_gtk_accelerator("fonts", self.export_action)
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
 

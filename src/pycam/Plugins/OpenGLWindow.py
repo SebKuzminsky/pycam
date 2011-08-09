@@ -92,8 +92,9 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self._last_view = VIEWS["reset"]
             self._position = [200, 200]
             toggle_3d = self.gui.get_object("Toggle3DView")
-            handler = toggle_3d.connect("toggled", self.toggle_3d_view)
-            self._toggle_action_handler = (toggle_3d, handler)
+            self._gtk_handlers = []
+            self._gtk_handlers.append((toggle_3d, "toggled",
+                    self.toggle_3d_view))
             self.register_gtk_accelerator("opengl", toggle_3d,
                     "<Control><Shift>v", "ToggleOpenGLView")
             self.core.register_ui("view_menu", "ViewOpenGL", toggle_3d, -20)
@@ -108,29 +109,33 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                     ("LeftView", "left"), ("RightView", "right"),
                     ("FrontView", "front"), ("BackView", "back"),
                     ("TopView", "top"), ("BottomView", "bottom")):
-                self.gui.get_object(obj_name).connect("clicked",
-                        self.rotate_view, VIEWS[view])
+                kwargs = {"view": view}
+                self._gtk_handlers.append((self.gui.get_object(obj_name),
+                           "clicked", self.rotate_view, VIEWS[view]))
             # key binding
-            self.window.connect("key-press-event", self.key_handler)
+            self._gtk_handlers.append((self.window, "key-press-event",
+                    self.key_handler))
             # OpenGL stuff
             glconfig = gtk.gdkgl.Config(mode=gtk.gdkgl.MODE_RGBA \
                     | gtk.gdkgl.MODE_DEPTH | gtk.gdkgl.MODE_DOUBLE)
             self.area = gtk.gtkgl.DrawingArea(glconfig)
             # first run; might also be important when doing other fancy
             # gtk/gdk stuff
-            self.area.connect_after('realize', self.paint)
+            #self.area.connect_after('realize', self.paint)
             # called when a part of the screen is uncovered
-            self.area.connect('expose-event', self.paint)
+            self._gtk_handlers.append((self.area, 'expose-event', self.paint))
             # resize window
-            self.area.connect('configure-event', self._resize_window)
+            self._gtk_handlers.append((self.area, 'configure-event',
+                    self._resize_window))
             # catch mouse events
             self.area.set_events(gtk.gdk.MOUSE | gtk.gdk.POINTER_MOTION_HINT_MASK \
                     | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK \
                     | gtk.gdk.SCROLL_MASK)
-            self.area.connect("button-press-event", self.mouse_press_handler)
-            self.area.connect('motion-notify-event', self.mouse_handler)
-            self.area.connect("button-release-event", self.context_menu_handler)
-            self.area.connect("scroll-event", self.scroll_handler)
+            self._gtk_handlers.extend((
+                    (self.area, "button-press-event", self.mouse_press_handler),
+                    (self.area, "motion-notify-event", self.mouse_handler),
+                    (self.area, "button-release-event", self.context_menu_handler),
+                    (self.area, "scroll-event", self.scroll_handler)))
             self.container.pack_end(self.area)
             self.camera = Camera(self.core, lambda: (self.area.allocation.width,
                     self.area.allocation.height))
@@ -192,19 +197,20 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 self.context_menu.show_all()
             else:
                 self.context_menu = None
-            self.core.register_event("model-change-after",
-                    self.update_model_dimensions)
-            self.core.register_event("visual-item-updated",
-                    self.update_model_dimensions)
-            self.core.register_event("visual-item-updated", self.update_view)
-            self.core.register_event("visualization-state-changed",
-                    self._update_widgets)
-            self.core.register_event("model-list-changed",
-                    self._restore_latest_view)
-            # show the window
+            self._event_handlers = (
+                    ("model-change-after", self.update_model_dimensions),
+                    ("visual-item-updated", self.update_model_dimensions),
+                    ("visual-item-updated", self.update_view),
+                    ("visualization-state-changed", self._update_widgets),
+                    ("model-list-changed", self._restore_latest_view))
+            # handlers
+            self.register_gtk_handlers(self._gtk_handlers)
+            self.register_event_handlers(self._event_handlers)
+            # show the window - the handlers _must_ be registered before "show"
             self.area.show()
             self.container.show()
             toggle_3d.set_active(True)
+            # refresh display
             self.core.emit_event("visual-item-updated")
         return True
 
@@ -215,15 +221,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.core.unregister_ui("view_menu", toggle_3d)
             self.unregister_gtk_accelerator("opengl", toggle_3d)
             self.core.unregister_ui("view_menu", toggle_3d)
-            self.core.unregister_event("model-change-after",
-                    self.update_model_dimensions)
-            self.core.unregister_event("visual-item-updated",
-                    self.update_model_dimensions)
-            self.core.unregister_event("visual-item-updated", self.update_view)
-            self.core.unregister_event("visualization-state-changed",
-                    self._update_widgets)
-            self.core.unregister_event("model-list-changed",
-                    self._restore_latest_view)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.unregister_event_handlers(self._event_handlers)
             # the area will be created during setup again
             self.container.remove(self.area)
             self.area = None
@@ -233,10 +232,9 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.paint()
 
     def _update_widgets(self):
-        obj, handler = self._toggle_action_handler
-        obj.handler_block(handler)
-        obj.set_active(self.is_visible)
-        obj.handler_unblock(handler)
+        self.unregister_gtk_handlers(self._gtk_handlers)
+        self.gui.get_object("Toggle3DView").set_active(self.is_visible)
+        self.register_gtk_handlers(self._gtk_handlers)
 
     def update_model_dimensions(self, widget=None):
         models = self.core.get("models").get_visible()
