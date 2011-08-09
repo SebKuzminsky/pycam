@@ -119,7 +119,7 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
                 new_model = model.extrude(stepping=grid_size, func=func,
                         callback=progress.update)
                 if new_model:
-                    self.core.get("load_model")(new_model)
+                    self.core.get("models").append(new_model)
                     try:
                         # add the name of the original model to the new name
                         original_name = model_manager.get_attr(model,

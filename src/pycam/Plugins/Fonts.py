@@ -176,7 +176,7 @@ class Fonts(pycam.Plugins.PluginBase):
             return None
 
     def import_from_font_dialog(self, widget=None):
-        self.core.get("load_model")(self.get_font_dialog_text_rendered())
+        self.core.get("models").append(self.get_font_dialog_text_rendered())
         self.toggle_font_dialog_window()
 
     def export_from_font_dialog(self, widget=None):

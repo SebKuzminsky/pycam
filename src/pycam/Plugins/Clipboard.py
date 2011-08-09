@@ -169,7 +169,7 @@ class Clipboard(pycam.Plugins.PluginBase):
                     callback=progress.update)
             if model:
                 self.log.info("Loaded a model from clipboard")
-                self.core.get("load_model")(model)
+                self.core.get("models").append(model)
             else:
                 self.log.warn("Failed to load a model from clipboard")
         else:

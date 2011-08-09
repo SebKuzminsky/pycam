@@ -90,7 +90,7 @@ class ModelProjection(pycam.Plugins.PluginBase):
                     new_model = model.get_waterline_contour(plane,
                             callback=progress.update)
                     if new_model:
-                        self.core.get("load_model")(new_model)
+                        self.core.get("models").append(new_model)
                         model_manager = self.core.get("models")
                         try:
                             # add the name of the original model to the new name
