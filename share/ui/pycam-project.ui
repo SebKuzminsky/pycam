@@ -107,18 +107,8 @@
     <property name="tooltip">Exit PyCAM</property>
     <property name="stock_id">gtk-quit</property>
   </object>
-  <object class="GtkAction" id="SaveModel">
-    <property name="label">_Save Model</property>
-    <property name="tooltip">Save the current model to the STL file.</property>
-  </object>
   <object class="GtkAction" id="ViewMenu">
     <property name="label">_View</property>
-  </object>
-  <object class="GtkAction" id="SaveAsModel">
-    <property name="label">Save Model _as ...</property>
-    <property name="short_label">Save Model as ...</property>
-    <property name="tooltip">Save the current model to a new STL file.</property>
-    <property name="stock_id">gtk-save-as</property>
   </object>
   <object class="GtkDialog" id="GeneralSettingsWindow">
     <property name="border_width">5</property>

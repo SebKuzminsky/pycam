@@ -3,8 +3,6 @@
     <menu action="FileMenu">
       <menuitem action="OpenModel"/>
       <menuitem action="OpenRecentModel" name="OpenRecentModelMenu"/>
-      <menuitem action="SaveModel"/>
-      <menuitem action="SaveAsModel"/>
       <separator />
       <menu action="ExportMenu" />
       <separator />

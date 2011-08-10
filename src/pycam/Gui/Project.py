@@ -356,8 +356,6 @@ class ProjectGui(object):
                 ("SaveTaskSettings", self.save_task_settings_file, lambda: self.last_task_settings_uri, None),
                 ("SaveAsTaskSettings", self.save_task_settings_file, None, None),
                 ("OpenModel", self.load_model_file, None, "<Control>o"),
-                ("SaveModel", self.save_model, lambda: self.last_model_uri, "<Control>s"),
-                ("SaveAsModel", self.save_model, None, "<Control><Shift>s"),
                 ("Quit", self.destroy, None, "<Control>q"),
                 ("GeneralSettings", self.toggle_preferences_window, None, "<Control>p"),
                 ("UndoButton", self._restore_undo_state, None, "<Control>z"),
@@ -401,10 +399,6 @@ class ProjectGui(object):
         self.gui.get_object("UndoButton").set_sensitive(False)
         self.settings.register_event("model-change-before",
                 self._store_undo_state)
-        self.settings.register_event("model-change-after",
-                self.update_save_actions)
-        self.settings.register_event("model-selection-changed",
-                self.update_save_actions)
         self.settings.register_event("model-change-after",
                 lambda: self.settings.emit_event("visual-item-updated"))
         # set the availability of ODE
@@ -736,7 +730,6 @@ class ProjectGui(object):
             self.window.show()
 
     def update_all_controls(self):
-        self.update_save_actions()
         self.update_gcode_controls()
         self.update_ode_settings()
 
@@ -849,27 +842,6 @@ class ProjectGui(object):
             self.window.set_title("%s - PyCAM" % short_name)
         self.settings.emit_event("model-change-after")
 
-    def update_save_actions(self):
-        self.gui.get_object("SaveTaskSettings").set_sensitive(
-            bool(self.last_task_settings_uri and \
-                self.last_task_settings_uri.is_writable()))
-        # TODO: choose all models
-        models = self.settings.get("models") and \
-                self.settings.get("models").get_selected()
-        save_as_possible = bool(models) and models[0].is_export_supported()
-        self.gui.get_object("SaveAsModel").set_sensitive(save_as_possible)
-        save_possible = bool(self.last_model_uri and save_as_possible and \
-                self.last_model_uri.is_writable())
-        #TODO: fix this dirty hack to avoid silent overwrites of PS/DXF files as SVG
-        if save_possible:
-            extension = os.path.splitext(self.last_model_uri.get_path(
-                    ))[-1].lower()
-            # TODO: fix these hard-coded file extensions
-            if extension[1:] in ("eps", "ps", "dxf"):
-                # can't save 2D formats except SVG
-                save_possible = False
-        self.gui.get_object("SaveModel").set_sensitive(save_possible)
-
     def _browse_external_program_location(self, widget=None, key=None):
         location = self.settings.get("get_filename_func")(title="Select the executable " \
                 + "for '%s'" % key, mode_load=True,
@@ -920,61 +892,6 @@ class ProjectGui(object):
         self._preferences_window_visible = state
         # don't close the window - just hide it (for "delete-event")
         return True
-
-    def save_model(self, widget=None, filename=None, model=None,
-            store_filename=True):
-        if model is None:
-            # TODO: merge multiple models
-            model = self.settings.get("models").get_selected()[0]
-        if not model.is_export_supported():
-            log.warn(("Saving this type of model (%s) is currently not " \
-                    + "implemented!") % str(type(model)))
-            return
-        # get the filename
-        if callable(filename):
-            filename = filename()
-        uri = None
-        if not isinstance(filename, (basestring, pycam.Utils.URIHandler)):
-            # we open a dialog
-            # determine the file type
-            # TODO: this needs to be decided by the exporter code
-            if isinstance(model, pycam.Geometry.Model.Model):
-                # TODO: fix this extremely fragile filter
-                type_filter = [(name, patterns)
-                        for name, patterns in FILTER_MODEL
-                        if "STL" in name.upper()]
-            elif isinstance(model, pycam.Geometry.Model.ContourModel):
-                type_filter = [(name, patterns)
-                        for name, patterns in FILTER_MODEL
-                        if "SVG" in name.upper()]
-            filename = self.settings.get("get_filename_func")("Save model to ...",
-                    mode_load=False, type_filter=type_filter,
-                    filename_templates=(self.last_model_uri,))
-            if filename:
-                uri = pycam.Utils.URIHandler(filename)
-                if uri.is_local() and store_filename:
-                    self.set_model_filename(filename)
-        else:
-            uri = pycam.Utils.URIHandler(filename)
-        # no filename given -> exit
-        if not uri:
-            return
-        if not uri.is_local():
-            log.error("Unable to write file to a non-local " + \
-                    "destination: %s" % uri)
-        else:
-            try:
-                file_in = open(uri.get_local_path(), "w")
-                model.export(comment=self.get_meta_data(),
-                        unit=self.settings.get("unit")).write(file_in)
-                file_in.close()
-            except IOError, err_msg:
-                log.error("Failed to save model file: %s" % err_msg)
-            else:
-                log.info("Successfully stored the current model as '%s'." % \
-                        str(filename))
-                self.update_save_actions()
-                self.add_to_recent_file_list(filename)
 
     @gui_activity_guard
     def reset_preferences(self, widget=None):
@@ -1134,7 +1051,6 @@ class ProjectGui(object):
         """ This function is used by the commandline handler """
         self.last_task_settings_uri = pycam.Utils.URIHandler(filename)
         self.load_task_settings_file(filename=filename)
-        self.update_save_actions()
 
     @gui_activity_guard
     def load_task_settings_file(self, widget=None, filename=None):
@@ -1151,7 +1067,6 @@ class ProjectGui(object):
             log.info("Loading task settings file: %s" % str(filename))
             self.load_task_settings(filename)
             self.add_to_recent_file_list(filename)
-        self.update_save_actions()
 
     def load_model(self, model):
         # load the new model only if the import worked
@@ -1185,7 +1100,6 @@ class ProjectGui(object):
                     filename_templates=(self.last_task_settings_uri, self.last_model_uri))
             if filename:
                 self.last_task_settings_uri = pycam.Utils.URIHandler(filename)
-                self.update_save_actions()
         # no filename given -> exit
         if not filename:
             return
@@ -1197,7 +1111,6 @@ class ProjectGui(object):
         else:
             log.info("Task settings written to %s" % filename)
             self.add_to_recent_file_list(filename)
-        self.update_save_actions()
 
     def add_to_recent_file_list(self, filename):
         # Add the item to the recent files list - if it already exists.
