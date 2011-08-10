@@ -74,14 +74,18 @@ class Tasks(pycam.Plugins.ListPluginBase):
                     changed_set_event="task-type-changed",
                     changed_set_list_event="task-type-list-changed",
                     get_current_set_func=self._get_type)
-            self.models_parameter_widget = self.core.get(
-                    "register_parameter_section")("task", "models")
+            self.models_widget = pycam.Gui.ControlsGTK.ParameterSection()
+            self.core.register_ui_section("task_models",
+                    self.models_widget.add_widget,
+                    self.models_widget.clear_widgets)
             self.core.register_ui("task_parameters", "Collision models",
-                    self.models_parameter_widget, weight=20)
-            self.components_parameter_widget = self.core.get(
-                    "register_parameter_section")("task", "components")
+                    self.models_widget.widget, weight=20)
+            self.components_widget = pycam.Gui.ControlsGTK.ParameterSection()
+            self.core.register_ui_section("task_components",
+                    self.components_widget.add_widget,
+                    self.components_widget.clear_widgets)
             self.core.register_ui("task_parameters", "Components",
-                    self.components_parameter_widget, weight=10)
+                    self.components_widget.widget, weight=10)
             # table
             self._gtk_handlers.append((self.gui.get_object("TaskNameCell"),
                     "edited", self._edit_task_name))
@@ -131,9 +135,10 @@ class Tasks(pycam.Plugins.ListPluginBase):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("TaskBox"))
             self.core.unregister_ui("task_parameters",
-                    self.models_parameter_widget)
-            self.core.unregister_ui("task_parameters",
-                    self.components_parameter_widget)
+                    self.models_widget)
+            self.core.unregister_ui("task_parameters", self.components_widget)
+            self.core.unregister_ui_section("task_models")
+            self.core.unregister_ui_section("task_components")
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
         while len(self) > 0:

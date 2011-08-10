@@ -74,14 +74,16 @@ class Tools(pycam.Plugins.ListPluginBase):
                     changed_set_event="tool-shape-changed",
                     changed_set_list_event="tool-shape-list-changed",
                     get_current_set_func=self._get_shape)
-            size_parameter_widget = self.core.get("register_parameter_section")(
-                    "tool", "size")
+            size_widget = pycam.Gui.ControlsGTK.ParameterSection()
             self.core.register_ui("tool_parameters", "Size",
-                    size_parameter_widget, weight=10)
-            speed_parameter_widget = self.core.get("register_parameter_section")(
-                    "tool", "speed")
+                    size_widget.widget, weight=10)
+            self.core.register_ui_section("tool_size",
+                    size_widget.add_widget, size_widget.clear_widgets)
+            speed_widget = pycam.Gui.ControlsGTK.ParameterSection()
             self.core.register_ui("tool_parameters", "Speed",
-                    speed_parameter_widget, weight=20)
+                    speed_widget.widget, weight=20)
+            self.core.register_ui_section("tool_speed",
+                    speed_widget.add_widget, speed_widget.clear_widgets)
             # table updates
             cell = self.gui.get_object("ToolTableShapeCell")
             self.gui.get_object("ToolTableShapeColumn").set_cell_data_func(

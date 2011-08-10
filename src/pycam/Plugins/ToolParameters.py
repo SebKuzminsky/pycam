@@ -31,19 +31,21 @@ class ToolParamRadius(pycam.Plugins.PluginBase):
     CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
-        control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=99, digits=0,
-                change_handler=lambda widget=None: self.core.emit_event(
-                    "tool-changed"))
-        control.set_conversion(set_conv=lambda value: value * 2.0,
+        self.control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=99,
+                digits=0, change_handler=lambda widget=None: \
+                    self.core.emit_event("tool-changed"))
+        self.control.set_conversion(set_conv=lambda value: value * 2.0,
                 get_conv=lambda value: value / 2.0)
-        self.core.get("register_parameter")("tool", "size", "radius",
-                "Tool diameter", control, weight=10)
+        self.core.get("register_parameter")("tool", "radius", self.control)
+        self.core.register_ui("tool_size", "Tool Diameter",
+                self.control.get_widget(), weight=10)
         self.core.register_chain("get_toolpath_information",
                 self.get_toolpath_information)
         return True
 
     def teardown(self):
-        self.core.get("unregister_parameter")("tool", "size", "radius")
+        self.core.get("unregister_parameter")("tool", "radius")
+        self.core.unregister_ui("tool_size", self.control.get_widget())
         self.core.unregister_chain("get_toolpath_information",
                 self.get_toolpath_information)
 
@@ -59,14 +61,17 @@ class ToolParamTorusRadius(pycam.Plugins.PluginBase):
     CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
-        control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=99, digits=0,
-                change_handler=lambda widget=None: self.core.emit_event(
-                    "tool-changed"))
-        self.core.get("register_parameter")("tool", "size", "torus_radius",
-                "Torus radius", control, weight=20)
+        self.control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=99,
+                digits=0, change_handler=lambda widget=None: \
+                    self.core.emit_event( "tool-changed"))
+        self.core.get("register_parameter")("tool", "torus_radius",
+                self.control)
+        self.core.register_ui("tool_size", "Torus Radius",
+                self.control.get_widget(), weight=50)
         return True
 
     def teardown(self):
+        self.core.unregister_ui("tool_size", self.control.get_widget())
         self.core.get("unregister_parameter")("tool", "size", "torus_radius")
 
 
@@ -76,16 +81,18 @@ class ToolParamFeedrate(pycam.Plugins.PluginBase):
     CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
-        control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=10000,
+        self.control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=10000,
                 digits=0, change_handler=lambda widget=None: \
                     self.core.emit_event("tool-changed"))
-        self.core.get("register_parameter")("tool", "speed", "feedrate",
-                "Feedrate", control, weight=10)
+        self.core.get("register_parameter")("tool", "feedrate", self.control)
+        self.core.register_ui("tool_speed", "Feedrate",
+                self.control.get_widget(), weight=10)
         self.core.register_chain("get_toolpath_information",
                 self.get_toolpath_information)
         return True
 
     def teardown(self):
+        self.core.unregister_ui("tool_speed", self.control.get_widget())
         self.core.get("unregister_parameter")("tool", "speed", "feedrate")
         self.core.unregister_chain("get_toolpath_information",
                 self.get_toolpath_information)
@@ -101,16 +108,19 @@ class ToolParamSpindleSpeed(pycam.Plugins.PluginBase):
     CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
-        control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=100000,
+        self.control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=100000,
                 digits=0, change_handler=lambda widget=None: \
                     self.core.emit_event("tool-changed"))
-        self.core.get("register_parameter")("tool", "speed", "spindle_speed",
-                "Spindle speed", control, weight=20)
+        self.core.get("register_parameter")("tool", "spindle_speed",
+                self.control)
+        self.core.register_ui("tool_speed", "Spindle Speed",
+                self.control.get_widget(), weight=50)
         self.core.register_chain("get_toolpath_information",
                 self.get_toolpath_information)
         return True
 
     def teardown(self):
+        self.core.unregister_ui("tool_speed", self.control.get_widget())
         self.core.get("unregister_parameter")("tool", "speed", "spindle_speed")
         self.core.unregister_chain("get_toolpath_information",
                 self.get_toolpath_information)

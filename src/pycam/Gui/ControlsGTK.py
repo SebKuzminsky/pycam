@@ -20,7 +20,9 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# gtk and gobject are imported later (to avoid plugin load failures)
+
+import gtk
+import gobject
 
 import pycam.Utils.log
 
@@ -69,7 +71,6 @@ class InputNumber(InputBaseClass):
 
     def __init__(self, digits=0, start=0, lower=0, upper=100,
             increment=1, change_handler=None):
-        import gtk
         adjustment = gtk.Adjustment(value=start, lower=lower, upper=upper,
                 step_incr=increment)
         self.control = gtk.SpinButton(adjustment, digits=digits)
@@ -89,8 +90,6 @@ class InputNumber(InputBaseClass):
 class InputChoice(InputBaseClass):
 
     def __init__(self, choices, change_handler=None):
-        import gtk
-        import gobject
         self.model = gtk.ListStore(gobject.TYPE_STRING)
         self._values = []
         for label, value in choices:
@@ -149,8 +148,6 @@ class InputChoice(InputBaseClass):
 class InputTable(InputChoice):
 
     def __init__(self, choices, change_handler=None):
-        import gtk
-        import gobject
         self.model = gtk.ListStore(gobject.TYPE_STRING)
         self._values = []
         for label, value in choices:
@@ -191,7 +188,6 @@ class InputTable(InputChoice):
 class InputCheckBox(InputBaseClass):
 
     def __init__(self, start=False, change_handler=None):
-        import gtk
         self.control = gtk.CheckButton()
         self.control.set_active(start)
         if change_handler:
@@ -204,4 +200,82 @@ class InputCheckBox(InputBaseClass):
     @_input_conversion
     def set_value(self, value):
         self.control.set_active(value)
+
+
+class ParameterSection(object):
+
+    def __init__(self):
+        self._widgets = []
+        self._table = gtk.Table(rows=1, columns=2)
+        self._table.set_col_spacings(3)
+        self._table.set_row_spacings(3)
+        self.update_widgets()
+        self._update_widgets_visibility()
+        self._table.show()
+        self.widget = self._table
+
+    def add_widget(self, widget, label, weight=100):
+        item = (widget, label, weight, [])
+        self._widgets.append(item)
+        for signal in ("hide", "show"):
+            item[3].append(widget.connect(signal,
+                    self._update_widgets_visibility))
+        self.update_widgets()
+
+    def clear_widgets(self):
+        while self._widgets:
+            item = self._widgets.pop()
+            for signal_handler in item[3]:
+                item[0].disconnect(signal_handler)
+        self.update_widgets()
+
+    def update_widgets(self):
+        widgets = list(self._widgets)
+        widgets.sort(key=lambda item: item[2])
+        # remove all widgets from the table
+        for child in self._table.get_children():
+            self._table.remove(child)
+        # add the current controls
+        for index, widget in enumerate(widgets):
+            if hasattr(widget, "get_label"):
+                # checkbox
+                widget.set_label(widget[1])
+                self._table.attach(widget, 0, 2, index, index + 1,
+                        xoptions=gtk.FILL, yoptions=gtk.FILL)
+            elif not widget[1]:
+                self._table.attach(widget[0], 0, 2, index, index + 1,
+                        xoptions=gtk.FILL, yoptions=gtk.FILL)
+            else:
+                # spinbutton, combobox, ...
+                label = gtk.Label("%s:" % widget[1])
+                label.set_alignment(0.0, 0.5)
+                self._table.attach(label, 0, 1, index, index + 1,
+                        xoptions=gtk.FILL, yoptions=gtk.FILL)
+                self._table.attach(widget[0], 1, 2, index, index + 1,
+                        xoptions=gtk.FILL, yoptions=gtk.FILL)
+        self._update_widgets_visibility()
+
+    def _get_table_row_of_widget(self, widget):
+        for child in self._table.get_children():
+            if child is widget:
+                return self._get_child_row(child)
+        else:
+            return -1
+
+    def _get_child_row(self, widget):
+        return gtk.Container.child_get_property(self._table, widget,
+                "top-attach")
+
+    def _update_widgets_visibility(self, widget=None):
+        for widget in self._widgets:
+            table_row = self._get_table_row_of_widget(widget[0])
+            is_visible = widget[0].props.visible
+            for child in self._table.get_children():
+                if widget == child:
+                    continue
+                if self._get_child_row(child) == table_row:
+                    if is_visible:
+                        child.show()
+                    else:
+                        child.hide()
 
