@@ -59,8 +59,15 @@ class ModelExport(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
+            save_action = self.gui.get_object("SaveModel")
+            self.core.unregister_ui("file_menu", save_action)
+            self.unregister_gtk_accelerator("model", save_action)
+            save_as_action = self.gui.get_object("SaveAsModel")
+            self.core.unregister_ui("file_menu", save_as_action)
+            self.unregister_gtk_accelerator("model", save_as_action)
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
+        self.core.unregister_chain("model_export", self._fallback_model_export)
 
     def _fallback_model_export(self, models):
         if models:
@@ -148,6 +155,9 @@ class ModelExportContour(pycam.Plugins.PluginBase):
     def setup(self):
         self.core.register_chain("model_export", self.export_contour, weight=40)
         return True
+
+    def teardown(self):
+        self.core.unregister_chain("model_export", self.export_contour)
 
     def export_contour(self, models):
         removal_list = []

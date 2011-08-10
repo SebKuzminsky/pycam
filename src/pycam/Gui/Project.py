@@ -24,9 +24,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import sys
-import re
-import math
-import time
 import datetime
 import gtk
 import gobject
@@ -37,23 +34,14 @@ import pickle
 import logging
 
 import pycam.Gui.Settings
-import pycam.Cutters
-import pycam.Toolpath.Generator
-import pycam.Toolpath
 import pycam.Importers.CXFImporter
 import pycam.Importers.TestModel
 import pycam.Importers
-from pycam.Geometry.Point import Point, Vector
-from pycam.Geometry.Plane import Plane
-import pycam.Geometry.Path
 import pycam.Utils.log
 from pycam.Utils.locations import get_data_file_location, \
         get_ui_file_location, get_external_program_location, \
         get_all_program_locations
 import pycam.Utils
-from pycam.Geometry.utils import sqrt
-import pycam.Geometry.Model
-from pycam.Toolpath import Bounds
 import pycam.Plugins
 from pycam import VERSION
 import pycam.Physics.ode_physics
