@@ -133,7 +133,8 @@ class PathParamPattern(pycam.Plugins.PluginBase):
 
     def setup(self):
         widget = pycam.Gui.ControlsGTK.InputChoice(
-                (("grid", "grid"), ("spiral", "spiral")),
+                (("grid", pycam.Toolpath.MotionGrid.get_fixed_grid),
+                    ("spiral", pycam.Toolpath.MotionGrid.get_spiral)),
                 change_handler=lambda widget=None: self.core.emit_event(
                     "process-changed"))
         self.core.get("register_parameter")("process", "pathgenerator",

@@ -74,10 +74,8 @@ class Processes(pycam.Plugins.ListPluginBase):
                     "process", "pathgenerator")
             self.core.register_ui("process_parameters", "Path parameters",
                     parameter_widget, weight=10)
-            selection = self._modelview.get_selection()
-            selection.connect("changed", 
-                    lambda widget, event: self.core.emit_event(event),
-                    "process-selection-changed")
+            self._gtk_handlers.append((self._modelview.get_selection(),
+                    "changed", "process-selection-changed"))
             self._gtk_handlers.append((self.gui.get_object("NameCell"),
                     "edited", self._edit_process_name))
             self._treemodel = self.gui.get_object("ProcessList")
