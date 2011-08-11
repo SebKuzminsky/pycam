@@ -93,7 +93,7 @@ class PathParamMaterialAllowance(pycam.Plugins.PluginBase):
 
 class PathParamMillingStyle(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["Processes"]
+    DEPENDS = ["Processes", "PathParamPattern"]
     CATEGORIES = ["Process", "Parameter"]
 
     def setup(self):
@@ -103,7 +103,7 @@ class PathParamMillingStyle(pycam.Plugins.PluginBase):
                     ("conventional / up", pycam.Toolpath.MotionGrid.MILLING_STYLE_CONVENTIONAL)),
                 change_handler=lambda widget=None: self.core.emit_event(
                         "process-changed"))
-        self.core.get("register_parameter")("process", "milling_style",
+        self.core.get("register_parameter")("path_pattern", "milling_style",
                 self.control)
         self.core.register_ui("process_path_parameters", "Milling style",
                 self.control.get_widget(), weight=50)
@@ -111,12 +111,12 @@ class PathParamMillingStyle(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
-        self.core.get("unregister_parameter")("process", "milling_style")
+        self.core.get("unregister_parameter")("path_pattern", "milling_style")
 
 
 class PathParamGridDirection(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["Processes"]
+    DEPENDS = ["Processes", "PathParamPattern"]
     CATEGORIES = ["Process", "Parameter"]
 
     def setup(self):
@@ -126,7 +126,7 @@ class PathParamGridDirection(pycam.Plugins.PluginBase):
                     ("xy", pycam.Toolpath.MotionGrid.GRID_DIRECTION_XY)),
                 change_handler=lambda widget=None: self.core.emit_event(
                         "process-changed"))
-        self.core.get("register_parameter")("process", "grid_direction",
+        self.core.get("register_parameter")("path_pattern", "grid_direction",
                 self.control)
         self.core.register_ui("process_path_parameters", "Direction",
                 self.control.get_widget(), weight=40)
@@ -134,29 +134,100 @@ class PathParamGridDirection(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
-        self.core.get("unregister_parameter")("process", "grid_direction")
+        self.core.get("unregister_parameter")("path_pattern", "grid_direction")
 
 
-class PathParamPattern(pycam.Plugins.PluginBase):
+class PathParamSpiralDirection(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["Processes"]
+    DEPENDS = ["Processes", "PathParamPattern"]
     CATEGORIES = ["Process", "Parameter"]
 
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputChoice(
-                (("grid", pycam.Toolpath.MotionGrid.get_fixed_grid),
-                    ("spiral", pycam.Toolpath.MotionGrid.get_spiral)),
+                    (("outside -> center", pycam.Toolpath.MotionGrid.SPIRAL_DIRECTION_IN),
+                    ("center -> outside", pycam.Toolpath.MotionGrid.SPIRAL_DIRECTION_OUT)),
                 change_handler=lambda widget=None: self.core.emit_event(
-                    "process-changed"))
-        self.core.get("register_parameter")("process", "path_pattern",
+                        "process-changed"))
+        self.core.get("register_parameter")("path_pattern", "spiral_direction",
                 self.control)
-        self.core.register_ui("process_path_parameters", "Pattern",
-                self.control.get_widget(), weight=5)
+        self.core.register_ui("process_path_parameters", "Direction",
+                self.control.get_widget(), weight=40)
         return True
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
+        self.core.get("unregister_parameter")("path_pattern", "spiral_direction")
+
+
+class PathParamPattern(pycam.Plugins.PluginBase):
+
+    DEPENDS = ["Processes", "ParameterGroupManager"]
+    CATEGORIES = ["Process", "Parameter"]
+
+    def setup(self):
+        self.choices = []
+        self.control = pycam.Gui.ControlsGTK.InputChoice([],
+                change_handler=lambda widget=None: self.core.emit_event(
+                    "process-changed"))
+        self.control.set_conversion(set_conv=self._set_value_converter,
+                get_conv=self._get_value_converter)
+        self.core.get("register_parameter")("process", "path_pattern",
+                self.control)
+        self.core.get("register_parameter_group")("path_pattern",
+                changed_set_event="process-path-pattern-changed",
+                changed_set_list_event="process-path-pattern-list-changed",
+                get_current_set_func=self._get_pattern)
+        self.core.register_ui("process_path_parameters", "Pattern",
+                self.control.get_widget(), weight=5)
+        self.control.get_widget().connect("changed", lambda widget: \
+                self.core.emit_event("process-path-pattern-changed"))
+        self.core.register_event("process-path-pattern-list-changed",
+                self._update_selector)
+        return True
+
+    def _get_value_converter(self, value):
+        if value:
+            parameter_keys = self.core.get("get_parameter_sets")("path_pattern")[value]["parameters"].keys()
+            all_parameters = self.core.get("get_parameter_values")("path_pattern")
+            result = {"name": value, "parameters": {}}
+            for parameter_key in parameter_keys:
+                result["parameters"][parameter_key] = all_parameters[parameter_key]
+            return result
+        else:
+            return None
+
+    def _set_value_converter(self, value):
+        if value:
+            self.core.get("set_parameter_values")("path_pattern", value["parameters"])
+            return value["name"]
+        elif self.choices:
+            # use the first entry as the default value
+            return self.choices[0][1]
+        else:
+            return None
+
+    def teardown(self):
+        self.core.unregister_ui("process_path_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("process", "path_pattern")
+
+    def _update_selector(self):
+        patterns = list(self.core.get("get_parameter_sets")(
+                "path_pattern").values())
+        patterns.sort(key=lambda item: item["weight"])
+        self.choices = []
+        for pattern in patterns:
+            self.choices.append((pattern["label"], pattern["name"]))
+        self.control.update_choices(self.choices)
+        if not self.control.get_value() and self.choices:
+            print {"name": self.choices[0][1], "parameters": {}}
+            self.control.set_value({"name": self.choices[0][1], "parameters": {}})
+
+    def _get_pattern(self):
+        pattern_set = self.control.get_value()
+        if pattern_set:
+            return self.core.get("get_parameter_sets")("path_pattern")[pattern_set["name"]]
+        else:
+            return None
 
 
 class PathParamRadiusCompensation(pycam.Plugins.PluginBase):

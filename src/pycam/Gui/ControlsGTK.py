@@ -32,9 +32,7 @@ _log = pycam.Utils.log.get_logger()
 
 def _input_conversion(func):
     def _input_conversion_wrapper(self, value):
-        if value is None:
-            new_value = None
-        elif hasattr(self, "_input_converter") and self._input_converter:
+        if hasattr(self, "_input_converter") and self._input_converter:
             new_value = self._input_converter(value)
         else:
             new_value = value
@@ -103,6 +101,7 @@ class InputChoice(InputBaseClass):
         if change_handler:
             self.control.connect("changed", change_handler)
 
+    @_output_conversion
     def get_value(self):
         index = self.control.get_active()
         if index < 0:
@@ -110,6 +109,7 @@ class InputChoice(InputBaseClass):
         else:
             return self._values[index]
 
+    @_input_conversion
     def set_value(self, value):
         if value is None:
             self.control.set_active(-1)

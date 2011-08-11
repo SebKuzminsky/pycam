@@ -39,6 +39,9 @@ START_X = 0x1
 START_Y = 0x2
 START_Z = 0x4
 
+SPIRAL_DIRECTION_IN = 0
+SPIRAL_DIRECTION_OUT = 1
+
 def isiterable(obj):
     try:
         iter(obj)
@@ -160,8 +163,7 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance,
 
 def get_fixed_grid((low, high), layer_distance, line_distance=None,
         step_width=None, grid_direction=GRID_DIRECTION_X,
-        milling_style=MILLING_STYLE_IGNORE, start_position=START_Z,
-        reverse=False):
+        milling_style=MILLING_STYLE_IGNORE, start_position=START_Z):
     """ Calculate the grid positions for toolpath moves
     """
     if isiterable(layer_distance):
@@ -257,10 +259,9 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width,
             yield points
 
 def get_spiral((low, high), layer_distance, line_distance=None,
-        step_width=None, grid_direction=None,
-        milling_style=MILLING_STYLE_IGNORE,
-        start_position=(START_X | START_Y | START_Z),
-        reverse=True):
+        step_width=None, milling_style=MILLING_STYLE_IGNORE,
+        spiral_direction=SPIRAL_DIRECTION_IN,
+        start_position=(START_X | START_Y | START_Z)):
     """ Calculate the grid positions for toolpath moves
     """
     if isiterable(layer_distance):
@@ -276,6 +277,7 @@ def get_spiral((low, high), layer_distance, line_distance=None,
         start_direction = GRID_DIRECTION_X
     else:
         start_direction = GRID_DIRECTION_Y
+    reverse = (spiral_direction == SPIRAL_DIRECTION_OUT)
     for z in layers:
         yield get_spiral_layer(low[0], high[0], low[1], high[1], z,
                 line_distance, step_width=step_width,
