@@ -26,7 +26,6 @@ try:
     import OpenGL.GL as GL
     import OpenGL.GLU as GLU
     import OpenGL.GLUT as GLUT
-    import pango
     GL_ENABLED = True
 except (ImportError, RuntimeError):
     GL_ENABLED = False
@@ -73,8 +72,6 @@ GTK_COLOR_MAX = 65535.0
 class OpenGLWindow(pycam.Plugins.PluginBase):
 
     UI_FILE = "opengl.ui"
-    # TODO: drop the dependecy on "Models" as soon as the calls for get("models") are gone
-    DEPENDS = ["Models"]
     CATEGORIES = ["Visualization", "OpenGL"]
 
     def setup(self):
@@ -111,6 +108,22 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
             self.core.add_item("drill_progress_max_fps",
                     skip_obj.get_value, skip_obj.set_value)
+            # info bar above the model view
+            detail_box = self.gui.get_object("InfoBox")
+            def clear_window():
+                for child in detail_box.get_children():
+                    detail_box.remove(child)
+            def add_widget_to_window(item, name):
+                if len(detail_box.get_children()) > 0:
+                    sep = gtk.HSeparator()
+                    detail_box.pack_start(sep)
+                    sep.show()
+                detail_box.pack_start(item)
+                item.show()
+            self.core.register_ui_section("opengl_window",
+                    add_widget_to_window, clear_window)
+            self.core.register_ui("opengl_window", "Views",
+                    self.gui.get_object("ViewControls"), weight=0)
             # color box
             color_frame = self.gui.get_object("ColorPrefTab")
             color_frame.unparent()
@@ -141,7 +154,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # TODO: move support grid and drill to a separate plugin
             for name, label, weight in (
                     ("show_support_grid", "Show Support Grid", 20),
-                    ("show_dimensions", "Show Dimensions", 60),
                     ("show_drill", "Show Tool", 70),
                     ("show_directions", "Show Directions", 80)):
                 self.core.get("register_display_item")(name, label, weight)
@@ -158,7 +170,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                     "pressed_button": None}
             self.window.connect("delete-event", self.destroy)
             self.window.set_default_size(560, 400)
-            self.container = self.gui.get_object("OpenGLBox")
             for obj_name, view in (("ResetView", "reset"),
                     ("LeftView", "left"), ("RightView", "right"),
                     ("FrontView", "front"), ("BackView", "back"),
@@ -190,26 +201,9 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                     (self.area, "motion-notify-event", self.mouse_handler),
                     (self.area, "button-release-event", self.context_menu_handler),
                     (self.area, "scroll-event", self.scroll_handler)))
-            self.container.pack_end(self.area)
+            self.gui.get_object("OpenGLBox").pack_end(self.area)
             self.camera = Camera(self.core, lambda: (self.area.allocation.width,
                     self.area.allocation.height))
-            # Color the dimension value according to the axes.
-            # For "y" axis: 100% green is too bright on light background - we
-            # reduce it a bit.
-            for color, names in (
-                    (pango.AttrForeground(65535, 0, 0, 0, 100),
-                            ("model_dim_x_label", "model_dim_x", "ModelCornerXMax",
-                                "ModelCornerXMin", "ModelCornerXSpaces")),
-                    (pango.AttrForeground(0, 50000, 0, 0, 100),
-                            ("model_dim_y_label", "model_dim_y", "ModelCornerYMax",
-                                "ModelCornerYMin", "ModelCornerYSpaces")),
-                    (pango.AttrForeground(0, 0, 65535, 0, 100),
-                            ("model_dim_z_label", "model_dim_z", "ModelCornerZMax",
-                                "ModelCornerZMin", "ModelCornerZSpaces"))):
-                attributes = pango.AttrList()
-                attributes.insert(color)
-                for name in names:
-                    self.gui.get_object(name).set_attributes(attributes)
             # add the items buttons (for configuring visible items)
             # TODO: enable the context menu
             if False and item_buttons:
@@ -252,8 +246,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             else:
                 self.context_menu = None
             self._event_handlers = (
-                    ("model-change-after", self.update_model_dimensions),
-                    ("visual-item-updated", self.update_model_dimensions),
                     ("visual-item-updated", self.update_view),
                     ("visualization-state-changed", self._update_widgets),
                     ("model-list-changed", self._restore_latest_view))
@@ -262,7 +254,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.register_event_handlers(self._event_handlers)
             # show the window - the handlers _must_ be registered before "show"
             self.area.show()
-            self.container.show()
             toggle_3d.set_active(True)
             # refresh display
             self.core.emit_event("visual-item-updated")
@@ -281,8 +272,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             for name in ("color_background", "color_model",
                     "color_support_grid", "color_cutter", "color_material"):
                 self.core.get("unregister_color")(name)
-            for name in ("show_support_grid", "show_dimensions", "show_drill",
-                    "show_directions"):
+            for name in ("show_support_grid", "show_drill", "show_directions"):
                 self.core.get("unregister_display_item")(name)
             self.window.remove_accel_group(self.core.get("gtk-accel-group"))
             self.unregister_gtk_handlers(self._gtk_handlers)
@@ -299,22 +289,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         self.unregister_gtk_handlers(self._gtk_handlers)
         self.gui.get_object("Toggle3DView").set_active(self.is_visible)
         self.register_gtk_handlers(self._gtk_handlers)
-
-    def update_model_dimensions(self, widget=None):
-        models = self.core.get("models").get_visible()
-        low, high = pycam.Geometry.Model.get_combined_bounds(models)
-        if None in low or None in high:
-            low, high = (0, 0, 0), (0, 0, 0)
-        # model corners in 3D view
-        if None in low or None in high:
-            # all models are empty
-            return
-        for value, label_suffix in ((low[0], "XMin"), (low[1], "YMin"),
-                (low[2], "ZMin"), (high[0], "XMax"), (high[1], "YMax"),
-                (high[2], "ZMax")):
-            label_name = "ModelCorner%s" % label_suffix
-            value = "%.3f" % value
-            self.gui.get_object(label_name).set_label(value)
 
     def register_display_item(self, name, label, weight=100):
         if name in self._display_items:
@@ -756,8 +730,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                     # Determine the biggest dimension (x/y/z) for moving the
                     # screen's center in relation to this value.
                     obj_dim = []
-                    low, high = pycam.Geometry.Model.get_combined_bounds(
-                            self.core.get("models").get_visible())
+                    low, high = [None, None, None], [None, None, None]
+                    self.core.call_chain("get_draw_dimension", low, high)
                     for index in range(3):
                         obj_dim.append(high[index] - low[index])
                     max_dim = max(obj_dim)
@@ -808,21 +782,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         # draw the model
         draw_complete_model_view(self.core)
         self.core.emit_event("visualize-items")
-        # update the dimension display
-        s = self.core
-        dimension_bar = self.gui.get_object("view3ddimension")
-        low, high = pycam.Geometry.Model.get_combined_bounds(
-                self.core.get("models").get_visible())
-        if not (None in low or None in high) and s.get("show_dimensions"):
-            for name, size in (
-                    ("model_dim_x", high[0] - low[0]),
-                    ("model_dim_y", high[1] - low[1]),
-                    ("model_dim_z", high[2] - low[2])):
-                self.gui.get_object(name).set_text("%.3f %s" \
-                        % (size, s.get("unit")))
-            dimension_bar.show()
-        else:
-            dimension_bar.hide()
 
 
 class Camera(object):
@@ -842,9 +801,9 @@ class Camera(object):
         self.auto_adjust_distance()
 
     def _get_low_high_dims(self):
-        # center the view on the object
-        models = self.core.get("models").get_visible()
-        return pycam.Geometry.Model.get_combined_bounds(models)
+        low, high = [None, None, None], [None, None, None]
+        self.core.call_chain("get_draw_dimension", low, high)
+        return low, high
 
     def center_view(self):
         center = []

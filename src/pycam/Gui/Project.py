@@ -80,6 +80,7 @@ PREFERENCES_DEFAULTS = {
         "color_toolpath_cut": (1.0, 0.5, 0.5, 1.0),
         "color_toolpath_return": (0.9, 1.0, 0.1, 0.4),
         "color_material": (1.0, 0.5, 0.0, 1.0),
+        "color_grid": (0.75, 1.0, 0.7, 0.55),
         "view_light": True,
         "view_shadow": True,
         "view_polygon": True,

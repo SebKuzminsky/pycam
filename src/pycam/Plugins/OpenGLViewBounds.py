@@ -35,24 +35,43 @@ class OpenGLViewBounds(pycam.Plugins.PluginBase):
                 40)
         self.core.get("register_display_item")("show_bounding_box",
                 "Show Bounding Box", 40)
+        self.core.register_chain("get_draw_dimension", self.get_draw_dimension)
         self.core.register_event("visualize-items", self.draw_bounds)
         self.core.emit_event("visual-item-updated")
         return True
 
     def teardown(self):
         self.core.unregister_event("visualize-items", self.draw_bounds)
+        self.core.unregister_chain("get_draw_dimension",
+                self.get_draw_dimension)
         self.core.get("unregister_color")("color_bounding_box")
         self.core.get("unregister_display_item")("show_bounding_box")
         self.core.emit_event("visual-item-updated")
+
+    def get_draw_dimension(self, low, high):
+        if not self.core.get("show_bounding_box"):
+            return
+        mlow, mhigh = self._get_bounds()
+        if None in mlow or None in mhigh:
+            return
+        for index in range(3):
+            if (low[index] is None) or (mlow[index] < low[index]):
+                low[index] = mlow[index]
+            if (high[index] is None) or (mhigh[index] > high[index]):
+                high[index] = mhigh[index]
+
+    def _get_bounds(self):
+        bounds = self.core.get("bounds").get_selected()
+        if not bounds:
+            return ([None, None, None], [None, None, None])
+        low, high = bounds.get_absolute_limits()
+        return low, high
 
     def draw_bounds(self):
         GL = self._GL
         if not self.core.get("show_bounding_box"):
             return
-        bounds = self.core.get("bounds").get_selected()
-        if not bounds:
-            return
-        low, high = bounds.get_absolute_limits()
+        low, high = self._get_bounds()
         if None in low or None in high:
             return
         minx, miny, minz = low[0], low[1], low[2]

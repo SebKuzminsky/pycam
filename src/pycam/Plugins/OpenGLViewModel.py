@@ -41,6 +41,7 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
                 ("model-changed","visual-item-updated"),
                 ("model-list-changed","visual-item-updated"))
         self.core.get("register_display_item")("show_model", "Show Model", 10)
+        self.core.register_chain("get_draw_dimension", self.get_draw_dimension)
         self.register_event_handlers(self._event_handlers)
         self.core.emit_event("visual-item-updated")
         self._cache = {}
@@ -48,6 +49,8 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.unregister_event_handlers(self._event_handlers)
+        self.core.unregister_chain("get_draw_dimension",
+                self.get_draw_dimension)
         self.core.get("unregister_display_item")("show_model")
         self.core.emit_event("visual-item-updated")
 
@@ -57,11 +60,26 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
         else:
             return None
 
+    def _is_visible(self):
+        return self.core.get("show_model") \
+                and not (self.core.get("show_simulation") \
+                    and self.core.get("simulation_toolpath_moves"))
+
+    def get_draw_dimension(self, low, high):
+        if self._is_visible():
+            mlow, mhigh = pycam.Geometry.Model.get_combined_bounds(
+                    self.core.get("models").get_visible())
+            if None in mlow or None in mhigh:
+                return
+            for index in range(3):
+                if (low[index] is None) or (mlow[index] < low[index]):
+                    low[index] = mlow[index]
+                if (high[index] is None) or (mhigh[index] > high[index]):
+                    high[index] = mhigh[index]
+
     def draw_model(self):
         GL = self._GL
-        if self.core.get("show_model") \
-                and not (self.core.get("show_simulation") \
-                    and self.core.get("simulation_toolpath_moves")):
+        if self._is_visible():
             for model in self.core.get("models").get_visible():
                 color_str = self.core.get("models").get_attr(model, "color")
                 alpha = self.core.get("models").get_attr(model, "alpha")

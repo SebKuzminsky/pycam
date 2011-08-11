@@ -36,22 +36,42 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
                 60)
         self.core.get("register_color")("color_toolpath_return",
                 "Toolpath rapid", 70)
+        self.core.register_chain("get_draw_dimension", self.get_draw_dimension)
         self.core.get("register_display_item")("show_toolpath", "Show Toolpath", 30),
         self.core.emit_event("visual-item-updated")
         return True
 
     def teardown(self):
+        self.core.unregister_chain("get_draw_dimension",
+                self.get_draw_dimension)
         self.core.unregister_event("visualize-items", self.draw_toolpath)
         self.core.get("unregister_color")("color_toolpath_cut")
         self.core.get("unregister_color")("color_toolpath_return")
         self.core.get("unregister_display_item")("show_toolpath")
         self.core.emit_event("visual-item-updated")
 
-    def draw_toolpath(self):
-        if self.core.get("show_toolpath") \
+    def get_draw_dimension(self, low, high):
+        if self._is_visible():
+            toolpaths = self.core.get("toolpaths").get_visible()
+            for tp in toolpaths:
+                mlow = tp.minx, tp.miny, tp.minz
+                mhigh = tp.maxx, tp.maxy, tp.maxz
+                if None in mlow or None in mhigh:
+                    continue
+                for index in range(3):
+                    if (low[index] is None) or (mlow[index] < low[index]):
+                        low[index] = mlow[index]
+                    if (high[index] is None) or (mhigh[index] > high[index]):
+                        high[index] = mhigh[index]
+
+    def _is_visible(self):
+        return self.core.get("show_toolpath") \
                 and not self.core.get("toolpath_in_progress") \
                 and not (self.core.get("show_simulation") \
-                        and self.core.get("simulation_toolpath_moves")):
+                        and self.core.get("simulation_toolpath_moves"))
+
+    def draw_toolpath(self):
+        if self._is_visible():
             GL = self._GL
             for toolpath in self.core.get("toolpaths").get_visible():
                 color_rapid = self.core.get("color_toolpath_return")

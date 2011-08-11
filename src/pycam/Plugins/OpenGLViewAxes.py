@@ -51,10 +51,10 @@ class OpenGLViewAxes(pycam.Plugins.PluginBase):
         GL = self._GL
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glLoadIdentity()
-        low, high = pycam.Geometry.Model.get_combined_bounds(
-                self.core.get("models").get_visible())
+        low, high = [None, None, None], [None, None, None]
+        self.core.call_chain("get_draw_dimension", low, high)
         if None in low or None in high:
-            low, high = (0, 0, 0), (1, 1, 1)
+            low, high = (0, 0, 0), (10, 10, 10)
         size_x = abs(high[0])
         size_y = abs(high[1])
         size_z = abs(high[2])
