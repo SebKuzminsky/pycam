@@ -53,7 +53,7 @@ class PushCutter(object):
         self.pa = path_processor
         self.physics = physics
         # check if we use a PolygonExtractor
-        self._use_polygon_extractor = hasattr(self.pa, "pe")
+        self._use_polygon_extractor = hasattr(self.pa, "polygon_extractor")
 
     def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None, draw_callback=None):
         # Transfer the grid (a generator) into a list of lists and count the

@@ -58,6 +58,9 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
         models = task["parameters"]["collision_models"]
         moves = path_generator.GenerateToolPath(tool, models, motion_grid,
                 minz=low[2], maxz=high[2], draw_callback=callback)
+        if not moves:
+            self.log.info("No valid moves found")
+            return None
         data = {}
         for item_name in ("tool", "process", "bounds"):
             self.core.call_chain("get_toolpath_information",

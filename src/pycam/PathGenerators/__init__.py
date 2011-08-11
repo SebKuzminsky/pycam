@@ -133,7 +133,6 @@ def get_free_paths_triangles(models, cutter, p1, p2, return_triangles=False):
         # return only the cutter locations (without triangles)
         return [cut_info[0] for cut_info in points]
 
-
 def get_free_paths_ode(physics, p1, p2, depth=8):
     """ Recursive function for splitting a line (usually along x or y) into
     small pieces to gather connected paths for the PushCutter.

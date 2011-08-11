@@ -240,7 +240,6 @@ class Bounds(pycam.Plugins.ListPluginBase):
             removal_list.reverse()
             for index in removal_list:
                 bounds["Models"].pop(index)
-                print "Removed model %d" % index
 
     def _store_bounds_settings(self, widget=None):
         data = self.get_selected()

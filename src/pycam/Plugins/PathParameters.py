@@ -105,6 +105,8 @@ class PathParamMillingStyle(pycam.Plugins.PluginBase):
                         "process-changed"))
         self.core.get("register_parameter")("path_pattern", "milling_style",
                 self.control)
+        self.core.get("register_parameter")("process", "milling_style",
+                self.control)
         self.core.register_ui("process_path_parameters", "Milling style",
                 self.control.get_widget(), weight=50)
         return True
@@ -112,6 +114,7 @@ class PathParamMillingStyle(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("path_pattern", "milling_style")
+        self.core.get("unregister_parameter")("process", "milling_style")
 
 
 class PathParamGridDirection(pycam.Plugins.PluginBase):
@@ -128,6 +131,8 @@ class PathParamGridDirection(pycam.Plugins.PluginBase):
                         "process-changed"))
         self.core.get("register_parameter")("path_pattern", "grid_direction",
                 self.control)
+        self.core.get("register_parameter")("process", "grid_direction",
+                self.control)
         self.core.register_ui("process_path_parameters", "Direction",
                 self.control.get_widget(), weight=40)
         return True
@@ -135,6 +140,7 @@ class PathParamGridDirection(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("path_pattern", "grid_direction")
+        self.core.get("unregister_parameter")("process", "grid_direction")
 
 
 class PathParamSpiralDirection(pycam.Plugins.PluginBase):

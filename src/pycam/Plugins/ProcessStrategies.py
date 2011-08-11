@@ -25,6 +25,7 @@ import pycam.Plugins
 import pycam.PathGenerators.PushCutter
 import pycam.PathProcessors.PathAccumulator
 import pycam.Toolpath.MotionGrid
+from pycam.Toolpath.MotionGrid import START_X, START_Y, START_Z
 
 
 class ProcessStrategySlicing(pycam.Plugins.PluginBase):
@@ -56,7 +57,7 @@ class ProcessStrategySlicing(pycam.Plugins.PluginBase):
         line_distance = 2 * tool_params["radius"] * \
                 (1.0 - process["parameters"]["overlap"])
         path_generator = pycam.PathGenerators.PushCutter.PushCutter(
-                pycam.PathProcessors.PathAccumulator.PathAccumulator())
+                pycam.PathProcessors.SimpleCutter.SimpleCutter())
         path_pattern = process["parameters"]["path_pattern"]
         path_get_func = self.core.get("get_parameter_sets")(
                 "path_pattern")[path_pattern["name"]]["func"]
@@ -76,6 +77,7 @@ class ProcessStrategyContour(pycam.Plugins.PluginBase):
     def setup(self):
         parameters = {"step_down": 1.0,
                 "material_allowance": 0,
+                "overlap": 0.8,
                 "milling_style": pycam.Toolpath.MotionGrid.MILLING_STYLE_IGNORE,
         }
         self.core.get("register_parameter_set")("process", "contour",
@@ -86,8 +88,23 @@ class ProcessStrategyContour(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter_set")("process", "contour")
 
-    def run_process(self, strategy, environment=None):
-        pass
+    def run_process(self, process, environment=None):
+        tool = environment["tool"]
+        tool_params = tool["parameters"]
+        low, high = environment["bounds"].get_absolute_limits(
+                tool=tool, models=environment["collision_models"])
+        line_distance = 2 * tool_params["radius"] * \
+                (1.0 - process["parameters"]["overlap"])
+        path_generator = pycam.PathGenerators.PushCutter.PushCutter(
+                pycam.PathProcessors.ContourCutter.ContourCutter())
+        # TODO: milling_style currently refers to the grid lines - not to the waterlines
+        motion_grid = pycam.Toolpath.MotionGrid.get_fixed_grid(
+                (low, high), process["parameters"]["step_down"],
+                line_distance=line_distance,
+                grid_direction=pycam.Toolpath.MotionGrid.GRID_DIRECTION_X, 
+                milling_style=process["parameters"]["milling_style"],
+                start_position=(START_X | START_Z))
+        return path_generator, motion_grid, (low, high)
 
 
 class ProcessStrategySurfacing(pycam.Plugins.PluginBase):

@@ -32,32 +32,32 @@ class PolygonCutter(pycam.PathProcessors.BasePathProcessor):
         super(PolygonCutter, self).__init__()
         self.curr_path = None
         self.scanline = None
-        self.poly_extractor = PolygonExtractor(PolygonExtractor.MONOTONE)
+        self.polygon_extractor = PolygonExtractor(PolygonExtractor.MONOTONE)
         self.reverse = reverse
 
     def append(self, point):
-        self.poly_extractor.append(point)
+        self.polygon_extractor.append(point)
 
     def new_direction(self, direction):
-        self.poly_extractor.new_direction(direction)
+        self.polygon_extractor.new_direction(direction)
 
     def end_direction(self):
-        self.poly_extractor.end_direction()
+        self.polygon_extractor.end_direction()
 
     def new_scanline(self):
-        self.poly_extractor.new_scanline()
+        self.polygon_extractor.new_scanline()
 
     def end_scanline(self):
-        self.poly_extractor.end_scanline()
+        self.polygon_extractor.end_scanline()
 
     def finish(self):
-        self.poly_extractor.finish()
+        self.polygon_extractor.finish()
         paths = []
         source_paths = []
-        if self.poly_extractor.hor_path_list:
-            source_paths.extend(self.poly_extractor.hor_path_list)
-        if self.poly_extractor.ver_path_list:
-            source_paths.extend(self.poly_extractor.ver_path_list)
+        if self.polygon_extractor.hor_path_list:
+            source_paths.extend(self.polygon_extractor.hor_path_list)
+        if self.polygon_extractor.ver_path_list:
+            source_paths.extend(self.polygon_extractor.ver_path_list)
         for path in source_paths:
             points = path.points
             for i in range(0, (len(points)+1)/2):
