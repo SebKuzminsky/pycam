@@ -43,9 +43,9 @@ class Models(pycam.Plugins.ListPluginBase):
         if self.gui:
             import gtk
             self._gtk = gtk
-            model_frame = self.gui.get_object("ModelBox")
-            model_frame.unparent()
-            self.core.register_ui("main", "Models", model_frame, weight=-50)
+            self.model_frame = self.gui.get_object("ModelBox")
+            self.model_frame.unparent()
+            self.core.register_ui("main", "Models", self.model_frame, weight=-50)
             model_handling_obj = self.gui.get_object("ModelHandlingNotebook")
             def clear_model_handling_obj():
                 for index in range(model_handling_obj.get_n_pages()):
@@ -110,6 +110,7 @@ class Models(pycam.Plugins.ListPluginBase):
         if self.gui:
             self.core.unregister_ui_section("model_handling")
             self.core.unregister_ui("main", self.gui.get_object("ModelBox"))
+            self.core.unregister_ui("main", self.model_frame)
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
         self.core.set("models", None)

@@ -80,6 +80,8 @@ class PluginSelector(pycam.Plugins.PluginBase):
             self.core.register_ui("view_menu", action)
             self.core.unregister_event("plugin-list-changed",
                     self._update_plugin_model)
+            self.plugin_window.remove_accel_group(
+                    self.core.get("gtk-accel-group"))
             self.unregister_gtk_handlers(self._gtk_handlers)
 
     def toggle_plugin_window(self, widget=None, value=None, action=None):

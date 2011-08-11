@@ -56,7 +56,7 @@ class Log(pycam.Plugins.PluginBase):
             # "log" window
             self.log_window = self.gui.get_object("LogWindow")
             self.log_window.set_default_size(500, 400)
-            hide_window = lambda *args: self.toggle_log_window(state=False)
+            hide_window = lambda *args: self.toggle_log_window(value=False)
             self._gtk_handlers.extend([
                     (self.log_window, "delete-event", hide_window),
                     (self.log_window, "destroy", hide_window),

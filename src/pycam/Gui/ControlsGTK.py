@@ -117,7 +117,8 @@ class InputChoice(InputBaseClass):
             if value in self._values:
                 self.control.set_active(self._values.index(value))
             else:
-                _log.debug("Unknown value: %s" % str(value))
+                # this may occour, if plugins were removed
+                _log.debug2("Unknown value: %s" % str(value))
 
     def update_choices(self, choices):
         selected = self.get_value()
@@ -128,7 +129,6 @@ class InputChoice(InputBaseClass):
                 self._values.insert(choice_index, value)
                 continue
             index = self._values.index(value)
-            row = self.model[index]
             # the current choice is preceded by some obsolete items
             while index > choice_index:
                 m_iter = self.model.get_iter((index,))
@@ -136,6 +136,7 @@ class InputChoice(InputBaseClass):
                 self._values.pop(index)
                 index -= 1
             # update the label column
+            row = self.model[index]
             row[0] = label
         # check if there are obsolete items after the last one
         while len(self.model) > len(choices):

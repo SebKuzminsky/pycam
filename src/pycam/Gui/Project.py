@@ -246,6 +246,12 @@ class EventCore(pycam.Gui.Settings.Settings):
         assert WIDGET_OBJ_INDEX == 1
         assert WIDGET_WEIGHT_INDEX == 2
         assert WIDGET_ARGS_INDEX == 3
+        current_widgets = [item[1]
+                for item in self.ui_sections[section][UI_WIDGET_INDEX]]
+        if (not widget is None) and (widget in current_widgets):
+            log.debug("Tried to register widget twice: %s -> %s" % \
+                    (section, name))
+            return
         self.ui_sections[section][UI_WIDGET_INDEX].append((name, widget,
                 weight, args_dict))
         self._rebuild_ui_section(section)
@@ -426,8 +432,8 @@ class ProjectGui(object):
         # preferences tab
         preferences_book = self.gui.get_object("PreferencesNotebook")
         def clear_preferences():
-            for index in range(preferences_book.get_n_pages()):
-                preferences_book.remove_page(0)
+            for child in preferences_book.get_children():
+                preferences_book.remove(child)
         def add_preferences_item(item, name):
             preferences_book.append_page(item, gtk.Label(name))
         self.settings.register_ui_section("preferences",

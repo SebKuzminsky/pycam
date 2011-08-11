@@ -75,12 +75,12 @@ class Clipboard(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.unregister_event_handlers(self._event_handlers)
-            self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_gtk_accelerator("clipboard", self.copy_action)
             self.core.unregister_ui("edit_menu", self.copy_action)
             self.unregister_gtk_accelerator("clipboard", self.paste_action)
             self.core.unregister_ui("edit_menu", self.paste_action)
+            self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
             self.core.set("clipboard-set", None)
 
     def _get_exportable_models(self):

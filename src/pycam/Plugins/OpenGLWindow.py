@@ -85,9 +85,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         if self.gui:
             self.window = self.gui.get_object("OpenGLWindow")
             self.core.get("configure-drag-drop-func")(self.window)
-            accel_group = self.core.get("gtk-accel-group")
-            if not accel_group is None:
-                self.window.add_accel_group(accel_group)
+            self.window.add_accel_group(self.core.get("gtk-accel-group"))
             self.initialized = False
             self.busy = False
             self.is_visible = False
@@ -272,6 +270,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
+            self.core.unregister_ui("preferences",
+                    self.gui.get_object("OpenGLPrefTab"))
             toggle_3d = self.gui.get_object("Toggle3DView")
             # hide the window
             toggle_3d.set_active(False)
@@ -284,6 +284,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             for name in ("show_support_grid", "show_dimensions", "show_drill",
                     "show_directions"):
                 self.core.get("unregister_display_item")(name)
+            self.window.remove_accel_group(self.core.get("gtk-accel-group"))
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
             # the area will be created during setup again

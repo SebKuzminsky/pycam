@@ -70,11 +70,12 @@ class Processes(pycam.Plugins.ListPluginBase):
                     changed_set_event="process-strategy-changed",
                     changed_set_list_event="process-strategy-list-changed",
                     get_current_set_func=self._get_strategy)
-            parameter_widget = pycam.Gui.ControlsGTK.ParameterSection()
+            self.parameter_widget = pycam.Gui.ControlsGTK.ParameterSection()
             self.core.register_ui_section("process_path_parameters",
-                    parameter_widget.add_widget, parameter_widget.clear_widgets)
+                    self.parameter_widget.add_widget,
+                    self.parameter_widget.clear_widgets)
             self.core.register_ui("process_parameters", "Path parameters",
-                    parameter_widget.widget, weight=10)
+                    self.parameter_widget.widget, weight=10)
             self._gtk_handlers.append((self._modelview.get_selection(),
                     "changed", "process-selection-changed"))
             self._gtk_handlers.append((self.gui.get_object("NameCell"),
@@ -109,6 +110,10 @@ class Processes(pycam.Plugins.ListPluginBase):
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("ProcessBox"))
+            self.core.unregister_ui_section("process_path_parameters")
+            self.core.unregister_ui("process_parameters",
+                    self.parameter_widget.widget)
+            self.core.unregister_ui_section("process_parameters")
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
         self.core.set("processes", None)

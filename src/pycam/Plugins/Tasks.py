@@ -139,6 +139,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self.core.unregister_ui("task_parameters", self.components_widget)
             self.core.unregister_ui_section("task_models")
             self.core.unregister_ui_section("task_components")
+            self.core.unregister_ui_section("task_parameters")
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
         while len(self) > 0:

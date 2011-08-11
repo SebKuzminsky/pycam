@@ -101,7 +101,10 @@ class Fonts(pycam.Plugins.PluginBase):
         self.core.add_item("fonts", None)
         if self.gui:
             font_toggle = self.gui.get_object("ShowFontDialog")
+            self.core.unregister_ui("edit_menu", None)
             self.core.unregister_ui("edit_menu", font_toggle)
+            self.font_dialog_window.remove_accel_group(
+                    self.core.get("gtk-accel-group"))
             self.unregister_gtk_accelerator("fonts", font_toggle)
             self.unregister_gtk_handlers(self._gtk_handlers)
 

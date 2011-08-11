@@ -74,16 +74,18 @@ class Tools(pycam.Plugins.ListPluginBase):
                     changed_set_event="tool-shape-changed",
                     changed_set_list_event="tool-shape-list-changed",
                     get_current_set_func=self._get_shape)
-            size_widget = pycam.Gui.ControlsGTK.ParameterSection()
+            self.size_widget = pycam.Gui.ControlsGTK.ParameterSection()
             self.core.register_ui("tool_parameters", "Size",
-                    size_widget.widget, weight=10)
+                    self.size_widget.widget, weight=10)
             self.core.register_ui_section("tool_size",
-                    size_widget.add_widget, size_widget.clear_widgets)
-            speed_widget = pycam.Gui.ControlsGTK.ParameterSection()
+                    self.size_widget.add_widget,
+                    self.size_widget.clear_widgets)
+            self.speed_widget = pycam.Gui.ControlsGTK.ParameterSection()
             self.core.register_ui("tool_parameters", "Speed",
-                    speed_widget.widget, weight=20)
+                    self.speed_widget.widget, weight=20)
             self.core.register_ui_section("tool_speed",
-                    speed_widget.add_widget, speed_widget.clear_widgets)
+                    self.speed_widget.add_widget,
+                    self.speed_widget.clear_widgets)
             # table updates
             cell = self.gui.get_object("ToolTableShapeCell")
             self.gui.get_object("ToolTableShapeColumn").set_cell_data_func(
@@ -130,6 +132,11 @@ class Tools(pycam.Plugins.ListPluginBase):
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("ToolBox"))
+            self.core.unregister_ui_section("tool_speed")
+            self.core.unregister_ui_section("tool_size")
+            self.core.unregister_ui("tool_parameters", self.size_widget.widget)
+            self.core.unregister_ui("tool_parameters", self.speed_widget.widget)
+            self.core.unregister_ui_section("tool_parameters")
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
             self.core.unregister_chain("get_toolpath_information",

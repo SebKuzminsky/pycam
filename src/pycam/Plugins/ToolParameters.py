@@ -72,7 +72,7 @@ class ToolParamTorusRadius(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.core.unregister_ui("tool_size", self.control.get_widget())
-        self.core.get("unregister_parameter")("tool", "size", "torus_radius")
+        self.core.get("unregister_parameter")("tool", "torus_radius")
 
 
 class ToolParamFeedrate(pycam.Plugins.PluginBase):
@@ -93,7 +93,7 @@ class ToolParamFeedrate(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.core.unregister_ui("tool_speed", self.control.get_widget())
-        self.core.get("unregister_parameter")("tool", "speed", "feedrate")
+        self.core.get("unregister_parameter")("tool", "feedrate")
         self.core.unregister_chain("get_toolpath_information",
                 self.get_toolpath_information)
 
@@ -121,7 +121,7 @@ class ToolParamSpindleSpeed(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.core.unregister_ui("tool_speed", self.control.get_widget())
-        self.core.get("unregister_parameter")("tool", "speed", "spindle_speed")
+        self.core.get("unregister_parameter")("tool", "spindle_speed")
         self.core.unregister_chain("get_toolpath_information",
                 self.get_toolpath_information)
 

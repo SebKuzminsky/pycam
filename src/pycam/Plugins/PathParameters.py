@@ -187,7 +187,12 @@ class PathParamPattern(pycam.Plugins.PluginBase):
 
     def _get_value_converter(self, value):
         if value:
-            parameter_keys = self.core.get("get_parameter_sets")("path_pattern")[value]["parameters"].keys()
+            pattern_sets = self.core.get("get_parameter_sets")("path_pattern")
+            try:
+                current_pattern_set = pattern_sets[value]
+            except KeyError:
+                return None
+            parameter_keys = current_pattern_set["parameters"].keys()
             all_parameters = self.core.get("get_parameter_values")("path_pattern")
             result = {"name": value, "parameters": {}}
             for parameter_key in parameter_keys:
