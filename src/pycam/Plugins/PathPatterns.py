@@ -28,13 +28,15 @@ import pycam.Toolpath.MotionGrid
 class PathPatternSpiral(pycam.Plugins.PluginBase):
 
     DEPENDS = ["ParameterGroupManager", "PathParamPattern",
-            "PathParamMillingStyle", "PathParamSpiralDirection"]
-    CATEGORIES = ["Process"]
+            "PathParamMillingStyle", "PathParamSpiralDirection",
+            "PathParamRoundedSpiralCorners"]
+    CATEGORIES = ["Process", "Path pattern"]
 
     def setup(self):
         parameters = {
                 "milling_style": pycam.Toolpath.MotionGrid.MILLING_STYLE_IGNORE,
                 "spiral_direction": None,
+                "rounded_corners": False,
         }
         self.core.get("register_parameter_set")("path_pattern", "spiral",
                 "Spiral", self.get_grid_generator, parameters=parameters,
@@ -54,7 +56,7 @@ class PathPatternGrid(pycam.Plugins.PluginBase):
 
     DEPENDS = ["ParameterGroupManager", "PathParamPattern",
             "PathParamMillingStyle", "PathParamGridDirection"]
-    CATEGORIES = ["Process"]
+    CATEGORIES = ["Process", "Path pattern"]
 
     def setup(self):
         parameters = {

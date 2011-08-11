@@ -20,10 +20,11 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.Point import Point
+from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import epsilon
 from pycam.Geometry.Polygon import PolygonSorter
+import pycam.Geometry
 import math
 
 
@@ -200,11 +201,11 @@ def _get_position(minx, maxx, miny, maxy, z, position):
     return Point(x, y, z)
 
 def get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x,
-        line_distance_y, grid_direction, start_position,
-        current_location):
+        line_distance_y, grid_direction, start_position, current_location):
     xor_map = {GRID_DIRECTION_X: START_X, GRID_DIRECTION_Y: START_Y}
     end_position = start_position ^ xor_map[grid_direction]
     end_location = _get_position(minx, maxx, miny, maxy, z, end_position)
+    lines = [(current_location, end_location)]
     if grid_direction == GRID_DIRECTION_X:
         next_grid_direction = GRID_DIRECTION_Y
         if start_position & START_Y > 0:
@@ -217,7 +218,6 @@ def get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x,
             minx += line_distance_x
         else:
             maxx -= line_distance_x
-    lines = [(current_location, end_location)]
     if (minx - epsilon <= maxx ) and (miny - epsilon <= maxy):
         # recursively compute the next lines
         lines.extend(get_spiral_layer_lines(minx, maxx, miny, maxy, z,
@@ -226,7 +226,7 @@ def get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x,
     return lines
 
 def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width,
-        grid_direction, start_position, reverse):
+        grid_direction, start_position, rounded_corners, reverse):
     current_location = _get_position(minx, maxx, miny, maxy, z,
             start_position)
     if line_distance > 0:
@@ -240,6 +240,38 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width,
         if reverse:
             lines.reverse()
         # turn the lines into steps
+        if rounded_corners:
+            rounded_lines = []
+            previous = None
+            for index, (start, end) in enumerate(lines):
+                radius = 0.5 * min(line_distance_x, line_distance_y)
+                edge_vector = end.sub(start)
+                # TODO: ellipse would be better than arc
+                offset = edge_vector.normalized().mul(radius)
+                if previous:
+                    start = start.add(offset)
+                    center = previous.add(offset)
+                    up_vector = previous.sub(center).cross(start.sub(center)).normalized()
+                    north = center.add(Vector(1.0, 0.0, 0.0))
+                    angle_start = pycam.Geometry.get_angle_pi(north, center, previous, up_vector, pi_factor=True) * 180.0
+                    angle_end = pycam.Geometry.get_angle_pi(north, center, start, up_vector, pi_factor=True) * 180.0
+                    # TODO: remove these exceptions based on up_vector.z (get_points_of_arc does not respect the plane, yet)
+                    if up_vector.z < 0:
+                        angle_start, angle_end = -angle_end, -angle_start
+                    arc_points = pycam.Geometry.get_points_of_arc(center, radius, angle_start, angle_end)
+                    if up_vector.z < 0:
+                        arc_points.reverse()
+                    for arc_index in range(len(arc_points) - 1):
+                        p1_coord = arc_points[arc_index]
+                        p2_coord = arc_points[arc_index + 1]
+                        p1 = Point(p1_coord[0], p1_coord[1], z)
+                        p2 = Point(p2_coord[0], p2_coord[1], z)
+                        rounded_lines.append((p1, p2))
+                if index != len(lines) - 1:
+                    end = end.sub(offset)
+                previous = end
+                rounded_lines.append((start, end))
+            lines = rounded_lines
         for start, end in lines:
             points = []
             if step_width is None:
@@ -260,7 +292,7 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width,
 
 def get_spiral((low, high), layer_distance, line_distance=None,
         step_width=None, milling_style=MILLING_STYLE_IGNORE,
-        spiral_direction=SPIRAL_DIRECTION_IN,
+        spiral_direction=SPIRAL_DIRECTION_IN, rounded_corners=False,
         start_position=(START_X | START_Y | START_Z)):
     """ Calculate the grid positions for toolpath moves
     """
@@ -282,7 +314,7 @@ def get_spiral((low, high), layer_distance, line_distance=None,
         yield get_spiral_layer(low[0], high[0], low[1], high[1], z,
                 line_distance, step_width=step_width,
                 grid_direction=start_direction, start_position=start_position,
-                reverse=reverse)
+                rounded_corners=rounded_corners, reverse=reverse)
 
 def get_lines_layer(lines, z, last_z=None, step_width=None,
         milling_style=MILLING_STYLE_CONVENTIONAL):

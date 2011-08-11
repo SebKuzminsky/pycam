@@ -127,7 +127,7 @@ class ProgressGTK(object):
     def disable_cancel(self):
         self._cancel_button.set_sensitive(False)
 
-    def cancel(self):
+    def cancel(self, widget=None):
         self._cancel_requested = True
 
     def finish(self):

@@ -219,7 +219,6 @@ class PathParamPattern(pycam.Plugins.PluginBase):
             self.choices.append((pattern["label"], pattern["name"]))
         self.control.update_choices(self.choices)
         if not self.control.get_value() and self.choices:
-            print {"name": self.choices[0][1], "parameters": {}}
             self.control.set_value({"name": self.choices[0][1], "parameters": {}})
 
     def _get_pattern(self):
@@ -228,6 +227,27 @@ class PathParamPattern(pycam.Plugins.PluginBase):
             return self.core.get("get_parameter_sets")("path_pattern")[pattern_set["name"]]
         else:
             return None
+
+
+class PathParamRoundedSpiralCorners(pycam.Plugins.PluginBase):
+
+    DEPENDS = ["Processes"]
+    CATEGORIES = ["Process", "Parameter"]
+
+    def setup(self):
+        self.control = pycam.Gui.ControlsGTK.InputCheckBox(
+                change_handler=lambda widget=None: self.core.emit_event(
+                    "process-changed"))
+        self.core.get("register_parameter")("path_pattern", "rounded_corners",
+                self.control)
+        self.core.register_ui("process_path_parameters", "Rounded corners",
+                self.control.get_widget(), weight=80)
+        return True
+
+    def teardown(self):
+        self.core.unregister_ui("process_path_parameters",
+                self.control.get_widget())
+        self.core.get("unregister_parameter")("path_pattern", "rounded_corners")
 
 
 class PathParamRadiusCompensation(pycam.Plugins.PluginBase):

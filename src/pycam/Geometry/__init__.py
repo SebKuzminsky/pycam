@@ -96,8 +96,8 @@ def get_points_of_arc(center, radius, a1, a2, plane=None, cords=32):
     @type plane: pycam.Geometry.Plane.Plane
     @param cords: number of lines for a full circle
     @type cords: int
-    @return: a list of lines approximating the arc
-    @rtype: list(pycam.Geometry.Line.Line)
+    @return: a list of points approximating the arc
+    @rtype: list(pycam.Geometry.Point.Point)
     """
     # TODO: implement 3D arc and respect "plane"
     a1 = math.pi * a1 / 180
@@ -105,6 +105,8 @@ def get_points_of_arc(center, radius, a1, a2, plane=None, cords=32):
     angle_diff = a2 - a1
     if angle_diff < 0:
         angle_diff += 2 * math.pi
+    if angle_diff >= 2 * math.pi:
+        angle_diff -= 2 * math.pi
     if angle_diff == 0:
         return []
     num_of_segments = ceil(angle_diff / (2 * math.pi) * cords)
