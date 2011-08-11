@@ -119,14 +119,17 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self._gtk_handlers.append((self.gui.get_object("TaskTypeSelector"),
                     "changed", "task-type-changed"))
             self._event_handlers = (
-                    ("task-type-list-changed", self._update_widgets),
+                    ("task-type-list-changed", self._update_table),
                     ("task-selection-changed", self._task_switch),
                     ("task-changed", self._store_task),
-                    ("task-type-changed", self._store_task))
+                    ("task-type-changed", self._store_task),
+                    ("task-selection-changed", self._update_widgets),
+                    ("task-list-changed", self._update_widgets))
             self.register_model_update(update_model)
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
+            self._update_table()
             self._task_switch()
         self.core.set("tasks", self)
         return True
@@ -192,7 +195,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
         else:
             selector.set_active(-1)
 
-    def _update_widgets(self):
+    def _update_table(self):
         selected = self._get_type()
         model = self.gui.get_object("TaskTypeList")
         model.clear()
@@ -218,6 +221,12 @@ class Tasks(pycam.Plugins.ListPluginBase):
             selector_box.show()
         if selected:
             self.select_type(selected["name"])
+
+    def _update_widgets(self):
+        self.gui.get_object("GenerateToolPathButton").set_sensitive(
+                len(self.get_selected()) > 0)
+        self.gui.get_object("GenerateAllToolPathsButton").set_sensitive(
+                len(self) > 0)
 
     def _task_switch(self):
         tasks = self.get_selected()
