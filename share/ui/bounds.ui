@@ -16,12 +16,6 @@
       </row>
     </data>
   </object>
-  <object class="GtkListStore" id="BoundsModelsList">
-    <columns>
-      <!-- column-name ref_model -->
-      <column type="gulong"/>
-    </columns>
-  </object>
   <object class="GtkListStore" id="ToolLimitModeList">
     <columns>
       <!-- column-name description -->
@@ -754,27 +748,12 @@
                             <property name="visible">True</property>
                             <property name="orientation">vertical</property>
                             <child>
-                              <object class="GtkViewport" id="viewport2">
+                              <object class="GtkViewport" id="ModelsViewPort">
                                 <property name="visible">True</property>
                                 <property name="resize_mode">queue</property>
                                 <property name="shadow_type">etched-out</property>
                                 <child>
-                                  <object class="GtkTreeView" id="BoundsModelsTable">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="model">BoundsModelsList</property>
-                                    <property name="headers_visible">False</property>
-                                    <property name="headers_clickable">False</property>
-                                    <property name="search_column">0</property>
-                                    <child>
-                                      <object class="GtkTreeViewColumn" id="ModelDescriptionColumn">
-                                        <property name="title">Model</property>
-                                        <child>
-                                          <object class="GtkCellRendererText" id="ModelNameCell"/>
-                                        </child>
-                                      </object>
-                                    </child>
-                                  </object>
+                                  <placeholder/>
                                 </child>
                               </object>
                               <packing>

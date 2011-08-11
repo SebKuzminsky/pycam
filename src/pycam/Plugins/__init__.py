@@ -456,6 +456,8 @@ class ListPluginBase(PluginBase, list):
             model.connect(signal, self._update_list_action_button_state,
                     modelview, action, button)
         button.connect("clicked", self._list_action, modelview, action)
+        # initialize the state of the button
+        self._update_list_action_button_state(modelview, action, button)
 
     def get_attr(self, item, attr, model=None, id_col=None):
         return self.__get_set_attr(item, attr, write=False, model=model, id_col=id_col)

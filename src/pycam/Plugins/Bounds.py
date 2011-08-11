@@ -57,12 +57,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
             bounds_box.unparent()
             self.core.register_ui("main", "Bounds", bounds_box, 30)
             self._boundsview = self.gui.get_object("BoundsEditTable")
-            self._modelview = self.gui.get_object("BoundsModelsTable")
-            model_selection = self._modelview.get_selection()
-            model_selection.set_mode(gtk.SELECTION_MULTIPLE)
             self._gtk_handlers = []
-            self._gtk_handlers.append((model_selection, "changed",
-                    "bounds-changed"))
             self._gtk_handlers.append((self._boundsview.get_selection(),
                     "changed", "bounds-selection-changed"))
             self._treemodel = self._boundsview.get_model()
@@ -87,6 +82,11 @@ class Bounds(pycam.Plugins.ListPluginBase):
                         self.gui.get_object(obj_name))
             self._gtk_handlers.append((self.gui.get_object("BoundsNew"),
                     "clicked", self._bounds_new))
+            # model selector
+            self.models_control = pycam.Gui.ControlsGTK.InputTable([],
+                    change_handler=lambda *args: \
+                        self.core.emit_event("bounds-changed"))
+            self.gui.get_object("ModelsViewPort").add(self.models_control.get_widget())
             # quickly adjust the bounds via buttons
             for obj_name in ("MarginIncreaseX", "MarginIncreaseY",
                     "MarginIncreaseZ", "MarginDecreaseX", "MarginDecreaseY",
@@ -132,8 +132,6 @@ class Bounds(pycam.Plugins.ListPluginBase):
                         continue
             self._gtk_handlers.append((self.gui.get_object("NameCell"),
                     "edited", self._edit_bounds_name))
-            self.gui.get_object("ModelDescriptionColumn").set_cell_data_func(
-                    self.gui.get_object("ModelNameCell"), self._render_model_name)
             self._event_handlers.extend((
                     ("bounds-selection-changed", self._switch_bounds),
                     ("bounds-changed", self._store_bounds_settings),
@@ -168,39 +166,10 @@ class Bounds(pycam.Plugins.ListPluginBase):
             selection.select_path((index,))
 
     def get_selected_models(self, index=False):
-        return self._get_selected(self._modelview,
-                content=self.core.get("models"), index=index,
-                force_list=True)
+        return self.models_control.get_value()
 
     def select_models(self, models):
-        selection = self._modelview.get_selection()
-        remaining = models[:]
-        for index, row in enumerate(self._modelview.get_model()):
-            model_ids = [id(m) for m in remaining]
-            path = (index, )
-            if row[0] in model_ids:
-                remaining.pop(model_ids.index(row[0]))
-                if not selection.path_is_selected(path):
-                    selection.select_path(path)
-            else:
-                if selection.path_is_selected(path):
-                    selection.unselect_path(path)
-        # remove all models that are not available anymore
-        for not_found in remaining:
-            models.remove(not_found)
-
-    def _render_model_name(self, column, cell, model, m_iter):
-        path = model.get_path(m_iter)
-        all_models = self.core.get("models")
-        model_id = model[path[0]][0]
-        model_ids = [id(m) for m in all_models]
-        if model_id in model_ids:
-            this_model = all_models[model_ids.index(model_id)]
-            try:
-                label = all_models.get_attr(this_model, "name")
-            except IndexError:
-                label = ""
-            cell.set_property("text", label)
+        self.models_control.set_value(models)
 
     def _render_bounds_size(self, column, cell, model, m_iter):
         path = model.get_path(m_iter)
@@ -218,28 +187,12 @@ class Bounds(pycam.Plugins.ListPluginBase):
                 self.gui.get_object("SizeCell"), self._render_bounds_size)
 
     def _update_model_list(self):
-        model_ids = [id(m) for m in self.core.get("models")]
-        model_list = self._modelview.get_model()
-        for index, model_id in enumerate(model_ids):
-            while (len(model_list) > index) and \
-                    (model_list[index][0] != model_id):
-                index_iter = model_list.get_iter((index, ))
-                if model_list[index][0] in model_ids:
-                    # move it to the end of the list
-                    model_list.move_before(index_iter, None)
-                else:
-                    model_list.remove(index_iter)
-            if len(model_list) <= index:
-                model_list.append((model_id,))
-        # remove missing models from all bounds
-        for bounds in self:
-            removal_list = []
-            for index, model in enumerate(bounds["Models"]):
-                if not model in self.core.get("models"):
-                    removal_list.append(index)
-            removal_list.reverse()
-            for index in removal_list:
-                bounds["Models"].pop(index)
+        models = self.core.get("models")
+        choices = []
+        for model in models:
+            name = models.get_attr(model, "name")
+            choices.append((name, model))
+        self.models_control.update_choices(choices)
 
     def _store_bounds_settings(self, widget=None):
         data = self.get_selected()
