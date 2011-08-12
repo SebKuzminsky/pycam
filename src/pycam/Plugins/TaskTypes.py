@@ -48,6 +48,15 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
         environment = {}
         for key in task["parameters"]:
             environment[key] = task["parameters"][key]
+        if environment["tool"] is None:
+            self.log.error("You need to assign a tool to this task.")
+            return
+        if environment["process"] is None:
+            self.log.error("You need to assign a process to this task.")
+            return
+        if environment["bounds"] is None:
+            self.log.error("You need to assign bounds to this task.")
+            return
         funcs = {}
         for key, set_name in (("tool", "shape"), ("process", "strategy")):
             funcs[key] = self.core.get("get_parameter_sets")(
@@ -55,6 +64,9 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
         tool = funcs["tool"](tool=environment["tool"], environment=environment)
         path_generator, motion_grid, (low, high) = funcs["process"](
                 environment["process"], environment=environment)
+        if path_generator is None:
+            # we assume that an error message was given already
+            return
         models = task["parameters"]["collision_models"]
         moves = path_generator.GenerateToolPath(tool, models, motion_grid,
                 minz=low[2], maxz=high[2], draw_callback=callback)

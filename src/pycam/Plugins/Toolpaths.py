@@ -133,6 +133,7 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             self.tp_box.hide()
         else:
             self.tp_box.show()
+            self._trigger_toolpath_time_update()
 
     def _trigger_toolpath_time_update(self):
         self.gui.get_object("ToolpathTimeColumn").set_cell_data_func(

@@ -748,10 +748,9 @@
                             <property name="visible">True</property>
                             <property name="orientation">vertical</property>
                             <child>
-                              <object class="GtkViewport" id="ModelsViewPort">
+                              <object class="GtkVBox" id="ModelsViewPort">
                                 <property name="visible">True</property>
-                                <property name="resize_mode">queue</property>
-                                <property name="shadow_type">etched-out</property>
+                                <property name="orientation">vertical</property>
                                 <child>
                                   <placeholder/>
                                 </child>

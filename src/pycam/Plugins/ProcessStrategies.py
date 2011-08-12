@@ -102,8 +102,7 @@ class ProcessStrategyContour(pycam.Plugins.PluginBase):
                 (low, high), process["parameters"]["step_down"],
                 line_distance=line_distance,
                 grid_direction=pycam.Toolpath.MotionGrid.GRID_DIRECTION_X, 
-                milling_style=process["parameters"]["milling_style"],
-                start_position=(START_X | START_Z))
+                milling_style=process["parameters"]["milling_style"])
         return path_generator, motion_grid, (low, high)
 
 
@@ -176,6 +175,10 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
         path_generator = pycam.PathGenerators.EngraveCutter.EngraveCutter(
                 pycam.PathProcessors.SimpleCutter.SimpleCutter())
         models = list(process["parameters"]["trace_models"])
+        if not models:
+            self.log.error("No trace models given: you need to assign a " + \
+                    "2D model to the engraving process.")
+            return None, None, (None, None)
         progress = self.core.get("progress")
         if process["parameters"]["radius_compensation"]:
             progress.update(text="Offsetting models")

@@ -112,7 +112,11 @@ class InputChoice(InputBaseClass):
     @_input_conversion
     def set_value(self, value):
         if value is None:
-            self.control.set_active(-1)
+            if len(self._values) > 0:
+                # activate the first item as the default
+                self.control.set_active(0)
+            else:
+                self.control.set_active(-1)
         else:
             if value in self._values:
                 self.control.set_active(self._values.index(value))
