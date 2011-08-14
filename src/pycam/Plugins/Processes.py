@@ -210,6 +210,23 @@ class Processes(pycam.Plugins.ListPluginBase):
         if process is None or strategy is None:
             control_box.hide()
         else:
+            # Check if any of the relevant controls are still at their default
+            # values for this process type. These values are overridden by the
+            # default value of the new (changed) process type.
+            # E.g. this changes the "overlap" value from 10 to 60 when
+            # switching from slicing to surfacing.
+            if process["strategy"] and process["strategy"] in \
+                    self.core.get("get_parameter_sets")("process"):
+                old_strategy = self.core.get("get_parameter_sets")("process")[process["strategy"]]
+                if process["strategy"] != strategy["name"]:
+                    changes = {}
+                    common_keys = [key for key in old_strategy["parameters"] \
+                            if key in strategy["parameters"]]
+                    for key in common_keys:
+                        if process["parameters"][key] == \
+                                old_strategy["parameters"][key]:
+                            changes[key] = strategy["parameters"][key]
+                        self.core.get("set_parameter_values")("process", changes)
             process["strategy"] = strategy["name"]
             parameters = process["parameters"]
             parameters.update(self.core.get("get_parameter_values")("process"))

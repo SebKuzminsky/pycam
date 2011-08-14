@@ -1009,7 +1009,7 @@ class ProjectGui(object):
             filename = filename()
         if not filename:
             filename = self.settings.get("get_filename_func")("Loading model ...",
-                    mode_load=True, type_filter=FILTER_MODEL, extra_widget=gtk.Label("Test"))
+                    mode_load=True, type_filter=FILTER_MODEL)
         if filename:
             file_type, importer = pycam.Importers.detect_file_type(filename)
             if file_type and callable(importer):
