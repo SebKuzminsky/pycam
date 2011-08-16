@@ -525,64 +525,6 @@ class ProjectGui(object):
             main_tab.set_sensitive(True)
         self.settings.register_event("gui-disable", disable_gui)
         self.settings.register_event("gui-enable", enable_gui)
-        # gcode settings
-        for objname, setting in (
-                ("GCodeTouchOffOnStartup", "touch_off_on_startup"),
-                ("GCodeTouchOffOnToolChange", "touch_off_on_tool_change")):
-            obj = self.gui.get_object(objname)
-            obj.connect("toggled", self.update_gcode_controls)
-            self.settings.add_item(setting, obj.get_active, obj.set_active)
-        touch_off_pos_selector = self.gui.get_object("TouchOffLocationSelector")
-        def get_touch_off_position_type():
-            index = touch_off_pos_selector.get_active()
-            if index < 0:
-                return PREFERENCES_DEFAULTS["touch_off_position_type"]
-            else:
-                return touch_off_pos_selector.get_model()[index][0]
-        def set_touch_off_position_type(new_key):
-            model = touch_off_pos_selector.get_model()
-            for index, (key, value) in enumerate(model):
-                if key == new_key:
-                    touch_off_pos_selector.set_active(index)
-                    break
-            else:
-                touch_off_pos_selector.set_active(-1)
-        touch_off_pos_selector.connect("changed", self.update_gcode_controls)
-        self.settings.add_item("touch_off_position_type",
-                get_touch_off_position_type, set_touch_off_position_type)
-        for axis in "XYZ":
-            obj = self.gui.get_object("ToolChangePos%s" % axis.upper())
-            self.settings.add_item("touch_off_position_%s" % axis.lower(),
-                    obj.get_value, obj.set_value)
-        for objname, setting in (
-                ("ToolChangeRapidMoveDown", "touch_off_rapid_move"),
-                ("ToolChangeSlowMoveDown", "touch_off_slow_move"),
-                ("ToolChangeSlowMoveSpeed", "touch_off_slow_feedrate"),
-                ("TouchOffHeight", "touch_off_height")):
-            obj = self.gui.get_object(objname)
-            self.settings.add_item(setting, obj.get_value, obj.set_value)
-        touch_off_pause = self.gui.get_object("TouchOffPauseExecution")
-        self.settings.add_item("touch_off_pause_execution",
-                touch_off_pause.get_active, touch_off_pause.set_active)
-        gcode_path_mode = self.gui.get_object("GCodeCornerStyleControl")
-        self.settings.add_item("gcode_path_mode", gcode_path_mode.get_active,
-                gcode_path_mode.set_active)
-        gcode_path_mode.connect("changed", self.update_gcode_controls)
-        gcode_motion_tolerance = self.gui.get_object(
-                "GCodeCornerStyleMotionTolerance")
-        self.settings.add_item("gcode_motion_tolerance",
-                gcode_motion_tolerance.get_value,
-                gcode_motion_tolerance.set_value)
-        gcode_naive_tolerance = self.gui.get_object(
-                "GCodeCornerStyleCAMTolerance")
-        self.settings.add_item("gcode_naive_tolerance",
-                gcode_naive_tolerance.get_value,
-                gcode_naive_tolerance.set_value)
-        gcode_start_stop_spindle = self.gui.get_object("GCodeStartStopSpindle")
-        self.settings.add_item("gcode_start_stop_spindle",
-                gcode_start_stop_spindle.get_active,
-                gcode_start_stop_spindle.set_active)
-        gcode_start_stop_spindle.connect("toggled", self.update_gcode_controls)
         # configure locations of external programs
         for auto_control_name, location_control_name, browse_button, key in (
                 ("ExternalProgramInkscapeAuto",
@@ -702,45 +644,7 @@ class ProjectGui(object):
             self.window.show()
 
     def update_all_controls(self):
-        self.update_gcode_controls()
         self.update_ode_settings()
-
-    def update_gcode_controls(self, widget=None):
-        # path mode
-        path_mode = self.settings.get("gcode_path_mode")
-        self.gui.get_object("GCodeToleranceTable").set_sensitive(path_mode == 3)
-        # spindle delay
-        sensitive = self.settings.get("gcode_start_stop_spindle")
-        self.gui.get_object("GCodeSpindleDelayLabel").set_sensitive(sensitive)
-        self.gui.get_object("GCodeSpindleDelay").set_sensitive(sensitive)
-        # tool change controls
-        pos_control = self.gui.get_object("TouchOffLocationSelector")
-        tool_change_pos_model = pos_control.get_model()
-        active_pos_index = pos_control.get_active()
-        if active_pos_index < 0:
-            pos_key = None
-        else:
-            pos_key = tool_change_pos_model[active_pos_index][0]
-        # show or hide the vbox containing the absolute tool change location
-        absolute_pos_box = self.gui.get_object("AbsoluteToolChangePositionBox")
-        if pos_key == "absolute":
-            absolute_pos_box.show()
-        else:
-            absolute_pos_box.hide()
-        # disable/enable the touch off position controls
-        position_controls_table = self.gui.get_object("TouchOffLocationTable")
-        touch_off_enabled = any([self.gui.get_object(objname).get_active()
-                for objname in ("GCodeTouchOffOnStartup",
-                    "GCodeTouchOffOnToolChange")])
-        position_controls_table.set_sensitive(touch_off_enabled)
-        # disable/enable touch probe height
-        if self.gui.get_object("GCodeTouchOffOnStartup").get_active():
-            update_func = "show"
-        else:
-            update_func = "hide"
-        for objname in ("TouchOffHeight", "TouchOffHeightLabel",
-                "LengthUnitTouchOffHeight"):
-            getattr(self.gui.get_object(objname), update_func)()
 
     def update_ode_settings(self, widget=None):
         if pycam.Utils.threading.is_multiprocessing_enabled() \

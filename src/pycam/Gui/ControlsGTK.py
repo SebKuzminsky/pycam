@@ -58,11 +58,12 @@ class InputBaseClass(object):
             control = self.get_widget()
         if not hasattr(self, "_handler_ids"):
             self._handler_ids = []
-        self._handler_ids.append(control.connect(signal, handler))
+        self._handler_ids.append((control, control.connect(signal, handler)))
 
     def destroy(self):
         while hasattr(self, "_handler_ids") and self._handler_ids:
-            self.get_widget().disconnect(self._handler_ids.pop())
+            control, handler_id = self._handler_ids.pop()
+            control.disconnect(handler_id)
         self.get_widget().destroy()
 
     def get_widget(self):
@@ -268,10 +269,10 @@ class ParameterSection(object):
             self._table.remove(child)
         # add the current controls
         for index, widget in enumerate(widgets):
-            if hasattr(widget, "get_label"):
+            if hasattr(widget[0], "get_label"):
                 # checkbox
-                widget.set_label(widget[1])
-                self._table.attach(widget, 0, 2, index, index + 1,
+                widget[0].set_label(widget[1])
+                self._table.attach(widget[0], 0, 2, index, index + 1,
                         xoptions=gtk.FILL, yoptions=gtk.FILL)
             elif not widget[1]:
                 self._table.attach(widget[0], 0, 2, index, index + 1,

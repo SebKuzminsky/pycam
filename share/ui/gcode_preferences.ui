@@ -4,6 +4,7 @@
   <!-- interface-naming-policy project-wide -->
   <object class="GtkDialog" id="GCodePreferencesWindow">
     <property name="border_width">5</property>
+    <property name="title" translatable="yes">GCode preferences</property>
     <property name="type_hint">normal</property>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox1">
