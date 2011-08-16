@@ -441,7 +441,6 @@ class ProjectGui(object):
                 add_preferences_item, clear_preferences)
         for obj_name, label, priority in (
                 ("GeneralSettingsPrefTab", "General", -50),
-                ("GCodePrefTab", "GCode", 10),
                 ("ProgramsPrefTab", "Programs", 50)):
             obj = self.gui.get_object(obj_name)
             obj.unparent()
@@ -527,21 +526,6 @@ class ProjectGui(object):
         self.settings.register_event("gui-disable", disable_gui)
         self.settings.register_event("gui-enable", enable_gui)
         # gcode settings
-        gcode_minimum_step_x = self.gui.get_object("GCodeMinimumStep_x")
-        self.settings.add_item("gcode_minimum_step_x",
-                gcode_minimum_step_x.get_value, gcode_minimum_step_x.set_value)
-        gcode_minimum_step_y = self.gui.get_object("GCodeMinimumStep_y")
-        self.settings.add_item("gcode_minimum_step_y",
-                gcode_minimum_step_y.get_value, gcode_minimum_step_y.set_value)
-        gcode_minimum_step_z = self.gui.get_object("GCodeMinimumStep_z")
-        self.settings.add_item("gcode_minimum_step_z",
-                gcode_minimum_step_z.get_value, gcode_minimum_step_z.set_value)
-        gcode_safety_height = self.gui.get_object("SafetyHeightControl")
-        self.settings.add_item("gcode_safety_height",
-                gcode_safety_height.get_value, gcode_safety_height.set_value)
-        gcode_spindle_delay = self.gui.get_object("GCodeSpindleDelay")
-        self.settings.add_item("gcode_spindle_delay",
-                gcode_spindle_delay.get_value, gcode_spindle_delay.set_value)
         for objname, setting in (
                 ("GCodeTouchOffOnStartup", "touch_off_on_startup"),
                 ("GCodeTouchOffOnToolChange", "touch_off_on_tool_change")):
@@ -580,9 +564,6 @@ class ProjectGui(object):
         touch_off_pause = self.gui.get_object("TouchOffPauseExecution")
         self.settings.add_item("touch_off_pause_execution",
                 touch_off_pause.get_active, touch_off_pause.set_active)
-        # redraw the toolpath if safety height changed
-        gcode_safety_height.connect("value-changed", lambda widget:
-                self.settings.emit_event("visual-item-updated"))
         gcode_path_mode = self.gui.get_object("GCodeCornerStyleControl")
         self.settings.add_item("gcode_path_mode", gcode_path_mode.get_active,
                 gcode_path_mode.set_active)
@@ -602,10 +583,6 @@ class ProjectGui(object):
                 gcode_start_stop_spindle.get_active,
                 gcode_start_stop_spindle.set_active)
         gcode_start_stop_spindle.connect("toggled", self.update_gcode_controls)
-        gcode_filename_extension = self.gui.get_object("GCodeFilenameExtension")
-        self.settings.add_item("gcode_filename_extension",
-                gcode_filename_extension.get_text,
-                gcode_filename_extension.set_text)
         # configure locations of external programs
         for auto_control_name, location_control_name, browse_button, key in (
                 ("ExternalProgramInkscapeAuto",

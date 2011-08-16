@@ -51,6 +51,20 @@ def _output_conversion(func):
 
 class InputBaseClass(object):
 
+    def connect(self, signal, handler, control=None):
+        if not handler:
+            return
+        if control is None:
+            control = self.get_widget()
+        if not hasattr(self, "_handler_ids"):
+            self._handler_ids = []
+        self._handler_ids.append(control.connect(signal, handler))
+
+    def destroy(self):
+        while hasattr(self, "_handler_ids") and self._handler_ids:
+            self.get_widget().disconnect(self._handler_ids.pop())
+        self.get_widget().destroy()
+
     def get_widget(self):
         return self.control
 
@@ -73,8 +87,7 @@ class InputNumber(InputBaseClass):
                 step_incr=increment)
         self.control = gtk.SpinButton(adjustment, digits=digits)
         self.control.set_value(start)
-        if change_handler:
-            self.control.connect("changed", change_handler)
+        self.connect("changed", change_handler)
 
     @_output_conversion
     def get_value(self):
@@ -83,6 +96,22 @@ class InputNumber(InputBaseClass):
     @_input_conversion
     def set_value(self, value):
         self.control.set_value(value)
+
+
+class InputString(InputBaseClass):
+
+    def __init__(self, start="", max_length=32, change_handler=None):
+        self.control = gtk.Entry(max_length)
+        self.control.set_text(start)
+        self.connect("changed", change_handler)
+
+    @_output_conversion
+    def get_value(self):
+        return self.control.get_text()
+
+    @_input_conversion
+    def set_value(self, value):
+        self.control.set_text(value)
 
 
 class InputChoice(InputBaseClass):
@@ -98,8 +127,7 @@ class InputChoice(InputBaseClass):
         self.control.pack_start(renderer)
         self.control.set_attributes(renderer, text=0)
         self.control.set_active(0)
-        if change_handler:
-            self.control.connect("changed", change_handler)
+        self.connect("changed", change_handler)
 
     @_output_conversion
     def get_value(self):
@@ -172,8 +200,7 @@ class InputTable(InputChoice):
         self._selection = self._treeview.get_selection()
         self._selection.set_mode(gtk.SELECTION_MULTIPLE)
         self.control.show_all()
-        if change_handler:
-            self._selection.connect("changed", change_handler)
+        self.connect("changed", change_handler, self._selection)
 
     def get_value(self):
         model, rows = self._selection.get_selected_rows()
@@ -195,8 +222,7 @@ class InputCheckBox(InputBaseClass):
     def __init__(self, start=False, change_handler=None):
         self.control = gtk.CheckButton()
         self.control.set_active(start)
-        if change_handler:
-            self.control.connect("toggled", change_handler)
+        self.connect("toggled", change_handler)
 
     @_output_conversion
     def get_value(self):

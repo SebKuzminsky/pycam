@@ -108,7 +108,7 @@ class ToolParamSpindleSpeed(pycam.Plugins.PluginBase):
     CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
-        self.control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=100000,
+        self.control = pycam.Gui.ControlsGTK.InputNumber(lower=1, upper=500000,
                 digits=0, change_handler=lambda widget=None: \
                     self.core.emit_event("tool-changed"))
         self.core.get("register_parameter")("tool", "spindle_speed",
