@@ -80,6 +80,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                     + "\nPlease install 'python-gtkglext1' to enable it.")
             return False
         if self.gui:
+            self.context_menu = gtk.Menu()
             self.window = self.gui.get_object("OpenGLWindow")
             self.core.get("configure-drag-drop-func")(self.window)
             self.window.add_accel_group(self.core.get("gtk-accel-group"))
@@ -204,47 +205,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.gui.get_object("OpenGLBox").pack_end(self.area)
             self.camera = Camera(self.core, lambda: (self.area.allocation.width,
                     self.area.allocation.height))
-            # add the items buttons (for configuring visible items)
-            # TODO: enable the context menu
-            if False and item_buttons:
-                items_button_container = self.gui.get_object("ViewItems")
-                for button in item_buttons:
-                    new_checkbox = gtk.ToggleToolButton()
-                    new_checkbox.set_label(button.get_label())
-                    new_checkbox.set_active(button.get_active())
-                    # Configure the two buttons (in "Preferences" and in the 3D view
-                    # widget) to toggle each other. This is required for a
-                    # consistent view of the setting.
-                    connect_button_handlers("toggled", button, new_checkbox)
-                    items_button_container.insert(new_checkbox, -1)
-                items_button_container.show_all()
-                # create the drop-down menu
-                if context_menu_actions:
-                    action_group = gtk.ActionGroup("context")
-                    for action in context_menu_actions:
-                        action_group.add_action(action)
-                    uimanager = gtk.UIManager()
-                    # The "pos" parameter is optional since gtk 2.12 - we can
-                    # remove it later.
-                    uimanager.insert_action_group(action_group, pos=-1)
-                    uimanager_template = '<ui><popup name="context">%s</popup></ui>'
-                    uimanager_item_template = """<menuitem action="%s" />"""
-                    uimanager_text = uimanager_template % "".join(
-                            [uimanager_item_template % action.get_name()
-                                    for action in context_menu_actions])
-                    uimanager.add_ui_from_string(uimanager_text)
-                    self.context_menu = uimanager.get_widget("/context")
-                    self.context_menu.insert(gtk.SeparatorMenuItem(), 0)
-                else:
-                    self.context_menu = gtk.Menu()
-                for index, button in enumerate(item_buttons):
-                    new_item = gtk.CheckMenuItem(button.get_label())
-                    new_item.set_active(button.get_active())
-                    connect_button_handlers("toggled", button, new_item)
-                    self.context_menu.insert(new_item, index)
-                self.context_menu.show_all()
-            else:
-                self.context_menu = None
             self._event_handlers = (
                     ("visual-item-updated", self.update_view),
                     ("visualization-state-changed", self._update_widgets),
@@ -294,12 +254,21 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         if name in self._display_items:
             self.log.debug("Tried to register display item '%s' twice" % name)
             return
-        widget = gtk.CheckButton(label)
-        widget.connect("toggled", lambda widget: \
+        # create an action and three derived items:
+        #  - a checkbox for the preferences window
+        #  - a tool item for the drop-down list in the 3D window
+        #  - a menu item for the context menu in the 3D window
+        action = gtk.ToggleAction(name, label, "Show/hide %s" % label, None)
+        action.connect("toggled", lambda widget: \
                 self.core.emit_event("visual-item-updated"))
+        checkbox = gtk.CheckButton(label)
+        action.connect_proxy(checkbox)
+        tool_item = action.create_tool_item()
+        menu_item = action.create_menu_item()
+        widgets = (checkbox, tool_item, menu_item)
         self._display_items[name] = {"name": name, "label": label,
-                "weight": weight, "widget": widget}
-        self.core.add_item(name, widget.get_active, widget.set_active)
+                "weight": weight, "widgets": widgets}
+        self.core.add_item(name, action.get_active, action.set_active)
         self._rebuild_display_items()
 
     def unregister_display_item(self, name):
@@ -311,14 +280,20 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         self._rebuild_display_items()
 
     def _rebuild_display_items(self):
-        box = self.gui.get_object("PreferencesVisibleItemsBox")
-        for child in box.get_children():
-            box.remove(child)
+        pref_box = self.gui.get_object("PreferencesVisibleItemsBox")
+        toolbar = self.gui.get_object("ViewItems")
+        for parent in pref_box, self.context_menu, toolbar:
+            for child in parent.get_children():
+                parent.remove(child)
         items = self._display_items.values()
         items.sort(key=lambda item: item["weight"])
         for item in items:
-            box.pack_start(item["widget"], expand=False)
-        box.show_all()
+            pref_box.pack_start(item["widgets"][0], expand=False)
+            toolbar.add(item["widgets"][1])
+            self.context_menu.add(item["widgets"][2])
+        pref_box.show_all()
+        toolbar.show_all()
+        self.context_menu.show_all()
     
     def register_color_setting(self, name, label, weight=100):
         if name in self._color_settings:

@@ -74,23 +74,20 @@ class OpenGLViewDimension(pycam.Plugins.PluginBase):
         low, high = pycam.Geometry.Model.get_combined_bounds(models)
         if None in low or None in high:
             low, high = (0, 0, 0), (0, 0, 0)
-        # model corners in 3D view
-        if None in low or None in high:
-            # all models are empty
-            dimension_bar.hide()
-            return
         if self.core.get("show_dimensions"):
-            dimension_bar.show()
-        for value, label_suffix in ((low[0], "XMin"), (low[1], "YMin"),
-                (low[2], "ZMin"), (high[0], "XMax"), (high[1], "YMax"),
-                (high[2], "ZMax")):
-            label_name = "ModelCorner%s" % label_suffix
-            value = "%.3f" % value
-            self.gui.get_object(label_name).set_label(value)
-        for name, size in (
-                ("model_dim_x", high[0] - low[0]),
-                ("model_dim_y", high[1] - low[1]),
-                ("model_dim_z", high[2] - low[2])):
-            self.gui.get_object(name).set_text("%.3f %s" \
-                    % (size, self.core.get("unit_string")))
+            for value, label_suffix in ((low[0], "XMin"), (low[1], "YMin"),
+                    (low[2], "ZMin"), (high[0], "XMax"), (high[1], "YMax"),
+                    (high[2], "ZMax")):
+                label_name = "ModelCorner%s" % label_suffix
+                value = "%.3f" % value
+                self.gui.get_object(label_name).set_label(value)
+            for name, size in (
+                    ("model_dim_x", high[0] - low[0]),
+                    ("model_dim_y", high[1] - low[1]),
+                    ("model_dim_z", high[2] - low[2])):
+                self.gui.get_object(name).set_text("%.3f %s" \
+                        % (size, self.core.get("unit_string")))
 
+            dimension_bar.show()
+        else:
+            dimension_bar.hide()

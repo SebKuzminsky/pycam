@@ -2,60 +2,6 @@
 <interface>
   <!-- interface-requires gtk+ 2.12 -->
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkListStore" id="ProcessingConfigs">
-    <columns>
-      <!-- column-name Name -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
-  <object class="GtkListStore" id="PathSetup">
-    <columns>
-      <!-- column-name index -->
-      <column type="guint"/>
-      <!-- column-name tool_id -->
-      <column type="guint"/>
-      <!-- column-name process_id -->
-      <column type="guint"/>
-    </columns>
-  </object>
-  <object class="GtkListStore" id="GCodeCornerStyleList">
-    <columns>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">Exact path mode (G61)</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">Exact stop mode (G61.1)</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">Continuous with maximum speed (G64)</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">Continuous with tolerance (G64 P/Q)</col>
-      </row>
-    </data>
-  </object>
-  <object class="GtkListStore" id="TouchOffLocationModel">
-    <columns>
-      <!-- column-name key -->
-      <column type="gchararray"/>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">startup</col>
-        <col id="1" translatable="yes">Initial location (at startup)</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">absolute</col>
-        <col id="1" translatable="yes">Fixed location (absolute)</col>
-      </row>
-    </data>
-  </object>
   <object class="GtkWindow" id="ProjectWindow">
     <property name="title" translatable="yes">PyCAM</property>
     <property name="role">pycam-main</property>
@@ -67,11 +13,6 @@
         <property name="spacing">2</property>
       </object>
     </child>
-  </object>
-  <object class="GtkAdjustment" id="SafetyHeightValue">
-    <property name="lower">-2000</property>
-    <property name="upper">2000</property>
-    <property name="step_increment">1</property>
   </object>
   <object class="GtkAction" id="OpenModel">
     <property name="label">_Open Model ...</property>
@@ -574,14 +515,6 @@ You should have received a copy of the GNU General Public License along with thi
   <object class="GtkAction" id="HelpHotkeys">
     <property name="label">_Keyboard Shortcuts</property>
   </object>
-  <object class="GtkAdjustment" id="GCodeCornerStyleMotionToleranceValue">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="GCodeCornerStyleCAMToleranceValue">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
-  </object>
   <object class="GtkAction" id="OpenRecentModel">
     <property name="label">Open _Recent</property>
   </object>
@@ -597,46 +530,6 @@ You should have received a copy of the GNU General Public License along with thi
   <object class="GtkAction" id="UndoButton">
     <property name="label">Undo latest model change</property>
     <property name="stock_id">gtk-undo</property>
-  </object>
-  <object class="GtkAdjustment" id="ToolChangeRapidMoveDownValue">
-    <property name="upper">10000</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="ToolChangeSlowMoveDownValue">
-    <property name="value">1</property>
-    <property name="lower">0.10000000000000001</property>
-    <property name="upper">10000</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="ToolChangeSlowMoveSpeedValue">
-    <property name="value">20</property>
-    <property name="lower">1</property>
-    <property name="upper">100000</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="ToolChangePosXValue">
-    <property name="lower">-10000</property>
-    <property name="upper">10000</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="ToolChangePosYValue">
-    <property name="lower">-10000</property>
-    <property name="upper">10000</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="ToolChangePosZValue">
-    <property name="lower">-10000</property>
-    <property name="upper">10000</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="TouchOffHeightValue">
-    <property name="lower">-10000</property>
-    <property name="upper">10000</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="GCodeSpindleDelayValue">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
   </object>
   <object class="GtkAction" id="HelpTouchOff">
     <property name="label">_Touch off and tool change</property>
