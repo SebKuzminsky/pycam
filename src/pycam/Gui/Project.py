@@ -32,6 +32,7 @@ import ConfigParser
 import StringIO
 import pickle
 import logging
+import xml.etree.ElementTree as ET
 
 import pycam.Gui.Settings
 import pycam.Importers.CXFImporter
@@ -150,6 +151,7 @@ class EventCore(pycam.Gui.Settings.Settings):
         self.event_handlers = {}
         self.ui_sections = {}
         self.chains = {}
+        self.xml_dumps = []
 
     def register_event(self, event, func, *args):
         if not event in self.event_handlers:
@@ -396,6 +398,22 @@ class ProjectGui(object):
                 self._store_undo_state)
         self.settings.register_event("model-change-after",
                 lambda: self.settings.emit_event("visual-item-updated"))
+        def dump_xml():
+            result = []
+            self.settings.call_chain("xml_dump", result)
+            root = ET.Element("pycam")
+            for match, element in result:
+                parent = root
+                if match:
+                    found = root.findall(match)
+                    if found:
+                        parent = found[0]
+                    else:
+                        log.debug("Failed to find XML parent: %s" % str(match))
+                parent.append(element)
+            # for DEBUGGING
+            #print ET.tostring(parent)
+        self.settings.register_event("visual-item-updated", dump_xml)
         # set the availability of ODE
         self.enable_ode_control = self.gui.get_object("SettingEnableODE")
         self.settings.add_item("enable_ode", self.enable_ode_control.get_active,
@@ -870,15 +888,6 @@ class ProjectGui(object):
         else:
             log.error("Failed to open the model: %s" % str(uris[0]))
         return False
-
-    def append_to_queue(self, func, *args, **kwargs):
-        # check if gui is currently active
-        if self.gui_is_active:
-            # queue the function call
-            self._batch_queue.append((func, args, kwargs))
-        else:
-            # call the function right now
-            func(*args, **kwargs)
 
     def load_recent_model_file(self, widget):
         uri = widget.get_current_uri()

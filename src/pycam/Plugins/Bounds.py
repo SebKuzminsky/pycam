@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import xml.etree.ElementTree as ET
+
 import pycam.Plugins
 # TODO: move Toolpath.Bounds here?
 import pycam.Toolpath
@@ -51,6 +53,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
 
     def setup(self):
         self._event_handlers = []
+        self.core.set("bounds", self)
         if self.gui:
             import gtk
             bounds_box = self.gui.get_object("BoundsBox")
@@ -132,6 +135,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
                         continue
             self._gtk_handlers.append((self.gui.get_object("NameCell"),
                     "edited", self._edit_bounds_name))
+            self.core.register_chain("xml_dump", self.dump_xml)
             self._event_handlers.extend((
                     ("bounds-selection-changed", self._switch_bounds),
                     ("bounds-changed", self._store_bounds_settings),
@@ -141,13 +145,13 @@ class Bounds(pycam.Plugins.ListPluginBase):
             self._trigger_table_update()
             self._switch_bounds()
             self._update_model_list()
-        self.core.set("bounds", self)
         self._event_handlers.append(("bounds-changed", "visual-item-updated"))
         self.register_event_handlers(self._event_handlers)
         return True
 
     def teardown(self):
         if self.gui:
+            self.core.unregister_chain("xml_dump", self.dump_xml)
             self.core.unregister_ui("main", self.gui.get_object("BoundsBox"))
             self.unregister_gtk_handlers(self._gtk_handlers)
         self.unregister_event_handlers(self._event_handlers)
@@ -386,6 +390,12 @@ class Bounds(pycam.Plugins.ListPluginBase):
                 new_text:
             self._treemodel[path][self.COLUMN_NAME] = new_text
 
+    def dump_xml(self, result):
+        root = ET.Element("bounds-list")
+        for bounds in self.core.get("bounds"):
+            root.append(bounds.dump_xml())
+        result.append((None, root))
+
 
 class BoundsDict(dict):
 
@@ -455,4 +465,20 @@ class BoundsDict(dict):
                 low[index] -= offset
                 high[index] += offset
         return low, high
+
+    def dump_xml(self, name):
+        leaf = ET.Element("bounds")
+        leaf.set("name", repr(name))
+        parameters = ET.SubElement(leaf, "parameters")
+        for key in self:
+            if "Models" == key:
+                models = self["Models"]
+                if len(models) > 0:
+                    models_leaf = ET.SubElement(parameters, "Models")
+                    for model in models:
+                        name = self.core.get("models").get_attr(model, "name")
+                        ET.SubElement(models_leaf, "model", text=name)
+            else:
+                parameters.set(key, repr(self[key]))
+        return leaf
 

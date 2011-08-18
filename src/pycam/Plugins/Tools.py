@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import xml.etree.ElementTree as ET
+
 import pycam.Plugins
 from pycam.Cutters.CylindricalCutter import CylindricalCutter
 from pycam.Cutters.SphericalCutter import SphericalCutter
@@ -35,6 +37,7 @@ class Tools(pycam.Plugins.ListPluginBase):
     LIST_ATTRIBUTE_MAP = {"id": COLUMN_TOOL_ID, "name": COLUMN_NAME}
 
     def setup(self):
+        self.core.set("tools", self)
         if self.gui:
             import gtk
             tool_frame = self.gui.get_object("ToolBox")
@@ -121,16 +124,17 @@ class Tools(pycam.Plugins.ListPluginBase):
                     ("tool-selection-changed", self._tool_switch),
                     ("tool-changed", self._store_tool_settings),
                     ("tool-shape-changed", self._store_tool_settings))
+            self.core.register_chain("xml_dump", self.dump_xml)
             self.register_model_update(update_model)
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
             self._tool_switch()
-        self.core.set("tools", self)
         return True
 
     def teardown(self):
         if self.gui:
+            self.core.unregister_chain("xml_dump", self.dump_xml)
             self.core.unregister_ui("main", self.gui.get_object("ToolBox"))
             self.core.unregister_ui_section("tool_speed")
             self.core.unregister_ui_section("tool_size")
@@ -285,4 +289,16 @@ class Tools(pycam.Plugins.ListPluginBase):
         }
         self.append(new_tool)
         self.select(new_tool)
+
+    def dump_xml(self, result):
+        root = ET.Element("tools")
+        for tool in self:
+            leaf = ET.SubElement(root, "tool")
+            for key in self.LIST_ATTRIBUTE_MAP:
+                leaf.set(key, repr(self.get_attr(tool, key)))
+            leaf.set("shape", tool["shape"])
+            parameters = ET.SubElement(leaf, "parameters")
+            for key, value in tool["parameters"].iteritems():
+                parameters.set(key, repr(value))
+        result.append((None, root))
 

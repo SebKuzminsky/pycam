@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import xml.etree.ElementTree as ET
+
 import pycam.Plugins
 
 
@@ -32,6 +34,7 @@ class Processes(pycam.Plugins.ListPluginBase):
     LIST_ATTRIBUTE_MAP = {"ref": COLUMN_REF, "name": COLUMN_NAME}
 
     def setup(self):
+        self.core.set("processes", self)
         if self.gui:
             import gtk
             self._gtk = gtk
@@ -97,6 +100,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             self._gtk_handlers.append((self.gui.get_object("StrategySelector"),
                     "changed", "process-strategy-changed"))
             self.register_model_update(update_model)
+            self.core.register_chain("xml_dump", self.dump_xml)
             self._event_handlers = (
                     ("process-strategy-list-changed", self._update_widgets),
                     ("process-selection-changed", self._process_switch),
@@ -104,11 +108,11 @@ class Processes(pycam.Plugins.ListPluginBase):
                     ("process-strategy-changed", self._store_process_settings))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
-        self.core.set("processes", self)
         return True
 
     def teardown(self):
         if self.gui:
+            self.core.unregister_chain("xml_dump", self.dump_xml)
             self.core.unregister_ui("main", self.gui.get_object("ProcessBox"))
             self.core.unregister_ui_section("process_path_parameters")
             self.core.unregister_ui("process_parameters",
@@ -259,4 +263,15 @@ class Processes(pycam.Plugins.ListPluginBase):
         }
         self.append(new_process)
         self.select(new_process)
+
+    def dump_xml(self, result):
+        root = ET.Element("processes")
+        for process in self:
+            leaf = ET.SubElement(root, "process")
+            leaf.set("name", repr(self.get_attr(process, "name")))
+            leaf.set("strategy", process["strategy"])
+            parameters = ET.SubElement(leaf, "parameters")
+            for key, value in process["parameters"].iteritems():
+                parameters.set(key, repr(value))
+        result.append((None, root))
 
