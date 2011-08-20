@@ -135,7 +135,6 @@ class Bounds(pycam.Plugins.ListPluginBase):
                         continue
             self._gtk_handlers.append((self.gui.get_object("NameCell"),
                     "edited", self._edit_bounds_name))
-            self.core.register_chain("xml_dump", self.dump_xml)
             self._event_handlers.extend((
                     ("bounds-selection-changed", self._switch_bounds),
                     ("bounds-changed", self._store_bounds_settings),
@@ -146,6 +145,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
             self._switch_bounds()
             self._update_model_list()
         self._event_handlers.append(("bounds-changed", "visual-item-updated"))
+        self.core.register_chain("xml_dump", self.dump_xml)
         self.register_event_handlers(self._event_handlers)
         return True
 
@@ -392,15 +392,15 @@ class Bounds(pycam.Plugins.ListPluginBase):
 
     def dump_xml(self, result):
         root = ET.Element("bounds-list")
-        for bounds in self.core.get("bounds"):
+        for bounds in self:
             root.append(bounds.dump_xml())
         result.append((None, root))
 
 
-class BoundsDict(dict):
+class BoundsDict(pycam.Plugins.ObjectWithAttributes):
 
     def __init__(self, core, *args, **kwargs):
-        super(BoundsDict, self).__init__(*args, **kwargs)
+        super(BoundsDict, self).__init__("bounds", *args, **kwargs)
         self.core = core
         self.update({
                 "BoundaryLowX": 0,

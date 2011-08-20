@@ -100,7 +100,6 @@ class Processes(pycam.Plugins.ListPluginBase):
             self._gtk_handlers.append((self.gui.get_object("StrategySelector"),
                     "changed", "process-strategy-changed"))
             self.register_model_update(update_model)
-            self.core.register_chain("xml_dump", self.dump_xml)
             self._event_handlers = (
                     ("process-strategy-list-changed", self._update_widgets),
                     ("process-selection-changed", self._process_switch),
@@ -108,6 +107,7 @@ class Processes(pycam.Plugins.ListPluginBase):
                     ("process-strategy-changed", self._store_process_settings))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
+        self.core.register_chain("xml_dump", self.dump_xml)
         return True
 
     def teardown(self):
@@ -258,20 +258,20 @@ class Processes(pycam.Plugins.ListPluginBase):
         strategies = self.core.get("get_parameter_sets")("process").values()
         strategies.sort(key=lambda item: item["weight"])
         strategy = strategies[0]
-        new_process = {"strategy": strategy["name"],
-                "parameters": strategy["parameters"].copy(),
-        }
+        new_process = ProcessEntity({"strategy": strategy["name"],
+                "parameters": strategy["parameters"].copy()})
         self.append(new_process)
         self.select(new_process)
 
     def dump_xml(self, result):
         root = ET.Element("processes")
         for process in self:
-            leaf = ET.SubElement(root, "process")
-            leaf.set("name", repr(self.get_attr(process, "name")))
-            leaf.set("strategy", process["strategy"])
-            parameters = ET.SubElement(leaf, "parameters")
-            for key, value in process["parameters"].iteritems():
-                parameters.set(key, repr(value))
+            root.append(process.get_xml())
         result.append((None, root))
+
+
+class ProcessEntity(pycam.Plugins.ObjectWithAttributes):
+
+    def __init__(self, parameters):
+        super(ProcessEntity, self).__init__("process", parameters)
 

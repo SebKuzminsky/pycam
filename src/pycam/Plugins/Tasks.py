@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import time
+import xml.etree.ElementTree as ET
 
 import pycam.Plugins
 import pycam.Utils
@@ -131,10 +132,12 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self._update_widgets()
             self._update_table()
             self._task_switch()
+        self.core.register_chain("xml_dump", self.dump_xml)
         self.core.set("tasks", self)
         return True
 
     def teardown(self):
+        self.core.unregister_chain("xml_dump", self.dump_xml)
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("TaskBox"))
             self.core.unregister_ui("task_parameters",
@@ -264,9 +267,8 @@ class Tasks(pycam.Plugins.ListPluginBase):
         types = self.core.get("get_parameter_sets")("task").values()
         types.sort(key=lambda item: item["weight"])
         one_type = types[0]
-        new_task = {"type": one_type["name"],
-                "parameters": one_type["parameters"].copy(),
-        }
+        new_task = TaskEntity({"type": one_type["name"],
+                "parameters": one_type["parameters"].copy()})
         self.append(new_task)
         self.select(new_task)
 
@@ -355,4 +357,16 @@ class Tasks(pycam.Plugins.ListPluginBase):
         if not use_multi_progress:
             progress.finish()
         return result
+
+    def dump_xml(self, result):
+        root = ET.Element("tasks")
+        for task in self:
+            root.append(task.get_xml())
+        result.append((None, root))
+
+
+class TaskEntity(pycam.Plugins.ObjectWithAttributes):
+
+    def __init__(self, parameters):
+        super(TaskEntity, self).__init__("task", parameters)
 

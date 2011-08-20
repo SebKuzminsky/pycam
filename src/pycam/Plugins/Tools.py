@@ -23,9 +23,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import xml.etree.ElementTree as ET
 
 import pycam.Plugins
-from pycam.Cutters.CylindricalCutter import CylindricalCutter
-from pycam.Cutters.SphericalCutter import SphericalCutter
-from pycam.Cutters.ToroidalCutter import ToroidalCutter
 
 
 class Tools(pycam.Plugins.ListPluginBase):
@@ -124,12 +121,12 @@ class Tools(pycam.Plugins.ListPluginBase):
                     ("tool-selection-changed", self._tool_switch),
                     ("tool-changed", self._store_tool_settings),
                     ("tool-shape-changed", self._store_tool_settings))
-            self.core.register_chain("xml_dump", self.dump_xml)
             self.register_model_update(update_model)
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
             self._tool_switch()
+        self.core.register_chain("xml_dump", self.dump_xml)
         return True
 
     def teardown(self):
@@ -284,21 +281,20 @@ class Tools(pycam.Plugins.ListPluginBase):
         shapes = self.core.get("get_parameter_sets")("tool").values()
         shapes.sort(key=lambda item: item["weight"])
         shape = shapes[0]
-        new_tool = {"shape": shape["name"],
-                "parameters": shape["parameters"].copy(),
-        }
+        new_tool = ToolEntity({"shape": shape["name"],
+                "parameters": shape["parameters"].copy()})
         self.append(new_tool)
         self.select(new_tool)
 
     def dump_xml(self, result):
         root = ET.Element("tools")
         for tool in self:
-            leaf = ET.SubElement(root, "tool")
-            for key in self.LIST_ATTRIBUTE_MAP:
-                leaf.set(key, repr(self.get_attr(tool, key)))
-            leaf.set("shape", tool["shape"])
-            parameters = ET.SubElement(leaf, "parameters")
-            for key, value in tool["parameters"].iteritems():
-                parameters.set(key, repr(value))
+            root.append(tool.get_xml())
         result.append((None, root))
+
+
+class ToolEntity(pycam.Plugins.ObjectWithAttributes):
+
+    def __init__(self, parameters):
+        super(ToolEntity, self).__init__("tool", parameters)
 

@@ -29,6 +29,7 @@ import gobject
 
 import pycam.Utils.log
 import pycam.Utils.locations
+import pycam.Utils.xml_handling
 
 
 _log = pycam.Utils.log.get_logger()
@@ -484,4 +485,19 @@ class ListPluginBase(PluginBase, list):
         else:
             raise KeyError("Attribute '%s' is not part of this list: %s" % \
                     (attr, ", ".join(self.LIST_ATTRIBUTE_MAP.keys())))
+
+
+class ObjectWithAttributes(dict):
+
+    def __init__(self, key, params=None):
+        if params is None:
+            params = {}
+        self.update(params)
+        self.node_key = key
+
+    def get_xml(self, name=None):
+        if name is None:
+            name = self.node_key
+        return pycam.Utils.xml_handling.get_xml(self, name=name,
+                ignore_self=True)
 
