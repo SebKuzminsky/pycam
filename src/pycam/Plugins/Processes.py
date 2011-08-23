@@ -107,12 +107,12 @@ class Processes(pycam.Plugins.ListPluginBase):
                     ("process-strategy-changed", self._store_process_settings))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
-        self.core.register_chain("xml_dump", self.dump_xml)
+        self.core.register_chain("state_dump", self.dump_state)
         return True
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_chain("xml_dump", self.dump_xml)
+            self.core.unregister_chain("state_dump", self.dump_state)
             self.core.unregister_ui("main", self.gui.get_object("ProcessBox"))
             self.core.unregister_ui_section("process_path_parameters")
             self.core.unregister_ui("process_parameters",
@@ -263,7 +263,7 @@ class Processes(pycam.Plugins.ListPluginBase):
         self.append(new_process)
         self.select(new_process)
 
-    def dump_xml(self, result):
+    def dump_state(self, result):
         root = ET.Element("processes")
         for process in self:
             root.append(process.get_xml())

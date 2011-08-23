@@ -145,13 +145,13 @@ class Bounds(pycam.Plugins.ListPluginBase):
             self._switch_bounds()
             self._update_model_list()
         self._event_handlers.append(("bounds-changed", "visual-item-updated"))
-        self.core.register_chain("xml_dump", self.dump_xml)
+        self.core.register_chain("state_dump", self.dump_state)
         self.register_event_handlers(self._event_handlers)
         return True
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_chain("xml_dump", self.dump_xml)
+            self.core.unregister_chain("state_dump", self.dump_state)
             self.core.unregister_ui("main", self.gui.get_object("BoundsBox"))
             self.unregister_gtk_handlers(self._gtk_handlers)
         self.unregister_event_handlers(self._event_handlers)
@@ -390,10 +390,10 @@ class Bounds(pycam.Plugins.ListPluginBase):
                 new_text:
             self._treemodel[path][self.COLUMN_NAME] = new_text
 
-    def dump_xml(self, result):
+    def dump_state(self, result):
         root = ET.Element("bounds-list")
         for bounds in self:
-            root.append(bounds.dump_xml())
+            root.append(bounds.get_xml())
         result.append((None, root))
 
 
@@ -465,20 +465,4 @@ class BoundsDict(pycam.Plugins.ObjectWithAttributes):
                 low[index] -= offset
                 high[index] += offset
         return low, high
-
-    def dump_xml(self, name):
-        leaf = ET.Element("bounds")
-        leaf.set("name", repr(name))
-        parameters = ET.SubElement(leaf, "parameters")
-        for key in self:
-            if "Models" == key:
-                models = self["Models"]
-                if len(models) > 0:
-                    models_leaf = ET.SubElement(parameters, "Models")
-                    for model in models:
-                        name = self.core.get("models").get_attr(model, "name")
-                        ET.SubElement(models_leaf, "model", text=name)
-            else:
-                parameters.set(key, repr(self[key]))
-        return leaf
 

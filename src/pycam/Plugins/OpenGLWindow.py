@@ -32,6 +32,7 @@ except (ImportError, RuntimeError):
 
 import gtk
 import math
+import xml.etree.ElementTree as ET
 
 from pycam.Gui.OpenGLTools import draw_complete_model_view
 from pycam.Geometry.Point import Point
@@ -212,6 +213,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # handlers
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
+            self.core.register_chain("state_dump", self.dump_state)
             # show the window - the handlers _must_ be registered before "show"
             self.area.show()
             toggle_3d.set_active(True)
@@ -221,6 +223,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
+            self.core.unregister_chain("state_dump", self.dump_state)
             self.core.unregister_ui("preferences",
                     self.gui.get_object("OpenGLPrefTab"))
             toggle_3d = self.gui.get_object("Toggle3DView")
@@ -240,6 +243,23 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # the area will be created during setup again
             self.container.remove(self.area)
             self.area = None
+
+    def dump_state(self, result):
+        # register all visible items ("show_model", ...) and OpenGL settings
+        for name in self._display_items.keys() + ["view_light", "view_shadow",
+                "view_polygon", "view_perspective", "drill_progress_max_fps"]:
+            item = ET.Element(name)
+            item.text = repr(bool(self.core.get(name)))
+            result.append(("settings/items", item))
+        # register all colors
+        for name in self._color_settings:
+            item = ET.Element(name)
+            color = self.core.get(name)
+            for index, color_key in enumerate(("red", "green", "blue",
+                    "alpha")):
+                sub = ET.SubElement(item, color_key)
+                sub.text = str(color[index])
+            result.append(("settings/colors", item))
 
     def update_view(self, widget=None, data=None):
         if self.is_visible:

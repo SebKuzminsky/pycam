@@ -46,6 +46,7 @@ import pycam.Utils
 import pycam.Plugins
 from pycam import VERSION
 import pycam.Physics.ode_physics
+import pycam.Utils.xml_handling
 
 GTKBUILD_FILE = "pycam-project.ui"
 GTKMENU_FILE = "menubar.xml"
@@ -151,7 +152,7 @@ class EventCore(pycam.Gui.Settings.Settings):
         self.event_handlers = {}
         self.ui_sections = {}
         self.chains = {}
-        self.xml_dumps = []
+        self.state_dumps = []
 
     def register_event(self, event, func, *args):
         if not event in self.event_handlers:
@@ -300,6 +301,26 @@ class EventCore(pycam.Gui.Settings.Settings):
         else:
             log.debug("Called an unknown chain: %s" % name)
 
+    def dump_state(self):
+        result = []
+        self.call_chain("state_dump", result)
+        root = ET.Element("pycam")
+        for match, element in result:
+            parent = root
+            if match:
+                chain = match.split("/")
+                for component in chain:
+                    if parent.find(component):
+                        parent = parent.find(component)
+                    else:
+                        item = ET.SubElement(parent, component)
+                        parent = item
+            parent.append(element)
+        return os.linesep.join(pycam.Utils.xml_handling.get_xml_lines(parent))
+
+    def reset_state(self):
+        pass
+
 
 class ProjectGui(object):
 
@@ -398,22 +419,6 @@ class ProjectGui(object):
                 self._store_undo_state)
         self.settings.register_event("model-change-after",
                 lambda: self.settings.emit_event("visual-item-updated"))
-        def dump_xml():
-            result = []
-            self.settings.call_chain("xml_dump", result)
-            root = ET.Element("pycam")
-            for match, element in result:
-                parent = root
-                if match:
-                    found = root.findall(match)
-                    if found:
-                        parent = found[0]
-                    else:
-                        log.debug("Failed to find XML parent: %s" % str(match))
-                parent.append(element)
-            # for DEBUGGING
-            #print ET.tostring(parent)
-        self.settings.register_event("visual-item-updated", dump_xml)
         # set the availability of ODE
         self.enable_ode_control = self.gui.get_object("SettingEnableODE")
         self.settings.add_item("enable_ode", self.enable_ode_control.get_active,
@@ -988,14 +993,15 @@ class ProjectGui(object):
         # no filename given -> exit
         if not filename:
             return
-        settings = pycam.Gui.Settings.ProcessSettings()
-        if not settings.write_to_file(filename, self.settings.get("tools"),
-                self.settings.get("processes"), self.settings.get("bounds"),
-                self.settings.get("tasks")):
-            log.error("Failed to save settings file")
-        else:
+        settings = self.settings.dump_state()
+        try:
+            out_file = open(filename, "w")
+            out_file.write(settings)
+            out_file.close()
             log.info("Task settings written to %s" % filename)
             self.add_to_recent_file_list(filename)
+        except IOError:
+            log.error("Failed to save settings file")
 
     def add_to_recent_file_list(self, filename):
         # Add the item to the recent files list - if it already exists.

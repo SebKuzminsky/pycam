@@ -132,12 +132,12 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self._update_widgets()
             self._update_table()
             self._task_switch()
-        self.core.register_chain("xml_dump", self.dump_xml)
+        self.core.register_chain("state_dump", self.dump_state)
         self.core.set("tasks", self)
         return True
 
     def teardown(self):
-        self.core.unregister_chain("xml_dump", self.dump_xml)
+        self.core.unregister_chain("state_dump", self.dump_state)
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("TaskBox"))
             self.core.unregister_ui("task_parameters",
@@ -358,7 +358,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             progress.finish()
         return result
 
-    def dump_xml(self, result):
+    def dump_state(self, result):
         root = ET.Element("tasks")
         for task in self:
             root.append(task.get_xml())

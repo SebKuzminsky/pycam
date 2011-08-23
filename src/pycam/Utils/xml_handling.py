@@ -42,3 +42,26 @@ def get_xml(item, name="value", ignore_self=False):
         leaf.text=repr(item)
         return leaf
 
+def get_xml_lines(item):
+    lines = []
+    content = ET.tostring(item)
+    content = content.replace("><", ">\n<")
+    indent = 0
+    for line in content.split("\n"):
+        indented = False
+        if line.startswith("</"):
+            indent -= 2
+            indented = True
+        lines.append(" " * indent + line)
+        if indented:
+            pass
+        elif line.endswith("/>"):
+            pass
+        elif line.startswith("</"):
+            indent -= 2
+        elif "</" in line:
+            pass
+        else:
+            indent += 2
+    return lines
+

@@ -126,12 +126,12 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
             self._tool_switch()
-        self.core.register_chain("xml_dump", self.dump_xml)
+        self.core.register_chain("state_dump", self.dump_state)
         return True
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_chain("xml_dump", self.dump_xml)
+            self.core.unregister_chain("state_dump", self.dump_state)
             self.core.unregister_ui("main", self.gui.get_object("ToolBox"))
             self.core.unregister_ui_section("tool_speed")
             self.core.unregister_ui_section("tool_size")
@@ -286,7 +286,7 @@ class Tools(pycam.Plugins.ListPluginBase):
         self.append(new_tool)
         self.select(new_tool)
 
-    def dump_xml(self, result):
+    def dump_state(self, result):
         root = ET.Element("tools")
         for tool in self:
             root.append(tool.get_xml())
