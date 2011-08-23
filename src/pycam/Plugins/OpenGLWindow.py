@@ -32,7 +32,6 @@ except (ImportError, RuntimeError):
 
 import gtk
 import math
-import xml.etree.ElementTree as ET
 
 from pycam.Gui.OpenGLTools import draw_complete_model_view
 from pycam.Geometry.Point import Point
@@ -213,17 +212,23 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # handlers
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
-            self.core.register_chain("state_dump", self.dump_state)
             # show the window - the handlers _must_ be registered before "show"
             self.area.show()
             toggle_3d.set_active(True)
             # refresh display
             self.core.emit_event("visual-item-updated")
+            def get_get_set_functions(name):
+                get_func = lambda: self.core.get(name)
+                set_func = lambda value: self.core.set(name, value)
+                return get_func, set_func
+            for name in ("view_light", "view_shadow", "view_polygon",
+                    "view_perspective", "drill_progress_max_fps"):
+                self.register_state_item("settings/view/opengl/%s" % name,
+                        *get_get_set_functions(name))
         return True
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_chain("state_dump", self.dump_state)
             self.core.unregister_ui("preferences",
                     self.gui.get_object("OpenGLPrefTab"))
             toggle_3d = self.gui.get_object("Toggle3DView")
@@ -243,23 +248,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # the area will be created during setup again
             self.container.remove(self.area)
             self.area = None
-
-    def dump_state(self, result):
-        # register all visible items ("show_model", ...) and OpenGL settings
-        for name in self._display_items.keys() + ["view_light", "view_shadow",
-                "view_polygon", "view_perspective", "drill_progress_max_fps"]:
-            item = ET.Element(name)
-            item.text = repr(bool(self.core.get(name)))
-            result.append(("settings/items", item))
-        # register all colors
-        for name in self._color_settings:
-            item = ET.Element(name)
-            color = self.core.get(name)
-            for index, color_key in enumerate(("red", "green", "blue",
-                    "alpha")):
-                sub = ET.SubElement(item, color_key)
-                sub.text = str(color[index])
-            result.append(("settings/colors", item))
+        self.clear_state_items()
 
     def update_view(self, widget=None, data=None):
         if self.is_visible:
@@ -287,15 +276,20 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         menu_item = action.create_menu_item()
         widgets = (checkbox, tool_item, menu_item)
         self._display_items[name] = {"name": name, "label": label,
-                "weight": weight, "widgets": widgets}
+                "weight": weight, "widgets": widgets, "action": action}
         self.core.add_item(name, action.get_active, action.set_active)
         self._rebuild_display_items()
+        # add this item to the state handler
+        self.register_state_item("settings/view/items/%s" % name,
+                action.get_active, action.set_active)
 
     def unregister_display_item(self, name):
         if not name in self._display_items:
             self.log.debug("Failed to unregister unknown display item: %s" % \
                     name)
             return
+        action = self._display_items[name]["action"]
+        self.unregister_state_item(name, action.get_active, action.set_active)
         del self._display_items[name]
         self._rebuild_display_items()
 
@@ -321,40 +315,38 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             return
         # color selectors
         def get_color_wrapper(obj):
-            def gtk_color_to_float():
+            def gtk_color_to_dict():
                 gtk_color = obj.get_color()
                 alpha = obj.get_alpha()
-                return (gtk_color.red / GTK_COLOR_MAX,
-                        gtk_color.green / GTK_COLOR_MAX,
-                        gtk_color.blue / GTK_COLOR_MAX,
-                        alpha / GTK_COLOR_MAX)
-            return gtk_color_to_float
+                return {"red": gtk_color.red / GTK_COLOR_MAX,
+                        "green": gtk_color.green / GTK_COLOR_MAX,
+                        "blue": gtk_color.blue / GTK_COLOR_MAX,
+                        "alpha": alpha / GTK_COLOR_MAX}
+            return gtk_color_to_dict
         def set_color_wrapper(obj):
-            def set_gtk_color_by_float(components):
-                # use alpha if it was given
-                if len(components) == 3:
-                    alpha = 1.0
-                else:
-                    alpha = components[3]
-                red, green, blue = components[:3]
-                obj.set_color(gtk.gdk.Color(int(red * GTK_COLOR_MAX),
-                        int(green * GTK_COLOR_MAX), int(blue * GTK_COLOR_MAX)))
-                obj.set_alpha(int(alpha * GTK_COLOR_MAX))
-            return set_gtk_color_by_float
+            def set_gtk_color_by_dict(color):
+                obj.set_color(gtk.gdk.Color(int(color["red"] * GTK_COLOR_MAX),
+                        int(color["green"] * GTK_COLOR_MAX),
+                        int(color["blue"] * GTK_COLOR_MAX)))
+                obj.set_alpha(int(color["alpha"] * GTK_COLOR_MAX))
+            return set_gtk_color_by_dict
         widget = gtk.ColorButton()
         widget.set_use_alpha(True)
+        wrappers = (get_color_wrapper(widget), set_color_wrapper(widget))
         self._color_settings[name] = {"name": name, "label": label,
-                "weight": weight, "widget": widget}
+                "weight": weight, "widget": widget, "wrappers": wrappers}
         widget.connect("color-set", lambda widget: \
                 self.core.emit_event("visual-item-updated"))
-        self.core.add_item(name, get_color_wrapper(widget),
-                set_color_wrapper(widget))
+        self.core.add_item(name, *wrappers)
+        self.register_state_item("settings/view/colors/%s" % name, *wrappers)
         self._rebuild_color_settings()
 
     def unregister_color_setting(self, name):
         if not name in self._color_settings:
             self.log.debug("Failed to unregister unknown color item: %s" % name)
             return
+        wrappers = self._color_settings[name]
+        self.unregister_state_item(name, *wrappers)
         del self._color_settings[name]
         self._rebuild_color_settings()
     
@@ -487,7 +479,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             GL.glMatrixMode(GL.GL_MODELVIEW)
             # clear the background with the configured color
             bg_col = self.core.get("color_background")
-            GL.glClearColor(bg_col[0], bg_col[1], bg_col[2], 0.0)
+            GL.glClearColor(bg_col["red"], bg_col["green"], bg_col["blue"], 0.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
             result = func(self, *args, **kwargs)
             self.camera.position_camera()
@@ -515,7 +507,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         # use vertex normals for smooth rendering
         GL.glShadeModel(GL.GL_SMOOTH)
         bg_col = self.core.get("color_background")
-        GL.glClearColor(bg_col[0], bg_col[1], bg_col[2], 0.0)
+        GL.glClearColor(bg_col["red"], bg_col["green"], bg_col["blue"], 0.0)
         GL.glHint(GL.GL_PERSPECTIVE_CORRECTION_HINT, GL.GL_NICEST)
         GL.glMatrixMode(GL.GL_MODELVIEW)
         # enable blending/transparency (alpha) for colors
@@ -538,8 +530,9 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         #GL.glEnable(GL.GL_MULTISAMPLE_ARB)
         GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
         GL.glPolygonOffset(1.0, 1.0)
-        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT_AND_DIFFUSE,
-                self.core.get("color_model") )
+        col = self.core.get("color_model")
+        col = (col["red"], col["green"], col["blue"], col["alpha"])
+        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT_AND_DIFFUSE, col)
         GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR,
                 (1.0, 1.0, 1.0, 1.0))
         GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (100.0))

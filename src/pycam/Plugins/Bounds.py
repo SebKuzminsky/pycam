@@ -20,8 +20,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import xml.etree.ElementTree as ET
-
 import pycam.Plugins
 # TODO: move Toolpath.Bounds here?
 import pycam.Toolpath
@@ -145,13 +143,13 @@ class Bounds(pycam.Plugins.ListPluginBase):
             self._switch_bounds()
             self._update_model_list()
         self._event_handlers.append(("bounds-changed", "visual-item-updated"))
-        self.core.register_chain("state_dump", self.dump_state)
         self.register_event_handlers(self._event_handlers)
+        self.register_state_item("bounds-list", self)
         return True
 
     def teardown(self):
+        self.clear_state_items()
         if self.gui:
-            self.core.unregister_chain("state_dump", self.dump_state)
             self.core.unregister_ui("main", self.gui.get_object("BoundsBox"))
             self.unregister_gtk_handlers(self._gtk_handlers)
         self.unregister_event_handlers(self._event_handlers)
@@ -389,12 +387,6 @@ class Bounds(pycam.Plugins.ListPluginBase):
         if (new_text != self._treemodel[path][self.COLUMN_NAME]) and \
                 new_text:
             self._treemodel[path][self.COLUMN_NAME] = new_text
-
-    def dump_state(self, result):
-        root = ET.Element("bounds-list")
-        for bounds in self:
-            root.append(bounds.get_xml())
-        result.append((None, root))
 
 
 class BoundsDict(pycam.Plugins.ObjectWithAttributes):

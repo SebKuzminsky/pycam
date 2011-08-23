@@ -20,8 +20,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import xml.etree.ElementTree as ET
-
 import pycam.Plugins
 
 
@@ -107,10 +105,11 @@ class Processes(pycam.Plugins.ListPluginBase):
                     ("process-strategy-changed", self._store_process_settings))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
-        self.core.register_chain("state_dump", self.dump_state)
+        self.register_state_item("processes", self)
         return True
 
     def teardown(self):
+        self.clear_state_items()
         if self.gui:
             self.core.unregister_chain("state_dump", self.dump_state)
             self.core.unregister_ui("main", self.gui.get_object("ProcessBox"))
@@ -262,12 +261,6 @@ class Processes(pycam.Plugins.ListPluginBase):
                 "parameters": strategy["parameters"].copy()})
         self.append(new_process)
         self.select(new_process)
-
-    def dump_state(self, result):
-        root = ET.Element("processes")
-        for process in self:
-            root.append(process.get_xml())
-        result.append((None, root))
 
 
 class ProcessEntity(pycam.Plugins.ObjectWithAttributes):

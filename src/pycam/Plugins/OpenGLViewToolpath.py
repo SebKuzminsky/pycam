@@ -90,9 +90,11 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
                     if last_rapid != rapid:
                         GL.glEnd()
                         if rapid:
-                            GL.glColor4f(*color_rapid)
+                            GL.glColor4f(color_rapid["red"], color_rapid["green"],
+                                    color_rapid["blue"], color_rapid["alpha"])
                         else:
-                            GL.glColor4f(*color_cut)
+                            GL.glColor4f(color_cut["red"], color_cut["green"],
+                                    color_cut["blue"], color_cut["alpha"])
                         # we need to wait until the color change is active
                         GL.glFinish()
                         GL.glBegin(GL.GL_LINE_STRIP)

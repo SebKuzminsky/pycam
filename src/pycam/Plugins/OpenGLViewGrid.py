@@ -87,7 +87,8 @@ class OpenGLViewGrid(pycam.Plugins.PluginBase):
             self.gui.get_object("MinorGridSizeLabel").set_text(
                     "%g%s" % (minor_distance, unit))
         line_counter = int(math.ceil(grid_size / minor_distance))
-        GL.glColor4f(*self.core.get("color_grid"))
+        color = self.core.get("color_grid")
+        GL.glColor4f(color["red"], color["green"], color["blue"], color["alpha"])
         GL.glFinish()
         is_light = GL.glIsEnabled(GL.GL_LIGHTING)
         GL.glDisable(GL.GL_LIGHTING)

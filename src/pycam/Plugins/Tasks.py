@@ -21,7 +21,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import time
-import xml.etree.ElementTree as ET
 
 import pycam.Plugins
 import pycam.Utils
@@ -132,12 +131,12 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self._update_widgets()
             self._update_table()
             self._task_switch()
-        self.core.register_chain("state_dump", self.dump_state)
+        self.register_state_item("tasks", self)
         self.core.set("tasks", self)
         return True
 
     def teardown(self):
-        self.core.unregister_chain("state_dump", self.dump_state)
+        self.clear_state_items()
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("TaskBox"))
             self.core.unregister_ui("task_parameters",
@@ -357,12 +356,6 @@ class Tasks(pycam.Plugins.ListPluginBase):
         if not use_multi_progress:
             progress.finish()
         return result
-
-    def dump_state(self, result):
-        root = ET.Element("tasks")
-        for task in self:
-            root.append(task.get_xml())
-        result.append((None, root))
 
 
 class TaskEntity(pycam.Plugins.ObjectWithAttributes):

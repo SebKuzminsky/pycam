@@ -100,13 +100,15 @@ def draw_complete_model_view(settings):
     if settings.get("show_simulation"):
         obj = settings.get("simulation_object")
         if not obj is None:
-            GL.glColor4f(*settings.get("color_material"))
+            color = settings.get("color_material")
+            GL.glColor4f(color["red"], color["green"], color["blue"], color["alpha"])
             # we need to wait until the color change is active
             GL.glFinish()
             obj.to_OpenGL()
     # draw the support grid
     if False and settings.get("show_support_grid") and settings.get("current_support_model"):
-        GL.glColor4f(*settings.get("color_support_grid"))
+        color = settings.get("color_support_grid")
+        GL.glColor4f(color["red"], color["green"], color["blue"], color["alpha"])
         # we need to wait until the color change is active
         GL.glFinish()
         settings.get("current_support_model").to_OpenGL()
@@ -122,7 +124,8 @@ def draw_complete_model_view(settings):
     if settings.get("show_drill"):
         cutter = settings.get("cutter")
         if not cutter is None:
-            GL.glColor4f(*settings.get("color_cutter"))
+            color = settings.get("color_cutter")
+            GL.glColor4f(color["red"], color["green"], color["blue"], color["alpha"])
             GL.glFinish()
             cutter.to_OpenGL()
     if settings.get("show_drill_progress") \

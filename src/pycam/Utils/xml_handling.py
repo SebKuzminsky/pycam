@@ -24,22 +24,25 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import xml.etree.ElementTree as ET
 
 
-def get_xml(item, name="value", ignore_self=False):
-    if not ignore_self and hasattr(item, "get_xml"):
-        return item.get_xml(name=name)
-    elif isinstance(item, (list, tuple, set)):
-        leaf = ET.Element("list", name=name)
+def get_xml(item, name=None):
+    if name is None:
+        if hasattr(item, "node_key"):
+            name = item.node_key
+        else:
+            name = "value"
+    if isinstance(item, (list, tuple, set)):
+        leaf = ET.Element(name)
         for single in item:
             leaf.append(get_xml(single))
         return leaf
     elif isinstance(item, dict):
-        leaf = ET.Element("dict", name=name)
+        leaf = ET.Element(name)
         for key, value in item.iteritems():
             leaf.append(get_xml(value, name=key))
         return leaf
     else:
         leaf = ET.Element(name)
-        leaf.text=repr(item)
+        leaf.text = repr(item)
         return leaf
 
 def get_xml_lines(item):

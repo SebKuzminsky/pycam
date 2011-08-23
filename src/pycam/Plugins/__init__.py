@@ -77,6 +77,34 @@ class PluginBase(object):
         self._func_cache = {}
         self._gtk_handler_id_cache = []
         self.enabled = True
+        self._state_items = []
+
+    def register_state_item(self, path, get_func, set_func=None):
+        group = (path, get_func, set_func)
+        if group in self._state_items:
+            self.log.debug("Trying to register a state item twice: %s" % \
+                    path)
+        else:
+            self._state_items.append(group)
+
+    def clear_state_items(self):
+        self._state_items = []
+
+    def unregister_state_item(self, path, get_func, set_func=None):
+        group = (path, get_func, set_func)
+        if group in self._state_items:
+            self._state_items.remove(group)
+        else:
+            self.log.debug("Trying to unregister an unknown state item: %s" % \
+                    path)
+
+    def dump_state(self, result):
+        for path, get_func, set_func in self._state_items:
+            if callable(get_func):
+                value = get_func()
+            else:
+                value = get_func
+            result.append((path, value))
 
     def __get_handler_func(self, func, params=None):
         if params is None:
@@ -494,10 +522,4 @@ class ObjectWithAttributes(dict):
             params = {}
         self.update(params)
         self.node_key = key
-
-    def get_xml(self, name=None):
-        if name is None:
-            name = self.node_key
-        return pycam.Utils.xml_handling.get_xml(self, name=name,
-                ignore_self=True)
 

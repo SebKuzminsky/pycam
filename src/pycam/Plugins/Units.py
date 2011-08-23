@@ -20,8 +20,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import xml.etree.ElementTree as ET
-
 import pycam.Plugins
 
 
@@ -60,21 +58,17 @@ class Units(pycam.Plugins.PluginBase):
                     (self.unit_change_window, "delete_event",
                         self.change_unit_apply, False)))
             self.register_gtk_handlers(self._gtk_handlers)
-            self.core.register_chain("state_dump", self.dump_state)
+        self.register_state_item("settings/unit", lambda: self.core.get("unit"),
+                lambda value: self.core.set("unit", value))
         return True
 
     def teardown(self):
+        self.core.clear_state_items()
         if self.gui:
-            self.core.unregister_chain("state_dump", self.dump_state)
             self.core.unregister_ui("preferences_general",
                     self.gui.get_object("UnitPrefBox"))
             self.unregister_gtk_handlers(self._gtk_handlers)
             # TODO: reset setting "unit" back to a default value?
-
-    def dump_state(self, result):
-        item = ET.Element("unit")
-        item.text = self.core.get("unit")
-        result.append(("settings", item))
 
     def change_unit_init(self, widget=None):
         new_unit = self.gui.get_object("unit_control").get_active_text()

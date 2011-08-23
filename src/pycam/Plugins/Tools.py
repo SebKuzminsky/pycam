@@ -20,8 +20,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import xml.etree.ElementTree as ET
-
 import pycam.Plugins
 
 
@@ -126,12 +124,12 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
             self._tool_switch()
-        self.core.register_chain("state_dump", self.dump_state)
+        self.register_state_item("tools", self)
         return True
 
     def teardown(self):
+        self.clear_state_items()
         if self.gui:
-            self.core.unregister_chain("state_dump", self.dump_state)
             self.core.unregister_ui("main", self.gui.get_object("ToolBox"))
             self.core.unregister_ui_section("tool_speed")
             self.core.unregister_ui_section("tool_size")
@@ -285,12 +283,6 @@ class Tools(pycam.Plugins.ListPluginBase):
                 "parameters": shape["parameters"].copy()})
         self.append(new_tool)
         self.select(new_tool)
-
-    def dump_state(self, result):
-        root = ET.Element("tools")
-        for tool in self:
-            root.append(tool.get_xml())
-        result.append((None, root))
 
 
 class ToolEntity(pycam.Plugins.ObjectWithAttributes):

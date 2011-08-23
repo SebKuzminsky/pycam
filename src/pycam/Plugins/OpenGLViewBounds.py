@@ -87,7 +87,8 @@ class OpenGLViewBounds(pycam.Plugins.PluginBase):
         if self.core.get("view_light"):
             GL.glDisable(GL.GL_LIGHTING)
         # lower rectangle
-        GL.glColor4f(*self.core.get("color_bounding_box"))
+        color = self.core.get("color_bounding_box")
+        GL.glColor4f(color["red"], color["green"], color["blue"], color["alpha"])
         GL.glFinish()
         GL.glBegin(GL.GL_LINES)
         # all combinations of neighbouring corners

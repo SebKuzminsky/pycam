@@ -20,8 +20,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import xml.etree.ElementTree as ET
-
 import pycam.Plugins
 import pycam.Gui.ControlsGTK
 
@@ -112,19 +110,15 @@ class GCodeSafetyHeight(pycam.Plugins.PluginBase):
                 self.safety_height.get_widget(), weight=20)
         self.core.add_item("gcode_safety_height",
                 self.safety_height.get_value, self.safety_height.set_value)
-        self.core.register_chain("state_dump", self.dump_state)
+        self.register_state_item("settings/gcode/gcode_safety_height",
+                self.safety_height.get_value, self.safety_height.set_value)
         return True
 
     def teardown(self):
-        self.core.unregister_chain("state_dump", self.dump_state)
+        self.clear_state_items()
         self.core.add_item("gcode_safety_height", lambda value: None,
                 lambda: None)
         self.safety_height.destroy()
-
-    def dump_state(self, result):
-        item = ET.Element("gcode_safety_height")
-        item.text = "%f" % self.core.get("gcode_safety_height")
-        result.append(("settings/gcode", item))
 
 
 class GCodeFilenameExtension(pycam.Plugins.PluginBase):
@@ -167,27 +161,23 @@ class GCodeStepWidth(pycam.Plugins.PluginBase):
             control = pycam.Gui.ControlsGTK.InputNumber(digits=8, start=0.0001,
                     increment=0.00005)
             # TODO: this should be done via parameter groups based on postprocessors
+            name = "gcode_minimum_step_%s" % key
             control.get_widget().show()
-            self.core.add_item("gcode_minimum_step_%s" % key,
-                    control.get_value, control.set_value)
+            self.core.add_item(name, control.get_value, control.set_value)
             self.core.register_ui("gcode_step_width", key.upper(),
                     control.get_widget(), weight="xyz".index(key))
+            self.register_state_item("settings/gcode/%s" % name,
+                    control.get_value, control.set_value)
             self.controls.append(control)
         return True
 
     def teardown(self):
+        self.clear_state_items()
         while self.controls:
             self.core.unregister_ui("gcode_step_width", self.controls.pop())
         for key in "xyz":
             self.core.add_item("gcode_minimum_step_%s" % key, lambda: None,
                     lambda value: None)
-
-    def dump_state(self, result):
-        for key in "xyz":
-            item = ET.Element("gcode_minimum_step_%s" % key)
-            item.text = "%f" % self.core.get("gcode_minimum_step_%s" % key)
-            result.append(("settings/gcode", item))
-                        
 
 class GCodeSpindle(pycam.Plugins.PluginBase):
 

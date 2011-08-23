@@ -74,15 +74,15 @@ PREFERENCES_DEFAULTS = {
         "show_toolpath": True,
         "show_drill": False,
         "show_directions": False,
-        "color_background": (0.0, 0.0, 0.0, 1.0),
-        "color_model": (0.5, 0.5, 1.0, 1.0),
-        "color_support_grid": (0.8, 0.8, 0.3, 1.0),
-        "color_bounding_box": (0.3, 0.3, 0.3, 1.0),
-        "color_cutter": (1.0, 0.2, 0.2, 1.0),
-        "color_toolpath_cut": (1.0, 0.5, 0.5, 1.0),
-        "color_toolpath_return": (0.9, 1.0, 0.1, 0.4),
-        "color_material": (1.0, 0.5, 0.0, 1.0),
-        "color_grid": (0.75, 1.0, 0.7, 0.55),
+        "color_background": {"red": 0.0, "green": 0.0, "blue": 0.0, "alpha": 1.0},
+        "color_model": {"red": 0.5, "green": 0.5, "blue": 1.0, "alpha": 1.0},
+        "color_support_grid": {"red": 0.8, "green": 0.8, "blue": 0.3, "alpha": 1.0},
+        "color_bounding_box": {"red": 0.3, "green": 0.3, "blue": 0.3, "alpha": 1.0},
+        "color_cutter": {"red": 1.0, "green": 0.2, "blue": 0.2, "alpha": 1.0},
+        "color_toolpath_cut": {"red": 1.0, "green": 0.5, "blue": 0.5, "alpha": 1.0},
+        "color_toolpath_return": {"red": 0.9, "green": 1.0, "blue": 0.1, "alpha": 0.4},
+        "color_material": {"red": 1.0, "green": 0.5, "blue": 0.0, "alpha": 1.0},
+        "color_grid": {"red": 0.75, "green": 1.0, "blue": 0.7, "alpha": 0.55},
         "view_light": True,
         "view_shadow": True,
         "view_polygon": True,
@@ -303,20 +303,25 @@ class EventCore(pycam.Gui.Settings.Settings):
 
     def dump_state(self):
         result = []
-        self.call_chain("state_dump", result)
+        for plugin in self.get("plugin-manager").get_plugins():
+            if plugin.enabled:
+                plugin.dump_state(result)
         root = ET.Element("pycam")
         for match, element in result:
+            chain = match.split("/")
+            if not hasattr(element, "findtext"):
+                # not an instance of ET.Element
+                element = pycam.Utils.xml_handling.get_xml(element, chain[-1])
             parent = root
             if match:
-                chain = match.split("/")
-                for component in chain:
+                for component in chain[:-1]:
                     if parent.find(component):
                         parent = parent.find(component)
                     else:
                         item = ET.SubElement(parent, component)
                         parent = item
             parent.append(element)
-        return os.linesep.join(pycam.Utils.xml_handling.get_xml_lines(parent))
+        return os.linesep.join(pycam.Utils.xml_handling.get_xml_lines(root))
 
     def reset_state(self):
         pass
