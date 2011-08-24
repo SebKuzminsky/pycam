@@ -75,8 +75,7 @@ class EMCToolExport(pycam.Plugins.PluginBase):
             tools_dict = []
             tools = self.core.get("tools")
             for tool in tools:
-                tools_dict.append({"name": tools.get_attr(tool, "name"),
-                        "id": tools.get_attr(tool, "id"),
+                tools_dict.append({"name": tool["name"], "id": tool["id"],
                         "radius": tool["parameters"].get("radius", 1)})
             export = pycam.Exporters.EMCToolExporter.EMCToolExporter(tools_dict)
             text = export.get_tool_definition_string()

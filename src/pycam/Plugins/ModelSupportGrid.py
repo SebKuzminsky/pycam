@@ -288,7 +288,7 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
             self.grid_adjustment_selector.set_active(-1)
 
     def _get_bounds(self):
-        models = self.core.get("models").get_selected()
+        models = [m.model for m in self.core.get("models").get_selected()]
         low, high = pycam.Geometry.Model.get_combined_bounds(models)
         if None in low or None in high:
             return [0, 0, 0], [0, 0, 0]
@@ -298,3 +298,4 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
                 low[index] -= 5
                 high[index] += 5
             return low, high
+

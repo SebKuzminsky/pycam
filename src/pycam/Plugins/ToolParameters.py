@@ -31,8 +31,8 @@ class ToolParamRadius(pycam.Plugins.PluginBase):
     CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
-        self.control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=99,
-                digits=0, change_handler=lambda widget=None: \
+        self.control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=999,
+                digits=4, change_handler=lambda widget=None: \
                     self.core.emit_event("tool-changed"))
         self.control.set_conversion(set_conv=lambda value: value * 2.0,
                 get_conv=lambda value: value / 2.0)
@@ -61,8 +61,8 @@ class ToolParamTorusRadius(pycam.Plugins.PluginBase):
     CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
-        self.control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=99,
-                digits=0, change_handler=lambda widget=None: \
+        self.control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=999,
+                digits=4, change_handler=lambda widget=None: \
                     self.core.emit_event( "tool-changed"))
         self.core.get("register_parameter")("tool", "torus_radius",
                 self.control)
@@ -81,7 +81,7 @@ class ToolParamFeedrate(pycam.Plugins.PluginBase):
     CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
-        self.control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=10000,
+        self.control = pycam.Gui.ControlsGTK.InputNumber(lower=0, upper=50000,
                 digits=0, change_handler=lambda widget=None: \
                     self.core.emit_event("tool-changed"))
         self.core.get("register_parameter")("tool", "feedrate", self.control)

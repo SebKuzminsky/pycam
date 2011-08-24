@@ -67,7 +67,7 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
         if path_generator is None:
             # we assume that an error message was given already
             return
-        models = task["parameters"]["collision_models"]
+        models = [m.model for m in task["parameters"]["collision_models"]]
         moves = path_generator.GenerateToolPath(tool, models, motion_grid,
                 minz=low[2], maxz=high[2], draw_callback=callback)
         if not moves:

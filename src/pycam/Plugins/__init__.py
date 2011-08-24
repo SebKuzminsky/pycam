@@ -488,32 +488,6 @@ class ListPluginBase(PluginBase, list):
         # initialize the state of the button
         self._update_list_action_button_state(modelview, action, button)
 
-    def get_attr(self, item, attr, model=None, id_col=None):
-        return self.__get_set_attr(item, attr, write=False, model=model, id_col=id_col)
-
-    def set_attr(self, item, attr, value, model=None, id_col=None):
-        return self.__get_set_attr(item, attr, value=value, write=True, model=model, id_col=id_col)
-
-    def __get_set_attr(self, item, attr, value=None, write=True, model=None, id_col=None):
-        if model is None:
-            # TODO: "self.treemodel" should not be used here
-            model = self._treemodel
-        if id_col is None:
-            id_col = self.COLUMN_REF
-        if attr in self.LIST_ATTRIBUTE_MAP:
-            col = self.LIST_ATTRIBUTE_MAP[attr]
-            for index in range(len(model)):
-                if model[index][id_col] == id(item):
-                    if write:
-                        model[index][col] = value
-                        return
-                    else:
-                        return model[index][col]
-            raise IndexError("Item '%s' not found in %s" % (item, list(model)))
-        else:
-            raise KeyError("Attribute '%s' is not part of this list: %s" % \
-                    (attr, ", ".join(self.LIST_ATTRIBUTE_MAP.keys())))
-
 
 class ObjectWithAttributes(dict):
 

@@ -92,6 +92,7 @@ class ModelSupportDistributed(pycam.Plugins.PluginBase):
             return
         grid_type = self.core.get("support_model_type")
         support_model = None
+        # TODO: completely broken code
         if grid_type in ("distributed_edges", "distributed_corners"):
             s = self.core
             if (s.get("support_grid_thickness") > 0) \
@@ -102,7 +103,7 @@ class ModelSupportDistributed(pycam.Plugins.PluginBase):
                 bounds = s.get("current_bounds")
                 if bounds:
                     minz = bounds.get_absolute_limits(
-                            reference=model.get_bounds())[0][2]
+                            reference=model.model.get_bounds())[0][2]
                     corner_start = (grid_type == "distributed_corners")
                     support_model = pycam.Toolpath.SupportGrid.get_support_distributed(
                             s.get("model"), minz,

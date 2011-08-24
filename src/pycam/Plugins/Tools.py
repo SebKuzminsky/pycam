@@ -28,8 +28,7 @@ class Tools(pycam.Plugins.ListPluginBase):
     DEPENDS = ["ParameterGroupManager"]
     CATEGORIES = ["Tool"]
     UI_FILE = "tools.ui"
-    COLUMN_REF, COLUMN_TOOL_ID, COLUMN_NAME = range(3)
-    LIST_ATTRIBUTE_MAP = {"id": COLUMN_TOOL_ID, "name": COLUMN_NAME}
+    COLUMN_REF = 0
 
     def setup(self):
         self.core.set("tools", self)
@@ -41,7 +40,7 @@ class Tools(pycam.Plugins.ListPluginBase):
             self._gtk_handlers = []
             self.core.register_chain("get_toolpath_information",
                     self.get_toolpath_information)
-            self._modelview = self.gui.get_object("ToolEditorTable")
+            self._modelview = self.gui.get_object("ToolTable")
             for action, obj_name in ((self.ACTION_UP, "ToolMoveUp"),
                     (self.ACTION_DOWN, "ToolMoveDown"),
                     (self.ACTION_DELETE, "ToolDelete")):
@@ -85,12 +84,12 @@ class Tools(pycam.Plugins.ListPluginBase):
                     self.speed_widget.add_widget,
                     self.speed_widget.clear_widgets)
             # table updates
-            cell = self.gui.get_object("ToolTableShapeCell")
-            self.gui.get_object("ToolTableShapeColumn").set_cell_data_func(
+            cell = self.gui.get_object("ShapeCell")
+            self.gui.get_object("ShapeColumn").set_cell_data_func(
                     cell, self._render_tool_shape)
-            self._gtk_handlers.append((self.gui.get_object("ToolTableIDCell"),
+            self._gtk_handlers.append((self.gui.get_object("IDCell"),
                     "edited", self._edit_tool_id))
-            self._gtk_handlers.append((self.gui.get_object("ToolTableNameCell"),
+            self._gtk_handlers.append((self.gui.get_object("NameCell"),
                     "edited", self._edit_tool_name))
             self._treemodel = self.gui.get_object("ToolList")
             self._treemodel.clear()
@@ -103,8 +102,7 @@ class Tools(pycam.Plugins.ListPluginBase):
                 self._treemodel.clear()
                 for index, item in enumerate(self):
                     if not id(item) in cache:
-                        cache[id(item)] = [id(item), index + 1,
-                                "Tool #%d" % index]
+                        cache[id(item)] = [id(item)]
                     self._treemodel.append(cache[id(item)])
                 self.core.emit_event("tool-list-changed")
             # selector
@@ -118,11 +116,14 @@ class Tools(pycam.Plugins.ListPluginBase):
                     ("tool-shape-list-changed", self._update_widgets),
                     ("tool-selection-changed", self._tool_switch),
                     ("tool-changed", self._store_tool_settings),
+                    ("tool-changed", self._trigger_table_update),
+                    ("tool-list-changed", self._trigger_table_update),
                     ("tool-shape-changed", self._store_tool_settings))
             self.register_model_update(update_model)
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
+            self._trigger_table_update()
             self._tool_switch()
         self.register_state_item("tools", self)
         return True
@@ -158,7 +159,20 @@ class Tools(pycam.Plugins.ListPluginBase):
 
     def get_toolpath_information(self, item, data):
         if item in self:
-            data["tool_id"] = self.get_attr(item, "id")
+            data["tool_id"] = item["id"]
+
+    def _trigger_table_update(self):
+        self.gui.get_object("IDColumn").set_cell_data_func(
+                self.gui.get_object("IDCell"), self._render_tool_info, "id")
+        self.gui.get_object("NameColumn").set_cell_data_func(
+                self.gui.get_object("NameCell"), self._render_tool_info, "name")
+        self.gui.get_object("ShapeColumn").set_cell_data_func(
+                self.gui.get_object("ShapeCell"), self._render_tool_shape)
+
+    def _render_tool_info(self, column, cell, model, m_iter, key):
+        path = model.get_path(m_iter)
+        tool = self[path[0]]
+        cell.set_property("text", str(tool[key]))
 
     def _render_tool_shape(self, column, cell, model, m_iter):
         path = model.get_path(m_iter)
@@ -172,18 +186,21 @@ class Tools(pycam.Plugins.ListPluginBase):
 
     def _edit_tool_name(self, cell, path, new_text):
         path = int(path)
-        if (new_text != self._treemodel[path][self.COLUMN_NAME]) and \
-                new_text:
-            self._treemodel[path][self.COLUMN_NAME] = new_text
+        tool_ref = self._treemodel[path][self.COLUMN_REF]
+        tool = [t for t in self if id(t) == tool_ref][0]
+        if (new_text != tool["name"]) and new_text:
+            tool["name"] = new_text
 
     def _edit_tool_id(self, cell, path, new_text):
         path = int(path)
+        tool_ref = self._treemodel[path][self.COLUMN_REF]
+        tool = [t for t in self if id(t) == tool_ref][0]
         try:
             new_value = int(new_text)
         except ValueError:
             return
-        if str(new_value) != self._treemodel[path][self.COLUMN_TOOL_ID]:
-            self._treemodel[path][self.COLUMN_TOOL_ID] = new_value
+        if new_value != tool["id"]:
+            tool["id"] = new_value
 
     def _get_shape(self, name=None):
         shapes = self.core.get("get_parameter_sets")("tool")
@@ -210,12 +227,6 @@ class Tools(pycam.Plugins.ListPluginBase):
                 break
         else:
             selector.set_active(-1)
-
-    def _trigger_table_update(self):
-        # trigger a table update - this is clumsy!
-        cell = self.gui.get_object("ToolTableShapeColumn")
-        renderer = self.gui.get_object("ToolTableShapeCell")
-        cell.set_cell_data_func(renderer, self._render_tool_shape)
 
     def _update_widgets(self):
         selected = self._get_shape()
@@ -274,13 +285,23 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.core.unblock_event("tool-changed")
             # trigger a widget update
             self.core.emit_event("tool-shape-changed")
+
+    def _get_new_tool_id_and_name(self):
+        tools = self.core.get("tools")
+        tool_ids = [tool["id"] for tool in tools]
+        tool_id = 1
+        while tool_id in tool_ids:
+            tool_id += 1
+        return (tool_id, "Tool #%d" % tool_id)
         
     def _tool_new(self, *args):
         shapes = self.core.get("get_parameter_sets")("tool").values()
         shapes.sort(key=lambda item: item["weight"])
         shape = shapes[0]
+        tool_id, tool_name = self._get_new_tool_id_and_name()
         new_tool = ToolEntity({"shape": shape["name"],
-                "parameters": shape["parameters"].copy()})
+                "parameters": shape["parameters"].copy(),
+                "id": tool_id, "name": tool_name})
         self.append(new_tool)
         self.select(new_tool)
 

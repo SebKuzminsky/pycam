@@ -87,7 +87,7 @@ class Clipboard(pycam.Plugins.PluginBase):
         models = self.core.get("models").get_selected()
         exportable = []
         for model in models:
-            if model.is_export_supported():
+            if model.model.is_export_supported():
                 exportable.append(model)
         return exportable
 
@@ -128,11 +128,11 @@ class Clipboard(pycam.Plugins.PluginBase):
         def same_type(m1, m2):
             return isinstance(m1, pycam.Geometry.Model.ContourModel) == \
                     isinstance(m2, pycam.Geometry.Model.ContourModel)
-        merged_model = models.pop(0)
+        merged_model = models.pop(0).model
         for model in models:
             # merge only 3D _or_ 2D models (don't mix them)
-            if same_type(merged_model, model):
-                merged_model += model
+            if same_type(merged_model, model.model):
+                merged_model += model.model
         # TODO: add "comment=get_meta_data()" here
         merged_model.export(unit=self.core.get("unit")).write(text_buffer)
         text_buffer.seek(0)
@@ -168,8 +168,9 @@ class Clipboard(pycam.Plugins.PluginBase):
                     fonts_cache=self.core.get("fonts"),
                     callback=progress.update)
             if model:
+                models = self.core.get("models")
                 self.log.info("Loaded a model from clipboard")
-                self.core.get("models").append(model)
+                models.add_model(model, name_template="Pasted model #%d")
             else:
                 self.log.warn("Failed to load a model from clipboard")
         else:

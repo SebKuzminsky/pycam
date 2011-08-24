@@ -28,8 +28,7 @@ class Processes(pycam.Plugins.ListPluginBase):
     DEPENDS = ["ParameterGroupManager"]
     CATEGORIES = ["Process"]
     UI_FILE = "processes.ui"
-    COLUMN_REF, COLUMN_NAME = range(2)
-    LIST_ATTRIBUTE_MAP = {"ref": COLUMN_REF, "name": COLUMN_NAME}
+    COLUMN_REF = 0
 
     def setup(self):
         self.core.set("processes", self)
@@ -92,7 +91,7 @@ class Processes(pycam.Plugins.ListPluginBase):
                 self._treemodel.clear()
                 for index, item in enumerate(self):
                     if not id(item) in cache:
-                        cache[id(item)] = [id(item), "Process #%d" % index]
+                        cache[id(item)] = [id(item)]
                     self._treemodel.append(cache[id(item)])
                 self.core.emit_event("process-list-changed")
             self._gtk_handlers.append((self.gui.get_object("StrategySelector"),
@@ -137,21 +136,28 @@ class Processes(pycam.Plugins.ListPluginBase):
     def _render_process_description(self, column, cell, model, m_iter):
         path = model.get_path(m_iter)
         data = self[path[0]]
-        # find the current strategy
+        # TODO: describe the strategy
         text = "TODO"
         cell.set_property("text", text)
 
+    def _render_process_name(self, column, cell, model, m_iter):
+        path = model.get_path(m_iter)
+        data = self[path[0]]
+        cell.set_property("text", data["name"])
+
     def _edit_process_name(self, cell, path, new_text):
         path = int(path)
-        if (new_text != self._treemodel[path][self.COLUMN_NAME]) and \
-                new_text:
-            self._treemodel[path][self.COLUMN_NAME] = new_text
+        process_ref = self._treemodel[path][self.COLUMN_REF]
+        process = [p for p in self if id(p) == process_ref][0]
+        if (new_text != process["name"]) and new_text:
+            process["name"] = new_text
 
     def _trigger_table_update(self):
-        # trigger a table update - this is clumsy!
-        cell = self.gui.get_object("DescriptionColumn")
-        renderer = self.gui.get_object("DescriptionCell")
-        cell.set_cell_data_func(renderer, self._render_process_description)
+        self.gui.get_object("NameColumn").set_cell_data_func(
+                self.gui.get_object("NameCell"), self._render_process_name)
+        self.gui.get_object("DescriptionColumn").set_cell_data_func(
+                self.gui.get_object("DescriptionCell"),
+                self._render_process_description)
 
     def _update_widgets(self):
         selected = self._get_strategy()
@@ -257,8 +263,14 @@ class Processes(pycam.Plugins.ListPluginBase):
         strategies = self.core.get("get_parameter_sets")("process").values()
         strategies.sort(key=lambda item: item["weight"])
         strategy = strategies[0]
+        strategy_names = [process["name"] for process in self]
+        process_id = 1
+        name_template = "Process #%d"
+        while (name_template % process_id) in strategy_names:
+            process_id += 1
         new_process = ProcessEntity({"strategy": strategy["name"],
-                "parameters": strategy["parameters"].copy()})
+                "parameters": strategy["parameters"].copy(),
+                "name": name_template % process_id})
         self.append(new_process)
         self.select(new_process)
 

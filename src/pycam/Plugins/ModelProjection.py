@@ -59,7 +59,8 @@ class ModelProjection(pycam.Plugins.PluginBase):
         models = self.core.get("models").get_selected()
         projectables = []
         for model in models:
-            if (not model is None) and hasattr(model, "get_waterline_contour"):
+            if (not model is None) and \
+                    hasattr(model.model, "get_waterline_contour"):
                 projectables.append(model)
         return projectables
 
@@ -78,7 +79,8 @@ class ModelProjection(pycam.Plugins.PluginBase):
         progress = self.core.get("progress")
         progress.update(text="Calculating 2D projection")
         progress.set_multiple(len(models), "Model")
-        for model in models:
+        for model_dict in models:
+            model = model_dict.model
             for objname, z_level in (("ProjectionModelTop", model.maxz),
                     ("ProjectionModelMiddle", (model.minz + model.maxz) / 2.0),
                     ("ProjectionModelBottom", model.minz),
@@ -90,18 +92,8 @@ class ModelProjection(pycam.Plugins.PluginBase):
                     new_model = model.get_waterline_contour(plane,
                             callback=progress.update)
                     if new_model:
-                        self.core.get("models").append(new_model)
-                        model_manager = self.core.get("models")
-                        try:
-                            # add the name of the original model to the new name
-                            original_name = model_manager.get_attr(model,
-                                    "name").split("(")[0].strip()
-                            new_name = model_manager.get_attr(new_model, "name")
-                            model_manager.set_attr(new_model, "name",
-                                    "%s (projection of %s)" % \
-                                    (new_name, original_name))
-                        except LookupError:
-                            pass
+                        self.core.get("models").add_model(new_model,
+                                name_template="Projected model #%d")
                     else:
                         self.log.warn("The 2D projection at z=%g is empty. Aborted." % \
                                 plane.p.z)

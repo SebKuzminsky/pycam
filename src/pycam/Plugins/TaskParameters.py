@@ -51,8 +51,8 @@ class TaskParamCollisionModels(pycam.Plugins.PluginBase):
         choices = []
         models = self.core.get("models")
         for model in models:
-            if hasattr(model, "triangles"):
-                choices.append((models.get_attr(model, "name"), model))
+            if hasattr(model.model, "triangles"):
+                choices.append((model["name"], model))
         self.control.update_choices(choices)
 
 
@@ -80,7 +80,7 @@ class TaskParamTool(pycam.Plugins.PluginBase):
         choices = []
         tools = self.core.get("tools")
         for tool in tools:
-            choices.append((tools.get_attr(tool, "name"), tool))
+            choices.append((tool["name"], tool))
         self.control.update_choices(choices)
 
 
@@ -108,7 +108,7 @@ class TaskParamProcess(pycam.Plugins.PluginBase):
         choices = []
         processes = self.core.get("processes")
         for process in processes:
-            choices.append((processes.get_attr(process, "name"), process))
+            choices.append((process["name"], process))
         self.control.update_choices(choices)
 
 
@@ -136,6 +136,6 @@ class TaskParamBounds(pycam.Plugins.PluginBase):
         choices = []
         bounds = self.core.get("bounds")
         for bound in bounds:
-            choices.append((bounds.get_attr(bound, "name"), bound))
+            choices.append((bound["name"], bound))
         self.control.update_choices(choices)
 

@@ -127,7 +127,8 @@ class ModelSupport(pycam.Plugins.PluginBase):
     def _add_support_model(self, widget=None):
         model = self.core.get("current_support_model")
         if model:
-            self.core.get("models").append(model)
+            self.core.get("models").add_model(model,
+                    name_template="Support model #%d")
 
     def update_support_model(self, widget=None):
         grid_type = self.core.get("support_model_type")

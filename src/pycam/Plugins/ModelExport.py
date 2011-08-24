@@ -112,12 +112,12 @@ class ModelExportTrimesh(pycam.Plugins.PluginBase):
     def export_trimesh(self, models):
         removal_list = []
         for index, model in enumerate(models):
-            if not hasattr(model, "triangles"):
+            if not hasattr(model.model, "triangles"):
                 continue
             # determine the file type
             # TODO: this needs to be decided by the exporter code
             type_filter = [("STL models", "*.stl")]
-            model_name = self.core.get("models").get_attr(model, "name")
+            model_name = model["name"]
             filename = self.core.get("get_filename_func")(
                     "Save model '%s' to ..." % model_name,
                     mode_load=False, type_filter=type_filter,
@@ -135,7 +135,7 @@ class ModelExportTrimesh(pycam.Plugins.PluginBase):
                 file_in = open(uri.get_local_path(), "w")
                 # TODO: fill in "comment" with "meta_data"
                 # TODO: call a specific exporter
-                model.export(unit=self.core.get("unit")).write(file_in)
+                model.model.export(unit=self.core.get("unit")).write(file_in)
                 file_in.close()
                 removal_list.append(index)
             except IOError, err_msg:
@@ -162,14 +162,13 @@ class ModelExportContour(pycam.Plugins.PluginBase):
     def export_contour(self, models):
         removal_list = []
         for index, model in enumerate(models):
-            if not hasattr(model, "get_polygons"):
+            if not hasattr(model.model, "get_polygons"):
                 continue
             # determine the file type
             # TODO: this needs to be decided by the exporter code
             type_filter = [("SVG models", "*.svg")]
-            model_name = self.core.get("models").get_attr(model, "name")
             filename = self.core.get("get_filename_func")(
-                    "Save model '%s' to ..." % model_name,
+                    "Save model '%s' to ..." % model["name"],
                     mode_load=False, type_filter=type_filter,
                     filename_templates=[])
             if not filename:
@@ -185,7 +184,7 @@ class ModelExportContour(pycam.Plugins.PluginBase):
                 file_in = open(uri.get_local_path(), "w")
                 # TODO: fill in "comment" with "meta_data"
                 # TODO: call a specific exporter
-                model.export(unit=self.core.get("unit")).write(file_in)
+                model.model.export(unit=self.core.get("unit")).write(file_in)
                 file_in.close()
                 removal_list.append(index)
             except IOError, err_msg:

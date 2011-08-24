@@ -68,7 +68,7 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
     def get_draw_dimension(self, low, high):
         if self._is_visible():
             mlow, mhigh = pycam.Geometry.Model.get_combined_bounds(
-                    self.core.get("models").get_visible())
+                    [m.model for m in self.core.get("models").get_visible()])
             if None in mlow or None in mhigh:
                 return
             for index in range(3):
@@ -80,12 +80,10 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
     def draw_model(self):
         GL = self._GL
         if self._is_visible():
-            for model in self.core.get("models").get_visible():
-                color_str = self.core.get("models").get_attr(model, "color")
-                alpha = self.core.get("models").get_attr(model, "alpha")
-                col = self._gtk.gdk.color_parse(color_str)
-                color = (col.red / GTK_COLOR_MAX, col.green / GTK_COLOR_MAX,
-                        col.blue / GTK_COLOR_MAX, alpha / GTK_COLOR_MAX)
+            for model_dict in self.core.get("models").get_visible():
+                model = model_dict.model
+                col = model_dict["color"]
+                color = (col["red"], col["green"], col["blue"], col["alpha"])
                 GL.glColor4f(*color)
                 # reset the material color
                 GL.glMaterial(GL.GL_FRONT_AND_BACK,
@@ -96,11 +94,12 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
                         show_directions=self.core.get("show_directions"))
                 do_caching = not key is None
                 if do_caching and not key in self._cache:
-                    # Rendering a display list takes less than 5% of the time for a
-                    # complete rebuild.
+                    # Rendering a display list takes less than 5% of the time
+                    # for a complete rebuild.
                     list_index = GL.glGenLists(1)
                     if list_index > 0:
-                        # somehow "GL_COMPILE_AND_EXECUTE" fails - we render it later
+                        # Somehow "GL_COMPILE_AND_EXECUTE" fails - we render
+                        # it later.
                         GL.glNewList(list_index, GL.GL_COMPILE)
                     else:
                         do_caching = False

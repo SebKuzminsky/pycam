@@ -2,14 +2,6 @@
 <interface>
   <!-- interface-requires gtk+ 2.12 -->
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkListStore" id="ProcessList">
-    <columns>
-      <!-- column-name ref -->
-      <column type="gulong"/>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
   <object class="GtkListStore" id="StrategyModel">
     <columns>
       <!-- column-name label -->
@@ -23,6 +15,12 @@
         <col id="1" translatable="yes">slicing</col>
       </row>
     </data>
+  </object>
+  <object class="GtkListStore" id="ProcessList">
+    <columns>
+      <!-- column-name ref -->
+      <column type="gulong"/>
+    </columns>
   </object>
   <object class="GtkVPaned" id="ProcessBox">
     <property name="visible">True</property>
@@ -52,9 +50,6 @@
                     <property name="title">Name</property>
                     <child>
                       <object class="GtkCellRendererText" id="NameCell"/>
-                      <attributes>
-                        <attribute name="text">1</attribute>
-                      </attributes>
                     </child>
                   </object>
                 </child>

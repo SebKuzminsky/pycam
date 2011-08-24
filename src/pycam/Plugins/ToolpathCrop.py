@@ -85,7 +85,7 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
         choices = []
         models = self.core.get("models")
         for model in models:
-            choices.append((models.get_attr(model, "name"), model))
+            choices.append((model["name"], model))
         self.models_widget.update_choices(choices)
 
     def _update_visibility(self):
@@ -95,7 +95,7 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
             self._frame.hide()
 
     def _update_widgets(self, widget=None):
-        models = self.models_widget.get_value()
+        models = [m.model for m in self.models_widget.get_value()]
         info_label = self.gui.get_object("ToolpathCropInfo")
         info_box = self.gui.get_object("ToolpathCropInfoBox")
         button = self.gui.get_object("CropButton")
@@ -136,7 +136,7 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
                 button.set_sensitive(False)
 
     def _get_waterlines(self):
-        models = self.models_widget.get_value()
+        models = [m.model for m in self.models_widget.get_value()]
         polygons = []
         # get all waterlines and polygons
         for model in models:

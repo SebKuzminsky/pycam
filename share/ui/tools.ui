@@ -12,23 +12,6 @@
     <property name="upper">500</property>
     <property name="step_increment">0.10000000000000001</property>
   </object>
-  <object class="GtkListStore" id="ToolList">
-    <columns>
-      <!-- column-name object_ref -->
-      <column type="guint"/>
-      <!-- column-name tool_id -->
-      <column type="guint"/>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0">0</col>
-        <col id="1">0</col>
-        <col id="2" translatable="yes">test</col>
-      </row>
-    </data>
-  </object>
   <object class="GtkListStore" id="ToolShapeList">
     <columns>
       <!-- column-name label -->
@@ -42,6 +25,12 @@
         <col id="1" translatable="yes">ballnose</col>
       </row>
     </data>
+  </object>
+  <object class="GtkListStore" id="ToolList">
+    <columns>
+      <!-- column-name object_ref -->
+      <column type="guint"/>
+    </columns>
   </object>
   <object class="GtkVPaned" id="ToolBox">
     <property name="visible">True</property>
@@ -59,44 +48,38 @@
             <property name="vscrollbar_policy">automatic</property>
             <property name="shadow_type">etched-in</property>
             <child>
-              <object class="GtkTreeView" id="ToolEditorTable">
+              <object class="GtkTreeView" id="ToolTable">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="model">ToolList</property>
                 <property name="headers_clickable">False</property>
                 <property name="search_column">0</property>
                 <child>
-                  <object class="GtkTreeViewColumn" id="ToolTableIDColumn">
+                  <object class="GtkTreeViewColumn" id="IDColumn">
                     <property name="title">Tool ID</property>
                     <child>
-                      <object class="GtkCellRendererText" id="ToolTableIDCell">
+                      <object class="GtkCellRendererText" id="IDCell">
                         <property name="editable">True</property>
                       </object>
-                      <attributes>
-                        <attribute name="text">1</attribute>
-                      </attributes>
                     </child>
                   </object>
                 </child>
                 <child>
-                  <object class="GtkTreeViewColumn" id="ToolTableNameColumn">
+                  <object class="GtkTreeViewColumn" id="NameColumn">
                     <property name="title">Name</property>
                     <property name="expand">True</property>
                     <child>
-                      <object class="GtkCellRendererText" id="ToolTableNameCell">
+                      <object class="GtkCellRendererText" id="NameCell">
                         <property name="editable">True</property>
                       </object>
-                      <attributes>
-                        <attribute name="text">2</attribute>
-                      </attributes>
                     </child>
                   </object>
                 </child>
                 <child>
-                  <object class="GtkTreeViewColumn" id="ToolTableShapeColumn">
+                  <object class="GtkTreeViewColumn" id="ShapeColumn">
                     <property name="title">Shape</property>
                     <child>
-                      <object class="GtkCellRendererText" id="ToolTableShapeCell">
+                      <object class="GtkCellRendererText" id="ShapeCell">
                         <property name="alignment">right</property>
                       </object>
                     </child>

@@ -75,7 +75,7 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
         models = self.core.get("models").get_selected()
         extrudables = []
         for model in models:
-            if (not model is None) and hasattr(model, "extrude"):
+            if (not model is None) and hasattr(model.model, "extrude"):
                 extrudables.append(model)
         return extrudables
 
@@ -111,25 +111,17 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
             else:
                 self.log.error("Unknown extrusion type selected: %s" % type_string)
                 return
-            model_manager = self.core.get("models")
             progress = self.core.get("progress")
             progress.update(text="Extruding models")
             progress.set_multiple(len(selected_models), "Model")
             for model in selected_models:
-                new_model = model.extrude(stepping=grid_size, func=func,
+                new_model = model.model.extrude(stepping=grid_size, func=func,
                         callback=progress.update)
                 if new_model:
-                    self.core.get("models").append(new_model)
-                    try:
-                        # add the name of the original model to the new name
-                        original_name = model_manager.get_attr(model,
-                                "name").split("(")[0].strip()
-                        new_name = model_manager.get_attr(new_model, "name")
-                        model_manager.set_attr(new_model, "name",
-                                "%s (extrusion of %s)" % \
-                                (new_name, original_name))
-                    except LookupError:
-                        pass
+                    self.core.get("models").add_model(new_model,
+                            name_template="Extruded model #%d")
+                else:
+                    self.log.info("Extruded model is empty")
                 progress.update_multiple()
             progress.finish()
 

@@ -45,6 +45,9 @@ def get_xml(item, name=None):
         leaf.text = repr(item)
         return leaf
 
+def parse_xml_dict(item):
+    pass
+
 def get_xml_lines(item):
     lines = []
     content = ET.tostring(item)

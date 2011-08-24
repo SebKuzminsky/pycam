@@ -656,7 +656,7 @@ class ProjectGui(object):
                 self.add_to_recent_file_list)
         # fallback - in case of a failure when opening a model file
         model = pycam.Importers.TestModel.get_test_model()
-        self.settings.get("models").append(model)
+        self.settings.get("models").add_model(model, "Tiny pyramid")
         # Without this "gkt.main_iteration" loop the task settings file
         # control would not be updated in time.
         while gtk.events_pending():
@@ -967,7 +967,7 @@ class ProjectGui(object):
         # load the new model only if the import worked
         if model:
             self.settings.emit_event("model-change-before")
-            self.settings.get("models").append(model)
+            self.settings.get("models").add_model(model)
             self.last_model_uri = None
             return True
         else:

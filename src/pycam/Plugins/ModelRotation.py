@@ -83,7 +83,7 @@ class ModelRotation(pycam.Plugins.PluginBase):
         progress.disable_cancel()
         progress.set_multiple(len(models), "Model")
         for model in models:
-            model.transform_by_matrix(matrix, callback=progress.update)
+            model.model.transform_by_matrix(matrix, callback=progress.update)
             progress.update_multiple()
         self.core.emit_event("model-change-after")
         progress.finish()

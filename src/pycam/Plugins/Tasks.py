@@ -31,8 +31,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
 
     UI_FILE = "tasks.ui"
     CATEGORIES = ["Task"]
-    COLUMN_REF, COLUMN_NAME = range(2)
-    LIST_ATTRIBUTE_MAP = {"id": COLUMN_REF, "name": COLUMN_NAME}
+    COLUMN_REF = 0
     DEPENDS = ["Models", "Tools", "Processes", "Bounds", "Toolpaths"]
 
     def setup(self):
@@ -87,7 +86,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self.core.register_ui("task_parameters", "Components",
                     self.components_widget.widget, weight=10)
             # table
-            self._gtk_handlers.append((self.gui.get_object("TaskNameCell"),
+            self._gtk_handlers.append((self.gui.get_object("NameCell"),
                     "edited", self._edit_task_name))
             selection = self._taskview.get_selection()
             self._gtk_handlers.append((selection, "changed",
@@ -110,10 +109,9 @@ class Tasks(pycam.Plugins.ListPluginBase):
                     cache[row[self.COLUMN_REF]] = list(row)
                 self._treemodel.clear()
                 for index, item in enumerate(self):
-                    if id(item) in cache:
-                        self._treemodel.append(cache[id(item)])
-                    else:
-                        self._treemodel.append((id(item), "Task #%d" % index))
+                    if not id(item) in cache:
+                        cache[id(item)] = [id(item)]
+                    self._treemodel.append(cache[id(item)])
                 self.core.emit_event("task-list-changed")
             # shape selector
             self._gtk_handlers.append((self.gui.get_object("TaskTypeSelector"),
@@ -122,6 +120,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
                     ("task-type-list-changed", self._update_table),
                     ("task-selection-changed", self._task_switch),
                     ("task-changed", self._store_task),
+                    ("task-changed", self._trigger_table_update),
                     ("task-type-changed", self._store_task),
                     ("task-selection-changed", self._update_widgets),
                     ("task-list-changed", self._update_widgets))
@@ -131,6 +130,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self._update_widgets()
             self._update_table()
             self._task_switch()
+            self._trigger_table_update()
         self.register_state_item("tasks", self)
         self.core.set("tasks", self)
         return True
@@ -167,9 +167,19 @@ class Tasks(pycam.Plugins.ListPluginBase):
 
     def _edit_task_name(self, cell, path, new_text):
         path = int(path)
-        if (new_text != self._treemodel[path][self.COLUMN_NAME]) and \
-                new_text:
-            self._treemodel[path][self.COLUMN_NAME] = new_text
+        task_ref = self._treemodel[path][self.COLUMN_REF]
+        task = [t for t in self if id(t) == task_ref][0]
+        if (new_text != task["name"]) and new_text:
+            task["name"] = new_text
+
+    def _trigger_table_update(self):
+        self.gui.get_object("NameColumn").set_cell_data_func(
+                self.gui.get_object("NameCell"), self._render_task_name)
+
+    def _render_task_name(self, column, cell, model, m_iter):
+        path = model.get_path(m_iter)
+        task = self[path[0]]
+        cell.set_property("text", task["name"])
 
     def _get_type(self, name=None):
         types = self.core.get("get_parameter_sets")("task")
@@ -266,8 +276,14 @@ class Tasks(pycam.Plugins.ListPluginBase):
         types = self.core.get("get_parameter_sets")("task").values()
         types.sort(key=lambda item: item["weight"])
         one_type = types[0]
+        task_id = 1
+        name_template = "Task #%d"
+        task_names = [task["name"] for task in self]
+        while (name_template % task_id) in task_names:
+            task_id += 1
         new_task = TaskEntity({"type": one_type["name"],
-                "parameters": one_type["parameters"].copy()})
+                "parameters": one_type["parameters"].copy(),
+                "name": name_template % task_id})
         self.append(new_task)
         self.select(new_task)
 

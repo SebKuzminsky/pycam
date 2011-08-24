@@ -69,7 +69,7 @@ class ModelPlaneMirror(pycam.Plugins.PluginBase):
             if self.gui.get_object("MirrorPlane%s" % plane).get_active():
                 break
         for model in models:
-            model.transform_by_template("%s_mirror" % plane.lower(),
+            model.model.transform_by_template("%s_mirror" % plane.lower(),
                     callback=progress.update)
             progress.update_multiple()
         progress.finish()
