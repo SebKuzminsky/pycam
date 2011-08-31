@@ -648,8 +648,9 @@ class ProjectGui(object):
         self.plugin_manager.import_plugins()
         # some more initialization
         self.reset_preferences()
-        self.load_preferences()
-        self.load_task_settings()
+        # TODO: preferences are not loaded until the new format is stable
+        #self.load_preferences()
+        #self.load_task_settings()
         self.settings.register_event("notify-file-saved",
                 self.add_to_recent_file_list)
         self.settings.register_event("notify-file-opened",
@@ -859,7 +860,9 @@ class ProjectGui(object):
         self.quit()
 
     def quit(self):
-        self.save_preferences()
+        # TODO: disabled until the format is stable
+        #self.save_preferences()
+        pass
 
     def configure_drag_and_drop(self, obj):
         obj.connect("drag-data-received", self.handle_data_drop)
