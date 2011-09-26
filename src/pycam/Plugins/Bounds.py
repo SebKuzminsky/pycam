@@ -250,7 +250,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         bounds = self.get_selected()
         if not bounds:
             return
-        models = bounds["parameters"]["Models"]
+        models = [m.model for m in bounds["parameters"]["Models"]]
         if self.gui.get_object("TypeRelativeMargin").get_active():
             # no models are currently selected
             func_low = lambda value, axis: 0
@@ -293,7 +293,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         bounds = self.get_selected()
         if not bounds:
             return
-        models = bounds["parameters"]["Models"]
+        models = [m.model for m in bounds["parameters"]["Models"]]
         # calculate the model bounds
         low, high = pycam.Geometry.Model.get_combined_bounds(models)
         if None in low or None in high:
@@ -334,7 +334,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
             bounds["parameters"]["BoundaryHigh%s" % axis.upper()] += change_factor * 10
         else:
             # absolute margin
-            models = self.get_selected_models()
+            models = [m.model for m in self.get_selected_models()]
             model_low, model_high = pycam.Geometry.Model.get_combined_bounds(models)
             if None in model_low or None in model_high:
                 return
@@ -456,8 +456,8 @@ class BoundsDict(pycam.Plugins.ObjectWithAttributes):
                 low.append(get_low_value(axis))
                 high.append(get_high_value(axis))
         tool_limit = _BOUNDARY_MODES[self["parameters"]["ToolLimit"]]
-        # apply inside/along/outside
-        if tool_limit != "along":
+        # apply inside/along/outside if a tool is given
+        if tool and (tool_limit != "along"):
             tool_radius = tool["parameters"]["radius"]
             if tool_limit == "inside":
                 offset = -tool_radius

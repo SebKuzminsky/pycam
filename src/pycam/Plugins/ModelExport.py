@@ -191,7 +191,7 @@ class ModelExportContour(pycam.Plugins.PluginBase):
                 self.log.error("Failed to save model file: %s" % err_msg)
             else:
                 self.log.info(("Successfully stored '%s' as " + \
-                        "'%s'.") % (filename, model_name))
+                        "'%s'.") % (filename, model["name"]))
         removal_list.reverse()
         for index in removal_list:
             models.pop(index)

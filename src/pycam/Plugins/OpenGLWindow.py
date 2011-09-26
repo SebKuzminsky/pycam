@@ -246,7 +246,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
             # the area will be created during setup again
-            self.container.remove(self.area)
+            self.gui.get_object("OpenGLBox").remove(self.area)
             self.area = None
         self.clear_state_items()
 
@@ -345,7 +345,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         if not name in self._color_settings:
             self.log.debug("Failed to unregister unknown color item: %s" % name)
             return
-        wrappers = self._color_settings[name]
+        wrappers = self._color_settings[name]["wrappers"]
         self.unregister_state_item(name, *wrappers)
         del self._color_settings[name]
         self._rebuild_color_settings()
