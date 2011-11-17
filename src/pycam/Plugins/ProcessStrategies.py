@@ -109,8 +109,7 @@ class ProcessStrategyContour(pycam.Plugins.PluginBase):
 class ProcessStrategySurfacing(pycam.Plugins.PluginBase):
 
     DEPENDS = ["ParameterGroupManager", "PathParamOverlap",
-            "PathParamStepDown", "PathParamMaterialAllowance",
-            "PathParamPattern"]
+            "PathParamMaterialAllowance", "PathParamPattern"]
     CATEGORIES = ["Process"]
 
     def setup(self):
@@ -139,8 +138,7 @@ class ProcessStrategySurfacing(pycam.Plugins.PluginBase):
         path_get_func = self.core.get("get_parameter_sets")(
                 "path_pattern")[path_pattern["name"]]["func"]
         grid_func, kwargs = path_get_func(path_pattern)
-        motion_grid = grid_func((low, high),
-                process["parameters"]["step_down"],
+        motion_grid = grid_func((low, high), None,
                 step_width=(tool_params["radius"] / 4.0),
                 line_distance=line_distance, **kwargs)
         return path_generator, motion_grid, (low, high)
