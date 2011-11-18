@@ -35,6 +35,7 @@ import os
 log = pycam.Utils.log.get_logger()
 
 
+
 def _unescape_control_characters(text):
     # see http://www.kxcad.net/autodesk/autocad/AutoCAD_2008_Command_Reference/d0e73428.htm
     # and QCad: qcadlib/src/filters/rs_filterdxf.cpp
@@ -71,15 +72,18 @@ class DXFParser(object):
         "RADIUS": 40,
         "TEXT_HEIGHT": 40,
         "TEXT_WIDTH_FINAL": 41,
+        "VERTEX_BULGE": 42,
         "ANGLE_START": 50,
         "TEXT_ROTATION": 50,
         "ANGLE_END": 51,
         "TEXT_SKEW_ANGLE": 51,
         "COLOR": 62,
+        "VERTEX_FLAGS": 70,
         "TEXT_MIRROR_FLAGS": 71,
         "MTEXT_ALIGNMENT": 71,
         "TEXT_ALIGN_HORIZONTAL": 72,
         "TEXT_ALIGN_VERTICAL": 73,
+        "CURVE_TYPE": 75,
     }
 
     IGNORE_KEYS = ("DICTIONARY", "VPORT", "LTYPE", "STYLE", "APPID", "DIMSTYLE",
@@ -104,6 +108,7 @@ class DXFParser(object):
         self._fonts_cache = fonts_cache
         self._open_sequence = None
         self._open_sequence_items = []
+        self._open_sequence_params = {}
         # run the parser
         self.parse_content()
         self.optimize_line_order()
@@ -184,7 +189,7 @@ class DXFParser(object):
         if line1 in [self.KEYS[key] for key in ("P1_X", "P1_Y", "P1_Z",
                 "P2_X", "P2_Y", "P2_Z", "RADIUS", "ANGLE_START", "ANGLE_END",
                 "TEXT_HEIGHT", "TEXT_WIDTH_FINAL", "TEXT_ROTATION",
-                "TEXT_SKEW_ANGLE")]:
+                "TEXT_SKEW_ANGLE", "VERTEX_BULGE")]:
             try:
                 line2 = float(line2)
             except ValueError:
@@ -194,7 +199,7 @@ class DXFParser(object):
                 line2 = None
         elif line1 in [self.KEYS[key] for key in ("COLOR", "TEXT_MIRROR_FLAGS",
                 "TEXT_ALIGN_HORIZONTAL", "TEXT_ALIGN_VERTICAL",
-                "MTEXT_ALIGNMENT")]:
+                "MTEXT_ALIGNMENT", "CURVE_TYPE", "VERTEX_FLAGS")]:
             try:
                 line2 = int(line2)
             except ValueError:
@@ -273,6 +278,7 @@ class DXFParser(object):
         start_line = self.line_number
         point = [None, None, 0]
         color = None
+        bulge = None
         key, value = self._read_key_value()
         while (not key is None) and (key != self.KEYS["MARKER"]):
             if key == self.KEYS["P1_X"]:
@@ -283,6 +289,8 @@ class DXFParser(object):
                 point[2] = value
             elif key == self.KEYS["COLOR"]:
                 color = value
+            elif key == self.KEYS["VERTEX_BULGE"]:
+                bulge = value
             else:
                 pass
             key, value = self._read_key_value()
@@ -297,33 +305,51 @@ class DXFParser(object):
                     "between line %d and %d" % (start_line, end_line))
         else:
             self._open_sequence_items.append(
-                    Point(point[0], point[1], point[2]))
+                    (Point(point[0], point[1], point[2]), bulge))
 
     def parse_polyline(self, init):
         start_line = self.line_number
+        params = self._open_sequence_params
         if init:
             self._open_sequence = "POLYLINE"
             self._open_sequence_items = []
             key, value = self._read_key_value()
             while (not key is None) and (key != self.KEYS["MARKER"]):
+                if key == self.KEYS["CURVE_TYPE"]:
+                    if value == 8:
+                        params["CURVE_TYPE"] = "BEZIER"
+                elif key == self.KEYS["VERTEX_FLAGS"]:
+                    if value == 1:
+                        params["VERTEX_FLAGS"] = "EXTRA_VERTEX"
                 key, value = self._read_key_value()
             if not key is None:
                 self._push_on_stack(key, value)
         else:
             # closing
-            points = self._open_sequence_items
-            for index in range(len(points) - 1):
-                point = points[index]
-                next_point = points[index + 1]
-                if point != next_point:
-                    self.lines.append(Line(point, next_point))
+            if ("CURVE_TYPE" in params) and (params["CURVE_TYPE"] == "BEZIER"):
+                self.lines.extend(pycam.Geometry.get_bezier_lines(
+                        self._open_sequence_items))
+                if ("VERTEX_FLAGS" in params) and \
+                        (params["VERTEX_FLAGS"] == "EXTRA_VERTEX"):
+                    # repeat the same polyline on the other side
+                    self._open_sequence_items.reverse()
+                    self.lines.extend(pycam.Geometry.get_bezier_lines(
+                            self._open_sequence_items))
+            else:
+                points = [p for p, bulge in self._open_sequence_items]
+                for index in range(len(points) - 1):
+                    point = points[index]
+                    next_point = points[index + 1]
+                    if point != next_point:
+                        self.lines.append(Line(point, next_point))
             self._open_sequence_items = []
+            self._open_sequence_params = {}
             self._open_sequence = None
 
     def parse_lwpolyline(self):
         start_line = self.line_number
         points = []
-        def add_point(p_array):
+        def add_point(p_array, bulge):
             # fill all "None" values with zero
             for index in range(len(p_array)):
                 if p_array[index] is None:
@@ -332,8 +358,10 @@ class DXFParser(object):
                                 "date in line %d: %s" % \
                                 (self.line_number, p_array))
                     p_array[index] = 0
-            points.append(Point(p_array[0], p_array[1], p_array[2]))
+            points.append((Point(p_array[0], p_array[1], p_array[2]), bulge))
         current_point = [None, None, None]
+        bulge = None
+        extra_vertex_flag = False
         key, value = self._read_key_value()
         while (not key is None) and (key != self.KEYS["MARKER"]):
             if key == self.KEYS["P1_X"]:
@@ -346,6 +374,13 @@ class DXFParser(object):
                 # interpret the color as the height
                 axis = 2
                 value = float(value) / 255
+            elif key == self.KEYS["VERTEX_BULGE"]:
+                bulge = value
+                axis = None
+            elif key == self.KEYS["VERTEX_FLAGS"]:
+                if value == 1:
+                    extra_vertex_flag = True
+                axis = None
             else:
                 axis = None
             if not axis is None:
@@ -354,9 +389,10 @@ class DXFParser(object):
                     current_point[axis] = value
                 else:
                     # The current point seems to be complete.
-                    add_point(current_point)
+                    add_point(current_point, bulge)
                     current_point = [None, None, None]
                     current_point[axis] = value
+                    bulge = None
             key, value = self._read_key_value()
         end_line = self.line_number
         # The last lines were not used - they are just the marker for the next
@@ -365,17 +401,25 @@ class DXFParser(object):
             self._push_on_stack(key, value)
         # check if there is a remaining item in "current_point"
         if len(current_point) != current_point.count(None):
-            add_point(current_point)
+            add_point(current_point, bulge)
         if len(points) < 2:
             # too few points for a polyline
             log.warn("DXFImporter: Empty LWPOLYLINE definition between line " \
                     + "%d and %d" % (start_line, end_line))
         else:
             for index in range(len(points) - 1):
-                point = points[index]
-                next_point = points[index + 1]
+                point, bulge = points[index]
+                next_point, next_bulge = points[index + 1]
                 if point != next_point:
-                    self.lines.append(Line(point, next_point))
+                    if bulge or next_bulge:
+                        self.lines.extend(pycam.Geometry.get_bezier_lines(
+                                ((point, bulge), (next_point, next_bulge))))
+                        if extra_vertex_flag:
+                            self.lines.extend(pycam.Geometry.get_bezier_lines(
+                                    ((next_point, next_bulge), (point, bulge))))
+                    else:
+                        # straight line
+                        self.lines.append(Line(point, next_point))
                 else:
                     log.warn("DXFImporter: Ignoring zero-length LINE " \
                             + "(between input line %d and %d): %s" \

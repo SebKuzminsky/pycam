@@ -120,6 +120,60 @@ def get_points_of_arc(center, radius, a1, a2, plane=None, cords=32):
         points.append(get_angle_point(a1 + angle_segment * (index + 1)))
     return points
 
+def get_bezier_lines(points_with_bulge, segments=32):
+    # TODO: add a recursive algorithm for more than two points
+    if len(points_with_bulge) != 2:
+        return []
+    else:
+        result_points = []
+        p1, bulge1 = points_with_bulge[0]
+        p2, bulge2 = points_with_bulge[1]
+        if not bulge1 and not bulge2:
+            # straight line
+            return [Line.Line(p1, p2)]
+        straight_dir = p2.sub(p1).normalized()
+        bulge1 = max(-1.0, min(1.0, bulge1))
+        # bulge=1 -> 90 degree; bulge: -1..1
+        angle = -90 * bulge1
+        rot_matrix = Matrix.get_rotation_matrix_axis_angle((0, 0, 1),
+                angle, use_radians=False)
+        dir1_mat = Matrix.multiply_vector_matrix((straight_dir.x,
+                straight_dir.y, straight_dir.z), rot_matrix)
+        dir1 = Point.Vector(dir1_mat[0], dir1_mat[1], dir1_mat[2])
+        if bulge2 is None:
+            bulge2 = bulge1
+        bulge2 = max(-1.0, min(1.0, bulge2))
+        angle = 90 * bulge2
+        rot_matrix = Matrix.get_rotation_matrix_axis_angle((0, 0, 1),
+                angle, use_radians=False)
+        dir2_mat = Matrix.multiply_vector_matrix((straight_dir.x,
+                straight_dir.y, straight_dir.z), rot_matrix)
+        dir2 = Point.Vector(dir2_mat[0], dir2_mat[1], dir2_mat[2])
+        # this length calculation for the tangents results from a bit of try-and-error
+        alpha = math.atan(bulge1) * 4
+        dist = p2.sub(p1).norm / 2.0
+        radius = abs(dist / math.sin(alpha / 2.0))
+        factor = math.sqrt(2) * 2 * (radius ** 2 - dist ** 2)
+        if factor < epsilon:
+            factor = 4 * dist
+        dir1 = dir1.mul(factor)
+        dir2 = dir2.mul(factor)
+        for index in range(segments + 1):
+            # t: 0..1
+            t = float(index) / segments
+            # see: http://en.wikipedia.org/wiki/Cubic_Hermite_spline
+            p = p1.mul(2 * t ** 3 - 3 * t ** 2 + 1).add(
+                    dir1.mul(t ** 3 - 2 * t ** 2 + t).add(
+                    p2.mul(-2 * t ** 3 + 3 * t ** 2).add(
+                    dir2.mul(t ** 3 - t ** 2))))
+            result_points.append(p)
+        # create lines
+        result = []
+        for index in range(len(result_points) - 1):
+            result.append(Line.Line(result_points[index],
+                    result_points[index + 1]))
+        return result
+
 
 class TransformableContainer(object):
     """ a base class for geometrical objects containing other elements
