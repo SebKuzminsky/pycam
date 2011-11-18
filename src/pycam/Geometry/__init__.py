@@ -132,30 +132,39 @@ def get_bezier_lines(points_with_bulge, segments=32):
             # straight line
             return [Line.Line(p1, p2)]
         straight_dir = p2.sub(p1).normalized()
-        bulge1 = max(-1.0, min(1.0, bulge1))
-        # bulge=1 -> 90 degree; bulge: -1..1
-        angle = -90 * bulge1
+        #bulge1 = max(-1.0, min(1.0, bulge1))
+        bulge1 = math.atan(bulge1)
         rot_matrix = Matrix.get_rotation_matrix_axis_angle((0, 0, 1),
-                angle, use_radians=False)
+                -2 * bulge1, use_radians=True)
         dir1_mat = Matrix.multiply_vector_matrix((straight_dir.x,
                 straight_dir.y, straight_dir.z), rot_matrix)
         dir1 = Point.Vector(dir1_mat[0], dir1_mat[1], dir1_mat[2])
         if bulge2 is None:
             bulge2 = bulge1
-        bulge2 = max(-1.0, min(1.0, bulge2))
-        angle = 90 * bulge2
+        else:
+            bulge2 = math.atan(bulge2)
         rot_matrix = Matrix.get_rotation_matrix_axis_angle((0, 0, 1),
-                angle, use_radians=False)
+                2 * bulge2, use_radians=True)
         dir2_mat = Matrix.multiply_vector_matrix((straight_dir.x,
                 straight_dir.y, straight_dir.z), rot_matrix)
         dir2 = Point.Vector(dir2_mat[0], dir2_mat[1], dir2_mat[2])
-        # this length calculation for the tangents results from a bit of try-and-error
-        alpha = math.atan(bulge1) * 4
-        dist = p2.sub(p1).norm / 2.0
-        radius = abs(dist / math.sin(alpha / 2.0))
-        factor = math.sqrt(2) * 2 * (radius ** 2 - dist ** 2)
-        if factor < epsilon:
-            factor = 4 * dist
+        # interpretation of bulge1 and bulge2:
+        # /// taken from http://paulbourke.net/dataformats/dxf/dxf10.html ///
+        # The bulge is the tangent of 1/4 the included angle for an arc
+        # segment, made negative if the arc goes clockwise from the start
+        # point to the end point; a bulge of 0 indicates a straight segment,
+        # and a bulge of 1 is a semicircle.
+        alpha = 2 * (abs(bulge1) + abs(bulge2))
+        dist = p2.sub(p1).norm
+        # calculate the radius of the circumcircle - avoiding divide-by-zero
+        if (abs(alpha) < epsilon) or (abs(math.pi - alpha) < epsilon):
+            radius = dist / 2.0
+        else:
+            # see http://en.wikipedia.org/wiki/Law_of_sines
+            radius = abs(dist / math.sin(alpha / 2.0)) / 2.0
+        # The calculation of "factor" is based on random guessing - but it
+        # seems to work well.
+        factor = 4 * radius * math.tan(alpha / 4.0)
         dir1 = dir1.mul(factor)
         dir2 = dir2.mul(factor)
         for index in range(segments + 1):
