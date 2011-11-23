@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+import re
 import StringIO
 # imported later (on demand)
 #import gtk
@@ -151,12 +152,15 @@ class Fonts(pycam.Plugins.PluginBase):
         # don't close the window - just hide it (for "delete-event")
         return True
 
-    def get_font_dialog_text_rendered(self):
+    def _get_text_from_input(self):
         input_field = self.gui.get_object("FontDialogInput")
         text_buffer = input_field.get_buffer()
         text = text_buffer.get_text(text_buffer.get_start_iter(),
                 text_buffer.get_end_iter())
-        text = unicode(text)
+        return unicode(text)
+
+    def get_font_dialog_text_rendered(self):
+        text = self._get_text_from_input()
         if text:
             skew = self.gui.get_object("FontSideSkewValue").get_value()
             line_space = self.gui.get_object("FontLineSpacingValue").get_value()
@@ -169,7 +173,8 @@ class Fonts(pycam.Plugins.PluginBase):
                 obj = self.gui.get_object(objname)
                 if obj.get_active():
                     align = value
-                    input_field.set_justification(justification)
+                    self.gui.get_object("FontDialogInput").set_justification(
+                            justification)
             font_name = self.font_selector.get_active_text()
             charset = self._fonts_cache.get_font(font_name)
             return charset.render(text, skew=skew, line_spacing=line_space,
@@ -179,7 +184,9 @@ class Fonts(pycam.Plugins.PluginBase):
             return None
 
     def import_from_font_dialog(self, widget=None):
-        self.core.get("models").append(self.get_font_dialog_text_rendered())
+        text_model = self.get_font_dialog_text_rendered()
+        name = "Text " + re.sub("\W", "", self._get_text_from_input())[:10]
+        self.core.get("models").add_model(text_model, name=name)
         self.toggle_font_dialog_window()
 
     def export_from_font_dialog(self, widget=None):
