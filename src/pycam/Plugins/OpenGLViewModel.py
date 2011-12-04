@@ -41,7 +41,7 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
                 ("model-changed","visual-item-updated"),
                 ("model-list-changed","visual-item-updated"))
         self.core.get("register_display_item")("show_model", "Show Model", 10)
-        self.core.get("register_color") ("color_model", "Model", 10)
+        self.core.get("register_color")("color_model", "Model", 10)
         self.core.register_chain("get_draw_dimension", self.get_draw_dimension)
         self.register_event_handlers(self._event_handlers)
         self.core.emit_event("visual-item-updated")
@@ -53,6 +53,7 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
         self.core.unregister_chain("get_draw_dimension",
                 self.get_draw_dimension)
         self.core.get("unregister_display_item")("show_model")
+        self.core.get("unregister_color")("color_model")
         self.core.emit_event("visual-item-updated")
 
     def _get_cache_key(self, model, *args, **kwargs):

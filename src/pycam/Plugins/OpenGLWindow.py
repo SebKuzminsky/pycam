@@ -231,7 +231,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             toggle_3d.set_active(False)
             self.core.unregister_ui("view_menu", toggle_3d)
             self.unregister_gtk_accelerator("opengl", toggle_3d)
-            self.core.unregister_ui("view_menu", toggle_3d)
             for name in ("color_background", "color_cutter", "color_material"):
                 self.core.get("unregister_color")(name)
             for name in ("show_drill", "show_directions"):
@@ -242,6 +241,15 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # the area will be created during setup again
             self.gui.get_object("OpenGLBox").remove(self.area)
             self.area = None
+            self.core.unregister_ui("preferences",
+                    self.gui.get_object("DisplayItemsPrefTab"))
+            self.core.unregister_ui("preferences",
+                    self.gui.get_object("OpenGLPrefTab"))
+            self.core.unregister_ui("opengl_window",
+                    self.gui.get_object("ViewControls"))
+            self.core.unregister_ui("preferences",
+                    self.gui.get_object("ColorPrefTab"))
+            self.core.unregister_ui_section("opengl_window")
         self.clear_state_items()
 
     def update_view(self, widget=None, data=None):
