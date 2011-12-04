@@ -721,6 +721,10 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                     low, high = [None, None, None], [None, None, None]
                     self.core.call_chain("get_draw_dimension", low, high)
                     for index in range(3):
+                        if high[index] is None:
+                            high[index] = 10
+                        if low[index] is None:
+                            low[index] = 0
                         obj_dim.append(high[index] - low[index])
                     max_dim = max(obj_dim)
                     self.camera.move_camera_by_screen(x - start_x, y - start_y,
