@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import os
 
 import pycam.Plugins
+import pycam.Utils
 
 
 def _get_filters_from_list(filter_list):
@@ -35,7 +36,8 @@ def _get_filters_from_list(filter_list):
         if not isinstance(file_extensions, (list, tuple)):
             file_extensions = [file_extensions]
         for ext in file_extensions:
-            current_filter.add_pattern(ext)
+            current_filter.add_pattern(
+                    pycam.Utils.get_case_insensitive_file_pattern(ext))
         result.append(current_filter)
     return result
 

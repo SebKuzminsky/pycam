@@ -587,10 +587,15 @@ class ProjectGui(object):
             recent_files_menu = gtk.RecentChooserMenu(self.recent_manager)
             recent_files_menu.set_name("RecentFilesMenu")
             recent_menu_filter = gtk.RecentFilter()
-            for filter_name, filter_patterns in FILTER_MODEL:
-                if not isinstance(filter_patterns, (list, set, tuple)):
-                    filter_patterns = [filter_patterns]
-                for pattern in filter_patterns:
+            case_converter = pycam.Utils.get_case_insensitive_file_pattern
+            for filter_name, patterns in FILTER_MODEL:
+                if not isinstance(patterns, (list, set, tuple)):
+                    patterns = [patterns]
+                # convert it into a mutable list (instead of set/tuple)
+                patterns = list(patterns)
+                for index in range(len(patterns)):
+                    patterns[index] = case_converter(patterns[index])
+                for pattern in patterns:
                     recent_menu_filter.add_pattern(pattern)
             recent_files_menu.add_filter(recent_menu_filter)
             recent_files_menu.set_show_numbers(True)
@@ -600,7 +605,8 @@ class ProjectGui(object):
             recent_files_menu.set_sort_type(gtk.RECENT_SORT_MRU)
             # show only ten files
             recent_files_menu.set_limit(10)
-            uimanager.get_widget("/MenuBar/FileMenu/OpenRecentModelMenu").set_submenu(recent_files_menu)
+            uimanager.get_widget("/MenuBar/FileMenu/OpenRecentModelMenu")\
+                    .set_submenu(recent_files_menu)
             recent_files_menu.connect("item-activated",
                     self.load_recent_model_file)
         else:

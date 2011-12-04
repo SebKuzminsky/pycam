@@ -59,6 +59,19 @@ def get_platform():
     else:
         return PLATFORM_UNKNOWN
 
+def get_case_insensitive_file_pattern(pattern):
+    """ Convert something like "*.svg" into "*.[sS][vV][gG]" - as it is
+        required for GTK's FileFilter.
+    """
+    result = []
+    char_match = re.compile(r"[a-zA-Z]")
+    for char in pattern:
+        if char_match.match(char):
+            result.append("[%s%s]" % (char.lower(), char.upper()))
+        else:
+            result.append(char)
+    return "".join(result)
+
 
 class URIHandler(object):
 
