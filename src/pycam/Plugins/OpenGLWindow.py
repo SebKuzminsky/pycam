@@ -132,13 +132,9 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.core.register_ui("preferences", "Colors", color_frame, 30)
             self.core.set("register_color", self.register_color_setting)
             self.core.set("unregister_color", self.unregister_color_setting)
-            # TODO: move the "tool" color to a separate plugin
-            # TODO: move "material" to simulation viewer
-            # TODO: move "support grid" to support grid visualization
+            # TODO: move "cutter" and "material" to simulation viewer
             for name, label, weight in (
                     ("color_background", "Background", 10),
-                    ("color_model", "Model", 20),
-                    ("color_support_grid", "Support grid", 30),
                     ("color_cutter", "Tool", 50),
                     ("color_material", "Material", 80)):
                 self.core.get("register_color")(name, label, weight)
@@ -152,9 +148,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.core.set("unregister_display_item",
                     self.unregister_display_item)
             # visual and general settings
-            # TODO: move support grid and drill to a separate plugin
+            # TODO: move drill and directions to a separate plugin
             for name, label, weight in (
-                    ("show_support_grid", "Show Support Grid", 20),
                     ("show_drill", "Show Tool", 70),
                     ("show_directions", "Show Directions", 80)):
                 self.core.get("register_display_item")(name, label, weight)
@@ -237,10 +232,9 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.core.unregister_ui("view_menu", toggle_3d)
             self.unregister_gtk_accelerator("opengl", toggle_3d)
             self.core.unregister_ui("view_menu", toggle_3d)
-            for name in ("color_background", "color_model",
-                    "color_support_grid", "color_cutter", "color_material"):
+            for name in ("color_background", "color_cutter", "color_material"):
                 self.core.get("unregister_color")(name)
-            for name in ("show_support_grid", "show_drill", "show_directions"):
+            for name in ("show_drill", "show_directions"):
                 self.core.get("unregister_display_item")(name)
             self.window.remove_accel_group(self.core.get("gtk-accel-group"))
             self.unregister_gtk_handlers(self._gtk_handlers)
@@ -530,9 +524,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         #GL.glEnable(GL.GL_MULTISAMPLE_ARB)
         GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
         GL.glPolygonOffset(1.0, 1.0)
-        col = self.core.get("color_model")
-        col = (col["red"], col["green"], col["blue"], col["alpha"])
-        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT_AND_DIFFUSE, col)
+        # ambient and diffuse material lighting is defined in OpenGLViewModel
         GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR,
                 (1.0, 1.0, 1.0, 1.0))
         GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (100.0))

@@ -176,7 +176,8 @@ class Models(pycam.Plugins.ListPluginBase):
     def get_visible(self):
         return [model for model in self if model["visible"]]
 
-    def add_model(self, model, name=None, name_template="Model #%d"):
+    def add_model(self, model, name=None, name_template="Model #%d",
+            color=None):
         model_dict = ModelEntity(model)
         if not name:
             model_id = 1
@@ -185,7 +186,8 @@ class Models(pycam.Plugins.ListPluginBase):
                 model_id += 1
             name = name_template % model_id
         model_dict["name"] = name
-        color = self.core.get("color_model")
+        if not color:
+            color = self.core.get("color_model")
         if not color:
             color = self.FALLBACK_COLOR.copy()
         model_dict["color"] = color

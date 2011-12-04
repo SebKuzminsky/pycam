@@ -151,7 +151,7 @@ def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness,
     return grid_model
 
 def get_support_distributed(model, z_plane, average_distance,
-        min_bridges_per_polygon, thickness, height, length, bounds,
+        min_bridges_per_polygon, thickness, height, length, bounds=None,
         start_at_corners=False):
     if (average_distance == 0) or (length == 0) or (thickness == 0) \
             or (height == 0):
@@ -163,7 +163,7 @@ def get_support_distributed(model, z_plane, average_distance,
     if model:
         model = model.get_flat_projection(Plane(Point(0, 0, z_plane),
                 Vector(0, 0, 1)))
-    if model:
+    if model and bounds:
         model = model.get_cropped_model_by_bounds(bounds)
     if model:
         polygons = model.get_polygons()

@@ -105,13 +105,6 @@ def draw_complete_model_view(settings):
             # we need to wait until the color change is active
             GL.glFinish()
             obj.to_OpenGL()
-    # draw the support grid
-    if False and settings.get("show_support_grid") and settings.get("current_support_model"):
-        color = settings.get("color_support_grid")
-        GL.glColor4f(color["red"], color["green"], color["blue"], color["alpha"])
-        # we need to wait until the color change is active
-        GL.glFinish()
-        settings.get("current_support_model").to_OpenGL()
     # draw the toolpath simulation
     if settings.get("show_simulation"):
         moves = settings.get("simulation_toolpath_moves")
