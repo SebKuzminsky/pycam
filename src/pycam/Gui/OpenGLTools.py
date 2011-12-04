@@ -54,17 +54,23 @@ def keep_matrix(func):
     return keep_matrix_wrapper
 
 @keep_matrix
-def draw_direction_cone(p1, p2):
+def draw_direction_cone(p1, p2, position=0.5, precision=12, size=0.1):
+    # convert p1 and p2 from list/tuple to Point
+    if not hasattr(p1, "sub"):
+        p1 = Point(*p1)
+    if not hasattr(p2, "sub"):
+        p2 = Point(*p2)
     distance = p2.sub(p1)
     length = distance.norm
     direction = distance.normalized()
     if direction is None:
         # zero-length line
         return
-    cone_radius = length / 30
-    cone_length = length / 10
+    cone_length = length * size
+    cone_radius = cone_length / 3.0
     # move the cone to the middle of the line
-    GL.glTranslatef((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, (p1.z + p2.z) / 2)
+    GL.glTranslatef((p1.x + p2.x) * position,
+            (p1.y + p2.y) * position, (p1.z + p2.z) * position)
     # rotate the cone according to the line direction
     # The cross product is a good rotation axis.
     cross = direction.cross(Point(0, 0, -1))
@@ -87,9 +93,9 @@ def draw_direction_cone(p1, p2):
         # The line goes up the z axis - nothing to be done.
         pass
     # center the cone
-    GL.glTranslatef(0, 0, -cone_length / 2)
+    GL.glTranslatef(0, 0, -cone_length * position)
     # draw the cone
-    GLUT.glutSolidCone(cone_radius, cone_length, 12, 1)
+    GLUT.glutSolidCone(cone_radius, cone_length, precision, 1)
 
 @keep_gl_mode
 @keep_matrix

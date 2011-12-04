@@ -21,7 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Plugins
-from pycam.Geometry.utils import number
+from pycam.Gui.OpenGLTools import draw_direction_cone
 
 
 class OpenGLViewAxes(pycam.Plugins.PluginBase):
@@ -31,9 +31,7 @@ class OpenGLViewAxes(pycam.Plugins.PluginBase):
 
     def setup(self):
         import OpenGL.GL
-        import OpenGL.GLUT
         self._GL = OpenGL.GL
-        self._GLUT = OpenGL.GLUT
         self.core.register_event("visualize-items", self.draw_axes)
         self.core.get("register_display_item")("show_axes",
                 "Show Coordinate System", 50)
@@ -55,53 +53,32 @@ class OpenGLViewAxes(pycam.Plugins.PluginBase):
         self.core.call_chain("get_draw_dimension", low, high)
         if None in low or None in high:
             low, high = (0, 0, 0), (10, 10, 10)
-        size_x = abs(high[0])
-        size_y = abs(high[1])
-        size_z = abs(high[2])
-        size = number(1.7) * max(size_x, size_y, size_z)
-        # the divider is just based on playing with numbers
-        scale = size / number(1500.0)
-        string_distance = number(1.1) * size
-        # otherwise plain colors like the next glColor4f wouldn't work
+        length = 1.2 * max(max(high), abs(min(low)))
+        origin = (0, 0, 0)
+        cone_length = 0.05
+        old_line_width = GL.glGetFloatv(GL.GL_LINE_WIDTH)
         if self.core.get("view_light"):
             GL.glDisable(GL.GL_LIGHTING)
-        GL.glBegin(GL.GL_LINES)
-        GL.glColor4f(1, 0, 0, 1)
-        GL.glVertex3f(0, 0, 0)
-        GL.glVertex3f(size, 0, 0)
-        GL.glEnd()
-        self.draw_string(string_distance, 0, 0, 'xy', "X", scale=scale)
-        GL.glBegin(GL.GL_LINES)
-        GL.glColor3f(0, 1, 0)
-        GL.glVertex3f(0, 0, 0)
-        GL.glVertex3f(0, size, 0)
-        GL.glEnd()
-        self.draw_string(0, string_distance, 0, 'yz', "Y", scale=scale)
-        GL.glBegin(GL.GL_LINES)
-        GL.glColor3f(0, 0, 1)
-        GL.glVertex3f(0, 0, 0)
-        GL.glVertex3f(0, 0, size)
-        GL.glEnd()
-        self.draw_string(0, 0, string_distance, 'xz', "Z", scale=scale)
+        GL.glLineWidth(1.5)
+        # draw a colored line ending in a cone for each axis
+        for index in range(3):
+            end = [0, 0, 0]
+            end[index] = length
+            color = [0.0, 0.0, 0.0]
+            # reduced brightness (not 1.0)
+            color[index] = 0.8
+            GL.glColor3f(*color)
+            # we need to wait until the color change is active
+            GL.glFinish()
+            GL.glBegin(GL.GL_LINES)
+            GL.glVertex3f(*origin)
+            GL.glVertex3f(*end)
+            GL.glEnd()
+            # Position the cone slightly behind the end of the line - otherwise
+            # the end of the line (width=2) is visible at the top of the cone.
+            draw_direction_cone(origin, end, position=1.0 + cone_length,
+                    precision=32, size=cone_length)
+        GL.glLineWidth(old_line_width)
         if self.core.get("view_light"):
             GL.glEnable(GL.GL_LIGHTING)
-
-    def draw_string(self, x, y, z, p, s, scale=.01):
-        GL = self._GL
-        GLUT = self._GLUT
-        GL.glPushMatrix()
-        GL.glTranslatef(x, y, z)
-        if p == 'xy':
-            GL.glRotatef(90, 1, 0, 0)
-        elif p == 'yz':
-            GL.glRotatef(90, 0, 1, 0)
-            GL.glRotatef(90, 0, 0, 1)
-        elif p == 'xz':
-            GL.glRotatef(90, 0, 1, 0)
-            GL.glRotatef(90, 0, 0, 1)
-            GL.glRotatef(45, 0, 1, 0)
-        GL.glScalef(scale, scale, scale)
-        for c in str(s):
-            GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(c))
-        GL.glPopMatrix()
 
