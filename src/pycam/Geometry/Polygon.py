@@ -36,6 +36,9 @@ except ImportError:
     GL_enabled = False
 
 
+LINE_WIDTH_INNER = 0.7
+LINE_WIDTH_OUTER = 1.3
+
 log = pycam.Utils.log.get_logger()
 
 
@@ -535,17 +538,23 @@ class Polygon(TransformableContainer):
     def to_OpenGL(self, **kwords):
         if not GL_enabled:
             return
+        GL.glDisable(GL.GL_LIGHTING)
         if self.is_closed:
             is_outer = self.is_outer()
             if not is_outer:
                 color = GL.glGetFloatv(GL.GL_CURRENT_COLOR)
                 GL.glColor(color[0], color[1], color[2], color[3] / 2)
+                GL.glLineWidth(LINE_WIDTH_INNER)
+            else:
+                GL.glLineWidth(LINE_WIDTH_OUTER)
             GL.glBegin(GL.GL_LINE_LOOP)
             for point in self._points:
                 GL.glVertex3f(point.x, point.y, point.z)
             GL.glEnd()
             if not is_outer:
                 GL.glColor(*color)
+            # reset line width
+            GL.glLineWidth(1.0)
         else:
             for line in self.get_lines():
                 line.to_OpenGL(**kwords)
