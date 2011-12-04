@@ -36,16 +36,27 @@ class GCodeTouchOff(pycam.Plugins.PluginBase):
             box.unparent()
             self.core.register_ui("gcode_preferences", "Touch Off",
                     box, weight=70)
+            self._gtk_handlers = []
             for objname, setting in (
                     ("GCodeTouchOffOnStartup", "touch_off_on_startup"),
                     ("GCodeTouchOffOnToolChange", "touch_off_on_tool_change")):
-                self.gui.get_object(objname).connect("toggled",
-                        self.update_widgets)
-            self.gui.get_object("TouchOffLocationSelector").connect("changed",
-                    self.update_widgets)
-            self.gui.get_object("TouchOffLocationSelector").set_active(0)
+                obj = self.gui.get_object(objname)
+                self._gtk_handlers.append((obj, "toggled", self.update_widgets))
+                self.core.add_item(setting, obj.get_active, obj.set_active)
+            selector = self.gui.get_object("TouchOffLocationSelector")
+            self._gtk_handlers.append((selector, "changed", self.update_widgets))
+            selector.set_active(0)
+            self.register_gtk_handlers(self._gtk_handlers)
             self.update_widgets()
         return True
+
+    def teardown(self):
+        if self.gui:
+            self.core.unregister_ui("gcode_preferences",
+                    self.gui.get_object("TouchOffBox"))
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            for setting in ("touch_off_on_startup", "touch_off_on_tool_change"):
+                self.core.remove_item(setting)
 
     def update_widgets(self, widget=None):
         # tool change controls

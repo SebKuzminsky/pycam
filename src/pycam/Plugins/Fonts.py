@@ -99,7 +99,7 @@ class Fonts(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
-        self.core.add_item("fonts", None)
+        self.core.remove_item("fonts")
         if self.gui:
             font_toggle = self.gui.get_object("ShowFontDialog")
             self.core.unregister_ui("edit_menu", None)

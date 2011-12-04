@@ -33,6 +33,7 @@ CONFIG_DIR = "pycam"
 
 log = pycam.Utils.log.get_logger()
 
+
 def get_config_dirname():
     try:
         from win32com.shell import shellcon, shell            
@@ -75,6 +76,11 @@ class Settings(object):
         self.define_get_func(key, get_func)
         self.define_set_func(key, set_func)
         self.items[key][self.VALUE_INDEX] = None
+
+    def remove_item(self, key):
+        if not self.items.has_key(key):
+            return
+        del self.items[key]
 
     def define_get_func(self, key, get_func=None):
         if not self.items.has_key(key):

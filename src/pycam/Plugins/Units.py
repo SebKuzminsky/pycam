@@ -63,7 +63,7 @@ class Units(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
-        self.core.clear_state_items()
+        self.clear_state_items()
         if self.gui:
             self.core.unregister_ui("preferences_general",
                     self.gui.get_object("UnitPrefBox"))

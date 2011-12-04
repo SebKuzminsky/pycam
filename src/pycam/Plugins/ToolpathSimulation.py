@@ -69,7 +69,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
     def teardown(self):
         if self.gui:
             for name in ("simulation_speed_factor", "simulation_details_level"):
-                self.core.add_item(name, None, lambda value: None)
+                self.core.remove_item(name)
             self.unregister_gtk_handlers(self._gtk_handlers)
 
     def finish_toolpath_simulation(self, widget=None, data=None):

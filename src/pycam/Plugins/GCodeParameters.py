@@ -43,8 +43,15 @@ class GCodePreferences(pycam.Plugins.PluginBase):
                     while not child in self._pref_items:
                         parent.remove(child)
                         parent = child
-                        child = child.get_children()[0]
-                    parent.remove(child)
+                        try:
+                            child = child.get_children()[0]
+                        except (AttributeError, IndexError):
+                            # We encountered an invalid item (e.g. a label
+                            # without children) or an empty item.
+                            break
+                    else:
+                        # we found a valid child -> remove it
+                        parent.remove(child)
             def add_preferences_item(item, name):
                 if not item in self._pref_items:
                     self._pref_items.append(item)
@@ -116,8 +123,7 @@ class GCodeSafetyHeight(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.clear_state_items()
-        self.core.add_item("gcode_safety_height", lambda value: None,
-                lambda: None)
+        self.core.remove_item("gcode_safety_height")
         self.safety_height.destroy()
 
 
@@ -140,8 +146,7 @@ class GCodeFilenameExtension(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
-        self.core.add_item("gcode_filename_extension", lambda value: None,
-                lambda: None)
+        self.core.remove_item("gcode_filename_extension")
         self.filename_extension.destroy()
 
 
@@ -176,8 +181,7 @@ class GCodeStepWidth(pycam.Plugins.PluginBase):
         while self.controls:
             self.core.unregister_ui("gcode_step_width", self.controls.pop())
         for key in "xyz":
-            self.core.add_item("gcode_minimum_step_%s" % key, lambda: None,
-                    lambda value: None)
+            self.core.remove_item("gcode_minimum_step_%s" % key)
 
 class GCodeSpindle(pycam.Plugins.PluginBase):
 
@@ -185,11 +189,11 @@ class GCodeSpindle(pycam.Plugins.PluginBase):
     CATEGORIES = ["GCode"]
 
     def setup(self):
-        table = pycam.Gui.ControlsGTK.ParameterSection()
+        self._table = pycam.Gui.ControlsGTK.ParameterSection()
         self.core.register_ui("gcode_preferences", "Spindle control",
-                table.widget)
+                self._table.widget)
         self.core.register_ui_section("gcode_spindle",
-                table.add_widget, table.clear_widgets)
+                self._table.add_widget, self._table.clear_widgets)
         self.spindle_delay = pycam.Gui.ControlsGTK.InputNumber(digits=1)
         # TODO: this should be done via parameter groups based on postprocessors
         self.spindle_delay.get_widget().show()
@@ -206,6 +210,15 @@ class GCodeSpindle(pycam.Plugins.PluginBase):
                 self.spindle_enable.get_widget(), weight=10)
         self.update_widgets()
         return True
+
+    def teardown(self):
+        self.core.remove_item("gcode_spindle_delay")
+        self.core.unregister_ui("gcode_spindle",
+                self.spindle_delay.get_widget())
+        self.core.unregister_ui("gcode_spindle",
+                self.spindle_enable.get_widget())
+        self.core.unregister_ui_section("gcode_spindle")
+        self.core.unregister_ui("gcode_preferences", self._table.widget)
 
     def update_widgets(self, widget=None):
         widget = self.spindle_delay.get_widget()
@@ -243,6 +256,15 @@ class GCodeCornerStyle(pycam.Plugins.PluginBase):
         table.widget.show_all()
         self.update_widgets()
         return True
+
+    def teardown(self):
+        self.core.unregister_ui("gcode_corner_style",
+                self.motion_tolerance.get_widget())
+        self.core.unregister_ui("gcode_corner_style",
+                self.naive_tolerance.get_widget())
+        self.core.unregister_ui("gcode_corner_style",
+                self.path_mode.get_widget())
+        self.core.unregister_ui_section("gcode_corner_style")
 
     def update_widgets(self, widget=None):
         enable_tolerances = (self.path_mode.get_value() == "optimize_speed")
