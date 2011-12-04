@@ -43,27 +43,28 @@ class ModelSupportDistributed(pycam.Plugins.PluginBase):
                     support_expander)
             grid_length = self.gui.get_object("SupportGridLength")
             self._gtk_handlers.append((grid_length, "value-changed",
-                    self.update_support_model))
+                    "support-model-changed"))
             self.core.add_item("support_grid_length",
                     grid_length.get_value, grid_length.set_value)
             average_distance = self.gui.get_object("GridAverageDistance")
             self._gtk_handlers.append((average_distance, "value-changed",
-                    self.update_support_model))
+                    "support-model-changed"))
             self.core.add_item("support_grid_average_distance",
                     average_distance.get_value, average_distance.set_value)
             minimum_bridges = self.gui.get_object("GridMinBridgesPerPolygon")
             self._gtk_handlers.append((minimum_bridges, "value-changed",
-                    self.update_support_model))
+                    "support-model-changed"))
             self.core.add_item("support_grid_minimum_bridges",
                     minimum_bridges.get_value, minimum_bridges.set_value)
             # TODO: remove these public settings
             self.core.set("support_grid_average_distance", 30)
             self.core.set("support_grid_minimum_bridges", 2)
             self.core.set("support_grid_length", 5)
+            self.core.register_chain("get_support_models",
+                    self._get_support_models)
             # register handlers
             self._event_handlers = (
-                    ("support-model-changed", self.update_support_controls),
-                    ("support-model-changed", self.update_support_model))
+                    ("support-model-changed", self.update_support_controls),)
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
         return True
@@ -72,6 +73,8 @@ class ModelSupportDistributed(pycam.Plugins.PluginBase):
         if self.gui:
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
+            self.core.unregister_chain("get_support_models",
+                    self._get_support_models)
             self.core.unregister_ui("support_model_type_selector",
                     "distributed_edges")
             self.core.unregister_ui("support_model_type_selector",
@@ -86,35 +89,27 @@ class ModelSupportDistributed(pycam.Plugins.PluginBase):
         else:
             self.gui.get_object("DistributedSupportExpander").hide()
 
-    def update_support_model(self, widget=None):
-        model = self.core.get("model")
-        if not model:
-            return
+    def _get_support_models(self, models, support_models):
         grid_type = self.core.get("support_model_type")
-        support_model = None
-        # TODO: completely broken code
         if grid_type in ("distributed_edges", "distributed_corners"):
             s = self.core
-            if (s.get("support_grid_thickness") > 0) \
-                    and (s.get("support_grid_height") > 0) \
-                    and (s.get("support_grid_average_distance") > 0) \
-                    and (s.get("support_grid_minimum_bridges") > 0):
-                # get the minimum z value of the bounding box
-                bounds = s.get("current_bounds")
-                if bounds:
-                    minz = bounds.get_absolute_limits(
-                            reference=model.model.get_bounds())[0][2]
+            while models:
+                model = models.pop(0)
+                if model.model and (s.get("support_grid_thickness") > 0) \
+                        and (s.get("support_grid_height") > 0) \
+                        and (s.get("support_grid_average_distance") > 0) \
+                        and (s.get("support_grid_minimum_bridges") > 0):
+                    # get the minimum z value of the bounding box
+                    minz = model.model.minz
                     corner_start = (grid_type == "distributed_corners")
                     support_model = pycam.Toolpath.SupportGrid.get_support_distributed(
-                            s.get("model"), minz,
+                            model.model, minz,
                             s.get("support_grid_average_distance"),
                             s.get("support_grid_minimum_bridges"),
                             s.get("support_grid_thickness"),
                             s.get("support_grid_height"),
                             s.get("support_grid_length"),
-                            bounds.get_referenced_bounds(s.get("model").get_bounds()),
                             start_at_corners=corner_start)
-        if support_model != self.core.get("current_support_model"):
-            self.core.set("current_support_model", support_model)
-            self.core.emit_event("visual-item-updated")
+                    if support_model:
+                        support_models.append(support_model)
 

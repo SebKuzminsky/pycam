@@ -126,31 +126,36 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
                     adjustments[index] = value
             # TODO: remove these public settings
             self.core.add_item("support_grid_adjustment_value",
-                    get_set_grid_adjustment_value, get_set_grid_adjustment_value)
+                    get_set_grid_adjustment_value,
+                    get_set_grid_adjustment_value)
             grid_distance_square.set_active(True)
             self.core.set("support_grid_distance_x", 10.0)
+            self.core.register_chain("get_support_models",
+                    self._get_support_models)
             # handlers
-            self._event_handlers = ((
-                    ("support-model-changed", self.update_support_controls),
-                    ("support-model-changed", self.update_support_model)))
+            self._event_handlers = (
+                    ("support-model-changed", self.update_support_controls), )
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
         return True
 
     def teardown(self):
         if self.gui:
+            self.core.unregister_chain("get_support_models",
+                    self._get_support_models)
             self.core.unregister_ui("support_model_type_selector", "grid")
             self.core.unregister_ui("support_model_settings",
                     self.gui.get_object("SupportModelGridBox"))
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
 
-    def update_support_model(self, widget=None):
+    def _get_support_models(self, models, support_models):
         grid_type = self.core.get("support_model_type")
-        if grid_type == "grid": 
+        if (grid_type == "grid") and models: 
+            # we create exactly one support model for all input models
             s = self.core
             support_grid = None
-            low, high = self._get_bounds()
+            low, high = self._get_bounds(models)
             if (s.get("support_grid_thickness") > 0) \
                     and ((s.get("support_grid_distance_x") > 0) \
                         or (s.get("support_grid_distance_y") > 0)) \
@@ -171,8 +176,10 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
                         offset_y=s.get("support_grid_offset_y"),
                         adjustments_x=self.grid_adjustments_x,
                         adjustments_y=self.grid_adjustments_y)
-            self.core.set("current_support_model", support_grid)
-            self.core.emit_event("visual-item-updated")
+            # all models are processed -> wipe the input list
+            while models:
+                models.pop()
+            support_models.append(support_grid)
 
     def update_support_controls(self, widget=None):
         grid_type = self.core.get("support_model_type")
@@ -287,8 +294,10 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
         else:
             self.grid_adjustment_selector.set_active(-1)
 
-    def _get_bounds(self):
-        models = [m.model for m in self.core.get("models").get_selected()]
+    def _get_bounds(self, models=None):
+        if not models:
+            models = self.core.get("models").get_selected()
+        models = [m.model for m in models]
         low, high = pycam.Geometry.Model.get_combined_bounds(models)
         if None in low or None in high:
             return [0, 0, 0], [0, 0, 0]
