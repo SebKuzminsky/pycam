@@ -148,7 +148,7 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
 
     DEPENDS = ["ParameterGroupManager", "PathParamStepDown",
             "PathParamMillingStyle", "PathParamRadiusCompensation",
-            "PathParamTraceModel"]
+            "PathParamTraceModel", "PathParamPocketingType"]
     CATEGORIES = ["Process"]
 
     def setup(self):
@@ -156,6 +156,7 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
                 "milling_style": pycam.Toolpath.MotionGrid.MILLING_STYLE_IGNORE,
                 "radius_compensation": False,
                 "trace_models": [],
+                "pocketing_type": pycam.Toolpath.MotionGrid.POCKETING_TYPE_NONE,
         }
         self.core.get("register_parameter_set")("process", "engraving",
                 "Engraving", self.run_process, parameters=parameters,
@@ -190,8 +191,10 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
         progress.update(text="Calculating moves")
         motion_grid = pycam.Toolpath.MotionGrid.get_lines_grid(models,
                 (low, high), process["parameters"]["step_down"],
+                line_distance=1.8*tool_params["radius"],
                 step_width=(tool_params["radius"] / 4.0),
                 milling_style=process["parameters"]["milling_style"],
+                pocketing_type=process["parameters"]["pocketing_type"],
                 callback=progress.update)
         progress.finish()
         return path_generator, motion_grid, (low, high)

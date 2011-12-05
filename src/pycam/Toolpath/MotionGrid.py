@@ -24,8 +24,13 @@ from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import epsilon
 from pycam.Geometry.Polygon import PolygonSorter
+import pycam.Utils.log
 import pycam.Geometry
+
 import math
+
+
+_log = pycam.Utils.log.get_logger()
 
 
 GRID_DIRECTION_X = 0
@@ -42,6 +47,11 @@ START_Z = 0x4
 
 SPIRAL_DIRECTION_IN = 0
 SPIRAL_DIRECTION_OUT = 1
+
+POCKETING_TYPE_NONE = 0
+POCKETING_TYPE_HOLES = 1
+POCKETING_TYPE_MATERIAL = 2
+
 
 def isiterable(obj):
     try:
@@ -389,12 +399,20 @@ def _get_sorted_polygons(models, callback=None):
 
 def get_lines_grid(models, (low, high), layer_distance, line_distance=None,
         step_width=None, milling_style=MILLING_STYLE_CONVENTIONAL,
-        start_position=START_Z, callback=None):
+        start_position=START_Z, pocketing_type=POCKETING_TYPE_NONE,
+        callback=None):
     # the lower limit is never below the model
     polygons = _get_sorted_polygons(models, callback=callback)
     if polygons:
         low_limit_lines = min([polygon.minz for polygon in polygons])
         low[2] = max(low[2], low_limit_lines)
+    # calculate pockets
+    if pocketing_type != POCKETING_TYPE_NONE:
+        if not callback is None:
+            callback(text="Generating pocketing polygons ...")
+        polygons = get_pocketing_polygons(polygons, line_distance,
+                pocketing_type, callback=callback)
+    # extract lines in correct order from all polygons
     lines = []
     for polygon in polygons:
         if callback:
@@ -413,9 +431,9 @@ def get_lines_grid(models, (low, high), layer_distance, line_distance=None,
     else:
         layers = floatrange(low[2], high[2], inc=layer_distance,
                 reverse=bool(start_position & START_Z))
-    last_z = None
     # turn the generator into a list - otherwise the slicing fails
     layers = list(layers)
+    last_z = None
     if layers:
         # the upper layers are used for PushCutter operations
         for z in layers[:-1]:
@@ -429,4 +447,56 @@ def get_lines_grid(models, (low, high), layer_distance, line_distance=None,
             callback()
         yield get_lines_layer(lines, layers[-1], last_z=last_z,
                 step_width=step_width, milling_style=milling_style)
+
+def get_pocketing_polygons(polygons, offset, pocketing_type, callback=None):
+    pocketing_limit = 1000
+    base_polygons = []
+    other_polygons = []
+    if pocketing_type == POCKETING_TYPE_HOLES:
+        # go inwards
+        offset *= -1
+        for poly in polygons:
+            if poly.is_closed and poly.is_outer():
+                base_polygons.append(poly)
+            else:
+                other_polygons.append(poly)
+    elif pocketing_type == POCKETING_TYPE_MATERIAL:
+        for poly in polygons:
+            if poly.is_closed and not poly.is_outer():
+                base_polygons.append(poly)
+            else:
+                other_polygons.append(poly)
+    else:
+        _log.warning("Invalid pocketing type given: %d" % str(pocketing_type))
+        return polygons
+    # For now we use only the polygons that do not surround any other
+    # polygons. Sorry - the pocketing is currently very simple ...
+    base_filtered_polygons = []
+    for candidate in base_polygons:
+        if callback and callback():
+            # we were interrupted
+            return polygons
+        for other in other_polygons:
+            if candidate.is_polygon_inside(other):
+                break
+        else:
+            base_filtered_polygons.append(candidate)
+    # start the pocketing for all remaining polygons
+    pocket_polygons = []
+    for base_polygon in base_filtered_polygons:
+        pocket_polygons.append(base_polygon)
+        current_queue = [base_polygon]
+        next_queue = []
+        pocket_depth = 0
+        while current_queue and (pocket_depth < pocketing_limit):
+            if callback and callback():
+                return polygons
+            for poly in current_queue:
+                result = poly.get_offset_polygons(offset)
+                pocket_polygons.extend(result)
+                next_queue.extend(result)
+                pocket_depth += 1
+            current_queue = next_queue
+            next_queue = []
+    return pocket_polygons
 

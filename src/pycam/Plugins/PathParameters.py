@@ -324,3 +324,26 @@ class PathParamTraceModel(pycam.Plugins.PluginBase):
                 choices.append((model["name"], model))
         self.control.update_choices(choices)
 
+
+class PathParamPocketingType(pycam.Plugins.PluginBase):
+
+    DEPENDS = ["Processes"]
+    CATEGORIES = ["Process", "Parameter"]
+
+    def setup(self):
+        self.control = pycam.Gui.ControlsGTK.InputChoice(
+                    (("none", pycam.Toolpath.MotionGrid.POCKETING_TYPE_NONE),
+                    ("holes", pycam.Toolpath.MotionGrid.POCKETING_TYPE_HOLES),
+                    ("material", pycam.Toolpath.MotionGrid.POCKETING_TYPE_MATERIAL)),
+                change_handler=lambda widget=None: self.core.emit_event(
+                        "process-changed"))
+        self.core.get("register_parameter")("process", "pocketing_type",
+                self.control)
+        self.core.register_ui("process_path_parameters", "Pocketing",
+                self.control.get_widget(), weight=60)
+        return True
+
+    def teardown(self):
+        self.core.unregister_ui("process_path_parameters", self.control.get_widget())
+        self.core.get("unregister_parameter")("path_pattern", "pocketing_type")
+
