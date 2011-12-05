@@ -172,7 +172,7 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
                 tool=tool, models=environment["collision_models"])
         path_generator = pycam.PathGenerators.EngraveCutter.EngraveCutter(
                 pycam.PathProcessors.SimpleCutter.SimpleCutter())
-        models = list(process["parameters"]["trace_models"])
+        models = [m.model for m in process["parameters"]["trace_models"]]
         if not models:
             self.log.error("No trace models given: you need to assign a " + \
                     "2D model to the engraving process.")
