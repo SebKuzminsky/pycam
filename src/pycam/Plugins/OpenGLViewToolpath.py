@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Plugins
+import pycam.Gui.OpenGLTools
 
 
 class OpenGLViewToolpath(pycam.Plugins.PluginBase):
@@ -73,18 +74,16 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
     def draw_toolpath(self):
         if self._is_visible():
             GL = self._GL
+            GL.glDisable(GL.GL_LIGHTING)
+            show_directions = self.core.get("show_directions")
+            color_rapid = self.core.get("color_toolpath_return")
+            color_cut = self.core.get("color_toolpath_cut")
             for toolpath in self.core.get("toolpaths").get_visible():
-                color_rapid = self.core.get("color_toolpath_return")
-                color_cut = self.core.get("color_toolpath_cut")
-                show_directions = self.core.get("show_directions")
-                lighting = self.core.get("view_light")
                 moves = toolpath.get_moves(self.core.get("gcode_safety_height"))
                 GL.glMatrixMode(GL.GL_MODELVIEW)
                 GL.glLoadIdentity()
                 last_position = None
                 last_rapid = None
-                if lighting:
-                    GL.glDisable(GL.GL_LIGHTING)
                 GL.glBegin(GL.GL_LINE_STRIP)
                 for position, rapid in moves:
                     if last_rapid != rapid:
@@ -104,11 +103,9 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
                     GL.glVertex3f(position.x, position.y, position.z)
                     last_position = position
                 GL.glEnd()
-                if lighting:
-                    GL.glEnable(GL.GL_LIGHTING)
                 if show_directions:
                     for index in range(len(moves) - 1):
                         p1 = moves[index][0]
                         p2 = moves[index + 1][0]
-                        draw_direction_cone(p1, p2)
+                        pycam.Gui.OpenGLTools.draw_direction_cone(p1, p2)
 
