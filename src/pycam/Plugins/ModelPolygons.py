@@ -75,11 +75,13 @@ class ModelPolygons(pycam.Plugins.PluginBase):
         if not models:
             return
         self.core.emit_event("model-change-before")
-        self.core.get("update_progress")("Reversing directions of contour model")
-        # TODO: main/sub progress bar for multiple models
+        progress = self.core.get("progress")
+        progress.update(text="Reversing directions of contour model")
+        progress.set_multiple(len(models), "Model")
         for model in models:
-            model.model.reverse_directions(
-                    callback=self.core.get("update_progress"))
+            model.model.reverse_directions(callback=progress.update)
+            progress.update_multiple()
+        progress.finish()
         self.core.emit_event("model-change-after")
 
     def _revise_directions(self, widget=None):
