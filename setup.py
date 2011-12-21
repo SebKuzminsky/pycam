@@ -32,13 +32,11 @@ import glob
 import os.path
 import sys
 import shutil
-# add the local pycam source directory to the PYTHONPATH
-BASE_DIR = os.path.realpath(os.path.abspath(os.path.dirname(__file__)))
-sys.path.insert(0, os.path.join(BASE_DIR, "src"))
+
 from pycam import VERSION
 
-WINDOWS_START_SCRIPT = "pycam-loader.py"
-DEFAULT_START_SCRIPT = "pycam"
+WINDOWS_START_SCRIPT = "scripts/pycam-loader.py"
+DEFAULT_START_SCRIPT = "scripts/pycam"
 
 # we don't want to include the windows postinstall script in other installers
 is_windows_installer = "bdist_wininst" in sys.argv or "bdist_msi" in sys.argv
@@ -46,7 +44,7 @@ is_windows_installer = "bdist_wininst" in sys.argv or "bdist_msi" in sys.argv
 if is_windows_installer:
     shutil.copy2(os.path.join(BASE_DIR, DEFAULT_START_SCRIPT),
             os.path.join(BASE_DIR, WINDOWS_START_SCRIPT))
-    PLATFORM_SCRIPTS = [WINDOWS_START_SCRIPT, "pycam_win32_postinstall.py"]
+    PLATFORM_SCRIPTS = [WINDOWS_START_SCRIPT, "scripts/pycam_win32_postinstall.py"]
 else:
     PLATFORM_SCRIPTS = [DEFAULT_START_SCRIPT]
 
@@ -84,7 +82,6 @@ Windows: select Python 2.5 in the following dialog.
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX",
     ],
-    package_dir={'': 'src'},
     packages=[
         "pycam",
         "pycam.Cutters",
