@@ -92,6 +92,7 @@ Windows: select Python 2.5 in the following dialog.
         "pycam.PathGenerators",
         "pycam.PathProcessors",
         "pycam.Physics",
+        "pycam.Plugins",
         "pycam.Simulation",
         "pycam.Toolpath",
         "pycam.Utils",
