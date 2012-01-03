@@ -629,14 +629,19 @@ def run_in_parallel_local(func, args, unordered=False,
             imap_func = pool.imap_unordered
         else:
             imap_func = pool.imap
-        # Beware: we may not return "pool.imap" or "pool.imap_unordered"
-        # directly. It would somehow loose the focus and just hang infinitely.
-        # Thus we wrap our own generator around it.
-        for result in imap_func(func, args):
-            if callback and callback():
-                # cancel requested
-                break
-            yield result
+        # We need to use try/finally here to ensure the garbage collection
+        # of "pool". Otherwise a memory overflow is caused for Python 2.7.
+        try:
+            # Beware: we may not return "pool.imap" or "pool.imap_unordered"
+            # directly. It would somehow loose the focus and just hang infinitely.
+            # Thus we wrap our own generator around it.
+            for result in imap_func(func, args):
+                if callback and callback():
+                    # cancel requested
+                    break
+                yield result
+        finally:
+            pool.terminate()
     else:
         for arg in args:
             if callback and callback():
