@@ -98,7 +98,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                     ("view_light", "OpenGLLight", True),
                     ("view_shadow", "OpenGLShadow", True),
                     ("view_polygon", "OpenGLPolygon", True),
-                    ("view_perspective", "OpenGLPerspective", True)):
+                    ("view_perspective", "OpenGLPerspective", True),
+                    ("opengl_cache_enable", "OpenGLCache", True)):
                 obj = self.gui.get_object(objname)
                 self.core.add_item(name, obj.get_active, obj.set_active)
                 obj.set_active(default)
@@ -217,7 +218,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 set_func = lambda value: self.core.set(name, value)
                 return get_func, set_func
             for name in ("view_light", "view_shadow", "view_polygon",
-                    "view_perspective", "drill_progress_max_fps"):
+                    "view_perspective", "opengl_cache_enable",
+                    "drill_progress_max_fps"):
                 self.register_state_item("settings/view/opengl/%s" % name,
                         *get_get_set_functions(name))
         return True

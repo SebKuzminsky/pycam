@@ -92,9 +92,12 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
                         GL.GL_AMBIENT_AND_DIFFUSE, color)
                 # we need to wait until the color change is active
                 GL.glFinish()
-                key = self._get_cache_key(model, color=color,
-                        show_directions=self.core.get("show_directions"))
-                do_caching = not key is None
+                if self.core.get("opengl_cache_enable"):
+                    key = self._get_cache_key(model, color=color,
+                            show_directions=self.core.get("show_directions"))
+                    do_caching = not key is None
+                else:
+                    do_caching = False
                 if do_caching and not key in self._cache:
                     # Rendering a display list takes less than 5% of the time
                     # for a complete rebuild.
