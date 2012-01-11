@@ -100,7 +100,7 @@ class ProgressGTK(object):
             self._multi_base_text = base_text
         else:
             self._multi_base_text = ""
-        self._multi_counter = 1
+        self._multi_counter = 0
         if count > 1:
             self._multi_maximum = count
             self.update_multiple(increment=False)
@@ -116,10 +116,10 @@ class ProgressGTK(object):
             self._multi_counter += 1
             self._progress_bar.set_fraction(0)
         if self._multi_base_text:
-            text = "%s %d/%d" % (self._multi_base_text, self._multi_counter,
-                    self._multi_maximum)
+            text = "%s %d/%d" % (self._multi_base_text,
+                    self._multi_counter + 1, self._multi_maximum)
         else:
-            text = "%d/%d" % (self._multi_counter, self._multi_maximum)
+            text = "%d/%d" % (self._multi_counter + 1, self._multi_maximum)
         self._multi_widget.set_text(text)
         self._multi_widget.set_fraction(min(1.0,
                 float(self._multi_counter) / self._multi_maximum))
