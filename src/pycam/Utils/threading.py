@@ -34,26 +34,29 @@ import time
 import os
 import sys
 
+
+log = pycam.Utils.log.get_logger()
+
+
 try:
-    from multiprocessing.managers import SyncManager
+    from multiprocessing.managers import SyncManager as __SyncManager
+except ImportError:
+    pass
+else:
     # this class definition needs to be at the top level - for pyinstaller
-    class TaskManager(SyncManager):
+    class TaskManager(__SyncManager):
         @classmethod
         def _run_server(cls, *args):
             # make sure that the server ignores SIGINT (KeyboardInterrupt)
             signal.signal(signal.SIGINT, signal.SIG_IGN)
             # prevent connection errors to trigger exceptions
             try:
-                SyncManager._run_server(*args)
+                __SyncManager._run_server(*args)
             except socket.error:
                 pass
-except ImportError:
-    pass
 
 DEFAULT_PORT = 1250
 
-
-log = pycam.Utils.log.get_logger()
 
 #TODO: create one or two classes for these functions (to get rid of the globals)
 
@@ -70,6 +73,7 @@ __manager = None
 __closing = None
 __task_source_uuid = None
 __finished_jobs = []
+__issued_warnings = []
 
 
 def run_in_parallel(*args, **kwargs):
@@ -88,9 +92,22 @@ def is_multiprocessing_available():
         return False
     try:
         import multiprocessing
+        # try to initialize a semaphore - this can trigger shm access failures
+        # (e.g. on Debian Lenny with Python 2.6.6)
+        multiprocessing.Semaphore()
         return True
     except ImportError:
-        return False
+        if not "missing_module" in __issued_warnings:
+            log.info("Python's multiprocessing module is missing: " + \
+                    "disabling parallel processing")
+            __issued_warnings.append("missing_module")
+    except OSError:
+        if not "shm_access_failed" in __issued_warnings:
+            log.info("Python's multiprocessing module failed to acquire " + \
+                    "read/write access to shared memory (shm) - disabling " + \
+                    "parallel processing")
+            __issued_warnings.append("shm_access_failed")
+    return False
 
 def is_multiprocessing_enabled():
     return bool(__multiprocessing)
