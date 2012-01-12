@@ -68,6 +68,10 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
             # we assume that an error message was given already
             return
         models = [m.model for m in task["parameters"]["collision_models"]]
+        if not models:
+            # issue a warning - and go ahead ...
+            self.log.warn("No collision model was selected. This can be " + \
+                    "intentional, but maybe you simply forgot it.")
         moves = path_generator.GenerateToolPath(tool, models, motion_grid,
                 minz=low[2], maxz=high[2], draw_callback=callback)
         if not moves:
