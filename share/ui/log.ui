@@ -149,32 +149,29 @@
     <property name="short_label">_Log Window</property>
     <property name="tooltip">Show the event protocol of PyCAM.</property>
   </object>
-  <object class="GtkWindow" id="DummyWindow">
+  <object class="GtkEventBox" id="StatusBarEventBox">
+    <property name="visible">True</property>
+    <property name="tooltip_text" translatable="yes">Click here to show the log window.</property>
     <child>
-      <object class="GtkEventBox" id="StatusBarEventBox">
+      <object class="GtkHBox" id="hbox37">
         <property name="visible">True</property>
         <child>
-          <object class="GtkHBox" id="hbox37">
-            <property name="visible">True</property>
-            <child>
-              <object class="GtkImage" id="StatusBarWarning">
-                <property name="stock">gtk-dialog-warning</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkStatusbar" id="StatusBar">
-                <property name="visible">True</property>
-                <property name="spacing">2</property>
-              </object>
-              <packing>
-                <property name="position">1</property>
-              </packing>
-            </child>
+          <object class="GtkImage" id="StatusBarWarning">
+            <property name="stock">gtk-dialog-warning</property>
           </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkStatusbar" id="StatusBar">
+            <property name="visible">True</property>
+            <property name="spacing">2</property>
+          </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
         </child>
       </object>
     </child>
