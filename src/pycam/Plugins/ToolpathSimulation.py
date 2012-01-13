@@ -21,6 +21,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import math
+import datetime
+import gobject
 
 import pycam.Plugins
 # this requires ODE - we import it later, if necessary
@@ -30,128 +32,130 @@ import pycam.Plugins
 class ToolpathSimulation(pycam.Plugins.PluginBase):
 
     UI_FILE = "toolpath_simulation.ui"
+    DEPENDS = ["Toolpaths", "OpenGLViewToolpath"]
     CATEGORIES = ["Toolpath"]
 
     def setup(self):
+        self._running = None
         if self.gui:
             self._gtk_handlers = []
-            speed_factor_widget = self.gui.get_object("SimulationSpeedFactor")
-            self.core.add_item("simulation_speed_factor",
-                    lambda: pow(10, speed_factor_widget.get_value()),
-                    lambda value: speed_factor_widget.set_value(math.log10(
-                            max(0.001, value))))
-            simulation_progress = self.gui.get_object(
+            self._frame = self.gui.get_object("SimulationBox")
+            self.core.register_ui("toolpath_handling", "Simulation",
+                    self._frame, 25)
+            self._speed_factor_widget = self.gui.get_object(
+                    "SimulationSpeedFactorValue")
+            self._speed_factor_widget.set_value(1.0)
+            self._progress = self.gui.get_object(
                     "SimulationProgressTimelineValue")
-            def update_simulation_progress(widget):
-                if widget.get_value() == 100:
-                    # a negative value indicates, that the simulation is finished
-                    self.core.set("simulation_current_distance", -1)
-                else:
-                    complete = self.core.get("simulation_complete_distance")
-                    partial = widget.get_value() / 100.0 * complete
-                    self.core.set("simulation_current_distance", partial)
-            self._gtk_handlers.append((simulation_progress, "value-changed",
-                    update_simulation_progress))
-            # update the speed factor label
-            self._gtk_handlers.append((speed_factor_widget, "value-changed",
-                    lambda widget: self.gui.get_object(
-                        "SimulationSpeedFactorValueLabel").set_label("%.2f" % \
-                            self.core.get("simulation_speed_factor"))))
-            self.simulation_window = self.gui.get_object("SimulationDialog")
-            self._gtk_handlers.append((self.simulation_window, "delete-event",
-                    self.finish_toolpath_simulation))
-            sim_detail_obj = self.gui.get_object("SimulationDetailsValue")
-            self.core.add_item("simulation_details_level",
-                    sim_detail_obj.get_value, sim_detail_obj.set_value)
+            self._timer_widget = self.gui.get_object(
+                    "SimulationProgressTimeDisplay")
+            self.core.set("show_simulation", False)
+            self._toolpath_moves = None
+            self._start_button = self.gui.get_object("SimulationStartButton")
+            self._pause_button = self.gui.get_object("SimulationPauseButton")
+            self._stop_button = self.gui.get_object("SimulationStopButton")
+            for obj, handler in ((self._start_button, self._start_simulation),
+                    (self._pause_button, self._pause_simulation),
+                    (self._stop_button, self._stop_simulation)):
+                self._gtk_handlers.append((obj, "clicked", handler))
+            self._gtk_handlers.append((self._progress, "value-changed",
+                    self._update_toolpath))
             self.register_gtk_handlers(self._gtk_handlers)
+            self.core.register_event("visualize-items", self.show_simulation)
         return True
 
     def teardown(self):
         if self.gui:
-            for name in ("simulation_speed_factor", "simulation_details_level"):
-                self.core.remove_item(name)
+            self.core.remove_item("show_simulation")
+            self.core.unregister_ui("toolpath_handling", self._frame)
+            self.core.unregister_event("visualize-items", self.show_simulation)
             self.unregister_gtk_handlers(self._gtk_handlers)
 
-    def finish_toolpath_simulation(self, widget=None, data=None):
-        # hide the simulation tab
-        self.simulation_window.hide()
-        # enable all other tabs again
-        self.toggle_tabs_for_simulation(True)
-        self.core.set("simulation_object", None)
-        self.core.set("simulation_toolpath_moves", None)
-        self.core.set("show_simulation", False)
-        self.core.set("simulation_toolpath", None)
-        self.update_view()
-        # don't destroy the simulation window (for "destroy" event)
-        return True
-
-    def update_toolpath_simulation(self, widget=None, toolpath=None):
-        s = self.core
-        # update the GUI
-        while gtk.events_pending():
-            gtk.main_iteration()
-        if not s.get("show_simulation"):
-            # cancel
-            return False
-        safety_height = s.get("gcode_safety_height")
-        if not s.get("simulation_toolpath"):
-            # get the currently selected toolpath, if none is give
-            if toolpath is None:
-                toolpath_index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
-                if toolpath_index is None:
-                    return
-                else:
-                    toolpath = self.toolpath[toolpath_index]
-            s.set("simulation_toolpath", toolpath)
-            # set the current cutter
-            self.cutter = toolpath.toolpath_settings.get_tool()
-            # calculate steps
-            s.set("simulation_machine_time",
-                    toolpath.get_machine_time(safety_height=safety_height))
-            s.set("simulation_complete_distance",
-                    toolpath.get_machine_movement_distance(
-                        safety_height=safety_height))
-            s.set("simulation_current_distance", 0)
+    def _update_visibility(self):
+        toolpaths = self.core.get("toolpaths").get_selected()
+        if toolpaths and (len(toolpaths) == 1):
+            self._frame.show()
         else:
-            toolpath = s.get("simulation_toolpath")
-        if (s.get("simulation_current_distance") \
-                < s.get("simulation_complete_distance")):
-            if s.get("simulation_current_distance") < 0:
-                # "-1" -> simulation is finished
-                updated_distance = s.get("simulation_complete_distance")
-            else:
-                time_step = 1.0 / s.get("drill_progress_max_fps")
-                feedrate = toolpath.toolpath_settings.get_tool_settings(
-                        )["feedrate"]
-                distance_step = s.get("simulation_speed_factor") * \
-                        time_step * feedrate / 60
-                updated_distance = min(distance_step + \
-                        s.get("simulation_current_distance"),
-                        s.get("simulation_complete_distance"))
-            if updated_distance != s.get("simulation_current_distance"):
-                s.set("simulation_current_distance", updated_distance)
-                moves = toolpath.get_moves(safety_height=safety_height,
-                        max_movement=updated_distance)
-                s.set("simulation_toolpath_moves", moves)
-                if moves:
-                    self.cutter.moveto(moves[-1][0])
-                self.update_view()
-        progress_value_percent = 100.0 * s.get("simulation_current_distance") \
-                / s.get("simulation_complete_distance")
-        self.gui.get_object("SimulationProgressTimelineValue").set_value(
-                progress_value_percent)
+            self._frame.hide()
+
+    def _start_simulation(self, widget=None):
+        if self._running is None:
+            # initial start of simulation (not just continuing)
+            toolpaths = self.core.get("toolpaths")
+            if not toolpaths:
+                # this should not happen
+                return
+            # we use only one toolpath
+            self._toolpath = toolpaths[0]
+            # calculate steps
+            self._safety_height = self.core.get("gcode_safety_height")
+            self._progress.set_upper(self._toolpath.get_machine_time(
+                    safety_height=self._safety_height))
+            self._progress.set_value(0)
+            self._distance = self._toolpath.get_machine_movement_distance(
+                        safety_height=self._safety_height)
+            self._feedrate = self._toolpath.get_params().get("tool_feedrate",
+                    300)
+            self._toolpath_moves = None
+            self.core.set("show_simulation", True)
+            self._running = True
+            interval_ms = int(1000 / self.core.get("drill_progress_max_fps"))
+            gobject.timeout_add(interval_ms, self._next_timestep)
+        else:
+            self._running = True
+        self._start_button.set_sensitive(False)
+        self._pause_button.set_sensitive(True)
+        self._stop_button.set_sensitive(True)
+
+    def _pause_simulation(self, widget=None):
+        self._start_button.set_sensitive(True)
+        self._pause_button.set_sensitive(False)
+        self._running = False
+
+    def _stop_simulation(self, widget=None):
+        self._running = None
+        self.core.set("show_simulation", False)
+        self._toolpath_moves = None
+        self._timer_widget.set_label("")
+        self._progress.set_value(0)
+        self._start_button.set_sensitive(True)
+        self._pause_button.set_sensitive(False)
+        self._stop_button.set_sensitive(False)
+        self.core.emit_event("visual-item-updated")
+
+    def _next_timestep(self):
+        if self._running is None:
+            # stop operation
+            return False
+        if not self._running:
+            # pause -> no change
+            return True
+        if self._progress.get_value() < self._progress.get_upper():
+            time_step = self._speed_factor_widget.get_value() / \
+                    self.core.get("drill_progress_max_fps")
+            new_time = self._progress.get_value() + time_step
+            new_time = min(new_time, self._progress.get_upper())
+            if new_time != self._progress.get_value():
+                # update the visualization
+                self._progress.set_value(new_time)
         return True
 
-    def show_toolpath_simulation(self, toolpath=None):
-        # disable the main controls
-        self.toggle_tabs_for_simulation(False)
-        # show the simulation controls
-        self.simulation_window.show()
-        # start the simulation
-        self.core.set("show_simulation", True)
-        time_step = int(1000 / self.core.get("drill_progress_max_fps"))
-        # update the toolpath simulation repeatedly
-        gobject.timeout_add(time_step, self.update_toolpath_simulation)
+    def _update_toolpath(self, widget=None):
+        if (not self._running is None) and (self._progress.get_upper() > 0):
+            fraction = self._progress.get_value() / self._progress.get_upper()
+            current = datetime.timedelta(
+                    seconds=int(self._progress.get_value()))
+            complete = datetime.timedelta(
+                    seconds=int(self._progress.get_upper()))
+            self._timer_widget.set_label("%s / %s" % (current, complete))
+            self._toolpath_moves = self._toolpath.get_moves(
+                    safety_height=self._safety_height,
+                    max_movement=self._distance * fraction)
+            self.core.emit_event("visual-item-updated")
+
+    def show_simulation(self):
+        if self._toolpath_moves and self.core.get("show_simulation"):
+            self.core.get("draw_toolpath_moves_func")(self._toolpath_moves)
 
     def update_toolpath_simulation_ode(self, widget=None, toolpath=None):
         import pycam.Simulation.ODEBlocks as ODEBlocks

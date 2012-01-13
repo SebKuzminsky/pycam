@@ -2,31 +2,42 @@
 <interface>
   <!-- interface-requires gtk+ 2.12 -->
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkDialog" id="SimulationDialog">
-    <property name="border_width">5</property>
-    <property name="title" translatable="yes">PyCAM simulation</property>
-    <property name="role">pycam-simulation</property>
-    <property name="destroy_with_parent">True</property>
-    <property name="type_hint">dialog</property>
-    <child internal-child="vbox">
-      <object class="GtkVBox" id="dialog-vbox9">
+  <object class="GtkAdjustment" id="SimulationProgressTimelineValue">
+    <property name="upper">1</property>
+    <property name="step_increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="SimulationSpeedFactorValue">
+    <property name="lower">0.01</property>
+    <property name="upper">10000</property>
+    <property name="step_increment">0.25</property>
+  </object>
+  <object class="GtkAdjustment" id="SimulationDetailsValue">
+    <property name="lower">1</property>
+    <property name="upper">10</property>
+    <property name="step_increment">1</property>
+  </object>
+  <object class="GtkFrame" id="SimulationBox">
+    <property name="visible">True</property>
+    <property name="label_xalign">0</property>
+    <property name="shadow_type">none</property>
+    <child>
+      <object class="GtkAlignment" id="alignment1">
         <property name="visible">True</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
+        <property name="top_padding">3</property>
+        <property name="left_padding">12</property>
         <child>
-          <object class="GtkVBox" id="vbox23">
+          <object class="GtkVBox" id="vbox1">
             <property name="visible">True</property>
             <property name="orientation">vertical</property>
             <property name="spacing">3</property>
             <child>
-              <object class="GtkHBox" id="hbox20">
-                <property name="spacing">2</property>
+              <object class="GtkHBox" id="hbox1">
+                <property name="visible">True</property>
                 <child>
-                  <object class="GtkLabel" id="SimulationDetailsControlLabel">
+                  <object class="GtkLabel" id="SimulationProgressTimelineLabel">
                     <property name="visible">True</property>
                     <property name="xalign">0</property>
-                    <property name="xpad">5</property>
-                    <property name="label" translatable="yes">Simulation detail level (1..10):</property>
+                    <property name="label" translatable="yes">Progress:</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -34,15 +45,12 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkSpinButton" id="SimulationDetailsControl">
+                  <object class="GtkLabel" id="SimulationProgressTimeDisplay">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="max_length">6</property>
-                    <property name="invisible_char">&#x25CF;</property>
-                    <property name="adjustment">SimulationDetailsValue</property>
+                    <property name="xalign">1</property>
+                    <property name="label" translatable="yes">0:20 / 4:45</property>
                   </object>
                   <packing>
-                    <property name="expand">False</property>
                     <property name="position">1</property>
                   </packing>
                 </child>
@@ -53,14 +61,12 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label2">
-                <property name="xalign">0</property>
-                <property name="label" translatable="yes">&lt;b&gt;Hint:&lt;/b&gt; take a look at the "show drill" and
-"OpenGL: polygon" settings in preferences.
-&lt;b&gt;Beware:&lt;/b&gt; the simulation feature is new and
-experimental. Thus you will quite probably stumble
-upon interesting bugs and weird results.</property>
-                <property name="use_markup">True</property>
+              <object class="GtkHScale" id="SimulationProgressTimeline">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="update_policy">delayed</property>
+                <property name="adjustment">SimulationProgressTimelineValue</property>
+                <property name="draw_value">False</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -68,22 +74,61 @@ upon interesting bugs and weird results.</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="SimulationProgressTimelineLabel">
+              <object class="GtkHButtonBox" id="hbuttonbox1">
                 <property name="visible">True</property>
-                <property name="xalign">0</property>
-                <property name="label" translatable="yes">Progress:</property>
+                <property name="spacing">3</property>
+                <child>
+                  <object class="GtkButton" id="SimulationStartButton">
+                    <property name="label">gtk-media-play</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="use_stock">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="SimulationPauseButton">
+                    <property name="label">gtk-media-pause</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="use_stock">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="SimulationStopButton">
+                    <property name="label">gtk-stop</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="use_stock">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
+                <property name="fill">False</property>
                 <property name="position">2</property>
               </packing>
             </child>
             <child>
-              <object class="GtkHScale" id="SimulationProgressTimeline">
+              <object class="GtkHSeparator" id="hseparator1">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="adjustment">SimulationProgressTimelineValue</property>
-                <property name="draw_value">False</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -98,92 +143,43 @@ upon interesting bugs and weird results.</property>
                   <object class="GtkLabel" id="SimulationSpeedFactorLabel">
                     <property name="visible">True</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">Simulation speed factor:</property>
+                    <property name="label" translatable="yes">Simulation speed:</property>
                   </object>
                   <packing>
-                    <property name="expand">False</property>
                     <property name="position">0</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="SimulationSpeedFactorValueLabel">
+                  <object class="GtkSpinButton" id="SimulationSpeedFactorControl">
                     <property name="visible">True</property>
-                    <property name="label" translatable="yes">1.00</property>
+                    <property name="can_focus">True</property>
+                    <property name="invisible_char">&#x25CF;</property>
+                    <property name="adjustment">SimulationSpeedFactorValue</property>
+                    <property name="digits">2</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
+                    <property name="fill">False</property>
                     <property name="position">1</property>
                   </packing>
                 </child>
               </object>
               <packing>
                 <property name="expand">False</property>
+                <property name="fill">False</property>
                 <property name="position">4</property>
               </packing>
             </child>
-            <child>
-              <object class="GtkHScale" id="SimulationSpeedFactor">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="adjustment">SimulationSpeedFactorValueExponential</property>
-                <property name="draw_value">False</property>
-                <property name="value_pos">bottom</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="position">5</property>
-              </packing>
-            </child>
           </object>
-          <packing>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="dialog-action_area8">
-            <property name="visible">True</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="ExitSimulationButton">
-                <property name="label">gtk-close</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="can_default">True</property>
-                <property name="has_default">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
         </child>
       </object>
     </child>
-    <action-widgets>
-      <action-widget response="0">ExitSimulationButton</action-widget>
-    </action-widgets>
-  </object>
-  <object class="GtkAdjustment" id="SimulationProgressTimelineValue">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="SimulationSpeedFactorValueExponential">
-    <property name="lower">-2</property>
-    <property name="upper">4</property>
-    <property name="step_increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="SimulationDetailsValue">
-    <property name="lower">1</property>
-    <property name="upper">10</property>
-    <property name="step_increment">1</property>
+    <child type="label">
+      <object class="GtkLabel" id="SimulationFrameLabel">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">&lt;b&gt;Simulation&lt;/b&gt;</property>
+        <property name="use_markup">True</property>
+      </object>
+    </child>
   </object>
 </interface>

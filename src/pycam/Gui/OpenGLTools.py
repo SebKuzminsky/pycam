@@ -102,23 +102,6 @@ def draw_direction_cone(p1, p2, position=0.5, precision=12, size=0.1):
 def draw_complete_model_view(settings):
     GL.glMatrixMode(GL.GL_MODELVIEW)
     GL.glLoadIdentity()
-    # draw the material (for simulation mode)
-    if settings.get("show_simulation"):
-        obj = settings.get("simulation_object")
-        if not obj is None:
-            color = settings.get("color_material")
-            GL.glColor4f(color["red"], color["green"], color["blue"], color["alpha"])
-            # we need to wait until the color change is active
-            GL.glFinish()
-            obj.to_OpenGL()
-    # draw the toolpath simulation
-    if settings.get("show_simulation"):
-        moves = settings.get("simulation_toolpath_moves")
-        if not moves is None:
-            draw_toolpath(moves, settings.get("color_toolpath_cut"),
-                    settings.get("color_toolpath_return"),
-                    show_directions=settings.get("show_directions"),
-                    lighting=settings.get("view_light"))
     # draw the drill
     if settings.get("show_drill"):
         cutter = settings.get("cutter")
