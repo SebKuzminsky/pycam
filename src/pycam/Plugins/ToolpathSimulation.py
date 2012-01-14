@@ -60,7 +60,11 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
                 self._gtk_handlers.append((obj, "clicked", handler))
             self._gtk_handlers.append((self._progress, "value-changed",
                     self._update_toolpath))
+            self._event_handlers = (
+                    ("toolpath-selection-changed", self._update_visibility), )
+            self.register_event_handlers(self._event_handlers)
             self.register_gtk_handlers(self._gtk_handlers)
+            self._update_visibility()
             self.core.register_event("visualize-items", self.show_simulation)
         return True
 
@@ -69,6 +73,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
             self.core.remove_item("show_simulation")
             self.core.unregister_ui("toolpath_handling", self._frame)
             self.core.unregister_event("visualize-items", self.show_simulation)
+            self.unregister_event_handlers(self._event_handlers)
             self.unregister_gtk_handlers(self._gtk_handlers)
 
     def _update_visibility(self):
@@ -100,12 +105,31 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
             self.core.set("show_simulation", True)
             self._running = True
             interval_ms = int(1000 / self.core.get("drill_progress_max_fps"))
+            self._set_sensitive_others(self._frame, False)
             gobject.timeout_add(interval_ms, self._next_timestep)
         else:
             self._running = True
         self._start_button.set_sensitive(False)
         self._pause_button.set_sensitive(True)
         self._stop_button.set_sensitive(True)
+
+    def _set_sensitive_others(self, widget, new_state):
+        """ go through all widgets above the given one and change their
+        "sensitivity" state. This effects everything besides the one
+        given widget (and its direct line of ancestors).
+        Useful for disabling the screen while an action is going on.
+        """
+        child = widget
+        parent = widget.get_parent()
+        def disable_if_different(obj, current):
+            if not obj is current:
+                obj.set_sensitive(new_state)
+        while parent:
+            # Use "forall" instead of "foreach" - this also catches all tab
+            # labels.
+            parent.forall(disable_if_different, child)
+            child = parent
+            parent = parent.get_parent()
 
     def _pause_simulation(self, widget=None):
         self._start_button.set_sensitive(True)
@@ -121,6 +145,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
         self._start_button.set_sensitive(True)
         self._pause_button.set_sensitive(False)
         self._stop_button.set_sensitive(False)
+        self._set_sensitive_others(self._frame, True)
         self.core.emit_event("visual-item-updated")
 
     def _next_timestep(self):
