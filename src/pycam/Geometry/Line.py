@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import TransformableContainer
+from pycam.Geometry import TransformableContainer, IDGenerator
 from pycam.Geometry.Point import Point
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.utils import epsilon, sqrt
@@ -36,13 +36,13 @@ except ImportError:
     GL_enabled = False
 
 
-class Line(TransformableContainer):
-    id = 0
+class Line(IDGenerator, TransformableContainer):
+
+    __slots__ = ["id", "p1", "p2", "_vector", "_minx", "_maxx", "_miny",
+            "_maxy", "_minz", "_maxz"]
 
     def __init__(self, p1, p2):
         super(Line, self).__init__()
-        self.id = Line.id
-        Line.id += 1
         self.p1 = p1
         self.p2 = p2
         self.reset_cache()

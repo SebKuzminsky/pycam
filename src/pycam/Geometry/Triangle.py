@@ -24,7 +24,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Line import Line
-from pycam.Geometry import TransformableContainer
+from pycam.Geometry import TransformableContainer, IDGenerator
 import pycam.Utils.log
 
 
@@ -37,13 +37,15 @@ except ImportError:
     GL_enabled = False
 
 
-class Triangle(TransformableContainer):
-    id = 0
+class Triangle(IDGenerator, TransformableContainer):
 
-    # points are expected to be in ClockWise order
+    __slots__ = ["id", "p1", "p2", "p3", "normal", "minx", "maxx", "miny",
+            "maxy", "minz", "maxz", "e1", "e2", "e3", "normal", "center",
+            "radius", "radiussq", "middle"]
+
     def __init__(self, p1=None, p2=None, p3=None, n=None):
-        self.id = Triangle.id
-        Triangle.id += 1
+        # points are expected to be in ClockWise order
+        super(Triangle, self).__init__()
         self.p1 = p1
         self.p2 = p2
         self.p3 = p3

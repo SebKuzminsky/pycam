@@ -22,17 +22,19 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.utils import epsilon, sqrt, number
+from pycam.Geometry import IDGenerator
+
 
 def _is_near(x, y):
     return abs(x - y) < epsilon
 
 
-class Point(object):
-    id = 0
+class Point(IDGenerator):
+
+    __slots__ = ["id", "x", "y", "z", "_norm", "_normsq"]
 
     def __init__(self, x, y, z):
-        self.id = Point.id
-        Point.id += 1
+        super(Point, self).__init__()
         self.x = number(x)
         self.y = number(y)
         self.z = number(z)
@@ -146,6 +148,8 @@ class Vector(Point):
     is that vectors are not shifted during transformations. This feature
     is necessary for normals (e.g. of Triangles or Planes).
     """
+
+    __slots__ = []
 
     def transform_by_matrix(self, matrix, transformed_list=None, callback=None):
         x = self.x * matrix[0][0] + self.y * matrix[0][1] \

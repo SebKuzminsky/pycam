@@ -20,19 +20,19 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import TransformableContainer
+from pycam.Geometry import TransformableContainer, IDGenerator
 from pycam.Geometry.utils import INFINITE, epsilon
 from pycam.Geometry.Point import Vector
 # "Line" is imported later to avoid circular imports
 #from pycam.Geometry.Line import Line
 
 
-class Plane(TransformableContainer):
-    id = 0
+class Plane(IDGenerator, TransformableContainer):
+
+    __slots__ = ["id", "p", "n"]
+
     def __init__(self, point, normal=None):
         super(Plane, self).__init__()
-        self.id = Plane.id
-        Plane.id += 1
         if normal is None:
             normal = Vector(0, 0, 1)
         self.p = point
