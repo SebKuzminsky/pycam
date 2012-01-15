@@ -163,7 +163,7 @@
   <object class="GtkAdjustment" id="DrillProgressMaxFPS">
     <property name="value">1</property>
     <property name="lower">1</property>
-    <property name="upper">25</property>
+    <property name="upper">50</property>
     <property name="step_increment">1</property>
   </object>
   <object class="GtkFrame" id="ColorPrefTab">

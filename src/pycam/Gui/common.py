@@ -53,6 +53,7 @@ WINDOWS_GTK_REGISTRY_PATH = r"SOFTWARE\Gtk+"
 WINDOWS_GTK_REGISTRY_KEY = "Path"
 WINDOWS_GTK_LIB_SUBDIR = "bin"
 
+
 def import_gtk_carefully():
     """ especially for windows: try to locate required libraries manually, if
     the import of GTK fails
@@ -94,6 +95,7 @@ def import_gtk_carefully():
         # everything should be prepared - now we try to import it again
         import gtk
 
+
 def requirements_details_gtk():
     result = {}
     try:
@@ -103,6 +105,7 @@ def requirements_details_gtk():
         log.error("Failed to import GTK: %s" % str(err_msg))
         result["gtk"] = False
     return result
+
 
 def recommends_details_gtk():
     result = {}
@@ -125,6 +128,7 @@ def recommends_details_gtk():
         log.warn("Failed to import OpenGL: %s" % str(err_msg))
         result["opengl"] = False
 
+
 def check_dependencies(details):
     """you can feed this function with the output of
     '(requirements|recommends)_details_*'.
@@ -132,6 +136,7 @@ def check_dependencies(details):
     """
     failed = [key for (key, state) in details.items() if not state]
     return len(failed) == 0
+
 
 def get_dependency_report(details, prefix=""):
     result = []
@@ -148,6 +153,30 @@ def get_dependency_report(details, prefix=""):
             text += "MISSING (%s)" % DEPENDENCY_DESCRIPTION[key][ADVICE_COL]
         result.append(text)
     return os.linesep.join(result)
+
+
+def set_parent_controls_sensitivity(widget, new_state):
+    """ go through all widgets above the given one and change their
+    "sensitivity" state. This effects everything besides the single
+    given widget, its direct line of ancestors and all attached
+    labels (e.g for notebook tabs).
+    Useful for disabling the screen while an action is going on.
+    """
+    child = widget
+    parent = widget.get_parent()
+    def disable_if_different(obj, (parent, active)):
+        if hasattr(parent, "get_tab_label") and \
+                (obj is parent.get_tab_label(active)):
+            # skip the label of the current tab (in a notebook)
+            return
+        if not obj is active:
+            obj.set_sensitive(new_state)
+    while parent:
+        # Use "forall" instead of "foreach" - this also catches all tab
+        # labels.
+        parent.forall(disable_if_different, (parent, child))
+        child = parent
+        parent = parent.get_parent()
 
 
 class EmergencyDialog(object):
