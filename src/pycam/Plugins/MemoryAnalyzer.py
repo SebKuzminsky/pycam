@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
+import gobject
 import guppy
 
 import pycam.Plugins
@@ -92,9 +93,16 @@ class MemoryAnalyzer(pycam.Plugins.PluginBase):
         return True
 
     def refresh_memory_analyzer(self, widget=None):
-        memory_state = guppy.hpy().heap()
         self.model.clear()
+        self.gui.get_object("MemoryAnalyzerLoadingLabel").show()
+        self.gui.get_object("MemoryAnalyzerRefreshButton").set_sensitive(False)
+        gobject.idle_add(self._refresh_data_in_background)
+
+    def _refresh_data_in_background(self):
+        memory_state = guppy.hpy().heap()
         for row in memory_state.stat.get_rows():
             item = (row.name, row.count, row.size / 1024, row.size / row.count)
             self.model.append(item)
+        self.gui.get_object("MemoryAnalyzerRefreshButton").set_sensitive(True)
+        self.gui.get_object("MemoryAnalyzerLoadingLabel").hide()
 
