@@ -9,9 +9,10 @@ Homepage: http://sourceforge.net/projects/pycam/
 
 Package: pycam
 Architecture: all
-Depends: python-gtk2, python-opengl (>>3.0.0~b6-3), python-gtkglext1, python-rsvg,
- ${misc:Depends}, ${python:Depends}
-Recommends: python-pyode (>>1.2.0-3), python-psyco, python-setproctitle
+Depends: python-gtk2, python-opengl (>>3.0.0~b6-3), python-gtkglext1,
+ python-rsvg, ${misc:Depends}, ${python:Depends}
+Recommends: python-pyode (>>1.2.0-3), python-psyco, python-setproctitle,
+ python-guppy
 Suggests: inkscape, pstoedit, qcad-data | librecad-data
 Description: CAM program & Python library for generating toolpaths
  PyCAM is a toolpath generator for 3 axis machines. The generated
