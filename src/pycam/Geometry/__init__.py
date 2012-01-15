@@ -184,6 +184,21 @@ def get_bezier_lines(points_with_bulge, segments=32):
         return result
 
 
+def _id_generator():
+    current_id = 0
+    while True:
+        yield current_id
+        current_id += 1
+
+
+class IDGenerator(object):
+
+    __id_gen_func = _id_generator()
+
+    def __init__(self):
+        self.id = self.__id_gen_func.next()
+
+
 class TransformableContainer(object):
     """ a base class for geometrical objects containing other elements
 

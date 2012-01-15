@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
+from pycam.Geometry import IDGenerator
 from pycam.Geometry.Point import Point
 from pycam.Geometry.utils import number, INFINITE, epsilon
 from pycam.Geometry.intersection import intersect_cylinder_point, \
@@ -29,19 +30,18 @@ from pycam.Geometry.intersection import intersect_cylinder_point, \
 import uuid
 
 
-class BaseCutter(object):
-    id = 0
+class BaseCutter(IDGenerator):
+
     vertical = Point(0, 0, -1)
 
     def __init__(self, radius, location=None, height=None):
+        super(BaseCutter, self).__init__()
         if location is None:
             location = Point(0, 0, 0)
         if height is None:
             height = 10
         radius = number(radius)
         self.height = number(height)
-        self.id = BaseCutter.id
-        BaseCutter.id += 1
         self.radius = radius
         self.radiussq = radius ** 2
         self.required_distance = 0
