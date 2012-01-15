@@ -795,8 +795,8 @@ Note: The Windows standalone executable does not support parallel processing. Pl
     </child>
   </object>
   <object class="GtkToggleAction" id="ToggleProcessPoolWindow">
-    <property name="label">_Process Pool Window</property>
-    <property name="short_label">_Process Pool Window</property>
+    <property name="label">_Process Pool</property>
+    <property name="short_label">_Process Pool</property>
     <property name="tooltip">Show the current pool of workers</property>
   </object>
 </interface>
