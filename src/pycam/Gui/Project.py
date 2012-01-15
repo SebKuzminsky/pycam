@@ -51,6 +51,7 @@ import pycam.Utils.xml_handling
 GTKBUILD_FILE = "pycam-project.ui"
 GTKMENU_FILE = "menubar.xml"
 GTKRC_FILE_WINDOWS = "gtkrc_windows"
+PICKLE_PROTOCOL = 2
 
 WINDOW_ICON_FILENAMES = ["logo_%dpx.png" % pixels for pixels in (16, 32, 48, 64, 128)]
 
@@ -714,7 +715,8 @@ class ProjectGui(object):
         if not self.settings.get("models"):
             return
         # TODO: store all models
-        self._undo_states.append(pickle.dumps(self.settings.get("models")[0]))
+        self._undo_states.append(pickle.dumps(
+                self.settings.get("models")[0].model, PICKLE_PROTOCOL))
         log.debug("Stored the current state of the model for undo")
         while len(self._undo_states) > MAX_UNDO_STATES:
             self._undo_states.pop(0)
