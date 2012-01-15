@@ -38,12 +38,13 @@ except ImportError:
     # dummy for python < v2.6 (consumes more memory)
     get_point_object = lambda point: point
 
+from pycam.Geometry import IDGenerator
 
-class Path(object):
-    id = 0
+
+class Path(IDGenerator):
+
     def __init__(self):
-        self.id = Path.id
-        Path.id += 1
+        super(Path, self).__init__()
         self.top_join = None
         self.bot_join = None
         self.winding = 0

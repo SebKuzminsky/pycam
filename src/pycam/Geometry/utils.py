@@ -53,3 +53,4 @@ if _use_precision:
 else:
     number = lambda value: float(value)
 
+

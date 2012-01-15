@@ -23,7 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Plane import Plane
-from pycam.Geometry import TransformableContainer, get_bisector
+from pycam.Geometry import TransformableContainer, IDGenerator, get_bisector
 from pycam.Geometry.utils import number, epsilon
 import pycam.Utils.log
 # import later to avoid circular imports
@@ -42,15 +42,14 @@ LINE_WIDTH_OUTER = 1.3
 log = pycam.Utils.log.get_logger()
 
 
-class PolygonInTree(object):
+class PolygonInTree(IDGenerator):
     """ This class is a wrapper around Polygon objects that is used for sorting.
     """
 
     next_id = 0
 
     def __init__(self, polygon):
-        self.id = PolygonInTree.next_id
-        PolygonInTree.next_id += 1
+        super(PolygonInTree, self).__init__()
         self.start = polygon.get_points()[0]
         self.end = polygon.get_points()[-1]
         self.polygon = polygon
@@ -878,11 +877,20 @@ class Polygon(TransformableContainer):
             if len(new_group) > 0:
                 group_starts = []
                 index1 = 0
+                fallout3 = 0
                 while index1 < len(new_group):
                     index2 = 0
+                    fallout2 = len(new_group)
+                    fallout3 += 1
                     while index2 < len(new_group):
+                        fallout2 -= 1
                         index_distance = min(abs(index2 - index1), \
                                 abs(len(new_group) - (index2 - index1))) 
+                        if fallout3 > 10000:
+                            print "FALLOUT3"
+                            print index_distance, index2, index1, len(new_group), len(group_starts)
+                            import sys
+                            sys.exit(1)
                         # skip neighbours
                         if index_distance > 1:
                             line1 = new_group[index1]

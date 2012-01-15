@@ -21,6 +21,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry import IDGenerator
+
 try:
     import OpenGL.GL as GL
     GL_enabled = True
@@ -34,6 +36,7 @@ class Node(object):
         for bound in self.bound:
             s += "%g : " % bound
         return s
+
 
 def find_max_spread(nodes):
     minval = []
@@ -57,17 +60,15 @@ def find_max_spread(nodes):
     return (maxspreaddim, maxspread)
 
 
-class kdtree(object):
-    id = 0
+class kdtree(IDGenerator):
 
     def __init__(self, nodes, cutoff, cutoff_distance):
-        self.id = kdtree.id
+        super(kdtree, self).__init__()
         self.bucket = False
         if nodes and len(nodes) > 0:
             self.dim = len(nodes[0].bound)
         else:
             self.dim = 0
-        kdtree.id += 1
         self.cutoff = cutoff
         self.cutoff_distance = cutoff_distance
 

@@ -36,7 +36,7 @@ from pycam.Geometry.TriangleKdtree import TriangleKdtree
 from pycam.Geometry.Matrix import TRANSFORMATIONS
 from pycam.Toolpath import Bounds
 from pycam.Geometry.utils import INFINITE, epsilon
-from pycam.Geometry import TransformableContainer
+from pycam.Geometry import TransformableContainer, IDGenerator
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
 
@@ -80,12 +80,10 @@ def get_combined_model(models):
     return result
 
 
-class BaseModel(TransformableContainer):
-    id = 0
+class BaseModel(IDGenerator, TransformableContainer):
 
     def __init__(self):
-        self.id = BaseModel.id
-        BaseModel.id += 1
+        super(BaseModel, self).__init__()
         self._item_groups = []
         self.name = "model%d" % self.id
         self.minx = None
@@ -1059,11 +1057,10 @@ class TriangleOptimizer(object):
         return result
 
 
-class Rectangle(TransformableContainer):
-
-    id = 0
+class Rectangle(IDGenerator, TransformableContainer):
 
     def __init__(self, p1, p2, p3, p4, normal=None):
+        super(Rectangle, self).__init__()
         if normal:
             orders = ((p1, p2, p3, p4), (p1, p2, p4, p3), (p1, p3, p2, p4),
                     (p1, p3, p4, p2), (p1, p4, p2, p3), (p1, p4, p3, p2))
@@ -1082,8 +1079,6 @@ class Rectangle(TransformableContainer):
             self.p2 = p2
             self.p3 = p3
             self.p4 = p4
-        self.id = Rectangle.id
-        Rectangle.id += 1
         self.reset_cache()
 
     def reset_cache(self):
