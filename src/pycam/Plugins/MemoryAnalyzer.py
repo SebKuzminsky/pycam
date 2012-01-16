@@ -21,6 +21,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
+import StringIO
+import csv
 import gobject
 import guppy
 
@@ -30,7 +32,7 @@ import pycam.Plugins
 class MemoryAnalyzer(pycam.Plugins.PluginBase):
 
     UI_FILE = "memory_analyzer.ui"
-    DEPENDS = []
+    DEPENDS = ["Clipboard"]
     CATEGORIES = ["System"]
 
     def setup(self):
@@ -55,6 +57,8 @@ class MemoryAnalyzer(pycam.Plugins.PluginBase):
                     (self.window, "destroy", hide_window),
                     (self.gui.get_object("MemoryAnalyzerCloseButton"),
                             "clicked", hide_window),
+                    (self.gui.get_object("MemoryAnalyzerCopyButton"),
+                            "clicked", self.copy_to_clipboard),
                     (self.gui.get_object("MemoryAnalyzerRefreshButton"),
                             "clicked", self.refresh_memory_analyzer)])
             self.model = self.gui.get_object("MemoryAnalyzerModel")
@@ -95,7 +99,9 @@ class MemoryAnalyzer(pycam.Plugins.PluginBase):
     def refresh_memory_analyzer(self, widget=None):
         self.model.clear()
         self.gui.get_object("MemoryAnalyzerLoadingLabel").show()
-        self.gui.get_object("MemoryAnalyzerRefreshButton").set_sensitive(False)
+        for objname in ("MemoryAnalyzerRefreshButton",
+                "MemoryAnalyzerCopyButton"):
+            self.gui.get_object(objname).set_sensitive(False)
         gobject.idle_add(self._refresh_data_in_background)
 
     def _refresh_data_in_background(self):
@@ -103,6 +109,18 @@ class MemoryAnalyzer(pycam.Plugins.PluginBase):
         for row in memory_state.stat.get_rows():
             item = (row.name, row.count, row.size / 1024, row.size / row.count)
             self.model.append(item)
+        for objname in ("MemoryAnalyzerRefreshButton",
+                "MemoryAnalyzerCopyButton"):
+            self.gui.get_object(objname).set_sensitive(True)
         self.gui.get_object("MemoryAnalyzerRefreshButton").set_sensitive(True)
         self.gui.get_object("MemoryAnalyzerLoadingLabel").hide()
+
+    def copy_to_clipboard(self, widget=None):
+        text_buffer = StringIO.StringIO()
+        writer = csv.writer(text_buffer)
+        writer.writerow(("Type", "Count", "Size (all) [kB]", "Average size [B]"))
+        for row in self.model:
+            writer.writerow(row)
+        self.core.get("clipboard-set")(text_buffer.getvalue())
+        text_buffer.close()
 
