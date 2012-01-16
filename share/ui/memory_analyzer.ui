@@ -24,73 +24,97 @@
         <property name="orientation">vertical</property>
         <property name="spacing">4</property>
         <child>
-          <object class="GtkScrolledWindow" id="scrolledwindow1">
+          <object class="GtkVBox" id="MemoryAnalyzerDataBox">
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="hscrollbar_policy">automatic</property>
-            <property name="vscrollbar_policy">automatic</property>
-            <property name="shadow_type">etched-in</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">3</property>
             <child>
-              <object class="GtkTreeView" id="MemoryAnalyzerTable">
+              <object class="GtkScrolledWindow" id="scrolledwindow1">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="model">MemoryAnalyzerModel</property>
-                <property name="reorderable">True</property>
-                <property name="search_column">0</property>
+                <property name="hscrollbar_policy">automatic</property>
+                <property name="vscrollbar_policy">automatic</property>
+                <property name="shadow_type">etched-in</property>
                 <child>
-                  <object class="GtkTreeViewColumn" id="treeviewcolumn3">
-                    <property name="title">Size (all) [kB]</property>
-                    <property name="clickable">True</property>
-                    <property name="sort_column_id">2</property>
+                  <object class="GtkTreeView" id="MemoryAnalyzerTable">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="model">MemoryAnalyzerModel</property>
+                    <property name="reorderable">True</property>
+                    <property name="search_column">0</property>
                     <child>
-                      <object class="GtkCellRendererText" id="cellrenderertext3"/>
-                      <attributes>
-                        <attribute name="text">2</attribute>
-                      </attributes>
+                      <object class="GtkTreeViewColumn" id="treeviewcolumn3">
+                        <property name="title">Size (all) [kB]</property>
+                        <property name="clickable">True</property>
+                        <property name="sort_column_id">2</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderertext3"/>
+                          <attributes>
+                            <attribute name="text">2</attribute>
+                          </attributes>
+                        </child>
+                      </object>
                     </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="treeviewcolumn2">
-                    <property name="title">Count</property>
-                    <property name="clickable">True</property>
-                    <property name="sort_order">descending</property>
-                    <property name="sort_column_id">1</property>
                     <child>
-                      <object class="GtkCellRendererText" id="cellrenderertext2"/>
-                      <attributes>
-                        <attribute name="text">1</attribute>
-                      </attributes>
+                      <object class="GtkTreeViewColumn" id="treeviewcolumn2">
+                        <property name="title">Count</property>
+                        <property name="clickable">True</property>
+                        <property name="sort_order">descending</property>
+                        <property name="sort_column_id">1</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderertext2"/>
+                          <attributes>
+                            <attribute name="text">1</attribute>
+                          </attributes>
+                        </child>
+                      </object>
                     </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="treeviewcolumn4">
-                    <property name="title">Average size [B]</property>
-                    <property name="clickable">True</property>
-                    <property name="sort_column_id">3</property>
                     <child>
-                      <object class="GtkCellRendererText" id="cellrenderertext4"/>
-                      <attributes>
-                        <attribute name="text">3</attribute>
-                      </attributes>
+                      <object class="GtkTreeViewColumn" id="treeviewcolumn4">
+                        <property name="title">Average size [B]</property>
+                        <property name="clickable">True</property>
+                        <property name="sort_column_id">3</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderertext4"/>
+                          <attributes>
+                            <attribute name="text">3</attribute>
+                          </attributes>
+                        </child>
+                      </object>
                     </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="treeviewcolumn1">
-                    <property name="title">Type</property>
-                    <property name="clickable">True</property>
-                    <property name="sort_column_id">0</property>
                     <child>
-                      <object class="GtkCellRendererText" id="cellrenderertext1"/>
-                      <attributes>
-                        <attribute name="text">0</attribute>
-                      </attributes>
+                      <object class="GtkTreeViewColumn" id="treeviewcolumn1">
+                        <property name="title">Type</property>
+                        <property name="clickable">True</property>
+                        <property name="sort_column_id">0</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
                     </child>
                   </object>
                 </child>
               </object>
+              <packing>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="MemoryAnalyzerLoadingLabel">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Updating memory usage data ...</property>
+                <attributes>
+                  <attribute name="style" value="italic"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
             </child>
           </object>
           <packing>
@@ -98,16 +122,14 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="MemoryAnalyzerLoadingLabel">
+          <object class="GtkLabel" id="MemoryAnalyzerBrokenLabel">
             <property name="visible">True</property>
-            <property name="label" translatable="yes">Updating memory usage data ...</property>
-            <attributes>
-              <attribute name="style" value="italic"/>
-            </attributes>
+            <property name="label" translatable="yes">The memory analyzer requires the Python module &lt;i&gt;guppy&lt;/i&gt;, but it seems to be missing.</property>
+            <property name="use_markup">True</property>
+            <property name="justify">center</property>
+            <property name="wrap">True</property>
           </object>
           <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
             <property name="position">2</property>
           </packing>
         </child>

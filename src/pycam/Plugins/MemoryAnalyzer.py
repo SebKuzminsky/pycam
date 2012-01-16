@@ -24,9 +24,13 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import StringIO
 import csv
 import gobject
-import guppy
+# guppy will be imported later
+#import guppy
 
 import pycam.Plugins
+import pycam.Utils.log
+
+_log = pycam.Utils.log.get_logger()
 
 
 class MemoryAnalyzer(pycam.Plugins.PluginBase):
@@ -64,6 +68,15 @@ class MemoryAnalyzer(pycam.Plugins.PluginBase):
             self.model = self.gui.get_object("MemoryAnalyzerModel")
             # window state
             self._window_position = None
+            # check if "heapy" is available - this disables all widgets
+            try:
+                import guppy
+            except ImportError:
+                self._guppy = None
+                self.gui.get_object("MemoryAnalyzerDataBox").hide()
+            else:
+                self._guppy = guppy
+                self.gui.get_object("MemoryAnalyzerBrokenLabel").hide()
             self.register_gtk_handlers(self._gtk_handlers)
         return True
 
@@ -105,7 +118,9 @@ class MemoryAnalyzer(pycam.Plugins.PluginBase):
         gobject.idle_add(self._refresh_data_in_background)
 
     def _refresh_data_in_background(self):
-        memory_state = guppy.hpy().heap()
+        if not self._guppy:
+            return
+        memory_state = self._guppy.hpy().heap()
         for row in memory_state.stat.get_rows():
             item = (row.name, row.count, row.size / 1024, row.size / row.count)
             self.model.append(item)
