@@ -31,6 +31,13 @@ except ImportError:
 
 
 class Node(object):
+
+    __slots__ = ["obj", "bound"]
+
+    def __init__(self, obj, bound):
+        self.obj = obj
+        self.bound = bound
+
     def __repr__(self):
         s = ""
         for bound in self.bound:
@@ -62,6 +69,9 @@ def find_max_spread(nodes):
 
 class kdtree(IDGenerator):
 
+    __slots__ = ["bucket", "dim", "cutoff", "cutoff_distance", "nodes",
+            "cutdim", "minval", "maxval", "cutval", "hi", "lo"]
+
     def __init__(self, nodes, cutoff, cutoff_distance):
         super(kdtree, self).__init__()
         self.bucket = False
@@ -83,8 +93,7 @@ class kdtree(IDGenerator):
             else:
                 self.bucket = False
                 self.cutdim = cutdim
-                nodes.sort(cmp=lambda x, y:
-                        cmp(x.bound[cutdim], y.bound[cutdim]))
+                nodes.sort(key=lambda item: item.bound[cutdim])
                 median = len(nodes) / 2
                 self.minval = nodes[0].bound[cutdim]
                 self.maxval = nodes[-1].bound[cutdim]
@@ -228,5 +237,4 @@ class kdtree(IDGenerator):
                 self.lo.insert(node)
             else:
                 self.hi.insert(node)
-        
 

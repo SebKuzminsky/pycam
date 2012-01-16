@@ -26,6 +26,9 @@ from pycam.Geometry.kdtree import Node, kdtree
 
 
 class PointKdtree(kdtree):
+
+    __slots__ = ["_n", "tolerance"]
+
     def __init__(self, points=None, cutoff=5, cutoff_distance=0.5,
             tolerance=epsilon):
         if points is None:
@@ -34,12 +37,7 @@ class PointKdtree(kdtree):
         self.tolerance = tolerance
         nodes = []
         for p in points:
-            n = Node()
-            n.point = p
-            n.bound = []
-            n.bound.append(p.x)
-            n.bound.append(p.y)
-            n.bound.append(p.z)
+            n = Node(p, (p.x, p.y, p.z))
             nodes.append(n)
         kdtree.__init__(self, nodes, cutoff, cutoff_distance)
 
@@ -53,19 +51,16 @@ class PointKdtree(kdtree):
         #return Point(x,y,z)
         if self._n:
             n = self._n
+            n.bound = (x, y, z)
         else:
-            n = Node()
-        n.bound = []
-        n.bound.append(x)
-        n.bound.append(y)
-        n.bound.append(z)
+            n = Node(None, (x, y, z))
         (nn, dist) = self.nearest_neighbor(n, self.dist)
         if nn and (dist < self.tolerance):
             self._n = n
-            return nn.p
+            return nn.obj
         else:
-            n.p = Point(x, y, z)
+            n.obj = Point(x, y, z)
             self._n = None
             self.insert(n)
-            return n.p
+            return n.obj
 
