@@ -44,16 +44,16 @@ def init_logger(log, logfilename=None):
         datetime_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         logfile_handler = logging.FileHandler(logfilename)
         logfile_handler.setFormatter(datetime_format)
-        logfile_handler.addFilter(RepetitionsFilter(logfile_handler))
+        logfile_handler.addFilter(RepetitionsFilter(logfile_handler, log))
         log.addHandler(logfile_handler)
     console_output = logging.StreamHandler()
-    console_output.addFilter(RepetitionsFilter(console_output))
+    console_output.addFilter(RepetitionsFilter(console_output, log))
     log.addHandler(console_output)
     log.setLevel(logging.INFO)
     log.debug2 = lambda *args, **kwargs: log.log(logging.DEBUG - 1, *args, **kwargs)
     # store the latest log items in a queue (for pushing them into new handlers)
     buffer_handler = BufferHandler()
-    buffer_handler.addFilter(RepetitionsFilter(buffer_handler))
+    buffer_handler.addFilter(RepetitionsFilter(buffer_handler, log))
     log.addHandler(buffer_handler)
 
 def _push_back_old_logs(new_handler):
@@ -68,7 +68,7 @@ def add_stream(stream, level=None):
     logstream = logging.StreamHandler(stream)
     if not level is None:
         logstream.setLevel(level)
-    logstream.addFilter(RepetitionsFilter(logstream))
+    logstream.addFilter(RepetitionsFilter(logstream, log))
     log.addHandler(logstream)
     _push_back_old_logs(logstream)
 
@@ -77,7 +77,7 @@ def add_hook(callback, level=None):
     loghook = HookHandler(callback)
     if not level is None:
         loghook.setLevel(level)
-    loghook.addFilter(RepetitionsFilter(loghook))
+    loghook.addFilter(RepetitionsFilter(loghook, log))
     log.addHandler(loghook)
     _push_back_old_logs(loghook)
 
@@ -86,15 +86,16 @@ def add_gtk_gui(parent_window, level=None):
     loggui = GTKHandler(parent_window)
     if not level is None:
         loggui.setLevel(level)
-    loggui.addFilter(RepetitionsFilter(loggui))
+    loggui.addFilter(RepetitionsFilter(loggui, log))
     log.addHandler(loggui)
     _push_back_old_logs(loggui)
 
 
 class RepetitionsFilter(logging.Filter):
 
-    def __init__(self, handler, **kwargs):
+    def __init__(self, handler, logger, **kwargs):
         logging.Filter.__init__(self, **kwargs)
+        self._logger = logger
         self._last_timestamp = 0
         self._last_record = None
         # Every handler needs its own "filter" instance - this is not really
@@ -106,19 +107,26 @@ class RepetitionsFilter(logging.Filter):
 
     def filter(self, record):
         now = time.time()
-        message_equal = self._last_record and \
-                record.getMessage().startswith(
-                    self._last_record.getMessage()[:self._cmp_len])
-        if (now - self._last_timestamp <= self._delay) and \
-                self._last_record and message_equal:
+        if self._logger.getEffectiveLevel() <= logging.DEBUG:
+            # skip only identical lines in debug mode
+            message_equal = self._last_record and \
+                    (record.getMessage() == self._last_record.getMessage())
+            similarity = "identical"
+        else:
+            # skip similar lines in non-debug modes
+            message_equal = self._last_record and \
+                    record.getMessage().startswith(
+                        self._last_record.getMessage()[:self._cmp_len])
+            similarity = "similar"
+        if message_equal and (now - self._last_timestamp <= self._delay):
             self._suppressed_messages_counter += 1
             return False
         else:
             if self._suppressed_messages_counter > 0:
                 # inject a message regarding the previously suppressed messages
                 self._last_record.msg =  \
-                        "*** skipped %d similar message(s) ***" % \
-                        self._suppressed_messages_counter
+                        "*** skipped %d %s message(s) ***" % \
+                        (self._suppressed_messages_counter, similarity)
                 self._handler.emit(self._last_record)
             self._last_record = record
             self._last_timestamp = now
