@@ -196,8 +196,15 @@ class GTKHandler(logging.Handler):
             message_title = "".join([char for char in message_title
                     if ord(char) < 128])
         window.set_title(message_title)
-        window.run()
-        window.destroy()
+        # make sure that the window gets destroyed later
+        def close_window(*args):
+            window.destroy()
+        for signal in ("close", "response"):
+            window.connect(signal, close_window)
+        # accept "destroy" action -> remove window
+        window.connect("destroy", lambda *args: True)
+        # show the window, but don't wait for a response
+        window.show()
 
 
 class HookHandler(logging.Handler):
