@@ -934,7 +934,10 @@ class PolygonGroup(object):
                         final_points.append(cp)
         else:
             final_points.extend([Point(*coord) for coord in coords])
-        valid_points = [p for p in final_points if not p is None]
+        valid_points = []
+        for p in final_points:
+            if not (p is None) and not (p in valid_points):
+                valid_points.append(p)
         if len(valid_points) < 3:
             result = []
         elif len(valid_points) == 3:
