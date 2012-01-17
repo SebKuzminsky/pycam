@@ -29,7 +29,7 @@
   <object class="GtkListStore" id="ToolList">
     <columns>
       <!-- column-name object_ref -->
-      <column type="guint"/>
+      <column type="gulong"/>
     </columns>
   </object>
   <object class="GtkVPaned" id="ToolBox">

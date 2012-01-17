@@ -54,6 +54,8 @@ class Processes(pycam.Plugins.ListPluginBase):
                         lambda widget: parameters_box.remove(widget))
             def add_parameter_widget(item, name):
                 # create a frame with an align and the item inside
+                if item.get_parent():
+                    item.unparent()
                 frame_label = gtk.Label()
                 frame_label.set_markup("<b>%s</b>" % name)
                 frame = gtk.Frame()
