@@ -197,8 +197,8 @@ class GTKHandler(logging.Handler):
                     if ord(char) < 128])
         window.set_title(message_title)
         # make sure that the window gets destroyed later
-        def close_window(*args):
-            window.destroy()
+        def close_window(dialog, *args):
+            dialog.destroy()
         for signal in ("close", "response"):
             window.connect(signal, close_window)
         # accept "destroy" action -> remove window
