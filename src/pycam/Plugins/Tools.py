@@ -127,11 +127,14 @@ class Tools(pycam.Plugins.ListPluginBase):
             self._update_widgets()
             self._trigger_table_update()
             self._tool_switch()
+        self.core.register_namespace("tools",
+                pycam.Plugins.get_filter(self))
         self.register_state_item("tools", self)
         return True
 
     def teardown(self):
         self.clear_state_items()
+        self.core.unregister_namespace("tools")
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("ToolBox"))
             self.core.unregister_ui_section("tool_speed")

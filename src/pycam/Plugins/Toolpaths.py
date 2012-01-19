@@ -99,9 +99,12 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             self._trigger_toolpath_time_update()
             self._update_widgets()
         self.core.set("toolpaths", self)
+        self.core.register_namespace("toolpaths",
+                pycam.Plugins.get_filter(self))
         return True
 
     def teardown(self):
+        self.core.unregister_namespace("toolpaths")
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("ToolpathsBox"))
             self.unregister_gtk_handlers(self._gtk_handlers)

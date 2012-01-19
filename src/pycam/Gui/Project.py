@@ -154,6 +154,7 @@ class EventCore(pycam.Gui.Settings.Settings):
         self.ui_sections = {}
         self.chains = {}
         self.state_dumps = []
+        self.namespace = {}
 
     def register_event(self, event, func, *args):
         if not event in self.event_handlers:
@@ -316,8 +317,9 @@ class EventCore(pycam.Gui.Settings.Settings):
             parent = root
             if match:
                 for component in chain[:-1]:
-                    if parent.find(component):
-                        parent = parent.find(component)
+                    next_item = parent.find(component)
+                    if not next_item is None:
+                        parent = next_item
                     else:
                         item = ET.SubElement(parent, component)
                         parent = item
@@ -326,6 +328,20 @@ class EventCore(pycam.Gui.Settings.Settings):
 
     def reset_state(self):
         pass
+
+    def register_namespace(self, name, value):
+        if name in self.namespace:
+            log.info("Trying to register the same key in namespace twice: " + \
+                    str(name))
+        self.namespace[name] = value
+
+    def unregister_namespace(self, name):
+        if not name in self.namespace:
+            log.info("Tried to unregister an unknown name from namespace: " + \
+                      str(name))
+
+    def get_namespace(self):
+        return self.namespace
 
 
 class ProjectGui(object):

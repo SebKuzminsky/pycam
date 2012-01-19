@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import uuid
 # imported later (on demand)
 #import gtk
 
@@ -93,10 +94,13 @@ class Models(pycam.Plugins.ListPluginBase):
             self.register_model_update(update_model)
             # update the model list
             self.core.emit_event("model-list-changed")
+        self.core.register_namespace("models",
+                pycam.Plugins.get_filter(self))
         self.core.set("models", self)
         return True
 
     def teardown(self):
+        self.core.unregister_namespace("models")
         if self.gui:
             self.core.unregister_ui_section("model_handling")
             self.core.unregister_ui("main", self.gui.get_object("ModelBox"))
@@ -176,6 +180,12 @@ class Models(pycam.Plugins.ListPluginBase):
     def get_visible(self):
         return [model for model in self if model["visible"]]
 
+    def get_by_uuid(self, uuid):
+        for model in self:
+            if model["uuid"] == uuid:
+                return model
+        return None
+
     def add_model(self, model, name=None, name_template="Model #%d",
             color=None):
         model_dict = ModelEntity(model)
@@ -198,6 +208,8 @@ class Models(pycam.Plugins.ListPluginBase):
 class ModelEntity(pycam.Plugins.ObjectWithAttributes):
 
     def __init__(self, model):
-        self.model = model
         super(ModelEntity, self).__init__("model")
+        self.model = model
+        # this UUID is not connected with model.uuid
+        self["uuid"] = uuid.uuid4()
 

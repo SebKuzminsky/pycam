@@ -107,10 +107,13 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
         self.register_state_item("processes", self)
+        self.core.register_namespace("processes",
+                pycam.Plugins.get_filter(self))
         return True
 
     def teardown(self):
         self.clear_state_items()
+        self.core.unregister_namespace("processes")
         if self.gui:
             self.core.unregister_chain("state_dump", self.dump_state)
             self.core.unregister_ui("main", self.gui.get_object("ProcessBox"))

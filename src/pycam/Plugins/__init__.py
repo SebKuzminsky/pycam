@@ -498,3 +498,40 @@ class ObjectWithAttributes(dict):
         self.update(params)
         self.node_key = key
 
+
+def filter_list(items, *args, **kwargs):
+    if len(args) > 1:
+        _log.info("This filter accepts only a single unnamed parameter: " + \
+                "index(es), but %d parameters were given" % len(args))
+        return []
+    elif len(args) == 1:
+        try:
+            items = [items[index] for index in args[0]]
+        except TypeError:
+            # not iterable
+            try:
+                items = [items[args[0]]]
+            except (IndexError, TypeError):
+                _log.info("Invalid index requested in filter: %s" % \
+                          str(args[0]))
+                return []
+    else:
+        pass
+    result = []
+    for item in items:
+        for filter_key in kwargs:
+            try:
+                if not item[filter_key] == kwargs[filter_key]:
+                    break
+            except KeyError:
+                _log.info("Tried to filter an unknown attribute: %s" % \
+                          str(filter_key))
+                break
+        else:
+            # all keys are matching
+            result.append(item)
+    return result
+
+def get_filter(items):
+    return lambda *args, **kwargs: filter_list(items, *args, **kwargs)
+
