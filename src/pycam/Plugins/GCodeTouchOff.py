@@ -56,7 +56,7 @@ class GCodeTouchOff(pycam.Plugins.PluginBase):
                     self.gui.get_object("TouchOffBox"))
             self.unregister_gtk_handlers(self._gtk_handlers)
             for setting in ("touch_off_on_startup", "touch_off_on_tool_change"):
-                self.core.remove_item(setting)
+                del self.core[setting]
 
     def update_widgets(self, widget=None):
         # tool change controls

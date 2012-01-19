@@ -141,8 +141,8 @@ def get_all_program_locations(core):
     # import all external program locations into a dict
     program_locations = {}
     prefix = "external_program_"
-    for key in core.get_keys():
-        if key.startswith(prefix) and core.get(key):
-            program_locations[key[len(prefix):]] = core.get(key)
+    for key in core:
+        if key.startswith(prefix) and core[key]:
+            program_locations[key[len(prefix):]] = core[key]
     return program_locations
 

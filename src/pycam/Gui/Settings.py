@@ -61,72 +61,61 @@ def get_config_filename(filename=None):
         return os.path.join(config_dir, filename)
 
 
-class Settings(object):
+class Settings(dict):
 
     GET_INDEX = 0
     SET_INDEX = 1
     VALUE_INDEX = 2
-    
-    def __init__(self):
-        self.items = {}
-        self.values = {}
+
+    def __getitem_orig(self, key):
+        return super(Settings, self).__getitem__(key)
+
+    def __setitem_orig(self, key, value):
+        super(Settings, self).__setitem__(key, value)
 
     def add_item(self, key, get_func=None, set_func=None):
-        self.items[key] = [None, None, None]
+        self.__setitem_orig(key, [None, None, None])
         self.define_get_func(key, get_func)
         self.define_set_func(key, set_func)
-        self.items[key][self.VALUE_INDEX] = None
-
-    def remove_item(self, key):
-        if not self.items.has_key(key):
-            return
-        del self.items[key]
-
-    def define_get_func(self, key, get_func=None):
-        if not self.items.has_key(key):
-            return
-        if get_func is None:
-            get_func = lambda: self.items[key][self.VALUE_INDEX]
-        self.items[key][self.GET_INDEX] = get_func
-
-    def define_set_func(self, key, set_func=None):
-        if not self.items.has_key(key):
-            return
-        def default_set_func(value):
-            self.items[key][self.VALUE_INDEX] = value
-        if set_func is None:
-            set_func = default_set_func
-        self.items[key][self.SET_INDEX] = set_func
-
-    def get(self, key, default=None):
-        if self.items.has_key(key):
-            try:
-                result = self.items[key][self.GET_INDEX]()
-            except TypeError, err_msg:
-                log.info("Failed to retrieve setting '%s': %s" % (key, err_msg))
-                result = None
-        else:
-            result = default
-        return result
+        self.__getitem_orig(key)[self.VALUE_INDEX] = None
 
     def set(self, key, value):
-        if not self.items.has_key(key):
+        self[key] = value
+
+    def get(self, key, default=None):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return default
+
+    def define_get_func(self, key, get_func=None):
+        if not self.has_key(key):
+            return
+        if get_func is None:
+            get_func = lambda: self.__getitem_orig(key)[self.VALUE_INDEX]
+        self.__getitem_orig(key)[self.GET_INDEX] = get_func
+
+    def define_set_func(self, key, set_func=None):
+        if not self.has_key(key):
+            return
+        def default_set_func(value):
+            self.__getitem_orig(key)[self.VALUE_INDEX] = value
+        if set_func is None:
+            set_func = default_set_func
+        self.__getitem_orig(key)[self.SET_INDEX] = set_func
+
+    def __getitem__(self, key):
+        try:
+            return self.__getitem_orig(key)[self.GET_INDEX]()
+        except TypeError, err_msg:
+            log.info("Failed to retrieve setting '%s': %s" % (key, err_msg))
+            return None
+
+    def __setitem__(self, key, value):
+        if not self.has_key(key):
             self.add_item(key)
-        self.items[key][self.SET_INDEX](value)
-        self.items[key][self.VALUE_INDEX] = value
-
-    def has_key(self, key):
-        """ expose the "has_key" function of the items list """
-        return self.items.has_key(key)
-
-    def __str__(self):
-        result = {}
-        for key in self.items.keys():
-            result[key] = self.get(key)
-        return str(result)
-
-    def get_keys(self):
-        return self.items.keys()
+        self.__getitem_orig(key)[self.SET_INDEX](value)
+        self.__getitem_orig(key)[self.VALUE_INDEX] = value
 
 
 class ProcessSettings(object):

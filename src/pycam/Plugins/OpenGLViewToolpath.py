@@ -50,7 +50,7 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
         self.core.get("unregister_color")("color_toolpath_cut")
         self.core.get("unregister_color")("color_toolpath_return")
         self.core.get("unregister_display_item")("show_toolpath")
-        self.core.remove_item("draw_toolpath_moves_func")
+        del self.core["draw_toolpath_moves_func"]
         self.core.emit_event("visual-item-updated")
 
     def get_draw_dimension(self, low, high):

@@ -123,7 +123,7 @@ class GCodeSafetyHeight(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.clear_state_items()
-        self.core.remove_item("gcode_safety_height")
+        del self.core["gcode_safety_height"]
         self.safety_height.destroy()
 
 
@@ -146,7 +146,7 @@ class GCodeFilenameExtension(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
-        self.core.remove_item("gcode_filename_extension")
+        del self.core["gcode_filename_extension"]
         self.filename_extension.destroy()
 
 
@@ -181,7 +181,7 @@ class GCodeStepWidth(pycam.Plugins.PluginBase):
         while self.controls:
             self.core.unregister_ui("gcode_step_width", self.controls.pop())
         for key in "xyz":
-            self.core.remove_item("gcode_minimum_step_%s" % key)
+            del self.core["gcode_minimum_step_%s" % key]
 
 class GCodeSpindle(pycam.Plugins.PluginBase):
 
@@ -212,7 +212,7 @@ class GCodeSpindle(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
-        self.core.remove_item("gcode_spindle_delay")
+        del self.core["gcode_spindle_delay"]
         self.core.unregister_ui("gcode_spindle",
                 self.spindle_delay.get_widget())
         self.core.unregister_ui("gcode_spindle",
