@@ -1,0 +1,15 @@
+*.o
+*.so
+*.py[cod]
+
+dist
+build
+eggs
+*.egg-info
+.svn
+
+.DS_Store*
+ehthumbs.db
+Icon?
+Thumbs.db
+
