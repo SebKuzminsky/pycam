@@ -27,7 +27,6 @@
                 <property name="can_focus">True</property>
                 <property name="editable">False</property>
                 <property name="wrap_mode">word-char</property>
-                <property name="cursor_visible">False</property>
                 <property name="buffer">ConsoleViewBuffer</property>
               </object>
             </child>
@@ -144,6 +143,6 @@
   </object>
   <object class="GtkTextBuffer" id="ConsoleViewBuffer"/>
   <object class="GtkToggleAction" id="ToggleConsoleWindow">
-    <property name="label">Console</property>
+    <property name="label">_Console</property>
   </object>
 </interface>

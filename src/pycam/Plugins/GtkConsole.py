@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
+import sys
 import code
 # gtk is imported later
 #import gtk
@@ -37,6 +39,10 @@ class GtkConsole(pycam.Plugins.PluginBase):
     DEPENDS = ["Clipboard"]
     CATEGORIES = ["System"]
 
+    # sys.ps1 and sys.ps2 don't seem to be available outside of the shell
+    PROMPT_PS1 = ">>> "
+    PROMPT_PS2 = "... "
+
     def setup(self):
         self._history = []
         self._history_position = None
@@ -50,9 +56,13 @@ class GtkConsole(pycam.Plugins.PluginBase):
             code.sys.stdout = self._console_output
             code.sys.stdin = StringIO.StringIO()
             self._console_buffer = self.gui.get_object("ConsoleViewBuffer")
-            self._console.write = lambda data: \
-                    self._console_buffer.insert(
+            def console_write(data):
+                self._console_buffer.insert(
                         self._console_buffer.get_end_iter(), data)
+                self._console_buffer.place_cursor(
+                        self._console_buffer.get_end_iter())
+            self._console.write  = console_write
+            self._clear_console()
             console_action = self.gui.get_object("ToggleConsoleWindow")
             self.register_gtk_accelerator("console", console_action, None,
                     "ToggleConsoleWindow")
@@ -88,11 +98,12 @@ class GtkConsole(pycam.Plugins.PluginBase):
     def _hide_window(self, widget=None, event=None):
         self.gui.get_object("ConsoleDialog").hide()
         # don't close window (for "destroy" event)
-        return False
+        return True
 
     def _clear_console(self, widget=None):
         start, end = self._console_buffer.get_bounds()
         self._console_buffer.delete(start, end)
+        self._console.write(self.PROMPT_PS1)
 
     def _execute_command(self, widget=None):
         input_control = self.gui.get_object("CommandInput")
@@ -100,18 +111,24 @@ class GtkConsole(pycam.Plugins.PluginBase):
         if not text:
             return
         input_control.set_text("")
+        # add the command to the console window
+        self._console.write(text + os.linesep)
         # execute command - check if it needs more input
         if not self._console.push(text):
             # append result to console view
             self._console_output.seek(0)
             for line in self._console_output.readlines():
-                self._console_buffer.insert(
-                        self._console_buffer.get_end_iter(), line)
+                self._console.write(line)
             # scroll down console view to the end of the buffer
             view = self.gui.get_object("ConsoleView")
             view.scroll_mark_onscreen(self._console_buffer.get_insert())
             # clear the buffer
             self._console_output.truncate(0)
+            # show the prompt again
+            self._console.write(self.PROMPT_PS1)
+        else:
+            # show the "waiting for more" prompt
+            self._console.write(self.PROMPT_PS2)
         # add to history
         if not self._history or (text != self._history[-1]):
             self._history.append(text)
