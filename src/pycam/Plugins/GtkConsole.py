@@ -68,11 +68,6 @@ class GtkConsole(pycam.Plugins.PluginBase):
                     "ToggleConsoleWindow")
             self.core.register_ui("view_menu", "ToggleConsoleWindow",
                     console_action, 90)
-            # create input buffer for "CommandInput"
-            # (missing in Glade v3.6.7)
-            command_input = self.gui.get_object("CommandInput")
-            if not command_input.get_buffer():
-                command_input.set_buffer(self._gtk.TextBuffer())
             self._window = self.gui.get_object("ConsoleDialog")
             self._window_position = None
             self._gtk_handlers = []
