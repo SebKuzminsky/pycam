@@ -49,8 +49,6 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
                             self.toggle_process_pool_window, False),
                     (self.process_pool_window, "destroy",
                             self.toggle_process_pool_window, False)))
-            self.process_pool_window.add_accel_group(
-                    self.core.get("gtk-accel-group"))
             self._gtk_handlers.append((
                     self.gui.get_object("ProcessPoolWindowClose"), "clicked",
                     self.toggle_process_pool_window, False))
@@ -111,8 +109,6 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
                     self.gui.get_object("MultiprocessingFrame"))
             toggle_button = self.gui.get_object("ToggleProcessPoolWindow")
             self.core.unregister_ui("view_menu", toggle_button)
-            self.process_pool_window.remove_accel_group(
-                    self.core.get("gtk-accel-group"))
             self.unregister_gtk_accelerator("processes", toggle_button)
             self.unregister_gtk_handlers(self._gtk_handlers)
 

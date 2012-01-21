@@ -453,6 +453,7 @@ class ProjectGui(object):
         self.settings.get("configure-drag-drop-func")(self.window)
         # other events
         self.window.connect("destroy", self.destroy)
+        self.window.connect("delete-event", self.destroy)
         # the settings window
         self.gui.get_object("CloseSettingsWindow").connect("clicked", self.toggle_preferences_window, False)
         self.gui.get_object("ResetPreferencesButton").connect("clicked", self.reset_preferences)
@@ -472,9 +473,15 @@ class ProjectGui(object):
         uimanager = gtk.UIManager()
         self.settings.set("gtk-uimanager", uimanager)
         self._accel_group = uimanager.get_accel_group()
+        # send a "delete" event on "CTRL-w" for every window
+        def handle_window_close(accel_group, window, *args):
+            window.emit("delete-event", gtk.gdk.Event(gtk.gdk.DELETE))
+        self._accel_group.connect_group(ord('w'), gtk.gdk.CONTROL_MASK,
+                gtk.ACCEL_LOCKED, handle_window_close)
         self.settings.add_item("gtk-accel-group", lambda: self._accel_group)
-        for window in (self.window, self.about_window, self.preferences_window):
-            window.add_accel_group(self._accel_group)
+        for obj in self.gui.get_objects():
+            if isinstance(obj, gtk.Window):
+                obj.add_accel_group(self._accel_group)
         # preferences tab
         preferences_book = self.gui.get_object("PreferencesNotebook")
         def clear_preferences():

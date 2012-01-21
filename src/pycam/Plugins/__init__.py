@@ -60,6 +60,15 @@ class PluginBase(object):
                     self.log.info("Failed to import UI file (%s): %s" % \
                             (gtk_build_file, err_msg))
                     self.gui = None
+                else:
+                    # All windows should share the same accel group (for
+                    # keyboard shortcuts).
+                    common_accel_group = self.core["gtk-accel-group"]
+                    if common_accel_group:
+                        for obj in self.gui.get_objects():
+                            if isinstance(obj, gtk.Window):
+                                obj.add_accel_group(common_accel_group)
+
         for key in self.ICONS:
             icon_location = pycam.Utils.locations.get_ui_file_location(
                     self.ICONS[key])

@@ -80,8 +80,6 @@ class Fonts(pycam.Plugins.PluginBase):
                 self._gtk_handlers.append((self.gui.get_object(objname),
                         "toggled", self.update_font_dialog_preview))
             # use global key accel map
-            self.font_dialog_window.add_accel_group(
-                    self.core.get("gtk-accel-group"))
             font_action = self.gui.get_object("ShowFontDialog")
             self.register_gtk_accelerator("fonts", font_action,
                     "<Control><Shift>t", "ShowFontDialog")
@@ -104,8 +102,6 @@ class Fonts(pycam.Plugins.PluginBase):
             font_toggle = self.gui.get_object("ShowFontDialog")
             self.core.unregister_ui("edit_menu", None)
             self.core.unregister_ui("edit_menu", font_toggle)
-            self.font_dialog_window.remove_accel_group(
-                    self.core.get("gtk-accel-group"))
             self.unregister_gtk_accelerator("fonts", font_toggle)
             self.unregister_gtk_handlers(self._gtk_handlers)
 

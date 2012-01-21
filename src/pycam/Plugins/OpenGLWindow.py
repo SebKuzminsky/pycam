@@ -83,7 +83,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.context_menu = gtk.Menu()
             self.window = self.gui.get_object("OpenGLWindow")
             self.core.get("configure-drag-drop-func")(self.window)
-            self.window.add_accel_group(self.core.get("gtk-accel-group"))
             self.initialized = False
             self.busy = False
             self.is_visible = False
@@ -237,7 +236,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 self.core.get("unregister_color")(name)
             for name in ("show_drill", "show_directions"):
                 self.core.get("unregister_display_item")(name)
-            self.window.remove_accel_group(self.core.get("gtk-accel-group"))
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
             # the area will be created during setup again

@@ -44,8 +44,6 @@ class PluginSelector(pycam.Plugins.PluginBase):
                         self.toggle_plugin_window, False),
                     (self.plugin_window, "destroy",
                         self.toggle_plugin_window, False)))
-            self.plugin_window.add_accel_group(
-                    self.core.get("gtk-accel-group"))
             self._gtk_handlers.append((
                     self.gui.get_object("ClosePluginManager"), "clicked",
                         self.toggle_plugin_window, False))
@@ -80,8 +78,6 @@ class PluginSelector(pycam.Plugins.PluginBase):
             self.core.register_ui("view_menu", action)
             self.core.unregister_event("plugin-list-changed",
                     self._update_plugin_model)
-            self.plugin_window.remove_accel_group(
-                    self.core.get("gtk-accel-group"))
             self.unregister_gtk_handlers(self._gtk_handlers)
 
     def toggle_plugin_window(self, widget=None, value=None, action=None):
