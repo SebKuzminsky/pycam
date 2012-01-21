@@ -80,6 +80,7 @@ class GtkConsole(pycam.Plugins.PluginBase):
                     ("CommandInput", "key-press-event", self._scroll_history),
                     ("ToggleConsoleWindow", "toggled", self._toggle_window),
                     ("CloseConsoleButton", "clicked", hide_window),
+                    ("ConsoleDialog", "delete-event", hide_window),
                     ("ConsoleDialog", "destroy", hide_window)):
                 self._gtk_handlers.append((self.gui.get_object(objname),
                         signal, func))
@@ -155,15 +156,15 @@ class GtkConsole(pycam.Plugins.PluginBase):
 
     def _scroll_history(self, widget=None, event=None):
         if event is None:
-            return
+            return False
         try:
             keyval = getattr(event, "keyval")
             get_state = getattr(event, "get_state")
         except AttributeError:
-            return
+            return False
         if get_state():
             # ignore, if any modifier is pressed
-            return
+            return False
         input_control = self.gui.get_object("CommandInput")
         if (keyval == self._gtk.keysyms.Up):
             if self._history_position is None:
@@ -175,14 +176,14 @@ class GtkConsole(pycam.Plugins.PluginBase):
                 self._history_position -= 1
             else:
                 # invalid -> no change
-                return
+                return True
         elif (keyval == self._gtk.keysyms.Down):
             if self._history_position is None:
-                return
+                return True
             self._history_position += 1
         else:
             # all other keys: ignore
-            return
+            return False
         if self._history_position >= len(self._history):
             input_control.set_text(self._history_lastline_backup)
             # make sure that the backup can be stored again
@@ -192,4 +193,5 @@ class GtkConsole(pycam.Plugins.PluginBase):
         # move the cursor to the end of the new text
         input_control.set_position(0)
         input_control.grab_focus()
+        return True
 
