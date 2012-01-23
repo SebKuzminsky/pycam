@@ -28,20 +28,23 @@ import pycam.Utils.log
 
 DATA_DIR_ENVIRON_KEY = "PYCAM_DATA_DIR"
 FONT_DIR_ENVIRON_KEY = "PYCAM_FONT_DIR"
-DATA_BASE_DIRS = [os.path.realpath(os.path.join(os.path.dirname(__file__),
-                                                os.pardir, os.pardir, "share")),
-                  os.path.realpath(os.path.join(os.path.dirname(__file__),
-                                                os.pardir, os.pardir, "share", "pycam")),
+
+# this directory represents the base of the development tree
+PROJECT_BASE_DIR = os.path.realpath(os.path.join(os.path.dirname(
+        os.path.realpath(__file__)), os.pardir, os.pardir))
+# necessary for "pyinstaller"
+if "_MEIPASS2" in os.environ:
+    PROJECT_BASE_DIR = os.path.normpath(os.environ["_MEIPASS2"])
+
+# lookup list of directories for UI files, fonts, ...
+DATA_BASE_DIRS = [os.path.join(PROJECT_BASE_DIR, "share"),
+                  os.path.join(PROJECT_BASE_DIR, "share", "pycam"),
                   os.path.join(sys.prefix, "local", "share", "pycam"),
                   os.path.join(sys.prefix, "share", "pycam")]
 FONTS_SUBDIR = "fonts"
 UI_SUBDIR = "ui"
 
-
-# necessary for "pyinstaller"
-if "_MEIPASS2" in os.environ:
-    DATA_BASE_DIRS.insert(0, os.path.join(os.path.normpath(os.environ["_MEIPASS2"]), "share"))
-# respect an override via an environment setting
+# respect an override via environment settings
 if DATA_DIR_ENVIRON_KEY in os.environ:
     DATA_BASE_DIRS.insert(0, os.path.normpath(os.environ[DATA_DIR_ENVIRON_KEY]))
 if FONT_DIR_ENVIRON_KEY in os.environ:
