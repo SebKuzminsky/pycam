@@ -51,6 +51,6 @@ else:
 if _use_precision:
     number = lambda value: decimal.Decimal(str(value))
 else:
-    number = lambda value: float(value)
+    number = float
 
 

@@ -40,7 +40,7 @@ if "_MEIPASS2" in os.environ:
 DATA_BASE_DIRS = [os.path.join(PROJECT_BASE_DIR, "share"),
                   os.path.join(PROJECT_BASE_DIR, "share", "pycam"),
                   os.path.join(sys.prefix, "local", "share", "pycam"),
-                  os.path.join(sys.prefix, "share", "pycam")]
+                  os.path.join(sys.prefix, "share", "pycam"), '.']
 FONTS_SUBDIR = "fonts"
 UI_SUBDIR = "ui"
 

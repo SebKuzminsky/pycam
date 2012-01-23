@@ -13,6 +13,10 @@ from pycam.Toolpath import Bounds
 from pycam.Toolpath.MotionGrid import get_fixed_grid
 from pycam.Utils.locations import get_data_file_location
 
+# Disable multi processing
+from pycam.Utils import threading
+threading.__multiprocessing = False
+
 """ Profile PyCAM doing several operations, print out the top 10
 (sorted by actual local runtime) methods.
 """
