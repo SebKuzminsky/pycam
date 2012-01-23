@@ -33,7 +33,7 @@ DATA_BASE_DIRS = [os.path.realpath(os.path.join(os.path.dirname(__file__),
                   os.path.realpath(os.path.join(os.path.dirname(__file__),
                                                 os.pardir, os.pardir, "share", "pycam")),
                   os.path.join(sys.prefix, "local", "share", "pycam"),
-                  os.path.join(sys.prefix, "share", "pycam")]
+                  os.path.join(sys.prefix, "share", "pycam"), '.']
 FONTS_SUBDIR = "fonts"
 UI_SUBDIR = "ui"
 
