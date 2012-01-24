@@ -51,17 +51,28 @@ class GtkConsole(pycam.Plugins.PluginBase):
             self._gtk = gtk
             self._console = code.InteractiveConsole(
                     locals=self.core.get_namespace(), filename="PyCAM")
-            self._console_output = StringIO.StringIO()
-            # TODO: clean up this stdin/stdout mess (maybe subclass "sys"?)
-            code.sys.stdout = self._console_output
-            code.sys.stdin = StringIO.StringIO()
+            # redirect sys.stdin/stdout - "exec" always writes there
+            self._original_stdout = sys.stdout
+            self._original_stdin = sys.stdin
             self._console_buffer = self.gui.get_object("ConsoleViewBuffer")
-            def console_write(data):
-                self._console_buffer.insert(
-                        self._console_buffer.get_end_iter(), data)
-                self._console_buffer.place_cursor(
-                        self._console_buffer.get_end_iter())
-            self._console.write  = console_write
+            class ConsoleReplacement(object):
+                def __init__(self):
+                    # clone sys.stdout
+                    for item in dir(sys.stdout):
+                        if item.startswith("_") or (item == "write"):
+                            continue
+                        child = getattr(sys.stdout, item)
+                        setattr(self, item, child)
+                def write(self_obj, data):
+                    self._console_buffer.insert(
+                            self._console_buffer.get_end_iter(), data)
+                    self._console_buffer.place_cursor(
+                            self._console_buffer.get_end_iter())
+                    self._original_stdout.write(data)
+            sys.stdout = ConsoleReplacement()
+            # make sure that we are never waiting for input (e.g. "help()")
+            sys.stdin = StringIO.StringIO()
+            self._console.write  = sys.stdout.write
             self._clear_console()
             console_action = self.gui.get_object("ToggleConsoleWindow")
             self.register_gtk_accelerator("console", console_action, None,
@@ -89,12 +100,13 @@ class GtkConsole(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
+            self._toggle_window(value=False)
+            sys.stdout = self._original_stdout
+            sys.stdin = self._original_stdin
+            console_action = self.gui.get_object("ToggleConsoleWindow")
+            self.unregister_gtk_accelerator("console", console_action)
+            self.core.unregister_ui("view_menu", console_action)
             self.unregister_gtk_handlers(self._gtk_handlers)
-
-    def _hide_window(self, widget=None, event=None):
-        self.gui.get_object("ConsoleDialog").hide()
-        # don't close window (for "destroy" event)
-        return True
 
     def _clear_console(self, widget=None):
         start, end = self._console_buffer.get_bounds()
@@ -111,15 +123,9 @@ class GtkConsole(pycam.Plugins.PluginBase):
         self._console.write(text + os.linesep)
         # execute command - check if it needs more input
         if not self._console.push(text):
-            # append result to console view
-            self._console_output.seek(0)
-            for line in self._console_output.readlines():
-                self._console.write(line)
             # scroll down console view to the end of the buffer
             view = self.gui.get_object("ConsoleView")
             view.scroll_mark_onscreen(self._console_buffer.get_insert())
-            # clear the buffer
-            self._console_output.truncate(0)
             # show the prompt again
             self._console.write(self.PROMPT_PS1)
         else:

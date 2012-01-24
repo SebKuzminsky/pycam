@@ -25,6 +25,7 @@ import os
 import datetime
 
 import pycam.Plugins
+import pycam.Utils
 
 
 class Log(pycam.Plugins.PluginBase):
