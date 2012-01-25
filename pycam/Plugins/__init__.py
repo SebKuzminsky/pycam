@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import imp
 import inspect
+import uuid
 # TODO: load these modules only on demand
 import gtk
 import gobject
@@ -502,9 +503,9 @@ class ListPluginBase(PluginBase, list):
 class ObjectWithAttributes(dict):
 
     def __init__(self, key, params=None):
-        if params is None:
-            params = {}
-        self.update(params)
+        if not params is None:
+            self.update(params)
+        self["uuid"] = uuid.uuid4()
         self.node_key = key
 
 

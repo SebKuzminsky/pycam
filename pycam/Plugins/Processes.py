@@ -115,7 +115,6 @@ class Processes(pycam.Plugins.ListPluginBase):
         self.clear_state_items()
         self.core.unregister_namespace("processes")
         if self.gui:
-            self.core.unregister_chain("state_dump", self.dump_state)
             self.core.unregister_ui("main", self.gui.get_object("ProcessBox"))
             self.core.unregister_ui_section("process_path_parameters")
             self.core.unregister_ui("process_parameters",
