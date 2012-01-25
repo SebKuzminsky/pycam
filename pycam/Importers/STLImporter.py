@@ -61,7 +61,8 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
     normal_conflict_warning_seen = False
 
     if hasattr(filename, "read"):
-        f = filename
+        # make sure that the input stream can seek and has ".len"
+        f = StringIO.StringIO(filename.read())
         # useful for later error messages
         filename = "input stream"
     else:
@@ -70,6 +71,9 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
             # urllib.urlopen objects do not support "seek" - so we need to read
             # the whole file at once. This is ugly - anyone with a better idea?
             f = StringIO.StringIO(url_file.read())
+            # TODO: the above ".read" may be incomplete - this is ugly
+            # see http://patrakov.blogspot.com/2011/03/case-of-non-raised-exception.html
+            # and http://stackoverflow.com/questions/1824069/urllib2-not-retrieving-entire-http-response
             url_file.close()
         except IOError, err_msg:
             log.error("STLImporter: Failed to read file (%s): %s" \
