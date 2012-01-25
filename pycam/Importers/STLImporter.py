@@ -93,6 +93,8 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
     f.seek(80)
     numfacets = unpack("<I", f.read(4))[0]
     binary = False
+    log.debug("STL import info: %s / %s / %s / %s" % \
+            (f.len, numfacets, header.find("solid"), header.find("facet")))
 
     if f.len == (84 + 50*numfacets):
         binary = True
