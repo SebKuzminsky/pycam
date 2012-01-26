@@ -42,7 +42,7 @@ def get_xml(item, name=None):
         return leaf
     else:
         leaf = ET.Element(name)
-        leaf.text = repr(item)
+        leaf.text = str(item)
         return leaf
 
 def parse_xml_dict(item):

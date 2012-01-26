@@ -55,24 +55,19 @@ class GtkConsole(pycam.Plugins.PluginBase):
             self._original_stdout = sys.stdout
             self._original_stdin = sys.stdin
             self._console_buffer = self.gui.get_object("ConsoleViewBuffer")
-            class ConsoleReplacement(object):
-                def __init__(self):
-                    # clone sys.stdout
-                    for item in dir(sys.stdout):
-                        if item.startswith("_") or (item == "write"):
-                            continue
-                        child = getattr(sys.stdout, item)
-                        setattr(self, item, child)
-                def write(self_obj, data):
-                    self._console_buffer.insert(
-                            self._console_buffer.get_end_iter(), data)
-                    self._console_buffer.place_cursor(
-                            self._console_buffer.get_end_iter())
-                    self._original_stdout.write(data)
-            sys.stdout = ConsoleReplacement()
+            # redirect the virtual console output to the window
+            sys.stdout = StringIO.StringIO()
+            def console_write(data):
+                self._console_buffer.insert(
+                        self._console_buffer.get_end_iter(), data)
+                self._console_buffer.place_cursor(
+                        self._console_buffer.get_end_iter())
+            self._console.write  = console_write
             # make sure that we are never waiting for input (e.g. "help()")
             sys.stdin = StringIO.StringIO()
-            self._console.write  = sys.stdout.write
+            # multiprocessing has a bug regarding the handling of sys.stdin:
+            # see http://bugs.python.org/issue10174
+            sys.stdin.fileno = lambda: -1
             self._clear_console()
             console_action = self.gui.get_object("ToggleConsoleWindow")
             self.register_gtk_accelerator("console", console_action, None,
@@ -123,6 +118,12 @@ class GtkConsole(pycam.Plugins.PluginBase):
         self._console.write(text + os.linesep)
         # execute command - check if it needs more input
         if not self._console.push(text):
+            # append result to console view
+            sys.stdout.seek(0)
+            for line in sys.stdout.readlines():
+                self._console.write(line)
+            # clear the buffer
+            sys.stdout.truncate(0)
             # scroll down console view to the end of the buffer
             view = self.gui.get_object("ConsoleView")
             view.scroll_mark_onscreen(self._console_buffer.get_insert())
