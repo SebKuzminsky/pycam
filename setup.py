@@ -33,6 +33,8 @@ import os.path
 import sys
 import shutil
 
+BASE_DIR = os.path.realpath(os.path.abspath(os.path.dirname(__file__)))
+
 from pycam import VERSION
 
 WINDOWS_START_SCRIPT = os.path.join("scripts", "pycam-loader.py")
