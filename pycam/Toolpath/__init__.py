@@ -64,10 +64,9 @@ class Toolpath(object):
 
     def __init__(self, paths, parameters=None):
         self.paths = paths
-        if parameters:
-            self.parameters = parameters
-        else:
-            self.parameters = {}
+        if not parameters:
+            parameters = {}
+        self.parameters = parameters
         self._max_safe_distance = 2 * parameters.get("tool_radius", 0)
         self._feedrate = parameters.get("tool_feedrate", 300)
 
