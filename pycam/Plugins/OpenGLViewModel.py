@@ -21,7 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Plugins
-import pycam.Geometry.Point
+from pycam.Geometry.PointUtils import *
 
 
 GTK_COLOR_MAX = 65535.0
@@ -144,30 +144,32 @@ class OpenGLViewModelTriangle(pycam.Plugins.PluginBase):
             model = models[index]
             if not hasattr(model, "triangles"):
                 continue
-            get_coords = lambda p: (p.x, p.y, p.z)
             def calc_normal(main, normals):
-                suitable = pycam.Geometry.Point.Vector(0, 0, 0)
+                suitable = (0, 0, 0, 'v')
                 for normal, weight in normals:
-                    dot = main.dot(normal)
+                    dot = pdot(main, normal)
+                    #dot = main.dot(normal)
                     if dot > 0:
-                        suitable = suitable.add(normal.mul(weight * dot))
-                return suitable.normalized()
+                        suitable = padd(suitable, pmul(normal, weight * dot))
+                        #suitable = suitable.add(normal.mul(weight * dot))
+                return pnormalized(suitable)
+                #return suitable.normalized()
             vertices = {}
             for t in model.triangles():
                 for p in (t.p1, t.p2, t.p3):
-                    coords = get_coords(p)
-                    if not coords in vertices:
-                        vertices[coords] = []
-                    vertices[coords].append((t.normal.normalized(), t.get_area()))
+                    if not p in vertices:
+                        vertices[p] = []
+                    vertices[p].append((pnormalized(t.normal), t.get_area()))
+                    #vertices[p].append((t.normal.normalized(), t.get_area()))
             GL.glBegin(GL.GL_TRIANGLES)
             for t in model.triangles():
                 # The triangle's points are in clockwise order, but GL expects
                 # counter-clockwise sorting.
                 for p in (t.p1, t.p3, t.p2):
-                    coords = get_coords(p)
-                    normal = calc_normal(t.normal.normalized(), vertices[coords])
-                    GL.glNormal3f(normal.x, normal.y, normal.z)
-                    GL.glVertex3f(p.x, p.y, p.z)
+                    normal = calc_normal(pnormalized(t.normal), vertices[p])
+                    #normal = calc_normal(t.normal.normalized(), vertices[coords])
+                    GL.glNormal3f(normal[0], normal[1], normal[2])
+                    GL.glVertex3f(p[0], p[1], p[2])
             GL.glEnd()
             removal_list.append(index)
         # remove all models that we processed

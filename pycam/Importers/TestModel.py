@@ -22,22 +22,21 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.Line import Line
-from pycam.Geometry.Point import Point
 from pycam.Geometry.Model import Model
 
 
 def get_test_model():
     points = []
-    points.append(Point(-2, 1, 4))
-    points.append(Point(2, 1, 4))
-    points.append(Point(0, -2, 4))
-    points.append(Point(-5, 2, 2))
-    points.append(Point(-1, 3, 2))
-    points.append(Point(5, 2, 2))
-    points.append(Point(4, -1, 2))
-    points.append(Point(2, -4, 2))
-    points.append(Point(-2, -4, 2))
-    points.append(Point(-3, -2, 2))
+    points.append((-2, 1, 4))
+    points.append((2, 1, 4))
+    points.append((0, -2, 4))
+    points.append((-5, 2, 2))
+    points.append((-1, 3, 2))
+    points.append((5, 2, 2))
+    points.append((4, -1, 2))
+    points.append((2, -4, 2))
+    points.append((-2, -4, 2))
+    points.append((-3, -2, 2))
 
     lines = []
     lines.append(Line(points[0], points[1]))

@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.Point import Point
+from pycam.Geometry.PointUtils import *
 from pycam.Geometry.utils import sqrt
 
 # careful import
@@ -56,37 +56,37 @@ def keep_matrix(func):
 @keep_matrix
 def draw_direction_cone(p1, p2, position=0.5, precision=12, size=0.1):
     # convert p1 and p2 from list/tuple to Point
-    if not hasattr(p1, "sub"):
-        p1 = Point(*p1)
-    if not hasattr(p2, "sub"):
-        p2 = Point(*p2)
-    distance = p2.sub(p1)
-    length = distance.norm
-    direction = distance.normalized()
+    distance = psub(p2, p1)
+    #distance = p2.sub(p1)
+    length = pnorm(distance)
+    direction = pnormalized(distance)
+    #direction = distance.normalized()
     if direction is None:
         # zero-length line
         return
     cone_length = length * size
     cone_radius = cone_length / 3.0
     # move the cone to the middle of the line
-    GL.glTranslatef((p1.x + p2.x) * position,
-            (p1.y + p2.y) * position, (p1.z + p2.z) * position)
+    GL.glTranslatef((p1[0] + p2[0]) * position,
+            (p1[1] + p2[1]) * position, (p1[2] + p2[2]) * position)
     # rotate the cone according to the line direction
     # The cross product is a good rotation axis.
-    cross = direction.cross(Point(0, 0, -1))
-    if cross.norm != 0:
+    cross = pcross(direction, (0, 0, -1))
+    #cross = direction.cross(Point(0, 0, -1))
+    #if cross.norm != 0:
+    if pnorm(cross) != 0:
         # The line direction is not in line with the z axis.
         try:
-            angle = math.asin(sqrt(direction.x ** 2 + direction.y ** 2))
+            angle = math.asin(sqrt(direction[0] ** 2 + direction[1] ** 2))
         except ValueError:
             # invalid angle - just ignore this cone
             return
         # convert from radians to degree
         angle = angle / math.pi * 180
-        if direction.z < 0:
+        if direction[2] < 0:
             angle = 180 - angle
-        GL.glRotatef(angle, cross.x, cross.y, cross.z)
-    elif direction.z == -1:
+        GL.glRotatef(angle, cross[0], cross[1], cross[2])
+    elif direction[2] == -1:
         # The line goes down the z axis - turn it around.
         GL.glRotatef(180, 1, 0, 0)
     else:

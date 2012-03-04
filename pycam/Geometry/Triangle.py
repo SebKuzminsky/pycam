@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.Point import Point, Vector
+from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Line import Line
 from pycam.Geometry import TransformableContainer, IDGenerator
@@ -53,55 +53,54 @@ class Triangle(IDGenerator, TransformableContainer):
         self.reset_cache()
 
     def reset_cache(self):
-        self.minx = min(self.p1.x, self.p2.x, self.p3.x)
-        self.miny = min(self.p1.y, self.p2.y, self.p3.y)
-        self.minz = min(self.p1.z, self.p2.z, self.p3.z)
-        self.maxx = max(self.p1.x, self.p2.x, self.p3.x)
-        self.maxy = max(self.p1.y, self.p2.y, self.p3.y)
-        self.maxz = max(self.p1.z, self.p2.z, self.p3.z)
+        self.minx = min(self.p1[0], self.p2[0], self.p3[0])
+        self.miny = min(self.p1[1], self.p2[1], self.p3[1])
+        self.minz = min(self.p1[2], self.p2[2], self.p3[2])
+        self.maxx = max(self.p1[0], self.p2[0], self.p3[0])
+        self.maxy = max(self.p1[1], self.p2[1], self.p3[1])
+        self.maxz = max(self.p1[2], self.p2[2], self.p3[2])
         self.e1 = Line(self.p1, self.p2)
         self.e2 = Line(self.p2, self.p3)
         self.e3 = Line(self.p3, self.p1)
         # calculate normal, if p1-p2-pe are in clockwise order
         if self.normal is None:
-            self.normal = self.p3.sub(self.p1).cross(self.p2.sub( \
-                    self.p1)).normalized()
-        if not isinstance(self.normal, Vector):
-            self.normal = self.normal.get_vector()
-        # make sure that the normal has always a unit length
-        self.normal = self.normal.normalized()
-        self.center = self.p1.add(self.p2).add(self.p3).div(3)
+            self.normal = pnormalized(pcross(psub(self.p3, self.p1), psub(self.p2, self.p1)))
+            #self.normal = self.p3.sub(self.p1).cross(self.p2.sub( \
+            #        self.p1)).normalized()
+        if not len(self.normal) > 3:
+            self.normal = (self.normal[0], self.normal[1], self.normal[2], 'v')
+        self.center = pdiv(padd(padd(self.p1, self.p2), self.p3), 3)
+       # self.center = self.p1.add(self.p2).add(self.p3).div(3)
         self.plane = Plane(self.center, self.normal)
         # calculate circumcircle (resulting in radius and middle)
-        denom = self.p2.sub(self.p1).cross(self.p3.sub(self.p2)).norm
-        self.radius = (self.p2.sub(self.p1).norm \
-                * self.p3.sub(self.p2).norm * self.p3.sub(self.p1).norm) \
-                / (2 * denom)
+        denom = pnorm(pcross(psub(self.p2, self.p1), psub(self.p3, self.p2)))
+        #denom = self.p2.sub(self.p1).cross(self.p3.sub(self.p2)).norm
+        self.radius = (pnorm(psub(self.p2, self.p1)) * pnorm(psub(self.p3, self.p2)) * pnorm(psub(self.p3, self.p1))) / (2 * denom)
+        #self.radius = (self.p2.sub(self.p1).norm * self.p3.sub(self.p2).norm * self.p3.sub(self.p1).norm) / (2 * denom)
         self.radiussq = self.radius ** 2
         denom2 = 2 * denom * denom
-        alpha = self.p3.sub(self.p2).normsq \
-                * self.p1.sub(self.p2).dot(self.p1.sub(self.p3)) / denom2
-        beta  = self.p1.sub(self.p3).normsq \
-                * self.p2.sub(self.p1).dot(self.p2.sub(self.p3)) / denom2
-        gamma = self.p1.sub(self.p2).normsq \
-                * self.p3.sub(self.p1).dot(self.p3.sub(self.p2)) / denom2
-        self.middle = Point(
-                self.p1.x * alpha + self.p2.x * beta + self.p3.x * gamma,
-                self.p1.y * alpha + self.p2.y * beta + self.p3.y * gamma,
-                self.p1.z * alpha + self.p2.z * beta + self.p3.z * gamma)
+        alpha = pnormsq(psub(self.p3, self.p2)) * pdot(psub(self.p1, self.p2), psub(self.p1, self.p3)) / denom2
+        #alpha = self.p3.sub(self.p2).normsq * self.p1.sub(self.p2).dot(self.p1.sub(self.p3)) / denom2
+        beta = pnormsq(psub(self.p1, self.p3)) * pdot(psub(self.p2, self.p1), psub(self.p2, self.p3)) / denom2
+        #beta  = self.p1.sub(self.p3).normsq * self.p2.sub(self.p1).dot(self.p2.sub(self.p3)) / denom2
+        gamma = pnormsq(psub(self.p1, self.p2)) * pdot(psub(self.p3, self.p1), psub(self.p3, self.p2)) / denom2
+        #gamma = self.p1.sub(self.p2).normsq * self.p3.sub(self.p1).dot(self.p3.sub(self.p2)) / denom2
+        self.middle = (self.p1[0] * alpha + self.p2[0] * beta + self.p3[0] * gamma,
+                        self.p1[1] * alpha + self.p2[1] * beta + self.p3[1] * gamma,
+                        self.p1[2] * alpha + self.p2[2] * beta + self.p3[2] * gamma)
 
     def __repr__(self):
         return "Triangle%d<%s,%s,%s>" % (self.id, self.p1, self.p2, self.p3)
 
     def copy(self):
-        return self.__class__(self.p1.copy(), self.p2.copy(), self.p3.copy(),
-                self.normal.copy())
+        return self.__class__(self.p1, self.p2, self.p3,
+                self.normal)
 
     def next(self):
-        yield self.p1
-        yield self.p2
-        yield self.p3
-        yield self.normal
+        yield "p1"
+        yield "p2"
+        yield "p3"
+        yield "normal"
 
     def get_points(self):
         return (self.p1, self.p2, self.p3)
@@ -118,25 +117,25 @@ class Triangle(IDGenerator, TransformableContainer):
         GL.glBegin(GL.GL_TRIANGLES)
         # use normals to improve lighting (contributed by imyrek)
         normal_t = self.normal
-        GL.glNormal3f(normal_t.x, normal_t.y, normal_t.z)
+        GL.glNormal3f(normal_t[0], normal_t[1], normal_t[2])
         # The triangle's points are in clockwise order, but GL expects
         # counter-clockwise sorting.
-        GL.glVertex3f(self.p1.x, self.p1.y, self.p1.z)
-        GL.glVertex3f(self.p3.x, self.p3.y, self.p3.z)
-        GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
+        GL.glVertex3f(self.p1[0], self.p1[1], self.p1[2])
+        GL.glVertex3f(self.p3[0], self.p3[1], self.p3[2])
+        GL.glVertex3f(self.p2[0], self.p2[1], self.p2[2])
         GL.glEnd()
         if show_directions: # display surface normals
             n = self.normal
             c = self.center
             d = 0.5
             GL.glBegin(GL.GL_LINES)
-            GL.glVertex3f(c.x, c.y, c.z)
-            GL.glVertex3f(c.x+n.x*d, c.y+n.y*d, c.z+n.z*d)
+            GL.glVertex3f(c[0], c[1], c[2])
+            GL.glVertex3f(c[0]+n[0]*d, c[1]+n[1]*d, c[2]+n[2]*d)
             GL.glEnd()
         if False: # display bounding sphere
             GL.glPushMatrix()
             middle = self.middle
-            GL.glTranslate(middle.x, middle.y, middle.z)
+            GL.glTranslate(middle[0], middle[1], middle[2])
             if not hasattr(self, "_sphere"):
                 self._sphere = GLU.gluNewQuadric()
             GLU.gluSphere(self._sphere, self.radius, 10, 10)
@@ -144,15 +143,20 @@ class Triangle(IDGenerator, TransformableContainer):
         if pycam.Utils.log.is_debug(): # draw triangle id on triangle face
             GL.glPushMatrix()
             c = self.center
-            GL.glTranslate(c.x, c.y, c.z)
-            p12 = self.p1.add(self.p2).mul(0.5)
-            p3_12 = self.p3.sub(p12).normalized()
-            p2_1 = self.p1.sub(self.p2).normalized()
-            pn = p2_1.cross(p3_12)
-            GL.glMultMatrixf((p2_1.x, p2_1.y, p2_1.z, 0, p3_12.x, p3_12.y,
-                    p3_12.z, 0, pn.x, pn.y, pn.z, 0, 0, 0, 0, 1))
-            n = self.normal.mul(0.01)
-            GL.glTranslatef(n.x, n.y, n.z)
+            GL.glTranslate(c[0], c[1], c[2])
+            p12 = pmul(padd(self.p1, self.p2), 0.5)
+            #p12 = self.p1.add(self.p2).mul(0.5)
+            p3_12 = pnormalized(psub(self.p3, p12))
+            #p3_12 = self.p3.sub(p12).normalized()
+            p2_1 = pnormalized(psub(self.p1, self.p2))
+            #p2_1 = self.p1.sub(self.p2).normalized()
+            pn = pcross(p2_1, p3_12)
+            #pn = p2_1.cross(p3_12)
+            GL.glMultMatrixf((p2_1[0], p2_1[1], p2_1[2], 0, p3_12[0], p3_12[1],
+                    p3_12[2], 0, pn[0], pn[1], pn[2], 0, 0, 0, 0, 1))
+            n = pmul(self.normal, 0.01)
+            #n = self.normal.mul(0.01)
+            GL.glTranslatef(n[0], n[1], n[2])
             maxdim = max((self.maxx - self.minx), (self.maxy - self.miny),
                     (self.maxz - self.minz))
             factor = 0.001
@@ -167,18 +171,24 @@ class Triangle(IDGenerator, TransformableContainer):
             GL.glPopMatrix()
         if False: # draw point id on triangle face
             c = self.center
-            p12 = self.p1.add(self.p2).mul(0.5)
-            p3_12 = self.p3.sub(p12).normalized()
-            p2_1 = self.p1.sub(self.p2).normalized()
-            pn = p2_1.cross(p3_12)
-            n = self.normal.mul(0.01)
+            p12 = pmul(padd(self.p1, self.p2), 0.5)
+            #p12 = self.p1.add(self.p2).mul(0.5)
+            p3_12 = pnormalized(psub(self.p3, p12))
+            #p3_12 = self.p3.sub(p12).normalized()
+            p2_1 = pnormalized(psub(self.p1, self.p2))
+            #p2_1 = self.p1.sub(self.p2).normalized()
+            pn = pcross(p2_1, p3_12)
+            #pn = p2_1.cross(p3_12)
+            n = pmul(self.normal, 0.01)
+            #n = self.normal.mul(0.01)
             for p in (self.p1, self.p2, self.p3):
                 GL.glPushMatrix()
-                pp = p.sub(p.sub(c).mul(0.3))
-                GL.glTranslate(pp.x, pp.y, pp.z)
-                GL.glMultMatrixf((p2_1.x, p2_1.y, p2_1.z, 0, p3_12.x, p3_12.y,
-                        p3_12.z, 0, pn.x, pn.y, pn.z, 0, 0, 0, 0, 1))
-                GL.glTranslatef(n.x, n.y, n.z)
+                pp = psub(p, pmul(psub(p, c), 0.3))
+                #pp = p.sub(p.sub(c).mul(0.3))
+                GL.glTranslate(pp[0], pp[1], pp[2])
+                GL.glMultMatrixf((p2_1[0], p2_1[1], p2_1[2], 0, p3_12[0], p3_12[1],
+                        p3_12[2], 0, pn[0], pn[1], pn[2], 0, 0, 0, 0, 1))
+                GL.glTranslatef(n[0], n[1], n[2])
                 GL.glScalef(0.001, 0.001, 0.001)
                 w = 0
                 for ch in str(p.id):
@@ -191,15 +201,18 @@ class Triangle(IDGenerator, TransformableContainer):
     def is_point_inside(self, p):
         # http://www.blackpawn.com/texts/pointinpoly/default.html
         # Compute vectors
-        v0 = self.p3.sub(self.p1)
-        v1 = self.p2.sub(self.p1)
-        v2 = p.sub(self.p1)
+        v0 = psub(self.p3, self.p1)
+        #v0 = self.p3.sub(self.p1)
+        v1 = psub(self.p2, self.p1)
+        #v1 = self.p2.sub(self.p1)
+        v2 = psub(p, self.p1)
+        #v2 = p.sub(self.p1)
         # Compute dot products
-        dot00 = v0.dot(v0)
-        dot01 = v0.dot(v1)
-        dot02 = v0.dot(v2)
-        dot11 = v1.dot(v1)
-        dot12 = v1.dot(v2)
+        dot00 = pdot(v0, v0) # dot00 = v0.dot(v0)
+        dot01 = pdot(v0, v1) # dot01 = v0.dot(v1)
+        dot02 = pdot(v0, v2) # dot02 = v0.dot(v2)
+        dot11 = pdot(v1, v1) # dot11 = v1.dot(v1)
+        dot12 = pdot(v1, v2) # dot12 = v1.dot(v2)
         # Compute barycentric coordinates
         denom = dot00 * dot11 - dot01 * dot01
         if denom == 0:
@@ -218,9 +231,12 @@ class Triangle(IDGenerator, TransformableContainer):
         if depth == 0:
             sub.append(self)
         else:
-            p4 = self.p1.add(self.p2).div(2)
-            p5 = self.p2.add(self.p3).div(2)
-            p6 = self.p3.add(self.p1).div(2)
+            p4 = pdiv(padd(self.p1, self.p2), 2)
+            #p4 = self.p1.add(self.p2).div(2)
+            p5 = pdiv(padd(self.p2, self.p3), 2)
+            #p5 = self.p2.add(self.p3).div(2)
+            p6 = pdiv(padd(self.p3, self.p1), 2)
+            #p6 = self.p3.add(self.p1).div(2)
             sub += Triangle(self.p1, p4, p6).subdivide(depth - 1)
             sub += Triangle(p6, p5, self.p3).subdivide(depth - 1)
             sub += Triangle(p6, p4, p5).subdivide(depth - 1)
@@ -228,6 +244,7 @@ class Triangle(IDGenerator, TransformableContainer):
         return sub
 
     def get_area(self):
-        cross = self.p2.sub(self.p1).cross(self.p3.sub(self.p1))
-        return cross.norm / 2
+        cross = pcross(psub(self.p2, self.p1), psub(self.p3, self.p1))
+        #cross = self.p2.sub(self.p1).cross(self.p3.sub(self.p1))
+        return pnorm(cross) / 2
 

@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.utils import INFINITE, sqrt
-from pycam.Geometry.Point import Point, Vector
+from pycam.Geometry.PointUtils import *
 from pycam.Geometry.intersection import intersect_circle_plane, \
         intersect_circle_point, intersect_circle_line
 from pycam.Cutters.BaseCutter import BaseCutter
@@ -40,7 +40,7 @@ class CylindricalCutter(BaseCutter):
 
     def __init__(self, radius, **kwargs):
         BaseCutter.__init__(self, radius, **kwargs)
-        self.axis = Vector(0, 0, 1)
+        self.axis = (0, 0, 1, 'v')
 
     def __repr__(self):
         return "CylindricalCutter<%s,%s>" % (self.location, self.radius)
@@ -92,17 +92,17 @@ class CylindricalCutter(BaseCutter):
                 geom_connect_transform = ode.GeomTransform(geom.space)
                 geom_connect_transform.setBody(geom.getBody())
                 geom_connect = ode_physics.get_parallelepiped_geom(
-                        (Point(-hypotenuse / 2, radius, -diff_z / 2),
-                        Point(hypotenuse / 2, radius, diff_z / 2),
-                        Point(hypotenuse / 2, -radius, diff_z / 2),
-                        Point(-hypotenuse / 2, -radius, -diff_z / 2)),
-                        (Point(-hypotenuse / 2, radius,
+                        ((-hypotenuse / 2, radius, -diff_z / 2),
+                        (hypotenuse / 2, radius, diff_z / 2),
+                        (hypotenuse / 2, -radius, diff_z / 2),
+                        (-hypotenuse / 2, -radius, -diff_z / 2)),
+                        ((-hypotenuse / 2, radius,
                             self.height - diff_z / 2),
-                        Point(hypotenuse / 2,
+                        (hypotenuse / 2,
                             radius, self.height + diff_z / 2),
-                        Point(hypotenuse / 2, -radius,
+                        (hypotenuse / 2, -radius,
                             self.height + diff_z / 2),
-                        Point(-hypotenuse / 2, -radius,
+                        (-hypotenuse / 2, -radius,
                             self.height - diff_z / 2)))
                 geom_connect.setRotation(rot_matrix_box)
                 geom_connect.setPosition((hypotenuse / 2, 0, radius))
@@ -119,7 +119,7 @@ class CylindricalCutter(BaseCutter):
         if not GL_enabled:
             return
         GL.glPushMatrix()
-        GL.glTranslate(self.center.x, self.center.y, self.center.z)
+        GL.glTranslate(self.center[0], self.center[1], self.center[2])
         if not hasattr(self, "_cylinder"):
             self._cylinder = GLU.gluNewQuadric()
         GLU.gluCylinder(self._cylinder, self.radius, self.radius, self.height,
@@ -131,17 +131,18 @@ class CylindricalCutter(BaseCutter):
 
     def moveto(self, location, **kwargs):
         BaseCutter.moveto(self, location, **kwargs)
-        self.center = Point(location.x, location.y,
-                location.z - self.get_required_distance())
+        self.center = (location[0], location[1],
+                location[2] - self.get_required_distance())
 
     def intersect_circle_plane(self, direction, triangle, start=None):
         if start is None:
             start = self.location
         (ccp, cp, d) = intersect_circle_plane(
-                start.sub(self.location).add(self.center), self.distance_radius,
-                direction, triangle)
+                padd(psub(start, self.location), self.center), #start.sub(self.location).add(self.center), 
+                self.distance_radius, direction, triangle)
         if ccp and cp:
-            cl = cp.add(start.sub(ccp))
+            cl = padd(cp, psub(start, ccp))
+            #cl = cp.add(start.sub(ccp))
             return (cl, ccp, cp, d)
         return (None, None, None, INFINITE)
 
@@ -149,10 +150,11 @@ class CylindricalCutter(BaseCutter):
         if start is None:
             start = self.location
         (ccp, cp, l) = intersect_circle_point(
-                start.sub(self.location).add(self.center), self.axis,
-                self.distance_radius, self.distance_radiussq, direction, point)
+                padd(psub(start, self.location), self.center), #start.sub(self.location).add(self.center), 
+                self.axis, self.distance_radius, self.distance_radiussq, direction, point)
         if ccp:
-            cl = cp.add(start.sub(ccp))
+            cl = padd(cp, psub(start, ccp))
+            #cl = cp.add(start.sub(ccp))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
@@ -160,10 +162,11 @@ class CylindricalCutter(BaseCutter):
         if start is None:
             start = self.location
         (ccp, cp, l) = intersect_circle_line(
-                start.sub(self.location).add(self.center), self.axis,
-                self.distance_radius, self.distance_radiussq, direction, edge)
+                padd(psub(start, self.location), self.center), #start.sub(self.location).add(self.center), 
+                self.axis, self.distance_radius, self.distance_radiussq, direction, edge)
         if ccp:
-            cl = cp.add(start.sub(ccp))
+            cl = padd(cp, psub(start, ccp))
+            #cl = cp.add(start.sub(ccp))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
@@ -177,7 +180,7 @@ class CylindricalCutter(BaseCutter):
             d = d_t
             cl = cl_t
             cp = cp_t
-        if cl and (direction.x == 0) and (direction.y == 0):
+        if cl and (direction[0] == 0) and (direction[1] == 0):
             #print 'circle_triangle:'
             #print 'cl is:', cl, 'd is:', d, 'cp is:', cp
             return (cl, d, cp)
@@ -202,7 +205,7 @@ class CylindricalCutter(BaseCutter):
             cl = cl_e3
             cp = cp_e3
             #print 'circle_edge e3:'
-        if cl and (direction.x == 0) and (direction.y == 0):
+        if cl and (direction[0] == 0) and (direction[1] == 0):
             #print 'circle_edge:'
             #print 'cl is:', cl, 'd is:', d, 'cp is:', cp
             return (cl, d, cp)
@@ -227,11 +230,11 @@ class CylindricalCutter(BaseCutter):
             cl = cl_p3
             cp = cp_p3
             #print 'circle vertex p3:'
-        if cl and (direction.x == 0) and (direction.y == 0):
+        if cl and (direction[0] == 0) and (direction[1] == 0):
             #print 'circle vertex:'
             #print 'cl is:', cl, 'd is:', d, 'cp is:', cp
             return (cl, d, cp)
-        if (direction.x != 0) or (direction.y != 0):
+        if (direction[0] != 0) or (direction[1] != 0):
             (cl_p1, d_p1, cp_p1) = self.intersect_cylinder_vertex(direction,
                     triangle.p1, start=start)
             (cl_p2, d_p2, cp_p2) = self.intersect_cylinder_vertex(direction,

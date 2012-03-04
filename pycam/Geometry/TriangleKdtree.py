@@ -79,10 +79,10 @@ class TriangleKdtree(kdtree):
     def __init__(self, triangles, cutoff=3, cutoff_distance=1.0):
         nodes = []
         for t in triangles:
-            n = Node(t, (min(t.p1.x, t.p2.x, t.p3.x),
-                    max(t.p1.x, t.p2.x, t.p3.x),
-                    min(t.p1.y, t.p2.y, t.p3.y),
-                    max(t.p1.y, t.p2.y, t.p3.y)))
+            n = Node(t, (min(t.p1[0], t.p2[0], t.p3[0]),
+                    max(t.p1[0], t.p2[0], t.p3[0]),
+                    min(t.p1[1], t.p2[1], t.p3[1]),
+                    max(t.p1[1], t.p2[1], t.p3[1])))
             nodes.append(n)
         super(TriangleKdtree, self).__init__(nodes, cutoff, cutoff_distance)
 

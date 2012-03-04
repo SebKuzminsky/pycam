@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = ["simplify_toolpath", "ToolpathList", "Toolpath", "Generator"]
 
-from pycam.Geometry.Point import Point
+from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Path import Path
 from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import number, epsilon
@@ -34,8 +34,10 @@ log = pycam.Utils.log.get_logger()
 
 
 def _check_colinearity(p1, p2, p3):
-    v1 = p2.sub(p1).normalized()
-    v2 = p3.sub(p2).normalized()
+    v1 = pnormalized(psub(p2, p1))
+    #v1 = p2.sub(p1).normalized()
+    v2 = pnormalized(psub(p3, p2))
+    #v2 = p3.sub(p2).normalized()
     # compare if the normalized distances between p1-p2 and p2-p3 are equal
     return v1 == v2
 
@@ -82,36 +84,36 @@ class Toolpath(object):
             new_paths.append(new_path)
         return Toolpath(new_paths, parameters=self.get_params())
 
-    def _get_limit_generic(self, attr, func):
+    def _get_limit_generic(self, idx, func):
         path_min = []
         for path in self.paths:
             if path.points:
-                path_min.append(func([getattr(p, attr) for p in path.points]))
+                path_min.append(func([ p[idx] for p in path.points]))
         return func(path_min)
 
     @property
     def minx(self):
-        return self._get_limit_generic("x", min)
+        return self._get_limit_generic(0, min)
 
     @property
     def maxx(self):
-        return self._get_limit_generic("x", max)
+        return self._get_limit_generic(0, max)
 
     @property
     def miny(self):
-        return self._get_limit_generic("y", min)
+        return self._get_limit_generic(1, min)
 
     @property
     def maxy(self):
-        return self._get_limit_generic("y", max)
+        return self._get_limit_generic(1, max)
 
     @property
     def minz(self):
-        return self._get_limit_generic("z", min)
+        return self._get_limit_generic(2, min)
 
     @property
     def maxz(self):
-        return self._get_limit_generic("z", max)
+        return self._get_limit_generic(2, max)
 
     def get_meta_data(self):
         meta = self.toolpath_settings.get_string()
@@ -137,12 +139,13 @@ class Toolpath(object):
                     self.last_pos = new_position
                     return True
                 else:
-                    distance = new_position.sub(self.last_pos).norm
+                    distance = pnorm(psub(new_position, self.last_pos))
+                    #distance = new_position.sub(self.last_pos).norm
                     if self.moved_distance + distance > self.max_movement:
                         partial = (self.max_movement - self.moved_distance) / \
                                 distance
-                        partial_dest = self.last_pos.add(new_position.sub(
-                                self.last_pos).mul(partial))
+                        partial_dest = padd(self.last_pos, pmul(psub(new_position, self.last_pos), partial))
+                        #partial_dest = self.last_pos.add(new_position.sub(self.last_pos).mul(partial))
                         self.moves.append((partial_dest, rapid))
                         self.last_pos = partial_dest
                         # we are finished
@@ -163,21 +166,20 @@ class Toolpath(object):
                 continue
             p_next = path.points[0]
             if p_last is None:
-                p_last = Point(p_next.x, p_next.y, safety_height)
+                p_last = (p_next[0], p_next[1], safety_height)
                 if not result.append(p_last, True):
                     return result.moves
-            if ((abs(p_last.x - p_next.x) > epsilon) \
-                    or (abs(p_last.y - p_next.y) > epsilon)):
+            if ((abs(p_last[0] - p_next[0]) > epsilon) \
+                    or (abs(p_last[1] - p_next[1]) > epsilon)):
                 # Draw the connection between the last and the next path.
                 # Respect the safety height.
-                if (abs(p_last.z - p_next.z) > epsilon) \
-                        or (p_last.sub(p_next).norm > \
-                            self._max_safe_distance + epsilon):
+                #if (abs(p_last[2] - p_next[2]) > epsilon) or (p_last.sub(p_next).norm > self._max_safe_distance + epsilon):
+                if (abs(p_last[2] - p_next[2]) > epsilon) or (pnorm(psub(p_last, p_next)) > self._max_safe_distance + epsilon):
                     # The distance between these two points is too far.
                     # This condition helps to prevent moves up/down for
                     # adjacent lines.
-                    safety_last = Point(p_last.x, p_last.y, safety_height)
-                    safety_next = Point(p_next.x, p_next.y, safety_height)
+                    safety_last = (p_last[0], p_last[1], safety_height)
+                    safety_next = (p_next[0], p_next[1], safety_height)
                     if not result.append(safety_last, True):
                         return result.moves
                     if not result.append(safety_next, True):
@@ -187,7 +189,7 @@ class Toolpath(object):
                     return result.moves
             p_last = path.points[-1]
         if not p_last is None:
-            p_last_safety = Point(p_last.x, p_last.y, safety_height)
+            p_last_safety = (p_last[0], p_last[1], safety_height)
             result.append(p_last_safety, True)
         return result.moves
 
@@ -206,7 +208,8 @@ class Toolpath(object):
         # go through all points of the path
         for new_pos, rapid in self.get_moves(safety_height):
             if not current_position is None:
-                result += new_pos.sub(current_position).norm / self._feedrate
+                result += pnorm(psub(new_pos, current_position)) / self._feedrate
+                #result += new_pos.sub(current_position).norm / self._feedrate
             current_position = new_pos
         return result
 
@@ -217,7 +220,8 @@ class Toolpath(object):
         # go through all points of the path
         for new_pos, rapid in self.get_moves(safety_height):
             if not current_position is None:
-                result += new_pos.sub(current_position).norm
+                result += pnorm(psub(new_pos, current_position))
+                #result += new_pos.sub(current_position).norm
             current_position = new_pos
         return result
 

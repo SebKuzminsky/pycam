@@ -102,9 +102,9 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
                 GL.glFinish()
                 GL.glBegin(GL.GL_LINE_STRIP)
                 if not last_position is None:
-                    GL.glVertex3f(last_position.x, last_position.y, last_position.z)
+                    GL.glVertex3f(last_position[0], last_position[1], last_position[2])
                 last_rapid = rapid
-            GL.glVertex3f(position.x, position.y, position.z)
+            GL.glVertex3f(position[0], position[1], position[2])
             last_position = position
         GL.glEnd()
         if show_directions:

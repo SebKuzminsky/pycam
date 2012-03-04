@@ -21,7 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.utils import sqrt
-from pycam.Geometry.Point import Point
+from pycam.Geometry.PointUtils import *
 import ctypes
 import math
 
@@ -128,12 +128,12 @@ class ZBuffer(object):
             py = self.y[y]
             for x in range(minx, maxx):
                 px = self.x[x]
-                v0x = t.p3.x - t.p1.x
-                v0y = t.p3.y - t.p1.y
-                v1x = t.p2.x - t.p1.x
-                v1y = t.p2.y - t.p1.y
-                v2x = px - t.p1.x
-                v2y = py - t.p1.y
+                v0x = t.p3[0] - t.p1[0]
+                v0y = t.p3[1] - t.p1[1]
+                v1x = t.p2[0] - t.p1[0]
+                v1y = t.p2[1] - t.p1[1]
+                v2x = px - t.p1[0]
+                v2y = py - t.p1[1]
                 dot00 = v0x*v0x + v0y*v0y
                 dot01 = v0x*v1x + v0y*v1y
                 dot02 = v0x*v2x + v0y*v2y
@@ -143,9 +143,9 @@ class ZBuffer(object):
                 u = (dot11 * dot02 - dot01 * dot12) * invDenom
                 v = (dot00 * dot12 - dot01 * dot02) * invDenom
                 if (u >= -EPSILON) and (v >= -EPSILON) and (u + v <= 1-EPSILON):
-                    v0z = t.p3.z - t.p1.z
-                    v1z = t.p2.z - t.p1.z
-                    pz = t.p1.z + v0z * u + v1z * v
+                    v0z = t.p3[2] - t.p1[2]
+                    v1z = t.p2[2] - t.p1[2]
+                    pz = t.p1[2] + v0z * u + v1z * v
                     if pz > self.buf[y][x].z:
                         self.buf[y][x].z = pz
                         self.buf[y+0][x+0].changed = True
@@ -155,8 +155,8 @@ class ZBuffer(object):
                         self.changed = True
 
     def add_cutter(self, c):
-        cx = c.location.x
-        cy = c.location.y
+        cx = c.location[0]
+        cy = c.location[1]
         rsq = c.radiussq
         minx = int((c.minx - self.minx) / (self.maxx - self.minx) * self.xres) \
                 - 1
@@ -182,13 +182,15 @@ class ZBuffer(object):
             maxy = self.yres - 1
         if miny > self.yres - 1: 
             miny = self.yres - 1
-        p = Point(0, 0, 0)
-        zaxis = Point(0, 0, -1)
+        p = (0, 0, 0)
+        zaxis = (0, 0, -1)
 
         for y in range(miny, maxy):
-            p.y = py = self.y[y]
+            py = self.y[y]
+            p = (p[0], py, p[2])
             for x in range(minx, maxx):
-                p.x = px = self.x[x]
+                px = self.x[x]
+                p = (px, p[1], p[2])
                 if (px - cx) * (px - cx) + (py - cy) * (py - cy) \
                         <= rsq + EPSILON:
                     (cl, ccp, cp, l) = c.intersect_point(zaxis, p)

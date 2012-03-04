@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry import TransformableContainer, IDGenerator
-from pycam.Geometry.Point import Point
+from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.utils import epsilon, sqrt
 # OpenGLTools will be imported later, if necessary
@@ -48,61 +48,64 @@ class Line(IDGenerator, TransformableContainer):
         self.reset_cache()
 
     def copy(self):
-        return self.__class__(self.p1.copy(), self.p2.copy())
+        return self.__class__(self.p1, self.p2)
 
     @property
     def vector(self):
         if self._vector is None:
-            self._vector = self.p2.sub(self.p1)
+            self._vector = psub(self.p2, self.p1)
+            #self._vector = self.p2.sub(self.p1)
         return self._vector
 
     @property
     def dir(self):
-        return self.vector.normalized()
+        return pnormalized(self.vector)
+        #return self.vector.normalized()
 
     @property
     def len(self):
-        return self.vector.norm
+        return pnorm(self.vector)
+        #return self.vector.norm
 
     @property
     def minx(self):
         if self._minx is None:
-            self._minx = min(self.p1.x, self.p2.x)
+            self._minx = min(self.p1[0], self.p2[0])
         return self._minx
 
     @property
     def maxx(self):
         if self._maxx is None:
-            self._maxx = max(self.p1.x, self.p2.x)
+            self._maxx = max(self.p1[0], self.p2[0])
         return self._maxx
 
     @property
     def miny(self):
         if self._miny is None:
-            self._miny = min(self.p1.y, self.p2.y)
+            self._miny = min(self.p1[1], self.p2[1])
         return self._miny
 
     @property
     def maxy(self):
         if self._maxy is None:
-            self._maxy = max(self.p1.y, self.p2.y)
+            self._maxy = max(self.p1[1], self.p2[1])
         return self._maxy
 
     @property
     def minz(self):
         if self._minz is None:
-            self._minz = min(self.p1.z, self.p2.z)
+            self._minz = min(self.p1[2], self.p2[2])
         return self._minz
 
     @property
     def maxz(self):
         if self._maxz is None:
-            self._maxz = max(self.p1.z, self.p2.z)
+            self._maxz = max(self.p1[2], self.p2[2])
         return self._maxz
 
     def __repr__(self):
-        return "Line<%g,%g,%g>-<%g,%g,%g>" % (self.p1.x, self.p1.y, self.p1.z,
-                self.p2.x, self.p2.y, self.p2.z)
+        return "Line<%g,%g,%g>-<%g,%g,%g>" % (self.p1[0], self.p1[1], self.p1[2],
+                self.p2[0], self.p2[1], self.p2[2])
 
     def __cmp__(self, other):
         """ Two lines are equal if both pairs of points are at the same
@@ -119,10 +122,12 @@ class Line(IDGenerator, TransformableContainer):
                 return cmp(self.p2, other.p2)
         else:
             return cmp(str(self), str(other))
-
+        
     def next(self):
-        yield self.p1
-        yield self.p2
+        yield "p1"
+        #yield self.p1
+        #yield lambda x: self.p2 = x
+        yield "p2"
 
     def get_children_count(self):
         # a line always contains two points
@@ -141,23 +146,28 @@ class Line(IDGenerator, TransformableContainer):
         return (self.p1, self.p2)
 
     def point_with_length_multiply(self, l):
-        return self.p1.add(self.dir.mul(l*self.len))
+        return padd(self.p1, pmul(self.dir, l*self.len))
+        #return self.p1.add(self.dir.mul(l*self.len))
 
     def get_length_line(self, length):
         """ return a line with the same direction and the specified length
         """
-        return Line(self.p1, self.p1.add(self.dir.mul(length)))
+        return Line(self.p1, padd(self.p1, pmul(self.dir, length)))
+        #return Line(self.p1, self.p1.add(self.dir.mul(length)))
 
     def closest_point(self, p):
         v = self.dir
         if v is None:
             # for zero-length lines
             return self.p1
-        l = self.p1.dot(v) - p.dot(v)
-        return self.p1.sub(v.mul(l))
+        l = pdot(self.p1, v) - pdot(p, v)
+        #l = self.p1.dot(v) - p.dot(v)
+        return psub(self.p1, pmul(v, l))
+        #return self.p1.sub(v.mul(l))
 
     def dist_to_point_sq(self, p):
-        return p.sub(self.closest_point(p)).normsq
+        return pnormsq(psub(p, self.closes_point(p)))
+        #return p.sub(self.closest_point(p)).normsq
 
     def dist_to_point(self, p):
         return sqrt(self.dist_to_point_sq(p))
@@ -166,8 +176,11 @@ class Line(IDGenerator, TransformableContainer):
         if (p == self.p1) or (p == self.p2):
             # these conditions are not covered by the code below
             return True
-        dir1 = p.sub(self.p1).normalized()
-        dir2 = self.p2.sub(p).normalized()
+            
+        dir1 = pnormalized(psub(p, self.p1))
+        #dir1 = p.sub(self.p1).normalized()
+        dir2 = pnormalized(psub(self.p2, p))
+        #dir2 = self.p2.sub(p).normalized()
         # True if the two parts of the line have the same direction or if the
         # point is self.p1 or self.p2.
         return (dir1 == dir2 == self.dir) or (dir1 is None) or (dir2 is None)
@@ -178,8 +191,8 @@ class Line(IDGenerator, TransformableContainer):
         if not color is None:
             GL.glColor4f(*color)
         GL.glBegin(GL.GL_LINES)
-        GL.glVertex3f(self.p1.x, self.p1.y, self.p1.z)
-        GL.glVertex3f(self.p2.x, self.p2.y, self.p2.z)
+        GL.glVertex3f(self.p1[0], self.p1[1], self.p1[2])
+        GL.glVertex3f(self.p2[0], self.p2[1], self.p2[2])
         GL.glEnd()
         # (optional) draw a cone for visualizing the direction of each line
         if show_directions and (self.len > 0):
@@ -196,24 +209,30 @@ class Line(IDGenerator, TransformableContainer):
         0 and 1.
         """
         x1, x2, x3, x4 = self.p1, self.p2, line.p1, line.p2
-        a = x2.sub(x1)
-        b = x4.sub(x3)
-        c = x3.sub(x1)
+        a = psub(x2, x1)
+        #a = x2.sub(x1)
+        b = psub(x4, x3)
+        #b = x4.sub(x3)
+        c = psub(x3, x1)
+        #c = x3.sub(x1)
         # see http://mathworld.wolfram.com/Line-LineIntersection.html (24)
         try:
-            factor = c.cross(b).dot(a.cross(b)) / a.cross(b).normsq
+            factor = pdot(pcross(c, b), pcross(a, b)) / pnormsq(pcross(a, b))
+            #factor = c.cross(b).dot(a.cross(b)) / a.cross(b).normsq
         except ZeroDivisionError:
             # lines are parallel
             # check if they are _one_ line
-            if a.cross(c).norm != 0:
+            #if a.cross(c).norm != 0:
+            if pnorm(pcross(a,c)) != 0:
                 # the lines are parallel with a distance
                 return None, None
             # the lines are on one straight
             candidates = []
             if self.is_point_inside(x3):
-                candidates.append((x3, c.norm / a.norm))
+                candidates.append((x3, pnorm(c) / pnorm(a)))
             elif self.is_point_inside(x4):
-                candidates.append((x4, line.p2.sub(self.p1).norm / a.norm))
+                candidates.append((x4, pnorm(psub(line.p2, self.p1)) / pnorm(a)))
+                #candidates.append((x4, line.p2.sub(self.p1).norm / a.norm))
             elif line.is_point_inside(x1):
                 candidates.append((x1, 0))
             elif line.is_point_inside(x2):
@@ -224,13 +243,14 @@ class Line(IDGenerator, TransformableContainer):
             candidates.sort(key=lambda (cp, dist): dist)
             return candidates[0]
         if infinite_lines or (-epsilon <= factor <= 1 + epsilon):
-            intersection = x1.add(a.mul(factor))
+            intersection = padd(x1, pmul(a, factor))
+            #intersection = x1.add(a.mul(factor))
             # check if the intersection is between x3 and x4
             if infinite_lines:
                 return intersection, factor
-            elif (min(x3.x, x4.x) - epsilon <= intersection.x <= max(x3.x, x4.x) + epsilon) \
-                    and (min(x3.y, x4.y) - epsilon <= intersection.y <= max(x3.y, x4.y) + epsilon) \
-                    and (min(x3.z, x4.z) - epsilon <= intersection.z <= max(x3.z, x4.z) + epsilon):
+            elif (min(x3[0], x4[0]) - epsilon <= intersection[0] <= max(x3[0], x4[0]) + epsilon) \
+                    and (min(x3[1], x4[1]) - epsilon <= intersection[1] <= max(x3[1], x4[1]) + epsilon) \
+                    and (min(x3[2], x4[2]) - epsilon <= intersection[2] <= max(x3[2], x4[2]) + epsilon):
                 return intersection, factor
             else:
                 # intersection outside of the length of line(x3, x4)
@@ -247,15 +267,15 @@ class Line(IDGenerator, TransformableContainer):
         else:
             # the line needs to be cropped
             # generate the six planes of the cube for possible intersections
-            minp = Point(minx, miny, minz)
-            maxp = Point(maxx, maxy, maxz)
+            minp = (minx, miny, minz)
+            maxp = (maxx, maxy, maxz)
             planes = [
-                    Plane(minp, Point(1, 0, 0)),
-                    Plane(minp, Point(0, 1, 0)),
-                    Plane(minp, Point(0, 0, 1)),
-                    Plane(maxp, Point(1, 0, 0)),
-                    Plane(maxp, Point(0, 1, 0)),
-                    Plane(maxp, Point(0, 0, 1)),
+                    Plane(minp, (1, 0, 0)),
+                    Plane(minp, (0, 1, 0)),
+                    Plane(minp, (0, 0, 1)),
+                    Plane(maxp, (1, 0, 0)),
+                    Plane(maxp, (0, 1, 0)),
+                    Plane(maxp, (0, 0, 1)),
             ]
             # calculate all intersections
             intersections = [plane.intersect_point(self.dir, self.p1)

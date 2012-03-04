@@ -34,7 +34,7 @@ import gtk
 import math
 
 from pycam.Gui.OpenGLTools import draw_complete_model_view
-from pycam.Geometry.Point import Point
+from pycam.Geometry.PointUtils import *
 import pycam.Geometry.Matrix as Matrix
 from pycam.Geometry.utils import sqrt, number
 import pycam.Plugins
@@ -815,12 +815,13 @@ class Camera(object):
         if (None, None) in low_high:
             return
         max_dim = max([high - low for low, high in low_high])
-        distv = Point(v["distance"][0], v["distance"][1],
-                v["distance"][2]).normalized()
+        distv = pnormalized((v["distance"][0], v["distance"][1], v["distance"][2]))
+        #distv = Point(v["distance"][0], v["distance"][1],v["distance"][2]).normalized()
         # The multiplier "1.25" is based on experiments. 1.414 (sqrt(2)) should
         # be roughly sufficient for showing the diagonal of any model.
-        distv = distv.mul((max_dim * 1.25) / number(math.sin(v["fovy"] / 2)))
-        self.view["distance"] = (distv.x, distv.y, distv.z)
+        distv = pmul(distv, (max_dim * 1.25) / number(math.sin(v["fovy"] / 2)))
+        #distv = distv.mul((max_dim * 1.25) / number(math.sin(v["fovy"] / 2)))
+        self.view["distance"] = distv
         # Adjust the "far" distance for the camera to make sure, that huge
         # models (e.g. x=1000) are still visible.
         self.view["zfar"] = 100 * max_dim
@@ -976,9 +977,10 @@ class Camera(object):
         # Calculate the proportion of each model axis according to the x axis of
         # the screen.
         distv = self.view["distance"]
-        distv = Point(distv[0], distv[1], distv[2]).normalized()
-        factors_x = distv.cross(Point(v_up[0], v_up[1], v_up[2])).normalized()
-        factors_x = (factors_x.x, factors_x.y, factors_x.z)
+        distv = pnormalized((distv[0], distv[1], distv[2]))
+        factors_x = pnormalized(pcross(distv, (v_up[0], v_up[1], v_up[2])))
+        #factors_x = distv.cross(Point(v_up[0], v_up[1], v_up[2])).normalized()
+        #factors_x = (factors_x.x, factors_x.y, factors_x.z)
         return (factors_x, factors_y)
 
 

@@ -22,7 +22,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry import TransformableContainer, IDGenerator
 from pycam.Geometry.utils import INFINITE, epsilon
-from pycam.Geometry.Point import Vector
+from pycam.Geometry.PointUtils import *
+
 # "Line" is imported later to avoid circular imports
 #from pycam.Geometry.Line import Line
 
@@ -34,11 +35,11 @@ class Plane(IDGenerator, TransformableContainer):
     def __init__(self, point, normal=None):
         super(Plane, self).__init__()
         if normal is None:
-            normal = Vector(0, 0, 1)
+            normal = (0, 0, 1, 'v')
         self.p = point
         self.n = normal
-        if not isinstance(self.n, Vector):
-            self.n = self.n.get_vector()
+        if not len(self.n) > 3:
+            self.n = (self.n[0], self.n[1], self.n[2], 'v')
 
     def __repr__(self):
         return "Plane<%s,%s>" % (self.p, self.n)
@@ -56,8 +57,8 @@ class Plane(IDGenerator, TransformableContainer):
         return self.__class__(self.p.copy(), self.n.copy())
 
     def next(self):
-        yield self.p
-        yield self.n
+        yield "p"
+        yield "n"
 
     def get_children_count(self):
         # a plane always consists of two points
@@ -65,21 +66,24 @@ class Plane(IDGenerator, TransformableContainer):
 
     def reset_cache(self):
         # we need to prevent the "normal" from growing
-        norm = self.n.normalized()
+        norm = pnormalized(self.n)
         if norm:
             self.n = norm
 
     def intersect_point(self, direction, point):
-        if (not direction is None) and (direction.norm != 1):
+        if (not direction is None) and (pnorm(direction) != 1):
             # calculations will go wrong, if the direction is not a unit vector
-            direction = direction.normalized()
+            direction = pnormalized(direction)
         if direction is None:
             return (None, INFINITE)
-        denom = self.n.dot(direction)
+        denom = pdot(self.n, direction)
+        #denom = self.n.dot(direction)
         if denom == 0:
             return (None, INFINITE)
-        l = -(self.n.dot(point) - self.n.dot(self.p)) / denom
-        cp = point.add(direction.mul(l))
+        l = -(pdot(self.n, point) - pdot(self.n, self.p)) / denom
+        #l = -(self.n.dot(point) - self.n.dot(self.p)) / denom
+        cp = padd(point, pmul(direction, l))
+        #cp = point.add(direction.mul(l))
         return (cp, l)
 
     def intersect_triangle(self, triangle, counter_clockwise=False):
@@ -101,7 +105,7 @@ class Plane(IDGenerator, TransformableContainer):
             # a distance that is lower than the length of the edge.
             if (not cp is None) and (-epsilon < l < edge.len - epsilon):
                 collisions.append(cp)
-            elif (cp is None) and (self.n.dot(edge.dir) == 0):
+            elif (cp is None) and (pdot(self.n, edge.dir) == 0):
                 cp, dist = self.intersect_point(self.n, point)
                 if abs(dist) < epsilon:
                     # the edge is on the plane
@@ -116,8 +120,10 @@ class Plane(IDGenerator, TransformableContainer):
             # no further calculation, if the line is zero-sized
             if collision_line.len == 0:
                 return collision_line
-            cross = self.n.cross(collision_line.dir)
-            if (cross.dot(triangle.normal) < 0) == bool(not counter_clockwise):
+            cross = pcross(self.n, collision_line.dir)
+            #cross = self.n.cross(collision_line.dir)
+            #if (cross.dot(triangle.normal) < 0) == bool(not counter_clockwise):
+            if (pdot(cross, triangle.normal) < 0) == bool(not counter_clockwise):
                 # anti-clockwise direction -> revert the direction of the line
                 collision_line = Line(collision_line.p2, collision_line.p1)
             return collision_line

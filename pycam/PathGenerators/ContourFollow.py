@@ -23,7 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 # take a look at the related blog posting describing this algorithm:
 # http://fab.senselab.org/node/43
 
-from pycam.Geometry.Point import Point, Vector
+from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
 from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
@@ -50,7 +50,8 @@ def _process_one_triangle((model, cutter, up_vector, triangle, z)):
         # Case 1a
         return result, None
     # ignore triangles pointing upwards or downwards
-    if triangle.normal.cross(up_vector).norm == 0:
+    #if triangle.normal.cross(up_vector).norm == 0:
+    if pnorm(pcross(triangle.normal, up_vector)) == 0:
         # Case 1b
         return result, None
     edge_collisions = get_collision_waterline_of_triangle(model, cutter,
@@ -197,7 +198,7 @@ class ContourFollow(object):
 
     def __init__(self, path_processor, physics=None):
         self.pa = path_processor
-        self._up_vector = Vector(0, 0, 1)
+        self._up_vector = (0, 0, 1, 'v')
         self.physics = physics
         self._processed_triangles = []
         if self.physics:
@@ -343,13 +344,15 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
             for index in range(3):
                 edge = Line(proj_points[index - 1], proj_points[index])
                 # the edge should be clockwise around the model
-                if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+                #if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+                if pdot(pcross(edge.dir, triangle.normal), up_vector) < 0:
                     edge = Line(edge.p2, edge.p1)
                 edges.append((edge, proj_points[index - 2]))
             outer_edges = []
             for edge, other_point in edges:
                 # pick only edges, where the other point is on the right side
-                if other_point.sub(edge.p1).cross(edge.dir).dot(up_vector) > 0:
+                #if other_point.sub(edge.p1).cross(edge.dir).dot(up_vector) > 0:
+                if pdot(pcross(psub(other_point, edge.p1), edge.dir), up_vector) > 0:
                     outer_edges.append(edge)
             if len(outer_edges) == 0:
                 # the points seem to be an one line
@@ -361,14 +364,15 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
                 outer_edges = [long_edge]
         else:
             edge = Line(proj_points[0], proj_points[1])
-            if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+            #if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+            if pdot(pcross(edge.dir, triangle.normal), up_vector) < 0:
                 edge = Line(edge.p2, edge.p1)
             outer_edges = [edge]
     else:
         # some parts of the triangle are above and some below the cutter level
         # Cases (2a), (2b), (3a) and (3b)
         points_above = [plane.get_point_projection(p)
-                for p in triangle.get_points() if p.z > z]
+                for p in triangle.get_points() if p[2] > z]
         waterline = plane.intersect_triangle(triangle)
         if waterline is None:
             if len(points_above) == 0:
@@ -380,7 +384,7 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
                     # "triangle.minz >= z" statement above).
                     outer_edges = []
                 elif not [p for p in triangle.get_points()
-                        if p.z > z + epsilon]:
+                        if p[2] > z + epsilon]:
                     # same as above: fix for inaccurate floating calculations
                     outer_edges = []
                 else:
@@ -397,8 +401,8 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
                 outer_edges = [waterline]
             elif len(points_above) == 1:
                 other_point = points_above[0]
-                dot = other_point.sub(waterline.p1).cross(waterline.dir).dot(
-                        up_vector)
+                dot = pdot(pcross(psub(other_point, waterline.p1), waterline.dir), up_vector)
+                #dot = other_point.sub(waterline.p1).cross(waterline.dir).dot(up_vector)
                 if dot > 0:
                     # Case (2b)
                     outer_edges = [waterline]
@@ -409,7 +413,8 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
                     edges.append(Line(waterline.p2, other_point))
                     outer_edges = []
                     for edge in edges:
-                        if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+                        #if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+                        if pdot(pcross(edge.dir, triangle.normal), up_vector) < 0:
                             outer_edges.append(Line(edge.p2, edge.p1))
                         else:
                             outer_edges.append(edge)
@@ -422,15 +427,16 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
                     edges.append(Line(waterline.p2, other_point))
                     edges.sort(key=lambda x: x.len)
                     edge = edges[-1]
-                    if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+                    #if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+                    if pdot(pcross(edge.dir, triangle.normal), up_vector) < 0:
                         outer_edges = [Line(edge.p2, edge.p1)]
                     else:
                         outer_edges = [edge]
             else:
                 # two points above
                 other_point = points_above[0]
-                dot = other_point.sub(waterline.p1).cross(waterline.dir).dot(
-                        up_vector)
+                dot = pdot(pcross(psub(other_point, waterline.p1), waterline.dir), up_vector)
+                #dot = other_point.sub(waterline.p1).cross(waterline.dir).dot(up_vector)
                 if dot > 0:
                     # Case (2b)
                     # the other two points are on the right side
@@ -438,7 +444,8 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
                 elif dot < 0:
                     # Case (3a)
                     edge = Line(points_above[0], points_above[1])
-                    if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+                    #if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+                    if pdot(pcross(edge.dir, triangle.normal), up_vector) < 0:
                         outer_edges = [Line(edge.p2, edge.p1)]
                     else:
                         outer_edges = [edge]
@@ -471,21 +478,23 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
         direction = up_vector.cross(edge.dir).normalized()
         if direction is None:
             continue
-        direction = direction.mul(max_length)
-        edge_dir = edge.p2.sub(edge.p1)
+        direction = pmul(direction, max_length)
+        #direction = direction.mul(max_length)
+        edge_dir = psub(edge.p2, edge.p1)
+        #edge_dir = edge.p2.sub(edge.p1)
         # TODO: Adapt the number of potential starting positions to the length
         # of the line. Don't use 0.0 and 1.0 - this could result in ambiguous
         # collisions with triangles sharing these vertices.
         for factor in (0.5, epsilon, 1.0 - epsilon, 0.25, 0.75):
-            start = edge.p1.add(edge_dir.mul(factor))
+            start = padd(edge.p1, pmul(edge_dir, factor))
+            #start = edge.p1.add(edge_dir.mul(factor))
             # We need to use the triangle collision algorithm here - because we
             # need the point of collision in the triangle.
-            collisions = get_free_paths_triangles([model], cutter, start,
-                    start.add(direction), return_triangles=True)
+            collisions = get_free_paths_triangles([model], cutter, start, padd(start, direction), return_triangles=True)
             for index, coll in enumerate(collisions):
                 if (index % 2 == 0) and (not coll[1] is None) \
                         and (not coll[2] is None) \
-                        and (coll[0].sub(start).dot(direction) > 0):
+                        and (pdot(psub(coll[0], start), direction) > 0): #and (coll[0].sub(start).dot(direction) > 0):
                     cl, hit_t, cp = coll
                     break
             else:

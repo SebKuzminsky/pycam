@@ -21,7 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry.Triangle import Triangle
-from pycam.Geometry.Point import Point
+from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Line import Line
 import pycam.Geometry.Model
 import pycam.Geometry.Matrix
@@ -142,8 +142,10 @@ class DXFParser(object):
                     current_group = []
                     groups.append(current_group)
         def get_distance_between_groups(group1, group2):
-            forward = group1[-1].p2.sub(group2[0].p1).norm
-            backward = group2[-1].p2.sub(group1[0].p1).norm
+            forward = pnorm(psub(group1[-1].p2, group2[0].p1))
+            #forward = group1[-1].p2.sub(group2[0].p1).norm
+            backward = pnorm(psub(group2[-1].p2, group1[0].p1))
+            #backward = group2[-1].p2.sub(group1[0].p1).norm
             return min(forward, backward)
         remaining_groups = groups[:]
         ordered_groups = []
@@ -305,7 +307,7 @@ class DXFParser(object):
                     "between line %d and %d" % (start_line, end_line))
         else:
             self._open_sequence_items.append(
-                    (Point(point[0], point[1], point[2]), bulge))
+                    ((point[0], point[1], point[2]), bulge))
 
     def parse_polyline(self, init):
         start_line = self.line_number
@@ -358,7 +360,7 @@ class DXFParser(object):
                                 "date in line %d: %s" % \
                                 (self.line_number, p_array))
                     p_array[index] = 0
-            points.append((Point(p_array[0], p_array[1], p_array[2]), bulge))
+            points.append(((p_array[0], p_array[1], p_array[2]), bulge))
         current_point = [None, None, None]
         bulge = None
         extra_vertex_flag = False
@@ -755,15 +757,15 @@ class DXFParser(object):
                     + "%d and %d" % (start_line, end_line))
         else:
             # no color height adjustment for 3DFACE
-            point1 = Point(p1[0], p1[1], p1[2])
-            point2 = Point(p2[0], p2[1], p2[2])
-            point3 = Point(p3[0], p3[1], p3[2])
+            point1 = (p1[0], p1[1], p1[2])
+            point2 = (p2[0], p2[1], p2[2])
+            point3 = (p3[0], p3[1], p3[2])
             triangles = []
             triangles.append((point1, point2, point3))
             # DXF specifies, that p3=p4 if triangles (instead of quads) are
             # written.
             if (not None in p4) and (p3 != p4):
-                point4 = Point(p4[0], p4[1], p4[2])
+                point4 = (p4[0], p4[1], p4[2])
                 triangles.append((point3, point4, point1))
             for t in triangles:
                 if (t[0] != t[1]) and (t[0] != t[2]) and (t[1] != t[2]):
@@ -811,7 +813,7 @@ class DXFParser(object):
                 # use the color code as the z coordinate
                 p1[2] = float(color) / 255
                 p2[2] = float(color) / 255
-            line = Line(Point(p1[0], p1[1], p1[2]), Point(p2[0], p2[1], p2[2]))
+            line = Line((p1[0], p1[1], p1[2]), (p2[0], p2[1], p2[2]))
             if line.p1 != line.p2:
                 self.lines.append(line)
             else:
@@ -862,7 +864,7 @@ class DXFParser(object):
             if self._color_as_height and (not color is None):
                 # use the color code as the z coordinate
                 center[2] = float(color) / 255
-            center = Point(center[0], center[1], center[2])
+            center = (center[0], center[1], center[2])
             xy_point_coords = pycam.Geometry.get_points_of_arc(center, radius,
                     angle_start, angle_end)
             # Somehow the order of points seems to be the opposite of what is
@@ -871,9 +873,9 @@ class DXFParser(object):
             if len(xy_point_coords) > 1:
                 for index in range(len(xy_point_coords) - 1):
                     p1 = xy_point_coords[index]
-                    p1 = Point(p1[0], p1[1], center.z)
+                    p1 = (p1[0], p1[1], center[2])
                     p2 = xy_point_coords[index + 1]
-                    p2 = Point(p2[0], p2[1], center.z)
+                    p2 = (p2[0], p2[1], center[2])
                     if p1 != p2:
                         self.lines.append(Line(p1, p2))
             else:

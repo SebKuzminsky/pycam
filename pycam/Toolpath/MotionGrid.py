@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.Point import Point, Vector
+from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import epsilon
 from pycam.Geometry.Polygon import PolygonSorter
@@ -91,9 +91,9 @@ def get_fixed_grid_line(start, end, line_pos, z, step_width=None,
     else:
         steps = floatrange(start, end, inc=step_width)
     if grid_direction == GRID_DIRECTION_X:
-        get_point = lambda pos: Point(pos, line_pos, z)
+        get_point = lambda pos: (pos, line_pos, z)
     else:
-        get_point = lambda pos: Point(line_pos, pos, z)
+        get_point = lambda pos: (line_pos, pos, z)
     for pos in steps:
         yield get_point(pos)
 
@@ -208,7 +208,7 @@ def _get_position(minx, maxx, miny, maxy, z, position):
         y = miny
     else:
         y = maxy
-    return Point(x, y, z)
+    return (x, y, z)
 
 def get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x,
         line_distance_y, grid_direction, start_position, current_location):
@@ -255,27 +255,33 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width,
             previous = None
             for index, (start, end) in enumerate(lines):
                 radius = 0.5 * min(line_distance_x, line_distance_y)
-                edge_vector = end.sub(start)
+                edge_vector = psub(end,start)
+                #edge_vector = end.sub(start)
                 # TODO: ellipse would be better than arc
-                offset = edge_vector.normalized().mul(radius)
+                offset = pmul(pnormalized(edge_vector), radius)
+                #offset = edge_vector.normalized().mul(radius)
                 if previous:
-                    start = start.add(offset)
-                    center = previous.add(offset)
-                    up_vector = previous.sub(center).cross(start.sub(center)).normalized()
-                    north = center.add(Vector(1.0, 0.0, 0.0))
+                    start = padd(start, offset)
+                    #start = start.add(offset)
+                    center = padd(previous, offset)
+                    #center = previous.add(offset)
+                    up_vector = pnormalized(pcross(psub(previous, center), psub(start, center)))
+                    #up_vector = previous.sub(center).cross(start.sub(center)).normalized()
+                    north = padd(center, (1.0, 0.0, 0.0, 'v'))
+                    #north = center.add(Vector(1.0, 0.0, 0.0))
                     angle_start = pycam.Geometry.get_angle_pi(north, center, previous, up_vector, pi_factor=True) * 180.0
                     angle_end = pycam.Geometry.get_angle_pi(north, center, start, up_vector, pi_factor=True) * 180.0
                     # TODO: remove these exceptions based on up_vector.z (get_points_of_arc does not respect the plane, yet)
-                    if up_vector.z < 0:
+                    if up_vector[2] < 0:
                         angle_start, angle_end = -angle_end, -angle_start
                     arc_points = pycam.Geometry.get_points_of_arc(center, radius, angle_start, angle_end)
-                    if up_vector.z < 0:
+                    if up_vector[2] < 0:
                         arc_points.reverse()
                     for arc_index in range(len(arc_points) - 1):
                         p1_coord = arc_points[arc_index]
                         p2_coord = arc_points[arc_index + 1]
-                        p1 = Point(p1_coord[0], p1_coord[1], z)
-                        p2 = Point(p2_coord[0], p2_coord[1], z)
+                        p1 = (p1_coord[0], p1_coord[1], z)
+                        p2 = (p2_coord[0], p2_coord[1], z)
                         rounded_lines.append((p1, p2))
                 if index != len(lines) - 1:
                     end = end.sub(offset)
@@ -294,7 +300,8 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width,
                 else:
                     steps = floatrange(0.0, line.len, inc=step_width)
                 for step in steps:
-                    next_point = line.p1.add(line.dir.mul(step))
+                    next_point = padd(line.p1, pmul(line.dir, step))
+                    #next_point = line.p1.add(line.dir.mul(step))
                     points.append(next_point)
             if reverse:
                 points.reverse()
@@ -328,7 +335,7 @@ def get_spiral((low, high), layer_distance, line_distance=None,
 
 def get_lines_layer(lines, z, last_z=None, step_width=None,
         milling_style=MILLING_STYLE_CONVENTIONAL):
-    get_proj_point = lambda proj_point: Point(proj_point.x, proj_point.y, z)
+    get_proj_point = lambda proj_point: (proj_point[0], proj_point[1], z)
     projected_lines = []
     for line in lines:
         if (not last_z is None) and (last_z < line.minz):
@@ -337,9 +344,10 @@ def get_lines_layer(lines, z, last_z=None, step_width=None,
         elif line.minz < z < line.maxz:
             # Split the line at the point at z level and do the calculation
             # for both point pairs.
-            factor = (z - line.p1.z) / (line.p2.z - line.p1.z)
-            plane_point = line.p1.add(line.vector.mul(factor))
-            if line.p1.z < z:
+            factor = (z - line.p1[2]) / (line.p2[2] - line.p1[2])
+            plane_point = padd(line.p1, pmul(line.vector, factor))
+            #plane_point = line.p1.add(line.vector.mul(factor))
+            if line.p1[2] < z:
                 p1 = get_proj_point(line.p1)
                 p2 = line.p2
             else:
@@ -348,10 +356,10 @@ def get_lines_layer(lines, z, last_z=None, step_width=None,
             projected_lines.append(Line(p1, plane_point))
             yield Line(plane_point, p2)
         elif line.minz < last_z < line.maxz:
-            plane = Plane(Point(0, 0, last_z), Vector(0, 0, 1))
+            plane = Plane((0, 0, last_z), (0, 0, 1, 'v'))
             cp = plane.intersect_point(line.dir, line.p1)[0]
             # we can be sure that there is an intersection
-            if line.p1.z > last_z:
+            if line.p1[2] > last_z:
                 p1, p2 = cp, line.p2
             else:
                 p1, p2 = line.p1, cp
@@ -378,7 +386,8 @@ def get_lines_layer(lines, z, last_z=None, step_width=None,
             else:
                 steps = floatrange(0.0, line.len, inc=step_width)
             for step in steps:
-                next_point = line.p1.add(line.dir.mul(step))
+                next_point = padd(line.p1, pmul(line.dir, step))
+                #next_point = line.p1.add(line.dir.mul(step))
                 points.append(next_point)
         yield points
 

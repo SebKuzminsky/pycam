@@ -24,7 +24,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.Geometry import TransformableContainer
 from pycam.Geometry.Model import ContourModel
 from pycam.Geometry.Line import Line
-from pycam.Geometry.Point import Point
+from pycam.Geometry.PointUtils import *
 
 TEXT_ALIGN_LEFT = 0
 TEXT_ALIGN_CENTER = 1
@@ -50,9 +50,7 @@ class Letter(TransformableContainer):
 
     def get_positioned_lines(self, base_point, skew=None):
         result = []
-        get_skewed_point = lambda p: \
-                Point(base_point.x + p.x + (p.y * skew / 100.0),
-                        base_point.y + p.y, base_point.z)
+        get_skewed_point = lambda p: (base_point[0] + p[0] + (p[1] * skew / 100.0), base_point[1] + p[1], base_point[2])
         for line in self.lines:
             skewed_p1 = get_skewed_point(line.p1)
             skewed_p2 = get_skewed_point(line.p2)
@@ -133,13 +131,15 @@ class Charset(object):
                     # update line height
                     line_height = max(line_height, charset_letter.maxy())
                     # shift the base position
-                    base = base.add(Point(
+                    base = base.add((
                             charset_letter.maxx() + letter_spacing, 0, 0))
                 else:
                     # unknown character - add a small whitespace
-                    base = base.add(Point(letter_spacing, 0, 0))
+                    base = padd(base, (letter_spacing, 0, 0))
+                    #base = base.add(Point(letter_spacing, 0, 0))
             # go to the next line
-            base = Point(origin.x, base.y - line_height * line_factor, origin.z)
+            base = (origin[0], base[1] - line_height * line_factor, origin[2])
+            #base = Point(origin.x, base.y - line_height * line_factor, origin.z)
             if not current_line.maxx is None:
                 if align == TEXT_ALIGN_CENTER:
                     current_line.shift(-current_line.maxx / 2, 0, 0)
