@@ -23,7 +23,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import pycam.Plugins
 import pycam.Gui.OpenGLTools
 
-
 class OpenGLViewToolpath(pycam.Plugins.PluginBase):
 
     DEPENDS = ["OpenGLWindow", "Toolpaths"]
@@ -75,9 +74,37 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
     def draw_toolpaths(self):
         if self._is_visible():
             for toolpath in self.core.get("toolpaths").get_visible():
-                moves = toolpath.get_moves(self.core.get("gcode_safety_height"))
-                self._draw_toolpath_moves(moves)
-    
+                moves = toolpath.get_moves_for_opengl(self.core.get("gcode_safety_height"))
+                self._draw_toolpath_moves2(moves)
+            
+    def _draw_toolpath_moves2(self, paths):
+        GL = self._GL
+        GL.glDisable(GL.GL_LIGHTING)
+        color_rapid = self.core.get("color_toolpath_return")
+        color_cut = self.core.get("color_toolpath_cut")
+        show_directions = self.core.get("show_directions")
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
+        coords = paths[0]
+        try:
+            coords.bind()
+            GL.glEnableClientState(GL.GL_VERTEX_ARRAY)
+            GL.glVertexPointerf(coords)
+            for path in paths[1]:
+                if path[1]:
+                    GL.glColor4f(color_rapid["red"], color_rapid["green"], color_rapid["blue"], color_rapid["alpha"])
+                else:
+                    GL.glColor4f(color_cut["red"], color_cut["green"], color_cut["blue"], color_cut["alpha"])
+                
+                GL.glDrawElements(GL.GL_LINE_STRIP, len(path[0]), GL.GL_UNSIGNED_INT, path[0])
+        finally:
+            coords.unbind()
+        
+        if show_directions:
+            for index in range(len(moves)):
+                pycam.Gui.OpenGLTools.draw_direction_cone(paths[index][0][0], paths[index + 1][0][0])
+
+    ## Dead code, remove at some time
     def _draw_toolpath_moves(self, moves):
         GL = self._GL
         GL.glDisable(GL.GL_LIGHTING)
@@ -102,9 +129,9 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
                 GL.glFinish()
                 GL.glBegin(GL.GL_LINE_STRIP)
                 if not last_position is None:
-                    GL.glVertex3f(last_position[0], last_position[1], last_position[2])
+                    GL.glVertex3f(*last_position)
                 last_rapid = rapid
-            GL.glVertex3f(position[0], position[1], position[2])
+            GL.glVertex3f(*position)
             last_position = position
         GL.glEnd()
         if show_directions:

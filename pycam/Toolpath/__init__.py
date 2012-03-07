@@ -22,16 +22,17 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = ["simplify_toolpath", "ToolpathList", "Toolpath", "Generator"]
 
+import OpenGL.GL as GL
+from OpenGL.arrays import vbo
+import numpy
+from numpy import array
 from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Path import Path
 from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import number, epsilon
-import pycam.Utils.log
 import random
 import os
-
-log = pycam.Utils.log.get_logger()
-
+from itertools import groupby
 
 def _check_colinearity(p1, p2, p3):
     v1 = pnormalized(psub(p2, p1))
@@ -71,6 +72,22 @@ class Toolpath(object):
         self.parameters = parameters
         self._max_safe_distance = 2 * parameters.get("tool_radius", 0)
         self._feedrate = parameters.get("tool_feedrate", 300)
+        self.opengl_safety_height = None
+        self._minx = None
+        self._maxx = None
+        self._miny = None
+        self._maxy = None
+        self._minz = None
+        self._maxz = None
+        
+    def clear_cache(self):
+        self.opengl_safety_height = None
+        self._minx = None
+        self._maxx = None
+        self._miny = None
+        self._maxy = None
+        self._minz = None
+        self._maxz = None
 
     def get_params(self):
         return dict(self.parameters)
@@ -93,27 +110,39 @@ class Toolpath(object):
 
     @property
     def minx(self):
-        return self._get_limit_generic(0, min)
+        if self._minx == None:
+            self._minx = self._get_limit_generic(0, min)
+        return self._minx
 
     @property
     def maxx(self):
-        return self._get_limit_generic(0, max)
+        if self._maxx == None:
+            self._maxx = self._get_limit_generic(0, max)
+        return self._maxx
 
     @property
     def miny(self):
-        return self._get_limit_generic(1, min)
+        if self._miny == None:
+            self._miny = self._get_limit_generic(1, min)
+        return self._miny
 
     @property
     def maxy(self):
-        return self._get_limit_generic(1, max)
+        if self._maxy == None:
+            self._maxy = self._get_limit_generic(1, max)
+        return self._maxy
 
     @property
     def minz(self):
-        return self._get_limit_generic(2, min)
+        if self._minz == None:
+            self._minz = self._get_limit_generic(2, min)
+        return self._minz
 
     @property
     def maxz(self):
-        return self._get_limit_generic(2, max)
+        if self._maxz == None:
+            self._maxz = self._get_limit_generic(2, max)
+        return self._maxz
 
     def get_meta_data(self):
         meta = self.toolpath_settings.get_string()
@@ -169,8 +198,7 @@ class Toolpath(object):
                 p_last = (p_next[0], p_next[1], safety_height)
                 if not result.append(p_last, True):
                     return result.moves
-            if ((abs(p_last[0] - p_next[0]) > epsilon) \
-                    or (abs(p_last[1] - p_next[1]) > epsilon)):
+            if ((abs(p_last[0] - p_next[0]) > epsilon) or (abs(p_last[1] - p_next[1]) > epsilon)):
                 # Draw the connection between the last and the next path.
                 # Respect the safety height.
                 #if (abs(p_last[2] - p_next[2]) > epsilon) or (p_last.sub(p_next).norm > self._max_safe_distance + epsilon):
@@ -192,7 +220,67 @@ class Toolpath(object):
             p_last_safety = (p_last[0], p_last[1], safety_height)
             result.append(p_last_safety, True)
         return result.moves
-
+        
+    def get_moves_for_opengl(self, safety_height):
+        if self.opengl_safety_height != safety_height:
+            self.make_moves_for_opengl(safety_height)
+            self.make_vbo_for_moves()
+        return (self.opengl_coords, self.opengl_indices)
+    
+    # separate vertex coordinates from line definitions and convert to indices    
+    def make_vbo_for_moves(self):
+        index = 0
+        output = []
+        store_vertices = {}
+        vertices = []
+        for path in self.opengl_lines:
+            indices = []
+            for point in path[0]:
+                if not point in store_vertices:
+                    store_vertices[point] = index
+                    vertices.insert(store_vertices[point], point)
+                    index += 1
+                indices.append(store_vertices[point])
+            #this list comprehension removes consecutive duplicate points. 
+            indices = array([x[0] for x in groupby(indices)],dtype=numpy.int32)
+            output.append((indices, path[1]))
+        vertices = array(vertices,dtype=numpy.float32)
+        coords = vbo.VBO(vertices)
+        self.opengl_coords = coords
+        self.opengl_indices = output
+    
+    #convert moves into lines for dispaly with opengl
+    def make_moves_for_opengl(self, safety_height):
+        working_path = []
+        outpaths = []
+        for path in self.paths:
+            if not path:
+                continue
+            path = path.points
+            
+            if len(outpaths) != 0:
+                lastp = outpaths[-1][0][-1]
+                working_path.append((path[0][0], path[0][1], safety_height))
+                if ((abs(lastp[0] - path[0][0]) > epsilon) or (abs(lastp[1] - path[0][1]) > epsilon)):
+                    if (abs(lastp[2] - path[0][2]) > epsilon) or (pnorm(psub(lastp, path[0])) > self._max_safe_distance + epsilon):
+                        outpaths.append((working_path, True))
+            else:
+                working_path.append((0,0,0))
+                working_path.append((path[0][0], path[0][1], safety_height))
+                outpaths.append((working_path, True))
+            
+            # add this move to last move if last move was not rapid
+            if outpaths[-1][1] == False:
+                outpaths[-1] = (outpaths[-1][0] + tuple(path), False)
+            else:
+                outpaths.append(((outpaths[-1][0][-1],) + tuple(path), False))
+            working_path = []
+            working_path.append(path[-1])
+            working_path.append((path[-1][0], path[-1][1], safety_height))
+        outpaths.append((working_path, True))
+        self.opengl_safety_height = safety_height
+        self.opengl_lines = outpaths
+        
     def get_machine_time(self, safety_height=0.0):
         """ calculate an estimation of the time required for processing the
         toolpath with the machine
@@ -277,6 +365,7 @@ class Toolpath(object):
         if current_path.points:
             new_paths.append(current_path)
         self.paths = new_paths
+        self.clear_cache()
 
 
 class Bounds(object):
