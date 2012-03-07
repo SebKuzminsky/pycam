@@ -105,7 +105,7 @@ class Charset(object):
             align=None):
         result = ContourModel()
         if origin is None:
-            origin = Point(0, 0, 0)
+            origin = (0, 0, 0)
         if align is None:
             align = TEXT_ALIGN_LEFT
         base = origin
@@ -118,7 +118,8 @@ class Charset(object):
             line_height = self.default_height
             for character in line:
                 if character == " ":
-                    base = base.add(Point(word_spacing, 0, 0))
+                    base = padd(base, (word_spacing, 0, 0))
+                    #base = base.add(Point(word_spacing, 0, 0))
                 elif character in self.letters.keys():
                     charset_letter = self.letters[character]
                     new_model = ContourModel()
@@ -131,8 +132,8 @@ class Charset(object):
                     # update line height
                     line_height = max(line_height, charset_letter.maxy())
                     # shift the base position
-                    base = base.add((
-                            charset_letter.maxx() + letter_spacing, 0, 0))
+                    base = padd(base, (charset_letter.maxx() + letter_spacing, 0, 0))
+                    #base = base.add((charset_letter.maxx() + letter_spacing, 0, 0))
                 else:
                     # unknown character - add a small whitespace
                     base = padd(base, (letter_spacing, 0, 0))
