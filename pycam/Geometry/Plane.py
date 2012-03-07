@@ -54,7 +54,7 @@ class Plane(IDGenerator, TransformableContainer):
             return cmp(str(self), str(other))
 
     def copy(self):
-        return self.__class__(self.p.copy(), self.n.copy())
+        return self.__class__(self.p, self.n)
 
     def next(self):
         yield "p"
