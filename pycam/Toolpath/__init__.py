@@ -32,7 +32,10 @@ from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import number, epsilon
 import random
 import os
+import math
 from itertools import groupby
+import pycam.Utils.log
+log = pycam.Utils.log.get_logger()
 
 def _check_colinearity(p1, p2, p3):
     v1 = pnormalized(psub(p2, p1))
@@ -220,7 +223,41 @@ class Toolpath(object):
             p_last_safety = (p_last[0], p_last[1], safety_height)
             result.append(p_last_safety, True)
         return result.moves
+    
+    def _rotate_point(self, rp, sp, v, angle):
+        x = (sp[0] * (v[1] ** 2 + v[2] ** 2) - v[0] * (sp[1] * v[1] + sp[2] * v[2] - v[0] * rp[0] - v[1] * rp[1] - v[2] * rp[2])) * (1 - math.cos(angle)) + rp[0] * math.cos(angle) + (-sp[2] * v[1] + sp[1] * v[2] - v[2] * rp[1] + v[1] * rp[2]) * math.sin(angle)
+        y = (sp[1] * (v[0] ** 2 + v[2] ** 2) - v[1] * (sp[0] * v[0] + sp[2] * v[2] - v[0] * rp[0] - v[1] * rp[1] - v[2] * rp[2])) * (1 - math.cos(angle)) + rp[1] * math.cos(angle) + (sp[2] * v[0] - sp[0] * v[2] + v[2] * rp[0] - v[0] * rp[2]) * math.sin(angle)
+        z = (sp[2] * (v[0] ** 2 + v[1] ** 2) - v[2] * (sp[0] * v[0] + sp[1] * v[1] - v[0] * rp[0] - v[1] * rp[1] - v[2] * rp[2])) * (1 - math.cos(angle)) + rp[2] * math.cos(angle) + (-sp[1] * v[0] + sp[0] * v[1] - v[1] * rp[0] + v[0] * rp[1]) * math.sin(angle)
+        return (x,y,z)
+    
+    def draw_direction_cone_mesh(self, p1, p2, position=0.5, precision=12, size=0.1):
+        distance = psub(p2, p1)
+        length = pnorm(distance)
+        direction = pnormalized(distance)
+        if direction is None:
+            # zero-length line
+            return []
+        cone_length = length * size
+        cone_radius = cone_length / 3.0
+        bottom = padd(p1, pmul(psub(p2, p1), position - size/2))
+        top = padd(p1, pmul(psub(p2, p1), position + size/2))
+        #generate a a line perpendicular to this line, cross product is good at this
+        cross = pcross(direction, (0, 0, -1))
+        conepoints = []
+        if pnorm(cross) != 0:
+            # The line direction is not in line with the z axis.
+            conep1 = padd(bottom, pmul(cross, cone_radius))
+            conepoints = [ self._rotate_point(conep1, bottom, direction, x) for x in numpy.linspace(0, 2*math.pi, precision)]
+        else:
+            # Z axis
+            # just add cone radius to the x axis and rotate the point
+            conep1 = (bottom[0] + cone_radius, bottom[1], bottom[2])
+            conepoints = [ self._rotate_point(conep1, p1, direction, x) for x in numpy.linspace(0, 2*math.pi, precision)]
         
+        triangles = [(top, conepoints[idx], conepoints[idx + 1]) for idx in range ( len(conepoints) - 1)]
+        return triangles
+
+       
     def get_moves_for_opengl(self, safety_height):
         if self.opengl_safety_height != safety_height:
             self.make_moves_for_opengl(safety_height)
@@ -234,6 +271,8 @@ class Toolpath(object):
         store_vertices = {}
         vertices = []
         for path in self.opengl_lines:
+            # compress the lines into a centeral array containing all the vertices
+            # generate a matching index for each line
             indices = []
             for point in path[0]:
                 if not point in store_vertices:
@@ -241,9 +280,26 @@ class Toolpath(object):
                     vertices.insert(store_vertices[point], point)
                     index += 1
                 indices.append(store_vertices[point])
-            #this list comprehension removes consecutive duplicate points. 
+            # this list comprehension removes consecutive duplicate points. 
             indices = array([x[0] for x in groupby(indices)],dtype=numpy.int32)
-            output.append((indices, path[1]))
+            # generate mesh for each direction cone
+            # also put these vertices in the vertex array above
+            # also generate indices for each triangle
+            triangles = []
+            for idx in range(len(path[0]) - 1):
+                some_triangles = self.draw_direction_cone_mesh(path[0][idx], path[0][idx + 1])
+                for triangle in some_triangles:
+                    triangles.append(triangle)
+            triangle_indices = []
+            for t in triangles:
+                for p in t:
+                    if not p in store_vertices:
+                        store_vertices[p] = index
+                        vertices.insert(store_vertices[p], p)
+                        index += 1
+                    triangle_indices.append(store_vertices[p])
+            triangle_indices = array(triangle_indices, dtype=numpy.int32)
+            output.append((indices, triangle_indices, path[1]))
         vertices = array(vertices,dtype=numpy.float32)
         coords = vbo.VBO(vertices)
         self.opengl_coords = coords

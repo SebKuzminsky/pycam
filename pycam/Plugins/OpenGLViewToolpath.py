@@ -22,6 +22,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 import pycam.Gui.OpenGLTools
+import pycam.Utils.log
+log = pycam.Utils.log.get_logger()
 
 class OpenGLViewToolpath(pycam.Plugins.PluginBase):
 
@@ -76,6 +78,8 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
             for toolpath in self.core.get("toolpaths").get_visible():
                 moves = toolpath.get_moves_for_opengl(self.core.get("gcode_safety_height"))
                 self._draw_toolpath_moves2(moves)
+                #moves = toolpath.get_moves(self.core.get("gcode_safety_height"))
+                #self._draw_toolpath_moves(moves)
             
     def _draw_toolpath_moves2(self, paths):
         GL = self._GL
@@ -91,18 +95,17 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
             GL.glEnableClientState(GL.GL_VERTEX_ARRAY)
             GL.glVertexPointerf(coords)
             for path in paths[1]:
-                if path[1]:
+                if path[2]:
                     GL.glColor4f(color_rapid["red"], color_rapid["green"], color_rapid["blue"], color_rapid["alpha"])
                 else:
                     GL.glColor4f(color_cut["red"], color_cut["green"], color_cut["blue"], color_cut["alpha"])
-                
+                if show_directions:
+                    GL.glDisable(GL.GL_CULL_FACE)
+                    GL.glDrawElements(GL.GL_TRIANGLES, len(path[1]), GL.GL_UNSIGNED_INT, path[1])
+                    GL.glEnable(GL.GL_CULL_FACE)
                 GL.glDrawElements(GL.GL_LINE_STRIP, len(path[0]), GL.GL_UNSIGNED_INT, path[0])
         finally:
             coords.unbind()
-        
-        if show_directions:
-            for index in range(len(moves)):
-                pycam.Gui.OpenGLTools.draw_direction_cone(paths[index][0][0], paths[index + 1][0][0])
 
     ## Dead code, remove at some time
     def _draw_toolpath_moves(self, moves):
@@ -139,4 +142,3 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
                 p1 = moves[index][0]
                 p2 = moves[index + 1][0]
                 pycam.Gui.OpenGLTools.draw_direction_cone(p1, p2)
-
