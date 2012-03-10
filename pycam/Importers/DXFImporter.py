@@ -757,9 +757,9 @@ class DXFParser(object):
                     + "%d and %d" % (start_line, end_line))
         else:
             # no color height adjustment for 3DFACE
-            point1 = (p1[0], p1[1], p1[2])
-            point2 = (p2[0], p2[1], p2[2])
-            point3 = (p3[0], p3[1], p3[2])
+            point1 = tuple(p1)
+            point2 = tuple(p2)
+            point3 = tuple(p3)
             triangles = []
             triangles.append((point1, point2, point3))
             # DXF specifies, that p3=p4 if triangles (instead of quads) are
@@ -864,9 +864,8 @@ class DXFParser(object):
             if self._color_as_height and (not color is None):
                 # use the color code as the z coordinate
                 center[2] = float(color) / 255
-            center = (center[0], center[1], center[2])
-            xy_point_coords = pycam.Geometry.get_points_of_arc(center, radius,
-                    angle_start, angle_end)
+            center = tuple(center)
+            xy_point_coords = pycam.Geometry.get_points_of_arc(center, radius, angle_start, angle_end)
             # Somehow the order of points seems to be the opposite of what is
             # expected.
             xy_point_coords.reverse()
