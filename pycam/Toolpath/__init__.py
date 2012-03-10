@@ -234,7 +234,7 @@ class Toolpath(object):
         distance = psub(p2, p1)
         length = pnorm(distance)
         direction = pnormalized(distance)
-        if direction is None:
+        if direction is None or length < 0.5:
             # zero-length line
             return []
         cone_length = length * size
@@ -261,49 +261,87 @@ class Toolpath(object):
     def get_moves_for_opengl(self, safety_height):
         if self.opengl_safety_height != safety_height:
             self.make_moves_for_opengl(safety_height)
-            self.make_vbo_for_moves()
+            self.make_vbo_for_moves2()
         return (self.opengl_coords, self.opengl_indices)
     
-    # separate vertex coordinates from line definitions and convert to indices    
-    def make_vbo_for_moves(self):
+    def make_vbo_for_moves2(self):
         index = 0
         output = []
         store_vertices = {}
         vertices = []
         for path in self.opengl_lines:
-            # compress the lines into a centeral array containing all the vertices
-            # generate a matching index for each line
             indices = []
-            for point in path[0]:
+            triangles = []
+            triangle_indices = []
+            for idx in range(len(path[0]) - 1):
+                point = path[0][idx]
                 if not point in store_vertices:
                     store_vertices[point] = index
-                    vertices.insert(store_vertices[point], point)
+                    vertices.insert(index, point)
                     index += 1
                 indices.append(store_vertices[point])
-            # this list comprehension removes consecutive duplicate points. 
-            indices = array([x[0] for x in groupby(indices)],dtype=numpy.int32)
-            # generate mesh for each direction cone
-            # also put these vertices in the vertex array above
-            # also generate indices for each triangle
-            triangles = []
-            for idx in range(len(path[0]) - 1):
-                some_triangles = self.draw_direction_cone_mesh(path[0][idx], path[0][idx + 1])
-                for triangle in some_triangles:
-                    triangles.append(triangle)
-            triangle_indices = []
-            for t in triangles:
-                for p in t:
-                    if not p in store_vertices:
-                        store_vertices[p] = index
-                        vertices.insert(store_vertices[p], p)
-                        index += 1
-                    triangle_indices.append(store_vertices[p])
+                point2 = path[0][idx + 1]
+                if not point2 in store_vertices:
+                    store_vertices[point2] = index
+                    vertices.insert(index, point2)
+                    index += 1
+                triangles.extend(self.draw_direction_cone_mesh(path[0][idx], path[0][idx + 1]))
+                for t in triangles:
+                    for p in t:
+                        if not p in store_vertices:
+                            store_vertices[p] = index
+                            vertices.insert(index, p)
+                            index += 1
+                        triangle_indices.append(store_vertices[p])
             triangle_indices = array(triangle_indices, dtype=numpy.int32)
+            indices.append(store_vertices[path[0][-1]])
+            indices = array([x[0] for x in groupby(indices)],dtype=numpy.int32)
             output.append((indices, triangle_indices, path[1]))
-        vertices = array(vertices,dtype=numpy.float32)
-        coords = vbo.VBO(vertices)
-        self.opengl_coords = coords
+        vertices = array(vertices, dtype=numpy.float32)
+        self.opengl_coords = vbo.VBO(vertices)
         self.opengl_indices = output
+        
+                
+    # separate vertex coordinates from line definitions and convert to indices    
+    #def make_vbo_for_moves(self):
+    #    index = 0
+    #    output = []
+    #    store_vertices = {}
+    #    vertices = []
+    #    for path in self.opengl_lines:
+    #        # compress the lines into a centeral array containing all the vertices
+    #        # generate a matching index for each line
+    #        indices = []
+    #        for point in path[0]:
+    #            if not point in store_vertices:
+    #                store_vertices[point] = index
+    #                vertices.insert(store_vertices[point], point)
+    #                index += 1
+    #            indices.append(store_vertices[point])
+    #        # this list comprehension removes consecutive duplicate points. 
+    #        indices = array([x[0] for x in groupby(indices)],dtype=numpy.int32)
+    #        # generate mesh for each direction cone
+    #        # also put these vertices in the vertex array above
+    #        # also generate indices for each triangle
+    #        triangles = []
+    #        for idx in range(len(path[0]) - 1):
+    #            some_triangles = 
+    #            for triangle in some_triangles:
+    #                triangles.append(triangle)
+    #        triangle_indices = []
+    #        for t in triangles:
+    #            for p in t:
+    #                if not p in store_vertices:
+    #                    store_vertices[p] = index
+    #                    vertices.insert(store_vertices[p], p)
+    #                    index += 1
+    #                triangle_indices.append(store_vertices[p])
+    #        triangle_indices = array(triangle_indices, dtype=numpy.int32)
+    #        output.append((indices, triangle_indices, path[1]))
+    #    vertices = array(vertices,dtype=numpy.float32)
+    #    coords = vbo.VBO(vertices)
+    #    self.opengl_coords = coords
+    #    self.opengl_indices = output
     
     #convert moves into lines for dispaly with opengl
     def make_moves_for_opengl(self, safety_height):
@@ -319,7 +357,7 @@ class Toolpath(object):
                 working_path.append((path[0][0], path[0][1], safety_height))
                 if ((abs(lastp[0] - path[0][0]) > epsilon) or (abs(lastp[1] - path[0][1]) > epsilon)):
                     if (abs(lastp[2] - path[0][2]) > epsilon) or (pnorm(psub(lastp, path[0])) > self._max_safe_distance + epsilon):
-                        outpaths.append((working_path, True))
+                        outpaths.append((tuple([x[0] for x in groupby(working_path)]), True))
             else:
                 working_path.append((0,0,0))
                 working_path.append((path[0][0], path[0][1], safety_height))
@@ -329,11 +367,12 @@ class Toolpath(object):
             if outpaths[-1][1] == False:
                 outpaths[-1] = (outpaths[-1][0] + tuple(path), False)
             else:
-                outpaths.append(((outpaths[-1][0][-1],) + tuple(path), False))
+                # last move was rapid, so add last point of rapid to beginning of path
+                outpaths.append((tuple([x[0] for x in groupby((outpaths[-1][0][-1],) + tuple(path))]), False))
             working_path = []
             working_path.append(path[-1])
             working_path.append((path[-1][0], path[-1][1], safety_height))
-        outpaths.append((working_path, True))
+        outpaths.append((tuple([x[0] for x in groupby(working_path)]), True))
         self.opengl_safety_height = safety_height
         self.opengl_lines = outpaths
         
