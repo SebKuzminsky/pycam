@@ -22,8 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 import pycam.Gui.OpenGLTools
-import pycam.Utils.log
-log = pycam.Utils.log.get_logger()
+
 
 class OpenGLViewToolpath(pycam.Plugins.PluginBase):
 
@@ -107,7 +106,7 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
         finally:
             coords.unbind()
 
-    ## Dead code, remove at some time
+    ## Simulate still depends on this pathway
     def _draw_toolpath_moves(self, moves):
         GL = self._GL
         GL.glDisable(GL.GL_LIGHTING)
