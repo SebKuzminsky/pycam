@@ -344,6 +344,8 @@ class DXFParser(object):
                     next_point = points[index + 1]
                     if point != next_point:
                         self.lines.append(Line(point, next_point))
+                if ("VERTEX_FLAGS" in params) and (params["VERTEX_FLAGS"] == "EXTRA_VERTEX"):
+                    self.lines.append(Line(points[-1], points[0]))
             self._open_sequence_items = []
             self._open_sequence_params = {}
             self._open_sequence = None
