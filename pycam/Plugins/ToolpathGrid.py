@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import pycam.Plugins
+from pycam.Geometry.PointUtils import *
 
 
 class ToolpathGrid(pycam.Plugins.PluginBase):
@@ -99,7 +100,7 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
                     shift = (x * (x_space + x_dim), y * (y_space + y_dim), 0, 'v')
                     for path in toolpath.paths:
                         new_path = pycam.Geometry.Path.Path()
-                        new_path.points = [shift.add(p) for p in path.points]
+                        new_path.points = [padd(shift, p) for p in path.points]
                         new_paths.append(new_path)
             if not self.gui.get_object("KeepOriginal").get_active():
                 toolpath.paths = new_paths
