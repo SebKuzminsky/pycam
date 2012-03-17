@@ -25,7 +25,8 @@ from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry import TransformableContainer, IDGenerator, get_bisector
 from pycam.Geometry.utils import number, epsilon
-import pycam.Utils.log
+from pycam.Utils import log
+log = log.get_logger()
 # import later to avoid circular imports
 #from pycam.Geometry.Model import ContourModel
 
@@ -38,9 +39,6 @@ except ImportError:
 
 LINE_WIDTH_INNER = 0.7
 LINE_WIDTH_OUTER = 1.3
-
-log = pycam.Utils.log.get_logger()
-
 
 class PolygonInTree(IDGenerator):
     """ This class is a wrapper around Polygon objects that is used for sorting.
@@ -909,8 +907,7 @@ class Polygon(TransformableContainer):
                             line1 = new_group[index1]
                             line2 = new_group[index2]
                             intersection, factor = line1.get_intersection(line2)
-                            if intersection and (intersection != line1.p1) \
-                                    and (intersection != line1.p2):
+                            if intersection and (pnorm(psub(intersection, line1.p1)) > epsilon) and (pnorm(psub(intersection, line1.p2)) > epsilon):
                                 del new_group[index1]
                                 new_group.insert(index1,
                                         Line(line1.p1, intersection))
@@ -942,6 +939,7 @@ class Polygon(TransformableContainer):
                     for group_start in group_starts:
                         groups.append(new_group[last_start:group_start])
                         last_start = group_start
+                        
                     # Add the remaining lines to the first group or as a new
                     # group.
                     if groups[0][0].p1 == new_group[-1].p2:
