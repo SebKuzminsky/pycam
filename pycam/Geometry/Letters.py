@@ -119,7 +119,6 @@ class Charset(object):
             for character in line:
                 if character == " ":
                     base = padd(base, (word_spacing, 0, 0))
-                    #base = base.add(Point(word_spacing, 0, 0))
                 elif character in self.letters.keys():
                     charset_letter = self.letters[character]
                     new_model = ContourModel()
@@ -133,14 +132,11 @@ class Charset(object):
                     line_height = max(line_height, charset_letter.maxy())
                     # shift the base position
                     base = padd(base, (charset_letter.maxx() + letter_spacing, 0, 0))
-                    #base = base.add((charset_letter.maxx() + letter_spacing, 0, 0))
                 else:
                     # unknown character - add a small whitespace
                     base = padd(base, (letter_spacing, 0, 0))
-                    #base = base.add(Point(letter_spacing, 0, 0))
             # go to the next line
             base = (origin[0], base[1] - line_height * line_factor, origin[2])
-            #base = Point(origin.x, base.y - line_height * line_factor, origin.z)
             if not current_line.maxx is None:
                 if align == TEXT_ALIGN_CENTER:
                     current_line.shift(-current_line.maxx / 2, 0, 0)

@@ -47,7 +47,6 @@ class PointKdtree(kdtree):
         return dx*dx+dy*dy+dz*dz
 
     def Point(self, x, y, z):
-        #return Point(x,y,z)
         if self._n:
             n = self._n
             n.bound = (x, y, z)

@@ -38,23 +38,16 @@ def get_bisector(p1, p2, p3, up_vector):
     of the angle.
     """
     d1 = pnormalized(psub(p2, p1))
-    #d1 = p2.sub(p1).normalized()
     d2 = pnormalized(psub(p2, p3))
-    #d2 = p2.sub(p3).normalized()
     bisector_dir = pnormalized(padd(d1, d2))
-    #bisector_dir = d1.add(d2).normalized()
     if bisector_dir is None:
         # the two vectors pointed to opposite directions
         bisector_dir = pnormalized(pcross(d1, up_vector))
-        #bisector_dir = d1.cross(up_vector).normalized()
     else:
         skel_up_vector = pcross(bisector_dir, psub(p2, p1))
-        #skel_up_vector = bisector_dir.cross(p2.sub(p1))
-        #if up_vector.dot(skel_up_vector) < 0:
         if pdot(up_vector, skel_up_vector) < 0:
             # reverse the skeleton vector to point outwards
             bisector_dir = pmul(bisector_dir, -1)
-            #bisector_dir = bisector_dir.mul(-1)
     return bisector_dir
 
 def get_angle_pi(p1, p2, p3, up_vector, pi_factor=False):
@@ -69,13 +62,10 @@ def get_angle_pi(p1, p2, p3, up_vector, pi_factor=False):
     The result is in a range between 0 and 2*PI.
     """
     d1 = pnormalized(psub(p2, p1))
-    #d1 = p2.sub(p1).normalized()
     d2 = pnormalized(psub(p2, p3))
-    #d2 = p2.sub(p3).normalized()
     if (d1 is None) or (d2 is None):
         return 2 * math.pi
     angle = math.acos(pdot(d1, d2))
-    #angle = math.acos(d1.dot(d2))
     # check the direction of the points (clockwise/anti)
     # The code is taken from Polygon.get_area
     value = [0, 0, 0]
@@ -145,7 +135,6 @@ def get_bezier_lines(points_with_bulge, segments=32):
             # straight line
             return [Line.Line(p1, p2)]
         straight_dir = pnormalized(psub(p2, p1))
-        #straight_dir = p2.sub(p1).normalized()
         #bulge1 = max(-1.0, min(1.0, bulge1))
         bulge1 = math.atan(bulge1)
         rot_matrix = Matrix.get_rotation_matrix_axis_angle((0, 0, 1),
@@ -170,7 +159,6 @@ def get_bezier_lines(points_with_bulge, segments=32):
         # and a bulge of 1 is a semicircle.
         alpha = 2 * (abs(bulge1) + abs(bulge2))
         dist = pnorm(psub(p2, p1))
-        #dist = p2.sub(p1).norm
         # calculate the radius of the circumcircle - avoiding divide-by-zero
         if (abs(alpha) < epsilon) or (abs(math.pi - alpha) < epsilon):
             radius = dist / 2.0
@@ -181,20 +169,11 @@ def get_bezier_lines(points_with_bulge, segments=32):
         # seems to work well.
         factor = 4 * radius * math.tan(alpha / 4.0)
         dir1 = pmul(dir1, factor)
-        #dir1 = dir1.mul(factor)
         dir2 = pmul(dir2, factor)
-        #dir2 = dir2.mul(factor)
         for index in range(segments + 1):
             # t: 0..1
             t = float(index) / segments
             # see: http://en.wikipedia.org/wiki/Cubic_Hermite_spline
-            #p = p1.mul(2 * t ** 3 - 3 * t ** 2 + 1).add(
-            #    dir1.mul(t ** 3 - 2 * t ** 2 + t).add(
-            #        p2.mul(-2 * t ** 3 + 3 * t ** 2).add(
-            #            dir2.mul(t ** 3 - t ** 2)
-            #        )
-            #    )
-            #)
             p = padd( pmul(p1, 2 * t ** 3 - 3 * t ** 2 + 1) ,padd( pmul(dir1, t ** 3 - 2 * t ** 2 + t), padd(pmul(p2, -2 * t ** 3 + 3 * t ** 2) ,pmul(dir2, t ** 3 - t ** 2))))
             result_points.append(p)
         # create lines

@@ -77,13 +77,10 @@ class Plane(IDGenerator, TransformableContainer):
         if direction is None:
             return (None, INFINITE)
         denom = pdot(self.n, direction)
-        #denom = self.n.dot(direction)
         if denom == 0:
             return (None, INFINITE)
         l = -(pdot(self.n, point) - pdot(self.n, self.p)) / denom
-        #l = -(self.n.dot(point) - self.n.dot(self.p)) / denom
         cp = padd(point, pmul(direction, l))
-        #cp = point.add(direction.mul(l))
         return (cp, l)
 
     def intersect_triangle(self, triangle, counter_clockwise=False):
@@ -121,8 +118,6 @@ class Plane(IDGenerator, TransformableContainer):
             if collision_line.len == 0:
                 return collision_line
             cross = pcross(self.n, collision_line.dir)
-            #cross = self.n.cross(collision_line.dir)
-            #if (cross.dot(triangle.normal) < 0) == bool(not counter_clockwise):
             if (pdot(cross, triangle.normal) < 0) == bool(not counter_clockwise):
                 # anti-clockwise direction -> revert the direction of the line
                 collision_line = Line(collision_line.p2, collision_line.p1)

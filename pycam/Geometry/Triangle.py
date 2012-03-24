@@ -65,26 +65,18 @@ class Triangle(IDGenerator, TransformableContainer):
         # calculate normal, if p1-p2-pe are in clockwise order
         if self.normal is None:
             self.normal = pnormalized(pcross(psub(self.p3, self.p1), psub(self.p2, self.p1)))
-            #self.normal = self.p3.sub(self.p1).cross(self.p2.sub( \
-            #        self.p1)).normalized()
         if not len(self.normal) > 3:
             self.normal = (self.normal[0], self.normal[1], self.normal[2], 'v')
         self.center = pdiv(padd(padd(self.p1, self.p2), self.p3), 3)
-       # self.center = self.p1.add(self.p2).add(self.p3).div(3)
         self.plane = Plane(self.center, self.normal)
         # calculate circumcircle (resulting in radius and middle)
         denom = pnorm(pcross(psub(self.p2, self.p1), psub(self.p3, self.p2)))
-        #denom = self.p2.sub(self.p1).cross(self.p3.sub(self.p2)).norm
         self.radius = (pnorm(psub(self.p2, self.p1)) * pnorm(psub(self.p3, self.p2)) * pnorm(psub(self.p3, self.p1))) / (2 * denom)
-        #self.radius = (self.p2.sub(self.p1).norm * self.p3.sub(self.p2).norm * self.p3.sub(self.p1).norm) / (2 * denom)
         self.radiussq = self.radius ** 2
         denom2 = 2 * denom * denom
         alpha = pnormsq(psub(self.p3, self.p2)) * pdot(psub(self.p1, self.p2), psub(self.p1, self.p3)) / denom2
-        #alpha = self.p3.sub(self.p2).normsq * self.p1.sub(self.p2).dot(self.p1.sub(self.p3)) / denom2
         beta = pnormsq(psub(self.p1, self.p3)) * pdot(psub(self.p2, self.p1), psub(self.p2, self.p3)) / denom2
-        #beta  = self.p1.sub(self.p3).normsq * self.p2.sub(self.p1).dot(self.p2.sub(self.p3)) / denom2
         gamma = pnormsq(psub(self.p1, self.p2)) * pdot(psub(self.p3, self.p1), psub(self.p3, self.p2)) / denom2
-        #gamma = self.p1.sub(self.p2).normsq * self.p3.sub(self.p1).dot(self.p3.sub(self.p2)) / denom2
         self.middle = (self.p1[0] * alpha + self.p2[0] * beta + self.p3[0] * gamma,
                         self.p1[1] * alpha + self.p2[1] * beta + self.p3[1] * gamma,
                         self.p1[2] * alpha + self.p2[2] * beta + self.p3[2] * gamma)
@@ -145,17 +137,12 @@ class Triangle(IDGenerator, TransformableContainer):
             c = self.center
             GL.glTranslate(c[0], c[1], c[2])
             p12 = pmul(padd(self.p1, self.p2), 0.5)
-            #p12 = self.p1.add(self.p2).mul(0.5)
             p3_12 = pnormalized(psub(self.p3, p12))
-            #p3_12 = self.p3.sub(p12).normalized()
             p2_1 = pnormalized(psub(self.p1, self.p2))
-            #p2_1 = self.p1.sub(self.p2).normalized()
             pn = pcross(p2_1, p3_12)
-            #pn = p2_1.cross(p3_12)
             GL.glMultMatrixf((p2_1[0], p2_1[1], p2_1[2], 0, p3_12[0], p3_12[1],
                     p3_12[2], 0, pn[0], pn[1], pn[2], 0, 0, 0, 0, 1))
             n = pmul(self.normal, 0.01)
-            #n = self.normal.mul(0.01)
             GL.glTranslatef(n[0], n[1], n[2])
             maxdim = max((self.maxx - self.minx), (self.maxy - self.miny),
                     (self.maxz - self.minz))
@@ -172,19 +159,13 @@ class Triangle(IDGenerator, TransformableContainer):
         if False: # draw point id on triangle face
             c = self.center
             p12 = pmul(padd(self.p1, self.p2), 0.5)
-            #p12 = self.p1.add(self.p2).mul(0.5)
             p3_12 = pnormalized(psub(self.p3, p12))
-            #p3_12 = self.p3.sub(p12).normalized()
             p2_1 = pnormalized(psub(self.p1, self.p2))
-            #p2_1 = self.p1.sub(self.p2).normalized()
             pn = pcross(p2_1, p3_12)
-            #pn = p2_1.cross(p3_12)
             n = pmul(self.normal, 0.01)
-            #n = self.normal.mul(0.01)
             for p in (self.p1, self.p2, self.p3):
                 GL.glPushMatrix()
                 pp = psub(p, pmul(psub(p, c), 0.3))
-                #pp = p.sub(p.sub(c).mul(0.3))
                 GL.glTranslate(pp[0], pp[1], pp[2])
                 GL.glMultMatrixf((p2_1[0], p2_1[1], p2_1[2], 0, p3_12[0], p3_12[1],
                         p3_12[2], 0, pn[0], pn[1], pn[2], 0, 0, 0, 0, 1))
@@ -202,17 +183,14 @@ class Triangle(IDGenerator, TransformableContainer):
         # http://www.blackpawn.com/texts/pointinpoly/default.html
         # Compute vectors
         v0 = psub(self.p3, self.p1)
-        #v0 = self.p3.sub(self.p1)
         v1 = psub(self.p2, self.p1)
-        #v1 = self.p2.sub(self.p1)
         v2 = psub(p, self.p1)
-        #v2 = p.sub(self.p1)
         # Compute dot products
-        dot00 = pdot(v0, v0) # dot00 = v0.dot(v0)
-        dot01 = pdot(v0, v1) # dot01 = v0.dot(v1)
-        dot02 = pdot(v0, v2) # dot02 = v0.dot(v2)
-        dot11 = pdot(v1, v1) # dot11 = v1.dot(v1)
-        dot12 = pdot(v1, v2) # dot12 = v1.dot(v2)
+        dot00 = pdot(v0, v0)
+        dot01 = pdot(v0, v1)
+        dot02 = pdot(v0, v2)
+        dot11 = pdot(v1, v1)
+        dot12 = pdot(v1, v2)
         # Compute barycentric coordinates
         denom = dot00 * dot11 - dot01 * dot01
         if denom == 0:
@@ -232,11 +210,8 @@ class Triangle(IDGenerator, TransformableContainer):
             sub.append(self)
         else:
             p4 = pdiv(padd(self.p1, self.p2), 2)
-            #p4 = self.p1.add(self.p2).div(2)
             p5 = pdiv(padd(self.p2, self.p3), 2)
-            #p5 = self.p2.add(self.p3).div(2)
             p6 = pdiv(padd(self.p3, self.p1), 2)
-            #p6 = self.p3.add(self.p1).div(2)
             sub += Triangle(self.p1, p4, p6).subdivide(depth - 1)
             sub += Triangle(p6, p5, self.p3).subdivide(depth - 1)
             sub += Triangle(p6, p4, p5).subdivide(depth - 1)
@@ -245,6 +220,5 @@ class Triangle(IDGenerator, TransformableContainer):
 
     def get_area(self):
         cross = pcross(psub(self.p2, self.p1), psub(self.p3, self.p1))
-        #cross = self.p2.sub(self.p1).cross(self.p3.sub(self.p1))
         return pnorm(cross) / 2
 

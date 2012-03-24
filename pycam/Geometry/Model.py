@@ -980,7 +980,6 @@ class PolygonGroup(object):
         line_distances = []
         for line in self.lines:
             cross_product = pcross(line.dir, psub(point, line.p1))
-            #cross_product = line.dir.cross(point.sub(line.p1))
             if cross_product[2] > 0:
                 close_points = []
                 close_point = line.closest_point(point)
@@ -991,9 +990,7 @@ class PolygonGroup(object):
                     close_points.append(close_point)
                 for p in close_points:
                     direction = psub(point, p)
-                    #direction = point.sub(p)
                     dist = pnorm(direction)
-                    #dist = direction.norm
                     line_distances.append(dist)
             elif cross_product.z == 0:
                 # the point is on the line
@@ -1071,7 +1068,6 @@ class Rectangle(IDGenerator, TransformableContainer):
             orders = ((p1, p2, p3, p4), (p1, p2, p4, p3), (p1, p3, p2, p4),
                     (p1, p3, p4, p2), (p1, p4, p2, p3), (p1, p4, p3, p2))
             for order in orders:
-                #if abs(order[0].sub(order[2]).norm - order[1].sub(order[3]).norm) < epsilon:
                 if abs(pnorm(psub(order[0], order[2])) - pnorm(psub(order[1], order[3]))) < epsilon:
                     t1 = Triangle(order[0], order[1], order[2])
                     t2 = Triangle(order[2], order[3], order[0])
@@ -1101,10 +1097,6 @@ class Rectangle(IDGenerator, TransformableContainer):
         return (self.p1, self.p2, self.p3, self.p4)
 
     def next(self):
-        #yield self.p1
-        #yield self.p2
-        #yield self.p3
-        #yield self.p4
         yield "p1"
         yield "p2"
         yield "p3"
@@ -1141,7 +1133,6 @@ class Rectangle(IDGenerator, TransformableContainer):
             log.error("Invalid number of vertices: %s" % unique_vertices)
             return None
         if abs(pnorm(psub(unique_verticies[0], unique_verticies[1])) - pnorm(psub(shared_vertices[0], shared_vertices[1]))) < epsilon:
-        #if abs(unique_vertices[0].sub(unique_vertices[1]).norm - shared_vertices[0].sub(shared_vertices[1]).norm) < epsilon:
             try:
                 return Rectangle(unique_vertices[0], unique_vertices[1],
                         shared_vertices[0], shared_vertices[1],

@@ -54,18 +54,15 @@ class Line(IDGenerator, TransformableContainer):
     def vector(self):
         if self._vector is None:
             self._vector = psub(self.p2, self.p1)
-            #self._vector = self.p2.sub(self.p1)
         return self._vector
 
     @property
     def dir(self):
         return pnormalized(self.vector)
-        #return self.vector.normalized()
 
     @property
     def len(self):
         return pnorm(self.vector)
-        #return self.vector.norm
 
     @property
     def minx(self):
@@ -125,8 +122,6 @@ class Line(IDGenerator, TransformableContainer):
         
     def next(self):
         yield "p1"
-        #yield self.p1
-        #yield lambda x: self.p2 = x
         yield "p2"
 
     def get_children_count(self):
@@ -147,13 +142,11 @@ class Line(IDGenerator, TransformableContainer):
 
     def point_with_length_multiply(self, l):
         return padd(self.p1, pmul(self.dir, l*self.len))
-        #return self.p1.add(self.dir.mul(l*self.len))
 
     def get_length_line(self, length):
         """ return a line with the same direction and the specified length
         """
         return Line(self.p1, padd(self.p1, pmul(self.dir, length)))
-        #return Line(self.p1, self.p1.add(self.dir.mul(length)))
 
     def closest_point(self, p):
         v = self.dir
@@ -161,13 +154,10 @@ class Line(IDGenerator, TransformableContainer):
             # for zero-length lines
             return self.p1
         l = pdot(self.p1, v) - pdot(p, v)
-        #l = self.p1.dot(v) - p.dot(v)
         return psub(self.p1, pmul(v, l))
-        #return self.p1.sub(v.mul(l))
 
     def dist_to_point_sq(self, p):
         return pnormsq(psub(p, self.closes_point(p)))
-        #return p.sub(self.closest_point(p)).normsq
 
     def dist_to_point(self, p):
         return sqrt(self.dist_to_point_sq(p))
@@ -178,9 +168,7 @@ class Line(IDGenerator, TransformableContainer):
             return True
             
         dir1 = pnormalized(psub(p, self.p1))
-        #dir1 = p.sub(self.p1).normalized()
         dir2 = pnormalized(psub(self.p2, p))
-        #dir2 = self.p2.sub(p).normalized()
         # True if the two parts of the line have the same direction or if the
         # point is self.p1 or self.p2.
         return (dir1 == dir2 == self.dir) or (dir1 is None) or (dir2 is None)
@@ -210,19 +198,14 @@ class Line(IDGenerator, TransformableContainer):
         """
         x1, x2, x3, x4 = self.p1, self.p2, line.p1, line.p2
         a = psub(x2, x1)
-        #a = x2.sub(x1)
         b = psub(x4, x3)
-        #b = x4.sub(x3)
         c = psub(x3, x1)
-        #c = x3.sub(x1)
         # see http://mathworld.wolfram.com/Line-LineIntersection.html (24)
         try:
             factor = pdot(pcross(c, b), pcross(a, b)) / pnormsq(pcross(a, b))
-            #factor = c.cross(b).dot(a.cross(b)) / a.cross(b).normsq
         except ZeroDivisionError:
             # lines are parallel
             # check if they are _one_ line
-            #if a.cross(c).norm != 0:
             if pnorm(pcross(a,c)) != 0:
                 # the lines are parallel with a distance
                 return None, None
@@ -232,7 +215,6 @@ class Line(IDGenerator, TransformableContainer):
                 candidates.append((x3, pnorm(c) / pnorm(a)))
             elif self.is_point_inside(x4):
                 candidates.append((x4, pnorm(psub(line.p2, self.p1)) / pnorm(a)))
-                #candidates.append((x4, line.p2.sub(self.p1).norm / a.norm))
             elif line.is_point_inside(x1):
                 candidates.append((x1, 0))
             elif line.is_point_inside(x2):
@@ -244,7 +226,6 @@ class Line(IDGenerator, TransformableContainer):
             return candidates[0]
         if infinite_lines or (-epsilon <= factor <= 1 + epsilon):
             intersection = padd(x1, pmul(a, factor))
-            #intersection = x1.add(a.mul(factor))
             # check if the intersection is between x3 and x4
             if infinite_lines:
                 return intersection, factor
