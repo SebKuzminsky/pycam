@@ -151,10 +151,8 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
             attribs = unpack("<H", f.read(2)) 
             
             dotcross = pdot(n, pcross(psub(p2, p1), psub(p3, p1)))
-            #dotcross = n.dot(p2.sub(p1).cross(p3.sub(p1)))
             if a1 == a2 == a3 == 0:
                 dotcross = pcross(psub(p2, p1), psub(p3,p1))[2]
-                #dotcross = p2.sub(p1).cross(p3.sub(p1)).z
                 n = None
 
             if dotcross > 0:
@@ -245,7 +243,6 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
                     continue
                 if not n:
                     n = pnormalized(pcross(psub(p2, p1), psub(p3, p1)))
-                    #n = p2.sub(p1).cross(p3.sub(p1)).normalized()
 
                 # validate the normal
                 # The three vertices of a triangle in an STL file are supposed
@@ -257,7 +254,6 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
                 else:
                     # make sure the points are in ClockWise order
                     dotcross = pdot(n, pcross(psub(p2,p1), psub(p3, p1)))
-                    #dotcross = n.dot(p2.sub(p1).cross(p3.sub(p1)))
                 if dotcross > 0:
                     # Triangle expects the vertices in clockwise order
                     t = Triangle(p1, p3, p2, n)
