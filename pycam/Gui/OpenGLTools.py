@@ -55,12 +55,9 @@ def keep_matrix(func):
 
 @keep_matrix
 def draw_direction_cone(p1, p2, position=0.5, precision=12, size=0.1):
-    # convert p1 and p2 from list/tuple to Point
     distance = psub(p2, p1)
-    #distance = p2.sub(p1)
     length = pnorm(distance)
     direction = pnormalized(distance)
-    #direction = distance.normalized()
     if direction is None:
         # zero-length line
         return
@@ -72,8 +69,6 @@ def draw_direction_cone(p1, p2, position=0.5, precision=12, size=0.1):
     # rotate the cone according to the line direction
     # The cross product is a good rotation axis.
     cross = pcross(direction, (0, 0, -1))
-    #cross = direction.cross(Point(0, 0, -1))
-    #if cross.norm != 0:
     if pnorm(cross) != 0:
         # The line direction is not in line with the z axis.
         try:
