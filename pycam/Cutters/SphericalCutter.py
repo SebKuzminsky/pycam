@@ -147,12 +147,11 @@ class SphericalCutter(BaseCutter):
         if start is None:
             start = self.location
         (ccp, cp, d) = intersect_sphere_plane(
-                padd(psub(start, self.location), self.center), #start.sub(self.location).add(self.center), 
+                padd(psub(start, self.location), self.center), 
                 self.distance_radius, direction, triangle)
         # offset intersection
         if ccp:
             cl = padd(cp, psub(start, ccp))
-            #cl = cp.add(start.sub(ccp))
             return (cl, ccp, cp, d)
         return (None, None, None, INFINITE)
 
@@ -167,7 +166,7 @@ class SphericalCutter(BaseCutter):
         if start is None:
             start = self.location
         (ccp, cp, l) = intersect_sphere_point(
-                padd(psub(start, self.location), self.center), #start.sub(self.location).add(self.center), 
+                padd(psub(start, self.location), self.center),
                 self.distance_radius, self.distance_radiussq, direction, point)
         # offset intersection
         cl = None
@@ -184,12 +183,11 @@ class SphericalCutter(BaseCutter):
         if start is None:
             start = self.location
         (ccp, cp, l) = intersect_sphere_line(
-                padd(psub(start, self.location), self.center), # start.sub(self.location).add(self.center),
+                padd(psub(start, self.location), self.center),
                 self.distance_radius, self.distance_radiussq, direction, edge)
         # offset intersection
         if ccp:
             cl = psub(cp, psub(ccp, start))
-            #cl = cp.sub(ccp.sub(start))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
@@ -199,9 +197,7 @@ class SphericalCutter(BaseCutter):
         if cp:
             # check if the contact point is between the endpoints
             d = psub(edge.p2, edge.p1)
-            #d = edge.p2.sub(edge.p1)
             m = pdot(psub(cp, edge.p1), d)
-            #m = cp.sub(edge.p1).dot(d)
             if (m < -epsilon) or (m > pnormsq(d) + epsilon):
                 return (None, INFINITE, None)
         return (cl, l, cp)

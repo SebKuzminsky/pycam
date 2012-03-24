@@ -138,11 +138,10 @@ class CylindricalCutter(BaseCutter):
         if start is None:
             start = self.location
         (ccp, cp, d) = intersect_circle_plane(
-                padd(psub(start, self.location), self.center), #start.sub(self.location).add(self.center), 
+                padd(psub(start, self.location), self.center), 
                 self.distance_radius, direction, triangle)
         if ccp and cp:
             cl = padd(cp, psub(start, ccp))
-            #cl = cp.add(start.sub(ccp))
             return (cl, ccp, cp, d)
         return (None, None, None, INFINITE)
 
@@ -150,11 +149,10 @@ class CylindricalCutter(BaseCutter):
         if start is None:
             start = self.location
         (ccp, cp, l) = intersect_circle_point(
-                padd(psub(start, self.location), self.center), #start.sub(self.location).add(self.center), 
+                padd(psub(start, self.location), self.center),
                 self.axis, self.distance_radius, self.distance_radiussq, direction, point)
         if ccp:
             cl = padd(cp, psub(start, ccp))
-            #cl = cp.add(start.sub(ccp))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
@@ -162,11 +160,10 @@ class CylindricalCutter(BaseCutter):
         if start is None:
             start = self.location
         (ccp, cp, l) = intersect_circle_line(
-                padd(psub(start, self.location), self.center), #start.sub(self.location).add(self.center), 
+                padd(psub(start, self.location), self.center),
                 self.axis, self.distance_radius, self.distance_radiussq, direction, edge)
         if ccp:
             cl = padd(cp, psub(start, ccp))
-            #cl = cp.add(start.sub(ccp))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
@@ -181,8 +178,6 @@ class CylindricalCutter(BaseCutter):
             cl = cl_t
             cp = cp_t
         if cl and (direction[0] == 0) and (direction[1] == 0):
-            #print 'circle_triangle:'
-            #print 'cl is:', cl, 'd is:', d, 'cp is:', cp
             return (cl, d, cp)
         (cl_e1, d_e1, cp_e1) = self.intersect_circle_edge(direction,
                 triangle.e1, start=start)
@@ -194,20 +189,15 @@ class CylindricalCutter(BaseCutter):
             d = d_e1
             cl = cl_e1
             cp = cp_e1
-            #print 'circle_edge e1:'
         if d_e2 < d:
             d = d_e2
             cl = cl_e2
             cp = cp_e2
-            #print 'circle_edge e2:'
         if d_e3 < d:
             d = d_e3
             cl = cl_e3
             cp = cp_e3
-            #print 'circle_edge e3:'
         if cl and (direction[0] == 0) and (direction[1] == 0):
-            #print 'circle_edge:'
-            #print 'cl is:', cl, 'd is:', d, 'cp is:', cp
             return (cl, d, cp)
         (cl_p1, d_p1, cp_p1) = self.intersect_circle_vertex(direction,
                 triangle.p1, start=start)
@@ -219,20 +209,15 @@ class CylindricalCutter(BaseCutter):
             d = d_p1
             cl = cl_p1
             cp = cp_p1
-            #print 'circle vertex p1:'
         if d_p2 < d:
             d = d_p2
             cl = cl_p2
             cp = cp_p2
-            #print 'circle vertex p2:'
         if d_p3 < d:
             d = d_p3
             cl = cl_p3
             cp = cp_p3
-            #print 'circle vertex p3:'
         if cl and (direction[0] == 0) and (direction[1] == 0):
-            #print 'circle vertex:'
-            #print 'cl is:', cl, 'd is:', d, 'cp is:', cp
             return (cl, d, cp)
         if (direction[0] != 0) or (direction[1] != 0):
             (cl_p1, d_p1, cp_p1) = self.intersect_cylinder_vertex(direction,
@@ -245,17 +230,14 @@ class CylindricalCutter(BaseCutter):
                 d = d_p1
                 cl = cl_p1
                 cp = cp_p1
-                #print 'cyl vertex p1:'
             if d_p2 < d:
                 d = d_p2
                 cl = cl_p2
                 cp = cp_p2
-                #print 'cyl vertex p2:'
             if d_p3 < d:
                 d = d_p3
                 cl = cl_p3
                 cp = cp_p3
-                #print 'cyl vertex p3:'
             (cl_e1, d_e1, cp_e1) = self.intersect_cylinder_edge(direction,
                     triangle.e1, start=start)
             (cl_e2, d_e2, cp_e2) = self.intersect_cylinder_edge(direction,
@@ -266,18 +248,13 @@ class CylindricalCutter(BaseCutter):
                 d = d_e1
                 cl = cl_e1
                 cp = cp_e1
-                #print 'cyl edge e1:'
             if d_e2 < d:
                 d = d_e2
                 cl = cl_e2
                 cp = cp_e2
-                #print 'cyl edge e2:'
             if d_e3 < d:
                 d = d_e3
                 cl = cl_e3
                 cp = cp_e3
-                #print 'cyl edge e3:'
-        #print 'cyl:'
-        #print 'cl is:', cl, 'd is:', d, 'cp is:', cp
         return (cl, d, cp)
 

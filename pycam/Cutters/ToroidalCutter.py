@@ -119,12 +119,11 @@ class ToroidalCutter(BaseCutter):
         if start is None:
             start = self.location
         (ccp, cp, l) = intersect_torus_plane(
-                padd(psub(start, self.location), self.center), # start.sub(self.location).add(self.center), 
+                padd(psub(start, self.location), self.center),
                 self.axis, self.distance_majorradius, self.distance_minorradius, direction,
                 triangle)
         if cp:
             cl = padd(cp, psub(start, ccp))
-            #cl = cp.add(start.sub(ccp))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
@@ -139,13 +138,12 @@ class ToroidalCutter(BaseCutter):
         if start is None:
             start = self.location
         (ccp, cp, l) = intersect_torus_point(
-                padd(psub(start, self.location), self.center), # start.sub(self.location).add(self.center), 
+                padd(psub(start, self.location), self.center),
                 self.axis, self.distance_majorradius, self.distance_minorradius,
                 self.distance_majorradiussq, self.distance_minorradiussq,
                 direction, point)
         if ccp:
             cl = padd(point, psub(start, ccp))
-            #cl = point.add(start.sub(ccp))
             return (cl, ccp, point, l)
         return (None, None, None, INFINITE)
 
@@ -197,12 +195,11 @@ class ToroidalCutter(BaseCutter):
         if start is None:
             start = self.location
         (ccp, cp, l) = intersect_cylinder_point(
-                padd(psub(start, self.location), self.center), # start.sub(self.location).add(self.center), 
+                padd(psub(start, self.location), self.center), 
                 self.axis, self.distance_radius, self.distance_radiussq, direction, point)
         # offset intersection
         if ccp:
             cl = padd(start, pmul(direction, l))
-            #cl = start.add(direction.mul(l))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
@@ -210,7 +207,7 @@ class ToroidalCutter(BaseCutter):
         if start is None:
             start = self.location
         (ccp, cp, l) = intersect_cylinder_line(
-                padd(psub(start, self.location), self.center), # start.sub(self.location).add(self.center), 
+                padd(psub(start, self.location), self.center), 
                 self.axis, self.distance_radius, self.distance_radiussq, direction, edge)
         # offset intersection
         if ccp:
@@ -226,7 +223,6 @@ class ToroidalCutter(BaseCutter):
             return (None, INFINITE, None)
         if ccp:
             m = pdot(psub(cp, edge.p1), edge.dir)
-            #m = cp.sub(edge.p1).dot(edge.dir)
             if (m < -epsilon) or (m > edge.len + epsilon):
                 return (None, INFINITE, None)
         return (cl, l, cp)
@@ -239,7 +235,6 @@ class ToroidalCutter(BaseCutter):
         # offset intersection
         if ccp:
             cl = psub(cp, psub(ccp, start))
-            #cl = cp.sub(ccp.sub(start))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
@@ -251,7 +246,6 @@ class ToroidalCutter(BaseCutter):
                 direction, point)
         if ccp:
             cl = psub(cp, psub(ccp, start))
-            #cl = cp.sub(ccp.sub(start))
             return (cl, ccp, point, l)
         return (None, None, None, INFINITE)
 
@@ -263,7 +257,6 @@ class ToroidalCutter(BaseCutter):
                 direction, edge)
         if ccp:
             cl = psub(cp, psub(ccp, start))
-            #cl = cp.sub(ccp.sub(start))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 

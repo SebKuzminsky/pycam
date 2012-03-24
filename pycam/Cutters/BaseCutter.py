@@ -151,7 +151,6 @@ class BaseCutter(IDGenerator):
         if cp:
             # check if the contact point is between the endpoints
             m = pdot(psub(cp, edge.p1), edge.dir)
-            #m = cp.sub(edge.p1).dot(edge.dir)
             if (m < -epsilon) or (m > edge.len + epsilon):
                 return (None, INFINITE, cp)
         return (cl, l, cp)
@@ -160,7 +159,7 @@ class BaseCutter(IDGenerator):
         if start is None:
             start = self.location
         (ccp, cp, l) = intersect_cylinder_point(
-                padd(psub(start, self.location), self.center), #start.sub(self.location).add(self.center)
+                padd(psub(start, self.location), self.center),
                 self.axis, self.distance_radius, self.distance_radiussq, direction, point)
         # offset intersection
         if ccp:
@@ -173,7 +172,6 @@ class BaseCutter(IDGenerator):
             start = self.location
         (cl, ccp, cp, l) = self.intersect_cylinder_point(direction, point,
                 start=start)
-        #if ccp and ccp[2] < start.sub(self.location).add(self.center)[2]:
         if ccp and ccp[2] < padd(psub(start, self.location), self.center)[2]:
             return (None, INFINITE, None)
         return (cl, l, cp)
@@ -182,12 +180,11 @@ class BaseCutter(IDGenerator):
         if start is None:
             start = self.location
         (ccp, cp, l) = intersect_cylinder_line(
-                padd(psub(start, self.location), self.center), #start.sub(self.location).add(self.center), 
+                padd(psub(start, self.location), self.center),
                 self.axis, self.distance_radius, self.distance_radiussq, direction, edge)
         # offset intersection
         if ccp:
             cl = padd(start, psub(cp, ccp))
-            #cl = start.add(cp.sub(ccp))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 
@@ -199,10 +196,8 @@ class BaseCutter(IDGenerator):
         if not ccp:
             return (None, INFINITE, None)
         m = pdot(psub(cp, edge.p1), edge.dir)
-        #m = cp.sub(edge.p1).dot(edge.dir)
         if (m < -epsilon) or (m > edge.len + epsilon):
             return (None, INFINITE, None)
-        #if ccp.z < start.sub(self.location).add(self.center)[2]:
         if ccp[2] < padd(psub(start, self.location), self.center)[2]:
             return (None, INFINITE, None)
         return (cl, l, cp)
