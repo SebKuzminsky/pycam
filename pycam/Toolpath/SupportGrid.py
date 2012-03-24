@@ -35,25 +35,15 @@ def _get_triangles_for_face(pts):
 
 def _add_cuboid_to_model(model, start, direction, height, width):
     up = pmul((0, 0, 1, 'v'), height)
-    #up = Vector(0, 0, 1).mul(height)
     ortho_dir = pnormalized(pcross(direction, up))
-    #ortho_dir = direction.cross(up).normalized()
     start1 = padd(start, pmul(ortho_dir, -width/2))
-    #start1 = start.add(ortho_dir.mul(-width/2))
     start2 = padd(start1, up)
-    #start2 = start1.add(up)
     start3 = padd(start2, pmul(ortho_dir, width))
-    #start3 = start2.add(ortho_dir.mul(width))
     start4 = psub(start3, up)
-    #start4 = start3.sub(up)
     end1 = padd(start1, direction)
-    #end1 = start1.add(direction)
     end2 = padd(start2, direction)
-    #end2 = start2.add(direction)
     end3 = padd(start3, direction)
-    #end3 = start3.add(direction)
     end4 = padd(start4, direction)
-    #end4 = start4.add(direction)
     faces = ((start1, start2, start3, start4), (start1, end1, end2, start2),
             (start2, end2, end3, start3), (start3, end3, end4, start4),
             (start4, end4, end1, start1), (end4, end3, end2, end1))
@@ -195,7 +185,6 @@ def get_support_distributed(model, z_plane, average_distance,
                 average_distance, avoid_distance)
         for pos, direction in bridges:
             _add_cuboid_to_model(result, pos, pmul(direction, length), height, thickness)
-            #_add_cuboid_to_model(result, pos, direction.mul(length), height, thickness)
     return result
 
 
@@ -207,10 +196,8 @@ class _BridgeCorner(object):
         self.position = p2
         self.direction = pnormalized(pycam.Geometry.get_bisector(p1, p2, p3, self.up_vector))
         preferred_direction = pnormalized(psub(p2, barycenter))
-        #preferred_direction = p2.sub(barycenter).normalized()
         # direction_factor: 0..1 (bigger -> better)
         direction_factor = (pdot(preferred_direction, self.direction) + 1) / 2
-        #direction_factor = (preferred_direction.dot(self.direction) + 1) / 2
         angle = pycam.Geometry.get_angle_pi(p1, p2, p3, self.up_vector, pi_factor=True)
         # angle_factor: 0..1 (bigger -> better)
         if angle > 0.5:
@@ -285,7 +272,6 @@ def _get_edge_bridges(polygon, z_plane, min_bridges, average_distance,
         avoid_distance):
     def is_near_list(point_list, point, distance):
         for p in point_list:
-            #if p.sub(point).norm <= distance:
             if pnorm(psub(p, point)) <= distance:
                 return True
         return False
@@ -320,9 +306,7 @@ def _get_edge_bridges(polygon, z_plane, min_bridges, average_distance,
             line = polygon.get_lines()[line_index]
             # calculate two alternative points on the same line
             position1 = pdiv(padd(position, line.p1), 2)
-            #position1 = position.add(line.p1).div(2)
             position2 = pdiv(padd(position, line.p2), 2)
-            #position2 = position.add(line.p2).div(2)
             if is_near_list(bridge_positions, position1, avoid_distance):
                 if is_near_list(bridge_positions, position2,
                         avoid_distance):
@@ -339,7 +323,6 @@ def _get_edge_bridges(polygon, z_plane, min_bridges, average_distance,
         # move the point to z_plane
         position = (position[0], position[1], z_plane)
         bridge_dir = pnormalized(pcross(lines[line_index].dir, polygon.plane.n))
-        #bridge_dir = lines[line_index].dir.cross(polygon.plane.n).normalized()
         result.append((position, bridge_dir))
     return result
 

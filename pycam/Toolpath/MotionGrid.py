@@ -262,13 +262,9 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width,
                 #offset = edge_vector.normalized().mul(radius)
                 if previous:
                     start = padd(start, offset)
-                    #start = start.add(offset)
                     center = padd(previous, offset)
-                    #center = previous.add(offset)
                     up_vector = pnormalized(pcross(psub(previous, center), psub(start, center)))
-                    #up_vector = previous.sub(center).cross(start.sub(center)).normalized()
                     north = padd(center, (1.0, 0.0, 0.0, 'v'))
-                    #north = center.add(Vector(1.0, 0.0, 0.0))
                     angle_start = pycam.Geometry.get_angle_pi(north, center, previous, up_vector, pi_factor=True) * 180.0
                     angle_end = pycam.Geometry.get_angle_pi(north, center, start, up_vector, pi_factor=True) * 180.0
                     # TODO: remove these exceptions based on up_vector.z (get_points_of_arc does not respect the plane, yet)
@@ -301,7 +297,6 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width,
                     steps = floatrange(0.0, line.len, inc=step_width)
                 for step in steps:
                     next_point = padd(line.p1, pmul(line.dir, step))
-                    #next_point = line.p1.add(line.dir.mul(step))
                     points.append(next_point)
             if reverse:
                 points.reverse()
@@ -346,7 +341,6 @@ def get_lines_layer(lines, z, last_z=None, step_width=None,
             # for both point pairs.
             factor = (z - line.p1[2]) / (line.p2[2] - line.p1[2])
             plane_point = padd(line.p1, pmul(line.vector, factor))
-            #plane_point = line.p1.add(line.vector.mul(factor))
             if line.p1[2] < z:
                 p1 = get_proj_point(line.p1)
                 p2 = line.p2
@@ -387,7 +381,6 @@ def get_lines_layer(lines, z, last_z=None, step_width=None,
                 steps = floatrange(0.0, line.len, inc=step_width)
             for step in steps:
                 next_point = padd(line.p1, pmul(line.dir, step))
-                #next_point = line.p1.add(line.dir.mul(step))
                 points.append(next_point)
         yield points
 

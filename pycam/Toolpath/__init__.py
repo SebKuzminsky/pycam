@@ -38,9 +38,7 @@ from itertools import groupby
 
 def _check_colinearity(p1, p2, p3):
     v1 = pnormalized(psub(p2, p1))
-    #v1 = p2.sub(p1).normalized()
     v2 = pnormalized(psub(p3, p2))
-    #v2 = p3.sub(p2).normalized()
     # compare if the normalized distances between p1-p2 and p2-p3 are equal
     return v1 == v2
 
@@ -171,12 +169,10 @@ class Toolpath(object):
                     return True
                 else:
                     distance = pnorm(psub(new_position, self.last_pos))
-                    #distance = new_position.sub(self.last_pos).norm
                     if self.moved_distance + distance > self.max_movement:
                         partial = (self.max_movement - self.moved_distance) / \
                                 distance
                         partial_dest = padd(self.last_pos, pmul(psub(new_position, self.last_pos), partial))
-                        #partial_dest = self.last_pos.add(new_position.sub(self.last_pos).mul(partial))
                         self.moves.append((partial_dest, rapid))
                         self.last_pos = partial_dest
                         # we are finished
@@ -203,7 +199,6 @@ class Toolpath(object):
             if ((abs(p_last[0] - p_next[0]) > epsilon) or (abs(p_last[1] - p_next[1]) > epsilon)):
                 # Draw the connection between the last and the next path.
                 # Respect the safety height.
-                #if (abs(p_last[2] - p_next[2]) > epsilon) or (p_last.sub(p_next).norm > self._max_safe_distance + epsilon):
                 if (abs(p_last[2] - p_next[2]) > epsilon) or (pnorm(psub(p_last, p_next)) > self._max_safe_distance + epsilon):
                     # The distance between these two points is too far.
                     # This condition helps to prevent moves up/down for
@@ -357,7 +352,6 @@ class Toolpath(object):
         for new_pos, rapid in self.get_moves(safety_height):
             if not current_position is None:
                 result += pnorm(psub(new_pos, current_position)) / self._feedrate
-                #result += new_pos.sub(current_position).norm / self._feedrate
             current_position = new_pos
         return result
 
@@ -369,7 +363,6 @@ class Toolpath(object):
         for new_pos, rapid in self.get_moves(safety_height):
             if not current_position is None:
                 result += pnorm(psub(new_pos, current_position))
-                #result += new_pos.sub(current_position).norm
             current_position = new_pos
         return result
 
