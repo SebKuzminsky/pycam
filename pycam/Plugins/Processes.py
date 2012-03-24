@@ -38,7 +38,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             process_frame = self.gui.get_object("ProcessBox")
             process_frame.unparent()
             self._gtk_handlers = []
-            self.core.register_ui("main", "Processs", process_frame, weight=20)
+            self.core.register_ui("main", "Processes", process_frame, weight=20)
             self._modelview = self.gui.get_object("ProcessEditorTable")
             for action, obj_name in ((self.ACTION_UP, "ProcessMoveUp"),
                     (self.ACTION_DOWN, "ProcessMoveDown"),
