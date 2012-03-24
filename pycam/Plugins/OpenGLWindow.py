@@ -816,11 +816,9 @@ class Camera(object):
             return
         max_dim = max([high - low for low, high in low_high])
         distv = pnormalized((v["distance"][0], v["distance"][1], v["distance"][2]))
-        #distv = Point(v["distance"][0], v["distance"][1],v["distance"][2]).normalized()
         # The multiplier "1.25" is based on experiments. 1.414 (sqrt(2)) should
         # be roughly sufficient for showing the diagonal of any model.
         distv = pmul(distv, (max_dim * 1.25) / number(math.sin(v["fovy"] / 2)))
-        #distv = distv.mul((max_dim * 1.25) / number(math.sin(v["fovy"] / 2)))
         self.view["distance"] = distv
         # Adjust the "far" distance for the camera to make sure, that huge
         # models (e.g. x=1000) are still visible.
@@ -979,8 +977,6 @@ class Camera(object):
         distv = self.view["distance"]
         distv = pnormalized((distv[0], distv[1], distv[2]))
         factors_x = pnormalized(pcross(distv, (v_up[0], v_up[1], v_up[2])))
-        #factors_x = distv.cross(Point(v_up[0], v_up[1], v_up[2])).normalized()
-        #factors_x = (factors_x.x, factors_x.y, factors_x.z)
         return (factors_x, factors_y)
 
 
