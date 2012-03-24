@@ -38,7 +38,6 @@ class ContourCutter(pycam.PathProcessors.BasePathProcessor):
     def append(self, point):
         # Sort the points in positive x/y direction - otherwise the
         # PolygonExtractor breaks.
-        #if self.points and (point.sub(self.points[0]).dot(self.__forward) < 0):
         if self.points and (pdot(psub(point, self.points[0]), self.__forward) < 0):
             self.points.insert(0, point)
         else:
