@@ -65,11 +65,8 @@ def get_free_paths_triangles(models, cutter, p1, p2, return_triangles=False):
         return all_results
 
     backward = pnormalized(psub(p1, p2))
-    #backward = p1.sub(p2).normalized()
     forward = pnormalized(psub(p2, p1))
-    #forward = p2.sub(p1).normalized()
     xyz_dist = pnorm(psub(p2, p1))
-    #xyz_dist = p2.sub(p1).norm
 
     minx = min(p1[0], p2[0])
     maxx = max(p1[0], p2[0])
@@ -255,9 +252,7 @@ def get_max_height_triangles(model, cutter, x, y, minz, maxz):
 
 def _check_deviance_of_adjacent_points(p1, p2, p3, min_distance):
     straight = psub(p3, p1)
-    #straight = p3.sub(p1)
     added = pnorm(psub(p2, p1)) + pnorm(psub(p3, p2))
-    #added = p2.sub(p1).norm + p3.sub(p2).norm
     # compare only the x/y distance of p1 and p3 with min_distance
     if straight[0] ** 2 + straight[1] ** 2 < min_distance ** 2:
         # the points are too close together

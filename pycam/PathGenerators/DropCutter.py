@@ -26,8 +26,7 @@ from pycam.Utils import ProgressCounter
 from pycam.Utils.threading import run_in_parallel
 import pycam.Geometry.Model
 import pycam.Utils.log
-#import pprint
-#pp = pprint.PrettyPrinter(indent=4)
+
 
 log = pycam.Utils.log.get_logger()
 
