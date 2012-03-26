@@ -983,7 +983,6 @@ class Polygon(TransformableContainer):
             self_is_outer = self.is_outer()
             groups = []
             for lines in cleaned_line_groups:
-                log.info("run 3 len: " + str(len(lines)) + " " + str(lines))
                 if callback and callback():
                     return None
                 group = Polygon(self.plane)
