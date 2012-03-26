@@ -227,7 +227,7 @@ class PolygonExtractor(object):
 
             print "active points: ",
             for point in scanline:
-                print "%d(%g,%g)" % (point.id, point[0], point.[1]),
+                print "%d(%g,%g)" % (point.id, point[0], point[1]),
             print
 
         prev_point = Iterator(self.prev_line)
