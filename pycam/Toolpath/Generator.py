@@ -159,7 +159,7 @@ def generate_toolpath(model, tool_settings=None,
             warning = "The contour model contains colliding line groups. " + \
                     "This can cause problems with an engraving offset.\n" + \
                     "A collision was detected at (%.2f, %.2f, %.2f)." % \
-                    (result.x, result.y, result.z)
+                    (result[0], result[1], result[2])
             log.warning(warning)
         else:
             # no collisions and no user interruption
