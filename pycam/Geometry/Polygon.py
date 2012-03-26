@@ -895,7 +895,7 @@ class Polygon(TransformableContainer):
                                 if not index1 + 1 in group_starts:
                                     group_starts.append(index1 + 1)
                                 # don't update index2 -> maybe there are other hits
-                            elif intersection and (intersection == line1.p1):
+                            elif intersection and (pnorm(psub(intersection, line1.p1)) < epsilon):
                                 if not index1 in group_starts:
                                     group_starts.append(index1)
                                 index2 += 1
@@ -964,9 +964,9 @@ class Polygon(TransformableContainer):
         for index in range(len(self._points)):
             points.append(get_shifted_vertex(index, offset))
         new_lines = []
-        for index in range(len(points)):
+        for index in range(len(points) - 1):
             p1 = points[index]
-            p2 = points[(index + 1) % len(points)]
+            p2 = points[(index + 1)]
             new_lines.append(Line(p1, p2))
         if callback and callback():
             return None
@@ -983,26 +983,13 @@ class Polygon(TransformableContainer):
             self_is_outer = self.is_outer()
             groups = []
             for lines in cleaned_line_groups:
+                log.info("run 3 len: " + str(len(lines)) + " " + str(lines))
                 if callback and callback():
                     return None
                 group = Polygon(self.plane)
                 for line in lines:
                     group.append(line)
-                if group.is_outer() != self_is_outer:
-                    # We ignore groups that changed the direction. These
-                    # parts of the original group are flipped due to the
-                    # offset.
-                    log.debug("Ignoring reversed polygon: %s / %s" % \
-                            (self.get_area(), group.get_area()))
-                    continue
-                # Remove polygons that should be inside the original,
-                # but due to float inaccuracies they are not.
-                if ((self.is_outer() and (offset < 0)) \
-                        or (not self.is_outer() and (offset > 0))) \
-                        and (not self.is_polygon_inside(group)):
-                    log.debug("Ignoring inaccurate polygon: %s / %s" \
-                            % (self.get_area(), group.get_area()))
-                    continue
+
                 groups.append(group)
             if not groups:
                 log.debug("Skipping offset polygon: toggled polygon removed")
