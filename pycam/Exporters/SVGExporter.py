@@ -87,7 +87,7 @@ class SVGExporter(object):
         self.output.write(l)
         
     def AddPoint(self, p):
-        self.AddDot(p.x, p.y)
+        self.AddDot(p[0], p[1])
 
     def AddPath(self, path):
         self.AddLines(path.points)
@@ -100,7 +100,7 @@ class SVGExporter(object):
                 l += "M "
             else:
                 l += " L "
-            l += "%.8f %.8f" % (p.x, -p.y)
+            l += "%.8f %.8f" % (p[0], -p[1])
         l += "'/>\n"
         self.output.write(l)
 

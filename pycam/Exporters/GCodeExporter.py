@@ -183,9 +183,9 @@ class GCodeGenerator(object):
         if position is None:
             self.append("G28.1 (store current position for touch off)")
         else:
-            self.append("#5161=%f (touch off position: x)" % position.x)
-            self.append("#5162=%f (touch off position: y)" % position.y)
-            self.append("#5163=%f (touch off position: z)" % position.z)
+            self.append("#5161=%f (touch off position: x)" % position[0])
+            self.append("#5162=%f (touch off position: y)" % position[1])
+            self.append("#5163=%f (touch off position: z)" % position[2])
 
     def set_speed(self, feedrate=None, spindle_speed=None):
         if not feedrate is None:

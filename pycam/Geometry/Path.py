@@ -33,7 +33,7 @@ try:
     import INVALID_IMPORT
     from collections import namedtuple
     tuple_point = namedtuple("TuplePoint", "x y z")
-    get_point_object = lambda point: tuple_point(point.x, point.y, point.z)
+    get_point_object = lambda point: tuple_point(point[0], point[1], point[2])
 except ImportError:
     # dummy for python < v2.6 (consumes more memory)
     get_point_object = lambda point: point
@@ -59,7 +59,7 @@ class Path(IDGenerator):
                 first = False
             else:
                 text += "-"
-            text += "%d(%g,%g,%g)" % (point.id, point.x, point.y, point.z)
+            text += "%d(%g,%g,%g)" % (id(point), point[0], point[1], point[2])
         return text
 
     def insert(self, index, point):

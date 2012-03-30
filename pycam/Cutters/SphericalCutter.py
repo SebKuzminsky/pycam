@@ -171,7 +171,7 @@ class SphericalCutter(BaseCutter):
         # offset intersection
         cl = None
         if cp:
-            cl = start.add(direction.mul(l))
+            cl = padd(start, pmul(direction, l))
         return (cl, ccp, cp, l)
 
     def intersect_sphere_vertex(self, direction, point, start=None):

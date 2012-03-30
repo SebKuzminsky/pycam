@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam import VERSION
+from pycam.Geometry.PointUtils import pnormalized
 import datetime
 import os
 
@@ -50,13 +51,13 @@ class STLExporter(object):
         yield """solid "%s"; Produced by %s (v%s), %s""" \
                 % (self.name, self.created_by, VERSION, date)
         for triangle in self.model.triangles():
-            norm = triangle.normal.normalized()
-            yield "facet normal %f %f %f" % (norm.x, norm.y, norm.z)
+            norm = pnormalized(triangle.normal)
+            yield "facet normal %f %f %f" % (norm[0], norm[1], norm[2])
             yield "  outer loop"
             # Triangle vertices are stored in clockwise order - thus we need
             # to reverse the order (STL expects counter-clockwise orientation).
             for point in (triangle.p1, triangle.p3, triangle.p2):
-                yield "    vertex %f %f %f" % (point.x, point.y, point.z)
+                yield "    vertex %f %f %f" % (point[0], point[1], point[2])
             yield "  endloop"
             yield "endfacet"
         yield "endsolid"

@@ -212,7 +212,6 @@ class ToroidalCutter(BaseCutter):
         # offset intersection
         if ccp:
             cl = padd(start, psub(cp, ccp))
-            #cl = start.add(cp.sub(ccp))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 

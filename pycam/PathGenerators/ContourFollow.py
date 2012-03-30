@@ -455,7 +455,7 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
                                 edges.append(Line(p1, p2))
                     edges.sort(key=lambda x: x.len)
                     edge = edges[-1]
-                    if edge.dir.cross(triangle.normal).dot(up_vector) < 0:
+                    if pdot(pcross(edge.dir, triangle.normal), up_vector) < 0:
                         outer_edges = [Line(edge.p2, edge.p1)]
                     else:
                         outer_edges = [edge]
@@ -466,7 +466,7 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
     max_length = sqrt(x_dim ** 2 + y_dim ** 2 + z_dim ** 2)
     result = []
     for edge in outer_edges:
-        direction = up_vector.cross(edge.dir).normalized()
+        direction = pnormalized(up_vector.cross(edge.dir))
         if direction is None:
             continue
         direction = pmul(direction, max_length)
@@ -516,9 +516,9 @@ def get_shifted_waterline(up_vector, waterline, cutter_location):
     if offset < epsilon:
         return wl_proj
     # shift both ends of the waterline towards the cutter location
-    shift = cutter_location.sub(wl_proj.closest_point(cutter_location))
+    shift = psub(cutter_location, wl_proj.closest_point(cutter_location))
     # increase the shift width slightly to avoid "touch" collisions
-    shift = shift.mul(1.0 + epsilon)
-    shifted_waterline = Line(wl_proj.p1.add(shift), wl_proj.p2.add(shift))
+    shift = pmul(shift, 1.0 + epsilon)
+    shifted_waterline = Line(padd(wl_proj.p1, shift), padd(wl_proj.p2, shift))
     return shifted_waterline
 

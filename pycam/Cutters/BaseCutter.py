@@ -163,7 +163,7 @@ class BaseCutter(IDGenerator):
                 self.axis, self.distance_radius, self.distance_radiussq, direction, point)
         # offset intersection
         if ccp:
-            cl = cp.add(start.sub(ccp))
+            cl = padd(start, psub(cp, ccp))
             return (cl, ccp, cp, l)
         return (None, None, None, INFINITE)
 

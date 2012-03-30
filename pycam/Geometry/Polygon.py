@@ -1236,7 +1236,7 @@ class Polygon(TransformableContainer):
     def get_plane_projection(self, plane):
         if plane == self.plane:
             return self
-        elif plane.n.dot(self.plane.n) == 0:
+        elif pdot(plane.n, self.plane.n) == 0:
             log.warn("Polygon projection onto plane: orthogonal projection " \
                     + "is not possible")
             return None
@@ -1247,7 +1247,7 @@ class Polygon(TransformableContainer):
                 p2 = plane.get_point_projection(line.p2)
                 result.append(Line(p1, p2))
             # check if the projection would revert the direction of the polygon
-            if plane.n.dot(self.plane.n) < 0:
+            if pdot(plane.n, self.plane.n) < 0:
                 result.reverse_direction()
             return result
 

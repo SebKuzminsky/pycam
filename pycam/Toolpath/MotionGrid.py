@@ -256,10 +256,8 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width,
             for index, (start, end) in enumerate(lines):
                 radius = 0.5 * min(line_distance_x, line_distance_y)
                 edge_vector = psub(end,start)
-                #edge_vector = end.sub(start)
                 # TODO: ellipse would be better than arc
                 offset = pmul(pnormalized(edge_vector), radius)
-                #offset = edge_vector.normalized().mul(radius)
                 if previous:
                     start = padd(start, offset)
                     center = padd(previous, offset)
@@ -280,7 +278,7 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width,
                         p2 = (p2_coord[0], p2_coord[1], z)
                         rounded_lines.append((p1, p2))
                 if index != len(lines) - 1:
-                    end = end.sub(offset)
+                    end = psub(end, offset)
                 previous = end
                 rounded_lines.append((start, end))
             lines = rounded_lines
