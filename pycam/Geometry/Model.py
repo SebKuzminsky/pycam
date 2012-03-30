@@ -31,7 +31,7 @@ from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Polygon import Polygon
-from pycam.Geometry.Point import Point, Vector
+from pycam.Geometry.PointUtils import *
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
 from pycam.Geometry.Matrix import TRANSFORMATIONS
 from pycam.Toolpath import Bounds
@@ -109,7 +109,7 @@ class BaseModel(IDGenerator, TransformableContainer):
         return sum([len(igroup) for igroup in self._item_groups])
 
     def next(self):
-        for item_group in self._item_groups:
+       for item_group in self._item_groups:
             for item in item_group:
                 if isinstance(item, list):
                     for subitem in item:
@@ -324,7 +324,7 @@ class Model(BaseModel):
                 # Find all groups with the same direction (see 'normal') that
                 # share at least one edge with the current triangle.
                 touch_groups = []
-                if t.normal.z == 0:
+                if t.normal[2] == 0:
                     # ignore vertical triangles
                     continue
                 for group_index, group in enumerate(groups):
@@ -359,7 +359,7 @@ class ContourModel(BaseModel):
         self.name = "contourmodel%d" % self.id
         if plane is None:
             # the default plane points upwards along the z axis
-            plane = Plane(Point(0, 0, 0), Vector(0, 0, 1))
+            plane = Plane((0, 0, 0), (0, 0, 1, 'v'))
         self._plane = plane
         self._line_groups = []
         self._item_groups.append(self._line_groups)
@@ -804,7 +804,7 @@ class PolygonGroup(object):
         self.inner = inner_list
         self.callback = callback
         self.lines = outer.get_lines()
-        self.z_level = self.lines[0].p1.z
+        self.z_level = self.lines[0].p1[2]
         for poly in inner_list:
             self.lines.extend(poly.get_lines())
 
@@ -836,7 +836,7 @@ class PolygonGroup(object):
                     # create the backside plane
                     backside_points = []
                     for p in item.get_points():
-                        backside_points.insert(0, Point(p.x, p.y, self.z_level))
+                        backside_points.insert(0, (p[0], p[1], self.z_level))
                     triangle_optimizer.append(Triangle(*backside_points))
             if self.callback and self.callback():
                 return None
@@ -873,7 +873,7 @@ class PolygonGroup(object):
             # the contour points of the model will always be at level zero
             a[2] = self.z_level
             b[2] = self.z_level
-            return Line(Point(*a), Point(*b))
+            return Line(a, b)
         valid_indices = [index for index, p in enumerate(coords)
                 if not p[2] is None]
         none_indices = [index for index, p in enumerate(coords) if p[2] is None]
@@ -891,7 +891,7 @@ class PolygonGroup(object):
                         fan_points.append(cp)
                     final_points.append(cp)
                 else:
-                    final_points.append(Point(*coords[index]))
+                    final_points.append(coords[index])
             # check if the three fan_points are in line
             if len(fan_points) == 3:
                 fan_points.sort()
@@ -905,7 +905,7 @@ class PolygonGroup(object):
                 # is hardly possible, anyway.
                 for index in range(4):
                     if index in valid_indices:
-                        final_points.append(Point(*coords[index]))
+                        final_points.append(coords[index])
                     else:
                         probe_line = get_line(index - 1, index)
                         cp = self._get_closest_line_collision(probe_line)
@@ -913,7 +913,7 @@ class PolygonGroup(object):
             else:
                 for index in range(4):
                     if index in valid_indices:
-                        final_points.append(Point(*coords[index]))
+                        final_points.append(coords[index])
                     else:
                         if ((index + 1) % 4) in valid_indices:
                             other_index = index + 1
@@ -925,7 +925,7 @@ class PolygonGroup(object):
         elif valid_count == 3:
             for index in range(4):
                 if index in valid_indices:
-                    final_points.append(Point(*coords[index]))
+                    final_points.append(coords[index])
                 else:
                     # add two points
                     for other_index in (index - 1, index + 1):
@@ -933,7 +933,7 @@ class PolygonGroup(object):
                         cp = self._get_closest_line_collision(probe_line)
                         final_points.append(cp)
         else:
-            final_points.extend([Point(*coord) for coord in coords])
+            final_points.extend(coords)
         valid_points = []
         for p in final_points:
             if not (p is None) and not (p in valid_points):
@@ -970,17 +970,17 @@ class PolygonGroup(object):
         return grid
 
     def calculate_point_height(self, x, y, func):
-        point = Point(x, y, self.outer.minz)
+        point = (x, y, self.outer.minz)
         if not self.outer.is_point_inside(point):
             return None
         for poly in self.inner:
             if poly.is_point_inside(point):
                 return None
-        point = Point(x, y, self.outer.minz)
+        point = (x, y, self.outer.minz)
         line_distances = []
         for line in self.lines:
-            cross_product = line.dir.cross(point.sub(line.p1))
-            if cross_product.z > 0:
+            cross_product = pcross(line.dir, psub(point, line.p1))
+            if cross_product[2] > 0:
                 close_points = []
                 close_point = line.closest_point(point)
                 if not line.is_point_inside(close_point):
@@ -989,8 +989,8 @@ class PolygonGroup(object):
                 else:
                     close_points.append(close_point)
                 for p in close_points:
-                    direction = point.sub(p)
-                    dist = direction.norm
+                    direction = psub(point, p)
+                    dist = pnorm(direction)
                     line_distances.append(dist)
             elif cross_product.z == 0:
                 # the point is on the line
@@ -1012,10 +1012,10 @@ class TriangleOptimizer(object):
 
     def append(self, triangle):
         # use a simple tuple instead of an object as the dict's key
-        normal_coords = triangle.normal.x, triangle.normal.y, triangle.normal.z
-        if not normal_coords in self.groups:
-            self.groups[normal_coords] = []
-        self.groups[normal_coords].append(triangle)
+        normal = triangle.normal
+        if not normal in self.groups:
+            self.groups[normal] = []
+        self.groups[normal].append(triangle)
 
     def optimize(self):
         for group in self.groups.values():
@@ -1068,7 +1068,7 @@ class Rectangle(IDGenerator, TransformableContainer):
             orders = ((p1, p2, p3, p4), (p1, p2, p4, p3), (p1, p3, p2, p4),
                     (p1, p3, p4, p2), (p1, p4, p2, p3), (p1, p4, p3, p2))
             for order in orders:
-                if abs(order[0].sub(order[2]).norm - order[1].sub(order[3]).norm) < epsilon:
+                if abs(pnorm(psub(order[0], order[2])) - pnorm(psub(order[1], order[3]))) < epsilon:
                     t1 = Triangle(order[0], order[1], order[2])
                     t2 = Triangle(order[2], order[3], order[0])
                     if t1.normal == t2.normal == normal:
@@ -1085,22 +1085,22 @@ class Rectangle(IDGenerator, TransformableContainer):
         self.reset_cache()
 
     def reset_cache(self):
-        self.maxx = max([p.x for p in self.get_points()])
-        self.minx = max([p.x for p in self.get_points()])
-        self.maxy = max([p.y for p in self.get_points()])
-        self.miny = max([p.y for p in self.get_points()])
-        self.maxz = max([p.z for p in self.get_points()])
-        self.minz = max([p.z for p in self.get_points()])
-        self.normal = Triangle(self.p1, self.p2, self.p3).normal.normalized()
+        self.maxx = max([p[0] for p in self.get_points()])
+        self.minx = max([p[0] for p in self.get_points()])
+        self.maxy = max([p[1] for p in self.get_points()])
+        self.miny = max([p[1] for p in self.get_points()])
+        self.maxz = max([p[2] for p in self.get_points()])
+        self.minz = max([p[2] for p in self.get_points()])
+        self.normal = pnormalized(Triangle(self.p1, self.p2, self.p3).normal)
 
     def get_points(self):
         return (self.p1, self.p2, self.p3, self.p4)
 
     def next(self):
-        yield self.p1
-        yield self.p2
-        yield self.p3
-        yield self.p4
+        yield "p1"
+        yield "p2"
+        yield "p3"
+        yield "p4"
 
     def __repr__(self):
         return "Rectangle%d<%s,%s,%s,%s>" % (self.id, self.p1, self.p2,
@@ -1132,8 +1132,7 @@ class Rectangle(IDGenerator, TransformableContainer):
         if len(unique_vertices) != 2:
             log.error("Invalid number of vertices: %s" % unique_vertices)
             return None
-        if abs(unique_vertices[0].sub(unique_vertices[1]).norm - \
-                shared_vertices[0].sub(shared_vertices[1]).norm) < epsilon:
+        if abs(pnorm(psub(unique_verticies[0], unique_verticies[1])) - pnorm(psub(shared_vertices[0], shared_vertices[1]))) < epsilon:
             try:
                 return Rectangle(unique_vertices[0], unique_vertices[1],
                         shared_vertices[0], shared_vertices[1],

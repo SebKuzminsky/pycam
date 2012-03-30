@@ -27,6 +27,7 @@ from pycam.Utils.threading import run_in_parallel
 import pycam.Geometry.Model
 import pycam.Utils.log
 
+
 log = pycam.Utils.log.get_logger()
 
 
@@ -52,12 +53,11 @@ class DropCutter(object):
 
         # Transfer the grid (a generator) into a list of lists and count the
         # items.
-        lines = []
         # usually there is only one layer - but an xy-grid consists of two
+        lines = []
         for layer in motion_grid:
-            for line in layer:
-                lines.append(line)
-
+            lines.extend(layer)
+		
         num_of_lines = len(lines)
         progress_counter = ProgressCounter(len(lines), draw_callback)
         current_line = 0
@@ -66,15 +66,13 @@ class DropCutter(object):
 
         args = []
         for one_grid_line in lines:
-            # simplify the data (useful for remote processing)
-            xy_coords = [(pos.x, pos.y) for pos in one_grid_line]
-            args.append((xy_coords, minz, maxz, model, cutter,
-                    self.physics))
+            args.append(([(x,y) for x,y,z in one_grid_line], minz, maxz, model, cutter, self.physics))
+            
         for points in run_in_parallel(_process_one_grid_line, args,
                 callback=progress_counter.update):
             self.pa.new_scanline()
-            if draw_callback and draw_callback(text="DropCutter: processing " \
-                        + "line %d/%d" % (current_line + 1, num_of_lines)):
+            if draw_callback and draw_callback(text="DropCutter: processing line %d/%d" 
+                % (current_line + 1, num_of_lines)):
                 # cancel requested
                 quit_requested = True
                 break

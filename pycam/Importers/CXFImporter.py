@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.Letters import Charset
 from pycam.Geometry.Line import Line
-from pycam.Geometry.Point import Point
+from pycam.Geometry.PointUtils import *
 from pycam.Geometry import get_points_of_arc
 import pycam.Utils.log
 import pycam.Utils
@@ -144,13 +144,13 @@ class CXFParser(object):
                     type_char = line[0].upper()
                     if (type_def == "L") and (len(coords) == 4):
                         # line
-                        p1 = Point(coords[0], coords[1], 0)
-                        p2 = Point(coords[2], coords[3], 0)
+                        p1 = (coords[0], coords[1], 0)
+                        p2 = (coords[2], coords[3], 0)
                         char_definition.append(Line(p1, p2))
                     elif (type_def in ("A", "AR")) and (len(coords) == 5):
                         # arc
                         previous = None
-                        center = Point(coords[0], coords[1], 0)
+                        center = (coords[0], coords[1], 0)
                         radius = coords[2]
                         start_angle, end_angle = coords[3], coords[4]
                         if type_def == "AR":
@@ -158,7 +158,7 @@ class CXFParser(object):
                             start_angle, end_angle = end_angle, start_angle
                         for p in get_points_of_arc(center, radius, start_angle,
                                 end_angle):
-                            current = Point(p[0], p[1], 0)
+                            current = (p[0], p[1], 0)
                             if not previous is None:
                                 char_definition.append(Line(previous, current))
                             previous = current

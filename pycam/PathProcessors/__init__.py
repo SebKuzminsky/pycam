@@ -41,10 +41,10 @@ class BasePathProcessor(object):
     def sort_layered(self, upper_first=True):
         if upper_first:
             compare_height = lambda path1, path2: \
-                    path1.points[0].z < path2.points[0].z
+                    path1.points[0][2] < path2.points[0][2]
         else:
             compare_height = lambda path1, path2: \
-                    path1.points[0].z > path2.points[0].z
+                    path1.points[0][2] > path2.points[0][2]
         finished = False
         while not finished:
             index = 0

@@ -23,7 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 # various matrix related functions for PyCAM
 
 
-from pycam.Geometry.Point import Point
+from pycam.Geometry.PointUtils import *
 from pycam.Geometry.utils import sqrt, number, epsilon
 import math
 
@@ -54,23 +54,6 @@ def get_dot_product(a, b):
     """
     return sum(l1 * l2 for l1, l2 in zip(a, b))
 
-def get_cross_product(a, b):
-    """ calculate the cross product of two 3d vectors
-
-    @type a: tuple(float) | list(float) | pycam.Geometry.Point
-    @value a: the first vector to be multiplied
-    @type b: tuple(float) | list(float) | pycam.Geometry.Point
-    @value b: the second vector to be multiplied
-    @rtype: tuple(float)
-    @return: the cross product is a 3d vector
-    """
-    if isinstance(a, Point):
-        a = (a.x, a.y, a.z)
-    if isinstance(b, Point):
-        b = (b.x, b.y, b.z)
-    return (a[1] * b[2] - a[2] * b[1],
-            a[2] * b[0] - a[0] * b[2],
-            a[0] * b[1] - a[1] * b[0])
 
 def get_length(vector):
     """ calculate the lengt of a 3d vector
@@ -101,13 +84,10 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
     @rtype: tuple(tuple(float))
     @return: the roation matrix (3x3)
     """
-    if isinstance(v_orig, Point):
-        v_orig = (v_orig.x, v_orig.y, v_orig.z)
-    if isinstance(v_dest, Point):
-        v_dest = (v_dest.x, v_dest.y, v_dest.z)
+
     v_orig_length = get_length(v_orig)
     v_dest_length = get_length(v_dest)
-    cross_product = get_length(get_cross_product(v_orig, v_dest))
+    cross_product = get_length(pcross(v_orig, v_dest))
     try:
         arcsin = cross_product / (v_orig_length * v_dest_length)
     except ZeroDivisionError:
@@ -121,9 +101,9 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
     # calculate the rotation axis
     # The rotation axis is equal to the cross product of the original and
     # destination vectors.
-    rot_axis = Point(v_orig[1] * v_dest[2] - v_orig[2] * v_dest[1],
+    rot_axis = pnormalized((v_orig[1] * v_dest[2] - v_orig[2] * v_dest[1],
             v_orig[2] * v_dest[0] - v_orig[0] * v_dest[2],
-            v_orig[0] * v_dest[1] - v_orig[1] * v_dest[0]).normalized()
+            v_orig[0] * v_dest[1] - v_orig[1] * v_dest[0]))
     if not rot_axis:
         return None
     # get the rotation matrix
@@ -131,15 +111,15 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
     c = math.cos(rot_angle)
     s = math.sin(rot_angle)
     t = 1 - c
-    return ((t * rot_axis.x * rot_axis.x + c,
-            t * rot_axis.x * rot_axis.y - s * rot_axis.z,
-            t * rot_axis.x * rot_axis.z + s * rot_axis.y),
-            (t * rot_axis.x * rot_axis.y + s * rot_axis.z,
-            t * rot_axis.y * rot_axis.y + c,
-            t * rot_axis.y * rot_axis.z - s * rot_axis.x),
-            (t * rot_axis.x * rot_axis.z - s * rot_axis.y,
-            t * rot_axis.y * rot_axis.z + s * rot_axis.x,
-            t * rot_axis.z * rot_axis.z + c))
+    return ((t * rot_axis[0] * rot_axis[0] + c,
+            t * rot_axis[0] * rot_axis[1] - s * rot_axis[2],
+            t * rot_axis[0] * rot_axis[2] + s * rot_axis[1]),
+            (t * rot_axis[0] * rot_axis[1] + s * rot_axis[2],
+            t * rot_axis[1] * rot_axis[1] + c,
+            t * rot_axis[1] * rot_axis[2] - s * rot_axis[0]),
+            (t * rot_axis[0] * rot_axis[2] - s * rot_axis[1],
+            t * rot_axis[1] * rot_axis[2] + s * rot_axis[0],
+            t * rot_axis[2] * rot_axis[2] + c))
 
 def get_rotation_matrix_axis_angle(rot_axis, rot_angle, use_radians=True):
     """ calculate rotation matrix for a normalized vector and an angle

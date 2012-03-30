@@ -23,7 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 from pycam.Geometry.Plane import Plane
-from pycam.Geometry.Point import Point, Vector
+from pycam.Geometry.PointUtils import *
 
 
 class ModelProjection(pycam.Plugins.PluginBase):
@@ -87,8 +87,8 @@ class ModelProjection(pycam.Plugins.PluginBase):
                     ("ProjectionModelCustom",
                         self.gui.get_object("ProjectionZLevel").get_value())):
                 if self.gui.get_object(objname).get_active():
-                    plane = Plane(Point(0, 0, z_level), Vector(0, 0, 1))
-                    self.log.info("Projecting 3D model at level z=%g" % plane.p.z)
+                    plane = Plane((0, 0, z_level), (0, 0, 1, 'v'))
+                    self.log.info("Projecting 3D model at level z=%g" % plane.p[2])
                     new_model = model.get_waterline_contour(plane,
                             callback=progress.update)
                     if new_model:

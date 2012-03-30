@@ -26,6 +26,7 @@ import pycam.PathProcessors
 from pycam.Geometry.utils import ceil
 from pycam.Utils.threading import run_in_parallel
 from pycam.Utils import ProgressCounter
+from pycam.Geometry.PointUtils import *
 import pycam.Utils.log
 import math
 
@@ -127,7 +128,7 @@ class PushCutter(object):
         for line in layer_grid:
             p1, p2 = line
             # calculate the required calculation depth (recursion)
-            distance = p2.sub(p1).norm
+            distance = pnorm(psub(p2, p1))
             # TODO: accessing cutter.radius here is slightly ugly
             depth = math.log(accuracy * distance / cutter.radius) / math.log(2)
             depth = min(max(ceil(depth), 4), max_depth)

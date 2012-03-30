@@ -22,20 +22,23 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = ["simplify_toolpath", "ToolpathList", "Toolpath", "Generator"]
 
-from pycam.Geometry.Point import Point
+import OpenGL.GL as GL
+from OpenGL.arrays import vbo
+import numpy
+from numpy import array
+from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Path import Path
 from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import number, epsilon
-import pycam.Utils.log
 import random
 import os
-
-log = pycam.Utils.log.get_logger()
+import math
+from itertools import groupby
 
 
 def _check_colinearity(p1, p2, p3):
-    v1 = p2.sub(p1).normalized()
-    v2 = p3.sub(p2).normalized()
+    v1 = pnormalized(psub(p2, p1))
+    v2 = pnormalized(psub(p3, p2))
     # compare if the normalized distances between p1-p2 and p2-p3 are equal
     return v1 == v2
 
@@ -69,6 +72,22 @@ class Toolpath(object):
         self.parameters = parameters
         self._max_safe_distance = 2 * parameters.get("tool_radius", 0)
         self._feedrate = parameters.get("tool_feedrate", 300)
+        self.opengl_safety_height = None
+        self._minx = None
+        self._maxx = None
+        self._miny = None
+        self._maxy = None
+        self._minz = None
+        self._maxz = None
+        
+    def clear_cache(self):
+        self.opengl_safety_height = None
+        self._minx = None
+        self._maxx = None
+        self._miny = None
+        self._maxy = None
+        self._minz = None
+        self._maxz = None
 
     def get_params(self):
         return dict(self.parameters)
@@ -82,36 +101,48 @@ class Toolpath(object):
             new_paths.append(new_path)
         return Toolpath(new_paths, parameters=self.get_params())
 
-    def _get_limit_generic(self, attr, func):
+    def _get_limit_generic(self, idx, func):
         path_min = []
         for path in self.paths:
             if path.points:
-                path_min.append(func([getattr(p, attr) for p in path.points]))
+                path_min.append(func([ p[idx] for p in path.points]))
         return func(path_min)
 
     @property
     def minx(self):
-        return self._get_limit_generic("x", min)
+        if self._minx == None:
+            self._minx = self._get_limit_generic(0, min)
+        return self._minx
 
     @property
     def maxx(self):
-        return self._get_limit_generic("x", max)
+        if self._maxx == None:
+            self._maxx = self._get_limit_generic(0, max)
+        return self._maxx
 
     @property
     def miny(self):
-        return self._get_limit_generic("y", min)
+        if self._miny == None:
+            self._miny = self._get_limit_generic(1, min)
+        return self._miny
 
     @property
     def maxy(self):
-        return self._get_limit_generic("y", max)
+        if self._maxy == None:
+            self._maxy = self._get_limit_generic(1, max)
+        return self._maxy
 
     @property
     def minz(self):
-        return self._get_limit_generic("z", min)
+        if self._minz == None:
+            self._minz = self._get_limit_generic(2, min)
+        return self._minz
 
     @property
     def maxz(self):
-        return self._get_limit_generic("z", max)
+        if self._maxz == None:
+            self._maxz = self._get_limit_generic(2, max)
+        return self._maxz
 
     def get_meta_data(self):
         meta = self.toolpath_settings.get_string()
@@ -137,12 +168,11 @@ class Toolpath(object):
                     self.last_pos = new_position
                     return True
                 else:
-                    distance = new_position.sub(self.last_pos).norm
+                    distance = pnorm(psub(new_position, self.last_pos))
                     if self.moved_distance + distance > self.max_movement:
                         partial = (self.max_movement - self.moved_distance) / \
                                 distance
-                        partial_dest = self.last_pos.add(new_position.sub(
-                                self.last_pos).mul(partial))
+                        partial_dest = padd(self.last_pos, pmul(psub(new_position, self.last_pos), partial))
                         self.moves.append((partial_dest, rapid))
                         self.last_pos = partial_dest
                         # we are finished
@@ -163,21 +193,18 @@ class Toolpath(object):
                 continue
             p_next = path.points[0]
             if p_last is None:
-                p_last = Point(p_next.x, p_next.y, safety_height)
+                p_last = (p_next[0], p_next[1], safety_height)
                 if not result.append(p_last, True):
                     return result.moves
-            if ((abs(p_last.x - p_next.x) > epsilon) \
-                    or (abs(p_last.y - p_next.y) > epsilon)):
+            if ((abs(p_last[0] - p_next[0]) > epsilon) or (abs(p_last[1] - p_next[1]) > epsilon)):
                 # Draw the connection between the last and the next path.
                 # Respect the safety height.
-                if (abs(p_last.z - p_next.z) > epsilon) \
-                        or (p_last.sub(p_next).norm > \
-                            self._max_safe_distance + epsilon):
+                if (abs(p_last[2] - p_next[2]) > epsilon) or (pnorm(psub(p_last, p_next)) > self._max_safe_distance + epsilon):
                     # The distance between these two points is too far.
                     # This condition helps to prevent moves up/down for
                     # adjacent lines.
-                    safety_last = Point(p_last.x, p_last.y, safety_height)
-                    safety_next = Point(p_next.x, p_next.y, safety_height)
+                    safety_last = (p_last[0], p_last[1], safety_height)
+                    safety_next = (p_next[0], p_next[1], safety_height)
                     if not result.append(safety_last, True):
                         return result.moves
                     if not result.append(safety_next, True):
@@ -187,10 +214,128 @@ class Toolpath(object):
                     return result.moves
             p_last = path.points[-1]
         if not p_last is None:
-            p_last_safety = Point(p_last.x, p_last.y, safety_height)
+            p_last_safety = (p_last[0], p_last[1], safety_height)
             result.append(p_last_safety, True)
         return result.moves
+    
+    def _rotate_point(self, rp, sp, v, angle):
+        vx = v[0]
+        vy = v[1]
+        vz = v[2]
+        x = (sp[0] * (vy ** 2 + vz ** 2) - vx * (sp[1] * vy + sp[2] * vz - vx * rp[0] - vy * rp[1] - vz * rp[2])) * (1 - math.cos(angle)) + rp[0] * math.cos(angle) + (-sp[2] * vy + sp[1] * vz - vz * rp[1] + vy * rp[2]) * math.sin(angle)
+        y = (sp[1] * (vx ** 2 + vz ** 2) - vy * (sp[0] * vx + sp[2] * vz - vx * rp[0] - vy * rp[1] - vz * rp[2])) * (1 - math.cos(angle)) + rp[1] * math.cos(angle) + (sp[2] * vx - sp[0] * vz + vz * rp[0] - vx * rp[2]) * math.sin(angle)
+        z = (sp[2] * (vx ** 2 + vy ** 2) - vz * (sp[0] * vx + sp[1] * vy - vx * rp[0] - vy * rp[1] - vz * rp[2])) * (1 - math.cos(angle)) + rp[2] * math.cos(angle) + (-sp[1] * vx + sp[0] * vy - vy * rp[0] + vx * rp[1]) * math.sin(angle)
+        return (x,y,z)
+    
+    def draw_direction_cone_mesh(self, p1, p2, position=0.5, precision=12, size=0.1):
+        distance = psub(p2, p1)
+        length = pnorm(distance)
+        direction = pnormalized(distance)
+        if direction is None or length < 0.5:
+            # zero-length line
+            return []
+        cone_length = length * size
+        cone_radius = cone_length / 3.0
+        bottom = padd(p1, pmul(psub(p2, p1), position - size/2))
+        top = padd(p1, pmul(psub(p2, p1), position + size/2))
+        #generate a a line perpendicular to this line, cross product is good at this
+        cross = pcross(direction, (0, 0, -1))
+        conepoints = []
+        if pnorm(cross) != 0:
+            # The line direction is not in line with the z axis.
+            conep1 = padd(bottom, pmul(cross, cone_radius))
+            conepoints = [ self._rotate_point(conep1, bottom, direction, x) for x in numpy.linspace(0, 2*math.pi, precision)]
+        else:
+            # Z axis
+            # just add cone radius to the x axis and rotate the point
+            conep1 = (bottom[0] + cone_radius, bottom[1], bottom[2])
+            conepoints = [ self._rotate_point(conep1, p1, direction, x) for x in numpy.linspace(0, 2*math.pi, precision)]
+        
+        triangles = [(top, conepoints[idx], conepoints[idx + 1]) for idx in range ( len(conepoints) - 1)]
+        return triangles
 
+       
+    def get_moves_for_opengl(self, safety_height):
+        if self.opengl_safety_height != safety_height:
+            self.make_moves_for_opengl(safety_height)
+            self.make_vbo_for_moves()
+        return (self.opengl_coords, self.opengl_indices)
+    
+    # separate vertex coordinates from line definitions and convert to indices
+    def make_vbo_for_moves(self):
+        index = 0
+        output = []
+        store_vertices = {}
+        vertices = []
+        for path in self.opengl_lines:
+            indices = []
+            triangles = []
+            triangle_indices = []
+            # compress the lines into a centeral array containing all the vertices
+            # generate a matching index for each line
+            for idx in range(len(path[0]) - 1):
+                point = path[0][idx]
+                if not point in store_vertices:
+                    store_vertices[point] = index
+                    vertices.insert(index, point)
+                    index += 1
+                indices.append(store_vertices[point])
+                point2 = path[0][idx + 1]
+                if not point2 in store_vertices:
+                    store_vertices[point2] = index
+                    vertices.insert(index, point2)
+                    index += 1
+                triangles.extend(self.draw_direction_cone_mesh(path[0][idx], path[0][idx + 1]))
+                for t in triangles:
+                    for p in t:
+                        if not p in store_vertices:
+                            store_vertices[p] = index
+                            vertices.insert(index, p)
+                            index += 1
+                        triangle_indices.append(store_vertices[p])
+            triangle_indices = array(triangle_indices, dtype=numpy.int32)
+            indices.append(store_vertices[path[0][-1]])
+            # this list comprehension removes consecutive duplicate points.
+            indices = array([x[0] for x in groupby(indices)],dtype=numpy.int32)
+            output.append((indices, triangle_indices, path[1]))
+        vertices = array(vertices, dtype=numpy.float32)
+        self.opengl_coords = vbo.VBO(vertices)
+        self.opengl_indices = output
+
+    
+    #convert moves into lines for dispaly with opengl
+    def make_moves_for_opengl(self, safety_height):
+        working_path = []
+        outpaths = []
+        for path in self.paths:
+            if not path:
+                continue
+            path = path.points
+            
+            if len(outpaths) != 0:
+                lastp = outpaths[-1][0][-1]
+                working_path.append((path[0][0], path[0][1], safety_height))
+                if ((abs(lastp[0] - path[0][0]) > epsilon) or (abs(lastp[1] - path[0][1]) > epsilon)):
+                    if (abs(lastp[2] - path[0][2]) > epsilon) or (pnorm(psub(lastp, path[0])) > self._max_safe_distance + epsilon):
+                        outpaths.append((tuple([x[0] for x in groupby(working_path)]), True))
+            else:
+                working_path.append((0,0,0))
+                working_path.append((path[0][0], path[0][1], safety_height))
+                outpaths.append((working_path, True))
+            
+            # add this move to last move if last move was not rapid
+            if outpaths[-1][1] == False:
+                outpaths[-1] = (outpaths[-1][0] + tuple(path), False)
+            else:
+                # last move was rapid, so add last point of rapid to beginning of path
+                outpaths.append((tuple([x[0] for x in groupby((outpaths[-1][0][-1],) + tuple(path))]), False))
+            working_path = []
+            working_path.append(path[-1])
+            working_path.append((path[-1][0], path[-1][1], safety_height))
+        outpaths.append((tuple([x[0] for x in groupby(working_path)]), True))
+        self.opengl_safety_height = safety_height
+        self.opengl_lines = outpaths
+        
     def get_machine_time(self, safety_height=0.0):
         """ calculate an estimation of the time required for processing the
         toolpath with the machine
@@ -206,7 +351,7 @@ class Toolpath(object):
         # go through all points of the path
         for new_pos, rapid in self.get_moves(safety_height):
             if not current_position is None:
-                result += new_pos.sub(current_position).norm / self._feedrate
+                result += pnorm(psub(new_pos, current_position)) / self._feedrate
             current_position = new_pos
         return result
 
@@ -217,7 +362,7 @@ class Toolpath(object):
         # go through all points of the path
         for new_pos, rapid in self.get_moves(safety_height):
             if not current_position is None:
-                result += new_pos.sub(current_position).norm
+                result += pnorm(psub(new_pos, current_position))
             current_position = new_pos
         return result
 
@@ -273,6 +418,7 @@ class Toolpath(object):
         if current_path.points:
             new_paths.append(current_path)
         self.paths = new_paths
+        self.clear_cache()
 
 
 class Bounds(object):

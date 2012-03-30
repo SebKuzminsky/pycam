@@ -24,7 +24,7 @@ import os
 
 import pycam.Plugins
 from pycam.Exporters.GCodeExporter import PATH_MODES
-from pycam.Geometry.Point import Point
+from pycam.Geometry.PointUtils import *
 
 
 FILTER_GCODE = (("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode")),)
@@ -181,7 +181,7 @@ class ToolpathExport(pycam.Plugins.PluginBase):
                 pos_x = self.core.get("touch_off_position_x")
                 pos_y = self.core.get("touch_off_position_y")
                 pos_z = self.core.get("touch_off_position_z")
-                touch_off_pos = Point(pos_x, pos_y, pos_z)
+                touch_off_pos = (pos_x, pos_y, pos_z)
             else:
                 touch_off_pos = None
             generator = generator_func(destination,

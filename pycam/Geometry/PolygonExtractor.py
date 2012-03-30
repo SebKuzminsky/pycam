@@ -80,7 +80,7 @@ class PolygonExtractor(object):
                     print "points=", path.points
                 i = 0
                 while i < len(path.points)-1:
-                    if path.points[i].x > path.points[i+1].x:
+                    if path.points[i][0] > path.points[i+1][0]:
                         if DEBUG_POLYGONEXTRACTOR2:
                             print "drop point %d:" % path.points[i].id
                         path.points = path.points[:i] + path.points[i+1:]
@@ -95,7 +95,7 @@ class PolygonExtractor(object):
                 print "%d:" % path.id,
                 print "%d ->" % path.top_join.id
                 for point in path.points:
-                    print "%d(%g,%g)" % (point.id, point.x, point.y),
+                    print "%d(%g,%g)" % (point.id, point[0], point[1]),
                 print "->%d" % path.bot_join.id
 
         path_list = []
@@ -133,7 +133,7 @@ class PolygonExtractor(object):
             for path in path_list:
                 print "path %d(w=%d): " % (path.id, path.winding),
                 for point in path.points:
-                    print "%d(%g,%g)" % (point.id, point.x, point.y),
+                    print "%d(%g,%g)" % (point.id, point[0], point[1]),
                 print
 
         if self.current_dir == 0:
@@ -156,13 +156,13 @@ class PolygonExtractor(object):
                         self.svg.fill("red")
                     else:
                         self.svg.fill("blue")
-                    self.svg.AddDot(p.x, p.y)
-                    self.svg.AddText(p.x, p.y, str(p.id))
+                    self.svg.AddDot(p[0], p[1])
+                    self.svg.AddText(p[0], p[1], str(p.id))
                     if prev:
-                        self.svg.AddLine(p.x, p.y, prev.x, prev.y)
+                        self.svg.AddLine(p[0], p[1], prev[0], prev[1])
                     prev = p
                 p = path.points[0]
-                self.svg.AddLine(p.x, p.y, prev.x, prev.y)
+                self.svg.AddLine(p[0], p[1], prev[0], prev[1])
 
             self.svg.close()
             self.cont.close()
@@ -176,8 +176,8 @@ class PolygonExtractor(object):
     def append(self, p):
         if DEBUG_POLYGONEXTRACTOR3:
             p.dir = self.current_dir
-            self.svg.AddDot(p.x, p.y)
-            self.svg.AddText(p.x, p.y, str(p.id))
+            self.svg.AddDot(p[0], p[1])
+            self.svg.AddText(p[0], p[1], str(p.id))
         self.curr_line.append(p)
 
     def end_scanline(self):
@@ -187,7 +187,7 @@ class PolygonExtractor(object):
             if self.policy == PolygonExtractor.CONTOUR and self.hor_path_list:
                 next_x = -INFINITE
                 if len(self.curr_line) > 0:
-                    next_x = self.curr_line[0].x
+                    next_x = self.curr_line[0][0]
                     self.delta_x = next_x - self.last_x
                     self.last_x = next_x
                 else:
@@ -204,7 +204,7 @@ class PolygonExtractor(object):
             inside = False
             s = ""
             for point in scanline:
-                next_x = point.x
+                next_x = point[0]
                 if inside:
                     s += "*" * int(next_x - last)
                 else:
@@ -217,17 +217,17 @@ class PolygonExtractor(object):
             print "active paths: ",
             for path in self.curr_path_list:
                 print "%d(%g,%g)" \
-                        % (path.id, path.points[-1].x, path.points[-1].y),
+                        % (path.id, path.points[-1][0], path.points[-1][1]),
             print
 
             print "prev points: ",
             for point in self.prev_line:
-                print "(%g,%g)" % (point.x, point.y),
+                print "(%g,%g)" % (point[0], point[1]),
             print
 
             print "active points: ",
             for point in scanline:
-                print "%d(%g,%g)" % (point.id, point.x, point.y),
+                print "%d(%g,%g)" % (point.id, point[0], point[1]),
             print
 
         prev_point = Iterator(self.prev_line)
@@ -246,13 +246,13 @@ class PolygonExtractor(object):
                 p0 = Path()
                 p0.winding = winding + 1
                 if DEBUG_POLYGONEXTRACTOR:
-                    print "new path %d(%g,%g)" % (p0.id, c0.x, c0.y)
+                    print "new path %d(%g,%g)" % (p0.id, c0[0], c0[1])
                 p0.append(c0)
                 self.curr_path_list.append(p0)
                 p1 = Path()
                 p1.winding = winding
                 if DEBUG_POLYGONEXTRACTOR:
-                    print "new path %d(%g,%g)" % (p1.id, c1.x, c1.y)
+                    print "new path %d(%g,%g)" % (p1.id, c1[0], c1[1])
                 p1.append(c1)
                 self.curr_path_list.append(p1)
                 p0.top_join = p1
@@ -282,16 +282,16 @@ class PolygonExtractor(object):
                 c1 = curr_point.peek(1)
 
                 if DEBUG_POLYGONEXTRACTOR:
-                    print "overlap test: p0=%g p1=%g" % (p0.x, p1.x)
-                    print "overlap test: c0=%g c1=%g" % (c0.x, c1.x)
+                    print "overlap test: p0=%g p1=%g" % (p0[0], p1[0])
+                    print "overlap test: c0=%g c1=%g" % (c0[0], c1[0])
 
-                if c1.x < p0.x:
+                if c1[0] < p0[0]:
                     # new segment is completely to the left
                     # new path starts
                     s0 = Path()
                     if DEBUG_POLYGONEXTRACTOR:
                         print "new path %d(%g,%g) w=%d" \
-                                % (s0.id, c0.x, c0.y, winding + 1)
+                                % (s0.id, c0[0], c0[0], winding + 1)
                     s0.append(c0)
                     curr_path.insert(s0)
                     s1 = Path()
@@ -299,14 +299,14 @@ class PolygonExtractor(object):
                     s1.winding = winding
                     if DEBUG_POLYGONEXTRACTOR:
                         print "new path %d(%g,%g) w=%d" \
-                                % (s1.id, c1.x, c1.y, winding)
+                                % (s1.id, c1[0], c1[1], winding)
                     s1.append(c1)
                     curr_path.insert(s1)
                     curr_point.next()
                     curr_point.next()
                     s0.top_join = s1
                     s1.top_join = s0
-                elif c0.x > p1.x:
+                elif c0[0] > p1[0]:
                     # new segment is completely to the right
                     # old path ends
                     s0 = curr_path.takeNext()
@@ -342,9 +342,9 @@ class PolygonExtractor(object):
                             p2 = prev_point.peek(1)
                             if DEBUG_POLYGONEXTRACTOR:
                                 print "join test: p0=%g p1=%g p2=%g" \
-                                        % (p0.x, p1.x, p2.x)
-                                print "join test: c0=%g c1=%g" % (c0.x, c1.x)
-                            if p2.x <= c1.x:
+                                        % (p0[0], p1[0], p2[0])
+                                print "join test: c0=%g c1=%g" % (c0[0], c1[0])
+                            if p2[0] <= c1[0]:
                                 overlap_p = True
                                 if self.policy == PolygonExtractor.CONTOUR:
                                     s0 = curr_path.takeNext()
@@ -384,10 +384,10 @@ class PolygonExtractor(object):
                         if curr_point.remains()>=2:
                             c2 = curr_point.peek(1)
                             if DEBUG_POLYGONEXTRACTOR:
-                                print "split test: p0=%g p1=%g" % (p0.x, p1.x)
+                                print "split test: p0=%g p1=%g" % (p0[0], p1[0])
                                 print "split test: c0=%g c1=%g c2=%g" \
-                                        % (c0.x, c1.x, c2.x)
-                            if c2.x <= p1.x:
+                                        % (c0[0], c1[0], c2[0])
+                            if c2[0] <= p1[0]:
                                 overlap_c = True
                                 s0 = Path()
                                 s1 = Path()
@@ -419,14 +419,14 @@ class PolygonExtractor(object):
 
                     if DEBUG_POLYGONEXTRACTOR:
                         print "add to path %d(%g,%g)" \
-                                % (left_path.id, left_point.x, left_point.y)
+                                % (left_path.id, left_point[0], left_point[1])
                     left_path.append(left_point)
                     right_path.append(right_point)
                     if right_path == curr_path.peek():
                         curr_path.next()
                     if DEBUG_POLYGONEXTRACTOR:
                         print "add to path %d(%g,%g)" \
-                                % (right_path.id, right_point.x, right_point.y)
+                                % (right_path.id, right_point[0], right_point[1])
                     winding = right_path.winding
                     prev_point.next()
                     curr_point.next()
@@ -434,8 +434,8 @@ class PolygonExtractor(object):
         if DEBUG_POLYGONEXTRACTOR:
             print "active paths: ",
             for path in self.curr_path_list:
-                print "%d(%g,%g,w=%d)" % (path.id, path.points[-1].x,
-                        path.points[-1].y, path.winding),
+                print "%d(%g,%g,w=%d)" % (path.id, path.points[-1][0],
+                        path.points[-1][1], path.winding),
             print
 
         self.prev_line = scanline
@@ -448,11 +448,11 @@ class PolygonExtractor(object):
                     self.cont.fill("red")
                 else:
                     self.cont.fill("blue")
-                self.cont.AddDot(p.x, p.y)
+                self.cont.AddDot(p[0], p[1])
                 self.cont.fill("black")
-                self.cont.AddText(p.x, p.y, str(p.id))
+                self.cont.AddText(p[0], p[1], str(p.id))
                 if prev:
-                    self.cont.AddLine(prev.x, prev.y, p.x, p.y)
+                    self.cont.AddLine(prev[0], prev[1], p[0], p[1])
                 prev = p
 
         if DEBUG_POLYGONEXTRACTOR:
@@ -460,7 +460,7 @@ class PolygonExtractor(object):
             inside = False
             s = ""
             for point in scanline:
-                next_y = point.y
+                next_y = point[1]
                 if inside:
                     s += "*" * int(next_y - last)
                 else:
@@ -473,17 +473,17 @@ class PolygonExtractor(object):
             print "active paths: ",
             for path in self.curr_path_list:
                 print "%d(%g,%g)" \
-                        % (path.id, path.points[-1].x, path.points[-1].y),
+                        % (path.id, path.points[-1][0], path.points[-1][1]),
             print
 
             print "prev points: ",
             for point in self.prev_line:
-                print "(%g,%g)" % (point.x, point.y),
+                print "(%g,%g)" % (point[0], point[1]),
             print
 
             print "active points: ",
             for point in scanline:
-                print "%d(%g,%g)" % (point.id, point.x, point.y),
+                print "%d(%g,%g)" % (point.id, point[0], point[1]),
             print
 
         prev_point = Iterator(self.prev_line)
@@ -502,13 +502,13 @@ class PolygonExtractor(object):
                 p0 = Path()
                 p0.winding = winding + 1
                 if DEBUG_POLYGONEXTRACTOR:
-                    print "new path %d(%g,%g)" % (p0.id, c0.x, c0.y)
+                    print "new path %d(%g,%g)" % (p0.id, c0[0], c0[1])
                 p0.append(c0)
                 self.curr_path_list.append(p0)
                 p1 = Path()
                 p1.winding = winding
                 if DEBUG_POLYGONEXTRACTOR:
-                    print "new path %d(%g,%g)" % (p1.id, c1.x, c1.y)
+                    print "new path %d(%g,%g)" % (p1.id, c1[0], c1[1])
                 p1.append(c1)
                 self.curr_path_list.append(p1)
                 p0.top_join = p1
@@ -538,16 +538,16 @@ class PolygonExtractor(object):
                 c1 = curr_point.peek(1)
 
                 if DEBUG_POLYGONEXTRACTOR:
-                    print "overlap test: p0=%g p1=%g" % (p0.x, p1.x)
-                    print "overlap test: c0=%g c1=%g" % (c0.x, c1.x)
+                    print "overlap test: p0=%g p1=%g" % (p0[0], p1[0])
+                    print "overlap test: c0=%g c1=%g" % (c0[0], c1[0])
 
-                if c1.y < p0.y:
+                if c1[1] < p0[1]:
                     # new segment is completely to the left
                     # new path starts
                     s0 = Path()
                     if DEBUG_POLYGONEXTRACTOR:
                         print "new path %d(%g,%g) w=%d" \
-                                % (s0.id, c0.x, c0.y, winding + 1)
+                                % (s0.id, c0[0], c0[1], winding + 1)
                     s0.append(c0)
                     curr_path.insert(s0)
                     s1 = Path()
@@ -555,14 +555,14 @@ class PolygonExtractor(object):
                     s1.winding = winding
                     if DEBUG_POLYGONEXTRACTOR:
                         print "new path %d(%g,%g) w=%d" \
-                                % (s1.id, c1.x, c1.y, winding)
+                                % (s1.id, c1[0], c1[1], winding)
                     s1.append(c1)
                     curr_path.insert(s1)
                     curr_point.next()
                     curr_point.next()
                     s0.top_join = s1
                     s1.top_join = s0
-                elif c0.y > p1.y:
+                elif c0[1] > p1[1]:
                     # new segment is completely to the right
                     # old path ends
                     s0 = curr_path.takeNext()
@@ -598,9 +598,9 @@ class PolygonExtractor(object):
                             p2 = prev_point.peek(1)
                             if DEBUG_POLYGONEXTRACTOR:
                                 print "join test: p0=%g p1=%g p2=%g" \
-                                        % (p0.x, p1.x, p2.x)
-                                print "join test: c0=%g c1=%g" % (c0.x, c1.x)
-                            if p2.y <= c1.y:
+                                        % (p0[0], p1[0], p2[0])
+                                print "join test: c0=%g c1=%g" % (c0[0], c1[0])
+                            if p2[1] <= c1[1]:
                                 overlap_p = True
                                 if self.policy == PolygonExtractor.CONTOUR:
                                     s0 = curr_path.takeNext()
@@ -640,10 +640,10 @@ class PolygonExtractor(object):
                         if curr_point.remains()>=2:
                             c2 = curr_point.peek(1)
                             if DEBUG_POLYGONEXTRACTOR:
-                                print "split test: p0=%g p1=%g" % (p0.x, p1.x)
+                                print "split test: p0=%g p1=%g" % (p0[0], p1[0])
                                 print "split test: c0=%g c1=%g c2=%g" \
-                                        % (c0.x, c1.x, c2.x)
-                            if c2.y <= p1.y:
+                                        % (c0[0], c1[0], c2[0])
+                            if c2[1] <= p1[1]:
                                 overlap_c = True
                                 s0 = Path()
                                 s1 = Path()
@@ -675,14 +675,14 @@ class PolygonExtractor(object):
 
                     if DEBUG_POLYGONEXTRACTOR:
                         print "add to path %d(%g,%g)" \
-                                % (left_path.id, left_point.x, left_point.y)
+                                % (left_path.id, left_point[0], left_point[1])
                     left_path.append(left_point)
                     right_path.append(right_point)
                     if right_path == curr_path.peek():
                         curr_path.next()
                     if DEBUG_POLYGONEXTRACTOR:
                         print "add to path %d(%g,%g)" \
-                                % (right_path.id, right_point.x, right_point.y)
+                                % (right_path.id, right_point[0], right_point[1])
                     winding = right_path.winding
                     prev_point.next()
                     curr_point.next()
@@ -690,8 +690,8 @@ class PolygonExtractor(object):
         if DEBUG_POLYGONEXTRACTOR:
             print "active paths: ",
             for path in self.curr_path_list:
-                print "%d(%g,%g,w=%d)" % (path.id, path.points[-1].x,
-                        path.points[-1].y, path.winding),
+                print "%d(%g,%g,w=%d)" % (path.id, path.points[-1][0],
+                        path.points[-1][1], path.winding),
             print
 
         self.prev_line = scanline
@@ -702,26 +702,26 @@ class PolygonExtractor(object):
         hor_path_list = []
         for s in self.hor_path_list:
             allsame = True
-            miny = s.points[0].y
-            maxy = s.points[0].y
+            miny = s.points[0][1]
+            maxy = s.points[0][1]
             for p in s.points:
-                if not p.x == s.points[0].x:
+                if not p[0] == s.points[0][0]:
                     allsame = False
-                if p.y < miny:
-                    miny = p.y
-                if p.y > maxy:
-                    maxy = p.y
+                if p[1] < miny:
+                    miny = p[1]
+                if p[1] > maxy:
+                    maxy = p[1]
             if allsame:
                 if DEBUG_POLYGONEXTRACTOR2:
                     print "all same !"
                 s0 = Path()
                 for p in s.points:
-                    if p.y == miny:
+                    if p[1] == miny:
                         s0.append(p)
                 hor_path_list.append(s0)
                 s1 = Path()
                 for p in s.points:
-                    if p.y == maxy:
+                    if p[1] == maxy:
                         s1.append(p)
                 hor_path_list.append(s1)
                 continue
@@ -729,28 +729,28 @@ class PolygonExtractor(object):
             p_iter = CyclicIterator(s.points)
             p = s.points[0]
             next_p = p_iter.next()
-            while not ((prev.x >= p.x) and (next_p.x > p.x)):
+            while not ((prev[0] >= p[0]) and (next_p[0] > p[0])):
                 p = next_p
                 next_p = p_iter.next()
             count = 0
             while count < len(s.points):
                 s0 = Path()
-                while next_p.x >= p.x:
+                while next_p[0] >= p[0]:
                     s0.append(p)
                     p = next_p
                     next_p = p_iter.next()
                     count += 1
                 s0.append(p)
                 while (len(s0.points) > 1) \
-                        and (s0.points[0].x == s0.points[1].x):
+                        and (s0.points[0][0] == s0.points[1][0]):
                     s0.points = s0.points[1:]
                 while (len(s0.points) > 1) \
-                        and (s0.points[-2].x == s0.points[-1].x):
+                        and (s0.points[-2][0] == s0.points[-1][0]):
                     s0.points = s0.points[0:-1]
 
                 hor_path_list.append(s0)
                 s1 = Path()
-                while next_p.x <= p.x:
+                while next_p[0] <= p[0]:
                     s1.append(p)
                     p = next_p
                     next_p = p_iter.next()
@@ -758,13 +758,13 @@ class PolygonExtractor(object):
                 s1.append(p)
                 s1.reverse()
                 while (len(s1.points) > 1) \
-                        and (s1.points[0].x == s1.points[1].x):
+                        and (s1.points[0][0] == s1.points[1][0]):
                     s1.points = s1.points[1:]
                 while (len(s1.points) > 1) \
-                        and (s1.points[-2].x == s1.points[-1].x):
+                        and (s1.points[-2][0] == s1.points[-1][0]):
                     s1.points = s1.points[:-1]
                 hor_path_list.append(s1)
-        hor_path_list.sort(cmp=lambda a, b: cmp(a.points[0].x, b.points[0].x))
+        hor_path_list.sort(cmp=lambda a, b: cmp(a.points[0][0], b.points[0][0]))
         if DEBUG_POLYGONEXTRACTOR2:
             print "ver_hor_path_list = ", hor_path_list
             for s in hor_path_list:
@@ -785,12 +785,12 @@ class PolygonExtractor(object):
             next_x = INFINITE
 
             if self.ver_hor_path_list \
-                    and (self.ver_hor_path_list[0].points[0].x < next_x):
-                next_x = self.ver_hor_path_list[0].points[0].x
+                    and (self.ver_hor_path_list[0].points[0][0] < next_x):
+                next_x = self.ver_hor_path_list[0].points[0][0]
 
             if self.act_hor_path_list \
-                    and (self.act_hor_path_list[0].points[0].x < next_x):
-                next_x = self.act_hor_path_list[0].points[0].x
+                    and (self.act_hor_path_list[0].points[0][0] < next_x):
+                next_x = self.act_hor_path_list[0].points[0][0]
 
             if next_x >= _next_x:
                 return
@@ -801,13 +801,13 @@ class PolygonExtractor(object):
                 print "next_x =", next_x
 
             if self.ver_hor_path_list \
-                    and (self.ver_hor_path_list[0].points[0].x <= next_x):
+                    and (self.ver_hor_path_list[0].points[0][0] <= next_x):
                 while self.ver_hor_path_list \
-                        and (self.ver_hor_path_list[0].points[0].x <= next_x):
+                        and (self.ver_hor_path_list[0].points[0][0] <= next_x):
                     self.act_hor_path_list.append(self.ver_hor_path_list[0])
                     self.ver_hor_path_list = self.ver_hor_path_list[1:]
                 self.act_hor_path_list.sort(cmp=lambda a, b:
-                        cmp(a.points[0].x, b.points[0].x))
+                        cmp(a.points[0][0], b.points[0][0]))
 
             scanline = []
             i = 0
@@ -816,7 +816,7 @@ class PolygonExtractor(object):
                 if DEBUG_POLYGONEXTRACTOR2:
                     print "s =", s
                 scanline.append(s.points[0])
-                if s.points[0].x <= next_x:
+                if s.points[0][0] <= next_x:
                     if len(s.points) <= 1:
                         if DEBUG_POLYGONEXTRACTOR2:
                             print "remove list"
@@ -830,17 +830,17 @@ class PolygonExtractor(object):
                         if DEBUG_POLYGONEXTRACTOR2:
                             print "remove point", s.points[0]
                         s.points = s.points[1:]
-                        if len(s.points)> 0 and s.points[0].x == next_x:
+                        if len(s.points)> 0 and s.points[0][0] == next_x:
                             # TODO: the variable "repeat" is never used.
                             # Any idea?
                             repeat = True
                 i += 1
             self.act_hor_path_list.sort(cmp=lambda a, b:
-                    cmp(a.points[0].x, b.points[0].x))
+                    cmp(a.points[0][0], b.points[0][0]))
             if len(scanline) == 0:
                 return
 
-            scanline.sort(cmp=lambda a, b: cmp(a.y, b.y))
+            scanline.sort(cmp=lambda a, b: cmp(a[1], b[1]))
             if DEBUG_POLYGONEXTRACTOR2:
                 print "scanline' =", scanline
                 print "ver_hor_path_list =", self.ver_hor_path_list

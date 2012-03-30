@@ -253,8 +253,8 @@ class Fonts(pycam.Plugins.PluginBase):
                     # add the first point again to close the polygon
                     points.append(points[0])
                 for point in points:
-                    x = get_virtual_x(point.x)
-                    y = get_virtual_y(point.y)
+                    x = get_virtual_x(point[0])
+                    y = get_virtual_y(point[1])
                     draw_points.append((x, y))
                 drawing_area.draw_lines(gc, draw_points)
         final_gc = final_drawing_area.new_gc()

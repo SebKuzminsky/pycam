@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.PathProcessors
 from pycam.Geometry.PolygonExtractor import PolygonExtractor
-from pycam.Geometry.Point import Point
+from pycam.Geometry.PointUtils import *
 from pycam.Toolpath import simplify_toolpath
 
 class ContourCutter(pycam.PathProcessors.BasePathProcessor):
@@ -33,12 +33,12 @@ class ContourCutter(pycam.PathProcessors.BasePathProcessor):
         self.polygon_extractor = None
         self.points = []
         self.reverse = reverse
-        self.__forward = Point(1, 1, 0)
+        self.__forward = (1, 1, 0)
 
     def append(self, point):
         # Sort the points in positive x/y direction - otherwise the
         # PolygonExtractor breaks.
-        if self.points and (point.sub(self.points[0]).dot(self.__forward) < 0):
+        if self.points and (pdot(psub(point, self.points[0]), self.__forward) < 0):
             self.points.insert(0, point)
         else:
             self.points.append(point)

@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.Point import Point, Vector
+from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.PointKdtree import PointKdtree
 from pycam.Geometry.utils import epsilon
@@ -40,17 +40,17 @@ vertices = 0
 edges = 0
 kdtree = None
 
+lastUniqueVertex = (None,None,None)
 def UniqueVertex(x, y, z):
-    global vertices
+    global vertices,lastUniqueVertex
     if kdtree:
-        last = Point.id
         p = kdtree.Point(x, y, z)
-        if p.id == last:
+        if p == lastUniqueVertex:
             vertices += 1
         return p
     else:
         vertices += 1
-        return Point(x, y, z)
+        return (x, y, z)
 
 def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
     global vertices, edges, kdtree
@@ -127,7 +127,7 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
             a2 = unpack("<f", f.read(4))[0] 
             a3 = unpack("<f", f.read(4))[0] 
 
-            n = Vector(float(a1), float(a2), float(a3))
+            n = (float(a1), float(a2), float(a3), 'v')
             
             v11 = unpack("<f", f.read(4))[0] 
             v12 = unpack("<f", f.read(4))[0] 
@@ -150,9 +150,9 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
             # not used
             attribs = unpack("<H", f.read(2)) 
             
-            dotcross = n.dot(p2.sub(p1).cross(p3.sub(p1)))
+            dotcross = pdot(n, pcross(psub(p2, p1), psub(p3, p1)))
             if a1 == a2 == a3 == 0:
-                dotcross = p2.sub(p1).cross(p3.sub(p1)).z
+                dotcross = pcross(psub(p2, p1), psub(p3,p1))[2]
                 n = None
 
             if dotcross > 0:
@@ -209,8 +209,7 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
             if m:
                 m = normal.match(line)
                 if m:
-                    n = Vector(float(m.group('x')), float(m.group('y')),
-                            float(m.group('z')))
+                    n = (float(m.group('x')), float(m.group('y')), float(m.group('z')), 'v')
                 else:
                     n = None
                 continue
@@ -243,7 +242,7 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
                     n, p1, p2, p3 = None, None, None, None
                     continue
                 if not n:
-                    n = p2.sub(p1).cross(p3.sub(p1)).normalized()
+                    n = pnormalized(pcross(psub(p2, p1), psub(p3, p1)))
 
                 # validate the normal
                 # The three vertices of a triangle in an STL file are supposed
@@ -254,7 +253,7 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
                     dotcross = 0
                 else:
                     # make sure the points are in ClockWise order
-                    dotcross = n.dot(p2.sub(p1).cross(p3.sub(p1)))
+                    dotcross = pdot(n, pcross(psub(p2,p1), psub(p3, p1)))
                 if dotcross > 0:
                     # Triangle expects the vertices in clockwise order
                     t = Triangle(p1, p3, p2, n)

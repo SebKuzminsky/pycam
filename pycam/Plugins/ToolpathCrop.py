@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import pycam.Plugins
-from pycam.Geometry.Point import Point
+from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Plane import Plane
 import pycam.Gui.ControlsGTK
 
@@ -145,7 +145,7 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
                     polygons.append(poly.copy())
             elif hasattr(model, "get_waterline_contour"):
                 z_slice = self.gui.get_object("ToolpathCropZSlice").get_value()
-                plane = Plane(Point(0, 0, z_slice))
+                plane = Plane((0, 0, z_slice))
                 for poly in model.get_waterline_contour(plane).get_polygons():
                     polygons.append(poly.copy())
         # add an offset if requested
