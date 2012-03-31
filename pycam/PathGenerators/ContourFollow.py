@@ -466,7 +466,7 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
     max_length = sqrt(x_dim ** 2 + y_dim ** 2 + z_dim ** 2)
     result = []
     for edge in outer_edges:
-        direction = pnormalized(up_vector.cross(edge.dir))
+        direction = pnormalized(pcross(up_vector,edge.dir))
         if direction is None:
             continue
         direction = pmul(direction, max_length)
