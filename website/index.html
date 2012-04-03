@@ -1,0 +1,112 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>PyCAM - Toolpath Generation for 3-Axis CNC machining</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link href="style.css" type="text/css" rel="stylesheet" />
+    <meta name="description" content="toolpath generator for 3-Axis CNC machining" />
+    <meta name="keywords" content="pycam, toolpath, GCode, G-Code, generator, CAM, cnc, machine, mill, STL, DXF, SVG, model, engrave, linux, Mac OS, windows, gpl, free, open source" />
+    <link rel='shortcut icon' href="/favicon.ico" />
+	<script type="text/javascript">
+		function insert_download_counter() {
+			// get the number of downloads from sourceforge and put it into the span with the id "download_counter"
+			var httpRequest;
+			if (window.XMLHttpRequest) { // Mozilla, Safari, ...
+				httpRequest = new XMLHttpRequest();
+			} else if (window.ActiveXObject) { // IE 8 and older
+				httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
+			}
+			if (httpRequest) {
+				function content_arrival() {
+					var state = httpRequest.status;
+					var readyState = httpRequest.readyState;
+					if (((readyState === 2) || (readyState === 4)) && (
+							(state === 200) || (state === 301) || (state === 302) || (state === 303) || (state === 307))) {
+						var data = JSON.parse(httpRequest.responseText);
+						if (data) {
+							document.getElementById("download_counter").innerHTML = "<br/>Downloads (all releases):&nbsp;" + data["summaries"]["time"]["downloads"];
+						}
+					}
+				}
+				httpRequest.onreadystatechange = content_arrival;
+				httpRequest.open('GET', "http://sourceforge.net/projects/pycam/files/stats/json?start_date=2007-01-01&amp;end_date=2020-01-01");
+				httpRequest.send();
+			}
+		}
+	</script>
+</head>
+<body onload="insert_download_counter()">
+<div class="download"><a href="download.html"><img src="download.png" alt="Download PyCAM" /></a></div>
+<div class="logo"><img src="pycam_logo.png" alt="PyCAM logo" /></div>
+<div id="content" style="float:left; width:70%">
+<h1>PyCAM</h1>
+<p><i>Latest release: v0.5.1 (2011/06/13)<span id="download_counter"/></i></p>
+<p>PyCAM is a toolpath generator for 3-axis CNC machining. It loads 3D models in STL format or 2D contour models from DXF or SVG files. The resulting GCode can be used with <a href="http://linuxcnc.org">EMC2</a> or any other machine controller.</p>
+<p>PyCAM supports a wide range of toolpath strategies for 3D models and 2D contour models.</p>
+<p>See the list of <a href="http://sourceforge.net/apps/mediawiki/pycam/index.php?title=Features" title="Features list in the wiki">all features</a> in the wiki.</p>
+<p>PyCAM runs on Linux, Windows and MacOS (with <a href="http://www.macports.org/">MacPorts</a>). It is free software licensed under the <a href="http://www.gnu.org/licenses/gpl-3.0.html" title="GPL v3 license text">GPL v3</a>.</p>
+
+<p class="screenshots">
+    <a href="http://sourceforge.net/dbimage.php?id=195611"><img src="http://sourceforge.net/dbimage.php?id=195610" alt="screenshot" /></a>
+    <a href="http://sourceforge.net/dbimage.php?id=195609"><img src="http://sourceforge.net/dbimage.php?id=195608" alt="screenshot" /></a>
+    <a href="http://sourceforge.net/dbimage.php?id=266880"><img src="http://sourceforge.net/dbimage.php?id=266879" alt="screenshot" /></a>
+    <a href="http://sourceforge.net/dbimage.php?id=266878"><img src="http://sourceforge.net/dbimage.php?id=266877" alt="screenshot" /></a>
+    <a href="http://sourceforge.net/dbimage.php?id=253460"><img src="http://sourceforge.net/dbimage.php?id=253459" alt="screenshot" /></a>
+    <a href="http://sourceforge.net/dbimage.php?id=281711"><img src="http://sourceforge.net/dbimage.php?id=281710" alt="screenshot" /></a>
+</p>
+
+<table border="0"><tr><td style="padding-right:20px;" valign="top">
+<h2>Ressources</h2>
+<ul>
+    <li><a href="http://sourceforge.net/projects/pycam/">
+        <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=237831&amp;type=8" width="80" height="15"
+            alt="Sourceforge"/> development website</a></li>
+    <li><a href="download.html" title="Download PyCAM">Download</a></li>
+    <li><a href="http://sourceforge.net/apps/mediawiki/pycam/">Wiki</a> /
+        <a href="http://sourceforge.net/apps/mediawiki/pycam/index.php?title=User_Manual">User manual</a> /
+        <a href="http://sourceforge.net/apps/mediawiki/pycam/index.php?title=Get_started">Get started</a> /
+	<a href="http://sourceforge.net/apps/mediawiki/pycam/index.php?title=FAQ">FAQ</a></li>
+    <li><a href="http://vimeo.com/channels/pycam">Video tutorials</a> / 
+        <a href="http://sourceforge.net/project/screenshots.php?group_id=237831">Screenshots</a> /
+	<a href="http://www.youtube.com/results?search_query=%2B%22pycam%22+-spy+-spycam+-hidden&amp;aq=f">related videos</a></li>
+    <li><a href="http://fab.senselab.org/pycam">Developer's blog</a></li>
+    <li><a href="http://sourceforge.net/projects/pycam/forums">Forum</a> /
+        <a href="http://sourceforge.net/mail/?group_id=237831">Mailing lists</a></li>
+    <li><a href="http://sourceforge.net/tracker/?group_id=237831&amp;atid=1104176">Bug tracker</a></li>
+    <li><a href="http://sourceforge.net/apps/mediawiki/pycam/index.php?title=Articles_mentioning_PyCAM">Articles mentioning PyCAM</a></li>
+</ul>
+</td><td style="border-left: 1px solid black; padding-left:20px;" valign="top">
+	<h2>Overview of processing</h2>
+	<a href="big_picture_of_processing.svg" title="Zoom into the overview of processing"><img width="260px" src="big_picture_of_processing.svg" alt="Flowchart: Design -> PyCAM -> physical Object"/></a>
+</td></tr></table>
+</div>
+<div style="float:left; width:26%; margin-left:2%; height:600px">
+       	<iframe style="padding:10px; border-left-width:1px" frameborder="0" width="100%" height="100%" src="http://fab.senselab.org/pycam_blog/widget">
+		<p>Read the development blog at: <a href="http://fab.senselab.org/pycam" title="Blog">fab.senselab.org</a></p>
+	</iframe>
+</div>
+
+<div style="clear:left; background:white; width:100%; height:220px; margin-top:1%; padding-top:1%; border-top-width:1px">
+	<h2>Recent activities</h2>
+	<iframe style="margin-left:2%" scrolling="no" frameborder="0" width="97%" height="100%" src="http://fab.senselab.org/pycam_activities/widget">
+		<p>Read about recent acitivites at: <a href="http://sourceforge.net/projects/pycam/develop" title="Activity log">sourceforge</a></p>
+	</iframe>
+</div>
+
+<!-- Piwik -->
+<script type="text/javascript">
+var pkBaseURL = (("https:" == document.location.protocol) ? "https://sourceforge.net/apps/piwik/pycam/" : "http://sourceforge.net/apps/piwik/pycam/");
+document.write(unescape("%3Cscript src='" + pkBaseURL + "piwik.js' type='text/javascript'%3E%3C/script%3E"));
+</script><script type="text/javascript">
+try {
+    var piwikTracker = Piwik.getTracker(pkBaseURL + "piwik.php", 1);
+    piwikTracker.trackPageView();
+    piwikTracker.enableLinkTracking();
+} catch( err ) {}
+</script><noscript><p><img src="http://sourceforge.net/apps/piwik/pycam/piwik.php?idsite=1" style="border:0" alt=""/></p></noscript>
+<!-- End Piwik Tag -->
+
+</body>
+</html>

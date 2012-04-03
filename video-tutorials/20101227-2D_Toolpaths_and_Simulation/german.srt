@@ -1,0 +1,108 @@
+﻿1
+00:00:00,500 --> 00:00:01,500
+Eine PyCAM-Einführung
+
+2
+00:00:02,000 --> 00:00:05,000
+Lade die SVG-Datei eines 2D-Modells.
+In diesem Beispiel werden wir ein Reprap-Lasercut-Modell verwenden.
+
+3
+00:00:06,000 --> 00:00:11,000
+Wähle einen passenden Fräser-Radius.
+Wir werden einen zylindrischen 2mm-Fräser verwenden.
+
+4
+00:00:10,500 --> 00:00:13,000
+Wähle einen Vorschub, der zu deiner
+Maschine und dem Material passt.
+
+5
+00:00:14,000 --> 00:00:16,000
+Wähle eine Vorlage mit der "Engraving"-Strategie.
+
+6
+00:00:16,500 --> 00:00:20,000
+"Step down": die maximale Höhe einer Schicht.
+"Engrave Offset": meist Null oder Fräser-Radius.
+
+7
+00:00:21,000 --> 00:00:25,000
+Wähle die Bearbeitungsgrenzen. In diesem Fall: "Fixed margin".
+Tippe die Höhe deiner Materialplatte im Feld "lower z" ein.
+
+8
+00:00:26,000 --> 00:00:30,000
+Rotiere, verschiebe und vergrößere die Modell-Vorschau
+durch klicken und ziehen mit einem der Maus-Knöpfe.
+
+9
+00:00:31,000 --> 00:00:35,000
+Füge Stützbrücken hinzu, um kleine Einzelteile zu fixieren.
+Wähle dazu der Einfachheit halber "automatic distribution".
+
+10
+00:00:36,000 --> 00:00:40,000
+Üblicherweise solltest du wohl die Höhe der Stützbrücken
+größer ausfallen lassen, als ihre Breite.
+
+11
+00:00:41,000 --> 00:00:45,000
+Füge weitere Stützbrücken hinzu, indem du
+ihren mittleren Abstand reduzierst.
+
+12
+00:00:48,000 --> 00:00:52,000
+Konfiguriere eine der "Task"-Vorlagen mit einem Werkzeug,
+einem Prozess und einer Bearbeitungsbegrenzung.
+
+13
+00:00:54,000 --> 00:00:57,000
+Starte die Berechnung des Werkzeugpfads.
+
+14
+00:00:57,500 --> 00:00:59,000
+Wir überspringen die Wartezeit ...
+
+15
+00:01:02,000 --> 00:01:07,000
+Verringere die "safety height" um die Maschinenzeit
+zu minimieren. Achte auf die Veränderung in der Vorschau.
+
+16
+00:01:08,000 --> 00:01:14,000
+Wähle eine der "corner accuracy"-Varianten.
+(Details dazu findest du im EMC2-Handbuch)
+
+17
+00:01:20,000 --> 00:01:24,000
+Starte die Werkzeugpfad-Simulation um die
+Maschinenwege zu überprüfen.
+
+18
+00:01:28,000 --> 00:01:32,000
+Erhöhe die Geschwindigkeit der Simulation
+(Faktor "1" entspricht Echtzeit).
+
+19
+00:01:38,000 --> 00:01:42,000
+Öffne erneut das Fenster "Einstellungen / Preferences".
+Tastenkürzel: STRG-P
+
+20
+00:01:44,000 --> 00:01:48,000
+Schalte alle unerwünschten Anzeige-Details ab.
+
+21
+00:01:55,000 --> 00:01:59,000
+Prüfe die Details des Werkzeugpfads.
+
+22
+00:02:14,000 --> 00:02:18,000
+Speichere den Werkzeugpfad als GCode-Datei.
+
+23
+00:02:18,500 --> 00:02:20,000
+Viel Spaß!
+http://pycam.sf.net
+

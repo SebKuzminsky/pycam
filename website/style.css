@@ -1,0 +1,28 @@
+div.download {
+	float: right;
+	margin: 10px;
+}
+
+div.download img {
+	border: 0px;
+}
+
+div.logo img {
+    border: 0px;
+    margin: 10px;
+}
+
+p.screenshots {
+	text-align: left;
+}
+
+p.screenshots img {
+	margin: 5px;
+	vertical-align: middle;
+}
+
+/* for the table at the bottom of the startup page */
+h2 {
+	margin-top: 0px;
+}
+

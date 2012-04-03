@@ -1,0 +1,160 @@
+1
+00:00:00,000 --> 00:00:04,500
+PyCAM-Tutorial #2
+"Mehrschichtige 2D-Modelle"
+
+2
+00:00:05,050 --> 00:00:08,250
+Inkscape ist ein nützliches Programm
+für den Entwurf von 2D-Modellen.
+
+3
+00:00:08,500 --> 00:00:12,000
+Kombiniere zwei Flächen mit
+verschiedenen Farben.
+
+4
+00:00:12,450 --> 00:00:15,550
+Die rote Fläche stellt die
+Außenkante des Objekts dar.
+
+5
+00:00:16,000 --> 00:00:19,500
+Die grüne Fläche repräsentiert
+eine zu fräsende Vertiefung.
+
+6
+00:00:21,250 --> 00:00:24,950
+Verwende die Zwischenablage zum
+schnellen Datenaustausch.
+
+7
+00:00:26,500 --> 00:00:29,500
+Öffne PyCAM und füge das Modell
+aus der Zwischenablage ein.
+
+8
+00:00:30,750 --> 00:00:33,750
+Nun solltest du die Ausrichtung
+der Polygone prüfen.
+
+9
+00:00:35,100 --> 00:00:38,100
+Außenkanten werden mit voller
+Intensität gezeichnet.
+
+10
+00:00:38,550 --> 00:00:41,550
+Innenkanten (Löcher) werden mit
+nur 50% Deckungsgrad gezeichnet.
+
+11
+00:00:41,900 --> 00:00:44,600
+Derzeit haben alle Polygone
+dieselbe Ausrichtung.
+
+12
+00:00:44,950 --> 00:00:47,950
+Nicht einmal "Revise directions" kann
+dies korrigieren, da die Polygone
+in verschiedenen Ebenen liegen.
+
+13
+00:00:48,200 --> 00:00:51,100
+Dies müssen wir in Inkscape korrigieren.
+
+14
+00:00:51,350 --> 00:00:54,850
+Verwandle die Fläche in einen Pfad.
+Kehre die Richtung des Pfads um.
+
+15
+00:01:03,400 --> 00:01:06,400
+Die Ausrichtung des inneren Polygons
+wurde nun umgekehrt.
+
+16
+00:01:07,250 --> 00:01:10,250
+Kehre die Richtung aller Polygone um,
+falls erforderlich.
+
+17
+00:01:10,900 --> 00:01:13,900
+Verwende die "Undo"-Funktion,
+um Fehler zu korrigieren.
+
+18
+00:01:15,450 --> 00:01:18,450
+Der vertikale Abstand der beiden
+Polygone beträgt derzeit 1mm.
+
+19
+00:01:20,300 --> 00:01:24,900
+Wir müssen diesen Abstand auf die
+gewünschte Höhe skalieren - z.B. 16mm.
+
+20
+00:01:31,650 --> 00:01:34,650
+Nun ist es an der Zeit, das Modell
+zur gewünschten Position zu verschieben.
+
+21
+00:01:35,200 --> 00:01:38,200
+Das Ausgangsmaterial ist 24mm hoch,
+also müssen wir das Modell um 24mm
+nach unten verschieben.
+
+22
+00:01:42,450 --> 00:01:46,950
+Oberhalb des Modells verbleiben
+8mm Abstand zur Materialhöhe.
+
+23
+00:01:47,100 --> 00:01:49,800
+Definiere die Fräsereigenschaften,
+falls erforderlich.
+
+24
+00:01:50,250 --> 00:01:53,050
+Ein 3mm-Schlichtfräser ist passend.
+
+25
+00:01:53,500 --> 00:01:56,500
+Passe die Gravur-Parameter an.
+
+26
+00:01:56,350 --> 00:01:59,850
+Die Layer sollten nicht höher als 10mm sein.
+Der Offset ist die Hälfte des Fräserradius.
+
+27
+00:02:00,100 --> 00:02:03,600
+Wir wollen die innere Einkerbung ausfräsen,
+wähle also "Pocketing" und "Hole".
+
+28
+00:02:04,250 --> 00:02:07,350
+Wähle den 3mm-Fräser für die Gravur.
+
+29
+00:02:08,000 --> 00:02:11,500
+Starte die Werkzeugpfad-Berechnung.
+
+30
+00:02:19,450 --> 00:02:22,650
+Das Ergebnis sieht korrekt aus.
+
+31
+00:02:27,900 --> 00:02:30,900
+Der Werkzeugpfad kann mit einer
+Simulation geprüft werden.
+
+32
+00:02:51,650 --> 00:02:55,150
+Speichere den GCode in einer Datei.
+
+33
+00:03:02,150 --> 00:03:09,650
+Im PyCAM-Wiki findest du mehr Details.
+http://pycam.sf.net
+

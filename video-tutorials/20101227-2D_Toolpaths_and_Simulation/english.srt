@@ -1,0 +1,106 @@
+﻿1
+00:00:00,500 --> 00:00:01,500
+a PyCAM tutorial
+
+2
+00:00:02,000 --> 00:00:05,000
+Load the SVG file of a 2D contour model.
+In this example I will use a reprap (Lasercut) model file.
+
+3
+00:00:06,000 --> 00:00:11,000
+Change the tool radius of your choice.
+We will use a 2mm flat end mill.
+
+4
+00:00:10,500 --> 00:00:13,000
+Choose an appropriate feedrate suitable for
+your machine and the material.
+
+5
+00:00:14,000 --> 00:00:16,000
+Choose a template with the "Engraving" strategy.
+
+6
+00:00:16,500 --> 00:00:20,000
+"Step down": the maximum height of each layer.
+"Engrave Offset": usually zero or the tool radius.
+
+7
+00:00:21,000 --> 00:00:25,000
+Select a bounding box. Choose "Fixed margin".
+Enter the height of your plate as the lower z margin.
+
+8
+00:00:26,000 --> 00:00:30,000
+Rotate, pan and zoom the model view
+by holding down one of the mouse buttons.
+
+9
+00:00:31,000 --> 00:00:35,000
+Add support bridges to prevent small pieces from
+breaking away. Choose the automatic distribution.
+
+10
+00:00:36,000 --> 00:00:40,000
+Usually you will want to increase the height
+of the support bridges.
+
+11
+00:00:41,000 --> 00:00:45,000
+Add some more support bridges by reducing
+the average distance between neighbouring ones.
+
+12
+00:00:48,000 --> 00:00:52,000
+Configure one of the task templates with
+the tool, the process and the bounding box.
+
+13
+00:00:54,000 --> 00:00:57,000
+Start the toolpath generation.
+
+14
+00:00:57,500 --> 00:00:59,000
+We will skip the delay here ...
+
+15
+00:01:02,000 --> 00:01:07,000
+Reduce the safety height to minimize machine time.
+Check the live update of the toolpath in the 3D view.
+
+16
+00:01:08,000 --> 00:01:14,000
+Choose one of the corner accuracy modes.
+(see the EMC2 manual for details)
+
+17
+00:01:20,000 --> 00:01:24,000
+Run the toolpath simulation to
+check the resulting machine moves.
+
+18
+00:01:28,000 --> 00:01:32,000
+Increase the simulation speed (compared to real-time).
+
+19
+00:01:38,000 --> 00:01:42,000
+Open the "Preferences" window again (CTRL-P).
+
+20
+00:01:44,000 --> 00:01:48,000
+Disable all superfluous visible items.
+
+21
+00:01:55,000 --> 00:01:59,000
+Check the details of the toolpath.
+
+22
+00:02:14,000 --> 00:02:18,000
+Save the resulting toolpath as a GCode file.
+
+23
+00:02:18,500 --> 00:02:20,000
+Have fun!
+http://pycam.sf.net
+

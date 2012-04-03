@@ -1,0 +1,8 @@
+mencoder time slices:
+-ss 1:07 -endpos 58
+-ss 4:13 -endpos 75
+-ss 6:10 -endpos 7
+
+crop window:
+-vf crop=1024:640:232:260
+

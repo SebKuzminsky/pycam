@@ -1,0 +1,157 @@
+1
+00:00:00,000 --> 00:00:04,500
+PyCAM tutorial #2
+"Multi-layered models"
+
+2
+00:00:05,050 --> 00:00:08,250
+Inkscape is a useful program
+for designing flat models.
+
+3
+00:00:08,500 --> 00:00:12,000
+Here we combine two boxes
+of different colors.
+
+4
+00:00:12,450 --> 00:00:15,550
+The red box marks the
+edges the object.
+
+5
+00:00:16,000 --> 00:00:19,500
+The green box is supposed
+to be carved out of the stock.
+
+6
+00:00:21,250 --> 00:00:24,950
+Use the clipboard
+for a quick test.
+
+7
+00:00:26,500 --> 00:00:29,500
+Open PyCAM and paste the
+model from the clipboard.
+
+8
+00:00:30,750 --> 00:00:33,750
+Now you should check
+the winding of the polygons.
+
+9
+00:00:35,100 --> 00:00:38,100
+Outer edges are drawn
+with full intensity.
+
+10
+00:00:38,550 --> 00:00:41,550
+The edges of holes are
+drawn with only 50% opacity.
+
+11
+00:00:41,900 --> 00:00:44,600
+Here all polygons have
+the same winding.
+
+12
+00:00:44,950 --> 00:00:47,950
+Even "Revise directions" does not help
+since the polygons are at different levels.
+
+13
+00:00:48,200 --> 00:00:51,100
+We need to fix this with Inkscape.
+
+14
+00:00:51,350 --> 00:00:54,850
+Convert one of the boxes to a path.
+Reverse the direction of this path.
+
+15
+00:01:03,400 --> 00:01:06,400
+Now the winding of the inner
+polygon is reversed.
+
+16
+00:01:07,250 --> 00:01:10,250
+Toggle the direction again,
+if necessary.
+
+17
+00:01:10,900 --> 00:01:13,900
+Use the "undo" feature
+if you made a mistake.
+
+18
+00:01:15,450 --> 00:01:18,450
+The vertical distance between
+the two polygons is currently 1mm.
+
+19
+00:01:20,300 --> 00:01:24,900
+We need to scale this to the
+required height, e.g. 16mm.
+
+20
+00:01:31,650 --> 00:01:34,650
+It is about time to move the model
+to its final location.
+
+21
+00:01:35,200 --> 00:01:38,200
+The stock material is 24mm thick,
+thus we move the model 24mm below zero.
+
+22
+00:01:42,450 --> 00:01:46,950
+A margin of 8mm on top
+of the model remains.
+
+23
+00:01:47,100 --> 00:01:49,800
+Configure the tool if necessary.
+
+24
+00:01:50,250 --> 00:01:53,050
+The 3mm flat end mill is OK for us.
+
+25
+00:01:53,500 --> 00:01:56,500
+Adjust the Engraving parameters.
+
+26
+00:01:56,350 --> 00:01:59,850
+Each layer should be up to 10mm thick.
+The offset is half of the tool's diameter.
+
+27
+00:02:00,100 --> 00:02:03,600
+We want to pocket the inner hole.
+
+28
+00:02:04,250 --> 00:02:07,350
+Choose the 3mm tool for the
+Engraving task.
+
+29
+00:02:08,000 --> 00:02:11,500
+Run the toolpath generator.
+
+30
+00:02:19,450 --> 00:02:22,650
+The result looks fine.
+
+31
+00:02:27,900 --> 00:02:30,900
+You can verify the toolpath
+with a simulation.
+
+32
+00:02:51,650 --> 00:02:55,150
+Store the GCode in a file.
+
+33
+00:03:02,150 --> 00:03:09,650
+Read PyCAM's wiki for more details.
+http://pycam.sf.net
+

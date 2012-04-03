@@ -1,0 +1,806 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="967.52997"
+   height="2821.4348"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.47 r22583"
+   sodipodi:docname="push_follow_strategy.svg">
+  <title
+     id="title4292">Sketches for Push-Follow toolpath strategy</title>
+  <defs
+     id="defs4">
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5592"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5350"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect5146"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4952"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4948"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4944"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4940"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4936"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect4138"
+       is_visible="true" />
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Lstart"
+       style="overflow:visible">
+      <path
+         id="path3687"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(0.8,0,0,0.8,10,0)" />
+    </marker>
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect2910"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect2906"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect2902"
+       is_visible="true" />
+    <linearGradient
+       id="linearGradient3644">
+      <stop
+         style="stop-color:#df2235;stop-opacity:1;"
+         offset="0"
+         id="stop3646" />
+      <stop
+         id="stop3652"
+         offset="0.5"
+         style="stop-color:#e8818c;stop-opacity:1;" />
+      <stop
+         style="stop-color:#df2235;stop-opacity:1;"
+         offset="1"
+         id="stop3648" />
+    </linearGradient>
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect2844"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3632"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3628"
+       is_visible="true" />
+    <inkscape:path-effect
+       is_visible="true"
+       id="path-effect3624"
+       effect="spiro" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3620"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3616"
+       is_visible="true" />
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="-20.720168 : 469.94063 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="723.37431 : 469.94063 : 1"
+       inkscape:persp3d-origin="351.32707 : 294.54693 : 1"
+       id="perspective10" />
+    <inkscape:perspective
+       id="perspective3600"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3644"
+       id="linearGradient4226"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-694.74386,-694.75982)"
+       x1="287.60236"
+       y1="883.64081"
+       x2="381.3631"
+       y2="883.64081" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3644"
+       id="linearGradient4228"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-1694.7439,-694.75982)"
+       x1="287.60236"
+       y1="883.64081"
+       x2="381.3631"
+       y2="883.64081" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3644"
+       id="linearGradient4230"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-1134.7439,-694.75982)"
+       x1="287.60236"
+       y1="883.64081"
+       x2="381.3631"
+       y2="883.64081" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3644"
+       id="linearGradient4234"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(165.26314,-694.75982)"
+       x1="287.60236"
+       y1="883.64081"
+       x2="381.3631"
+       y2="883.64081" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3644"
+       id="linearGradient4236"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(1025.2631,-694.75982)"
+       x1="287.60236"
+       y1="883.64081"
+       x2="381.3631"
+       y2="883.64081" />
+    <inkscape:perspective
+       id="perspective4920"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3644"
+       id="linearGradient5778"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-274.73686,-694.75982)"
+       x1="287.60236"
+       y1="883.64081"
+       x2="381.3631"
+       y2="883.64081" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.499308"
+     inkscape:cx="898.5398"
+     inkscape:cy="243.40248"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:snap-global="true"
+     showguides="true"
+     inkscape:snap-bbox="false"
+     inkscape:bbox-nodes="false"
+     inkscape:bbox-paths="false"
+     inkscape:snap-bbox-edge-midpoints="false"
+     inkscape:snap-bbox-midpoints="false"
+     inkscape:window-width="1024"
+     inkscape:window-height="742"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:object-paths="true"
+     inkscape:snap-intersection-paths="false"
+     inkscape:object-nodes="true"
+     inkscape:snap-smooth-nodes="false"
+     inkscape:snap-nodes="false">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3632"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Sketches for Push-Follow toolpath strategy</dc:title>
+        <dc:date>2010/09/25</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Lars Kruse</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:source>https://pycam.svn.sourceforge.net/svnroot/pycam/trunk/artwork</dc:source>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/3.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/3.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(1603.5528,-33.73877)">
+    <g
+       id="g3891"
+       transform="translate(-1926.0692,1400)"
+       inkscape:export-filename="/home/lars/subversion/pycam/trunk/artwork/pics/case3a.png"
+       inkscape:export-xdpi="40.016376"
+       inkscape:export-ydpi="40.016376">
+      <g
+         transform="translate(-41.6624,0)"
+         id="g3734">
+        <path
+           sodipodi:nodetypes="csaacccc"
+           id="path3698"
+           d="m 453.8655,39.399761 c 0,0 14.3721,-9.70579 21.46016,-3.70003 8.92695,7.56386 16.03483,9.82794 24.42021,14.06011 7.69164,3.88203 15.07588,10.80419 23.68019,10.36008 8.49429,-0.43843 22.20018,-12.5801 22.20018,-12.5801 l 0,252.342049 -91.76074,0 0,-260.482109 z"
+           style="fill:url(#linearGradient4234);fill-opacity:1;stroke:none" />
+        <path
+           sodipodi:nodetypes="cccc"
+           id="path3702"
+           d="M 595.09253,97.352465 642.03303,449.38533 511.9649,133.69284 595.09253,97.352465 z"
+           style="fill:#2e980b;fill-opacity:1;stroke:none" />
+      </g>
+      <text
+         id="text3708"
+         y="513.15857"
+         x="506.96362"
+         style="font-size:28px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="513.15857"
+           x="506.96362"
+           id="tspan3710"
+           sodipodi:role="line">Case 3a</tspan><tspan
+           id="tspan3712"
+           y="548.15857"
+           x="506.96362"
+           sodipodi:role="line">Two triangle vertices</tspan><tspan
+           id="tspan3714"
+           y="583.15857"
+           x="506.96362"
+           sodipodi:role="line">are above the cutter level.</tspan><tspan
+           id="tspan3716"
+           y="618.15857"
+           x="506.96362"
+           sodipodi:role="line">The triangle's normal</tspan><tspan
+           id="tspan3718"
+           y="653.15857"
+           x="506.96362"
+           sodipodi:role="line">points downward.</tspan></text>
+    </g>
+    <g
+       id="g4249"
+       inkscape:export-filename="/home/lars/subversion/pycam/trunk/artwork/pics/case4.png"
+       inkscape:export-xdpi="40.00053"
+       inkscape:export-ydpi="40.00053">
+      <g
+         transform="translate(-2829.8646,2220)"
+         id="g3796">
+        <path
+           sodipodi:nodetypes="csaacccc"
+           id="path3774"
+           d="m 1313.8655,39.399761 c 0,0 14.3721,-9.70579 21.4602,-3.70003 8.9269,7.56386 16.0348,9.82794 24.4202,14.06011 7.6916,3.88203 15.0758,10.80419 23.6802,10.36008 8.4942,-0.43843 22.2001,-12.5801 22.2001,-12.5801 l 0,252.342049 -91.7607,0 0,-260.482109 z"
+           style="fill:url(#linearGradient4236);fill-opacity:1;stroke:none" />
+        <path
+           style="fill:#2e980b;fill-opacity:1;stroke:none"
+           d="M 1469.4959,85.481778 1506.299,200.54947 1367.884,212.08419 1469.4959,85.481778 z"
+           id="path3778"
+           sodipodi:nodetypes="cccc" />
+      </g>
+      <text
+         id="text3780"
+         y="2626.5864"
+         x="-1419.0509"
+         style="font-size:28px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="2626.5864"
+           x="-1419.0509"
+           id="tspan3782"
+           sodipodi:role="line">Case 4</tspan><tspan
+           id="tspan3784"
+           y="2661.5864"
+           x="-1419.0509"
+           sodipodi:role="line">The complete triangle is</tspan><tspan
+           id="tspan3790"
+           y="2696.5864"
+           x="-1419.0509"
+           sodipodi:role="line">above the cutter level.</tspan></text>
+    </g>
+    <g
+       id="g4282"
+       inkscape:export-filename="/home/lars/subversion/pycam/trunk/artwork/pics/case2a.png"
+       inkscape:export-xdpi="39.983322"
+       inkscape:export-ydpi="39.983322">
+      <g
+         transform="translate(-656.45438,700)"
+         id="g3818">
+        <path
+           style="fill:url(#linearGradient4230);fill-opacity:1;stroke:none"
+           d="m -846.1415,39.399761 c 0,0 14.3721,-9.70579 21.46016,-3.70003 8.92695,7.56386 16.03483,9.82794 24.42021,14.06011 7.69164,3.88203 15.07588,10.80419 23.68019,10.36008 8.49429,-0.43843 22.20018,-12.5801 22.20018,-12.5801 l 0,252.342049 -91.76074,0 0,-260.482109 z"
+           id="path3802"
+           sodipodi:nodetypes="csaacccc" />
+        <path
+           style="fill:#2e980b;fill-opacity:1;stroke:none"
+           d="m -694.41479,223.23423 13.90036,49.09019 -17.42372,149.94979 3.52336,-199.03998 z"
+           id="path3806"
+           sodipodi:nodetypes="cccc" />
+      </g>
+      <text
+         id="text3808"
+         y="1213.5863"
+         x="-1419.4132"
+         style="font-size:28px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="1213.5863"
+           x="-1419.4132"
+           id="tspan3810"
+           sodipodi:role="line">Case 2a</tspan><tspan
+           id="tspan3812"
+           y="1248.5863"
+           x="-1419.4132"
+           sodipodi:role="line">The projection of the</tspan><tspan
+           id="tspan3814"
+           y="1283.5863"
+           x="-1419.4132"
+           sodipodi:role="line">triangle onto the xy plane</tspan><tspan
+           id="tspan3816"
+           y="1318.5863"
+           x="-1419.4132"
+           sodipodi:role="line">results in a line.</tspan></text>
+    </g>
+    <g
+       id="g3880"
+       transform="translate(-997.84187,700)"
+       inkscape:export-filename="/home/lars/subversion/pycam/trunk/artwork/pics/case2b.png"
+       inkscape:export-xdpi="40.016376"
+       inkscape:export-ydpi="40.016376">
+      <path
+         sodipodi:nodetypes="cccc"
+         id="path3657"
+         d="M 217.26916,118.99432 48.442967,431.44954 128.64982,99.566541 217.26916,118.99432 z"
+         style="fill:#2e980b;fill-opacity:1;stroke:none" />
+      <path
+         sodipodi:nodetypes="csaacccc"
+         id="rect3642"
+         d="m 13.865497,39.399761 c 0,0 14.3721,-9.70579 21.46016,-3.70003 8.92695,7.56386 16.03483,9.82794 24.42021,14.06011 7.691642,3.88203 15.075882,10.80419 23.680192,10.36008 8.49429,-0.43843 22.200181,-12.5801 22.200181,-12.5801 l 0,252.342049 -91.760743,0 0,-260.482109 z"
+         style="fill:url(#linearGradient5778);fill-opacity:1;stroke:none" />
+      <text
+         id="text3660"
+         y="478.15857"
+         x="115.72456"
+         style="font-size:28px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="478.15857"
+           x="115.72456"
+           id="tspan3662"
+           sodipodi:role="line">Case 2b</tspan><tspan
+           id="tspan3664"
+           y="513.15857"
+           x="115.72456"
+           sodipodi:role="line">One or two vertices</tspan><tspan
+           id="tspan3720"
+           y="548.15857"
+           x="115.72456"
+           sodipodi:role="line">of the triangle are</tspan><tspan
+           id="tspan3724"
+           y="583.15857"
+           x="115.72456"
+           sodipodi:role="line">above the cutter</tspan><tspan
+           id="tspan3728"
+           y="618.15857"
+           x="115.72456"
+           sodipodi:role="line">level. The triangle's</tspan><tspan
+           id="tspan3730"
+           y="653.15857"
+           x="115.72456"
+           sodipodi:role="line">normal points upwards.</tspan></text>
+    </g>
+    <g
+       id="g4265"
+       inkscape:export-filename="/home/lars/subversion/pycam/trunk/artwork/pics/case1b.png"
+       inkscape:export-xdpi="40.000576"
+       inkscape:export-ydpi="40.000576">
+      <g
+         transform="translate(364.74354,0)"
+         id="g3838">
+        <path
+           style="fill:url(#linearGradient4228);fill-opacity:1;stroke:none"
+           d="m -1406.1415,39.399761 c 0,0 14.3721,-9.70579 21.4602,-3.70003 8.9269,7.56386 16.0348,9.82794 24.4202,14.06011 7.6916,3.88203 15.0759,10.80419 23.6802,10.36008 8.4943,-0.43843 22.2001,-12.5801 22.2001,-12.5801 l 0,252.342049 -91.7607,0 0,-260.482109 z"
+           id="path3824"
+           sodipodi:nodetypes="csaacccc" />
+        <path
+           style="fill:#2e980b;fill-opacity:1;stroke:none"
+           d="m -1240.2797,238.04743 152.2072,11.36564 -191.5695,0.96017 39.3623,-12.32581 z"
+           id="path3828"
+           sodipodi:nodetypes="cccc" />
+      </g>
+      <text
+         id="text3830"
+         y="383.15857"
+         x="-881.57727"
+         style="font-size:28px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="383.15857"
+           x="-881.57727"
+           id="tspan3832"
+           sodipodi:role="line">Case 1b</tspan><tspan
+           id="tspan3834"
+           y="418.15857"
+           x="-881.57727"
+           sodipodi:role="line">The vertices of the triangle</tspan><tspan
+           id="tspan3836"
+           y="453.15857"
+           x="-881.57727"
+           sodipodi:role="line">are in the same xy plane.</tspan></text>
+    </g>
+    <g
+       id="g3902"
+       transform="translate(-1828.8596,1400)"
+       inkscape:export-filename="/home/lars/subversion/pycam/trunk/artwork/pics/case3b.png"
+       inkscape:export-xdpi="40.016376"
+       inkscape:export-ydpi="40.016376">
+      <g
+         transform="translate(-49.750192,0)"
+         id="g3766">
+        <use
+           x="0"
+           y="0"
+           xlink:href="#rect3642"
+           id="use3748"
+           transform="translate(840,0)"
+           width="744.09448"
+           height="1052.3622" />
+        <path
+           sodipodi:nodetypes="cccc"
+           id="use3750"
+           d="m 1015.5041,418.08145 -100.6534,-272.8995 210.0226,212.90241 -109.3692,59.99709 z"
+           style="fill:#2e980b;fill-opacity:1;stroke:none" />
+      </g>
+      <text
+         id="text3754"
+         y="513.15857"
+         x="940.29596"
+         style="font-size:28px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="513.15857"
+           x="940.29596"
+           id="tspan3756"
+           sodipodi:role="line">Case 3b</tspan><tspan
+           id="tspan3758"
+           y="548.15857"
+           x="944.75299"
+           sodipodi:role="line">One triangle vertex is </tspan><tspan
+           id="tspan3760"
+           y="583.15857"
+           x="940.29596"
+           sodipodi:role="line">above the cutter level.</tspan><tspan
+           id="tspan3762"
+           y="618.15857"
+           x="940.29596"
+           sodipodi:role="line">The triangle's normal</tspan><tspan
+           id="tspan3764"
+           y="653.15857"
+           x="940.29596"
+           sodipodi:role="line">points downward.</tspan></text>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:28px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="-1207.0242"
+       y="2207.7163"
+       id="text2894"><tspan
+         sodipodi:role="line"
+         id="tspan2896"
+         x="-1207.0242"
+         y="2207.7163">see the related blog posting:</tspan><tspan
+         sodipodi:role="line"
+         x="-1207.0242"
+         y="2242.7163"
+         id="tspan2898">http://fab.senselab.org/node/43</tspan></text>
+    <g
+       id="g4339"
+       inkscape:export-filename="/home/lars/subversion/pycam/trunk/artwork/pics/case1a.png"
+       inkscape:export-xdpi="40"
+       inkscape:export-ydpi="40">
+      <g
+         transform="translate(-1158.0449,0)"
+         id="g3844">
+        <path
+           sodipodi:nodetypes="csaacccc"
+           id="path3676"
+           d="m -406.1415,39.399761 c 0,0 14.3721,-9.70579 21.46016,-3.70003 8.92695,7.56386 16.03483,9.82794 24.42021,14.06011 7.69164,3.88203 15.07588,10.80419 23.68019,10.36008 8.49429,-0.43843 22.20018,-12.5801 22.20018,-12.5801 l 0,252.342049 -91.76074,0 0,-260.482109 z"
+           style="fill:url(#linearGradient4226);fill-opacity:1;stroke:none" />
+        <path
+           sodipodi:nodetypes="cccc"
+           id="path3680"
+           d="m -236.6722,331.72503 119.56148,49.09019 -149.86704,149.94979 30.30556,-199.03998 z"
+           style="fill:#2e980b;fill-opacity:1;stroke:none" />
+      </g>
+      <text
+         id="text3686"
+         y="588.5863"
+         x="-1419.3243"
+         style="font-size:28px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           id="tspan3690"
+           y="588.5863"
+           x="-1419.3243"
+           sodipodi:role="line">Case 1a</tspan><tspan
+           id="tspan3692"
+           y="623.5863"
+           x="-1419.3243"
+           sodipodi:role="line">The triangle is completely</tspan><tspan
+           id="tspan3732"
+           y="658.5863"
+           x="-1419.3243"
+           sodipodi:role="line">below the cutter level.</tspan></text>
+      <path
+         transform="translate(-1603.5528,33.73877)"
+         inkscape:original-d="m 148.69822,96.45102 c 113.29389,-59.479289 -2.83234,4.24852 0,0 z"
+         inkscape:path-effect="#path-effect2902"
+         id="path2900"
+         d="m 148.69822,96.45102 0,0"
+         style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         transform="translate(-1603.5528,33.73877)"
+         inkscape:original-d="M 138.78501,86.537805 222.33925,45.468772 138.78501,86.537805 z"
+         inkscape:path-effect="#path-effect2910"
+         id="path2908"
+         d="M 138.78501,86.537805 222.33925,45.468772 138.78501,86.537805"
+         style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Lstart)" />
+      <text
+         id="text4132"
+         y="86.288414"
+         x="-1340.468"
+         style="font-size:28px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           style="font-size:22px"
+           y="86.288414"
+           x="-1340.468"
+           id="tspan4134"
+           sodipodi:role="line">Cutter</tspan></text>
+      <path
+         transform="translate(-1603.5528,33.73877)"
+         inkscape:original-d="m 263.40828,307.46088 5.6647,-69.3925 -5.6647,69.3925 z"
+         inkscape:path-effect="#path-effect4138"
+         id="path4136"
+         d="m 263.40828,307.46088 5.6647,-69.3925 -5.6647,69.3925"
+         style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Lstart)" />
+      <text
+         id="text4324"
+         y="210.31602"
+         x="-1330.7284"
+         style="font-size:28px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           style="font-size:22px"
+           y="210.31602"
+           x="-1330.7284"
+           id="tspan4326"
+           sodipodi:role="line">One triangle</tspan><tspan
+           style="font-size:22px"
+           id="tspan4328"
+           y="237.81602"
+           x="-1330.7284"
+           sodipodi:role="line">of the solid 3D</tspan><tspan
+           style="font-size:22px"
+           id="tspan4330"
+           y="265.31604"
+           x="-1330.7284"
+           sodipodi:role="line">trimesh model.</tspan></text>
+    </g>
+    <g
+       id="g5875"
+       inkscape:export-filename="/home/lars/subversion/pycam/trunk/artwork/pics/corners.png"
+       inkscape:export-xdpi="40"
+       inkscape:export-ydpi="40">
+      <g
+         id="g5780">
+        <path
+           style="opacity:0.67041201;fill:#a1af9c;fill-opacity:1;stroke:#000000;stroke-opacity:1"
+           d="m -965.74222,2727.1351 -56.76808,-78.8764 -85.7763,29.3263 -50.1352,-142.3395 229.95363,-145.1493 90.34061,256.487 -127.61466,80.5519 z"
+           id="path2897"
+           sodipodi:nodetypes="ccccccc" />
+        <path
+           id="path5873"
+           d="m -898.0403,2376.9594 -12.5,-35.5625 c 0,0 -1.3e-4,10e-5 -2e-4,2e-4 -9.80861,7.8487 -31.8438,20.1562 -31.8438,20.1562 l -2.0937,1.3125 -0.031,0.031"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1,2;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans;stroke-dashoffset:0" />
+        <path
+           id="path5871"
+           d="m -810.97214,2624.3428 c -29.04832,-82.4521 -58.08796,-164.9073 -87.06816,-247.3834"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans" />
+        <path
+           id="path5869"
+           d="m -1179.2278,2511.0531 -20.25,12.7813 7.9687,22.5625"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1,2;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans;stroke-dashoffset:0" />
+        <path
+           id="path5867"
+           d="m -944.509,2362.8968 c -78.2368,49.3906 -156.4793,98.7754 -234.7188,148.1563"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans" />
+        <path
+           id="path5865"
+           d="m -1139.0403,2695.4906 9.8437,27.9688 28.0938,-9.5313"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1,2;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans;stroke-dashoffset:0" />
+        <path
+           id="path5863"
+           d="m -1191.5091,2546.3969 c 17.504,49.6955 34.9761,99.3967 52.4688,149.0937"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans" />
+        <path
+           id="path5861"
+           d="m -991.1341,2752.9281 16.4688,22.9063 23.875,-15.0625"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1,2;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans;stroke-dashoffset:0" />
+        <path
+           id="path5859"
+           d="m -1101.1028,2713.9281 c 21.9899,-7.4481 43.8611,-14.9884 65.75,-22.5 14.7458,20.4976 29.4867,41.0159 44.2187,61.5"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans" />
+        <path
+           id="path5857"
+           d="m -950.7903,2760.7719 120.95798,-76.3509"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans" />
+        <path
+           id="path4357"
+           d="m -829.83232,2684.421 c 23.74503,-19.1043 27.7063,-34.969 18.86018,-60.0782"
+           style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:none;stroke:#e50000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1,2;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans;stroke-dashoffset:0" />
+        <path
+           style="opacity:0.33000004;fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           d="m -838.12756,2646.5832 -184.38274,1.6755 -135.9115,-113.0132 320.29424,111.3377"
+           id="path4946"
+           inkscape:path-effect="#path-effect4948"
+           inkscape:original-d="m -838.12756,2646.5832 -184.38274,1.6755 -135.9115,-113.0132 320.29424,111.3377 z" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:1.21528423px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Lstart)"
+           d="m -1100.9885,2445.7916 -22.9943,-71.8056 22.9943,71.8056"
+           id="path4950"
+           inkscape:path-effect="#path-effect4952"
+           inkscape:original-d="m -1100.9885,2445.7916 -22.9943,-71.8056 22.9943,71.8056 z" />
+        <text
+           xml:space="preserve"
+           style="font-size:22px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           x="-1112.4302"
+           y="2334.2952"
+           id="text5138"><tspan
+             sodipodi:role="line"
+             id="tspan5140"
+             x="-1112.4302"
+             y="2334.2952">extended shifted</tspan><tspan
+             sodipodi:role="line"
+             x="-1112.4302"
+             y="2361.7952"
+             id="tspan5142">collision line</tspan></text>
+        <path
+           style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Lstart)"
+           d="m -1044.7795,2700.736 -67.0928,78.1081 67.0928,-78.1081"
+           id="path5144"
+           inkscape:path-effect="#path-effect5146"
+           inkscape:original-d="m -1044.7795,2700.736 -67.0928,78.1081 67.0928,-78.1081 z"
+           sodipodi:nodetypes="ccc" />
+        <text
+           xml:space="preserve"
+           style="font-size:22px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           x="-1126.8904"
+           y="2799.8621"
+           id="text5332"><tspan
+             sodipodi:role="line"
+             id="tspan5334"
+             x="-1126.8904"
+             y="2799.8621">shortened</tspan><tspan
+             sodipodi:role="line"
+             x="-1126.8904"
+             y="2827.3621"
+             id="tspan5336">lines at</tspan><tspan
+             sodipodi:role="line"
+             x="-1126.8904"
+             y="2854.8621"
+             id="tspan5338">concave corner</tspan></text>
+        <path
+           style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Lstart)"
+           d="m -965.66996,2781.8483 58.08038,31.0429 -58.08038,-31.0429"
+           id="path5348"
+           inkscape:path-effect="#path-effect5350"
+           inkscape:original-d="m -965.66996,2781.8483 58.08038,31.0429 -58.08038,-31.0429 z" />
+        <text
+           xml:space="preserve"
+           style="font-size:22px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           x="-815.1947"
+           y="2817.2107"
+           id="text5536"><tspan
+             sodipodi:role="line"
+             id="tspan5538"
+             x="-815.1947"
+             y="2817.2107">extended lines</tspan><tspan
+             sodipodi:role="line"
+             x="-815.1947"
+             y="2844.7107"
+             id="tspan5540">at convex corner</tspan></text>
+        <text
+           xml:space="preserve"
+           style="font-size:22px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           x="-737.35394"
+           y="2440.3757"
+           id="text5576"><tspan
+             sodipodi:role="line"
+             x="-737.35394"
+             y="2440.3757"
+             id="tspan5580">connecting a</tspan><tspan
+             id="tspan5806"
+             sodipodi:role="line"
+             x="-737.35394"
+             y="2467.8757">convex corner</tspan><tspan
+             sodipodi:role="line"
+             x="-737.35394"
+             y="2495.3757"
+             id="tspan5582">with an arc</tspan><tspan
+             sodipodi:role="line"
+             x="-737.35394"
+             y="2522.8757"
+             id="tspan5586">(not implemented)</tspan></text>
+        <path
+           style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Lstart)"
+           d="M 804.1129,2599.9043 860.19051,2497.763 804.1129,2599.9043"
+           id="path5590"
+           inkscape:path-effect="#path-effect5592"
+           inkscape:original-d="M 804.1129,2599.9043 860.19051,2497.763 804.1129,2599.9043 z"
+           transform="translate(-1603.5528,33.73877)" />
+      </g>
+    </g>
+  </g>
+</svg>
