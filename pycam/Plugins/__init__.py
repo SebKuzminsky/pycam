@@ -30,7 +30,6 @@ import gobject
 
 import pycam.Utils.log
 import pycam.Utils.locations
-import pycam.Utils.xml_handling
 
 
 _log = pycam.Utils.log.get_logger()
