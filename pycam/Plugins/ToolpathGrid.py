@@ -98,9 +98,8 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
             for x in range(x_count):
                 for y in range(y_count):
                     shift = (x * (x_space + x_dim), y * (y_space + y_dim), 0, 'v')
-                    for path in toolpath.paths:
-                        new_path = pycam.Geometry.Path.Path()
-                        new_path.points = [padd(shift, p) for p in path.points]
+                    for index in len(toolpath.paths):
+                        new_path = [shift.add(p) for p in toolpath.paths[index]]
                         new_paths.append(new_path)
             if not self.gui.get_object("KeepOriginal").get_active():
                 toolpath.paths = new_paths

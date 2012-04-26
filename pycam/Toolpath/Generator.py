@@ -23,8 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.PathGenerators import DropCutter, PushCutter, EngraveCutter, \
         ContourFollow
 from pycam.Geometry.utils import number
-from pycam.PathProcessors import PathAccumulator, SimpleCutter, ZigZagCutter, \
-        PolygonCutter, ContourCutter
+from pycam.PathProcessors import PolygonCutter, ContourCutter
 from pycam.Cutters.CylindricalCutter import CylindricalCutter
 import pycam.Cutters
 import pycam.Toolpath.SupportGrid

@@ -22,6 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 import pycam.Gui.OpenGLTools
+from pycam.Toolpath import MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID
 
 
 class OpenGLViewToolpath(pycam.Plugins.PluginBase):
@@ -75,10 +76,12 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
     def draw_toolpaths(self):
         if self._is_visible():
             for toolpath in self.core.get("toolpaths").get_visible():
-                moves = toolpath.get_moves_for_opengl(self.core.get("gcode_safety_height"))
-                self._draw_toolpath_moves2(moves)
-                #moves = toolpath.get_moves(self.core.get("gcode_safety_height"))
-                #self._draw_toolpath_moves(moves)
+                # TODO: enable the VBO code for speedup!
+                #moves = toolpath.get_moves_for_opengl(self.core.get("gcode_safety_height"))
+                #self._draw_toolpath_moves2(moves)
+                toolpath._update_safety_height(self.core.get("gcode_safety_height"))
+                moves = toolpath.get_basic_moves()
+                self._draw_toolpath_moves(moves)
             
     def _draw_toolpath_moves2(self, paths):
         GL = self._GL
@@ -118,7 +121,10 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
         last_position = None
         last_rapid = None
         GL.glBegin(GL.GL_LINE_STRIP)
-        for position, rapid in moves:
+        for move_type, position in moves:
+            if not move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
+                continue
+            rapid = move_type == MOVE_STRAIGHT_RAPID
             if last_rapid != rapid:
                 GL.glEnd()
                 if rapid:
@@ -141,3 +147,4 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
                 p1 = moves[index][0]
                 p2 = moves[index + 1][0]
                 pycam.Gui.OpenGLTools.draw_direction_cone(p1, p2)
+

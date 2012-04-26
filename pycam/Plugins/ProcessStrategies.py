@@ -23,7 +23,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 import pycam.PathGenerators.PushCutter
-import pycam.PathProcessors.PathAccumulator
 import pycam.Toolpath.MotionGrid
 from pycam.Toolpath.MotionGrid import START_X, START_Y, START_Z
 
@@ -56,8 +55,7 @@ class ProcessStrategySlicing(pycam.Plugins.PluginBase):
                 tool=tool, models=environment["collision_models"])
         line_distance = 2 * tool_params["radius"] * \
                 (1.0 - process["parameters"]["overlap"])
-        path_generator = pycam.PathGenerators.PushCutter.PushCutter(
-                pycam.PathProcessors.SimpleCutter.SimpleCutter())
+        path_generator = pycam.PathGenerators.PushCutter.PushCutter(waterlines=False)
         path_pattern = process["parameters"]["path_pattern"]
         path_get_func = self.core.get("get_parameter_sets")(
                 "path_pattern")[path_pattern["name"]]["func"]
@@ -95,8 +93,7 @@ class ProcessStrategyContour(pycam.Plugins.PluginBase):
                 tool=tool, models=environment["collision_models"])
         line_distance = 2 * tool_params["radius"] * \
                 (1.0 - process["parameters"]["overlap"])
-        path_generator = pycam.PathGenerators.PushCutter.PushCutter(
-                pycam.PathProcessors.ContourCutter.ContourCutter())
+        path_generator = pycam.PathGenerators.PushCutter.PushCutter(waterlines=True)
         # TODO: milling_style currently refers to the grid lines - not to the waterlines
         motion_grid = pycam.Toolpath.MotionGrid.get_fixed_grid(
                 (low, high), process["parameters"]["step_down"],
@@ -132,8 +129,7 @@ class ProcessStrategySurfacing(pycam.Plugins.PluginBase):
                 tool=tool, models=environment["collision_models"])
         line_distance = 2 * tool_params["radius"] * \
                 (1.0 - process["parameters"]["overlap"])
-        path_generator = pycam.PathGenerators.DropCutter.DropCutter(
-                pycam.PathProcessors.PathAccumulator.PathAccumulator())
+        path_generator = pycam.PathGenerators.DropCutter.DropCutter()
         path_pattern = process["parameters"]["path_pattern"]
         path_get_func = self.core.get("get_parameter_sets")(
                 "path_pattern")[path_pattern["name"]]["func"]
@@ -171,8 +167,7 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
         tool_params = tool["parameters"]
         low, high = environment["bounds"].get_absolute_limits(
                 tool=tool, models=environment["collision_models"])
-        path_generator = pycam.PathGenerators.EngraveCutter.EngraveCutter(
-                pycam.PathProcessors.SimpleCutter.SimpleCutter())
+        path_generator = pycam.PathGenerators.EngraveCutter.EngraveCutter()
         models = [m.model for m in process["parameters"]["trace_models"]]
         if not models:
             self.log.error("No trace models given: you need to assign a " + \

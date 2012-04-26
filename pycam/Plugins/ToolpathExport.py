@@ -219,7 +219,8 @@ class ToolpathExport(pycam.Plugins.PluginBase):
                 spindle_speed = params.get("spindle_speed", 1000)
                 generator.set_speed(feedrate, spindle_speed)
                 # TODO: implement toolpath.get_meta_data()
-                generator.add_moves(toolpath.get_moves(safety_height),
+                toolpath._update_safety_height(safety_height)
+                generator.add_moves(toolpath.get_basic_moves(),
                         tool_id=tool_id, comment="")
             generator.finish()
             destination.close()

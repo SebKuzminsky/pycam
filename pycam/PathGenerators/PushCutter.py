@@ -29,6 +29,7 @@ from pycam.Utils import ProgressCounter
 from pycam.Geometry.PointUtils import *
 import pycam.Utils.log
 import math
+from pycam.Toolpath import MOVE_STRAIGHT, MOVE_SAFETY
 
 
 log = pycam.Utils.log.get_logger()
@@ -46,15 +47,13 @@ def _process_one_line((p1, p2, depth, models, cutter, physics)):
 
 class PushCutter(object):
 
-    def __init__(self, path_processor, physics=None):
+    def __init__(self, waterlines=False, physics=None):
         if physics is None:
             log.debug("Starting PushCutter (without ODE)")
         else:
             log.debug("Starting PushCutter (with ODE)")
-        self.pa = path_processor
         self.physics = physics
-        # check if we use a PolygonExtractor
-        self._use_polygon_extractor = hasattr(self.pa, "polygon_extractor")
+        self.waterlines = waterlines
 
     def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None, draw_callback=None):
         # Transfer the grid (a generator) into a list of lists and count the
@@ -74,6 +73,10 @@ class PushCutter(object):
         progress_counter = ProgressCounter(num_of_grid_positions, draw_callback)
 
         current_layer = 0
+        if self.waterlines:
+            self.pa = pycam.PathProcessors.ContourCutter.ContourCutter()
+        else:
+            path = []
         for layer_grid in grid:
             # update the progress bar and check, if we should cancel the process
             if draw_callback and draw_callback(text="PushCutter: processing" \
@@ -81,45 +84,58 @@ class PushCutter(object):
                 # cancel immediately
                 break
 
-            self.pa.new_direction(0)
-            self.GenerateToolPathSlice(cutter, models, layer_grid, draw_callback,
-                    progress_counter)
-            self.pa.end_direction()
-            self.pa.finish()
+            if self.waterlines:
+                self.pa.new_direction(0)
+            result = self.GenerateToolPathSlice(cutter, models, layer_grid,
+                    draw_callback, progress_counter)
+            if self.waterlines:
+                self.pa.end_direction()
+                self.pa.finish()
+            else:
+                path.extend(result)
 
             current_layer += 1
 
-        if self._use_polygon_extractor and (len(models) > 1):
-            other_models = models[1:]
+        if self.waterlines:
             # TODO: this is complicated and hacky :(
             # we don't use parallelism or ODE (for the sake of simplicity)
-            final_pa = pycam.PathProcessors.SimpleCutter.SimpleCutter(
-                    reverse=self.pa.reverse)
+            result = []
+            # turn the waterline points into cutting segments
             for path in self.pa.paths:
-                final_pa.new_scanline()
                 pairs = []
                 for index in range(len(path.points) - 1):
                     pairs.append((path.points[index], path.points[index + 1]))
-                for p1, p2 in pairs:
-                    free_points = get_free_paths_triangles(other_models,
-                            cutter, p1, p2)
-                    for point in free_points:
-                        final_pa.append(point)
-                final_pa.end_scanline()
-            final_pa.finish()
-            return final_pa.paths
+                if len(models) > 1:
+                    # We assume that the first model is used for the waterline and all
+                    # other models are obstacles (e.g. a support grid).
+                    other_models = models[1:]
+                    for p1, p2 in pairs:
+                        free_points = get_free_paths_triangles(other_models,
+                                cutter, p1, p2)
+                        for index in range(len(free_points) / 2):
+                            result.append((MOVE_STRAIGHT, free_points[2 * index]))
+                            result.append((MOVE_STRAIGHT, free_points[2 * index + 1]))
+                            result.append((MOVE_SAFETY, None))
+                else:
+                    for p1, p2 in pairs:
+                        result.append((MOVE_STRAIGHT, p1))
+                        result.append((MOVE_STRAIGHT, p2))
+                        result.append((MOVE_SAFETY, None))
+            return result
         else:
-            return self.pa.paths
+            return path
 
     def GenerateToolPathSlice(self, cutter, models, layer_grid, draw_callback=None,
             progress_counter=None):
+        path = []
+
         # settings for calculation of depth
         accuracy = 20
         max_depth = 20
         min_depth = 4
 
         # the ContourCutter pathprocessor does not work with combined models
-        if self._use_polygon_extractor:
+        if self.waterlines:
             models = models[:1]
         else:
             models = models
@@ -137,14 +153,27 @@ class PushCutter(object):
         for points in run_in_parallel(_process_one_line, args,
                 callback=progress_counter.update):
             if points:
-                self.pa.new_scanline()
-                for point in points:
-                    self.pa.append(point)
-                if draw_callback:
-                    draw_callback(tool_position=points[-1], toolpath=self.pa.paths)
-                self.pa.end_scanline()
+                if self.waterlines:
+                    self.pa.new_scanline()
+                    for point in points:
+                        self.pa.append(point)
+                else:
+                    for index in range(len(points) / 2):
+                        path.append((MOVE_STRAIGHT, points[2 * index]))
+                        path.append((MOVE_STRAIGHT, points[2 * index + 1]))
+                        path.append((MOVE_SAFETY, None))
+                if self.waterlines:
+                    if draw_callback:
+                        draw_callback(tool_position=points[-1])
+                    self.pa.end_scanline()
+                else:
+                    if draw_callback:
+                        draw_callback(tool_position=points[-1], toolpath=path)
             # update the progress counter
             if progress_counter and progress_counter.increment():
                 # quit requested
                 break
+
+        if not self.waterlines:
+            return path
 

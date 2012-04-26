@@ -30,10 +30,16 @@ from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Path import Path
 from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import number, epsilon
+import pycam.Utils.log
 import random
 import os
+
 import math
 from itertools import groupby
+
+
+MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC, MOVE_SAFETY, TOOL_CHANGE, \
+        MACHINE_SETTING = range(6)
 
 
 def _check_colinearity(p1, p2, p3):
@@ -65,20 +71,23 @@ def simplify_toolpath(path):
 
 class Toolpath(object):
 
-    def __init__(self, paths, parameters=None):
-        self.paths = paths
+    def __init__(self, path, parameters=None):
+        self.path = path
         if not parameters:
             parameters = {}
         self.parameters = parameters
-        self._max_safe_distance = 2 * parameters.get("tool_radius", 0)
+        # TODO: remove this hidden import (currently necessary to avoid dependency loop)
+        from pycam.Toolpath.Filters import TinySidewaysMovesFilter, MachineSetting, \
+                SafetyHeightFilter
+        self.filters = []
+        self.filters.append(MachineSetting("metric", True))
+        self.filters.append(MachineSetting("feedrate",
+                parameters.get("tool_feedrate", 300)))
+        self.filters.append(TinySidewaysMovesFilter(
+                2 * parameters.get("tool_radius", 0)))
+        self.filters.append(SafetyHeightFilter(20))
         self._feedrate = parameters.get("tool_feedrate", 300)
-        self.opengl_safety_height = None
-        self._minx = None
-        self._maxx = None
-        self._miny = None
-        self._maxy = None
-        self._minz = None
-        self._maxz = None
+        self.clear_cache()
         
     def clear_cache(self):
         self.opengl_safety_height = None
@@ -94,19 +103,17 @@ class Toolpath(object):
 
     def copy(self):
         new_paths = []
-        for path in self.paths:
+        for path in self.path:
             new_path = Path()
-            for point in path.points:
+            for point in path:
                 new_path.append(point)
             new_paths.append(new_path)
         return Toolpath(new_paths, parameters=self.get_params())
 
     def _get_limit_generic(self, idx, func):
-        path_min = []
-        for path in self.paths:
-            if path.points:
-                path_min.append(func([ p[idx] for p in path.points]))
-        return func(path_min)
+        values = [p[x] for move_type, p in self.path
+                  if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID)]
+        return func(values)
 
     @property
     def minx(self):
@@ -151,6 +158,7 @@ class Toolpath(object):
         return os.linesep.join((start_marker, meta, end_marker))
 
     def get_moves(self, safety_height, max_movement=None):
+        self._update_safety_height(safety_height)
         class MoveContainer(object):
             def __init__(self, max_movement):
                 self.max_movement = max_movement
@@ -187,11 +195,11 @@ class Toolpath(object):
                 return True
         p_last = None
         result = MoveContainer(max_movement)
-        for path in self.paths:
+        for path in self.path:
             if not path:
                 # ignore empty paths
                 continue
-            p_next = path.points[0]
+            p_next = path[0]
             if p_last is None:
                 p_last = (p_next[0], p_next[1], safety_height)
                 if not result.append(p_last, True):
@@ -345,26 +353,36 @@ class Toolpath(object):
         @rtype: float
         @returns: the machine time used for processing the toolpath in minutes
         """
-        result = 0
-        safety_height = number(safety_height)
-        current_position = None
-        # go through all points of the path
-        for new_pos, rapid in self.get_moves(safety_height):
-            if not current_position is None:
-                result += pnorm(psub(new_pos, current_position)) / self._feedrate
-            current_position = new_pos
-        return result
+        return self.get_machine_move_distance(safety_height) / self._feedrate
 
-    def get_machine_movement_distance(self, safety_height=0.0):
+    def _update_safety_height(self, safety_height):
+        # TODO: remove this ugly hack!
+        from pycam.Toolpath.Filters import SafetyHeightFilter
+        for index in range(len(self.filters)):
+            if isinstance(self.filters[index], SafetyHeightFilter) and \
+                    (self.filters[index].safety_height != safety_height):
+                self.filters[index] = SafetyHeightFilter(safety_height)
+                self.get_basic_moves(reset_cache=True)
+                break
+
+    def get_machine_move_distance(self, safety_height):
         result = 0
-        safety_height = number(safety_height)
         current_position = None
+        self._update_safety_height(safety_height)
         # go through all points of the path
-        for new_pos, rapid in self.get_moves(safety_height):
-            if not current_position is None:
-                result += pnorm(psub(new_pos, current_position))
-            current_position = new_pos
+        for move_type, args in self.get_basic_moves():
+            if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
+                if not current_position is None:
+                    result += pnorm(psub(args, current_position))
+                current_position = args
         return result
+    def get_basic_moves(self, reset_cache=False):
+        if reset_cache or not hasattr(self, "_cache_basic_moves"):
+            result = list(self.path)
+            for move_filter in self.filters:
+                result |= move_filter
+            self._cache_basic_moves = result
+        return self._cache_basic_moves
 
     def get_cropped_copy(self, polygons, callback=None):
         # create a deep copy of the current toolpath
@@ -375,11 +393,9 @@ class Toolpath(object):
     def crop(self, polygons, callback=None):
         # collect all existing toolpath lines
         open_lines = []
-        for path in self.paths:
-            if path:
-                for index in range(len(path.points) - 1):
-                    open_lines.append(Line(path.points[index],
-                            path.points[index + 1]))
+        # TODO: migrate "crop" to the new toolpath structure
+        for index in range(len(path) - 1):
+            open_lines.append(Line(path[index], path[index + 1]))
         # go through all polygons and add "inner" lines (or parts thereof) to
         # the final list of remaining lines
         inner_lines = []
@@ -402,7 +418,7 @@ class Toolpath(object):
         while inner_lines:
             if callback and callback():
                 return
-            end = current_path.points[-1]
+            end = current_path[-1]
             # look for the next connected point
             for line in inner_lines:
                 if line.p1 == end:
@@ -415,10 +431,9 @@ class Toolpath(object):
                 line = inner_lines.pop(0)
                 current_path.append(line.p1)
                 current_path.append(line.p2)
-        if current_path.points:
+        if current_path:
             new_paths.append(current_path)
-        self.paths = new_paths
-        self.clear_cache()
+        self.path = new_path
 
 
 class Bounds(object):

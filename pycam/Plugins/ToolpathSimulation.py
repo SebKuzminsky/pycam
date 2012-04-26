@@ -98,7 +98,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
             self._progress.set_upper(self._toolpath.get_machine_time(
                     safety_height=self._safety_height))
             self._progress.set_value(0)
-            self._distance = self._toolpath.get_machine_movement_distance(
+            self._distance = self._toolpath.get_machine_move_distance(
                         safety_height=self._safety_height)
             self._feedrate = self._toolpath.get_params().get("tool_feedrate",
                     300)
@@ -203,11 +203,11 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
             if progress.update(text=progress_text, percent=progress_value_percent):
                 # break if the user pressed the "cancel" button
                 break
-            for index in range(len(path.points)):
-                self.cutter.moveto(path.points[index])
+            for index in range(len(path)):
+                self.cutter.moveto(path[index])
                 if index != 0:
-                    start = path.points[index - 1]
-                    end = path.points[index]
+                    start = path[index - 1]
+                    end = path[index]
                     if start != end:
                         simulation_backend.process_cutter_movement(start, end)
                 self.update_view()

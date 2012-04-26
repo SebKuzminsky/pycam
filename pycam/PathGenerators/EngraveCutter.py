@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import pycam.PathProcessors.PathAccumulator
+from pycam.Geometry.Point import Point, Vector
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.utils import ceil
@@ -35,12 +35,7 @@ log = pycam.Utils.log.get_logger()
 
 class EngraveCutter(object):
 
-    def __init__(self, path_processor, physics=None):
-        self.pa_push = path_processor
-        # We use a separated path processor for the last "drop" layer.
-        # This path processor does not need to be configurable.
-        self.pa_drop = pycam.PathProcessors.PathAccumulator.PathAccumulator(
-                reverse=self.pa_push.reverse)
+    def __init__(self, physics=None):
         self.physics = physics
 
     def GenerateToolPath(self, cutter, models, motion_grid, minz=None,
@@ -58,8 +53,9 @@ class EngraveCutter(object):
 
         push_layers = motion_grid[:-1]
         push_generator = pycam.PathGenerators.PushCutter.PushCutter(
-                self.pa_push, physics=self.physics)
+                physics=self.physics)
         current_layer = 0
+        push_moves = []
         for push_layer in push_layers:
             # update the progress bar and check, if we should cancel the process
             if draw_callback and draw_callback(text="Engrave: processing " \
@@ -68,7 +64,8 @@ class EngraveCutter(object):
                 quit_requested = True
                 break
             # no callback: otherwise the status text gets lost
-            push_generator.GenerateToolPath(cutter, [model], [push_layer])
+            push_moves.extend(push_generator.GenerateToolPath(cutter, [model],
+                    [push_layer]))
             if draw_callback and draw_callback():
                 # cancel requested
                 quit_requested = True
@@ -76,15 +73,15 @@ class EngraveCutter(object):
             current_layer += 1
 
         if quit_requested:
-            return self.pa_push.paths
+            return push_moves
 
-        drop_generator = pycam.PathGenerators.DropCutter.DropCutter(self.pa_drop,
+        drop_generator = pycam.PathGenerators.DropCutter.DropCutter(
                 physics=self.physics)
         drop_layers = motion_grid[-1:]
         if draw_callback:
             draw_callback(text="Engrave: processing layer " + \
                 "%d/%d" % (current_layer + 1, num_of_layers))
-        drop_generator.GenerateToolPath(cutter, [model], drop_layers,
-                minz=minz, maxz=maxz, draw_callback=draw_callback)
-        return self.pa_push.paths + self.pa_drop.paths
+        drop_moves = drop_generator.GenerateToolPath(cutter, [model],
+                drop_layers, minz=minz, maxz=maxz, draw_callback=draw_callback)
+        return push_moves + drop_moves
 

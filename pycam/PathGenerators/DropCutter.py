@@ -26,7 +26,7 @@ from pycam.Utils import ProgressCounter
 from pycam.Utils.threading import run_in_parallel
 import pycam.Geometry.Model
 import pycam.Utils.log
-
+from pycam.Toolpath import MOVE_STRAIGHT, MOVE_SAFETY
 
 log = pycam.Utils.log.get_logger()
 
@@ -43,60 +43,55 @@ def _process_one_grid_line((positions, minz, maxz, model, cutter, physics)):
 
 class DropCutter(object):
 
-    def __init__(self, path_processor, physics=None):
-        self.pa = path_processor
+    def __init__(self, physics=None):
         self.physics = physics
 
     def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None, draw_callback=None):
+        path = []
         quit_requested = False
         model = pycam.Geometry.Model.get_combined_model(models)
 
         # Transfer the grid (a generator) into a list of lists and count the
         # items.
-        # usually there is only one layer - but an xy-grid consists of two
         lines = []
+        # usually there is only one layer - but an xy-grid consists of two
         for layer in motion_grid:
-            lines.extend(layer)
-		
+            for line in layer:
+                lines.append(line)
+
         num_of_lines = len(lines)
         progress_counter = ProgressCounter(len(lines), draw_callback)
         current_line = 0
 
-        self.pa.new_direction(0)
 
         args = []
         for one_grid_line in lines:
-            args.append(([(x,y) for x,y,z in one_grid_line], minz, maxz, model, cutter, self.physics))
-            
+            # simplify the data (useful for remote processing)
+            xy_coords = [(pos.x, pos.y) for pos in one_grid_line]
+            args.append((xy_coords, minz, maxz, model, cutter,
+                    self.physics))
         for points in run_in_parallel(_process_one_grid_line, args,
                 callback=progress_counter.update):
-            self.pa.new_scanline()
-            if draw_callback and draw_callback(text="DropCutter: processing line %d/%d" 
-                % (current_line + 1, num_of_lines)):
+            if draw_callback and draw_callback(text="DropCutter: processing " \
+                        + "line %d/%d" % (current_line + 1, num_of_lines)):
                 # cancel requested
                 quit_requested = True
                 break
             for point in points:
                 if point is None:
                     # exceeded maxz - the cutter has to skip this point
-                    self.pa.end_scanline()
-                    self.pa.new_scanline()
+                    path.append((MOVE_SAFETY))
                     continue
-                self.pa.append(point)
-                # "draw_callback" returns true, if the user requested to quit
-                # via the GUI.
+                path.append((MOVE_STRAIGHT, point))
                 # The progress counter may return True, if cancel was requested.
                 if draw_callback and draw_callback(tool_position=point,
-                        toolpath=self.pa.paths):
+                        toolpath=path):
                     quit_requested = True
                     break
             progress_counter.increment()
-            self.pa.end_scanline()
             # update progress
             current_line += 1
             if quit_requested:
                 break
-        self.pa.end_direction()
-        self.pa.finish()
-        return self.pa.paths
+        return path
 
