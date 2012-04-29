@@ -111,7 +111,7 @@ class Toolpath(object):
         return Toolpath(new_paths, parameters=self.get_params())
 
     def _get_limit_generic(self, idx, func):
-        values = [p[x] for move_type, p in self.path
+        values = [p[idx] for move_type, p in self.path
                   if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID)]
         return func(values)
 

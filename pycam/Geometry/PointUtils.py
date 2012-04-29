@@ -32,6 +32,11 @@ def pnorm(a):
 def pnormsq(a):
     return pdot(a,a)
 
+def pdist(a, b, axes=None):
+    if axes is None:
+        axes = (0, 1, 2)
+    return sqrt(sum([(a[index] - b[index]) ** 2 for index in axes]))
+
 def pcmp(a,b):
     """ Two points are equal if all dimensions are identical.
     Otherwise the result is based on the individual x/y/z comparisons.

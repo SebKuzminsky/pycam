@@ -22,7 +22,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 from pycam.Toolpath import MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_SAFETY, MACHINE_SETTING
-from pycam.Geometry.Point import Point
+from pycam.Geometry.PointUtils import psub, pdist
+from pycam.Geometry.utils import epsilon
 
 
 class BaseFilter(object):
@@ -48,14 +49,14 @@ class SafetyHeightFilter(BaseFilter):
                 if not last_pos:
                     # there was a safety move (or no move at all) before
                     # -> move sideways
-                    safe_pos = Point(args.x, args.y, self.safety_height)
+                    safe_pos = (args[0], args[1], self.safety_height)
                     new_path.append((MOVE_STRAIGHT_RAPID, safe_pos))
                 last_pos = args
                 new_path.append((move_type, args))
             elif move_type == MOVE_SAFETY:
                 if last_pos:
                     # safety move -> move straight up to safety height
-                    next_pos = Point(last_pos.x, last_pos.y, self.safety_height)
+                    next_pos = (last_pos[0], last_pos[1], self.safety_height)
                     new_path.append((MOVE_STRAIGHT_RAPID, next_pos))
                     last_pos = None
                 else:
@@ -79,9 +80,10 @@ class TinySidewaysMovesFilter(BaseFilter):
         for move_type, args in toolpath:
             if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
                 if in_safety and last_pos:
-                    # check if the last position was very close
-                    if (last_pos.sub(args).norm < self.tolerance) and \
-                            (last_pos.x == args.x) and (last_pos.y == args.y):
+                    # check if the last position was very close and at the
+                    # same height
+                    if (pdist(last_pos, args) < self.tolerance) and \
+                            (abs(last_pos[2] - args[2]) < epsilon):
                         # within tolerance -> remove previous safety move
                         new_path.pop(-1)
                 in_safety = False
