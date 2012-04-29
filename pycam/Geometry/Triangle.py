@@ -71,12 +71,12 @@ class Triangle(IDGenerator, TransformableContainer):
         self.plane = Plane(self.center, self.normal)
         # calculate circumcircle (resulting in radius and middle)
         denom = pnorm(pcross(psub(self.p2, self.p1), psub(self.p3, self.p2)))
-        self.radius = (pnorm(psub(self.p2, self.p1)) * pnorm(psub(self.p3, self.p2)) * pnorm(psub(self.p3, self.p1))) / (2 * denom)
+        self.radius = (pdist(self.p2, self.p1) * pdist(self.p3, self.p2) * pdist(self.p3, self.p1)) / (2 * denom)
         self.radiussq = self.radius ** 2
         denom2 = 2 * denom * denom
-        alpha = pnormsq(psub(self.p3, self.p2)) * pdot(psub(self.p1, self.p2), psub(self.p1, self.p3)) / denom2
-        beta = pnormsq(psub(self.p1, self.p3)) * pdot(psub(self.p2, self.p1), psub(self.p2, self.p3)) / denom2
-        gamma = pnormsq(psub(self.p1, self.p2)) * pdot(psub(self.p3, self.p1), psub(self.p3, self.p2)) / denom2
+        alpha = pdist_sq(self.p3, self.p2) * pdot(psub(self.p1, self.p2), psub(self.p1, self.p3)) / denom2
+        beta = pdist_sq(self.p1, self.p3) * pdot(psub(self.p2, self.p1), psub(self.p2, self.p3)) / denom2
+        gamma = pdist_sq(self.p1, self.p2) * pdot(psub(self.p3, self.p1), psub(self.p3, self.p2)) / denom2
         self.middle = (self.p1[0] * alpha + self.p2[0] * beta + self.p3[0] * gamma,
                         self.p1[1] * alpha + self.p2[1] * beta + self.p3[1] * gamma,
                         self.p1[2] * alpha + self.p2[2] * beta + self.p3[2] * gamma)

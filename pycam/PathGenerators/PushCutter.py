@@ -144,7 +144,7 @@ class PushCutter(object):
         for line in layer_grid:
             p1, p2 = line
             # calculate the required calculation depth (recursion)
-            distance = pnorm(psub(p2, p1))
+            distance = pdist(p2, p1)
             # TODO: accessing cutter.radius here is slightly ugly
             depth = math.log(accuracy * distance / cutter.radius) / math.log(2)
             depth = min(max(ceil(depth), 4), max_depth)

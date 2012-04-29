@@ -176,7 +176,7 @@ class Toolpath(object):
                     self.last_pos = new_position
                     return True
                 else:
-                    distance = pnorm(psub(new_position, self.last_pos))
+                    distance = pdist(new_position, self.last_pos)
                     if self.moved_distance + distance > self.max_movement:
                         partial = (self.max_movement - self.moved_distance) / \
                                 distance
@@ -207,7 +207,7 @@ class Toolpath(object):
             if ((abs(p_last[0] - p_next[0]) > epsilon) or (abs(p_last[1] - p_next[1]) > epsilon)):
                 # Draw the connection between the last and the next path.
                 # Respect the safety height.
-                if (abs(p_last[2] - p_next[2]) > epsilon) or (pnorm(psub(p_last, p_next)) > self._max_safe_distance + epsilon):
+                if (abs(p_last[2] - p_next[2]) > epsilon) or (pdist(p_last, p_next) > self._max_safe_distance + epsilon):
                     # The distance between these two points is too far.
                     # This condition helps to prevent moves up/down for
                     # adjacent lines.
@@ -324,7 +324,7 @@ class Toolpath(object):
                 lastp = outpaths[-1][0][-1]
                 working_path.append((path[0][0], path[0][1], safety_height))
                 if ((abs(lastp[0] - path[0][0]) > epsilon) or (abs(lastp[1] - path[0][1]) > epsilon)):
-                    if (abs(lastp[2] - path[0][2]) > epsilon) or (pnorm(psub(lastp, path[0])) > self._max_safe_distance + epsilon):
+                    if (abs(lastp[2] - path[0][2]) > epsilon) or (pdist(lastp, path[0]) > self._max_safe_distance + epsilon):
                         outpaths.append((tuple([x[0] for x in groupby(working_path)]), True))
             else:
                 working_path.append((0,0,0))
@@ -373,7 +373,7 @@ class Toolpath(object):
         for move_type, args in self.get_basic_moves():
             if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
                 if not current_position is None:
-                    result += pnorm(psub(args, current_position))
+                    result += pdist(args, current_position)
                 current_position = args
         return result
     def get_basic_moves(self, reset_cache=False):

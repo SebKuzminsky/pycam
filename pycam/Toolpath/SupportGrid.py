@@ -272,7 +272,7 @@ def _get_edge_bridges(polygon, z_plane, min_bridges, average_distance,
         avoid_distance):
     def is_near_list(point_list, point, distance):
         for p in point_list:
-            if pnorm(psub(p, point)) <= distance:
+            if pdist(p, point) <= distance:
                 return True
         return False
     lines = polygon.get_lines()

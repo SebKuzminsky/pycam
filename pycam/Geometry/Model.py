@@ -1068,7 +1068,7 @@ class Rectangle(IDGenerator, TransformableContainer):
             orders = ((p1, p2, p3, p4), (p1, p2, p4, p3), (p1, p3, p2, p4),
                     (p1, p3, p4, p2), (p1, p4, p2, p3), (p1, p4, p3, p2))
             for order in orders:
-                if abs(pnorm(psub(order[0], order[2])) - pnorm(psub(order[1], order[3]))) < epsilon:
+                if abs(pdist(order[0], order[2]) - pdist(order[1], order[3])) < epsilon:
                     t1 = Triangle(order[0], order[1], order[2])
                     t2 = Triangle(order[2], order[3], order[0])
                     if t1.normal == t2.normal == normal:
@@ -1132,7 +1132,7 @@ class Rectangle(IDGenerator, TransformableContainer):
         if len(unique_vertices) != 2:
             log.error("Invalid number of vertices: %s" % unique_vertices)
             return None
-        if abs(pnorm(psub(unique_verticies[0], unique_verticies[1])) - pnorm(psub(shared_vertices[0], shared_vertices[1]))) < epsilon:
+        if abs(pdist(unique_verticies[0], unique_verticies[1]) - pdist(shared_vertices[0], shared_vertices[1])) < epsilon:
             try:
                 return Rectangle(unique_vertices[0], unique_vertices[1],
                         shared_vertices[0], shared_vertices[1],

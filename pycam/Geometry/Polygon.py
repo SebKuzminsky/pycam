@@ -71,7 +71,7 @@ class PolygonInTree(IDGenerator):
             pass
 
     def get_cost(self, other):
-        return pnorm(psub(other.start, self.end))
+        return pdist(other.start, self.end)
 
 
 class PolygonPositionSorter(object):
@@ -417,9 +417,9 @@ class Polygon(TransformableContainer):
     def get_lengths(self):
         result = []
         for index in range(len(self._points) - 1):
-            result.append(pnorm(psub(self._points[index + 1], self._points[index])))
+            result.append(pdist(self._points[index + 1], self._points[index]))
         if self.is_closed:
-            result.append(pnorm(psub(self._points[0], self._points[-1])))
+            result.append(pdist(self._points[0], self._points[-1]))
         return result
 
     def get_max_inside_distance(self):
@@ -427,12 +427,12 @@ class Polygon(TransformableContainer):
         """
         if len(self._points) < 2:
             return None
-        distance = pnorm(psub(self._points[1], self._points[0]))
+        distance = pdist(self._points[1], self._points[0])
         for p1 in self._points:
             for p2 in self._points:
                 if p1 is p2:
                     continue
-                distance = max(distance, pnorm(psub(p2, p1)))
+                distance = max(distance, pdist(p2, p1))
         return distance
 
     def is_outer(self):
@@ -601,7 +601,7 @@ class Polygon(TransformableContainer):
         max_dist = 1000 * epsilon
         def test_point_near(p, others):
             for o in others:
-                if pnorm(psub(p, o)) < max_dist:
+                if pdist(p, o) < max_dist:
                     return True
             return False
         reverse_lines = []
@@ -645,7 +645,7 @@ class Polygon(TransformableContainer):
                     # no lines are left
                     print "out 2"
                     return []
-                if pnorm(psub(prev_line.p2, next_line.p1)) > max_dist:
+                if pdist(prev_line.p2, next_line.p1) > max_dist:
                     cp, dist = prev_line.get_intersection(next_line)
                 else:
                     cp = prev_line.p2
@@ -692,8 +692,8 @@ class Polygon(TransformableContainer):
                         # maybe we have been here before
                         if not cp in split_points:
                             split_points.append(cp)
-                    elif (pnorm(psub(cp, line.p1)) < max_dist) or (pnorm(psub(cp, line.p2)) < max_dist):
-                        if pnorm(psub(cp, lines.p1)) < pnorm(psub(cp, line.p2)):
+                    elif (pdist(cp, line.p1) < max_dist) or (pdist(cp, line.p2) < max_dist):
+                        if pdist(cp, lines.p1) < pdist(cp, line.p2):
                             non_reversed[index] = Line(cp, line.p2)
                         else:
                             non_reversed[index] = Line(line.p1, cp)
@@ -881,7 +881,7 @@ class Polygon(TransformableContainer):
                             line1 = new_group[index1]
                             line2 = new_group[index2]
                             intersection, factor = line1.get_intersection(line2)
-                            if intersection and (pnorm(psub(intersection, line1.p1)) > epsilon) and (pnorm(psub(intersection, line1.p2)) > epsilon):
+                            if intersection and (pdist(intersection, line1.p1) > epsilon) and (pdist(intersection, line1.p2) > epsilon):
                                 del new_group[index1]
                                 new_group.insert(index1,
                                         Line(line1.p1, intersection))
@@ -895,7 +895,7 @@ class Polygon(TransformableContainer):
                                 if not index1 + 1 in group_starts:
                                     group_starts.append(index1 + 1)
                                 # don't update index2 -> maybe there are other hits
-                            elif intersection and (pnorm(psub(intersection, line1.p1)) < epsilon):
+                            elif intersection and (pdist(intersection, line1.p1) < epsilon):
                                 if not index1 in group_starts:
                                     group_starts.append(index1)
                                 index2 += 1
@@ -1290,7 +1290,7 @@ class Polygon(TransformableContainer):
                 for index in range(len(collisions) - 1):
                     p1 = collisions[index][0]
                     p2 = collisions[index + 1][0]
-                    if pnorm(psub(p1, p2)) < epsilon:
+                    if pdist(p1, p2) < epsilon:
                         # ignore zero-length lines
                         continue
                     # Use the middle between p1 and p2 to check the

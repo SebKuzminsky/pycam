@@ -158,7 +158,7 @@ def get_bezier_lines(points_with_bulge, segments=32):
         # point to the end point; a bulge of 0 indicates a straight segment,
         # and a bulge of 1 is a semicircle.
         alpha = 2 * (abs(bulge1) + abs(bulge2))
-        dist = pnorm(psub(p2, p1))
+        dist = pdist(p2, p1)
         # calculate the radius of the circumcircle - avoiding divide-by-zero
         if (abs(alpha) < epsilon) or (abs(math.pi - alpha) < epsilon):
             radius = dist / 2.0

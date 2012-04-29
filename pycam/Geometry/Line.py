@@ -157,10 +157,10 @@ class Line(IDGenerator, TransformableContainer):
         return psub(self.p1, pmul(v, l))
 
     def dist_to_point_sq(self, p):
-        return pnormsq(psub(p, self.closes_point(p)))
+        return pdist_sq(p, self.closes_point(p))
 
     def dist_to_point(self, p):
-        return sqrt(self.dist_to_point_sq(p))
+        return pdist(p, self.closes_point(p))
     
     def is_point_inside(self, p):
         if (p == self.p1) or (p == self.p2):
@@ -214,7 +214,7 @@ class Line(IDGenerator, TransformableContainer):
             if self.is_point_inside(x3):
                 candidates.append((x3, pnorm(c) / pnorm(a)))
             elif self.is_point_inside(x4):
-                candidates.append((x4, pnorm(psub(line.p2, self.p1)) / pnorm(a)))
+                candidates.append((x4, pdist(line.p2, self.p1) / pnorm(a)))
             elif line.is_point_inside(x1):
                 candidates.append((x1, 0))
             elif line.is_point_inside(x2):
