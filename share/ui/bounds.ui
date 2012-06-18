@@ -65,8 +65,8 @@
   </object>
   <object class="GtkListStore" id="BoundsList">
     <columns>
-      <!-- column-name ref -->
-      <column type="gulong"/>
+      <!-- column-name uuid -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkVPaned" id="BoundsBox">

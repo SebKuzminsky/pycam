@@ -358,6 +358,7 @@ class ListPluginBase(PluginBase, list):
     def __init__(self, *args, **kwargs):
         super(ListPluginBase, self).__init__(*args, **kwargs)
         self._update_model_funcs = []
+        self._gtk_modelview = None
         def get_function(func_name):
             return lambda *args, **kwargs: \
                     self._change_wrapper(func_name, *args, **kwargs)
@@ -370,9 +371,14 @@ class ListPluginBase(PluginBase, list):
         self._update_model()
         return value
 
-    def _get_selected(self, modelview, index=False, force_list=False, content=None):
-        if content is None:
-            content = self
+    def get_selected(self, **kwargs):
+        if self._gtk_modelview:
+            return self._get_gtk_selected(**kwargs)
+        else:
+            return None
+
+    def _get_gtk_selected(self, index=False, force_list=False):
+        modelview = self._gtk_modelview
         if hasattr(modelview, "get_selection"):
             # a treeview selection
             selection = modelview.get_selection()
@@ -393,7 +399,7 @@ class ListPluginBase(PluginBase, list):
         if index:
             get_result = lambda path: path[0]
         else:
-            get_result = lambda path: content[path[0]]
+            get_result = self.get_by_path
         if (selection_mode == gtk.SELECTION_MULTIPLE) or force_list:
             result = []
             for path in paths:
@@ -405,7 +411,57 @@ class ListPluginBase(PluginBase, list):
                 result = get_result(paths[0])
         return result
 
+    def select(self, selected):
+        if not isinstance(selected, (list, tuple)):
+            selected = [selected]
+        if self._gtk_modelview:
+            self._select_gtk(selected)
+
+    def _select_gtk(self, selected_objs):
+        selection = self._gtk_modelview.get_selection()
+        selected_uuids = [item["uuid"] for item in selected_objs]
+        for index, item in enumerate(self):
+            if item["uuid"] in selected_uuids:
+                selection.select_path((index, ))
+            else:
+                selection.unselect_path((index, ))
+
+    def set_gtk_modelview(self, modelview):
+        self._gtk_modelview = modelview
+
+    def _update_gtk_treemodel(self):
+        if not self._gtk_modelview:
+            return
+        treemodel = self._gtk_modelview.get_model()
+        current_uuids = [item["uuid"] for item in self]
+        # remove all superfluous rows from "treemodel"
+        removal_indices = [index for index, item in enumerate(treemodel)
+                if not item[0] in current_uuids]
+        removal_indices.reverse()
+        for index in removal_indices:
+            treemodel.remove(treemodel.get_iter((index, )))
+        # add all missing items to "treemodel"
+        model_uuids = [row[0] for row in treemodel]
+        for uuid in current_uuids:
+            if not uuid in model_uuids:
+                treemodel.append((uuid, ))
+        # reorder the treemodel according to the current list
+        sorted_indices = [current_uuids.index(row[0]) for row in treemodel]
+        treemodel.reorder(sorted_indices)
+        self.core.emit_event("tool-list-changed")
+
+    def get_by_path(self, path):
+        if not self._gtk_modelview:
+            return None
+        uuid = self._gtk_modelview.get_model()[int(path[0])][0]
+        objs = [t for t in self if uuid == t["uuid"]]
+        if objs:
+            return objs[0]
+        else:
+            return None
+
     def _update_model(self):
+        self._update_gtk_treemodel()
         for update_func in self._update_model_funcs:
             update_func()
 
@@ -426,8 +482,7 @@ class ListPluginBase(PluginBase, list):
             self.log.info("Invalid action for ListPluginBase.list_action: " + \
                     str(action))
             return
-        selected_items = self._get_selected(modelview, index=True,
-                force_list=True)
+        selected_items = self.get_selected(index=True, force_list=True)
         selected_items.sort()
         if action in (self.ACTION_DOWN, self.ACTION_DELETE):
             selected_items.sort(reverse=True)
@@ -466,7 +521,7 @@ class ListPluginBase(PluginBase, list):
         modelview = args[-3]
         action = args[-2]
         button = args[-1]
-        paths = self._get_selected(modelview, index=True, force_list=True)
+        paths = self.get_selected(index=True, force_list=True)
         if action == self.ACTION_CLEAR:
             button.set_sensitive(len(self) > 0)
         elif not paths:
@@ -479,7 +534,8 @@ class ListPluginBase(PluginBase, list):
             else:
                 button.set_sensitive(True)
 
-    def register_list_action_button(self, action, modelview, button):
+    def register_list_action_button(self, action, button):
+        modelview = self._gtk_modelview
         if hasattr(modelview, "get_selection"):
             # a treeview
             selection = modelview.get_selection()
@@ -504,7 +560,7 @@ class ObjectWithAttributes(dict):
     def __init__(self, key, params=None):
         if not params is None:
             self.update(params)
-        self["uuid"] = uuid.uuid4()
+        self["uuid"] = str(uuid.uuid4())
         self.node_key = key
 
 

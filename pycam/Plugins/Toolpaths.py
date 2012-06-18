@@ -40,13 +40,16 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             self.core.register_ui("main", "Toolpaths", self.tp_box, weight=50)
             self._gtk_handlers = []
             self._modelview = self.gui.get_object("ToolpathTable")
+            self.set_gtk_modelview(self._modelview)
+            self.register_model_update(lambda:
+                    self.core.emit_event("toolpath-list-changed"))
             self._treemodel = self.gui.get_object("ToolpathListModel")
             self._treemodel.clear()
             for action, obj_name in ((self.ACTION_UP, "ToolpathMoveUp"),
                     (self.ACTION_DOWN, "ToolpathMoveDown"),
                     (self.ACTION_DELETE, "ToolpathDelete"),
                     (self.ACTION_CLEAR, "ToolpathDeleteAll")):
-                self.register_list_action_button(action, self._modelview,
+                self.register_list_action_button(action,
                         self.gui.get_object(obj_name))
             # toolpath operations
             toolpath_handling_obj = self.gui.get_object(
@@ -73,22 +76,6 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             self._gtk_handlers.append((selection, "changed",
                     "toolpath-selection-changed"))
             selection.set_mode(gtk.SELECTION_MULTIPLE)
-            # model handling
-            def update_model():
-                if not hasattr(self, "_model_cache"):
-                    self._model_cache = {}
-                cache = self._model_cache
-                for row in self._treemodel:
-                    cache[row[self.COLUMN_REF]] = list(row)
-                self._treemodel.clear()
-                for index, item in enumerate(self):
-                    if id(item) in cache:
-                        self._treemodel.append(cache[id(item)])
-                    else:
-                        self._treemodel.append((id(item),
-                                "Toolpath #%d" % index, True))
-                self.core.emit_event("toolpath-list-changed")
-            self.register_model_update(update_model)
             self._event_handlers = (
                     ("toolpath-changed", self._update_widgets),
                     ("toolpath-list-changed", self._update_widgets),
@@ -110,9 +97,6 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
         self.core.set("toolpaths", None)
-
-    def get_selected(self):
-        return self._get_selected(self._modelview, force_list=True)
 
     def get_visible(self):
         return [self[index] for index, item in enumerate(self._treemodel)

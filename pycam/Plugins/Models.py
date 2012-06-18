@@ -33,7 +33,6 @@ class Models(pycam.Plugins.ListPluginBase):
 
     UI_FILE = "models.ui"
     CATEGORIES = ["Model"]
-    COLUMN_REF = 0
     ICONS = {"visible": "visible.svg", "hidden": "visible_off.svg"}
     FALLBACK_COLOR = {"red": 0.5, "green": 0.5, "blue": 1.0, "alpha": 1.0}
 
@@ -53,11 +52,14 @@ class Models(pycam.Plugins.ListPluginBase):
             self.core.register_ui_section("model_handling",
                     add_model_handling_item, clear_model_handling_obj)
             self._modelview = self.gui.get_object("ModelView")
+            self.set_gtk_modelview(self._modelview)
+            self.register_model_update(lambda:
+                    self.core.emit_event("model-list-changed"))
             for action, obj_name in ((self.ACTION_UP, "ModelMoveUp"),
                     (self.ACTION_DOWN, "ModelMoveDown"),
                     (self.ACTION_DELETE, "ModelDelete"),
                     (self.ACTION_CLEAR, "ModelDeleteAll")):
-                self.register_list_action_button(action, self._modelview,
+                self.register_list_action_button(action,
                         self.gui.get_object(obj_name))
             self._gtk_handlers = []
             self._gtk_handlers.extend((
@@ -68,18 +70,6 @@ class Models(pycam.Plugins.ListPluginBase):
                         self._edit_model_name)))
             self._treemodel = self.gui.get_object("ModelList")
             self._treemodel.clear()
-            def update_model():
-                if not hasattr(self, "_model_cache"):
-                    self._model_cache = {}
-                cache = self._model_cache
-                for row in self._treemodel:
-                    cache[row[self.COLUMN_REF]] = list(row)
-                self._treemodel.clear()
-                for index, item in enumerate(self):
-                    if not id(item) in cache:
-                        cache[id(item)] = [id(item)]
-                    self._treemodel.append(cache[id(item)])
-                self.core.emit_event("model-list-changed")
             selection = self._modelview.get_selection()
             selection.set_mode(self._gtk.SELECTION_MULTIPLE)
             self._gtk_handlers.append((selection, "changed",
@@ -90,7 +80,6 @@ class Models(pycam.Plugins.ListPluginBase):
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._get_colors_of_selected_models()
-            self.register_model_update(update_model)
             # update the model list
             self.core.emit_event("model-list-changed")
         self.core.register_namespace("models",
@@ -145,16 +134,13 @@ class Models(pycam.Plugins.ListPluginBase):
                 self._visualize_visible_state)
 
     def _edit_model_name(self, cell, path, new_text):
-        path = int(path)
-        model_ref = self._treemodel[path][self.COLUMN_REF]
-        model = [m for m in self if id(m) == model_ref][0]
-        if (new_text != model["name"]) and new_text:
+        model = self.get_by_path(path)
+        if model and (new_text != model["name"]) and new_text:
             model["name"] = new_text
 
     def _render_model_name(self, column, cell, model, m_iter):
-        path = model.get_path(m_iter)
-        model_dict = self[path[0]]
-        cell.set_property("text", model_dict["name"])
+        model_obj = self.get_by_path(model.get_path(m_iter))
+        cell.set_property("text", model_obj["name"])
 
     def _visualize_visible_state(self, column, cell, model, m_iter):
         path = model.get_path(m_iter)
@@ -174,9 +160,6 @@ class Models(pycam.Plugins.ListPluginBase):
         model = self[path[0]]
         model["visible"] = not model["visible"]
         self.core.emit_event("visual-item-updated")
-
-    def get_selected(self):
-        return self._get_selected(self._modelview, force_list=True)
 
     def get_visible(self):
         return [model for model in self if model["visible"]]

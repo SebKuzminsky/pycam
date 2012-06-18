@@ -31,7 +31,6 @@ class Tasks(pycam.Plugins.ListPluginBase):
 
     UI_FILE = "tasks.ui"
     CATEGORIES = ["Task"]
-    COLUMN_REF = 0
     DEPENDS = ["Models", "Tools", "Processes", "Bounds", "Toolpaths"]
 
     def setup(self):
@@ -43,10 +42,13 @@ class Tasks(pycam.Plugins.ListPluginBase):
             task_frame.unparent()
             self.core.register_ui("main", "Tasks", task_frame, weight=40)
             self._taskview = self.gui.get_object("TaskView")
+            self.set_gtk_modelview(self._taskview)
+            self.register_model_update(lambda:
+                self.core.emit_event("task-list-changed"))
             for action, obj_name in ((self.ACTION_UP, "TaskMoveUp"),
                     (self.ACTION_DOWN, "TaskMoveDown"),
                     (self.ACTION_DELETE, "TaskDelete")):
-                self.register_list_action_button(action, self._taskview,
+                self.register_list_action_button(action,
                         self.gui.get_object(obj_name))
             self._gtk_handlers.append((self.gui.get_object("TaskNew"),
                     "clicked", self._task_new))
@@ -102,19 +104,6 @@ class Tasks(pycam.Plugins.ListPluginBase):
                         self._generate_selected_toolpaths),
                     (self.gui.get_object("GenerateAllToolPathsButton"), "clicked",
                         self._generate_all_toolpaths)))
-            # manage the treemodel
-            def update_model():
-                if not hasattr(self, "_model_cache"):
-                    self._model_cache = {}
-                cache = self._model_cache
-                for row in self._treemodel:
-                    cache[row[self.COLUMN_REF]] = list(row)
-                self._treemodel.clear()
-                for index, item in enumerate(self):
-                    if not id(item) in cache:
-                        cache[id(item)] = [id(item)]
-                    self._treemodel.append(cache[id(item)])
-                self.core.emit_event("task-list-changed")
             # shape selector
             self._gtk_handlers.append((self.gui.get_object("TaskTypeSelector"),
                     "changed", "task-type-changed"))
@@ -126,7 +115,6 @@ class Tasks(pycam.Plugins.ListPluginBase):
                     ("task-type-changed", self._store_task),
                     ("task-selection-changed", self._update_widgets),
                     ("task-list-changed", self._update_widgets))
-            self.register_model_update(update_model)
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
@@ -152,26 +140,9 @@ class Tasks(pycam.Plugins.ListPluginBase):
         while len(self) > 0:
             self.pop()
 
-    def get_selected(self, index=False):
-        return self._get_selected(self._taskview, index=index)
-
-    def select(self, tasks):
-        selection = self._taskview.get_selection()
-        model = self._taskview.get_model()
-        if not isinstance(tasks, (list, tuple)):
-            tasks = [tasks]
-        tasks_ref = [id(task) for task in tasks]
-        for index, row in enumerate(model):
-            if row[self.COLUMN_REF] in tasks_ref:
-                selection.select_path((index,))
-            else:
-                selection.unselect_path((index,))
-
     def _edit_task_name(self, cell, path, new_text):
-        path = int(path)
-        task_ref = self._treemodel[path][self.COLUMN_REF]
-        task = [t for t in self if id(t) == task_ref][0]
-        if (new_text != task["name"]) and new_text:
+        task = self.get_by_path(path)
+        if task and (new_text != task["name"]) and new_text:
             task["name"] = new_text
 
     def _trigger_table_update(self):
@@ -179,8 +150,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
                 self.gui.get_object("NameCell"), self._render_task_name)
 
     def _render_task_name(self, column, cell, model, m_iter):
-        path = model.get_path(m_iter)
-        task = self[path[0]]
+        task = self.get_by_path(model.get_path(m_iter))
         cell.set_property("text", task["name"])
 
     def _get_type(self, name=None):

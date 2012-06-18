@@ -28,8 +28,8 @@
   </object>
   <object class="GtkListStore" id="ToolList">
     <columns>
-      <!-- column-name object_ref -->
-      <column type="gulong"/>
+      <!-- column-name uuid -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkVPaned" id="ToolBox">

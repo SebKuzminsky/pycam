@@ -28,8 +28,8 @@
   </object>
   <object class="GtkListStore" id="TaskList">
     <columns>
-      <!-- column-name index -->
-      <column type="gulong"/>
+      <!-- column-name uuid -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkVPaned" id="TaskBox">
@@ -60,7 +60,9 @@
                   <object class="GtkTreeViewColumn" id="NameColumn">
                     <property name="title">Name</property>
                     <child>
-                      <object class="GtkCellRendererText" id="NameCell"/>
+                      <object class="GtkCellRendererText" id="NameCell">
+                        <property name="editable">True</property>
+		      </object>
                     </child>
                   </object>
                 </child>

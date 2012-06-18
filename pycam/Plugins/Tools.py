@@ -28,7 +28,6 @@ class Tools(pycam.Plugins.ListPluginBase):
     DEPENDS = ["ParameterGroupManager"]
     CATEGORIES = ["Tool"]
     UI_FILE = "tools.ui"
-    COLUMN_REF = 0
 
     def setup(self):
         self.core.set("tools", self)
@@ -41,10 +40,13 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.core.register_chain("get_toolpath_information",
                     self.get_toolpath_information)
             self._modelview = self.gui.get_object("ToolTable")
+            self.set_gtk_modelview(self._modelview)
+            self.register_model_update(lambda:
+                    self.core.emit_event("tool-list-changed"))
             for action, obj_name in ((self.ACTION_UP, "ToolMoveUp"),
                     (self.ACTION_DOWN, "ToolMoveDown"),
                     (self.ACTION_DELETE, "ToolDelete")):
-                self.register_list_action_button(action, self._modelview,
+                self.register_list_action_button(action,
                         self.gui.get_object(obj_name))
             self._gtk_handlers.append((self.gui.get_object("ToolNew"),
                     "clicked", self._tool_new))
@@ -95,18 +97,6 @@ class Tools(pycam.Plugins.ListPluginBase):
                     "edited", self._edit_tool_name))
             self._treemodel = self.gui.get_object("ToolList")
             self._treemodel.clear()
-            def update_model():
-                if not hasattr(self, "_model_cache"):
-                    self._model_cache = {}
-                cache = self._model_cache
-                for row in self._treemodel:
-                    cache[row[self.COLUMN_REF]] = list(row)
-                self._treemodel.clear()
-                for index, item in enumerate(self):
-                    if not id(item) in cache:
-                        cache[id(item)] = [id(item)]
-                    self._treemodel.append(cache[id(item)])
-                self.core.emit_event("tool-list-changed")
             # selector
             self._gtk_handlers.append((self._modelview.get_selection(),
                     "changed", "tool-selection-changed"))
@@ -121,7 +111,6 @@ class Tools(pycam.Plugins.ListPluginBase):
                     ("tool-changed", self._trigger_table_update),
                     ("tool-list-changed", self._trigger_table_update),
                     ("tool-shape-changed", self._store_tool_settings))
-            self.register_model_update(update_model)
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
@@ -151,17 +140,6 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.pop()
         return True
 
-    def get_selected(self, index=False):
-        return self._get_selected(self._modelview, index=index)
-
-    def select(self, tool):
-        if tool in self:
-            selection = self._modelview.get_selection()
-            # check for identity instead of equality
-            index = [id(t) for t in self].index(id(tool))
-            selection.unselect_all()
-            selection.select_path((index,))
-
     def get_toolpath_information(self, item, data):
         if item in self:
             data["tool_id"] = item["id"]
@@ -180,8 +158,9 @@ class Tools(pycam.Plugins.ListPluginBase):
         cell.set_property("text", str(tool[key]))
 
     def _render_tool_shape(self, column, cell, model, m_iter):
-        path = model.get_path(m_iter)
-        tool = self[path[0]]
+        tool = self.get_by_path(model.get_path(m_iter))
+        if not tool:
+            return
         parameters = tool["parameters"]
         if "radius" in parameters:
             text = "%g%s" % (2 * parameters["radius"], self.core.get("unit"))
@@ -190,21 +169,17 @@ class Tools(pycam.Plugins.ListPluginBase):
         cell.set_property("text", text)
 
     def _edit_tool_name(self, cell, path, new_text):
-        path = int(path)
-        tool_ref = self._treemodel[path][self.COLUMN_REF]
-        tool = [t for t in self if id(t) == tool_ref][0]
-        if (new_text != tool["name"]) and new_text:
+        tool = self.get_by_path(path)
+        if tool and (new_text != tool["name"]) and new_text:
             tool["name"] = new_text
 
     def _edit_tool_id(self, cell, path, new_text):
-        path = int(path)
-        tool_ref = self._treemodel[path][self.COLUMN_REF]
-        tool = [t for t in self if id(t) == tool_ref][0]
+        tool = self.get_by_path(path)
         try:
             new_value = int(new_text)
         except ValueError:
             return
-        if new_value != tool["id"]:
+        if tool and (new_value != tool["id"]):
             tool["id"] = new_value
 
     def _get_shape(self, name=None):

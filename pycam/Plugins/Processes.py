@@ -28,7 +28,6 @@ class Processes(pycam.Plugins.ListPluginBase):
     DEPENDS = ["ParameterGroupManager"]
     CATEGORIES = ["Process"]
     UI_FILE = "processes.ui"
-    COLUMN_REF = 0
 
     def setup(self):
         self.core.set("processes", self)
@@ -40,10 +39,13 @@ class Processes(pycam.Plugins.ListPluginBase):
             self._gtk_handlers = []
             self.core.register_ui("main", "Processes", process_frame, weight=20)
             self._modelview = self.gui.get_object("ProcessEditorTable")
+            self.set_gtk_modelview(self._modelview)
+            self.register_model_update(lambda:
+                    self.core.emit_event("process-list-changed"))
             for action, obj_name in ((self.ACTION_UP, "ProcessMoveUp"),
                     (self.ACTION_DOWN, "ProcessMoveDown"),
                     (self.ACTION_DELETE, "ProcessDelete")):
-                self.register_list_action_button(action, self._modelview,
+                self.register_list_action_button(action,
                         self.gui.get_object(obj_name))
             self._gtk_handlers.append((self.gui.get_object("ProcessNew"),
                     "clicked", self._process_new))
@@ -84,23 +86,11 @@ class Processes(pycam.Plugins.ListPluginBase):
                     "edited", self._edit_process_name))
             self._treemodel = self.gui.get_object("ProcessList")
             self._treemodel.clear()
-            def update_model():
-                if not hasattr(self, "_model_cache"):
-                    self._model_cache = {}
-                cache = self._model_cache
-                for row in self._treemodel:
-                    cache[row[self.COLUMN_REF]] = list(row)
-                self._treemodel.clear()
-                for index, item in enumerate(self):
-                    if not id(item) in cache:
-                        cache[id(item)] = [id(item)]
-                    self._treemodel.append(cache[id(item)])
-                self.core.emit_event("process-list-changed")
             self._gtk_handlers.append((self.gui.get_object("StrategySelector"),
                     "changed", "process-strategy-changed"))
-            self.register_model_update(update_model)
             self._event_handlers = (
                     ("process-strategy-list-changed", self._update_widgets),
+                    ("process-list-changed", self._trigger_table_update),
                     ("process-selection-changed", self._process_switch),
                     ("process-changed", self._store_process_settings),
                     ("process-strategy-changed", self._store_process_settings))
@@ -127,33 +117,19 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.pop()
         return True
 
-    def get_selected(self, index=False):
-        return self._get_selected(self._modelview, index=index)
-
-    def select(self, process):
-        if process in self:
-            selection = self._modelview.get_selection()
-            index = [id(p) for p in self].index(id(p))
-            selection.unselect_all()
-            selection.select_path((index,))
-
     def _render_process_description(self, column, cell, model, m_iter):
-        path = model.get_path(m_iter)
-        data = self[path[0]]
+        process = self.get_by_path(model.get_path(m_iter))
         # TODO: describe the strategy
         text = "TODO"
         cell.set_property("text", text)
 
     def _render_process_name(self, column, cell, model, m_iter):
-        path = model.get_path(m_iter)
-        data = self[path[0]]
-        cell.set_property("text", data["name"])
+        process = self.get_by_path(model.get_path(m_iter))
+        cell.set_property("text", process["name"])
 
     def _edit_process_name(self, cell, path, new_text):
-        path = int(path)
-        process_ref = self._treemodel[path][self.COLUMN_REF]
-        process = [p for p in self if id(p) == process_ref][0]
-        if (new_text != process["name"]) and new_text:
+        process = self.get_by_path(path)
+        if process and (new_text != process["name"]) and new_text:
             process["name"] = new_text
 
     def _trigger_table_update(self):

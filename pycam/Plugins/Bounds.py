@@ -34,7 +34,6 @@ class Bounds(pycam.Plugins.ListPluginBase):
     UI_FILE = "bounds.ui"
     DEPENDS = ["Models"]
     CATEGORIES = ["Bounds"]
-    COLUMN_REF = 0
 
     # mapping of boundary types and GUI control elements
     BOUNDARY_TYPES = {
@@ -57,29 +56,19 @@ class Bounds(pycam.Plugins.ListPluginBase):
             bounds_box.unparent()
             self.core.register_ui("main", "Bounds", bounds_box, 30)
             self._boundsview = self.gui.get_object("BoundsTable")
-            self._gtk_handlers = []
-            self._gtk_handlers.append((self._boundsview.get_selection(),
-                    "changed", "bounds-selection-changed"))
-            self._treemodel = self._boundsview.get_model()
-            self._treemodel.clear()
-            def update_model():
-                if not hasattr(self, "_model_cache"):
-                    self._model_cache = {}
-                cache = self._model_cache
-                for row in self._treemodel:
-                    cache[row[self.COLUMN_REF]] = list(row)
-                self._treemodel.clear()
-                for index, item in enumerate(self):
-                    if not id(item) in cache:
-                        cache[id(item)] = [id(item)]
-                    self._treemodel.append(cache[id(item)])
-                self.core.emit_event("bounds-list-changed")
-            self.register_model_update(update_model)
+            self.set_gtk_modelview(self._boundsview)
+            self.register_model_update(lambda:
+                    self.core.emit_event("bounds-list-changed"))
             for action, obj_name in ((self.ACTION_UP, "BoundsMoveUp"),
                     (self.ACTION_DOWN, "BoundsMoveDown"),
                     (self.ACTION_DELETE, "BoundsDelete")):
-                self.register_list_action_button(action, self._boundsview,
+                self.register_list_action_button(action,
                         self.gui.get_object(obj_name))
+            self._treemodel = self._boundsview.get_model()
+            self._treemodel.clear()
+            self._gtk_handlers = []
+            self._gtk_handlers.append((self._boundsview.get_selection(),
+                    "changed", "bounds-selection-changed"))
             self._gtk_handlers.append((self.gui.get_object("BoundsNew"),
                     "clicked", self._bounds_new))
             # model selector
@@ -159,16 +148,6 @@ class Bounds(pycam.Plugins.ListPluginBase):
         while len(self) > 0:
             self.pop()
 
-    def get_selected(self, index=False):
-        return self._get_selected(self._boundsview, index=index)
-
-    def select(self, bounds):
-        if bounds in self:
-            selection = self._boundsview.get_selection()
-            index = [id(b) for b in self].index(id(bounds))
-            selection.unselect_all()
-            selection.select_path((index,))
-
     def get_selected_models(self, index=False):
         return self.models_control.get_value()
 
@@ -176,8 +155,9 @@ class Bounds(pycam.Plugins.ListPluginBase):
         self.models_control.set_value(models)
 
     def _render_bounds_size(self, column, cell, model, m_iter):
-        path = model.get_path(m_iter)
-        bounds = self[path[0]]
+        bounds = self.get_by_path(model.get_path(m_iter))
+        if not bounds:
+            return
         low, high = bounds.get_absolute_limits()
         if None in low or None in high:
             text = ""
@@ -186,8 +166,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         cell.set_property("text", text)
 
     def _render_bounds_name(self, column, cell, model, m_iter):
-        path = model.get_path(m_iter)
-        bounds = self[path[0]]
+        bounds = self.get_by_path(model.get_path(m_iter))
         cell.set_property("text", bounds["name"])
 
     def _trigger_table_update(self):
@@ -392,10 +371,8 @@ class Bounds(pycam.Plugins.ListPluginBase):
         self.select(new_bounds)
 
     def _edit_bounds_name(self, cell, path, new_text):
-        path = int(path)
-        bounds_ref = self._treemodel[path][self.COLUMN_REF]
-        bounds = [bound for bound in self if id(bound) == bounds_ref]
-        if (new_text != bounds["name"]) and new_text:
+        bounds = self.get_by_path(path)
+        if bounds and (new_text != bounds["name"]) and new_text:
             bounds["name"] = new_text
 
 
