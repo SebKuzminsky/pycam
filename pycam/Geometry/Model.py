@@ -303,7 +303,7 @@ class Model(BaseModel):
                 return
             contour.append(line)
             counter += 1
-        log.debug("Waterline: %f - %d - %s" % (plane.p.z,
+        log.debug("Waterline: %f - %d - %s" % (plane.p[2],
                 len(contour.get_polygons()),
                 [len(p.get_lines()) for p in contour.get_polygons()]))
         return contour
@@ -992,7 +992,7 @@ class PolygonGroup(object):
                     direction = psub(point, p)
                     dist = pnorm(direction)
                     line_distances.append(dist)
-            elif cross_product.z == 0:
+            elif cross_product[2] == 0:
                 # the point is on the line
                 line_distances.append(0.0)
                 # no other line can get closer than this

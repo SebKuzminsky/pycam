@@ -96,7 +96,7 @@ class ModelProjection(pycam.Plugins.PluginBase):
                                 name_template="Projected model #%d")
                     else:
                         self.log.warn("The 2D projection at z=%g is empty. Aborted." % \
-                                plane.p.z)
+                                plane.p[2])
                     break
             progress.update_multiple()
         progress.finish()

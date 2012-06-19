@@ -79,7 +79,7 @@ def pmul(a, c):
 
 def pdiv(a, c):
     c = number(c)
-    return (a[0] / c, a[0] / c, a[0] / c)
+    return (a[0] / c, a[1] / c, a[2] / c)
 
 def padd(a, b):
     return (a[0] + b[0], a[1] + b[1], a[2] + b[2])
@@ -107,3 +107,4 @@ def pis_inside(a, minx=None, maxx=None, miny=None, maxy=None, minz=None, maxz=No
             and ((maxy is None) or (a[1] <= maxy + epsilon)) \
             and ((minz is None) or (minz - epsilon <= a[2])) \
             and ((maxz is None) or (a[2] <= maxz + epsilon))
+

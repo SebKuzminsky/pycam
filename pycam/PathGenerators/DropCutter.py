@@ -67,7 +67,7 @@ class DropCutter(object):
         args = []
         for one_grid_line in lines:
             # simplify the data (useful for remote processing)
-            xy_coords = [(pos.x, pos.y) for pos in one_grid_line]
+            xy_coords = [(pos[0], pos[1]) for pos in one_grid_line]
             args.append((xy_coords, minz, maxz, model, cutter,
                     self.physics))
         for points in run_in_parallel(_process_one_grid_line, args,
