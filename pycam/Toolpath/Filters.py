@@ -107,18 +107,22 @@ class TinySidewaysMovesFilter(BaseFilter):
         for move_type, args in toolpath:
             if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
                 if in_safety and last_pos:
-                    # check if the last position was very close and at the
-                    # same height
+                    # check if we can skip a possible previous safety move
                     if (pdist(last_pos, args) < self.settings["tolerance"]) and \
                             (abs(last_pos[2] - args[2]) < epsilon):
-                        # within tolerance -> remove previous safety move
+                        # same height, within tolerance -> no safety move
+                        new_path.pop(-1)
+                    elif (abs(last_pos[0] - args[0]) < epsilon) and \
+                            (abs(last_pos[1] - args[1]) < epsilon):
+                        # same position, but different height
                         new_path.pop(-1)
                 in_safety = False
                 last_pos = args
             elif move_type == MOVE_SAFETY:
                 in_safety = True
             else:
-                pass
+                # it is not safe to assume that we are still at safety height
+                in_safety = False
             new_path.append((move_type, args))
         return new_path
 
@@ -181,6 +185,8 @@ class Crop(BaseFilter):
 
 
 class TransformPosition(BaseFilter):
+    """ shift or rotate a toolpath based on a given 3x3 or 3x4 matrix
+    """
 
     PARAMS = ("matrix", )
 
