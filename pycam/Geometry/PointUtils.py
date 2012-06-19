@@ -53,7 +53,7 @@ def pcmp(a,b):
     else:
         return cmp(a[2], b[2])
 
-def ptransform_by_matrix(a, matrix, transformed_list=None):
+def ptransform_by_matrix(a, matrix):
     if len(a) > 3:
         return (a[0] * matrix[0][0] + a[1] * matrix[0][1] + a[2] * matrix[0][2],
                 a[0] * matrix[1][0] + a[1] * matrix[1][1] + a[2] * matrix[1][2],

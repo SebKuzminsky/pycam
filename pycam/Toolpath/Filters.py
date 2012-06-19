@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 from pycam.Toolpath import MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_SAFETY, MACHINE_SETTING
-from pycam.Geometry.PointUtils import psub, pdist
+from pycam.Geometry.PointUtils import psub, pdist, ptransform_by_matrix
 from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import epsilon
 import pycam.Utils.log
@@ -173,6 +173,21 @@ class Crop(BaseFilter):
                 last_pos = args
             elif move_type == MOVE_SAFETY:
                 optional_moves = []
+            else:
+                new_path.append((move_type, args))
+        return new_path
+
+
+class TransformPosition(BaseFilter):
+
+    PARAMS = ("matrix", )
+
+    def filter_toolpath(self, toolpath):
+        new_path = []
+        for move_type, args in toolpath:
+            if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
+                new_pos = ptransform_by_matrix(args, self.settings["matrix"])
+                new_path.append((move_type, new_pos))
             else:
                 new_path.append((move_type, args))
         return new_path
