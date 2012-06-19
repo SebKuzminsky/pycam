@@ -164,11 +164,11 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
                 "ToolpathCropKeepOriginal").get_active()
         for toolpath in self.core.get("toolpaths").get_selected():
             new_tp = toolpath.get_cropped_copy(polygons)
-            if new_tp.paths:
+            if new_tp.path:
                 if keep_original:
                     self.core.get("toolpaths").append(new_tp)
                 else:
-                    toolpath.paths = new_tp.paths
+                    toolpath.path = new_tp.path
                     self.core.emit_event("toolpath-changed")
             else:
                 self.log.info("Toolpath cropping: the result is empty")

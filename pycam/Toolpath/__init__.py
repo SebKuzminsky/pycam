@@ -27,7 +27,6 @@ from OpenGL.arrays import vbo
 import numpy
 from numpy import array
 from pycam.Geometry.PointUtils import *
-from pycam.Geometry.Path import Path
 from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import number, epsilon
 import pycam.Utils.log
@@ -36,6 +35,8 @@ import os
 
 import math
 from itertools import groupby
+
+log = pycam.Utils.log.get_logger()
 
 
 MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC, MOVE_SAFETY, TOOL_CHANGE, \
@@ -57,13 +58,12 @@ def simplify_toolpath(path):
     when moving along very small steps.
     The toolpath is simplified _in_place_.
     @value path: a single separate segment of a toolpath
-    @type path: pycam.Geometry.Path.Path
+    @type path: list of points
     """
     index = 1
-    points = path.points
-    while index < len(points) - 1:
-        if _check_colinearity(points[index-1], points[index], points[index+1]):
-            points.pop(index)
+    while index < len(path) - 1:
+        if _check_colinearity(path[index-1], path[index], path[index+1]):
+            path.pop(index)
             # don't increase the counter - otherwise we skip one point
         else:
             index += 1
@@ -91,6 +91,7 @@ class Toolpath(object):
         
     def clear_cache(self):
         self.opengl_safety_height = None
+        self._cache_basic_moves = None
         self._minx = None
         self._maxx = None
         self._miny = None
@@ -102,13 +103,10 @@ class Toolpath(object):
         return dict(self.parameters)
 
     def copy(self):
-        new_paths = []
-        for path in self.path:
-            new_path = Path()
-            for point in path:
-                new_path.append(point)
-            new_paths.append(new_path)
-        return Toolpath(new_paths, parameters=self.get_params())
+        new_path = list(self.path)
+        new_tp = Toolpath(new_path, parameters=self.get_params())
+        new_tp.filters = [f.clone() for f in self.filters]
+        return new_tp
 
     def _get_limit_generic(self, idx, func):
         values = [p[idx] for move_type, p in self.path
@@ -262,7 +260,6 @@ class Toolpath(object):
         triangles = [(top, conepoints[idx], conepoints[idx + 1]) for idx in range ( len(conepoints) - 1)]
         return triangles
 
-       
     def get_moves_for_opengl(self, safety_height):
         if self.opengl_safety_height != safety_height:
             self.make_moves_for_opengl(safety_height)
@@ -310,15 +307,13 @@ class Toolpath(object):
         self.opengl_coords = vbo.VBO(vertices)
         self.opengl_indices = output
 
-    
-    #convert moves into lines for dispaly with opengl
     def make_moves_for_opengl(self, safety_height):
+        # convert moves into lines for display with opengl
         working_path = []
         outpaths = []
-        for path in self.paths:
+        for path in self.path:
             if not path:
                 continue
-            path = path.points
             
             if len(outpaths) != 0:
                 lastp = outpaths[-1][0][-1]
@@ -360,7 +355,7 @@ class Toolpath(object):
         from pycam.Toolpath.Filters import SafetyHeightFilter
         for index in range(len(self.filters)):
             if isinstance(self.filters[index], SafetyHeightFilter) and \
-                    (self.filters[index].safety_height != safety_height):
+                    (self.filters[index].settings["safety_height"] != safety_height):
                 self.filters[index] = SafetyHeightFilter(safety_height)
                 self.get_basic_moves(reset_cache=True)
                 break
@@ -376,8 +371,9 @@ class Toolpath(object):
                     result += pdist(args, current_position)
                 current_position = args
         return result
+
     def get_basic_moves(self, reset_cache=False):
-        if reset_cache or not hasattr(self, "_cache_basic_moves"):
+        if reset_cache or not self._cache_basic_moves:
             result = list(self.path)
             for move_filter in self.filters:
                 result |= move_filter
@@ -391,11 +387,14 @@ class Toolpath(object):
         return tp
 
     def crop(self, polygons, callback=None):
+        self.path |= pycam.Toolpath.Filters.Crop(polygons)
+        self.clear_cache()
+        return
         # collect all existing toolpath lines
         open_lines = []
-        # TODO: migrate "crop" to the new toolpath structure
-        for index in range(len(path) - 1):
-            open_lines.append(Line(path[index], path[index + 1]))
+        for step in self.path:
+            for index in range(len(path) - 1):
+                open_lines.append(Line(path[index], path[index + 1]))
         # go through all polygons and add "inner" lines (or parts thereof) to
         # the final list of remaining lines
         inner_lines = []
@@ -410,7 +409,7 @@ class Toolpath(object):
             open_lines = new_open_lines
         # turn all "inner_lines" into toolpath moves
         new_paths = []
-        current_path = Path()
+        current_path = []
         if inner_lines:
             line = inner_lines.pop(0)
             current_path.append(line.p1)
