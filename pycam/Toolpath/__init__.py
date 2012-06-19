@@ -155,75 +155,9 @@ class Toolpath(object):
         end_marker = self.toolpath_settings.META_MARKER_END
         return os.linesep.join((start_marker, meta, end_marker))
 
-    def get_moves(self, safety_height, max_movement=None):
-        self._update_safety_height(safety_height)
-        class MoveContainer(object):
-            def __init__(self, max_movement):
-                self.max_movement = max_movement
-                self.moved_distance = 0
-                self.moves = []
-                self.last_pos = None
-                if max_movement is None:
-                    self.append = self.append_without_movement_limit
-                else:
-                    self.append = self.append_with_movement_limit
-            def append_with_movement_limit(self, new_position, rapid):
-                if self.last_pos is None:
-                    # first move with unknown start position - ignore it
-                    self.moves.append((new_position, rapid))
-                    self.last_pos = new_position
-                    return True
-                else:
-                    distance = pdist(new_position, self.last_pos)
-                    if self.moved_distance + distance > self.max_movement:
-                        partial = (self.max_movement - self.moved_distance) / \
-                                distance
-                        partial_dest = padd(self.last_pos, pmul(psub(new_position, self.last_pos), partial))
-                        self.moves.append((partial_dest, rapid))
-                        self.last_pos = partial_dest
-                        # we are finished
-                        return False
-                    else:
-                        self.moves.append((new_position, rapid))
-                        self.moved_distance += distance
-                        self.last_pos = new_position
-                        return True
-            def append_without_movement_limit(self, new_position, rapid):
-                self.moves.append((new_position, rapid))
-                return True
-        p_last = None
-        result = MoveContainer(max_movement)
-        for path in self.path:
-            if not path:
-                # ignore empty paths
-                continue
-            p_next = path[0]
-            if p_last is None:
-                p_last = (p_next[0], p_next[1], safety_height)
-                if not result.append(p_last, True):
-                    return result.moves
-            if ((abs(p_last[0] - p_next[0]) > epsilon) or (abs(p_last[1] - p_next[1]) > epsilon)):
-                # Draw the connection between the last and the next path.
-                # Respect the safety height.
-                if (abs(p_last[2] - p_next[2]) > epsilon) or (pdist(p_last, p_next) > self._max_safe_distance + epsilon):
-                    # The distance between these two points is too far.
-                    # This condition helps to prevent moves up/down for
-                    # adjacent lines.
-                    safety_last = (p_last[0], p_last[1], safety_height)
-                    safety_next = (p_next[0], p_next[1], safety_height)
-                    if not result.append(safety_last, True):
-                        return result.moves
-                    if not result.append(safety_next, True):
-                        return result.moves
-            for p in path.points:
-                if not result.append(p, False):
-                    return result.moves
-            p_last = path.points[-1]
-        if not p_last is None:
-            p_last_safety = (p_last[0], p_last[1], safety_height)
-            result.append(p_last_safety, True)
-        return result.moves
-    
+    def get_moves(self, max_time=None):
+        return self.get_basic_moves() | pycam.Toolpath.Filters.TimeLimit(max_time)
+
     def _rotate_point(self, rp, sp, v, angle):
         vx = v[0]
         vy = v[1]
@@ -338,39 +272,43 @@ class Toolpath(object):
         outpaths.append((tuple([x[0] for x in groupby(working_path)]), True))
         self.opengl_safety_height = safety_height
         self.opengl_lines = outpaths
+
+    def get_machine_setting(self, key, default=None):
+        """ look for the first appearance of a machine setting (e.g. feedrate,
+        safety height, metric/imperial, ...). Additional occourences of this
+        setting are ignored.
+        """
+        for move_type, args in self.path:
+            if (move_type == MACHINE_SETTING) and (key == args[0]):
+                return args[1]
+        return default
         
     def get_machine_time(self, safety_height=0.0):
         """ calculate an estimation of the time required for processing the
         toolpath with the machine
 
-        @value safety_height: the safety height configured for this toolpath
-        @type safety_height: float
         @rtype: float
         @returns: the machine time used for processing the toolpath in minutes
         """
-        return self.get_machine_move_distance(safety_height) / self._feedrate
+        return self.get_machine_move_distance_and_time()[1]
 
-    def _update_safety_height(self, safety_height):
-        # TODO: remove this ugly hack!
-        from pycam.Toolpath.Filters import SafetyHeightFilter
-        for index in range(len(self.filters)):
-            if isinstance(self.filters[index], SafetyHeightFilter) and \
-                    (self.filters[index].settings["safety_height"] != safety_height):
-                self.filters[index] = SafetyHeightFilter(safety_height)
-                self.get_basic_moves(reset_cache=True)
-                break
-
-    def get_machine_move_distance(self, safety_height):
-        result = 0
+    def get_machine_move_distance_and_time(self):
+        min_feedrate = 1
+        length = 0
+        duration = 0
+        feed_rate = min_feedrate
         current_position = None
-        self._update_safety_height(safety_height)
         # go through all points of the path
         for move_type, args in self.get_basic_moves():
-            if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
+            if (move_type == MACHINE_SETTING) and (args[0] == "feedrate"):
+                feedrate = args[1]
+            elif move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
                 if not current_position is None:
-                    result += pdist(args, current_position)
+                    distance = pdist(args, current_position)
+                    duration += distance / max(feedrate, min_feedrate)
+                    length += distance
                 current_position = args
-        return result
+        return length, duration
 
     def get_basic_moves(self, reset_cache=False):
         if reset_cache or not self._cache_basic_moves:

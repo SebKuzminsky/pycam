@@ -94,14 +94,9 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
             # we use only one toolpath
             self._toolpath = toolpaths[0]
             # calculate steps
-            self._safety_height = self.core.get("gcode_safety_height")
-            self._progress.set_upper(self._toolpath.get_machine_time(
-                    safety_height=self._safety_height))
+            self._duration = self._toolpath.get_machine_move_distance_and_time()[1]
+            self._progress.set_upper(self._duration)
             self._progress.set_value(0)
-            self._distance = self._toolpath.get_machine_move_distance(
-                        safety_height=self._safety_height)
-            self._feedrate = self._toolpath.get_params().get("tool_feedrate",
-                    300)
             self._toolpath_moves = None
             self.core.set("show_simulation", True)
             self._running = True
@@ -157,8 +152,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
                     seconds=int(self._progress.get_upper()))
             self._timer_widget.set_label("%s / %s" % (current, complete))
             self._toolpath_moves = self._toolpath.get_moves(
-                    safety_height=self._safety_height,
-                    max_movement=self._distance * fraction)
+                    max_time=self._duration * fraction)
             self.core.emit_event("visual-item-updated")
 
     def show_simulation(self):
@@ -174,7 +168,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
                 return
             else:
                 toolpath = self.toolpath[toolpath_index]
-        paths = toolpath.paths
+        paths = toolpath.path
         # set the current cutter
         self.cutter = pycam.Cutters.get_tool_from_settings(
                 toolpath.get_tool_settings())

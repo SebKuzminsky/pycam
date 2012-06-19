@@ -21,8 +21,10 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-from pycam.Toolpath import MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_SAFETY, MACHINE_SETTING
-from pycam.Geometry.PointUtils import psub, pdist, ptransform_by_matrix
+from pycam.Toolpath import MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_SAFETY, \
+        MACHINE_SETTING
+from pycam.Geometry.PointUtils import padd, psub, pmul, pdist, \
+        ptransform_by_matrix
 from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import epsilon
 import pycam.Utils.log
@@ -190,5 +192,41 @@ class TransformPosition(BaseFilter):
                 new_path.append((move_type, new_pos))
             else:
                 new_path.append((move_type, args))
+        return new_path
+
+
+class TimeLimit(BaseFilter):
+    """ This filter is used for the toolpath simulation. It returns only a
+    partial toolpath within a given duration limit.
+    """
+
+    PARAMS = ("timelimit", )
+
+    def filter_toolpath(self, toolpath):
+        feedrate = min_feedrate = 1
+        new_path = []
+        last_pos = None
+        limit = self.settings["timelimit"]
+        duration = 0
+        for move_type, args in toolpath:
+            if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
+                if last_pos:
+                    new_distance = pdist(args, last_pos)
+                    new_duration = new_distance / max(feedrate, min_feedrate)
+                    if (new_duration > 0) and (duration + new_duration > limit):
+                        partial = (limit - duration) / new_duration
+                        destination = padd(last_pos, pmul(psub(args, last_pos), partial))
+                        duration = limit
+                    else:
+                        destination = args
+                        duration += new_duration
+                else:
+                    destination = args
+                new_path.append((move_type, destination))
+                last_pos = args
+            if (move_type == MACHINE_SETTING) and (args[0] == "feedrate"):
+                feedrate = args[1]
+            if duration >= limit:
+                break
         return new_path
 

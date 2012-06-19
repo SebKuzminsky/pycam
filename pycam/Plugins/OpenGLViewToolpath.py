@@ -79,7 +79,6 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
                 # TODO: enable the VBO code for speedup!
                 #moves = toolpath.get_moves_for_opengl(self.core.get("gcode_safety_height"))
                 #self._draw_toolpath_moves2(moves)
-                toolpath._update_safety_height(self.core.get("gcode_safety_height"))
                 moves = toolpath.get_basic_moves()
                 self._draw_toolpath_moves(moves)
             
