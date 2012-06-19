@@ -275,7 +275,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
                 func_low = lambda value, axis: low[axis] - value
                 func_high = lambda value, axis: high[axis] + value
             # absolute mode -> no models may be selected
-            self._modelview.get_selection().unselect_all()
+            self.select_models([])
         for axis in "XYZ":
             for func, name in ((func_low, "BoundaryLow"),
                     (func_high, "BoundaryHigh")):
