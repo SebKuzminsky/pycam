@@ -592,7 +592,11 @@ class Polygon(TransformableContainer):
                 return padd(p1, bisector_sized)
             else:
                 return p2
-        if offset * 2 >= self.get_max_inside_distance():
+        if self.is_outer():
+            inside_shifting = max(0, -offset)
+        else:
+            inside_shifting = max(0, offset)
+        if inside_shifting * 2 >= self.get_max_inside_distance():
             # no polygons will be left
             return []
         points = []
@@ -954,7 +958,11 @@ class Polygon(TransformableContainer):
         offset = number(offset)
         if offset == 0:
             return [self]
-        if offset * 2 >= self.get_max_inside_distance():
+        if self.is_outer():
+            inside_shifting = max(0, -offset)
+        else:
+            inside_shifting = max(0, offset)
+        if inside_shifting * 2 >= self.get_max_inside_distance():
             # This offset will not create a valid offset polygon.
             # Sadly there is currently no other way to detect a complete flip of
             # something like a circle.
@@ -968,6 +976,8 @@ class Polygon(TransformableContainer):
             p1 = points[index]
             p2 = points[(index + 1)]
             new_lines.append(Line(p1, p2))
+        if self.is_closed and (len(points) > 1):
+            new_lines.append(Line(points[-1], points[0]))
         if callback and callback():
             return None
         cleaned_line_groups = simplify_polygon_intersections(new_lines)
