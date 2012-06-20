@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import pycam.Plugins
 # TODO: move Toolpath.Bounds here?
 import pycam.Toolpath
+from pycam.Utils import get_non_conflicting_name
 
 
 _RELATIVE_UNIT = ("%", "mm")
@@ -362,11 +363,9 @@ class Bounds(pycam.Plugins.ListPluginBase):
         self.core.emit_event("bounds-changed")
 
     def _bounds_new(self, *args):
-        bounds_names = [bounds["name"] for bounds in self]
-        bounds_id = 1
-        while ("Bounds #%d" % bounds_id) in bounds_names:
-            bounds_id += 1
-        new_bounds = BoundsDict(self.core, "Bounds #%d" % bounds_id)
+        name = get_non_conflicting_name("Bounds #%d",
+                [bounds["name"] for bounds in self])
+        new_bounds = BoundsDict(self.core, name)
         self.append(new_bounds)
         self.select(new_bounds)
 

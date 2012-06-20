@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 import pycam.Toolpath
+from pycam.Utils import get_non_conflicting_name
 
 
 class Toolpaths(pycam.Plugins.ListPluginBase):
@@ -156,11 +157,9 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             parameters = new_tp.get_params()
         else:
             moves, parameters = new_tp
-        toolpath_id = len(self) + 1
-        name_template = "Toolpath #%d"
-        while (name_template % toolpath_id) in [tp["name"] for tp in self]:
-            toolpath_id += 1
-        attributes= {"visible": True, "name": name_template % toolpath_id}
+        name = get_non_conflicting_name("Toolpath #%d",
+                [tp["name"] for tp in self])
+        attributes= {"visible": True, "name": name}
         new_tp = ToolpathEntity(toolpath_path=moves,
                 toolpath_parameters=parameters, attributes=attributes)
         self.append(new_tp)

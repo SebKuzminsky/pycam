@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Plugins
+from pycam.Utils import get_non_conflicting_name
 
 
 class Processes(pycam.Plugins.ListPluginBase):
@@ -243,14 +244,11 @@ class Processes(pycam.Plugins.ListPluginBase):
         strategies = self.core.get("get_parameter_sets")("process").values()
         strategies.sort(key=lambda item: item["weight"])
         strategy = strategies[0]
-        strategy_names = [process["name"] for process in self]
-        process_id = 1
-        name_template = "Process #%d"
-        while (name_template % process_id) in strategy_names:
-            process_id += 1
+        name = get_non_conflicting_name("Process #%d",
+                [process["name"] for process in self])
         new_process = ProcessEntity({"strategy": strategy["name"],
                 "parameters": strategy["parameters"].copy(),
-                "name": name_template % process_id})
+                "name": name})
         self.append(new_process)
         self.select(new_process)
 

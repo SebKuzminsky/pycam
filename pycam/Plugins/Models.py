@@ -24,6 +24,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 #import gtk
 
 import pycam.Plugins
+from pycam.Utils import get_non_conflicting_name
 
 
 _GTK_COLOR_MAX = 65535.0
@@ -173,11 +174,8 @@ class Models(pycam.Plugins.ListPluginBase):
             color=None):
         model_dict = ModelEntity(model)
         if not name:
-            model_id = 1
-            model_names = [model["name"] for model in self]
-            while (name_template % model_id) in model_names:
-                model_id += 1
-            name = name_template % model_id
+            name = get_non_conflicting_name(name_template,
+                    [model["name"] for model in self])
         model_dict["name"] = name
         if not color:
             color = self.core.get("color_model")

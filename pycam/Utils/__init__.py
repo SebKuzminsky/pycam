@@ -59,6 +59,7 @@ def get_platform():
     else:
         return PLATFORM_UNKNOWN
 
+
 def get_case_insensitive_file_pattern(pattern):
     """ Convert something like "*.svg" into "*.[sS][vV][gG]" - as it is
         required for GTK's FileFilter.
@@ -71,6 +72,36 @@ def get_case_insensitive_file_pattern(pattern):
         else:
             result.append(char)
     return "".join(result)
+
+
+def get_non_conflicting_name(template, conflicts, start=None,
+        get_next_func=None):
+    """ Find a string containing a number that is not in conflict with any of
+        the given strings. A name template (containing "%d") is required.
+
+        You may use non-numbers (strings, floats, ...) as well. In this case
+        you need to override "start" and "get_next_func".
+
+        @value template: a string template containing "%d" (e.g. "Object %d")
+        @type template: basestr
+        @value conflicts: a list of strings that need may not be used
+        @type conflicts: list(basestr)
+        @value start: optional initial value (default: len(conflicts) + 1)
+        @type start: undefined
+        @value get_next_func: function used for determining the next value to
+            be tested. This function defaults to "lambda value: value + 1".
+        @returns: a usable name that was not found in "conflicts"
+        @rtype: basestr
+    """
+    if start is None:
+        index = len(conflicts) + 1
+    else:
+        index = start
+    if get_next_func is None:
+        get_next_func = lambda current: current + 1
+    while (template % index) in conflicts:
+        index = get_next_func(index)
+    return template % index
 
 
 class URIHandler(object):

@@ -25,6 +25,7 @@ import time
 import pycam.Plugins
 import pycam.Utils
 from pycam.Exporters.GCodeExporter import GCodeGenerator
+from pycam.Utils import get_non_conflicting_name
 
 
 class Tasks(pycam.Plugins.ListPluginBase):
@@ -248,14 +249,11 @@ class Tasks(pycam.Plugins.ListPluginBase):
         types = self.core.get("get_parameter_sets")("task").values()
         types.sort(key=lambda item: item["weight"])
         one_type = types[0]
-        task_id = 1
-        name_template = "Task #%d"
-        task_names = [task["name"] for task in self]
-        while (name_template % task_id) in task_names:
-            task_id += 1
+        name = get_non_conflicting_name("Task #%d",
+                [task["name"] for task in self])
         new_task = TaskEntity({"type": one_type["name"],
                 "parameters": one_type["parameters"].copy(),
-                "name": name_template % task_id})
+                "name": name})
         self.append(new_task)
         self.select(new_task)
 
