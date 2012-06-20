@@ -56,6 +56,9 @@ class BaseFilter(object):
         return self.__class__(**self.settings)
 
     def __ror__(self, toolpath):
+        # allow to use pycam.Toolpath.Toolpath instances (instead of a list)
+        if hasattr(toolpath, "path") and hasattr(toolpath, "get_params"):
+            toolpath = toolpath.path
         return self.filter_toolpath(toolpath)
 
     def filter_toolpath(self, toolpath):
@@ -235,4 +238,18 @@ class TimeLimit(BaseFilter):
             if duration >= limit:
                 break
         return new_path
+
+class MovesOnly(BaseFilter):
+    """ Use this filter for checking if a given toolpath is empty/useless
+    (only machine settings, safety moves, ...).
+    """
+
+    def filter_toolpath(self, toolpath):
+        return [item for item in toolpath
+                if item[0] in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID)]
+
+class Copy(BaseFilter):
+
+    def filter_toolpath(self, toolpath):
+        return list(toolpath)
 
