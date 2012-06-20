@@ -81,6 +81,5 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
         for item_name in ("tool", "process", "bounds"):
             self.core.call_chain("get_toolpath_information",
                     environment[item_name], data)
-        tp = pycam.Toolpath.Toolpath(moves, parameters=data)
-        return tp
+        return moves, data
 

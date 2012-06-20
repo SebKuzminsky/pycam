@@ -23,7 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 from pycam.Geometry.PointUtils import *
-import pycam.Toolpath.Filters
+import pycam.Toolpath.Filters as Filters
 
 
 class ToolpathGrid(pycam.Plugins.PluginBase):
@@ -95,20 +95,21 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
         y_space = self.gui.get_object("GridYDistance").get_value()
         x_dim, y_dim = self._get_toolpaths_dim(toolpaths)
         for toolpath in toolpaths:
-            new_path = list(toolpath.path)
+            # start with a copy of the original
+            new_path = toolpath | Filters.Copy()
             for x in range(x_count):
                 for y in range(y_count):
-                    shift_x = x * (x_space + x_dim)
-                    shift_y = y * (y_space + y_dim)
-                    shift_filter = pycam.Toolpath.Filters.TransformPosition((
-                            (1, 0, 0, shift_x), (0, 1, 0, shift_y), (0, 0, 1, 0)))
-                    new_path.extend(toolpath.path | shift_filter)
+                    shift_matrix = (
+                            (1, 0, 0, x * (x_space + x_dim)),
+                            (0, 1, 0, y * (y_space + y_dim)),
+                            (0, 0, 1, 0))
+                    shifted = toolpath | Filters.TransformPosition(shift_matrix)
+                    new_path.extend(shifted)
             if not self.gui.get_object("KeepOriginal").get_active():
                 toolpath.path = new_path
                 self.core.emit_event("toolpath-changed")
             else:
-                new_toolpath = toolpath.copy()
-                new_toolpath.path = new_path
-                self.core.get("toolpaths").append(new_toolpath)
+                self.core.get("toolpaths").add_new((new_path,
+                        toolpath.get_params()))
         self.core.get("toolpaths").select(toolpaths)
 

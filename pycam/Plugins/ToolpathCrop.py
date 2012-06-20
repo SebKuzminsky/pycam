@@ -24,6 +24,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import pycam.Plugins
 from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Plane import Plane
+import pycam.Toolpath.Filters as Filters
 import pycam.Gui.ControlsGTK
 
 
@@ -163,12 +164,15 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
         keep_original = self.gui.get_object(
                 "ToolpathCropKeepOriginal").get_active()
         for toolpath in self.core.get("toolpaths").get_selected():
-            new_tp = toolpath.get_cropped_copy(polygons)
-            if new_tp.path:
+            # Store the new toolpath first separately - otherwise we can't
+            # revert the changes in case of an empty result.
+            new_path = toolpath | Filters.Crop(polygons)
+            if new_path | Filters.MovesOnly():
                 if keep_original:
-                    self.core.get("toolpaths").append(new_tp)
+                    self.core.get("toolpaths").add_new((new_path,
+                            toolpath.get_params()))
                 else:
-                    toolpath.path = new_tp.path
+                    toolpath.path = new_path
                     self.core.emit_event("toolpath-changed")
             else:
                 self.log.info("Toolpath cropping: the result is empty")

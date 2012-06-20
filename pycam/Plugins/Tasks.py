@@ -337,8 +337,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             # we were not successful (similar to a "cancel" request)
             result = False
         else:
-            # TODO: create a real toolpath object
-            self.core.get("toolpaths").append(toolpath)
+            self.core.get("toolpaths").add_new(toolpath)
             # return "False" if the action was cancelled
             result = not progress.update()
         if not use_multi_progress:
