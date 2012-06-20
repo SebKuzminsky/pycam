@@ -87,7 +87,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
     def _start_simulation(self, widget=None):
         if self._running is None:
             # initial start of simulation (not just continuing)
-            toolpaths = self.core.get("toolpaths")
+            toolpaths = self.core.get("toolpaths").get_selected()
             if not toolpaths:
                 # this should not happen
                 return
