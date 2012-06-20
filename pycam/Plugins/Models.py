@@ -128,7 +128,7 @@ class Models(pycam.Plugins.ListPluginBase):
 
     def _trigger_table_update(self):
         self.gui.get_object("NameColumn").set_cell_data_func(
-                self.gui.get_object("NameCell"), self._render_model_name)
+                self.gui.get_object("NameCell"), self._visualize_model_name)
         self.gui.get_object("VisibleColumn").set_cell_data_func(
                 self.gui.get_object("VisibleSymbol"),
                 self._visualize_visible_state)
@@ -138,13 +138,12 @@ class Models(pycam.Plugins.ListPluginBase):
         if model and (new_text != model["name"]) and new_text:
             model["name"] = new_text
 
-    def _render_model_name(self, column, cell, model, m_iter):
+    def _visualize_model_name(self, column, cell, model, m_iter):
         model_obj = self.get_by_path(model.get_path(m_iter))
         cell.set_property("text", model_obj["name"])
 
     def _visualize_visible_state(self, column, cell, model, m_iter):
-        path = model.get_path(m_iter)
-        model_dict = self[path[0]]
+        model_dict = self.get_by_path(model.get_path(m_iter))
         visible = model_dict["visible"]
         if visible:
             cell.set_property("pixbuf", self.ICONS["visible"])
@@ -157,7 +156,7 @@ class Models(pycam.Plugins.ListPluginBase):
                 blue=int(color["blue"] * _GTK_COLOR_MAX)))
 
     def _toggle_visibility(self, treeview, path, clicked_column):
-        model = self[path[0]]
+        model = self.get_by_path(path)
         model["visible"] = not model["visible"]
         self.core.emit_event("visual-item-updated")
 
