@@ -71,24 +71,39 @@ def simplify_toolpath(path):
 
 class Toolpath(object):
 
-    def __init__(self, path, parameters=None):
-        self.path = path
-        if not parameters:
-            parameters = {}
-        self.parameters = parameters
+    def __init__(self, toolpath_path=None, toolpath_parameters=None, **kwargs):
+        super(Toolpath, self).__init__(**kwargs)
+        if toolpath_path is None:
+            toolpath_path = []
+        self.__path = toolpath_path
+        if toolpath_parameters is None:
+            toolpath_parameters = {}
+        self.parameters = toolpath_parameters
         # TODO: remove this hidden import (currently necessary to avoid dependency loop)
         from pycam.Toolpath.Filters import TinySidewaysMovesFilter, MachineSetting, \
                 SafetyHeightFilter
         self.filters = []
         self.filters.append(MachineSetting("metric", True))
         self.filters.append(MachineSetting("feedrate",
-                parameters.get("tool_feedrate", 300)))
+                self.parameters.get("tool_feedrate", 300)))
         self.filters.append(TinySidewaysMovesFilter(
-                2 * parameters.get("tool_radius", 0)))
+                2 * self.parameters.get("tool_radius", 0)))
         self.filters.append(SafetyHeightFilter(20))
-        self._feedrate = parameters.get("tool_feedrate", 300)
+        self._feedrate = self.parameters.get("tool_feedrate", 300)
         self.clear_cache()
         
+    def __get_path(self):
+        return self.__path
+
+    def __set_path(self, new_path):
+        # use a read-only tuple instead of a list
+        # (otherwise we can't detect changes)
+        self.__path = tuple(new_path)
+        self.clear_cache()
+        
+    # use a property in order to trigger "clear_cache" whenever the path changes
+    path = property(__get_path, __set_path)
+
     def clear_cache(self):
         self.opengl_safety_height = None
         self._cache_basic_moves = None
@@ -101,12 +116,6 @@ class Toolpath(object):
 
     def get_params(self):
         return dict(self.parameters)
-
-    def copy(self):
-        new_path = list(self.path)
-        new_tp = Toolpath(new_path, parameters=self.get_params())
-        new_tp.filters = [f.clone() for f in self.filters]
-        return new_tp
 
     def _get_limit_generic(self, idx, func):
         values = [p[idx] for move_type, p in self.path
@@ -156,7 +165,11 @@ class Toolpath(object):
         return os.linesep.join((start_marker, meta, end_marker))
 
     def get_moves(self, max_time=None):
-        return self.get_basic_moves() | pycam.Toolpath.Filters.TimeLimit(max_time)
+        moves = self.get_basic_moves()
+        if max_time is None:
+            return moves
+        else:
+            return moves | pycam.Toolpath.Filters.TimeLimit(max_time)
 
     def _rotate_point(self, rp, sp, v, angle):
         vx = v[0]
@@ -317,60 +330,6 @@ class Toolpath(object):
                 result |= move_filter
             self._cache_basic_moves = result
         return self._cache_basic_moves
-
-    def get_cropped_copy(self, polygons, callback=None):
-        # create a deep copy of the current toolpath
-        tp = self.copy()
-        tp.crop(polygons, callback=callback)
-        return tp
-
-    def crop(self, polygons, callback=None):
-        self.path |= pycam.Toolpath.Filters.Crop(polygons)
-        self.clear_cache()
-        return
-        # collect all existing toolpath lines
-        open_lines = []
-        for step in self.path:
-            for index in range(len(path) - 1):
-                open_lines.append(Line(path[index], path[index + 1]))
-        # go through all polygons and add "inner" lines (or parts thereof) to
-        # the final list of remaining lines
-        inner_lines = []
-        for polygon in polygons:
-            new_open_lines = []
-            for line in open_lines:
-                if callback and callback():
-                    return
-                inner, outer = polygon.split_line(line)
-                inner_lines.extend(inner)
-                new_open_lines.extend(outer)
-            open_lines = new_open_lines
-        # turn all "inner_lines" into toolpath moves
-        new_paths = []
-        current_path = []
-        if inner_lines:
-            line = inner_lines.pop(0)
-            current_path.append(line.p1)
-            current_path.append(line.p2)
-        while inner_lines:
-            if callback and callback():
-                return
-            end = current_path[-1]
-            # look for the next connected point
-            for line in inner_lines:
-                if line.p1 == end:
-                    inner_lines.remove(line)
-                    current_path.append(line.p2)
-                    break
-            else:
-                new_paths.append(current_path)
-                current_path = Path()
-                line = inner_lines.pop(0)
-                current_path.append(line.p1)
-                current_path.append(line.p2)
-        if current_path:
-            new_paths.append(current_path)
-        self.path = new_path
 
 
 class Bounds(object):

@@ -5,24 +5,8 @@
   <object class="GtkListStore" id="ToolpathListModel">
     <columns>
       <!-- column-name ref -->
-      <column type="gulong"/>
-      <!-- column-name name -->
       <column type="gchararray"/>
-      <!-- column-name visible -->
-      <column type="gboolean"/>
     </columns>
-    <data>
-      <row>
-        <col id="0">0</col>
-        <col id="1" translatable="yes">#1</col>
-        <col id="2">True</col>
-      </row>
-      <row>
-        <col id="0">0</col>
-        <col id="1" translatable="yes">#2</col>
-        <col id="2">False</col>
-      </row>
-    </data>
   </object>
   <object class="GtkVPaned" id="ToolpathsBox">
     <property name="visible">True</property>
@@ -60,10 +44,9 @@
                   <object class="GtkTreeViewColumn" id="ToolpathNameColumn">
                     <property name="title">Name</property>
                     <child>
-                      <object class="GtkCellRendererText" id="ToolpathNameCell"/>
-                      <attributes>
-                        <attribute name="text">1</attribute>
-                      </attributes>
+                      <object class="GtkCellRendererText" id="ToolpathNameCell">
+                        <property name="editable">True</property>
+                      </object>
                     </child>
                   </object>
                 </child>

@@ -353,7 +353,6 @@ class PluginManager(object):
 class ListPluginBase(PluginBase, list):
 
     ACTION_UP, ACTION_DOWN, ACTION_DELETE, ACTION_CLEAR = range(4)
-    LIST_ATTRIBUTE_MAP = {}
 
     def __init__(self, *args, **kwargs):
         super(ListPluginBase, self).__init__(*args, **kwargs)
@@ -557,11 +556,12 @@ class ListPluginBase(PluginBase, list):
 
 class ObjectWithAttributes(dict):
 
-    def __init__(self, key, params=None):
-        if not params is None:
-            self.update(params)
+    def __init__(self, node_key=None, attributes=None, **kwargs):
+        super(ObjectWithAttributes, self).__init__(**kwargs)
+        if not attributes is None:
+            self.update(attributes)
         self["uuid"] = str(uuid.uuid4())
-        self.node_key = key
+        self.node_key = node_key
 
 
 def filter_list(items, *args, **kwargs):
