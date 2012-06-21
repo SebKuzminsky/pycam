@@ -54,6 +54,8 @@
   </object>
   <object class="GtkHButtonBox" id="PreferencesControls">
     <property name="visible">True</property>
+    <property name="spacing">3</property>
+    <property name="layout_style">center</property>
     <child>
       <object class="GtkButton" id="PreferencesButton">
         <property name="label">gtk-preferences</property>

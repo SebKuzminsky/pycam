@@ -26,25 +26,24 @@ import pycam.Plugins
 
 class GCodeTouchOff(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["GCodePreferences"]
+    DEPENDS = ["ToolpathProcessors"]
     CATEGORIES = ["GCode"]
     UI_FILE = "gcode_touch_off.ui"
 
     def setup(self):
         if self.gui:
-            box = self.gui.get_object("TouchOffBox")
-            box.unparent()
+            self.box = self.gui.get_object("TouchOffBox")
+            self.box.unparent()
             self.core.register_ui("gcode_preferences", "Touch Off",
-                    box, weight=70)
+                    self.box, weight=70)
             self._gtk_handlers = []
-            for objname, setting in (
-                    ("GCodeTouchOffOnStartup", "touch_off_on_startup"),
-                    ("GCodeTouchOffOnToolChange", "touch_off_on_tool_change")):
+            for objname in ("GCodeTouchOffOnStartup",
+                    "GCodeTouchOffOnToolChange"):
                 obj = self.gui.get_object(objname)
                 self._gtk_handlers.append((obj, "toggled", self.update_widgets))
-                self.core.add_item(setting, obj.get_active, obj.set_active)
             selector = self.gui.get_object("TouchOffLocationSelector")
-            self._gtk_handlers.append((selector, "changed", self.update_widgets))
+            self._gtk_handlers.append((selector, "changed",
+                    self.update_widgets))
             selector.set_active(0)
             self.register_gtk_handlers(self._gtk_handlers)
             self.update_widgets()
@@ -55,8 +54,8 @@ class GCodeTouchOff(pycam.Plugins.PluginBase):
             self.core.unregister_ui("gcode_preferences",
                     self.gui.get_object("TouchOffBox"))
             self.unregister_gtk_handlers(self._gtk_handlers)
-            for setting in ("touch_off_on_startup", "touch_off_on_tool_change"):
-                del self.core[setting]
+            self.core.get("unregister_parameter")("toolpath_processor",
+                    "touch_off", self.box)
 
     def update_widgets(self, widget=None):
         # tool change controls

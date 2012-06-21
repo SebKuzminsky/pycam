@@ -37,20 +37,12 @@ class ToolpathExport(pycam.Plugins.PluginBase):
     CATEGORIES = ["Toolpath", "Export"]
 
     def setup(self):
-        self._postprocessors = {}
-        self.core.set("register_postprocessor",
-                self.register_postprocessor)
-        self.core.set("unregister_postprocessor",
-                self.unregister_postprocessor)
         self._last_toolpath_file = None
         if self.gui:
             self._frame = self.gui.get_object("ToolpathExportFrame")
             self._frame.unparent()
             self.core.register_ui("toolpath_handling", "Export",
                     self._frame, -100)
-            self._postproc_model = self.gui.get_object("PostprocessorList")
-            self._postproc_selector = self.gui.get_object(
-                    "PostprocessorSelector")
             self._gtk_handlers = (
                     (self.gui.get_object("ExportGCodeAll"), "clicked",
                         self.export_all),
@@ -59,13 +51,11 @@ class ToolpathExport(pycam.Plugins.PluginBase):
                     (self.gui.get_object("ExportGCodeVisible"), "clicked",
                         self.export_visible))
             self._event_handlers = (
-                    ("postprocessors-list-changed", self._update_postprocessors),
                     ("toolpath-list-changed", self._update_widgets),
                     ("toolpath-selection-changed", self._update_widgets),
                     ("toolpath-changed", self._update_widgets))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
-            self._update_postprocessors()
             self._update_widgets()
         return True
 
@@ -74,54 +64,6 @@ class ToolpathExport(pycam.Plugins.PluginBase):
             self.core.unregister_ui("toolpath_handling", self._frame)
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
-
-    def register_postprocessor(self, name, label, func):
-        if name in self._postprocessors:
-            self.log.debug("Registering postprocessor '%s' again" % name)
-        processor = {"name": name,
-                "label": label,
-                "func": func,
-        }
-        self._postprocessors[name] = processor
-        self.core.emit_event("postprocessors-list-changed")
-
-    def unregister_postprocessor(self, name):
-        if not name in self._postprocessors:
-            self.log.debug("Tried to unregister an unknown postprocessor: " + \
-                    name)
-        else:
-            del self._postprocessors[name]
-            self.core.emit_event("postprocessors-list-changed")
-
-    def get_selected(self):
-        index = self._postproc_selector.get_active()
-        if index < 0:
-            return None
-        else:
-            return self._postproc_model[index][1]
-
-    def select(self, name):
-        for index, row in enumerate(self._postproc_model):
-            if row[1] == name:
-                self._postproc_selector.set_active(index)
-                break
-        else:
-            self._postproc_selector.set_active(-1)
-
-    def _update_postprocessors(self):
-        selected = self.get_selected()
-        model = self._postproc_model
-        model.clear()
-        processors = self._postprocessors.values()
-        processors.sort(key=lambda item: item["label"])
-        for proc in processors:
-            model.append((proc["label"], proc["name"]))
-        if selected:
-            self.select(selected)
-        elif len(model) > 0:
-            self._postproc_selector.set_active(0)
-        else:
-            pass
 
     def _update_widgets(self):
         toolpaths = self.core.get("toolpaths")
