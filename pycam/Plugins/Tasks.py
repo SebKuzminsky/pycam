@@ -83,13 +83,13 @@ class Tasks(pycam.Plugins.ListPluginBase):
                     self.models_widget.add_widget,
                     self.models_widget.clear_widgets)
             self.core.register_ui("task_parameters", "Collision models",
-                    self.models_widget.widget, weight=20)
+                    self.models_widget.get_widget(), weight=20)
             self.components_widget = pycam.Gui.ControlsGTK.ParameterSection()
             self.core.register_ui_section("task_components",
                     self.components_widget.add_widget,
                     self.components_widget.clear_widgets)
             self.core.register_ui("task_parameters", "Components",
-                    self.components_widget.widget, weight=10)
+                    self.components_widget.get_widget(), weight=10)
             # table
             self._gtk_handlers.append((self.gui.get_object("NameCell"),
                     "edited", self._edit_task_name))

@@ -189,7 +189,9 @@ class InputTable(InputChoice):
             self._values.append(value)
         renderer = gtk.CellRendererText()
         self.control = gtk.ScrolledWindow()
+        self.control.show()
         self._treeview = gtk.TreeView(self.model)
+        self._treeview.show()
         self.control.add(self._treeview)
         self.control.set_shadow_type(gtk.SHADOW_ETCHED_OUT)
         self.control.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -200,7 +202,6 @@ class InputTable(InputChoice):
         self._treeview.set_headers_visible(False)
         self._selection = self._treeview.get_selection()
         self._selection.set_mode(gtk.SELECTION_MULTIPLE)
-        self.control.show_all()
         self.connect("changed", change_handler, self._selection)
 
     def get_value(self):
@@ -243,8 +244,9 @@ class ParameterSection(object):
         self._table.set_row_spacings(3)
         self.update_widgets()
         self._update_widgets_visibility()
-        self._table.show()
-        self.widget = self._table
+
+    def get_widget(self):
+        return self._table
 
     def add_widget(self, widget, label, weight=100):
         item = (widget, label, weight, [])

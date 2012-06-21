@@ -219,7 +219,11 @@ class PathParamPattern(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
+        self.core.unregister_event("process-path-pattern-list-changed",
+                self._update_selector)
         self.core.get("unregister_parameter")("process", "path_pattern")
+        self.core.get("unregister_parameter_group")("path_pattern")
+
 
     def _update_selector(self):
         patterns = list(self.core.get("get_parameter_sets")(
