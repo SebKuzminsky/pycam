@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.PathProcessors
 from pycam.Geometry.PolygonExtractor import PolygonExtractor
-from pycam.Geometry.Point import Point
+from pycam.Geometry.PointUtils import *
 from pycam.Toolpath import simplify_toolpath
 
 class ContourCutter(pycam.PathProcessors.BasePathProcessor):
