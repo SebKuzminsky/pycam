@@ -52,23 +52,55 @@
       <action-widget response="0">CloseButton</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkHButtonBox" id="PreferencesControls">
+  <object class="GtkAlignment" id="PreferencesBox">
     <property name="visible">True</property>
-    <property name="spacing">3</property>
-    <property name="layout_style">center</property>
+    <property name="xscale">0</property>
+    <property name="yscale">0</property>
     <child>
-      <object class="GtkButton" id="PreferencesButton">
-        <property name="label">gtk-preferences</property>
+      <object class="GtkVBox" id="VBox">
         <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="receives_default">True</property>
-        <property name="use_stock">True</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">3</property>
+        <child>
+          <object class="GtkAlignment" id="SelectorsContainer">
+            <property name="visible">True</property>
+            <property name="xscale">0</property>
+            <property name="yscale">0</property>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkHButtonBox" id="hbuttonbox1">
+            <property name="visible">True</property>
+            <child>
+              <object class="GtkButton" id="PreferencesButton">
+                <property name="label">gtk-preferences</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
       </object>
-      <packing>
-        <property name="expand">False</property>
-        <property name="fill">False</property>
-        <property name="position">0</property>
-      </packing>
     </child>
   </object>
 </interface>

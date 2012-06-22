@@ -45,7 +45,7 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                     notebook.remove(child)
                     # we need to clear the whole path down to the "real" item
                     parent = notebook
-                    while not child in self._pref_items:
+                    while not child in [entry[0] for entry in self._pref_items]:
                         parent.remove(child)
                         parent = child
                         try:
@@ -56,10 +56,30 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                             break
                     else:
                         # we found a valid child -> remove it
+                        signals = [entry[1] for entry in self._pref_items
+                                if child is entry[0]][0]
+                        while signals:
+                            child.disconnect(signals.pop())
                         parent.remove(child)
+            def update_preference_item_visibility(widget, *args):
+                """ This function takes care for hiding empty pages of the
+                    notebook.
+                """
+                parent = args[-1]
+                if parent is widget:
+                    return
+                if widget.get_property("visible"):
+                    parent.show()
+                else:
+                    parent.hide()
             def add_preferences_item(item, name):
-                if not item in self._pref_items:
-                    self._pref_items.append(item)
+                matching_entries = [obj for obj in self._pref_items
+                        if obj[0] is item]
+                if matching_entries:
+                    current_entry = matching_entries[0]
+                else:
+                    current_entry = (item, [])
+                    self._pref_items.append(current_entry)
                 item.unparent()
                 if not isinstance(item, gtk.Frame):
                     # create a simple default frame if none was given
@@ -72,9 +92,15 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                     frame.show()
                     align.add(item)
                     align.show()
-                    item.show()
-                    item = frame
-                notebook.append_page(item, gtk.Label(name))
+                    parent = frame
+                else:
+                    parent = item
+                if not current_entry[1]:
+                    for signal in ("hide", "show"):
+                        current_entry[1].append(item.connect(signal,
+                            update_preference_item_visibility, parent))
+                notebook.append_page(parent, gtk.Label(name))
+                update_preference_item_visibility(item, parent)
             self.core.register_ui_section("gcode_preferences",
                     add_preferences_item, clear_preferences)
             general_widget = pycam.Gui.ControlsGTK.ParameterSection()
@@ -83,9 +109,9 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                     general_widget.add_widget, general_widget.clear_widgets)
             self.core.register_ui("gcode_preferences", "General",
                     general_widget.get_widget())
-            self._controls_hbox = self.gui.get_object("PreferencesControls")
+            complete_box = self.gui.get_object("PreferencesBox")
             self.core.register_ui("toolpath_handling", "Settings",
-                    self._controls_hbox)
+                    complete_box)
             self.gui.get_object("PreferencesButton").connect("clicked",
                     self._toggle_window, True)
             self.gui.get_object("CloseButton").connect("clicked",
@@ -97,8 +123,12 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                             self.core.emit_event(
                                 "toolpath-processor-selection-changed"))
             proc_widget = self._proc_selector.get_widget()
-            self._controls_hbox.pack_start(proc_widget, expand=False)
-            self._controls_hbox.reorder_child(proc_widget, 0)
+            self._settings_section = pycam.Gui.ControlsGTK.ParameterSection()
+            self._settings_section.get_widget().show()
+            self.gui.get_object("SelectorsContainer").add(
+                    self._settings_section.get_widget())
+            self._settings_section.add_widget(proc_widget,
+                    "Toolpath processor", weight=10)
             proc_widget.show()
             self.core.get("register_parameter_group")("toolpath_processor",
                     changed_set_event="toolpath-processor-selection-changed",
@@ -106,7 +136,6 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                     get_current_set_func=self.get_selected)
             self._event_handlers = (
                     ("toolpath-processor-list-changed", self._update_processors),
-                    ("toolpath-processor-selection-changed", self._update_visibility),
             )
             self.register_event_handlers(self._event_handlers)
             self._update_processors()
@@ -142,32 +171,6 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
             self.select(None)
         else:
             pass
-
-    def _update_visibility(self):
-        # Go through all children and hide the respective containers
-        # if all their children are invisible.
-        #TODO: this is an ugly hack. It fails to re-enable checkboxes (spindle_enable).
-        #      We should use another path ...
-        import gtk
-        notebook = self.gui.get_object("GCodePrefsNotebook")
-        def hide_empty_container(container):
-            found_visible = False
-            for child in container.get_children():
-                if isinstance(child, gtk.Label):
-                    continue
-                # check containers (except for tables, comboboxes, ...)
-                if (hasattr(child, "get_children") and \
-                        not hasattr(child, "get_model")):
-                    hide_empty_container(child)
-                if child.get_property("visible"):
-                    found_visible = True
-            if found_visible:
-                container.show()
-                return False
-            else:
-                container.hide()
-                return True
-        hide_empty_container(notebook)
 
     def _toggle_window(self, *args):
         status = args[-1]
@@ -221,6 +224,9 @@ class ToolpathProcessorLaser(pycam.Plugins.PluginBase):
                 "step_width_x": 0.0001,
                 "step_width_y": 0.0001,
                 "step_width_z": 0.0001,
+                "path_mode": "exact_path",
+                "motion_tolerance": 0.0,
+                "naive_tolerance": 0.0,
         }
         self.core.get("register_parameter_set")("toolpath_processor",
                 "laser", "Laser", self.get_filters, parameters=parameters,
