@@ -77,12 +77,7 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         else:
             active_parameters = []
         for param in group["parameters"].values():
-            widget = param["control"].get_widget()
-            # TODO: this is gtk-specific (show/hide)
-            if param["name"] in active_parameters:
-                widget.show()
-            else:
-                widget.hide()
+            param["control"].set_visible(param["name"] in active_parameters)
 
     def register_parameter_set(self, group_name, name, label, func,
             parameters=None, weight=100):
