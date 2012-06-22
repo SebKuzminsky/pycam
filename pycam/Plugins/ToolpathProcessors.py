@@ -206,6 +206,7 @@ class ToolpathProcessorMilling(pycam.Plugins.PluginBase):
                 "naive_tolerance": 0.0,
                 "spindle_enable": True,
                 "spindle_delay": 3,
+                "touch_off": None,
         }
         self.core.get("register_parameter_set")("toolpath_processor",
                 "milling", "Milling", self.get_filters, parameters=parameters,

@@ -34,6 +34,8 @@ class GCodeTouchOff(pycam.Plugins.PluginBase):
         if self.gui:
             self.box = self.gui.get_object("TouchOffBox")
             self.box.unparent()
+            self.core.get("register_parameter")("toolpath_processor",
+                    "touch_off", self.box)
             self.core.register_ui("gcode_preferences", "Touch Off",
                     self.box, weight=70)
             self._gtk_handlers = []
