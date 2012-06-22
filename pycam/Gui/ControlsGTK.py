@@ -49,7 +49,19 @@ def _output_conversion(func):
     return _output_conversion_wrapper
 
 
-class InputBaseClass(object):
+class WidgetBaseClass(object):
+
+    def get_widget(self):
+        return self.control
+
+    def set_visible(self, state):
+        if state:
+            self.get_widget().show()
+        else:
+            self.get_widget().hide()
+
+
+class InputBaseClass(WidgetBaseClass):
 
     def connect(self, signal, handler, control=None):
         if not handler:
@@ -65,15 +77,6 @@ class InputBaseClass(object):
             control, handler_id = self._handler_ids.pop()
             control.disconnect(handler_id)
         self.get_widget().destroy()
-
-    def get_widget(self):
-        return self.control
-
-    def set_visible(self, state):
-        if state:
-            self.control.show()
-        else:
-            self.control.hide()
 
     def set_conversion(self, set_conv=None, get_conv=None):
         self._input_converter = set_conv
@@ -235,7 +238,7 @@ class InputCheckBox(InputBaseClass):
         self.control.set_active(value)
 
 
-class ParameterSection(object):
+class ParameterSection(WidgetBaseClass):
 
     def __init__(self):
         self._widgets = []
@@ -301,9 +304,13 @@ class ParameterSection(object):
                 "top-attach")
 
     def _update_widgets_visibility(self, widget=None):
+        # Hide and show labels (or other items) that share a row with a
+        # configured item (according to its visibility).
+        visibility_collector = []
         for widget in self._widgets:
             table_row = self._get_table_row_of_widget(widget[0])
             is_visible = widget[0].props.visible
+            visibility_collector.append(is_visible)
             for child in self._table.get_children():
                 if widget == child:
                     continue
@@ -312,4 +319,9 @@ class ParameterSection(object):
                         child.show()
                     else:
                         child.hide()
+        # hide the complete section if all items are hidden
+        if any(visibility_collector):
+            self._table.show()
+        else:
+            self._table.hide()
 
