@@ -61,6 +61,9 @@ def simplify_toolpath(path):
     @type path: list of points
     """
     index = 1
+    # stay compatible with pycam.Geometry.Path objects
+    if hasattr(path, "points"):
+        path = path.points
     while index < len(path) - 1:
         if _check_colinearity(path[index-1], path[index], path[index+1]):
             path.pop(index)
