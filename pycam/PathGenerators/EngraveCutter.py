@@ -21,10 +21,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.Point import Point, Vector
-from pycam.Geometry.Line import Line
-from pycam.Geometry.Plane import Plane
-from pycam.Geometry.utils import ceil
 from pycam.PathGenerators import get_max_height_dynamic, get_free_paths_ode, \
         get_free_paths_triangles
 from pycam.Utils import ProgressCounter
