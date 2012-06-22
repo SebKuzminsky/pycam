@@ -52,40 +52,29 @@
       <action-widget response="0">CloseButton</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkAlignment" id="PreferencesBox">
+  <object class="GtkFrame" id="SettingsFrame">
     <property name="visible">True</property>
-    <property name="xscale">0</property>
-    <property name="yscale">0</property>
+    <property name="label_xalign">0</property>
+    <property name="shadow_type">none</property>
     <child>
-      <object class="GtkVBox" id="VBox">
+      <object class="GtkAlignment" id="Align1">
         <property name="visible">True</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">3</property>
+        <property name="xscale">0</property>
+        <property name="yscale">0</property>
+        <property name="left_padding">12</property>
         <child>
-          <object class="GtkAlignment" id="SelectorsContainer">
+          <object class="GtkVBox" id="VBox">
             <property name="visible">True</property>
-            <property name="xscale">0</property>
-            <property name="yscale">0</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">3</property>
             <child>
-              <placeholder/>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkHButtonBox" id="hbuttonbox1">
-            <property name="visible">True</property>
-            <child>
-              <object class="GtkButton" id="PreferencesButton">
-                <property name="label">gtk-preferences</property>
+              <object class="GtkAlignment" id="SelectorsContainer">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
+                <property name="xscale">0</property>
+                <property name="yscale">0</property>
+                <child>
+                  <placeholder/>
+                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -93,13 +82,39 @@
                 <property name="position">0</property>
               </packing>
             </child>
+            <child>
+              <object class="GtkHButtonBox" id="hbuttonbox1">
+                <property name="visible">True</property>
+                <child>
+                  <object class="GtkButton" id="PreferencesButton">
+                    <property name="label">gtk-preferences</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="use_stock">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
           </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">1</property>
-          </packing>
         </child>
+      </object>
+    </child>
+    <child type="label">
+      <object class="GtkLabel" id="label1">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">&lt;b&gt;Settings&lt;/b&gt;</property>
+        <property name="use_markup">True</property>
       </object>
     </child>
   </object>

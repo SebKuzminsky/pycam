@@ -31,7 +31,7 @@ _log = pycam.Utils.log.get_logger()
 
 class ToolpathProcessors(pycam.Plugins.ListPluginBase):
 
-    DEPENDS = ["ParameterGroupManager"]
+    DEPENDS = ["Toolpaths", "ParameterGroupManager"]
     CATEGORIES = ["Toolpath"]
     UI_FILE = "toolpath_processors.ui"
 
@@ -109,9 +109,8 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                     general_widget.add_widget, general_widget.clear_widgets)
             self.core.register_ui("gcode_preferences", "General",
                     general_widget.get_widget())
-            complete_box = self.gui.get_object("PreferencesBox")
-            self.core.register_ui("toolpath_handling", "Settings",
-                    complete_box)
+            self._frame = self.gui.get_object("SettingsFrame")
+            self.core.register_ui("toolpath_handling", "Settings", self._frame)
             self.gui.get_object("PreferencesButton").connect("clicked",
                     self._toggle_window, True)
             self.gui.get_object("CloseButton").connect("clicked",
@@ -136,9 +135,11 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                     get_current_set_func=self.get_selected)
             self._event_handlers = (
                     ("toolpath-processor-list-changed", self._update_processors),
+                    ("toolpath-selection-changed", self._update_visibility),
             )
             self.register_event_handlers(self._event_handlers)
             self._update_processors()
+            self._update_visibility()
         return True
 
     def teardown(self):
@@ -156,6 +157,12 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
         if not item is None:
             item = item["name"]
         self._proc_selector.set_value(item)
+
+    def _update_visibility(self):
+        if self.core.get("toolpaths").get_selected():
+            self._frame.show()
+        else:
+            self._frame.hide()
 
     def _update_processors(self):
         selected = self.get_selected()
