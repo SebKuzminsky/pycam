@@ -77,7 +77,15 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         else:
             active_parameters = []
         for param in group["parameters"].values():
-            param["control"].set_visible(param["name"] in active_parameters)
+            is_visible = param["name"] in active_parameters
+            control = param["control"]
+            # allow override but stay compatible with PyGTK before v2.22
+            if hasattr(control, "set_visible"):
+                control.set_visible(is_visible)
+            elif is_visible:
+                control.show()
+            else:
+                control.hide()
 
     def register_parameter_set(self, group_name, name, label, func,
             parameters=None, weight=100):
@@ -99,7 +107,8 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         if event:
             self.core.emit_event(event)
 
-    def register_parameter(self, group_name, name, control):
+    def register_parameter(self, group_name, name, control, get_func=None,
+            set_func=None):
         if not group_name in self._groups:
             self.log.info("Unknown parameter group: %s" % group_name)
             return
@@ -107,7 +116,12 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         if name in group["parameters"]:
             self.log.debug("Registering parameter '%s' in group '%s' again" % \
                     (name, group_name))
-        group["parameters"][name] = {"name": name, "control": control}
+        if not get_func:
+            get_func = control.get_value
+        if not set_func:
+            set_func = control.set_value
+        group["parameters"][name] = {"name": name, "control": control,
+                "get_func": get_func, "set_func": set_func}
 
     def get_parameters(self, group_name):
         if not group_name in self._groups:
@@ -124,7 +138,7 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         result = {}
         group = self._groups[group_name]
         for parameter in group["parameters"].values():
-            result[parameter["name"]] = parameter["control"].get_value()
+            result[parameter["name"]] = parameter["get_func"]()
         return result
 
     def set_parameter_values(self, group_name, value_dict):
@@ -134,7 +148,7 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         group = self._groups[group_name]
         for parameter in group["parameters"].values():
             if parameter["name"] in value_dict:
-                parameter["control"].set_value(value_dict[parameter["name"]])
+                parameter["set_func"](value_dict[parameter["name"]])
 
     def get_parameter_sets(self, group_name):
         if not group_name in self._groups:
