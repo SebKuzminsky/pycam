@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -eu
+
+BASE_PATH="$(cd "$(dirname "$0")"; pwd)"
+
+IGNORE_LIST="C0111,C0103,W0613,R0914,R0911,R0912,W0511,W0603,,R0902,W0612,R0903,R0201,R0915,R0913,W0602"
+# more extras
+IGNORE_LIST="$IGNORE_LIST,C0301"
+
+PYTHONPATH="$BASE_PATH/pycam" pylint -i y -d "$IGNORE_LIST" "$1"
+
