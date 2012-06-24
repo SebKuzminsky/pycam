@@ -136,6 +136,8 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
             self._event_handlers = (
                     ("toolpath-processor-list-changed", self._update_processors),
                     ("toolpath-selection-changed", self._update_visibility),
+                    ("notify-initialization-finished",
+                            self._activate_first_processor),
             )
             self.register_event_handlers(self._event_handlers)
             self._update_processors()
@@ -147,6 +149,13 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
             self._toggle_window(False)
         self.unregister_event_handlers(self._event_handlers)
         self.core.get("unregister_parameter_group")("toolpath_processor")
+
+    def _activate_first_processor(self):
+        # run this action as soon as all processors are registered
+        processors = self.core.get("get_parameter_sets")("toolpath_processor").values()
+        processors.sort(key=lambda item: item["weight"])
+        if processors:
+            self.select(processors[0])
 
     def get_selected(self):
         all_processors = self.core.get("get_parameter_sets")("toolpath_processor")

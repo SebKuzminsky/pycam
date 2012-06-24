@@ -640,6 +640,7 @@ class ProjectGui(object):
             # register a logging handler for displaying error messages
             pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
             self.window.show()
+        self.settings.emit_event("notify-initialization-finished")
 
     def update_all_controls(self):
         self.update_ode_settings()
