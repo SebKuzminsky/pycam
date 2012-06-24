@@ -21,7 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 __all__ = ["Cutters", "Exporters", "Geometry", "Gui", "Importers",
-        "PathGenerators", "PathProcessors", "Utils"]
+        "PathGenerators", "PathProcessors", "Plugins", "Utils"]
 
 VERSION = "0.6-svn"
 
