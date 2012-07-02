@@ -59,9 +59,10 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
             return
         funcs = {}
         for key, set_name in (("tool", "shape"), ("process", "strategy")):
-            funcs[key] = self.core.get("get_parameter_sets")(
-                    key)[environment[key][set_name]]["func"]
-        tool = funcs["tool"](tool=environment["tool"], environment=environment)
+            funcs[key] = self.core.get("get_parameter_sets")(key)\
+                    [environment[key][set_name]]["func"]
+        tool, tool_filters = funcs["tool"](environment["tool"]["parameters"])
+        self.log.info("Filters: %s" % str(tool_filters))
         path_generator, motion_grid, (low, high) = funcs["process"](
                 environment["process"], environment=environment)
         if path_generator is None:
@@ -78,7 +79,7 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
             self.log.info("No valid moves found")
             return None
         data = {}
-        for item_name in ("tool", "process", "bounds"):
+        for item_name in ("process", "bounds"):
             self.core.call_chain("get_toolpath_information",
                     environment[item_name], data)
         return moves, data

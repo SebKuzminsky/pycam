@@ -23,6 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 import pycam.Gui.ControlsGTK
+from pycam.Toolpath.Filters import toolpath_filter
 
 
 class ToolParamRadius(pycam.Plugins.PluginBase):
@@ -39,20 +40,19 @@ class ToolParamRadius(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("tool", "radius", self.control)
         self.core.register_ui("tool_size", "Tool Diameter",
                 self.control.get_widget(), weight=10)
-        self.core.register_chain("get_toolpath_information",
-                self.get_toolpath_information)
+        self.core.register_chain("toolpath_filters",
+                self.get_toolpath_filters)
         return True
 
     def teardown(self):
         self.core.get("unregister_parameter")("tool", "radius")
         self.core.unregister_ui("tool_size", self.control.get_widget())
-        self.core.unregister_chain("get_toolpath_information",
-                self.get_toolpath_information)
+        self.core.unregister_chain("get_toolpath_filters",
+                self.get_toolpath_filters)
 
-    def get_toolpath_information(self, item, data):
-        if item in self.core.get("tools") and \
-                "radius" in item["parameters"]:
-            data["tool_radius"] = item["parameters"]["radius"]
+    @toolpath_filter("tool", "radius")
+    def get_toolpath_filters(self, radius):
+        return [pycam.Toolpath.Filters.TinySidewaysMovesFilter(2 * radius)]
 
 
 class ToolParamTorusRadius(pycam.Plugins.PluginBase):
@@ -87,20 +87,20 @@ class ToolParamFeedrate(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("tool", "feedrate", self.control)
         self.core.register_ui("tool_speed", "Feedrate",
                 self.control.get_widget(), weight=10)
-        self.core.register_chain("get_toolpath_information",
-                self.get_toolpath_information)
+        self.core.register_chain("get_toolpath_filters",
+                self.get_toolpath_filters)
         return True
 
     def teardown(self):
         self.core.unregister_ui("tool_speed", self.control.get_widget())
         self.core.get("unregister_parameter")("tool", "feedrate")
-        self.core.unregister_chain("get_toolpath_information",
-                self.get_toolpath_information)
+        self.core.unregister_chain("get_toolpath_filters",
+                self.get_toolpath_filters)
 
-    def get_toolpath_information(self, item, data):
-        if item in self.core.get("tools") and \
-                "feedrate" in item["parameters"]:
-            data["tool_feedrate"] = item["parameters"]["feedrate"]
+    @toolpath_filter("tool", "feedrate")
+    def get_toolpath_filters(self, feedrate):
+        return [pycam.Toolpath.Filters.MachineSetting("feedrate", feedrate)]
+
 
 class ToolParamSpindleSpeed(pycam.Plugins.PluginBase):
 
@@ -115,18 +115,18 @@ class ToolParamSpindleSpeed(pycam.Plugins.PluginBase):
                 self.control)
         self.core.register_ui("tool_speed", "Spindle Speed",
                 self.control.get_widget(), weight=50)
-        self.core.register_chain("get_toolpath_information",
-                self.get_toolpath_information)
+        self.core.register_chain("get_toolpath_filters",
+                self.get_toolpath_filters)
         return True
 
     def teardown(self):
         self.core.unregister_ui("tool_speed", self.control.get_widget())
         self.core.get("unregister_parameter")("tool", "spindle_speed")
-        self.core.unregister_chain("get_toolpath_information",
-                self.get_toolpath_information)
+        self.core.unregister_chain("get_toolpath_filters",
+                self.get_toolpath_filters)
 
-    def get_toolpath_information(self, item, data):
-        if item in self.core.get("tools") and \
-                "spindle_speed" in item["parameters"]:
-            data["spindle_speed"] = item["parameters"]["spindle_speed"]
+    @toolpath_filter("tool", "spindle_speed")
+    def get_toolpath_filters(self, spindle_speed):
+        return [pycam.Toolpath.Filters.MachineSetting("spindle_speed",
+                spindle_speed)]
 

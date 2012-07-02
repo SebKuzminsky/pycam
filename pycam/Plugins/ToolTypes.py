@@ -27,6 +27,20 @@ import pycam.Cutters.ToroidalCutter
 import pycam.Cutters.CylindricalCutter
 
 
+def tool_params_and_filters(*param_names):
+    def get_params_and_filters_inner(func):
+        def get_tool_func(self, parameters):
+            filters = []
+            self.core.call_chain("get_toolpath_filters", "tool", parameters, filters)
+            args = []
+            for param_name in param_names:
+                args.append(parameters[param_name])
+            cutter = func(*args)
+            return cutter, filters
+        return get_tool_func
+    return get_params_and_filters_inner
+
+
 class ToolTypeBallNose(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Tools", "ToolParamRadius", "ToolParamFeedrate"]
@@ -45,8 +59,9 @@ class ToolTypeBallNose(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter_set")("tool", "ballnose")
 
-    def get_tool(self, tool, environment=None):
-        return pycam.Cutters.SphericalCutter(tool["parameters"]["radius"])
+    @tool_params_and_filters("radius")
+    def get_tool(self, radius):
+        return pycam.Cutters.SphericalCutter(radius)
 
 
 class ToolTypeBullNose(pycam.Plugins.PluginBase):
@@ -69,10 +84,9 @@ class ToolTypeBullNose(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter_set")("tool", "bullnose")
 
-    def get_tool(self, tool, environment=None):
-        return pycam.Cutters.ToroidalCutter(
-                tool["parameters"]["radius"],
-                tool["parameters"]["torus_radius"])
+    @tool_params_and_filters("radius", "torus_radius")
+    def get_tool(self, radius, torus_radius):
+        return pycam.Cutters.ToroidalCutter(radius, torus_radius)
 
 
 class ToolTypeFlat(pycam.Plugins.PluginBase):
@@ -92,6 +106,7 @@ class ToolTypeFlat(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter_set")("tool", "flat")
 
-    def get_tool(self, tool, environment=None):
-        return pycam.Cutters.CylindricalCutter(tool["parameters"]["radius"])
+    @tool_params_and_filters("radius", "torus_radius")
+    def get_tool(self, radius):
+        return pycam.Cutters.CylindricalCutter(radius)
 
