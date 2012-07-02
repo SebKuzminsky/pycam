@@ -398,7 +398,7 @@ class BoundsDict(pycam.Plugins.ObjectWithAttributes):
                 "Models": [],
         })
 
-    def get_absolute_limits(self, tool=None, models=None):
+    def get_absolute_limits(self, tool_radius=None, models=None):
         default = (None, None, None), (None, None, None)
         get_low_value = lambda axis: \
                 self["parameters"]["BoundaryLow%s" % "XYZ"[axis]]
@@ -438,8 +438,7 @@ class BoundsDict(pycam.Plugins.ObjectWithAttributes):
                 high.append(get_high_value(axis))
         tool_limit = _BOUNDARY_MODES[self["parameters"]["ToolLimit"]]
         # apply inside/along/outside if a tool is given
-        if tool and (tool_limit != "along"):
-            tool_radius = tool["parameters"]["radius"]
+        if tool_radius and (tool_limit != "along"):
             if tool_limit == "inside":
                 offset = -tool_radius
             else:

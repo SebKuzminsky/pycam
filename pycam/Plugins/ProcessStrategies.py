@@ -27,6 +27,9 @@ import pycam.Toolpath.MotionGrid
 from pycam.Toolpath.MotionGrid import START_X, START_Y, START_Z
 
 
+_get_line_distance = lambda radius, overlap: 2 * radius * (1.0 - overlap)
+
+
 class ProcessStrategySlicing(pycam.Plugins.PluginBase):
 
     DEPENDS = ["ParameterGroupManager", "PathParamOverlap",
@@ -48,13 +51,9 @@ class ProcessStrategySlicing(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter_set")("process", "slicing")
 
-    def run_process(self, process, environment=None):
-        tool = environment["tool"]
-        tool_params = tool["parameters"]
-        low, high = environment["bounds"].get_absolute_limits(
-                tool=tool, models=environment["collision_models"])
-        line_distance = 2 * tool_params["radius"] * \
-                (1.0 - process["parameters"]["overlap"])
+    def run_process(self, process, tool_radius, (low, high)):
+        line_distance = _get_line_distance(tool_radius,
+                process["parameters"]["overlap"])
         path_generator = pycam.PathGenerators.PushCutter.PushCutter(waterlines=False)
         path_pattern = process["parameters"]["path_pattern"]
         path_get_func = self.core.get("get_parameter_sets")(
@@ -63,7 +62,7 @@ class ProcessStrategySlicing(pycam.Plugins.PluginBase):
         motion_grid = grid_func((low, high),
                 process["parameters"]["step_down"],
                 line_distance=line_distance, **kwargs)
-        return path_generator, motion_grid, (low, high)
+        return path_generator, motion_grid
 
 
 class ProcessStrategyContour(pycam.Plugins.PluginBase):
@@ -86,13 +85,9 @@ class ProcessStrategyContour(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter_set")("process", "contour")
 
-    def run_process(self, process, environment=None):
-        tool = environment["tool"]
-        tool_params = tool["parameters"]
-        low, high = environment["bounds"].get_absolute_limits(
-                tool=tool, models=environment["collision_models"])
-        line_distance = 2 * tool_params["radius"] * \
-                (1.0 - process["parameters"]["overlap"])
+    def run_process(self, process, tool_radius, (low, high)):
+        line_distance = _get_line_distance(tool_radius,
+                process["parameters"]["overlap"])
         path_generator = pycam.PathGenerators.PushCutter.PushCutter(waterlines=True)
         # TODO: milling_style currently refers to the grid lines - not to the waterlines
         motion_grid = pycam.Toolpath.MotionGrid.get_fixed_grid(
@@ -100,7 +95,7 @@ class ProcessStrategyContour(pycam.Plugins.PluginBase):
                 line_distance=line_distance,
                 grid_direction=pycam.Toolpath.MotionGrid.GRID_DIRECTION_X, 
                 milling_style=process["parameters"]["milling_style"])
-        return path_generator, motion_grid, (low, high)
+        return path_generator, motion_grid
 
 
 class ProcessStrategySurfacing(pycam.Plugins.PluginBase):
@@ -122,22 +117,18 @@ class ProcessStrategySurfacing(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter_set")("process", "surfacing")
 
-    def run_process(self, process, environment=None):
-        tool = environment["tool"]
-        tool_params = tool["parameters"]
-        low, high = environment["bounds"].get_absolute_limits(
-                tool=tool, models=environment["collision_models"])
-        line_distance = 2 * tool_params["radius"] * \
-                (1.0 - process["parameters"]["overlap"])
+    def run_process(self, process, tool_radius, (low, high)):
+        line_distance = _get_line_distance(tool_radius,
+                process["parameters"]["overlap"])
         path_generator = pycam.PathGenerators.DropCutter.DropCutter()
         path_pattern = process["parameters"]["path_pattern"]
         path_get_func = self.core.get("get_parameter_sets")(
                 "path_pattern")[path_pattern["name"]]["func"]
         grid_func, kwargs = path_get_func(path_pattern)
         motion_grid = grid_func((low, high), None,
-                step_width=(tool_params["radius"] / 4.0),
+                step_width=(tool_radius / 4.0),
                 line_distance=line_distance, **kwargs)
-        return path_generator, motion_grid, (low, high)
+        return path_generator, motion_grid
 
 
 class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
@@ -162,11 +153,7 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter_set")("process", "engraving")
 
-    def run_process(self, process, environment=None):
-        tool = environment["tool"]
-        tool_params = tool["parameters"]
-        low, high = environment["bounds"].get_absolute_limits(
-                tool=tool, models=environment["collision_models"])
+    def run_process(self, process, tool_radius, (low, high)):
         path_generator = pycam.PathGenerators.EngraveCutter.EngraveCutter()
         models = [m.model for m in process["parameters"]["trace_models"]]
         if not models:
@@ -179,18 +166,18 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
             progress.set_multiple(len(models), "Model")
             compensated_models = []
             for index in range(len(models)):
-                models[index] = models[index].get_offset_model(
-                        tool_params["radius"], callback=progress.update)
+                models[index] = models[index].get_offset_model(tool_radius,
+                        callback=progress.update)
                 progress.update_multiple()
             progress.finish()
         progress.update(text="Calculating moves")
         motion_grid = pycam.Toolpath.MotionGrid.get_lines_grid(models,
                 (low, high), process["parameters"]["step_down"],
-                line_distance=1.8*tool_params["radius"],
-                step_width=(tool_params["radius"] / 4.0),
+                line_distance=1.8*tool_radius,
+                step_width=(tool_radius / 4.0),
                 milling_style=process["parameters"]["milling_style"],
                 pocketing_type=process["parameters"]["pocketing_type"],
                 callback=progress.update)
         progress.finish()
-        return path_generator, motion_grid, (low, high)
+        return path_generator, motion_grid
 

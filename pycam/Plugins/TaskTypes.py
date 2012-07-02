@@ -62,9 +62,10 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
             funcs[key] = self.core.get("get_parameter_sets")(key)\
                     [environment[key][set_name]]["func"]
         tool, tool_filters = funcs["tool"](environment["tool"]["parameters"])
-        self.log.info("Filters: %s" % str(tool_filters))
-        path_generator, motion_grid, (low, high) = funcs["process"](
-                environment["process"], environment=environment)
+        low, high = environment["bounds"].get_absolute_limits(
+                tool_radius=tool.radius, models=environment["collision_models"])
+        path_generator, motion_grid = funcs["process"](environment["process"],
+                tool.radius, (low, high))
         if path_generator is None:
             # we assume that an error message was given already
             return
