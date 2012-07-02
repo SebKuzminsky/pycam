@@ -26,16 +26,16 @@ import pycam.Cutters.SphericalCutter
 import pycam.Cutters.ToroidalCutter
 import pycam.Cutters.CylindricalCutter
 
-
 def tool_params_and_filters(*param_names):
     def get_params_and_filters_inner(func):
         def get_tool_func(self, parameters):
             filters = []
-            self.core.call_chain("get_toolpath_filters", "tool", parameters, filters)
+            self.core.call_chain("get_toolpath_filters", "tool", parameters,
+                    filters)
             args = []
             for param_name in param_names:
                 args.append(parameters[param_name])
-            cutter = func(*args)
+            cutter = func(self, *args)
             return cutter, filters
         return get_tool_func
     return get_params_and_filters_inner
@@ -106,7 +106,7 @@ class ToolTypeFlat(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter_set")("tool", "flat")
 
-    @tool_params_and_filters("radius", "torus_radius")
+    @tool_params_and_filters("radius")
     def get_tool(self, radius):
         return pycam.Cutters.CylindricalCutter(radius)
 
