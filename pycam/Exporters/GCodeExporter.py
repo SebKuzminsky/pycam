@@ -31,7 +31,6 @@ DEFAULT_HEADER = ("G40 (disable tool radius compensation)",
                 "G54 (select coordinate system 1)",
                 "G90 (disable incremental moves)")
 
-PATH_MODES = {"exact_path": 0, "exact_stop": 1, "continuous": 2}
 MAX_DIGITS = 12
 
 
