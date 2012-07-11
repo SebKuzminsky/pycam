@@ -155,7 +155,7 @@ class URIHandler(object):
 
     def open(self):
         if self.is_local():
-            return open(self.get_local_path())
+            return open(self.get_local_path(), "rb")
         else:
             return urllib.urlopen(self._uri.geturl())
 
