@@ -79,9 +79,5 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
         if not moves:
             self.log.info("No valid moves found")
             return None
-        data = {}
-        for item_name in ("process", "bounds"):
-            self.core.call_chain("get_toolpath_information",
-                    environment[item_name], data)
-        return moves, data
+        return moves, tool_filters
 

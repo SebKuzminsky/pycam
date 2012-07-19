@@ -169,8 +169,8 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
             new_path = toolpath | Filters.Crop(polygons)
             if new_path | Filters.MovesOnly():
                 if keep_original:
-                    self.core.get("toolpaths").add_new((new_path,
-                            toolpath.get_params()))
+                    self.core.get("toolpaths").add_new(
+                            (new_path, toolpath.filters))
                 else:
                     toolpath.path = new_path
                     self.core.emit_event("toolpath-changed")

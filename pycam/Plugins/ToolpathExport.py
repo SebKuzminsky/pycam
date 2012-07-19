@@ -23,8 +23,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import os
 
 import pycam.Plugins
-from pycam.Exporters.GCodeExporter import PATH_MODES
 from pycam.Geometry.PointUtils import *
+import pycam.Exporters.GCode.LinuxCNC
 
 
 FILTER_GCODE = (("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode")),)
@@ -33,7 +33,7 @@ FILTER_GCODE = (("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode")),)
 class ToolpathExport(pycam.Plugins.PluginBase):
 
     UI_FILE = "toolpath_export.ui"
-    DEPENDS = ["Toolpaths", "FilenameDialog"]
+    DEPENDS = ["Toolpaths", "FilenameDialog", "ToolpathProcessors"]
     CATEGORIES = ["Toolpath", "Export"]
 
     def setup(self):
@@ -82,12 +82,16 @@ class ToolpathExport(pycam.Plugins.PluginBase):
         self._export_toolpaths(self.core.get("toolpaths").get_selected())
 
     def _export_toolpaths(self, toolpaths):
-        proc_name = self.get_selected()
-        processor = self._postprocessors[proc_name]
+        processor = self.core.get("toolpath_processors").get_selected()
         if not processor:
-            self.log.warn("Unknown postprocessor: %s" % str(name))
+            self.log.warn("No toolpath processor selected")
             return
-        generator_func = processor["func"]
+        filter_func = processor["func"]
+        filter_params = self.core.get("get_parameter_values")(
+                "toolpath_processor")
+        settings_filters = filter_func(filter_params)
+        # TODO: get "public" filters (metric, ...)
+        common_filters = []
         # we open a dialog
         if self.core.get("gcode_filename_extension"):
             filename_extension = self.core.get("gcode_filename_extension")
@@ -106,7 +110,6 @@ class ToolpathExport(pycam.Plugins.PluginBase):
             return
         try:
             destination = open(filename, "w")
-            safety_height = self.core.get("gcode_safety_height")
             # TODO: implement "get_meta_data()"
             #meta_data = self.get_meta_data()
             meta_data = ""
@@ -116,6 +119,10 @@ class ToolpathExport(pycam.Plugins.PluginBase):
                 machine_time += toolpath.get_machine_time()
             all_info = meta_data + os.linesep \
                     + "Estimated machine time: %.0f minutes" % machine_time
+            generator = pycam.Exporters.GCode.LinuxCNC.LinuxCNC(destination)
+            generator.add_filters(settings_filters)
+            generator.add_filters(common_filters)
+            """
             minimum_steps = [self.core.get("gcode_minimum_step_x"),  
                     self.core.get("gcode_minimum_step_y"),  
                     self.core.get("gcode_minimum_step_z")]
@@ -142,27 +149,22 @@ class ToolpathExport(pycam.Plugins.PluginBase):
                     touch_off_pause_execution=self.core.get("touch_off_pause_execution"))
             path_mode = self.core.get("gcode_path_mode")
             if path_mode == 0:
-                generator.set_path_mode(PATH_MODES["exact_path"])
+                generator.set_path_mode(CORNER_STYLE_EXACT_PATH)
             elif path_mode == 1:
-                generator.set_path_mode(PATH_MODES["exact_stop"])
+                generator.set_path_mode(CORNER_STYLE_EXACT_STOP)
             elif path_mode == 2:
-                generator.set_path_mode(PATH_MODES["continuous"])
+                generator.set_path_mode(CORNER_STYLE_OPTIMIZE_SPEED)
             else:
                 naive_tolerance = self.core.get("gcode_naive_tolerance")
                 if naive_tolerance == 0:
                     naive_tolerance = None
-                generator.set_path_mode(PATH_MODES["continuous"],
+                generator.set_path_mode(CORNER_STYLE_OPTIMIZE_TOLERANCE,
                         self.core.get("gcode_motion_tolerance"),
                         naive_tolerance)
+            """
             for toolpath in toolpaths:
-                params = toolpath.get_params()
-                tool_id = params.get("tool_id", 1)
-                feedrate = params.get("tool_feedrate", 300)
-                spindle_speed = params.get("spindle_speed", 1000)
-                generator.set_speed(feedrate, spindle_speed)
                 # TODO: implement toolpath.get_meta_data()
-                generator.add_moves(toolpath.get_basic_moves(),
-                        tool_id=tool_id, comment="")
+                generator.add_moves(toolpath.path, toolpath.filters)
             generator.finish()
             destination.close()
             self.log.info("GCode file successfully written: %s" % str(filename))

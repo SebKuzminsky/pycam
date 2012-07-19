@@ -24,7 +24,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import pycam.Plugins
 import pycam.Gui.ControlsGTK
 import pycam.Utils.log
-
+import pycam.Toolpath.Filters as Filters
+from pycam.Toolpath import CORNER_STYLE_EXACT_PATH
 
 _log = pycam.Utils.log.get_logger()
 
@@ -137,20 +138,22 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                     ("toolpath-processor-list-changed", self._update_processors),
                     ("toolpath-selection-changed", self._update_visibility),
                     ("notify-initialization-finished",
-                            self._activate_first_processor),
+                            self._select_first_processor),
             )
             self.register_event_handlers(self._event_handlers)
             self._update_processors()
             self._update_visibility()
+        self.core.set("toolpath_processors", self)
         return True
 
     def teardown(self):
         if self.gui:
             self._toggle_window(False)
+        self.core.set("toolpath_processors", None)
         self.unregister_event_handlers(self._event_handlers)
         self.core.get("unregister_parameter_group")("toolpath_processor")
 
-    def _activate_first_processor(self):
+    def _select_first_processor(self):
         # run this action as soon as all processors are registered
         processors = self.core.get("get_parameter_sets")("toolpath_processor").values()
         processors.sort(key=lambda item: item["weight"])
@@ -198,6 +201,12 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
         return True
 
 
+def _get_processor_filters(core, parameters):
+    filters = []
+    core.call_chain("toolpath_filters", "settings", parameters, filters)
+    return filters
+
+
 class ToolpathProcessorMilling(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Toolpaths", "GCodeSafetyHeight", "GCodeFilenameExtension",
@@ -210,7 +219,7 @@ class ToolpathProcessorMilling(pycam.Plugins.PluginBase):
                 "step_width_x": 0.0001,
                 "step_width_y": 0.0001,
                 "step_width_z": 0.0001,
-                "path_mode": "exact_path",
+                "path_mode": CORNER_STYLE_EXACT_PATH,
                 "motion_tolerance": 0.0,
                 "naive_tolerance": 0.0,
                 "spindle_enable": True,
@@ -218,16 +227,14 @@ class ToolpathProcessorMilling(pycam.Plugins.PluginBase):
                 "touch_off": None,
         }
         self.core.get("register_parameter_set")("toolpath_processor",
-                "milling", "Milling", self.get_filters, parameters=parameters,
-                weight=10)
+                "milling", "Milling",
+                lambda params: _get_processor_filters(self.core, params),
+                parameters=parameters, weight=10)
         return True
 
     def teardown(self):
         self.core.get("unregister_parameter_set")("toolpath_processor", 
                 "milling")
-
-    def get_filters(self):
-        return []
 
 
 class ToolpathProcessorLaser(pycam.Plugins.PluginBase):
@@ -246,14 +253,12 @@ class ToolpathProcessorLaser(pycam.Plugins.PluginBase):
                 "naive_tolerance": 0.0,
         }
         self.core.get("register_parameter_set")("toolpath_processor",
-                "laser", "Laser", self.get_filters, parameters=parameters,
-                weight=50)
+                "laser", "Laser",
+                lambda params: _get_processor_filters(self.core, params),
+                parameters=parameters, weight=50)
         return True
 
     def teardown(self):
         self.core.get("unregister_parameter_set")("toolpath_processor",
                 "laser")
-
-    def get_filters(self):
-        return []
 
