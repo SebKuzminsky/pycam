@@ -29,6 +29,8 @@ from numpy import array
 from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import number, epsilon
+# Filters is imported later - dependency cycle :(
+#import pycam.Toolpath.Filters
 import pycam.Utils.log
 import random
 import os
@@ -39,8 +41,8 @@ from itertools import groupby
 log = pycam.Utils.log.get_logger()
 
 
-MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC, MOVE_SAFETY, MACHINE_SETTING = \
-        range(5)
+MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC, MOVE_SAFETY, MACHINE_SETTING, \
+        COMMENT = range(6)
 MOVES_LIST = (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC, MOVE_SAFETY)
 CORNER_STYLE_EXACT_PATH, CORNER_STYLE_EXACT_STOP, CORNER_STYLE_OPTIMIZE_SPEED, \
         CORNER_STYLE_OPTIMIZE_TOLERANCE = range(4)
@@ -77,25 +79,14 @@ def simplify_toolpath(path):
 
 class Toolpath(object):
 
-    def __init__(self, toolpath_path=None, toolpath_parameters=None, **kwargs):
+    def __init__(self, toolpath_path=None, toolpath_filters=None, **kwargs):
         super(Toolpath, self).__init__(**kwargs)
         if toolpath_path is None:
             toolpath_path = []
-        self.__path = toolpath_path
-        if toolpath_parameters is None:
-            toolpath_parameters = {}
-        self.parameters = toolpath_parameters
-        # TODO: remove this hidden import (currently necessary to avoid dependency loop)
-        from pycam.Toolpath.Filters import TinySidewaysMovesFilter, MachineSetting, \
-                SafetyHeightFilter
-        self.filters = []
-        self.filters.append(MachineSetting("metric", True))
-        self.filters.append(MachineSetting("feedrate",
-                self.parameters.get("tool_feedrate", 300)))
-        self.filters.append(TinySidewaysMovesFilter(
-                2 * self.parameters.get("tool_radius", 0)))
-        self.filters.append(SafetyHeightFilter(20))
-        self._feedrate = self.parameters.get("tool_feedrate", 300)
+        if toolpath_filters is None:
+            toolpath_filters = []
+        self.filters = toolpath_filters
+        self.path = toolpath_path
         self.clear_cache()
         
     def __get_path(self):
@@ -107,8 +98,18 @@ class Toolpath(object):
         self.__path = tuple(new_path)
         self.clear_cache()
         
+    def __get_filters(self):
+        return self.__filters
+
+    def __set_filters(self, new_filters):
+        # use a read-only tuple instead of a list
+        # (otherwise we can't detect changes)
+        self.__filters = tuple(new_filters)
+        self.clear_cache()
+        
     # use a property in order to trigger "clear_cache" whenever the path changes
     path = property(__get_path, __set_path)
+    filters = property(__get_filters, __set_filters)
 
     def clear_cache(self):
         self.opengl_safety_height = None
@@ -119,9 +120,6 @@ class Toolpath(object):
         self._maxy = None
         self._minz = None
         self._maxz = None
-
-    def get_params(self):
-        return dict(self.parameters)
 
     def _get_limit_generic(self, idx, func):
         values = [p[idx] for move_type, p in self.path
@@ -175,6 +173,8 @@ class Toolpath(object):
         if max_time is None:
             return moves
         else:
+            # late import due to dependency cycle
+            import pycam.Toolpath.Filters
             return moves | pycam.Toolpath.Filters.TimeLimit(max_time)
 
     def _rotate_point(self, rp, sp, v, angle):
