@@ -30,7 +30,6 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
 
     def setup(self):
         self._groups = {}
-        self.core.set("get_parameters", self.get_parameters)
         self.core.set("get_parameter_values", self.get_parameter_values)
         self.core.set("set_parameter_values", self.set_parameter_values)
         self.core.set("get_parameter_sets", self.get_parameter_sets)
@@ -46,7 +45,7 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
-        for name in ("get_parameters", "set_parameter_values",
+        for name in ("set_parameter_values",
                 "get_parameter_values", "get_parameter_sets",
                 "register_parameter_set", "register_parameter_group",
                 "register_parameter", "unregister_parameter_set",
@@ -122,14 +121,6 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
             set_func = control.set_value
         group["parameters"][name] = {"name": name, "control": control,
                 "get_func": get_func, "set_func": set_func}
-
-    def get_parameters(self, group_name):
-        if not group_name in self._groups:
-            self.log.info("Unknown parameter group: %s" % group_name)
-            return []
-        result = {}
-        group = self._groups[group_name]
-        return list(group["parameters"].values)
 
     def get_parameter_values(self, group_name):
         if not group_name in self._groups:
