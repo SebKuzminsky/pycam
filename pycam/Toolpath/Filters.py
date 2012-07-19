@@ -31,25 +31,51 @@ from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import epsilon
 import pycam.Utils.log
 
-log = pycam.Utils.log.get_logger()
+
+MAX_DIGITS = 12
+
+_log = pycam.Utils.log.get_logger()
 
 
 def toolpath_filter(our_category, key):
     """ decorator for toolpath filter functions
+    e.g. see pycam.Plugins.ToolTypes
     """
     def toolpath_filter_inner(func):
         def get_filter_func(self, category, parameters, previous_filters):
-            if (category == our_category) and (key in parameters):
-                result = func(self, parameters[key])
+            if (category == our_category):
+                if isinstance(key, (list, tuple, set)) and \
+                        any([(k in parameters) for k in key]):
+                    # "key" is a list and at least one parameter is found
+                    arg_dict = {}
+                    for one_key in key:
+                        if one_key in parameters:
+                            arg_dict[one_key] = parameters[one_key]
+                    result = func(self, **arg_dict)
+                elif key in parameters:
+                    result = func(self, parameters[key])
+                else:
+                    # no match found - ignore
+                    result = None
                 if result:
                     previous_filters.extend(result)
         return get_filter_func
     return toolpath_filter_inner
 
 
+def get_filtered_moves(moves, filters):
+    filters = list(filters)
+    moves = list(moves)
+    filters.sort()
+    for one_filter in filters:
+        moves |= one_filter
+    return moves
+
+
 class BaseFilter(object):
 
     PARAMS = []
+    WEIGHT = 50
 
     def __init__(self, *args, **kwargs):
         self.settings = dict(kwargs)
@@ -72,10 +98,26 @@ class BaseFilter(object):
 
     def __ror__(self, toolpath):
         # allow to use pycam.Toolpath.Toolpath instances (instead of a list)
-        if hasattr(toolpath, "path") and hasattr(toolpath, "get_params"):
+        if hasattr(toolpath, "path") and hasattr(toolpath, "filters"):
             toolpath = toolpath.path
         # use a copy of the list -> changes will be permitted
         return self.filter_toolpath(list(toolpath))
+
+    def __repr__(self):
+        class_name = str(self.__class__).split("'")[1]
+        return "%s - %s" % (class_name, self._render_settings())
+
+    # comparison functions: they allow to use "filters.sort()"
+    __eq__ = lambda self, other: self.WEIGHT == other.WEIGHT
+    __ne__ = lambda self, other: self.WEIGHT != other.WEIGHT
+    __lt__ = lambda self, other: self.WEIGHT < other.WEIGHT
+    __le__ = lambda self, other: self.WEIGHT <= other.WEIGHT
+    __gt__ = lambda self, other: self.WEIGHT > other.WEIGHT
+    __ge__ = lambda self, other: self.WEIGHT >= other.WEIGHT
+
+    def _render_settings(self):
+        return ", ".join(["%s=%s" % (key, self.settings[key])
+                for key in self.settings])
 
     def filter_toolpath(self, toolpath):
         raise NotImplementedError("The filter class %s failed to " + \
@@ -85,6 +127,7 @@ class BaseFilter(object):
 class SafetyHeightFilter(BaseFilter):
 
     PARAMS = ("safety_height", )
+    WEIGHT = 60
 
     def filter_toolpath(self, toolpath):
         last_pos = None
@@ -118,6 +161,7 @@ class SafetyHeightFilter(BaseFilter):
 class TinySidewaysMovesFilter(BaseFilter):
 
     PARAMS = ("tolerance", )
+    WEIGHT = 80
 
     def filter_toolpath(self, toolpath):
         new_path = []
@@ -149,6 +193,7 @@ class TinySidewaysMovesFilter(BaseFilter):
 class MachineSetting(BaseFilter):
 
     PARAMS = ("key", "value")
+    WEIGHT = 20
 
     def filter_toolpath(self, toolpath):
         result = []
@@ -156,28 +201,53 @@ class MachineSetting(BaseFilter):
         while toolpath and toolpath[0][0] == MACHINE_SETTING:
             result.append(toolpath.pop(0))
         # add the new setting
-        result.append((MACHINE_SETTING, (self.settings["key"], self.settings["value"])))
+        for setting in self._get_settings():
+            result.append((MACHINE_SETTING, setting))
         return result + toolpath
+
+    def _get_settings(self):
+        return [(self.settings["key"], self.settings["value"])]
+
+    def _render_settings(self):
+        return "%s=%s" % (self.settings["key"], self.settings["value"])
+
+
+class PathMode(MachineSetting):
+
+    PARAMS = ("path_mode", "motion_tolerance", "naive_tolerance")
+    WEIGHT = 25
+
+    def _get_settings(self):
+        return [("corner_style",
+                (self.settings["path_mode"], self.settings["motion_tolerance"],
+                    self.settings["naive_tolerance"]))]
+
+    def _render_settings(self):
+        return "%d / %d / %d" % (self.settings["path_mode"],
+                self.settings["motion_tolerance"],
+                self.settings["naive_tolerance"])
 
 
 class SelectTool(BaseFilter):
 
     PARAMS = ("tool_id", )
+    WEIGHT = 35
 
     def filter_toolpath(self, toolpath):
-        result = []
-        # move all previous machine settings
-        while toolpath and \
-                not toolpath[0][0] in MOVES_LIST:
-            result.append(toolpath.pop(0))
-        result.append((MACHINE_SETTING,
+        index = 0
+        # skip all non-moves
+        while (index < len(toolpath)) and \
+                (not toolpath[0][0] in MOVES_LIST):
+            index += 1
+        toolpath.insert(index, (MACHINE_SETTING,
                 ("select_tool", self.settings["tool_id"])))
-        return result + toolpath
+        return toolpath
 
 
 class TriggerSpindle(BaseFilter):
 
     PARAMS = ("delay", )
+    WEIGHT = 40
 
     def filter_toolpath(self, toolpath):
         def enable_spindle(path, index):
@@ -186,8 +256,8 @@ class TriggerSpindle(BaseFilter):
                 path.insert(index + 1,
                     (MACHINE_SETTING, ("delay", self.settings["delay"])))
         def disable_spindle(path, index):
-            path.insert(index, (MACHINE_SETTING, ("spindle_enabled", True)))
-        # move all previous machine settings
+            path.insert(index, (MACHINE_SETTING, ("spindle_enabled", False)))
+        # find all positions of "select_tool"
         tool_changes = [index for index, (move, args) in enumerate(toolpath)
                 if (move == MACHINE_SETTING) and (args[0] == "select_tool")]
         if tool_changes:
@@ -195,15 +265,15 @@ class TriggerSpindle(BaseFilter):
             for index in tool_changes:
                 enable_spindle(toolpath, index + 1)
         else:
-            for index, (move, args) in enumerate(toolpath):
+            for index, (move_type, args) in enumerate(toolpath):
                 if move_type in MOVES_LIST:
                     enable_spindle(toolpath, index)
                     break
         # add "stop spindle" just after the last move
-        index = len(result) - 1
-        while (not result[-index][0] in MOVES_LIST) and (index > 0):
+        index = len(toolpath) - 1
+        while (not toolpath[index][0] in MOVES_LIST) and (index > 0):
             index -= 1
-        if result[index][0] in MOVES_LIST:
+        if toolpath[index][0] in MOVES_LIST:
             disable_spindle(toolpath, index + 1)
         return toolpath
 
@@ -211,6 +281,7 @@ class TriggerSpindle(BaseFilter):
 class Crop(BaseFilter):
 
     PARAMS = ("polygons", )
+    WEIGHT = 90
 
     def filter_toolpath(self, toolpath):
         new_path = []
@@ -254,6 +325,7 @@ class TransformPosition(BaseFilter):
     """
 
     PARAMS = ("matrix", )
+    WEIGHT = 85
 
     def filter_toolpath(self, toolpath):
         new_path = []
@@ -272,6 +344,7 @@ class TimeLimit(BaseFilter):
     """
 
     PARAMS = ("timelimit", )
+    WEIGHT = 100
 
     def filter_toolpath(self, toolpath):
         feedrate = min_feedrate = 1
@@ -307,11 +380,15 @@ class MovesOnly(BaseFilter):
     (only machine settings, safety moves, ...).
     """
 
+    WEIGHT = 95
+
     def filter_toolpath(self, toolpath):
         return [item for item in toolpath
                 if item[0] in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID)]
 
 class Copy(BaseFilter):
+
+    WEIGHT = 100
 
     def filter_toolpath(self, toolpath):
         return toolpath
@@ -351,15 +428,15 @@ class StepWidth(BaseFilter):
 
     PARAMS = ("step_width_x", "step_width_y", "step_width_z")
     NUM_OF_AXES = 3
+    WEIGHT = 60
 
     def filter_toolpath(self, toolpath):
         minimum_steps = []
-        axes_formatter = []
+        conv = []
         for key in "xyz":
             minimum_steps.append(self.settings["step_width_%s" % key])
         for step_width in minimum_steps:
-            conv, format_string = _get_num_converter(step_width)
-            axes_formatter.append((conv(step_width), conv, format_string))
+            conv.append(_get_num_converter(step_width)[0])
         last_pos = None
         path = []
         for move_type, args in toolpath:
