@@ -26,11 +26,12 @@ import pycam.Cutters.SphericalCutter
 import pycam.Cutters.ToroidalCutter
 import pycam.Cutters.CylindricalCutter
 
+
 def tool_params_and_filters(*param_names):
     def get_params_and_filters_inner(func):
         def get_tool_func(self, parameters):
             filters = []
-            self.core.call_chain("get_toolpath_filters", "tool", parameters,
+            self.core.call_chain("toolpath_filters", "tool", parameters,
                     filters)
             args = []
             for param_name in param_names:

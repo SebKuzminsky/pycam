@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Plugins
+from pycam.Toolpath.Filters import toolpath_filter
 
 
 class Tools(pycam.Plugins.ListPluginBase):
@@ -37,8 +38,6 @@ class Tools(pycam.Plugins.ListPluginBase):
             tool_frame.unparent()
             self.core.register_ui("main", "Tools", tool_frame, weight=10)
             self._gtk_handlers = []
-            self.core.register_chain("get_toolpath_information",
-                    self.get_toolpath_information)
             self._modelview = self.gui.get_object("ToolTable")
             self.set_gtk_modelview(self._modelview)
             self.register_model_update(lambda:
@@ -116,6 +115,8 @@ class Tools(pycam.Plugins.ListPluginBase):
             self._update_widgets()
             self._trigger_table_update()
             self._tool_switch()
+        self.core.register_chain("toolpath_filters",
+                self.get_toolpath_filters)
         self.core.register_namespace("tools",
                 pycam.Plugins.get_filter(self))
         self.register_state_item("tools", self)
@@ -124,6 +125,8 @@ class Tools(pycam.Plugins.ListPluginBase):
     def teardown(self):
         self.clear_state_items()
         self.core.unregister_namespace("tools")
+        self.core.unregister_chain("toolpath_filters",
+                self.get_toolpath_filters)
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("ToolBox"))
             self.core.unregister_ui_section("tool_speed")
@@ -135,16 +138,10 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.core.unregister_ui_section("tool_parameters")
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
-            self.core.unregister_chain("get_toolpath_information",
-                    self.get_toolpath_information)
         self.core.set("tools", None)
         while len(self) > 0:
             self.pop()
         return True
-
-    def get_toolpath_information(self, item, data):
-        if item in self:
-            data["tool_id"] = item["id"]
 
     def _trigger_table_update(self):
         self.gui.get_object("IDColumn").set_cell_data_func(
@@ -286,6 +283,10 @@ class Tools(pycam.Plugins.ListPluginBase):
                 "id": tool_id, "name": tool_name})
         self.append(new_tool)
         self.select(new_tool)
+
+    @toolpath_filter("tool", "tool_id")
+    def get_toolpath_filters(self, tool_id):
+        return [pycam.Toolpath.Filters.SelectTool(tool_id)]
 
 
 class ToolEntity(pycam.Plugins.ObjectWithAttributes):

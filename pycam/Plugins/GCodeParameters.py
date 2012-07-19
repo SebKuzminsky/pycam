@@ -35,26 +35,26 @@ class GCodeSafetyHeight(pycam.Plugins.PluginBase):
     def setup(self):
         # TODO: update the current filters after a change
         self.control = pycam.Gui.ControlsGTK.InputNumber(digits=0,
-                change_handler=lambda *args: \
+                lower=-1000, upper=1000, change_handler=lambda *args: \
                     self.core.emit_event("visual-item-updated"))
-        self.core.get("register_parameter")("toolpath_processor", "safety_height",
-                self.control)
+        self.core.get("register_parameter")("toolpath_processor",
+                "safety_height", self.control)
         self.core.register_ui("gcode_general_parameters", "Safety Height",
                 self.control.get_widget(), weight=20)
-        self.core.register_chain("toolpath_filters", self.apply_filter)
+        self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         return True
 
     def teardown(self):
-        self.core.unregister_chain("toolpath_filters", self.apply_filter)
+        self.core.unregister_chain("toolpath_filters",
+                self.get_toolpath_filters)
         self.core.unregister_ui("gcode_general_parameters",
                 self.control.get_widget())
         self.core.get("unregister_parameter")("toolpath_processor",
                 "safety_height")
 
-    def apply_filter(self, settings_dict, filters_list):
-        if "safety_height" in settings_dict:
-            filters_list.append(Filters.SafetyHeightFilter(
-                    settings_dict["safety_height"]))
+    @Filters.toolpath_filter("settings", "safety_height")
+    def get_toolpath_filters(self, safety_height):
+        return [Filters.SafetyHeightFilter(safety_height)]
 
 
 #TODO: move to settings for ToolpathOutputDialects
@@ -78,9 +78,10 @@ class GCodeFilenameExtension(pycam.Plugins.PluginBase):
         self.core.get("unregister_parameter")("toolpath_processor",
                 "filename_extension")
 
-    def apply_filter(self, settings_dict, filters_list):
-        # TODO: implement this after moving to Dialects
-        pass
+    @Filters.toolpath_filter("settings", "filename_extension")
+    def get_toolpath_filters(self, safety_height):
+        # TODO: see above - move to ToolpathOutputDialects
+        return []
 
 
 class GCodeStepWidth(pycam.Plugins.PluginBase):
@@ -103,11 +104,12 @@ class GCodeStepWidth(pycam.Plugins.PluginBase):
             self.core.get("register_parameter")("toolpath_processor",
                     "step_width_%s" % key, control)
             self.controls.append((key, control))
-        self.core.register_chain("toolpath_filters", self.apply_filter)
+        self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         return True
 
     def teardown(self):
-        self.core.unregister_chain("toolpath_filters", self.apply_filter)
+        self.core.unregister_chain("toolpath_filters",
+                self.get_toolpath_filters)
         for key, control in self.controls:
             self.core.unregister_ui("gcode_step_width", control)
             self.core.get("unregister_parameter")("toolpath_processor",
@@ -115,13 +117,10 @@ class GCodeStepWidth(pycam.Plugins.PluginBase):
         self.core.unregister_ui("gcode_general_parameters",
                 self._table.get_widget())
 
-    def apply_filter(self, settings_dict, filters_list):
-        result = {}
-        if any([("step_width_%s" % key) in settings_dict
-                for key in "xyz"]):
-            full_key = "step_width_%s" % key
-            result[full_key] = settings_dict.get(full_key, 0.0)
-            filters_list.append(Filters.StepWidth(**result))
+    @Filters.toolpath_filter("settings",
+            ("step_width_x", "step_width_y", "step_width_z"))
+    def get_toolpath_filters(self, **kwargs):
+        return [Filters.StepWidth(**kwargs)]
 
 
 class GCodeSpindle(pycam.Plugins.PluginBase):
@@ -147,12 +146,13 @@ class GCodeSpindle(pycam.Plugins.PluginBase):
                 self.spindle_enable.get_widget(), weight=10)
         self.core.get("register_parameter")("toolpath_processor",
                 "spindle_enable", self.spindle_enable)
-        self.core.register_chain("toolpath_filters", self.apply_filter)
+        self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         self.update_widgets()
         return True
 
     def teardown(self):
-        self.core.unregister_chain("toolpath_filters", self.apply_filter)
+        self.core.unregister_chain("toolpath_filters",
+                self.get_toolpath_filters)
         self.core.unregister_ui("gcode_spindle",
                 self.spindle_delay.get_widget())
         self.core.unregister_ui("gcode_spindle",
@@ -168,11 +168,12 @@ class GCodeSpindle(pycam.Plugins.PluginBase):
         widget = self.spindle_delay.get_widget()
         widget.set_sensitive(self.spindle_enable.get_value())
 
-    def apply_filter(self, settings_dict, filters_list):
-        if not settings_dict.get("spindle_enable", False):
-            return
-        filters_list.append(Filters.TriggerSpindle(
-                settings_dict.get("spindle_delay", 0)))
+    @Filters.toolpath_filter("settings", ("spindle_enable", "spindle_delay"))
+    def get_toolpath_filters(self, spindle_enable=False, spindle_delay=0):
+        if spindle_enable:
+            return [Filters.TriggerSpindle(spindle_delay)]
+        else:
+            return []
 
 
 class GCodeCornerStyle(pycam.Plugins.PluginBase):
@@ -208,12 +209,13 @@ class GCodeCornerStyle(pycam.Plugins.PluginBase):
                 self.path_mode.get_widget(), weight=10)
         self.core.get("register_parameter")("toolpath_processor", "path_mode",
                 self.path_mode)
-        self.core.register_chain("toolpath_filters", self.apply_filter)
+        self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         self.update_widgets()
         return True
 
     def teardown(self):
-        self.core.unregister_chain("toolpath_filters", self.apply_filter)
+        self.core.unregister_chain("toolpath_filters",
+                self.get_toolpath_filters)
         self.core.unregister_ui("gcode_corner_style",
                 self.motion_tolerance.get_widget())
         self.core.unregister_ui("gcode_corner_style",
@@ -231,10 +233,9 @@ class GCodeCornerStyle(pycam.Plugins.PluginBase):
         for control in controls:
             control.get_widget().set_sensitive(enable_tolerances)
 
-    def apply_filter(self, settings_dict, filters_list):
-        param_dict = {}
-        for name in ("path_mode", "motion_tolerance", "naive_tolerance"):
-            if name in settings_dict:
-                param_dict[name] = settings_dict[name]
-        filers_list.insert(Filters.MachineSetting("corner_style", param_dict))
+    @Filters.toolpath_filter("settings",
+            ("path_mode", "motion_tolerance", "naive_tolerance"))
+    def get_toolpath_filters(self, path_mode=CORNER_STYLE_EXACT_PATH,
+            motion_tolerance=0, naive_tolerance=0):
+        return [Filters.PathMode(path_mode, motion_tolerance, naive_tolerance)]
 

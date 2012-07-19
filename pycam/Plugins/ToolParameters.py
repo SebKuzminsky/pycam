@@ -47,7 +47,7 @@ class ToolParamRadius(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter")("tool", "radius")
         self.core.unregister_ui("tool_size", self.control.get_widget())
-        self.core.unregister_chain("get_toolpath_filters",
+        self.core.unregister_chain("toolpath_filters",
                 self.get_toolpath_filters)
 
     @toolpath_filter("tool", "radius")
@@ -87,14 +87,14 @@ class ToolParamFeedrate(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("tool", "feedrate", self.control)
         self.core.register_ui("tool_speed", "Feedrate",
                 self.control.get_widget(), weight=10)
-        self.core.register_chain("get_toolpath_filters",
+        self.core.register_chain("toolpath_filters",
                 self.get_toolpath_filters)
         return True
 
     def teardown(self):
         self.core.unregister_ui("tool_speed", self.control.get_widget())
         self.core.get("unregister_parameter")("tool", "feedrate")
-        self.core.unregister_chain("get_toolpath_filters",
+        self.core.unregister_chain("toolpath_filters",
                 self.get_toolpath_filters)
 
     @toolpath_filter("tool", "feedrate")
@@ -115,14 +115,14 @@ class ToolParamSpindleSpeed(pycam.Plugins.PluginBase):
                 self.control)
         self.core.register_ui("tool_speed", "Spindle Speed",
                 self.control.get_widget(), weight=50)
-        self.core.register_chain("get_toolpath_filters",
+        self.core.register_chain("toolpath_filters",
                 self.get_toolpath_filters)
         return True
 
     def teardown(self):
         self.core.unregister_ui("tool_speed", self.control.get_widget())
         self.core.get("unregister_parameter")("tool", "spindle_speed")
-        self.core.unregister_chain("get_toolpath_filters",
+        self.core.unregister_chain("toolpath_filters",
                 self.get_toolpath_filters)
 
     @toolpath_filter("tool", "spindle_speed")
