@@ -486,12 +486,21 @@ def get_pocketing_polygons(polygons, offset, pocketing_type, callback=None):
         use_voronoi = False
     if use_voronoi:
         _log.debug("Using openvoronoi pocketing algorithm")
-        poly = pycam.Toolpath.OpenVoronoi.pocket_model(polygons, offset)
+        return pycam.Toolpath.OpenVoronoi.pocket_model(polygons, offset)
     else:
         _log.info("Failed to load openvoronoi library.")
-        poly = get_pocketing_polygons_simple(polygons, offset, pocketing_type,
-                callback)
-    return poly
+    try:
+        import pycam.Toolpath.LibArea
+        use_libarea = True
+    except ImportError:
+        use_libarea = False
+    if use_libarea:
+        _log.debug("Using libarea pocketing algorithm")
+        return pycam.Toolpath.LibArea._pocket_model(polygons)
+    else:
+        _log.info("Failed to load libarea library.")
+    # fall back to the simple default algorithm
+    return get_pocketing_polygons_simple(polygons, offset, pocketing_type, callback)
 
 
 def get_pocketing_polygons_simple(polygons, offset, pocketing_type, callback=None):
