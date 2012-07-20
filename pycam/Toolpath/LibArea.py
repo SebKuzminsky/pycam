@@ -1,17 +1,25 @@
-def _pocket_model(model):
+import copy
+
+import area
+
+import pycam.Geometry.Line
+import pycam.Geometry.Polygon
+
+
+def _pocket_model(polygons):
     """Create pocketing path."""    
     # libarea.Vertex Linetypes
     LINE = 0
     ARC_CCW = 1
     ARC_CW = -1
     
-    print "Model\n#lines:", model.get_num_of_lines()
-    print "#line_groups:", len(model.get_polygons())
+    #print "Model\n#lines:", model.get_num_of_lines()
+    print "#line_groups:", len(polygons)
     
     # copy pycam.Model to libarea.Area
     my_area = area.Area()
     my_pocketParams = PocketParams()    
-    for lg in model.get_polygons():
+    for lg in polygons:
         #print "line_group:", lg
         print "line_group() #Points:", len(lg.get_points())
         my_curve = area.Curve()
@@ -24,12 +32,12 @@ def _pocket_model(model):
         for pt in lg.get_points():
             #print "point(x,y): (%f,%f)" % (pt.x, pt.y)
             if p_first:
-                my_curve.append(area.Vertex(area.Point(pt.x, pt.y)))
+                my_curve.append(area.Vertex(area.Point(pt[0], pt[1])))
             else:
                 if p_skip:  # ugly hack to load same begin/end point only once
                     p_skip = False
                 else:
-                    my_curve.append(area.Vertex(area.Point(pt.x, pt.y)))
+                    my_curve.append(area.Vertex(area.Point(pt[0], pt[1])))
                     p_skip = True
             """
             if p_previous is None:
@@ -103,16 +111,16 @@ def _pocket_area(a, params, polygons):
         #print "areaList()"
         for c in a.getCurves():
             print "Curve() #vertices:", c.getNumVertices()
-            my_poly = Polygon()
+            my_poly = pycam.Geometry.Polygon.Polygon()
             p_previous = None
             p_next = None
             for vt in c.getVertices():
                 # from 2D to 3D with Z=0
                 if p_previous is None:
-                    p_previous = Point(vt.p.x, vt.p.y, 0.0)
+                    p_previous = (vt.p.x, vt.p.y, 0.0)
                 else:
-                    p_next = Point(vt.p.x, vt.p.y, 0.0)
-                    my_poly.append(Line(p_previous, p_next))
+                    p_next = (vt.p.x, vt.p.y, 0.0)
+                    my_poly.append(pycam.Geometry.Line.Line(p_previous, p_next))
                     p_previous = p_next
                 #polygons.append(Line(p1, p2))
                 #polygons.append(Point(vt.p.x, vt.p.y, 0.0))
