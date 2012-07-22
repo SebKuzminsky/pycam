@@ -496,7 +496,7 @@ def get_pocketing_polygons(polygons, offset, pocketing_type, callback=None):
         use_libarea = False
     if use_libarea:
         _log.debug("Using libarea pocketing algorithm")
-        return pycam.Toolpath.LibArea._pocket_model(polygons)
+        return pycam.Toolpath.LibArea._pocket_model(polygons, offset)
     else:
         _log.info("Failed to load libarea library.")
     # fall back to the simple default algorithm
