@@ -115,9 +115,8 @@ def get_points_of_arc(center, radius, a1, a2, plane=None, cords=32):
     num_of_segments = ceil(angle_diff / (2 * math.pi) * cords)
     angle_segment = angle_diff / num_of_segments
     points = []
-    get_angle_point = lambda angle: (
-            center[0] + radius * math.cos(angle),
-            center[1] + radius * math.sin(angle))
+    get_angle_point = lambda angle: (center[0] + radius * math.cos(angle),
+            center[1] + radius * math.sin(angle), 0)
     points.append(get_angle_point(a1))
     for index in range(num_of_segments):
         points.append(get_angle_point(a1 + angle_segment * (index + 1)))
