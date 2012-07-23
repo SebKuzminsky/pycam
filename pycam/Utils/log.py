@@ -118,7 +118,8 @@ class RepetitionsFilter(logging.Filter):
                     record.getMessage().startswith(
                         self._last_record.getMessage()[:self._cmp_len])
             similarity = "similar"
-        if message_equal and (now - self._last_timestamp <= self._delay):
+        if not is_debug() and \
+                (message_equal and (now - self._last_timestamp <= self._delay)):
             self._suppressed_messages_counter += 1
             return False
         else:
