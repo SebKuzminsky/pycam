@@ -159,7 +159,7 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
         if not models:
             self.log.error("No trace models given: you need to assign a " + \
                     "2D model to the engraving process.")
-            return None, None, (None, None)
+            return None, None
         progress = self.core.get("progress")
         if process["parameters"]["radius_compensation"]:
             progress.update(text="Offsetting models")
