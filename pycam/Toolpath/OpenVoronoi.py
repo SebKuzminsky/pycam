@@ -40,13 +40,11 @@ def pocket_model(polygons, offset):
     radius = max(maxx - minx, maxy - miny) / 1.8
     bin_size = sum([len(poly.get_points()) for poly in polygons])
     dia = openvoronoi.VoronoiDiagram(radius, int(math.ceil(math.sqrt(bin_size))))
-    # @awallin: is this the offset definition?
-    dia.setEdgeOffset(offset)
+    #dia.setEdgeOffset(offset)
     for polygon in polygons:
         _polygon2diagram(polygon, dia)
     dia.check()
     offset_dia = openvoronoi.Offset(dia.getGraph())
-    # @awallin: is this the offset?
     #polygons = []
     model = pycam.Geometry.Model.ContourModel()
     before = None
@@ -97,6 +95,6 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         offset = float(sys.argv[2])
     else:
-        offset = 0.2
+        offset = 1.0
     print pocket_model(model.get_polygons(), offset)
 
