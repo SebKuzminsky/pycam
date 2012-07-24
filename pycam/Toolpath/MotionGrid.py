@@ -449,6 +449,22 @@ def get_lines_grid(models, (low, high), layer_distance, line_distance=None,
                 step_width=step_width, milling_style=milling_style)
 
 def get_pocketing_polygons(polygons, offset, pocketing_type, callback=None):
+    try:
+        import pycam.Toolpath.OpenVoronoi
+        use_voronoi = True
+    except ImportError:
+        use_voronoi = False
+    if use_voronoi:
+        _log.debug("Using openvoronoi pocketing algorithm")
+        poly = pycam.Toolpath.OpenVoronoi.pocket_model(polygons, offset)
+    else:
+        _log.info("Failed to load openvoronoi library.")
+        poly = get_pocketing_polygons_simple(polygons, offset, pocketing_type,
+                callback)
+    return poly
+
+
+def get_pocketing_polygons_simple(polygons, offset, pocketing_type, callback=None):
     pocketing_limit = 1000
     base_polygons = []
     other_polygons = []
