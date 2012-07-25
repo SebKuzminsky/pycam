@@ -866,20 +866,11 @@ class Polygon(TransformableContainer):
             if len(new_group) > 0:
                 group_starts = []
                 index1 = 0
-                fallout3 = 0
                 while index1 < len(new_group):
                     index2 = 0
-                    fallout2 = len(new_group)
-                    fallout3 += 1
                     while index2 < len(new_group):
-                        fallout2 -= 1
                         index_distance = min(abs(index2 - index1), \
                                 abs(len(new_group) - (index2 - index1))) 
-                        if fallout3 > 10000:
-                            print "FALLOUT3"
-                            print index_distance, index2, index1, len(new_group), len(group_starts)
-                            import sys
-                            sys.exit(1)
                         # skip neighbours
                         if index_distance > 1:
                             line1 = new_group[index1]
@@ -915,7 +906,10 @@ class Polygon(TransformableContainer):
                     groups = []
                     last_start = 0
                     for group_start in group_starts:
-                        groups.append(new_group[last_start:group_start])
+                        transfer_group = new_group[last_start:group_start]
+                        # add only non-empty groups
+                        if transfer_group:
+                            groups.append(transfer_group)
                         last_start = group_start
                         
                     # Add the remaining lines to the first group or as a new
