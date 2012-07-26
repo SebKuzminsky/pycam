@@ -14,8 +14,12 @@ _log = pycam.Utils.log.get_logger()
 
 def _polygon2curve(polygon):
     curve = area.Curve()
+    first_pt = next(iter(polygon.get_points()), None)
     for pt in polygon.get_points():
         curve.append(area.Vertex(area.Point(pt[0], pt[1])))
+    # closed curve has end point same as start point
+    if not first_pt is None:
+        curve.append(area.Vertex(area.Point(first_pt[0], first_pt[1])))
     return curve
 
 
@@ -66,9 +70,6 @@ def vertex2lines(before, vt):
         return [pycam.Geometry.Line.Line(before, end)]
 
 def _pocket_area(a, offset):
-    polygons = []
-    #a.m_round_corners_factor = params.m_round_corner_factor
-    a.m_round_corners_factor = 1.0
     arealist = _get_inner_polygons(a, offset)
     #if params.m_from_center:
     #    arealist.reverse()
