@@ -228,7 +228,8 @@ class GCodeCornerStyle(pycam.Plugins.PluginBase):
             self.core.get("unregister_parameter")("toolpath_processor", name)
 
     def update_widgets(self, widget=None):
-        enable_tolerances = (self.path_mode.get_value() == "optimize_speed")
+        enable_tolerances = (self.path_mode.get_value() == \
+                CORNER_STYLE_OPTIMIZE_TOLERANCE)
         controls = (self.motion_tolerance, self.naive_tolerance)
         for control in controls:
             control.get_widget().set_sensitive(enable_tolerances)
