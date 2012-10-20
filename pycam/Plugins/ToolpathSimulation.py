@@ -50,6 +50,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
                     "SimulationProgressTimelineValue")
             self._timer_widget = self.gui.get_object(
                     "SimulationProgressTimeDisplay")
+            self._timer_widget.set_label("")
             self.core.set("show_simulation", False)
             self._toolpath_moves = None
             self._start_button = self.gui.get_object("SimulationStartButton")
@@ -61,6 +62,8 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
                 self._gtk_handlers.append((obj, "clicked", handler))
             self._gtk_handlers.append((self._progress, "value-changed",
                     self._update_toolpath))
+            self._gtk_handlers.append((self._speed_factor_widget,
+                    "value-changed", self._update_speed_factor_step))
             self._event_handlers = (
                     ("toolpath-selection-changed", self._update_visibility), )
             self.register_event_handlers(self._event_handlers)
@@ -84,6 +87,11 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
         else:
             self._frame.hide()
 
+    def _update_speed_factor_step(self, widget):
+        new_step = max(0.25, widget.get_value() / 10)
+        if widget.get_step_increment() != new_step:
+            widget.set_step_increment(new_step)
+
     def _start_simulation(self, widget=None):
         if self._running is None:
             # initial start of simulation (not just continuing)
@@ -93,8 +101,8 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
                 return
             # we use only one toolpath
             self._toolpath = toolpaths[0]
-            # calculate steps
-            self._duration = self._toolpath.get_machine_move_distance_and_time()[1]
+            # calculate duration (in seconds) 
+            self._duration = 60 * self._toolpath.get_machine_move_distance_and_time()[1]
             self._progress.set_upper(self._duration)
             self._progress.set_value(0)
             self._toolpath_moves = None
@@ -152,7 +160,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
                     seconds=int(self._progress.get_upper()))
             self._timer_widget.set_label("%s / %s" % (current, complete))
             self._toolpath_moves = self._toolpath.get_moves(
-                    max_time=self._duration * fraction)
+                    max_time=self._duration * fraction / 60)
             self.core.emit_event("visual-item-updated")
 
     def show_simulation(self):
