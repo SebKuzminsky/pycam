@@ -91,7 +91,7 @@ class InputNumber(InputBaseClass):
                 step_incr=increment)
         self.control = gtk.SpinButton(adjustment, digits=digits)
         self.control.set_value(start)
-        self.connect("changed", change_handler)
+        self.connect("value-changed", change_handler)
 
     @_output_conversion
     def get_value(self):
