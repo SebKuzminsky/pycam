@@ -23,7 +23,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.utils import epsilon, sqrt, number
 
-def _is_near(x, y):
+def _is_near_float(x, y):
     return abs(x - y) < epsilon
 
 def pnorm(a):
@@ -40,11 +40,15 @@ def pdist_sq(a, b, axes=None):
         axes = (0, 1, 2)
     return sum([(a[index] - b[index]) ** 2 for index in axes])
 
-def pcmp(a,b):
+def pnear(a, b):
+    return _is_near_float(a[0], b[0]) and _is_near_float(a[1], b[1]) and \
+            _is_near_float(a[2], b[2])
+
+def pcmp(a, b):
     """ Two points are equal if all dimensions are identical.
     Otherwise the result is based on the individual x/y/z comparisons.
     """
-    if (_is_near(a[0], b[0]) and _is_near(a[1], b[1]) and _is_near(a[2], b[2])):
+    if pnear(a, b):
         return 0
     elif not _is_near(a[0], b[0]):
         return cmp(a[0], b[0])
