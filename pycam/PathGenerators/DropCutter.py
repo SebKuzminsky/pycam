@@ -81,19 +81,19 @@ class DropCutter(object):
                 if point is None:
                     # exceeded maxz - the cutter has to skip this point
                     path.append((MOVE_SAFETY, None))
-                    continue
-                path.append((MOVE_STRAIGHT, point))
+                else:
+                    path.append((MOVE_STRAIGHT, point))
                 # The progress counter may return True, if cancel was requested.
                 if draw_callback and draw_callback(tool_position=point,
                         toolpath=path):
                     quit_requested = True
                     break
+            # add a move to safety height after each line of moves
+            path.append((MOVE_SAFETY, None))
             progress_counter.increment()
             # update progress
             current_line += 1
             if quit_requested:
                 break
-        if path and not (path[-1][0] == MOVE_SAFETY):
-            path.append((MOVE_SAFETY, None))
         return path
 
