@@ -334,18 +334,19 @@ class Toolpath(object):
     def get_basic_moves(self, filters=None, reset_cache=False):
         if filters is None:
             # implicitly assume that we use the default (latest) filters if nothing is given
-            filters = self._cache_visual_filters
+            filters = self._cache_visual_filters or []
         if reset_cache or not self._cache_basic_moves or \
                 (str(filters) != self._cache_visual_filters_string):
             # late import due to dependency cycle
             import pycam.Toolpath.Filters as Filters
+            all_filters = tuple(self.filters) + tuple(filters)
             self._cache_basic_moves = \
                     pycam.Toolpath.Filters.get_filtered_moves(self.path,
-                            tuple(self.filters) + tuple(filters))
+                            all_filters)
             self._cache_visual_filters_string = str(filters)
             self._cache_visual_filters = filters
             _log.debug("Applying toolpath filters: %s" % \
-                    ", ".join([str(fil) for fil in self.filters]))
+                    ", ".join([str(fil) for fil in all_filters]))
             _log.debug("Toolpath step changes: %d (before) -> %d (after)" % \
                     (len(self.path), len(self._cache_basic_moves)))
         return self._cache_basic_moves
