@@ -37,6 +37,10 @@ MAX_DIGITS = 12
 _log = pycam.Utils.log.get_logger()
 
 
+""" Toolpath filters are used for applying parameters to generic toolpaths.
+"""
+
+
 def toolpath_filter(our_category, key):
     """ decorator for toolpath filter functions
     e.g. see pycam.Plugins.ToolTypes
@@ -101,11 +105,12 @@ class BaseFilter(object):
         if hasattr(toolpath, "path") and hasattr(toolpath, "filters"):
             toolpath = toolpath.path
         # use a copy of the list -> changes will be permitted
+        _log.debug("Applying toolpath filter: %s" % self.__class__)
         return self.filter_toolpath(list(toolpath))
 
     def __repr__(self):
-        class_name = str(self.__class__).split("'")[1]
-        return "%s - %s" % (class_name, self._render_settings())
+        class_name = str(self.__class__).split("'")[1].split(".")[-1]
+        return "%s(%s)" % (class_name, self._render_settings())
 
     # comparison functions: they allow to use "filters.sort()"
     __eq__ = lambda self, other: self.WEIGHT == other.WEIGHT

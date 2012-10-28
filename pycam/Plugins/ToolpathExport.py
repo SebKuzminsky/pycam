@@ -82,6 +82,8 @@ class ToolpathExport(pycam.Plugins.PluginBase):
         self._export_toolpaths(self.core.get("toolpaths").get_selected())
 
     def _export_toolpaths(self, toolpaths):
+        # TODO: this is ugly copy'n'paste from pycam.Plugins.OpenGLViewToolpath (draw_toolpaths)
+        # KEEP IN SYNC
         processor = self.core.get("toolpath_processors").get_selected()
         if not processor:
             self.log.warn("No toolpath processor selected")

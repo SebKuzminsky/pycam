@@ -75,11 +75,21 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
 
     def draw_toolpaths(self):
         if self._is_visible():
+            # TODO: this is ugly copy'n'paste from pycam.Plugins.ToolpathExport (_export_toolpaths)
+            # KEEP IN SYNC
+            processor = self.core.get("toolpath_processors").get_selected()
+            if not processor:
+                self.log.warn("No toolpath processor selected")
+                return
+            filter_func = processor["func"]
+            filter_params = self.core.get("get_parameter_values")(
+                    "toolpath_processor")
+            settings_filters = filter_func(filter_params)
             for toolpath in self.core.get("toolpaths").get_visible():
                 # TODO: enable the VBO code for speedup!
                 #moves = toolpath.get_moves_for_opengl(self.core.get("gcode_safety_height"))
                 #self._draw_toolpath_moves2(moves)
-                moves = toolpath.get_basic_moves()
+                moves = toolpath.get_basic_moves(filters=settings_filters)
                 self._draw_toolpath_moves(moves)
             
     def _draw_toolpath_moves2(self, paths):

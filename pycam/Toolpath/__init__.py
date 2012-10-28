@@ -38,7 +38,7 @@ import os
 import math
 from itertools import groupby
 
-log = pycam.Utils.log.get_logger()
+_log = pycam.Utils.log.get_logger()
 
 
 MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC, MOVE_SAFETY, MACHINE_SETTING, \
@@ -114,6 +114,8 @@ class Toolpath(object):
     def clear_cache(self):
         self.opengl_safety_height = None
         self._cache_basic_moves = None
+        self._cache_visual_filters_string = None
+        self._cache_visual_filters = None
         self._minx = None
         self._maxx = None
         self._miny = None
@@ -329,12 +331,23 @@ class Toolpath(object):
                 current_position = args
         return length, duration
 
-    def get_basic_moves(self, reset_cache=False):
-        if reset_cache or not self._cache_basic_moves:
-            result = list(self.path)
-            for move_filter in self.filters:
-                result |= move_filter
-            self._cache_basic_moves = result
+    def get_basic_moves(self, filters=None, reset_cache=False):
+        if filters is None:
+            # implicitly assume that we use the default (latest) filters if nothing is given
+            filters = self._cache_visual_filters
+        if reset_cache or not self._cache_basic_moves or \
+                (str(filters) != self._cache_visual_filters_string):
+            # late import due to dependency cycle
+            import pycam.Toolpath.Filters as Filters
+            self._cache_basic_moves = \
+                    pycam.Toolpath.Filters.get_filtered_moves(self.path,
+                            tuple(self.filters) + tuple(filters))
+            self._cache_visual_filters_string = str(filters)
+            self._cache_visual_filters = filters
+            _log.debug("Applying toolpath filters: %s" % \
+                    ", ".join([str(fil) for fil in self.filters]))
+            _log.debug("Toolpath step changes: %d (before) -> %d (after)" % \
+                    (len(self.path), len(self._cache_basic_moves)))
         return self._cache_basic_moves
 
 
@@ -522,9 +535,9 @@ class Bounds(object):
                     # Display warning messages, if we can't reach the requested
                     # absolute dimension.
                     if ref_low[index] != limits_low[index]:
-                        log.info(message % "lower")
+                        _log.info(message % "lower")
                     if ref_high[index] != limits_high[index]:
-                        log.info(message % "upper")
+                        _log.info(message % "upper")
                     self.bounds_low[index] = 0
                     self.bounds_high[index] = 0
                 else:
