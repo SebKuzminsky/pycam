@@ -80,7 +80,7 @@ class DropCutter(object):
             for point in points:
                 if point is None:
                     # exceeded maxz - the cutter has to skip this point
-                    path.append((MOVE_SAFETY))
+                    path.append((MOVE_SAFETY, None))
                     continue
                 path.append((MOVE_STRAIGHT, point))
                 # The progress counter may return True, if cancel was requested.
@@ -93,5 +93,7 @@ class DropCutter(object):
             current_line += 1
             if quit_requested:
                 break
+        if path and not (path[-1][0] == MOVE_SAFETY):
+            path.append((MOVE_SAFETY, None))
         return path
 
