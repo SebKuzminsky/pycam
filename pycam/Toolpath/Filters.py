@@ -25,7 +25,7 @@ import decimal
 
 from pycam.Toolpath import MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_SAFETY, \
         MOVES_LIST, MACHINE_SETTING
-from pycam.Geometry.PointUtils import padd, psub, pmul, pdist, \
+from pycam.Geometry.PointUtils import padd, psub, pmul, pdist, pnear, \
         ptransform_by_matrix
 from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import epsilon
@@ -38,6 +38,12 @@ _log = pycam.Utils.log.get_logger()
 
 
 """ Toolpath filters are used for applying parameters to generic toolpaths.
+
+A generic toolpath is a simple list of actions.
+Each action is described by a tuple of (TYPE, ARGUMENTS).
+TYPE is usually one of MOVE_STRAIGHT, MOVE_RAPID and MOVE_SAFETY.
+The other possible types describe machine settings and so on.
+ARGUMENTS (in case of moves) is a tuple of x/y/z for the move's destination.
 """
 
 
@@ -136,30 +142,48 @@ class SafetyHeightFilter(BaseFilter):
 
     def filter_toolpath(self, toolpath):
         last_pos = None
+        max_height = None
         new_path = []
+        safety_pending = False
+        get_safe = lambda pos: tuple((pos[0], pos[1],
+                self.settings["safety_height"]))
+        is_near_xy = lambda pos1, pos2: \
+                pnear((pos1[0], pos1[1], 0), (pos2[0], pos2[1], 0))
         for move_type, args in toolpath:
-            if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
+            if move_type == MOVE_SAFETY:
+                safety_pending = True
+            elif move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
+                new_pos = tuple(args)
+                max_height = max(max_height, new_pos[2])
                 if not last_pos:
                     # there was a safety move (or no move at all) before
                     # -> move sideways
-                    safe_pos = (args[0], args[1],
-                            self.settings["safety_height"])
-                    new_path.append((MOVE_STRAIGHT_RAPID, safe_pos))
-                last_pos = args
-                new_path.append((move_type, args))
-            elif move_type == MOVE_SAFETY:
-                if last_pos:
-                    # safety move -> move straight up to safety height
-                    next_pos = (last_pos[0], last_pos[1],
-                            self.settings["safety_height"])
-                    new_path.append((MOVE_STRAIGHT_RAPID, next_pos))
-                    last_pos = None
+                    new_path.append((MOVE_STRAIGHT_RAPID, get_safe(new_pos)))
+                elif safety_pending:
+                    safety_pending = False
+                    if is_near_xy(last_pos, new_pos):
+                        # same x/y position - skip safety move
+                        pass
+                    else:
+                        # go up, sideways and down
+                        new_path.append((MOVE_STRAIGHT_RAPID,
+                                get_safe(last_pos)))
+                        new_path.append((MOVE_STRAIGHT_RAPID,
+                                get_safe(new_pos)))
                 else:
-                    # this looks like a duplicate safety move -> ignore
+                    # we are in the middle of usual moves -> keep going
                     pass
+                new_path.append((move_type, new_pos))
+                last_pos = new_pos
             else:
                 # unknown move -> keep it
                 new_path.append((move_type, args))
+        # process pending safety moves
+        if safety_pending and last_pos:
+            new_path.append((MOVE_STRAIGHT_RAPID, get_safe(last_pos)))
+        if max_height > self.settings["safety_height"]:
+            _log.warn("Toolpath exceeds safety height: %f => %f" % \
+                    (max_height, self.settings["safety_height"]))
         return new_path
 
 
@@ -452,7 +476,12 @@ class StepWidth(BaseFilter):
                     if all([d < lim for d, lim in zip(diff, minimum_steps)]):
                         # too close: ignore this move
                         continue
-                destination = [conv[i](args[i]) for i in range(3)]
+                # TODO: this would also change the GCode output - we want
+                # this, but it sadly breaks other code pieces that rely on
+                # floats instead of decimals at this point. The output
+                # conversion needs to move into the GCode output hook.
+                #destination = [conv[i](args[i]) for i in range(3)]
+                destination = args
                 path.append((move_type, destination))
                 last_pos = args
             else:
