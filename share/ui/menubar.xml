@@ -12,10 +12,12 @@
       <separator />
     </menu>
     <menu action="SettingsMenu">
+      <!--
       <menuitem action="LoadTaskSettings"/>
       <menuitem action="SaveTaskSettings"/>
       <menuitem action="SaveAsTaskSettings"/>
       <separator />
+      -->
       <menuitem action="GeneralSettings"/>
     </menu>
     <menu action="ViewMenu" />
