@@ -23,8 +23,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.utils import epsilon, sqrt, number
 
-def _is_near_float(x, y):
-    return abs(x - y) < epsilon
 
 def pnorm(a):
     return sqrt(pdot(a,a))
@@ -40,22 +38,20 @@ def pdist_sq(a, b, axes=None):
         axes = (0, 1, 2)
     return sum([(a[index] - b[index]) ** 2 for index in axes])
 
-def pnear(a, b):
-    return _is_near_float(a[0], b[0]) and _is_near_float(a[1], b[1]) and \
-            _is_near_float(a[2], b[2])
+def pnear(a, b, axes=None):
+    return pcmp(a, b, axes=axes) == 0
 
-def pcmp(a, b):
+def pcmp(a, b, axes=None):
     """ Two points are equal if all dimensions are identical.
     Otherwise the result is based on the individual x/y/z comparisons.
     """
-    if pnear(a, b):
-        return 0
-    elif not _is_near(a[0], b[0]):
-        return cmp(a[0], b[0])
-    elif not _is_near(a[1], b[1]):
-        return cmp(a[1], b[1])
-    else:
-        return cmp(a[2], b[2])
+    if axes is None:
+        axes = (0, 1, 2)
+    for axis in axes:
+        if abs(a[axis] - b[axis]) > epsilon:
+            return cmp(a[axis], b[axis])
+    # both points are at the same position
+    return 0
 
 def ptransform_by_matrix(a, matrix):
     if len(a) > 3:
