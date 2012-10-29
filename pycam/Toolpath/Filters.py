@@ -93,7 +93,7 @@ class BaseFilter(object):
         if len(args) > len(self.PARAMS):
             raise ValueError("Too many parameters: " + \
                     "%d (expected: %d)" % (len(args), len(self.PARAMS)))
-        # fail if too fee arguments (without names) are given
+        # fail if too few arguments (without names) are given
         for index, key in enumerate(self.PARAMS):
             if len(args) > index:
                 self.settings[key] = args[index]
@@ -138,7 +138,7 @@ class BaseFilter(object):
 class SafetyHeightFilter(BaseFilter):
 
     PARAMS = ("safety_height", )
-    WEIGHT = 60
+    WEIGHT = 80
 
     def filter_toolpath(self, toolpath):
         last_pos = None
@@ -147,8 +147,6 @@ class SafetyHeightFilter(BaseFilter):
         safety_pending = False
         get_safe = lambda pos: tuple((pos[0], pos[1],
                 self.settings["safety_height"]))
-        is_near_xy = lambda pos1, pos2: \
-                pnear((pos1[0], pos1[1], 0), (pos2[0], pos2[1], 0))
         for move_type, args in toolpath:
             if move_type == MOVE_SAFETY:
                 safety_pending = True
@@ -161,7 +159,7 @@ class SafetyHeightFilter(BaseFilter):
                     new_path.append((MOVE_STRAIGHT_RAPID, get_safe(new_pos)))
                 elif safety_pending:
                     safety_pending = False
-                    if is_near_xy(last_pos, new_pos):
+                    if pnear(last_pos, new_pos, axes=(0, 1)):
                         # same x/y position - skip safety move
                         pass
                     else:
@@ -190,32 +188,36 @@ class SafetyHeightFilter(BaseFilter):
 class TinySidewaysMovesFilter(BaseFilter):
 
     PARAMS = ("tolerance", )
-    WEIGHT = 80
+    WEIGHT = 60
 
     def filter_toolpath(self, toolpath):
         new_path = []
         last_pos = None
-        in_safety = False
+        safety_pending = False
         for move_type, args in toolpath:
             if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
-                if in_safety and last_pos:
+                if safety_pending and last_pos:
                     # check if we can skip a possible previous safety move
-                    if (pdist(last_pos, args) < self.settings["tolerance"]) and \
+                    if (pdist(last_pos, args) <= self.settings["tolerance"]) and \
                             (abs(last_pos[2] - args[2]) < epsilon):
                         # same height, within tolerance -> no safety move
-                        new_path.pop(-1)
-                    elif (abs(last_pos[0] - args[0]) < epsilon) and \
-                            (abs(last_pos[1] - args[1]) < epsilon):
-                        # same position, but different height
-                        new_path.pop(-1)
-                in_safety = False
+                        pass
+                    elif pnear(last_pos, args, axes=(0, 1)):
+                        # same position (x/y)
+                        pass
+                    else:
+                        # safety move is necessary
+                        new_path.append((MOVE_SAFETY, None))
+                new_path.append((move_type, args))
+                safety_pending = False
                 last_pos = args
             elif move_type == MOVE_SAFETY:
-                in_safety = True
+                safety_pending = True
             else:
-                # it is not safe to assume that we are still at safety height
-                in_safety = False
-            new_path.append((move_type, args))
+                # all others: keep
+                new_path.append((move_type, args))
+        if safety_pending:
+            new_path.append((MOVE_SAFETY, None))
         return new_path
 
 
