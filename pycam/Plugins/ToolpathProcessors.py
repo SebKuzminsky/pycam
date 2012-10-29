@@ -129,7 +129,9 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                     self._settings_section.get_widget())
             self._settings_section.add_widget(proc_widget,
                     "Toolpath processor", weight=10)
-            proc_widget.show()
+            # TODO: it is currently not possible to switch processors (invalid dict entries are not removed)
+            proc_widget.hide()
+            #proc_widget.show()
             self.core.get("register_parameter_group")("toolpath_processor",
                     changed_set_event="toolpath-processor-selection-changed",
                     changed_set_list_event="toolpath-processor-list-changed",
@@ -171,7 +173,8 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
         self._proc_selector.set_value(item)
 
     def _update_visibility(self):
-        if self.core.get("toolpaths").get_selected():
+        # TODO: the gcode settings are valid for _all_ toolpaths - thus it should always be visible
+        if True or self.core.get("toolpaths").get_selected():
             self._frame.show()
         else:
             self._frame.hide()
@@ -230,6 +233,8 @@ class ToolpathProcessorMilling(pycam.Plugins.PluginBase):
                 "milling", "Milling",
                 lambda params: _get_processor_filters(self.core, params),
                 parameters=parameters, weight=10)
+        # initialize all parameters
+        self.core.get("set_parameter_values")("toolpath_processor", parameters)
         return True
 
     def teardown(self):
@@ -248,7 +253,7 @@ class ToolpathProcessorLaser(pycam.Plugins.PluginBase):
                 "step_width_x": 0.0001,
                 "step_width_y": 0.0001,
                 "step_width_z": 0.0001,
-                "path_mode": "exact_path",
+                "path_mode": CORNER_STYLE_EXACT_PATH,
                 "motion_tolerance": 0.0,
                 "naive_tolerance": 0.0,
         }
@@ -256,6 +261,8 @@ class ToolpathProcessorLaser(pycam.Plugins.PluginBase):
                 "laser", "Laser",
                 lambda params: _get_processor_filters(self.core, params),
                 parameters=parameters, weight=50)
+        # initialize all parameters
+        self.core.get("set_parameter_values")("toolpath_processor", parameters)
         return True
 
     def teardown(self):
