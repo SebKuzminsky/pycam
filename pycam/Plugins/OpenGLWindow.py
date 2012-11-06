@@ -951,6 +951,8 @@ class Camera(object):
     def shift_view(self, x_dist=0, y_dist=0):
         obj_dim = []
         low, high = self._get_low_high_dims()
+        if None in low or None in high:
+            return
         for index in range(3):
             obj_dim.append(high[index] - low[index])
         max_dim = max(obj_dim)
