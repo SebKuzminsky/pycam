@@ -400,7 +400,7 @@ def _get_sorted_polygons(models, callback=None):
 def get_lines_grid(models, (low, high), layer_distance, line_distance=None,
         step_width=None, milling_style=MILLING_STYLE_CONVENTIONAL,
         start_position=START_Z, pocketing_type=POCKETING_TYPE_NONE,
-        callback=None):
+        skip_first_layer=False, callback=None):
     # the lower limit is never below the model
     polygons = _get_sorted_polygons(models, callback=callback)
     if polygons:
@@ -433,6 +433,9 @@ def get_lines_grid(models, (low, high), layer_distance, line_distance=None,
                 reverse=bool(start_position & START_Z))
     # turn the generator into a list - otherwise the slicing fails
     layers = list(layers)
+    # engrave ignores the top layer
+    if skip_first_layer and (len(layers) > 1):
+        layers = layers[1:]
     last_z = None
     if layers:
         # the upper layers are used for PushCutter operations

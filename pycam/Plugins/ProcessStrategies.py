@@ -177,7 +177,7 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
                 step_width=(tool_radius / 4.0),
                 milling_style=process["parameters"]["milling_style"],
                 pocketing_type=process["parameters"]["pocketing_type"],
-                callback=progress.update)
+                skip_first_layer=True, callback=progress.update)
         progress.finish()
         return path_generator, motion_grid
 
