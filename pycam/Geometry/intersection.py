@@ -242,7 +242,7 @@ def intersect_sphere_point(center, radius, radiussq, direction, point):
 def intersect_sphere_line(center, radius, radiussq, direction, edge):
     # make a plane by sliding the line along the direction (1)
     d = edge.dir
-    n = pcross(n, direction)
+    n = pcross(d, direction)
     if pnorm(n) == 0:
         # no contact point, but should check here if sphere *always* intersects
         # line...
