@@ -76,7 +76,7 @@ class ToolpathExport(pycam.Plugins.PluginBase):
         self._export_toolpaths(self.core.get("toolpaths"))
 
     def export_visible(self, widget=None):
-        self._export_toolpaths(self.core.get("toolpaths").get_visble())
+        self._export_toolpaths(self.core.get("toolpaths").get_visible())
 
     def export_selected(self, widget=None):
         self._export_toolpaths(self.core.get("toolpaths").get_selected())
