@@ -190,7 +190,7 @@ class OpenGLViewModelGeneric(pycam.Plugins.PluginBase):
         for index in range(len(models)):
             model = models[index]
             for item in model.next():
-                # ignore invisble things like the normal of a ContourModel
+                # ignore invisible things like the normal of a ContourModel
                 if hasattr(item, "to_OpenGL"):
                     item.to_OpenGL(show_directions=self.core.get("show_directions"))
             removal_list.append(index)
