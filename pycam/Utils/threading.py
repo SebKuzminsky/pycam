@@ -79,6 +79,10 @@ __issued_warnings = []
 def run_in_parallel(*args, **kwargs):
     global __manager
     if __manager is None:
+        if pycam.Utils.log.is_debug():
+            # force serial processing in debug mode
+            kwargs = dict(kwargs)
+            kwargs["disable_multiprocessing"] = True
         return run_in_parallel_local(*args, **kwargs)
     else:
         return run_in_parallel_remote(*args, **kwargs)
