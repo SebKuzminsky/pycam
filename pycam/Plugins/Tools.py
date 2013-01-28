@@ -171,6 +171,7 @@ class Tools(pycam.Plugins.ListPluginBase):
         tool = self.get_by_path(path)
         if tool and (new_text != tool["name"]) and new_text:
             tool["name"] = new_text
+            self.core.emit_event("tool-list-changed")
 
     def _edit_tool_id(self, cell, path, new_text):
         tool = self.get_by_path(path)

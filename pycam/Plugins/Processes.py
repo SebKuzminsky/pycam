@@ -132,6 +132,7 @@ class Processes(pycam.Plugins.ListPluginBase):
         process = self.get_by_path(path)
         if process and (new_text != process["name"]) and new_text:
             process["name"] = new_text
+            self.core.emit_event("process-list-changed")
 
     def _trigger_table_update(self):
         self.gui.get_object("NameColumn").set_cell_data_func(

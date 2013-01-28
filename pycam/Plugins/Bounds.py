@@ -373,6 +373,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         bounds = self.get_by_path(path)
         if bounds and (new_text != bounds["name"]) and new_text:
             bounds["name"] = new_text
+            self.core.emit_event("bounds-list-changed")
 
 
 class BoundsDict(pycam.Plugins.ObjectWithAttributes):

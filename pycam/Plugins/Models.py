@@ -138,6 +138,7 @@ class Models(pycam.Plugins.ListPluginBase):
         model = self.get_by_path(path)
         if model and (new_text != model["name"]) and new_text:
             model["name"] = new_text
+            self.core.emit_event("model-list-changed")
 
     def _visualize_model_name(self, column, cell, model, m_iter):
         model_obj = self.get_by_path(model.get_path(m_iter))
