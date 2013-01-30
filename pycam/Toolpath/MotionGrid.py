@@ -169,6 +169,25 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance,
             if zigzag:
                 start, end = end, start
                 end_position ^= primary_dir
+        if zigzag and step_width:
+            # Connect endpoints of zigzag lines (prevent unnecessary safety moves).
+            # (DropCutter)
+            zigzag_result = []
+            for line in result:
+                zigzag_result.extend(line)
+            # return a list containing a single chain of lines
+            result = [zigzag_result]
+        elif zigzag and step_width is None:
+            # Add a pair of end_before/start_next points between two lines.
+            # (PushCutter)
+            zigzag_result = []
+            last = None
+            for (p1, p2) in result:
+                if last:
+                    zigzag_result.append((last, p1))
+                zigzag_result.append((p1, p2))
+                last = p2
+            result = zigzag_result
         return result, end_position
     return get_lines(start, end, end_position)
 

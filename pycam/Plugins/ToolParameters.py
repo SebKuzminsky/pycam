@@ -40,19 +40,11 @@ class ToolParamRadius(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("tool", "radius", self.control)
         self.core.register_ui("tool_size", "Tool Diameter",
                 self.control.get_widget(), weight=10)
-        self.core.register_chain("toolpath_filters",
-                self.get_toolpath_filters)
         return True
 
     def teardown(self):
         self.core.get("unregister_parameter")("tool", "radius")
         self.core.unregister_ui("tool_size", self.control.get_widget())
-        self.core.unregister_chain("toolpath_filters",
-                self.get_toolpath_filters)
-
-    @toolpath_filter("tool", "radius")
-    def get_toolpath_filters(self, radius):
-        return [pycam.Toolpath.Filters.TinySidewaysMovesFilter(2 * radius)]
 
 
 class ToolParamTorusRadius(pycam.Plugins.PluginBase):

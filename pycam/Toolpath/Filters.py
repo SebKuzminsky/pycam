@@ -185,42 +185,6 @@ class SafetyHeightFilter(BaseFilter):
         return new_path
 
 
-class TinySidewaysMovesFilter(BaseFilter):
-
-    PARAMS = ("tolerance", )
-    WEIGHT = 60
-
-    def filter_toolpath(self, toolpath):
-        new_path = []
-        last_pos = None
-        safety_pending = False
-        for move_type, args in toolpath:
-            if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
-                if safety_pending and last_pos:
-                    # check if we can skip a possible previous safety move
-                    if (pdist(last_pos, args) <= self.settings["tolerance"]) and \
-                            (abs(last_pos[2] - args[2]) < epsilon):
-                        # same height, within tolerance -> no safety move
-                        pass
-                    elif pnear(last_pos, args, axes=(0, 1)):
-                        # same position (x/y)
-                        pass
-                    else:
-                        # safety move is necessary
-                        new_path.append((MOVE_SAFETY, None))
-                new_path.append((move_type, args))
-                safety_pending = False
-                last_pos = args
-            elif move_type == MOVE_SAFETY:
-                safety_pending = True
-            else:
-                # all others: keep
-                new_path.append((move_type, args))
-        if safety_pending:
-            new_path.append((MOVE_SAFETY, None))
-        return new_path
-
-
 class MachineSetting(BaseFilter):
 
     PARAMS = ("key", "value")
