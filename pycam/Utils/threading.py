@@ -39,19 +39,19 @@ log = pycam.Utils.log.get_logger()
 
 
 try:
-    from multiprocessing.managers import SyncManager as __SyncManager
-except ImportError:
-    pass
+    from multiprocessing.managers import SyncManager as _SyncManager
+except ImportError, msg:
+    log.debug("Failed to import multiprocessing.managers.SyncMananger: %s" % msg)
 else:
     # this class definition needs to be at the top level - for pyinstaller
-    class TaskManager(__SyncManager):
+    class TaskManager(_SyncManager):
         @classmethod
         def _run_server(cls, *args):
             # make sure that the server ignores SIGINT (KeyboardInterrupt)
             signal.signal(signal.SIGINT, signal.SIG_IGN)
             # prevent connection errors to trigger exceptions
             try:
-                __SyncManager._run_server(*args)
+                _SyncManager._run_server(*args)
             except socket.error:
                 pass
 
