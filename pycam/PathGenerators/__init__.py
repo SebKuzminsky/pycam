@@ -265,7 +265,7 @@ def get_max_height_dynamic(model, cutter, positions, minz, maxz, physics=None):
     max_depth = 8
     # the points don't need to get closer than 1/1000 of the cutter radius
     min_distance = cutter.distance_radius / 1000
-    result = []
+    points = []
     if physics:
         get_max_height = lambda x, y: get_max_height_ode(physics, x, y, minz,
                 maxz)
@@ -275,15 +275,15 @@ def get_max_height_dynamic(model, cutter, positions, minz, maxz, physics=None):
     # add one point between all existing points
     for index in range(len(positions)):
         p = positions[index]
-        result.append(get_max_height(p[0], p[1]))
+        points.append(get_max_height(p[0], p[1]))
     # Check if three consecutive points are "flat".
     # Add additional points if necessary.
     index = 0
     depth_count = 0
-    while index < len(result) - 2:
-        p1 = result[index]
-        p2 = result[index + 1]
-        p3 = result[index + 2]
+    while index < len(points) - 2:
+        p1 = points[index]
+        p2 = points[index + 1]
+        p3 = points[index + 2]
         if (not p1 is None) and (not p2 is None) and (not p3 is None) and \
                 not _check_deviance_of_adjacent_points(p1, p2, p3,
                     min_distance) and \
@@ -292,14 +292,21 @@ def get_max_height_dynamic(model, cutter, positions, minz, maxz, physics=None):
             if depth_count % 3 != 2:
                 # insert between the 1st and 2nd point
                 middle = ((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2)
-                result.insert(index + 1, get_max_height(middle[0], middle[1]))
+                points.insert(index + 1, get_max_height(middle[0], middle[1]))
             else:
                 # insert between the 2nd and 3rd point
                 middle = ((p2[0] + p3[0]) / 2, (p2[1] + p3[1]) / 2)
-                result.insert(index + 2, get_max_height(middle[0], middle[1]))
+                points.insert(index + 2, get_max_height(middle[0], middle[1]))
             depth_count += 1
         else:
             index += 1
             depth_count = 0
-    return result
+    # remove all points that are in line
+    index = 1
+    while index + 1 < len(points):
+        p1, p2, p3 = points[index-1:index+2]
+        if _check_deviance_of_adjacent_points(p1, p2, p3, 0):
+            # remove superfluous point
+            points.pop(index)
+    return points
 
