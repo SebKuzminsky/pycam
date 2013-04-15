@@ -187,8 +187,10 @@ class PathParamPattern(pycam.Plugins.PluginBase):
                 self.control.get_widget(), weight=5)
         self.control.get_widget().connect("changed", lambda widget: \
                 self.core.emit_event("process-path-pattern-changed"))
-        self.core.register_event("process-path-pattern-list-changed",
-                self._update_selector)
+        self._event_handlers = (
+                ("process-path-pattern-list-changed", self._update_selector),
+                ("process-changed", "process-path-pattern-changed"))
+        self.register_event_handlers(self._event_handlers)
         return True
 
     def _get_value_converter(self, value):
@@ -219,8 +221,7 @@ class PathParamPattern(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
-        self.core.unregister_event("process-path-pattern-list-changed",
-                self._update_selector)
+        self.unregister_event_handlers(self._event_handlers)
         self.core.get("unregister_parameter")("process", "path_pattern")
         self.core.get("unregister_parameter_group")("path_pattern")
 

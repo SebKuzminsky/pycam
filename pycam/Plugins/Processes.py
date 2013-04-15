@@ -240,6 +240,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.core.unblock_event("process-strategy-changed")
             self.core.unblock_event("process-changed")
             self.core.emit_event("process-strategy-changed")
+            self.core.emit_event("process-changed")
         
     def _process_new(self, *args):
         strategies = self.core.get("get_parameter_sets")("process").values()
