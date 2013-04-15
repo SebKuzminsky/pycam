@@ -47,7 +47,8 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                     # we need to clear the whole path down to the "real" item
                     parent = notebook
                     while not child in [entry[0] for entry in self._pref_items]:
-                        parent.remove(child)
+                        if child.get_parent():
+                            parent.remove(child)
                         parent = child
                         try:
                             child = child.get_children()[0]
