@@ -143,12 +143,12 @@ class URIHandler(object):
             return None
 
     def get_path(self):
+        encoded_path = self._uri.path
         if get_platform() == PLATFORM_WINDOWS:
-            text = self._uri.netloc + self._uri.path
-            text = text.lstrip("/").replace("/", "\\")
-            return re.sub("%([0-9a-fA-F]{2})", lambda token: chr(int(token.groups()[0], 16)), text)
-        else:
-            return self._uri.path
+            # prepend "netloc" (the drive letter - e.g. "c:")
+            encoded_path = self._uri.netloc + encoded_path
+        # decode all special characters like "%20" and replace "/" with "\\" (Windows)
+        return urllib.url2pathname(encoded_path)
 
     def get_url(self):
         return self._uri.geturl()
