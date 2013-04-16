@@ -308,5 +308,7 @@ def get_max_height_dynamic(model, cutter, positions, minz, maxz, physics=None):
         if _check_deviance_of_adjacent_points(p1, p2, p3, 0):
             # remove superfluous point
             points.pop(index)
+        else:
+            index += 1
     return points
 
