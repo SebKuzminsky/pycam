@@ -383,7 +383,7 @@ def get_lines_layer(lines, z, last_z=None, step_width=None,
             elif line.minz >= z:
                 projected_lines.append(line)
             else:
-                log.warn("Unexpected condition 'get_lines_layer': " + \
+                _log.warn("Unexpected condition 'get_lines_layer': " + \
                         "%s / %s / %s / %s" % (line.p1, line.p2, z, last_z))
     # process all projected lines
     for line in projected_lines:
