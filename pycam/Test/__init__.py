@@ -25,16 +25,26 @@ import unittest
 class PycamTestCase(unittest.TestCase):
 
     def _compare_vectors(self, v1, v2, max_deviance=0.000001):
+        # provide readable error messages
+        result_difference = "%s != %s" % (v1, v2)
+        result_equal = None
+        if v1 == v2:
+            return result_equal
         for index in range(3):
             if max_deviance < abs(v1[index] - v2[index]):
-                return False
-        return True
+                return result_difference
+        return result_equal
 
     def assertVectorEqual(self, v1, v2):
-        self.assertTrue(self._compare_vectors(v1, v2))
+        self.assertIsNone(self._compare_vectors(v1, v2))
 
     def assertVectorNotEqual(self, v1, v2):
-        self.assertFalse(self._compare_vectors(v1, v2))
+        self.assertIsNotNone(self._compare_vectors(v1, v2))
+
+    def assertCollisionEqual(self, (ccp1, cp1, d1), (ccp2, cp2, d2)):
+        self.assertVectorEqual(ccp1, ccp2)
+        self.assertVectorEqual(cp1, cp2)
+        self.assertAlmostEqual(d1, d2)
 
 
 main = unittest.main
