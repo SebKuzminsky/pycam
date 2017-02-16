@@ -448,7 +448,15 @@ def get_lines_grid(models, (low, high), layer_distance, line_distance=None,
         yield get_lines_layer(lines, layers[-1], last_z=last_z,
                 step_width=step_width, milling_style=milling_style)
 
+
 def get_pocketing_polygons(polygons, offset, pocketing_type, callback=None):
+    """ calculate the pocketing polygons for a given set of polygons
+
+    This function checks if the (not yet fully integrated) openvoronoi library
+    is found (see pycam.Toolpath.OpenVoronoi for details). If this fails it
+    uses the better-tested (but known to be unstable) simple pocketing
+    algorithm.
+    """
     try:
         import pycam.Toolpath.OpenVoronoi
         use_voronoi = True

@@ -1,7 +1,20 @@
 # -*- coding: utf-8 -*-
+"""
+This module uses the openvoronoi library (https://github.com/aewallin/openvoronoi).
+This module is experimental and not well tested.
+
+How to enable this module:
+    * download openvoronoi
+    * build the library (e.g. openvoronoi.so)
+    * copy/link/install this library to a directory used by python's module importer
+    * the presence of this library makes the module below importable (see "import openvoronoi")
+    * the function pycam.Toolpath.MotionGrid.get_pocketing_polygons automatically used openvoronoi
+      if it is available
+"""
 
 import math
 
+# this import requires the openvoronoi library (optional) - see the module documentation above
 import openvoronoi
 
 import pycam.Utils.log
