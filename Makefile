@@ -19,7 +19,7 @@ DISTUTILS_PLAT_NAME = $(shell $(PYTHON_EXE) setup.py --help build_ext | grep -q 
 # turn the destination directory into an absolute path
 ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
 
-.PHONY: zip tgz win32 clean dist git_export upload create_archive_dir man
+.PHONY: zip tgz win32 clean dist git_export upload create_archive_dir man check-style test
 
 dist: zip tgz win32
 	@# remove the tmp directory when everything is done
@@ -58,3 +58,7 @@ upload:
 	svn import "$(ARCHIVE_DIR)/$(EXPORT_TGZ)" "$(REPO_TAGS)/archives/$(EXPORT_TGZ)" -m "added released tgz file for version $(VERSION)"
 	svn import "$(ARCHIVE_DIR)/$(EXPORT_WIN32)" "$(REPO_TAGS)/archives/$(EXPORT_WIN32)" -m "added released win32 installer for version $(VERSION)"
 
+check-style:
+	python -m flake8
+
+test: check-style

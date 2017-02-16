@@ -2,7 +2,7 @@ Source: pycam
 Section: python
 Priority: extra
 Maintainer: Lars Kruse <devel@sumpfralle.de>
-Build-Depends: python, debhelper (>= 7), cdbs, patchutils
+Build-Depends: python, debhelper (>= 7), cdbs, patchutils, python-flake8
 Build-Depends-Indep: python-support, help2man
 Standards-Version: 3.9.2
 Homepage: http://sourceforge.net/projects/pycam/
