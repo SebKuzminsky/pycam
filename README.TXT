@@ -3,8 +3,6 @@ pycam : Python CAM
 
 Toolpath Generation for 3-Axis CNC machining
 
-Read the wiki for details:
-    http://sourceforge.net/apps/mediawiki/pycam/index.php?title=User_Manual
 
 
 RUNNING:
@@ -36,9 +34,9 @@ USAGE:
 
 
 
-KNOWN BUGS:
+ISSUE TRACKER:
 
-    http://sourceforge.net/tracker/?group_id=237831&atid=1104176
+    https://github.com/SebKuzminsky/pycam/issues
 
 
 CONTRIBUTORS:
