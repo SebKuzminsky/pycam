@@ -2,7 +2,7 @@ include LICENSE.TXT
 include technical_details.txt
 include INSTALL.TXT
 include COPYING.TXT
-include README.TXT
+include README.md
 include Changelog
 include release_info.txt
 include pycam

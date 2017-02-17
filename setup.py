@@ -106,7 +106,7 @@ Windows: select Python 2.5 in the following dialog.
             "COPYING.TXT",
             "INSTALL.TXT",
             "LICENSE.TXT",
-            "README.TXT",
+            "README.md",
             "Changelog",
             "release_info.txt"]),
         ("share/pycam/ui", glob.glob(os.path.join("share", "ui", "*"))),
