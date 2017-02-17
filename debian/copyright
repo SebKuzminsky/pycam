@@ -1,7 +1,7 @@
-Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135
-Name: PyCAM
-Maintainer: Lars Kruse <devel@sumpfralle.de>
-Source: http://pycam.sourceforge.net
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: PyCAM
+Upstream-Contact: Lars Kruse <devel@sumpfralle.de>
+Source: http://github.com/SebKuzminsky/pycam
 
 Files: *
 Copyright: 2010-2011, Lars Kruse <devel@sumpfralle.de>
