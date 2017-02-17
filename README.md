@@ -4,12 +4,12 @@ pycam : Python CAM
 Toolpath Generation for 3-Axis CNC machining
 
 
-## RUNNING:
+## RUNNING
 
 Extract the archive and run "python pycam"
 
 
-## USAGE:
+## USAGE
 
 As a practical approach, you would probably: 
 
@@ -30,12 +30,12 @@ As a practical approach, you would probably:
 
 
 
-## BUG TRACKER:
+## BUG TRACKER
 
 https://github.com/SebKuzminsky/pycam/issues
 
 
-## CONTRIBUTORS:
+## CONTRIBUTORS
 
 * Lode Leroy: initiated the project; developed the toolpath generation,
   collision detection, geometry, Tk interface, ...
