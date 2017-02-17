@@ -89,6 +89,7 @@ Windows: select Python 2.5 in the following dialog.
         "pycam",
         "pycam.Cutters",
         "pycam.Exporters",
+        "pycam.Exporters.GCode",
         "pycam.Geometry",
         "pycam.Gui",
         "pycam.Importers",
