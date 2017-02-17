@@ -1,4 +1,5 @@
 #!/usr/bin/make -f
+# vim: noexpandtab
 # See debhelper(7) (uncomment to enable)
 # output every command that modifies files on the build system.
 DH_VERBOSE = 1
