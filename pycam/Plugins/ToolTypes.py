@@ -57,7 +57,7 @@ class ToolTypeBallNose(pycam.Plugins.PluginBase):
 
     @tool_params_and_filters("radius")
     def get_tool(self, radius):
-        return pycam.Cutters.SphericalCutter(radius)
+        return pycam.Cutters.SphericalCutter.SphericalCutter(radius)
 
 
 class ToolTypeBullNose(pycam.Plugins.PluginBase):
@@ -79,7 +79,7 @@ class ToolTypeBullNose(pycam.Plugins.PluginBase):
 
     @tool_params_and_filters("radius", "torus_radius")
     def get_tool(self, radius, torus_radius):
-        return pycam.Cutters.ToroidalCutter(radius, torus_radius)
+        return pycam.Cutters.ToroidalCutter.ToroidalCutter(radius, torus_radius)
 
 
 class ToolTypeFlat(pycam.Plugins.PluginBase):
@@ -100,4 +100,4 @@ class ToolTypeFlat(pycam.Plugins.PluginBase):
 
     @tool_params_and_filters("radius")
     def get_tool(self, radius):
-        return pycam.Cutters.CylindricalCutter(radius)
+        return pycam.Cutters.CylindricalCutter.CylindricalCutter(radius)
