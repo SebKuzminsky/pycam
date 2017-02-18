@@ -2,10 +2,9 @@ Source: pycam
 Section: python
 Priority: extra
 Maintainer: Lars Kruse <devel@sumpfralle.de>
-Build-Depends: python, debhelper (>= 7), cdbs, patchutils
-Build-Depends-Indep: python-support, help2man
-Standards-Version: 3.9.2
-Homepage: http://sourceforge.net/projects/pycam/
+Build-Depends: python, debhelper (>= 9), dh-python, help2man, python-opengl, python-numpy
+Standards-Version: 3.9.6
+Homepage: http://github.com/SebKuzminsky/pycam
 
 Package: pycam
 Architecture: all
