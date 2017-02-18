@@ -21,10 +21,11 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import math
-from math import sqrt
+
+from pycam.Geometry import sqrt
+
 
 # see BRL-CAD/src/libbn/poly.c
-
 EPSILON = 1e-4
 SMALL = 1e-4
 INV_2 = 0.5
