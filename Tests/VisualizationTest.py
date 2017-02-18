@@ -21,15 +21,15 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
-sys.path.insert(0,'.')
-
 from pycam.Gui.Visualization import Visualization
 from pycam.Importers.TestModel import TestModel
 
+
 model = TestModel()
+
 
 def DrawScene():
     model.to_OpenGL()
+
 
 Visualization("VisualizationTest", DrawScene)
