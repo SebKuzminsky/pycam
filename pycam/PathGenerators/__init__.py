@@ -21,11 +21,11 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = ["DropCutter", "PushCutter", "EngraveCutter", "ContourFollow"]
+from pycam.Geometry.PointUtils import pdist, pnorm, pnormalized, psub
+from pycam.Geometry.utils import INFINITE, epsilon
 
-from pycam.Geometry.utils import INFINITE, epsilon, sqrt
-from pycam.Geometry.PointUtils import *
-import pycam.Utils.threading
+
+__all__ = ["DropCutter", "PushCutter", "EngraveCutter", "ContourFollow"]
 
 
 class Hit(object):
@@ -49,8 +49,7 @@ def get_free_paths_triangles(models, cutter, p1, p2, return_triangles=False):
         model = models[0]
     else:
         # multiple models were given - process them in layers
-        result = get_free_paths_triangles(models[:1], cutter, p1, p2,
-                return_triangles)
+        result = get_free_paths_triangles(models[:1], cutter, p1, p2, return_triangles)
         # group the result into pairs of two points (start/end)
         point_pairs = []
         while result:
@@ -59,8 +58,8 @@ def get_free_paths_triangles(models, cutter, p1, p2, return_triangles=False):
             point_pairs.append((pair1, pair2))
         all_results = []
         for pair in point_pairs:
-            one_result = get_free_paths_triangles(models[1:], cutter, pair[0],
-                    pair[1], return_triangles)
+            one_result = get_free_paths_triangles(models[1:], cutter, pair[0], pair[1],
+                                                  return_triangles)
             all_results.extend(one_result)
         return all_results
 
@@ -77,9 +76,9 @@ def get_free_paths_triangles(models, cutter, p1, p2, return_triangles=False):
     # find all hits along scan line
     hits = []
 
-    triangles = model.triangles(minx - cutter.distance_radius,
-            miny - cutter.distance_radius, minz, maxx + cutter.distance_radius,
-            maxy + cutter.distance_radius, INFINITE)
+    triangles = model.triangles(minx - cutter.distance_radius, miny - cutter.distance_radius, minz,
+                                maxx + cutter.distance_radius, maxy + cutter.distance_radius,
+                                INFINITE)
 
     for t in triangles:
         (cl1, d1, cp1) = cutter.intersect(backward, t, start=p1)
@@ -132,6 +131,7 @@ def get_free_paths_triangles(models, cutter, p1, p2, return_triangles=False):
     else:
         # return only the cutter locations (without triangles)
         return [cut_info[0] for cut_info in points]
+
 
 def get_free_paths_ode(physics, p1, p2, depth=8):
     """ Recursive function for splitting a line (usually along x or y) into
@@ -192,6 +192,7 @@ def get_free_paths_ode(physics, p1, p2, depth=8):
     physics.reset_drill()
     return points
 
+
 def get_max_height_ode(physics, x, y, minz, maxz):
     # Take a small float inaccuracy for the upper limit into account.
     # Otherwise an upper bound at maxz of the model will not return
@@ -224,6 +225,7 @@ def get_max_height_ode(physics, x, y, minz, maxz):
     else:
         return (x, y, safe_z)
 
+
 def get_max_height_triangles(model, cutter, x, y, minz, maxz):
     if model is None:
         return (x, y, minz)
@@ -235,8 +237,7 @@ def get_max_height_triangles(model, cutter, x, y, minz, maxz):
     box_y_max = cutter.get_maxy(p)
     box_z_min = minz
     box_z_max = maxz
-    triangles = model.triangles(box_x_min, box_y_min, box_z_min, box_x_max,
-            box_y_max, box_z_max)
+    triangles = model.triangles(box_x_min, box_y_min, box_z_min, box_x_max, box_y_max, box_z_max)
     for t in triangles:
         cut = cutter.drop(t, start=p)
         if cut and ((height_max is None) or (cut[2] > height_max)):
@@ -250,6 +251,7 @@ def get_max_height_triangles(model, cutter, x, y, minz, maxz):
     else:
         return (x, y, height_max)
 
+
 def _check_deviance_of_adjacent_points(p1, p2, p3, min_distance):
     straight = psub(p3, p1)
     added = pdist(p2, p1) + pdist(p3, p2)
@@ -261,17 +263,18 @@ def _check_deviance_of_adjacent_points(p1, p2, p3, min_distance):
         # allow 0.1% deviance - this is an angle of around 2 degrees
         return (added / pnorm(straight)) < 1.001
 
+
 def get_max_height_dynamic(model, cutter, positions, minz, maxz, physics=None):
     max_depth = 8
     # the points don't need to get closer than 1/1000 of the cutter radius
     min_distance = cutter.distance_radius / 1000
     points = []
     if physics:
-        get_max_height = lambda x, y: get_max_height_ode(physics, x, y, minz,
-                maxz)
+        def get_max_height(x, y):
+            return get_max_height_ode(physics, x, y, minz, maxz)
     else:
-        get_max_height = lambda x, y: get_max_height_triangles(model, cutter,
-                x, y, minz, maxz)
+        def get_max_height(x, y):
+            return get_max_height_triangles(model, cutter, x, y, minz, maxz)
     # add one point between all existing points
     for index in range(len(positions)):
         p = positions[index]
@@ -284,10 +287,9 @@ def get_max_height_dynamic(model, cutter, positions, minz, maxz, physics=None):
         p1 = points[index]
         p2 = points[index + 1]
         p3 = points[index + 2]
-        if (not p1 is None) and (not p2 is None) and (not p3 is None) and \
-                not _check_deviance_of_adjacent_points(p1, p2, p3,
-                    min_distance) and \
-                (depth_count < max_depth):
+        if ((None not in (p1, p2, p3))
+                and not _check_deviance_of_adjacent_points(p1, p2, p3, min_distance)
+                and (depth_count < max_depth)):
             # distribute the new point two before the middle and one after
             if depth_count % 3 != 2:
                 # insert between the 1st and 2nd point
@@ -304,11 +306,10 @@ def get_max_height_dynamic(model, cutter, positions, minz, maxz, physics=None):
     # remove all points that are in line
     index = 1
     while index + 1 < len(points):
-        p1, p2, p3 = points[index-1:index+2]
+        p1, p2, p3 = points[index - 1:index + 2]
         if _check_deviance_of_adjacent_points(p1, p2, p3, 0):
             # remove superfluous point
             points.pop(index)
         else:
             index += 1
     return points
-

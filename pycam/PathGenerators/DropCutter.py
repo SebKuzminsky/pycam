@@ -21,12 +21,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import pycam.Geometry.Model
 from pycam.PathGenerators import get_max_height_dynamic
+from pycam.Toolpath import MOVE_STRAIGHT, MOVE_SAFETY
 from pycam.Utils import ProgressCounter
 from pycam.Utils.threading import run_in_parallel
-import pycam.Geometry.Model
 import pycam.Utils.log
-from pycam.Toolpath import MOVE_STRAIGHT, MOVE_SAFETY
 
 log = pycam.Utils.log.get_logger()
 
@@ -46,7 +46,8 @@ class DropCutter(object):
     def __init__(self, physics=None):
         self.physics = physics
 
-    def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None, draw_callback=None):
+    def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None,
+                         draw_callback=None):
         path = []
         quit_requested = False
         model = pycam.Geometry.Model.get_combined_model(models)
@@ -63,17 +64,15 @@ class DropCutter(object):
         progress_counter = ProgressCounter(len(lines), draw_callback)
         current_line = 0
 
-
         args = []
         for one_grid_line in lines:
             # simplify the data (useful for remote processing)
             xy_coords = [(pos[0], pos[1]) for pos in one_grid_line]
-            args.append((xy_coords, minz, maxz, model, cutter,
-                    self.physics))
+            args.append((xy_coords, minz, maxz, model, cutter, self.physics))
         for points in run_in_parallel(_process_one_grid_line, args,
-                callback=progress_counter.update):
-            if draw_callback and draw_callback(text="DropCutter: processing " \
-                        + "line %d/%d" % (current_line + 1, num_of_lines)):
+                                      callback=progress_counter.update):
+            if draw_callback and draw_callback(
+                    text="DropCutter: processing line %d/%d" % (current_line + 1, num_of_lines)):
                 # cancel requested
                 quit_requested = True
                 break
@@ -84,8 +83,7 @@ class DropCutter(object):
                 else:
                     path.append((MOVE_STRAIGHT, point))
                 # The progress counter may return True, if cancel was requested.
-                if draw_callback and draw_callback(tool_position=point,
-                        toolpath=path):
+                if draw_callback and draw_callback(tool_position=point, toolpath=path):
                     quit_requested = True
                     break
             # add a move to safety height after each line of moves
@@ -96,4 +94,3 @@ class DropCutter(object):
             if quit_requested:
                 break
         return path
-

@@ -21,14 +21,15 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import math
+
+from pycam.Geometry.PointUtils import pdist
+from pycam.Geometry.utils import ceil
 from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
 import pycam.PathProcessors
-from pycam.Geometry.utils import ceil
 from pycam.Utils.threading import run_in_parallel
 from pycam.Utils import ProgressCounter
-from pycam.Geometry.PointUtils import *
 import pycam.Utils.log
-import math
 from pycam.Toolpath import MOVE_STRAIGHT, MOVE_SAFETY
 
 
@@ -55,7 +56,8 @@ class PushCutter(object):
         self.physics = physics
         self.waterlines = waterlines
 
-    def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None, draw_callback=None):
+    def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None,
+                         draw_callback=None):
         # Transfer the grid (a generator) into a list of lists and count the
         # items.
         grid = []
@@ -79,15 +81,15 @@ class PushCutter(object):
             path = []
         for layer_grid in grid:
             # update the progress bar and check, if we should cancel the process
-            if draw_callback and draw_callback(text="PushCutter: processing" \
-                        + " layer %d/%d" % (current_layer + 1, num_of_layers)):
+            if draw_callback and draw_callback(text="PushCutter: processing layer %d/%d"
+                                                    % (current_layer + 1, num_of_layers)):
                 # cancel immediately
                 break
 
             if self.waterlines:
                 self.pa.new_direction(0)
-            result = self.GenerateToolPathSlice(cutter, models, layer_grid,
-                    draw_callback, progress_counter)
+            result = self.GenerateToolPathSlice(cutter, models, layer_grid, draw_callback,
+                                                progress_counter)
             if self.waterlines:
                 self.pa.end_direction()
                 self.pa.finish()
@@ -110,8 +112,7 @@ class PushCutter(object):
                     # other models are obstacles (e.g. a support grid).
                     other_models = models[1:]
                     for p1, p2 in pairs:
-                        free_points = get_free_paths_triangles(other_models,
-                                cutter, p1, p2)
+                        free_points = get_free_paths_triangles(other_models, cutter, p1, p2)
                         for index in range(len(free_points) / 2):
                             result.append((MOVE_STRAIGHT, free_points[2 * index]))
                             result.append((MOVE_STRAIGHT, free_points[2 * index + 1]))
@@ -126,13 +127,12 @@ class PushCutter(object):
             return path
 
     def GenerateToolPathSlice(self, cutter, models, layer_grid, draw_callback=None,
-            progress_counter=None):
+                              progress_counter=None):
         path = []
 
         # settings for calculation of depth
         accuracy = 20
         max_depth = 20
-        min_depth = 4
 
         # the ContourCutter pathprocessor does not work with combined models
         if self.waterlines:
@@ -150,8 +150,7 @@ class PushCutter(object):
             depth = min(max(ceil(depth), 4), max_depth)
             args.append((p1, p2, depth, models, cutter, self.physics))
 
-        for points in run_in_parallel(_process_one_line, args,
-                callback=progress_counter.update):
+        for points in run_in_parallel(_process_one_line, args, callback=progress_counter.update):
             if points:
                 if self.waterlines:
                     self.pa.new_scanline()
@@ -176,4 +175,3 @@ class PushCutter(object):
 
         if not self.waterlines:
             return path
-
