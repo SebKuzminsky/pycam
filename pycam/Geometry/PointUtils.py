@@ -25,21 +25,26 @@ from pycam.Geometry.utils import epsilon, sqrt, number
 
 
 def pnorm(a):
-    return sqrt(pdot(a,a))
+    return sqrt(pdot(a, a))
+
 
 def pnormsq(a):
-    return pdot(a,a)
+    return pdot(a, a)
+
 
 def pdist(a, b, axes=None):
     return sqrt(pdist_sq(a, b, axes=axes))
+
 
 def pdist_sq(a, b, axes=None):
     if axes is None:
         axes = (0, 1, 2)
     return sum([(a[index] - b[index]) ** 2 for index in axes])
 
+
 def pnear(a, b, axes=None):
     return pcmp(a, b, axes=axes) == 0
+
 
 def pcmp(a, b, axes=None):
     """ Two points are equal if all dimensions are identical.
@@ -52,6 +57,7 @@ def pcmp(a, b, axes=None):
             return cmp(a[axis], b[axis])
     # both points are at the same position
     return 0
+
 
 def ptransform_by_matrix(a, matrix):
     if len(a) > 3:
@@ -66,32 +72,36 @@ def ptransform_by_matrix(a, matrix):
                 offsets.append(0)
             else:
                 offsets.append(column[3])
-        
         return (a[0] * matrix[0][0] + a[1] * matrix[0][1] + a[2] * matrix[0][2] + offsets[0],
                 a[0] * matrix[1][0] + a[1] * matrix[1][1] + a[2] * matrix[1][2] + offsets[1],
                 a[0] * matrix[2][0] + a[1] * matrix[2][1] + a[2] * matrix[2][2] + offsets[2])
-    
 
-        
+
 def pmul(a, c):
     c = number(c)
     return (a[0] * c, a[1] * c, a[2] * c)
+
 
 def pdiv(a, c):
     c = number(c)
     return (a[0] / c, a[1] / c, a[2] / c)
 
+
 def padd(a, b):
     return (a[0] + b[0], a[1] + b[1], a[2] + b[2])
+
 
 def psub(a, b):
     return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
 
+
 def pdot(a, b):
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 
+
 def pcross(a, b):
     return (a[1] * b[2] - b[1] * a[2], b[0] * a[2] - a[0] * b[2], a[0] * b[1] - b[0] * a[1])
+
 
 def pnormalized(a):
     n = pnorm(a)
@@ -100,6 +110,7 @@ def pnormalized(a):
     else:
         return (a[0] / n, a[1] / n, a[2] / n) + a[3:]
 
+
 def pis_inside(a, minx=None, maxx=None, miny=None, maxy=None, minz=None, maxz=None):
     return ((minx is None) or (minx - epsilon <= a[0])) \
             and ((maxx is None) or (a[0] <= maxx + epsilon)) \
@@ -107,4 +118,3 @@ def pis_inside(a, minx=None, maxx=None, miny=None, maxy=None, minz=None, maxz=No
             and ((maxy is None) or (a[1] <= maxy + epsilon)) \
             and ((minz is None) or (minz - epsilon <= a[2])) \
             and ((maxz is None) or (a[2] <= maxz + epsilon))
-

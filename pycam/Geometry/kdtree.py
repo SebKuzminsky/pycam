@@ -21,13 +21,13 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import IDGenerator
-
 try:
     import OpenGL.GL as GL
     GL_enabled = True
 except ImportError:
     GL_enabled = False
+
+from pycam.Geometry import IDGenerator
 
 
 class Node(object):
@@ -69,8 +69,8 @@ def find_max_spread(nodes):
 
 class kdtree(IDGenerator):
 
-    __slots__ = ["bucket", "dim", "cutoff", "cutoff_distance", "nodes",
-            "cutdim", "minval", "maxval", "cutval", "hi", "lo"]
+    __slots__ = ["bucket", "dim", "cutoff", "cutoff_distance", "nodes", "cutdim", "minval",
+                 "maxval", "cutval", "hi", "lo"]
 
     def __init__(self, nodes, cutoff, cutoff_distance):
         super(kdtree, self).__init__()
@@ -104,7 +104,7 @@ class kdtree(IDGenerator):
     def __repr__(self):
         if self.bucket:
             if True:
-                return "(#%d)" % (len(self.nodes))
+                return "(#%d)" % len(self.nodes)
             else:
                 s = "("
                 for n in self.nodes:
@@ -112,8 +112,7 @@ class kdtree(IDGenerator):
                         s += ", %s)" % str(n.p.id)
                 return s
         else:
-            return "(%s,%d:%g,%s)" % (self.lo, self.cutdim, self.cutval,
-                    self.hi)
+            return "(%s,%d:%g,%s)" % (self.lo, self.cutdim, self.cutval, self.hi)
 
     def to_OpenGL(self, minx, maxx, miny, maxy, minz, maxz):
         if not GL_enabled:
@@ -211,7 +210,7 @@ class kdtree(IDGenerator):
                     if bestdist2 < bestdist:
                         return (best2, bestdist2)
                 return (best, bestdist)
-    
+
     def insert(self, node):
         if self.dim == 0:
             self.dim = len(node.bound)
@@ -222,19 +221,15 @@ class kdtree(IDGenerator):
                 self.bucket = False
                 (cutdim, spread) = find_max_spread(self.nodes)
                 self.cutdim = cutdim
-                self.nodes.sort(cmp=lambda x, y:
-                        cmp(x.bound[cutdim], y.bound[cutdim]))
-                median = len(self.nodes)/2
+                self.nodes.sort(cmp=lambda x, y: cmp(x.bound[cutdim], y.bound[cutdim]))
+                median = len(self.nodes) / 2
                 self.minval = self.nodes[0].bound[cutdim]
                 self.maxval = self.nodes[-1].bound[cutdim]
                 self.cutval = self.nodes[median].bound[cutdim]
-                self.lo = kdtree(self.nodes[0:median], self.cutoff,
-                        self.cutoff_distance)
-                self.hi = kdtree(self.nodes[median:], self.cutoff,
-                        self.cutoff_distance)
+                self.lo = kdtree(self.nodes[0:median], self.cutoff, self.cutoff_distance)
+                self.hi = kdtree(self.nodes[median:], self.cutoff, self.cutoff_distance)
         else:
             if node.bound[self.cutdim] <= self.cutval:
                 self.lo.insert(node)
             else:
                 self.hi.insert(node)
-

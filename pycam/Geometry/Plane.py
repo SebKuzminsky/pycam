@@ -22,10 +22,10 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry import TransformableContainer, IDGenerator
 from pycam.Geometry.utils import INFINITE, epsilon
-from pycam.Geometry.PointUtils import *
+from pycam.Geometry.PointUtils import padd, pcross, pdot, pmul, pnorm, pnormalized
 
 # "Line" is imported later to avoid circular imports
-#from pycam.Geometry.Line import Line
+# from pycam.Geometry.Line import Line
 
 
 class Plane(IDGenerator, TransformableContainer):
@@ -71,7 +71,7 @@ class Plane(IDGenerator, TransformableContainer):
             self.n = norm
 
     def intersect_point(self, direction, point):
-        if (not direction is None) and (pnorm(direction) != 1):
+        if (direction is not None) and (pnorm(direction) != 1):
             # calculations will go wrong, if the direction is not a unit vector
             direction = pnormalized(direction)
         if direction is None:
@@ -94,13 +94,13 @@ class Plane(IDGenerator, TransformableContainer):
         from pycam.Geometry.Line import Line
         collisions = []
         for edge, point in ((triangle.e1, triangle.p1),
-                (triangle.e2, triangle.p2),
-                (triangle.e3, triangle.p3)):
+                            (triangle.e2, triangle.p2),
+                            (triangle.e3, triangle.p3)):
             cp, l = self.intersect_point(edge.dir, point)
             # filter all real collisions
             # We don't want to count vertices double -> thus we only accept
             # a distance that is lower than the length of the edge.
-            if (not cp is None) and (-epsilon < l < edge.len - epsilon):
+            if (cp is not None) and (-epsilon < l < edge.len - epsilon):
                 collisions.append(cp)
             elif (cp is None) and (pdot(self.n, edge.dir) == 0):
                 cp, dist = self.intersect_point(self.n, point)
@@ -138,4 +138,3 @@ class Plane(IDGenerator, TransformableContainer):
         proj_p1 = self.get_point_projection(line.p1)
         proj_p2 = self.get_point_projection(line.p2)
         return Line(proj_p1, proj_p2)
-

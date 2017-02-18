@@ -22,10 +22,10 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 # various matrix related functions for PyCAM
 
-
-from pycam.Geometry.PointUtils import *
-from pycam.Geometry.utils import sqrt, number, epsilon
 import math
+
+from pycam.Geometry.PointUtils import pcross, pnormalized
+from pycam.Geometry.utils import sqrt, number, epsilon
 
 
 TRANSFORMATIONS = {
@@ -66,9 +66,10 @@ def get_length(vector):
     """
     return sqrt(get_dot_product(vector, vector))
 
+
 def get_rotation_matrix_from_to(v_orig, v_dest):
     """ calculate the rotation matrix used to transform one vector into another
-    
+
     The result is useful for modifying the rotation matrix of a 3d object.
     See the "extend_shape" code in each of the cutter classes (for ODE).
     The simplest example is the following with the original vector pointing
@@ -102,8 +103,8 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
     # The rotation axis is equal to the cross product of the original and
     # destination vectors.
     rot_axis = pnormalized((v_orig[1] * v_dest[2] - v_orig[2] * v_dest[1],
-            v_orig[2] * v_dest[0] - v_orig[0] * v_dest[2],
-            v_orig[0] * v_dest[1] - v_orig[1] * v_dest[0]))
+                            v_orig[2] * v_dest[0] - v_orig[0] * v_dest[2],
+                            v_orig[0] * v_dest[1] - v_orig[1] * v_dest[0]))
     if not rot_axis:
         return None
     # get the rotation matrix
@@ -121,6 +122,7 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
             t * rot_axis[1] * rot_axis[2] + s * rot_axis[0],
             t * rot_axis[2] * rot_axis[2] + c))
 
+
 def get_rotation_matrix_axis_angle(rot_axis, rot_angle, use_radians=True):
     """ calculate rotation matrix for a normalized vector and an angle
 
@@ -137,15 +139,16 @@ def get_rotation_matrix_axis_angle(rot_axis, rot_angle, use_radians=True):
         rot_angle *= math.pi / 180
     sin = number(math.sin(rot_angle))
     cos = number(math.cos(rot_angle))
-    return ((cos + rot_axis[0]*rot_axis[0]*(1-cos),
-            rot_axis[0]*rot_axis[1]*(1-cos) - rot_axis[2]*sin,
-            rot_axis[0]*rot_axis[2]*(1-cos) + rot_axis[1]*sin),
-            (rot_axis[1]*rot_axis[0]*(1-cos) + rot_axis[2]*sin,
-            cos + rot_axis[1]*rot_axis[1]*(1-cos),
-            rot_axis[1]*rot_axis[2]*(1-cos) - rot_axis[0]*sin),
-            (rot_axis[2]*rot_axis[0]*(1-cos) - rot_axis[1]*sin,
-            rot_axis[2]*rot_axis[1]*(1-cos) + rot_axis[0]*sin,
-            cos + rot_axis[2]*rot_axis[2]*(1-cos)))
+    return ((cos + rot_axis[0] * rot_axis[0] * (1 - cos),
+            rot_axis[0] * rot_axis[1] * (1 - cos) - rot_axis[2] * sin,
+            rot_axis[0] * rot_axis[2] * (1 - cos) + rot_axis[1] * sin),
+            (rot_axis[1] * rot_axis[0] * (1 - cos) + rot_axis[2] * sin,
+            cos + rot_axis[1] * rot_axis[1] * (1 - cos),
+            rot_axis[1] * rot_axis[2] * (1 - cos) - rot_axis[0] * sin),
+            (rot_axis[2] * rot_axis[0] * (1 - cos) - rot_axis[1] * sin,
+            rot_axis[2] * rot_axis[1] * (1 - cos) + rot_axis[0] * sin,
+            cos + rot_axis[2] * rot_axis[2] * (1 - cos)))
+
 
 def multiply_vector_matrix(v, m):
     """ Multiply a 3d vector with a 3x3 matrix. The result is a 3d vector.
@@ -169,13 +172,14 @@ def multiply_vector_matrix(v, m):
             v[0] * m[1][0] + v[1] * m[1][1] + v[2] * m[1][2],
             v[0] * m[2][0] + v[1] * m[2][1] + v[2] * m[2][2])
 
+
 def multiply_matrix_matrix(m1, m2):
     def multi(row1, col2):
-        return (m1[row1][0] * m2[0][col2] + m1[row1][1] * m2[1][col2] \
-                + m1[row1][2] * m2[2][col2])
-    return  ((multi(0, 0), multi(0, 1), multi(0, 2)),
+        return (m1[row1][0] * m2[0][col2] + m1[row1][1] * m2[1][col2] + m1[row1][2] * m2[2][col2])
+    return ((multi(0, 0), multi(0, 1), multi(0, 2)),
             (multi(1, 0), multi(1, 1), multi(1, 2)),
             (multi(2, 0), multi(2, 1), multi(2, 2)))
+
 
 def get_inverse_matrix(m):
     _a = m[1][1] * m[2][2] - m[1][2] * m[2][1]
@@ -194,4 +198,3 @@ def get_inverse_matrix(m):
         return ((_a / det, _b / det, _c / det),
                 (_d / det, _e / det, _f / det),
                 (_g / det, _h / det, _k / det))
-

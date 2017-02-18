@@ -21,16 +21,20 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import math
+
+import pycam.Geometry.Matrix as Matrix
+from pycam.Geometry.Line import Line
+from pycam.Geometry.PointUtils import padd, pcross, pdist, pdot, pmul, pnormalized, psub, \
+        ptransform_by_matrix
+from pycam.Geometry.utils import epsilon, ceil
+from pycam.Utils import log
+log = log.get_logger()
+
+
 __all__ = ["utils", "Line", "Model", "Path", "Plane", "Triangle",
            "PolygonExtractor", "TriangleKdtree", "intersection", "kdtree",
            "Matrix", "Polygon", "Letters", "PointUtils"]
-
-from pycam.Geometry.PointUtils import *
-from pycam.Geometry.utils import epsilon, ceil
-from pycam.Utils import log
-import types
-log = log.get_logger()
-import math
 
 
 def get_bisector(p1, p2, p3, up_vector):
@@ -49,6 +53,7 @@ def get_bisector(p1, p2, p3, up_vector):
             # reverse the skeleton vector to point outwards
             bisector_dir = pmul(bisector_dir, -1)
     return bisector_dir
+
 
 def get_angle_pi(p1, p2, p3, up_vector, pi_factor=False):
     """ calculate the angle between three points
@@ -84,6 +89,7 @@ def get_angle_pi(p1, p2, p3, up_vector, pi_factor=False):
     else:
         return angle
 
+
 def get_points_of_arc(center, radius, a1, a2, plane=None, cords=32):
     """ return the points for an approximated arc
 
@@ -115,12 +121,15 @@ def get_points_of_arc(center, radius, a1, a2, plane=None, cords=32):
     num_of_segments = ceil(angle_diff / (2 * math.pi) * cords)
     angle_segment = angle_diff / num_of_segments
     points = []
-    get_angle_point = lambda angle: (center[0] + radius * math.cos(angle),
-            center[1] + radius * math.sin(angle), 0)
+
+    def get_angle_point(angle):
+        return (center[0] + radius * math.cos(angle), center[1] + radius * math.sin(angle), 0)
+
     points.append(get_angle_point(a1))
     for index in range(num_of_segments):
         points.append(get_angle_point(a1 + angle_segment * (index + 1)))
     return points
+
 
 def get_bezier_lines(points_with_bulge, segments=32):
     # TODO: add a recursive algorithm for more than two points
@@ -134,21 +143,20 @@ def get_bezier_lines(points_with_bulge, segments=32):
             # straight line
             return [Line.Line(p1, p2)]
         straight_dir = pnormalized(psub(p2, p1))
-        #bulge1 = max(-1.0, min(1.0, bulge1))
         bulge1 = math.atan(bulge1)
-        rot_matrix = Matrix.get_rotation_matrix_axis_angle((0, 0, 1),
-                -2 * bulge1, use_radians=True)
-        dir1_mat = Matrix.multiply_vector_matrix((straight_dir[0],
-                straight_dir[1], straight_dir[2]), rot_matrix)
+        rot_matrix = Matrix.get_rotation_matrix_axis_angle((0, 0, 1), -2 * bulge1,
+                                                           use_radians=True)
+        dir1_mat = Matrix.multiply_vector_matrix((straight_dir[0], straight_dir[1],
+                                                  straight_dir[2]), rot_matrix)
         dir1 = (dir1_mat[0], dir1_mat[1], dir1_mat[2], 'v')
         if bulge2 is None:
             bulge2 = bulge1
         else:
             bulge2 = math.atan(bulge2)
-        rot_matrix = Matrix.get_rotation_matrix_axis_angle((0, 0, 1),
-                2 * bulge2, use_radians=True)
-        dir2_mat = Matrix.multiply_vector_matrix((straight_dir[0],
-                straight_dir[1], straight_dir[2]), rot_matrix)
+        rot_matrix = Matrix.get_rotation_matrix_axis_angle((0, 0, 1), 2 * bulge2,
+                                                           use_radians=True)
+        dir2_mat = Matrix.multiply_vector_matrix((straight_dir[0], straight_dir[1],
+                                                  straight_dir[2]), rot_matrix)
         dir2 = (dir2_mat[0], dir2_mat[1], dir2_mat[2], 'v')
         # interpretation of bulge1 and bulge2:
         # /// taken from http://paulbourke.net/dataformats/dxf/dxf10.html ///
@@ -173,13 +181,14 @@ def get_bezier_lines(points_with_bulge, segments=32):
             # t: 0..1
             t = float(index) / segments
             # see: http://en.wikipedia.org/wiki/Cubic_Hermite_spline
-            p = padd( pmul(p1, 2 * t ** 3 - 3 * t ** 2 + 1) ,padd( pmul(dir1, t ** 3 - 2 * t ** 2 + t), padd(pmul(p2, -2 * t ** 3 + 3 * t ** 2) ,pmul(dir2, t ** 3 - t ** 2))))
+            p = padd(pmul(p1, 2 * t ** 3 - 3 * t ** 2 + 1),
+                     padd(pmul(dir1, t ** 3 - 2 * t ** 2 + t),
+                          padd(pmul(p2, -2 * t ** 3 + 3 * t ** 2), pmul(dir2, t ** 3 - t ** 2))))
             result_points.append(p)
         # create lines
         result = []
         for index in range(len(result_points) - 1):
-            result.append(Line.Line(result_points[index],
-                    result_points[index + 1]))
+            result.append(Line.Line(result_points[index], result_points[index + 1]))
         return result
 
 
@@ -231,11 +240,8 @@ class TransformableContainer(object):
         # Use the 'id' builtin to prevent expensive object comparions.
         for item in self.next():
             if isinstance(item, TransformableContainer):
-                item.transform_by_matrix(matrix, transformed_list,callback=callback)
+                item.transform_by_matrix(matrix, transformed_list, callback=callback)
             elif not id(item) in transformed_list:
-                # non-TransformableContainer do not care to update the
-                # 'transformed_list'. Thus we need to do it.
-                #transformed_list.append(id(item))
                 # Don't transmit the 'transformed_list' if the object is
                 # not a TransformableContainer. It is not necessary and it
                 # is hard to understand on the lowest level (e.g. Point).
@@ -246,7 +252,9 @@ class TransformableContainer(object):
                     elif isinstance(theval, list):
                         setattr(self, item, [ptransform_by_matrix(x, matrix) for x in theval])
                 elif isinstance(item, tuple):
-                    log.error("ERROR!! A tuple (Point, Vector) made it into base transform_by_matrix without a back reference. Point/Vector remains unchanged.")
+                    log.error("ERROR!! A tuple (Point, Vector) made it into base "
+                              "transform_by_matrix without a back reference. "
+                              "Point/Vector remains unchanged.")
                 else:
                     item.transform_by_matrix(matrix, callback=callback)
             # run the callback - e.g. for a progress counter
@@ -259,35 +267,32 @@ class TransformableContainer(object):
         return self
 
     def next(self):
-        raise NotImplementedError(("'%s' is a subclass of " \
-                + "'TransformableContainer' but it fails to implement the " \
-                + "'next' generator") % str(type(self)))
+        raise NotImplementedError(("'%s' is a subclass of 'TransformableContainer' but it fails "
+                                   "to implement the 'next' generator") % str(type(self)))
 
     def get_children_count(self):
-        raise NotImplementedError(("'%s' is a subclass of " \
-                + "'TransformableContainer' but it fails to implement the " \
-                + "'get_children_count' method") % str(type(self)))
+        raise NotImplementedError(("'%s' is a subclass of 'TransformableContainer' but it fails "
+                                   "to implement the 'get_children_count' method")
+                                  % str(type(self)))
 
     def reset_cache(self):
-        raise NotImplementedError(("'%s' is a subclass of " \
-                + "'TransformableContainer' but it fails to implement the " \
-                + "'reset_cache' method") % str(type(self)))
+        raise NotImplementedError(("'%s' is a subclass of 'TransformableContainer' but it fails "
+                                   "to implement the 'reset_cache' method") % str(type(self)))
 
-    def is_completely_inside(self, minx=None, maxx=None, miny=None, maxy=None,
-            minz=None, maxz=None):
-        return ((minx is None) or (minx - epsilon <= self.minx)) \
-                and ((maxx is None) or (self.maxx <= maxx + epsilon)) \
-                and ((miny is None) or (miny - epsilon <= self.miny)) \
-                and ((maxy is None) or (self.maxy <= maxy + epsilon)) \
-                and ((minz is None) or (minz - epsilon <= self.minz)) \
-                and ((maxz is None) or (self.maxz <= maxz + epsilon))
+    def is_completely_inside(self, minx=None, maxx=None, miny=None, maxy=None, minz=None,
+                             maxz=None):
+        return (((minx is None) or (minx - epsilon <= self.minx))
+                and ((maxx is None) or (self.maxx <= maxx + epsilon))
+                and ((miny is None) or (miny - epsilon <= self.miny))
+                and ((maxy is None) or (self.maxy <= maxy + epsilon))
+                and ((minz is None) or (minz - epsilon <= self.minz))
+                and ((maxz is None) or (self.maxz <= maxz + epsilon)))
 
-    def is_completely_outside(self, minx=None, maxx=None, miny=None, maxy=None,
-            minz=None, maxz=None):
-        return ((maxx is None) or (maxx + epsilon < self.minx)) \
-                or ((minx is None) or (self.maxx < minx - epsilon)) \
-                or ((maxy is None) or (maxy + epsilon < self.miny)) \
-                or ((miny is None) or (self.maxy < miny - epsilon)) \
-                or ((maxz is None) or (maxz + epsilon < self.minz)) \
-                or ((minz is None) or (self.maxz < minz - epsilon))
-
+    def is_completely_outside(self, minx=None, maxx=None, miny=None, maxy=None, minz=None,
+                              maxz=None):
+        return (((maxx is None) or (maxx + epsilon < self.minx))
+                or ((minx is None) or (self.maxx < minx - epsilon))
+                or ((maxy is None) or (maxy + epsilon < self.miny))
+                or ((miny is None) or (self.maxy < miny - epsilon))
+                or ((maxz is None) or (maxz + epsilon < self.minz))
+                or ((minz is None) or (self.maxz < minz - epsilon)))

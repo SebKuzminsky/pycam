@@ -28,8 +28,7 @@ class PointKdtree(kdtree):
 
     __slots__ = ["_n", "tolerance"]
 
-    def __init__(self, points=None, cutoff=5, cutoff_distance=0.5,
-            tolerance=epsilon):
+    def __init__(self, points=None, cutoff=5, cutoff_distance=0.5, tolerance=epsilon):
         if points is None:
             points = []
         self._n = None
@@ -61,4 +60,3 @@ class PointKdtree(kdtree):
             self._n = None
             self.insert(n)
             return n.obj
-

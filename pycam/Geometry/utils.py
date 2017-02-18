@@ -24,6 +24,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import decimal
 import math
 
+
 INFINITE = 100000
 epsilon = 0.00001
 
@@ -42,15 +43,11 @@ else:
 # otherwise: return the sqrt function of the current type (could even raise
 # exceptions)
 if _use_precision:
-    sqrt = lambda value: (((value < -epsilon) or (value > 0)) and \
-            value.sqrt()) or 0
+    sqrt = lambda value: (((value < -epsilon) or (value > 0)) and value.sqrt()) or 0
 else:
-    sqrt = lambda value: (((value < -epsilon) or (value > 0)) and \
-            math.sqrt(value)) or 0
+    sqrt = lambda value: (((value < -epsilon) or (value > 0)) and math.sqrt(value)) or 0
 
 if _use_precision:
     number = lambda value: decimal.Decimal(str(value))
 else:
     number = float
-
-
