@@ -58,10 +58,11 @@ import time
 # we need the multiprocessing exception for remote connections
 try:
     import multiprocessing
+    from multiprocessing import AuthenticationError
 except ImportError:
-    class multiprocessing(object):
-        # use an arbitrary other Exception
-        AuthenticationError = socket.error
+    multiprocessing = None
+    # use an arbitrary other Exception
+    AuthenticationError = socket.error
 
 
 # The installer for PyODE does not add the required PATH variable.
