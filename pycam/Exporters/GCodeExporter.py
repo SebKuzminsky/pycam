@@ -26,10 +26,10 @@ import os
 
 
 DEFAULT_HEADER = ("G40 (disable tool radius compensation)",
-                "G49 (disable tool length compensation)",
-                "G80 (cancel modal motion)",
-                "G54 (select coordinate system 1)",
-                "G90 (disable incremental moves)")
+                  "G49 (disable tool length compensation)",
+                  "G80 (cancel modal motion)",
+                  "G54 (select coordinate system 1)",
+                  "G90 (disable incremental moves)")
 
 MAX_DIGITS = 12
 
@@ -62,22 +62,20 @@ def _get_num_converter(step_width):
     format_string = "%%.%df" % digits
     conv_func = lambda number: decimal.Decimal(format_string % number)
     return conv_func, format_string
-    
+
 
 class GCodeGenerator(object):
 
     NUM_OF_AXES = 3
 
     def __init__(self, destination, metric_units=True, safety_height=0.0,
-            toggle_spindle_status=False, spindle_delay=3, header=None,
-            comment=None, minimum_steps=None, touch_off_on_startup=False,
-            touch_off_on_tool_change=False, touch_off_position=None,
-            touch_off_rapid_move=0, touch_off_slow_move=1,
-            touch_off_slow_feedrate=20, touch_off_height=0,
-            touch_off_pause_execution=False):
+                 toggle_spindle_status=False, spindle_delay=3, header=None, comment=None,
+                 minimum_steps=None, touch_off_on_startup=False, touch_off_on_tool_change=False,
+                 touch_off_position=None, touch_off_rapid_move=0, touch_off_slow_move=1,
+                 touch_off_slow_feedrate=20, touch_off_height=0, touch_off_pause_execution=False):
         if isinstance(destination, basestring):
             # open the file
-            self.destination = file(destination,"w")
+            self.destination = file(destination, "w")
             self._close_stream_on_exit = True
         else:
             # assume that "destination" is something like a StringIO instance
@@ -144,10 +142,10 @@ class GCodeGenerator(object):
         if self.touch_off_rapid_move > 0:
             self.append("G0 Z-%f (go down rapidly)" % self.touch_off_rapid_move)
         self.append("G38.2 Z-%f (do the touch off)" % self.touch_off_slow_move)
-        if not force_height is None:
+        if force_height is not None:
             self.append("G92 Z%f" % force_height)
         self.append("G28 (go up again)")
-        if not new_tool_id is None:
+        if new_tool_id is not None:
             # compensate the length of the new tool
             self.append("#100=#5063 (store current tool length compensation)")
             self.append("T%d M6" % new_tool_id)
@@ -161,7 +159,7 @@ class GCodeGenerator(object):
         self.append("G90 (disable incremental mode)")
         # Move up to a safe height. This is either "safety height" or the touch
         # off start location. The highest value of these two is used.
-        if self.touch_off_on_startup and not self.touch_off_height is None:
+        if self.touch_off_on_startup and self.touch_off_height is not None:
             touch_off_safety_height = self.touch_off_height + \
                     self.touch_off_slow_move + self.touch_off_rapid_move
             final_height = max(touch_off_safety_height, self.safety_height)
@@ -188,15 +186,16 @@ class GCodeGenerator(object):
             self.append("#5163=%f (touch off position: z)" % position[2])
 
     def set_speed(self, feedrate=None, spindle_speed=None):
-        if not feedrate is None:
+        if feedrate is not None:
             self.append("F%.5f" % feedrate)
             self.last_feedrate = feedrate
-        if not spindle_speed is None:
+        if spindle_speed is not None:
             self.append("S%.5f" % spindle_speed)
 
-    def set_path_mode(self, mode, motion_tolerance=None,
-            naive_cam_tolerance=None):
+    def set_path_mode(self, mode, motion_tolerance=None, naive_cam_tolerance=None):
         result = ""
+        # TODO: implement real path modes (see CORNER_STYLE in pycam.Plugins.ToolpathExport)
+        PATH_MODES = {"exact_path": None, "exact_stop": None, "continuous": None}
         if mode == PATH_MODES["exact_path"]:
             result = "G61 (exact path mode)"
         elif mode == PATH_MODES["exact_stop"]:
@@ -205,26 +204,23 @@ class GCodeGenerator(object):
             if motion_tolerance is None:
                 result = "G64 (continuous mode with maximum speed)"
             elif naive_cam_tolerance is None:
-                result = "G64 P%f (continuous mode with tolerance)" \
-                        % motion_tolerance
+                result = "G64 P%f (continuous mode with tolerance)" % motion_tolerance
             else:
-                result = ("G64 P%f Q%f (continuous mode with tolerance and " \
-                        + "cleanup)") % (motion_tolerance, naive_cam_tolerance)
+                result = ("G64 P%f Q%f (continuous mode with tolerance and cleanup)"
+                          % (motion_tolerance, naive_cam_tolerance))
         else:
-            raise ValueError("GCodeGenerator: invalid path mode (%s)" \
-                    % str(mode))
+            raise ValueError("GCodeGenerator: invalid path mode (%s)" % str(mode))
         self.append(result)
 
     def add_moves(self, moves, tool_id=None, comment=None):
-        if not comment is None:
+        if comment is not None:
             self.add_comment(comment)
         skip_safety_height_move = False
-        if not tool_id is None:
+        if tool_id is not None:
             if self.last_tool_id == tool_id:
                 # nothing to be done
                 pass
-            elif self.touch_off_on_tool_change and \
-                    not (self.last_tool_id is None):
+            elif self.touch_off_on_tool_change and (self.last_tool_id is not None):
                 self.run_touch_off(new_tool_id=tool_id)
                 skip_safety_height_move = True
             else:
@@ -253,16 +249,14 @@ class GCodeGenerator(object):
                 self.append("M3 (start spindle)")
             else:
                 self.append("M5 (stop spindle)")
-            self.append("G04 P%d (wait for %d seconds)" % (self.spindle_delay,
-                    self.spindle_delay))
+            self.append("G04 P%d (wait for %d seconds)" % (self.spindle_delay, self.spindle_delay))
 
     def add_move_to_safety(self):
         new_pos = [None, None, self.safety_height]
         self.add_move(new_pos, rapid=True)
 
     def add_move(self, position, rapid=False):
-        """ add the GCode for a machine move to 'position'. Use rapid (G0) or
-        normal (G01) speed.
+        """ add the GCode for a machine move to 'position'. Use rapid (G0) or normal (G01) speed.
 
         @value position: the new position
         @type position: Point or list(float)
@@ -328,10 +322,9 @@ class GCodeGenerator(object):
 
     def append(self, command):
         if self._finished:
-            raise TypeError("GCodeGenerator: can't add further commands to a " \
-                    + "finished GCodeGenerator instance: %s" % str(command))
+            raise TypeError("GCodeGenerator: can't add further commands to a finished "
+                            "GCodeGenerator instance: %s" % str(command))
         if isinstance(command, basestring):
             command = [command]
         for line in command:
             self.destination.write(line + os.linesep)
-

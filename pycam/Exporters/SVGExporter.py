@@ -29,7 +29,7 @@ class SVGExporter(object):
     def __init__(self, output, unit="mm", maxx=None, maxy=None):
         if isinstance(output, basestring):
             # a filename was given
-            self.output = file(output,"w")
+            self.output = file(output, "w")
         else:
             # a stream was given
             self.output = output
@@ -49,17 +49,15 @@ class SVGExporter(object):
             height = dots_per_px * maxy
             if height <= 0:
                 height = 800
-        self.output.write("""<?xml version='1.0'?>
-<svg xmlns='http://www.w3.org/2000/svg' width='%f' height='%f'>
-<g transform='translate(0,%f) scale(%.10f)' stroke-width='0.05' font-size='0.2'>
-""" % (width, height, height, dots_per_px))
+        self.output.write(("<?xml version='1.0'?>\n"
+                           "<svg xmlns='http://www.w3.org/2000/svg' width='%f' height='%f'>\n"
+                           "<g transform='translate(0,%f) scale(%.10f)' stroke-width='0.05' "
+                           "font-size='0.2'>\n") % (width, height, height, dots_per_px))
         self._fill = 'none'
         self._stroke = 'black'
 
     def close(self, close_stream=True):
-        self.output.write("""</g>
-</svg>
-""")
+        self.output.write("""</g>\n</svg>\n""")
         if close_stream:
             self.output.close()
 
@@ -70,32 +68,27 @@ class SVGExporter(object):
         self._fill = fill
 
     def AddDot(self, x, y):
-        l = "<circle fill='" + self._fill +"'" + (" cx='%g'" % x) \
-                + (" cy='%g'" % -y) + " r='0.04'/>\n"
+        l = "<circle fill='%s' cx='%g' cy='%g' r='0.04'/>\n" % (self._fill, x, -y)
         self.output.write(l)
 
     def AddText(self, x, y, text):
-        l = "<text fill='" + self._fill +"'" + (" x='%g'" % x) \
-                + (" y='%g'" % -y) + " dx='0.07'>" + text + "</text>\n"
+        l = "<text fill='%s' x='%g' y='%g' dx='0.07'>%s</text>\n" % (self._fill, x, -y, text)
         self.output.write(l)
-        
 
     def AddLine(self, x1, y1, x2, y2):
-        l = "<line fill='" + self._fill +"' stroke='" + self._stroke + "'" \
-                + (" x1='%.8f'" % x1) + (" y1='%.8f'" % -y1) + (" x2='%.8f'" % x2) \
-                + (" y2='%.8f'" % -y2) + " />\n"
+        l = ("<line fill='%s' stroke='%s' x1='%.8f' y1='%.8f' x2='%.8f' y2='%.8f' />\n"
+             % (self._fill, self._stroke, x1, -y1, x2, -y2))
         self.output.write(l)
-        
+
     def AddPoint(self, p):
         self.AddDot(p[0], p[1])
 
     def AddPath(self, path):
         self.AddLines(path.points)
-    
+
     def AddLines(self, points):
-        l = "<path fill='" + self._fill +"' stroke='" + self._stroke + "' d='"
-        for i in range(0, len(points)):
-            p = points[i]
+        l = "<path fill='%s' stroke='%s' d='" % (self._fill, self._stroke)
+        for i, p in enumerate(points):
             if i == 0:
                 l += "M "
             else:
@@ -109,7 +102,7 @@ class SVGExporter(object):
             self.AddPath(path)
 
 
-#TODO: we need to create a unified "Exporter" interface and base class
+# TODO: we need to create a unified "Exporter" interface and base class
 class SVGExporterContourModel(object):
 
     def __init__(self, model, unit="mm", **kwargs):
@@ -117,12 +110,10 @@ class SVGExporterContourModel(object):
         self.unit = unit
 
     def write(self, stream):
-        writer = SVGExporter(stream, unit=self.unit, maxx=self.model.maxx,
-                maxy=self.model.maxy)
+        writer = SVGExporter(stream, unit=self.unit, maxx=self.model.maxx, maxy=self.model.maxy)
         for polygon in self.model.get_polygons():
             points = polygon.get_points()
             if polygon.is_closed:
                 points.append(points[0])
             writer.AddLines(points)
         writer.close(close_stream=False)
-
