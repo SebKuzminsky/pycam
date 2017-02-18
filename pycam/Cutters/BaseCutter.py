@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2008-2010 Lode Leroy
 Copyright 2010-2011 Lars Kruse <devel@sumpfralle.de>
 

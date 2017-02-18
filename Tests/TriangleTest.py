@@ -1,8 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lode Leroy
 
 This file is part of PyCAM.

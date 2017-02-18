@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2012 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
