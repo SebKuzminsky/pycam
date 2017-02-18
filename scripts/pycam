@@ -61,7 +61,7 @@ import pycam.Utils.threading
 # The installer for PyODE does not add the required PATH variable.
 if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
     os.environ["PATH"] = os.environ.get("PATH", "") + os.path.pathsep + sys.exec_prefix
-# The GtkGLExt installer does not add the required PATH variable. 
+# The GtkGLExt installer does not add the required PATH variable.
 if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
     import _winreg
     path = None
@@ -746,4 +746,3 @@ if __name__ == "__main__":
         sys.exit(exit_code)
     else:
         sys.exit(EXIT_CODES["ok"])
-
