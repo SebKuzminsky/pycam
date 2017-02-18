@@ -20,21 +20,22 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
+import re
+import sys
+
 import pycam.Gui.Settings
 import pycam.Gui.Project
 import pycam.Utils.log
 import pycam.Utils
-import re
-import os
-import sys
 
 COMMENT_CHARACTERS = r";#"
 REGEX_META_KEYWORDS = r"[%s]?%s (.*): (.*)$" % (COMMENT_CHARACTERS,
-        pycam.Gui.Project.ProjectGui.META_DATA_PREFIX)
+                                                pycam.Gui.Project.ProjectGui.META_DATA_PREFIX)
 REGEX_SETTINGS_START = r"[%s]?%s$" % (COMMENT_CHARACTERS,
-        pycam.Gui.Settings.ToolpathSettings.META_MARKER_START)
+                                      pycam.Gui.Settings.ToolpathSettings.META_MARKER_START)
 REGEX_SETTINGS_END = r"[%s]?%s$" % (COMMENT_CHARACTERS,
-        pycam.Gui.Settings.ToolpathSettings.META_MARKER_END)
+                                    pycam.Gui.Settings.ToolpathSettings.META_MARKER_END)
 
 log = pycam.Utils.log.get_logger()
 
@@ -61,8 +62,7 @@ def parse_toolpath_settings(filename):
         try:
             infile = pycam.Utils.URIHandler(filename).open()
         except IOError, err_msg:
-            log.warn("ToolpathSettingsParser: Failed to read file (%s): %s" % \
-                    (filename, err_msg))
+            log.warn("ToolpathSettingsParser: Failed to read file (%s): %s", filename, err_msg)
             return None
         close_file = True
     for line in infile.readlines():
@@ -84,7 +84,7 @@ def parse_toolpath_settings(filename):
         infile.close()
     return keywords, [os.linesep.join(one_block) for one_block in meta_content]
 
+
 if __name__ == "__main__":
     # for testing: output the parsed content of the given file (first argument)
     print "\n#################\n".join(parse_toolpath_settings(sys.argv[1])[1])
-

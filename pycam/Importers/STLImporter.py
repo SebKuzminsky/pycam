@@ -21,28 +21,28 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.PointUtils import *
+import re
+import StringIO
+from struct import unpack
+
+from pycam.Geometry.PointUtils import pcross, pdot, pnormalized, psub
 from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.PointKdtree import PointKdtree
 from pycam.Geometry.utils import epsilon
 from pycam.Geometry.Model import Model
 import pycam.Utils.log
 import pycam.Utils
-
-from struct import unpack 
-import StringIO
-import re
-
 log = pycam.Utils.log.get_logger()
 
 
 vertices = 0
 edges = 0
 kdtree = None
+lastUniqueVertex = (None, None, None)
 
-lastUniqueVertex = (None,None,None)
+
 def UniqueVertex(x, y, z):
-    global vertices,lastUniqueVertex
+    global vertices, lastUniqueVertex
     if kdtree:
         p = kdtree.Point(x, y, z)
         if p == lastUniqueVertex:
@@ -51,6 +51,7 @@ def UniqueVertex(x, y, z):
     else:
         vertices += 1
         return (x, y, z)
+
 
 def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
     global vertices, edges, kdtree
@@ -73,11 +74,10 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
             f = StringIO.StringIO(url_file.read())
             # TODO: the above ".read" may be incomplete - this is ugly
             # see http://patrakov.blogspot.com/2011/03/case-of-non-raised-exception.html
-            # and http://stackoverflow.com/questions/1824069/urllib2-not-retrieving-entire-http-response
+            # and http://stackoverflow.com/questions/1824069/
             url_file.close()
         except IOError, err_msg:
-            log.error("STLImporter: Failed to read file (%s): %s" \
-                    % (filename, err_msg))
+            log.error("STLImporter: Failed to read file (%s): %s", filename, err_msg)
             return None
     # Read the first two lines of (potentially non-binary) input - they should
     # contain "solid" and "facet".
@@ -86,7 +86,7 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
         line = f.readline(200)
         if len(line) == 0:
             # empty line (not even a line-feed) -> EOF
-            log.error("STLImporter: No valid lines found in '%s'" % filename)
+            log.error("STLImporter: No valid lines found in '%s'", filename)
             return None
         # ignore comment lines
         # note: partial comments (starting within a line) are not handled
@@ -97,8 +97,8 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
     f.seek(80)
     numfacets = unpack("<I", f.read(4))[0]
     binary = False
-    log.debug("STL import info: %s / %s / %s / %s" % \
-            (f.len, numfacets, header.find("solid"), header.find("facet")))
+    log.debug("STL import info: %s / %s / %s / %s",
+              f.len, numfacets, header.find("solid"), header.find("facet"))
 
     if f.len == (84 + 50*numfacets):
         binary = True
@@ -119,40 +119,40 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
     p3 = None
 
     if binary:
-        for i in range(1, numfacets + 1): 
+        for i in range(1, numfacets + 1):
             if callback and callback():
                 log.warn("STLImporter: load model operation cancelled")
                 return None
-            a1 = unpack("<f", f.read(4))[0] 
-            a2 = unpack("<f", f.read(4))[0] 
-            a3 = unpack("<f", f.read(4))[0] 
+            a1 = unpack("<f", f.read(4))[0]
+            a2 = unpack("<f", f.read(4))[0]
+            a3 = unpack("<f", f.read(4))[0]
 
             n = (float(a1), float(a2), float(a3), 'v')
-            
-            v11 = unpack("<f", f.read(4))[0] 
-            v12 = unpack("<f", f.read(4))[0] 
-            v13 = unpack("<f", f.read(4))[0] 
+
+            v11 = unpack("<f", f.read(4))[0]
+            v12 = unpack("<f", f.read(4))[0]
+            v13 = unpack("<f", f.read(4))[0]
 
             p1 = UniqueVertex(float(v11), float(v12), float(v13))
-            
-            v21 = unpack("<f", f.read(4))[0] 
-            v22 = unpack("<f", f.read(4))[0] 
-            v23 = unpack("<f", f.read(4))[0] 
+
+            v21 = unpack("<f", f.read(4))[0]
+            v22 = unpack("<f", f.read(4))[0]
+            v23 = unpack("<f", f.read(4))[0]
 
             p2 = UniqueVertex(float(v21), float(v22), float(v23))
-            
-            v31 = unpack("<f", f.read(4))[0] 
-            v32 = unpack("<f", f.read(4))[0] 
-            v33 = unpack("<f", f.read(4))[0] 
-            
+
+            v31 = unpack("<f", f.read(4))[0]
+            v32 = unpack("<f", f.read(4))[0]
+            v33 = unpack("<f", f.read(4))[0]
+
             p3 = UniqueVertex(float(v31), float(v32), float(v33))
 
-            # not used
-            attribs = unpack("<H", f.read(2)) 
-            
+            # not used (additional attributes)
+            f.read(2)
+
             dotcross = pdot(n, pcross(psub(p2, p1), psub(p3, p1)))
             if a1 == a2 == a3 == 0:
-                dotcross = pcross(psub(p2, p1), psub(p3,p1))[2]
+                dotcross = pcross(psub(p2, p1), psub(p3, p1))[2]
                 n = None
 
             if dotcross > 0:
@@ -160,18 +160,16 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
                 t = Triangle(p1, p3, p2)
             elif dotcross < 0:
                 if not normal_conflict_warning_seen:
-                    log.warn(("Inconsistent normal/vertices found in facet " + \
-                            "definition %d of '%s'. Please validate the " + \
-                            "STL file!") % (i, filename))
+                    log.warn("Inconsistent normal/vertices found in facet definition %d of '%s'. "
+                             "Please validate the STL file!", i, filename)
                     normal_conflict_warning_seen = True
                 t = Triangle(p1, p2, p3)
             else:
                 # the three points are in a line - or two points are identical
                 # usually this is caused by points, that are too close together
                 # check the tolerance value in pycam/Geometry/PointKdtree.py
-                log.warn("Skipping invalid triangle: %s / %s / %s " \
-                        % (p1, p2, p3) + "(maybe the resolution of the model " \
-                        + "is too high?)")
+                log.warn("Skipping invalid triangle: %s / %s / %s (maybe the resolution of the "
+                         "model is too high?)", p1, p2, p3)
                 continue
             if n:
                 t.normal = n
@@ -181,17 +179,17 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
         solid = re.compile(r"\s*solid\s+(\w+)\s+.*")
         endsolid = re.compile(r"\s*endsolid\s*")
         facet = re.compile(r"\s*facet\s*")
-        normal = re.compile(r"\s*facet\s+normal" \
-                + r"\s+(?P<x>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)" \
-                + r"\s+(?P<y>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)" \
-                + r"\s+(?P<z>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+")
+        normal = re.compile(r"\s*facet\s+normal"
+                            + r"\s+(?P<x>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"
+                            + r"\s+(?P<y>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"
+                            + r"\s+(?P<z>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+")
         endfacet = re.compile(r"\s*endfacet\s+")
         loop = re.compile(r"\s*outer\s+loop\s+")
         endloop = re.compile(r"\s*endloop\s+")
-        vertex = re.compile(r"\s*vertex" \
-                + r"\s+(?P<x>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)" \
-                + r"\s+(?P<y>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)" \
-                + r"\s+(?P<z>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+")
+        vertex = re.compile(r"\s*vertex"
+                            + r"\s+(?P<x>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"
+                            + r"\s+(?P<y>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"
+                            + r"\s+(?P<z>[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)\s+")
 
         current_line = 0
 
@@ -218,8 +216,7 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
                 continue
             m = vertex.match(line)
             if m:
-                p = UniqueVertex(float(m.group('x')), float(m.group('y')),
-                        float(m.group('z')))
+                p = UniqueVertex(float(m.group('x')), float(m.group('y')), float(m.group('z')))
                 if p1 is None:
                     p1 = p
                 elif p2 is None:
@@ -227,18 +224,16 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
                 elif p3 is None:
                     p3 = p
                 else:
-                    log.error("STLImporter: more then 3 points in facet " \
-                            + "(line %d)" % current_line)
+                    log.error("STLImporter: more then 3 points in facet (line %d)", current_line)
                 continue
             m = endloop.match(line)
             if m:
                 continue
             m = endfacet.match(line)
             if m:
-                if p1 is None or p2 is None or p3 is None:
-                    log.warn(("Invalid facet definition in line " \
-                            + "%d of '%s'. Please validate the STL file!") \
-                            % (current_line, filename))
+                if None in (p1, p2, p3):
+                    log.warn("Invalid facet definition in line %d of '%s'. Please validate the "
+                             "STL file!", current_line, filename)
                     n, p1, p2, p3 = None, None, None, None
                     continue
                 if not n:
@@ -253,15 +248,14 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
                     dotcross = 0
                 else:
                     # make sure the points are in ClockWise order
-                    dotcross = pdot(n, pcross(psub(p2,p1), psub(p3, p1)))
+                    dotcross = pdot(n, pcross(psub(p2, p1), psub(p3, p1)))
                 if dotcross > 0:
                     # Triangle expects the vertices in clockwise order
                     t = Triangle(p1, p3, p2, n)
                 elif dotcross < 0:
                     if not normal_conflict_warning_seen:
-                        log.warn(("Inconsistent normal/vertices found in " + \
-                                "line %d of '%s'. Please validate the STL " + \
-                                "file!") % (current_line, filename))
+                        log.warn("Inconsistent normal/vertices found in line %d of '%s'. Please "
+                                 "validate the STL file!", current_line, filename)
                         normal_conflict_warning_seen = True
                     t = Triangle(p1, p2, p3, n)
                 else:
@@ -269,9 +263,8 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
                     # identical. Usually this is caused by points, that are too
                     # close together. Check the tolerance value in
                     # pycam/Geometry/PointKdtree.py.
-                    log.warn("Skipping invalid triangle: %s / %s / %s " \
-                            % (p1, p2, p3) + "(maybe the resolution of the " \
-                            + "model is too high?)")
+                    log.warn("Skipping invalid triangle: %s / %s / %s (maybe the resolution of "
+                             "the model is too high?)", p1, p2, p3)
                     n, p1, p2, p3 = (None, None, None, None)
                     continue
                 n, p1, p2, p3 = (None, None, None, None)
@@ -281,8 +274,8 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
             if m:
                 continue
 
-    log.info("Imported STL model: %d vertices, %d edges, %d triangles" \
-            % (vertices, edges, len(model.triangles())))
+    log.info("Imported STL model: %d vertices, %d edges, %d triangles",
+             vertices, edges, len(model.triangles()))
     vertices = 0
     edges = 0
     kdtree = None
@@ -292,4 +285,3 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
         return None
     else:
         return model
-    

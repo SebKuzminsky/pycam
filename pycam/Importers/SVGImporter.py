@@ -20,14 +20,13 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
+import subprocess
+import tempfile
+
 import pycam.Importers.DXFImporter
 from pycam.Utils.locations import get_external_program_location
 import pycam.Utils
-import tempfile
-import subprocess
-import os
-
-
 log = pycam.Utils.log.get_logger()
 
 
@@ -37,23 +36,22 @@ def convert_svg2eps(svg_filename, eps_filename, location=None):
         if location is None:
             location = "inkscape"
     try:
-        process = subprocess.Popen(stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                args = [location, "--export-area-page", "--export-eps",
-                        eps_filename, svg_filename])
+        process = subprocess.Popen(stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE,
+                                   args=[location, "--export-area-page", "--export-eps",
+                                         eps_filename, svg_filename])
     except OSError, err_msg:
-        log.error(("SVGImporter: failed to execute 'inkscape' (%s): %s%s" + \
-                "Maybe you need to install Inkscape (http://inkscape.org)?") % \
-                (location, err_msg, os.linesep))
+        log.error("SVGImporter: failed to execute 'inkscape' (%s): %s%sMaybe you need to install "
+                  "Inkscape (http://inkscape.org)?", location, err_msg, os.linesep)
         return False
     returncode = process.wait()
     if returncode == 0:
         return True
     else:
-        log.warn(("SVGImporter: failed to convert SVG file (%s) to EPS file " \
-                + "(%s): %s") % (svg_filename, eps_filename,
-                process.stderr.read()))
+        log.warn("SVGImporter: failed to convert SVG file (%s) to EPS file (%s): %s",
+                 svg_filename, eps_filename, process.stderr.read())
         return False
+
 
 def convert_eps2dxf(eps_filename, dxf_filename, location=None, unit="mm"):
     if location is None:
@@ -67,12 +65,11 @@ def convert_eps2dxf(eps_filename, dxf_filename, location=None, unit="mm"):
     args.append(eps_filename)
     args.append(dxf_filename)
     try:
-        process = subprocess.Popen(stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, args=args)
+        process = subprocess.Popen(stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, args=args)
     except OSError, err_msg:
-        log.error(("SVGImporter: failed to execute 'pstoedit' (%s): %s%s" + \
-                "Maybe you need to install pstoedit (http://pstoedit.net)?") % \
-                (location, err_msg, os.linesep))
+        log.error("SVGImporter: failed to execute 'pstoedit' (%s): %s%sMaybe you need to install "
+                  "pstoedit (http://pstoedit.net)?", location, err_msg, os.linesep)
         return False
     returncode = process.wait()
     if returncode == 0:
@@ -81,34 +78,28 @@ def convert_eps2dxf(eps_filename, dxf_filename, location=None, unit="mm"):
             # The resulting file seems to be quite small (268 byte). But it is
             # not certain, that this filesize is fixed in case of this problem.
             if os.path.getsize(dxf_filename) < 280:
-                log.warn(("SVGImporter: maybe there was a problem with " + \
-                        "the conversion from EPS (%s) to DXF.\nProbably " + \
-                        "you need to install 'ghostscript' " + \
-                        "(http://pages.cs.wisc.edu/~ghost).") % \
-                        str(eps_filename))
+                log.warn("SVGImporter: maybe there was a problem with the conversion from EPS "
+                         "(%s) to DXF.\nProbably you need to install 'ghostscript' "
+                         "(http://pages.cs.wisc.edu/~ghost).", str(eps_filename))
             return True
         except OSError:
             # The dxf file was not created.
-            log.warn("SVGImporter: no DXF file was created, even though " + \
-                    "no error code was returned. This seems to be a bug " + \
-                    "of 'pstoedit'. Please send the original model file " + \
-                    "to the PyCAM developers. Thanks!")
+            log.warn("SVGImporter: no DXF file was created, even though no error code was "
+                     "returned. This seems to be a bug of 'pstoedit'. Please send the original "
+                     "model file to the PyCAM developers. Thanks!")
             return False
     elif returncode == -11:
-        log.warn(("SVGImporter: maybe there was a problem with the " + \
-                "conversion from EPS (%s) to DXF.\n Users of Ubuntu 'lucid' " + \
-                "should install the package 'libpstoedit0c2a' from the " + \
-                "'maverick' repository to avoid this warning.") % \
-                str(eps_filename))
+        log.warn("SVGImporter: maybe there was a problem with the conversion from EPS (%s) to "
+                 "DXF.\n Users of Ubuntu 'lucid' should install the package 'libpstoedit0c2a' "
+                 "from the 'maverick' repository to avoid this warning.", str(eps_filename))
         return True
     else:
-        log.warn(("SVGImporter: failed to convert EPS file (%s) to DXF file " \
-                + "(%s): %s") % (eps_filename, dxf_filename,
-                process.stderr.read()))
+        log.warn("SVGImporter: failed to convert EPS file (%s) to DXF file (%s): %s",
+                 eps_filename, dxf_filename, process.stderr.read())
         return False
 
-def import_model(filename, program_locations=None, unit="mm", callback=None,
-        **kwargs):
+
+def import_model(filename, program_locations=None, unit="mm", callback=None, **kwargs):
     local_file = False
     if hasattr(filename, "read"):
         infile = filename
@@ -118,24 +109,23 @@ def import_model(filename, program_locations=None, unit="mm", callback=None,
             temp_file.write(infile.read())
             temp_file.close()
         except IOError, err_msg:
-            log.error("SVGImporter: Failed to create temporary local file " + \
-                    "(%s): %s" % (svg_file_name, err_msg))
+            log.error("SVGImporter: Failed to create temporary local file (%s): %s",
+                      svg_file_name, err_msg)
             return
         filename = svg_file_name
     else:
         uri = pycam.Utils.URIHandler(filename)
         if not uri.exists():
-            log.error("SVGImporter: file (%s) does not exist" % filename)
+            log.error("SVGImporter: file (%s) does not exist", filename)
             return None
         if not uri.is_local():
             # non-local file - write it to a temporary file first
             svg_file_handle, svg_file_name = tempfile.mkstemp(suffix=".svg")
             os.close(svg_file_handle)
-            log.debug("Retrieving SVG file for local access: %s -> %s" % \
-                    (uri, svg_file_name))
+            log.debug("Retrieving SVG file for local access: %s -> %s", uri, svg_file_name)
             if not uri.retrieve_remote_file(svg_file_name, callback=callback):
-                log.error("SVGImporter: Failed to retrieve the SVG model " + \
-                        "file: %s -> %s" % (uri, svg_file_name))
+                log.error("SVGImporter: Failed to retrieve the SVG model file: %s -> %s",
+                          uri, svg_file_name)
             filename = svg_file_name
         else:
             filename = uri.get_local_path()
@@ -160,13 +150,15 @@ def import_model(filename, program_locations=None, unit="mm", callback=None,
     eps_file_handle, eps_file_name = tempfile.mkstemp(suffix=".eps")
     os.close(eps_file_handle)
     success = convert_svg2eps(filename, eps_file_name, location=inkscape_path)
+
     def remove_temp_file(filename):
         if os.path.isfile(filename):
             try:
                 os.remove(filename)
             except OSError, err_msg:
-                log.warn("SVGImporter: failed to remove temporary file " \
-                        + "(%s): %s" % (filename, err_msg))
+                log.warn("SVGImporter: failed to remove temporary file (%s): %s",
+                         filename, err_msg)
+
     # remove the temporary file
     if not local_file:
         remove_temp_file(svg_file_name)
@@ -182,8 +174,7 @@ def import_model(filename, program_locations=None, unit="mm", callback=None,
     # convert eps to dxf via pstoedit
     dxf_file_handle, dxf_file_name = tempfile.mkstemp(suffix=".dxf")
     os.close(dxf_file_handle)
-    success = convert_eps2dxf(eps_file_name, dxf_file_name, unit=unit,
-            location=pstoedit_path)
+    success = convert_eps2dxf(eps_file_name, dxf_file_name, unit=unit, location=pstoedit_path)
     # we don't need the eps file anymore
     remove_temp_file(eps_file_name)
     if not success:
@@ -193,9 +184,8 @@ def import_model(filename, program_locations=None, unit="mm", callback=None,
         result = None
     else:
         log.info("Successfully converted EPS file to DXF file")
-        result = pycam.Importers.DXFImporter.import_model(dxf_file_name,
-                unit=unit, color_as_height=True, callback=callback)
+        result = pycam.Importers.DXFImporter.import_model(dxf_file_name, unit=unit,
+                                                          color_as_height=True, callback=callback)
     # always remove the dxf file
     remove_temp_file(dxf_file_name)
     return result
-

@@ -20,17 +20,17 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
+import tempfile
+
 from pycam.Importers.SVGImporter import convert_eps2dxf
 import pycam.Importers.DXFImporter
 import pycam.Utils
-import tempfile
-import os
 
 log = pycam.Utils.log.get_logger()
 
 
-def import_model(filename, program_locations=None, unit="mm", callback=None,
-        **kwargs):
+def import_model(filename, program_locations=None, unit="mm", callback=None, **kwargs):
     local_file = False
     if hasattr(filename, "read"):
         infile = filename
@@ -40,24 +40,23 @@ def import_model(filename, program_locations=None, unit="mm", callback=None,
             temp_file.write(infile.read())
             temp_file.close()
         except IOError, err_msg:
-            log.error("PSImporter: Failed to create temporary local file " + \
-                    "(%s): %s" % (ps_file_name, err_msg))
+            log.error("PSImporter: Failed to create temporary local file (%s): %s",
+                      ps_file_name, err_msg)
             return
         filename = ps_file_name
     else:
         uri = pycam.Utils.URIHandler(filename)
         if not uri.exists():
-            log.error("PSImporter: file (%s) does not exist" % filename)
+            log.error("PSImporter: file (%s) does not exist", filename)
             return None
         if not uri.is_local():
             # non-local file - write it to a temporary file first
             ps_file_handle, ps_file_name = tempfile.mkstemp(suffix=".ps")
             os.close(ps_file_handle)
-            log.debug("Retrieving PS file for local access: %s -> %s" % \
-                    (uri, ps_file_name))
+            log.debug("Retrieving PS file for local access: %s -> %s", uri, ps_file_name)
             if not uri.retrieve_remote_file(ps_file_name, callback=callback):
-                log.error("PSImporter: Failed to retrieve the PS model file: " + \
-                        "%s -> %s" % (uri, ps_file_name))
+                log.error("PSImporter: Failed to retrieve the PS model file: %s -> %s",
+                          uri, ps_file_name)
                 return
             filename = ps_file_name
         else:
@@ -74,14 +73,12 @@ def import_model(filename, program_locations=None, unit="mm", callback=None,
             try:
                 os.remove(filename)
             except OSError, err_msg:
-                log.warn("PSImporter: failed to remove temporary file " \
-                        + "(%s): %s" % (filename, err_msg))
+                log.warn("PSImporter: failed to remove temporary file (%s): %s", filename, err_msg)
 
     # convert eps to dxf via pstoedit
     dxf_file_handle, dxf_file_name = tempfile.mkstemp(suffix=".dxf")
     os.close(dxf_file_handle)
-    success = convert_eps2dxf(filename, dxf_file_name, unit=unit,
-            location=pstoedit_path)
+    success = convert_eps2dxf(filename, dxf_file_name, unit=unit, location=pstoedit_path)
     if not local_file:
         remove_temp_file(ps_file_name)
     if not success:
@@ -92,9 +89,8 @@ def import_model(filename, program_locations=None, unit="mm", callback=None,
     else:
         log.info("Successfully converted PS file to DXF file")
         # pstoedit uses "inch" -> force a scale operation
-        result = pycam.Importers.DXFImporter.import_model(dxf_file_name,
-                unit=unit, callback=callback)
+        result = pycam.Importers.DXFImporter.import_model(dxf_file_name, unit=unit,
+                                                          callback=callback)
     # always remove the dxf file
     remove_temp_file(dxf_file_name)
     return result
-
