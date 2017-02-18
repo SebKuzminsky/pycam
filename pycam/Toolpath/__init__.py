@@ -20,32 +20,27 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = ["simplify_toolpath", "ToolpathList", "Toolpath", "Generator"]
+import math
+from itertools import groupby
+import os
 
-import OpenGL.GL as GL
 from OpenGL.arrays import vbo
 import numpy
 from numpy import array
-from pycam.Geometry.PointUtils import *
-from pycam.Geometry.Line import Line
-from pycam.Geometry.utils import number, epsilon
-# Filters is imported later - dependency cycle :(
-#import pycam.Toolpath.Filters
-import pycam.Utils.log
-import random
-import os
 
-import math
-from itertools import groupby
+from pycam.Geometry.PointUtils import padd, pcross, pdist, pmul, pnorm, pnormalized, psub
+from pycam.Geometry.utils import number, epsilon
+import pycam.Utils.log
+
+__all__ = ["simplify_toolpath", "ToolpathList", "Toolpath", "Generator"]
 
 _log = pycam.Utils.log.get_logger()
 
 
-MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC, MOVE_SAFETY, MACHINE_SETTING, \
-        COMMENT = range(6)
+MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC, MOVE_SAFETY, MACHINE_SETTING, COMMENT = range(6)
 MOVES_LIST = (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC, MOVE_SAFETY)
 CORNER_STYLE_EXACT_PATH, CORNER_STYLE_EXACT_STOP, CORNER_STYLE_OPTIMIZE_SPEED, \
-        CORNER_STYLE_OPTIMIZE_TOLERANCE = range(4)
+    CORNER_STYLE_OPTIMIZE_TOLERANCE = range(4)
 
 
 def _check_colinearity(p1, p2, p3):
@@ -88,7 +83,7 @@ class Toolpath(object):
         self.filters = toolpath_filters
         self.path = toolpath_path
         self.clear_cache()
-        
+
     def __get_path(self):
         return self.__path
 
@@ -97,7 +92,7 @@ class Toolpath(object):
         # (otherwise we can't detect changes)
         self.__path = tuple(new_path)
         self.clear_cache()
-        
+
     def __get_filters(self):
         return self.__filters
 
@@ -106,7 +101,7 @@ class Toolpath(object):
         # (otherwise we can't detect changes)
         self.__filters = tuple(new_filters)
         self.clear_cache()
-        
+
     # use a property in order to trigger "clear_cache" whenever the path changes
     path = property(__get_path, __set_path)
     filters = property(__get_filters, __set_filters)
@@ -130,37 +125,37 @@ class Toolpath(object):
 
     @property
     def minx(self):
-        if self._minx == None:
+        if self._minx is None:
             self._minx = self._get_limit_generic(0, min)
         return self._minx
 
     @property
     def maxx(self):
-        if self._maxx == None:
+        if self._maxx is None:
             self._maxx = self._get_limit_generic(0, max)
         return self._maxx
 
     @property
     def miny(self):
-        if self._miny == None:
+        if self._miny is None:
             self._miny = self._get_limit_generic(1, min)
         return self._miny
 
     @property
     def maxy(self):
-        if self._maxy == None:
+        if self._maxy is None:
             self._maxy = self._get_limit_generic(1, max)
         return self._maxy
 
     @property
     def minz(self):
-        if self._minz == None:
+        if self._minz is None:
             self._minz = self._get_limit_generic(2, min)
         return self._minz
 
     @property
     def maxz(self):
-        if self._maxz == None:
+        if self._maxz is None:
             self._maxz = self._get_limit_generic(2, max)
         return self._maxz
 
@@ -183,11 +178,32 @@ class Toolpath(object):
         vx = v[0]
         vy = v[1]
         vz = v[2]
-        x = (sp[0] * (vy ** 2 + vz ** 2) - vx * (sp[1] * vy + sp[2] * vz - vx * rp[0] - vy * rp[1] - vz * rp[2])) * (1 - math.cos(angle)) + rp[0] * math.cos(angle) + (-sp[2] * vy + sp[1] * vz - vz * rp[1] + vy * rp[2]) * math.sin(angle)
-        y = (sp[1] * (vx ** 2 + vz ** 2) - vy * (sp[0] * vx + sp[2] * vz - vx * rp[0] - vy * rp[1] - vz * rp[2])) * (1 - math.cos(angle)) + rp[1] * math.cos(angle) + (sp[2] * vx - sp[0] * vz + vz * rp[0] - vx * rp[2]) * math.sin(angle)
-        z = (sp[2] * (vx ** 2 + vy ** 2) - vz * (sp[0] * vx + sp[1] * vy - vx * rp[0] - vy * rp[1] - vz * rp[2])) * (1 - math.cos(angle)) + rp[2] * math.cos(angle) + (-sp[1] * vx + sp[0] * vy - vy * rp[0] + vx * rp[1]) * math.sin(angle)
-        return (x,y,z)
-    
+        x = ((sp[0] * (vy ** 2 + vz ** 2)
+              - vx * (sp[1] * vy
+                      + sp[2] * vz
+                      - vx * rp[0]
+                      - vy * rp[1]
+                      - vz * rp[2])) * (1 - math.cos(angle))
+             + rp[0] * math.cos(angle)
+             + (-sp[2] * vy + sp[1] * vz - vz * rp[1] + vy * rp[2]) * math.sin(angle))
+        y = ((sp[1] * (vx ** 2 + vz ** 2)
+              - vy * (sp[0] * vx
+                      + sp[2] * vz
+                      - vx * rp[0]
+                      - vy * rp[1]
+                      - vz * rp[2])) * (1 - math.cos(angle))
+             + rp[1] * math.cos(angle)
+             + (sp[2] * vx - sp[0] * vz + vz * rp[0] - vx * rp[2]) * math.sin(angle))
+        z = ((sp[2] * (vx ** 2 + vy ** 2)
+              - vz * (sp[0] * vx
+                      + sp[1] * vy
+                      - vx * rp[0]
+                      - vy * rp[1]
+                      - vz * rp[2])) * (1 - math.cos(angle))
+             + rp[2] * math.cos(angle)
+             + (-sp[1] * vx + sp[0] * vy - vy * rp[0] + vx * rp[1]) * math.sin(angle))
+        return (x, y, z)
+
     def draw_direction_cone_mesh(self, p1, p2, position=0.5, precision=12, size=0.1):
         distance = psub(p2, p1)
         length = pnorm(distance)
@@ -197,22 +213,24 @@ class Toolpath(object):
             return []
         cone_length = length * size
         cone_radius = cone_length / 3.0
-        bottom = padd(p1, pmul(psub(p2, p1), position - size/2))
-        top = padd(p1, pmul(psub(p2, p1), position + size/2))
-        #generate a a line perpendicular to this line, cross product is good at this
+        bottom = padd(p1, pmul(psub(p2, p1), position - size / 2))
+        top = padd(p1, pmul(psub(p2, p1), position + size / 2))
+        # generate a a line perpendicular to this line, cross product is good at this
         cross = pcross(direction, (0, 0, -1))
         conepoints = []
         if pnorm(cross) != 0:
             # The line direction is not in line with the z axis.
             conep1 = padd(bottom, pmul(cross, cone_radius))
-            conepoints = [ self._rotate_point(conep1, bottom, direction, x) for x in numpy.linspace(0, 2*math.pi, precision)]
+            conepoints = [self._rotate_point(conep1, bottom, direction, x)
+                          for x in numpy.linspace(0, 2 * math.pi, precision)]
         else:
             # Z axis
             # just add cone radius to the x axis and rotate the point
             conep1 = (bottom[0] + cone_radius, bottom[1], bottom[2])
-            conepoints = [ self._rotate_point(conep1, p1, direction, x) for x in numpy.linspace(0, 2*math.pi, precision)]
-        
-        triangles = [(top, conepoints[idx], conepoints[idx + 1]) for idx in range ( len(conepoints) - 1)]
+            conepoints = [self._rotate_point(conep1, p1, direction, x)
+                          for x in numpy.linspace(0, 2*math.pi, precision)]
+        triangles = [(top, conepoints[idx], conepoints[idx + 1])
+                     for idx in range(len(conepoints) - 1)]
         return triangles
 
     def get_moves_for_opengl(self, safety_height):
@@ -220,7 +238,7 @@ class Toolpath(object):
             self.make_moves_for_opengl(safety_height)
             self.make_vbo_for_moves()
         return (self.opengl_coords, self.opengl_indices)
-    
+
     # separate vertex coordinates from line definitions and convert to indices
     def make_vbo_for_moves(self):
         index = 0
@@ -235,20 +253,20 @@ class Toolpath(object):
             # generate a matching index for each line
             for idx in range(len(path[0]) - 1):
                 point = path[0][idx]
-                if not point in store_vertices:
+                if point not in store_vertices:
                     store_vertices[point] = index
                     vertices.insert(index, point)
                     index += 1
                 indices.append(store_vertices[point])
                 point2 = path[0][idx + 1]
-                if not point2 in store_vertices:
+                if point2 not in store_vertices:
                     store_vertices[point2] = index
                     vertices.insert(index, point2)
                     index += 1
                 triangles.extend(self.draw_direction_cone_mesh(path[0][idx], path[0][idx + 1]))
                 for t in triangles:
                     for p in t:
-                        if not p in store_vertices:
+                        if p not in store_vertices:
                             store_vertices[p] = index
                             vertices.insert(index, p)
                             index += 1
@@ -256,7 +274,7 @@ class Toolpath(object):
             triangle_indices = array(triangle_indices, dtype=numpy.int32)
             indices.append(store_vertices[path[0][-1]])
             # this list comprehension removes consecutive duplicate points.
-            indices = array([x[0] for x in groupby(indices)],dtype=numpy.int32)
+            indices = array([x[0] for x in groupby(indices)], dtype=numpy.int32)
             output.append((indices, triangle_indices, path[1]))
         vertices = array(vertices, dtype=numpy.float32)
         self.opengl_coords = vbo.VBO(vertices)
@@ -269,24 +287,27 @@ class Toolpath(object):
         for path in self.path:
             if not path:
                 continue
-            
+
             if len(outpaths) != 0:
                 lastp = outpaths[-1][0][-1]
                 working_path.append((path[0][0], path[0][1], safety_height))
-                if ((abs(lastp[0] - path[0][0]) > epsilon) or (abs(lastp[1] - path[0][1]) > epsilon)):
-                    if (abs(lastp[2] - path[0][2]) > epsilon) or (pdist(lastp, path[0]) > self._max_safe_distance + epsilon):
+                if ((abs(lastp[0] - path[0][0]) > epsilon)
+                        or (abs(lastp[1] - path[0][1]) > epsilon)):
+                    if ((abs(lastp[2] - path[0][2]) > epsilon)
+                            or (pdist(lastp, path[0]) > self._max_safe_distance + epsilon)):
                         outpaths.append((tuple([x[0] for x in groupby(working_path)]), True))
             else:
-                working_path.append((0,0,0))
+                working_path.append((0, 0, 0))
                 working_path.append((path[0][0], path[0][1], safety_height))
                 outpaths.append((working_path, True))
-            
+
             # add this move to last move if last move was not rapid
-            if outpaths[-1][1] == False:
+            if not outpaths[-1][1]:
                 outpaths[-1] = (outpaths[-1][0] + tuple(path), False)
             else:
                 # last move was rapid, so add last point of rapid to beginning of path
-                outpaths.append((tuple([x[0] for x in groupby((outpaths[-1][0][-1],) + tuple(path))]), False))
+                outpaths.append((tuple([x[0] for x in groupby((outpaths[-1][0][-1],)
+                                                              + tuple(path))]), False))
             working_path = []
             working_path.append(path[-1])
             working_path.append((path[-1][0], path[-1][1], safety_height))
@@ -303,7 +324,7 @@ class Toolpath(object):
             if (move_type == MACHINE_SETTING) and (key == args[0]):
                 return args[1]
         return default
-        
+
     def get_machine_time(self, safety_height=0.0):
         """ calculate an estimation of the time required for processing the
         toolpath with the machine
@@ -317,14 +338,14 @@ class Toolpath(object):
         min_feedrate = 1
         length = 0
         duration = 0
-        feed_rate = min_feedrate
+        feedrate = min_feedrate
         current_position = None
         # go through all points of the path
         for move_type, args in self.get_basic_moves():
             if (move_type == MACHINE_SETTING) and (args[0] == "feedrate"):
                 feedrate = args[1]
             elif move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
-                if not current_position is None:
+                if current_position is not None:
                     distance = pdist(args, current_position)
                     duration += distance / max(feedrate, min_feedrate)
                     length += distance
@@ -338,17 +359,16 @@ class Toolpath(object):
         if reset_cache or not self._cache_basic_moves or \
                 (str(filters) != self._cache_visual_filters_string):
             # late import due to dependency cycle
-            import pycam.Toolpath.Filters as Filters
+            import pycam.Toolpath.Filters
             all_filters = tuple(self.filters) + tuple(filters)
-            self._cache_basic_moves = \
-                    pycam.Toolpath.Filters.get_filtered_moves(self.path,
-                            all_filters)
+            self._cache_basic_moves = pycam.Toolpath.Filters.get_filtered_moves(self.path,
+                                                                                all_filters)
             self._cache_visual_filters_string = str(filters)
             self._cache_visual_filters = filters
-            _log.debug("Applying toolpath filters: %s" % \
-                    ", ".join([str(fil) for fil in all_filters]))
-            _log.debug("Toolpath step changes: %d (before) -> %d (after)" % \
-                    (len(self.path), len(self._cache_basic_moves)))
+            _log.debug("Applying toolpath filters: %s",
+                       ", ".join([str(fil) for fil in all_filters]))
+            _log.debug("Toolpath step changes: %d (before) -> %d (after)",
+                       len(self.path), len(self._cache_basic_moves))
         return self._cache_basic_moves
 
 
@@ -358,8 +378,7 @@ class Bounds(object):
     TYPE_FIXED_MARGIN = 1
     TYPE_CUSTOM = 2
 
-    def __init__(self, bounds_type=None, bounds_low=None, bounds_high=None,
-            reference=None):
+    def __init__(self, bounds_type=None, bounds_low=None, bounds_high=None, reference=None):
         """ create a new Bounds instance
 
         @value bounds_type: any of TYPE_RELATIVE_MARGIN | TYPE_FIXED_MARGIN |
@@ -395,7 +414,7 @@ class Bounds(object):
     def __repr__(self):
         bounds_type_labels = ("relative", "fixed", "custom")
         return "Bounds(%s, %s, %s)" % (bounds_type_labels[self.bounds_type],
-                self.bounds_low, self.bounds_high)
+                                       self.bounds_low, self.bounds_high)
 
     def is_valid(self):
         for index in range(3):
@@ -418,33 +437,31 @@ class Bounds(object):
 
     def set_type(self, bounds_type):
         # complain if an unknown bounds_type value was given
-        if not bounds_type in (Bounds.TYPE_RELATIVE_MARGIN,
-                Bounds.TYPE_FIXED_MARGIN, Bounds.TYPE_CUSTOM):
-            raise ValueError, "failed to create an instance of " \
-                    + "pycam.Toolpath.Bounds due to an invalid value of " \
-                    + "'bounds_type': %s" % repr(bounds_type)
+        if bounds_type not in (Bounds.TYPE_RELATIVE_MARGIN, Bounds.TYPE_FIXED_MARGIN,
+                               Bounds.TYPE_CUSTOM):
+            raise ValueError("failed to create an instance of pycam.Toolpath.Bounds due to an "
+                             "invalid value of 'bounds_type': %s" % repr(bounds_type))
         else:
             self.bounds_type = bounds_type
 
     def get_referenced_bounds(self, reference):
         return Bounds(bounds_type=self.bounds_type, bounds_low=self.bounds_low,
-                bounds_high=self.bounds_high, reference=reference)
+                      bounds_high=self.bounds_high, reference=reference)
 
     def get_bounds(self):
         return self.bounds_low[:], self.bounds_high[:]
 
     def set_bounds(self, low=None, high=None):
-        if not low is None:
+        if low is not None:
             if len(low) != 3:
-                raise ValueError, "lower bounds should be supplied as a " \
-                        + "tuple/list of 3 items - but %d were given" % len(low)
+                raise ValueError("lower bounds should be supplied as a tuple/list of 3 items - "
+                                 "but %d were given" % len(low))
             else:
                 self.bounds_low = [number(value) for value in low]
-        if not high is None:
+        if high is not None:
             if len(high) != 3:
-                raise ValueError, "upper bounds should be supplied as a " \
-                        + "tuple/list of 3 items - but %d were given" \
-                        % len(high)
+                raise ValueError("upper bounds should be supplied as a tuple/list of 3 items - "
+                                 "but %d were given" % len(high))
             else:
                 self.bounds_high = [number(value) for value in high]
 
@@ -466,9 +483,8 @@ class Bounds(object):
         if self.bounds_type \
                 in (Bounds.TYPE_RELATIVE_MARGIN, Bounds.TYPE_FIXED_MARGIN):
             if reference is None:
-                raise ValueError, "any non-custom boundary definition " \
-                        + "requires a reference object for caluclating " \
-                        + "absolute limits"
+                raise ValueError("any non-custom boundary definition requires a reference "
+                                 "object for caluclating absolute limits")
             else:
                 ref_low, ref_high = reference.get_absolute_limits()
         low = [None] * 3
@@ -477,10 +493,8 @@ class Bounds(object):
         if self.bounds_type == Bounds.TYPE_RELATIVE_MARGIN:
             for index in range(3):
                 dim_width = ref_high[index] - ref_low[index]
-                low[index] = ref_low[index] \
-                        - self.bounds_low[index] * dim_width
-                high[index] = ref_high[index] \
-                        + self.bounds_high[index] * dim_width
+                low[index] = ref_low[index] - self.bounds_low[index] * dim_width
+                high[index] = ref_high[index] + self.bounds_high[index] * dim_width
         elif self.bounds_type == Bounds.TYPE_FIXED_MARGIN:
             for index in range(3):
                 low[index] = ref_low[index] - self.bounds_low[index]
@@ -491,13 +505,12 @@ class Bounds(object):
                 high[index] = number(self.bounds_high[index])
         else:
             # this should not happen
-            raise NotImplementedError, "the function 'get_absolute_limits' is" \
-                    + " currently not implemented for the bounds_type " \
-                    + "'%s'" % str(self.bounds_type)
+            raise NotImplementedError("the function 'get_absolute_limits' is currently not "
+                                      "implemented for the bounds_type '%s'"
+                                      % str(self.bounds_type))
         return low, high
 
-    def adjust_bounds_to_absolute_limits(self, limits_low, limits_high,
-            reference=None):
+    def adjust_bounds_to_absolute_limits(self, limits_low, limits_high, reference=None):
         """ change the current bounds settings according to some absolute values
 
         This does not change the type of this bounds instance (e.g. relative).
@@ -518,9 +531,8 @@ class Bounds(object):
         if self.bounds_type \
                 in (Bounds.TYPE_RELATIVE_MARGIN, Bounds.TYPE_FIXED_MARGIN):
             if reference is None:
-                raise ValueError, "any non-custom boundary definition " \
-                        + "requires an a reference object for caluclating " \
-                        + "absolute limits"
+                raise ValueError("any non-custom boundary definition requires an a reference "
+                                 "object for caluclating absolute limits")
             else:
                 ref_low, ref_high = reference.get_absolute_limits()
         # calculate the new settings
@@ -530,9 +542,8 @@ class Bounds(object):
                 if dim_width == 0:
                     # We always loose relative margins if the specific dimension
                     # is zero. There is no way to avoid this.
-                    message = "Non-zero %s boundary lost during conversion " \
-                            + "to relative margins due to zero size " \
-                            + "dimension '%s'." % "xyz"[index]
+                    message = ("Non-zero %s boundary lost during conversion to relative margins "
+                               "due to zero size dimension '%s'." % "xyz"[index])
                     # Display warning messages, if we can't reach the requested
                     # absolute dimension.
                     if ref_low[index] != limits_low[index]:
@@ -542,10 +553,8 @@ class Bounds(object):
                     self.bounds_low[index] = 0
                     self.bounds_high[index] = 0
                 else:
-                    self.bounds_low[index] = \
-                            (ref_low[index] - limits_low[index]) / dim_width
-                    self.bounds_high[index] = \
-                            (limits_high[index] - ref_high[index]) / dim_width
+                    self.bounds_low[index] = (ref_low[index] - limits_low[index]) / dim_width
+                    self.bounds_high[index] = (limits_high[index] - ref_high[index]) / dim_width
         elif self.bounds_type == Bounds.TYPE_FIXED_MARGIN:
             for index in range(3):
                 self.bounds_low[index] = ref_low[index] - limits_low[index]
@@ -556,8 +565,6 @@ class Bounds(object):
                 self.bounds_high[index] = limits_high[index]
         else:
             # this should not happen
-            raise NotImplementedError, "the function " \
-                    + "'adjust_bounds_to_absolute_limits' is currently not " \
-                    + "implemented for the bounds_type '%s'" \
-                    % str(self.bounds_type)
-
+            raise NotImplementedError("the function 'adjust_bounds_to_absolute_limits' is "
+                                      "currently not implemented for the bounds_type '%s'"
+                                      % str(self.bounds_type))

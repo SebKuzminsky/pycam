@@ -20,14 +20,15 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.PointUtils import *
+import math
+
 from pycam.Geometry.Line import Line
-from pycam.Geometry.utils import epsilon
+from pycam.Geometry.Plane import Plane
+from pycam.Geometry.PointUtils import padd, pcross, pmul, pnormalized, psub
 from pycam.Geometry.Polygon import PolygonSorter
+from pycam.Geometry.utils import epsilon
 import pycam.Utils.log
 import pycam.Geometry
-
-import math
 
 
 _log = pycam.Utils.log.get_logger()
@@ -60,6 +61,7 @@ def isiterable(obj):
     except TypeError:
         return False
 
+
 def floatrange(start, end, inc=None, steps=None, reverse=False):
     if reverse:
         start, end = end, start
@@ -68,7 +70,7 @@ def floatrange(start, end, inc=None, steps=None, reverse=False):
         yield start
     elif inc is None and steps is None:
         raise ValueError("floatrange: either 'inc' or 'steps' must be provided")
-    elif (not steps is None) and (steps < 2):
+    elif (steps is not None) and (steps < 2):
         raise ValueError("floatrange: 'steps' must be greater than 1")
     else:
         # the input is fine
@@ -81,8 +83,8 @@ def floatrange(start, end, inc=None, steps=None, reverse=False):
         for index in range(steps):
             yield start + inc * index
 
-def get_fixed_grid_line(start, end, line_pos, z, step_width=None,
-        grid_direction=GRID_DIRECTION_X):
+
+def get_fixed_grid_line(start, end, line_pos, z, step_width=None, grid_direction=GRID_DIRECTION_X):
     if step_width is None:
         # useful for PushCutter operations
         steps = (start, end)
@@ -97,14 +99,15 @@ def get_fixed_grid_line(start, end, line_pos, z, step_width=None,
     for pos in steps:
         yield get_point(pos)
 
-def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance,
-        step_width=None, grid_direction=GRID_DIRECTION_X,
-        milling_style=MILLING_STYLE_IGNORE, start_position=0):
+
+def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance, step_width=None,
+                         grid_direction=GRID_DIRECTION_X, milling_style=MILLING_STYLE_IGNORE,
+                         start_position=0):
     if grid_direction == GRID_DIRECTION_XY:
-        raise ValueError("'get_one_layer_fixed_grid' does not accept XY " \
-                + "direction")
-    # zigzag is only available if the milling 
+        raise ValueError("'get_one_layer_fixed_grid' does not accept XY direction")
+    # zigzag is only available if the milling
     zigzag = (milling_style == MILLING_STYLE_IGNORE)
+
     # If we happen to start at a position that collides with the milling style,
     # then we need to move to the closest other corner. Here we decide, which
     # would be the best alternative.
@@ -115,6 +118,7 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance,
         else:
             # toggle the Y position bit
             return start ^ START_Y
+
     if grid_direction == GRID_DIRECTION_X:
         primary_dir = START_X
         secondary_dir = START_Y
@@ -126,13 +130,11 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance,
     if milling_style == MILLING_STYLE_IGNORE:
         # just move forward - milling style is not important
         pass
-    elif (milling_style == MILLING_STYLE_CLIMB) == \
-            (grid_direction == GRID_DIRECTION_X):
+    elif (milling_style == MILLING_STYLE_CLIMB) == (grid_direction == GRID_DIRECTION_X):
         if bool(start_position & START_X) == bool(start_position & START_Y):
             # we can't start from here - choose an alternative
             start_position = get_alternative_start_position(start_position)
-    elif (milling_style == MILLING_STYLE_CONVENTIONAL) == \
-            (grid_direction == GRID_DIRECTION_X):
+    elif (milling_style == MILLING_STYLE_CONVENTIONAL) == (grid_direction == GRID_DIRECTION_X):
         if bool(start_position & START_X) != bool(start_position & START_Y):
             # we can't start from here - choose an alternative
             start_position = get_alternative_start_position(start_position)
@@ -160,12 +162,13 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance,
     # the final position will probably be on the other side (primary)
     if not zigzag:
         end_position ^= primary_dir
+
     # calculate each line
     def get_lines(start, end, end_position):
         result = []
         for line_pos in lines:
-            result.append(get_fixed_grid_line(start, end, line_pos, z,
-                    step_width=step_width, grid_direction=grid_direction))
+            result.append(get_fixed_grid_line(start, end, line_pos, z, step_width=step_width,
+                                              grid_direction=grid_direction))
             if zigzag:
                 start, end = end, start
                 end_position ^= primary_dir
@@ -189,11 +192,13 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance,
                 last = p2
             result = zigzag_result
         return result, end_position
+
     return get_lines(start, end, end_position)
 
-def get_fixed_grid((low, high), layer_distance, line_distance=None,
-        step_width=None, grid_direction=GRID_DIRECTION_X,
-        milling_style=MILLING_STYLE_IGNORE, start_position=START_Z):
+
+def get_fixed_grid((low, high), layer_distance, line_distance=None, step_width=None,
+                   grid_direction=GRID_DIRECTION_X, milling_style=MILLING_STYLE_IGNORE,
+                   start_position=START_Z):
     """ Calculate the grid positions for toolpath moves
     """
     if isiterable(layer_distance):
@@ -203,7 +208,8 @@ def get_fixed_grid((low, high), layer_distance, line_distance=None,
         layers = [low[2]]
     else:
         layers = floatrange(low[2], high[2], inc=layer_distance,
-                reverse=bool(start_position & START_Z))
+                            reverse=bool(start_position & START_Z))
+
     def get_layers_with_direction(layers):
         for layer in layers:
             # this will produce a nice xy-grid, as well as simple x and y grids
@@ -211,12 +217,13 @@ def get_fixed_grid((low, high), layer_distance, line_distance=None,
                 yield (layer, GRID_DIRECTION_X)
             if grid_direction != GRID_DIRECTION_X:
                 yield (layer, GRID_DIRECTION_Y)
+
     for z, direction in get_layers_with_direction(layers):
-        result, start_position = get_fixed_grid_layer(low[0], high[0],
-                low[1], high[1], z, line_distance, step_width=step_width,
-                grid_direction=direction, milling_style=milling_style,
-                start_position=start_position)
+        result, start_position = get_fixed_grid_layer(
+            low[0], high[0], low[1], high[1], z, line_distance, step_width=step_width,
+            grid_direction=direction, milling_style=milling_style, start_position=start_position)
         yield result
+
 
 def _get_position(minx, maxx, miny, maxy, z, position):
     if position & START_X > 0:
@@ -229,8 +236,9 @@ def _get_position(minx, maxx, miny, maxy, z, position):
         y = maxy
     return (x, y, z)
 
-def get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x,
-        line_distance_y, grid_direction, start_position, current_location):
+
+def get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x, line_distance_y,
+                           grid_direction, start_position, current_location):
     xor_map = {GRID_DIRECTION_X: START_X, GRID_DIRECTION_Y: START_Y}
     end_position = start_position ^ xor_map[grid_direction]
     end_location = _get_position(minx, maxx, miny, maxy, z, end_position)
@@ -247,25 +255,24 @@ def get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x,
             minx += line_distance_x
         else:
             maxx -= line_distance_x
-    if (minx - epsilon <= maxx ) and (miny - epsilon <= maxy):
+    if (minx - epsilon <= maxx) and (miny - epsilon <= maxy):
         # recursively compute the next lines
-        lines.extend(get_spiral_layer_lines(minx, maxx, miny, maxy, z,
-                line_distance_x, line_distance_y, next_grid_direction,
-                end_position, end_location))
+        lines.extend(get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x,
+                                            line_distance_y, next_grid_direction, end_position,
+                                            end_location))
     return lines
 
-def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width,
-        grid_direction, start_position, rounded_corners, reverse):
-    current_location = _get_position(minx, maxx, miny, maxy, z,
-            start_position)
+
+def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width, grid_direction,
+                     start_position, rounded_corners, reverse):
+    current_location = _get_position(minx, maxx, miny, maxy, z, start_position)
     if line_distance > 0:
         line_steps_x = math.ceil((float(maxx - minx) / line_distance))
         line_steps_y = math.ceil((float(maxy - miny) / line_distance))
         line_distance_x = (maxx - minx) / line_steps_x
         line_distance_y = (maxy - miny) / line_steps_y
-        lines = get_spiral_layer_lines(minx, maxx, miny, maxy, z,
-                line_distance_x, line_distance_y, grid_direction,
-                start_position, current_location)
+        lines = get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x, line_distance_y,
+                                       grid_direction, start_position, current_location)
         if reverse:
             lines.reverse()
         # turn the lines into steps
@@ -274,7 +281,7 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width,
             previous = None
             for index, (start, end) in enumerate(lines):
                 radius = 0.5 * min(line_distance_x, line_distance_y)
-                edge_vector = psub(end,start)
+                edge_vector = psub(end, start)
                 # TODO: ellipse would be better than arc
                 offset = pmul(pnormalized(edge_vector), radius)
                 if previous:
@@ -282,12 +289,16 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width,
                     center = padd(previous, offset)
                     up_vector = pnormalized(pcross(psub(previous, center), psub(start, center)))
                     north = padd(center, (1.0, 0.0, 0.0, 'v'))
-                    angle_start = pycam.Geometry.get_angle_pi(north, center, previous, up_vector, pi_factor=True) * 180.0
-                    angle_end = pycam.Geometry.get_angle_pi(north, center, start, up_vector, pi_factor=True) * 180.0
-                    # TODO: remove these exceptions based on up_vector.z (get_points_of_arc does not respect the plane, yet)
+                    angle_start = pycam.Geometry.get_angle_pi(north, center, previous, up_vector,
+                                                              pi_factor=True) * 180.0
+                    angle_end = pycam.Geometry.get_angle_pi(north, center, start, up_vector,
+                                                            pi_factor=True) * 180.0
+                    # TODO: remove these exceptions based on up_vector.z (get_points_of_arc does
+                    #       not respect the plane, yet)
                     if up_vector[2] < 0:
                         angle_start, angle_end = -angle_end, -angle_start
-                    arc_points = pycam.Geometry.get_points_of_arc(center, radius, angle_start, angle_end)
+                    arc_points = pycam.Geometry.get_points_of_arc(center, radius, angle_start,
+                                                                  angle_end)
                     if up_vector[2] < 0:
                         arc_points.reverse()
                     for arc_index in range(len(arc_points) - 1):
@@ -319,10 +330,10 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width,
                 points.reverse()
             yield points
 
-def get_spiral((low, high), layer_distance, line_distance=None,
-        step_width=None, milling_style=MILLING_STYLE_IGNORE,
-        spiral_direction=SPIRAL_DIRECTION_IN, rounded_corners=False,
-        start_position=(START_X | START_Y | START_Z)):
+
+def get_spiral((low, high), layer_distance, line_distance=None, step_width=None,
+               milling_style=MILLING_STYLE_IGNORE, spiral_direction=SPIRAL_DIRECTION_IN,
+               rounded_corners=False, start_position=(START_X | START_Y | START_Z)):
     """ Calculate the grid positions for toolpath moves
     """
     if isiterable(layer_distance):
@@ -332,25 +343,25 @@ def get_spiral((low, high), layer_distance, line_distance=None,
         layers = [low[2]]
     else:
         layers = floatrange(low[2], high[2], inc=layer_distance,
-                reverse=bool(start_position & START_Z))
-    if (milling_style == MILLING_STYLE_CLIMB) == \
-            (start_position & START_X > 0):
+                            reverse=bool(start_position & START_Z))
+    if (milling_style == MILLING_STYLE_CLIMB) == (start_position & START_X > 0):
         start_direction = GRID_DIRECTION_X
     else:
         start_direction = GRID_DIRECTION_Y
     reverse = (spiral_direction == SPIRAL_DIRECTION_OUT)
     for z in layers:
-        yield get_spiral_layer(low[0], high[0], low[1], high[1], z,
-                line_distance, step_width=step_width,
-                grid_direction=start_direction, start_position=start_position,
-                rounded_corners=rounded_corners, reverse=reverse)
+        yield get_spiral_layer(low[0], high[0], low[1], high[1], z, line_distance,
+                               step_width=step_width, grid_direction=start_direction,
+                               start_position=start_position, rounded_corners=rounded_corners,
+                               reverse=reverse)
+
 
 def get_lines_layer(lines, z, last_z=None, step_width=None,
-        milling_style=MILLING_STYLE_CONVENTIONAL):
+                    milling_style=MILLING_STYLE_CONVENTIONAL):
     get_proj_point = lambda proj_point: (proj_point[0], proj_point[1], z)
     projected_lines = []
     for line in lines:
-        if (not last_z is None) and (last_z < line.minz):
+        if (last_z is not None) and (last_z < line.minz):
             # the line was processed before
             continue
         elif line.minz < z < line.maxz:
@@ -378,13 +389,12 @@ def get_lines_layer(lines, z, last_z=None, step_width=None,
         else:
             if line.maxz <= z:
                 # the line is completely below z
-                projected_lines.append(Line(get_proj_point(line.p1),
-                        get_proj_point(line.p2)))
+                projected_lines.append(Line(get_proj_point(line.p1), get_proj_point(line.p2)))
             elif line.minz >= z:
                 projected_lines.append(line)
             else:
-                _log.warn("Unexpected condition 'get_lines_layer': " + \
-                        "%s / %s / %s / %s" % (line.p1, line.p2, z, last_z))
+                _log.warn("Unexpected condition 'get_lines_layer': %s / %s / %s / %s",
+                          line.p1, line.p2, z, last_z)
     # process all projected lines
     for line in projected_lines:
         points = []
@@ -401,6 +411,7 @@ def get_lines_layer(lines, z, last_z=None, step_width=None,
                 points.append(next_point)
         yield points
 
+
 def _get_sorted_polygons(models, callback=None):
     # Sort the polygons according to their directions (first inside, then
     # outside. This reduces the problem of break-away pieces.
@@ -416,10 +427,10 @@ def _get_sorted_polygons(models, callback=None):
     outer_sorter = PolygonSorter(outer_polys, callback=callback)
     return inner_sorter.get_polygons() + outer_sorter.get_polygons()
 
-def get_lines_grid(models, (low, high), layer_distance, line_distance=None,
-        step_width=None, milling_style=MILLING_STYLE_CONVENTIONAL,
-        start_position=START_Z, pocketing_type=POCKETING_TYPE_NONE,
-        skip_first_layer=False, callback=None):
+
+def get_lines_grid(models, (low, high), layer_distance, line_distance=None, step_width=None,
+                   milling_style=MILLING_STYLE_CONVENTIONAL, start_position=START_Z,
+                   pocketing_type=POCKETING_TYPE_NONE, skip_first_layer=False, callback=None):
     # the lower limit is never below the model
     polygons = _get_sorted_polygons(models, callback=callback)
     if polygons:
@@ -427,17 +438,16 @@ def get_lines_grid(models, (low, high), layer_distance, line_distance=None,
         low[2] = max(low[2], low_limit_lines)
     # calculate pockets
     if pocketing_type != POCKETING_TYPE_NONE:
-        if not callback is None:
+        if callback is not None:
             callback(text="Generating pocketing polygons ...")
-        polygons = get_pocketing_polygons(polygons, line_distance,
-                pocketing_type, callback=callback)
+        polygons = get_pocketing_polygons(polygons, line_distance, pocketing_type,
+                                          callback=callback)
     # extract lines in correct order from all polygons
     lines = []
     for polygon in polygons:
         if callback:
             callback()
-        if polygon.is_closed and \
-                (milling_style == MILLING_STYLE_CONVENTIONAL):
+        if polygon.is_closed and (milling_style == MILLING_STYLE_CONVENTIONAL):
             polygon = polygon.copy()
             polygon.reverse()
         for line in polygon.get_lines():
@@ -449,7 +459,7 @@ def get_lines_grid(models, (low, high), layer_distance, line_distance=None,
         layers = [low[2]]
     else:
         layers = floatrange(low[2], high[2], inc=layer_distance,
-                reverse=bool(start_position & START_Z))
+                            reverse=bool(start_position & START_Z))
     # turn the generator into a list - otherwise the slicing fails
     layers = list(layers)
     # engrave ignores the top layer
@@ -462,13 +472,13 @@ def get_lines_grid(models, (low, high), layer_distance, line_distance=None,
             if callback:
                 callback()
             yield get_lines_layer(lines, z, last_z=last_z, step_width=None,
-                    milling_style=milling_style)
+                                  milling_style=milling_style)
             last_z = z
         # the last layer is used for a DropCutter operation
         if callback:
             callback()
-        yield get_lines_layer(lines, layers[-1], last_z=last_z,
-                step_width=step_width, milling_style=milling_style)
+        yield get_lines_layer(lines, layers[-1], last_z=last_z, step_width=step_width,
+                              milling_style=milling_style)
 
 
 def get_pocketing_polygons(polygons, offset, pocketing_type, callback=None):
@@ -489,8 +499,7 @@ def get_pocketing_polygons(polygons, offset, pocketing_type, callback=None):
         poly = pycam.Toolpath.OpenVoronoi.pocket_model(polygons, offset)
     else:
         _log.info("Failed to load openvoronoi library.")
-        poly = get_pocketing_polygons_simple(polygons, offset, pocketing_type,
-                callback)
+        poly = get_pocketing_polygons_simple(polygons, offset, pocketing_type, callback)
     return poly
 
 
@@ -513,7 +522,7 @@ def get_pocketing_polygons_simple(polygons, offset, pocketing_type, callback=Non
             else:
                 other_polygons.append(poly)
     else:
-        _log.warning("Invalid pocketing type given: %d" % str(pocketing_type))
+        _log.warning("Invalid pocketing type given: %d", str(pocketing_type))
         return polygons
     # For now we use only the polygons that do not surround any other
     # polygons. Sorry - the pocketing is currently very simple ...
@@ -545,4 +554,3 @@ def get_pocketing_polygons_simple(polygons, offset, pocketing_type, callback=Non
             current_queue = next_queue
             next_queue = []
     return pocket_polygons
-

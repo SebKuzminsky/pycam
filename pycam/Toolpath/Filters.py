@@ -54,8 +54,7 @@ def toolpath_filter(our_category, key):
     def toolpath_filter_inner(func):
         def get_filter_func(self, category, parameters, previous_filters):
             if (category == our_category):
-                if isinstance(key, (list, tuple, set)) and \
-                        any([(k in parameters) for k in key]):
+                if isinstance(key, (list, tuple, set)) and any([(k in parameters) for k in key]):
                     # "key" is a list and at least one parameter is found
                     arg_dict = {}
                     for one_key in key:
@@ -91,8 +90,8 @@ class BaseFilter(object):
         self.settings = dict(kwargs)
         # fail if too many arguments (without names) are given
         if len(args) > len(self.PARAMS):
-            raise ValueError("Too many parameters: " + \
-                    "%d (expected: %d)" % (len(args), len(self.PARAMS)))
+            raise ValueError("Too many parameters: %d (expected: %d)"
+                             % (len(args), len(self.PARAMS)))
         # fail if too few arguments (without names) are given
         for index, key in enumerate(self.PARAMS):
             if len(args) > index:
@@ -111,7 +110,7 @@ class BaseFilter(object):
         if hasattr(toolpath, "path") and hasattr(toolpath, "filters"):
             toolpath = toolpath.path
         # use a copy of the list -> changes will be permitted
-        _log.debug("Applying toolpath filter: %s" % self.__class__)
+        _log.debug("Applying toolpath filter: %s", self.__class__)
         return self.filter_toolpath(list(toolpath))
 
     def __repr__(self):
@@ -127,12 +126,11 @@ class BaseFilter(object):
     __ge__ = lambda self, other: self.WEIGHT >= other.WEIGHT
 
     def _render_settings(self):
-        return ", ".join(["%s=%s" % (key, self.settings[key])
-                for key in self.settings])
+        return ", ".join(["%s=%s" % (key, self.settings[key]) for key in self.settings])
 
     def filter_toolpath(self, toolpath):
-        raise NotImplementedError("The filter class %s failed to " + \
-                "implement the 'filter_toolpath' method" % str(type(self)))
+        raise NotImplementedError(("The filter class %s failed to implement the 'filter_toolpath' "
+                                   "method") % str(type(self)))
 
 
 class SafetyHeightFilter(BaseFilter):
@@ -145,8 +143,7 @@ class SafetyHeightFilter(BaseFilter):
         max_height = None
         new_path = []
         safety_pending = False
-        get_safe = lambda pos: tuple((pos[0], pos[1],
-                self.settings["safety_height"]))
+        get_safe = lambda pos: tuple((pos[0], pos[1], self.settings["safety_height"]))
         for move_type, args in toolpath:
             if move_type == MOVE_SAFETY:
                 safety_pending = True
@@ -164,10 +161,8 @@ class SafetyHeightFilter(BaseFilter):
                         pass
                     else:
                         # go up, sideways and down
-                        new_path.append((MOVE_STRAIGHT_RAPID,
-                                get_safe(last_pos)))
-                        new_path.append((MOVE_STRAIGHT_RAPID,
-                                get_safe(new_pos)))
+                        new_path.append((MOVE_STRAIGHT_RAPID, get_safe(last_pos)))
+                        new_path.append((MOVE_STRAIGHT_RAPID, get_safe(new_pos)))
                 else:
                     # we are in the middle of usual moves -> keep going
                     pass
@@ -180,8 +175,8 @@ class SafetyHeightFilter(BaseFilter):
         if safety_pending and last_pos:
             new_path.append((MOVE_STRAIGHT_RAPID, get_safe(last_pos)))
         if max_height > self.settings["safety_height"]:
-            _log.warn("Toolpath exceeds safety height: %f => %f" % \
-                    (max_height, self.settings["safety_height"]))
+            _log.warn("Toolpath exceeds safety height: %f => %f",
+                      max_height, self.settings["safety_height"])
         return new_path
 
 
@@ -219,8 +214,8 @@ class PathMode(MachineSetting):
 
     def _render_settings(self):
         return "%d / %d / %d" % (self.settings["path_mode"],
-                self.settings["motion_tolerance"],
-                self.settings["naive_tolerance"])
+                                 self.settings["motion_tolerance"],
+                                 self.settings["naive_tolerance"])
 
 
 class SelectTool(BaseFilter):
@@ -231,11 +226,9 @@ class SelectTool(BaseFilter):
     def filter_toolpath(self, toolpath):
         index = 0
         # skip all non-moves
-        while (index < len(toolpath)) and \
-                (not toolpath[0][0] in MOVES_LIST):
+        while (index < len(toolpath)) and (toolpath[index][0] not in MOVES_LIST):
             index += 1
-        toolpath.insert(index, (MACHINE_SETTING,
-                ("select_tool", self.settings["tool_id"])))
+        toolpath.insert(index, (MACHINE_SETTING, ("select_tool", self.settings["tool_id"])))
         return toolpath
 
 
@@ -248,13 +241,14 @@ class TriggerSpindle(BaseFilter):
         def enable_spindle(path, index):
             path.insert(index, (MACHINE_SETTING, ("spindle_enabled", True)))
             if self.settings["delay"]:
-                path.insert(index + 1,
-                    (MACHINE_SETTING, ("delay", self.settings["delay"])))
+                path.insert(index + 1, (MACHINE_SETTING, ("delay", self.settings["delay"])))
+
         def disable_spindle(path, index):
             path.insert(index, (MACHINE_SETTING, ("spindle_enabled", False)))
+
         # find all positions of "select_tool"
         tool_changes = [index for index, (move, args) in enumerate(toolpath)
-                if (move == MACHINE_SETTING) and (args[0] == "select_tool")]
+                        if (move == MACHINE_SETTING) and (args[0] == "select_tool")]
         if tool_changes:
             tool_changes.reverse()
             for index in tool_changes:
@@ -381,6 +375,7 @@ class MovesOnly(BaseFilter):
         return [item for item in toolpath
                 if item[0] in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID)]
 
+
 class Copy(BaseFilter):
 
     WEIGHT = 100
@@ -417,7 +412,7 @@ def _get_num_converter(step_width):
     format_string = "%%.%df" % digits
     conv_func = lambda number: decimal.Decimal(format_string % number)
     return conv_func, format_string
-    
+
 
 class StepWidth(BaseFilter):
 
@@ -437,8 +432,7 @@ class StepWidth(BaseFilter):
         for move_type, args in toolpath:
             if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
                 if last_pos:
-                    diff = [(abs(conv[i](last_pos[i]) - conv[i](args[i])))
-                            for i in range(3)]
+                    diff = [(abs(conv[i](last_pos[i]) - conv[i](args[i]))) for i in range(3)]
                     if all([d < lim for d, lim in zip(diff, minimum_steps)]):
                         # too close: ignore this move
                         continue
@@ -446,7 +440,7 @@ class StepWidth(BaseFilter):
                 # this, but it sadly breaks other code pieces that rely on
                 # floats instead of decimals at this point. The output
                 # conversion needs to move into the GCode output hook.
-                #destination = [conv[i](args[i]) for i in range(3)]
+#               destination = [conv[i](args[i]) for i in range(3)]
                 destination = args
                 path.append((move_type, destination))
                 last_pos = args
@@ -455,4 +449,3 @@ class StepWidth(BaseFilter):
                 last_pos = None
                 path.append((move_type, args))
         return path
-
