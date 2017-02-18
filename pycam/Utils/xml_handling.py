@@ -45,8 +45,10 @@ def get_xml(item, name=None):
         leaf.text = str(item)
         return leaf
 
+
 def parse_xml_dict(item):
     pass
+
 
 def get_xml_lines(item):
     lines = []
@@ -70,4 +72,3 @@ def get_xml_lines(item):
         else:
             indent += 2
     return lines
-

@@ -21,8 +21,9 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import pycam.Utils.log
 import os
+
+import pycam.Utils.log
 
 
 DEFAULT_NAMES = ("normal", "default", "standard")
@@ -114,12 +115,10 @@ class FontCache(object):
         filename = self._unused_font_files.pop(0)
         if progress:
             callback = progress.update
-            progress.update(text="Loading font file %s" % \
-                    os.path.basename(filename))
+            progress.update(text="Loading font file %s" % os.path.basename(filename))
         else:
             callback = None
         charset = pycam.Importers.CXFImporter.import_font(filename, callback=callback)
-        if not charset is None:
+        if charset is not None:
             for name in charset.get_names():
                 self.fonts[name] = charset
-

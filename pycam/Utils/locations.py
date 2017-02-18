@@ -60,6 +60,7 @@ log = pycam.Utils.log.get_logger()
 def get_ui_file_location(filename, silent=False):
     return get_data_file_location(os.path.join(UI_SUBDIR, filename), silent=silent)
 
+
 def get_data_file_location(filename, silent=False):
     for base_dir in DATA_BASE_DIRS:
         test_path = os.path.join(base_dir, filename)
@@ -68,41 +69,40 @@ def get_data_file_location(filename, silent=False):
     else:
         if not silent:
             lines = []
-            lines.append("Failed to locate a resource file (%s) in %s!" \
-                    % (filename, DATA_BASE_DIRS))
-            lines.append("You can extend the search path by setting the " \
-                    + "environment variable '%s'." % str(DATA_DIR_ENVIRON_KEY))
+            lines.append("Failed to locate a resource file (%s) in %s!"
+                         % (filename, DATA_BASE_DIRS))
+            lines.append("You can extend the search path by setting the environment variable '%s'."
+                         % str(DATA_DIR_ENVIRON_KEY))
             log.error(os.linesep.join(lines))
         return None
+
 
 def get_font_dir():
     if FONT_DIR_OVERRIDE:
         if os.path.isdir(FONT_DIR_OVERRIDE):
             return FONT_DIR_OVERRIDE
         else:
-            log.warn(("You specified a font dir that does not exist (%s). " \
-                    + "I will ignore it.") % FONT_DIR_OVERRIDE)
+            log.warn("You specified a font dir that does not exist (%s). I will ignore it."
+                     % FONT_DIR_OVERRIDE)
     font_dir = get_data_file_location(FONTS_SUBDIR, silent=True)
-    if not font_dir is None:
+    if font_dir is not None:
         return font_dir
     else:
-        log.warn(("Failed to locate the fonts directory '%s' below '%s'. " \
-                + "Falling back to '%s'.") \
+        log.warn("Failed to locate the fonts directory '%s' below '%s'. Falling back to '%s'."
                  % (FONTS_SUBDIR, DATA_BASE_DIRS, ":".join(FONT_DIRS_FALLBACK)))
         for font_dir_fallback in FONT_DIRS_FALLBACK:
             if os.path.isdir(font_dir_fallback):
                 return font_dir_fallback
         else:
-            log.warn(("None of the fallback font directories (%s) exist. " + \
-                    "No fonts will be available.") % \
-                    ":".join(FONT_DIRS_FALLBACK))
+            log.warn(("None of the fallback font directories (%s) exist. No fonts will be "
+                      "available.") % ":".join(FONT_DIRS_FALLBACK))
             return None
+
 
 def get_external_program_location(key):
     extensions = ["", ".exe"]
     potential_names = ["%s%s" % (key, ext) for ext in extensions]
-    windows_program_directories = {'inkscape': ['Inkscape'],
-            'pstoedit': ['pstoedit']}
+    windows_program_directories = {'inkscape': ['Inkscape'], 'pstoedit': ['pstoedit']}
     # check the windows path via win32api
     try:
         import win32api
@@ -124,10 +124,9 @@ def get_external_program_location(key):
     # do a manual scan in the programs directory (only for windows)
     program_dirs = ["C:\\Program Files", "C:\\Programme"]
     try:
-        from win32com.shell import shellcon, shell            
+        from win32com.shell import shellcon, shell
         # The frozen application somehow dows not provide this setting.
-        program_dirs.insert(0, shell.SHGetFolderPath(0,
-                shellcon.CSIDL_PROGRAM_FILES, 0, 0))
+        program_dirs.insert(0, shell.SHGetFolderPath(0, shellcon.CSIDL_PROGRAM_FILES, 0, 0))
     except ImportError:
         # no other options for non-windows systems
         pass
@@ -141,6 +140,7 @@ def get_external_program_location(key):
     # nothing found
     return None
 
+
 def get_all_program_locations(core):
     # TODO: this should move to a plugin
     # import all external program locations into a dict
@@ -150,4 +150,3 @@ def get_all_program_locations(core):
         if key.startswith(prefix) and core[key]:
             program_locations[key[len(prefix):]] = core[key]
     return program_locations
-

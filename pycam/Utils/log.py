@@ -30,6 +30,7 @@ def is_debug():
     log = get_logger()
     return log.level <= logging.DEBUG
 
+
 def get_logger(suffix=None):
     name = "PyCAM"
     if suffix:
@@ -38,6 +39,7 @@ def get_logger(suffix=None):
     if len(logger.handlers) == 0:
         init_logger(logger)
     return logger
+
 
 def init_logger(log, logfilename=None):
     if logfilename:
@@ -56,6 +58,7 @@ def init_logger(log, logfilename=None):
     buffer_handler.addFilter(RepetitionsFilter(buffer_handler, log))
     log.addHandler(buffer_handler)
 
+
 def _push_back_old_logs(new_handler):
     log = get_logger()
     # push all older log items into the new handler
@@ -63,28 +66,31 @@ def _push_back_old_logs(new_handler):
         if hasattr(handler, "push_back"):
             handler.push_back(new_handler)
 
+
 def add_stream(stream, level=None):
     log = get_logger()
     logstream = logging.StreamHandler(stream)
-    if not level is None:
+    if level is not None:
         logstream.setLevel(level)
     logstream.addFilter(RepetitionsFilter(logstream, log))
     log.addHandler(logstream)
     _push_back_old_logs(logstream)
 
+
 def add_hook(callback, level=None):
     log = get_logger()
     loghook = HookHandler(callback)
-    if not level is None:
+    if level is not None:
         loghook.setLevel(level)
     loghook.addFilter(RepetitionsFilter(loghook, log))
     log.addHandler(loghook)
     _push_back_old_logs(loghook)
 
+
 def add_gtk_gui(parent_window, level=None):
     log = get_logger()
     loggui = GTKHandler(parent_window)
-    if not level is None:
+    if level is not None:
         loggui.setLevel(level)
     loggui.addFilter(RepetitionsFilter(loggui, log))
     log.addHandler(loggui)
@@ -109,17 +115,15 @@ class RepetitionsFilter(logging.Filter):
         now = time.time()
         if self._logger.getEffectiveLevel() <= logging.DEBUG:
             # skip only identical lines in debug mode
-            message_equal = self._last_record and \
-                    (record.getMessage() == self._last_record.getMessage())
+            message_equal = (self._last_record
+                             and (record.getMessage() == self._last_record.getMessage()))
             similarity = "identical"
         else:
             # skip similar lines in non-debug modes
-            message_equal = self._last_record and \
-                    record.getMessage().startswith(
-                        self._last_record.getMessage()[:self._cmp_len])
+            message_equal = self._last_record and record.getMessage().startswith(
+                self._last_record.getMessage()[:self._cmp_len])
             similarity = "similar"
-        if not is_debug() and \
-                (message_equal and (now - self._last_timestamp <= self._delay)):
+        if not is_debug() and (message_equal and (now - self._last_timestamp <= self._delay)):
             self._suppressed_messages_counter += 1
             return False
         else:
@@ -187,21 +191,13 @@ class GTKHandler(logging.Handler):
         else:
             message_type = gtk.MESSAGE_ERROR
             message_title = "Error"
-        window = gtk.MessageDialog(self.parent_window, type=message_type,
-                buttons=gtk.BUTTONS_OK)
+        window = gtk.MessageDialog(self.parent_window, type=message_type, buttons=gtk.BUTTONS_OK)
         window.set_markup(str(message))
-        try:
-            message_title = message_title.encode("utf-8")
-        except UnicodeDecodeError:
-            # remove all non-ascii characters
-            message_title = "".join([char for char in message_title
-                    if ord(char) < 128])
+        message_title = message_title.encode("utf-8", "ignore")
         window.set_title(message_title)
         # make sure that the window gets destroyed later
-        def close_window(dialog, *args):
-            dialog.destroy()
         for signal in ("close", "response"):
-            window.connect(signal, close_window)
+            window.connect(signal, lambda dialog, *args: dialog.destroy())
         # accept "destroy" action -> remove window
         window.connect("destroy", lambda *args: True)
         # show the window, but don't wait for a response
@@ -218,4 +214,3 @@ class HookHandler(logging.Handler):
         message = self.format(record)
         message_type = record.levelname
         self.callback(message_type, message, record=record)
-

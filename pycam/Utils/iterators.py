@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+
 class Iterator(object):
     def __init__(self, seq, start=0):
         self.seq = seq
@@ -103,7 +104,7 @@ if __name__ == "__main__":
     print i.peek()
     while True:
         val = i.next()
-        if val == None:
+        if val is None:
             break
         if val == 4:
             i.insertBefore(3)
@@ -139,4 +140,3 @@ if __name__ == "__main__":
     i.remove(4)
     print "remove(4) : ", i.peek()
     print "l=", l
-
