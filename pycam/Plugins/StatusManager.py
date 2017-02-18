@@ -75,14 +75,21 @@ class StatusManager(pycam.Plugins.PluginBase):
             # TODO: use "startup" hook instead
             if autoload_task_filename:
                 self.open_task_settings_file(autoload_task_filename)
-                ("LoadTaskSettings", self.load_task_settings_file, None, "<Control>t"),
-                ("SaveTaskSettings", self.save_task_settings_file,
-                 lambda: self.last_task_settings_uri, None),
-                ("SaveAsTaskSettings", self.save_task_settings_file, None, None),
+            self._gtk_handlers = []
+            for objname, callback, data, accel_key in (
+                    ("LoadTaskSettings", self.load_task_settings_file, None, "<Control>t"),
+                    ("SaveTaskSettings", self.save_task_settings_file,
+                     lambda: self.last_task_settings_uri, None),
+                    ("SaveAsTaskSettings", self.save_task_settings_file, None, None)):
+                obj = self.gui.get_object(objname)
+                self.register_gtk_accelerator("status_manager", obj, accel_key, objname)
+                self._gtk_handlers.append((obj, "activate", callback))
+            self.register_gtk_handlers(self._gtk_handlers)
         return True
 
     def teardown(self):
-        pass
+        if self.gui:
+            self.unregister_gtk_handlers(self._gtk_handlers)
 
     def register_status_type(self, name, the_type, parse_func, format_func):
         if name in self._types:
