@@ -17,11 +17,11 @@ import math
 # this import requires the openvoronoi library (optional) - see the module documentation above
 import openvoronoi
 
-import pycam.Utils.log
+from pycam.Geometry import epsilon
+import pycam.Geometry.Model
 from pycam.Geometry.Line import Line
 import pycam.Geometry.Polygon
-import pycam.Geometry.Model
-from pycam.Geometry.utils import epsilon
+import pycam.Utils.log
 
 _log = pycam.Utils.log.get_logger()
 

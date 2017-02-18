@@ -27,10 +27,10 @@ take a look at the related blog posting describing this algorithm:
 
 import math
 
+from pycam.Geometry import ceil, epsilon, sqrt
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.PointUtils import padd, pcross, pdot, pmul, pnorm, pnormalized, psub
-from pycam.Geometry.utils import epsilon, ceil, sqrt
 from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
 from pycam.Utils import ProgressCounter
 from pycam.Utils.threading import run_in_parallel

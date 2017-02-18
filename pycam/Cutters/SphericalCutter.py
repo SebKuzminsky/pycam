@@ -21,12 +21,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry import INFINITE, epsilon, sqrt
 from pycam.Cutters.BaseCutter import BaseCutter
 from pycam.Geometry import Matrix
 from pycam.Geometry.intersection import intersect_sphere_plane, intersect_sphere_point, \
         intersect_sphere_line
 from pycam.Geometry.PointUtils import padd, pdot, pmul, pnormsq, psub
-from pycam.Geometry.utils import INFINITE, epsilon, sqrt
 
 
 try:

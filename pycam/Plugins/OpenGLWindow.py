@@ -34,10 +34,10 @@ except (ImportError, RuntimeError):
 
 import gtk
 
-from pycam.Gui.OpenGLTools import draw_complete_model_view
+from pycam.Geometry import number, sqrt
 from pycam.Geometry.PointUtils import pcross, pmul, pnormalized
 import pycam.Geometry.Matrix as Matrix
-from pycam.Geometry.utils import sqrt, number
+from pycam.Gui.OpenGLTools import draw_complete_model_view
 import pycam.Plugins
 
 

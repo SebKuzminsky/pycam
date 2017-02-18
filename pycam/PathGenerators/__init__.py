@@ -21,8 +21,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry import epsilon, INFINITE
 from pycam.Geometry.PointUtils import pdist, pnorm, pnormalized, psub
-from pycam.Geometry.utils import INFINITE, epsilon
 
 
 class Hit(object):

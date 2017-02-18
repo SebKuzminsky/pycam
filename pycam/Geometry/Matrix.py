@@ -24,8 +24,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import math
 
+from pycam.Geometry import sqrt, number, epsilon
 from pycam.Geometry.PointUtils import pcross, pnormalized
-from pycam.Geometry.utils import sqrt, number, epsilon
 
 
 TRANSFORMATIONS = {

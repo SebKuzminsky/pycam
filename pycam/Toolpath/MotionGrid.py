@@ -22,13 +22,13 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import math
 
+from pycam.Geometry import epsilon
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.PointUtils import padd, pcross, pmul, pnormalized, psub
 from pycam.Geometry.Polygon import PolygonSorter
-from pycam.Geometry.utils import epsilon
+from pycam.Geometry.utils import get_angle_pi, get_points_of_arc
 import pycam.Utils.log
-import pycam.Geometry
 
 
 _log = pycam.Utils.log.get_logger()
@@ -289,16 +289,15 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width, grid_
                     center = padd(previous, offset)
                     up_vector = pnormalized(pcross(psub(previous, center), psub(start, center)))
                     north = padd(center, (1.0, 0.0, 0.0, 'v'))
-                    angle_start = pycam.Geometry.get_angle_pi(north, center, previous, up_vector,
-                                                              pi_factor=True) * 180.0
-                    angle_end = pycam.Geometry.get_angle_pi(north, center, start, up_vector,
-                                                            pi_factor=True) * 180.0
+                    angle_start = get_angle_pi(north, center, previous, up_vector,
+                                               pi_factor=True) * 180.0
+                    angle_end = get_angle_pi(north, center, start, up_vector,
+                                             pi_factor=True) * 180.0
                     # TODO: remove these exceptions based on up_vector.z (get_points_of_arc does
                     #       not respect the plane, yet)
                     if up_vector[2] < 0:
                         angle_start, angle_end = -angle_end, -angle_start
-                    arc_points = pycam.Geometry.get_points_of_arc(center, radius, angle_start,
-                                                                  angle_end)
+                    arc_points = get_points_of_arc(center, radius, angle_start, angle_end)
                     if up_vector[2] < 0:
                         arc_points.reverse()
                     for arc_index in range(len(arc_points) - 1):

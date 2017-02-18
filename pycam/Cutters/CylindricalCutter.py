@@ -21,11 +21,11 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry import INFINITE, sqrt
 from pycam.Cutters.BaseCutter import BaseCutter
 from pycam.Geometry.intersection import intersect_circle_plane, intersect_circle_point, \
         intersect_circle_line
 from pycam.Geometry.PointUtils import padd, psub
-from pycam.Geometry.utils import INFINITE, sqrt
 
 
 try:

@@ -25,11 +25,11 @@ import re
 import StringIO
 from struct import unpack
 
+from pycam.Geometry import epsilon
+from pycam.Geometry.Model import Model
+from pycam.Geometry.PointKdtree import PointKdtree
 from pycam.Geometry.PointUtils import pcross, pdot, pnormalized, psub
 from pycam.Geometry.Triangle import Triangle
-from pycam.Geometry.PointKdtree import PointKdtree
-from pycam.Geometry.utils import epsilon
-from pycam.Geometry.Model import Model
 import pycam.Utils.log
 import pycam.Utils
 log = pycam.Utils.log.get_logger()

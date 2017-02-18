@@ -24,7 +24,7 @@ import datetime
 
 import gobject
 
-from pycam.Geometry.utils import sqrt
+from pycam.Geometry import sqrt
 import pycam.Gui.common
 import pycam.Plugins
 # this requires ODE - we import it later, if necessary

@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.utils import INFINITE
+from pycam.Geometry import INFINITE
 from pycam.Geometry.Path import Path
 from pycam.Utils.iterators import Iterator, CyclicIterator
 

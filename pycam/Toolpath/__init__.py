@@ -20,16 +20,15 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import math
 from itertools import groupby
+import math
 import os
 
-from OpenGL.arrays import vbo
 import numpy
-from numpy import array
+from OpenGL.arrays import vbo
 
+from pycam.Geometry import epsilon, number
 from pycam.Geometry.PointUtils import padd, pcross, pdist, pmul, pnorm, pnormalized, psub
-from pycam.Geometry.utils import number, epsilon
 import pycam.Utils.log
 
 
@@ -270,12 +269,12 @@ class Toolpath(object):
                             vertices.insert(index, p)
                             index += 1
                         triangle_indices.append(store_vertices[p])
-            triangle_indices = array(triangle_indices, dtype=numpy.int32)
+            triangle_indices = numpy.array(triangle_indices, dtype=numpy.int32)
             indices.append(store_vertices[path[0][-1]])
             # this list comprehension removes consecutive duplicate points.
-            indices = array([x[0] for x in groupby(indices)], dtype=numpy.int32)
+            indices = numpy.array([x[0] for x in groupby(indices)], dtype=numpy.int32)
             output.append((indices, triangle_indices, path[1]))
-        vertices = array(vertices, dtype=numpy.float32)
+        vertices = numpy.array(vertices, dtype=numpy.float32)
         self.opengl_coords = vbo.VBO(vertices)
         self.opengl_indices = output
 

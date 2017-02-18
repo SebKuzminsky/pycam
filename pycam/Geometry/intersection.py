@@ -21,12 +21,12 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-from pycam.Utils.polynomials import poly4_roots
-from pycam.Geometry.utils import INFINITE, sqrt, epsilon
+from pycam.Geometry import INFINITE, sqrt, epsilon
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Line import Line
 from pycam.Geometry.PointUtils import padd, pcross, pdiv, pdot, pmul, pnorm, pnormalized, \
         pnormsq, psub
+from pycam.Utils.polynomials import poly4_roots
 
 
 def isNear(a, b):

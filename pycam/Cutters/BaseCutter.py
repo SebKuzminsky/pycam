@@ -23,10 +23,10 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import uuid
 
+from pycam.Geometry import number, INFINITE, epsilon
 from pycam.Geometry import IDGenerator
 from pycam.Geometry.intersection import intersect_cylinder_point, intersect_cylinder_line
 from pycam.Geometry.PointUtils import padd, pdot, psub
-from pycam.Geometry.utils import number, INFINITE, epsilon
 
 
 class BaseCutter(IDGenerator):

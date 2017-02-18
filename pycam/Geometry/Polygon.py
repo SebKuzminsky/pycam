@@ -20,12 +20,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry import epsilon, number, TransformableContainer, IDGenerator
 from pycam.Geometry.Line import Line
+from pycam.Geometry.Plane import Plane
 from pycam.Geometry.PointUtils import padd, pcross, pdist, pdiv, pdot, pis_inside, pmul, pnorm, \
         pnormsq, pnormalized, psub
-from pycam.Geometry.Plane import Plane
-from pycam.Geometry import TransformableContainer, IDGenerator, get_bisector
-from pycam.Geometry.utils import number, epsilon
+from pycam.Geometry.utils import get_bisector
 from pycam.Utils import log
 log = log.get_logger()
 # import later to avoid circular imports

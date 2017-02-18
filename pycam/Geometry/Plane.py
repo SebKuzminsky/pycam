@@ -20,8 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import TransformableContainer, IDGenerator
-from pycam.Geometry.utils import INFINITE, epsilon
+from pycam.Geometry import epsilon, INFINITE, TransformableContainer, IDGenerator
 from pycam.Geometry.PointUtils import padd, pcross, pdot, pmul, pnorm, pnormalized
 
 # "Line" is imported later to avoid circular imports

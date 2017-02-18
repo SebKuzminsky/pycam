@@ -20,8 +20,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry import number
 import pycam.Geometry.Model
-from pycam.Geometry.utils import number
 from pycam.PathGenerators import DropCutter, PushCutter, EngraveCutter, ContourFollow
 from pycam.PathProcessors import PolygonCutter, ContourCutter
 import pycam.Toolpath

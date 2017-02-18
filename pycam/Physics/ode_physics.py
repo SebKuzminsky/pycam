@@ -27,8 +27,8 @@ try:
 except ImportError:
     ode = None
 
+from pycam.Geometry import number
 from pycam.Geometry.Triangle import Triangle
-from pycam.Geometry.utils import number
 
 
 ShapeCylinder = lambda radius, height: ode.GeomCylinder(None, radius, height)

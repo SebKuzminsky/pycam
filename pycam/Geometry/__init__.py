@@ -21,170 +21,39 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import decimal
 import math
 
-import pycam.Geometry.Matrix as Matrix
-from pycam.Geometry.Line import Line
-from pycam.Geometry.PointUtils import padd, pcross, pdist, pdot, pmul, pnormalized, psub, \
-        ptransform_by_matrix
-from pycam.Geometry.utils import epsilon, ceil
-from pycam.Utils import log
-log = log.get_logger()
+import pycam.Utils.log
+_log = pycam.Utils.log.get_logger()
 
 
-def get_bisector(p1, p2, p3, up_vector):
-    """ Calculate the bisector between p1, p2 and p3, whereas p2 is the origin
-    of the angle.
-    """
-    d1 = pnormalized(psub(p2, p1))
-    d2 = pnormalized(psub(p2, p3))
-    bisector_dir = pnormalized(padd(d1, d2))
-    if bisector_dir is None:
-        # the two vectors pointed to opposite directions
-        bisector_dir = pnormalized(pcross(d1, up_vector))
-    else:
-        skel_up_vector = pcross(bisector_dir, psub(p2, p1))
-        if pdot(up_vector, skel_up_vector) < 0:
-            # reverse the skeleton vector to point outwards
-            bisector_dir = pmul(bisector_dir, -1)
-    return bisector_dir
+INFINITE = 100000
+epsilon = 0.00001
+
+# use the "decimal" module for fixed precision numbers (only for debugging)
+_use_precision = False
 
 
-def get_angle_pi(p1, p2, p3, up_vector, pi_factor=False):
-    """ calculate the angle between three points
-    Visualization:
-            p3
-           /
-          /
-         /\
-        /  \
-      p2--------p1
-    The result is in a range between 0 and 2*PI.
-    """
-    d1 = pnormalized(psub(p2, p1))
-    d2 = pnormalized(psub(p2, p3))
-    if (d1 is None) or (d2 is None):
-        return 2 * math.pi
-    angle = math.acos(pdot(d1, d2))
-    # check the direction of the points (clockwise/anti)
-    # The code is taken from Polygon.get_area
-    value = [0, 0, 0]
-    for (pa, pb) in ((p1, p2), (p2, p3), (p3, p1)):
-        value[0] += pa[1] * pb[2] - pa[2] * pb[1]
-        value[1] += pa[2] * pb[0] - pa[0] * pb[2]
-        value[2] += pa[0] * pb[1] - pa[1] * pb[0]
-    area = up_vector[0] * value[0] + up_vector[1] * value[1] + up_vector[2] * value[2]
-    if area > 0:
-        # The points are in anti-clockwise order. Thus the angle is greater
-        # than 180 degree.
-        angle = 2 * math.pi - angle
-    if pi_factor:
-        # the result is in the range of 0..2
-        return angle / math.pi
-    else:
-        return angle
+# the lambda functions below are more efficient than function definitions
 
+if _use_precision:
+    ceil = lambda value: int((value + number(1).next_minus()) // 1)
+else:
+    ceil = lambda value: int(math.ceil(value))
 
-def get_points_of_arc(center, radius, a1, a2, plane=None, cords=32):
-    """ return the points for an approximated arc
+# return "0" for "-epsilon < value < 0" (to work around floating inaccuracies)
+# otherwise: return the sqrt function of the current type (could even raise
+# exceptions)
+if _use_precision:
+    sqrt = lambda value: (((value < -epsilon) or (value > 0)) and value.sqrt()) or 0
+else:
+    sqrt = lambda value: (((value < -epsilon) or (value > 0)) and math.sqrt(value)) or 0
 
-    @param center: center of the circle
-    @type center: pycam.Geometry.Point.Point
-    @param radius: radius of the arc
-    @type radius: float
-    @param a1: angle of the start (in degree)
-    @type a1: float
-    @param a2: angle of the end (in degree)
-    @type a2: float
-    @param plane: the plane of the circle (default: xy-plane)
-    @type plane: pycam.Geometry.Plane.Plane
-    @param cords: number of lines for a full circle
-    @type cords: int
-    @return: a list of points approximating the arc
-    @rtype: list(pycam.Geometry.Point.Point)
-    """
-    # TODO: implement 3D arc and respect "plane"
-    a1 = math.pi * a1 / 180
-    a2 = math.pi * a2 / 180
-    angle_diff = a2 - a1
-    if angle_diff < 0:
-        angle_diff += 2 * math.pi
-    if angle_diff >= 2 * math.pi:
-        angle_diff -= 2 * math.pi
-    if angle_diff == 0:
-        return []
-    num_of_segments = ceil(angle_diff / (2 * math.pi) * cords)
-    angle_segment = angle_diff / num_of_segments
-    points = []
-
-    def get_angle_point(angle):
-        return (center[0] + radius * math.cos(angle), center[1] + radius * math.sin(angle), 0)
-
-    points.append(get_angle_point(a1))
-    for index in range(num_of_segments):
-        points.append(get_angle_point(a1 + angle_segment * (index + 1)))
-    return points
-
-
-def get_bezier_lines(points_with_bulge, segments=32):
-    # TODO: add a recursive algorithm for more than two points
-    if len(points_with_bulge) != 2:
-        return []
-    else:
-        result_points = []
-        p1, bulge1 = points_with_bulge[0]
-        p2, bulge2 = points_with_bulge[1]
-        if not bulge1 and not bulge2:
-            # straight line
-            return [Line(p1, p2)]
-        straight_dir = pnormalized(psub(p2, p1))
-        bulge1 = math.atan(bulge1)
-        rot_matrix = Matrix.get_rotation_matrix_axis_angle((0, 0, 1), -2 * bulge1,
-                                                           use_radians=True)
-        dir1_mat = Matrix.multiply_vector_matrix((straight_dir[0], straight_dir[1],
-                                                  straight_dir[2]), rot_matrix)
-        dir1 = (dir1_mat[0], dir1_mat[1], dir1_mat[2], 'v')
-        if bulge2 is None:
-            bulge2 = bulge1
-        else:
-            bulge2 = math.atan(bulge2)
-        rot_matrix = Matrix.get_rotation_matrix_axis_angle((0, 0, 1), 2 * bulge2,
-                                                           use_radians=True)
-        dir2_mat = Matrix.multiply_vector_matrix((straight_dir[0], straight_dir[1],
-                                                  straight_dir[2]), rot_matrix)
-        dir2 = (dir2_mat[0], dir2_mat[1], dir2_mat[2], 'v')
-        # interpretation of bulge1 and bulge2:
-        # /// taken from http://paulbourke.net/dataformats/dxf/dxf10.html ///
-        # The bulge is the tangent of 1/4 the included angle for an arc
-        # segment, made negative if the arc goes clockwise from the start
-        # point to the end point; a bulge of 0 indicates a straight segment,
-        # and a bulge of 1 is a semicircle.
-        alpha = 2 * (abs(bulge1) + abs(bulge2))
-        dist = pdist(p2, p1)
-        # calculate the radius of the circumcircle - avoiding divide-by-zero
-        if (abs(alpha) < epsilon) or (abs(math.pi - alpha) < epsilon):
-            radius = dist / 2.0
-        else:
-            # see http://en.wikipedia.org/wiki/Law_of_sines
-            radius = abs(dist / math.sin(alpha / 2.0)) / 2.0
-        # The calculation of "factor" is based on random guessing - but it
-        # seems to work well.
-        factor = 4 * radius * math.tan(alpha / 4.0)
-        dir1 = pmul(dir1, factor)
-        dir2 = pmul(dir2, factor)
-        for index in range(segments + 1):
-            # t: 0..1
-            t = float(index) / segments
-            # see: http://en.wikipedia.org/wiki/Cubic_Hermite_spline
-            p = padd(pmul(p1, 2 * t ** 3 - 3 * t ** 2 + 1),
-                     padd(pmul(dir1, t ** 3 - 2 * t ** 2 + t),
-                          padd(pmul(p2, -2 * t ** 3 + 3 * t ** 2), pmul(dir2, t ** 3 - t ** 2))))
-            result_points.append(p)
-        # create lines
-        result = []
-        for index in range(len(result_points) - 1):
-            result.append(Line(result_points[index], result_points[index + 1]))
-        return result
+if _use_precision:
+    number = lambda value: decimal.Decimal(str(value))
+else:
+    number = float
 
 
 def _id_generator():
@@ -228,6 +97,7 @@ class TransformableContainer(object):
     """
 
     def transform_by_matrix(self, matrix, transformed_list=None, callback=None):
+        from pycam.Geometry.PointUtils import ptransform_by_matrix
         if transformed_list is None:
             transformed_list = []
         # Prevent any kind of loops or double transformations (e.g. Points in
@@ -247,9 +117,9 @@ class TransformableContainer(object):
                     elif isinstance(theval, list):
                         setattr(self, item, [ptransform_by_matrix(x, matrix) for x in theval])
                 elif isinstance(item, tuple):
-                    log.error("ERROR!! A tuple (Point, Vector) made it into base "
-                              "transform_by_matrix without a back reference. "
-                              "Point/Vector remains unchanged.")
+                    _log.error("ERROR!! A tuple (Point, Vector) made it into base "
+                               "transform_by_matrix without a back reference. "
+                               "Point/Vector remains unchanged.")
                 else:
                     item.transform_by_matrix(matrix, callback=callback)
             # run the callback - e.g. for a progress counter

@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.Letters import Charset
 from pycam.Geometry.Line import Line
-from pycam.Geometry import get_points_of_arc
+from pycam.Geometry.utils import get_points_of_arc
 import pycam.Utils.log
 import pycam.Utils
 

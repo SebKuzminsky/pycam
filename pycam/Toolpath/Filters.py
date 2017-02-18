@@ -23,12 +23,11 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import decimal
 
-from pycam.Toolpath import MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_SAFETY, \
-        MOVES_LIST, MACHINE_SETTING
-from pycam.Geometry.PointUtils import padd, psub, pmul, pdist, pnear, \
-        ptransform_by_matrix
+from pycam.Geometry import epsilon
 from pycam.Geometry.Line import Line
-from pycam.Geometry.utils import epsilon
+from pycam.Geometry.PointUtils import padd, psub, pmul, pdist, pnear, ptransform_by_matrix
+from pycam.Toolpath import MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_SAFETY, MOVES_LIST, \
+        MACHINE_SETTING
 import pycam.Utils.log
 
 

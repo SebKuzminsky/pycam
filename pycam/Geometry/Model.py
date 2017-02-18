@@ -21,18 +21,17 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import uuid
 import math
+import uuid
 
-from pycam.Geometry.Triangle import Triangle
+from pycam.Geometry import epsilon, INFINITE, TransformableContainer, IDGenerator
+from pycam.Geometry.Matrix import TRANSFORMATIONS
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Polygon import Polygon
 from pycam.Geometry.PointUtils import pcross, pdist, pnorm, pnormalized, psub
+from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
-from pycam.Geometry.Matrix import TRANSFORMATIONS
-from pycam.Geometry.utils import INFINITE, epsilon
-from pycam.Geometry import TransformableContainer, IDGenerator
 from pycam.Toolpath import Bounds
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log

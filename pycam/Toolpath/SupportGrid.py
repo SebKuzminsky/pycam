@@ -20,12 +20,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry import number
+from pycam.Geometry.Model import Model
+from pycam.Geometry.Plane import Plane
 from pycam.Geometry.PointUtils import padd, pcross, pdot, pdist, pdiv, pmul, pnormalized, psub
 from pycam.Geometry.Triangle import Triangle
-from pycam.Geometry.Plane import Plane
-from pycam.Geometry.Model import Model
-from pycam.Geometry.utils import number
-import pycam.Geometry
+from pycam.Geometry.utils import get_angle_pi, get_bisector
 
 
 def _get_triangles_for_face(pts):
@@ -185,11 +185,11 @@ class _BridgeCorner(object):
     def __init__(self, barycenter, location, p1, p2, p3):
         self.location = location
         self.position = p2
-        self.direction = pnormalized(pycam.Geometry.get_bisector(p1, p2, p3, self.up_vector))
+        self.direction = pnormalized(get_bisector(p1, p2, p3, self.up_vector))
         preferred_direction = pnormalized(psub(p2, barycenter))
         # direction_factor: 0..1 (bigger -> better)
         direction_factor = (pdot(preferred_direction, self.direction) + 1) / 2
-        angle = pycam.Geometry.get_angle_pi(p1, p2, p3, self.up_vector, pi_factor=True)
+        angle = get_angle_pi(p1, p2, p3, self.up_vector, pi_factor=True)
         # angle_factor: 0..1 (bigger -> better)
         if angle > 0.5:
             # use only angles > 90 degree

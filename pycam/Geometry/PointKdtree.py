@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.utils import epsilon
+from pycam.Geometry import epsilon
 from pycam.Geometry.kdtree import Node, kdtree
 
 

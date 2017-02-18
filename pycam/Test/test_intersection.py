@@ -19,11 +19,11 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import pycam.Test
+from pycam.Geometry import INFINITE
 import pycam.Geometry.intersection
-from pycam.Geometry.utils import INFINITE
-from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.Line import Line
+from pycam.Geometry.Triangle import Triangle
+import pycam.Test
 
 
 class CircleIntersections(pycam.Test.PycamTestCase):

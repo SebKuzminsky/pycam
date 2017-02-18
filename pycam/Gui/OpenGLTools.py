@@ -29,8 +29,8 @@ try:
 except (ImportError, RuntimeError):
     pass
 
+from pycam.Geometry import sqrt
 from pycam.Geometry.PointUtils import pcross, pnorm, pnormalized, psub
-from pycam.Geometry.utils import sqrt
 
 
 def keep_gl_mode(func):

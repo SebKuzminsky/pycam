@@ -27,11 +27,10 @@ try:
 except ImportError:
     GL_enabled = False
 
-from pycam.Geometry import TransformableContainer, IDGenerator
+from pycam.Geometry import epsilon, TransformableContainer, IDGenerator
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.PointUtils import (padd, pcross, pdist, pdist_sq, pdot, pmul, pnorm, pnormsq,
                                        pnormalized, psub)
-from pycam.Geometry.utils import epsilon
 # OpenGLTools will be imported later, if necessary
 # import pycam.Gui.OpenGLTools
 
