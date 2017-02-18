@@ -20,16 +20,14 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.utils import sqrt
-
 import math
 import sys
 
 import OpenGL.GL as GL
 import OpenGL.GLU as GLU
 import OpenGL.GLUT as GLUT
-
 from OpenGL.constant import Constant
+
 GLUT_WHEEL_UP = Constant('GLUT_WHEEL_UP', 3)
 GLUT_WHEEL_DOWN = Constant('GLUT_WHEEL_DOWN', 4)
 
@@ -59,6 +57,7 @@ shade_model = GL.GL_FLAT
 polygon_mode = GL.GL_FILL
 width = 320
 height = 200
+
 
 # A general OpenGL initialization function.  Sets all of the initial parameters.
 def InitGL(Width, Height):
@@ -103,6 +102,7 @@ def InitGL(Width, Height):
 
     GL.glPolygonMode(GL.GL_FRONT_AND_BACK, polygon_mode)
 
+
 def ReSizeGLScene(Width, Height):
     # Prevent A Divide By Zero If The Window Is Too Small
     if Height == 0:
@@ -119,18 +119,22 @@ def ReSizeGLScene(Width, Height):
     GLU.gluPerspective(60.0, float(Width)/float(Height), 0.1, 100.0)
     GL.glMatrixMode(GL.GL_MODELVIEW)
 
+
 # The main drawing function.
 def DrawGLScene():
     global xrot, yrot, zrot, scale, xdist, ydist, zdist, light
 
     # Clear The Screen And The Depth Buffer
     GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-    GL.glLoadIdentity()					# Reset The View
-    GL.glTranslatef(xdist, ydist, zdist)			# Move Into The Screen
+    # Reset The View
+    GL.glLoadIdentity()
+    # Move Into The Screen
+    GL.glTranslatef(xdist, ydist, zdist)
 
-    GL.glRotatef(xrot, 1.0, 0.0, 0.0)			# Rotate The Cube On It's X Axis
-    GL.glRotatef(yrot, 0.0, 1.0, 0.0)			# Rotate The Cube On It's Y Axis
-    GL.glRotatef(zrot, 0.0, 0.0, 1.0)			# Rotate The Cube On It's Z Axis
+    # Rotate The Cube
+    GL.glRotatef(xrot, 1.0, 0.0, 0.0)
+    GL.glRotatef(yrot, 0.0, 1.0, 0.0)
+    GL.glRotatef(zrot, 0.0, 0.0, 1.0)
     GL.glScalef(scale, scale, scale)
     if light:
         GL.glEnable(GL.GL_LIGHTING)
@@ -143,6 +147,7 @@ def DrawGLScene():
     # Since this is double buffered, swap the buffers to display what just got
     # drawn.
     GLUT.glutSwapBuffers()
+
 
 # The function called whenever a key is pressed
 def keyPressed(key, x, y):
@@ -162,19 +167,23 @@ def keyPressed(key, x, y):
         xrot = 110
         yrot = 180
         zrot = 250
-    elif key == 'T': # top
+    elif key == 'T':
+        # top
         xrot = 0
         yrot = 0
         zrot = 0
-    elif key == 'F': # front
+    elif key == 'F':
+        # front
         xrot = -90
         yrot = 0
         zrot = 0
-    elif key == 'R': # right
+    elif key == 'R':
+        # right
         xrot = -90
         yrot = 0
         zrot = -90
-    elif key == 'L': # left
+    elif key == 'L':
+        # left
         xrot = -90
         yrot = 0
         zrot = +90
@@ -193,11 +202,13 @@ def keyPressed(key, x, y):
     elif _KeyHandlerFunc:
         _KeyHandlerFunc(key, x, y)
 
+
 class mouseState(object):
     button = None
     state = None
     x = 0
     y = 0
+
 
 def mousePressed(button, state, x, y):
     global xrot, yrot, zrot, xdist, ydist, zdist, scale
@@ -205,43 +216,43 @@ def mousePressed(button, state, x, y):
         scale *= 1.1
     elif button == GLUT_WHEEL_UP:
         scale /= 1.1
-
     mouseState.button = button
     mouseState.state = state
     mouseState.x = float(x)
     mouseState.y = float(y)
+
 
 def mouseMoved(x, y):
     global xrot, yrot, zrot, xdist, ydist, zdist, scale
     global width, height
     x = float(x)
     y = float(y)
-    a1 = math.atan2(mouseState.y-height/2.0, mouseState.x-width/2.0)
-    r1 = sqrt((mouseState.y - height / 2.0) ** 2 \
-            + (mouseState.x - width / 2.0) ** 2)
-    a2 = math.atan2(y-height/2.0, x-width/2.0)
-    r2 = sqrt((y - height / 2.0) ** 2 + (x - width / 2.0) ** 2)
+    # TODO: can these unused formulas be thrown away?
+#    a1 = math.atan2(mouseState.y - height / 2.0, mouseState.x - width / 2.0)
+#    r1 = sqrt((mouseState.y - height / 2.0) ** 2 + (mouseState.x - width / 2.0) ** 2)
+#    a2 = math.atan2(y - height / 2.0, x - width / 2.0)
+#    r2 = sqrt((y - height / 2.0) ** 2 + (x - width / 2.0) ** 2)
     if (mouseState.button == GLUT.GLUT_LEFT_BUTTON) \
             or (mouseState.button == GLUT.GLUT_RIGHT_BUTTON):
-        a3 = math.acos(mouseState.x/width-0.5)
-        a4 = math.acos(x/width-0.5)
-        zrot = zrot - (a4-a3)*180/math.pi*2
+        a3 = math.acos(mouseState.x / width - 0.5)
+        a4 = math.acos(x / width - 0.5)
+        zrot = zrot - (a4 - a3) * 180 / math.pi * 2
     if mouseState.button == GLUT.GLUT_RIGHT_BUTTON:
-        a3 = math.acos(mouseState.y/height-0.5)
-        a4 = math.acos(y/height-0.5)
+        a3 = math.acos(mouseState.y / height - 0.5)
+        a4 = math.acos(y / height - 0.5)
         if x > width / 2.0:
-            yrot = yrot + (a4-a3)*180/math.pi*2
+            yrot = yrot + (a4 - a3) * 180 / math.pi * 2
         else:
-            yrot = yrot - (a4-a3)*180/math.pi*2
+            yrot = yrot - (a4 - a3) * 180 / math.pi * 2
     if mouseState.button == GLUT.GLUT_LEFT_BUTTON:
-        a3 = math.acos(mouseState.y/width-0.5)
-        a4 = math.acos(y/width-0.5)
-        xrot = xrot - (a4-a3)*180/math.pi*2
+        a3 = math.acos(mouseState.y / width - 0.5)
+        a4 = math.acos(y/width - 0.5)
+        xrot = xrot - (a4 - a3) * 180 / math.pi * 2
     mouseState.x = x
     mouseState.y = y
 
-def Visualization(title, drawScene=DrawGLScene, width=320, height=200,
-        handleKey=None):
+
+def Visualization(title, drawScene=DrawGLScene, width=320, height=200, handleKey=None):
     global window, _DrawCurrentSceneFunc, _KeyHandlerFunc
     GLUT.glutInit(sys.argv)
 
@@ -255,8 +266,7 @@ def Visualization(title, drawScene=DrawGLScene, width=320, height=200,
     #  RGBA color
     # Alpha components supported
     # Depth buffer
-    GLUT.glutInitDisplayMode(GLUT.GLUT_RGBA | GLUT.GLUT_DOUBLE \
-            | GLUT.GLUT_DEPTH)
+    GLUT.glutInitDisplayMode(GLUT.GLUT_RGBA | GLUT.GLUT_DOUBLE | GLUT.GLUT_DEPTH)
 
     # get a 640 x 480 window
     GLUT.glutInitWindowSize(640, 480)
@@ -305,6 +315,7 @@ test_model = None
 test_cutter = None
 test_pathlist = None
 
+
 def DrawTestScene():
     global test_model, test_cutter, test_pathlist
     if test_model:
@@ -321,6 +332,7 @@ def DrawTestScene():
                 GL.glVertex3f(point.x, point.y, point.z)
 #                GL.glVertex3f(point.x, point.y, point.z+1)
             GL.glEnd()
+
 
 def ShowTestScene(model=None, cutter=None, pathlist=None):
     global test_model, test_cutter, test_pathlist

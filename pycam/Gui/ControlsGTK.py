@@ -39,6 +39,7 @@ def _input_conversion(func):
         return func(self, new_value)
     return _input_conversion_wrapper
 
+
 def _output_conversion(func):
     def _output_conversion_wrapper(self):
         result = func(self)
@@ -85,10 +86,8 @@ class InputBaseClass(WidgetBaseClass):
 
 class InputNumber(InputBaseClass):
 
-    def __init__(self, digits=0, start=0, lower=0, upper=100,
-            increment=1, change_handler=None):
-        adjustment = gtk.Adjustment(value=start, lower=lower, upper=upper,
-                step_incr=increment)
+    def __init__(self, digits=0, start=0, lower=0, upper=100, increment=1, change_handler=None):
+        adjustment = gtk.Adjustment(value=start, lower=lower, upper=upper, step_incr=increment)
         self.control = gtk.SpinButton(adjustment, digits=digits)
         self.control.set_value(start)
         self.connect("value-changed", change_handler)
@@ -159,7 +158,7 @@ class InputChoice(InputBaseClass):
     def update_choices(self, choices):
         selected = self.get_value()
         for choice_index, (label, value) in enumerate(choices):
-            if not value in self._values:
+            if value not in self._values:
                 # this choice is new
                 self.model.insert(choice_index, (label, ))
                 self._values.insert(choice_index, value)
@@ -255,8 +254,7 @@ class ParameterSection(WidgetBaseClass):
         item = (widget, label, weight, [])
         self._widgets.append(item)
         for signal in ("hide", "show"):
-            item[3].append(widget.connect(signal,
-                    self._update_widgets_visibility))
+            item[3].append(widget.connect(signal, self._update_widgets_visibility))
         self.update_widgets()
 
     def clear_widgets(self):
@@ -277,19 +275,19 @@ class ParameterSection(WidgetBaseClass):
             if hasattr(widget[0], "get_label"):
                 # checkbox
                 widget[0].set_label(widget[1])
-                self._table.attach(widget[0], 0, 2, index, index + 1,
-                        xoptions=gtk.FILL, yoptions=gtk.FILL)
+                self._table.attach(widget[0], 0, 2, index, index + 1, xoptions=gtk.FILL,
+                                   yoptions=gtk.FILL)
             elif not widget[1]:
-                self._table.attach(widget[0], 0, 2, index, index + 1,
-                        xoptions=gtk.FILL, yoptions=gtk.FILL)
+                self._table.attach(widget[0], 0, 2, index, index + 1, xoptions=gtk.FILL,
+                                   yoptions=gtk.FILL)
             else:
                 # spinbutton, combobox, ...
                 label = gtk.Label("%s:" % widget[1])
                 label.set_alignment(0.0, 0.5)
-                self._table.attach(label, 0, 1, index, index + 1,
-                        xoptions=gtk.FILL, yoptions=gtk.FILL)
-                self._table.attach(widget[0], 1, 2, index, index + 1,
-                        xoptions=gtk.FILL, yoptions=gtk.FILL)
+                self._table.attach(label, 0, 1, index, index + 1, xoptions=gtk.FILL,
+                                   yoptions=gtk.FILL)
+                self._table.attach(widget[0], 1, 2, index, index + 1, xoptions=gtk.FILL,
+                                   yoptions=gtk.FILL)
         self._update_widgets_visibility()
 
     def _get_table_row_of_widget(self, widget):
@@ -300,8 +298,7 @@ class ParameterSection(WidgetBaseClass):
             return -1
 
     def _get_child_row(self, widget):
-        return gtk.Container.child_get_property(self._table, widget,
-                "top-attach")
+        return gtk.Container.child_get_property(self._table, widget, "top-attach")
 
     def _update_widgets_visibility(self, widget=None):
         # Hide and show labels (or other items) that share a row with a
@@ -324,4 +321,3 @@ class ParameterSection(WidgetBaseClass):
             self._table.show()
         else:
             self._table.hide()
-

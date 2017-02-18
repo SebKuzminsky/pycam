@@ -20,14 +20,15 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Toolpath import Bounds
-import pycam.Cutters
-import pycam.Utils.log
-import pycam.Utils
-import pycam.Toolpath
 import ConfigParser
-import StringIO
 import os
+import StringIO
+
+import pycam.Cutters
+import pycam.Toolpath
+from pycam.Toolpath import Bounds
+import pycam.Utils
+import pycam.Utils.log
 
 CONFIG_DIR = "pycam"
 
@@ -36,7 +37,7 @@ log = pycam.Utils.log.get_logger()
 
 def get_config_dirname():
     try:
-        from win32com.shell import shellcon, shell            
+        from win32com.shell import shellcon, shell
         homedir = shell.SHGetFolderPath(0, shellcon.CSIDL_APPDATA, 0, 0)
         config_dir = os.path.join(homedir, CONFIG_DIR)
     except ImportError:
@@ -50,6 +51,7 @@ def get_config_dirname():
         except OSError:
             config_dir = None
     return config_dir
+
 
 def get_config_filename(filename=None):
     if filename is None:
@@ -89,17 +91,18 @@ class Settings(dict):
             return default
 
     def define_get_func(self, key, get_func=None):
-        if not self.has_key(key):
+        if key not in self:
             return
         if get_func is None:
-            get_func = lambda: self.__getitem_orig(key)[self.VALUE_INDEX]
+            def get_func():
+                return self.__getitem_orig(key)[self.VALUE_INDEX]
         self.__getitem_orig(key)[self.GET_INDEX] = get_func
 
     def define_set_func(self, key, set_func=None):
-        if not self.has_key(key):
-            return
         def default_set_func(value):
             self.__getitem_orig(key)[self.VALUE_INDEX] = value
+        if key not in self:
+            return
         if set_func is None:
             set_func = default_set_func
         self.__getitem_orig(key)[self.SET_INDEX] = set_func
@@ -108,11 +111,11 @@ class Settings(dict):
         try:
             return self.__getitem_orig(key)[self.GET_INDEX]()
         except TypeError, err_msg:
-            log.info("Failed to retrieve setting '%s': %s" % (key, err_msg))
+            log.info("Failed to retrieve setting '%s': %s", key, err_msg)
             return None
 
     def __setitem__(self, key, value):
-        if not self.has_key(key):
+        if key not in self:
             self.add_item(key)
         self.__getitem_orig(key)[self.SET_INDEX](value)
         self.__getitem_orig(key)[self.VALUE_INDEX] = value
@@ -291,14 +294,11 @@ process: 3
     }
 
     CATEGORY_KEYS = {
-            "tool": ("name", "shape", "tool_radius", "torus_radius", "feedrate",
-                    "speed"),
-            "process": ("name", "path_strategy", "path_direction",
-                    "milling_style", "material_allowance",
-                    "overlap_percent", "step_down", "engrave_offset",
-                    "pocketing_type"),
-            "bounds": ("name", "type", "x_low", "x_high", "y_low",
-                    "y_high", "z_low", "z_high"),
+            "tool": ("name", "shape", "tool_radius", "torus_radius", "feedrate", "speed"),
+            "process": ("name", "path_strategy", "path_direction", "milling_style",
+                        "material_allowance", "overlap_percent", "step_down", "engrave_offset",
+                        "pocketing_type"),
+            "bounds": ("name", "type", "x_low", "x_high", "y_low", "y_high", "z_low", "z_high"),
             "task": ("name", "tool", "process", "bounds", "enabled"),
     }
 
@@ -337,14 +337,12 @@ process: 3
             handle = uri.open()
             content = handle.read()
         except IOError, err_msg:
-            log.error("Settings: Failed to read config file '%s': %s" \
-                    % (uri, err_msg))
+            log.error("Settings: Failed to read config file '%s': %s", uri, err_msg)
             return False
         try:
             self.reset(content)
         except ConfigParser.ParsingError, err_msg:
-            log.error("Settings: Failed to parse config file '%s': %s" \
-                    % (uri, err_msg))
+            log.error("Settings: Failed to parse config file '%s': %s", uri, err_msg)
             return False
         return True
 
@@ -353,13 +351,11 @@ process: 3
         try:
             self.reset(input_text)
         except ConfigParser.ParsingError, err_msg:
-            log.error("Settings: Failed to parse config data: %s" % \
-                    str(err_msg))
+            log.error("Settings: Failed to parse config data: %s", str(err_msg))
             return False
         return True
 
-    def write_to_file(self, filename, tools=None, processes=None, bounds=None,
-            tasks=None):
+    def write_to_file(self, filename, tools=None, processes=None, bounds=None, tasks=None):
         uri = pycam.Utils.URIHandler(filename)
         text = self.get_config_text(tools, processes, bounds, tasks)
         try:
@@ -367,8 +363,8 @@ process: 3
             handle.write(text)
             handle.close()
         except IOError, err_msg:
-            log.error("Settings: Failed to write configuration to file " \
-                    + "(%s): %s" % (filename, err_msg))
+            log.error("Settings: Failed to write configuration to file (%s): %s",
+                      filename, err_msg)
             return False
         return True
 
@@ -404,7 +400,7 @@ process: 3
         return self._get_category_items("task")
 
     def _get_category_items(self, type_name):
-        if not self._cache.has_key(type_name):
+        if type_name not in self._cache:
             item_list = []
             index = 0
             prefix = self.SECTION_PREFIXES[type_name]
@@ -415,28 +411,23 @@ process: 3
                     value_type = self.SETTING_TYPES[key]
                     raw = value_type == str
                     try:
-                        value_raw = self.config.get(current_section_name, key,
-                                raw=raw)
+                        value_raw = self.config.get(current_section_name, key, raw=raw)
                     except ConfigParser.NoOptionError:
                         try:
                             try:
-                                value_raw = self.config.get(
-                                        prefix + self.DEFAULT_SUFFIX, key,
-                                        raw=raw)
-                            except (ConfigParser.NoSectionError,
-                                    ConfigParser.NoOptionError):
+                                value_raw = self.config.get(prefix + self.DEFAULT_SUFFIX, key,
+                                                            raw=raw)
+                            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
                                 value_raw = None
                         except ConfigParser.NoOptionError:
                             value_raw = None
-                    if not value_raw is None:
+                    if value_raw is not None:
                         try:
                             if value_type == object:
                                 # try to get the referenced object
-                                value = self._get_category_items(key)[
-                                        int(value_raw)]
+                                value = self._get_category_items(key)[int(value_raw)]
                             elif value_type == bool:
-                                if value_raw.lower() in (
-                                        "1", "true", "yes", "on"):
+                                if value_raw.lower() in ("1", "true", "yes", "on"):
                                     value = True
                                 else:
                                     value = False
@@ -445,7 +436,7 @@ process: 3
                                 value = value_type(value_raw)
                         except (ValueError, IndexError):
                             value = None
-                        if not value is None:
+                        if value is not None:
                             item[key] = value
                 if type_name == "bounds":
                     # don't add the pure dictionary, but the "bounds" instance
@@ -459,28 +450,26 @@ process: 3
 
     def _value_to_string(self, lists, key, value):
         value_type = self.SETTING_TYPES[key]
-        if value_type == bool:
+        if value_type is bool:
             if value:
                 return "1"
             else:
                 return "0"
-        elif value_type == object:
+        elif value_type is object:
             try:
                 return lists[key].index(value)
             except ValueError:
                 # special handling for non-direct object references ("bounds")
                 for index, item in enumerate(lists[key]):
-                    if (self.REFERENCE_TAG in item) \
-                            and (value is item[self.REFERENCE_TAG]):
+                    if (self.REFERENCE_TAG in item) and (value is item[self.REFERENCE_TAG]):
                         return index
                 return None
         else:
             return str(value_type(value))
 
-    def get_config_text(self, tools=None, processes=None, bounds=None,
-            tasks=None):
+    def get_config_text(self, tools=None, processes=None, bounds=None, tasks=None):
         def get_dictionary_of_bounds(boundary):
-            """ this function should be the inverse operation of 
+            """ this function should be the inverse operation of
             '_get_bounds_instance_from_dict'
             """
             result = {}
@@ -527,13 +516,12 @@ process: 3
                 if values and (values.count(values[0]) == len(values)):
                     common_keys.append(key)
             if common_keys:
-                section = "[%s%s]" % (self.SECTION_PREFIXES[type_name],
-                        self.DEFAULT_SUFFIX)
+                section = "[%s%s]" % (self.SECTION_PREFIXES[type_name], self.DEFAULT_SUFFIX)
                 result.append(section)
                 for key in common_keys:
                     value = type_list[0][key]
                     value_string = self._value_to_string(lists, key, value)
-                    if not value_string is None:
+                    if value_string is not None:
                         result.append("%s: %s" % (key, value_string))
                 # add an empty line to separate sections
                 result.append("")
@@ -546,10 +534,10 @@ process: 3
                     if key in common_keys:
                         # skip keys, that are listed in the "Default" section
                         continue
-                    if item.has_key(key):
+                    if key in item:
                         value = item[key]
                         value_string = self._value_to_string(lists, key, value)
-                        if not value_string is None:
+                        if value_string is not None:
                             result.append("%s: %s" % (key, value_string))
                 # add an empty line to separate sections
                 result.append("")
@@ -617,14 +605,14 @@ class ToolpathSettings(object):
         high = (self.bounds["maxx"], self.bounds["maxy"], self.bounds["maxz"])
         return Bounds(Bounds.TYPE_CUSTOM, low, high)
 
-    def set_tool(self, index, shape, tool_radius, torus_radius=None, speed=0.0,
-            feedrate=0.0):
-        self.tool_settings = {"id": index,
-                "shape": shape,
-                "tool_radius": tool_radius,
-                "torus_radius": torus_radius,
-                "speed": speed,
-                "feedrate": feedrate,
+    def set_tool(self, index, shape, tool_radius, torus_radius=None, speed=0.0, feedrate=0.0):
+        self.tool_settings = {
+            "id": index,
+            "shape": shape,
+            "tool_radius": tool_radius,
+            "torus_radius": torus_radius,
+            "speed": speed,
+            "feedrate": feedrate,
         }
 
     def get_tool(self):
@@ -643,11 +631,8 @@ class ToolpathSettings(object):
         self.program["enable_ode"] = (backend.upper() == "ODE")
 
     def get_calculation_backend(self):
-        if self.program.has_key("enable_ode"):
-            if self.program["enable_ode"]:
-                return "ODE"
-            else:
-                return None
+        if self.program.get("enable_ode", False):
+            return "ODE"
         else:
             return None
 
@@ -655,27 +640,24 @@ class ToolpathSettings(object):
         self.program["unit"] = unit_size
 
     def get_unit_size(self):
-        if self.program.has_key("unit"):
-            return self.program["unit"]
-        else:
-            return "mm"
+        return self.program.get("unit", "mm")
 
     def set_process_settings(self, generator, postprocessor, path_direction,
-            material_allowance=0.0, overlap_percent=0, step_down=1.0,
-            engrave_offset=0.0, milling_style="ignore", pocketing_type="none"):
+                             material_allowance=0.0, overlap_percent=0, step_down=1.0,
+                             engrave_offset=0.0, milling_style="ignore", pocketing_type="none"):
         # TODO: this hack should be somewhere else, I guess
         if generator in ("ContourFollow", "EngraveCutter"):
             material_allowance = 0.0
         self.process_settings = {
-                "generator": generator,
-                "postprocessor": postprocessor,
-                "path_direction": path_direction,
-                "material_allowance": material_allowance,
-                "overlap_percent": overlap_percent,
-                "step_down": step_down,
-                "engrave_offset": engrave_offset,
-                "milling_style": milling_style,
-                "pocketing_type": pocketing_type,
+            "generator": generator,
+            "postprocessor": postprocessor,
+            "path_direction": path_direction,
+            "material_allowance": material_allowance,
+            "overlap_percent": overlap_percent,
+            "step_down": step_down,
+            "engrave_offset": engrave_offset,
+            "milling_style": milling_style,
+            "pocketing_type": pocketing_type,
         }
 
     def get_process_settings(self):
@@ -686,34 +668,31 @@ class ToolpathSettings(object):
         config = ConfigParser.SafeConfigParser()
         config.readfp(text_stream)
         for config_dict, section in ((self.bounds, "Bounds"),
-                (self.tool_settings, "Tool"),
-                (self.process_settings, "Process")):
+                                     (self.tool_settings, "Tool"),
+                                     (self.process_settings, "Process")):
             for key, value_type in self.SECTIONS[section].items():
                 value_raw = config.get(section, key, None)
                 if value_raw is None:
                     continue
                 elif value_type == bool:
                     value = value_raw.lower() in ("1", "true", "yes", "on")
-                elif isinstance(value_type, basestring) \
-                        and (value_type.startswith("list_of_")):
+                elif isinstance(value_type, basestring) and (value_type.startswith("list_of_")):
                     item_type = value_type[len("list_of_"):]
                     if item_type == "float":
                         item_type = float
                     else:
                         continue
                     try:
-                        value = [item_type(one_val)
-                                for one_val in value_raw.split(",")]
+                        value = [item_type(one_val) for one_val in value_raw.split(",")]
                     except ValueError:
-                        log.warn("Settings: Ignored invalid setting due to " \
-                                + "a failed list type parsing: " \
-                                + "(%s -> %s): %s" % (section, key, value_raw))
+                        log.warn("Settings: Ignored invalid setting due to a failed list type "
+                                 "parsing: (%s -> %s): %s", section, key, value_raw)
                 else:
                     try:
                         value = value_type(value_raw)
                     except ValueError:
-                        log.warn("Settings: Ignored invalid setting " \
-                                + "(%s -> %s): %s" % (section, key, value_raw))
+                        log.warn("Settings: Ignored invalid setting (%s -> %s): %s",
+                                 section, key, value_raw)
                 config_dict[key] = value
 
     def __str__(self):
@@ -722,22 +701,19 @@ class ToolpathSettings(object):
     def get_string(self):
         result = []
         for config_dict, section in ((self.bounds, "Bounds"),
-                (self.tool_settings, "Tool"),
-                (self.process_settings, "Process")):
+                                     (self.tool_settings, "Tool"),
+                                     (self.process_settings, "Process")):
             # skip empty sections
             if not config_dict:
                 continue
             result.append("[%s]" % section)
             for key, value_type in self.SECTIONS[section].items():
-                if config_dict.has_key(key):
+                if key in config_dict:
                     value = config_dict[key]
-                    if isinstance(value_type, basestring) \
-                            and (value_type.startswith("list_of_")):
-                        result.append("%s = %s" % (key,
-                                ",".join([str(val) for val in value])))
+                    if isinstance(value_type, basestring) and (value_type.startswith("list_of_")):
+                        result.append("%s = %s" % (key, ",".join([str(val) for val in value])))
                     elif type(value) == value_type:
                         result.append("%s = %s" % (key, value))
                 # add one empty line after each section
             result.append("")
         return os.linesep.join(result)
-

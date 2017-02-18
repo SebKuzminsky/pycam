@@ -20,9 +20,11 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
+
+
 __all__ = ["ConsoleProgressBar"]
 
-import os
 
 class ConsoleProgressBar(object):
 
@@ -64,22 +66,21 @@ class ConsoleProgressBar(object):
             # don't remove any previous characters
             self.last_length = 0
         else:
-            raise ValueError("ConsoleProgressBar: invalid style (%d)" \
-                    % self.style)
+            raise ValueError("ConsoleProgressBar: invalid style (%d)" % self.style)
         self.output.write(text)
         self.output.flush()
 
     def update(self, text=None, percent=None, **kwargs):
         if self.style == ConsoleProgressBar.STYLE_NONE:
             return
-        if not text is None:
+        if text is not None:
             self.text = text
-        if not percent is None:
+        if percent is not None:
             self.percent = int(percent)
         if self.last_length > 0:
             # delete the previous line
             self.output.write("\x08" * self.last_length)
-        self._output_current_state(progress_happened = (not percent is None))
+        self._output_current_state(progress_happened=(percent is not None))
 
     def finish(self):
         if self.style == ConsoleProgressBar.STYLE_NONE:
@@ -88,4 +89,3 @@ class ConsoleProgressBar(object):
         self.update(percent=100)
         # finish the line
         self.output.write(os.linesep)
-

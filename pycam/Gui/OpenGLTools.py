@@ -20,8 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.PointUtils import *
-from pycam.Geometry.utils import sqrt
+import math
 
 # careful import
 try:
@@ -30,7 +29,8 @@ try:
 except (ImportError, RuntimeError):
     pass
 
-import math
+from pycam.Geometry.PointUtils import pcross, pnorm, pnormalized, psub
+from pycam.Geometry.utils import sqrt
 
 
 def keep_gl_mode(func):
@@ -40,6 +40,7 @@ def keep_gl_mode(func):
         GL.glMatrixMode(prev_mode)
         return result
     return keep_gl_mode_wrapper
+
 
 def keep_matrix(func):
     def keep_matrix_wrapper(*args, **kwargs):
@@ -53,6 +54,7 @@ def keep_matrix(func):
         return result
     return keep_matrix_wrapper
 
+
 @keep_matrix
 def draw_direction_cone(p1, p2, position=0.5, precision=12, size=0.1):
     distance = psub(p2, p1)
@@ -65,7 +67,8 @@ def draw_direction_cone(p1, p2, position=0.5, precision=12, size=0.1):
     cone_radius = cone_length / 3.0
     # move the cone to the middle of the line
     GL.glTranslatef((p1[0] + p2[0]) * position,
-            (p1[1] + p2[1]) * position, (p1[2] + p2[2]) * position)
+                    (p1[1] + p2[1]) * position,
+                    (p1[2] + p2[2]) * position)
     # rotate the cone according to the line direction
     # The cross product is a good rotation axis.
     cross = pcross(direction, (0, 0, -1))
@@ -92,6 +95,7 @@ def draw_direction_cone(p1, p2, position=0.5, precision=12, size=0.1):
     # draw the cone
     GLUT.glutSolidCone(cone_radius, cone_length, precision, 1)
 
+
 @keep_gl_mode
 @keep_matrix
 def draw_complete_model_view(settings):
@@ -100,13 +104,12 @@ def draw_complete_model_view(settings):
     # draw the drill
     if settings.get("show_drill"):
         cutter = settings.get("cutter")
-        if not cutter is None:
+        if cutter is not None:
             color = settings.get("color_cutter")
             GL.glColor4f(color["red"], color["green"], color["blue"], color["alpha"])
             GL.glFinish()
             cutter.to_OpenGL()
-    if settings.get("show_drill_progress") \
-            and settings.get("toolpath_in_progress"):
+    if settings.get("show_drill_progress") and settings.get("toolpath_in_progress"):
         # show the toolpath that is currently being calculated
         toolpath_in_progress = settings.get("toolpath_in_progress")
         # do a quick conversion from a list of Paths to a list of points
@@ -114,9 +117,9 @@ def draw_complete_model_view(settings):
         for path in toolpath_in_progress:
             for point in path.points:
                 moves.append((point, False))
-        if not toolpath_in_progress is None:
-            draw_toolpath(moves, settings.get("color_toolpath_cut"),
-                    settings.get("color_toolpath_return"),
-                    show_directions=settings.get("show_directions"),
-                    lighting=settings.get("view_light"))
-
+        if toolpath_in_progress is not None:
+            draw_toolpath(moves,
+                          settings.get("color_toolpath_cut"),
+                          settings.get("color_toolpath_return"),
+                          show_directions=settings.get("show_directions"),
+                          lighting=settings.get("view_light"))
