@@ -29,8 +29,6 @@ import pycam.Utils
 import pycam.Utils.log
 
 
-__all__ = ["STLImporter", "DXFImporter", "SVGImporter", "TestModel"]
-
 log = pycam.Utils.log.get_logger()
 
 

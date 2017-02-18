@@ -25,8 +25,6 @@ from pycam.Cutters.SphericalCutter import SphericalCutter
 from pycam.Cutters.CylindricalCutter import CylindricalCutter
 from pycam.Cutters.ToroidalCutter import ToroidalCutter
 
-__all__ = ["SphericalCutter", "CylindricalCutter", "ToroidalCutter", "BaseCutter"]
-
 
 def get_tool_from_settings(tool_settings, height=None):
     """ get the tool specified by the relevant settings

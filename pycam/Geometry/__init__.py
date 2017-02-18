@@ -32,11 +32,6 @@ from pycam.Utils import log
 log = log.get_logger()
 
 
-__all__ = ["utils", "Line", "Model", "Path", "Plane", "Triangle",
-           "PolygonExtractor", "TriangleKdtree", "intersection", "kdtree",
-           "Matrix", "Polygon", "Letters", "PointUtils"]
-
-
 def get_bisector(p1, p2, p3, up_vector):
     """ Calculate the bisector between p1, p2 and p3, whereas p2 is the origin
     of the angle.

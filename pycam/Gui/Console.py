@@ -23,9 +23,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import os
 
 
-__all__ = ["ConsoleProgressBar"]
-
-
 class ConsoleProgressBar(object):
 
     STYLE_NONE = 0

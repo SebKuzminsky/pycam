@@ -32,10 +32,6 @@ import urlparse
 # import win32api
 
 
-__all__ = ["iterators", "polynomials", "ProgressCounter", "threading", "get_platform",
-           "URIHandler", "PLATFORM_WINDOWS", "PLATFORM_MACOS", "PLATFORM_LINUX",
-           "PLATFORM_UNKNOWN", "get_exception_report"]
-
 PLATFORM_LINUX = 0
 PLATFORM_WINDOWS = 1
 PLATFORM_MACOS = 2

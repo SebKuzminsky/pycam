@@ -20,8 +20,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = ["PolygonCutter", "ContourCutter", "BasePathProcessor"]
-
 
 class BasePathProcessor(object):
 
