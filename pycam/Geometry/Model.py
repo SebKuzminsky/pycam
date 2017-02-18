@@ -24,8 +24,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import uuid
 import math
 
-import pycam.Exporters.STLExporter
-import pycam.Exporters.SVGExporter
 from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
@@ -33,9 +31,9 @@ from pycam.Geometry.Polygon import Polygon
 from pycam.Geometry.PointUtils import pcross, pdist, pnorm, pnormalized, psub
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
 from pycam.Geometry.Matrix import TRANSFORMATIONS
-from pycam.Toolpath import Bounds
 from pycam.Geometry.utils import INFINITE, epsilon
 from pycam.Geometry import TransformableContainer, IDGenerator
+from pycam.Toolpath import Bounds
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
 log = pycam.Utils.log.get_logger()
@@ -210,6 +208,7 @@ class BaseModel(IDGenerator, TransformableContainer):
 class Model(BaseModel):
 
     def __init__(self, use_kdtree=True):
+        import pycam.Exporters.STLExporter
         super(Model, self).__init__()
         self._triangles = []
         self._item_groups.append(self._triangles)
@@ -343,6 +342,7 @@ class Model(BaseModel):
 class ContourModel(BaseModel):
 
     def __init__(self, plane=None):
+        import pycam.Exporters.SVGExporter
         super(ContourModel, self).__init__()
         self.name = "contourmodel%d" % self.id
         if plane is None:

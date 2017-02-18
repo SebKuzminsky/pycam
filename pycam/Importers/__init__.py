@@ -21,10 +21,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import pycam.Importers.DXFImporter
-import pycam.Importers.PSImporter
-import pycam.Importers.STLImporter
-import pycam.Importers.SVGImporter
 import pycam.Utils
 import pycam.Utils.log
 
@@ -33,6 +29,10 @@ log = pycam.Utils.log.get_logger()
 
 
 def detect_file_type(filename, quiet=False):
+    import pycam.Importers.DXFImporter
+    import pycam.Importers.PSImporter
+    import pycam.Importers.STLImporter
+    import pycam.Importers.SVGImporter
     # also accept URI input
     uri = pycam.Utils.URIHandler(filename)
     filename = uri.get_path()

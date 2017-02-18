@@ -20,7 +20,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Exporters.SVGExporter import SVGExporter
 from pycam.Geometry.utils import INFINITE
 from pycam.Geometry.Path import Path
 from pycam.Utils.iterators import Iterator, CyclicIterator
@@ -49,6 +48,7 @@ class PolygonExtractor(object):
         self.curr_line = []
 
         if DEBUG_POLYGONEXTRACTOR3:
+            from pycam.Exporters.SVGExporter import SVGExporter
             self.svg = SVGExporter("test-%d.svg" % direction)
             if direction == 0:
                 self.svg.fill("red")
@@ -145,6 +145,7 @@ class PolygonExtractor(object):
                 self.ver_path_list = path_list
 
         if DEBUG_POLYGONEXTRACTOR3:
+            from pycam.Exporters.SVGExporter import SVGExporter
             self.svg = SVGExporter("test-3.svg")
             for path in path_list:
                 prev = None

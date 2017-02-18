@@ -20,11 +20,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Cutters.BaseCutter import BaseCutter
-from pycam.Cutters.SphericalCutter import SphericalCutter
-from pycam.Cutters.CylindricalCutter import CylindricalCutter
-from pycam.Cutters.ToroidalCutter import ToroidalCutter
-
 
 def get_tool_from_settings(tool_settings, height=None):
     """ get the tool specified by the relevant settings
@@ -43,6 +38,9 @@ def get_tool_from_settings(tool_settings, height=None):
     @rtype: BaseCutter | basestring
     @return: a tool object or an error string
     """
+    from pycam.Cutters.CylindricalCutter import CylindricalCutter
+    from pycam.Cutters.SphericalCutter import SphericalCutter
+    from pycam.Cutters.ToroidalCutter import ToroidalCutter
     cuttername = tool_settings["shape"]
     radius = tool_settings["tool_radius"]
     if cuttername == "SphericalCutter":

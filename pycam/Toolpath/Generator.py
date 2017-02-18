@@ -20,15 +20,13 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.PathGenerators import DropCutter, PushCutter, EngraveCutter, ContourFollow
-from pycam.Geometry.utils import number
-from pycam.PathProcessors import PolygonCutter, ContourCutter
-from pycam.Cutters.CylindricalCutter import CylindricalCutter
-import pycam.Cutters
-import pycam.Toolpath.SupportGrid
-import pycam.Toolpath.MotionGrid
-import pycam.Toolpath
 import pycam.Geometry.Model
+from pycam.Geometry.utils import number
+from pycam.PathGenerators import DropCutter, PushCutter, EngraveCutter, ContourFollow
+from pycam.PathProcessors import PolygonCutter, ContourCutter
+import pycam.Toolpath
+import pycam.Toolpath.MotionGrid
+import pycam.Toolpath.SupportGrid
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
 
@@ -96,6 +94,7 @@ def generate_toolpath(model, tool_settings=None, bounds=None, direction="x",
     @return: the resulting toolpath object or an error string in case of invalid
         arguments
     """
+    import pycam.Cutters
     log.debug("Starting toolpath generation")
     step_down = number(step_down)
     engrave_offset = number(engrave_offset)
@@ -278,6 +277,7 @@ def generate_toolpath(model, tool_settings=None, bounds=None, direction="x",
 
 def _get_pathgenerator_instance(trimesh_models, contour_model, cutter, pathgenerator,
                                 pathprocessor, physics, milling_style):
+    from pycam.Cutters.CylindricalCutter import CylindricalCutter
     if pathgenerator != "EngraveCutter" and contour_model:
         return ("The only available toolpath strategy for 2D contour models is 'Engraving'.")
     if pathgenerator == "DropCutter":
