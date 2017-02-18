@@ -1,0 +1,14 @@
+language: python
+
+python:
+  - "2.6"
+  - "2.7"
+
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y python-gtk2 python-opengl python-gtkglext1
+  - sudo apt-get install -y python-pyode python-setproctitle
+  - sudo apt-get install -y python-rsvg
+
+script:
+  - python setup.py sdist
