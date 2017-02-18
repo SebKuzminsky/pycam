@@ -36,13 +36,12 @@ class ModelPolygons(pycam.Plugins.PluginBase):
             polygon_frame.unparent()
             self.core.register_ui("model_handling", "Polygons", polygon_frame, 0)
             self._gtk_handlers = (
-                    (self.gui.get_object("ToggleModelDirectionButton"), "clicked",
-                        self._toggle_direction),
-                    (self.gui.get_object("DirectionsGuessButton"), "clicked",
-                        self._revise_directions))
+                (self.gui.get_object("ToggleModelDirectionButton"), "clicked",
+                 self._toggle_direction),
+                (self.gui.get_object("DirectionsGuessButton"), "clicked", self._revise_directions))
             self._event_handlers = (
-                    ("model-change-after", self._update_polygon_controls),
-                    ("model-selection-changed", self._update_polygon_controls))
+                ("model-change-after", self._update_polygon_controls),
+                ("model-selection-changed", self._update_polygon_controls))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_polygon_controls()
@@ -50,8 +49,7 @@ class ModelPolygons(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("model_handling",
-                    self.gui.get_object("ModelPolygonFrame"))
+            self.core.unregister_ui("model_handling", self.gui.get_object("ModelPolygonFrame"))
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
 
@@ -97,4 +95,3 @@ class ModelPolygons(pycam.Plugins.PluginBase):
             progress.update_multiple()
         progress.finish()
         self.core.emit_event("model-change-after")
-

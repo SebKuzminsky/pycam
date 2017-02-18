@@ -31,10 +31,8 @@ class OpenGLViewBounds(pycam.Plugins.PluginBase):
     def setup(self):
         import OpenGL.GL
         self._GL = OpenGL.GL
-        self.core.get("register_color")("color_bounding_box", "Bounding box",
-                40)
-        self.core.get("register_display_item")("show_bounding_box",
-                "Show Bounding Box", 40)
+        self.core.get("register_color")("color_bounding_box", "Bounding box", 40)
+        self.core.get("register_display_item")("show_bounding_box", "Show Bounding Box", 40)
         self.core.register_chain("get_draw_dimension", self.get_draw_dimension)
         self.core.register_event("visualize-items", self.draw_bounds)
         self.core.emit_event("visual-item-updated")
@@ -42,8 +40,7 @@ class OpenGLViewBounds(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.core.unregister_event("visualize-items", self.draw_bounds)
-        self.core.unregister_chain("get_draw_dimension",
-                self.get_draw_dimension)
+        self.core.unregister_chain("get_draw_dimension", self.get_draw_dimension)
         self.core.get("unregister_color")("color_bounding_box")
         self.core.get("unregister_display_item")("show_bounding_box")
         self.core.emit_event("visual-item-updated")
@@ -92,12 +89,10 @@ class OpenGLViewBounds(pycam.Plugins.PluginBase):
         GL.glFinish()
         GL.glBegin(GL.GL_LINES)
         # all combinations of neighbouring corners
-        for corner_pair in [(p1, p2), (p1, p5), (p1, p4), (p2, p3),
-                    (p2, p6), (p3, p4), (p3, p7), (p4, p8), (p5, p6),
-                    (p6, p7), (p7, p8), (p8, p5)]:
+        for corner_pair in [(p1, p2), (p1, p5), (p1, p4), (p2, p3), (p2, p6), (p3, p4), (p3, p7),
+                            (p4, p8), (p5, p6), (p6, p7), (p7, p8), (p8, p5)]:
             GL.glVertex3f(*(corner_pair[0]))
             GL.glVertex3f(*(corner_pair[1]))
         GL.glEnd()
         if self.core.get("view_light"):
             GL.glEnable(GL.GL_LIGHTING)
-

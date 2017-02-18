@@ -20,10 +20,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
 import xml.etree.ElementTree as ET
 
-import pycam.Utils.log
+from pycam import FILTER_CONFIG
 import pycam.Plugins
+import pycam.Utils.log
 
 _log = pycam.Utils.log.get_logger()
 
@@ -40,14 +42,16 @@ class StatusManager(pycam.Plugins.PluginBase):
             autoload_box = self.gui.get_object("StartupTaskFileBox")
             autoload_source = self.gui.get_object("StartupTaskFile")
             # TODO: fix the extension filter
-            #for one_filter in get_filters_from_list(FILTER_CONFIG):
-            #    autoload_source.add_filter(one_filter)
-            #    autoload_source.set_filter(one_filter)
+#           for one_filter in get_filters_from_list(FILTER_CONFIG):
+#               autoload_source.add_filter(one_filter)
+#               autoload_source.set_filter(one_filter)
+
             def get_autoload_task_file(autoload_source=autoload_source):
                 if autoload_enable.get_active():
                     return autoload_source.get_filename()
                 else:
                     return ""
+
             def set_autoload_task_file(filename):
                 if filename:
                     autoload_enable.set_active(True)
@@ -57,21 +61,23 @@ class StatusManager(pycam.Plugins.PluginBase):
                     autoload_enable.set_active(False)
                     autoload_box.hide()
                     autoload_source.unselect_all()
+
             def autoload_enable_switched(widget, box):
                 if not widget.get_active():
                     set_autoload_task_file(None)
                 else:
                     autoload_box.show()
-            autoload_enable.connect("toggled", autoload_enable_switched,
-                    autoload_box)
-            self.settings.add_item("default_task_settings_file",
-                    get_autoload_task_file, set_autoload_task_file)
+
+            autoload_enable.connect("toggled", autoload_enable_switched, autoload_box)
+            self.settings.add_item("default_task_settings_file", get_autoload_task_file,
+                                   set_autoload_task_file)
             autoload_task_filename = self.settings.get("default_task_settings_file")
             # TODO: use "startup" hook instead
             if autoload_task_filename:
                 self.open_task_settings_file(autoload_task_filename)
                 ("LoadTaskSettings", self.load_task_settings_file, None, "<Control>t"),
-                ("SaveTaskSettings", self.save_task_settings_file, lambda: self.last_task_settings_uri, None),
+                ("SaveTaskSettings", self.save_task_settings_file,
+                 lambda: self.last_task_settings_uri, None),
                 ("SaveAsTaskSettings", self.save_task_settings_file, None, None),
         return True
 
@@ -80,12 +86,12 @@ class StatusManager(pycam.Plugins.PluginBase):
 
     def register_status_type(self, name, the_type, parse_func, format_func):
         if name in self._types:
-            _log.info("Trying to register status type twice: %s" % name)
+            _log.info("Trying to register status type twice: %s", name)
         self._types[name] = (the_type, parse_func, format_func)
 
     def unregister_status_type(self, name):
-        if not name in self._types:
-            _log.info("Trying to unregister unknown status type: %s" % name)
+        if name not in self._types:
+            _log.info("Trying to unregister unknown status type: %s", name)
         else:
             del self._types[name]
 
@@ -111,13 +117,14 @@ class StatusManager(pycam.Plugins.PluginBase):
             filename = filename()
         if not filename:
             filename = self.settings.get("get_filename_func")("Loading settings ...",
-                    mode_load=True, type_filter=FILTER_CONFIG)
+                                                              mode_load=True,
+                                                              type_filter=FILTER_CONFIG)
             # Only update the last_task_settings attribute if the task file was
             # loaded interactively. E.g. ignore the initial task file loading.
             if filename:
                 self.last_task_settings_uri = pycam.Utils.URIHandler(filename)
         if filename:
-            log.info("Loading task settings file: %s" % str(filename))
+            _log.info("Loading task settings file: %s", str(filename))
             self.load_task_settings(filename)
             self.add_to_recent_file_list(filename)
 
@@ -126,9 +133,9 @@ class StatusManager(pycam.Plugins.PluginBase):
             filename = filename()
         if not isinstance(filename, (basestring, pycam.Utils.URIHandler)):
             # we open a dialog
-            filename = self.settings.get("get_filename_func")("Save settings to ...",
-                    mode_load=False, type_filter=FILTER_CONFIG,
-                    filename_templates=(self.last_task_settings_uri, self.last_model_uri))
+            filename = self.settings.get("get_filename_func")(
+                "Save settings to ...", mode_load=False, type_filter=FILTER_CONFIG,
+                filename_templates=(self.last_task_settings_uri, self.last_model_uri))
             if filename:
                 self.last_task_settings_uri = pycam.Utils.URIHandler(filename)
         # no filename given -> exit
@@ -139,14 +146,14 @@ class StatusManager(pycam.Plugins.PluginBase):
             out_file = open(filename, "w")
             out_file.write(settings)
             out_file.close()
-            log.info("Task settings written to %s" % filename)
+            _log.info("Task settings written to %s", filename)
             self.add_to_recent_file_list(filename)
         except IOError:
-            log.error("Failed to save settings file")
+            _log.error("Failed to save settings file")
 
     def load_task_settings(self, filename=None):
         settings = pycam.Gui.Settings.ProcessSettings()
-        if not filename is None:
+        if filename is not None:
             settings.load_file(filename)
         # flush all tables (without re-assigning new objects)
         for one_list_name in ("tools", "processes", "bounds", "tasks"):
@@ -170,7 +177,7 @@ class StatusManager(pycam.Plugins.PluginBase):
             if match:
                 for component in chain[:-1]:
                     next_item = parent.find(component)
-                    if not next_item is None:
+                    if next_item is not None:
                         parent = next_item
                     else:
                         item = ET.SubElement(parent, component)
@@ -226,4 +233,3 @@ def _get_xml_lines(item):
         else:
             indent += 2
     return lines
-

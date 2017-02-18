@@ -21,8 +21,9 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import os
 import datetime
+import os
+import re
 
 import pycam.Plugins
 import pycam.Utils
@@ -41,17 +42,13 @@ class Log(pycam.Plugins.PluginBase):
             # menu item and shortcut
             log_action = self.gui.get_object("ToggleLogWindow")
             self._gtk_handlers = []
-            self._gtk_handlers.append((log_action, "toggled",
-                    self.toggle_log_window))
-            self.register_gtk_accelerator("log", log_action,
-                    "<Control>l", "ToggleLogWindow")
-            self.core.register_ui("view_menu", "ToggleLogWindow", log_action,
-                    100)
+            self._gtk_handlers.append((log_action, "toggled", self.toggle_log_window))
+            self.register_gtk_accelerator("log", log_action, "<Control>l", "ToggleLogWindow")
+            self.core.register_ui("view_menu", "ToggleLogWindow", log_action, 100)
             # status bar
             self.status_bar = self.gui.get_object("StatusBar")
             event_bar = self.gui.get_object("StatusBarEventBox")
-            self._gtk_handlers.append((event_bar, "button-press-event",
-                    self.toggle_log_window))
+            self._gtk_handlers.append((event_bar, "button-press-event", self.toggle_log_window))
             event_bar.unparent()
             self.core.register_ui("main_window", "Status", event_bar, 100)
             # "log" window
@@ -59,13 +56,12 @@ class Log(pycam.Plugins.PluginBase):
             self.log_window.set_default_size(500, 400)
             hide_window = lambda *args: self.toggle_log_window(value=False)
             self._gtk_handlers.extend([
-                    (self.log_window, "delete-event", hide_window),
-                    (self.log_window, "destroy", hide_window),
-                    (self.gui.get_object("LogWindowClose"), "clicked", hide_window),
-                    (self.gui.get_object("LogWindowClear"), "clicked",
-                        self.clear_log_window),
-                    (self.gui.get_object("LogWindowCopyToClipboard"), "clicked",
-                        self.copy_log_to_clipboard)])
+                (self.log_window, "delete-event", hide_window),
+                (self.log_window, "destroy", hide_window),
+                (self.gui.get_object("LogWindowClose"), "clicked", hide_window),
+                (self.gui.get_object("LogWindowClear"), "clicked", self.clear_log_window),
+                (self.gui.get_object("LogWindowCopyToClipboard"), "clicked",
+                 self.copy_log_to_clipboard)])
             self.log_model = self.gui.get_object("LogWindowList")
             # window state
             self._log_window_position = None
@@ -80,27 +76,19 @@ class Log(pycam.Plugins.PluginBase):
             log_action = self.gui.get_object("ToggleLogWindow")
             self.core.unregister_ui("view_menu", log_action)
             self.unregister_gtk_accelerator("log", log_action)
-            self.core.unregister_ui("main_window",
-                    self.gui.get_object("StatusBarEventBox"))
-            self.core.unregister_ui("view_menu",
-                    self.gui.get_object("ToggleLogWindow"))
+            self.core.unregister_ui("main_window", self.gui.get_object("StatusBarEventBox"))
+            self.core.unregister_ui("view_menu", self.gui.get_object("ToggleLogWindow"))
             self.unregister_gtk_handlers(self._gtk_handlers)
             # TODO: disconnect the log handler
 
     def add_log_message(self, title, message, record=None):
-        timestamp = datetime.datetime.fromtimestamp(
-                record.created).strftime("%H:%M")
+        timestamp = datetime.datetime.fromtimestamp(record.created).strftime("%H:%M")
         # avoid the ugly character for a linefeed
         message = " ".join(message.splitlines())
-        try:
-            message = message.encode("utf-8")
-        except UnicodeDecodeError:
-            # remove all non-ascii characters
-            clean_char = lambda c: (32 <= ord(c) < 128) and c or " "
-            message = "".join([clean_char(char) for char in message])
+        message = message.encode("utf-8", "ignore")
         self.log_model.append((timestamp, title, message))
         # update the status bar (if the GTK interface is still active)
-        if not self.status_bar.window is None:
+        if self.status_bar.window is not None:
             # remove the last message from the stack (probably not necessary)
             self.status_bar.pop(0)
             # push the new message
@@ -114,12 +102,12 @@ class Log(pycam.Plugins.PluginBase):
                 self.gui.get_object("StatusBarWarning").show()
 
     def copy_log_to_clipboard(self, widget=None):
-        content = []
         def copy_row(model, path, it, content):
             columns = []
             for column in range(model.get_n_columns()):
                 columns.append(model.get_value(it, column))
             content.append(" ".join(columns))
+        content = []
         self.log_model.foreach(copy_row, content)
         self.core.get("clipboard-set")(os.linesep.join(content))
         self.gui.get_object("StatusBarWarning").hide()
@@ -152,4 +140,3 @@ class Log(pycam.Plugins.PluginBase):
         self.gui.get_object("StatusBarWarning").hide()
         # don't destroy the window with a "destroy" event
         return True
-

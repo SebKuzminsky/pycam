@@ -21,8 +21,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import pycam.Plugins
 import pycam.Geometry.Model
+import pycam.Plugins
 
 
 class ModelSupport(pycam.Plugins.PluginBase):
@@ -35,32 +35,24 @@ class ModelSupport(pycam.Plugins.PluginBase):
         if self.gui:
             self._support_frame = self.gui.get_object("ModelExtensionsFrame")
             self._support_frame.unparent()
-            self.core.register_ui("model_handling", "Support",
-                    self._support_frame, 0)
-            support_model_type_selector = self.gui.get_object(
-                    "SupportGridTypesControl")
+            self.core.register_ui("model_handling", "Support", self._support_frame, 0)
+            support_model_type_selector = self.gui.get_object("SupportGridTypesControl")
             self._gtk_handlers = []
             self._gtk_handlers.append((support_model_type_selector, "changed",
-                    "support-model-changed"))
+                                       "support-model-changed"))
+
             def add_support_type(obj, name):
                 types_model = support_model_type_selector.get_model()
                 types_model.append((obj, name))
                 # enable the first item by default
                 if len(types_model) == 1:
                     support_model_type_selector.set_active(0)
-            self.core.register_ui_section("support_model_type_selector",
-                    add_support_type,
-                    lambda: support_model_type_selector.get_model().clear())
-            self.core.register_ui("support_model_type_selector", "none",
-                    "none", weight=-100)
-            container = self.gui.get_object("SupportAddOnContainer")
+
             def clear_support_model_settings():
                 children = container.get_children()
                 for child in children:
                     container.remove(child)
-            self.core.register_ui_section("support_model_settings",
-                    lambda obj, name: container.pack_start(obj, expand=False),
-                    clear_support_model_settings)
+
             def get_support_model_type():
                 index = support_model_type_selector.get_active()
                 if index < 0:
@@ -68,6 +60,7 @@ class ModelSupport(pycam.Plugins.PluginBase):
                 else:
                     selector_model = support_model_type_selector.get_model()
                     return selector_model[index][0]
+
             def set_support_model_type(model_type):
                 selector_model = support_model_type_selector.get_model()
                 for index, row in enumerate(selector_model):
@@ -76,35 +69,38 @@ class ModelSupport(pycam.Plugins.PluginBase):
                         break
                 else:
                     support_model_type_selector.set_active(-1)
+
+            self.core.register_ui_section("support_model_type_selector", add_support_type,
+                                          lambda: support_model_type_selector.get_model().clear())
+            self.core.register_ui("support_model_type_selector", "none", "none", weight=-100)
+            container = self.gui.get_object("SupportAddOnContainer")
+            self.core.register_ui_section(
+                "support_model_settings",
+                lambda obj, name: container.pack_start(obj, expand=False),
+                clear_support_model_settings)
             # TODO: remove public settings
-            self.core.add_item("support_model_type",
-                    get_support_model_type,
-                    set_support_model_type)
+            self.core.add_item("support_model_type", get_support_model_type,
+                               set_support_model_type)
             grid_thickness = self.gui.get_object("SupportGridThickness")
-            self._gtk_handlers.append((grid_thickness, "value-changed",
-                    "support-model-changed"))
-            self.core.add_item("support_grid_thickness",
-                    grid_thickness.get_value, grid_thickness.set_value)
+            self._gtk_handlers.append((grid_thickness, "value-changed", "support-model-changed"))
+            self.core.add_item("support_grid_thickness", grid_thickness.get_value,
+                               grid_thickness.set_value)
             grid_height = self.gui.get_object("SupportGridHeight")
-            self._gtk_handlers.append((grid_height, "value-changed",
-                    "support-model-changed"))
-            self.core.add_item("support_grid_height",
-                    grid_height.get_value, grid_height.set_value)
-            self._gtk_handlers.append((
-                    self.gui.get_object("CreateSupportModel"), "clicked",
-                        self._add_support_model))
+            self._gtk_handlers.append((grid_height, "value-changed", "support-model-changed"))
+            self.core.add_item("support_grid_height", grid_height.get_value, grid_height.set_value)
+            self._gtk_handlers.append((self.gui.get_object("CreateSupportModel"), "clicked",
+                                       self._add_support_model))
             # support grid defaults
             self.core.set("support_grid_thickness", 0.5)
             self.core.set("support_grid_height", 0.5)
             self.core.set("support_grid_type", "none")
-            self.core.register_chain("get_draw_dimension",
-                    self.get_draw_dimension)
+            self.core.register_chain("get_draw_dimension", self.get_draw_dimension)
             # handlers
             self._event_handlers = (
-                    ("model-change-after", "support-model-changed"),
-                    ("bounds-changed", "support-model-changed"),
-                    ("model-selection-changed", "support-model-changed"),
-                    ("support-model-changed", self.update_support_model))
+                ("model-change-after", "support-model-changed"),
+                ("bounds-changed", "support-model-changed"),
+                ("model-selection-changed", "support-model-changed"),
+                ("support-model-changed", self.update_support_model))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
@@ -112,13 +108,11 @@ class ModelSupport(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("model_handling",
-                    self.gui.get_object("ModelExtensionsFrame"))
+            self.core.unregister_ui("model_handling", self.gui.get_object("ModelExtensionsFrame"))
             self.core.unregister_ui("support_model_type_selector", "none")
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
-            self.core.unregister_chain("get_draw_dimension",
-                    self.get_draw_dimension)
+            self.core.unregister_chain("get_draw_dimension", self.get_draw_dimension)
 
     def _update_widgets(self):
         models = self.core.get("models").get_selected()
@@ -141,9 +135,8 @@ class ModelSupport(pycam.Plugins.PluginBase):
     def _add_support_model(self, widget=None):
         models = self.core.get("current_support_models")
         for model in models:
-            self.core.get("models").add_model(model,
-                    name_template="Support model #%d",
-                    color=self.core.get("color_support_preview"))
+            self.core.get("models").add_model(model, name_template="Support model #%d",
+                                              color=self.core.get("color_support_preview"))
         # Disable the support model type -> avoid confusing visualization.
         # (this essentially removes the support grid from the 3D view)
         self.gui.get_object("SupportGridTypesControl").set_active(0)
@@ -151,8 +144,8 @@ class ModelSupport(pycam.Plugins.PluginBase):
     def get_draw_dimension(self, low, high):
         if not self.core.get("show_support_preview"):
             return
-        mlow, mhigh = pycam.Geometry.Model.get_combined_bounds(self.core.get(
-                "current_support_models"))
+        mlow, mhigh = pycam.Geometry.Model.get_combined_bounds(
+            self.core.get("current_support_models"))
         if None in mlow or None in mhigh:
             return
         for index in range(3):
@@ -170,11 +163,9 @@ class ModelSupport(pycam.Plugins.PluginBase):
             new_support_models = []
         else:
             # update the support model
-            self.core.call_chain("get_support_models", selected_models,
-                    new_support_models)
+            self.core.call_chain("get_support_models", selected_models, new_support_models)
         if old_support_models != new_support_models:
             self.core.set("current_support_models", new_support_models)
             self.core.emit_event("visual-item-updated")
         # show/hide controls
         self._update_widgets()
-

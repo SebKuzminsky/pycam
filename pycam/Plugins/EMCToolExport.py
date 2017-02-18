@@ -26,6 +26,7 @@ import pycam.Exporters.EMCToolExporter
 
 FILTER_EMC_TOOL = (("EMC tool files", "*.tbl"),)
 
+
 class EMCToolExport(pycam.Plugins.PluginBase):
 
     UI_FILE = "emc_tool_export.ui"
@@ -37,18 +38,15 @@ class EMCToolExport(pycam.Plugins.PluginBase):
         if self.gui:
             self.export_action = self.gui.get_object("ExportEMCToolDefinition")
             self.register_gtk_accelerator("export", self.export_action, None,
-                    "ExportEMCToolDefinition")
-            self._gtk_handlers = ((self.export_action, "activate",
-                    self.export_emc_tools), )
-            self.core.register_ui("export_menu", "ExportEMCToolDefinition",
-                    self.export_action, 80)
-            self._event_handlers = (("tool-selection-changed",
-                    self._update_emc_tool_button), )
+                                          "ExportEMCToolDefinition")
+            self._gtk_handlers = ((self.export_action, "activate", self.export_emc_tools), )
+            self.core.register_ui("export_menu", "ExportEMCToolDefinition", self.export_action, 80)
+            self._event_handlers = (("tool-selection-changed", self._update_emc_tool_button), )
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_emc_tool_button()
         return True
-    
+
     def teardown(self):
         if self.gui:
             self.core.unregister_ui("export_menu", self.export_action)
@@ -66,26 +64,26 @@ class EMCToolExport(pycam.Plugins.PluginBase):
         if not filename:
             # TODO: separate this away from Gui/Project.py
             # TODO: implement "last_model_filename" in core
-            filename = self.core.get("get_filename_func")("Save toolpath to ...",
-                    mode_load=False, type_filter=FILTER_EMC_TOOL,
-                    filename_templates=(self._last_emc_tool_file,
-                            self.core.get("last_model_filename")))
+            filename = self.core.get("get_filename_func")(
+                "Save toolpath to ...", mode_load=False, type_filter=FILTER_EMC_TOOL,
+                filename_templates=(self._last_emc_tool_file,
+                                    self.core.get("last_model_filename")))
         if filename:
             self._last_emc_tool_file = filename
             tools_dict = []
             tools = self.core.get("tools")
             for tool in tools:
-                tools_dict.append({"name": tool["name"], "id": tool["id"],
-                        "radius": tool["parameters"].get("radius", 1)})
+                tools_dict.append({"name": tool["name"],
+                                   "id": tool["id"],
+                                   "radius": tool["parameters"].get("radius", 1)})
             export = pycam.Exporters.EMCToolExporter.EMCToolExporter(tools_dict)
             text = export.get_tool_definition_string()
             try:
                 out = file(filename, "w")
                 out.write(text)
                 out.close()
-                self.log.info("EMC tool file written: %s" % filename)
-            except IOError, err_msg:
-                self.log.error("Failed to save EMC tool file: %s" % err_msg)
+                self.log.info("EMC tool file written: %s", filename)
+            except IOError as err_msg:
+                self.log.error("Failed to save EMC tool file: %s", err_msg)
             else:
                 self.core.emit_event("notify-file-saved", filename)
-

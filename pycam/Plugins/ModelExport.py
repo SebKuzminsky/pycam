@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
 
 import pycam.Plugins
 import pycam.Utils
@@ -35,26 +36,19 @@ class ModelExport(pycam.Plugins.PluginBase):
         if self.gui:
             self._gtk_handlers = []
             save_action = self.gui.get_object("SaveModel")
-            self.register_gtk_accelerator("model", save_action,
-                    "<Control>s", "SaveModel")
-            self._gtk_handlers.append((save_action, "activate",
-                    self.save_model))
-            self.core.register_ui("file_menu", "SaveModel",
-                    save_action, 20)
+            self.register_gtk_accelerator("model", save_action, "<Control>s", "SaveModel")
+            self._gtk_handlers.append((save_action, "activate", self.save_model))
+            self.core.register_ui("file_menu", "SaveModel", save_action, 20)
             save_as_action = self.gui.get_object("SaveAsModel")
-            self.register_gtk_accelerator("model", save_as_action,
-                    "<Control><Shift>s", "SaveAsModel")
-            self._gtk_handlers.append((save_as_action, "activate",
-                    self.save_as_model))
-            self.core.register_ui("file_menu", "SaveAsModel",
-                    save_as_action, 25)
-            self._event_handlers = (("model-selection-changed",
-                    self._update_widgets), )
+            self.register_gtk_accelerator("model", save_as_action, "<Control><Shift>s",
+                                          "SaveAsModel")
+            self._gtk_handlers.append((save_as_action, "activate", self.save_as_model))
+            self.core.register_ui("file_menu", "SaveAsModel", save_as_action, 25)
+            self._event_handlers = (("model-selection-changed", self._update_widgets), )
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
-        self.core.register_chain("model_export", self._fallback_model_export,
-                weight=1000)
+        self.core.register_chain("model_export", self._fallback_model_export, weight=1000)
         return True
 
     def teardown(self):
@@ -85,12 +79,12 @@ class ModelExport(pycam.Plugins.PluginBase):
         save_as_possible = len(models) > 0
         self.gui.get_object("SaveAsModel").set_sensitive(save_as_possible)
         # TODO: fix this
-        save_possible = False and bool(self.last_model_uri and save_as_possible and \
-                self.last_model_uri.is_writable())
-        #TODO: fix this dirty hack to avoid silent overwrites of PS/DXF files as SVG
+        save_possible = False and bool(self.last_model_uri
+                                       and save_as_possible
+                                       and self.last_model_uri.is_writable())
+        # TODO: fix this dirty hack to avoid silent overwrites of PS/DXF files as SVG
         if save_possible:
-            extension = os.path.splitext(self.last_model_uri.get_path(
-                    ))[-1].lower()
+            extension = os.path.splitext(self.last_model_uri.get_path())[-1].lower()
             # TODO: fix these hard-coded file extensions
             if extension[1:] in ("eps", "ps", "dxf"):
                 # can't save 2D formats except SVG
@@ -118,18 +112,17 @@ class ModelExportTrimesh(pycam.Plugins.PluginBase):
             # TODO: this needs to be decided by the exporter code
             type_filter = [("STL models", "*.stl")]
             model_name = model["name"]
-            filename = self.core.get("get_filename_func")(
-                    "Save model '%s' to ..." % model_name,
-                    mode_load=False, type_filter=type_filter,
-                    filename_templates=[])
+            filename = self.core.get("get_filename_func")("Save model '%s' to ..." % model_name,
+                                                          mode_load=False,
+                                                          type_filter=type_filter,
+                                                          filename_templates=[])
             if not filename:
                 continue
             uri = pycam.Utils.URIHandler(filename)
             if not uri:
                 continue
             if not uri.is_local():
-                self.log.error("Unable to write file to a non-local " + \
-                        "destination: %s" % uri)
+                self.log.error("Unable to write file to a non-local destination: %s", uri)
                 continue
             try:
                 file_in = open(uri.get_local_path(), "w")
@@ -139,10 +132,9 @@ class ModelExportTrimesh(pycam.Plugins.PluginBase):
                 file_in.close()
                 removal_list.append(index)
             except IOError, err_msg:
-                self.log.error("Failed to save model file: %s" % err_msg)
+                self.log.error("Failed to save model file: %s", err_msg)
             else:
-                self.log.info(("Successfully stored '%s' as " + \
-                        "'%s'.") % (filename, model_name))
+                self.log.info("Successfully stored '%s' as '%s'.", filename, model_name)
         removal_list.reverse()
         for index in removal_list:
             models.pop(index)
@@ -167,18 +159,17 @@ class ModelExportContour(pycam.Plugins.PluginBase):
             # determine the file type
             # TODO: this needs to be decided by the exporter code
             type_filter = [("SVG models", "*.svg")]
-            filename = self.core.get("get_filename_func")(
-                    "Save model '%s' to ..." % model["name"],
-                    mode_load=False, type_filter=type_filter,
-                    filename_templates=[])
+            filename = self.core.get("get_filename_func")("Save model '%s' to ..." % model["name"],
+                                                          mode_load=False,
+                                                          type_filter=type_filter,
+                                                          filename_templates=[])
             if not filename:
                 continue
             uri = pycam.Utils.URIHandler(filename)
             if not uri:
                 continue
             if not uri.is_local():
-                self.log.error("Unable to write file to a non-local " + \
-                        "destination: %s" % uri)
+                self.log.error("Unable to write file to a non-local destination: %s", uri)
                 continue
             try:
                 file_in = open(uri.get_local_path(), "w")
@@ -188,12 +179,9 @@ class ModelExportContour(pycam.Plugins.PluginBase):
                 file_in.close()
                 removal_list.append(index)
             except IOError, err_msg:
-                self.log.error("Failed to save model file: %s" % err_msg)
+                self.log.error("Failed to save model file: %s", err_msg)
             else:
-                self.log.info(("Successfully stored '%s' as " + \
-                        "'%s'.") % (filename, model["name"]))
+                self.log.info("Successfully stored '%s' as '%s'.", filename, model["name"])
         removal_list.reverse()
         for index in removal_list:
             models.pop(index)
-
-

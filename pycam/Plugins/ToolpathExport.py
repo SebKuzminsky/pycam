@@ -20,11 +20,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os
-
-import pycam.Plugins
-from pycam.Geometry.PointUtils import *
 import pycam.Exporters.GCode.LinuxCNC
+import pycam.Plugins
 
 
 FILTER_GCODE = (("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode")),)
@@ -41,19 +38,15 @@ class ToolpathExport(pycam.Plugins.PluginBase):
         if self.gui:
             self._frame = self.gui.get_object("ToolpathExportFrame")
             self._frame.unparent()
-            self.core.register_ui("toolpath_handling", "Export",
-                    self._frame, -100)
+            self.core.register_ui("toolpath_handling", "Export", self._frame, -100)
             self._gtk_handlers = (
-                    (self.gui.get_object("ExportGCodeAll"), "clicked",
-                        self.export_all),
-                    (self.gui.get_object("ExportGCodeSelected"), "clicked",
-                        self.export_selected),
-                    (self.gui.get_object("ExportGCodeVisible"), "clicked",
-                        self.export_visible))
+                (self.gui.get_object("ExportGCodeAll"), "clicked", self.export_all),
+                (self.gui.get_object("ExportGCodeSelected"), "clicked", self.export_selected),
+                (self.gui.get_object("ExportGCodeVisible"), "clicked", self.export_visible))
             self._event_handlers = (
-                    ("toolpath-list-changed", self._update_widgets),
-                    ("toolpath-selection-changed", self._update_widgets),
-                    ("toolpath-changed", self._update_widgets))
+                ("toolpath-list-changed", self._update_widgets),
+                ("toolpath-selection-changed", self._update_widgets),
+                ("toolpath-changed", self._update_widgets))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
@@ -68,8 +61,8 @@ class ToolpathExport(pycam.Plugins.PluginBase):
     def _update_widgets(self):
         toolpaths = self.core.get("toolpaths")
         for name, filtered in (("ExportGCodeAll", toolpaths),
-                ("ExportGCodeVisible", toolpaths.get_visible()),
-                ("ExportGCodeSelected", toolpaths.get_selected())):
+                               ("ExportGCodeVisible", toolpaths.get_visible()),
+                               ("ExportGCodeSelected", toolpaths.get_selected())):
             self.gui.get_object(name).set_sensitive(bool(filtered))
 
     def export_all(self, widget=None):
@@ -89,8 +82,7 @@ class ToolpathExport(pycam.Plugins.PluginBase):
             self.log.warn("No toolpath processor selected")
             return
         filter_func = processor["func"]
-        filter_params = self.core.get("get_parameter_values")(
-                "toolpath_processor")
+        filter_params = self.core.get("get_parameter_values")("toolpath_processor")
         settings_filters = filter_func(filter_params)
         # TODO: get "public" filters (metric, ...)
         common_filters = []
@@ -101,10 +93,10 @@ class ToolpathExport(pycam.Plugins.PluginBase):
             filename_extension = None
         # TODO: separate this away from Gui/Project.py
         # TODO: implement "last_model_filename" in core
-        filename = self.core.get("get_filename_func")("Save toolpath to ...",
-                mode_load=False, type_filter=FILTER_GCODE,
-                filename_templates=(self._last_toolpath_file, self.core.get("last_model_filename")),
-                filename_extension=filename_extension)
+        filename = self.core.get("get_filename_func")(
+            "Save toolpath to ...", mode_load=False, type_filter=FILTER_GCODE,
+            filename_templates=(self._last_toolpath_file, self.core.get("last_model_filename")),
+            filename_extension=filename_extension)
         if filename:
             self._last_toolpath_file = filename
         # no filename given -> exit
@@ -113,20 +105,21 @@ class ToolpathExport(pycam.Plugins.PluginBase):
         try:
             destination = open(filename, "w")
             # TODO: implement "get_meta_data()"
-            #meta_data = self.get_meta_data()
-            meta_data = ""
+#           meta_data = self.get_meta_data()
             machine_time = 0
             # calculate the machine time and store it in the GCode header
             for toolpath in toolpaths:
                 machine_time += toolpath.get_machine_time()
-            all_info = meta_data + os.linesep \
-                    + "Estimated machine time: %.0f minutes" % machine_time
+            # TODO: use this description for the export
+#           all_info = (meta_data + os.linesep
+#                       + "Estimated machine time: %.0f minutes" % machine_time)
             generator = pycam.Exporters.GCode.LinuxCNC.LinuxCNC(destination)
             generator.add_filters(settings_filters)
             generator.add_filters(common_filters)
+            # TODO: investigate, which code pieces we need (path_mode, ...)
             """
-            minimum_steps = [self.core.get("gcode_minimum_step_x"),  
-                    self.core.get("gcode_minimum_step_y"),  
+            minimum_steps = [self.core.get("gcode_minimum_step_x"),
+                    self.core.get("gcode_minimum_step_y"),
                     self.core.get("gcode_minimum_step_z")]
             if self.core.get("touch_off_position_type") == "absolute":
                 pos_x = self.core.get("touch_off_position_x")
@@ -169,9 +162,8 @@ class ToolpathExport(pycam.Plugins.PluginBase):
                 generator.add_moves(toolpath.path, toolpath.filters)
             generator.finish()
             destination.close()
-            self.log.info("GCode file successfully written: %s" % str(filename))
+            self.log.info("GCode file successfully written: %s", str(filename))
         except IOError, err_msg:
-            self.log.error("Failed to save toolpath file: %s" % err_msg)
+            self.log.error("Failed to save toolpath file: %s", err_msg)
         else:
             self.core.emit_event("notify-file-saved", filename)
-

@@ -35,33 +35,27 @@ class ModelPosition(pycam.Plugins.PluginBase):
             position_box = self.gui.get_object("ModelPositionBox")
             position_box.unparent()
             self._gtk_handlers = []
-            self.core.register_ui("model_handling", "Position", position_box,
-                    -20)
+            self.core.register_ui("model_handling", "Position", position_box, -20)
             shift_button = self.gui.get_object("ShiftModelButton")
-            self._gtk_handlers.append((shift_button, "clicked",
-                    self._shift_model))
+            self._gtk_handlers.append((shift_button, "clicked", self._shift_model))
             align_button = self.gui.get_object("AlignPositionButton")
-            self._gtk_handlers.append((align_button, "clicked",
-                    self._align_model))
+            self._gtk_handlers.append((align_button, "clicked", self._align_model))
             # grab default button for shift/align controls
             for axis in "XYZ":
                 obj = self.gui.get_object("ShiftPosition%s" % axis)
                 self._gtk_handlers.extend((
-                        (obj, "focus-in-event", lambda widget, data: \
-                            shift_button.grab_default()),
-                        (obj, "focus-out-event", lambda widget, data: \
-                            shift_button.get_toplevel().set_default(None))))
+                    (obj, "focus-in-event", lambda widget, data: shift_button.grab_default()),
+                    (obj, "focus-out-event",
+                     lambda widget, data: shift_button.get_toplevel().set_default(None))))
             for axis in "XYZ":
                 for name_template in ("AlignPosition%s", "AlignPosition%sMin",
-                        "AlignPosition%sCenter", "AlignPosition%sMax"):
+                                      "AlignPosition%sCenter", "AlignPosition%sMax"):
                     obj = self.gui.get_object("AlignPosition%s" % axis)
                     self._gtk_handlers.extend((
-                            (obj, "focus-in-event", lambda widget, data: \
-                                align_button.grab_default()),
-                            (obj, "focus-out-event", lambda widget, data: \
-                                align_button.get_toplevel().set_default(None))))
-            self._event_handlers = (("model-selection-changed",
-                    self._update_position_widgets), )
+                        (obj, "focus-in-event", lambda widget, data: align_button.grab_default()),
+                        (obj, "focus-out-event",
+                         lambda widget, data: align_button.get_toplevel().set_default(None))))
+            self._event_handlers = (("model-selection-changed", self._update_position_widgets), )
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_position_widgets()
@@ -69,8 +63,7 @@ class ModelPosition(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("model_handling",
-                    self.gui.get_object("ModelPositionBox"))
+            self.core.unregister_ui("model_handling", self.gui.get_object("ModelPositionBox"))
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
 
@@ -90,11 +83,9 @@ class ModelPosition(pycam.Plugins.PluginBase):
         progress.update(text="Aligning model")
         progress.disable_cancel()
         progress.set_multiple(len(models), "Model")
-        shift = [self.gui.get_object("ShiftPosition%s" % axis).get_value()
-                for axis in "XYZ"]
+        shift = [self.gui.get_object("ShiftPosition%s" % axis).get_value() for axis in "XYZ"]
         for model in models:
-            model.model.shift(shift[0], shift[1], shift[2],
-                    callback=progress.update)
+            model.model.shift(shift[0], shift[1], shift[2], callback=progress.update)
             progress.update_multiple()
         progress.finish()
         self.core.emit_event("model-change-after")
@@ -104,8 +95,7 @@ class ModelPosition(pycam.Plugins.PluginBase):
         if not models:
             return
         self.core.emit_event("model-change-before")
-        dest = [self.gui.get_object("AlignPosition%s" % axis).get_value()
-                for axis in "XYZ"]
+        dest = [self.gui.get_object("AlignPosition%s" % axis).get_value() for axis in "XYZ"]
         progress = self.core.get("progress")
         progress.update(text="Shifting model")
         progress.disable_cancel()
@@ -129,8 +119,7 @@ class ModelPosition(pycam.Plugins.PluginBase):
                             shift = dest - max_axis
                         shift_values.append(shift)
             model.shift(shift_values[0], shift_values[1], shift_values[2],
-                    callback=progress.update)
+                        callback=progress.update)
             progress.update_multiple()
         progress.finish()
         self.core.emit_event("model-change-after")
-

@@ -20,17 +20,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import code
 import os
 import sys
-import code
-# gtk is imported later
-#import gtk
 import StringIO
 
 import pycam.Plugins
-import pycam.Utils.log
-
-_log = pycam.Utils.log.get_logger()
 
 
 class GtkConsole(pycam.Plugins.PluginBase):
@@ -49,20 +44,22 @@ class GtkConsole(pycam.Plugins.PluginBase):
         if self.gui:
             import gtk
             self._gtk = gtk
-            self._console = code.InteractiveConsole(
-                    locals=self.core.get_namespace(), filename="PyCAM")
+            self._console = code.InteractiveConsole(locals=self.core.get_namespace(),
+                                                    filename="PyCAM")
             # redirect sys.stdin/stdout - "exec" always writes there
             self._original_stdout = sys.stdout
             self._original_stdin = sys.stdin
             self._console_buffer = self.gui.get_object("ConsoleViewBuffer")
             # redirect the virtual console output to the window
             sys.stdout = StringIO.StringIO()
+
             def console_write(data):
                 self._console_buffer.insert(
                         self._console_buffer.get_end_iter(), data)
                 self._console_buffer.place_cursor(
                         self._console_buffer.get_end_iter())
-            self._console.write  = console_write
+
+            self._console.write = console_write
             # make sure that we are never waiting for input (e.g. "help()")
             sys.stdin = StringIO.StringIO()
             # multiprocessing has a bug regarding the handling of sys.stdin:
@@ -70,32 +67,29 @@ class GtkConsole(pycam.Plugins.PluginBase):
             sys.stdin.fileno = lambda: -1
             self._clear_console()
             console_action = self.gui.get_object("ToggleConsoleWindow")
-            self.register_gtk_accelerator("console", console_action, None,
-                    "ToggleConsoleWindow")
-            self.core.register_ui("view_menu", "ToggleConsoleWindow",
-                    console_action, 90)
+            self.register_gtk_accelerator("console", console_action, None, "ToggleConsoleWindow")
+            self.core.register_ui("view_menu", "ToggleConsoleWindow", console_action, 90)
             self._window = self.gui.get_object("ConsoleDialog")
             self._window_position = None
             self._gtk_handlers = []
-            hide_window = lambda *args: self._toggle_window(value=False)
+            hide_window = lambda *args: self._set_window_visibility(value=False)
             for objname, signal, func in (
                     ("ConsoleExecuteButton", "clicked", self._execute_command),
                     ("CommandInput", "activate", self._execute_command),
                     ("CopyConsoleButton", "clicked", self._copy_to_clipboard),
                     ("WipeConsoleButton", "clicked", self._clear_console),
                     ("CommandInput", "key-press-event", self._scroll_history),
-                    ("ToggleConsoleWindow", "toggled", self._toggle_window),
+                    ("ToggleConsoleWindow", "toggled", self._set_window_visibility),
                     ("CloseConsoleButton", "clicked", hide_window),
                     ("ConsoleDialog", "delete-event", hide_window),
                     ("ConsoleDialog", "destroy", hide_window)):
-                self._gtk_handlers.append((self.gui.get_object(objname),
-                        signal, func))
+                self._gtk_handlers.append((self.gui.get_object(objname), signal, func))
             self.register_gtk_handlers(self._gtk_handlers)
         return True
 
     def teardown(self):
         if self.gui:
-            self._toggle_window(value=False)
+            self._set_window_visibility(value=False)
             sys.stdout = self._original_stdout
             sys.stdin = self._original_stdin
             console_action = self.gui.get_object("ToggleConsoleWindow")
@@ -142,7 +136,7 @@ class GtkConsole(pycam.Plugins.PluginBase):
         content = self._console_buffer.get_text(start, end)
         self.core.get("clipboard-set")(content)
 
-    def _toggle_window(self, widget=None, value=None, action=None):
+    def _set_window_visibility(self, widget=None, value=None, action=None):
         toggle_checkbox = self.gui.get_object("ToggleConsoleWindow")
         checkbox_state = toggle_checkbox.get_active()
         if value is None:
@@ -201,4 +195,3 @@ class GtkConsole(pycam.Plugins.PluginBase):
         input_control.set_position(0)
         input_control.grab_focus()
         return True
-

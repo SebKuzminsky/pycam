@@ -22,7 +22,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import pycam.Plugins
-from pycam.Geometry.PointUtils import *
 import pycam.Toolpath.Filters as Filters
 
 
@@ -36,18 +35,15 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
         if self.gui:
             self._gtk_handlers = []
             self._frame = self.gui.get_object("ToolpathGridFrame")
-            self.core.register_ui("toolpath_handling", "Clone grid",
-                    self._frame, 30)
+            self.core.register_ui("toolpath_handling", "Clone grid", self._frame, 30)
             for objname in ("GridYCount", "GridXCount"):
                 self.gui.get_object(objname).set_value(1)
-            for objname in ("GridYCount", "GridXCount", "GridYDistance",
-                    "GridXDistance"):
-                self._gtk_handlers.append((self.gui.get_object(objname),
-                        "value-changed", self._update_widgets))
-            self._gtk_handlers.append((self.gui.get_object("GridCreate"),
-                    "clicked", self.create_toolpath_grid))
-            self.core.register_event("toolpath-selection-changed",
-                    self._update_widgets)
+            for objname in ("GridYCount", "GridXCount", "GridYDistance", "GridXDistance"):
+                self._gtk_handlers.append((self.gui.get_object(objname), "value-changed",
+                                           self._update_widgets))
+            self._gtk_handlers.append((self.gui.get_object("GridCreate"), "clicked",
+                                       self.create_toolpath_grid))
+            self.core.register_event("toolpath-selection-changed", self._update_widgets)
             self.register_gtk_handlers(self._gtk_handlers)
             self._update_widgets()
         return True
@@ -56,8 +52,7 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
         if self.gui:
             self.core.unregister_ui("toolpath_handling", self._frame)
             self.unregister_gtk_handlers(self._gtk_handlers)
-            self.core.unregister_event("toolpath-selection-changed",
-                    self._update_widgets)
+            self.core.unregister_event("toolpath-selection-changed", self._update_widgets)
 
     def _get_toolpaths_dim(self, toolpaths):
         if toolpaths:
@@ -79,10 +74,10 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
             y_space = self.gui.get_object("GridYDistance").get_value()
             x_width = x_dim * x_count + x_space * (x_count - 1)
             y_width = y_dim * y_count + y_space * (y_count - 1)
-            self.gui.get_object("LabelGridXWidth").set_label("%g%s" % \
-                    (x_width, self.core.get("unit_string")))
-            self.gui.get_object("LabelGridYWidth").set_label("%g%s" % \
-                    (y_width, self.core.get("unit_string")))
+            self.gui.get_object("LabelGridXWidth").set_label(
+                "%g%s" % (x_width, self.core.get("unit_string")))
+            self.gui.get_object("LabelGridYWidth").set_label(
+                "%g%s" % (y_width, self.core.get("unit_string")))
             self._frame.show()
         else:
             self._frame.hide()
@@ -100,9 +95,9 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
             for x in range(x_count):
                 for y in range(y_count):
                     shift_matrix = (
-                            (1, 0, 0, x * (x_space + x_dim)),
-                            (0, 1, 0, y * (y_space + y_dim)),
-                            (0, 0, 1, 0))
+                        (1, 0, 0, x * (x_space + x_dim)),
+                        (0, 1, 0, y * (y_space + y_dim)),
+                        (0, 0, 1, 0))
                     shifted = toolpath | Filters.TransformPosition(shift_matrix)
                     new_path.extend(shifted)
             if not self.gui.get_object("KeepOriginal").get_active():
@@ -111,4 +106,3 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
             else:
                 self.core.get("toolpaths").add_new((new_path, toolpath.filters))
         self.core.get("toolpaths").select(toolpaths)
-

@@ -35,10 +35,9 @@ class ModelPlaneMirror(pycam.Plugins.PluginBase):
             mirror_box = self.gui.get_object("ModelMirrorBox")
             mirror_box.unparent()
             self.core.register_ui("model_handling", "Mirror", mirror_box, 0)
-            self._gtk_handlers = ((self.gui.get_object("PlaneMirrorButton"),
-                    "clicked", self._plane_mirror), )
-            self._event_handlers = (("model-selection-changed",
-                    self._update_plane_widgets), )
+            self._gtk_handlers = ((self.gui.get_object("PlaneMirrorButton"), "clicked",
+                                   self._plane_mirror), )
+            self._event_handlers = (("model-selection-changed", self._update_plane_widgets), )
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_plane_widgets()
@@ -70,8 +69,7 @@ class ModelPlaneMirror(pycam.Plugins.PluginBase):
                 break
         for model in models:
             model.model.transform_by_template("%s_mirror" % plane.lower(),
-                    callback=progress.update)
+                                              callback=progress.update)
             progress.update_multiple()
         progress.finish()
         self.core.emit_event("model-change-after")
-

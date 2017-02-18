@@ -21,11 +21,10 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import pycam.Plugins
-from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Plane import Plane
-import pycam.Toolpath.Filters as Filters
 import pycam.Gui.ControlsGTK
+import pycam.Plugins
+import pycam.Toolpath.Filters as Filters
 
 
 class ToolpathCrop(pycam.Plugins.PluginBase):
@@ -37,20 +36,18 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
     def setup(self):
         if self.gui:
             self._frame = self.gui.get_object("ToolpathCropFrame")
-            self.core.register_ui("toolpath_handling", "Crop",
-                    self._frame, 40)
+            self.core.register_ui("toolpath_handling", "Crop", self._frame, 40)
             self._gtk_handlers = []
             for objname in ("ToolpathCropZSlice", "ToolpathCropMargin"):
                 obj = self.gui.get_object(objname)
                 obj.set_value(0)
-                self._gtk_handlers.append((obj, "value-changed",
-                        self._update_widgets))
-            self._gtk_handlers.append((self.gui.get_object("CropButton"),
-                    "clicked", self.crop_toolpath))
+                self._gtk_handlers.append((obj, "value-changed", self._update_widgets))
+            self._gtk_handlers.append((self.gui.get_object("CropButton"), "clicked",
+                                       self.crop_toolpath))
             # model selector
-            self.models_widget = pycam.Gui.ControlsGTK.InputTable([],
-                    change_handler=self._update_widgets)
-            # configure the input/output converter
+            self.models_widget = pycam.Gui.ControlsGTK.InputTable(
+                [], change_handler=self._update_widgets)
+
             def get_converter(model_refs):
                 models_dict = {}
                 for model in self.core.get("models"):
@@ -59,15 +56,15 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
                 for model_ref in model_refs:
                     models.append(models_dict[model_ref])
                 return models
+
             def set_converter(models):
                 return [id(model) for model in models]
-            self.models_widget.set_conversion(set_conv=set_converter,
-                    get_conv=get_converter)
-            self.gui.get_object("ModelTableContainer").add(
-                    self.models_widget.get_widget())
+
+            self.models_widget.set_conversion(set_conv=set_converter, get_conv=get_converter)
+            self.gui.get_object("ModelTableContainer").add(self.models_widget.get_widget())
             self._event_handlers = (
-                    ("model-list-changed", self._update_models_list),
-                    ("toolpath-selection-changed", self._update_visibility))
+                ("model-list-changed", self._update_models_list),
+                ("toolpath-selection-changed", self._update_visibility))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
@@ -76,8 +73,7 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.gui.get_object("ModelTableContainer").remove(
-                    self.models_widget.get_widget())
+            self.gui.get_object("ModelTableContainer").remove(self.models_widget.get_widget())
             self.core.unregister_ui("toolpath_handling", self._frame)
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
@@ -100,8 +96,7 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
         info_label = self.gui.get_object("ToolpathCropInfo")
         info_box = self.gui.get_object("ToolpathCropInfoBox")
         button = self.gui.get_object("CropButton")
-        slicing_models = [model for model in models
-                if hasattr(model, "get_waterline_contour")]
+        slicing_models = [model for model in models if hasattr(model, "get_waterline_contour")]
         # show or hide z-slice controls
         slice_controls = ("ToolpathCropZSliceLabel", "ToolpathCropZSlice")
         if slicing_models:
@@ -161,20 +156,17 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
     def crop_toolpath(self, widget=None):
         selected = self.core.get("toolpaths").get_selected()
         polygons = self._get_waterlines()
-        keep_original = self.gui.get_object(
-                "ToolpathCropKeepOriginal").get_active()
+        keep_original = self.gui.get_object("ToolpathCropKeepOriginal").get_active()
         for toolpath in self.core.get("toolpaths").get_selected():
             # Store the new toolpath first separately - otherwise we can't
             # revert the changes in case of an empty result.
             new_path = toolpath | Filters.Crop(polygons)
             if new_path | Filters.MovesOnly():
                 if keep_original:
-                    self.core.get("toolpaths").add_new(
-                            (new_path, toolpath.filters))
+                    self.core.get("toolpaths").add_new((new_path, toolpath.filters))
                 else:
                     toolpath.path = new_path
                     self.core.emit_event("toolpath-changed")
             else:
                 self.log.info("Toolpath cropping: the result is empty")
         self.core.get("toolpaths").select(selected)
-

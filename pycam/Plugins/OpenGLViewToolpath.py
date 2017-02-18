@@ -34,10 +34,8 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
         import OpenGL.GL
         self._GL = OpenGL.GL
         self.core.register_event("visualize-items", self.draw_toolpaths)
-        self.core.get("register_color")("color_toolpath_cut", "Toolpath cut",
-                60)
-        self.core.get("register_color")("color_toolpath_return",
-                "Toolpath rapid", 70)
+        self.core.get("register_color")("color_toolpath_cut", "Toolpath cut", 60)
+        self.core.get("register_color")("color_toolpath_return", "Toolpath rapid", 70)
         self.core.register_chain("get_draw_dimension", self.get_draw_dimension)
         self.core.get("register_display_item")("show_toolpath", "Show Toolpath", 30),
         self.core.set("draw_toolpath_moves_func", self._draw_toolpath_moves)
@@ -45,8 +43,7 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
-        self.core.unregister_chain("get_draw_dimension",
-                self.get_draw_dimension)
+        self.core.unregister_chain("get_draw_dimension", self.get_draw_dimension)
         self.core.unregister_event("visualize-items", self.draw_toolpaths)
         self.core.get("unregister_color")("color_toolpath_cut")
         self.core.get("unregister_color")("color_toolpath_return")
@@ -87,11 +84,11 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
             settings_filters = filter_func(filter_params)
             for toolpath in self.core.get("toolpaths").get_visible():
                 # TODO: enable the VBO code for speedup!
-                #moves = toolpath.get_moves_for_opengl(self.core.get("gcode_safety_height"))
-                #self._draw_toolpath_moves2(moves)
+                # moves = toolpath.get_moves_for_opengl(self.core.get("gcode_safety_height"))
+                # self._draw_toolpath_moves2(moves)
                 moves = toolpath.get_basic_moves(filters=settings_filters)
                 self._draw_toolpath_moves(moves)
-            
+
     def _draw_toolpath_moves2(self, paths):
         GL = self._GL
         GL.glDisable(GL.GL_LIGHTING)
@@ -107,9 +104,11 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
             GL.glVertexPointerf(coords)
             for path in paths[1]:
                 if path[2]:
-                    GL.glColor4f(color_rapid["red"], color_rapid["green"], color_rapid["blue"], color_rapid["alpha"])
+                    GL.glColor4f(color_rapid["red"], color_rapid["green"], color_rapid["blue"],
+                                 color_rapid["alpha"])
                 else:
-                    GL.glColor4f(color_cut["red"], color_cut["green"], color_cut["blue"], color_cut["alpha"])
+                    GL.glColor4f(color_cut["red"], color_cut["green"], color_cut["blue"],
+                                 color_cut["alpha"])
                 if show_directions:
                     GL.glDisable(GL.GL_CULL_FACE)
                     GL.glDrawElements(GL.GL_TRIANGLES, len(path[1]), GL.GL_UNSIGNED_INT, path[1])
@@ -118,7 +117,7 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
         finally:
             coords.unbind()
 
-    ## Simulate still depends on this pathway
+    # Simulate still depends on this pathway
     def _draw_toolpath_moves(self, moves):
         GL = self._GL
         GL.glDisable(GL.GL_LIGHTING)
@@ -131,21 +130,21 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
         last_rapid = None
         GL.glBegin(GL.GL_LINE_STRIP)
         for move_type, position in moves:
-            if not move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
+            if move_type not in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
                 continue
             rapid = move_type == MOVE_STRAIGHT_RAPID
             if last_rapid != rapid:
                 GL.glEnd()
                 if rapid:
-                    GL.glColor4f(color_rapid["red"], color_rapid["green"],
-                            color_rapid["blue"], color_rapid["alpha"])
+                    GL.glColor4f(color_rapid["red"], color_rapid["green"], color_rapid["blue"],
+                                 color_rapid["alpha"])
                 else:
-                    GL.glColor4f(color_cut["red"], color_cut["green"],
-                            color_cut["blue"], color_cut["alpha"])
+                    GL.glColor4f(color_cut["red"], color_cut["green"], color_cut["blue"],
+                                 color_cut["alpha"])
                 # we need to wait until the color change is active
                 GL.glFinish()
                 GL.glBegin(GL.GL_LINE_STRIP)
-                if not last_position is None:
+                if last_position is not None:
                     GL.glVertex3f(*last_position)
                 last_rapid = rapid
             GL.glVertex3f(*position)
@@ -156,4 +155,3 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
                 p1 = moves[index][0]
                 p2 = moves[index + 1][0]
                 pycam.Gui.OpenGLTools.draw_direction_cone(p1, p2)
-

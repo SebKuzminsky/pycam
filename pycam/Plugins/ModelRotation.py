@@ -35,12 +35,10 @@ class ModelRotation(pycam.Plugins.PluginBase):
         if self.gui:
             rotation_box = self.gui.get_object("ModelRotationBox")
             rotation_box.unparent()
-            self.core.register_ui("model_handling", "Rotation", rotation_box,
-                    -10)
-            self._gtk_handlers = ((self.gui.get_object("RotateModelButton"),
-                    "clicked", self._rotate_model), )
-            self._event_handlers = (("model-selection-changed",
-                    self._update_controls), )
+            self.core.register_ui("model_handling", "Rotation", rotation_box, -10)
+            self._gtk_handlers = ((self.gui.get_object("RotateModelButton"), "clicked",
+                                   self._rotate_model), )
+            self._event_handlers = (("model-selection-changed", self._update_controls), )
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_controls()
@@ -48,8 +46,7 @@ class ModelRotation(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("model_handling",
-                    self.gui.get_object("ModelRotationBox"))
+            self.core.unregister_ui("model_handling", self.gui.get_object("ModelRotationBox"))
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
 
@@ -70,10 +67,10 @@ class ModelRotation(pycam.Plugins.PluginBase):
                 break
         axis_vector = {"X": (1, 0, 0), "Y": (0, 1, 0), "Z": (0, 0, 1)}[axis]
         for control, angle in (("RotationAngle90CCKW", -90),
-                ("RotationAngle90CKW", 90),
-                ("RotationAngle180", 180),
-                ("RotationAngleCustomCKW",
-                    self.gui.get_object("RotationAngle").get_value())):
+                               ("RotationAngle90CKW", 90),
+                               ("RotationAngle180", 180),
+                               ("RotationAngleCustomCKW",
+                                self.gui.get_object("RotationAngle").get_value())):
             if self.gui.get_object(control).get_active():
                 break
         matrix = pycam.Geometry.Matrix.get_rotation_matrix_axis_angle(
@@ -87,4 +84,3 @@ class ModelRotation(pycam.Plugins.PluginBase):
             progress.update_multiple()
         self.core.emit_event("model-change-after")
         progress.finish()
-

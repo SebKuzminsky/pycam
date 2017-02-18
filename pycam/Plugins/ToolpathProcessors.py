@@ -21,13 +21,10 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import pycam.Plugins
 import pycam.Gui.ControlsGTK
-import pycam.Utils.log
-import pycam.Toolpath.Filters as Filters
+import pycam.Plugins
 from pycam.Toolpath import CORNER_STYLE_EXACT_PATH
-
-_log = pycam.Utils.log.get_logger()
+import pycam.Utils.log
 
 
 class ToolpathProcessors(pycam.Plugins.ListPluginBase):
@@ -41,12 +38,13 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
             import gtk
             notebook = self.gui.get_object("GCodePrefsNotebook")
             self._pref_items = []
+
             def clear_preferences():
                 for child in notebook.get_children():
                     notebook.remove(child)
                     # we need to clear the whole path down to the "real" item
                     parent = notebook
-                    while not child in [entry[0] for entry in self._pref_items]:
+                    while child not in [entry[0] for entry in self._pref_items]:
                         if child.get_parent():
                             parent.remove(child)
                         parent = child
@@ -58,11 +56,11 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                             break
                     else:
                         # we found a valid child -> remove it
-                        signals = [entry[1] for entry in self._pref_items
-                                if child is entry[0]][0]
+                        signals = [entry[1] for entry in self._pref_items if child is entry[0]][0]
                         while signals:
                             child.disconnect(signals.pop())
                         parent.remove(child)
+
             def update_preference_item_visibility(widget, *args):
                 """ This function takes care for hiding empty pages of the
                     notebook.
@@ -74,9 +72,9 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                     parent.show()
                 else:
                     parent.hide()
+
             def add_preferences_item(item, name):
-                matching_entries = [obj for obj in self._pref_items
-                        if obj[0] is item]
+                matching_entries = [obj for obj in self._pref_items if obj[0] is item]
                 if matching_entries:
                     current_entry = matching_entries[0]
                 else:
@@ -99,50 +97,46 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                     parent = item
                 if not current_entry[1]:
                     for signal in ("hide", "show"):
-                        current_entry[1].append(item.connect(signal,
-                            update_preference_item_visibility, parent))
+                        current_entry[1].append(
+                            item.connect(signal, update_preference_item_visibility, parent))
                 notebook.append_page(parent, gtk.Label(name))
                 update_preference_item_visibility(item, parent)
-            self.core.register_ui_section("gcode_preferences",
-                    add_preferences_item, clear_preferences)
+
+            self.core.register_ui_section("gcode_preferences", add_preferences_item,
+                                          clear_preferences)
             general_widget = pycam.Gui.ControlsGTK.ParameterSection()
             general_widget.get_widget().show()
-            self.core.register_ui_section("gcode_general_parameters",
-                    general_widget.add_widget, general_widget.clear_widgets)
-            self.core.register_ui("gcode_preferences", "General",
-                    general_widget.get_widget())
+            self.core.register_ui_section("gcode_general_parameters", general_widget.add_widget,
+                                          general_widget.clear_widgets)
+            self.core.register_ui("gcode_preferences", "General", general_widget.get_widget())
             self._frame = self.gui.get_object("SettingsFrame")
             self.core.register_ui("toolpath_handling", "Settings", self._frame)
             self.gui.get_object("PreferencesButton").connect("clicked",
-                    self._toggle_window, True)
-            self.gui.get_object("CloseButton").connect("clicked",
-                    self._toggle_window, False)
+                                                             self._set_window_visibility, True)
+            self.gui.get_object("CloseButton").connect("clicked", self._set_window_visibility,
+                                                       False)
             self.window = self.gui.get_object("GCodePreferencesWindow")
-            self.window.connect("delete-event", self._toggle_window, False)
-            self._proc_selector = pycam.Gui.ControlsGTK.InputChoice([],
-                    change_handler=lambda widget=None: \
-                            self.core.emit_event(
-                                "toolpath-processor-selection-changed"))
+            self.window.connect("delete-event", self._set_window_visibility, False)
+            self._proc_selector = pycam.Gui.ControlsGTK.InputChoice(
+                [], change_handler=lambda widget=None: self.core.emit_event(
+                    "toolpath-processor-selection-changed"))
             proc_widget = self._proc_selector.get_widget()
             self._settings_section = pycam.Gui.ControlsGTK.ParameterSection()
             self._settings_section.get_widget().show()
-            self.gui.get_object("SelectorsContainer").add(
-                    self._settings_section.get_widget())
-            self._settings_section.add_widget(proc_widget,
-                    "Toolpath processor", weight=10)
-            # TODO: it is currently not possible to switch processors (invalid dict entries are not removed)
+            self.gui.get_object("SelectorsContainer").add(self._settings_section.get_widget())
+            self._settings_section.add_widget(proc_widget, "Toolpath processor", weight=10)
+            # TODO: it is currently not possible to switch processors (invalid dict entries are
+            #       not removed)
             proc_widget.hide()
-            #proc_widget.show()
-            self.core.get("register_parameter_group")("toolpath_processor",
-                    changed_set_event="toolpath-processor-selection-changed",
-                    changed_set_list_event="toolpath-processor-list-changed",
-                    get_current_set_func=self.get_selected)
+#           proc_widget.show()
+            self.core.get("register_parameter_group")(
+                "toolpath_processor", changed_set_event="toolpath-processor-selection-changed",
+                changed_set_list_event="toolpath-processor-list-changed",
+                get_current_set_func=self.get_selected)
             self._event_handlers = (
-                    ("toolpath-processor-list-changed", self._update_processors),
-                    ("toolpath-selection-changed", self._update_visibility),
-                    ("notify-initialization-finished",
-                            self._select_first_processor),
-            )
+                ("toolpath-processor-list-changed", self._update_processors),
+                ("toolpath-selection-changed", self._update_visibility),
+                ("notify-initialization-finished", self._select_first_processor))
             self.register_event_handlers(self._event_handlers)
             self._update_processors()
             self._update_visibility()
@@ -151,7 +145,7 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
 
     def teardown(self):
         if self.gui:
-            self._toggle_window(False)
+            self._set_window_visibility(False)
         self.core.set("toolpath_processors", None)
         self.unregister_event_handlers(self._event_handlers)
         self.core.get("unregister_parameter_group")("toolpath_processor")
@@ -169,7 +163,7 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
         return all_processors.get(current_name, None)
 
     def select(self, item=None):
-        if not item is None:
+        if item is not None:
             item = item["name"]
         self._proc_selector.set_value(item)
 
@@ -195,7 +189,7 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
         else:
             pass
 
-    def _toggle_window(self, *args):
+    def _set_window_visibility(self, *args):
         status = args[-1]
         if status:
             self.window.show()
@@ -213,60 +207,54 @@ def _get_processor_filters(core, parameters):
 
 class ToolpathProcessorMilling(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["Toolpaths", "GCodeSafetyHeight", "GCodeFilenameExtension",
-            "GCodeStepWidth", "GCodeSpindle", "GCodeCornerStyle"]
+    DEPENDS = ["Toolpaths", "GCodeSafetyHeight", "GCodeFilenameExtension", "GCodeStepWidth",
+               "GCodeSpindle", "GCodeCornerStyle"]
     CATEGORIES = ["Toolpath"]
 
     def setup(self):
         parameters = {"safety_height": 25,
-                "filename_extension": "",
-                "step_width_x": 0.0001,
-                "step_width_y": 0.0001,
-                "step_width_z": 0.0001,
-                "path_mode": CORNER_STYLE_EXACT_PATH,
-                "motion_tolerance": 0.0,
-                "naive_tolerance": 0.0,
-                "spindle_enable": True,
-                "spindle_delay": 3,
-                "touch_off": None,
-        }
-        self.core.get("register_parameter_set")("toolpath_processor",
-                "milling", "Milling",
-                lambda params: _get_processor_filters(self.core, params),
-                parameters=parameters, weight=10)
+                      "filename_extension": "",
+                      "step_width_x": 0.0001,
+                      "step_width_y": 0.0001,
+                      "step_width_z": 0.0001,
+                      "path_mode": CORNER_STYLE_EXACT_PATH,
+                      "motion_tolerance": 0.0,
+                      "naive_tolerance": 0.0,
+                      "spindle_enable": True,
+                      "spindle_delay": 3,
+                      "touch_off": None}
+        self.core.get("register_parameter_set")(
+            "toolpath_processor", "milling", "Milling",
+            lambda params: _get_processor_filters(self.core, params), parameters=parameters,
+            weight=10)
         # initialize all parameters
         self.core.get("set_parameter_values")("toolpath_processor", parameters)
         return True
 
     def teardown(self):
-        self.core.get("unregister_parameter_set")("toolpath_processor", 
-                "milling")
+        self.core.get("unregister_parameter_set")("toolpath_processor", "milling")
 
 
 class ToolpathProcessorLaser(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["Toolpaths", "GCodeFilenameExtension", "GCodeStepWidth",
-            "GCodeCornerStyle"]
+    DEPENDS = ["Toolpaths", "GCodeFilenameExtension", "GCodeStepWidth", "GCodeCornerStyle"]
     CATEGORIES = ["Toolpath"]
 
     def setup(self):
         parameters = {"filename_extension": "",
-                "step_width_x": 0.0001,
-                "step_width_y": 0.0001,
-                "step_width_z": 0.0001,
-                "path_mode": CORNER_STYLE_EXACT_PATH,
-                "motion_tolerance": 0.0,
-                "naive_tolerance": 0.0,
-        }
-        self.core.get("register_parameter_set")("toolpath_processor",
-                "laser", "Laser",
-                lambda params: _get_processor_filters(self.core, params),
-                parameters=parameters, weight=50)
+                      "step_width_x": 0.0001,
+                      "step_width_y": 0.0001,
+                      "step_width_z": 0.0001,
+                      "path_mode": CORNER_STYLE_EXACT_PATH,
+                      "motion_tolerance": 0.0,
+                      "naive_tolerance": 0.0}
+        self.core.get("register_parameter_set")(
+            "toolpath_processor", "laser", "Laser",
+            lambda params: _get_processor_filters(self.core, params), parameters=parameters,
+            weight=50)
         # initialize all parameters
         self.core.get("set_parameter_values")("toolpath_processor", parameters)
         return True
 
     def teardown(self):
-        self.core.get("unregister_parameter_set")("toolpath_processor",
-                "laser")
-
+        self.core.get("unregister_parameter_set")("toolpath_processor", "laser")

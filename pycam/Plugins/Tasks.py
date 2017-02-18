@@ -24,7 +24,6 @@ import time
 
 import pycam.Plugins
 import pycam.Utils
-from pycam.Exporters.GCodeExporter import GCodeGenerator
 from pycam.Utils import get_non_conflicting_name
 
 
@@ -44,20 +43,18 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self.core.register_ui("main", "Tasks", task_frame, weight=40)
             self._taskview = self.gui.get_object("TaskView")
             self.set_gtk_modelview(self._taskview)
-            self.register_model_update(lambda:
-                self.core.emit_event("task-list-changed"))
+            self.register_model_update(lambda: self.core.emit_event("task-list-changed"))
             for action, obj_name in ((self.ACTION_UP, "TaskMoveUp"),
-                    (self.ACTION_DOWN, "TaskMoveDown"),
-                    (self.ACTION_DELETE, "TaskDelete")):
-                self.register_list_action_button(action,
-                        self.gui.get_object(obj_name))
-            self._gtk_handlers.append((self.gui.get_object("TaskNew"),
-                    "clicked", self._task_new))
+                                     (self.ACTION_DOWN, "TaskMoveDown"),
+                                     (self.ACTION_DELETE, "TaskDelete")):
+                self.register_list_action_button(action, self.gui.get_object(obj_name))
+            self._gtk_handlers.append((self.gui.get_object("TaskNew"), "clicked", self._task_new))
             # parameters
             parameters_box = self.gui.get_object("TaskParameterBox")
+
             def clear_parameter_widgets():
-                parameters_box.foreach(
-                        lambda widget: parameters_box.remove(widget))
+                parameters_box.foreach(lambda widget: parameters_box.remove(widget))
+
             def add_parameter_widget(item, name):
                 # create a frame within an alignment and the item inside
                 if item.get_parent():
@@ -72,50 +69,48 @@ class Tasks(pycam.Plugins.ListPluginBase):
                 align.add(item)
                 frame.show_all()
                 parameters_box.pack_start(frame, expand=False)
-            self.core.register_ui_section("task_parameters",
-                    add_parameter_widget, clear_parameter_widgets)
-            self.core.get("register_parameter_group")("task",
-                    changed_set_event="task-type-changed",
-                    changed_set_list_event="task-type-list-changed",
-                    get_current_set_func=self._get_type)
+
+            self.core.register_ui_section("task_parameters", add_parameter_widget,
+                                          clear_parameter_widgets)
+            self.core.get("register_parameter_group")(
+                "task", changed_set_event="task-type-changed",
+                changed_set_list_event="task-type-list-changed",
+                get_current_set_func=self._get_type)
             self.models_widget = pycam.Gui.ControlsGTK.ParameterSection()
-            self.core.register_ui_section("task_models",
-                    self.models_widget.add_widget,
-                    self.models_widget.clear_widgets)
+            self.core.register_ui_section("task_models", self.models_widget.add_widget,
+                                          self.models_widget.clear_widgets)
             self.core.register_ui("task_parameters", "Collision models",
-                    self.models_widget.get_widget(), weight=20)
+                                  self.models_widget.get_widget(), weight=20)
             self.components_widget = pycam.Gui.ControlsGTK.ParameterSection()
-            self.core.register_ui_section("task_components",
-                    self.components_widget.add_widget,
-                    self.components_widget.clear_widgets)
+            self.core.register_ui_section("task_components", self.components_widget.add_widget,
+                                          self.components_widget.clear_widgets)
             self.core.register_ui("task_parameters", "Components",
-                    self.components_widget.get_widget(), weight=10)
+                                  self.components_widget.get_widget(), weight=10)
             # table
-            self._gtk_handlers.append((self.gui.get_object("NameCell"),
-                    "edited", self._edit_task_name))
+            self._gtk_handlers.append((self.gui.get_object("NameCell"), "edited",
+                                       self._edit_task_name))
             selection = self._taskview.get_selection()
-            self._gtk_handlers.append((selection, "changed",
-                    "task-selection-changed"))
+            self._gtk_handlers.append((selection, "changed", "task-selection-changed"))
             selection.set_mode(self._gtk.SELECTION_MULTIPLE)
             self._treemodel = self.gui.get_object("TaskList")
             self._treemodel.clear()
             # generate toolpaths
             self._gtk_handlers.extend((
                     (self.gui.get_object("GenerateToolPathButton"), "clicked",
-                        self._generate_selected_toolpaths),
+                     self._generate_selected_toolpaths),
                     (self.gui.get_object("GenerateAllToolPathsButton"), "clicked",
-                        self._generate_all_toolpaths)))
+                     self._generate_all_toolpaths)))
             # shape selector
-            self._gtk_handlers.append((self.gui.get_object("TaskTypeSelector"),
-                    "changed", "task-type-changed"))
+            self._gtk_handlers.append((self.gui.get_object("TaskTypeSelector"), "changed",
+                                       "task-type-changed"))
             self._event_handlers = (
-                    ("task-type-list-changed", self._update_table),
-                    ("task-selection-changed", self._task_switch),
-                    ("task-changed", self._store_task),
-                    ("task-changed", self._trigger_table_update),
-                    ("task-type-changed", self._store_task),
-                    ("task-selection-changed", self._update_widgets),
-                    ("task-list-changed", self._update_widgets))
+                ("task-type-list-changed", self._update_table),
+                ("task-selection-changed", self._task_switch),
+                ("task-changed", self._store_task),
+                ("task-changed", self._trigger_table_update),
+                ("task-type-changed", self._store_task),
+                ("task-selection-changed", self._update_widgets),
+                ("task-list-changed", self._update_widgets))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
@@ -130,8 +125,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
         self.clear_state_items()
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("TaskBox"))
-            self.core.unregister_ui("task_parameters",
-                    self.models_widget)
+            self.core.unregister_ui("task_parameters", self.models_widget)
             self.core.unregister_ui("task_parameters", self.components_widget)
             self.core.unregister_ui_section("task_models")
             self.core.unregister_ui_section("task_components")
@@ -147,8 +141,8 @@ class Tasks(pycam.Plugins.ListPluginBase):
             task["name"] = new_text
 
     def _trigger_table_update(self):
-        self.gui.get_object("NameColumn").set_cell_data_func(
-                self.gui.get_object("NameCell"), self._render_task_name)
+        self.gui.get_object("NameColumn").set_cell_data_func(self.gui.get_object("NameCell"),
+                                                             self._render_task_name)
 
     def _render_task_name(self, column, cell, model, m_iter):
         task = self.get_by_path(model.get_path(m_iter))
@@ -192,7 +186,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
         removal = []
         type_names = [one_type["name"] for one_type in types]
         for index, task in enumerate(self):
-            if not task["type"] in type_names:
+            if task["type"] not in type_names:
                 removal.append(index)
         removal.reverse()
         for index in removal:
@@ -224,14 +218,13 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self.core.block_event("task-type-changed")
             type_name = task["type"]
             self.select_type(type_name)
-            one_type = self._get_type(type_name)
             self.core.get("set_parameter_values")("task", task["parameters"])
             control_box.show()
             self.core.unblock_event("task-type-changed")
             self.core.unblock_event("task-changed")
             # trigger a widget update
             self.core.emit_event("task-type-changed")
-        
+
     def _store_task(self, widget=None):
         tasks = self.get_selected()
         details_box = self.gui.get_object("TaskDetails")
@@ -249,11 +242,10 @@ class Tasks(pycam.Plugins.ListPluginBase):
         types = self.core.get("get_parameter_sets")("task").values()
         types.sort(key=lambda item: item["weight"])
         one_type = types[0]
-        name = get_non_conflicting_name("Task #%d",
-                [task["name"] for task in self])
+        name = get_non_conflicting_name("Task #%d", [task["name"] for task in self])
         new_task = TaskEntity({"type": one_type["name"],
-                "parameters": one_type["parameters"].copy(),
-                "name": name})
+                               "parameters": one_type["parameters"].copy(),
+                               "name": name})
         self.append(new_task)
         self.select(new_task)
 
@@ -269,7 +261,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
 
     def _generate_selected_toolpaths(self, widget=None):
         tasks = self.get_selected()
-        self.generate_toolpaths(self.get_selected())
+        self.generate_toolpaths(tasks)
 
     def _generate_all_toolpaths(self, widget=None):
         self.generate_toolpaths(self)
@@ -283,36 +275,34 @@ class Tasks(pycam.Plugins.ListPluginBase):
             progress = self.core.get("progress")
         progress.update(text="Preparing toolpath generation")
         parent = self
+
         class UpdateView(object):
             def __init__(self, func, max_fps=1):
                 self.last_update = time.time()
                 self.max_fps = max_fps
                 self.func = func
-            def update(self, text=None, percent=None, tool_position=None,
-                    toolpath=None):
+
+            def update(self, text=None, percent=None, tool_position=None, toolpath=None):
                 if parent.core.get("show_drill_progress"):
-                    if not tool_position is None:
+                    if tool_position is not None:
                         parent.cutter.moveto(tool_position)
-                    if not toolpath is None:
+                    if toolpath is not None:
                         parent.core.set("toolpath_in_progress", toolpath)
                     current_time = time.time()
-                    if (current_time - self.last_update) > 1.0/self.max_fps:
+                    if (current_time - self.last_update) > 1.0 / self.max_fps:
                         self.last_update = current_time
                         if self.func:
                             self.func()
                 # break the loop if someone clicked the "cancel" button
                 return progress.update(text=text, percent=percent)
-        draw_callback = UpdateView(
-                lambda: self.core.emit_event("visual-item-updated"),
-                max_fps=self.core.get("drill_progress_max_fps")).update
 
+        draw_callback = UpdateView(lambda: self.core.emit_event("visual-item-updated"),
+                                   max_fps=self.core.get("drill_progress_max_fps")).update
         progress.update(text="Generating collision model")
-
         # run the toolpath generation
         progress.update(text="Starting the toolpath generation")
         try:
-            func = self.core.get("get_parameter_sets")(
-                    "task")[task["type"]]["func"]
+            func = self.core.get("get_parameter_sets")("task")[task["type"]]["func"]
             toolpath = func(task, callback=draw_callback)
         except Exception:
             # catch all non-system-exiting exceptions
@@ -321,7 +311,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
                 progress.finish()
             return False
 
-        self.log.info("Toolpath generation time: %f" % (time.time() - start_time))
+        self.log.info("Toolpath generation time: %f", time.time() - start_time)
         # don't show the new toolpath anymore
         self.core.set("toolpath_in_progress", None)
 
@@ -331,7 +321,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             result = not progress.update()
         elif isinstance(toolpath, basestring):
             # an error occoured - "toolpath" contains the error message
-            self.log.error("Failed to generate toolpath: %s" % toolpath)
+            self.log.error("Failed to generate toolpath: %s", toolpath)
             # we were not successful (similar to a "cancel" request)
             result = False
         else:
@@ -347,4 +337,3 @@ class TaskEntity(pycam.Plugins.ObjectWithAttributes):
 
     def __init__(self, parameters):
         super(TaskEntity, self).__init__("task", parameters)
-

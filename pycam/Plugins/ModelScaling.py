@@ -39,23 +39,31 @@ class ModelScaling(pycam.Plugins.PluginBase):
             scale_button = self.gui.get_object("ScaleModelButton")
             scale_percent.set_value(100)
             scale_dimension_button = self.gui.get_object("ScaleAllAxesButton")
-            scale_dimension_control = self.gui.get_object(
-                    "ScaleDimensionControl")
+            scale_dimension_control = self.gui.get_object("ScaleDimensionControl")
             self._gtk_handlers = []
             self._gtk_handlers.extend((
-                    (scale_percent, "focus-in-event", lambda widget, data: scale_button.grab_default()),
-                    (scale_percent, "focus-out-event", lambda widget, data: scale_box.get_toplevel().set_default(None)),
-                    (scale_button, "clicked", self._scale_model),
-                    (self.gui.get_object("ScaleDimensionAxis"), "changed", lambda widget=None: self.core.emit_event( "model-change-after")),
-                    (scale_dimension_control, "focus-in-event", lambda widget, data: scale_dimension_button.grab_default()),
-                    (scale_dimension_control, "focus-out-event", lambda widget, data: scale_box.get_toplevel().set_default(None)),
-                    (scale_dimension_button, "clicked", lambda widget: self._scale_model_axis_fit(proportionally=True)),
-                    (self.gui.get_object("ScaleSelectedAxisButton"), "clicked", lambda widget: self._scale_model_axis_fit(proportionally=False)),
-                    (self.gui.get_object("ScaleInchMM"), "clicked", lambda widget: self._scale_model(percent=(100 * 25.4))),
-                    (self.gui.get_object("ScaleMMInch"), "clicked", lambda widget: self._scale_model(percent=(100 / 25.4)))))
+                (scale_percent, "focus-in-event",
+                 lambda widget, data: scale_button.grab_default()),
+                (scale_percent, "focus-out-event",
+                 lambda widget, data: scale_box.get_toplevel().set_default(None)),
+                (scale_button, "clicked", self._scale_model),
+                (self.gui.get_object("ScaleDimensionAxis"), "changed",
+                 lambda widget=None: self.core.emit_event("model-change-after")),
+                (scale_dimension_control, "focus-in-event",
+                 lambda widget, data: scale_dimension_button.grab_default()),
+                (scale_dimension_control, "focus-out-event",
+                 lambda widget, data: scale_box.get_toplevel().set_default(None)),
+                (scale_dimension_button, "clicked",
+                 lambda widget: self._scale_model_axis_fit(proportionally=True)),
+                (self.gui.get_object("ScaleSelectedAxisButton"), "clicked",
+                 lambda widget: self._scale_model_axis_fit(proportionally=False)),
+                (self.gui.get_object("ScaleInchMM"), "clicked",
+                 lambda widget: self._scale_model(percent=(100 * 25.4))),
+                (self.gui.get_object("ScaleMMInch"), "clicked",
+                 lambda widget: self._scale_model(percent=(100 / 25.4)))))
             self._event_handlers = (
-                    ("model-selection-changed", self._update_scale_controls),
-                    ("model-change-after", self._update_scale_controls))
+                ("model-selection-changed", self._update_scale_controls),
+                ("model-change-after", self._update_scale_controls))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_scale_controls()
@@ -63,8 +71,7 @@ class ModelScaling(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("model_handling",
-                    self.gui.get_object("ModelScaleBox"))
+            self.core.unregister_ui("model_handling", self.gui.get_object("ModelScaleBox"))
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
 
@@ -83,8 +90,7 @@ class ModelScaling(pycam.Plugins.PluginBase):
             index = axis_control.get_active()
             # TODO: get dimension of multiple models
             model = models[0].model
-            dims = (model.maxx - model.minx, model.maxy - model.miny,
-                    model.maxz - model.minz)
+            dims = (model.maxx - model.minx, model.maxy - model.miny, model.maxz - model.minz)
             value = dims[index]
             non_zero_dimensions = [i for i, dim in enumerate(dims) if dim > 0]
             enable_controls = index in non_zero_dimensions
@@ -122,8 +128,8 @@ class ModelScaling(pycam.Plugins.PluginBase):
         axis_suffix = axes[index]
         # TODO: use dimension of multiple models
         model = models[0].model
-        factor = value / (getattr(model, "max" + axis_suffix) - \
-                getattr(model, "min" + axis_suffix))
+        factor = (value / (getattr(model, "max" + axis_suffix)
+                           - getattr(model, "min" + axis_suffix)))
         self.core.emit_event("model-change-before")
         progress = self.core.get("progress")
         progress.update(text="Scaling model")
@@ -143,9 +149,7 @@ class ModelScaling(pycam.Plugins.PluginBase):
                     factor_z = factor
                 else:
                     return
-                model.model.scale(factor_x, factor_y, factor_z,
-                        callback=progress.update)
+                model.model.scale(factor_x, factor_y, factor_z, callback=progress.update)
             progress.update_multiple()
         progress.finish()
         self.core.emit_event("model-change-after")
-

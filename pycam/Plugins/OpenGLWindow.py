@@ -34,7 +34,7 @@ import gtk
 import math
 
 from pycam.Gui.OpenGLTools import draw_complete_model_view
-from pycam.Geometry.PointUtils import *
+from pycam.Geometry.PointUtils import pcross, pmul, pnormalized
 import pycam.Geometry.Matrix as Matrix
 from pycam.Geometry.utils import sqrt, number
 import pycam.Plugins
@@ -44,19 +44,19 @@ import pycam.Plugins
 # multiplied later anyway.
 VIEWS = {
     "reset": {"distance": (-1.0, -1.0, 1.0), "center": (0.0, 0.0, 0.0),
-            "up": (0.0, 0.0, 1.0), "znear": 0.01, "zfar": 10000.0, "fovy": 30.0},
+              "up": (0.0, 0.0, 1.0), "znear": 0.01, "zfar": 10000.0, "fovy": 30.0},
     "top": {"distance": (0.0, 0.0, 1.0), "center": (0.0, 0.0, 0.0),
             "up": (0.0, 1.0, 0.0), "znear": 0.01, "zfar": 10000.0, "fovy": 30.0},
     "bottom": {"distance": (0.0, 0.0, -1.0), "center": (0.0, 0.0, 0.0),
-            "up": (0.0, 1.0, 0.0), "znear": 0.01, "zfar": 10000.0, "fovy": 30.0},
+               "up": (0.0, 1.0, 0.0), "znear": 0.01, "zfar": 10000.0, "fovy": 30.0},
     "left": {"distance": (-1.0, 0.0, 0.0), "center": (0.0, 0.0, 0.0),
-            "up": (0.0, 0.0, 1.0), "znear": 0.01, "zfar": 10000.0, "fovy": 30.0},
+             "up": (0.0, 0.0, 1.0), "znear": 0.01, "zfar": 10000.0, "fovy": 30.0},
     "right": {"distance": (1.0, 0.0, 0.0), "center": (0.0, 0.0, 0.0),
-            "up": (0.0, 0.0, 1.0), "znear": 0.01, "zfar": 10000.0, "fovy": 30.0},
+              "up": (0.0, 0.0, 1.0), "znear": 0.01, "zfar": 10000.0, "fovy": 30.0},
     "front": {"distance": (0.0, -1.0, 0.0), "center": (0.0, 0.0, 0.0),
-            "up": (0.0, 0.0, 1.0), "znear": 0.01, "zfar": 10000.0, "fovy": 30.0},
+              "up": (0.0, 0.0, 1.0), "znear": 0.01, "zfar": 10000.0, "fovy": 30.0},
     "back": {"distance": (0.0, 1.0, 0.0), "center": (0.0, 0.0, 0.0),
-            "up": (0.0, 0.0, 1.0), "znear": 0.01, "zfar": 10000.0, "fovy": 30.0},
+             "up": (0.0, 0.0, 1.0), "znear": 0.01, "zfar": 10000.0, "fovy": 30.0},
 }
 
 # buttons for rotating, moving and zooming the model view window
@@ -76,8 +76,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
     def setup(self):
         if not GL_ENABLED:
-            self.log.error("Failed to initialize the interactive 3D model view."
-                    + "\nPlease install 'python-gtkglext1' to enable it.")
+            self.log.error("Failed to initialize the interactive 3D model view.\nPlease install "
+                           "'python-gtkglext1' to enable it.")
             return False
         if self.gui:
             self.context_menu = gtk.Menu()
@@ -93,27 +93,26 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self._gtk_handlers = []
             # options
             # TODO: move the default value somewhere else
-            for name, objname, default in (
-                    ("view_light", "OpenGLLight", True),
-                    ("view_shadow", "OpenGLShadow", True),
-                    ("view_polygon", "OpenGLPolygon", True),
-                    ("view_perspective", "OpenGLPerspective", True),
-                    ("opengl_cache_enable", "OpenGLCache", True)):
+            for name, objname, default in (("view_light", "OpenGLLight", True),
+                                           ("view_shadow", "OpenGLShadow", True),
+                                           ("view_polygon", "OpenGLPolygon", True),
+                                           ("view_perspective", "OpenGLPerspective", True),
+                                           ("opengl_cache_enable", "OpenGLCache", True)):
                 obj = self.gui.get_object(objname)
                 self.core.add_item(name, obj.get_active, obj.set_active)
                 obj.set_active(default)
                 self._gtk_handlers.append((obj, "toggled", self.glsetup))
-                self._gtk_handlers.append((obj, "toggled",
-                        "visual-item-updated"))
+                self._gtk_handlers.append((obj, "toggled", "visual-item-updated"))
             # frames per second
             skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
-            self.core.add_item("drill_progress_max_fps",
-                    skip_obj.get_value, skip_obj.set_value)
+            self.core.add_item("drill_progress_max_fps", skip_obj.get_value, skip_obj.set_value)
             # info bar above the model view
             detail_box = self.gui.get_object("InfoBox")
+
             def clear_window():
                 for child in detail_box.get_children():
                     detail_box.remove(child)
+
             def add_widget_to_window(item, name):
                 if len(detail_box.get_children()) > 0:
                     sep = gtk.HSeparator()
@@ -121,10 +120,10 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                     sep.show()
                 detail_box.pack_start(item)
                 item.show()
-            self.core.register_ui_section("opengl_window",
-                    add_widget_to_window, clear_window)
-            self.core.register_ui("opengl_window", "Views",
-                    self.gui.get_object("ViewControls"), weight=0)
+
+            self.core.register_ui_section("opengl_window", add_widget_to_window, clear_window)
+            self.core.register_ui("opengl_window", "Views", self.gui.get_object("ViewControls"),
+                                  weight=0)
             # color box
             color_frame = self.gui.get_object("ColorPrefTab")
             color_frame.unparent()
@@ -133,77 +132,73 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.core.set("register_color", self.register_color_setting)
             self.core.set("unregister_color", self.unregister_color_setting)
             # TODO: move "cutter" and "material" to simulation viewer
-            for name, label, weight in (
-                    ("color_background", "Background", 10),
-                    ("color_cutter", "Tool", 50),
-                    ("color_material", "Material", 80)):
+            for name, label, weight in (("color_background", "Background", 10),
+                                        ("color_cutter", "Tool", 50),
+                                        ("color_material", "Material", 80)):
                 self.core.get("register_color")(name, label, weight)
             # display items
             items_frame = self.gui.get_object("DisplayItemsPrefTab")
             items_frame.unparent()
             self._display_items = {}
-            self.core.register_ui("preferences", "Display Items", items_frame,
-                    20)
+            self.core.register_ui("preferences", "Display Items", items_frame, 20)
             self.core.set("register_display_item", self.register_display_item)
-            self.core.set("unregister_display_item",
-                    self.unregister_display_item)
+            self.core.set("unregister_display_item", self.unregister_display_item)
             # visual and general settings
             # TODO: move drill and directions to a separate plugin
-            for name, label, weight in (
-                    ("show_drill", "Show Tool", 70),
-                    ("show_directions", "Show Directions", 80)):
+            for name, label, weight in (("show_drill", "Show Tool", 70),
+                                        ("show_directions", "Show Directions", 80)):
                 self.core.get("register_display_item")(name, label, weight)
             # toggle window state
             toggle_3d = self.gui.get_object("Toggle3DView")
-            self._gtk_handlers.append((toggle_3d, "toggled",
-                    self.toggle_3d_view))
-            self.register_gtk_accelerator("opengl", toggle_3d,
-                    "<Control><Shift>v", "ToggleOpenGLView")
+            self._gtk_handlers.append((toggle_3d, "toggled", self.toggle_3d_view))
+            self.register_gtk_accelerator("opengl", toggle_3d, "<Control><Shift>v",
+                                          "ToggleOpenGLView")
             self.core.register_ui("view_menu", "ViewOpenGL", toggle_3d, -20)
-            self.mouse = {"start_pos": None, "button": None,
-                    "event_timestamp": 0, "last_timestamp": 0,
-                    "pressed_pos": None, "pressed_timestamp": 0,
-                    "pressed_button": None}
+            self.mouse = {"start_pos": None, "button": None, "event_timestamp": 0,
+                          "last_timestamp": 0, "pressed_pos": None, "pressed_timestamp": 0,
+                          "pressed_button": None}
             self.window.connect("delete-event", self.destroy)
             self.window.set_default_size(560, 400)
             for obj_name, view in (("ResetView", "reset"),
-                    ("LeftView", "left"), ("RightView", "right"),
-                    ("FrontView", "front"), ("BackView", "back"),
-                    ("TopView", "top"), ("BottomView", "bottom")):
-                kwargs = {"view": view}
-                self._gtk_handlers.append((self.gui.get_object(obj_name),
-                           "clicked", self.rotate_view, VIEWS[view]))
+                                   ("LeftView", "left"),
+                                   ("RightView", "right"),
+                                   ("FrontView", "front"),
+                                   ("BackView", "back"),
+                                   ("TopView", "top"),
+                                   ("BottomView", "bottom")):
+                self._gtk_handlers.append((self.gui.get_object(obj_name), "clicked",
+                                           self.rotate_view, VIEWS[view]))
             # key binding
-            self._gtk_handlers.append((self.window, "key-press-event",
-                    self.key_handler))
+            self._gtk_handlers.append((self.window, "key-press-event", self.key_handler))
             # OpenGL stuff
-            glconfig = gtk.gdkgl.Config(mode=gtk.gdkgl.MODE_RGBA \
-                    | gtk.gdkgl.MODE_DEPTH | gtk.gdkgl.MODE_DOUBLE)
+            glconfig = gtk.gdkgl.Config(mode=(gtk.gdkgl.MODE_RGBA
+                                              | gtk.gdkgl.MODE_DEPTH
+                                              | gtk.gdkgl.MODE_DOUBLE))
             self.area = gtk.gtkgl.DrawingArea(glconfig)
             # first run; might also be important when doing other fancy
             # gtk/gdk stuff
-            #self.area.connect_after('realize', self.paint)
+#           self.area.connect_after('realize', self.paint)
             # called when a part of the screen is uncovered
             self._gtk_handlers.append((self.area, 'expose-event', self.paint))
             # resize window
-            self._gtk_handlers.append((self.area, 'configure-event',
-                    self._resize_window))
+            self._gtk_handlers.append((self.area, 'configure-event', self._resize_window))
             # catch mouse events
-            self.area.set_events(gtk.gdk.MOUSE | gtk.gdk.POINTER_MOTION_HINT_MASK \
-                    | gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK \
-                    | gtk.gdk.SCROLL_MASK)
+            self.area.set_events((gtk.gdk.MOUSE
+                                  | gtk.gdk.POINTER_MOTION_HINT_MASK
+                                  | gtk.gdk.BUTTON_PRESS_MASK
+                                  | gtk.gdk.BUTTON_RELEASE_MASK
+                                  | gtk.gdk.SCROLL_MASK))
             self._gtk_handlers.extend((
-                    (self.area, "button-press-event", self.mouse_press_handler),
-                    (self.area, "motion-notify-event", self.mouse_handler),
-                    (self.area, "button-release-event", self.context_menu_handler),
-                    (self.area, "scroll-event", self.scroll_handler)))
+                (self.area, "button-press-event", self.mouse_press_handler),
+                (self.area, "motion-notify-event", self.mouse_handler),
+                (self.area, "button-release-event", self.context_menu_handler),
+                (self.area, "scroll-event", self.scroll_handler)))
             self.gui.get_object("OpenGLBox").pack_end(self.area)
             self.camera = Camera(self.core, lambda: (self.area.allocation.width,
-                    self.area.allocation.height))
-            self._event_handlers = (
-                    ("visual-item-updated", self.update_view),
-                    ("visualization-state-changed", self._update_widgets),
-                    ("model-list-changed", self._restore_latest_view))
+                                                     self.area.allocation.height))
+            self._event_handlers = (("visual-item-updated", self.update_view),
+                                    ("visualization-state-changed", self._update_widgets),
+                                    ("model-list-changed", self._restore_latest_view))
             # handlers
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
@@ -212,21 +207,21 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             toggle_3d.set_active(True)
             # refresh display
             self.core.emit_event("visual-item-updated")
+
             def get_get_set_functions(name):
                 get_func = lambda: self.core.get(name)
                 set_func = lambda value: self.core.set(name, value)
                 return get_func, set_func
-            for name in ("view_light", "view_shadow", "view_polygon",
-                    "view_perspective", "opengl_cache_enable",
-                    "drill_progress_max_fps"):
+
+            for name in ("view_light", "view_shadow", "view_polygon", "view_perspective",
+                         "opengl_cache_enable", "drill_progress_max_fps"):
                 self.register_state_item("settings/view/opengl/%s" % name,
-                        *get_get_set_functions(name))
+                                         *get_get_set_functions(name))
         return True
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("preferences",
-                    self.gui.get_object("OpenGLPrefTab"))
+            self.core.unregister_ui("preferences", self.gui.get_object("OpenGLPrefTab"))
             toggle_3d = self.gui.get_object("Toggle3DView")
             # hide the window
             toggle_3d.set_active(False)
@@ -241,14 +236,10 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # the area will be created during setup again
             self.gui.get_object("OpenGLBox").remove(self.area)
             self.area = None
-            self.core.unregister_ui("preferences",
-                    self.gui.get_object("DisplayItemsPrefTab"))
-            self.core.unregister_ui("preferences",
-                    self.gui.get_object("OpenGLPrefTab"))
-            self.core.unregister_ui("opengl_window",
-                    self.gui.get_object("ViewControls"))
-            self.core.unregister_ui("preferences",
-                    self.gui.get_object("ColorPrefTab"))
+            self.core.unregister_ui("preferences", self.gui.get_object("DisplayItemsPrefTab"))
+            self.core.unregister_ui("preferences", self.gui.get_object("OpenGLPrefTab"))
+            self.core.unregister_ui("opengl_window", self.gui.get_object("ViewControls"))
+            self.core.unregister_ui("preferences", self.gui.get_object("ColorPrefTab"))
             self.core.unregister_ui_section("opengl_window")
         self.clear_state_items()
 
@@ -263,32 +254,30 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
     def register_display_item(self, name, label, weight=100):
         if name in self._display_items:
-            self.log.debug("Tried to register display item '%s' twice" % name)
+            self.log.debug("Tried to register display item '%s' twice", name)
             return
         # create an action and three derived items:
         #  - a checkbox for the preferences window
         #  - a tool item for the drop-down list in the 3D window
         #  - a menu item for the context menu in the 3D window
         action = gtk.ToggleAction(name, label, "Show/hide %s" % label, None)
-        action.connect("toggled", lambda widget: \
-                self.core.emit_event("visual-item-updated"))
+        action.connect("toggled", lambda widget: self.core.emit_event("visual-item-updated"))
         checkbox = gtk.CheckButton(label)
         action.connect_proxy(checkbox)
         tool_item = action.create_tool_item()
         menu_item = action.create_menu_item()
         widgets = (checkbox, tool_item, menu_item)
-        self._display_items[name] = {"name": name, "label": label,
-                "weight": weight, "widgets": widgets, "action": action}
+        self._display_items[name] = {"name": name, "label": label, "weight": weight,
+                                     "widgets": widgets, "action": action}
         self.core.add_item(name, action.get_active, action.set_active)
         self._rebuild_display_items()
         # add this item to the state handler
-        self.register_state_item("settings/view/items/%s" % name,
-                action.get_active, action.set_active)
+        self.register_state_item("settings/view/items/%s" % name, action.get_active,
+                                 action.set_active)
 
     def unregister_display_item(self, name):
-        if not name in self._display_items:
-            self.log.debug("Failed to unregister unknown display item: %s" % \
-                    name)
+        if name not in self._display_items:
+            self.log.debug("Failed to unregister unknown display item: %s", name)
             return
         action = self._display_items[name]["action"]
         self.unregister_state_item(name, action.get_active, action.set_active)
@@ -310,12 +299,12 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         pref_box.show_all()
         toolbar.show_all()
         self.context_menu.show_all()
-    
+
     def register_color_setting(self, name, label, weight=100):
         if name in self._color_settings:
-            self.log.debug("Tried to register color '%s' twice" % name)
+            self.log.debug("Tried to register color '%s' twice", name)
             return
-        # color selectors
+
         def get_color_wrapper(obj):
             def gtk_color_to_dict():
                 gtk_color = obj.get_color()
@@ -325,33 +314,34 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                         "blue": gtk_color.blue / GTK_COLOR_MAX,
                         "alpha": alpha / GTK_COLOR_MAX}
             return gtk_color_to_dict
+
         def set_color_wrapper(obj):
             def set_gtk_color_by_dict(color):
                 obj.set_color(gtk.gdk.Color(int(color["red"] * GTK_COLOR_MAX),
-                        int(color["green"] * GTK_COLOR_MAX),
-                        int(color["blue"] * GTK_COLOR_MAX)))
+                                            int(color["green"] * GTK_COLOR_MAX),
+                                            int(color["blue"] * GTK_COLOR_MAX)))
                 obj.set_alpha(int(color["alpha"] * GTK_COLOR_MAX))
             return set_gtk_color_by_dict
+
         widget = gtk.ColorButton()
         widget.set_use_alpha(True)
         wrappers = (get_color_wrapper(widget), set_color_wrapper(widget))
-        self._color_settings[name] = {"name": name, "label": label,
-                "weight": weight, "widget": widget, "wrappers": wrappers}
-        widget.connect("color-set", lambda widget: \
-                self.core.emit_event("visual-item-updated"))
+        self._color_settings[name] = {"name": name, "label": label, "weight": weight,
+                                      "widget": widget, "wrappers": wrappers}
+        widget.connect("color-set", lambda widget: self.core.emit_event("visual-item-updated"))
         self.core.add_item(name, *wrappers)
         self.register_state_item("settings/view/colors/%s" % name, *wrappers)
         self._rebuild_color_settings()
 
     def unregister_color_setting(self, name):
-        if not name in self._color_settings:
+        if name not in self._color_settings:
             self.log.debug("Failed to unregister unknown color item: %s" % name)
             return
         wrappers = self._color_settings[name]["wrappers"]
         self.unregister_state_item(name, *wrappers)
         del self._color_settings[name]
         self._rebuild_color_settings()
-    
+
     def _rebuild_color_settings(self):
         color_table = self.gui.get_object("ColorTable")
         for child in color_table.get_children():
@@ -361,10 +351,9 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         for index, item in enumerate(items):
             label = gtk.Label("%s:" % item["label"])
             label.set_alignment(0.0, 0.5)
-            color_table.attach(label, 0, 1, index, index + 1,
-                    xoptions=gtk.FILL, yoptions=gtk.FILL)
-            color_table.attach(item["widget"], 1, 2, index, index + 1,
-                    xoptions=gtk.FILL, yoptions=gtk.FILL)
+            color_table.attach(label, 0, 1, index, index + 1, xoptions=gtk.FILL, yoptions=gtk.FILL)
+            color_table.attach(item["widget"], 1, 2, index, index + 1, xoptions=gtk.FILL,
+                               yoptions=gtk.FILL)
         color_table.show_all()
 
     def toggle_3d_view(self, widget=None, value=None):
@@ -454,16 +443,15 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 # shift key pressed -> rotation
                 base = 0
                 factor = 10
-                self.camera.rotate_camera_by_screen(base, base,
-                        base - factor * move_x, base - factor * move_y)
+                self.camera.rotate_camera_by_screen(base, base, base - factor * move_x,
+                                                    base - factor * move_y)
             else:
                 # no shift key -> moving
                 self.camera.shift_view(x_dist=move_x, y_dist=move_y)
             self.paint()
         else:
             # see dir(gtk.keysyms)
-            #print "Key pressed: %s (%s)" % (keyval, get_state())
-            pass
+            self.log.info("Unhandled key pressed: %s (%s)", keyval, get_state())
 
     def check_busy(func):
         def check_busy_wrapper(self, *args, **kwargs):
@@ -482,14 +470,14 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # clear the background with the configured color
             bg_col = self.core.get("color_background")
             GL.glClearColor(bg_col["red"], bg_col["green"], bg_col["blue"], 0.0)
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
             result = func(self, *args, **kwargs)
             self.camera.position_camera()
             # adjust Light #2
             v = self.camera.view
             lightpos = (v["center"][0] + v["distance"][0],
-                    v["center"][1] + v["distance"][1],
-                    v["center"][2] + v["distance"][2])
+                        v["center"][1] + v["distance"][1],
+                        v["center"][2] + v["distance"][2])
             GL.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, lightpos)
             self._paint_raw()
             GL.glMatrixMode(prev_mode)
@@ -500,9 +488,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
     def glsetup(self, widget=None):
         GLUT.glutInit()
-        GLUT.glutInitDisplayMode(GLUT.GLUT_RGBA | GLUT.GLUT_DOUBLE | \
-                GLUT.GLUT_DEPTH | GLUT.GLUT_MULTISAMPLE | GLUT.GLUT_ALPHA | \
-                GLUT.GLUT_ACCUM)
+        GLUT.glutInitDisplayMode(GLUT.GLUT_RGBA | GLUT.GLUT_DOUBLE | GLUT.GLUT_DEPTH
+                                 | GLUT.GLUT_MULTISAMPLE | GLUT.GLUT_ALPHA | GLUT.GLUT_ACCUM)
         if self.core.get("view_shadow"):
             # TODO: implement shadowing (or remove the setting)
             pass
@@ -516,25 +503,24 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         GL.glEnable(GL.GL_BLEND)
         # see http://wiki.delphigl.com/index.php/glBlendFunc
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
-        GL.glEnable(GL.GL_DEPTH_TEST)        
+        GL.glEnable(GL.GL_DEPTH_TEST)
         # "less" is OpenGL's default
-        GL.glDepthFunc(GL.GL_LESS)   
+        GL.glDepthFunc(GL.GL_LESS)
         # slightly improved performance: ignore all faces inside the objects
-        GL.glCullFace(GL.GL_BACK);
-        GL.glEnable(GL.GL_CULL_FACE);
+        GL.glCullFace(GL.GL_BACK)
+        GL.glEnable(GL.GL_CULL_FACE)
         # enable antialiasing
         GL.glEnable(GL.GL_LINE_SMOOTH)
-        #GL.glEnable(GL.GL_POLYGON_SMOOTH)
+#       GL.glEnable(GL.GL_POLYGON_SMOOTH)
         GL.glHint(GL.GL_LINE_SMOOTH_HINT, GL.GL_NICEST)
         GL.glHint(GL.GL_POLYGON_SMOOTH_HINT, GL.GL_NICEST)
         # TODO: move to toolpath drawing
         GL.glLineWidth(0.8)
-        #GL.glEnable(GL.GL_MULTISAMPLE_ARB)
+#       GL.glEnable(GL.GL_MULTISAMPLE_ARB)
         GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
         GL.glPolygonOffset(1.0, 1.0)
         # ambient and diffuse material lighting is defined in OpenGLViewModel
-        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR,
-                (1.0, 1.0, 1.0, 1.0))
+        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR, (1.0, 1.0, 1.0, 1.0))
         GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (100.0))
         if self.core.get("view_polygon"):
             GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
@@ -544,8 +530,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         GL.glLoadIdentity()
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadIdentity()
-        GL.glViewport(0, 0, self.area.allocation.width,
-                self.area.allocation.height)
+        GL.glViewport(0, 0, self.area.allocation.width, self.area.allocation.height)
         # lighting
         GL.glLightModeli(GL.GL_LIGHT_MODEL_LOCAL_VIEWER, GL.GL_TRUE)
         # Light #1
@@ -559,21 +544,21 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         GL.glEnable(GL.GL_LIGHT0)
         # Light #2
         # spotlight with small light cone (like a desk lamp)
-        #GL.glLightfv(GL.GL_LIGHT1, GL.GL_SPOT_CUTOFF, 10.0)
+#       GL.glLightfv(GL.GL_LIGHT1, GL.GL_SPOT_CUTOFF, 10.0)
         # ... directed at the object
         v = self.camera.view
         GL.glLightfv(GL.GL_LIGHT1, GL.GL_SPOT_DIRECTION,
-                (v["center"][0], v["center"][1], v["center"][2]))
+                     (v["center"][0], v["center"][1], v["center"][2]))
         GL.glLightfv(GL.GL_LIGHT1, GL.GL_AMBIENT, (0.3, 0.3, 0.3, 1.0))
         # and dark outside of the light cone
-        #GL.glLightfv(GL.GL_LIGHT1, GL.GL_SPOT_EXPONENT, 100.0)
-        #GL.glLightf(GL.GL_LIGHT1, GL.GL_QUADRATIC_ATTENUATION, 0.5) 
+#       GL.glLightfv(GL.GL_LIGHT1, GL.GL_SPOT_EXPONENT, 100.0)
+#       GL.glLightf(GL.GL_LIGHT1, GL.GL_QUADRATIC_ATTENUATION, 0.5)
         # setup the diffuse light
         GL.glLightfv(GL.GL_LIGHT1, GL.GL_DIFFUSE, (0.9, 0.9, 0.9, 1.0))
         # setup the specular light
         GL.glLightfv(GL.GL_LIGHT1, GL.GL_SPECULAR, (1.0, 1.0, 1.0, 1.0))
         # enable Light #2
-        GL.glEnable(GL.GL_LIGHT1)       
+        GL.glEnable(GL.GL_LIGHT1)
         if self.core.get("view_light"):
             GL.glEnable(GL.GL_LIGHTING)
         else:
@@ -581,7 +566,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         GL.glEnable(GL.GL_NORMALIZE)
         GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT_AND_DIFFUSE)
         GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR)
-        #GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_EMISSION)
+#       GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_EMISSION)
         GL.glEnable(GL.GL_COLOR_MATERIAL)
 
     def destroy(self, widget=None, data=None):
@@ -627,8 +612,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 and (abs(event.y - self.mouse["pressed_pos"][1]) < 3):
             # A quick press/release cycle with the right mouse button
             # -> open the context menu.
-            self.context_menu.popup(None, None, None, event.button,
-                    int(event.get_time()))
+            self.context_menu.popup(None, None, None, event.button, int(event.get_time()))
 
     @check_busy
     @gtkgl_functionwrapper
@@ -647,12 +631,12 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             return
         control_pressed = modifier_state & gtk.gdk.CONTROL_MASK
         shift_pressed = modifier_state & gtk.gdk.SHIFT_MASK
-        if (event.direction == gtk.gdk.SCROLL_RIGHT) or \
-                ((event.direction == gtk.gdk.SCROLL_UP) and shift_pressed):
+        if ((event.direction == gtk.gdk.SCROLL_RIGHT)
+                or ((event.direction == gtk.gdk.SCROLL_UP) and shift_pressed)):
             # horizontal move right
             self.camera.shift_view(x_dist=-1)
-        elif (event.direction == gtk.gdk.SCROLL_LEFT) or \
-                ((event.direction == gtk.gdk.SCROLL_DOWN) and shift_pressed):
+        elif (event.direction == gtk.gdk.SCROLL_LEFT) \
+                or ((event.direction == gtk.gdk.SCROLL_DOWN) and shift_pressed):
             # horizontal move left
             self.camera.shift_view(x_dist=1)
         elif (event.direction == gtk.gdk.SCROLL_UP) and control_pressed:
@@ -684,8 +668,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
     def mouse_handler(self, widget, event):
         x, y, state = event.x, event.y, event.state
         if self.mouse["button"] is None:
-            if (state & BUTTON_ZOOM) or (state & BUTTON_ROTATE) \
-                    or (state & BUTTON_MOVE):
+            if (state & BUTTON_ZOOM) or (state & BUTTON_ROTATE) or (state & BUTTON_MOVE):
                 self.mouse["button"] = state
                 self.mouse["start_pos"] = [x, y]
         else:
@@ -727,8 +710,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                             low[index] = 0
                         obj_dim.append(high[index] - low[index])
                     max_dim = max(obj_dim)
-                    self.camera.move_camera_by_screen(x - start_x, y - start_y,
-                            max_dim)
+                    self.camera.move_camera_by_screen(x - start_x, y - start_y, max_dim)
                 else:
                     # BUTTON_ROTATE
                     # update the camera position according to the mouse movement
@@ -755,14 +737,13 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
     @gtkgl_functionwrapper
     @gtkgl_refresh
     def _resize_window(self, widget, data=None):
-        GL.glViewport(0, 0, self.area.allocation.width,
-                self.area.allocation.height)
+        GL.glViewport(0, 0, self.area.allocation.width, self.area.allocation.height)
 
     @check_busy
     @gtkgl_functionwrapper
     @gtkgl_refresh
     def paint(self, widget=None, data=None):
-        # the decorators take core for redraw
+        # the decorators take care for redraw
         pass
 
     @gtkgl_functionwrapper
@@ -808,7 +789,6 @@ class Camera(object):
         self.view["center"] = center
 
     def auto_adjust_distance(self):
-        s = self.core
         v = self.view
         # adjust the distance to get a view of the whole object
         low_high = zip(*self._get_low_high_dims())
@@ -828,11 +808,10 @@ class Camera(object):
         if scale != 0:
             scale = number(scale)
             dist = self.view["distance"]
-            self.view["distance"] = (scale * dist[0], scale * dist[1],
-                    scale * dist[2])
+            self.view["distance"] = (scale * dist[0], scale * dist[1], scale * dist[2])
 
     def get(self, key, default=None):
-        if (not self.view is None) and self.view.has_key(key):
+        if (self.view is not None) and key in self.view:
             return self.view[key]
         else:
             return default
@@ -866,9 +845,9 @@ class Camera(object):
         old_center = self.view["center"]
         new_center = []
         for i in range(3):
-            new_center.append(old_center[i] \
-                    + max_model_shift * (number(win_x_rel) * factors_x[i] \
-                    + number(win_y_rel) * factors_y[i]))
+            new_center.append(old_center[i]
+                              + max_model_shift * (number(win_x_rel) * factors_x[i]
+                                                   + number(win_y_rel) * factors_y[i]))
         self.view["center"] = tuple(new_center)
 
     def rotate_camera_by_screen(self, start_x, start_y, end_x, end_y):
@@ -892,14 +871,11 @@ class Camera(object):
         # rotate around the "up" vector with the y-axis rotation
         original_distance = self.view["distance"]
         original_up = self.view["up"]
-        y_rot_matrix = Matrix.get_rotation_matrix_axis_angle(factors_y,
-                rot_y_angle)
-        new_distance = Matrix.multiply_vector_matrix(original_distance,
-                y_rot_matrix)
+        y_rot_matrix = Matrix.get_rotation_matrix_axis_angle(factors_y, rot_y_angle)
+        new_distance = Matrix.multiply_vector_matrix(original_distance, y_rot_matrix)
         new_up = Matrix.multiply_vector_matrix(original_up, y_rot_matrix)
         # rotate around the cross vector with the x-axis rotation
-        x_rot_matrix = Matrix.get_rotation_matrix_axis_angle(factors_x,
-                rot_x_angle)
+        x_rot_matrix = Matrix.get_rotation_matrix_axis_angle(factors_x, rot_x_angle)
         new_distance = Matrix.multiply_vector_matrix(new_distance, x_rot_matrix)
         new_up = Matrix.multiply_vector_matrix(new_up, x_rot_matrix)
         self.view["distance"] = new_distance
@@ -914,22 +890,20 @@ class Camera(object):
         # position the light according to the current bounding box
         light_pos = [0, 0, 0]
         low, high = self._get_low_high_dims()
-        if not None in low and not None in high:
+        if None not in low and None not in high:
             for index in range(3):
                 light_pos[index] = 2 * (high[index] - low[index])
-        GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, (light_pos[0], light_pos[1],
-                light_pos[2], 0.0))
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, (light_pos[0], light_pos[1], light_pos[2], 0.0))
         # position the camera
         camera_position = (v["center"][0] + v["distance"][0],
-                v["center"][1] + v["distance"][1],
-                v["center"][2] + v["distance"][2])
+                           v["center"][1] + v["distance"][1],
+                           v["center"][2] + v["distance"][2])
         # position a second light at camera position
-        GL.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, (camera_position[0],
-                camera_position[1], camera_position[2], 0.0))
+        GL.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, (camera_position[0], camera_position[1],
+                                                    camera_position[2], 0.0))
         if self.core.get("view_perspective"):
             # perspective view
-            GLU.gluPerspective(v["fovy"], (0.0 + width) / height, v["znear"],
-                    v["zfar"])
+            GLU.gluPerspective(v["fovy"], (0.0 + width) / height, v["znear"], v["zfar"])
         else:
             # parallel projection
             # This distance calculation is completely based on trial-and-error.
@@ -943,9 +917,9 @@ class Camera(object):
             near = v["center"][2] - 2 * sin_factor
             far = v["center"][2] + 2 * sin_factor
             GL.glOrtho(left, right, bottom, top, near, far)
-        GLU.gluLookAt(camera_position[0], camera_position[1],
-                camera_position[2], v["center"][0], v["center"][1],
-                v["center"][2], v["up"][0], v["up"][1], v["up"][2])
+        GLU.gluLookAt(camera_position[0], camera_position[1], camera_position[2],
+                      v["center"][0], v["center"][1], v["center"][2],
+                      v["up"][0], v["up"][1], v["up"][2])
         GL.glMatrixMode(prev_mode)
 
     def shift_view(self, x_dist=0, y_dist=0):
@@ -980,5 +954,3 @@ class Camera(object):
         distv = pnormalized((distv[0], distv[1], distv[2]))
         factors_x = pnormalized(pcross(distv, (v_up[0], v_up[1], v_up[2])))
         return (factors_x, factors_y)
-
-
