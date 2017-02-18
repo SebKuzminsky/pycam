@@ -16,11 +16,13 @@ PYTHON_EXE ?= python
 # (introduced in python 2.6)
 DISTUTILS_PLAT_NAME = $(shell $(PYTHON_EXE) setup.py --help build_ext \
 		      | grep -q -- "--plat-name" && echo "--plat-name win32")
+PYLINT_TARGETS = pycam Tests pyinstaller/hooks scripts setup
 
 # turn the destination directory into an absolute path
 ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
 
-.PHONY: zip tgz win32 clean dist git_export upload create_archive_dir man check-style test
+.PHONY: zip tgz win32 clean dist git_export upload create_archive_dir man check-style test \
+	pylint-relaxed pylint-strict
 
 dist: zip tgz win32
 	@# remove the tmp directory when everything is done
@@ -66,5 +68,18 @@ upload:
 
 check-style:
 	python -m flake8
+
+pylint-strict:
+	pylint $(PYLINT_TARGETS)
+
+pylint-relaxed:
+	pylint -d missing-docstring,invalid-name,pointless-string-statement,fixme,no-self-use \
+		-d global-statement,unnecessary-pass,too-many-arguments,too-many-branches \
+		-d too-many-instance-attributes,too-many-return-statements \
+		-d too-few-public-methods,too-many-locals,using-constant-test \
+		-d attribute-defined-outside-init,superfluous-parens,too-many-nested-blocks \
+		-d too-many-statements,unused-argument,too-many-lines \
+		-d too-many-boolean-expressions,too-many-public-methods \
+		$(PYLINT_TARGETS)
 
 test: check-style
