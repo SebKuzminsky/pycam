@@ -704,7 +704,7 @@ if __name__ == "__main__":
             + "and stop it after each operation (M3/M5)")
     group_gcode.add_option("", "--gcode-minimum-step",
             dest="gcode_minimum_step", default=0.00001,
-            type="float", action="store", help="mimimum axial distance " \
+            type="float", action="store", help="minimum axial distance " \
             + "between two machine positions. Any shorter move is not " \
             + "written to GCode (default: 0.00001).")
     group_gcode.add_option("", "--gcode-path-mode", dest="gcode_path_mode",
