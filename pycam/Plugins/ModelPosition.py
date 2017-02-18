@@ -50,7 +50,7 @@ class ModelPosition(pycam.Plugins.PluginBase):
             for axis in "XYZ":
                 for name_template in ("AlignPosition%s", "AlignPosition%sMin",
                                       "AlignPosition%sCenter", "AlignPosition%sMax"):
-                    obj = self.gui.get_object("AlignPosition%s" % axis)
+                    obj = self.gui.get_object(name_template % axis)
                     self._gtk_handlers.extend((
                         (obj, "focus-in-event", lambda widget, data: align_button.grab_default()),
                         (obj, "focus-out-event",

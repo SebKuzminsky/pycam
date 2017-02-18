@@ -595,7 +595,7 @@ class ContourModel(BaseModel):
             if progress_callback and progress_callback():
                 self.reset_cache()
                 return
-        log.info("The winding of %d polygon(s) was fixed." % change_counter)
+        log.info("The winding of %d polygon(s) was fixed.", change_counter)
         self.reset_cache()
 
     def reverse_directions(self, callback=None):
@@ -1099,7 +1099,7 @@ class Rectangle(IDGenerator, TransformableContainer):
             else:
                 unique_vertices.append(point)
         if len(unique_vertices) != 2:
-            log.error("Invalid number of vertices: %s" % unique_vertices)
+            log.error("Invalid number of vertices: %s", unique_vertices)
             return None
         if abs(pdist(unique_vertices[0], unique_vertices[1])
                - pdist(shared_vertices[0], shared_vertices[1])) < epsilon:
@@ -1107,7 +1107,7 @@ class Rectangle(IDGenerator, TransformableContainer):
                 return Rectangle(unique_vertices[0], unique_vertices[1], shared_vertices[0],
                                  shared_vertices[1], normal=t1.normal)
             except ValueError:
-                log.warn("Triangles not combined: %s, %s" % (unique_vertices, shared_vertices))
+                log.warn("Triangles not combined: %s, %s", unique_vertices, shared_vertices)
                 return None
         else:
             return None
@@ -1136,10 +1136,10 @@ class Rectangle(IDGenerator, TransformableContainer):
             # collect all non-shared vertices
             corners.extend([p for p in rectangle.get_points() if p not in vertices])
         if len(corners) != 4:
-            log.error("Unexpected corner count: %s / %s / %s" % (r1, r2, corners))
+            log.error("Unexpected corner count: %s / %s / %s", r1, r2, corners)
             return None
         try:
             return Rectangle(corners[0], corners[1], corners[2], corners[3], normal=r1.normal)
         except ValueError:
-            log.error("No valid rectangle found: %s" % corners)
+            log.error("No valid rectangle found: %s", corners)
             return None

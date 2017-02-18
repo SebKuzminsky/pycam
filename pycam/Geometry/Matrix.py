@@ -113,14 +113,14 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
     s = math.sin(rot_angle)
     t = 1 - c
     return ((t * rot_axis[0] * rot_axis[0] + c,
-            t * rot_axis[0] * rot_axis[1] - s * rot_axis[2],
-            t * rot_axis[0] * rot_axis[2] + s * rot_axis[1]),
+             t * rot_axis[0] * rot_axis[1] - s * rot_axis[2],
+             t * rot_axis[0] * rot_axis[2] + s * rot_axis[1]),
             (t * rot_axis[0] * rot_axis[1] + s * rot_axis[2],
-            t * rot_axis[1] * rot_axis[1] + c,
-            t * rot_axis[1] * rot_axis[2] - s * rot_axis[0]),
+             t * rot_axis[1] * rot_axis[1] + c,
+             t * rot_axis[1] * rot_axis[2] - s * rot_axis[0]),
             (t * rot_axis[0] * rot_axis[2] - s * rot_axis[1],
-            t * rot_axis[1] * rot_axis[2] + s * rot_axis[0],
-            t * rot_axis[2] * rot_axis[2] + c))
+             t * rot_axis[1] * rot_axis[2] + s * rot_axis[0],
+             t * rot_axis[2] * rot_axis[2] + c))
 
 
 def get_rotation_matrix_axis_angle(rot_axis, rot_angle, use_radians=True):
@@ -140,14 +140,14 @@ def get_rotation_matrix_axis_angle(rot_axis, rot_angle, use_radians=True):
     sin = number(math.sin(rot_angle))
     cos = number(math.cos(rot_angle))
     return ((cos + rot_axis[0] * rot_axis[0] * (1 - cos),
-            rot_axis[0] * rot_axis[1] * (1 - cos) - rot_axis[2] * sin,
-            rot_axis[0] * rot_axis[2] * (1 - cos) + rot_axis[1] * sin),
+             rot_axis[0] * rot_axis[1] * (1 - cos) - rot_axis[2] * sin,
+             rot_axis[0] * rot_axis[2] * (1 - cos) + rot_axis[1] * sin),
             (rot_axis[1] * rot_axis[0] * (1 - cos) + rot_axis[2] * sin,
-            cos + rot_axis[1] * rot_axis[1] * (1 - cos),
-            rot_axis[1] * rot_axis[2] * (1 - cos) - rot_axis[0] * sin),
+             cos + rot_axis[1] * rot_axis[1] * (1 - cos),
+             rot_axis[1] * rot_axis[2] * (1 - cos) - rot_axis[0] * sin),
             (rot_axis[2] * rot_axis[0] * (1 - cos) - rot_axis[1] * sin,
-            rot_axis[2] * rot_axis[1] * (1 - cos) + rot_axis[0] * sin,
-            cos + rot_axis[2] * rot_axis[2] * (1 - cos)))
+             rot_axis[2] * rot_axis[1] * (1 - cos) + rot_axis[0] * sin,
+             cos + rot_axis[2] * rot_axis[2] * (1 - cos)))
 
 
 def multiply_vector_matrix(v, m):
@@ -175,7 +175,7 @@ def multiply_vector_matrix(v, m):
 
 def multiply_matrix_matrix(m1, m2):
     def multi(row1, col2):
-        return (m1[row1][0] * m2[0][col2] + m1[row1][1] * m2[1][col2] + m1[row1][2] * m2[2][col2])
+        return m1[row1][0] * m2[0][col2] + m1[row1][1] * m2[1][col2] + m1[row1][2] * m2[2][col2]
     return ((multi(0, 0), multi(0, 1), multi(0, 2)),
             (multi(1, 0), multi(1, 1), multi(1, 2)),
             (multi(2, 0), multi(2, 1), multi(2, 2)))

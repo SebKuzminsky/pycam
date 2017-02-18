@@ -73,8 +73,8 @@ class ModelRotation(pycam.Plugins.PluginBase):
                                 self.gui.get_object("RotationAngle").get_value())):
             if self.gui.get_object(control).get_active():
                 break
-        matrix = pycam.Geometry.Matrix.get_rotation_matrix_axis_angle(
-                axis_vector, angle, use_radians=False)
+        matrix = pycam.Geometry.Matrix.get_rotation_matrix_axis_angle(axis_vector, angle,
+                                                                      use_radians=False)
         progress = self.core.get("progress")
         progress.update(text="Rotating model")
         progress.disable_cancel()

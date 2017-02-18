@@ -20,4 +20,4 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = ["common", "Console", "OpenGLTools", "Project", "Settings", "Vizualisation"]
+__all__ = ["common", "Console", "OpenGLTools", "Project", "Settings", "Visualization"]

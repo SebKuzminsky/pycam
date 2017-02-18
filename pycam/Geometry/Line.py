@@ -156,10 +156,10 @@ class Line(IDGenerator, TransformableContainer):
         return psub(self.p1, pmul(v, l))
 
     def dist_to_point_sq(self, p):
-        return pdist_sq(p, self.closes_point(p))
+        return pdist_sq(p, self.closest_point(p))
 
     def dist_to_point(self, p):
-        return pdist(p, self.closes_point(p))
+        return pdist(p, self.closest_point(p))
 
     def is_point_inside(self, p):
         if (p == self.p1) or (p == self.p2):
@@ -248,14 +248,12 @@ class Line(IDGenerator, TransformableContainer):
             # generate the six planes of the cube for possible intersections
             minp = (minx, miny, minz)
             maxp = (maxx, maxy, maxz)
-            planes = [
-                    Plane(minp, (1, 0, 0)),
-                    Plane(minp, (0, 1, 0)),
-                    Plane(minp, (0, 0, 1)),
-                    Plane(maxp, (1, 0, 0)),
-                    Plane(maxp, (0, 1, 0)),
-                    Plane(maxp, (0, 0, 1)),
-            ]
+            planes = [Plane(minp, (1, 0, 0)),
+                      Plane(minp, (0, 1, 0)),
+                      Plane(minp, (0, 0, 1)),
+                      Plane(maxp, (1, 0, 0)),
+                      Plane(maxp, (0, 1, 0)),
+                      Plane(maxp, (0, 0, 1))]
             # calculate all intersections
             intersections = [plane.intersect_point(self.dir, self.p1) for plane in planes]
             # remove all intersections outside the box and outside the line

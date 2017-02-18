@@ -143,7 +143,7 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         group = self._groups[group_name]
         if group["parameters"]:
             self.log.debug("Unregistering parameter from group '%s', but it still contains "
-                           "parameters", group_name, ", ".join(group["parameters"].keys()))
+                           "parameters: %s", group_name, ", ".join(group["parameters"].keys()))
             for name in group["parameters"]:
                 self.unregister_parameter(group_name, name)
         if group["sets"]:

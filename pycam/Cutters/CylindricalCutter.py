@@ -143,9 +143,9 @@ class CylindricalCutter(BaseCutter):
     def intersect_circle_point(self, direction, point, start=None):
         if start is None:
             start = self.location
-        (ccp, cp, l) = intersect_circle_point(
-                padd(psub(start, self.location), self.center),
-                self.axis, self.distance_radius, self.distance_radiussq, direction, point)
+        (ccp, cp, l) = intersect_circle_point(padd(psub(start, self.location), self.center),
+                                              self.axis, self.distance_radius,
+                                              self.distance_radiussq, direction, point)
         if ccp:
             cl = padd(cp, psub(start, ccp))
             return (cl, ccp, cp, l)
@@ -154,9 +154,9 @@ class CylindricalCutter(BaseCutter):
     def intersect_circle_line(self, direction, edge, start=None):
         if start is None:
             start = self.location
-        (ccp, cp, l) = intersect_circle_line(
-                padd(psub(start, self.location), self.center),
-                self.axis, self.distance_radius, self.distance_radiussq, direction, edge)
+        (ccp, cp, l) = intersect_circle_line(padd(psub(start, self.location), self.center),
+                                             self.axis, self.distance_radius,
+                                             self.distance_radiussq, direction, edge)
         if ccp:
             cl = padd(cp, psub(start, ccp))
             return (cl, ccp, cp, l)

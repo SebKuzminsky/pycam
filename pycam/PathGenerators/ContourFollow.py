@@ -29,7 +29,6 @@ import math
 
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
-from pycam.Geometry.Point import Point
 from pycam.Geometry.PointUtils import padd, pcross, pdot, pmul, pnorm, pnormalized, psub
 from pycam.Geometry.utils import epsilon, ceil, sqrt
 from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
@@ -150,8 +149,7 @@ class CollisionPaths(object):
                 line_id = group[index % group_len]
                 if self.shifted_lines[line_id] is not None:
                     return line_id
-            else:
-                return None
+            return None
         groups = self._get_groups()
         for group in groups:
             index = 0
@@ -246,8 +244,8 @@ class ContourFollow(object):
         for z in z_steps:
             # update the progress bar and check, if we should cancel the process
             if draw_callback:
-                if draw_callback(text="ContourFollow: processing layer %d/%d"
-                                      % (current_layer + 1, num_of_layers)):
+                if draw_callback(text=("ContourFollow: processing layer %d/%d"
+                                       % (current_layer + 1, num_of_layers))):
                     # cancel immediately
                     break
             self.pa.new_direction(0)
@@ -322,7 +320,7 @@ class ContourFollow(object):
 
 def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
     # TODO: there are problems with "material allowance > 0"
-    plane = Plane(Point(0, 0, z), up_vector)
+    plane = Plane((0, 0, z), up_vector)
     if triangle.minz >= z:
         # no point of the triangle is below z
         # try all edges
@@ -477,8 +475,7 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
                     cl, hit_t, cp = coll
                     break
             else:
-                log.debug("Failed to detect any collision: %s / %s -> %s"
-                          % (edge, start, direction))
+                log.debug("Failed to detect any collision: %s / %s -> %s", edge, start, direction)
                 continue
             proj_cp = plane.get_point_projection(cp)
             # e.g. the Spherical Cutter often does not collide exactly above

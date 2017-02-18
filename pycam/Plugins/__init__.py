@@ -279,7 +279,7 @@ class PluginManager(object):
     def enable_plugin(self, name):
         plugin = self.get_plugin(name)
         if plugin.enabled:
-            self.log.debug("Refused to enable an active plugin: %s" % name)
+            _log.debug("Refused to enable an active plugin: %s" % name)
             return
         else:
             plugin.enabled = plugin.setup()
@@ -287,7 +287,7 @@ class PluginManager(object):
     def disable_plugin(self, name):
         plugin = self.get_plugin(name)
         if not plugin.enabled:
-            self.log.debug("Refused to disable an active plugin: %s" % name)
+            _log.debug("Refused to disable an active plugin: %s" % name)
             return
         else:
             plugin.teardown()

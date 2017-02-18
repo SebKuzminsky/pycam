@@ -50,8 +50,7 @@ def _get_num_of_significant_digits(number):
             shifted = number * (10 ** digit)
             if shifted - int(shifted) < max_diff:
                 return digit
-        else:
-            return MAX_DIGITS
+        return MAX_DIGITS
 
 
 def _get_num_converter(step_width):
@@ -276,13 +275,13 @@ class GCodeGenerator(object):
                 new_pos.append(conv(value))
         # check if there was a significant move
         no_diff = True
-        for index in range(len(new_pos)):
-            if new_pos[index] is None:
+        for index, current_new_axis in enumerate(new_pos):
+            if current_new_axis is None:
                 continue
             if self.last_position[index] is None:
                 no_diff = False
                 break
-            diff = abs(new_pos[index] - self.last_position[index])
+            diff = abs(current_new_axis - self.last_position[index])
             if diff >= self._axes_formatter[index][0]:
                 no_diff = False
                 break

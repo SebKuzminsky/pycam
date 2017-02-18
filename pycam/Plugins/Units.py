@@ -21,7 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Plugins
-from pycam.Toolpath import TYPE_RELATIVE_MARGIN, TYPE_FIXED_MARGIN, TYPE_CUSTOM
+from pycam.Toolpath import Bounds
 
 
 class Units(pycam.Plugins.PluginBase):
@@ -122,7 +122,7 @@ class Units(pycam.Plugins.PluginBase):
                     # scale the boundaries and keep their center
                     for bounds in self.core.get("bounds"):
                         low, high = bounds.get_bounds()
-                        if bounds.get_type() == TYPE_FIXED_MARGIN:
+                        if bounds.get_type() == Bounds.TYPE_FIXED_MARGIN:
                             low[0] *= factor
                             high[0] *= factor
                             low[1] *= factor
@@ -130,7 +130,7 @@ class Units(pycam.Plugins.PluginBase):
                             low[2] *= factor
                             high[2] *= factor
                             bounds.set_bounds(low, high)
-                        elif bounds.get_type() == TYPE_CUSTOM:
+                        elif bounds.get_type() == Bounds.TYPE_CUSTOM:
                             center = [0, 0, 0]
                             for i in range(3):
                                 center[i] = (high[i] + low[i]) / 2
@@ -138,7 +138,7 @@ class Units(pycam.Plugins.PluginBase):
                                 low[i] = center[i] + (low[i] - center[i]) * factor
                                 high[i] = center[i] + (high[i] - center[i]) * factor
                             bounds.set_bounds(low, high)
-                        elif bounds.get_type() == TYPE_RELATIVE_MARGIN:
+                        elif bounds.get_type() == Bounds.TYPE_RELATIVE_MARGIN:
                             # no need to change relative margins
                             pass
                 if self.gui.get_object("UnitChangeTools").get_active():

@@ -36,10 +36,7 @@ PI_DIV_3 = math.pi / 3.0
 
 
 def near_zero(x, epsilon=EPSILON):
-    if abs(x) < epsilon:
-        return True
-    else:
-        return False
+    return abs(x) < epsilon
 
 
 def cuberoot(x):
@@ -52,7 +49,8 @@ def cuberoot(x):
 def poly1_roots(a, b):
     if near_zero(a):
         return None
-    return (-b / a, )
+    else:
+        return (-b / a, )
 
 
 def poly2_roots(a, b, c):

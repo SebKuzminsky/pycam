@@ -50,8 +50,7 @@ class Tools(pycam.Plugins.ListPluginBase):
             parameters_box = self.gui.get_object("ToolParameterBox")
 
             def clear_parameter_widgets():
-                parameters_box.foreach(
-                        lambda widget: parameters_box.remove(widget))
+                parameters_box.foreach(parameters_box.remove)
 
             def add_parameter_widget(item, name):
                 # create a frame within an alignment and the item inside
@@ -97,8 +96,8 @@ class Tools(pycam.Plugins.ListPluginBase):
             self._gtk_handlers.append((self._modelview.get_selection(), "changed",
                                        "tool-selection-changed"))
             # shape selector
-            self._gtk_handlers.append((
-                    self.gui.get_object("ToolShapeSelector"), "changed", "tool-shape-changed"))
+            self._gtk_handlers.append((self.gui.get_object("ToolShapeSelector"), "changed",
+                                       "tool-shape-changed"))
             self._event_handlers = (
                 ("tool-shape-list-changed", self._update_widgets),
                 ("tool-selection-changed", self._tool_switch),

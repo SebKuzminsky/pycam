@@ -45,8 +45,7 @@ class EngraveCutter(object):
         num_of_layers = len(motion_grid)
 
         push_layers = motion_grid[:-1]
-        push_generator = pycam.PathGenerators.PushCutter.PushCutter(
-                physics=self.physics)
+        push_generator = pycam.PathGenerators.PushCutter.PushCutter(physics=self.physics)
         current_layer = 0
         push_moves = []
         for push_layer in push_layers:

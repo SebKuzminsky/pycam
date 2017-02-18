@@ -134,23 +134,21 @@ class OpenGLViewModelTriangle(pycam.Plugins.PluginBase):
         self.core.unregister_chain("draw_models", self.draw_triangle_model)
 
     def draw_triangle_model(self, models):
+        def calc_normal(main, normals):
+            suitable = (0, 0, 0, 'v')
+            for normal, weight in normals:
+                dot = pdot(main, normal)
+                if dot > 0:
+                    suitable = padd(suitable, pmul(normal, weight * dot))
+            return pnormalized(suitable)
+
         if not models:
             return
         GL = self._GL
         removal_list = []
-        for index in range(len(models)):
-            model = models[index]
+        for index, model in enumerate(models):
             if not hasattr(model, "triangles"):
                 continue
-
-            def calc_normal(main, normals):
-                suitable = (0, 0, 0, 'v')
-                for normal, weight in normals:
-                    dot = pdot(main, normal)
-                    if dot > 0:
-                        suitable = padd(suitable, pmul(normal, weight * dot))
-                return pnormalized(suitable)
-
             vertices = {}
             for t in model.triangles():
                 for p in (t.p1, t.p2, t.p3):
@@ -187,8 +185,7 @@ class OpenGLViewModelGeneric(pycam.Plugins.PluginBase):
 
     def draw_generic_model(self, models):
         removal_list = []
-        for index in range(len(models)):
-            model = models[index]
+        for index, model in enumerate(models):
             for item in model.next():
                 # ignore invisible things like the normal of a ContourModel
                 if hasattr(item, "to_OpenGL"):

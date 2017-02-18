@@ -27,6 +27,7 @@ from pycam.Geometry.utils import sqrt
 
 try:
     import OpenGL.GL as GL
+    from OpenGL.GL.pointers import glIndexPointers, glNormalPointerf, glVertexPointerf
     GL_enabled = True
 except ImportError:
     GL_enabled = False
@@ -358,7 +359,7 @@ class ZBuffer(object):
                                                  * ((y1 - y0) * (x1 - x0) * 2))()
 
                     GL.glEnableClientState(GL.GL_VERTEX_ARRAY)
-                    GL.glVertexPointerf(self.cell[y][x].array)
+                    glVertexPointerf(self.cell[y][x].array)
                     GL.glNewList(self.cell[y][x].list, GL.GL_COMPILE)
                     idx = 0
                     for yi in range(y0, y1-1):
@@ -425,8 +426,8 @@ class ZBuffer(object):
                         self.cell[y][x].normal = (ctypes.c_float * 3
                                                   * ((y1 - y0) * (x1 - x0) * 4))()
 
-                    GL.glVertexPointerf(self.cell[y][x].vertex)
-                    GL.glNormalPointerf(self.cell[y][x].normal)
+                    glVertexPointerf(self.cell[y][x].vertex)
+                    glNormalPointerf(self.cell[y][x].normal)
                     GL.glNewList(self.cell[y][x].list, GL.GL_COMPILE)
                     idx = 0
                     for yi in range(y0, y1-1):
@@ -518,9 +519,9 @@ class ZBuffer(object):
                         self.cell[y][x].normal = (ctypes.c_float * 3 * ((y1-y0) * (x1 - x0)))()
                         self.cell[y][x].index = (ctypes.c_ushort
                                                  * (4 * (y1 - y0 - 1) * (x1 - x0 - 1)))()
-                    GL.glIndexPointers(self.cell[y][x].index)
-                    GL.glVertexPointerf(self.cell[y][x].vertex)
-                    GL.glNormalPointerf(self.cell[y][x].normal)
+                    glIndexPointers(self.cell[y][x].index)
+                    glVertexPointerf(self.cell[y][x].vertex)
+                    glNormalPointerf(self.cell[y][x].normal)
 
                     GL.glNewList(self.cell[y][x].list, GL.GL_COMPILE)
                     idx = 0

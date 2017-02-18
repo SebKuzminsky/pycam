@@ -371,19 +371,19 @@ class BoundsDict(pycam.Plugins.ObjectWithAttributes):
         self["parameters"] = {}
         self.core = core
         self["parameters"].update({
-                "BoundaryLowX": 0,
-                "BoundaryLowY": 0,
-                "BoundaryLowZ": 0,
-                "BoundaryHighX": 0,
-                "BoundaryHighY": 0,
-                "BoundaryHighZ": 0,
-                "TypeRelativeMargin": True,
-                "TypeCustom": False,
-                # Use "list" conversion here: python 2.5 does not support
-                # "index" for tuples.
-                "RelativeUnit": list(_RELATIVE_UNIT).index("%"),
-                "ToolLimit": list(_BOUNDARY_MODES).index("along"),
-                "Models": [],
+            "BoundaryLowX": 0,
+            "BoundaryLowY": 0,
+            "BoundaryLowZ": 0,
+            "BoundaryHighX": 0,
+            "BoundaryHighY": 0,
+            "BoundaryHighZ": 0,
+            "TypeRelativeMargin": True,
+            "TypeCustom": False,
+            # Use "list" conversion here: python 2.5 does not support
+            # "index" for tuples.
+            "RelativeUnit": list(_RELATIVE_UNIT).index("%"),
+            "ToolLimit": list(_BOUNDARY_MODES).index("along"),
+            "Models": [],
         })
 
     def get_absolute_limits(self, tool_radius=None, models=None):

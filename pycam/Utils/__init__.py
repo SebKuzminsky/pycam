@@ -158,13 +158,13 @@ class URIHandler(object):
         else:
             return urllib.urlopen(self._uri.geturl())
 
-    def retrieve_remote_file(uri, destination, callback=None):
+    def retrieve_remote_file(self, destination, callback=None):
         if callback:
             download_callback = lambda current_blocks, block_size, num_of_blocks: callback()
         else:
             download_callback = None
         try:
-            urllib.urlretrieve(uri, destination, download_callback)
+            urllib.urlretrieve(self.get_url(), destination, download_callback)
             return True
         except IOError:
             return False

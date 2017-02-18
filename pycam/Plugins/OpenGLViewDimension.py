@@ -35,7 +35,7 @@ class OpenGLViewDimension(pycam.Plugins.PluginBase):
             import pango
             self.core.register_ui("opengl_window", "Dimension",
                                   self.gui.get_object("DimensionTable"), weight=20)
-            self.core.get("register_display_item")("show_dimensions", "Show Dimensions", 60),
+            self.core.get("register_display_item")("show_dimensions", "Show Dimensions", 60)
             # Color the dimension value according to the axes.
             # For "y" axis: 100% green is too bright on light background - we
             # reduce it a bit.

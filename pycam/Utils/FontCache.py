@@ -53,7 +53,7 @@ class FontCache(object):
     def _get_font_files(self):
         if self.font_dir is None:
             return []
-        log.info("Font directory: %s" % self.font_dir)
+        log.info("Font directory: %s", self.font_dir)
         result = []
         files = os.listdir(self.font_dir)
         for fname in files:
@@ -71,8 +71,7 @@ class FontCache(object):
         for font_name in self.fonts:
             if font_name.lower() == name.lower():
                 return self.fonts[font_name]
-        else:
-            return None
+        return None
 
     def get_font_names(self):
         self._load_all_files()
@@ -91,10 +90,9 @@ class FontCache(object):
                 font = self._get_font_without_loading(other_name)
                 if font:
                     return font
-            else:
-                if self.fonts:
-                    # return the first (random) font in the dictionary
-                    return self.fonts.values()[0]
+            if self.fonts:
+                # return the first (random) font in the dictionary
+                return self.fonts.values()[0]
 
     def _load_all_files(self):
         if self.core:

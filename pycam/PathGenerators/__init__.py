@@ -276,8 +276,7 @@ def get_max_height_dynamic(model, cutter, positions, minz, maxz, physics=None):
         def get_max_height(x, y):
             return get_max_height_triangles(model, cutter, x, y, minz, maxz)
     # add one point between all existing points
-    for index in range(len(positions)):
-        p = positions[index]
+    for index, p in enumerate(positions):
         points.append(get_max_height(p[0], p[1]))
     # Check if three consecutive points are "flat".
     # Add additional points if necessary.

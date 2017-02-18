@@ -23,7 +23,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import ode
 
 import pycam.Cutters
-from pycam.Geometry.Point import Point
 
 try:
     import OpenGL.GL as GL
@@ -148,7 +147,7 @@ class ODEBlocks(object):
         heights = []
         for box in self.boxes:
             aabb = box.getAABB()
-            heights.append(Point((aabb[1] + aabb[0]) / 2.0, (aabb[3] + aabb[2]) / 2.0, aabb[5]))
+            heights.append(((aabb[1] + aabb[0]) / 2.0, (aabb[3] + aabb[2]) / 2.0, aabb[5]))
         for column in range(self.x_steps):
             result.append(heights[column * self.y_steps:(column + 1) * self.y_steps])
         return result

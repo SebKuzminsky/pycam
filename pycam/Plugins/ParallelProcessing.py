@@ -236,9 +236,8 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
                 self.number_of_processes.set_sensitive(True)
             num_of_processes = int(self.number_of_processes.get_value())
             error = pycam.Utils.threading.init_threading(
-                    number_of_processes=num_of_processes,
-                    enable_server=enable_server, remote=remote,
-                    server_credentials=auth_key, local_port=local_port)
+                number_of_processes=num_of_processes, enable_server=enable_server, remote=remote,
+                server_credentials=auth_key, local_port=local_port)
             if error:
                 self.log.error("Failed to start server: %s", error)
                 pycam.Utils.threading.cleanup()

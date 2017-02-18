@@ -94,9 +94,10 @@ class Settings(dict):
         if key not in self:
             return
         if get_func is None:
-            def get_func():
-                return self.__getitem_orig(key)[self.VALUE_INDEX]
-        self.__getitem_orig(key)[self.GET_INDEX] = get_func
+            real_get_func = lambda: self.__getitem_orig(key)[self.VALUE_INDEX]
+        else:
+            real_get_func = get_func
+        self.__getitem_orig(key)[self.GET_INDEX] = real_get_func
 
     def define_set_func(self, key, set_func=None):
         def default_set_func(value):
@@ -265,49 +266,45 @@ process: 3
 
 """
 
-    SETTING_TYPES = {
-            "name": str,
-            "shape": str,
-            "tool_radius": float,
-            "torus_radius": float,
-            "speed": float,
-            "feedrate": float,
-            "path_strategy": str,
-            "path_direction": str,
-            "milling_style": str,
-            "material_allowance": float,
-            "overlap_percent": int,
-            "step_down": float,
-            "engrave_offset": float,
-            "pocketing_type": str,
-            "tool": object,
-            "process": object,
-            "bounds": object,
-            "enabled": bool,
-            "type": str,
-            "x_low": float,
-            "x_high": float,
-            "y_low": float,
-            "y_high": float,
-            "z_low": float,
-            "z_high": float,
-    }
+    SETTING_TYPES = {"name": str,
+                     "shape": str,
+                     "tool_radius": float,
+                     "torus_radius": float,
+                     "speed": float,
+                     "feedrate": float,
+                     "path_strategy": str,
+                     "path_direction": str,
+                     "milling_style": str,
+                     "material_allowance": float,
+                     "overlap_percent": int,
+                     "step_down": float,
+                     "engrave_offset": float,
+                     "pocketing_type": str,
+                     "tool": object,
+                     "process": object,
+                     "bounds": object,
+                     "enabled": bool,
+                     "type": str,
+                     "x_low": float,
+                     "x_high": float,
+                     "y_low": float,
+                     "y_high": float,
+                     "z_low": float,
+                     "z_high": float}
 
     CATEGORY_KEYS = {
-            "tool": ("name", "shape", "tool_radius", "torus_radius", "feedrate", "speed"),
-            "process": ("name", "path_strategy", "path_direction", "milling_style",
-                        "material_allowance", "overlap_percent", "step_down", "engrave_offset",
-                        "pocketing_type"),
-            "bounds": ("name", "type", "x_low", "x_high", "y_low", "y_high", "z_low", "z_high"),
-            "task": ("name", "tool", "process", "bounds", "enabled"),
+        "tool": ("name", "shape", "tool_radius", "torus_radius", "feedrate", "speed"),
+        "process": ("name", "path_strategy", "path_direction", "milling_style",
+                    "material_allowance", "overlap_percent", "step_down", "engrave_offset",
+                    "pocketing_type"),
+        "bounds": ("name", "type", "x_low", "x_high", "y_low", "y_high", "z_low", "z_high"),
+        "task": ("name", "tool", "process", "bounds", "enabled"),
     }
 
-    SECTION_PREFIXES = {
-        "tool": "Tool",
-        "process": "Process",
-        "task": "Task",
-        "bounds": "Bounds",
-    }
+    SECTION_PREFIXES = {"tool": "Tool",
+                        "process": "Process",
+                        "task": "Task",
+                        "bounds": "Bounds"}
 
     DEFAULT_SUFFIX = "Default"
     REFERENCE_TAG = "_reference_"
@@ -427,10 +424,7 @@ process: 3
                                 # try to get the referenced object
                                 value = self._get_category_items(key)[int(value_raw)]
                             elif value_type == bool:
-                                if value_raw.lower() in ("1", "true", "yes", "on"):
-                                    value = True
-                                else:
-                                    value = False
+                                value = value_raw.lower() in ("1", "true", "yes", "on")
                             else:
                                 # just do a simple type cast
                                 value = value_type(value_raw)
@@ -503,7 +497,7 @@ process: 3
         lists["process"] = processes
         lists["bounds"] = [get_dictionary_of_bounds(b) for b in bounds]
         lists["task"] = tasks
-        for type_name in lists.keys():
+        for type_name in lists:
             type_list = lists[type_name]
             # generate "Default" section
             common_keys = []
@@ -526,10 +520,9 @@ process: 3
                 # add an empty line to separate sections
                 result.append("")
             # generate individual sections
-            for index in range(len(type_list)):
+            for index, item in enumerate(type_list):
                 section = "[%s%d]" % (self.SECTION_PREFIXES[type_name], index)
                 result.append(section)
-                item = type_list[index]
                 for key in self.CATEGORY_KEYS[type_name]:
                     if key in common_keys:
                         # skip keys, that are listed in the "Default" section
@@ -592,12 +585,12 @@ class ToolpathSettings(object):
     def set_bounds(self, bounds):
         low, high = bounds.get_absolute_limits()
         self.bounds = {
-                "minx": low[0],
-                "maxx": high[0],
-                "miny": low[1],
-                "maxy": high[1],
-                "minz": low[2],
-                "maxz": high[2],
+            "minx": low[0],
+            "maxx": high[0],
+            "miny": low[1],
+            "maxy": high[1],
+            "minz": low[2],
+            "maxz": high[2],
         }
 
     def get_bounds(self):

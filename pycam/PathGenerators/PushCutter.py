@@ -81,8 +81,8 @@ class PushCutter(object):
             path = []
         for layer_grid in grid:
             # update the progress bar and check, if we should cancel the process
-            if draw_callback and draw_callback(text="PushCutter: processing layer %d/%d"
-                                                    % (current_layer + 1, num_of_layers)):
+            if draw_callback and draw_callback(text=("PushCutter: processing layer %d/%d"
+                                                     % (current_layer + 1, num_of_layers))):
                 # cancel immediately
                 break
 

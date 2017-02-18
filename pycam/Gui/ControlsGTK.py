@@ -294,8 +294,7 @@ class ParameterSection(WidgetBaseClass):
         for child in self._table.get_children():
             if child is widget:
                 return self._get_child_row(child)
-        else:
-            return -1
+        return -1
 
     def _get_child_row(self, widget):
         return gtk.Container.child_get_property(self._table, widget, "top-attach")

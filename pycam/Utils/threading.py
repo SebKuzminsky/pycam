@@ -40,7 +40,7 @@ log = pycam.Utils.log.get_logger()
 try:
     from multiprocessing.managers import SyncManager as _SyncManager
 except ImportError, msg:
-    log.debug("Failed to import multiprocessing.managers.SyncMananger: %s" % msg)
+    log.debug("Failed to import multiprocessing.managers.SyncMananger: %s", msg)
 else:
     # this class definition needs to be at the top level - for pyinstaller
     class TaskManager(_SyncManager):
@@ -539,7 +539,7 @@ def run_in_parallel_remote(func, args_list, unordered=False, disable_multiproces
             if stale_task:
                 stale_job_id, stale_task_id = stale_task[:2]
                 if stale_job_id in __finished_jobs:
-                    log.debug("Throwing away stale task of an old job: %s" % stale_job_id)
+                    log.debug("Throwing away stale task of an old job: %s", stale_job_id)
                     pending_tasks.remove(stale_job_id, stale_task_id)
                 elif stale_job_id == job_id:
                     log.debug("Reinjecting stale task: %s / %s", job_id, stale_task_id)
@@ -576,7 +576,7 @@ def run_in_parallel_remote(func, args_list, unordered=False, disable_multiproces
                 except GeneratorExit:
                     # This exception is triggered when the caller stops
                     # requesting more items from the generator.
-                    log.debug("Parallel processing cancelled: %s" % job_id)
+                    log.debug("Parallel processing cancelled: %s", job_id)
                     _cleanup_job(job_id, tasks_queue, pending_tasks, __finished_jobs)
                     # re-raise the GeneratorExit exception to finish destruction
                     raise
@@ -703,7 +703,7 @@ class ProcessStatistics(object):
 
     def _refresh_workers(self):
         oldest_valid = time.time() - self.timeout
-        for key in self.workers.keys():
+        for key in self.workers:
             # be careful: maybe the workers dictionary changed in between
             try:
                 timestamp = self.workers[key]
@@ -832,7 +832,7 @@ class ProcessDataCache(object):
 
     def expire_cache_items(self):
         expired = time.time() - self.timeout
-        for key in self.cache.keys():
+        for key in self.cache:
             try:
                 if self.cache[key][1] < expired:
                     del self.cache[key]

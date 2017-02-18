@@ -217,7 +217,7 @@ class DXFParser(object):
                 for char in line2:
                     try:
                         text_chars.append(unicode(char))
-                    except:
+                    except UnicodeDecodeError:
                         pass
                 text = u"".join(text_chars)
             line2 = _unescape_control_characters(text)
@@ -408,7 +408,7 @@ class DXFParser(object):
                 if point != next_point:
                     if bulge or next_bulge:
                         self.lines.extend(pycam.Geometry.get_bezier_lines(
-                                ((point, bulge), (next_point, next_bulge))))
+                            ((point, bulge), (next_point, next_bulge))))
                         if extra_vertex_flag:
                             self.lines.extend(pycam.Geometry.get_bezier_lines(
                                 ((next_point, next_bulge), (point, bulge))))

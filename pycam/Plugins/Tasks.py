@@ -53,7 +53,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             parameters_box = self.gui.get_object("TaskParameterBox")
 
             def clear_parameter_widgets():
-                parameters_box.foreach(lambda widget: parameters_box.remove(widget))
+                parameters_box.foreach(parameters_box.remove)
 
             def add_parameter_widget(item, name):
                 # create a frame within an alignment and the item inside
@@ -96,10 +96,10 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self._treemodel.clear()
             # generate toolpaths
             self._gtk_handlers.extend((
-                    (self.gui.get_object("GenerateToolPathButton"), "clicked",
-                     self._generate_selected_toolpaths),
-                    (self.gui.get_object("GenerateAllToolPathsButton"), "clicked",
-                     self._generate_all_toolpaths)))
+                (self.gui.get_object("GenerateToolPathButton"), "clicked",
+                 self._generate_selected_toolpaths),
+                (self.gui.get_object("GenerateAllToolPathsButton"), "clicked",
+                 self._generate_all_toolpaths)))
             # shape selector
             self._gtk_handlers.append((self.gui.get_object("TaskTypeSelector"), "changed",
                                        "task-type-changed"))
@@ -202,10 +202,8 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self.select_type(selected["name"])
 
     def _update_widgets(self):
-        self.gui.get_object("GenerateToolPathButton").set_sensitive(
-                len(self.get_selected()) > 0)
-        self.gui.get_object("GenerateAllToolPathsButton").set_sensitive(
-                len(self) > 0)
+        self.gui.get_object("GenerateToolPathButton").set_sensitive(len(self.get_selected()) > 0)
+        self.gui.get_object("GenerateAllToolPathsButton").set_sensitive(len(self) > 0)
 
     def _task_switch(self):
         tasks = self.get_selected()

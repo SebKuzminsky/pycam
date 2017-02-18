@@ -242,11 +242,11 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
         # get the toolpath without adjustments
         low, high = self._get_bounds()
         base_x, base_y = pycam.Toolpath.SupportGrid.get_support_grid_locations(
-                low[0], high[0], low[1], high[1],
-                s.get("support_grid_distance_x"),
-                s.get("support_grid_distance_y"),
-                offset_x=s.get("support_grid_offset_x"),
-                offset_y=s.get("support_grid_offset_y"))
+            low[0], high[0], low[1], high[1],
+            s.get("support_grid_distance_x"),
+            s.get("support_grid_distance_y"),
+            offset_x=s.get("support_grid_offset_x"),
+            offset_y=s.get("support_grid_offset_y"))
         # fill the adjustment lists
         while len(self.grid_adjustments_x) < len(base_x):
             self.grid_adjustments_x.append(0)

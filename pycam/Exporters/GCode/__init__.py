@@ -85,13 +85,13 @@ class BaseGenerator(object):
                 key, value = args
                 func_name = "command_%s" % key
                 if hasattr(self, func_name):
-                    _log.debug("GCode: machine setting '%s': %s" % (key, value))
+                    _log.debug("GCode: machine setting '%s': %s", key, value)
                     getattr(self, func_name)(value)
                     self._cache[key] = value
                     self._cache["rapid_move"] = None
                 else:
                     _log.warn("The current GCode exporter does not support the machine setting "
-                              "'%s=%s' -> ignore" % (key, value))
+                              "'%s=%s' -> ignore", key, value)
             else:
-                _log.warn("A non-basic toolpath item (%d -> %s) remained in the queue -> ignore"
-                          % (move_type, args))
+                _log.warn("A non-basic toolpath item (%d -> %s) remained in the queue -> ignore",
+                          move_type, args)

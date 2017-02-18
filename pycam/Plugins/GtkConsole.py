@@ -54,10 +54,8 @@ class GtkConsole(pycam.Plugins.PluginBase):
             sys.stdout = StringIO.StringIO()
 
             def console_write(data):
-                self._console_buffer.insert(
-                        self._console_buffer.get_end_iter(), data)
-                self._console_buffer.place_cursor(
-                        self._console_buffer.get_end_iter())
+                self._console_buffer.insert(self._console_buffer.get_end_iter(), data)
+                self._console_buffer.place_cursor(self._console_buffer.get_end_iter())
 
             self._console.write = console_write
             # make sure that we are never waiting for input (e.g. "help()")

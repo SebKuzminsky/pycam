@@ -95,7 +95,7 @@ class Log(pycam.Plugins.PluginBase):
             try:
                 self.status_bar.push(0, message)
             except TypeError:
-                new_message = re.sub("[^\w\s]", "", message)
+                new_message = re.sub(r"[^\w\s]", "", message)
                 self.status_bar.push(0, new_message)
             # highlight the "warning" icon for warnings/errors
             if record and record.levelno > 20:

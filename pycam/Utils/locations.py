@@ -30,8 +30,8 @@ DATA_DIR_ENVIRON_KEY = "PYCAM_DATA_DIR"
 FONT_DIR_ENVIRON_KEY = "PYCAM_FONT_DIR"
 
 # this directory represents the base of the development tree
-PROJECT_BASE_DIR = os.path.realpath(os.path.join(os.path.dirname(
-        os.path.realpath(__file__)), os.pardir, os.pardir))
+PROJECT_BASE_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                                 os.pardir, os.pardir))
 # necessary for "pyinstaller"
 if "_MEIPASS2" in os.environ:
     PROJECT_BASE_DIR = os.path.normpath(os.environ["_MEIPASS2"])
@@ -66,15 +66,11 @@ def get_data_file_location(filename, silent=False):
         test_path = os.path.join(base_dir, filename)
         if os.path.exists(test_path):
             return test_path
-    else:
-        if not silent:
-            lines = []
-            lines.append("Failed to locate a resource file (%s) in %s!"
-                         % (filename, DATA_BASE_DIRS))
-            lines.append("You can extend the search path by setting the environment variable '%s'."
-                         % str(DATA_DIR_ENVIRON_KEY))
-            log.error(os.linesep.join(lines))
-        return None
+    if not silent:
+        log.error("Failed to locate a resource file (%s) in %s! "
+                  "You can extend the search path by setting the environment variable '%s'.",
+                  filename, DATA_BASE_DIRS, str(DATA_DIR_ENVIRON_KEY))
+    return None
 
 
 def get_font_dir():
@@ -82,21 +78,20 @@ def get_font_dir():
         if os.path.isdir(FONT_DIR_OVERRIDE):
             return FONT_DIR_OVERRIDE
         else:
-            log.warn("You specified a font dir that does not exist (%s). I will ignore it."
-                     % FONT_DIR_OVERRIDE)
+            log.warn("You specified a font dir that does not exist (%s). I will ignore it.",
+                     FONT_DIR_OVERRIDE)
     font_dir = get_data_file_location(FONTS_SUBDIR, silent=True)
     if font_dir is not None:
         return font_dir
     else:
-        log.warn("Failed to locate the fonts directory '%s' below '%s'. Falling back to '%s'."
-                 % (FONTS_SUBDIR, DATA_BASE_DIRS, ":".join(FONT_DIRS_FALLBACK)))
+        log.warn("Failed to locate the fonts directory '%s' below '%s'. Falling back to '%s'.",
+                 FONTS_SUBDIR, DATA_BASE_DIRS, ":".join(FONT_DIRS_FALLBACK))
         for font_dir_fallback in FONT_DIRS_FALLBACK:
             if os.path.isdir(font_dir_fallback):
                 return font_dir_fallback
-        else:
-            log.warn(("None of the fallback font directories (%s) exist. No fonts will be "
-                      "available.") % ":".join(FONT_DIRS_FALLBACK))
-            return None
+        log.warn("None of the fallback font directories (%s) exist. No fonts will be available.",
+                 ":".join(FONT_DIRS_FALLBACK))
+        return None
 
 
 def get_external_program_location(key):

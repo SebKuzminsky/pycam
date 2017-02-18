@@ -37,7 +37,7 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
         self.core.get("register_color")("color_toolpath_cut", "Toolpath cut", 60)
         self.core.get("register_color")("color_toolpath_return", "Toolpath rapid", 70)
         self.core.register_chain("get_draw_dimension", self.get_draw_dimension)
-        self.core.get("register_display_item")("show_toolpath", "Show Toolpath", 30),
+        self.core.get("register_display_item")("show_toolpath", "Show Toolpath", 30)
         self.core.set("draw_toolpath_moves_func", self._draw_toolpath_moves)
         self.core.emit_event("visual-item-updated")
         return True
@@ -79,8 +79,7 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
                 self.log.warn("No toolpath processor selected")
                 return
             filter_func = processor["func"]
-            filter_params = self.core.get("get_parameter_values")(
-                    "toolpath_processor")
+            filter_params = self.core.get("get_parameter_values")("toolpath_processor")
             settings_filters = filter_func(filter_params)
             for toolpath in self.core.get("toolpaths").get_visible():
                 # TODO: enable the VBO code for speedup!

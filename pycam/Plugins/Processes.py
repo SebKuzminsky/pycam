@@ -52,7 +52,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             parameters_box = self.gui.get_object("ProcessParametersBox")
 
             def clear_parameter_widgets():
-                parameters_box.foreach(lambda widget: parameters_box.remove(widget))
+                parameters_box.foreach(parameters_box.remove)
 
             def add_parameter_widget(item, name):
                 # create a frame with an align and the item inside

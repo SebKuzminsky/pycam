@@ -85,24 +85,24 @@ def convert_triangles_to_vertices_faces(triangles):
 
 def get_parallelepiped_geom(low_points, high_points, space=None):
     triangles = (
-            # front side
-            Triangle(low_points[0], low_points[1], high_points[0]),
-            Triangle(low_points[1], high_points[1], high_points[0]),
-            # right side
-            Triangle(low_points[1], low_points[2], high_points[1]),
-            Triangle(low_points[2], high_points[2], high_points[1]),
-            # back side
-            Triangle(low_points[2], low_points[3], high_points[2]),
-            Triangle(low_points[3], high_points[3], high_points[2]),
-            # left side
-            Triangle(low_points[3], low_points[0], high_points[3]),
-            Triangle(low_points[0], high_points[0], high_points[3]),
-            # bottom side
-            Triangle(low_points[1], low_points[0], low_points[2]),
-            Triangle(low_points[3], low_points[2], low_points[0]),
-            # high side
-            Triangle(high_points[0], high_points[1], high_points[2]),
-            Triangle(high_points[2], high_points[3], high_points[0]),
+        # front side
+        Triangle(low_points[0], low_points[1], high_points[0]),
+        Triangle(low_points[1], high_points[1], high_points[0]),
+        # right side
+        Triangle(low_points[1], low_points[2], high_points[1]),
+        Triangle(low_points[2], high_points[2], high_points[1]),
+        # back side
+        Triangle(low_points[2], low_points[3], high_points[2]),
+        Triangle(low_points[3], high_points[3], high_points[2]),
+        # left side
+        Triangle(low_points[3], low_points[0], high_points[3]),
+        Triangle(low_points[0], high_points[0], high_points[3]),
+        # bottom side
+        Triangle(low_points[1], low_points[0], low_points[2]),
+        Triangle(low_points[3], low_points[2], low_points[0]),
+        # high side
+        Triangle(high_points[0], high_points[1], high_points[2]),
+        Triangle(high_points[2], high_points[3], high_points[0]),
     )
     mesh = ode.TriMeshData()
     vertices, faces = convert_triangles_to_vertices_faces(triangles)

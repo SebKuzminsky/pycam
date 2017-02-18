@@ -22,16 +22,17 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import os
-import sys
-import datetime
-import gtk
-import gobject
-import webbrowser
 import ConfigParser
-import StringIO
-import pickle
+import datetime
 import logging
+import os
+import pickle
+import StringIO
+import sys
+import webbrowser
+
+import gobject
+import gtk
 
 from pycam import VERSION, HELP_WIKI_URL
 import pycam.Gui.Settings
@@ -61,54 +62,54 @@ FILTER_MODEL = (("All supported model filetypes",
                 ("PS contours", ("*.eps", "*.ps")))
 
 PREFERENCES_DEFAULTS = {
-        "enable_ode": False,
-        "unit": "mm",
-        "default_task_settings_file": "",
-        "show_model": True,
-        "show_support_preview": True,
-        "show_axes": True,
-        "show_dimensions": True,
-        "show_bounding_box": True,
-        "show_toolpath": True,
-        "show_drill": False,
-        "show_directions": False,
-        "color_background": {"red": 0.0, "green": 0.0, "blue": 0.0, "alpha": 1.0},
-        "color_model": {"red": 0.5, "green": 0.5, "blue": 1.0, "alpha": 1.0},
-        "color_support_preview": {"red": 0.8, "green": 0.8, "blue": 0.3, "alpha": 1.0},
-        "color_bounding_box": {"red": 0.3, "green": 0.3, "blue": 0.3, "alpha": 1.0},
-        "color_cutter": {"red": 1.0, "green": 0.2, "blue": 0.2, "alpha": 1.0},
-        "color_toolpath_cut": {"red": 1.0, "green": 0.5, "blue": 0.5, "alpha": 1.0},
-        "color_toolpath_return": {"red": 0.9, "green": 1.0, "blue": 0.1, "alpha": 0.4},
-        "color_material": {"red": 1.0, "green": 0.5, "blue": 0.0, "alpha": 1.0},
-        "color_grid": {"red": 0.75, "green": 1.0, "blue": 0.7, "alpha": 0.55},
-        "view_light": True,
-        "view_shadow": True,
-        "view_polygon": True,
-        "view_perspective": True,
-        "drill_progress_max_fps": 2,
-        "gcode_safety_height": 25.0,
-        "gcode_minimum_step_x": 0.0001,
-        "gcode_minimum_step_y": 0.0001,
-        "gcode_minimum_step_z": 0.0001,
-        "gcode_path_mode": 0,
-        "gcode_motion_tolerance": 0,
-        "gcode_naive_tolerance": 0,
-        "gcode_start_stop_spindle": True,
-        "gcode_filename_extension": "",
-        "gcode_spindle_delay": 3,
-        "external_program_inkscape": "",
-        "external_program_pstoedit": "",
-        "touch_off_on_startup": False,
-        "touch_off_on_tool_change": False,
-        "touch_off_position_type": "absolute",
-        "touch_off_position_x": 0.0,
-        "touch_off_position_y": 0.0,
-        "touch_off_position_z": 0.0,
-        "touch_off_rapid_move": 0.0,
-        "touch_off_slow_move": 1.0,
-        "touch_off_slow_feedrate": 20,
-        "touch_off_height": 0.0,
-        "touch_off_pause_execution": False,
+    "enable_ode": False,
+    "unit": "mm",
+    "default_task_settings_file": "",
+    "show_model": True,
+    "show_support_preview": True,
+    "show_axes": True,
+    "show_dimensions": True,
+    "show_bounding_box": True,
+    "show_toolpath": True,
+    "show_drill": False,
+    "show_directions": False,
+    "color_background": {"red": 0.0, "green": 0.0, "blue": 0.0, "alpha": 1.0},
+    "color_model": {"red": 0.5, "green": 0.5, "blue": 1.0, "alpha": 1.0},
+    "color_support_preview": {"red": 0.8, "green": 0.8, "blue": 0.3, "alpha": 1.0},
+    "color_bounding_box": {"red": 0.3, "green": 0.3, "blue": 0.3, "alpha": 1.0},
+    "color_cutter": {"red": 1.0, "green": 0.2, "blue": 0.2, "alpha": 1.0},
+    "color_toolpath_cut": {"red": 1.0, "green": 0.5, "blue": 0.5, "alpha": 1.0},
+    "color_toolpath_return": {"red": 0.9, "green": 1.0, "blue": 0.1, "alpha": 0.4},
+    "color_material": {"red": 1.0, "green": 0.5, "blue": 0.0, "alpha": 1.0},
+    "color_grid": {"red": 0.75, "green": 1.0, "blue": 0.7, "alpha": 0.55},
+    "view_light": True,
+    "view_shadow": True,
+    "view_polygon": True,
+    "view_perspective": True,
+    "drill_progress_max_fps": 2,
+    "gcode_safety_height": 25.0,
+    "gcode_minimum_step_x": 0.0001,
+    "gcode_minimum_step_y": 0.0001,
+    "gcode_minimum_step_z": 0.0001,
+    "gcode_path_mode": 0,
+    "gcode_motion_tolerance": 0,
+    "gcode_naive_tolerance": 0,
+    "gcode_start_stop_spindle": True,
+    "gcode_filename_extension": "",
+    "gcode_spindle_delay": 3,
+    "external_program_inkscape": "",
+    "external_program_pstoedit": "",
+    "touch_off_on_startup": False,
+    "touch_off_on_tool_change": False,
+    "touch_off_position_type": "absolute",
+    "touch_off_position_x": 0.0,
+    "touch_off_position_y": 0.0,
+    "touch_off_position_z": 0.0,
+    "touch_off_rapid_move": 0.0,
+    "touch_off_slow_move": 1.0,
+    "touch_off_slow_feedrate": 20,
+    "touch_off_height": 0.0,
+    "touch_off_pause_execution": False,
 }
 """ the listed items will be loaded/saved via the preferences file in the
 user's home directory on startup/shutdown"""
@@ -296,12 +297,12 @@ class EventCore(pycam.Gui.Settings.Settings):
 
     def register_namespace(self, name, value):
         if name in self.namespace:
-            log.info("Trying to register the same key in namespace twice: ", str(name))
+            log.info("Trying to register the same key in namespace twice: %s", str(name))
         self.namespace[name] = value
 
     def unregister_namespace(self, name):
         if name not in self.namespace:
-            log.info("Tried to unregister an unknown name from namespace: ", str(name))
+            log.info("Tried to unregister an unknown name from namespace: %s", str(name))
 
     def get_namespace(self):
         return self.namespace
@@ -497,7 +498,7 @@ class ProjectGui(object):
         main_window = self.gui.get_object("WindowBox")
 
         def clear_main_window():
-            main_window.foreach(lambda x: main_window.remove(x))
+            main_window.foreach(main_window.remove)
 
         def add_main_window_item(item, name, **extra_args):
             # some widgets may want to override the defaults
@@ -788,7 +789,7 @@ class ProjectGui(object):
         for item, value in config.items("DEFAULT"):
             if item not in PREFERENCES_DEFAULTS.keys():
                 log.warn("Skipping obsolete preference item: %s", str(item))
-        for item in PREFERENCES_DEFAULTS.keys():
+        for item in PREFERENCES_DEFAULTS:
             if not config.has_option("DEFAULT", item):
                 # a new preference setting is missing in the (old) file
                 continue
@@ -811,7 +812,7 @@ class ProjectGui(object):
             log.warn("Failed to create a preferences directory in your user's home directory.")
             return
         config = ConfigParser.ConfigParser()
-        for item in PREFERENCES_DEFAULTS.keys():
+        for item in PREFERENCES_DEFAULTS:
             config.set("DEFAULT", item, self.settings.get(item))
         try:
             config_file = file(config_filename, "w")

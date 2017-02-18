@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import math
+
 # careful import
 try:
     import gtk.gtkgl
@@ -31,7 +33,6 @@ except (ImportError, RuntimeError):
     GL_ENABLED = False
 
 import gtk
-import math
 
 from pycam.Gui.OpenGLTools import draw_complete_model_view
 from pycam.Geometry.PointUtils import pcross, pmul, pnormalized
@@ -335,7 +336,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
     def unregister_color_setting(self, name):
         if name not in self._color_settings:
-            self.log.debug("Failed to unregister unknown color item: %s" % name)
+            self.log.debug("Failed to unregister unknown color item: %s", name)
             return
         wrappers = self._color_settings[name]["wrappers"]
         self.unregister_state_item(name, *wrappers)
@@ -394,18 +395,18 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             return
         # define arrow keys and "vi"-like navigation keys
         move_keys_dict = {
-                gtk.keysyms.Left: (1, 0),
-                gtk.keysyms.Down: (0, -1),
-                gtk.keysyms.Up: (0, 1),
-                gtk.keysyms.Right: (-1, 0),
-                ord("h"): (1, 0),
-                ord("j"): (0, -1),
-                ord("k"): (0, 1),
-                ord("l"): (-1, 0),
-                ord("H"): (1, 0),
-                ord("J"): (0, -1),
-                ord("K"): (0, 1),
-                ord("L"): (-1, 0),
+            gtk.keysyms.Left: (1, 0),
+            gtk.keysyms.Down: (0, -1),
+            gtk.keysyms.Up: (0, 1),
+            gtk.keysyms.Right: (-1, 0),
+            ord("h"): (1, 0),
+            ord("j"): (0, -1),
+            ord("k"): (0, 1),
+            ord("l"): (-1, 0),
+            ord("H"): (1, 0),
+            ord("J"): (0, -1),
+            ord("K"): (0, 1),
+            ord("L"): (-1, 0),
         }
         if key_string and (key_string in '1234567'):
             self._last_view = None

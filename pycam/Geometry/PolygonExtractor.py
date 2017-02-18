@@ -433,7 +433,7 @@ class PolygonExtractor(object):
             output = "active paths: "
             for path in self.curr_path_list:
                 output += "%d(%g,%g,w=%d)" % (path.id, path.points[-1][0], path.points[-1][1],
-                                              Path.winding)
+                                              path.winding)
             print(output)
 
         self.prev_line = scanline

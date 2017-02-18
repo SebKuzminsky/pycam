@@ -18,7 +18,7 @@ import math
 import openvoronoi
 
 import pycam.Utils.log
-import pycam.Geometry.Line
+from pycam.Geometry.Line import Line
 import pycam.Geometry.Polygon
 import pycam.Geometry.Model
 from pycam.Geometry.utils import epsilon
@@ -101,7 +101,7 @@ def _offset_loops_to_polygons(offset_loops):
             point = (point.x, point.y, 0.0)
             if before is not None:
                 if radius == -1:
-                    lines.append(pycam.Geometry.Line.Line(before, point))
+                    lines.append(Line(before, point))
                     _log.info("%d line %s to %s", n_segment, before, point)
                 else:
                     _log.info("%d arc %s to %s r=%f", n_segment, before, point, radius)
@@ -118,7 +118,7 @@ def _offset_loops_to_polygons(offset_loops):
                     points = pycam.Geometry.get_points_of_arc(center, radius, angles[0], angles[1])
                     last_p = before
                     for p in points:
-                        lines.append(pycam.Geometry.Line.Line(last_p, p))
+                        lines.append(Line(last_p, p))
                         last_p = p
             before = point
         for line in lines:
@@ -128,25 +128,25 @@ def _offset_loops_to_polygons(offset_loops):
 
 
 def pocket_model(polygons, offset):
-    _log.info("number of polygons: %d" % len(polygons))
-    _log.info("offset distance: %f" % offset)
+    _log.info("number of polygons: %d", len(polygons))
+    _log.info("offset distance: %f", offset)
     maxx = max([poly.maxx for poly in polygons])
     maxy = max([poly.maxy for poly in polygons])
     minx = min([poly.minx for poly in polygons])
     miny = min([poly.miny for poly in polygons])
     radius = math.sqrt((maxx - minx) ** 2 + (maxy - miny) ** 2) / 1.8
-    _log.info("Radius: %f" % radius)
+    _log.info("Radius: %f", radius)
     bin_size = int(math.ceil(math.sqrt(sum([len(poly.get_points()) for poly in polygons]))))
-    _log.info("bin_size: %f" % bin_size)
+    _log.info("bin_size: %f", bin_size)
     dia = openvoronoi.VoronoiDiagram(radius, bin_size)
     point_set, line_set = _polygons_to_line_set(polygons)
     _add_connected_point_set_to_diagram(point_set, line_set, dia)
     _log.info("diagram complete")
-    _log.info("diagram check: %s" % str(dia.check()))
+    _log.info("diagram check: %s", str(dia.check()))
     offset_dia = openvoronoi.Offset(dia.getGraph())
     _log.info("offset diagram created")
     offset_loops = offset_dia.offset(offset)
-    _log.info("got %d loops from openvoronoi" % len(offset_loops))
+    _log.info("got %d loops from openvoronoi", len(offset_loops))
     return _offset_loops_to_polygons(offset_loops)
 
 
@@ -163,7 +163,7 @@ if __name__ == "__main__":
         before = None
         for p in points:
             if before:
-                model.append(pycam.Geometry.Line.Line(before, p))
+                model.append(Line(before, p))
             before = p
     if len(sys.argv) > 2:
         offset = float(sys.argv[2])

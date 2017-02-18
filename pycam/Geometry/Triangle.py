@@ -33,6 +33,7 @@ try:
     import OpenGL.GL as GL
     import OpenGL.GLU as GLU
     import OpenGL.GLUT as GLUT
+    from OpenGL.GLUT.fonts import GLUT_STROKE_ROMAN
     GL_enabled = True
 except ImportError:
     GL_enabled = False
@@ -156,10 +157,10 @@ class Triangle(IDGenerator, TransformableContainer):
             w = 0
             id_string = "%s." % str(self.id)
             for ch in id_string:
-                w += GLUT.glutStrokeWidth(GLUT.GLUT_STROKE_ROMAN, ord(ch))
+                w += GLUT.glutStrokeWidth(GLUT_STROKE_ROMAN, ord(ch))
             GL.glTranslate(-w/2, 0, 0)
             for ch in id_string:
-                GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(ch))
+                GLUT.glutStrokeCharacter(GLUT_STROKE_ROMAN, ord(ch))
             GL.glPopMatrix()
         if False:
             # draw point id on triangle face
@@ -179,10 +180,10 @@ class Triangle(IDGenerator, TransformableContainer):
                 GL.glScalef(0.001, 0.001, 0.001)
                 w = 0
                 for ch in str(p.id):
-                    w += GLUT.glutStrokeWidth(GLUT.GLUT_STROKE_ROMAN, ord(ch))
+                    w += GLUT.glutStrokeWidth(GLUT_STROKE_ROMAN, ord(ch))
                     GL.glTranslate(-w/2, 0, 0)
                 for ch in str(p.id):
-                    GLUT.glutStrokeCharacter(GLUT.GLUT_STROKE_ROMAN, ord(ch))
+                    GLUT.glutStrokeCharacter(GLUT_STROKE_ROMAN, ord(ch))
                 GL.glPopMatrix()
 
     def is_point_inside(self, p):

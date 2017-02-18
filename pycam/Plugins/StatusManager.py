@@ -69,9 +69,9 @@ class StatusManager(pycam.Plugins.PluginBase):
                     autoload_box.show()
 
             autoload_enable.connect("toggled", autoload_enable_switched, autoload_box)
-            self.settings.add_item("default_task_settings_file", get_autoload_task_file,
-                                   set_autoload_task_file)
-            autoload_task_filename = self.settings.get("default_task_settings_file")
+            self.core.settings.add_item("default_task_settings_file", get_autoload_task_file,
+                                        set_autoload_task_file)
+            autoload_task_filename = self.core.settings.get("default_task_settings_file")
             # TODO: use "startup" hook instead
             if autoload_task_filename:
                 self.open_task_settings_file(autoload_task_filename)
@@ -116,9 +116,9 @@ class StatusManager(pycam.Plugins.PluginBase):
         if callable(filename):
             filename = filename()
         if not filename:
-            filename = self.settings.get("get_filename_func")("Loading settings ...",
-                                                              mode_load=True,
-                                                              type_filter=FILTER_CONFIG)
+            filename = self.core.settings.get("get_filename_func")("Loading settings ...",
+                                                                   mode_load=True,
+                                                                   type_filter=FILTER_CONFIG)
             # Only update the last_task_settings attribute if the task file was
             # loaded interactively. E.g. ignore the initial task file loading.
             if filename:
@@ -126,28 +126,28 @@ class StatusManager(pycam.Plugins.PluginBase):
         if filename:
             _log.info("Loading task settings file: %s", str(filename))
             self.load_task_settings(filename)
-            self.add_to_recent_file_list(filename)
+            self.core.emit_event("notify-file-opened", filename)
 
     def save_task_settings_file(self, widget=None, filename=None):
         if callable(filename):
             filename = filename()
         if not isinstance(filename, (basestring, pycam.Utils.URIHandler)):
             # we open a dialog
-            filename = self.settings.get("get_filename_func")(
+            filename = self.core.settings.get("get_filename_func")(
                 "Save settings to ...", mode_load=False, type_filter=FILTER_CONFIG,
-                filename_templates=(self.last_task_settings_uri, self.last_model_uri))
+                filename_templates=(self.last_task_settings_uri, self.core.last_model_uri))
             if filename:
                 self.last_task_settings_uri = pycam.Utils.URIHandler(filename)
         # no filename given -> exit
         if not filename:
             return
-        settings = self.settings.dump_state()
+        settings = self.dump_state()
         try:
             out_file = open(filename, "w")
             out_file.write(settings)
             out_file.close()
             _log.info("Task settings written to %s", filename)
-            self.add_to_recent_file_list(filename)
+            self.core.emit_event("notify-file-opened", filename)
         except IOError:
             _log.error("Failed to save settings file")
 
@@ -157,7 +157,7 @@ class StatusManager(pycam.Plugins.PluginBase):
             settings.load_file(filename)
         # flush all tables (without re-assigning new objects)
         for one_list_name in ("tools", "processes", "bounds", "tasks"):
-            one_list = self.settings.get(one_list_name)
+            one_list = self.core.settings.get(one_list_name)
             while one_list:
                 one_list.pop()
         # TODO: load default tools/processes/bounds

@@ -176,7 +176,7 @@ class GTKHandler(logging.Handler):
                 message = raw_message.decode(current_encoding)
             except (UnicodeDecodeError, LookupError):
                 # remove all critical characters
-                message = re.sub("[^\w\s]", "", raw_message)
+                message = re.sub(r"[^\w\s]", "", raw_message)
         # Replace all "<>" characters (invalid for markup styles) with html
         # entities.
         message = re.sub("<", "&lt;", message)

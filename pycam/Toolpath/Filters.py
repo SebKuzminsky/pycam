@@ -209,8 +209,8 @@ class PathMode(MachineSetting):
 
     def _get_settings(self):
         return [("corner_style",
-                (self.settings["path_mode"], self.settings["motion_tolerance"],
-                    self.settings["naive_tolerance"]))]
+                 (self.settings["path_mode"], self.settings["motion_tolerance"],
+                  self.settings["naive_tolerance"]))]
 
     def _render_settings(self):
         return "%d / %d / %d" % (self.settings["path_mode"],
@@ -400,8 +400,7 @@ def _get_num_of_significant_digits(number):
             shifted = number * (10 ** digit)
             if shifted - int(shifted) < max_diff:
                 return digit
-        else:
-            return MAX_DIGITS
+        return MAX_DIGITS
 
 
 def _get_num_converter(step_width):

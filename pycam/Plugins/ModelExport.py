@@ -65,7 +65,7 @@ class ModelExport(pycam.Plugins.PluginBase):
 
     def _fallback_model_export(self, models):
         if models:
-            self.log.info("Failed to export %d model(s)" % len(models))
+            self.log.info("Failed to export %d model(s)", len(models))
 
     def save_model(self, widget=None):
         # TODO: add "filename" property to models
@@ -79,12 +79,12 @@ class ModelExport(pycam.Plugins.PluginBase):
         save_as_possible = len(models) > 0
         self.gui.get_object("SaveAsModel").set_sensitive(save_as_possible)
         # TODO: fix this
-        save_possible = False and bool(self.last_model_uri
+        save_possible = False and bool(self.core.last_model_uri
                                        and save_as_possible
-                                       and self.last_model_uri.is_writable())
+                                       and self.core.last_model_uri.is_writable())
         # TODO: fix this dirty hack to avoid silent overwrites of PS/DXF files as SVG
         if save_possible:
-            extension = os.path.splitext(self.last_model_uri.get_path())[-1].lower()
+            extension = os.path.splitext(self.core.last_model_uri.get_path())[-1].lower()
             # TODO: fix these hard-coded file extensions
             if extension[1:] in ("eps", "ps", "dxf"):
                 # can't save 2D formats except SVG

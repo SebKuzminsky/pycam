@@ -141,7 +141,7 @@ def get_bezier_lines(points_with_bulge, segments=32):
         p2, bulge2 = points_with_bulge[1]
         if not bulge1 and not bulge2:
             # straight line
-            return [Line.Line(p1, p2)]
+            return [Line(p1, p2)]
         straight_dir = pnormalized(psub(p2, p1))
         bulge1 = math.atan(bulge1)
         rot_matrix = Matrix.get_rotation_matrix_axis_angle((0, 0, 1), -2 * bulge1,
@@ -188,7 +188,7 @@ def get_bezier_lines(points_with_bulge, segments=32):
         # create lines
         result = []
         for index in range(len(result_points) - 1):
-            result.append(Line.Line(result_points[index], result_points[index + 1]))
+            result.append(Line(result_points[index], result_points[index + 1]))
         return result
 
 

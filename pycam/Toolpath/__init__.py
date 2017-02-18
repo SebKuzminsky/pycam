@@ -420,8 +420,7 @@ class Bounds(object):
         for index in range(3):
             if self.bounds_low[index] > self.bounds_high[index]:
                 return False
-        else:
-            return True
+        return True
 
     def set_reference(self, reference):
         self.reference = reference
@@ -547,9 +546,9 @@ class Bounds(object):
                     # Display warning messages, if we can't reach the requested
                     # absolute dimension.
                     if ref_low[index] != limits_low[index]:
-                        _log.info(message % "lower")
+                        _log.info(message, "lower")
                     if ref_high[index] != limits_high[index]:
-                        _log.info(message % "upper")
+                        _log.info(message, "upper")
                     self.bounds_low[index] = 0
                     self.bounds_high[index] = 0
                 else:

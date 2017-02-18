@@ -64,6 +64,8 @@ class ModelSwapAxes(pycam.Plugins.PluginBase):
         for axes, template in (("XY", "x_swap_y"), ("XZ", "x_swap_z"), ("YZ", "y_swap_z")):
             if self.gui.get_object("SwapAxes%s" % axes).get_active():
                 break
+        else:
+            assert False, "No axis selected"
         progress = self.core.get("progress")
         progress.update(text="Swap axes of model")
         progress.disable_cancel()

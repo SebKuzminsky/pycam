@@ -24,7 +24,7 @@ from pycam.Geometry.Line import Line
 from pycam.Geometry.PointUtils import padd, pcross, pdist, pdiv, pdot, pis_inside, pmul, pnorm, \
         pnormsq, pnormalized, psub
 from pycam.Geometry.Plane import Plane
-from pycam.Geometry import Point, TransformableContainer, IDGenerator, get_bisector
+from pycam.Geometry import TransformableContainer, IDGenerator, get_bisector
 from pycam.Geometry.utils import number, epsilon
 from pycam.Utils import log
 log = log.get_logger()
@@ -315,10 +315,7 @@ class Polygon(TransformableContainer):
         else:
             # it is a point
             point = line_or_point
-            if (point == self._points[-1]) or (point == self._points[0]):
-                return True
-            else:
-                return False
+            return (point == self._points[-1]) or (point == self._points[0])
 
     def next(self):
         yield "_points"
@@ -400,7 +397,7 @@ class Polygon(TransformableContainer):
             if abs(czx / area_xz - czy / area_yz) > epsilon:
                 log.info("Failed assumption: barycenter zx/zy - %s / %s",
                          czx / area_xz, cyz / area_yz)
-            return Point(cxy / (6 * area_xy), cyx / (6 * area_xy), czx / (6 * area_xz))
+            return (cxy / (6 * area_xy), cyx / (6 * area_xy), czx / (6 * area_xz))
 
     def get_length(self):
         """ add the length of all lines within the polygon
@@ -446,7 +443,7 @@ class Polygon(TransformableContainer):
                 (self.miny > polygon.maxy) or (self.maxy < polygon.miny) or \
                 (self.minz > polygon.maxz) or (self.maxz < polygon.minz):
             return False
-        for point in polygon._points:
+        for point in polygon.get_points():
             if not self.is_point_inside(point):
                 return False
         return True
@@ -613,9 +610,8 @@ class Polygon(TransformableContainer):
 
         reverse_lines = []
         shifted_lines = []
-        for index in range(len(points)):
+        for index, p1 in enumerate(points):
             next_index = (index + 1) % len(points)
-            p1 = points[index]
             p2 = points[next_index]
             diff = psub(p2, p1)
             old_dir = pnormalized(psub(self._points[next_index], self._points[index]))
@@ -743,14 +739,6 @@ class Polygon(TransformableContainer):
                 groups[current_group].append(line)
             if line.p2 in split_points:
                 split_here = True
-
-        def is_joinable(g1, g2):
-            if g1 and g2 and (g1[0].p1 != g1[-1].p2):
-                if g1[0].p1 == g2[-1].p2:
-                    return g2 + g1
-                if g2[0].p1 == g1[-1].p2:
-                    return g1 + g2
-            return None
 
         # try to combine open groups
         for index1, group1 in enumerate(groups):
