@@ -32,12 +32,20 @@ if logfile:
     sys.stdout = logfile
     sys.stderr = logfile
 
+# There are some additional builtin functions available in the context of this script:
+#   https://docs.python.org/3/distutils/builtdist.html#the-postinstallation-script
+# We use the following functions:
+#   create_shortcut
+#   directory_created
+#   file_created
+#   get_special_folder_path
+
 LINK_EXTENSION = ".lnk"
 
 try:
     START_MENU_BASEDIR = get_special_folder_path("CSIDL_COMMON_PROGRAMS")
 except OSError:
-    START_MENU_BASEDIR = get_special_folder_path("CSIDL_PROGRAMS")
+    START_MENU_BASEDIR = get_special_folder_path("CSIDL_PROGRAMS")  # noqa: F821
 except NameError:
     START_MENU_BASEDIR = "C:\\"
 START_MENU_SUBDIR = os.path.join(START_MENU_BASEDIR, "PyCAM")
@@ -54,32 +62,32 @@ PYTHON_DOC_DIR = os.path.join(SHARE_DIR, "doc")
 ICON_FILE = os.path.join(SHARE_DIR, "pycam.ico")
 
 # add some more doc files
-DOC_FILES = [("LICENSE.TXT", "License"),]
+DOC_FILES = [("LICENSE.TXT", "License")]
 WEB_LINKS = [
-        (r"http://pycam.sourceforge.net/", "Project's Website"),
-        (r"http://sourceforge.net/tracker/?group_id=237831&atid=1104176", "Report a Bug"),
-        (r"http://sourceforge.net/projects/pycam/forums", "Forum Discussions"),
-        (r"http://sourceforge.net/apps/mediawiki/pycam/index.php?title=User_Manual", "User Manual")]
+    (r"http://pycam.sourceforge.net/", "Project's Website"),
+    (r"http://sourceforge.net/tracker/?group_id=237831&atid=1104176", "Report a Bug"),
+    (r"http://sourceforge.net/projects/pycam/forums", "Forum Discussions"),
+    (r"http://sourceforge.net/apps/mediawiki/pycam/index.php?title=User_Manual", "User Manual")]
 
 MENU_ITEMS = map(lambda v: (os.path.join(PYTHON_DOC_DIR, v[0]), v[1]), DOC_FILES)
 MENU_ITEMS.extend(WEB_LINKS)
 
 action = sys.argv[1]
 
+
 if action == "-install":
     if not os.path.exists(START_MENU_SUBDIR):
         os.mkdir(START_MENU_SUBDIR)
-    directory_created(START_MENU_SUBDIR)
+    directory_created(START_MENU_SUBDIR)  # noqa: F821
     for menu_item in MENU_ITEMS:
         target, description = menu_item
         filename = os.path.join(START_MENU_SUBDIR, description) + LINK_EXTENSION
-        create_shortcut(target, description, filename)
-        file_created(filename)
+        create_shortcut(target, description, filename)  # noqa: F821
+        file_created(filename)  # noqa: F821
     filename = os.path.join(START_MENU_SUBDIR, "Run PyCAM") + LINK_EXTENSION
-    create_shortcut(PYTHON_EXE, "Run PyCAM", filename, START_SCRIPT, "", ICON_FILE)
-    file_created(filename)
+    create_shortcut(PYTHON_EXE, "Run PyCAM", filename, START_SCRIPT, "", ICON_FILE)  # noqa: F821
+    file_created(filename)  # noqa: F821
 elif action == "-remove":
     pass
 else:
     pass
-

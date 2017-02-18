@@ -27,15 +27,14 @@ try:
 except ImportError:
     from distutils.core import setup
 
-import distutils.sysconfig
 import glob
 import os.path
 import sys
 import shutil
 
-BASE_DIR = os.path.realpath(os.path.abspath(os.path.dirname(__file__)))
-
 from pycam import VERSION
+
+BASE_DIR = os.path.realpath(os.path.abspath(os.path.dirname(__file__)))
 
 WINDOWS_START_SCRIPT = os.path.join("scripts", "pycam-loader.py")
 DEFAULT_START_SCRIPT = os.path.join("scripts", "pycam")
@@ -45,9 +44,9 @@ is_windows_installer = "bdist_wininst" in sys.argv or "bdist_msi" in sys.argv
 
 if is_windows_installer:
     shutil.copy2(os.path.join(BASE_DIR, DEFAULT_START_SCRIPT),
-            os.path.join(BASE_DIR, WINDOWS_START_SCRIPT))
+                 os.path.join(BASE_DIR, WINDOWS_START_SCRIPT))
     PLATFORM_SCRIPTS = [WINDOWS_START_SCRIPT,
-            os.path.join("scripts", "pycam_win32_postinstall.py")]
+                        os.path.join("scripts", "pycam_win32_postinstall.py")]
 else:
     PLATFORM_SCRIPTS = [DEFAULT_START_SCRIPT]
 
@@ -100,7 +99,7 @@ Windows: select Python 2.5 in the following dialog.
         "pycam.Toolpath",
         "pycam.Utils",
     ],
-    scripts = PLATFORM_SCRIPTS,
+    scripts=PLATFORM_SCRIPTS,
     data_files=[("share/pycam/doc", [
             "COPYING.TXT",
             "INSTALL.TXT",
@@ -110,7 +109,8 @@ Windows: select Python 2.5 in the following dialog.
             "release_info.txt"]),
         ("share/pycam/ui", glob.glob(os.path.join("share", "ui", "*"))),
         ("share/pycam/fonts", glob.glob(os.path.join("share", "fonts", "*"))),
-        ("share/pycam", [os.path.join("share", "pycam.ico"), os.path.join("share", "misc", "DXF.gpl")]),
+        ("share/pycam", [os.path.join("share", "pycam.ico"),
+                         os.path.join("share", "misc", "DXF.gpl")]),
         ("share/pycam/samples", glob.glob(os.path.join("samples", "*"))),
     ],
 )
