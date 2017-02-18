@@ -20,9 +20,10 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import pycam.Cutters
-from pycam.Geometry.PointUtils import *
 import ode
+
+import pycam.Cutters
+from pycam.Geometry.Point import Point
 
 try:
     import OpenGL.GL as GL
@@ -33,8 +34,8 @@ except ImportError:
 
 class ODEBlocks(object):
 
-    def __init__(self, tool_settings, (minx, maxx, miny, maxy, minz, maxz),
-            x_steps=None, y_steps=None):
+    def __init__(self, tool_settings, (minx, maxx, miny, maxy, minz, maxz), x_steps=None,
+                 y_steps=None):
         self.cutter = pycam.Cutters.get_tool_from_settings(tool_settings)
         # we don't want to use the "material allowance" distance
         self.cutter.set_required_distance(0)
@@ -61,13 +62,12 @@ class ODEBlocks(object):
         z_pos = self.z_offset + 0.5 * self.z_width
         self.x_step_width = self.x_width / (self.x_steps - 1)
         self.y_step_width = self.y_width / (self.y_steps - 1)
-        for x_pos in [self.x_offset + (index + 0.5) / x_steps * self.x_width \
-                for index in range(x_steps)]:
-            for y_pos in [self.y_offset + (index + 0.5) / y_steps \
-                    * self.y_width for index in range(y_steps)]:
+        for x_pos in [self.x_offset + (index + 0.5) / x_steps * self.x_width
+                      for index in range(x_steps)]:
+            for y_pos in [self.y_offset + (index + 0.5) / y_steps * self.y_width
+                          for index in range(y_steps)]:
                 body = ode.Body(self.world)
-                box = ode.GeomBox(self.space, (self.x_step_width,
-                        self.y_step_width, self.z_width))
+                box = ode.GeomBox(self.space, (self.x_step_width, self.y_step_width, self.z_width))
                 box.setBody(body)
                 box.setPosition((x_pos, y_pos, z_pos))
                 box.position = (x_pos, y_pos, z_pos)
@@ -76,19 +76,17 @@ class ODEBlocks(object):
     def process_cutter_movement(self, location_start, location_end):
         # TODO: fix this workaround in the cutters shape defintions (or in ODE?)
         # for now we may only move from low x/y values to higher x/y values
-        if (location_start[0] > location_end[0]) \
-                or (location_start[1] > location_end[1]):
+        if (location_start[0] > location_end[0]) or (location_start[1] > location_end[1]):
             location_start, location_end = location_end, location_start
         cutter_body = ode.Body(self.world)
         cutter_shape, cutter_position_func = self.cutter.get_shape("ODE")
         self.space.add(cutter_shape)
         cutter_shape.space = self.space
         cutter_shape.setBody(cutter_body)
-        cutter_position_func(location_start[0], location_start[1],
-                location_start[2])
+        cutter_position_func(location_start[0], location_start[1], location_start[2])
         cutter_shape.extend_shape(location_end[0] - location_start[0],
-                location_end[1] - location_start[1],
-                location_end[2] - location_start[2])
+                                  location_end[1] - location_start[1],
+                                  location_end[2] - location_start[2])
         aabb = cutter_shape.getAABB()
         cutter_height = aabb[5] - aabb[4]
         # add a ray along the drill to work around an ODE bug in v0.11.1
@@ -98,11 +96,13 @@ class ODEBlocks(object):
         ray.set((currx, curry, aabb[5]), (0.0, 0.0, -1.0))
         # check for collisions
         all_cutter_shapes = [cutter_shape] + cutter_shape.children + [ray]
+
         def check_collision(item):
             for one_cutter_shape in all_cutter_shapes:
                 if ode.collide(item, one_cutter_shape):
                     return True
             return False
+
         for index in range(len(self.boxes)):
             if check_collision(self.boxes[index]):
                 self.shrink_box_avoiding_collision(index, check_collision)
@@ -135,8 +135,7 @@ class ODEBlocks(object):
         # "bNormalizationResult" assertion.
         new_height = max(new_z - end_height, 0.1)
         z_pos = new_z - new_height / 2.0
-        new_box = ode.GeomBox(self.space, (aabb[1] - aabb[0], aabb[3] - aabb[2],
-                new_height))
+        new_box = ode.GeomBox(self.space, (aabb[1] - aabb[0], aabb[3] - aabb[2], new_height))
         new_box.position = (x_pos, y_pos, z_pos)
         new_box.setBody(box.getBody())
         new_box.setPosition((x_pos, y_pos, z_pos))
@@ -149,24 +148,22 @@ class ODEBlocks(object):
         heights = []
         for box in self.boxes:
             aabb = box.getAABB()
-            heights.append(Point((aabb[1] + aabb[0]) / 2.0,
-                    (aabb[3] + aabb[2]) / 2.0, aabb[5]))
+            heights.append(Point((aabb[1] + aabb[0]) / 2.0, (aabb[3] + aabb[2]) / 2.0, aabb[5]))
         for column in range(self.x_steps):
-            result.append(heights[
-                    column * self.y_steps : (column + 1) * self.y_steps])
+            result.append(heights[column * self.y_steps:(column + 1) * self.y_steps])
         return result
 
     def _normal(self, z0, z1, z2):
         nx = self.x_steps / self.x_width
         ny = self.y_steps / self.y_width
         nz = 1.0 / (self.z_width)
-        return (-ny * (z1 - z0) * nz / nx, -nx * (z2 - z1) * nz / ny,
-                nx * ny / nz * 100)
-        
+        return (-ny * (z1 - z0) * nz / nx, -nx * (z2 - z1) * nz / ny, nx * ny / nz * 100)
+
     def to_OpenGL(self):
         if not GL_enabled:
             return
         height_field = self.get_height_field()
+
         def get_box_height_points(x, y):
             """ Get the positions and heights of the the four top corners of a
             height box.
@@ -187,17 +184,16 @@ class ODEBlocks(object):
             # corner). The "offsets" tuple is used for indicating the relative
             # position of each corner.
             for offsets, index_list in (
-                ((-1, -1), ((x - 1, y - 1), (x, y - 1), (x, y), (x - 1, y))),
-                ((+1, -1), ((x, y - 1), (x, y), (x + 1, y), (x + 1, y - 1))),
-                ((+1, +1), ((x, y), (x + 1, y), (x + 1, y + 1), (x, y + 1))),
-                ((-1, +1), ((x - 1, y), (x, y), (x, y + 1), (x - 1, y + 1)))):
+                    ((-1, -1), ((x - 1, y - 1), (x, y - 1), (x, y), (x - 1, y))),
+                    ((+1, -1), ((x, y - 1), (x, y), (x + 1, y), (x + 1, y - 1))),
+                    ((+1, +1), ((x, y), (x + 1, y), (x + 1, y + 1), (x, y + 1))),
+                    ((-1, +1), ((x - 1, y), (x, y), (x, y + 1), (x - 1, y + 1)))):
                 divisor = 0
                 height_sum = 0
                 x_positions = []
                 y_positions = []
                 for ix, iy in index_list:
-                    if (0 <= ix < len(height_field)) \
-                            and (0 <= iy < len(height_field[ix])):
+                    if (0 <= ix < len(height_field)) and (0 <= iy < len(height_field[ix])):
                         point = height_field[ix][iy]
                         height_sum += point[2]
                         x_positions.append(point[0])
@@ -205,25 +201,24 @@ class ODEBlocks(object):
                         divisor += 1
                 # Use the middle between the x positions of two adjacent boxes,
                 # _if_ there is a neighbour attached to that corner.
-                if (min(x_positions) < height_field[x][y][0]) \
-                        or (max(x_positions) > height_field[x][y][0]):
+                if ((min(x_positions) < height_field[x][y][0])
+                        or (max(x_positions) > height_field[x][y][0])):
                     x_value = (min(x_positions) + max(x_positions)) / 2.0
                 else:
                     # There is no adjacent box in x direction. Use the step size
                     # to calculate the x value of this edge.
-                    x_value = height_field[x][y][0] \
-                            + offsets[0] * self.x_step_width / 2.0
+                    x_value = height_field[x][y][0] + offsets[0] * self.x_step_width / 2.0
                 # same as above for y instead of x
-                if (min(y_positions) < height_field[x][y][1]) \
-                        or (max(y_positions) > height_field[x][y][1]):
+                if ((min(y_positions) < height_field[x][y][1])
+                        or (max(y_positions) > height_field[x][y][1])):
                     y_value = (min(y_positions) + max(y_positions)) / 2.0
                 else:
-                    y_value = height_field[x][y][1] \
-                            + offsets[1] * self.y_step_width / 2.0
+                    y_value = height_field[x][y][1] + offsets[1] * self.y_step_width / 2.0
                 # Create a Point instance describing the position and the
                 # average height.
                 points.append((x_value, y_value, height_sum / divisor))
             return points
+
         # draw the surface
         GL.glBegin(GL.GL_QUADS)
         for x in xrange(self.x_steps):
@@ -233,28 +228,25 @@ class ODEBlocks(object):
                 points_around = get_box_height_points(x, y)
                 # Calculate the "normal" of polygon. We picked up three random
                 # points of this quadrilateral.
-                n = self._normal(points_around[1][2], points_around[2][2],
-                        points_around[3][2])
+                n = self._normal(points_around[1][2], points_around[2][2], points_around[3][2])
                 GL.glNormal3f(n[0], n[1], n[2])
                 for point in points_around:
                     GL.glVertex3f(point[0], point[1], point[2])
                 # go through the conditions for an edge box and use the
                 # appropriate corners for the side faces of the material
-                for condition, i1, i2 in ((x == 0, 3, 0), (y == 0, 0, 1),
-                        (x == self.x_steps - 1, 1, 2),
-                        (y == self.y_steps - 1, 2, 3)):
+                for condition, i1, i2 in ((x == 0, 3, 0),
+                                          (y == 0, 0, 1),
+                                          (x == self.x_steps - 1, 1, 2),
+                                          (y == self.y_steps - 1, 2, 3)):
                     # check if this point belongs to an edge of the material
                     if condition:
                         n = self._normal(points_around[1][2], points_around[2][2],
-                                points_around[3][2])
+                                         points_around[3][2])
                         GL.glNormal3f(n[0], n[1], n[2])
+                        GL.glVertex3f(points_around[i1][0], points_around[i1][1], self.z_offset)
                         GL.glVertex3f(points_around[i1][0], points_around[i1][1],
-                                self.z_offset)
-                        GL.glVertex3f(points_around[i1][0], points_around[i1][1],
-                                points_around[i1].z)
+                                      points_around[i1].z)
                         GL.glVertex3f(points_around[i2][0], points_around[i2][1],
-                                points_around[i2].z)
-                        GL.glVertex3f(points_around[i2][0], points_around[i2][1],
-                                self.z_offset)
+                                      points_around[i2].z)
+                        GL.glVertex3f(points_around[i2][0], points_around[i2][1], self.z_offset)
         GL.glEnd()
-

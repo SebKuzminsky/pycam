@@ -20,11 +20,10 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.utils import sqrt
-from pycam.Geometry.PointUtils import *
 import ctypes
 import math
 
+from pycam.Geometry.utils import sqrt
 
 try:
     import OpenGL.GL as GL
@@ -47,10 +46,12 @@ class ZBufferItem(object):
         self.changed = True
         self.list = -1
 
+
 class ZCellItem(object):
     def __init__(self):
         self.list = -1
         self.array = None
+
 
 class ZBuffer(object):
     def __init__(self, minx, maxx, xres, miny, maxy, yres, minz, maxz):
@@ -74,21 +75,21 @@ class ZBuffer(object):
         self.y = [0.0] * self.yres
         for i in range(0, self.yres):
             self.y[i] = self.miny+(i * (self.maxy-self.miny)/self.yres)
-        self.buf = [ [] ] * self.yres
+        self.buf = [[]] * self.yres
         for y in range(0, self.yres):
-            self.buf[y] = [ None ] * self.xres
+            self.buf[y] = [None] * self.xres
             for x in range(0, self.xres):
                 self.buf[y][x] = ZBufferItem(self.minz)
 
-        self.list = [ [] ] * self.yres
+        self.list = [[]] * self.yres
         for y in range(0, self.yres):
-            self.list[y] = [ None ] * self.xres
+            self.list[y] = [None] * self.xres
             for x in range(0, self.xres):
                 self.list[y][x] = -1
 
-        self.cell = [ None ] * NUM_CELL_Y
+        self.cell = [None] * NUM_CELL_Y
         for y in range(0, NUM_CELL_Y):
-            self.cell[y] = [ None ] * NUM_CELL_X
+            self.cell[y] = [None] * NUM_CELL_X
             for x in range(0, NUM_CELL_X):
                 self.cell[y][x] = ZCellItem()
 
@@ -98,8 +99,8 @@ class ZBuffer(object):
         for y in range(0, self.yres):
             for x in range(0, self.xres):
                 r = sqrt(self.y[y]*self.y[y]+self.x[x]*self.x[x])
-                self.buf[y][x].z = 1 + math.cos(r / rmax * r / rmax * math.pi \
-                        * freq) / (1 + damp * (r / rmax))
+                self.buf[y][x].z = (1 + math.cos(r / rmax * r / rmax * math.pi * freq)
+                                    / (1 + damp * (r / rmax)))
                 self.buf[y][x].changed = True
 
     def add_triangles(self, triangles):
@@ -107,19 +108,15 @@ class ZBuffer(object):
             self.add_triangle(t)
 
     def add_triangle(self, t):
-        minx = int((t.minx - self.minx) / (self.maxx - self.minx) \
-                * self.xres) - 1
-        maxx = int((t.maxx - self.minx) / (self.maxx - self.minx) \
-                * self.xres) + 1
-        miny = int((t.miny - self.miny) / (self.maxy - self.miny) \
-                * self.yres) - 1
-        maxy = int((t.maxy - self.miny) / (self.maxy - self.miny) \
-                * self.yres) + 2
-        if minx < 0: 
+        minx = int((t.minx - self.minx) / (self.maxx - self.minx) * self.xres) - 1
+        maxx = int((t.maxx - self.minx) / (self.maxx - self.minx) * self.xres) + 1
+        miny = int((t.miny - self.miny) / (self.maxy - self.miny) * self.yres) - 1
+        maxy = int((t.maxy - self.miny) / (self.maxy - self.miny) * self.yres) + 2
+        if minx < 0:
             minx = 0
-        if maxx > self.xres - 1: 
+        if maxx > self.xres - 1:
             maxx = self.xres - 1
-        if miny < 0: 
+        if miny < 0:
             miny = 0
         if maxy > self.yres - 1:
             maxy = self.yres - 1
@@ -158,29 +155,25 @@ class ZBuffer(object):
         cx = c.location[0]
         cy = c.location[1]
         rsq = c.radiussq
-        minx = int((c.minx - self.minx) / (self.maxx - self.minx) * self.xres) \
-                - 1
-        maxx = int((c.maxx - self.minx) / (self.maxx - self.minx) * self.xres) \
-                + 1
-        miny = int((c.miny - self.miny) / (self.maxy - self.miny) * self.yres) \
-                - 1
-        maxy = int((c.maxy - self.miny) / (self.maxy - self.miny) * self.yres) \
-                + 1
-        if minx < 0: 
+        minx = int((c.minx - self.minx) / (self.maxx - self.minx) * self.xres) - 1
+        maxx = int((c.maxx - self.minx) / (self.maxx - self.minx) * self.xres) + 1
+        miny = int((c.miny - self.miny) / (self.maxy - self.miny) * self.yres) - 1
+        maxy = int((c.maxy - self.miny) / (self.maxy - self.miny) * self.yres) + 1
+        if minx < 0:
             minx = 0
-        if maxx < 0: 
+        if maxx < 0:
             maxx = 0
-        if minx > self.xres - 1: 
+        if minx > self.xres - 1:
             minx = self.xres - 1
-        if maxx > self.xres - 1: 
+        if maxx > self.xres - 1:
             maxx = self.xres - 1
-        if miny < 0: 
+        if miny < 0:
             miny = 0
-        if maxy < 0: 
+        if maxy < 0:
             maxy = 0
-        if maxy > self.yres - 1: 
+        if maxy > self.yres - 1:
             maxy = self.yres - 1
-        if miny > self.yres - 1: 
+        if miny > self.yres - 1:
             miny = self.yres - 1
         p = (0, 0, 0)
         zaxis = (0, 0, -1)
@@ -191,8 +184,7 @@ class ZBuffer(object):
             for x in range(minx, maxx):
                 px = self.x[x]
                 p = (px, p[1], p[2])
-                if (px - cx) * (px - cx) + (py - cy) * (py - cy) \
-                        <= rsq + EPSILON:
+                if (px - cx) * (px - cx) + (py - cy) * (py - cy) <= rsq + EPSILON:
                     (cl, ccp, cp, l) = c.intersect_point(zaxis, p)
                     if ccp:
                         pz = l
@@ -213,16 +205,15 @@ class ZBuffer(object):
         nx = 1.0 / self.xres
         ny = 1.0 / self.yres
         nz = 1.0 / (self.maxz - self.minz)
-        return (-ny * (z1 - z0) * nz / nx, -nx * (z2 - z1) * nz / ny,
-                nx * ny / nz * 100)
-        
+        return (-ny * (z1 - z0) * nz / nx, -nx * (z2 - z1) * nz / ny, nx * ny / nz * 100)
+
     # the naive way (quads)
     def to_OpenGL_1(self):
         GL.glBegin(GL.GL_QUADS)
         for y in range(self.yres - 1):
             for x in range(self.xres - 1):
                 n = self.normal(self.buf[y+0][x+0].z, self.buf[y+0][x+1].z,
-                        self.buf[y+1][x+0].z)
+                                self.buf[y+1][x+0].z)
                 GL.glNormal3f(n[0], n[1], n[2])
                 GL.glVertex3f(self.x[x+0], self.y[y+0], self.buf[y+0][x+0].z)
                 GL.glVertex3f(self.x[x+1], self.y[y+0], self.buf[y+0][x+1].z)
@@ -232,10 +223,10 @@ class ZBuffer(object):
         GL.glEnd()
 
     # use display lists (per quad)
-    def to_OpenGL_2(self):        
+    def to_OpenGL_2(self):
         for y in range(self.yres - 1):
             for x in range(self.xres - 1):
-#                print "z[%f][%f]=%f" % (self.y[y],self.x[x],self.buf[y][x])
+                # print "z[%f][%f]=%f" % (self.y[y],self.x[x],self.buf[y][x])
                 if self.buf[y+0][x+0].changed or self.buf[y+0][x+1].changed \
                         or self.buf[y+1][x+0].changed \
                         or self.buf[y+1][x+1].changed:
@@ -245,19 +236,15 @@ class ZBuffer(object):
                     GL.glNewList(self.buf[y][x].list, GL.GL_COMPILE)
                     GL.glBegin(GL.GL_QUADS)
                     n = self.normal(self.buf[y+0][x+0].z, self.buf[y+0][x+1].z,
-                            self.buf[y+1][x+0].z)
+                                    self.buf[y+1][x+0].z)
                     GL.glNormal3f(n[0], n[1], n[2])
-                    GL.glVertex3f(self.x[x+0], self.y[y+0],
-                            self.buf[y+0][x+0].z)
-                    GL.glVertex3f(self.x[x+1], self.y[y+0],
-                            self.buf[y+0][x+1].z)
-                    GL.glVertex3f(self.x[x+1], self.y[y+1],
-                            self.buf[y+1][x+1].z)
-                    GL.glVertex3f(self.x[x+0], self.y[y+1],
-                            self.buf[y+1][x+0].z)
+                    GL.glVertex3f(self.x[x+0], self.y[y+0], self.buf[y+0][x+0].z)
+                    GL.glVertex3f(self.x[x+1], self.y[y+0], self.buf[y+0][x+1].z)
+                    GL.glVertex3f(self.x[x+1], self.y[y+1], self.buf[y+1][x+1].z)
+                    GL.glVertex3f(self.x[x+0], self.y[y+1], self.buf[y+1][x+0].z)
                     GL.glEnd()
                     GL.glEndList()
-                
+
         for y in range(0, self.yres-1):
             for x in range(0, self.xres-1):
                 self.buf[y][x].changed = False
@@ -297,54 +284,39 @@ class ZBuffer(object):
                         for yi in range(y0, y1-1):
                             GL.glBegin(GL.GL_TRIANGLES)
                             for xi in range(x0, x1-1):
-                                n = self.normal(self.buf[yi+0][xi+0].z,
-                                        self.buf[yi+0][xi+1].z,
-                                        self.buf[yi+1][xi+0].z)
+                                n = self.normal(self.buf[yi+0][xi+0].z, self.buf[yi+0][xi+1].z,
+                                                self.buf[yi+1][xi+0].z)
                                 GL.glNormal3f(n[0], n[1], n[2])
-                                GL.glVertex3f(self.x[xi+0], self.y[yi+0],
-                                        self.buf[yi+0][xi+0].z)
-                                GL.glVertex3f(self.x[xi+0], self.y[yi+1],
-                                        self.buf[yi+1][xi+0].z)
-                                GL.glVertex3f(self.x[xi+1], self.y[yi+1],
-                                        self.buf[yi+1][xi+1].z)
-                                n = self.normal(self.buf[y+1][x+1].z,
-                                        self.buf[y+0][x+1].z,
-                                        self.buf[y+1][x+0].z)
+                                GL.glVertex3f(self.x[xi+0], self.y[yi+0], self.buf[yi+0][xi+0].z)
+                                GL.glVertex3f(self.x[xi+0], self.y[yi+1], self.buf[yi+1][xi+0].z)
+                                GL.glVertex3f(self.x[xi+1], self.y[yi+1], self.buf[yi+1][xi+1].z)
+                                n = self.normal(self.buf[y+1][x+1].z, self.buf[y+0][x+1].z,
+                                                self.buf[y+1][x+0].z)
                                 GL.glNormal3f(n[0], n[1], n[2])
-                                GL.glVertex3f(self.x[xi+0], self.y[yi+0],
-                                        self.buf[yi+0][xi+0].z)
-                                GL.glVertex3f(self.x[xi+1], self.y[yi+1],
-                                        self.buf[yi+1][xi+1].z)
-                                GL.glVertex3f(self.x[xi+1], self.y[yi+0],
-                                        self.buf[yi+0][xi+1].z)
+                                GL.glVertex3f(self.x[xi+0], self.y[yi+0], self.buf[yi+0][xi+0].z)
+                                GL.glVertex3f(self.x[xi+1], self.y[yi+1], self.buf[yi+1][xi+1].z)
+                                GL.glVertex3f(self.x[xi+1], self.y[yi+0], self.buf[yi+0][xi+1].z)
                                 self.buf[yi][xi].changed = False
                             GL.glEnd()
                         GL.glEndList()
                     else:
                         GL.glNewList(self.list[y][x], GL.GL_COMPILE)
-                        for yi in range(y0, y1-1):
+                        for yi in range(y0, y1 - 1):
                             GL.glBegin(GL.GL_QUADS)
                             for xi in range(x0, x1-1):
-                                n = self.normal(self.buf[yi+0][xi+0].z,
-                                        self.buf[yi+0][xi+1].z,
-                                        self.buf[yi+1][xi+0].z)
+                                n = self.normal(self.buf[yi+0][xi+0].z, self.buf[yi+0][xi+1].z,
+                                                self.buf[yi+1][xi+0].z)
                                 GL.glNormal3f(n[0], n[1], n[2])
-                                GL.glVertex3f(self.x[xi+0], self.y[yi+0],
-                                        self.buf[yi+0][xi+0].z)
-                                GL.glVertex3f(self.x[xi+0], self.y[yi+1],
-                                        self.buf[yi+1][xi+0].z)
-                                GL.glVertex3f(self.x[xi+1], self.y[yi+1],
-                                        self.buf[yi+1][xi+1].z)
-                                GL.glVertex3f(self.x[xi+1], self.y[yi+0],
-                                        self.buf[yi+0][xi+1].z)
+                                GL.glVertex3f(self.x[xi+0], self.y[yi+0], self.buf[yi+0][xi+0].z)
+                                GL.glVertex3f(self.x[xi+0], self.y[yi+1], self.buf[yi+1][xi+0].z)
+                                GL.glVertex3f(self.x[xi+1], self.y[yi+1], self.buf[yi+1][xi+1].z)
+                                GL.glVertex3f(self.x[xi+1], self.y[yi+0], self.buf[yi+0][xi+1].z)
                                 self.buf[yi][xi].changed = False
                             GL.glEnd()
                         GL.glEndList()
-
-
                 GL.glCallList(self.list[y][x])
 
-    # use display list with vertex buffers per cell (cell = group of quads) 
+    # use display list with vertex buffers per cell (cell = group of quads)
     def to_OpenGL_4(self):
         num_cell_x = NUM_CELL_X
         num_cell_y = NUM_CELL_Y
@@ -379,11 +351,11 @@ class ZBuffer(object):
                                 break
 
                 if changed:
-#                    print "cell[",y,"][",x,"]=",self.cell[y][x].list
+                    # print "cell[",y,"][",x,"]=",self.cell[y][x].list
                     if self.cell[y][x].list == -1:
                         self.cell[y][x].list = GL.glGenLists(1)
-                        self.cell[y][x].array = (ctypes.c_float * 3 \
-                                * ((y1 - y0) * (x1 - x0) * 2))()
+                        self.cell[y][x].array = (ctypes.c_float * 3
+                                                 * ((y1 - y0) * (x1 - x0) * 2))()
 
                     GL.glEnableClientState(GL.GL_VERTEX_ARRAY)
                     GL.glVertexPointerf(self.cell[y][x].array)
@@ -396,21 +368,18 @@ class ZBuffer(object):
                             self.buf[yi+1][xi].changed = False
                             self.cell[y][x].array[idx+0][0] = self.x[xi+0]
                             self.cell[y][x].array[idx+0][1] = self.y[yi+0]
-                            self.cell[y][x].array[idx+0][2] = \
-                                    self.buf[yi+0][xi+0].z
+                            self.cell[y][x].array[idx+0][2] = self.buf[yi+0][xi+0].z
                             self.cell[y][x].array[idx+1][0] = self.x[xi+0]
                             self.cell[y][x].array[idx+1][1] = self.y[yi+1]
-                            self.cell[y][x].array[idx+1][2] = \
-                                    self.buf[yi+1][xi+0].z
+                            self.cell[y][x].array[idx+1][2] = self.buf[yi+1][xi+0].z
                             idx += 2
-                        GL.glDrawArrays(GL.GL_QUAD_STRIP, lineidx,
-                                idx - lineidx + 1)
+                        GL.glDrawArrays(GL.GL_QUAD_STRIP, lineidx, idx - lineidx + 1)
                     GL.glEndList()
 
                 GL.glCallList(self.cell[y][x].list)
 
     # use display list with vertex and normal buffers per cell
-    # (cell = group of quads) 
+    # (cell = group of quads)
     def to_OpenGL_5(self):
         num_cell_x = NUM_CELL_X
         num_cell_y = NUM_CELL_Y
@@ -448,13 +417,13 @@ class ZBuffer(object):
                                 break
 
                 if changed:
-#                    print "cell[",y,"][",x,"]=",self.cell[y][x].list
+                    # print "cell[",y,"][",x,"]=",self.cell[y][x].list
                     if self.cell[y][x].list == -1:
                         self.cell[y][x].list = GL.glGenLists(1)
-                        self.cell[y][x].vertex = (ctypes.c_float * 3 \
-                                * ((y1 - y0) * (x1 - x0) * 4))()
-                        self.cell[y][x].normal = (ctypes.c_float * 3 \
-                                * ((y1 - y0) * (x1 - x0) * 4))()
+                        self.cell[y][x].vertex = (ctypes.c_float * 3
+                                                  * ((y1 - y0) * (x1 - x0) * 4))()
+                        self.cell[y][x].normal = (ctypes.c_float * 3
+                                                  * ((y1 - y0) * (x1 - x0) * 4))()
 
                     GL.glVertexPointerf(self.cell[y][x].vertex)
                     GL.glNormalPointerf(self.cell[y][x].normal)
@@ -467,24 +436,19 @@ class ZBuffer(object):
                             self.buf[yi+1][xi].changed = False
                             self.cell[y][x].vertex[idx+0][0] = self.x[xi+0]
                             self.cell[y][x].vertex[idx+0][1] = self.y[yi+0]
-                            self.cell[y][x].vertex[idx+0][2] = \
-                                    self.buf[yi+0][xi+0].z
+                            self.cell[y][x].vertex[idx+0][2] = self.buf[yi+0][xi+0].z
                             self.cell[y][x].vertex[idx+1][0] = self.x[xi+0]
                             self.cell[y][x].vertex[idx+1][1] = self.y[yi+1]
-                            self.cell[y][x].vertex[idx+1][2] = \
-                                    self.buf[yi+1][xi+0].z
+                            self.cell[y][x].vertex[idx+1][2] = self.buf[yi+1][xi+0].z
                             self.cell[y][x].vertex[idx+2][0] = self.x[xi+1]
                             self.cell[y][x].vertex[idx+2][1] = self.y[yi+1]
-                            self.cell[y][x].vertex[idx+2][2] = \
-                                    self.buf[yi+1][xi+1].z
+                            self.cell[y][x].vertex[idx+2][2] = self.buf[yi+1][xi+1].z
                             self.cell[y][x].vertex[idx+3][0] = self.x[xi+1]
                             self.cell[y][x].vertex[idx+3][1] = self.y[yi+0]
-                            self.cell[y][x].vertex[idx+3][2] = \
-                                    self.buf[yi+0][xi+1].z
+                            self.cell[y][x].vertex[idx+3][2] = self.buf[yi+0][xi+1].z
 
-                            n = self.normal(self.buf[yi+0][xi+0].z,
-                                    self.buf[yi+0][xi+1].z,
-                                    self.buf[yi+1][xi+0].z)
+                            n = self.normal(self.buf[yi+0][xi+0].z, self.buf[yi+0][xi+1].z,
+                                            self.buf[yi+1][xi+0].z)
                             self.cell[y][x].normal[idx+0][0] = n[0]
                             self.cell[y][x].normal[idx+0][1] = n[1]
                             self.cell[y][x].normal[idx+0][2] = n[2]
@@ -508,7 +472,7 @@ class ZBuffer(object):
         GL.glDisableClientState(GL.GL_NORMAL_ARRAY)
 
     # use display list with vertex and normal and index buffers per cell
-    # (cell = group of quads) 
+    # (cell = group of quads)
     def to_OpenGL_6(self):
         num_cell_x = NUM_CELL_X
         num_cell_y = NUM_CELL_Y
@@ -547,15 +511,13 @@ class ZBuffer(object):
                                 break
 
                 if changed:
-                    #print "cell[",y,"][",x,"]=",self.cell[y][x].list
+                    # print "cell[",y,"][",x,"]=",self.cell[y][x].list
                     if self.cell[y][x].list == -1:
                         self.cell[y][x].list = GL.glGenLists(1)
-                        self.cell[y][x].vertex = (ctypes.c_float * 3 \
-                                * ((y1-y0) * (x1 - x0)))()
-                        self.cell[y][x].normal = (ctypes.c_float * 3 \
-                                * ((y1-y0) * (x1 - x0)))()
-                        self.cell[y][x].index  = (ctypes.c_ushort \
-                                * (4 * (y1 - y0 - 1) * (x1 - x0 - 1)))()
+                        self.cell[y][x].vertex = (ctypes.c_float * 3 * ((y1-y0) * (x1 - x0)))()
+                        self.cell[y][x].normal = (ctypes.c_float * 3 * ((y1-y0) * (x1 - x0)))()
+                        self.cell[y][x].index = (ctypes.c_ushort
+                                                 * (4 * (y1 - y0 - 1) * (x1 - x0 - 1)))()
                     GL.glIndexPointers(self.cell[y][x].index)
                     GL.glVertexPointerf(self.cell[y][x].vertex)
                     GL.glNormalPointerf(self.cell[y][x].normal)
@@ -569,15 +531,12 @@ class ZBuffer(object):
                             self.cell[y][x].vertex[idx][1] = self.y[yi]
                             self.cell[y][x].vertex[idx][2] = self.buf[yi][xi].z
 
-                            if (xi==self.xres - 1) or (yi == self.yres - 1):
-                                n = self.normal(self.buf[yi-1][xi-1].z,
-                                        self.buf[yi-1][xi].z,
-                                        self.buf[yi][xi-1].z)
+                            if (xi == self.xres - 1) or (yi == self.yres - 1):
+                                n = self.normal(self.buf[yi-1][xi-1].z, self.buf[yi-1][xi].z,
+                                                self.buf[yi][xi-1].z)
                             else:
-                                n = self.normal(self.buf[yi][xi].z,
-                                        self.buf[yi][xi+1].z,
-                                        self.buf[yi+1][xi].z)
-
+                                n = self.normal(self.buf[yi][xi].z, self.buf[yi][xi+1].z,
+                                                self.buf[yi+1][xi].z)
                             self.cell[y][x].normal[idx][0] = n[0]
                             self.cell[y][x].normal[idx][1] = n[1]
                             self.cell[y][x].normal[idx][2] = n[2]
@@ -587,22 +546,21 @@ class ZBuffer(object):
                     idx = 0
                     for yi in range(y0, y1 - 1):
                         for xi in range(x0, x1 - 1):
-                            self.cell[y][x].index[idx+0] = (yi - y0 + 0) \
-                                    * (x1 - x0) + (xi - x0 + 0)
-                            self.cell[y][x].index[idx+1] = (yi - y0 + 1) \
-                                    * (x1 - x0) + (xi - x0 + 0)
-                            self.cell[y][x].index[idx+2] = (yi - y0 + 1) \
-                                    * (x1 - x0) + (xi - x0 + 1)
-                            self.cell[y][x].index[idx+3] = (yi - y0 + 0) \
-                                    * (x1 - x0) + (xi - x0 + 1)
+                            self.cell[y][x].index[idx + 0] = ((yi - y0 + 0)
+                                                              * (x1 - x0) + (xi - x0 + 0))
+                            self.cell[y][x].index[idx + 1] = ((yi - y0 + 1)
+                                                              * (x1 - x0) + (xi - x0 + 0))
+                            self.cell[y][x].index[idx + 2] = ((yi - y0 + 1)
+                                                              * (x1 - x0) + (xi - x0 + 1))
+                            self.cell[y][x].index[idx + 3] = ((yi - y0 + 0)
+                                                              * (x1 - x0) + (xi - x0 + 1))
                             idx += 4
 
                     GL.glDrawElements(GL.GL_QUADS, idx, GL.GL_UNSIGNED_SHORT,
-                            self.cell[y][x].index)
+                                      self.cell[y][x].index)
                     GL.glEndList()
                 GL.glCallList(self.cell[y][x].list)
 
         GL.glDisableClientState(GL.GL_VERTEX_ARRAY)
         GL.glDisableClientState(GL.GL_NORMAL_ARRAY)
         GL.glDisableClientState(GL.GL_INDEX_ARRAY)
-
