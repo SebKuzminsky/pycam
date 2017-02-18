@@ -291,9 +291,7 @@ class Polygon(TransformableContainer):
         self.reset_cache()
 
     def get_reversed(self):
-        result = Polygon(plane=self.plane)
-        result._points = self._points[:]
-        result.is_closed = self.is_closed
+        result = self.copy()
         result.reverse_direction()
         return result
 
