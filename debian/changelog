@@ -1,3 +1,11 @@
+pycam (0.6) unstable; urgency=medium
+
+  * First triumphant release after years of dormancy.
+  * Merge misc old branches.
+  * Update debian packaging.
+
+ -- Sebastian Kuzminsky <seb@highlab.com>  Sat, 18 Feb 2017 11:50:53 -0700
+
 pycam (0.5.1-1) unstable; urgency=low
 
   * initial debian package
