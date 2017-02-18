@@ -21,11 +21,11 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.utils import INFINITE, sqrt
-from pycam.Geometry.PointUtils import *
-from pycam.Geometry.intersection import intersect_circle_plane, \
-        intersect_circle_point, intersect_circle_line
 from pycam.Cutters.BaseCutter import BaseCutter
+from pycam.Geometry.intersection import intersect_circle_plane, intersect_circle_point, \
+        intersect_circle_line
+from pycam.Geometry.PointUtils import padd, psub
+from pycam.Geometry.utils import INFINITE, sqrt
 
 
 try:
@@ -66,10 +66,13 @@ class CylindricalCutter(BaseCutter):
             geom_drill.setPosition((0, 0, center_height))
             geom.setGeom(geom_drill)
             geom.children = []
+
             def reset_shape():
                 geom.children = []
+
             def set_position(x, y, z):
                 geom.setPosition((x, y, z))
+
             def extend_shape(diff_x, diff_y, diff_z):
                 reset_shape()
                 # see http://mathworld.wolfram.com/RotationMatrix.html
@@ -87,29 +90,24 @@ class CylindricalCutter(BaseCutter):
                 geom_end.setPosition((diff_x, diff_y, diff_z + center_height))
                 geom_end_transform.setGeom(geom_end)
                 # create the block that connects to two cylinders at the end
-                rot_matrix_box = (cosinus, sinus, 0.0, -sinus, cosinus, 0.0,
-                        0.0, 0.0, 1.0)
+                rot_matrix_box = (cosinus, sinus, 0.0, -sinus, cosinus, 0.0, 0.0, 0.0, 1.0)
                 geom_connect_transform = ode.GeomTransform(geom.space)
                 geom_connect_transform.setBody(geom.getBody())
                 geom_connect = ode_physics.get_parallelepiped_geom(
-                        ((-hypotenuse / 2, radius, -diff_z / 2),
-                        (hypotenuse / 2, radius, diff_z / 2),
-                        (hypotenuse / 2, -radius, diff_z / 2),
-                        (-hypotenuse / 2, -radius, -diff_z / 2)),
-                        ((-hypotenuse / 2, radius,
-                            self.height - diff_z / 2),
-                        (hypotenuse / 2,
-                            radius, self.height + diff_z / 2),
-                        (hypotenuse / 2, -radius,
-                            self.height + diff_z / 2),
-                        (-hypotenuse / 2, -radius,
-                            self.height - diff_z / 2)))
+                    ((-hypotenuse / 2, radius, -diff_z / 2),
+                     (hypotenuse / 2, radius, diff_z / 2),
+                     (hypotenuse / 2, -radius, diff_z / 2),
+                     (-hypotenuse / 2, -radius, -diff_z / 2)),
+                    ((-hypotenuse / 2, radius, self.height - diff_z / 2),
+                     (hypotenuse / 2, radius, self.height + diff_z / 2),
+                     (hypotenuse / 2, -radius, self.height + diff_z / 2),
+                     (-hypotenuse / 2, -radius, self.height - diff_z / 2)))
                 geom_connect.setRotation(rot_matrix_box)
                 geom_connect.setPosition((hypotenuse / 2, 0, radius))
                 geom_connect_transform.setGeom(geom_connect)
                 # sort the geoms in order of collision probability
-                geom.children.extend([geom_connect_transform,
-                        geom_end_transform])
+                geom.children.extend([geom_connect_transform, geom_end_transform])
+
             geom.extend_shape = extend_shape
             geom.reset_shape = reset_shape
             self.shape[engine] = (geom, set_position)
@@ -122,8 +120,7 @@ class CylindricalCutter(BaseCutter):
         GL.glTranslate(self.center[0], self.center[1], self.center[2])
         if not hasattr(self, "_cylinder"):
             self._cylinder = GLU.gluNewQuadric()
-        GLU.gluCylinder(self._cylinder, self.radius, self.radius, self.height,
-                10, 10)
+        GLU.gluCylinder(self._cylinder, self.radius, self.radius, self.height, 10, 10)
         if not hasattr(self, "_disk"):
             self._disk = GLU.gluNewQuadric()
         GLU.gluDisk(self._disk, 0, self.radius, 10, 10)
@@ -131,15 +128,13 @@ class CylindricalCutter(BaseCutter):
 
     def moveto(self, location, **kwargs):
         BaseCutter.moveto(self, location, **kwargs)
-        self.center = (location[0], location[1],
-                location[2] - self.get_required_distance())
+        self.center = (location[0], location[1], location[2] - self.get_required_distance())
 
     def intersect_circle_plane(self, direction, triangle, start=None):
         if start is None:
             start = self.location
-        (ccp, cp, d) = intersect_circle_plane(
-                padd(psub(start, self.location), self.center), 
-                self.distance_radius, direction, triangle)
+        (ccp, cp, d) = intersect_circle_plane(padd(psub(start, self.location), self.center),
+                                              self.distance_radius, direction, triangle)
         if ccp and cp:
             cl = padd(cp, psub(start, ccp))
             return (cl, ccp, cp, d)
@@ -168,8 +163,7 @@ class CylindricalCutter(BaseCutter):
         return (None, None, None, INFINITE)
 
     def intersect(self, direction, triangle, start=None):
-        (cl_t, d_t, cp_t) = self.intersect_circle_triangle(direction, triangle,
-                start=start)
+        (cl_t, d_t, cp_t) = self.intersect_circle_triangle(direction, triangle, start=start)
         d = INFINITE
         cl = None
         cp = None
@@ -179,12 +173,9 @@ class CylindricalCutter(BaseCutter):
             cp = cp_t
         if cl and (direction[0] == 0) and (direction[1] == 0):
             return (cl, d, cp)
-        (cl_e1, d_e1, cp_e1) = self.intersect_circle_edge(direction,
-                triangle.e1, start=start)
-        (cl_e2, d_e2, cp_e2) = self.intersect_circle_edge(direction,
-                triangle.e2, start=start)
-        (cl_e3, d_e3, cp_e3) = self.intersect_circle_edge(direction,
-                triangle.e3, start=start)
+        (cl_e1, d_e1, cp_e1) = self.intersect_circle_edge(direction, triangle.e1, start=start)
+        (cl_e2, d_e2, cp_e2) = self.intersect_circle_edge(direction, triangle.e2, start=start)
+        (cl_e3, d_e3, cp_e3) = self.intersect_circle_edge(direction, triangle.e3, start=start)
         if d_e1 < d:
             d = d_e1
             cl = cl_e1
@@ -199,12 +190,9 @@ class CylindricalCutter(BaseCutter):
             cp = cp_e3
         if cl and (direction[0] == 0) and (direction[1] == 0):
             return (cl, d, cp)
-        (cl_p1, d_p1, cp_p1) = self.intersect_circle_vertex(direction,
-                triangle.p1, start=start)
-        (cl_p2, d_p2, cp_p2) = self.intersect_circle_vertex(direction,
-                triangle.p2, start=start)
-        (cl_p3, d_p3, cp_p3) = self.intersect_circle_vertex(direction,
-                triangle.p3, start=start)
+        (cl_p1, d_p1, cp_p1) = self.intersect_circle_vertex(direction, triangle.p1, start=start)
+        (cl_p2, d_p2, cp_p2) = self.intersect_circle_vertex(direction, triangle.p2, start=start)
+        (cl_p3, d_p3, cp_p3) = self.intersect_circle_vertex(direction, triangle.p3, start=start)
         if d_p1 < d:
             d = d_p1
             cl = cl_p1
@@ -220,12 +208,12 @@ class CylindricalCutter(BaseCutter):
         if cl and (direction[0] == 0) and (direction[1] == 0):
             return (cl, d, cp)
         if (direction[0] != 0) or (direction[1] != 0):
-            (cl_p1, d_p1, cp_p1) = self.intersect_cylinder_vertex(direction,
-                    triangle.p1, start=start)
-            (cl_p2, d_p2, cp_p2) = self.intersect_cylinder_vertex(direction,
-                    triangle.p2, start=start)
-            (cl_p3, d_p3, cp_p3) = self.intersect_cylinder_vertex(direction,
-                    triangle.p3, start=start)
+            cl_p1, d_p1, cp_p1 = self.intersect_cylinder_vertex(direction, triangle.p1,
+                                                                start=start)
+            cl_p2, d_p2, cp_p2 = self.intersect_cylinder_vertex(direction, triangle.p2,
+                                                                start=start)
+            cl_p3, d_p3, cp_p3 = self.intersect_cylinder_vertex(direction, triangle.p3,
+                                                                start=start)
             if d_p1 < d:
                 d = d_p1
                 cl = cl_p1
@@ -238,12 +226,9 @@ class CylindricalCutter(BaseCutter):
                 d = d_p3
                 cl = cl_p3
                 cp = cp_p3
-            (cl_e1, d_e1, cp_e1) = self.intersect_cylinder_edge(direction,
-                    triangle.e1, start=start)
-            (cl_e2, d_e2, cp_e2) = self.intersect_cylinder_edge(direction,
-                    triangle.e2, start=start)
-            (cl_e3, d_e3, cp_e3) = self.intersect_cylinder_edge(direction,
-                    triangle.e3, start=start)
+            cl_e1, d_e1, cp_e1 = self.intersect_cylinder_edge(direction, triangle.e1, start=start)
+            cl_e2, d_e2, cp_e2 = self.intersect_cylinder_edge(direction, triangle.e2, start=start)
+            cl_e3, d_e3, cp_e3 = self.intersect_cylinder_edge(direction, triangle.e3, start=start)
             if d_e1 < d:
                 d = d_e1
                 cl = cl_e1
@@ -257,4 +242,3 @@ class CylindricalCutter(BaseCutter):
                 cl = cl_e3
                 cp = cp_e3
         return (cl, d, cp)
-
