@@ -129,7 +129,7 @@ Version 0.2.3 - 2010-04-05
  * GUI change: tool and process settings can be combined into tasks
  * store configured settings to a file in the user's home directory
  * added "material allowance" support for non-ODE calculations
- * added export of EMC2 tool definitions
+ * added export of LinuxCNC tool definitions
  * added a warning dialog (GUI) for missing dependencies during startup (especially useful for Windows)
  * improved GUI for model scaling
  * allow to configure if the tool should move inside/along/around the boundary limits

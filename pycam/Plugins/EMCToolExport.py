@@ -20,12 +20,12 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import pycam.Plugins
-import pycam.Exporters.EMCToolExporter
+import pycam.Exporters.LinuxCNCToolExporter
 
-FILTER_EMC_TOOL = (("EMC tool files", "*.tbl"),)
+FILTER_LINUXCNC_TOOL = (("LinuxCNC tool files", "*.tbl"),)
 
 
-class EMCToolExport(pycam.Plugins.PluginBase):
+class LinuxCNCToolExport(pycam.Plugins.PluginBase):
 
     UI_FILE = "emc_tool_export.ui"
     DEPENDS = ["Tools", "FilenameDialog"]
@@ -34,11 +34,11 @@ class EMCToolExport(pycam.Plugins.PluginBase):
     def setup(self):
         self._last_emc_tool_file = None
         if self.gui:
-            self.export_action = self.gui.get_object("ExportEMCToolDefinition")
+            self.export_action = self.gui.get_object("ExportLinuxCNCToolDefinition")
             self.register_gtk_accelerator("export", self.export_action, None,
-                                          "ExportEMCToolDefinition")
+                                          "ExportLinuxCNCToolDefinition")
             self._gtk_handlers = ((self.export_action, "activate", self.export_emc_tools), )
-            self.core.register_ui("export_menu", "ExportEMCToolDefinition", self.export_action, 80)
+            self.core.register_ui("export_menu", "ExportLinuxCNCToolDefinition", self.export_action, 80)
             self._event_handlers = (("tool-selection-changed", self._update_emc_tool_button), )
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
@@ -63,7 +63,7 @@ class EMCToolExport(pycam.Plugins.PluginBase):
             # TODO: separate this away from Gui/Project.py
             # TODO: implement "last_model_filename" in core
             filename = self.core.get("get_filename_func")(
-                "Save toolpath to ...", mode_load=False, type_filter=FILTER_EMC_TOOL,
+                "Save toolpath to ...", mode_load=False, type_filter=FILTER_LINUXCNC_TOOL,
                 filename_templates=(self._last_emc_tool_file,
                                     self.core.get("last_model_filename")))
         if filename:
@@ -74,14 +74,14 @@ class EMCToolExport(pycam.Plugins.PluginBase):
                 tools_dict.append({"name": tool["name"],
                                    "id": tool["id"],
                                    "radius": tool["parameters"].get("radius", 1)})
-            export = pycam.Exporters.EMCToolExporter.EMCToolExporter(tools_dict)
+            export = pycam.Exporters.LinuxCNCToolExporter.LinuxCNCToolExporter(tools_dict)
             text = export.get_tool_definition_string()
             try:
                 out = file(filename, "w")
                 out.write(text)
                 out.close()
-                self.log.info("EMC tool file written: %s", filename)
+                self.log.info("LinuxCNC tool file written: %s", filename)
             except IOError as err_msg:
-                self.log.error("Failed to save EMC tool file: %s", err_msg)
+                self.log.error("Failed to save LinuxCNC tool file: %s", err_msg)
             else:
                 self.core.emit_event("notify-file-saved", filename)

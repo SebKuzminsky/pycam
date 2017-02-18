@@ -2,8 +2,8 @@
 <interface>
   <!-- interface-requires gtk+ 2.12 -->
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkAction" id="ExportEMCToolDefinition">
-    <property name="label">_Export tools for EMC2 ...</property>
-    <property name="short_label">_Export tools for EMC2 ...</property>
+  <object class="GtkAction" id="ExportLinuxCNCToolDefinition">
+    <property name="label">_Export tools for LinuxCNC ...</property>
+    <property name="short_label">_Export tools for LinuxCNC ...</property>
   </object>
 </interface>

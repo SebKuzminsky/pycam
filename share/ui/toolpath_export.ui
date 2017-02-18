@@ -75,8 +75,8 @@
     </columns>
     <data>
       <row>
-        <col id="0" translatable="yes">EMC2</col>
-        <col id="1" translatable="yes">emc2</col>
+        <col id="0" translatable="yes">LinuxCNC</col>
+        <col id="1" translatable="yes">linuxcnc</col>
       </row>
     </data>
   </object>

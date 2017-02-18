@@ -166,7 +166,7 @@ class GCodeGenerator(object):
             # top of the material. This is documented.
             # A proper ("safer") implementation would compare "safety_height"
             # with the touch off start location. But this requires "O"-Codes
-            # which are only usable for EMC2 (probably).
+            # which are only usable for LinuxCNC (probably).
             self.append("G53 G0 Z#5163 (go to touch off position: z)")
         if self.touch_off_pause_execution:
             self.append("(msg,Pausing after tool change)")
