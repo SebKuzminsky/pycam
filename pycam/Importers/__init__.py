@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2008 Lode Leroy
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
@@ -21,21 +19,18 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = ["STLImporter", "DXFImporter", "SVGImporter", "TestModel"]
-
-import pycam.Utils.log
 import pycam.Utils
-import pycam.Importers.DXFImporter
-import pycam.Importers.STLImporter
-import pycam.Importers.SVGImporter
-import pycam.Importers.PSImporter
+import pycam.Utils.log
 
-import os
 
 log = pycam.Utils.log.get_logger()
 
 
 def detect_file_type(filename, quiet=False):
+    import pycam.Importers.DXFImporter
+    import pycam.Importers.PSImporter
+    import pycam.Importers.STLImporter
+    import pycam.Importers.SVGImporter
     # also accept URI input
     uri = pycam.Utils.URIHandler(filename)
     filename = uri.get_path()
@@ -53,8 +48,6 @@ def detect_file_type(filename, quiet=False):
         return ("ps", pycam.Importers.PSImporter.import_model)
     else:
         if not quiet:
-            log.error(("Importers: Failed to detect the model type of '%s'. " \
-                    + "Is the file extension (stl/dxf/svg/eps/ps) correct?") \
-                    % filename)
+            log.error("Importers: Failed to detect the model type of '%s'. Is the file extension "
+                      "(stl/dxf/svg/eps/ps) correct?", filename)
         return failure
-

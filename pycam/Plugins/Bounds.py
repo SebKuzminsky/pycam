@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -38,12 +36,12 @@ class Bounds(pycam.Plugins.ListPluginBase):
 
     # mapping of boundary types and GUI control elements
     BOUNDARY_TYPES = {
-            pycam.Toolpath.Bounds.TYPE_RELATIVE_MARGIN: "TypeRelativeMargin",
-            pycam.Toolpath.Bounds.TYPE_CUSTOM: "TypeCustom"}
+        pycam.Toolpath.Bounds.TYPE_RELATIVE_MARGIN: "TypeRelativeMargin",
+        pycam.Toolpath.Bounds.TYPE_CUSTOM: "TypeCustom"}
     CONTROL_BUTTONS = ("TypeRelativeMargin", "TypeCustom",
-            "ToolLimit", "RelativeUnit", "BoundaryLowX",
-            "BoundaryLowY", "BoundaryLowZ", "BoundaryHighX",
-            "BoundaryHighY", "BoundaryHighZ")
+                       "ToolLimit", "RelativeUnit", "BoundaryLowX",
+                       "BoundaryLowY", "BoundaryLowZ", "BoundaryHighX",
+                       "BoundaryHighY", "BoundaryHighZ")
     CONTROL_SIGNALS = ("toggled", "value-changed", "changed")
     CONTROL_GET = ("get_active", "get_value")
     CONTROL_SET = ("set_active", "set_value")
@@ -52,36 +50,31 @@ class Bounds(pycam.Plugins.ListPluginBase):
         self._event_handlers = []
         self.core.set("bounds", self)
         if self.gui:
-            import gtk
             bounds_box = self.gui.get_object("BoundsBox")
             bounds_box.unparent()
             self.core.register_ui("main", "Bounds", bounds_box, 30)
             self._boundsview = self.gui.get_object("BoundsTable")
             self.set_gtk_modelview(self._boundsview)
-            self.register_model_update(lambda:
-                    self.core.emit_event("bounds-list-changed"))
+            self.register_model_update(lambda: self.core.emit_event("bounds-list-changed"))
             for action, obj_name in ((self.ACTION_UP, "BoundsMoveUp"),
-                    (self.ACTION_DOWN, "BoundsMoveDown"),
-                    (self.ACTION_DELETE, "BoundsDelete")):
-                self.register_list_action_button(action,
-                        self.gui.get_object(obj_name))
+                                     (self.ACTION_DOWN, "BoundsMoveDown"),
+                                     (self.ACTION_DELETE, "BoundsDelete")):
+                self.register_list_action_button(action, self.gui.get_object(obj_name))
             self._treemodel = self._boundsview.get_model()
             self._treemodel.clear()
             self._gtk_handlers = []
-            self._gtk_handlers.append((self._boundsview.get_selection(),
-                    "changed", "bounds-selection-changed"))
-            self._gtk_handlers.append((self.gui.get_object("BoundsNew"),
-                    "clicked", self._bounds_new))
+            self._gtk_handlers.append((self._boundsview.get_selection(), "changed",
+                                       "bounds-selection-changed"))
+            self._gtk_handlers.append((self.gui.get_object("BoundsNew"), "clicked",
+                                       self._bounds_new))
             # model selector
-            self.models_control = pycam.Gui.ControlsGTK.InputTable([],
-                    change_handler=lambda *args: \
-                        self.core.emit_event("bounds-changed"))
+            self.models_control = pycam.Gui.ControlsGTK.InputTable(
+                [], change_handler=lambda *args: self.core.emit_event("bounds-changed"))
             self.gui.get_object("ModelsViewPort").add(self.models_control.get_widget())
             # quickly adjust the bounds via buttons
-            for obj_name in ("MarginIncreaseX", "MarginIncreaseY",
-                    "MarginIncreaseZ", "MarginDecreaseX", "MarginDecreaseY",
-                    "MarginDecreaseZ", "MarginResetX", "MarginResetY",
-                    "MarginResetZ"):
+            for obj_name in ("MarginIncreaseX", "MarginIncreaseY", "MarginIncreaseZ",
+                             "MarginDecreaseX", "MarginDecreaseY", "MarginDecreaseZ",
+                             "MarginResetX", "MarginResetY", "MarginResetZ"):
                 axis = obj_name[-1].lower()
                 if "Increase" in obj_name:
                     args = "+"
@@ -89,44 +82,40 @@ class Bounds(pycam.Plugins.ListPluginBase):
                     args = "-"
                 else:
                     args = "0"
-                self._gtk_handlers.append((self.gui.get_object(obj_name),
-                        "clicked", self._adjust_bounds, axis, args))
+                self._gtk_handlers.append((self.gui.get_object(obj_name), "clicked",
+                                           self._adjust_bounds, axis, args))
             # connect change handler for boundary settings
             for axis in "XYZ":
                 for value in ("Low", "High"):
                     obj_name = "Boundary%s%s" % (value, axis)
-                    self._gtk_handlers.append((self.gui.get_object(obj_name),
-                            "value-changed", "bounds-changed"))
+                    self._gtk_handlers.append((self.gui.get_object(obj_name), "value-changed",
+                                               "bounds-changed"))
             # register all controls
             for obj_name in self.CONTROL_BUTTONS:
                 obj = self.gui.get_object(obj_name)
                 if obj_name == "TypeRelativeMargin":
-                    self._gtk_handlers.append((obj, "toggled",
-                            self._switch_relative_custom))
+                    self._gtk_handlers.append((obj, "toggled", self._switch_relative_custom))
                 elif obj_name == "RelativeUnit":
-                    self._gtk_handlers.append((obj, "changed",
-                            self._switch_percent_absolute))
+                    self._gtk_handlers.append((obj, "changed", self._switch_percent_absolute))
                 else:
                     for signal in self.CONTROL_SIGNALS:
                         try:
                             handler = obj.connect(signal, lambda *args: None)
                             obj.disconnect(handler)
-                            self._gtk_handlers.append((obj, signal,
-                                    "bounds-changed"))
+                            self._gtk_handlers.append((obj, signal, "bounds-changed"))
                             break
                         except TypeError:
                             continue
                     else:
-                        self.log.info("Failed to connect to widget '%s'" % \
-                                str(obj_name))
+                        self.log.info("Failed to connect to widget '%s'", str(obj_name))
                         continue
-            self._gtk_handlers.append((self.gui.get_object("NameCell"),
-                    "edited", self._edit_bounds_name))
+            self._gtk_handlers.append((self.gui.get_object("NameCell"), "edited",
+                                       self._edit_bounds_name))
             self._event_handlers.extend((
-                    ("bounds-selection-changed", self._switch_bounds),
-                    ("bounds-changed", self._store_bounds_settings),
-                    ("bounds-changed", self._trigger_table_update),
-                    ("model-list-changed", self._update_model_list)))
+                ("bounds-selection-changed", self._switch_bounds),
+                ("bounds-changed", self._store_bounds_settings),
+                ("bounds-changed", self._trigger_table_update),
+                ("model-list-changed", self._update_model_list)))
             self.register_gtk_handlers(self._gtk_handlers)
             self._trigger_table_update()
             self._switch_bounds()
@@ -134,8 +123,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         self._event_handlers.append(("bounds-changed", "visual-item-updated"))
         self.register_event_handlers(self._event_handlers)
         self.register_state_item("bounds-list", self)
-        self.core.register_namespace("bounds",
-                pycam.Plugins.get_filter(self))
+        self.core.register_namespace("bounds", pycam.Plugins.get_filter(self))
         return True
 
     def teardown(self):
@@ -171,10 +159,10 @@ class Bounds(pycam.Plugins.ListPluginBase):
         cell.set_property("text", bounds["name"])
 
     def _trigger_table_update(self):
-        self.gui.get_object("SizeColumn").set_cell_data_func(
-                self.gui.get_object("SizeCell"), self._render_bounds_size)
-        self.gui.get_object("NameColumn").set_cell_data_func(
-                self.gui.get_object("NameCell"), self._render_bounds_name)
+        self.gui.get_object("SizeColumn").set_cell_data_func(self.gui.get_object("SizeCell"),
+                                                             self._render_bounds_size)
+        self.gui.get_object("NameColumn").set_cell_data_func(self.gui.get_object("NameCell"),
+                                                             self._render_bounds_name)
 
     def _update_model_list(self):
         models = self.core.get("models")
@@ -198,7 +186,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
                         data["parameters"][obj_name] = value
                         break
                 else:
-                    self.log.info("Failed to update value of control %s" % obj_name)
+                    self.log.info("Failed to update value of control %s", obj_name)
             data["parameters"]["Models"] = self.get_selected_models()
             control_box.show()
         self._hide_and_show_controls()
@@ -257,8 +245,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
             # absolute mode -> no models may be selected
             self.select_models([])
         for axis in "XYZ":
-            for func, name in ((func_low, "BoundaryLow"),
-                    (func_high, "BoundaryHigh")):
+            for func, name in ((func_low, "BoundaryLow"), (func_high, "BoundaryHigh")):
                 try:
                     result = func(bounds["parameters"][name + axis], "XYZ".index(axis))
                 except ZeroDivisionError:
@@ -351,8 +338,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
                             getattr(obj, set_func)(value)
                         break
                 else:
-                    self.log.info("Failed to set value of control: %s" % \
-                            obj_name)
+                    self.log.info("Failed to set value of control: %s", obj_name)
             self.register_gtk_handlers(self._gtk_handlers)
             self._hide_and_show_controls()
             control_box.show()
@@ -363,8 +349,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         self.core.emit_event("bounds-changed")
 
     def _bounds_new(self, *args):
-        name = get_non_conflicting_name("Bounds #%d",
-                [bounds["name"] for bounds in self])
+        name = get_non_conflicting_name("Bounds #%d", [bounds["name"] for bounds in self])
         new_bounds = BoundsDict(self.core, name)
         self.append(new_bounds)
         self.select(new_bounds)
@@ -384,27 +369,25 @@ class BoundsDict(pycam.Plugins.ObjectWithAttributes):
         self["parameters"] = {}
         self.core = core
         self["parameters"].update({
-                "BoundaryLowX": 0,
-                "BoundaryLowY": 0,
-                "BoundaryLowZ": 0,
-                "BoundaryHighX": 0,
-                "BoundaryHighY": 0,
-                "BoundaryHighZ": 0,
-                "TypeRelativeMargin": True,
-                "TypeCustom": False,
-                # Use "list" conversion here: python 2.5 does not support
-                # "index" for tuples.
-                "RelativeUnit": list(_RELATIVE_UNIT).index("%"),
-                "ToolLimit": list(_BOUNDARY_MODES).index("along"),
-                "Models": [],
+            "BoundaryLowX": 0,
+            "BoundaryLowY": 0,
+            "BoundaryLowZ": 0,
+            "BoundaryHighX": 0,
+            "BoundaryHighY": 0,
+            "BoundaryHighZ": 0,
+            "TypeRelativeMargin": True,
+            "TypeCustom": False,
+            # Use "list" conversion here: python 2.5 does not support
+            # "index" for tuples.
+            "RelativeUnit": list(_RELATIVE_UNIT).index("%"),
+            "ToolLimit": list(_BOUNDARY_MODES).index("along"),
+            "Models": [],
         })
 
     def get_absolute_limits(self, tool_radius=None, models=None):
         default = (None, None, None), (None, None, None)
-        get_low_value = lambda axis: \
-                self["parameters"]["BoundaryLow%s" % "XYZ"[axis]]
-        get_high_value = lambda axis: \
-                self["parameters"]["BoundaryHigh%s" % "XYZ"[axis]]
+        get_low_value = lambda axis: self["parameters"]["BoundaryLow%s" % "XYZ"[axis]]
+        get_high_value = lambda axis: self["parameters"]["BoundaryHigh%s" % "XYZ"[axis]]
         if self["parameters"]["TypeRelativeMargin"]:
             # choose the appropriate set of models
             if self["parameters"]["Models"]:
@@ -416,8 +399,8 @@ class BoundsDict(pycam.Plugins.ObjectWithAttributes):
             else:
                 # use all visible models -> for live visualization
                 models = self.core.get("models").get_visible()
-            low_model, high_model = pycam.Geometry.Model.get_combined_bounds(
-                    [model.model for model in models])
+            low_model, high_model = pycam.Geometry.Model.get_combined_bounds([model.model
+                                                                              for model in models])
             if None in low_model or None in high_model:
                 # zero-sized models -> no action
                 return default
@@ -449,4 +432,3 @@ class BoundsDict(pycam.Plugins.ObjectWithAttributes):
                 low[index] -= offset
                 high[index] += offset
         return low, high
-

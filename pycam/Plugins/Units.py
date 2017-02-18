@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -21,6 +19,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Plugins
+from pycam.Toolpath import Bounds
 
 
 class Units(pycam.Plugins.PluginBase):
@@ -33,40 +32,37 @@ class Units(pycam.Plugins.PluginBase):
             self._gtk_handlers = []
             unit_pref_box = self.gui.get_object("UnitPrefBox")
             unit_pref_box.unparent()
-            self.core.register_ui("preferences_general", "Units",
-                    unit_pref_box, 20)
+            self.core.register_ui("preferences_general", "Units", unit_pref_box, 20)
             # unit control (mm/inch)
             unit_field = self.gui.get_object("unit_control")
-            self._gtk_handlers.append((unit_field, "changed",
-                    self.change_unit_init))
+            self._gtk_handlers.append((unit_field, "changed", self.change_unit_init))
+
             def set_unit(text):
                 unit_field.set_active(0 if text == "mm" else 1)
                 self._last_unit = text
+
             self.core.add_item("unit", unit_field.get_active_text, set_unit)
             # other plugins should use "unit_string" for human readable output
             self.core.add_item("unit_string", unit_field.get_active_text)
             self._gtk_handlers.extend((
-                    (self.gui.get_object("UnitChangeSelectAll"), "clicked",
-                        self.change_unit_set_selection, True),
-                    (self.gui.get_object("UnitChangeSelectNone"), "clicked",
-                        self.change_unit_set_selection, False)))
+                (self.gui.get_object("UnitChangeSelectAll"), "clicked",
+                 self.change_unit_set_selection, True),
+                (self.gui.get_object("UnitChangeSelectNone"), "clicked",
+                 self.change_unit_set_selection, False)))
             # "unit change" window
             self.unit_change_window = self.gui.get_object("UnitChangeDialog")
             self._gtk_handlers.extend((
-                    (self.gui.get_object("UnitChangeApply"), "clicked",
-                        self.change_unit_apply),
-                    (self.unit_change_window, "delete_event",
-                        self.change_unit_apply, False)))
+                (self.gui.get_object("UnitChangeApply"), "clicked", self.change_unit_apply),
+                (self.unit_change_window, "delete_event", self.change_unit_apply, False)))
             self.register_gtk_handlers(self._gtk_handlers)
         self.register_state_item("settings/unit", lambda: self.core.get("unit"),
-                lambda value: self.core.set("unit", value))
+                                 lambda value: self.core.set("unit", value))
         return True
 
     def teardown(self):
         self.clear_state_items()
         if self.gui:
-            self.core.unregister_ui("preferences_general",
-                    self.gui.get_object("UnitPrefBox"))
+            self.core.unregister_ui("preferences_general", self.gui.get_object("UnitPrefBox"))
             self.unregister_gtk_handlers(self._gtk_handlers)
             # TODO: reset setting "unit" back to a default value?
 
@@ -84,16 +80,14 @@ class Units(pycam.Plugins.PluginBase):
 
     def change_unit_set_selection(self, widget, state):
         for key in ("UnitChangeModel", "UnitChangeProcesses", "UnitChangeTools",
-                "UnitChangeBounds"):
+                    "UnitChangeBounds"):
             self.gui.get_object(key).set_active(state)
 
     def change_unit_apply(self, widget=None, data=None, apply_scale=True):
         # TODO: move tool/process/task related code to these plugins
         new_unit = self.gui.get_object("unit_control").get_active_text()
-        factors = {
-                ("mm", "inch"): 1 / 25.4,
-                ("inch", "mm"): 25.4,
-        }
+        factors = {("mm", "inch"): 1 / 25.4,
+                   ("inch", "mm"): 25.4}
         conversion = (self._last_unit, new_unit)
         if conversion in factors.keys():
             factor = factors[conversion]
@@ -108,21 +102,19 @@ class Units(pycam.Plugins.PluginBase):
                     progress.set_multiple(len(models), "Scaling model")
                     for model in models:
                         new_x, new_y, new_z = ((model.maxx + model.minx) / 2,
-                                (model.maxy + model.miny) / 2,
-                                (model.maxz + model.minz) / 2)
+                                               (model.maxy + model.miny) / 2,
+                                               (model.maxz + model.minz) / 2)
                         model.scale(factor, callback=progress.update)
                         cur_x, cur_y, cur_z = self._get_model_center()
-                        model.shift(new_x - cur_x, new_y - cur_y,
-                                new_z - cur_z,
-                                callback=progress.update)
+                        model.shift(new_x - cur_x, new_y - cur_y, new_z - cur_z,
+                                    callback=progress.update)
                         progress.update_multiple()
                     progress.finish()
                 if self.gui.get_object("UnitChangeProcesses").get_active():
                     # scale the process settings
                     for process in self.core.get("processes"):
-                        for key in ("MaterialAllowanceControl",
-                                "MaxStepDownControl",
-                                "EngraveOffsetControl"):
+                        for key in ("MaterialAllowanceControl", "MaxStepDownControl",
+                                    "EngraveOffsetControl"):
                             process[key] *= factor
                 if self.gui.get_object("UnitChangeBounds").get_active():
                     # scale the boundaries and keep their center
@@ -171,4 +163,3 @@ class Units(pycam.Plugins.PluginBase):
             self.gui.get_object(key).set_text("%s/minute" % base_unit)
         for key in ("LengthUnit1", "LengthUnit2", "LengthUnitTouchOffHeight"):
             self.gui.get_object(key).set_text(base_unit)
-

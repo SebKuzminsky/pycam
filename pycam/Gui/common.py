@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -20,28 +18,30 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import pycam.Utils.log
+import os
 # Tkinter is used for "EmergencyDialog" below - but we will try to import it
 # carefully.
-#import Tkinter
+# import Tkinter
 import sys
-import os
+
+import pycam.Utils.log
 
 log = pycam.Utils.log.get_logger()
 
+
 DEPENDENCY_DESCRIPTION = {
     "gtk": ("Python bindings for GTK+",
-        "Install the package 'python-gtk2'",
-        "see http://www.bonifazi.eu/appunti/pygtk_windows_installer.exe"),
+            "Install the package 'python-gtk2'",
+            "see http://www.bonifazi.eu/appunti/pygtk_windows_installer.exe"),
     "opengl": ("Python bindings for OpenGL",
-        "Install the package 'python-opengl'",
-        "see http://www.bonifazi.eu/appunti/pygtk_windows_installer.exe"),
+               "Install the package 'python-opengl'",
+               "see http://www.bonifazi.eu/appunti/pygtk_windows_installer.exe"),
     "gtkgl": ("GTK extension for OpenGL",
-        "Install the package 'python-gtkglext1'",
-        "see http://www.bonifazi.eu/appunti/pygtk_windows_installer.exe"),
+              "Install the package 'python-gtkglext1'",
+              "see http://www.bonifazi.eu/appunti/pygtk_windows_installer.exe"),
     "gl": ("OpenGL support of graphic driver",
-        "Your current graphic driver does not support OpenGL. Please consult " \
-        + "'glxgears' to locate this problem."),
+           "Your current graphic driver does not seem to support OpenGL.",
+           ""),
 }
 
 REQUIREMENTS_LINK = "http://sf.net/apps/mediawiki/pycam/?title=Requirements"
@@ -66,17 +66,16 @@ def import_gtk_carefully():
     if not in_windows:
         # We are not in windows - thus we just try to import gtk without
         # the need for any more manual preparations.
-        import gtk
+        import gtk  # noqa F401
     else:
         # We try to retrive the GTK library directory from the registry before
         # trying any import. Otherwise the user will always see a warning
         # dialog regarding the missing libglib-2.0-0.dll file. This Windows
         # warning dialog can't be suppressed - thus we should try to avoid it.
         try:
-            reg_path = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
-                    WINDOWS_GTK_REGISTRY_PATH)
-            gtk_dll_path = os.path.join(_winreg.QueryValueEx(reg_path,
-                    WINDOWS_GTK_REGISTRY_KEY)[0], WINDOWS_GTK_LIB_SUBDIR)
+            reg_path = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, WINDOWS_GTK_REGISTRY_PATH)
+            gtk_dll_path = os.path.join(_winreg.QueryValueEx(
+                reg_path, WINDOWS_GTK_REGISTRY_KEY)[0], WINDOWS_GTK_LIB_SUBDIR)
             _winreg.CloseKey(reg_path)
         except NameError:
             # GTK is probably not installed - the next import will fail
@@ -87,13 +86,13 @@ def import_gtk_carefully():
         else:
             # add the new path to the PATH environment variable
             if "PATH" in os.environ:
-                if not gtk_dll_path in os.environ["PATH"].split(os.pathsep):
+                if gtk_dll_path not in os.environ["PATH"].split(os.pathsep):
                     # append the guessed path to the library search path
                     os.environ["PATH"] += "%s%s" % (os.pathsep, gtk_dll_path)
             else:
                 os.environ["PATH"] = gtk_dll_path
         # everything should be prepared - now we try to import it again
-        import gtk
+        import gtk  # noqa F401
 
 
 def requirements_details_gtk():
@@ -102,7 +101,7 @@ def requirements_details_gtk():
         import_gtk_carefully()
         result["gtk"] = True
     except ImportError, err_msg:
-        log.error("Failed to import GTK: %s" % str(err_msg))
+        log.error("Failed to import GTK: %s", str(err_msg))
         result["gtk"] = False
     return result
 
@@ -110,22 +109,20 @@ def requirements_details_gtk():
 def recommends_details_gtk():
     result = {}
     try:
-        import gtk.gtkgl
+        import gtk.gtkgl  # noqa F401
         result["gtkgl"] = True
         result["gl"] = True
     except ImportError, err_msg:
-        log.warn("Failed to import OpenGL for GTK (ImportError): %s" % \
-                str(err_msg))
+        log.warn("Failed to import OpenGL for GTK (ImportError): %s", str(err_msg))
         result["gtkgl"] = False
     except RuntimeError, err_msg:
-        log.warn("Failed to import OpenGL for GTK (RuntimeError): %s" % \
-                str(err_msg))
+        log.warn("Failed to import OpenGL for GTK (RuntimeError): %s", str(err_msg))
         result["gl"] = False
     try:
-        import OpenGL
+        import OpenGL  # noqa F401
         result["opengl"] = True
     except ImportError, err_msg:
-        log.warn("Failed to import OpenGL: %s" % str(err_msg))
+        log.warn("Failed to import OpenGL: %s", str(err_msg))
         result["opengl"] = False
 
 
@@ -162,18 +159,16 @@ def set_parent_controls_sensitivity(widget, new_state):
     labels (e.g for notebook tabs).
     Useful for disabling the screen while an action is going on.
     """
-    child = widget
-    parent = widget.get_parent()
     def disable_if_different(obj, (parent, active)):
-        if hasattr(parent, "get_tab_label") and \
-                (obj is parent.get_tab_label(active)):
+        if hasattr(parent, "get_tab_label") and (obj is parent.get_tab_label(active)):
             # skip the label of the current tab (in a notebook)
             return
-        if not obj is active:
+        if obj is not active:
             obj.set_sensitive(new_state)
+    child = widget
+    parent = widget.get_parent()
     while parent:
-        # Use "forall" instead of "foreach" - this also catches all tab
-        # labels.
+        # Use "forall" instead of "foreach" - this also catches all tab labels.
         parent.forall(disable_if_different, (parent, child))
         child = parent
         parent = parent.get_parent()
@@ -190,14 +185,13 @@ class EmergencyDialog(object):
             import Tkinter
         except ImportError:
             # tk is not installed
-            log.warn("Failed to show error dialog due to a missing Tkinter " \
-                    + "Python package.")
+            log.warn("Failed to show error dialog due to a missing Tkinter Python package.")
             return
         try:
             root = Tkinter.Tk()
         except Tkinter.TclError, err_msg:
-            log.info(("Failed to create error dialog window (%s). Probably " \
-                    + "you are running PyCAM from a terminal.") % err_msg)
+            log.info("Failed to create error dialog window (%s). Probably you are running PyCAM "
+                     "from a terminal.", err_msg)
             return
         root.title(title)
         root.bind("<Return>", self.finish)
@@ -219,4 +213,3 @@ class EmergencyDialog(object):
 
     def finish(self, *args):
         self.root.quit()
-

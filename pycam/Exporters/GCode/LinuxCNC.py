@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-
 Copyright 2012 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -26,12 +25,13 @@ from pycam.Toolpath import CORNER_STYLE_EXACT_PATH, CORNER_STYLE_EXACT_STOP, \
 
 
 DEFAULT_HEADER = (("G40", "disable tool radius compensation"),
-                ("G49", "disable tool length compensation"),
-                ("G80", "cancel modal motion"),
-                ("G54", "select coordinate system 1"),
-                ("G90", "disable incremental moves"))
+                  ("G49", "disable tool length compensation"),
+                  ("G80", "cancel modal motion"),
+                  ("G54", "select coordinate system 1"),
+                  ("G90", "disable incremental moves"))
 
 DEFAULT_DIGITS = 6
+
 
 def _render_number(number):
     if int(number) == number:
@@ -41,7 +41,6 @@ def _render_number(number):
 
 
 class LinuxCNC(pycam.Exporters.GCode.BaseGenerator):
-
 
     def add_header(self):
         for command, comment in DEFAULT_HEADER:
@@ -104,20 +103,18 @@ class LinuxCNC(pycam.Exporters.GCode.BaseGenerator):
     def command_delay(self, seconds):
         self.add_command("G04 P%d" % seconds, "wait for %d seconds" % seconds)
 
-    def command_corner_style(self,
-            (path_mode, motion_tolerance, naive_tolerance)):
+    def command_corner_style(self, (path_mode, motion_tolerance, naive_tolerance)):
         if path_mode == CORNER_STYLE_EXACT_PATH:
             self.add_command("G61", "exact path mode")
         elif path_mode == CORNER_STYLE_EXACT_STOP:
             self.add_command("G61.1", "exact stop mode")
         elif path_mode == CORNER_STYLE_OPTIMIZE_SPEED:
             self.add_command("G64", "continuous mode with maximum speed")
-        else:
+        elif path_mode == CORNER_STYLE_OPTIMIZE_TOLERANCE:
             if not naive_tolerance:
-                self.add_command("G64 P%f" % motion_tolerance,
-                        "continuous mode with tolerance")
+                self.add_command("G64 P%f" % motion_tolerance, "continuous mode with tolerance")
             else:
-                self.add_command("G64 P%f Q%f" % \
-                        (motion_tolerance, naive_tolerance),
-                        "continuous mode with tolerance and cleanup")
-
+                self.add_command("G64 P%f Q%f" % (motion_tolerance, naive_tolerance),
+                                 "continuous mode with tolerance and cleanup")
+        else:
+            assert False, "Invalid corner style requested: {}".format(path_mode)

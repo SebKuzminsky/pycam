@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -20,28 +18,27 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import pycam.Utils.log
-import pycam.Utils
 # multiprocessing is imported later
-#import multiprocessing
+# import multiprocessing
+import os
+import platform
 import Queue
+import random
 import signal
 import socket
-import platform
-import random
-import uuid
-import time
-import os
 import sys
+import time
+import uuid
 
-
+import pycam.Utils
+import pycam.Utils.log
 log = pycam.Utils.log.get_logger()
 
 
 try:
     from multiprocessing.managers import SyncManager as _SyncManager
 except ImportError, msg:
-    log.debug("Failed to import multiprocessing.managers.SyncMananger: %s" % msg)
+    log.debug("Failed to import multiprocessing.managers.SyncMananger: %s", msg)
 else:
     # this class definition needs to be at the top level - for pyinstaller
     class TaskManager(_SyncManager):
@@ -58,7 +55,7 @@ else:
 DEFAULT_PORT = 1250
 
 
-#TODO: create one or two classes for these functions (to get rid of the globals)
+# TODO: create one or two classes for these functions (to get rid of the globals)
 
 # possible values:
 #   None: not initialized
@@ -87,8 +84,10 @@ def run_in_parallel(*args, **kwargs):
     else:
         return run_in_parallel_remote(*args, **kwargs)
 
+
 def is_pool_available():
-    return not __manager is None
+    return __manager is not None
+
 
 def is_multiprocessing_available():
     if (pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS) and \
@@ -101,31 +100,33 @@ def is_multiprocessing_available():
         multiprocessing.Semaphore()
         return True
     except ImportError:
-        if not "missing_module" in __issued_warnings:
-            log.info("Python's multiprocessing module is missing: " + \
-                    "disabling parallel processing")
+        if "missing_module" not in __issued_warnings:
+            log.info("Python's multiprocessing module is missing: disabling parallel processing")
             __issued_warnings.append("missing_module")
     except OSError:
-        if not "shm_access_failed" in __issued_warnings:
-            log.info("Python's multiprocessing module failed to acquire " + \
-                    "read/write access to shared memory (shm) - disabling " + \
-                    "parallel processing")
+        if "shm_access_failed" not in __issued_warnings:
+            log.info("Python's multiprocessing module failed to acquire read/write access to "
+                     "shared memory (shm) - disabling parallel processing")
             __issued_warnings.append("shm_access_failed")
     return False
 
+
 def is_multiprocessing_enabled():
     return bool(__multiprocessing)
+
 
 def is_server_mode_available():
     # the following definition should be kept in sync with the wiki:
     # http://sf.net/apps/mediawiki/pycam/?title=Parallel_Processing_on_different_Platforms
     return is_multiprocessing_available()
 
+
 def get_number_of_processes():
     if __num_of_processes is None:
         return 1
     else:
         return __num_of_processes
+
 
 def get_number_of_cores():
     try:
@@ -134,6 +135,7 @@ def get_number_of_cores():
     except ImportError:
         return None
 
+
 def get_pool_statistics():
     global __manager
     if __manager is None:
@@ -141,10 +143,11 @@ def get_pool_statistics():
     else:
         return __manager.statistics().get_worker_statistics()
 
+
 def get_task_statistics():
     global __manager
     result = {}
-    if not __manager is None:
+    if __manager is not None:
         try:
             result["tasks"] = __manager.tasks().qsize()
             result["results"] = __manager.results().qsize()
@@ -155,30 +158,37 @@ def get_task_statistics():
         result["cache"] = __manager.cache().length()
     return result
 
+
 class ManagerInfo(object):
     """ this separate class allows proper pickling for "multiprocesssing"
     """
+
     def __init__(self, tasks, results, stats, cache, pending):
         self.tasks_queue = tasks
         self.results_queue = results
         self.statistics = stats
         self.cache = cache
         self.pending_tasks = pending
+
     def get_tasks_queue(self):
         return self.tasks_queue
+
     def get_results_queue(self):
         return self.results_queue
+
     def get_statistics(self):
         return self.statistics
+
     def get_cache(self):
         return self.cache
+
     def get_pending_tasks(self):
         return self.pending_tasks
 
-def init_threading(number_of_processes=None, enable_server=False, remote=None,
-        run_server=False, server_credentials="", local_port=DEFAULT_PORT):
-    global __multiprocessing, __num_of_processes, __manager, __closing, \
-            __task_source_uuid
+
+def init_threading(number_of_processes=None, enable_server=False, remote=None, run_server=False,
+                   server_credentials="", local_port=DEFAULT_PORT):
+    global __multiprocessing, __num_of_processes, __manager, __closing, __task_source_uuid
     if __multiprocessing:
         # kill the manager and clean everything up for a re-initialization
         cleanup()
@@ -186,16 +196,15 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
         # server mode is disabled for the Windows pyinstaller standalone
         # due to "pickle errors". How to reproduce: run the standalone binary
         # with "--enable-server --server-auth-key foo".
-        feature_matrix_text = "Take a look at the wiki for a matrix of " + \
-                "platforms and available features: " + \
-                "http://sf.net/apps/mediawiki/pycam/?title=" + \
-                "Parallel_Processing_on_different_Platforms"
+        feature_matrix_text = ("Take a look at the wiki for a matrix of platforms and available "
+                               "features: http://sf.net/apps/mediawiki/pycam/?title="
+                               "Parallel_Processing_on_different_Platforms")
         if enable_server:
-            log.warn("Unable to enable server mode with your current " + \
-                    "setup.\n" + feature_matrix_text)
+            log.warn("Unable to enable server mode with your current setup.\n%s",
+                     feature_matrix_text)
         elif run_server:
-            log.warn("Unable to run in server-only mode with the Windows " + \
-                    "standalone executable.\n" + feature_matrix_text)
+            log.warn("Unable to run in server-only mode with the Windows standalone "
+                     "executable.\n%s", feature_matrix_text)
         else:
             # no further warnings required
             pass
@@ -210,17 +219,15 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
         __multiprocessing = False
         # Maybe a multiprocessing feature was explicitely requested?
         # Issue some warnings if necessary.
-        multiprocessing_missing_text = "Failed to enable server mode due to " \
-                + "a lack of 'multiprocessing' capabilities. Please use " \
-                + "Python2.6 or install the 'python-multiprocessing' package."
+        multiprocessing_missing_text = (
+            "Failed to enable server mode due to a lack of 'multiprocessing' capabilities. Please "
+            "use Python2.6 or install the 'python-multiprocessing' package.")
         if enable_server:
-            log.warn("Failed to enable server mode due to a lack of " \
-                    + "'multiprocessing' capabilities. " \
-                    + multiprocessing_missing_text)
+            log.warn("Failed to enable server mode due to a lack of 'multiprocessing' "
+                     "capabilities. %s", multiprocessing_missing_text)
         elif run_server:
-            log.warn("Failed to run in server-only mode due to a lack of " \
-                    + "'multiprocessing' capabilities. " \
-                    + multiprocessing_missing_text)
+            log.warn("Failed to run in server-only mode due to a lack of 'multiprocessing' "
+                     "capabilities. %s", multiprocessing_missing_text)
         else:
             # no further warnings required
             pass
@@ -229,14 +236,12 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
         if number_of_processes is None:
             # use defaults
             # don't enable threading for a single cpu
-            if (multiprocessing.cpu_count() > 1) or remote or run_server or \
-                    enable_server:
+            if (multiprocessing.cpu_count() > 1) or remote or run_server or enable_server:
                 __multiprocessing = multiprocessing
                 __num_of_processes = multiprocessing.cpu_count()
             else:
                 __multiprocessing = False
-        elif (number_of_processes < 1) and (remote is None) and \
-                (enable_server is None):
+        elif (number_of_processes < 1) and (remote is None) and (enable_server is None):
             # Zero processes are allowed if we use a remote server or offer a
             # server.
             __multiprocessing = False
@@ -249,14 +254,13 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
         log.info("Disabled parallel processing")
     elif not enable_server and not run_server:
         __manager = None
-        log.info("Enabled %d parallel local processes" % __num_of_processes)
+        log.info("Enabled %d parallel local processes", __num_of_processes)
     else:
         # with multiprocessing
-        log.info("Enabled %d parallel local processes" % __num_of_processes)
+        log.info("Enabled %d parallel local processes", __num_of_processes)
         log.info("Allow remote processing")
         # initialize the uuid list for all workers
-        worker_uuid_list = [str(uuid.uuid1())
-                for index in range(__num_of_processes)]
+        worker_uuid_list = [str(uuid.uuid1()) for index in range(__num_of_processes)]
         __task_source_uuid = str(uuid.uuid1())
         if remote is None:
             # try to guess an appropriate interface for binding
@@ -265,8 +269,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
                 all_ips = pycam.Utils.get_all_ips()
                 if all_ips:
                     address = (all_ips[0], local_port)
-                    log.info("Binding to local interface with IP %s" % \
-                            str(all_ips[0]))
+                    log.info("Binding to local interface with IP %s", str(all_ips[0]))
                 else:
                     return "Failed to find any local IP"
             else:
@@ -279,9 +282,8 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
                 try:
                     port = int(port)
                 except ValueError:
-                    log.warning(("Invalid port specified: '%s' - using " + \
-                            "default port (%d) instead") % \
-                            (port, DEFAULT_PORT))
+                    log.warning("Invalid port specified: '%s' - using default port (%d) instead",
+                                port, DEFAULT_PORT)
                     port = DEFAULT_PORT
             else:
                 host = remote
@@ -293,14 +295,12 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
             statistics = ProcessStatistics()
             cache = ProcessDataCache()
             pending_tasks = PendingTasks()
-            info = ManagerInfo(tasks_queue, results_queue, statistics, cache,
-                    pending_tasks)
+            info = ManagerInfo(tasks_queue, results_queue, statistics, cache, pending_tasks)
             TaskManager.register("tasks", callable=info.get_tasks_queue)
             TaskManager.register("results", callable=info.get_results_queue)
             TaskManager.register("statistics", callable=info.get_statistics)
             TaskManager.register("cache", callable=info.get_cache)
-            TaskManager.register("pending_tasks",
-                    callable=info.get_pending_tasks)
+            TaskManager.register("pending_tasks", callable=info.get_pending_tasks)
         else:
             TaskManager.register("tasks")
             TaskManager.register("results")
@@ -326,19 +326,19 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None,
         __closing = __manager.Value("b", False)
         if __num_of_processes > 0:
             # only start the spawner, if we want to use local workers
-            spawner = __multiprocessing.Process(name="spawn",
-                    target=_spawn_daemon, args=(__manager, __num_of_processes,
-                    worker_uuid_list))
+            spawner = __multiprocessing.Process(name="spawn", target=_spawn_daemon,
+                                                args=(__manager, __num_of_processes,
+                                                      worker_uuid_list))
             spawner.start()
         else:
             spawner = None
         # wait forever - in case of a server
         if run_server:
-            log.info("Running a local server and waiting for remote " + \
-                    "connections.")
+            log.info("Running a local server and waiting for remote connections.")
             # the server can be stopped via CTRL-C - it is caught later
-            if not spawner is None:
+            if spawner is not None:
                 spawner.join()
+
 
 def cleanup():
     global __multiprocessing, __manager, __closing
@@ -353,7 +353,7 @@ def cleanup():
         if hasattr(__manager, "shutdown"):
             # wait for the spawner and the worker threads to go down
             time.sleep(2.5)
-            #__manager.shutdown()
+            # __manager.shutdown()
             time.sleep(0.1)
             # check if it is still alive and kill it if necessary
             if __manager._process.is_alive():
@@ -361,6 +361,7 @@ def cleanup():
     __manager = None
     __closing = None
     __multiprocessing = None
+
 
 def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
     """ wait for items in the 'tasks' queue to appear and then spawn workers
@@ -371,9 +372,8 @@ def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
     stats = manager.statistics()
     cache = manager.cache()
     pending_tasks = manager.pending_tasks()
-    log.debug("Spawner daemon started with %d processes" % number_of_processes)
-    log.debug("Registering %d worker threads: %s" \
-            % (len(worker_uuid_list), worker_uuid_list))
+    log.debug("Spawner daemon started with %d processes", number_of_processes)
+    log.debug("Registering %d worker threads: %s", len(worker_uuid_list), worker_uuid_list)
     last_cache_update = time.time()
     # use only the hostname (for brevity) - no domain part
     hostname = platform.node().split(".", 1)[0]
@@ -387,10 +387,9 @@ def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
                 workers = []
                 for task_id in worker_uuid_list:
                     task_name = "%s-%s" % (hostname, task_id)
-                    worker = __multiprocessing.Process(
-                            name=task_name, target=_handle_tasks,
-                            args=(tasks, results, stats, cache,
-                                    pending_tasks, __closing))
+                    worker = __multiprocessing.Process(name=task_name, target=_handle_tasks,
+                                                       args=(tasks, results, stats, cache,
+                                                             pending_tasks, __closing))
                     worker.start()
                     workers.append(worker)
                 # wait until all workers are finished
@@ -408,6 +407,7 @@ def _spawn_daemon(manager, number_of_processes, worker_uuid_list):
     except (IOError, EOFError):
         # the connection was closed
         log.info("Spawner daemon lost connection to server")
+
 
 def _handle_tasks(tasks, results, stats, cache, pending_tasks, closing):
     global __multiprocessing
@@ -433,7 +433,7 @@ def _handle_tasks(tasks, results, stats, cache, pending_tasks, closing):
             # "pending_tasks.add", the task is lost. We should better use some
             # backup.
             pending_tasks.add(job_id, task_id, (func, args))
-            log.debug("Worker %s processes %s / %s" % (name, job_id, task_id))
+            log.debug("Worker %s processes %s / %s", name, job_id, task_id)
             # reset the timeout counter, if we found another item in the queue
             timeout_counter = 0
             real_args = []
@@ -446,8 +446,8 @@ def _handle_tasks(tasks, results, stats, cache, pending_tasks, closing):
                         value = cache.get(arg)
                         local_cache.add(arg, value)
                     real_args.append(value)
-                elif isinstance(arg, list) and [True for item in arg \
-                        if isinstance(item, ProcessDataCacheItemID)]:
+                elif isinstance(arg, list) and [True for item in arg
+                                                if isinstance(item, ProcessDataCacheItemID)]:
                     # check if any item in the list is cacheable
                     args_list = []
                     for item in arg:
@@ -470,19 +470,18 @@ def _handle_tasks(tasks, results, stats, cache, pending_tasks, closing):
             stats.add_process_time(name, time.time() - start_time)
     except KeyboardInterrupt:
         pass
-    log.debug("Worker thread finished after %d seconds of inactivity: %s" \
-            % (timeout_counter, name))
+    log.debug("Worker thread finished after %d seconds of inactivity: %s", timeout_counter, name)
 
-def run_in_parallel_remote(func, args_list, unordered=False,
-        disable_multiprocessing=False, callback=None):
-    global __multiprocessing, __num_of_processes, __manager, \
-            __task_source_uuid, __finished_jobs
+
+def run_in_parallel_remote(func, args_list, unordered=False, disable_multiprocessing=False,
+                           callback=None):
+    global __multiprocessing, __num_of_processes, __manager, __task_source_uuid, __finished_jobs
     if __multiprocessing is None:
         # threading was not configured before
         init_threading()
     if __multiprocessing and not disable_multiprocessing:
         job_id = str(uuid.uuid1())
-        log.debug("Starting parallel tasks: %s" % job_id)
+        log.debug("Starting parallel tasks: %s", job_id)
         tasks_queue = __manager.tasks()
         results_queue = __manager.results()
         remote_cache = __manager.cache()
@@ -499,8 +498,8 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                 if hasattr(arg, "uuid"):
                     data_uuid = ProcessDataCacheItemID(arg.uuid)
                     if not remote_cache.contains(data_uuid):
-                        log.debug("Adding cache item for job %s: %s - %s" % \
-                                (job_id, arg.uuid, arg.__class__))
+                        log.debug("Adding cache item for job %s: %s - %s",
+                                  job_id, arg.uuid, arg.__class__)
                         remote_cache.add(data_uuid, arg)
                     result_args.append(data_uuid)
                 elif isinstance(arg, (list, set, tuple)):
@@ -514,18 +513,16 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                             new_arg_list.append(item)
                             continue
                         if not remote_cache.contains(data_uuid):
-                            log.debug("Adding cache item from list for " \
-                                    + "job %s: %s - %s" \
-                                    % (job_id, item.uuid, item.__class__))
+                            log.debug("Adding cache item from list for job %s: %s - %s",
+                                      job_id, item.uuid, item.__class__)
                             remote_cache.add(data_uuid, item)
                         new_arg_list.append(data_uuid)
                     result_args.append(new_arg_list)
                 else:
                     result_args.append(arg)
             tasks_queue.put((job_id, index, func, result_args))
-            stats.add_queueing_time(__task_source_uuid,
-                    time.time() - start_time)
-        log.debug("Added %d tasks for job %s" % (len(args_list), job_id))
+            stats.add_queueing_time(__task_source_uuid, time.time() - start_time)
+        log.debug("Added %d tasks for job %s", len(args_list), job_id)
         result_buffer = {}
         index = 0
         cancelled = False
@@ -540,29 +537,24 @@ def run_in_parallel_remote(func, args_list, unordered=False,
             if stale_task:
                 stale_job_id, stale_task_id = stale_task[:2]
                 if stale_job_id in __finished_jobs:
-                    log.debug("Throwing away stale task of an old " + \
-                            "job: %s" % stale_job_id)
+                    log.debug("Throwing away stale task of an old job: %s", stale_job_id)
                     pending_tasks.remove(stale_job_id, stale_task_id)
                 elif stale_job_id == job_id:
-                    log.debug("Reinjecting stale task: %s / %s" % \
-                            (job_id, stale_task_id))
+                    log.debug("Reinjecting stale task: %s / %s", job_id, stale_task_id)
                     stale_func, stale_args = stale_task[2]
-                    tasks_queue.put((job_id, stale_task_id, stale_func,
-                            stale_args))
+                    tasks_queue.put((job_id, stale_task_id, stale_func, stale_args))
                     pending_tasks.remove(job_id, stale_task_id)
                 else:
                     # non-local task
-                    log.debug("Ignoring stale non-local task: %s / %s" \
-                            % (stale_job_id, stale_task_id))
+                    log.debug("Ignoring stale non-local task: %s / %s",
+                              stale_job_id, stale_task_id)
             try:
-                result_job_id, task_id, result = results_queue.get(
-                        timeout=1.0)
+                result_job_id, task_id, result = results_queue.get(timeout=1.0)
             except Queue.Empty:
                 time.sleep(1.0)
                 continue
             if result_job_id == job_id:
-                log.debug("Received the result of a task: %s / %s" % \
-                        (job_id, task_id))
+                log.debug("Received the result of a task: %s / %s", job_id, task_id)
                 try:
                     if unordered:
                         # just return the values in any order
@@ -582,30 +574,28 @@ def run_in_parallel_remote(func, args_list, unordered=False,
                 except GeneratorExit:
                     # This exception is triggered when the caller stops
                     # requesting more items from the generator.
-                    log.debug("Parallel processing cancelled: %s" % job_id)
-                    _cleanup_job(job_id, tasks_queue, pending_tasks,
-                            __finished_jobs)
+                    log.debug("Parallel processing cancelled: %s", job_id)
+                    _cleanup_job(job_id, tasks_queue, pending_tasks, __finished_jobs)
                     # re-raise the GeneratorExit exception to finish destruction
                     raise
             elif result_job_id in __finished_jobs:
                 # throw away this result of an old job
-                log.debug("Throwing away one result of an old job: %s" % \
-                        result_job_id)
+                log.debug("Throwing away one result of an old job: %s", result_job_id)
             else:
-                log.debug("Skipping result of non-local job: %s" % \
-                        result_job_id)
+                log.debug("Skipping result of non-local job: %s", result_job_id)
                 # put the result back to the queue for the next manager
                 results_queue.put((result_job_id, task_id, result))
                 # wait a little bit to get some idle CPU cycles
                 time.sleep(0.2)
         _cleanup_job(job_id, tasks_queue, pending_tasks, __finished_jobs)
         if cancelled:
-            log.debug("Parallel processing cancelled: %s" % job_id)
+            log.debug("Parallel processing cancelled: %s", job_id)
         else:
-            log.debug("Parallel processing finished: %s" % job_id)
+            log.debug("Parallel processing finished: %s", job_id)
     else:
         for args in args_list:
             yield func(args)
+
 
 def _cleanup_job(job_id, tasks_queue, pending_tasks, finished_jobs):
     # flush the task queue
@@ -627,8 +617,7 @@ def _cleanup_job(job_id, tasks_queue, pending_tasks, finished_jobs):
         else:
             removed_job_counter += 1
     if removed_job_counter > 0:
-        log.debug("Removed %d remaining tasks for %s" % (removed_job_counter,
-                job_id))
+        log.debug("Removed %d remaining tasks for %s", removed_job_counter, job_id)
     # remove all stale tasks
     pending_tasks.remove(job_id)
     # limit the number of stored finished jobs
@@ -637,8 +626,8 @@ def _cleanup_job(job_id, tasks_queue, pending_tasks, finished_jobs):
         finished_jobs.pop(0)
 
 
-def run_in_parallel_local(func, args, unordered=False,
-        disable_multiprocessing=False, callback=None):
+def run_in_parallel_local(func, args, unordered=False, disable_multiprocessing=False,
+                          callback=None):
     global __multiprocessing, __num_of_processes
     if __multiprocessing is None:
         # threading was not configured before
@@ -683,15 +672,13 @@ class OneProcess(object):
     def __str__(self):
         try:
             if self.is_queue:
-                return "Queue %s: %s (%s/%s)" \
-                    % (self.name, self.transfer_time/self.transfer_count,
-                            self.transfer_time, self.transfer_count)
+                return "Queue %s: %s (%s/%s)" % (self.name, self.transfer_time/self.transfer_count,
+                                                 self.transfer_time, self.transfer_count)
             else:
-                return "Process %s: %s (%s/%s) - %s (%s/%s)" \
-                        % (self.name, self.transfer_time/self.transfer_count,
-                                self.transfer_time, self.transfer_count,
-                                self.process_time/self.process_count,
-                                self.process_time, self.process_count)
+                return "Process %s: %s (%s/%s) - %s (%s/%s)" % (
+                    self.name, self.transfer_time/self.transfer_count, self.transfer_time,
+                    self.transfer_count, self.process_time/self.process_count, self.process_time,
+                    self.process_count)
         except ZeroDivisionError:
             # race condition between adding new objects and output
             if self.is_queue:
@@ -710,11 +697,11 @@ class ProcessStatistics(object):
 
     def __str__(self):
         return os.linesep.join([str(item)
-                for item in self.processes.values() + self.queues.values()])
+                                for item in self.processes.values() + self.queues.values()])
 
     def _refresh_workers(self):
         oldest_valid = time.time() - self.timeout
-        for key in self.workers.keys():
+        for key in self.workers:
             # be careful: maybe the workers dictionary changed in between
             try:
                 timestamp = self.workers[key]
@@ -727,19 +714,19 @@ class ProcessStatistics(object):
         return str(self)
 
     def add_transfer_time(self, name, amount):
-        if not name in self.processes.keys():
+        if name not in self.processes.keys():
             self.processes[name] = OneProcess(name)
         self.processes[name].transfer_count += 1
         self.processes[name].transfer_time += amount
 
     def add_process_time(self, name, amount):
-        if not name in self.processes.keys():
+        if name not in self.processes.keys():
             self.processes[name] = OneProcess(name)
         self.processes[name].process_count += 1
         self.processes[name].process_time += amount
 
     def add_queueing_time(self, name, amount):
-        if not name in self.queues.keys():
+        if name not in self.queues.keys():
             self.queues[name] = OneProcess(name, is_queue=True)
         self.queues[name].transfer_count += 1
         self.queues[name].transfer_time += amount
@@ -763,10 +750,9 @@ class ProcessStatistics(object):
                 process_time = one_process.process_time
                 # avoid divide-by-zero
                 avg_process_time = process_time / max(1, num_of_tasks)
-                avg_transfer_time = one_process.transfer_time \
-                        / max(1, num_of_tasks)
-                result.append((key, last_notification, num_of_tasks,
-                        process_time, avg_process_time, avg_transfer_time))
+                avg_transfer_time = one_process.transfer_time / max(1, num_of_tasks)
+                result.append((key, last_notification, num_of_tasks, process_time,
+                               avg_process_time, avg_transfer_time))
             except KeyError:
                 # no data available yet or the item was removed meanwhile
                 pass
@@ -803,7 +789,7 @@ class PendingTasks(object):
             if (job_id, task_id) in self._jobs:
                 del self._jobs[(job_id, task_id)]
         self._lock.release()
-        
+
     def get_stale_task(self):
         self._lock.acquire(block=True, timeout=self._lock_timeout)
         stale_start_time = time.time() - self._stale_timeout
@@ -844,7 +830,7 @@ class ProcessDataCache(object):
 
     def expire_cache_items(self):
         expired = time.time() - self.timeout
-        for key in self.cache.keys():
+        for key in self.cache:
             try:
                 if self.cache[key][1] < expired:
                     del self.cache[key]
@@ -881,4 +867,3 @@ class ProcessDataCacheItemID(object):
 
     def __init__(self, value):
         self.value = value
-

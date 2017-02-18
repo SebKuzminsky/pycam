@@ -1,8 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lode Leroy
 
 This file is part of PyCAM.
@@ -18,18 +16,17 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
+along with PyCAM.  If not, see <http://www.gnu.org/licenses/ > .
 """
 
-import sys, time 
-sys.path.insert(0,'.')
-
+import sys
+import time
 
 from pycam.Importers import STLImporter
 from pycam.Gui.Visualization import ShowTestScene
 
 
-if len(sys.argv)>1:
+if len(sys.argv) > 1:
     filename = sys.argv[1]
 else:
     filename = "Samples/STL/TestModel.stl"
@@ -40,5 +37,4 @@ end = time.clock()
 
 print "time=", (end-start)
 
-#ShowTestScene(model)
-
+ShowTestScene(model)

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2008 Lode Leroy
 
 This file is part of PyCAM.
@@ -20,8 +18,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = ["Cutters", "Exporters", "Geometry", "Gui", "Importers",
-        "PathGenerators", "PathProcessors", "Plugins", "Utils"]
-
 VERSION = "0.6-svn"
 
+FILTER_CONFIG = (("Config files", "*.conf"),)
+HELP_WIKI_URL = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=%s"

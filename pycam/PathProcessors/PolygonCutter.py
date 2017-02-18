@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 Copyright 2008 Lode Leroy
 
@@ -21,9 +19,9 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import pycam.PathProcessors
 from pycam.Geometry.Path import Path
 from pycam.Geometry.PolygonExtractor import PolygonExtractor
+import pycam.PathProcessors
 from pycam.Toolpath import simplify_toolpath
 
 
@@ -76,4 +74,3 @@ class PolygonCutter(pycam.PathProcessors.BasePathProcessor):
                     path.reverse()
             self.paths.extend(paths)
             self.sort_layered()
-

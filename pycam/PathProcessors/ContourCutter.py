@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2008-2010 Lode Leroy
 
 This file is part of PyCAM.
@@ -20,10 +18,11 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import pycam.PathProcessors
 from pycam.Geometry.PolygonExtractor import PolygonExtractor
-from pycam.Geometry.PointUtils import *
+from pycam.Geometry.PointUtils import pdot, psub
+import pycam.PathProcessors
 from pycam.Toolpath import simplify_toolpath
+
 
 class ContourCutter(pycam.PathProcessors.BasePathProcessor):
     def __init__(self):
@@ -43,7 +42,7 @@ class ContourCutter(pycam.PathProcessors.BasePathProcessor):
             self.points.append(point)
 
     def new_direction(self, direction):
-        if self.polygon_extractor == None:
+        if self.polygon_extractor is None:
             self.polygon_extractor = PolygonExtractor(PolygonExtractor.CONTOUR)
 
         self.polygon_extractor.new_direction(direction)
@@ -76,4 +75,3 @@ class ContourCutter(pycam.PathProcessors.BasePathProcessor):
             self.paths.extend(paths)
             self.sort_layered()
         self.polygon_extractor = None
-

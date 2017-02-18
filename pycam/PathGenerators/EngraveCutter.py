@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 Copyright 2008-2009 Lode Leroy
 
@@ -21,9 +19,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.PathGenerators import get_max_height_dynamic, get_free_paths_ode, \
-        get_free_paths_triangles
-from pycam.Utils import ProgressCounter
 import pycam.Utils.log
 
 log = pycam.Utils.log.get_logger()
@@ -34,8 +29,8 @@ class EngraveCutter(object):
     def __init__(self, physics=None):
         self.physics = physics
 
-    def GenerateToolPath(self, cutter, models, motion_grid, minz=None,
-            maxz=None, draw_callback=None):
+    def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None,
+                         draw_callback=None):
         quit_requested = False
 
         model = pycam.Geometry.Model.get_combined_model(models)
@@ -48,20 +43,18 @@ class EngraveCutter(object):
         num_of_layers = len(motion_grid)
 
         push_layers = motion_grid[:-1]
-        push_generator = pycam.PathGenerators.PushCutter.PushCutter(
-                physics=self.physics)
+        push_generator = pycam.PathGenerators.PushCutter.PushCutter(physics=self.physics)
         current_layer = 0
         push_moves = []
         for push_layer in push_layers:
             # update the progress bar and check, if we should cancel the process
-            if draw_callback and draw_callback(text="Engrave: processing " \
-                        + "layer %d/%d" % (current_layer + 1, num_of_layers)):
+            if draw_callback and draw_callback(
+                    text="Engrave: processing layer %d/%d" % (current_layer + 1, num_of_layers)):
                 # cancel immediately
                 quit_requested = True
                 break
             # no callback: otherwise the status text gets lost
-            push_moves.extend(push_generator.GenerateToolPath(cutter, [model],
-                    [push_layer]))
+            push_moves.extend(push_generator.GenerateToolPath(cutter, [model], [push_layer]))
             if draw_callback and draw_callback():
                 # cancel requested
                 quit_requested = True
@@ -71,13 +64,11 @@ class EngraveCutter(object):
         if quit_requested:
             return push_moves
 
-        drop_generator = pycam.PathGenerators.DropCutter.DropCutter(
-                physics=self.physics)
+        drop_generator = pycam.PathGenerators.DropCutter.DropCutter(physics=self.physics)
         drop_layers = motion_grid[-1:]
         if draw_callback:
-            draw_callback(text="Engrave: processing layer " + \
-                "%d/%d" % (current_layer + 1, num_of_layers))
-        drop_moves = drop_generator.GenerateToolPath(cutter, [model],
-                drop_layers, minz=minz, maxz=maxz, draw_callback=draw_callback)
+            draw_callback(
+                text="Engrave: processing layer %d/%d" % (current_layer + 1, num_of_layers))
+        drop_moves = drop_generator.GenerateToolPath(cutter, [model], drop_layers, minz=minz,
+                                                     maxz=maxz, draw_callback=draw_callback)
         return push_moves + drop_moves
-

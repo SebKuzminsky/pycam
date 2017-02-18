@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -21,8 +19,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import pycam.Plugins
 import pycam.Gui.ControlsGTK
+import pycam.Plugins
 
 
 class TaskParamCollisionModels(pycam.Plugins.PluginBase):
@@ -31,14 +29,11 @@ class TaskParamCollisionModels(pycam.Plugins.PluginBase):
     CATEGORIES = ["Model", "Task", "Parameter"]
 
     def setup(self):
-        self.control = pycam.Gui.ControlsGTK.InputTable([],
-                change_handler=lambda widget=None: \
-                    self.core.emit_event("task-changed"))
+        self.control = pycam.Gui.ControlsGTK.InputTable(
+            [], change_handler=lambda widget=None: self.core.emit_event("task-changed"))
         self.control.get_widget().set_size_request(240, -1)
-        self.core.get("register_parameter")("task", "collision_models",
-                self.control)
-        self.core.register_ui("task_models", "", self.control.get_widget(),
-                weight=5)
+        self.core.get("register_parameter")("task", "collision_models", self.control)
+        self.core.register_ui("task_models", "", self.control.get_widget(), weight=5)
         self.core.register_event("model-list-changed", self._update_models)
         return True
 
@@ -62,12 +57,10 @@ class TaskParamTool(pycam.Plugins.PluginBase):
     CATEGORIES = ["Tool", "Task", "Parameter"]
 
     def setup(self):
-        self.control = pycam.Gui.ControlsGTK.InputChoice([],
-                change_handler=lambda widget=None: \
-                    self.core.emit_event("task-changed"))
+        self.control = pycam.Gui.ControlsGTK.InputChoice(
+            [], change_handler=lambda widget=None: self.core.emit_event("task-changed"))
         self.core.get("register_parameter")("task", "tool", self.control)
-        self.core.register_ui("task_components", "Tool",
-                self.control.get_widget(), weight=10)
+        self.core.register_ui("task_components", "Tool", self.control.get_widget(), weight=10)
         self.core.register_event("tool-list-changed", self._update_tools)
         return True
 
@@ -90,12 +83,10 @@ class TaskParamProcess(pycam.Plugins.PluginBase):
     CATEGORIES = ["Process", "Task", "Parameter"]
 
     def setup(self):
-        self.control = pycam.Gui.ControlsGTK.InputChoice([],
-                change_handler=lambda widget=None: \
-                    self.core.emit_event("task-changed"))
+        self.control = pycam.Gui.ControlsGTK.InputChoice(
+            [], change_handler=lambda widget=None: self.core.emit_event("task-changed"))
         self.core.get("register_parameter")("task", "process", self.control)
-        self.core.register_ui("task_components", "Process",
-                self.control.get_widget(), weight=20)
+        self.core.register_ui("task_components", "Process", self.control.get_widget(), weight=20)
         self.core.register_event("process-list-changed", self._update_processes)
         return True
 
@@ -118,12 +109,10 @@ class TaskParamBounds(pycam.Plugins.PluginBase):
     CATEGORIES = ["Bounds", "Task", "Parameter"]
 
     def setup(self):
-        self.control = pycam.Gui.ControlsGTK.InputChoice([],
-                change_handler=lambda widget=None: \
-                    self.core.emit_event("task-changed"))
+        self.control = pycam.Gui.ControlsGTK.InputChoice(
+            [], change_handler=lambda widget=None: self.core.emit_event("task-changed"))
         self.core.get("register_parameter")("task", "bounds", self.control)
-        self.core.register_ui("task_components", "Bounds",
-                self.control.get_widget(), weight=30)
+        self.core.register_ui("task_components", "Bounds", self.control.get_widget(), weight=30)
         self.core.register_event("bounds-list-changed", self._update_bounds)
         return True
 
@@ -138,4 +127,3 @@ class TaskParamBounds(pycam.Plugins.PluginBase):
         for bound in bounds:
             choices.append((bound["name"], bound))
         self.control.update_choices(choices)
-

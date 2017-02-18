@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -36,10 +34,10 @@ def _get_filters_from_list(filter_list):
         if not isinstance(file_extensions, (list, tuple)):
             file_extensions = [file_extensions]
         for ext in file_extensions:
-            current_filter.add_pattern(
-                    pycam.Utils.get_case_insensitive_file_pattern(ext))
+            current_filter.add_pattern(pycam.Utils.get_case_insensitive_file_pattern(ext))
         result.append(current_filter)
     return result
+
 
 def _get_filename_with_suffix(filename, type_filter):
     # use the first extension provided by the filter as the default
@@ -79,9 +77,9 @@ class FilenameDialog(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.set("get_filename_func", None)
 
-    def get_filename_dialog(self, title="Choose file ...", mode_load=False,
-            type_filter=None, filename_templates=None, filename_extension=None,
-            parent=None, extra_widget=None):
+    def get_filename_dialog(self, title="Choose file ...", mode_load=False, type_filter=None,
+                            filename_templates=None, filename_extension=None, parent=None,
+                            extra_widget=None):
         gtk = self._gtk
         if parent is None:
             parent = self.core.get("main_window")
@@ -92,10 +90,9 @@ class FilenameDialog(pycam.Plugins.PluginBase):
         else:
             action = gtk.FILE_CHOOSER_ACTION_SAVE
             stock_id_ok = gtk.STOCK_SAVE
-        dialog = gtk.FileChooserDialog(title=title,
-                parent=parent, action=action,
-                buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                    stock_id_ok, gtk.RESPONSE_OK))
+        dialog = gtk.FileChooserDialog(title=title, parent=parent, action=action,
+                                       buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, stock_id_ok,
+                                                gtk.RESPONSE_OK))
         # set the initial directory to the last one used
         if self.last_dirname and os.path.isdir(self.last_dirname):
             dialog.set_current_folder(self.last_dirname)
@@ -136,8 +133,7 @@ class FilenameDialog(pycam.Plugins.PluginBase):
                         break
             dialog.select_filename(default_filename)
             try:
-                dialog.set_current_name(
-                        os.path.basename(default_filename).encode("utf-8"))
+                dialog.set_current_name(os.path.basename(default_filename).encode("utf-8"))
             except UnicodeError:
                 # ignore
                 pass
@@ -160,17 +156,17 @@ class FilenameDialog(pycam.Plugins.PluginBase):
                 # check if we want to add a default suffix
                 filename = _get_filename_with_suffix(filename, type_filter)
             if not mode_load and os.path.exists(filename):
-                overwrite_window = gtk.MessageDialog(parent, type=gtk.MESSAGE_WARNING,
-                        buttons=gtk.BUTTONS_YES_NO,
-                        message_format="This file exists. Do you want to overwrite it?")
+                overwrite_window = gtk.MessageDialog(
+                    parent, type=gtk.MESSAGE_WARNING, buttons=gtk.BUTTONS_YES_NO,
+                    message_format="This file exists. Do you want to overwrite it?")
                 overwrite_window.set_title("Confirm overwriting existing file")
                 response = overwrite_window.run()
                 overwrite_window.destroy()
                 done = (response == gtk.RESPONSE_YES)
             elif mode_load and not uri.exists():
-                not_found_window = gtk.MessageDialog(parent, type=gtk.MESSAGE_ERROR,
-                        buttons=gtk.BUTTONS_OK,
-                        message_format="This file does not exist. Please choose a different filename.")
+                not_found_window = gtk.MessageDialog(
+                    parent, type=gtk.MESSAGE_ERROR, buttons=gtk.BUTTONS_OK,
+                    message_format="This file does not exist. Please choose a different filename.")
                 not_found_window.set_title("Invalid filename selected")
                 response = not_found_window.run()
                 not_found_window.destroy()
@@ -187,4 +183,3 @@ class FilenameDialog(pycam.Plugins.PluginBase):
             else:
                 self.core.emit_event("notify-file-saved", filename)
         return filename
-

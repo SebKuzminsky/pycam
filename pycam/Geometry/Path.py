@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 Copyright 2008 Lode Leroy
 
@@ -21,24 +19,21 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-""" the points of a path are only used for describing coordinates. Thus we
-don't really need complete "Point" instances that consume a lot of memory.
+from collections import namedtuple
+
+from pycam.Geometry import IDGenerator
+
+"""
+The points of a path are only used for describing coordinates. Thus we don't really need complete
+"Point" instances that consume a lot of memory.
 Since python 2.6 the "namedtuple" factory is available.
 This reduces the memory consumption of a toolpath down to 1/3.
 """
+tuple_point = namedtuple("TuplePoint", "x y z")
 
-try:
-    # this works for python 2.6 or above (saves memory)
-    # TODO: disabled for now - check if we could enable it later ...
-    import INVALID_IMPORT
-    from collections import namedtuple
-    tuple_point = namedtuple("TuplePoint", "x y z")
-    get_point_object = lambda point: tuple_point(point[0], point[1], point[2])
-except ImportError:
-    # dummy for python < v2.6 (consumes more memory)
-    get_point_object = lambda point: point
 
-from pycam.Geometry import IDGenerator
+def get_point_object(point):
+    return tuple_point(point[0], point[1], point[2])
 
 
 class Path(IDGenerator):

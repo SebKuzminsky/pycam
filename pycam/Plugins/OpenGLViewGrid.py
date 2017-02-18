@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -20,8 +18,9 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import pycam.Plugins
 import math
+
+import pycam.Plugins
 
 
 class OpenGLViewGrid(pycam.Plugins.PluginBase):
@@ -36,21 +35,18 @@ class OpenGLViewGrid(pycam.Plugins.PluginBase):
         if self.gui:
             self.box = self.gui.get_object("GridSizeBox")
             self.core.register_ui("opengl_window", "Grid", self.box, weight=30)
-            self.core.register_event("visual-item-updated",
-                    self._update_widget_state)
+            self.core.register_event("visual-item-updated", self._update_widget_state)
         import OpenGL.GL
         self._GL = OpenGL.GL
         self.core.register_event("visualize-items", self.draw_grid)
-        self.core.get("register_display_item")("show_grid", "Show Base Grid",
-                80)
+        self.core.get("register_display_item")("show_grid", "Show Base Grid", 80)
         self.core.get("register_color")("color_grid", "Base Grid", 80)
         self.core.emit_event("visual-item-updated")
         return True
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_event("visual-item-updated",
-                    self._update_widget_state)
+            self.core.unregister_event("visual-item-updated", self._update_widget_state)
             self.core.unregister_ui("opengl_window", self.box)
         self.core.unregister_event("visualize-items", self.draw_grid)
         self.core.get("unregister_color")("color_grid")
@@ -83,9 +79,8 @@ class OpenGLViewGrid(pycam.Plugins.PluginBase):
         if self.gui:
             unit = self.core.get("unit_string")
             self.gui.get_object("MajorGridSizeLabel").set_text(
-                    "%g%s" % (minor_distance * major_skip, unit))
-            self.gui.get_object("MinorGridSizeLabel").set_text(
-                    "%g%s" % (minor_distance, unit))
+                "%g%s" % (minor_distance * major_skip, unit))
+            self.gui.get_object("MinorGridSizeLabel").set_text("%g%s" % (minor_distance, unit))
         line_counter = int(math.ceil(grid_size / minor_distance))
         color = self.core.get("color_grid")
         GL.glColor4f(color["red"], color["green"], color["blue"], color["alpha"])
@@ -106,12 +101,10 @@ class OpenGLViewGrid(pycam.Plugins.PluginBase):
                 GL.glEnd()
                 GL.glLineWidth(3)
                 GL.glBegin(GL.GL_LINES)
-            if (index == 0) or ((index > 0) and (high[1] > 0)) or \
-                    ((index < 0) and (low[1] < 0)):
+            if (index == 0) or ((index > 0) and (high[1] > 0)) or ((index < 0) and (low[1] < 0)):
                 GL.glVertex3f(grid_low[0], position, 0)
                 GL.glVertex3f(grid_high[0], position, 0)
-            if (index == 0) or ((index > 0) and (high[0] > 0)) or \
-                    ((index < 0) and (low[0] < 0)):
+            if (index == 0) or ((index > 0) and (high[0] > 0)) or ((index < 0) and (low[0] < 0)):
                 GL.glVertex3f(position, grid_low[1], 0)
                 GL.glVertex3f(position, grid_high[1], 0)
             if index % major_skip == 0:
@@ -121,4 +114,3 @@ class OpenGLViewGrid(pycam.Plugins.PluginBase):
         GL.glEnd()
         if is_light:
             GL.glEnable(GL.GL_LIGHTING)
-

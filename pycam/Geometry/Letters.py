@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2008-2010 Lode Leroy
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
@@ -24,7 +22,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.Geometry import TransformableContainer
 from pycam.Geometry.Model import ContourModel
 from pycam.Geometry.Line import Line
-from pycam.Geometry.PointUtils import *
+from pycam.Geometry.PointUtils import padd
+
 
 TEXT_ALIGN_LEFT = 0
 TEXT_ALIGN_CENTER = 1
@@ -32,9 +31,9 @@ TEXT_ALIGN_RIGHT = 2
 
 
 class Letter(TransformableContainer):
-    
+
     def __init__(self, lines):
-        self.lines = lines
+        self.lines = tuple(lines)
 
     def minx(self):
         return min([line.minx for line in self.lines])
@@ -50,7 +49,12 @@ class Letter(TransformableContainer):
 
     def get_positioned_lines(self, base_point, skew=None):
         result = []
-        get_skewed_point = lambda p: (base_point[0] + p[0] + (p[1] * skew / 100.0), base_point[1] + p[1], base_point[2])
+
+        def get_skewed_point(p):
+            return (base_point[0] + p[0] + (p[1] * skew / 100.0),
+                    base_point[1] + p[1],
+                    base_point[2])
+
         for line in self.lines:
             skewed_p1 = get_skewed_point(line.p1)
             skewed_p2 = get_skewed_point(line.p2)
@@ -64,8 +68,8 @@ class Letter(TransformableContainer):
 
 class Charset(object):
 
-    def __init__(self, name=None, author=None, letterspacing=3.0,
-            wordspacing=6.75, linespacingfactor=1.0, encoding=None):
+    def __init__(self, name=None, author=None, letterspacing=3.0, wordspacing=6.75,
+                 linespacingfactor=1.0, encoding=None):
         self.letters = {}
         self.letterspacing = letterspacing
         self.wordspacing = wordspacing
@@ -101,8 +105,7 @@ class Charset(object):
     def get_authors(self):
         return self.authors
 
-    def render(self, text, origin=None, skew=0, line_spacing=1.0, pitch=1.0,
-            align=None):
+    def render(self, text, origin=None, skew=0, line_spacing=1.0, pitch=1.0, align=None):
         result = ContourModel()
         if origin is None:
             origin = (0, 0, 0)
@@ -111,8 +114,7 @@ class Charset(object):
         base = origin
         letter_spacing = self.letterspacing * pitch
         word_spacing = self.wordspacing * pitch
-        line_factor = self.default_linespacing * self.linespacingfactor \
-                * line_spacing
+        line_factor = self.default_linespacing * self.linespacingfactor * line_spacing
         for line in text.splitlines():
             current_line = ContourModel()
             line_height = self.default_height
@@ -122,8 +124,7 @@ class Charset(object):
                 elif character in self.letters.keys():
                     charset_letter = self.letters[character]
                     new_model = ContourModel()
-                    for line in charset_letter.get_positioned_lines(base,
-                            skew=skew):
+                    for line in charset_letter.get_positioned_lines(base, skew=skew):
                         new_model.append(line, allow_reverse=True)
                     for polygon in new_model.get_polygons():
                         # add polygons instead of lines -> more efficient
@@ -137,7 +138,7 @@ class Charset(object):
                     base = padd(base, (letter_spacing, 0, 0))
             # go to the next line
             base = (origin[0], base[1] - line_height * line_factor, origin[2])
-            if not current_line.maxx is None:
+            if current_line.maxx is not None:
                 if align == TEXT_ALIGN_CENTER:
                     current_line.shift(-current_line.maxx / 2, 0, 0)
                 elif align == TEXT_ALIGN_RIGHT:
@@ -153,4 +154,3 @@ class Charset(object):
             # don't shift, if result.miny is None (e.g.: no content) or zero
             result.shift(0, -result.miny, 0)
         return result
-

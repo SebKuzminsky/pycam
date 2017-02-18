@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2008-2010 Lode Leroy
 Copyright 2010-2011 Lars Kruse <devel@sumpfralle.de>
 
@@ -21,13 +19,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-
-from pycam.Geometry import IDGenerator
-from pycam.Geometry.PointUtils import *
-from pycam.Geometry.utils import number, INFINITE, epsilon
-from pycam.Geometry.intersection import intersect_cylinder_point, \
-        intersect_cylinder_line
 import uuid
+
+from pycam.Geometry import number, INFINITE, epsilon
+from pycam.Geometry import IDGenerator
+from pycam.Geometry.intersection import intersect_cylinder_point, intersect_cylinder_line
+from pycam.Geometry.PointUtils import padd, pdot, psub
 
 
 class BaseCutter(IDGenerator):
@@ -108,8 +105,8 @@ class BaseCutter(IDGenerator):
             set_pos_func(location[0], location[1], location[2])
 
     def intersect(self, direction, triangle, start=None):
-        raise NotImplementedError("Inherited class of BaseCutter does not " \
-                + "implement the required function 'intersect'.")
+        raise NotImplementedError("Inherited class of BaseCutter does not implement the required "
+                                  "function 'intersect'.")
 
     def drop(self, triangle, start=None):
         if start is None:
@@ -126,28 +123,25 @@ class BaseCutter(IDGenerator):
 
         # check bounding circle collision
         c = triangle.middle
-        if (c[0] - start[0]) ** 2 + (c[1] - start[1]) ** 2 \
-                > (self.distance_radiussq + 2 * self.distance_radius \
-                    * triangle.radius + triangle.radiussq) + epsilon:
+        if ((c[0] - start[0]) ** 2 + (c[1] - start[1]) ** 2
+                > (self.distance_radiussq
+                   + 2 * self.distance_radius * triangle.radius + triangle.radiussq) + epsilon):
             return None
 
         return self.intersect(BaseCutter.vertical, triangle, start=start)[0]
 
     def intersect_circle_triangle(self, direction, triangle, start=None):
-        (cl, ccp, cp, d) = self.intersect_circle_plane(direction, triangle,
-                start=start)
+        (cl, ccp, cp, d) = self.intersect_circle_plane(direction, triangle, start=start)
         if cp and triangle.is_point_inside(cp):
             return (cl, d, cp)
         return (None, INFINITE, None)
 
     def intersect_circle_vertex(self, direction, point, start=None):
-        (cl, ccp, cp, l) = self.intersect_circle_point(direction, point,
-                start=start)
+        (cl, ccp, cp, l) = self.intersect_circle_point(direction, point, start=start)
         return (cl, l, cp)
 
     def intersect_circle_edge(self, direction, edge, start=None):
-        (cl, ccp, cp, l) = self.intersect_circle_line(direction, edge,
-                start=start)
+        (cl, ccp, cp, l) = self.intersect_circle_line(direction, edge, start=start)
         if cp:
             # check if the contact point is between the endpoints
             m = pdot(psub(cp, edge.p1), edge.dir)
@@ -158,9 +152,9 @@ class BaseCutter(IDGenerator):
     def intersect_cylinder_point(self, direction, point, start=None):
         if start is None:
             start = self.location
-        (ccp, cp, l) = intersect_cylinder_point(
-                padd(psub(start, self.location), self.center),
-                self.axis, self.distance_radius, self.distance_radiussq, direction, point)
+        (ccp, cp, l) = intersect_cylinder_point(padd(psub(start, self.location), self.center),
+                                                self.axis, self.distance_radius,
+                                                self.distance_radiussq, direction, point)
         # offset intersection
         if ccp:
             cl = padd(start, psub(cp, ccp))
@@ -170,8 +164,7 @@ class BaseCutter(IDGenerator):
     def intersect_cylinder_vertex(self, direction, point, start=None):
         if start is None:
             start = self.location
-        (cl, ccp, cp, l) = self.intersect_cylinder_point(direction, point,
-                start=start)
+        (cl, ccp, cp, l) = self.intersect_cylinder_point(direction, point, start=start)
         if ccp and ccp[2] < padd(psub(start, self.location), self.center)[2]:
             return (None, INFINITE, None)
         return (cl, l, cp)
@@ -179,9 +172,9 @@ class BaseCutter(IDGenerator):
     def intersect_cylinder_line(self, direction, edge, start=None):
         if start is None:
             start = self.location
-        (ccp, cp, l) = intersect_cylinder_line(
-                padd(psub(start, self.location), self.center),
-                self.axis, self.distance_radius, self.distance_radiussq, direction, edge)
+        (ccp, cp, l) = intersect_cylinder_line(padd(psub(start, self.location), self.center),
+                                               self.axis, self.distance_radius,
+                                               self.distance_radiussq, direction, edge)
         # offset intersection
         if ccp:
             cl = padd(start, psub(cp, ccp))
@@ -191,8 +184,7 @@ class BaseCutter(IDGenerator):
     def intersect_cylinder_edge(self, direction, edge, start=None):
         if start is None:
             start = self.location
-        (cl, ccp, cp, l) = self.intersect_cylinder_line(direction, edge,
-                start=start)
+        (cl, ccp, cp, l) = self.intersect_cylinder_line(direction, edge, start=start)
         if not ccp:
             return (None, INFINITE, None)
         m = pdot(psub(cp, edge.p1), edge.dir)
@@ -201,4 +193,3 @@ class BaseCutter(IDGenerator):
         if ccp[2] < padd(psub(start, self.location), self.center)[2]:
             return (None, INFINITE, None)
         return (cl, l, cp)
-

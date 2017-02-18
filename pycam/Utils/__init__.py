@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2008 Lode Leroy
 
 This file is part of PyCAM.
@@ -20,20 +18,17 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = ["iterators", "polynomials", "ProgressCounter", "threading",
-        "get_platform", "URIHandler", "PLATFORM_WINDOWS", "PLATFORM_MACOS",
-        "PLATFORM_LINUX", "PLATFORM_UNKNOWN", "get_exception_report"]
-
-import sys
 import os
 import re
 import socket
+import sys
+import traceback
 import urllib
 import urlparse
-import traceback
 # this is imported below on demand
-#import win32com
-#import win32api
+# import win32com
+# import win32api
+
 
 PLATFORM_LINUX = 0
 PLATFORM_WINDOWS = 1
@@ -74,8 +69,7 @@ def get_case_insensitive_file_pattern(pattern):
     return "".join(result)
 
 
-def get_non_conflicting_name(template, conflicts, start=None,
-        get_next_func=None):
+def get_non_conflicting_name(template, conflicts, start=None, get_next_func=None):
     """ Find a string containing a number that is not in conflict with any of
         the given strings. A name template (containing "%d") is required.
 
@@ -129,12 +123,11 @@ class URIHandler(object):
             self._uri = urlparse.urlparse(location)
             if not self._uri.scheme:
                 # always fill the "scheme" field - some functions expect this
-                self._uri = urlparse.urlparse(self.DEFAULT_PREFIX + \
-                        os.path.realpath(os.path.abspath(location)))
+                self._uri = urlparse.urlparse(self.DEFAULT_PREFIX
+                                              + os.path.realpath(os.path.abspath(location)))
 
     def is_local(self):
-        return bool(self and (not self._uri.scheme or \
-                (self._uri.scheme == "file")))
+        return bool(self and (not self._uri.scheme or (self._uri.scheme == "file")))
 
     def get_local_path(self):
         if self.is_local():
@@ -159,14 +152,13 @@ class URIHandler(object):
         else:
             return urllib.urlopen(self._uri.geturl())
 
-    def retrieve_remote_file(uri, destination, callback=None):
+    def retrieve_remote_file(self, destination, callback=None):
         if callback:
-            download_callback = lambda current_blocks, block_size, \
-                num_of_blocks: callback()
+            download_callback = lambda current_blocks, block_size, num_of_blocks: callback()
         else:
             download_callback = None
         try:
-            urllib.urlretrieve(uri, destination, download_callback)
+            urllib.urlretrieve(self.get_url(), destination, download_callback)
             return True
         except IOError:
             return False
@@ -202,8 +194,9 @@ class URIHandler(object):
                 return False
 
     def is_writable(self):
-        return bool(self.is_local() and os.path.isfile(self.get_local_path()) and \
-                os.access(self.get_local_path(), os.W_OK))
+        return bool(self.is_local()
+                    and os.path.isfile(self.get_local_path())
+                    and os.access(self.get_local_path(), os.W_OK))
 
 
 def get_all_ips():
@@ -212,7 +205,6 @@ def get_all_ips():
     The resulting list of IPs contains non-local IPs first, followed by
     local IPs (starting with "127....").
     """
-    result = []
     def get_ips_of_name(name):
         try:
             ips = socket.gethostbyname_ex(name)
@@ -220,12 +212,14 @@ def get_all_ips():
                 return ips[2]
         except socket.gaierror:
             return []
+    result = []
     result.extend(get_ips_of_name(socket.gethostname()))
     result.extend(get_ips_of_name("localhost"))
     filtered_result = []
     for one_ip in result:
-        if not one_ip in filtered_result:
+        if one_ip not in filtered_result:
             filtered_result.append(one_ip)
+
     def sort_ip_by_relevance(ip1, ip2):
         if ip1.startswith("127."):
             return 1
@@ -233,14 +227,16 @@ def get_all_ips():
             return -1
         else:
             return cmp(ip1, ip2)
+
     # non-local IPs first
     filtered_result.sort(cmp=sort_ip_by_relevance)
     return filtered_result
 
+
 def get_exception_report():
-    return "An unexpected exception occoured: please send the " \
-            + "text below to the developers of PyCAM. Thanks a lot!" \
-            + os.linesep + traceback.format_exc()
+    return ("An unexpected exception occoured: please send the text below to the developers of "
+            "PyCAM. Thanks a lot!" + os.linesep + traceback.format_exc())
+
 
 def print_stack_trace():
     # for debug purposes
@@ -271,4 +267,3 @@ class ProgressCounter(object):
 
     def get_percent(self):
         return min(100, max(0, 100.0 * self.current_value / self.max_value))
-

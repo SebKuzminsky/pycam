@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2008 Lode Leroy
 
 This file is part of PyCAM.
@@ -19,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
+
 
 def find_root_subdivide(f, x0, x1, tolerance, scale):
     ymin = 0
@@ -40,6 +39,7 @@ def find_root_subdivide(f, x0, x1, tolerance, scale):
         scale /= 10
     return xmin
 
+
 def find_root_newton_raphson(f, df, x0, tolerance, maxiter):
     x = x0
     iter_count = 0
@@ -57,7 +57,6 @@ def find_root_newton_raphson(f, df, x0, tolerance, maxiter):
         iter_count += 1
     return x
 
-def find_root(f, df=None, x0=0, x1=1, tolerance=0.001):
-    return find_root_subdivide(f=f, x0=x0, x1=x1, tolerance=tolerance,
-            scale=10.0)
 
+def find_root(f, df=None, x0=0, x1=1, tolerance=0.001):
+    return find_root_subdivide(f=f, x0=x0, x1=x1, tolerance=tolerance, scale=10.0)

@@ -14,12 +14,15 @@ EXPORT_WIN32 = $(EXPORT_FILE_PREFIX).win32.exe
 PYTHON_EXE ?= python
 # check if the local version of python's distutils support "--plat-name"
 # (introduced in python 2.6)
-DISTUTILS_PLAT_NAME = $(shell $(PYTHON_EXE) setup.py --help build_ext | grep -q -- "--plat-name" && echo "--plat-name win32")
+DISTUTILS_PLAT_NAME = $(shell $(PYTHON_EXE) setup.py --help build_ext \
+		      | grep -q -- "--plat-name" && echo "--plat-name win32")
+PYLINT_TARGETS = pycam Tests pyinstaller/hooks scripts setup
 
 # turn the destination directory into an absolute path
 ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
 
-.PHONY: zip tgz win32 clean dist git_export upload create_archive_dir man
+.PHONY: zip tgz win32 clean dist git_export upload create_archive_dir man check-style test \
+	pylint-relaxed pylint-strict
 
 dist: zip tgz win32
 	@# remove the tmp directory when everything is done
@@ -36,7 +39,8 @@ git_export: clean
 		then git clone . "$(EXPORT_DIR)";\
 		else echo "No git repo found."; exit 1;\
 	fi
-	# Windows needs a different name for the startup script - due to process creation (no fork/exec)
+	# Windows needs a different name for the startup script - due to process creation
+	# (no fork/exec)
 	@cp "$(EXPORT_DIR)/scripts/pycam" "$(EXPORT_DIR)/scripts/pycam-loader.py"
 
 create_archive_dir:
@@ -50,11 +54,32 @@ tgz: create_archive_dir man git_export
 
 win32: create_archive_dir man git_export
 	# this is a binary release
-	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py bdist_wininst --user-access-control force --dist-dir "$(ARCHIVE_DIR)" $(DISTUTILS_PLAT_NAME)
+	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py bdist_wininst --user-access-control force \
+		--dist-dir "$(ARCHIVE_DIR)" $(DISTUTILS_PLAT_NAME)
 
 upload:
 	svn cp "$(SVN_REPO_BASE)" "$(REPO_TAGS)/release-$(VERSION)" -m "tag release $(VERSION)"
-	svn import "$(ARCHIVE_DIR)/$(EXPORT_ZIP)" "$(REPO_TAGS)/archives/$(EXPORT_ZIP)" -m "added released zip file for version $(VERSION)"
-	svn import "$(ARCHIVE_DIR)/$(EXPORT_TGZ)" "$(REPO_TAGS)/archives/$(EXPORT_TGZ)" -m "added released tgz file for version $(VERSION)"
-	svn import "$(ARCHIVE_DIR)/$(EXPORT_WIN32)" "$(REPO_TAGS)/archives/$(EXPORT_WIN32)" -m "added released win32 installer for version $(VERSION)"
+	svn import "$(ARCHIVE_DIR)/$(EXPORT_ZIP)" "$(REPO_TAGS)/archives/$(EXPORT_ZIP)" \
+		-m "added released zip file for version $(VERSION)"
+	svn import "$(ARCHIVE_DIR)/$(EXPORT_TGZ)" "$(REPO_TAGS)/archives/$(EXPORT_TGZ)" \
+		-m "added released tgz file for version $(VERSION)"
+	svn import "$(ARCHIVE_DIR)/$(EXPORT_WIN32)" "$(REPO_TAGS)/archives/$(EXPORT_WIN32)" \
+		-m "added released win32 installer for version $(VERSION)"
 
+check-style:
+	python -m flake8
+
+pylint-strict:
+	pylint $(PYLINT_TARGETS)
+
+pylint-relaxed:
+	pylint -d missing-docstring,invalid-name,pointless-string-statement,fixme,no-self-use \
+		-d global-statement,unnecessary-pass,too-many-arguments,too-many-branches \
+		-d too-many-instance-attributes,too-many-return-statements \
+		-d too-few-public-methods,too-many-locals,using-constant-test \
+		-d attribute-defined-outside-init,superfluous-parens,too-many-nested-blocks \
+		-d too-many-statements,unused-argument,too-many-lines \
+		-d too-many-boolean-expressions,too-many-public-methods \
+		$(PYLINT_TARGETS)
+
+test: check-style

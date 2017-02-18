@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -21,7 +19,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Plugins
-from pycam.Geometry.PointUtils import *
+from pycam.Geometry.PointUtils import padd, pdot, pmul, pnormalized
 
 
 GTK_COLOR_MAX = 65535.0
@@ -38,8 +36,8 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
         self._gtk = gtk
         self._GL = OpenGL.GL
         self._event_handlers = (("visualize-items", self.draw_model),
-                ("model-changed","visual-item-updated"),
-                ("model-list-changed","visual-item-updated"))
+                                ("model-changed", "visual-item-updated"),
+                                ("model-list-changed", "visual-item-updated"))
         self.core.get("register_display_item")("show_model", "Show Model", 10)
         self.core.get("register_color")("color_model", "Model", 10)
         self.core.register_chain("get_draw_dimension", self.get_draw_dimension)
@@ -50,8 +48,7 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.unregister_event_handlers(self._event_handlers)
-        self.core.unregister_chain("get_draw_dimension",
-                self.get_draw_dimension)
+        self.core.unregister_chain("get_draw_dimension", self.get_draw_dimension)
         self.core.get("unregister_display_item")("show_model")
         self.core.get("unregister_color")("color_model")
         self.core.emit_event("visual-item-updated")
@@ -63,14 +60,14 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
             return None
 
     def _is_visible(self):
-        return self.core.get("show_model") \
-                and not (self.core.get("show_simulation") \
-                    and self.core.get("simulation_toolpath_moves"))
+        return (self.core.get("show_model")
+                and not (self.core.get("show_simulation")
+                         and self.core.get("simulation_toolpath_moves")))
 
     def get_draw_dimension(self, low, high):
         if self._is_visible():
             mlow, mhigh = pycam.Geometry.Model.get_combined_bounds(
-                    [m.model for m in self.core.get("models").get_visible()])
+                [m.model for m in self.core.get("models").get_visible()])
             if None in mlow or None in mhigh:
                 return
             for index in range(3):
@@ -88,17 +85,16 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
                 color = (col["red"], col["green"], col["blue"], col["alpha"])
                 GL.glColor4f(*color)
                 # reset the material color
-                GL.glMaterial(GL.GL_FRONT_AND_BACK,
-                        GL.GL_AMBIENT_AND_DIFFUSE, color)
+                GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT_AND_DIFFUSE, color)
                 # we need to wait until the color change is active
                 GL.glFinish()
                 if self.core.get("opengl_cache_enable"):
                     key = self._get_cache_key(model, color=color,
-                            show_directions=self.core.get("show_directions"))
-                    do_caching = not key is None
+                                              show_directions=self.core.get("show_directions"))
+                    do_caching = key is not None
                 else:
                     do_caching = False
-                if do_caching and not key in self._cache:
+                if do_caching and key not in self._cache:
                     # Rendering a display list takes less than 5% of the time
                     # for a complete rebuild.
                     list_index = GL.glGenLists(1)
@@ -109,10 +105,10 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
                     else:
                         do_caching = False
                     # next: compile an OpenGL display list
-                if not do_caching or (not key in self._cache):
+                if not do_caching or (key not in self._cache):
                     self.core.call_chain("draw_models", [model])
                 if do_caching:
-                    if not key in self._cache:
+                    if key not in self._cache:
                         GL.glEndList()
                         GL.glCallList(list_index)
                         self._cache[key] = list_index
@@ -136,25 +132,25 @@ class OpenGLViewModelTriangle(pycam.Plugins.PluginBase):
         self.core.unregister_chain("draw_models", self.draw_triangle_model)
 
     def draw_triangle_model(self, models):
+        def calc_normal(main, normals):
+            suitable = (0, 0, 0, 'v')
+            for normal, weight in normals:
+                dot = pdot(main, normal)
+                if dot > 0:
+                    suitable = padd(suitable, pmul(normal, weight * dot))
+            return pnormalized(suitable)
+
         if not models:
             return
         GL = self._GL
         removal_list = []
-        for index in range(len(models)):
-            model = models[index]
+        for index, model in enumerate(models):
             if not hasattr(model, "triangles"):
                 continue
-            def calc_normal(main, normals):
-                suitable = (0, 0, 0, 'v')
-                for normal, weight in normals:
-                    dot = pdot(main, normal)
-                    if dot > 0:
-                        suitable = padd(suitable, pmul(normal, weight * dot))
-                return pnormalized(suitable)
             vertices = {}
             for t in model.triangles():
                 for p in (t.p1, t.p2, t.p3):
-                    if not p in vertices:
+                    if p not in vertices:
                         vertices[p] = []
                     vertices[p].append((pnormalized(t.normal), t.get_area()))
             GL.glBegin(GL.GL_TRIANGLES)
@@ -187,8 +183,7 @@ class OpenGLViewModelGeneric(pycam.Plugins.PluginBase):
 
     def draw_generic_model(self, models):
         removal_list = []
-        for index in range(len(models)):
-            model = models[index]
+        for index, model in enumerate(models):
             for item in model.next():
                 # ignore invisible things like the normal of a ContourModel
                 if hasattr(item, "to_OpenGL"):
@@ -197,4 +192,3 @@ class OpenGLViewModelGeneric(pycam.Plugins.PluginBase):
         removal_list.reverse()
         for index in removal_list:
             removal_list.pop(index)
-

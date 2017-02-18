@@ -18,10 +18,11 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-
-import pycam.Geometry.PointUtils as pu 
-import pycam.Test
 import math
+
+import pycam.Geometry.PointUtils as pu
+import pycam.Test
+
 
 ROOT_2 = math.sqrt(2)
 ROOT_3 = math.sqrt(3)
@@ -39,6 +40,7 @@ TODO: the following tests are missing for the PointUtils module:
     pis_inside
     ptransform_by_matrix
 """
+
 
 class UnaryOperations(pycam.Test.PycamTestCase):
 
@@ -122,4 +124,3 @@ class BinaryOperations(pycam.Test.PycamTestCase):
 
 if __name__ == "__main__":
     pycam.Test.main()
-

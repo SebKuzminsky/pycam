@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2008-2009 Lode Leroy
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
@@ -21,25 +19,23 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry import TransformableContainer, IDGenerator
-from pycam.Geometry.PointUtils import *
-from pycam.Geometry.Plane import Plane
-from pycam.Geometry.utils import epsilon, sqrt
-# OpenGLTools will be imported later, if necessary
-#import pycam.Gui.OpenGLTools
-
-
 try:
     import OpenGL.GL as GL
     GL_enabled = True
 except ImportError:
     GL_enabled = False
 
+from pycam.Geometry import epsilon, TransformableContainer, IDGenerator
+from pycam.Geometry.Plane import Plane
+from pycam.Geometry.PointUtils import (padd, pcross, pdist, pdist_sq, pdot, pmul, pnorm, pnormsq,
+                                       pnormalized, psub)
+# OpenGLTools will be imported later, if necessary
+# import pycam.Gui.OpenGLTools
+
 
 class Line(IDGenerator, TransformableContainer):
 
-    __slots__ = ["id", "p1", "p2", "_vector", "_minx", "_maxx", "_miny",
-            "_maxy", "_minz", "_maxz"]
+    __slots__ = ["id", "p1", "p2", "_vector", "_minx", "_maxx", "_miny", "_maxy", "_minz", "_maxz"]
 
     def __init__(self, p1, p2):
         super(Line, self).__init__()
@@ -101,8 +97,8 @@ class Line(IDGenerator, TransformableContainer):
         return self._maxz
 
     def __repr__(self):
-        return "Line<%g,%g,%g>-<%g,%g,%g>" % (self.p1[0], self.p1[1], self.p1[2],
-                self.p2[0], self.p2[1], self.p2[2])
+        return "Line<%g,%g,%g>-<%g,%g,%g>" % (self.p1[0], self.p1[1], self.p1[2], self.p2[0],
+                                              self.p2[1], self.p2[2])
 
     def __cmp__(self, other):
         """ Two lines are equal if both pairs of points are at the same
@@ -119,7 +115,7 @@ class Line(IDGenerator, TransformableContainer):
                 return cmp(self.p2, other.p2)
         else:
             return cmp(str(self), str(other))
-        
+
     def next(self):
         yield "p1"
         yield "p2"
@@ -157,16 +153,15 @@ class Line(IDGenerator, TransformableContainer):
         return psub(self.p1, pmul(v, l))
 
     def dist_to_point_sq(self, p):
-        return pdist_sq(p, self.closes_point(p))
+        return pdist_sq(p, self.closest_point(p))
 
     def dist_to_point(self, p):
-        return pdist(p, self.closes_point(p))
-    
+        return pdist(p, self.closest_point(p))
+
     def is_point_inside(self, p):
         if (p == self.p1) or (p == self.p2):
             # these conditions are not covered by the code below
             return True
-            
         dir1 = pnormalized(psub(p, self.p1))
         dir2 = pnormalized(psub(self.p2, p))
         # True if the two parts of the line have the same direction or if the
@@ -176,7 +171,7 @@ class Line(IDGenerator, TransformableContainer):
     def to_OpenGL(self, color=None, show_directions=False):
         if not GL_enabled:
             return
-        if not color is None:
+        if color is not None:
             GL.glColor4f(*color)
         GL.glBegin(GL.GL_LINES)
         GL.glVertex3f(self.p1[0], self.p1[1], self.p1[2])
@@ -206,7 +201,7 @@ class Line(IDGenerator, TransformableContainer):
         except ZeroDivisionError:
             # lines are parallel
             # check if they are _one_ line
-            if pnorm(pcross(a,c)) != 0:
+            if pnorm(pcross(a, c)) != 0:
                 # the lines are parallel with a distance
                 return None, None
             # the lines are on one straight
@@ -225,14 +220,14 @@ class Line(IDGenerator, TransformableContainer):
             candidates.sort(key=lambda (cp, dist): dist)
             return candidates[0]
         if infinite_lines or (-epsilon <= factor <= 1 + epsilon):
-            intersection = padd(x1, pmul(a, factor))
+            intersec = padd(x1, pmul(a, factor))
             # check if the intersection is between x3 and x4
             if infinite_lines:
-                return intersection, factor
-            elif (min(x3[0], x4[0]) - epsilon <= intersection[0] <= max(x3[0], x4[0]) + epsilon) \
-                    and (min(x3[1], x4[1]) - epsilon <= intersection[1] <= max(x3[1], x4[1]) + epsilon) \
-                    and (min(x3[2], x4[2]) - epsilon <= intersection[2] <= max(x3[2], x4[2]) + epsilon):
-                return intersection, factor
+                return intersec, factor
+            elif ((min(x3[0], x4[0]) - epsilon <= intersec[0] <= max(x3[0], x4[0]) + epsilon)
+                  and (min(x3[1], x4[1]) - epsilon <= intersec[1] <= max(x3[1], x4[1]) + epsilon)
+                  and (min(x3[2], x4[2]) - epsilon <= intersec[2] <= max(x3[2], x4[2]) + epsilon)):
+                return intersec, factor
             else:
                 # intersection outside of the length of line(x3, x4)
                 return None, None
@@ -250,24 +245,20 @@ class Line(IDGenerator, TransformableContainer):
             # generate the six planes of the cube for possible intersections
             minp = (minx, miny, minz)
             maxp = (maxx, maxy, maxz)
-            planes = [
-                    Plane(minp, (1, 0, 0)),
-                    Plane(minp, (0, 1, 0)),
-                    Plane(minp, (0, 0, 1)),
-                    Plane(maxp, (1, 0, 0)),
-                    Plane(maxp, (0, 1, 0)),
-                    Plane(maxp, (0, 0, 1)),
-            ]
+            planes = [Plane(minp, (1, 0, 0)),
+                      Plane(minp, (0, 1, 0)),
+                      Plane(minp, (0, 0, 1)),
+                      Plane(maxp, (1, 0, 0)),
+                      Plane(maxp, (0, 1, 0)),
+                      Plane(maxp, (0, 0, 1))]
             # calculate all intersections
-            intersections = [plane.intersect_point(self.dir, self.p1)
-                    for plane in planes]
+            intersections = [plane.intersect_point(self.dir, self.p1) for plane in planes]
             # remove all intersections outside the box and outside the line
             valid_intersections = [(cp, dist) for cp, dist in intersections
-                    if cp and (-epsilon <= dist <= self.len + epsilon) and \
-                            cp.is_inside(minx, maxx, miny, maxy, minz, maxz)]
+                                   if cp and (-epsilon <= dist <= self.len + epsilon)
+                                   and cp.is_inside(minx, maxx, miny, maxy, minz, maxz)]
             # sort the intersections according to their distance to self.p1
-            valid_intersections.sort(
-                    cmp=lambda (cp1, l1), (cp2, l2): cmp(l1, l2))
+            valid_intersections.sort(cmp=lambda (cp1, l1), (cp2, l2): cmp(l1, l2))
             # Check if p1 is within the box - otherwise use the closest
             # intersection. The check for "valid_intersections" is necessary
             # to prevent an IndexError due to floating point inaccuracies.
@@ -278,8 +269,7 @@ class Line(IDGenerator, TransformableContainer):
                 new_p1 = valid_intersections[0][0]
             # Check if p2 is within the box - otherwise use the intersection
             # most distant from p1.
-            if self.p2.is_inside(minx, maxx, miny, maxy, minz, maxz) \
-                    or not valid_intersections:
+            if self.p2.is_inside(minx, maxx, miny, maxy, minz, maxz) or not valid_intersections:
                 new_p2 = self.p2
             else:
                 new_p2 = valid_intersections[-1][0]
@@ -288,4 +278,3 @@ class Line(IDGenerator, TransformableContainer):
                 return None
             else:
                 return Line(new_p1, new_p2)
-

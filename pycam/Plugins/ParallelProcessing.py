@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -22,10 +20,12 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import os
-import string
 import random
+import string
+
 import gobject
 
+from pycam import HELP_WIKI_URL
 import pycam.Plugins
 
 
@@ -46,18 +46,15 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
             self.process_pool_window.set_default_size(500, 400)
             self._gtk_handlers = []
             self._gtk_handlers.extend((
-                    (self.process_pool_window, "delete-event",
-                            self.toggle_process_pool_window, False),
-                    (self.process_pool_window, "destroy",
-                            self.toggle_process_pool_window, False)))
+                (self.process_pool_window, "delete-event", self.toggle_process_pool_window, False),
+                (self.process_pool_window, "destroy", self.toggle_process_pool_window, False)))
             self._gtk_handlers.append((
-                    self.gui.get_object("ProcessPoolWindowClose"), "clicked",
-                    self.toggle_process_pool_window, False))
+                self.gui.get_object("ProcessPoolWindowClose"), "clicked",
+                self.toggle_process_pool_window, False))
             self.gui.get_object("ProcessPoolRefreshInterval").set_value(3)
             self.process_pool_model = self.gui.get_object("ProcessPoolStatisticsModel")
             # show/hide controls
-            self.enable_parallel_processes = self.gui.get_object(
-                    "EnableParallelProcesses")
+            self.enable_parallel_processes = self.gui.get_object("EnableParallelProcesses")
             if pycam.Utils.threading.is_multiprocessing_available():
                 self.gui.get_object("ParallelProcessingDisabledLabel").hide()
                 if pycam.Utils.threading.is_server_mode_available():
@@ -68,37 +65,32 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
                 self.gui.get_object("ParallelProcessSettingsBox").hide()
                 self.gui.get_object("EnableParallelProcesses").hide()
             self.enable_parallel_processes.set_active(
-                    pycam.Utils.threading.is_multiprocessing_enabled())
+                pycam.Utils.threading.is_multiprocessing_enabled())
             self._gtk_handlers.append((self.enable_parallel_processes,
-                    "toggled", self.handle_parallel_processes_settings))
-            self.number_of_processes = self.gui.get_object(
-                    "NumberOfProcesses")
-            self.number_of_processes.set_value(
-                    pycam.Utils.threading.get_number_of_processes())
-            server_port_local_obj = self.gui.get_object("ServerPortLocal")
-            server_port_remote_obj = self.gui.get_object("RemoteServerPort")
+                                       "toggled", self.handle_parallel_processes_settings))
+            self.number_of_processes = self.gui.get_object("NumberOfProcesses")
+            self.number_of_processes.set_value(pycam.Utils.threading.get_number_of_processes())
+            self.server_port_local_obj = self.gui.get_object("ServerPortLocal")
+            self.server_port_remote_obj = self.gui.get_object("RemoteServerPort")
+            self.auth_key_obj = self.gui.get_object("ServerPassword")
             self._gtk_handlers.extend((
-                    (self.number_of_processes, "value-changed",
-                        self.handle_parallel_processes_settings),
-                    (self.gui.get_object("EnableServerMode"), "toggled",
-                        self.initialize_multiprocessing),
-                    (self.gui.get_object("ServerPasswordGenerate"), "clicked",
-                        self.generate_random_server_password),
-                    (self.gui.get_object("ServerPasswordShow"), "toggled",
-                        self.update_parallel_processes_settings)))
-            auth_key_obj = self.gui.get_object("ServerPassword")
-            server_hostname = self.gui.get_object("RemoteServerHostname")
+                (self.number_of_processes, "value-changed",
+                 self.handle_parallel_processes_settings),
+                (self.gui.get_object("EnableServerMode"), "toggled",
+                 self.initialize_multiprocessing),
+                (self.gui.get_object("ServerPasswordGenerate"), "clicked",
+                 self.generate_random_server_password),
+                (self.gui.get_object("ServerPasswordShow"), "toggled",
+                 self.update_parallel_processes_settings)))
             cpu_cores = pycam.Utils.threading.get_number_of_cores()
             if cpu_cores is None:
                 cpu_cores = "unknown"
             self.gui.get_object("AvailableCores").set_label(str(cpu_cores))
             toggle_button = self.gui.get_object("ToggleProcessPoolWindow")
-            self._gtk_handlers.append((toggle_button, "toggled",
-                    self.toggle_process_pool_window))
-            self.register_gtk_accelerator("processes", toggle_button,
-                    None, "ToggleProcessPoolWindow")
-            self.core.register_ui("view_menu", "ToggleProcessPoolWindow",
-                    toggle_button, 40)
+            self._gtk_handlers.append((toggle_button, "toggled", self.toggle_process_pool_window))
+            self.register_gtk_accelerator("processes", toggle_button, None,
+                                          "ToggleProcessPoolWindow")
+            self.core.register_ui("view_menu", "ToggleProcessPoolWindow", toggle_button, 40)
             self.register_gtk_handlers(self._gtk_handlers)
             self.update_parallel_processes_settings()
         return True
@@ -106,8 +98,7 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
     def teardown(self):
         if self.gui:
             self.process_pool_window.hide()
-            self.core.unregister_ui("preferences",
-                    self.gui.get_object("MultiprocessingFrame"))
+            self.core.unregister_ui("preferences", self.gui.get_object("MultiprocessingFrame"))
             toggle_button = self.gui.get_object("ToggleProcessPoolWindow")
             self.core.unregister_ui("view_menu", toggle_button)
             self.unregister_gtk_accelerator("processes", toggle_button)
@@ -131,10 +122,10 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
                 disabled_box.hide()
                 statistics_box.show()
                 # start the refresh function
-                interval = int(max(1, self.gui.get_object(
-                        "ProcessPoolRefreshInterval").get_value()))
+                interval = int(max(1,
+                                   self.gui.get_object("ProcessPoolRefreshInterval").get_value()))
                 gobject.timeout_add_seconds(interval,
-                        self.update_process_pool_statistics, interval)
+                                            self.update_process_pool_statistics, interval)
             else:
                 disabled_box.show()
                 statistics_box.hide()
@@ -151,18 +142,17 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
         model.clear()
         for item in stats:
             model.append(item)
-        self.gui.get_object("ProcessPoolConnectedWorkersValue").set_text(
-                str(len(stats)))
+        self.gui.get_object("ProcessPoolConnectedWorkersValue").set_text(str(len(stats)))
         details = pycam.Utils.threading.get_task_statistics()
         detail_text = os.linesep.join(["%s: %s" % (key, value)
-                for (key, value) in details.iteritems()])
+                                       for (key, value) in details.iteritems()])
         self.gui.get_object("ProcessPoolDetails").set_text(detail_text)
-        current_interval = int(max(1, self.gui.get_object(
-                "ProcessPoolRefreshInterval").get_value()))
+        current_interval = int(max(1,
+                                   self.gui.get_object("ProcessPoolRefreshInterval").get_value()))
         if original_interval != current_interval:
             # initiate a new repetition
-            gobject.timeout_add_seconds(current_interval,
-                    self.update_process_pool_statistics, current_interval)
+            gobject.timeout_add_seconds(current_interval, self.update_process_pool_statistics,
+                                        current_interval)
             # stop the current repetition
             return False
         else:
@@ -172,7 +162,7 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
     def generate_random_server_password(self, widget=None):
         all_characters = string.letters + string.digits
         random_pw = "".join([random.choice(all_characters) for i in range(12)])
-        self.gui.get_object("ServerPassword").set_text(random_pw)
+        self.auth_key_obj.set_text(random_pw)
 
     def update_parallel_processes_settings(self, widget=None):
         parallel_settings = self.gui.get_object("ParallelProcessSettingsBox")
@@ -180,7 +170,7 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
         server_mode_settings = self.gui.get_object("ServerModeSettingsTable")
         # update the show/hide state of the password
         hide_password = self.gui.get_object("ServerPasswordShow").get_active()
-        self.gui.get_object("ServerPassword").set_visibility(hide_password)
+        self.auth_key_obj.set_visibility(hide_password)
         if (self.gui.get_object("NumberOfProcesses").get_value() == 0) \
                 and self.enable_parallel_processes.get_active():
             self.gui.get_object("ZeroProcessesWarning").show()
@@ -220,13 +210,12 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
         enable_server = enable_server_obj.get_active()
         remote_host = self.gui.get_object("RemoteServerHostname").get_text()
         if remote_host:
-            remote_port = int(self.gui.get_object(
-                    "RemoteServerPort").get_value())
+            remote_port = int(self.server_port_remote_obj.get_value())
             remote = "%s:%s" % (remote_host, remote_port)
         else:
             remote = None
-        local_port = int(self.gui.get_object("ServerPortLocal").get_value())
-        auth_key = self.gui.get_object("ServerPassword").get_text()
+        local_port = int(self.server_port_local_obj.get_value())
+        auth_key = self.auth_key_obj.get_text()
         if not auth_key and enable_parallel and enable_server:
             self.log.error("You need to provide a password for this connection.")
             enable_server_obj.set_active(False)
@@ -234,23 +223,21 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
             if enable_server and \
                     (pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS):
                 if self.number_of_processes.get_value() > 0:
-                    self.log.warn("Mixed local and remote processes are " + \
-                        "currently not available on the Windows platform. " + \
-                        "Setting the number of local processes to zero." + \
-                        os.linesep + "See <a href=\"" + \
-                        HELP_WIKI_URL % "Parallel_Processing_on_different_Platforms" + \
-                        "\">platform feature matrix</a> for more details.")
+                    self.log.warn("Mixed local and remote processes are currently not available "
+                                  "on the Windows platform. Setting the number of local processes "
+                                  'to zero.%sSee <a href="%s">platform feature matrix</a> for '
+                                  "more details.", os.linesep,
+                                  HELP_WIKI_URL % "Parallel_Processing_on_different_Platforms")
                     self.number_of_processes.set_value(0)
                 self.number_of_processes.set_sensitive(False)
             else:
                 self.number_of_processes.set_sensitive(True)
             num_of_processes = int(self.number_of_processes.get_value())
             error = pycam.Utils.threading.init_threading(
-                    number_of_processes=num_of_processes,
-                    enable_server=enable_server, remote=remote,
-                    server_credentials=auth_key, local_port=local_port)
+                number_of_processes=num_of_processes, enable_server=enable_server, remote=remote,
+                server_credentials=auth_key, local_port=local_port)
             if error:
-                self.log.error("Failed to start server: %s" % error)
+                self.log.error("Failed to start server: %s", error)
                 pycam.Utils.threading.cleanup()
                 enable_server_obj.set_active(False)
         else:
@@ -264,4 +251,3 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
         enable_server_obj.set_label(info[0])
         complete_area.set_sensitive(True)
         self.update_parallel_processes_settings()
-

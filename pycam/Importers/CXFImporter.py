@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -22,8 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pycam.Geometry.Letters import Charset
 from pycam.Geometry.Line import Line
-from pycam.Geometry.PointUtils import *
-from pycam.Geometry import get_points_of_arc
+from pycam.Geometry.utils import get_points_of_arc
 import pycam.Utils.log
 import pycam.Utils
 
@@ -64,10 +61,8 @@ class _LineFeeder(object):
 
 class CXFParser(object):
 
-    META_KEYWORDS = ("letterspacing", "wordspacing", "linespacingfactor",
-            "encoding")
+    META_KEYWORDS = ("letterspacing", "wordspacing", "linespacingfactor", "encoding")
     META_KEYWORDS_MULTI = ("author", "name")
-
 
     def __init__(self, stream, callback=None):
         self.letters = {}
@@ -92,8 +87,8 @@ class CXFParser(object):
                             else:
                                 self.meta[key] = value
                         except ValueError:
-                            raise _CXFParseError("Invalid meta information " \
-                                    + "in line %d" % feeder.get_index())
+                            raise _CXFParseError("Invalid meta information in line %d",
+                                                 feeder.get_index())
                     elif key in self.META_KEYWORDS_MULTI:
                         if key in self.meta:
                             self.meta[key].append(value)
@@ -116,15 +111,15 @@ class CXFParser(object):
                         except UnicodeDecodeError:
                             pass
                     else:
-                        raise _CXFParseError("Failed to decode character at " \
-                                + "line %d" % feeder.get_index())
+                        raise _CXFParseError("Failed to decode character at line %d",
+                                             feeder.get_index())
                 elif (len(line) >= 6) and (line[5] == "]"):
                     # unicode character (e.g. "[1ae4]")
                     try:
                         character = unichr(int(line[1:5], 16))
                     except ValueError:
-                        raise _CXFParseError("Failed to parse unicode " \
-                                + "character at line %d" % feeder.get_index())
+                        raise _CXFParseError("Failed to parse unicode character at line %d",
+                                             feeder.get_index())
                 elif (len(line) > 3) and (line.find("]") > 2):
                     # read UTF8 (qcad 1 compatibility)
                     end_bracket = line.find("] ")
@@ -132,8 +127,8 @@ class CXFParser(object):
                     character = unicode(text, "utf-8")[0]
                 else:
                     # unknown format
-                    raise _CXFParseError("Failed to parse character at line " \
-                            + "%d" % feeder.get_index())
+                    raise _CXFParseError("Failed to parse character at line %d",
+                                         feeder.get_index())
                 # parse the following lines up to the next empty line
                 char_definition = []
                 while not feeder.is_empty() and (len(feeder.get()) > 0):
@@ -141,7 +136,6 @@ class CXFParser(object):
                     # split the line after the first whitespace
                     type_def, coord_string = line.split(None, 1)
                     coords = [float(value) for value in coord_string.split(",")]
-                    type_char = line[0].upper()
                     if (type_def == "L") and (len(coords) == 4):
                         # line
                         p1 = (coords[0], coords[1], 0)
@@ -156,40 +150,36 @@ class CXFParser(object):
                         if type_def == "AR":
                             # reverse the arc
                             start_angle, end_angle = end_angle, start_angle
-                        for p in get_points_of_arc(center, radius, start_angle,
-                                end_angle):
+                        for p in get_points_of_arc(center, radius, start_angle, end_angle):
                             current = (p[0], p[1], 0)
-                            if not previous is None:
+                            if previous is not None:
                                 char_definition.append(Line(previous, current))
                             previous = current
                     else:
-                        raise _CXFParseError("Failed to read item coordinates" \
-                                + " in line %d" % feeder.get_index())
+                        raise _CXFParseError("Failed to read item coordinates in line %d",
+                                             feeder.get_index())
                 self.letters[character] = char_definition
             else:
                 # unknown line format
-                raise _CXFParseError("Failed to parse unknown content in " \
-                        + "line %d" % feeder.get_index())
+                raise _CXFParseError("Failed to parse unknown content in line %d",
+                                     feeder.get_index())
 
 
 def import_font(filename, callback=None):
     try:
         infile = pycam.Utils.URIHandler(filename).open()
     except IOError, err_msg:
-        log.error("CXFImporter: Failed to read file (%s): %s" \
-                % (filename, err_msg))
+        log.error("CXFImporter: Failed to read file (%s): %s", filename, err_msg)
         return None
     try:
         parsed_font = CXFParser(infile, callback=callback)
     except _CXFParseError, err_msg:
-        log.warn("CFXImporter: Skipped font defintion file '%s'. Reason: %s." \
-                % (filename, err_msg))
+        log.warn("CFXImporter: Skipped font defintion file '%s'. Reason: %s.", filename, err_msg)
         return None
     charset = Charset(**parsed_font.meta)
     for key, value in parsed_font.letters.iteritems():
         charset.add_character(key, value)
-    log.info("CXFImporter: Imported CXF font from '%s': %d letters" \
-            % (filename, len(parsed_font.letters)))
+    log.info("CXFImporter: Imported CXF font from '%s': %d letters",
+             filename, len(parsed_font.letters))
     infile.close()
     return charset
-

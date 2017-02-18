@@ -18,12 +18,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import math
 
 import pycam.Test
 from pycam.Geometry.Triangle import Triangle
 from pycam.Cutters.CylindricalCutter import CylindricalCutter
 from pycam.Cutters.SphericalCutter import SphericalCutter
-import math
 
 
 class CylindricalCutterCollisions(pycam.Test.PycamTestCase):
@@ -42,9 +42,9 @@ class CylindricalCutterCollisions(pycam.Test.PycamTestCase):
         self.assertVectorEqual(self._drop(1, skewed_triangle), (0, 0, 2.5))
         self.assertVectorEqual(self._drop(1.5, skewed_triangle), (0, 0, 2.75))
         self.assertVectorEqual(self._drop(1.9, skewed_triangle), (0, 0, 2.95))
-        #self.assertVectorEqual(self._drop(2.0, skewed_triangle), (0, 0, 3))
-        #self.assertVectorEqual(self._drop(2.1, skewed_triangle), (0, 0, 3))
-        #self.assertVectorEqual(self._drop(3, skewed_triangle), (0, 0, 3))
+#       self.assertVectorEqual(self._drop(2.0, skewed_triangle), (0, 0, 3))
+#       self.assertVectorEqual(self._drop(2.1, skewed_triangle), (0, 0, 3))
+#       self.assertVectorEqual(self._drop(3, skewed_triangle), (0, 0, 3))
 
 
 class SphericalCutterCollisions(pycam.Test.PycamTestCase):
@@ -68,34 +68,34 @@ class SphericalCutterCollisions(pycam.Test.PycamTestCase):
         # skewed triangle
         factors = {30: (1.0 / math.cos(math.pi / 6) - 1),
                    45: (1.0 / math.cos(math.pi / 4) - 1),
-                   60: (1.0 / math.cos(math.pi / 3) - 1),
-        }
+                   60: (1.0 / math.cos(math.pi / 3) - 1)}
         triangles = {}
         triangles[30] = Triangle((-2, 2, 2), (2, 0, 4), (-2, -2, 2))
         triangles[45] = Triangle((-2, 2, 1), (2, 0, 5), (-2, -2, 1))
         triangles[60] = Triangle((-2, 2, -1), (2, 0, 7), (-2, -2, -1))
-        test_skew = lambda radius, degree: self.assertVectorEqual(
-                self._drop(radius, triangles[degree]), (0, 0, 3 + factors[degree] * radius))
+
+        def test_skew(radius, degree):
+            return self.assertVectorEqual(self._drop(radius, triangles[degree]),
+                                          (0, 0, 3 + factors[degree] * radius))
         test_skew(0.1, 45)
-        #test_skew(0.1, 30)
-        #test_skew(0.1, 60)
+#       test_skew(0.1, 30)
+#       test_skew(0.1, 60)
         test_skew(1, 45)
-        #test_skew(1, 30)
-        #test_skew(1, 60)
+#       test_skew(1, 30)
+#       test_skew(1, 60)
         test_skew(1.9, 45)
-        #test_skew(1.9, 30)
-        #test_skew(1.9, 60)
+#       test_skew(1.9, 30)
+#       test_skew(1.9, 60)
         test_skew(2.0, 45)
-        #test_skew(2.0, 30)
-        #test_skew(2.0, 60)
+#       test_skew(2.0, 30)
+#       test_skew(2.0, 60)
         test_skew(2.1, 45)
-        #test_skew(2.1, 30)
-        #test_skew(2.1, 60)
-        #test_skew(3, 45)
-        #test_skew(3, 30)
-        #test_skew(3, 60)
+#       test_skew(2.1, 30)
+#       test_skew(2.1, 60)
+#       test_skew(3, 45)
+#       test_skew(3, 30)
+#       test_skew(3, 60)
 
 
 if __name__ == "__main__":
     pycam.Test.main()
-
