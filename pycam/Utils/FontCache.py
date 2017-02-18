@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -21,8 +19,9 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import pycam.Utils.log
 import os
+
+import pycam.Utils.log
 
 
 DEFAULT_NAMES = ("normal", "default", "standard")
@@ -52,7 +51,7 @@ class FontCache(object):
     def _get_font_files(self):
         if self.font_dir is None:
             return []
-        log.info("Font directory: %s" % self.font_dir)
+        log.info("Font directory: %s", self.font_dir)
         result = []
         files = os.listdir(self.font_dir)
         for fname in files:
@@ -70,8 +69,7 @@ class FontCache(object):
         for font_name in self.fonts:
             if font_name.lower() == name.lower():
                 return self.fonts[font_name]
-        else:
-            return None
+        return None
 
     def get_font_names(self):
         self._load_all_files()
@@ -90,10 +88,9 @@ class FontCache(object):
                 font = self._get_font_without_loading(other_name)
                 if font:
                     return font
-            else:
-                if self.fonts:
-                    # return the first (random) font in the dictionary
-                    return self.fonts.values()[0]
+            if self.fonts:
+                # return the first (random) font in the dictionary
+                return self.fonts.values()[0]
 
     def _load_all_files(self):
         if self.core:
@@ -114,12 +111,10 @@ class FontCache(object):
         filename = self._unused_font_files.pop(0)
         if progress:
             callback = progress.update
-            progress.update(text="Loading font file %s" % \
-                    os.path.basename(filename))
+            progress.update(text="Loading font file %s" % os.path.basename(filename))
         else:
             callback = None
         charset = pycam.Importers.CXFImporter.import_font(filename, callback=callback)
-        if not charset is None:
+        if charset is not None:
             for name in charset.get_names():
                 self.fonts[name] = charset
-

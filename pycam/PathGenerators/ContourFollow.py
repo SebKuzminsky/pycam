@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -18,20 +16,23 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
+
+
+
+take a look at the related blog posting describing this algorithm:
+  http://fab.senselab.org/node/43
 """
 
-# take a look at the related blog posting describing this algorithm:
-# http://fab.senselab.org/node/43
+import math
 
-from pycam.Geometry.PointUtils import *
+from pycam.Geometry import ceil, epsilon, sqrt
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
+from pycam.Geometry.PointUtils import padd, pcross, pdot, pmul, pnorm, pnormalized, psub
 from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
-from pycam.Geometry.utils import epsilon, ceil, sqrt
 from pycam.Utils import ProgressCounter
 from pycam.Utils.threading import run_in_parallel
 import pycam.Utils.log
-import math
 
 _DEBUG_DISABLE_COLLISION_CHECK = False
 _DEBUG_DISABLE_EXTEND_LINES = False
@@ -53,8 +54,7 @@ def _process_one_triangle((model, cutter, up_vector, triangle, z)):
     if pnorm(pcross(triangle.normal, up_vector)) == 0:
         # Case 1b
         return result, None
-    edge_collisions = get_collision_waterline_of_triangle(model, cutter,
-            up_vector, triangle, z)
+    edge_collisions = get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z)
     if edge_collisions is None:
         # don't try to use this edge again
         return result, [id(triangle)]
@@ -62,9 +62,8 @@ def _process_one_triangle((model, cutter, up_vector, triangle, z)):
         return result, None
     else:
         for cutter_location, edge in edge_collisions:
-            shifted_edge = get_shifted_waterline(up_vector, edge,
-                    cutter_location)
-            if not shifted_edge is None:
+            shifted_edge = get_shifted_waterline(up_vector, edge, cutter_location)
+            if shifted_edge is not None:
                 if _DEBUG_DISBALE_WATERLINE_SHIFT:
                     result.append((edge, edge))
                 else:
@@ -146,10 +145,9 @@ class CollisionPaths(object):
                 index_range = range(ref + 1, group_len)
             for index in index_range:
                 line_id = group[index % group_len]
-                if not self.shifted_lines[line_id] is None:
+                if self.shifted_lines[line_id] is not None:
                     return line_id
-            else:
-                return None
+            return None
         groups = self._get_groups()
         for group in groups:
             index = 0
@@ -167,10 +165,9 @@ class CollisionPaths(object):
                 if current_shifted.p2 == neighbour_shifted.p1:
                     index += 1
                     continue
-                cp, dist = current_shifted.get_intersection(neighbour_shifted,
-                        infinite_lines=True)
+                cp, dist = current_shifted.get_intersection(neighbour_shifted, infinite_lines=True)
                 cp2, dist2 = neighbour_shifted.get_intersection(current_shifted,
-                        infinite_lines=True)
+                                                                infinite_lines=True)
                 # TODO: add an arc (composed of lines) for a soft corner (not
                 # required, but nicer)
                 if dist < epsilon:
@@ -188,7 +185,7 @@ class CollisionPaths(object):
         groups = self._get_groups()
         for group in groups:
             for index in group:
-                if not self.shifted_lines[index] is None:
+                if self.shifted_lines[index] is not None:
                     result.append(self.shifted_lines[index])
         return result
 
@@ -209,19 +206,17 @@ class ContourFollow(object):
             maxy = max([m.maxy for m in self.models])
             miny = max([m.miny for m in self.models])
             model_dim = max(abs(maxx - minx), abs(maxy - miny))
-            depth = math.log(accuracy * model_dim / self.cutter.radius) / \
-                    math.log(2)
+            depth = math.log(accuracy * model_dim / self.cutter.radius) / math.log(2)
             self._physics_maxdepth = min(max_depth, max(ceil(depth), 4))
 
     def _get_free_paths(self, cutter, models, p1, p2):
         if self.physics:
-            return get_free_paths_ode(self.physics, p1, p2,
-                    depth=self._physics_maxdepth)
+            return get_free_paths_ode(self.physics, p1, p2, depth=self._physics_maxdepth)
         else:
             return get_free_paths_triangles(models, cutter, p1, p2)
 
-    def GenerateToolPath(self, cutter, models, minx, maxx, miny, maxy, minz,
-            maxz, dz, draw_callback=None):
+    def GenerateToolPath(self, cutter, models, minx, maxx, miny, maxy, minz, maxz, dz,
+                         draw_callback=None):
         # reset the list of processed triangles
         self._processed_triangles = []
         # calculate the number of steps
@@ -236,10 +231,8 @@ class ContourFollow(object):
 
         # only the first model is used for the contour-follow algorithm
         # TODO: should we combine all models?
-        num_of_triangles = len(models[0].triangles(minx=minx, miny=miny,
-                maxx=maxx, maxy=maxy))
-        progress_counter = ProgressCounter(2 * num_of_layers * num_of_triangles,
-                draw_callback)
+        num_of_triangles = len(models[0].triangles(minx=minx, miny=miny, maxx=maxx, maxy=maxy))
+        progress_counter = ProgressCounter(2 * num_of_layers * num_of_triangles, draw_callback)
 
         current_layer = 0
 
@@ -249,22 +242,22 @@ class ContourFollow(object):
         for z in z_steps:
             # update the progress bar and check, if we should cancel the process
             if draw_callback:
-                if draw_callback(text="ContourFollow: processing layer %d/%d" \
-                        % (current_layer + 1, num_of_layers)):
+                if draw_callback(text=("ContourFollow: processing layer %d/%d"
+                                       % (current_layer + 1, num_of_layers))):
                     # cancel immediately
                     break
             self.pa.new_direction(0)
-            self.GenerateToolPathSlice(cutter, models[0], minx, maxx, miny, maxy, z,
-                    draw_callback, progress_counter, num_of_triangles)
+            self.GenerateToolPathSlice(cutter, models[0], minx, maxx, miny, maxy, z, draw_callback,
+                                       progress_counter, num_of_triangles)
             self.pa.end_direction()
             self.pa.finish()
             current_layer += 1
         return self.pa.paths
 
-    def GenerateToolPathSlice(self, cutter, model, minx, maxx, miny, maxy, z,
-            draw_callback=None, progress_counter=None, num_of_triangles=None):
-        shifted_lines = self.get_potential_contour_lines(cutter, model, minx, maxx, miny, maxy,
-                z, progress_counter=progress_counter)
+    def GenerateToolPathSlice(self, cutter, model, minx, maxx, miny, maxy, z, draw_callback=None,
+                              progress_counter=None, num_of_triangles=None):
+        shifted_lines = self.get_potential_contour_lines(cutter, model, minx, maxx, miny, maxy, z,
+                                                         progress_counter=progress_counter)
         if num_of_triangles is None:
             num_of_triangles = len(shifted_lines)
         last_position = None
@@ -275,45 +268,42 @@ class ContourFollow(object):
             else:
                 points = self._get_free_paths(line.p1, line.p2)
             if points:
-                if (not last_position is None) and (last_position != points[0]):
+                if (last_position is not None) and (last_position != points[0]):
                     self.pa.end_scanline()
                     self.pa.new_scanline()
                 for p in points:
                     self.pa.append(p)
                 last_position = points[-1]
                 if draw_callback:
-                    draw_callback(tool_position=last_position,
-                            toolpath=self.pa.paths)
+                    draw_callback(tool_position=last_position, toolpath=self.pa.paths)
             # update the progress counter
-            if not progress_counter is None:
+            if progress_counter is not None:
                 if progress_counter.increment():
                     # quit requested
                     break
         # The progress counter jumps up by the number of non directly processed
         # triangles.
-        if not progress_counter is None:
+        if progress_counter is not None:
             progress_counter.increment(num_of_triangles - len(shifted_lines))
         self.pa.end_scanline()
         return self.pa.paths
 
     def get_potential_contour_lines(self, cutter, model, minx, maxx, miny, maxy, z,
-            progress_counter=None):
+                                    progress_counter=None):
         # use only the first model for the contour
         follow_model = model
         waterline_triangles = CollisionPaths()
-        triangles = follow_model.triangles(minx=minx, miny=miny, maxx=maxx,
-                maxy=maxy)
+        triangles = follow_model.triangles(minx=minx, miny=miny, maxx=maxx, maxy=maxy)
         args = [(follow_model, cutter, self._up_vector, t, z)
-                for t in triangles if not id(t) in self._processed_triangles]
-        results_iter = run_in_parallel(_process_one_triangle, args,
-                unordered=True, callback=progress_counter.update)
+                for t in triangles if id(t) not in self._processed_triangles]
+        results_iter = run_in_parallel(_process_one_triangle, args, unordered=True,
+                                       callback=progress_counter.update)
         for result, ignore_triangle_id_list in results_iter:
             if ignore_triangle_id_list:
                 self._processed_triangles.extend(ignore_triangle_id_list)
             for edge, shifted_edge in result:
                 waterline_triangles.add(edge, shifted_edge)
-            if (not progress_counter is None) \
-                    and (progress_counter.increment()):
+            if (progress_counter is not None) and (progress_counter.increment()):
                 # quit requested
                 break
         if not _DEBUG_DISABLE_EXTEND_LINES:
@@ -321,14 +311,14 @@ class ContourFollow(object):
         result = []
         for line in waterline_triangles.get_shifted_lines():
             cropped_line = line.get_cropped_line(minx, maxx, miny, maxy, z, z)
-            if not cropped_line is None:
+            if cropped_line is not None:
                 result.append(cropped_line)
         return result
 
 
 def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
     # TODO: there are problems with "material allowance > 0"
-    plane = Plane(Point(0, 0, z), up_vector)
+    plane = Plane((0, 0, z), up_vector)
     if triangle.minz >= z:
         # no point of the triangle is below z
         # try all edges
@@ -336,7 +326,7 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
         proj_points = []
         for p in triangle.get_points():
             proj_p = plane.get_point_projection(p)
-            if not proj_p in proj_points:
+            if proj_p not in proj_points:
                 proj_points.append(proj_p)
         if len(proj_points) == 3:
             edges = []
@@ -367,8 +357,7 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
     else:
         # some parts of the triangle are above and some below the cutter level
         # Cases (2a), (2b), (3a) and (3b)
-        points_above = [plane.get_point_projection(p)
-                for p in triangle.get_points() if p[2] > z]
+        points_above = [plane.get_point_projection(p) for p in triangle.get_points() if p[2] > z]
         waterline = plane.intersect_triangle(triangle)
         if waterline is None:
             if len(points_above) == 0:
@@ -379,19 +368,16 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
                     # This is just an accuracy issue (see the
                     # "triangle.minz >= z" statement above).
                     outer_edges = []
-                elif not [p for p in triangle.get_points()
-                        if p[2] > z + epsilon]:
+                elif not [p for p in triangle.get_points() if p[2] > z + epsilon]:
                     # same as above: fix for inaccurate floating calculations
                     outer_edges = []
                 else:
                     # this should not happen
-                    raise ValueError(("Could not find a waterline, but " \
-                            + "there are points above z level (%f): " \
-                            + "%s / %s") % (z, triangle, points_above))
+                    raise ValueError(("Could not find a waterline, but there are points above z "
+                                      "level (%f): %s / %s") % (z, triangle, points_above))
         else:
             # remove points that are not part of the waterline
-            points_above = [p for p in points_above
-                    if (p != waterline.p1) and (p != waterline.p2)]
+            points_above = [p for p in points_above if (p != waterline.p1) and (p != waterline.p2)]
             if len(points_above) == 0:
                 # part of case (2a)
                 outer_edges = [waterline]
@@ -451,7 +437,7 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
                     points = [waterline.p1, waterline.p2] + points_above
                     for p1 in points:
                         for p2 in points:
-                            if not p1 is p2:
+                            if p1 is not p2:
                                 edges.append(Line(p1, p2))
                     edges.sort(key=lambda x: x.len)
                     edge = edges[-1]
@@ -466,7 +452,7 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
     max_length = sqrt(x_dim ** 2 + y_dim ** 2 + z_dim ** 2)
     result = []
     for edge in outer_edges:
-        direction = pnormalized(pcross(up_vector,edge.dir))
+        direction = pnormalized(pcross(up_vector, edge.dir))
         if direction is None:
             continue
         direction = pmul(direction, max_length)
@@ -478,16 +464,16 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
             start = padd(edge.p1, pmul(edge_dir, factor))
             # We need to use the triangle collision algorithm here - because we
             # need the point of collision in the triangle.
-            collisions = get_free_paths_triangles([model], cutter, start, padd(start, direction), return_triangles=True)
+            collisions = get_free_paths_triangles([model], cutter, start, padd(start, direction),
+                                                  return_triangles=True)
             for index, coll in enumerate(collisions):
-                if (index % 2 == 0) and (not coll[1] is None) \
-                        and (not coll[2] is None) \
-                        and (pdot(psub(coll[0], start), direction) > 0):
+                if ((index % 2 == 0) and (coll[1] is not None)
+                        and (coll[2] is not None)
+                        and (pdot(psub(coll[0], start), direction) > 0)):
                     cl, hit_t, cp = coll
                     break
             else:
-                log.debug("Failed to detect any collision: " \
-                        + "%s / %s -> %s" % (edge, start, direction))
+                log.debug("Failed to detect any collision: %s / %s -> %s", edge, start, direction)
                 continue
             proj_cp = plane.get_point_projection(cp)
             # e.g. the Spherical Cutter often does not collide exactly above
@@ -499,10 +485,11 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
                 break
     # Don't check triangles again that are completely above the z level and
     # did not return any collisions.
-    if (len(result) == 0) and (triangle.minz > z):
+    if not result and (triangle.minz > z):
         # None indicates that the triangle needs no further evaluation
         return None
     return result
+
 
 def get_shifted_waterline(up_vector, waterline, cutter_location):
     # Project the waterline and the cutter location down to the slice plane.
@@ -521,4 +508,3 @@ def get_shifted_waterline(up_vector, waterline, cutter_location):
     shift = pmul(shift, 1.0 + epsilon)
     shifted_waterline = Line(padd(wl_proj.p1, shift), padd(wl_proj.p2, shift))
     return shifted_waterline
-

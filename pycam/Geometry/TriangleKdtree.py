@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2008-2009 Lode Leroy
 
 This file is part of PyCAM.
@@ -23,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 from pycam.Geometry.kdtree import kdtree, Node
 
 overlaptest = True
+
 
 def SearchKdtree2d(tree, minx, maxx, miny, maxy):
     if tree.bucket:
@@ -80,12 +79,11 @@ class TriangleKdtree(kdtree):
         nodes = []
         for t in triangles:
             n = Node(t, (min(t.p1[0], t.p2[0], t.p3[0]),
-                    max(t.p1[0], t.p2[0], t.p3[0]),
-                    min(t.p1[1], t.p2[1], t.p3[1]),
-                    max(t.p1[1], t.p2[1], t.p3[1])))
+                         max(t.p1[0], t.p2[0], t.p3[0]),
+                         min(t.p1[1], t.p2[1], t.p3[1]),
+                         max(t.p1[1], t.p2[1], t.p3[1])))
             nodes.append(n)
         super(TriangleKdtree, self).__init__(nodes, cutoff, cutoff_distance)
 
     def Search(self, minx, maxx, miny, maxy):
         return SearchKdtree2d(self, minx, maxx, miny, maxy)
-

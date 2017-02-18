@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2008 Lode Leroy
 
 This file is part of PyCAM.
@@ -25,3 +23,5 @@ __all__ = ["Cutters", "Exporters", "Geometry", "Gui", "Importers",
 
 VERSION = "0.6.1-dev"
 
+FILTER_CONFIG = (("Config files", "*.conf"),)
+HELP_WIKI_URL = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=%s"

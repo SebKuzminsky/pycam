@@ -19,11 +19,11 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import pycam.Test
+from pycam.Geometry import INFINITE
 import pycam.Geometry.intersection
-from pycam.Geometry.utils import INFINITE
-from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.Line import Line
+from pycam.Geometry.Triangle import Triangle
+import pycam.Test
 
 
 class CircleIntersections(pycam.Test.PycamTestCase):
@@ -35,7 +35,8 @@ class CircleIntersections(pycam.Test.PycamTestCase):
     def test_line(self):
         """Circle->Line collisions"""
         func = pycam.Geometry.intersection.intersect_circle_line
-        func_args = [self._circle["center"], self._circle["axis"], self._circle["radius"], self._circle["radius"] ** 2]
+        func_args = [self._circle["center"], self._circle["axis"], self._circle["radius"],
+                     self._circle["radius"] ** 2]
         # additional arguments: direction, edge
         """
         edge = Line((-1, -1, 4), (5, 5, 4))
@@ -89,7 +90,10 @@ class CircleIntersections(pycam.Test.PycamTestCase):
     def test_point(self):
         """Circle->Point collisions"""
         func = pycam.Geometry.intersection.intersect_circle_point
-        func_args = [self._circle["center"], self._circle["axis"], self._circle["radius"], self._circle["radius"] ** 2]
+        func_args = [self._circle["center"],
+                     self._circle["axis"],
+                     self._circle["radius"],
+                     self._circle["radius"] ** 2]
         # additional arguments: direction, point
         coll = func(*(func_args + [(0, 0, -1)] + [(0, 0, 0)]))
         self.assertCollisionEqual(((0, 0, 10), (0, 0, 0), 10), coll)
@@ -109,4 +113,3 @@ class CircleIntersections(pycam.Test.PycamTestCase):
 
 if __name__ == "__main__":
     pycam.Test.main()
-

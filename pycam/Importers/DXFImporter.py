@@ -20,31 +20,31 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import math
+import re
+import os
+
 from pycam.Geometry.Triangle import Triangle
-from pycam.Geometry.PointUtils import *
+from pycam.Geometry.PointUtils import pdist
 from pycam.Geometry.Line import Line
 import pycam.Geometry.Model
 import pycam.Geometry.Matrix
 import pycam.Geometry
 import pycam.Utils.log
 import pycam.Utils
-import math
-import re
-import os
 
 log = pycam.Utils.log.get_logger()
-
 
 
 def _unescape_control_characters(text):
     # see http://www.kxcad.net/autodesk/autocad/AutoCAD_2008_Command_Reference/d0e73428.htm
     # and QCad: qcadlib/src/filters/rs_filterdxf.cpp
-    for src, dest in (("%%d", u"\u00B0"), ("%%p", u"\u00B1"),
-            ("%%c", u"\u2205"), (r"\P", os.linesep), (r"\~", " ")):
+    for src, dest in (("%%d", u"\u00B0"), ("%%p", u"\u00B1"), ("%%c", u"\u2205"),
+                      (r"\P", os.linesep), (r"\~", " ")):
         text = text.replace(src, dest)
     # convert "\U+xxxx" to unicode characters
     return re.sub(r"\\U\+([0-9a-fA-F]{4})",
-            lambda hex_in: unichr(int(hex_in.groups()[0], 16)), text)
+                  lambda hex_in: unichr(int(hex_in.groups()[0], 16)), text)
 
 
 class DXFParser(object):
@@ -86,13 +86,11 @@ class DXFParser(object):
         "CURVE_TYPE": 75,
     }
 
-    IGNORE_KEYS = ("DICTIONARY", "VPORT", "LTYPE", "STYLE", "APPID", "DIMSTYLE",
-            "BLOCK_RECORD", "BLOCK", "ENDBLK", "ACDBDICTIONARYWDFLT", "POINT",
-            "ACDBPLACEHOLDER", "LAYOUT", "MLINESTYLE", "DICTIONARYVAR", "CLASS",
-            "HATCH", "VIEW", "VIEWPORT")
+    IGNORE_KEYS = ("DICTIONARY", "VPORT", "LTYPE", "STYLE", "APPID", "DIMSTYLE", "BLOCK_RECORD",
+                   "BLOCK", "ENDBLK", "ACDBDICTIONARYWDFLT", "POINT", "ACDBPLACEHOLDER", "LAYOUT",
+                   "MLINESTYLE", "DICTIONARYVAR", "CLASS", "HATCH", "VIEW", "VIEWPORT")
 
-    def __init__(self, inputstream, color_as_height=False, fonts_cache=None,
-            callback=None):
+    def __init__(self, inputstream, color_as_height=False, fonts_cache=None, callback=None):
         self.inputstream = inputstream
         self.line_number = 0
         self.lines = []
@@ -101,7 +99,8 @@ class DXFParser(object):
         self._color_as_height = color_as_height
         if callback:
             # no "percent" updates - just pulse ...
-            callback_wrapper = lambda text="", percent=None: callback()
+            def callback_wrapper(text="", percent=None):
+                return callback()
             self.callback = callback_wrapper
         else:
             self.callback = None
@@ -141,10 +140,12 @@ class DXFParser(object):
                 else:
                     current_group = []
                     groups.append(current_group)
+
         def get_distance_between_groups(group1, group2):
             forward = pdist(group1[-1].p2, group2[0].p1)
             backward = pdist(group2[-1].p2, group1[0].p1)
             return min(forward, backward)
+
         remaining_groups = groups[:]
         ordered_groups = []
         while remaining_groups:
@@ -154,10 +155,8 @@ class DXFParser(object):
                 current_group = ordered_groups[-1]
                 closest_distance = None
                 for cmp_group in remaining_groups:
-                    cmp_distance = get_distance_between_groups(current_group,
-                            cmp_group)
-                    if (closest_distance is None) \
-                            or (cmp_distance < closest_distance):
+                    cmp_distance = get_distance_between_groups(current_group, cmp_group)
+                    if (closest_distance is None) or (cmp_distance < closest_distance):
                         closest_distance = cmp_distance
                         closest_group = cmp_group
                 ordered_groups.append(closest_group)
@@ -183,28 +182,29 @@ class DXFParser(object):
         try:
             line1 = int(line1)
         except ValueError:
-            log.warn("DXFImporter: Invalid key in line " \
-                    + "%d (int expected): %s" % (self.line_number, line1))
+            log.warn("DXFImporter: Invalid key in line %d (int expected): %s",
+                     self.line_number, line1)
             return None, None
-        if line1 in [self.KEYS[key] for key in ("P1_X", "P1_Y", "P1_Z",
-                "P2_X", "P2_Y", "P2_Z", "RADIUS", "ANGLE_START", "ANGLE_END",
-                "TEXT_HEIGHT", "TEXT_WIDTH_FINAL", "TEXT_ROTATION",
-                "TEXT_SKEW_ANGLE", "VERTEX_BULGE")]:
+        if line1 in [self.KEYS[key]
+                     for key in ("P1_X", "P1_Y", "P1_Z", "P2_X", "P2_Y", "P2_Z", "RADIUS",
+                                 "ANGLE_START", "ANGLE_END", "TEXT_HEIGHT", "TEXT_WIDTH_FINAL",
+                                 "TEXT_ROTATION", "TEXT_SKEW_ANGLE", "VERTEX_BULGE")]:
             try:
                 line2 = float(line2)
             except ValueError:
-                log.warn("DXFImporter: Invalid input in line " \
-                        + "%d (float expected): %s" % (self.line_number, line2))
+                log.warn("DXFImporter: Invalid input in line %d (float expected): %s",
+                         self.line_number, line2)
                 line1 = None
                 line2 = None
-        elif line1 in [self.KEYS[key] for key in ("COLOR", "TEXT_MIRROR_FLAGS",
-                "TEXT_ALIGN_HORIZONTAL", "TEXT_ALIGN_VERTICAL",
-                "MTEXT_ALIGNMENT", "CURVE_TYPE", "VERTEX_FLAGS")]:
+        elif line1 in [self.KEYS[key]
+                       for key in ("COLOR", "TEXT_MIRROR_FLAGS", "TEXT_ALIGN_HORIZONTAL",
+                                   "TEXT_ALIGN_VERTICAL", "MTEXT_ALIGNMENT", "CURVE_TYPE",
+                                   "VERTEX_FLAGS")]:
             try:
                 line2 = int(line2)
             except ValueError:
-                log.warn("DXFImporter: Invalid input in line " \
-                        + "%d (int expected): %s" % (self.line_number, line2))
+                log.warn("DXFImporter: Invalid input in line %d (int expected): %s",
+                         self.line_number, line2)
                 line1 = None
                 line2 = None
         elif line1 in [self.KEYS[key] for key in ("DEFAULT", "TEXT_MORE")]:
@@ -212,13 +212,12 @@ class DXFParser(object):
             try:
                 text = unicode(line2)
             except UnicodeDecodeError:
-                log.warn("DXFImporter: Invalid character in string in " + \
-                        "line %d" % self.line_number)
+                log.warn("DXFImporter: Invalid character in string in line %d", self.line_number)
                 text_chars = []
                 for char in line2:
                     try:
                         text_chars.append(unicode(char))
-                    except:
+                    except UnicodeDecodeError:
                         pass
                 text = u"".join(text_chars)
             line2 = _unescape_control_characters(text)
@@ -229,8 +228,7 @@ class DXFParser(object):
 
     def parse_content(self):
         key, value = self._read_key_value()
-        while (not key is None) \
-                and not ((key == self.KEYS["MARKER"]) and (value == "EOF")):
+        while (key is not None) and not ((key == self.KEYS["MARKER"]) and (value == "EOF")):
             if self.callback and self.callback():
                 return
             if key == self.KEYS["MARKER"]:
@@ -258,12 +256,12 @@ class DXFParser(object):
                 elif value == "3DFACE":
                     self.parse_3dface()
                 elif value in self.IGNORE_KEYS:
-                    log.debug("DXFImporter: Ignored a blacklisted element " \
-                            + "in line %d: %s" % (self.line_number, value))
+                    log.debug("DXFImporter: Ignored a blacklisted element in line %d: %s",
+                              self.line_number, value)
                 else:
                     # not supported
-                    log.warn("DXFImporter: Ignored unsupported element " \
-                            + "in line %d: %s" % (self.line_number, value))
+                    log.warn("DXFImporter: Ignored unsupported element in line %d: %s",
+                             self.line_number, value)
             key, value = self._read_key_value()
 
     def close_sequence(self):
@@ -271,8 +269,7 @@ class DXFParser(object):
         if self._open_sequence == "POLYLINE":
             self.parse_polyline(False)
         else:
-            log.warn("DXFImporter: unexpected SEQEND found at line %d" % \
-                    start_line)
+            log.warn("DXFImporter: unexpected SEQEND found at line %d", start_line)
 
     def parse_vertex(self):
         start_line = self.line_number
@@ -280,7 +277,7 @@ class DXFParser(object):
         color = None
         bulge = None
         key, value = self._read_key_value()
-        while (not key is None) and (key != self.KEYS["MARKER"]):
+        while (key is not None) and (key != self.KEYS["MARKER"]):
             if key == self.KEYS["P1_X"]:
                 point[0] = value
             elif key == self.KEYS["P1_Y"]:
@@ -295,26 +292,24 @@ class DXFParser(object):
                 pass
             key, value = self._read_key_value()
         end_line = self.line_number
-        if not key is None:
+        if key is not None:
             self._push_on_stack(key, value)
-        if self._color_as_height and (not color is None):
+        if self._color_as_height and (color is not None):
             # use the color code as the z coordinate
             point[2] = float(color) / 255
         if None in point:
-            log.warn("DXFImporter: Missing attribute of VERTEX item" + \
-                    "between line %d and %d" % (start_line, end_line))
+            log.warn("DXFImporter: Missing attribute of VERTEX item between line %d and %d",
+                     start_line, end_line)
         else:
-            self._open_sequence_items.append(
-                    ((point[0], point[1], point[2]), bulge))
+            self._open_sequence_items.append(((point[0], point[1], point[2]), bulge))
 
     def parse_polyline(self, init):
-        start_line = self.line_number
         params = self._open_sequence_params
         if init:
             self._open_sequence = "POLYLINE"
             self._open_sequence_items = []
             key, value = self._read_key_value()
-            while (not key is None) and (key != self.KEYS["MARKER"]):
+            while (key is not None) and (key != self.KEYS["MARKER"]):
                 if key == self.KEYS["CURVE_TYPE"]:
                     if value == 8:
                         params["CURVE_TYPE"] = "BEZIER"
@@ -322,19 +317,16 @@ class DXFParser(object):
                     if value == 1:
                         params["VERTEX_FLAGS"] = "EXTRA_VERTEX"
                 key, value = self._read_key_value()
-            if not key is None:
+            if key is not None:
                 self._push_on_stack(key, value)
         else:
             # closing
             if ("CURVE_TYPE" in params) and (params["CURVE_TYPE"] == "BEZIER"):
-                self.lines.extend(pycam.Geometry.get_bezier_lines(
-                        self._open_sequence_items))
-                if ("VERTEX_FLAGS" in params) and \
-                        (params["VERTEX_FLAGS"] == "EXTRA_VERTEX"):
+                self.lines.extend(pycam.Geometry.get_bezier_lines(self._open_sequence_items))
+                if ("VERTEX_FLAGS" in params) and (params["VERTEX_FLAGS"] == "EXTRA_VERTEX"):
                     # repeat the same polyline on the other side
                     self._open_sequence_items.reverse()
-                    self.lines.extend(pycam.Geometry.get_bezier_lines(
-                            self._open_sequence_items))
+                    self.lines.extend(pycam.Geometry.get_bezier_lines(self._open_sequence_items))
             else:
                 points = [p for p, bulge in self._open_sequence_items]
                 for index in range(len(points) - 1):
@@ -351,21 +343,22 @@ class DXFParser(object):
     def parse_lwpolyline(self):
         start_line = self.line_number
         points = []
+
         def add_point(p_array, bulge):
             # fill all "None" values with zero
             for index in range(len(p_array)):
                 if p_array[index] is None:
                     if (index == 0) or (index == 1):
-                        log.debug("DXFImporter: weird LWPOLYLINE input " + \
-                                "date in line %d: %s" % \
-                                (self.line_number, p_array))
+                        log.debug("DXFImporter: weird LWPOLYLINE input date in line %d: %s",
+                                  self.line_number, p_array)
                     p_array[index] = 0
             points.append(((p_array[0], p_array[1], p_array[2]), bulge))
+
         current_point = [None, None, None]
         bulge = None
         extra_vertex_flag = False
         key, value = self._read_key_value()
-        while (not key is None) and (key != self.KEYS["MARKER"]):
+        while (key is not None) and (key != self.KEYS["MARKER"]):
             if key == self.KEYS["P1_X"]:
                 axis = 0
             elif key == self.KEYS["P1_Y"]:
@@ -385,7 +378,7 @@ class DXFParser(object):
                 axis = None
             else:
                 axis = None
-            if not axis is None:
+            if axis is not None:
                 if current_point[axis] is None:
                     # The current point definition is not complete, yet.
                     current_point[axis] = value
@@ -399,15 +392,15 @@ class DXFParser(object):
         end_line = self.line_number
         # The last lines were not used - they are just the marker for the next
         # item.
-        if not key is None:
+        if key is not None:
             self._push_on_stack(key, value)
         # check if there is a remaining item in "current_point"
         if len(current_point) != current_point.count(None):
             add_point(current_point, bulge)
         if len(points) < 2:
             # too few points for a polyline
-            log.warn("DXFImporter: Empty LWPOLYLINE definition between line " \
-                    + "%d and %d" % (start_line, end_line))
+            log.warn("DXFImporter: Empty LWPOLYLINE definition between line %d and %d",
+                     start_line, end_line)
         else:
             for index in range(len(points) - 1):
                 point, bulge = points[index]
@@ -415,17 +408,16 @@ class DXFParser(object):
                 if point != next_point:
                     if bulge or next_bulge:
                         self.lines.extend(pycam.Geometry.get_bezier_lines(
-                                ((point, bulge), (next_point, next_bulge))))
+                            ((point, bulge), (next_point, next_bulge))))
                         if extra_vertex_flag:
                             self.lines.extend(pycam.Geometry.get_bezier_lines(
-                                    ((next_point, next_bulge), (point, bulge))))
+                                ((next_point, next_bulge), (point, bulge))))
                     else:
                         # straight line
                         self.lines.append(Line(point, next_point))
                 else:
-                    log.warn("DXFImporter: Ignoring zero-length LINE " \
-                            + "(between input line %d and %d): %s" \
-                            % (start_line, end_line, point))
+                    log.warn("DXFImporter: Ignoring zero-length LINE (between input line %d and "
+                             "%d): %s", start_line, end_line, point)
 
     def parse_mtext(self):
         start_line = self.line_number
@@ -441,7 +433,7 @@ class DXFParser(object):
         font_name = "normal"
         alignment = 0
         key, value = self._read_key_value()
-        while (not key is None) and (key != self.KEYS["MARKER"]):
+        while (key is not None) and (key != self.KEYS["MARKER"]):
             if key == self.KEYS["DEFAULT"]:
                 text_end = value
             elif key == self.KEYS["TEXT_MORE"]:
@@ -485,20 +477,19 @@ class DXFParser(object):
         # The last lines were not used - they are just the marker for the next
         # item.
         text = "".join(text_groups_start) + text_end
-        if not key is None:
+        if key is not None:
             self._push_on_stack(key, value)
         if None in ref_point:
-            log.warn("DXFImporter: Incomplete MTEXT definition between line " \
-                    + "%d and %d: missing location point" % \
-                    (start_line, end_line))
+            log.warn("DXFImporter: Incomplete MTEXT definition between line %d and %d: missing "
+                     "location point", start_line, end_line)
         elif not text:
-            log.warn("DXFImporter: Incomplete MTEXT definition between line " \
-                    + "%d and %d: missing text" % (start_line, end_line))
+            log.warn("DXFImporter: Incomplete MTEXT definition between line %d and %d: missing "
+                     "text", start_line, end_line)
         elif not text_height:
-            log.warn("DXFImporter: Incomplete MTEXT definition between line " \
-                    + "%d and %d: missing height" % (start_line, end_line))
+            log.warn("DXFImporter: Incomplete MTEXT definition between line %d and %d: missing "
+                     "height", start_line, end_line)
         else:
-            if self._color_as_height and (not color is None):
+            if self._color_as_height and (color is not None):
                 # use the color code as the z coordinate
                 ref_point[2] = float(color) / 255
             if self._fonts_cache:
@@ -506,31 +497,27 @@ class DXFParser(object):
             else:
                 font = None
             if not font:
-                log.warn("DXFImporter: No fonts are available - skipping " + \
-                        "MTEXT item between line %d and %d" % \
-                        (start_line, end_line))
+                log.warn("DXFImporter: No fonts are available - skipping MTEXT item between line "
+                         "%d and %d", start_line, end_line)
                 return
             model = font.render(text)
-            if (model.minx is None) or (model.miny is None) or \
-                    (model.minz is None) or (model.minx == model.maxx) or \
-                    (model.miny == model.maxy):
-                log.warn("DXFImporter: Empty rendered MTEXT item between " + \
-                        "line %d and %d" % (start_line, end_line))
+            if (None in (model.minx, model.miny, model.minz)
+                    or (model.minx == model.maxx) or (model.miny == model.maxy)):
+                log.warn("DXFImporter: Empty rendered MTEXT item between line %d and %d",
+                         start_line, end_line)
                 return
-            model.scale(text_height / (model.maxy - model.miny),
-                    callback=self.callback)
+            model.scale(text_height / (model.maxy - model.miny), callback=self.callback)
             # this setting seems to refer to a box - not the text width - ignore
             if False and width_final:
                 scale_x = width_final / (model.maxx - model.minx)
                 model.scale(scale_x, callback=self.callback)
             if rotation:
-                matrix = pycam.Geometry.Matrix.get_rotation_matrix_axis_angle(
-                        (0, 0, 1), rotation)
-            elif not None in direction_vector:
+                matrix = pycam.Geometry.Matrix.get_rotation_matrix_axis_angle((0, 0, 1), rotation)
+            elif None not in direction_vector:
                 # Due to the parsing code above only "rotation" or
                 # "direction_vector" is set at the same time.
-                matrix = pycam.Geometry.Matrix.get_rotation_matrix_from_to(
-                        (1, 0, 0), direction_vector)
+                matrix = pycam.Geometry.Matrix.get_rotation_matrix_from_to((1, 0, 0),
+                                                                           direction_vector)
             else:
                 matrix = None
             if matrix:
@@ -574,7 +561,7 @@ class DXFParser(object):
         align_horiz = 0
         align_vert = 0
         key, value = self._read_key_value()
-        while (not key is None) and (key != self.KEYS["MARKER"]):
+        while (key is not None) and (key != self.KEYS["MARKER"]):
             if key == self.KEYS["DEFAULT"]:
                 text = value
             elif key == self.KEYS["P1_X"]:
@@ -613,26 +600,24 @@ class DXFParser(object):
         end_line = self.line_number
         # The last lines were not used - they are just the marker for the next
         # item.
-        if not key is None:
+        if key is not None:
             self._push_on_stack(key, value)
-        if (not None in ref_point2) and (ref_point != ref_point2):
+        if (None not in ref_point2) and (ref_point != ref_point2):
             # just a warning - continue as usual
-            log.warn("DXFImporter: Second alignment point is not " + \
-                    "implemented for TEXT items - the text specified " + \
-                    "between line %d and %d may be slightly misplaced" % \
-                    (start_line, end_line))
+            log.warn("DXFImporter: Second alignment point is not implemented for TEXT items - the "
+                     "text specified between line %d and %d may be slightly misplaced",
+                     start_line, end_line)
         if None in ref_point:
-            log.warn("DXFImporter: Incomplete TEXT definition between line " \
-                    + "%d and %d: missing location point" % \
-                    (start_line, end_line))
+            log.warn("DXFImporter: Incomplete TEXT definition between line %d and %d: missing "
+                     "location point", start_line, end_line)
         elif not text:
-            log.warn("DXFImporter: Incomplete TEXT definition between line " \
-                    + "%d and %d: missing text" % (start_line, end_line))
+            log.warn("DXFImporter: Incomplete TEXT definition between line %d and %d: missing "
+                     "text", start_line, end_line)
         elif not text_height:
-            log.warn("DXFImporter: Incomplete TEXT definition between line " \
-                    + "%d and %d: missing height" % (start_line, end_line))
+            log.warn("DXFImporter: Incomplete TEXT definition between line %d and %d: missing "
+                     "height", start_line, end_line)
         else:
-            if self._color_as_height and (not color is None):
+            if self._color_as_height and (color is not None):
                 # use the color code as the z coordinate
                 ref_point[2] = float(color) / 255
             if self._fonts_cache:
@@ -640,29 +625,27 @@ class DXFParser(object):
             else:
                 font = None
             if not font:
-                log.warn("DXFImporter: No fonts are available - skipping " + \
-                        "TEXT item between line %d and %d" % \
-                        (start_line, end_line))
+                log.warn("DXFImporter: No fonts are available - skipping TEXT item between line "
+                         "%d and %d", start_line, end_line)
                 return
             if skew_angle:
                 # calculate the "skew" factor
                 if (skew_angle <= -90) or (skew_angle >= 90):
-                    log.warn("DXFImporter: Invalid skew angle for TEXT " + \
-                            "between line %d and %d" % (start_line, end_line))
+                    log.warn("DXFImporter: Invalid skew angle for TEXT between line %d and %d",
+                             start_line, end_line)
                     skew = 0
                 else:
                     skew = math.tan(skew_angle)
             else:
                 skew = 0
             model = font.render(text, skew=skew)
-            if (model.minx is None) or (model.miny is None) or \
-                    (model.minz is None) or (model.minx == model.maxx) or \
-                    (model.miny == model.maxy):
-                log.warn("DXFImporter: Empty rendered TEXT item between " + \
-                        "line %d and %d" % (start_line, end_line))
+            if ((model.minx is None) or (model.miny is None)
+                    or (model.minz is None) or (model.minx == model.maxx)
+                    or (model.miny == model.maxy)):
+                log.warn("DXFImporter: Empty rendered TEXT item between line %d and %d",
+                         start_line, end_line)
                 return
-            model.scale(text_height / (model.maxy - model.miny),
-                    callback=self.callback)
+            model.scale(text_height / (model.maxy - model.miny), callback=self.callback)
             if mirror_flags & 2:
                 # x mirror left/right
                 model.transform_by_template("yz_mirror", callback=self.callback)
@@ -674,8 +657,7 @@ class DXFParser(object):
                 scale_x = width_final / (model.maxx - model.minx)
                 model.scale(scale_x, callback=self.callback)
             if rotation:
-                matrix = pycam.Geometry.Matrix.get_rotation_matrix_axis_angle(
-                        (0, 0, 1), rotation)
+                matrix = pycam.Geometry.Matrix.get_rotation_matrix_axis_angle((0, 0, 1), rotation)
                 model.transform_by_matrix(matrix, callback=self.callback)
             # horizontal alignment
             if align_horiz == 0:
@@ -685,9 +667,8 @@ class DXFParser(object):
             elif align_horiz == 2:
                 offset_horiz = - (model.maxx - model.minx)
             else:
-                log.warn("DXFImporter: Horizontal TEXT justifications " + \
-                        "(3..5) are not supported - ignoring (between line " + \
-                        "%d and %d)" % (start_line, end_line))
+                log.warn("DXFImporter: Horizontal TEXT justifications (3..5) are not supported - "
+                         "ignoring (between line %d and %d)", start_line, end_line)
                 offset_horiz = 0
             # vertical alignment
             if align_vert in (0, 1):
@@ -698,8 +679,8 @@ class DXFParser(object):
             elif align_vert == 3:
                 offset_vert = - (model.maxy - model.miny)
             else:
-                log.warn("DXFImporter: Invalid vertical TEXT justification " + \
-                        " between line %d and %d" % (start_line, end_line))
+                log.warn("DXFImporter: Invalid vertical TEXT justification between line %d and %d",
+                         start_line, end_line)
                 offset_vert = 0
             # shift the text to its final destination
             shift_x = ref_point[0] - model.minx + offset_horiz
@@ -717,9 +698,8 @@ class DXFParser(object):
         p2 = [None, None, 0]
         p3 = [None, None, 0]
         p4 = [None, None, 0]
-        color = None
         key, value = self._read_key_value()
-        while (not key is None) and (key != self.KEYS["MARKER"]):
+        while (key is not None) and (key != self.KEYS["MARKER"]):
             if key == self.KEYS["P1_X"]:
                 p1[0] = value
             elif key == self.KEYS["P1_Y"]:
@@ -750,11 +730,11 @@ class DXFParser(object):
         end_line = self.line_number
         # The last lines were not used - they are just the marker for the next
         # item.
-        if not key is None:
+        if key is not None:
             self._push_on_stack(key, value)
         if (None in p1) or (None in p2) or (None in p3):
-            log.warn("DXFImporter: Incomplete 3DFACE definition between line " \
-                    + "%d and %d" % (start_line, end_line))
+            log.warn("DXFImporter: Incomplete 3DFACE definition between line %d and %d",
+                     start_line, end_line)
         else:
             # no color height adjustment for 3DFACE
             point1 = tuple(p1)
@@ -764,16 +744,15 @@ class DXFParser(object):
             triangles.append((point1, point2, point3))
             # DXF specifies, that p3=p4 if triangles (instead of quads) are
             # written.
-            if (not None in p4) and (p3 != p4):
+            if (None not in p4) and (p3 != p4):
                 point4 = (p4[0], p4[1], p4[2])
                 triangles.append((point3, point4, point1))
             for t in triangles:
                 if (t[0] != t[1]) and (t[0] != t[2]) and (t[1] != t[2]):
                     self.triangles.append(Triangle(t[0], t[1], t[2]))
                 else:
-                    log.warn("DXFImporter: Ignoring zero-sized 3DFACE " + \
-                            "(between input line %d and %d): %s" % \
-                            (start_line, end_line, t))
+                    log.warn("DXFImporter: Ignoring zero-sized 3DFACE (between input line %d and "
+                             "%d): %s", start_line, end_line, t)
 
     def parse_line(self):
         start_line = self.line_number
@@ -782,7 +761,7 @@ class DXFParser(object):
         p2 = [None, None, 0]
         color = None
         key, value = self._read_key_value()
-        while (not key is None) and (key != self.KEYS["MARKER"]):
+        while (key is not None) and (key != self.KEYS["MARKER"]):
             if key == self.KEYS["P1_X"]:
                 p1[0] = value
             elif key == self.KEYS["P1_Y"]:
@@ -803,13 +782,13 @@ class DXFParser(object):
         end_line = self.line_number
         # The last lines were not used - they are just the marker for the next
         # item.
-        if not key is None:
+        if key is not None:
             self._push_on_stack(key, value)
         if (None in p1) or (None in p2):
-            log.warn("DXFImporter: Incomplete LINE definition between line " \
-                    + "%d and %d" % (start_line, end_line))
+            log.warn("DXFImporter: Incomplete LINE definition between line %d and %d",
+                     start_line, end_line)
         else:
-            if self._color_as_height and (not color is None):
+            if self._color_as_height and (color is not None):
                 # use the color code as the z coordinate
                 p1[2] = float(color) / 255
                 p2[2] = float(color) / 255
@@ -817,9 +796,8 @@ class DXFParser(object):
             if line.p1 != line.p2:
                 self.lines.append(line)
             else:
-                log.warn("DXFImporter: Ignoring zero-length LINE (between " \
-                        + "input line %d and %d): %s" % (start_line, end_line,
-                        line))
+                log.warn("DXFImporter: Ignoring zero-length LINE (between input line %d and %d): "
+                         "%s", start_line, end_line, line)
 
     def parse_arc(self, circle=False):
         start_line = self.line_number
@@ -834,7 +812,7 @@ class DXFParser(object):
             angle_start = None
             angle_end = None
         key, value = self._read_key_value()
-        while (not key is None) and (key != self.KEYS["MARKER"]):
+        while (key is not None) and (key != self.KEYS["MARKER"]):
             if key == self.KEYS["P1_X"]:
                 center[0] = value
             elif key == self.KEYS["P1_Y"]:
@@ -853,19 +831,19 @@ class DXFParser(object):
                 pass
             key, value = self._read_key_value()
         end_line = self.line_number
-        # The last lines were not used - they are just the marker for the next
-        # item.
-        if not key is None:
+        # The last lines were not used - they are just the marker for the next item.
+        if key is not None:
             self._push_on_stack(key, value)
         if (None in center) or (None in (radius, angle_start, angle_end)):
-            log.warn("DXFImporter: Incomplete ARC definition between line " \
-                    + "%d and %d" % (start_line, end_line))
+            log.warn("DXFImporter: Incomplete ARC definition between line %d and %d",
+                     start_line, end_line)
         else:
-            if self._color_as_height and (not color is None):
+            if self._color_as_height and (color is not None):
                 # use the color code as the z coordinate
                 center[2] = float(color) / 255
             center = tuple(center)
-            xy_point_coords = pycam.Geometry.get_points_of_arc(center, radius, angle_start, angle_end)
+            xy_point_coords = pycam.Geometry.get_points_of_arc(center, radius, angle_start,
+                                                               angle_end)
             # Somehow the order of points seems to be the opposite of what is
             # expected.
             xy_point_coords.reverse()
@@ -878,9 +856,8 @@ class DXFParser(object):
                     if p1 != p2:
                         self.lines.append(Line(p1, p2))
             else:
-                log.warn("DXFImporter: Ignoring tiny ARC (between input " + \
-                        "line %d and %d): %s / %s (%s - %s)" % (start_line,
-                        end_line, center, radius, angle_start, angle_end))
+                log.warn("DXFImporter: Ignoring tiny ARC (between input line %d and %d): %s / %s "
+                         "(%s - %s)", start_line, end_line, center, radius, angle_start, angle_end)
 
     def check_header(self):
         # TODO: this function is not used?
@@ -891,20 +868,18 @@ class DXFParser(object):
             return None
 
 
-def import_model(filename, color_as_height=False, fonts_cache=None,
-        callback=None, **kwargs):
+def import_model(filename, color_as_height=False, fonts_cache=None, callback=None, **kwargs):
     if hasattr(filename, "read"):
         infile = filename
     else:
         try:
             infile = pycam.Utils.URIHandler(filename).open()
         except IOError, err_msg:
-            log.error("DXFImporter: Failed to read file (%s): %s" \
-                    % (filename, err_msg))
+            log.error("DXFImporter: Failed to read file (%s): %s", filename, err_msg)
             return None
 
-    result = DXFParser(infile, color_as_height=color_as_height,
-            fonts_cache=fonts_cache, callback=callback)
+    result = DXFParser(infile, color_as_height=color_as_height, fonts_cache=fonts_cache,
+                       callback=callback)
 
     model_data = result.get_model()
     lines = model_data["lines"]
@@ -917,16 +892,15 @@ def import_model(filename, color_as_height=False, fonts_cache=None,
     # 3D models are preferred over 2D models
     if triangles:
         if lines:
-            log.warn("DXFImporter: Ignoring 2D elements in DXF file: " + \
-                    "%d lines" % len(lines))
+            log.warn("DXFImporter: Ignoring 2D elements in DXF file: %d lines", len(lines))
         model = pycam.Geometry.Model.Model()
         for index, triangle in enumerate(triangles):
             model.append(triangle)
             # keep the GUI smooth
             if callback and (index % 50 == 0):
                 callback()
-        log.info("DXFImporter: Imported DXF model (3D): %d triangles" % \
-                len(model.triangles()))
+        log.info("DXFImporter: Imported DXF model (3D): %d triangles",
+                 len(model.triangles()))
         return model
     elif lines:
         model = pycam.Geometry.Model.ContourModel()
@@ -942,20 +916,17 @@ def import_model(filename, color_as_height=False, fonts_cache=None,
             if callback:
                 callback(text="Scaling height for multi-layered 2D model")
             log.info("DXFImporter: scaling height for multi-layered 2D model")
-            model.scale(scale_x=1.0, scale_y=1.0, scale_z=scale_z,
-                    callback=callback)
+            model.scale(scale_x=1.0, scale_y=1.0, scale_z=scale_z, callback=callback)
         # shift the model down to z=0
         if model.minz != 0:
             if callback:
                 callback(text="Shifting 2D model down to to z=0")
             model.shift(0, 0, -model.minz, callback=callback)
-        log.info("DXFImporter: Imported DXF model (2D): " + \
-                "%d lines / %d polygons" % \
-                (len(lines), len(model.get_polygons())))
+        log.info("DXFImporter: Imported DXF model (2D): %d lines / %d polygons",
+                 len(lines), len(model.get_polygons()))
         return model
     else:
         link = "http://sf.net/apps/mediawiki/pycam/?title=SupportedFormats"
-        log.error('DXFImporter: No supported elements found in DXF file!\n' \
-                + '<a href="%s">Read PyCAM\'s modelling hints.</a>' % link)
+        log.error('DXFImporter: No supported elements found in DXF file!\n'
+                  '<a href="%s">Read PyCAM\'s modelling hints.</a>', link)
         return None
-

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -41,20 +39,19 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.core.register_ui("main", "Processes", process_frame, weight=20)
             self._modelview = self.gui.get_object("ProcessEditorTable")
             self.set_gtk_modelview(self._modelview)
-            self.register_model_update(lambda:
-                    self.core.emit_event("process-list-changed"))
+            self.register_model_update(lambda: self.core.emit_event("process-list-changed"))
             for action, obj_name in ((self.ACTION_UP, "ProcessMoveUp"),
-                    (self.ACTION_DOWN, "ProcessMoveDown"),
-                    (self.ACTION_DELETE, "ProcessDelete")):
-                self.register_list_action_button(action,
-                        self.gui.get_object(obj_name))
-            self._gtk_handlers.append((self.gui.get_object("ProcessNew"),
-                    "clicked", self._process_new))
+                                     (self.ACTION_DOWN, "ProcessMoveDown"),
+                                     (self.ACTION_DELETE, "ProcessDelete")):
+                self.register_list_action_button(action, self.gui.get_object(obj_name))
+            self._gtk_handlers.append((self.gui.get_object("ProcessNew"), "clicked",
+                                       self._process_new))
             # parameters
             parameters_box = self.gui.get_object("ProcessParametersBox")
+
             def clear_parameter_widgets():
-                parameters_box.foreach(
-                        lambda widget: parameters_box.remove(widget))
+                parameters_box.foreach(parameters_box.remove)
+
             def add_parameter_widget(item, name):
                 # create a frame with an align and the item inside
                 if item.get_parent():
@@ -69,37 +66,37 @@ class Processes(pycam.Plugins.ListPluginBase):
                 align.add(item)
                 frame.show_all()
                 parameters_box.pack_start(frame, expand=False)
-            self.core.register_ui_section("process_parameters",
-                    add_parameter_widget, clear_parameter_widgets)
-            self.core.get("register_parameter_group")("process",
-                    changed_set_event="process-strategy-changed",
-                    changed_set_list_event="process-strategy-list-changed",
-                    get_current_set_func=self._get_strategy)
+
+            self.core.register_ui_section("process_parameters", add_parameter_widget,
+                                          clear_parameter_widgets)
+            self.core.get("register_parameter_group")(
+                "process", changed_set_event="process-strategy-changed",
+                changed_set_list_event="process-strategy-list-changed",
+                get_current_set_func=self._get_strategy)
             self.parameter_widget = pycam.Gui.ControlsGTK.ParameterSection()
             self.core.register_ui_section("process_path_parameters",
-                    self.parameter_widget.add_widget,
-                    self.parameter_widget.clear_widgets)
+                                          self.parameter_widget.add_widget,
+                                          self.parameter_widget.clear_widgets)
             self.core.register_ui("process_parameters", "Path parameters",
-                    self.parameter_widget.get_widget(), weight=10)
-            self._gtk_handlers.append((self._modelview.get_selection(),
-                    "changed", "process-selection-changed"))
-            self._gtk_handlers.append((self.gui.get_object("NameCell"),
-                    "edited", self._edit_process_name))
+                                  self.parameter_widget.get_widget(), weight=10)
+            self._gtk_handlers.append((self._modelview.get_selection(), "changed",
+                                       "process-selection-changed"))
+            self._gtk_handlers.append((self.gui.get_object("NameCell"), "edited",
+                                       self._edit_process_name))
             self._treemodel = self.gui.get_object("ProcessList")
             self._treemodel.clear()
-            self._gtk_handlers.append((self.gui.get_object("StrategySelector"),
-                    "changed", "process-strategy-changed"))
+            self._gtk_handlers.append((self.gui.get_object("StrategySelector"), "changed",
+                                       "process-strategy-changed"))
             self._event_handlers = (
-                    ("process-strategy-list-changed", self._update_widgets),
-                    ("process-list-changed", self._trigger_table_update),
-                    ("process-selection-changed", self._process_switch),
-                    ("process-changed", self._store_process_settings),
-                    ("process-strategy-changed", self._store_process_settings))
+                ("process-strategy-list-changed", self._update_widgets),
+                ("process-list-changed", self._trigger_table_update),
+                ("process-selection-changed", self._process_switch),
+                ("process-changed", self._store_process_settings),
+                ("process-strategy-changed", self._store_process_settings))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
         self.register_state_item("processes", self)
-        self.core.register_namespace("processes",
-                pycam.Plugins.get_filter(self))
+        self.core.register_namespace("processes", pycam.Plugins.get_filter(self))
         return True
 
     def teardown(self):
@@ -108,8 +105,7 @@ class Processes(pycam.Plugins.ListPluginBase):
         if self.gui:
             self.core.unregister_ui("main", self.gui.get_object("ProcessBox"))
             self.core.unregister_ui_section("process_path_parameters")
-            self.core.unregister_ui("process_parameters",
-                    self.parameter_widget.get_widget())
+            self.core.unregister_ui("process_parameters", self.parameter_widget.get_widget())
             self.core.unregister_ui_section("process_parameters")
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
@@ -119,9 +115,9 @@ class Processes(pycam.Plugins.ListPluginBase):
         return True
 
     def _render_process_description(self, column, cell, model, m_iter):
-        process = self.get_by_path(model.get_path(m_iter))
         # TODO: describe the strategy
         text = "TODO"
+#       process = self.get_by_path(model.get_path(m_iter))
         cell.set_property("text", text)
 
     def _render_process_name(self, column, cell, model, m_iter):
@@ -136,10 +132,9 @@ class Processes(pycam.Plugins.ListPluginBase):
 
     def _trigger_table_update(self):
         self.gui.get_object("NameColumn").set_cell_data_func(
-                self.gui.get_object("NameCell"), self._render_process_name)
+            self.gui.get_object("NameCell"), self._render_process_name)
         self.gui.get_object("DescriptionColumn").set_cell_data_func(
-                self.gui.get_object("DescriptionCell"),
-                self._render_process_description)
+            self.gui.get_object("DescriptionCell"), self._render_process_description)
 
     def _update_widgets(self):
         selected = self._get_strategy()
@@ -206,16 +201,15 @@ class Processes(pycam.Plugins.ListPluginBase):
             # default value of the new (changed) process type.
             # E.g. this changes the "overlap" value from 10 to 60 when
             # switching from slicing to surfacing.
-            if process["strategy"] and process["strategy"] in \
-                    self.core.get("get_parameter_sets")("process"):
+            if process["strategy"] \
+                    and process["strategy"] in self.core.get("get_parameter_sets")("process"):
                 old_strategy = self.core.get("get_parameter_sets")("process")[process["strategy"]]
                 if process["strategy"] != strategy["name"]:
                     changes = {}
-                    common_keys = [key for key in old_strategy["parameters"] \
-                            if key in strategy["parameters"]]
+                    common_keys = [key for key in old_strategy["parameters"]
+                                   if key in strategy["parameters"]]
                     for key in common_keys:
-                        if process["parameters"][key] == \
-                                old_strategy["parameters"][key]:
+                        if process["parameters"][key] == old_strategy["parameters"][key]:
                             changes[key] = strategy["parameters"][key]
                         self.core.get("set_parameter_values")("process", changes)
             process["strategy"] = strategy["name"]
@@ -234,23 +228,21 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.core.block_event("process-strategy-changed")
             strategy_name = process["strategy"]
             self.select_strategy(strategy_name)
-            strategy = self._get_strategy(strategy_name)
             self.core.get("set_parameter_values")("process", process["parameters"])
             control_box.show()
             self.core.unblock_event("process-strategy-changed")
             self.core.unblock_event("process-changed")
             self.core.emit_event("process-strategy-changed")
             self.core.emit_event("process-changed")
-        
+
     def _process_new(self, *args):
         strategies = self.core.get("get_parameter_sets")("process").values()
         strategies.sort(key=lambda item: item["weight"])
         strategy = strategies[0]
-        name = get_non_conflicting_name("Process #%d",
-                [process["name"] for process in self])
+        name = get_non_conflicting_name("Process #%d", [process["name"] for process in self])
         new_process = ProcessEntity({"strategy": strategy["name"],
-                "parameters": strategy["parameters"].copy(),
-                "name": name})
+                                     "parameters": strategy["parameters"].copy(),
+                                     "name": name})
         self.append(new_process)
         self.select(new_process)
 
@@ -259,4 +251,3 @@ class ProcessEntity(pycam.Plugins.ObjectWithAttributes):
 
     def __init__(self, parameters):
         super(ProcessEntity, self).__init__("process", parameters)
-

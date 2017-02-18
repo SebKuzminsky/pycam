@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -33,7 +31,8 @@ class OpenGLViewSupportModelPreview(pycam.Plugins.PluginBase):
         import OpenGL.GLUT
         self._GL = OpenGL.GL
         self.core.register_event("visualize-items", self.draw_support_preview)
-        self.core.get("register_display_item")("show_support_preview", "Show Support Model Preview", 30)
+        self.core.get("register_display_item")("show_support_preview",
+                                               "Show Support Model Preview", 30)
         self.core.get("register_color")("color_support_preview", "Support model", 30)
         self.core.emit_event("visual-item-updated")
         return True
@@ -71,4 +70,3 @@ class OpenGLViewSupportModelPreview(pycam.Plugins.PluginBase):
         # enable polygon fill mode again
         if self.core.get("view_polygon"):
             GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
-

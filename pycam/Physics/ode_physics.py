@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -20,8 +18,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.Triangle import Triangle
-from pycam.Geometry.utils import number
 import uuid
 
 try:
@@ -29,10 +25,12 @@ try:
 except ImportError:
     ode = None
 
+from pycam.Geometry import number
+from pycam.Geometry.Triangle import Triangle
+
 
 ShapeCylinder = lambda radius, height: ode.GeomCylinder(None, radius, height)
-ShapeCapsule = lambda radius, height: \
-        ode.GeomCapsule(None, radius, height - (2 * radius))
+ShapeCapsule = lambda radius, height: ode.GeomCapsule(None, radius, height - (2 * radius))
 
 _ode_override_state = None
 
@@ -49,8 +47,9 @@ def generate_physics(models, cutter, physics=None):
     physics.set_drill(shape_info[0], (0.0, 0.0, 0.0))
     return physics
 
+
 def is_ode_available():
-    if not _ode_override_state is None:
+    if _ode_override_state is not None:
         return _ode_override_state
     else:
         if ode is None:
@@ -58,9 +57,11 @@ def is_ode_available():
         else:
             return True
 
+
 def override_ode_availability(state):
     global _ode_override_state
     _ode_override_state = state
+
 
 def convert_triangles_to_vertices_faces(triangles):
     corners = []
@@ -72,33 +73,34 @@ def convert_triangles_to_vertices_faces(triangles):
         # models as well.
         for p in (t.p1, t.p3, t.p2):
             # add the point to the id/index mapping, if necessary
-            if not id_index_map.has_key(p.id):
+            if p.id not in id_index_map:
                 corners.append((p[0], p[1], p[2]))
                 id_index_map[p.id] = len(corners) - 1
-            coords.append(id_index_map[p.id]) 
+            coords.append(id_index_map[p.id])
         faces.append(coords)
     return corners, faces
 
+
 def get_parallelepiped_geom(low_points, high_points, space=None):
     triangles = (
-            # front side
-            Triangle(low_points[0], low_points[1], high_points[0]),
-            Triangle(low_points[1], high_points[1], high_points[0]),
-            # right side
-            Triangle(low_points[1], low_points[2], high_points[1]),
-            Triangle(low_points[2], high_points[2], high_points[1]),
-            # back side
-            Triangle(low_points[2], low_points[3], high_points[2]),
-            Triangle(low_points[3], high_points[3], high_points[2]),
-            # left side
-            Triangle(low_points[3], low_points[0], high_points[3]),
-            Triangle(low_points[0], high_points[0], high_points[3]),
-            # bottom side
-            Triangle(low_points[1], low_points[0], low_points[2]),
-            Triangle(low_points[3], low_points[2], low_points[0]),
-            # high side
-            Triangle(high_points[0], high_points[1], high_points[2]),
-            Triangle(high_points[2], high_points[3], high_points[0]),
+        # front side
+        Triangle(low_points[0], low_points[1], high_points[0]),
+        Triangle(low_points[1], high_points[1], high_points[0]),
+        # right side
+        Triangle(low_points[1], low_points[2], high_points[1]),
+        Triangle(low_points[2], high_points[2], high_points[1]),
+        # back side
+        Triangle(low_points[2], low_points[3], high_points[2]),
+        Triangle(low_points[3], high_points[3], high_points[2]),
+        # left side
+        Triangle(low_points[3], low_points[0], high_points[3]),
+        Triangle(low_points[0], high_points[0], high_points[3]),
+        # bottom side
+        Triangle(low_points[1], low_points[0], low_points[2]),
+        Triangle(low_points[3], low_points[2], low_points[0]),
+        # high side
+        Triangle(high_points[0], high_points[1], high_points[2]),
+        Triangle(high_points[2], high_points[3], high_points[0]),
     )
     mesh = ode.TriMeshData()
     vertices, faces = convert_triangles_to_vertices_faces(triangles)
@@ -157,10 +159,11 @@ class PhysicalWorld(object):
         self._dirty = True
 
     def set_drill(self, shape, position):
-        #geom = ode.GeomTransform(self._space)
-        #geom.setOffset(position)
-        #geom.setGeom(shape)
-        #shape.setOffset(position)
+        pass
+#       geom = ode.GeomTransform(self._space)
+#       geom.setOffset(position)
+#       geom.setGeom(shape)
+#       shape.setOffset(position)
         self._space.add(shape)
         # sadly PyODE forgets to update the "space" attribute that we need in
         # the cutters' "extend" functions
@@ -190,8 +193,8 @@ class PhysicalWorld(object):
     def set_drill_position(self, position):
         if self._drill:
             position = (position[0] + self._drill_offset[0],
-                    position[1] + self._drill_offset[1],
-                    position[2] + self._drill_offset[2])
+                        position[1] + self._drill_offset[1],
+                        position[2] + self._drill_offset[2])
             self._drill.setPosition(position)
 
     def _get_rays_for_geom(self, geom):
@@ -226,4 +229,3 @@ class PhysicalWorld(object):
 
     def get_space(self):
         return self._space
-

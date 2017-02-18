@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2008 Lode Leroy
 
 This file is part of PyCAM.
@@ -21,10 +19,11 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import math
-from math import sqrt
+
+from pycam.Geometry import sqrt
+
 
 # see BRL-CAD/src/libbn/poly.c
-
 EPSILON = 1e-4
 SMALL = 1e-4
 INV_2 = 0.5
@@ -34,11 +33,10 @@ INV_27 = 1.0 / 27.0
 SQRT3 = sqrt(3.0)
 PI_DIV_3 = math.pi / 3.0
 
+
 def near_zero(x, epsilon=EPSILON):
-    if abs(x) < epsilon:
-        return True
-    else:
-        return False
+    return abs(x) < epsilon
+
 
 def cuberoot(x):
     if x >= 0:
@@ -46,10 +44,13 @@ def cuberoot(x):
     else:
         return -pow(-x, INV_3)
 
+
 def poly1_roots(a, b):
     if near_zero(a):
         return None
-    return (-b / a, )
+    else:
+        return (-b / a, )
+
 
 def poly2_roots(a, b, c):
     d = b * b - 4 * a * c
@@ -65,6 +66,7 @@ def poly2_roots(a, b, c):
     else:
         return ((-b - q) / (2 * a), (-b + q) / (2 * a))
 
+
 def poly3_roots(a, b, c, d):
     if near_zero(a):
         return poly2_roots(b, c, d)
@@ -73,7 +75,7 @@ def poly3_roots(a, b, c, d):
     c3 = d / a
 
     c1_3 = c1 * INV_3
-    a = c2 -c1 * c1_3
+    a = c2 - c1 * c1_3
     b = (2 * c1 * c1 * c1 - 9 * c1 * c2 + 27 * c3) * INV_27
     delta = a * a
     delta = b * b * INV_4 + delta * a * INV_27
@@ -111,9 +113,10 @@ def poly3_roots(a, b, c, d):
                 cs_phi = math.cos(phi)
                 sn_phi_s3 = math.sin(phi) * SQRT3
         r1 = 2 * fact * cs_phi
-        r2 = fact * ( sn_phi_s3 - cs_phi)
+        r2 = fact * (sn_phi_s3 - cs_phi)
         r3 = fact * (-sn_phi_s3 - cs_phi)
         return (r1 - c1_3, r2 - c1_3, r3 - c1_3)
+
 
 def poly4_roots(a, b, c, d, e):
     if a == 0:
@@ -122,8 +125,7 @@ def poly4_roots(a, b, c, d, e):
     c2 = float(c) / a
     c3 = float(d) / a
     c4 = float(e) / a
-    roots3 = poly3_roots(1.0, -c2, c3 * c1 - 4 * c4, -c3 * c3 - c4 * c1 * c1 \
-            + 4 * c4 * c2)
+    roots3 = poly3_roots(1.0, -c2, c3 * c1 - 4 * c4, -c3 * c3 - c4 * c1 * c1 + 4 * c4 * c2)
     if not roots3:
         return None
     if len(roots3) == 1:
@@ -162,8 +164,8 @@ def poly4_roots(a, b, c, d, e):
             quad2[2] = q1
         else:
             return None
-#    print "f1(x)=%g*x**2%+g*x%+g" % (quad1[0], quad1[1], quad1[2])
-#    print "f2(x)=%g*x**2%+g*x%+g" % (quad2[0], quad2[1], quad2[2])
+    # print "f1(x)=%g*x**2%+g*x%+g" % (quad1[0], quad1[1], quad1[2])
+    # print "f2(x)=%g*x**2%+g*x%+g" % (quad2[0], quad2[1], quad2[2])
     roots1 = poly2_roots(quad1[0], quad1[1], quad1[2])
     roots2 = poly2_roots(quad2[0], quad2[1], quad2[2])
     if roots1 and roots2:
@@ -175,6 +177,7 @@ def poly4_roots(a, b, c, d, e):
     else:
         return None
 
+
 def test_poly1(a, b):
     roots = poly1_roots(a, b)
     print a, "*x+", b, "=0 ", roots
@@ -184,6 +187,7 @@ def test_poly1(a, b):
             if not near_zero(f):
                 print "ERROR:",
             print "    f(%f)=%f" % (r, f)
+
 
 def test_poly2(a, b, c):
     roots = poly2_roots(a, b, c)
@@ -195,6 +199,7 @@ def test_poly2(a, b, c):
                 print "ERROR:",
             print "    f(%f)=%f" % (r, f)
 
+
 def test_poly3(a, b, c, d):
     roots = poly3_roots(a, b, c, d)
     print a, "*x^3+", b, "*x^2+", c, "*x+", d, "=0 ", roots
@@ -204,6 +209,7 @@ def test_poly3(a, b, c, d):
             if not near_zero(f):
                 print "ERROR:",
             print "    f(%f)=%f" % (r, f)
+
 
 def test_poly4(a, b, c, d, e):
     roots = poly4_roots(a, b, c, d, e)
@@ -216,6 +222,7 @@ def test_poly4(a, b, c, d, e):
                 print "ERROR:",
             print "    f(%f)=%f" % (r, f)
     return roots
+
 
 if __name__ == "__main__":
     test_poly1(1, 2)
@@ -236,4 +243,3 @@ if __name__ == "__main__":
     test_poly4(1, -10, 35, -50, +24)
     test_poly4(1, 0, 6, -60, 36)
     test_poly4(1, -25, 235.895, -995.565, 1585.25)
-

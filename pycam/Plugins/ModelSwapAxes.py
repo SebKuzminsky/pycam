@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -35,10 +33,9 @@ class ModelSwapAxes(pycam.Plugins.PluginBase):
             swap_box = self.gui.get_object("ModelSwapBox")
             swap_box.unparent()
             self.core.register_ui("model_handling", "Swap axes", swap_box, 0)
-            self._gtk_handlers = ((self.gui.get_object("SwapAxesButton"),
-                    "clicked", self._swap_axes), )
-            self._event_handlers = (("model-selection-changed",
-                    self._update_controls), )
+            self._gtk_handlers = ((self.gui.get_object("SwapAxesButton"), "clicked",
+                                   self._swap_axes), )
+            self._event_handlers = (("model-selection-changed", self._update_controls), )
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_controls()
@@ -46,8 +43,7 @@ class ModelSwapAxes(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("model_handling",
-                    self.gui.get_object("ModelSwapBox"))
+            self.core.unregister_ui("model_handling", self.gui.get_object("ModelSwapBox"))
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
 
@@ -63,18 +59,17 @@ class ModelSwapAxes(pycam.Plugins.PluginBase):
         if not models:
             return
         self.core.emit_event("model-change-before")
-        for axes, template in (("XY", "x_swap_y"), ("XZ", "x_swap_z"),
-                ("YZ", "y_swap_z")):
+        for axes, template in (("XY", "x_swap_y"), ("XZ", "x_swap_z"), ("YZ", "y_swap_z")):
             if self.gui.get_object("SwapAxes%s" % axes).get_active():
                 break
+        else:
+            assert False, "No axis selected"
         progress = self.core.get("progress")
         progress.update(text="Swap axes of model")
         progress.disable_cancel()
         progress.set_multiple(len(models), "Model")
         for model in models:
-            model.model.transform_by_template(template,
-                    callback=progress.update)
+            model.model.transform_by_template(template, callback=progress.update)
             progress.update_multiple()
         progress.finish()
         self.core.emit_event("model-change-after")
-

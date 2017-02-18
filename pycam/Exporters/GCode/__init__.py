@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-
 Copyright 2012 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -19,14 +18,9 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-
-import decimal
-import os
-
 import pycam.Utils.log
 import pycam.Toolpath.Filters
-from pycam.Toolpath import MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, \
-        MACHINE_SETTING, COMMENT
+from pycam.Toolpath import MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MACHINE_SETTING, COMMENT
 
 _log = pycam.Utils.log.get_logger()
 
@@ -36,7 +30,7 @@ class BaseGenerator(object):
     def __init__(self, destination):
         if isinstance(destination, basestring):
             # open the file
-            self.destination = file(destination,"w")
+            self.destination = file(destination, "w")
             self._close_stream_on_exit = True
         else:
             # assume that "destination" is something like a StringIO instance
@@ -77,8 +71,7 @@ class BaseGenerator(object):
         all_filters = list(self._filters)
         if filters:
             all_filters.extend(filters)
-        filtered_moves = pycam.Toolpath.Filters.get_filtered_moves(moves,
-                all_filters)
+        filtered_moves = pycam.Toolpath.Filters.get_filtered_moves(moves, all_filters)
         for move_type, args in filtered_moves:
             if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
                 is_rapid = move_type == MOVE_STRAIGHT_RAPID
@@ -91,14 +84,13 @@ class BaseGenerator(object):
                 key, value = args
                 func_name = "command_%s" % key
                 if hasattr(self, func_name):
-                    _log.debug("GCode: machine setting '%s': %s" % (key, value))
+                    _log.debug("GCode: machine setting '%s': %s", key, value)
                     getattr(self, func_name)(value)
                     self._cache[key] = value
                     self._cache["rapid_move"] = None
                 else:
-                    _log.warn("The current GCode exporter does not support " + \
-                            "the machine setting '%s=%s' -> ignore" % (key, value))
+                    _log.warn("The current GCode exporter does not support the machine setting "
+                              "'%s=%s' -> ignore", key, value)
             else:
-                _log.warn(("A non-basic toolpath item (%d -> %s) remained in the " + \
-                        "queue -> ignore") % (move_type, args))
-
+                _log.warn("A non-basic toolpath item (%d -> %s) remained in the queue -> ignore",
+                          move_type, args)

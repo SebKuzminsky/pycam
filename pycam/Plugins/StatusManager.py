@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -20,10 +18,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
 import xml.etree.ElementTree as ET
 
-import pycam.Utils.log
+from pycam import FILTER_CONFIG
 import pycam.Plugins
+import pycam.Utils.log
 
 _log = pycam.Utils.log.get_logger()
 
@@ -40,14 +40,16 @@ class StatusManager(pycam.Plugins.PluginBase):
             autoload_box = self.gui.get_object("StartupTaskFileBox")
             autoload_source = self.gui.get_object("StartupTaskFile")
             # TODO: fix the extension filter
-            #for one_filter in get_filters_from_list(FILTER_CONFIG):
-            #    autoload_source.add_filter(one_filter)
-            #    autoload_source.set_filter(one_filter)
+#           for one_filter in get_filters_from_list(FILTER_CONFIG):
+#               autoload_source.add_filter(one_filter)
+#               autoload_source.set_filter(one_filter)
+
             def get_autoload_task_file(autoload_source=autoload_source):
                 if autoload_enable.get_active():
                     return autoload_source.get_filename()
                 else:
                     return ""
+
             def set_autoload_task_file(filename):
                 if filename:
                     autoload_enable.set_active(True)
@@ -57,35 +59,44 @@ class StatusManager(pycam.Plugins.PluginBase):
                     autoload_enable.set_active(False)
                     autoload_box.hide()
                     autoload_source.unselect_all()
+
             def autoload_enable_switched(widget, box):
                 if not widget.get_active():
                     set_autoload_task_file(None)
                 else:
                     autoload_box.show()
-            autoload_enable.connect("toggled", autoload_enable_switched,
-                    autoload_box)
-            self.settings.add_item("default_task_settings_file",
-                    get_autoload_task_file, set_autoload_task_file)
-            autoload_task_filename = self.settings.get("default_task_settings_file")
+
+            autoload_enable.connect("toggled", autoload_enable_switched, autoload_box)
+            self.core.settings.add_item("default_task_settings_file", get_autoload_task_file,
+                                        set_autoload_task_file)
+            autoload_task_filename = self.core.settings.get("default_task_settings_file")
             # TODO: use "startup" hook instead
             if autoload_task_filename:
                 self.open_task_settings_file(autoload_task_filename)
-                ("LoadTaskSettings", self.load_task_settings_file, None, "<Control>t"),
-                ("SaveTaskSettings", self.save_task_settings_file, lambda: self.last_task_settings_uri, None),
-                ("SaveAsTaskSettings", self.save_task_settings_file, None, None),
+            self._gtk_handlers = []
+            for objname, callback, data, accel_key in (
+                    ("LoadTaskSettings", self.load_task_settings_file, None, "<Control>t"),
+                    ("SaveTaskSettings", self.save_task_settings_file,
+                     lambda: self.last_task_settings_uri, None),
+                    ("SaveAsTaskSettings", self.save_task_settings_file, None, None)):
+                obj = self.gui.get_object(objname)
+                self.register_gtk_accelerator("status_manager", obj, accel_key, objname)
+                self._gtk_handlers.append((obj, "activate", callback))
+            self.register_gtk_handlers(self._gtk_handlers)
         return True
 
     def teardown(self):
-        pass
+        if self.gui:
+            self.unregister_gtk_handlers(self._gtk_handlers)
 
     def register_status_type(self, name, the_type, parse_func, format_func):
         if name in self._types:
-            _log.info("Trying to register status type twice: %s" % name)
+            _log.info("Trying to register status type twice: %s", name)
         self._types[name] = (the_type, parse_func, format_func)
 
     def unregister_status_type(self, name):
-        if not name in self._types:
-            _log.info("Trying to unregister unknown status type: %s" % name)
+        if name not in self._types:
+            _log.info("Trying to unregister unknown status type: %s", name)
         else:
             del self._types[name]
 
@@ -110,47 +121,48 @@ class StatusManager(pycam.Plugins.PluginBase):
         if callable(filename):
             filename = filename()
         if not filename:
-            filename = self.settings.get("get_filename_func")("Loading settings ...",
-                    mode_load=True, type_filter=FILTER_CONFIG)
+            filename = self.core.settings.get("get_filename_func")("Loading settings ...",
+                                                                   mode_load=True,
+                                                                   type_filter=FILTER_CONFIG)
             # Only update the last_task_settings attribute if the task file was
             # loaded interactively. E.g. ignore the initial task file loading.
             if filename:
                 self.last_task_settings_uri = pycam.Utils.URIHandler(filename)
         if filename:
-            log.info("Loading task settings file: %s" % str(filename))
+            _log.info("Loading task settings file: %s", str(filename))
             self.load_task_settings(filename)
-            self.add_to_recent_file_list(filename)
+            self.core.emit_event("notify-file-opened", filename)
 
     def save_task_settings_file(self, widget=None, filename=None):
         if callable(filename):
             filename = filename()
         if not isinstance(filename, (basestring, pycam.Utils.URIHandler)):
             # we open a dialog
-            filename = self.settings.get("get_filename_func")("Save settings to ...",
-                    mode_load=False, type_filter=FILTER_CONFIG,
-                    filename_templates=(self.last_task_settings_uri, self.last_model_uri))
+            filename = self.core.settings.get("get_filename_func")(
+                "Save settings to ...", mode_load=False, type_filter=FILTER_CONFIG,
+                filename_templates=(self.last_task_settings_uri, self.core.last_model_uri))
             if filename:
                 self.last_task_settings_uri = pycam.Utils.URIHandler(filename)
         # no filename given -> exit
         if not filename:
             return
-        settings = self.settings.dump_state()
+        settings = self.dump_state()
         try:
             out_file = open(filename, "w")
             out_file.write(settings)
             out_file.close()
-            log.info("Task settings written to %s" % filename)
-            self.add_to_recent_file_list(filename)
+            _log.info("Task settings written to %s", filename)
+            self.core.emit_event("notify-file-opened", filename)
         except IOError:
-            log.error("Failed to save settings file")
+            _log.error("Failed to save settings file")
 
     def load_task_settings(self, filename=None):
         settings = pycam.Gui.Settings.ProcessSettings()
-        if not filename is None:
+        if filename is not None:
             settings.load_file(filename)
         # flush all tables (without re-assigning new objects)
         for one_list_name in ("tools", "processes", "bounds", "tasks"):
-            one_list = self.settings.get(one_list_name)
+            one_list = self.core.settings.get(one_list_name)
             while one_list:
                 one_list.pop()
         # TODO: load default tools/processes/bounds
@@ -170,7 +182,7 @@ class StatusManager(pycam.Plugins.PluginBase):
             if match:
                 for component in chain[:-1]:
                     next_item = parent.find(component)
-                    if not next_item is None:
+                    if next_item is not None:
                         parent = next_item
                     else:
                         item = ET.SubElement(parent, component)
@@ -226,4 +238,3 @@ def _get_xml_lines(item):
         else:
             indent += 2
     return lines
-

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -20,18 +18,19 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.PointUtils import *
-from pycam.Geometry.Triangle import Triangle
-from pycam.Geometry.Plane import Plane
+from pycam.Geometry import number
 from pycam.Geometry.Model import Model
-from pycam.Geometry.utils import number
-import pycam.Geometry
+from pycam.Geometry.Plane import Plane
+from pycam.Geometry.PointUtils import padd, pcross, pdot, pdist, pdiv, pmul, pnormalized, psub
+from pycam.Geometry.Triangle import Triangle
+from pycam.Geometry.utils import get_angle_pi, get_bisector
 
 
 def _get_triangles_for_face(pts):
     t1 = Triangle(pts[0], pts[1], pts[2])
     t2 = Triangle(pts[2], pts[3], pts[0])
     return (t1, t2)
+
 
 def _add_cuboid_to_model(model, start, direction, height, width):
     up = pmul((0, 0, 1, 'v'), height)
@@ -45,50 +44,39 @@ def _add_cuboid_to_model(model, start, direction, height, width):
     end3 = padd(start3, direction)
     end4 = padd(start4, direction)
     faces = ((start1, start2, start3, start4), (start1, end1, end2, start2),
-            (start2, end2, end3, start3), (start3, end3, end4, start4),
-            (start4, end4, end1, start1), (end4, end3, end2, end1))
+             (start2, end2, end3, start3), (start3, end3, end4, start4),
+             (start4, end4, end1, start1), (end4, end3, end2, end1))
     for face in faces:
         t1, t2 = _get_triangles_for_face(face)
         model.append(t1)
         model.append(t2)
 
+
 def _add_aligned_cuboid_to_model(minx, maxx, miny, maxy, minz, maxz):
-    points = (
-            (minx, miny, minz),
-            (maxx, miny, minz),
-            (maxx, maxy, minz),
-            (minx, maxy, minz),
-            (minx, miny, maxz),
-            (maxx, miny, maxz),
-            (maxx, maxy, maxz),
-            (minx, maxy, maxz))
+    points = ((minx, miny, minz), (maxx, miny, minz), (maxx, maxy, minz), (minx, maxy, minz),
+              (minx, miny, maxz), (maxx, miny, maxz), (maxx, maxy, maxz), (minx, maxy, maxz))
     triangles = []
     # lower face
-    triangles.extend(_get_triangles_for_face(
-            (points[0], points[1], points[2], points[3])))
+    triangles.extend(_get_triangles_for_face((points[0], points[1], points[2], points[3])))
     # upper face
-    triangles.extend(_get_triangles_for_face(
-            (points[7], points[6], points[5], points[4])))
+    triangles.extend(_get_triangles_for_face((points[7], points[6], points[5], points[4])))
     # front face
-    triangles.extend(_get_triangles_for_face(
-            (points[0], points[4], points[5], points[1])))
+    triangles.extend(_get_triangles_for_face((points[0], points[4], points[5], points[1])))
     # back face
-    triangles.extend(_get_triangles_for_face(
-            (points[2], points[6], points[7], points[3])))
+    triangles.extend(_get_triangles_for_face((points[2], points[6], points[7], points[3])))
     # right face
-    triangles.extend(_get_triangles_for_face(
-            (points[1], points[5], points[6], points[2])))
+    triangles.extend(_get_triangles_for_face((points[1], points[5], points[6], points[2])))
     # left face
-    triangles.extend(_get_triangles_for_face(
-            (points[3], points[7], points[4], points[0])))
+    triangles.extend(_get_triangles_for_face((points[3], points[7], points[4], points[0])))
     # add all triangles to the model
     model = Model()
     for t in triangles:
         model.append(t)
     return model
 
-def get_support_grid_locations(minx, maxx, miny, maxy, dist_x, dist_y,
-        offset_x=0.0, offset_y=0.0, adjustments_x=None, adjustments_y=None):
+
+def get_support_grid_locations(minx, maxx, miny, maxy, dist_x, dist_y, offset_x=0.0, offset_y=0.0,
+                               adjustments_x=None, adjustments_y=None):
     def get_lines(center, dist, min_value, max_value):
         """ generate a list of positions starting from the middle going up and
         and down
@@ -108,6 +96,7 @@ def get_support_grid_locations(minx, maxx, miny, maxy, dist_x, dist_y,
         # remove lines that are out of range (e.g. due to a huge offset)
         lines = [line for line in lines if min_value < line < max_value]
         return lines
+
     # convert all inputs to the type defined in "number"
     dist_x = number(dist_x)
     dist_y = number(dist_y)
@@ -125,11 +114,11 @@ def get_support_grid_locations(minx, maxx, miny, maxy, dist_x, dist_y,
             lines_y[index] += number(adjustments_y[index])
     return lines_x, lines_y
 
-def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness,
-        height, offset_x=0.0, offset_y=0.0, adjustments_x=None,
-        adjustments_y=None):
-    lines_x, lines_y = get_support_grid_locations(minx, maxx, miny, maxy,
-            dist_x, dist_y, offset_x, offset_y, adjustments_x, adjustments_y)
+
+def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness, height,
+                     offset_x=0.0, offset_y=0.0, adjustments_x=None, adjustments_y=None):
+    lines_x, lines_y = get_support_grid_locations(minx, maxx, miny, maxy, dist_x, dist_y, offset_x,
+                                                  offset_y, adjustments_x, adjustments_y)
     # create all x grid lines
     grid_model = Model()
     # convert all inputs to "number"
@@ -140,29 +129,27 @@ def get_support_grid(minx, maxx, miny, maxy, z_plane, dist_x, dist_y, thickness,
     length_extension = max(thickness, height)
     for line_x in lines_x:
         # we make the grid slightly longer (by thickness) than necessary
-        grid_model += _add_aligned_cuboid_to_model(line_x - thick_half,
-                line_x + thick_half, miny - length_extension,
-                maxy + length_extension, z_plane, z_plane + height)
+        grid_model += _add_aligned_cuboid_to_model(
+            line_x - thick_half, line_x + thick_half, miny - length_extension,
+            maxy + length_extension, z_plane, z_plane + height)
     for line_y in lines_y:
         # we make the grid slightly longer (by thickness) than necessary
-        grid_model += _add_aligned_cuboid_to_model(minx - length_extension,
-                maxx + length_extension, line_y - thick_half,
-                line_y + thick_half, z_plane, z_plane + height)
+        grid_model += _add_aligned_cuboid_to_model(
+            minx - length_extension, maxx + length_extension, line_y - thick_half,
+            line_y + thick_half, z_plane, z_plane + height)
     return grid_model
 
-def get_support_distributed(model, z_plane, average_distance,
-        min_bridges_per_polygon, thickness, height, length, bounds=None,
-        start_at_corners=False):
-    if (average_distance == 0) or (length == 0) or (thickness == 0) \
-            or (height == 0):
+
+def get_support_distributed(model, z_plane, average_distance, min_bridges_per_polygon, thickness,
+                            height, length, bounds=None, start_at_corners=False):
+    if (average_distance == 0) or (length == 0) or (thickness == 0) or (height == 0):
         return
     result = Model()
     if not hasattr(model, "get_polygons"):
-        model = model.get_waterline_contour(
-                Plane((0, 0, max(model.minz, z_plane)), (0, 0, 1, 'v')))
+        model = model.get_waterline_contour(Plane((0, 0, max(model.minz, z_plane)),
+                                                  (0, 0, 1, 'v')))
     if model:
-        model = model.get_flat_projection(Plane((0, 0, z_plane),
-                (0, 0, 1, 'v')))
+        model = model.get_flat_projection(Plane((0, 0, z_plane), (0, 0, 1, 'v')))
     if model and bounds:
         model = model.get_cropped_model_by_bounds(bounds)
     if model:
@@ -181,24 +168,26 @@ def get_support_distributed(model, z_plane, average_distance,
         if polygon.is_closed and (not polygon.is_outer()) \
                 and (abs(polygon.get_area()) < 25000 * thickness ** 2):
             continue
-        bridges = bridge_calculator(polygon, z_plane, min_bridges_per_polygon,
-                average_distance, avoid_distance)
+        bridges = bridge_calculator(polygon, z_plane, min_bridges_per_polygon, average_distance,
+                                    avoid_distance)
         for pos, direction in bridges:
             _add_cuboid_to_model(result, pos, pmul(direction, length), height, thickness)
     return result
 
 
 class _BridgeCorner(object):
+
     # currently we only use the xy plane
     up_vector = (0, 0, 1, 'v')
+
     def __init__(self, barycenter, location, p1, p2, p3):
         self.location = location
         self.position = p2
-        self.direction = pnormalized(pycam.Geometry.get_bisector(p1, p2, p3, self.up_vector))
+        self.direction = pnormalized(get_bisector(p1, p2, p3, self.up_vector))
         preferred_direction = pnormalized(psub(p2, barycenter))
         # direction_factor: 0..1 (bigger -> better)
         direction_factor = (pdot(preferred_direction, self.direction) + 1) / 2
-        angle = pycam.Geometry.get_angle_pi(p1, p2, p3, self.up_vector, pi_factor=True)
+        angle = get_angle_pi(p1, p2, p3, self.up_vector, pi_factor=True)
         # angle_factor: 0..1 (bigger -> better)
         if angle > 0.5:
             # use only angles > 90 degree
@@ -207,18 +196,18 @@ class _BridgeCorner(object):
             angle_factor = 0
         # priority: 0..1 (bigger -> better)
         self.priority = angle_factor * direction_factor
+
     def get_position_priority(self, other_location, average_distance):
-        return self.priority / (1 + self.get_distance(other_location) / \
-                average_distance)
+        return self.priority / (1 + self.get_distance(other_location) / average_distance)
+
     def get_distance(self, other_location):
-        return min(abs(other_location - self.location),
-                abs(1 + other_location - self.location))
+        return min(abs(other_location - self.location), abs(1 + other_location - self.location))
+
     def __str__(self):
         return "%s (%s) - %s" % (self.position, self.location, self.priority)
-        
 
-def _get_corner_bridges(polygon, z_plane, min_bridges, average_distance,
-        avoid_distance):
+
+def _get_corner_bridges(polygon, z_plane, min_bridges, average_distance, avoid_distance):
     """ try to place support bridges at corners of a polygon
     Priorities:
         - bigger corner angles are preferred
@@ -229,7 +218,6 @@ def _get_corner_bridges(polygon, z_plane, min_bridges, average_distance,
         # polygon is open or zero-sized
         return []
     points = polygon.get_points()
-    lines = polygon.get_lines()
     poly_lengths = polygon.get_lengths()
     outline = sum(poly_lengths)
     rel_avoid_distance = avoid_distance / outline
@@ -256,20 +244,22 @@ def _get_corner_bridges(polygon, z_plane, min_bridges, average_distance,
         for corner in corners:
             if corner.get_distance(preferred_position) < rel_average_distance:
                 # check if the corner is too close to neighbouring corners
-                if (not bridge_corners) or \
-                        ((bridge_corners[-1].get_distance(corner.location) >= rel_avoid_distance) and \
-                            (bridge_corners[0].get_distance(corner.location) >= rel_avoid_distance)):
+                if (not bridge_corners
+                        or ((bridge_corners[-1].get_distance(corner.location)
+                             >= rel_avoid_distance)
+                            and (bridge_corners[0].get_distance(corner.location)
+                                 >= rel_avoid_distance))):
                     suitable_corners.append(corner)
-        get_priority = lambda corner: corner.get_position_priority(
-                preferred_position, rel_average_distance)
+        get_priority = lambda corner: corner.get_position_priority(preferred_position,
+                                                                   rel_average_distance)
         suitable_corners.sort(key=get_priority, reverse=True)
         if suitable_corners:
             bridge_corners.append(suitable_corners[0])
             corners.remove(suitable_corners[0])
     return [(c.position, c.direction) for c in bridge_corners]
 
-def _get_edge_bridges(polygon, z_plane, min_bridges, average_distance,
-        avoid_distance):
+
+def _get_edge_bridges(polygon, z_plane, min_bridges, average_distance, avoid_distance):
     def is_near_list(point_list, point, distance):
         for p in point_list:
             if pdist(p, point) <= distance:
@@ -277,8 +267,7 @@ def _get_edge_bridges(polygon, z_plane, min_bridges, average_distance,
         return False
     lines = polygon.get_lines()
     poly_lengths = polygon.get_lengths()
-    num_of_bridges = max(min_bridges,
-            int(round(sum(poly_lengths) / average_distance)))
+    num_of_bridges = max(min_bridges, int(round(sum(poly_lengths) / average_distance)))
     real_average_distance = sum(poly_lengths) / num_of_bridges
     max_line_index = poly_lengths.index(max(poly_lengths))
     positions = []
@@ -289,8 +278,7 @@ def _get_edge_bridges(polygon, z_plane, min_bridges, average_distance,
         current_line_index += 1
         current_line_index %= len(poly_lengths)
         # skip lines that are not at least twice as long as the grid width
-        while (distance_processed + poly_lengths[current_line_index] \
-                < real_average_distance):
+        while (distance_processed + poly_lengths[current_line_index] < real_average_distance):
             distance_processed += poly_lengths[current_line_index]
             current_line_index += 1
             current_line_index %= len(poly_lengths)
@@ -308,8 +296,7 @@ def _get_edge_bridges(polygon, z_plane, min_bridges, average_distance,
             position1 = pdiv(padd(position, line.p1), 2)
             position2 = pdiv(padd(position, line.p2), 2)
             if is_near_list(bridge_positions, position1, avoid_distance):
-                if is_near_list(bridge_positions, position2,
-                        avoid_distance):
+                if is_near_list(bridge_positions, position2, avoid_distance):
                     # no valid alternative - we skip this bridge
                     continue
                 else:
@@ -325,4 +312,3 @@ def _get_edge_bridges(polygon, z_plane, min_bridges, average_distance,
         bridge_dir = pnormalized(pcross(lines[line_index].dir, polygon.plane.n))
         result.append((position, bridge_dir))
     return result
-

@@ -37,16 +37,13 @@ def run_dropcutter():
                     (model.minx-5, model.miny-5, model.minz),
                     (model.maxx+5, model.maxy+5, model.maxz))
 
-
     low, high = bounds.get_absolute_limits()
     line_distance = 2 * tool.radius * (1.0 - overlap)
 
     motion_grid = get_fixed_grid((low, high), layer_distance,
                                  line_distance, tool.radius / 4.0)
-    moves = path_generator.GenerateToolPath(tool, [model], motion_grid,
-                                            minz=low[2], maxz=high[2],
-                                            draw_callback=progress_bar.update)
-    
+    path_generator.GenerateToolPath(tool, [model], motion_grid, minz=low[2], maxz=high[2],
+                                    draw_callback=progress_bar.update)
 
 
 if __name__ == '__main__':

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -36,34 +34,29 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         self.core.set("register_parameter_group", self.register_parameter_group)
         self.core.set("register_parameter_set", self.register_parameter_set)
         self.core.set("register_parameter", self.register_parameter)
-        self.core.set("unregister_parameter_group",
-                self.unregister_parameter_group)
-        self.core.set("unregister_parameter_set",
-                self.unregister_parameter_set)
-        self.core.set("unregister_parameter",
-                self.unregister_parameter)
+        self.core.set("unregister_parameter_group", self.unregister_parameter_group)
+        self.core.set("unregister_parameter_set", self.unregister_parameter_set)
+        self.core.set("unregister_parameter", self.unregister_parameter)
         return True
 
     def teardown(self):
-        for name in ("set_parameter_values",
-                "get_parameter_values", "get_parameter_sets",
-                "register_parameter_set", "register_parameter_group",
-                "register_parameter", "unregister_parameter_set",
-                "unregister_parameter_group", "unregister_parameter"):
+        for name in ("set_parameter_values", "get_parameter_values", "get_parameter_sets",
+                     "register_parameter_set", "register_parameter_group", "register_parameter",
+                     "unregister_parameter_set", "unregister_parameter_group",
+                     "unregister_parameter"):
             self.core.set(name, None)
 
-    def register_parameter_group(self, name, changed_set_event=None,
-            changed_set_list_event=None, get_current_set_func=None):
+    def register_parameter_group(self, name, changed_set_event=None, changed_set_list_event=None,
+                                 get_current_set_func=None):
         if name in self._groups:
-            self.log.debug("Registering parameter group '%s' again" % name)
+            self.log.debug("Registering parameter group '%s' again", name)
         self._groups[name] = {"changed_set_event": changed_set_event,
-                "changed_set_list_event": changed_set_list_event,
-                "get_current_set_func": get_current_set_func,
-                "sets": {},
-                "parameters": {}}
+                              "changed_set_list_event": changed_set_list_event,
+                              "get_current_set_func": get_current_set_func,
+                              "sets": {},
+                              "parameters": {}}
         if changed_set_event:
-            self.core.register_event(changed_set_event,
-                    self._update_widgets_visibility, name)
+            self.core.register_event(changed_set_event, self._update_widgets_visibility, name)
 
     def _update_widgets_visibility(self, group_name):
         group = self._groups[group_name]
@@ -86,45 +79,38 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
             else:
                 control.hide()
 
-    def register_parameter_set(self, group_name, name, label, func,
-            parameters=None, weight=100):
-        if not group_name in self._groups:
-            self.log.info("Unknown parameter group: %s" % group_name)
+    def register_parameter_set(self, group_name, name, label, func, parameters=None, weight=100):
+        if group_name not in self._groups:
+            self.log.info("Unknown parameter group: %s", group_name)
             return
         group = self._groups[group_name]
         if name in group["sets"]:
-            self.log.debug("Registering parameter set '%s' again" % name)
+            self.log.debug("Registering parameter set '%s' again", name)
         if parameters is None:
             parameters = []
-        group["sets"][name] = {"name": name,
-                "label": label,
-                "func": func,
-                "parameters": parameters,
-                "weight": weight,
-        }
+        group["sets"][name] = {"name": name, "label": label, "func": func,
+                               "parameters": parameters, "weight": weight}
         event = group["changed_set_list_event"]
         if event:
             self.core.emit_event(event)
 
-    def register_parameter(self, group_name, name, control, get_func=None,
-            set_func=None):
-        if not group_name in self._groups:
-            self.log.info("Unknown parameter group: %s" % group_name)
+    def register_parameter(self, group_name, name, control, get_func=None, set_func=None):
+        if group_name not in self._groups:
+            self.log.info("Unknown parameter group: %s", group_name)
             return
         group = self._groups[group_name]
         if name in group["parameters"]:
-            self.log.debug("Registering parameter '%s' in group '%s' again" % \
-                    (name, group_name))
+            self.log.debug("Registering parameter '%s' in group '%s' again", name, group_name)
         if not get_func:
             get_func = control.get_value
         if not set_func:
             set_func = control.set_value
-        group["parameters"][name] = {"name": name, "control": control,
-                "get_func": get_func, "set_func": set_func}
+        group["parameters"][name] = {"name": name, "control": control, "get_func": get_func,
+                                     "set_func": set_func}
 
     def get_parameter_values(self, group_name):
-        if not group_name in self._groups:
-            self.log.info("Unknown parameter group: %s" % group_name)
+        if group_name not in self._groups:
+            self.log.info("Unknown parameter group: %s", group_name)
             return {}
         result = {}
         group = self._groups[group_name]
@@ -133,8 +119,8 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         return result
 
     def set_parameter_values(self, group_name, value_dict):
-        if not group_name in self._groups:
-            self.log.info("Unknown parameter group: %s" % group_name)
+        if group_name not in self._groups:
+            self.log.info("Unknown parameter group: %s", group_name)
             return
         group = self._groups[group_name]
         for parameter in group["parameters"].values():
@@ -142,46 +128,42 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
                 parameter["set_func"](value_dict[parameter["name"]])
 
     def get_parameter_sets(self, group_name):
-        if not group_name in self._groups:
-            self.log.info("Unknown parameter group: %s" % group_name)
+        if group_name not in self._groups:
+            self.log.info("Unknown parameter group: %s", group_name)
             return
         group = self._groups[group_name]
         return dict(group["sets"])
 
     def unregister_parameter_group(self, group_name):
-        if not group_name in self._groups:
-            self.log.debug("Tried to unregister a non-existing parameter " + \
-                    "group: %s" % group_name)
+        if group_name not in self._groups:
+            self.log.debug("Tried to unregister a non-existing parameter group: %s", group_name)
             return
         group = self._groups[group_name]
         if group["parameters"]:
-            self.log.debug(("Unregistering parameter from group '%s', but " + \
-                    "it still contains parameters") % \
-                    (group_name, ", ".join(group["parameters"].keys())))
+            self.log.debug("Unregistering parameter from group '%s', but it still contains "
+                           "parameters: %s", group_name, ", ".join(group["parameters"].keys()))
             for name in group["parameters"]:
                 self.unregister_parameter(group_name, name)
         if group["sets"]:
-            self.log.debug(("Unregistering parameter group (%s), but it " + \
-                    "still contains sets: %s") % \
-                    (group_name, ", ".join(group["sets"].keys())))
+            self.log.debug("Unregistering parameter group (%s), but it still contains sets: %s",
+                           group_name, ", ".join(group["sets"].keys()))
             for set_name in group["sets"]:
                 self.unregister_parameter_set(group_name, set_name)
         changed_set_event = group["changed_set_event"]
         if changed_set_event:
-            self.core.register_event(changed_set_event,
-                    self._update_widgets_visibility, group_name)
+            self.core.register_event(changed_set_event, self._update_widgets_visibility,
+                                     group_name)
         del self._groups[group_name]
 
     def unregister_parameter_set(self, group_name, set_name):
-        if not group_name in self._groups:
-            self.log.debug(("Tried to unregister set '%s' from a " + \
-                    "non-existing parameter group: %s") % \
-                    (set_name, group_name))
+        if group_name not in self._groups:
+            self.log.debug("Tried to unregister set '%s' from a non-existing parameter group: %s",
+                           set_name, group_name)
             return
         group = self._groups[group_name]
-        if not set_name in group["sets"]:
-            self.log.debug("Tried to unregister non-existing parameter " + \
-                    "set '%s' from group '%s'" % (set_name, group_name))
+        if set_name not in group["sets"]:
+            self.log.debug("Tried to unregister non-existing parameter set '%s' from group '%s'",
+                           set_name, group_name)
             return
         del group["sets"][set_name]
         event = group["changed_set_list_event"]
@@ -189,14 +171,13 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
             self.core.emit_event(event)
 
     def unregister_parameter(self, group_name, name):
-        if not group_name in self._groups:
-            self.log.debug(("Tried to unregister parameter '%s' from a " + \
-                    "non-existing parameter group: %s") % (name, group_name))
+        if group_name not in self._groups:
+            self.log.debug("Tried to unregister parameter '%s' from a non-existing parameter "
+                           "group: %s", name, group_name)
             return
         group = self._groups[group_name]
         if name in group["parameters"]:
             del group["parameters"][name]
         else:
-            self.log.debug("Tried to unregister the non-existing " + \
-                    "parameter '%s' from group '%s'" % (name, group_name))
-
+            self.log.debug("Tried to unregister the non-existing parameter '%s' from group '%s'",
+                           name, group_name)

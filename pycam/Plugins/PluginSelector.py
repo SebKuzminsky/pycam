@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -21,8 +19,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-# imported later (on demand)
-#import gtk
 
 import pycam.Plugins
 
@@ -31,42 +27,34 @@ class PluginSelector(pycam.Plugins.PluginBase):
 
     UI_FILE = "plugin_selector.ui"
     CATEGORIES = ["Plugins"]
-    COLUMN_NAME, COLUMN_DESCRIPTION, COLUMN_ENABLED, COLUMN_DEPENDS, \
-            COLUMN_DEPENDS_OK, COLUMN_SOURCE = range(6)
+    COLUMN_NAME, COLUMN_DESCRIPTION, COLUMN_ENABLED, COLUMN_DEPENDS, COLUMN_DEPENDS_OK, \
+        COLUMN_SOURCE = range(6)
 
     def setup(self):
         if self.gui:
-            import gtk
             self.plugin_window = self.gui.get_object("PluginManagerWindow")
             self._gtk_handlers = []
             self._gtk_handlers.extend((
-                    (self.plugin_window, "delete-event",
-                        self.toggle_plugin_window, False),
-                    (self.plugin_window, "destroy",
-                        self.toggle_plugin_window, False)))
-            self._gtk_handlers.append((
-                    self.gui.get_object("ClosePluginManager"), "clicked",
-                        self.toggle_plugin_window, False))
+                (self.plugin_window, "delete-event", self.toggle_plugin_window, False),
+                (self.plugin_window, "destroy", self.toggle_plugin_window, False)))
+            self._gtk_handlers.append((self.gui.get_object("ClosePluginManager"), "clicked",
+                                       self.toggle_plugin_window, False))
             self._treemodel = self.gui.get_object("PluginsModel")
             self._treemodel.clear()
             action = self.gui.get_object("TogglePluginWindow")
-            self._gtk_handlers.append((action, "toggled",
-                    self.toggle_plugin_window))
-            self.register_gtk_accelerator("plugins", action, None,
-                    "TogglePluginWindow")
+            self._gtk_handlers.append((action, "toggled", self.toggle_plugin_window))
+            self.register_gtk_accelerator("plugins", action, None, "TogglePluginWindow")
             self.core.register_ui("view_menu", "TogglePluginWindow", action, 60)
             # model filters
             model_filter = self.gui.get_object("PluginsModel").filter_new()
             for obj_name in ("StatusFilter", "CategoryFilter"):
-                self._gtk_handlers.append((self.gui.get_object(obj_name),
-                        "changed", lambda widget: model_filter.refilter()))
+                self._gtk_handlers.append((self.gui.get_object(obj_name), "changed",
+                                           lambda widget: model_filter.refilter()))
             self.gui.get_object("PluginsTable").set_model(model_filter)
             model_filter.set_visible_func(self._filter_set_visible)
-            self._gtk_handlers.append((
-                    self.gui.get_object("PluginsEnabledCell"), "toggled",
-                        self.toggle_plugin_state))
-            self.core.register_event("plugin-list-changed",
-                    self._update_plugin_model)
+            self._gtk_handlers.append((self.gui.get_object("PluginsEnabledCell"), "toggled",
+                                       self.toggle_plugin_state))
+            self.core.register_event("plugin-list-changed", self._update_plugin_model)
             self.register_gtk_handlers(self._gtk_handlers)
             self._update_plugin_model()
         return True
@@ -76,8 +64,7 @@ class PluginSelector(pycam.Plugins.PluginBase):
             self.plugin_window.hide()
             action = self.gui.get_object("TogglePluginWindow")
             self.core.register_ui("view_menu", action)
-            self.core.unregister_event("plugin-list-changed",
-                    self._update_plugin_model)
+            self.core.unregister_event("plugin-list-changed", self._update_plugin_model)
             self.unregister_gtk_handlers(self._gtk_handlers)
 
     def toggle_plugin_window(self, widget=None, value=None, action=None):
@@ -112,26 +99,24 @@ class PluginSelector(pycam.Plugins.PluginBase):
         if not plugin_name:
             return False
         plugin = manager.get_plugin(plugin_name)
-        if (cat_index > 0) and (not cat_name in plugin.CATEGORIES):
+        if (cat_index > 0) and (cat_name not in plugin.CATEGORIES):
             return False
         elif (status_index > 0):
-            if (status_name == "enabled") and \
-                    not manager.get_plugin_state(plugin_name):
+            if (status_name == "enabled") and not manager.get_plugin_state(plugin_name):
                 return False
-            elif (status_name == "disabled") and \
-                    manager.get_plugin_state(plugin_name):
+            elif (status_name == "disabled") and manager.get_plugin_state(plugin_name):
                 return False
-            elif (status_name == "dep_missing") and \
-                    not manager.get_plugin_missing_dependencies(plugin_name):
+            elif (status_name == "dep_missing") \
+                    and not manager.get_plugin_missing_dependencies(plugin_name):
                 return False
-            elif (status_name == "dep_satisfied") and \
-                    (manager.get_plugin_state(plugin_name) or \
-                        manager.get_plugin_missing_dependencies(plugin_name)):
+            elif (status_name == "dep_satisfied") \
+                    and (manager.get_plugin_state(plugin_name)
+                         or manager.get_plugin_missing_dependencies(plugin_name)):
                 return False
-            elif (status_name == "not_required") and \
-                    (not manager.get_plugin_state(plugin_name) or \
-                        manager.is_plugin_required(plugin_name) or \
-                        (plugin_name == "PluginSelector")):
+            elif (status_name == "not_required") \
+                    and (not manager.get_plugin_state(plugin_name)
+                         or manager.is_plugin_required(plugin_name)
+                         or (plugin_name == "PluginSelector")):
                 return False
         return True
 
@@ -155,13 +140,11 @@ class PluginSelector(pycam.Plugins.PluginBase):
             depends_markup = []
             for depend in plugin.DEPENDS:
                 if depend in depends_missing:
-                    depends_markup.append(
-                            '<span foreground="red">%s</span>' % depend)
+                    depends_markup.append('<span foreground="red">%s</span>' % depend)
                 else:
                     depends_markup.append(depend)
-            model.append((name, "Beschreibung", enabled,
-                    os.linesep.join(depends_markup), satisfied,
-                    "Hint"))
+            model.append((name, "Beschreibung", enabled, os.linesep.join(depends_markup),
+                          satisfied, "Hint"))
         self.gui.get_object("PluginsDescriptionColumn").queue_resize()
         self.gui.get_object("PluginsTable").queue_resize()
         # update the category filter
@@ -199,4 +182,3 @@ class PluginSelector(pycam.Plugins.PluginBase):
         else:
             manager.enable_plugin(plugin_name)
         self._update_plugin_model()
-

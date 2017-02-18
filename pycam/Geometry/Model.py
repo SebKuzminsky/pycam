@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2008-2010 Lode Leroy
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
@@ -21,33 +19,20 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import uuid
 import math
+import uuid
 
-
-import pycam.Exporters.STLExporter
-import pycam.Exporters.SVGExporter
-from pycam.Geometry.Triangle import Triangle
+from pycam.Geometry import epsilon, INFINITE, TransformableContainer, IDGenerator
+from pycam.Geometry.Matrix import TRANSFORMATIONS
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Polygon import Polygon
-from pycam.Geometry.PointUtils import *
+from pycam.Geometry.PointUtils import pcross, pdist, pnorm, pnormalized, psub
+from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
-from pycam.Geometry.Matrix import TRANSFORMATIONS
 from pycam.Toolpath import Bounds
-from pycam.Geometry.utils import INFINITE, epsilon
-from pycam.Geometry import TransformableContainer, IDGenerator
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
-
-
-try:
-    import OpenGL.GL as GL
-    GL_enabled = True
-except ImportError:
-    GL_enabled = False
-
-
 log = pycam.Utils.log.get_logger()
 
 
@@ -69,9 +54,10 @@ def get_combined_bounds(models):
             high[2] = model.maxz
     return low, high
 
+
 def get_combined_model(models):
     # remove all "None" models
-    models = [model for model in models if not model is None]
+    models = [model for model in models if model is not None]
     if not models:
         return None
     result = models.pop(0).copy()
@@ -109,7 +95,7 @@ class BaseModel(IDGenerator, TransformableContainer):
         return sum([len(igroup) for igroup in self._item_groups])
 
     def next(self):
-       for item_group in self._item_groups:
+        for item_group in self._item_groups:
             for item in item_group:
                 if isinstance(item, list):
                     for subitem in item:
@@ -131,14 +117,14 @@ class BaseModel(IDGenerator, TransformableContainer):
         return result
 
     def is_export_supported(self):
-        return not self._export_function is None
+        return self._export_function is not None
 
     def export(self, **kwargs):
         if self.is_export_supported():
             return self._export_function(self, **kwargs)
         else:
-            raise NotImplementedError(("This type of model (%s) does not " \
-                    + "support the 'export' function.") % str(type(self)))
+            raise NotImplementedError(("This type of model (%s) does not support the 'export' "
+                                       "function.") % str(type(self)))
 
     def _update_limits(self, item):
         # Ignore items without limit attributes (e.g. the normal of a
@@ -167,8 +153,8 @@ class BaseModel(IDGenerator, TransformableContainer):
             self.append(item)
 
     def maxsize(self):
-        return max(abs(self.maxx), abs(self.minx), abs(self.maxy),
-                abs(self.miny), abs(self.maxz), abs(self.minz))
+        return max(abs(self.maxx), abs(self.minx), abs(self.maxy), abs(self.miny), abs(self.maxz),
+                   abs(self.minz))
 
     def subdivide(self, depth):
         model = self.__class__()
@@ -190,37 +176,36 @@ class BaseModel(IDGenerator, TransformableContainer):
     def _get_progress_callback(self, update_callback):
         if update_callback:
             return ProgressCounter(self.get_children_count(),
-                    update_callback=update_callback).increment
+                                   update_callback=update_callback).increment
         else:
             return None
 
     def transform_by_template(self, direction="normal", callback=None):
         if direction in TRANSFORMATIONS.keys():
             self.transform_by_matrix(TRANSFORMATIONS[direction],
-                    callback=self._get_progress_callback(callback))
+                                     callback=self._get_progress_callback(callback))
 
     def shift(self, shift_x, shift_y, shift_z, callback=None):
         matrix = ((1, 0, 0, shift_x), (0, 1, 0, shift_y), (0, 0, 1, shift_z))
-        self.transform_by_matrix(matrix,
-                callback=self._get_progress_callback(callback))
-        
+        self.transform_by_matrix(matrix, callback=self._get_progress_callback(callback))
+
     def scale(self, scale_x, scale_y=None, scale_z=None, callback=None):
         if scale_y is None:
             scale_y = scale_x
         if scale_z is None:
             scale_z = scale_x
         matrix = ((scale_x, 0, 0, 0), (0, scale_y, 0, 0), (0, 0, scale_z, 0))
-        self.transform_by_matrix(matrix,
-                callback=self._get_progress_callback(callback))
+        self.transform_by_matrix(matrix, callback=self._get_progress_callback(callback))
 
     def get_bounds(self):
         return Bounds(Bounds.TYPE_CUSTOM, (self.minx, self.miny, self.minz),
-                (self.maxx, self.maxy, self.maxz))
+                      (self.maxx, self.maxy, self.maxz))
 
 
 class Model(BaseModel):
 
     def __init__(self, use_kdtree=True):
+        import pycam.Exporters.STLExporter
         super(Model, self).__init__()
         self._triangles = []
         self._item_groups.append(self._triangles)
@@ -232,7 +217,7 @@ class Model(BaseModel):
         self._t_kdtree = None
         self.__flat_groups_cache = {}
         self.__uuid = None
-        
+
     def __len__(self):
         """ Return the number of available items in the model.
         This is mainly useful for evaluating an empty model as False.
@@ -271,10 +256,9 @@ class Model(BaseModel):
         # the kdtree is up-to-date again
         self._dirty = False
 
-    def triangles(self, minx=-INFINITE, miny=-INFINITE, minz=-INFINITE,
-            maxx=+INFINITE, maxy=+INFINITE, maxz=+INFINITE):
-        if (minx == miny == minz == -INFINITE) \
-                and (maxx == maxy == maxz == +INFINITE):
+    def triangles(self, minx=-INFINITE, miny=-INFINITE, minz=-INFINITE, maxx=+INFINITE,
+                  maxy=+INFINITE, maxz=+INFINITE):
+        if (minx == miny == minz == -INFINITE) and (maxx == maxy == maxz == +INFINITE):
             return self._triangles
         if self._use_kdtree:
             # update the kdtree, if new triangles were added meanwhile
@@ -291,7 +275,7 @@ class Model(BaseModel):
             if callback and callback(percent=100.0 * counter / progress_max):
                 return
             collision_line = plane.intersect_triangle(t, counter_clockwise=True)
-            if not collision_line is None:
+            if collision_line is not None:
                 collision_lines.append(collision_line)
             else:
                 counter += 1
@@ -303,22 +287,22 @@ class Model(BaseModel):
                 return
             contour.append(line)
             counter += 1
-        log.debug("Waterline: %f - %d - %s" % (plane.p[2],
-                len(contour.get_polygons()),
-                [len(p.get_lines()) for p in contour.get_polygons()]))
+        log.debug("Waterline: %f - %d - %s", plane.p[2], len(contour.get_polygons()),
+                  [len(p.get_lines()) for p in contour.get_polygons()])
         return contour
 
     def get_flat_areas(self, min_area=None):
         """ Find plane areas (combinations of triangles) bigger than 'min_area'
         and ignore vertical planes. The result is cached.
         """
-        if not self.__flat_groups_cache.has_key(min_area):
+        if min_area not in self.__flat_groups_cache:
             def has_shared_edge(t1, t2):
                 count = 0
                 for p in (t1.p1, t1.p2, t1.p3):
                     if p in (t2.p1, t2.p2, t2.p3):
                         count += 1
                 return count >= 2
+
             groups = []
             for t in self.triangles():
                 # Find all groups with the same direction (see 'normal') that
@@ -345,9 +329,9 @@ class Model(BaseModel):
                 else:
                     groups.append([t])
             # check the size of each area
-            if not min_area is None:
+            if min_area is not None:
                 groups = [group for group in groups
-                        if sum([t.get_area() for t in group]) >= min_area]
+                          if sum([t.get_area() for t in group]) >= min_area]
             self.__flat_groups_cache[min_area] = groups
         return self.__flat_groups_cache[min_area]
 
@@ -355,6 +339,7 @@ class Model(BaseModel):
 class ContourModel(BaseModel):
 
     def __init__(self, plane=None):
+        import pycam.Exporters.SVGExporter
         super(ContourModel, self).__init__()
         self.name = "contourmodel%d" % self.id
         if plane is None:
@@ -367,8 +352,7 @@ class ContourModel(BaseModel):
         self._plane_groups = [self._plane]
         self._item_groups.append(self._plane_groups)
         self._cached_offset_models = {}
-        self._export_function = \
-                pycam.Exporters.SVGExporter.SVGExporterContourModel
+        self._export_function = pycam.Exporters.SVGExporter.SVGExporterContourModel
 
     def __len__(self):
         """ Return the number of available items in the model.
@@ -470,8 +454,7 @@ class ContourModel(BaseModel):
                 for candidate in item_list:
                     if line_group.is_connectable(candidate):
                         line_group.append(candidate)
-                        self._merge_polygon_if_possible(line_group,
-                                allow_reverse=allow_reverse)
+                        self._merge_polygon_if_possible(line_group, allow_reverse=allow_reverse)
                         found = True
                         break
                 if found:
@@ -526,10 +509,9 @@ class ContourModel(BaseModel):
                         new_queue = processed
                 while len(self._line_groups) > 0:
                     self._line_groups.pop()
-                print "Processed polygons: %s" % str([len(p.get_lines())
-                        for p in processed_polygons])
-                print "New queue: %s" % str([len(p.get_lines())
-                        for p in new_queue])
+                print("Processed polygons: %s" % str([len(p.get_lines())
+                                                      for p in processed_polygons]))
+                print("New queue: %s" % str([len(p.get_lines()) for p in new_queue]))
                 for processed_polygon in processed_polygons + new_queue:
                     self._line_groups.append(processed_polygon)
                 # TODO: this is quite expensive - can we do it differently?
@@ -557,14 +539,12 @@ class ContourModel(BaseModel):
         Beware: never use this function if the direction of lines may not
         change.
         """
-        number_of_initial_closed_polygons = len([poly
-                for poly in self.get_polygons() if poly.is_closed])
-        open_polygons = [poly for poly in self.get_polygons()
-                if not poly.is_closed]
+        number_of_initial_closed_polygons = len([poly for poly in self.get_polygons()
+                                                 if poly.is_closed])
+        open_polygons = [poly for poly in self.get_polygons() if not poly.is_closed]
         if callback:
             progress_callback = pycam.Utils.ProgressCounter(
-                    2 * number_of_initial_closed_polygons + len(open_polygons),
-                    callback).increment
+                2 * number_of_initial_closed_polygons + len(open_polygons), callback).increment
         else:
             progress_callback = None
         # try to connect all open polygons
@@ -576,21 +556,18 @@ class ContourModel(BaseModel):
                 self.append(line, allow_reverse=True)
             if progress_callback and progress_callback():
                 return
-        poly_open_after = len([poly for poly in self.get_polygons()
-                if not poly.is_closed])
+        poly_open_after = len([poly for poly in self.get_polygons() if not poly.is_closed])
         if poly_open_before != poly_open_after:
-            log.info("Reduced the number of open polygons from " + \
-                    "%d down to %d" % (poly_open_before, poly_open_after))
+            log.info("Reduced the number of open polygons from %d down to %d",
+                     poly_open_before, poly_open_after)
         else:
             log.debug("No combineable open polygons found")
         # auto-detect directions of closed polygons: inside and outside
         finished = []
-        remaining_polys = [poly for poly in self.get_polygons()
-                if poly.is_closed]
+        remaining_polys = [poly for poly in self.get_polygons() if poly.is_closed]
         if progress_callback:
             # shift the counter back by the number of new closed polygons
-            progress_callback(2 * (number_of_initial_closed_polygons - \
-                    len(remaining_polys)))
+            progress_callback(2 * (number_of_initial_closed_polygons - len(remaining_polys)))
         remaining_polys.sort(key=lambda poly: abs(poly.get_area()))
         while remaining_polys:
             # pick the largest polygon
@@ -615,13 +592,13 @@ class ContourModel(BaseModel):
             if progress_callback and progress_callback():
                 self.reset_cache()
                 return
-        log.info("The winding of %d polygon(s) was fixed." % change_counter)
+        log.info("The winding of %d polygon(s) was fixed.", change_counter)
         self.reset_cache()
 
     def reverse_directions(self, callback=None):
         if callback:
-            progress_callback = pycam.Utils.ProgressCounter(
-                    len(self.get_polygons()), callback).increment
+            progress_callback = pycam.Utils.ProgressCounter(len(self.get_polygons()),
+                                                            callback).increment
         else:
             progress_callback = None
         for polygon in self._line_groups:
@@ -639,15 +616,13 @@ class ContourModel(BaseModel):
 
     def get_cropped_model_by_bounds(self, bounds):
         low, high = bounds.get_absolute_limits()
-        return self.get_cropped_model(low[0], high[0], low[1], high[1],
-                low[2], high[2])
+        return self.get_cropped_model(low[0], high[0], low[1], high[1], low[2], high[2])
 
     def get_cropped_model(self, minx, maxx, miny, maxy, minz, maxz):
         new_line_groups = []
         for group in self._line_groups:
-            new_groups = group.get_cropped_polygons(minx, maxx, miny, maxy,
-                    minz, maxz)
-            if not new_groups is None:
+            new_groups = group.get_cropped_polygons(minx, maxx, miny, maxy, minz, maxz)
+            if new_groups is not None:
                 new_line_groups.extend(new_groups)
         if len(new_line_groups) > 0:
             result = ContourModel(plane=self._plane)
@@ -676,7 +651,7 @@ class ContourModel(BaseModel):
         result = ContourModel(plane=self._plane)
         for group in self._line_groups:
             new_groups = group.get_offset_polygons(offset)
-            if not new_groups is None:
+            if new_groups is not None:
                 for new_group in new_groups:
                     result.append(new_group)
             if callback and callback():
@@ -710,20 +685,14 @@ class ContourModel(BaseModel):
         Otherwise it returns False if no intersections were found.
         """
         def check_bounds_of_groups(g1, g2):
-            if (g1.minx <= g2.minx <= g1.maxx) \
-                    or (g1.minx <= g2.maxx <= g1.maxx) \
-                    or (g2.minx <= g1.minx <= g2.maxx) \
-                    or (g2.minx <= g1.maxx <= g2.maxx):
+            if (g1.minx <= g2.minx <= g1.maxx) or (g1.minx <= g2.maxx <= g1.maxx) \
+                    or (g2.minx <= g1.minx <= g2.maxx) or (g2.minx <= g1.maxx <= g2.maxx):
                 # the x boundaries overlap
-                if (g1.miny <= g2.miny <= g1.maxy) \
-                        or (g1.miny <= g2.maxy <= g1.maxy) \
-                        or (g2.miny <= g1.miny <= g2.maxy) \
-                        or (g2.miny <= g1.maxy <= g2.maxy):
+                if (g1.miny <= g2.miny <= g1.maxy) or (g1.miny <= g2.maxy <= g1.maxy) \
+                        or (g2.miny <= g1.miny <= g2.maxy) or (g2.miny <= g1.maxy <= g2.maxy):
                     # also the y boundaries overlap
-                    if (g1.minz <= g2.minz <= g1.maxz) \
-                            or (g1.minz <= g2.maxz <= g1.maxz) \
-                            or (g2.minz <= g1.minz <= g2.maxz) \
-                            or (g2.minz <= g1.maxz <= g2.maxz):
+                    if (g1.minz <= g2.minz <= g1.maxz) or (g1.minz <= g2.maxz <= g1.maxz) \
+                            or (g2.minz <= g1.minz <= g2.maxz) or (g2.minz <= g1.maxz <= g2.maxz):
                         # z overlaps as well
                         return True
             return False
@@ -761,8 +730,7 @@ class ContourModel(BaseModel):
         """ do a spherical extrusion of a 2D model.
         This is mainly useful for extruding text in a visually pleasent way ...
         """
-        outer_polygons = [(poly, []) for poly in self._line_groups
-                if poly.is_outer()]
+        outer_polygons = [(poly, []) for poly in self._line_groups if poly.is_outer()]
         for poly in self._line_groups:
             # ignore open polygons
             if not poly.is_closed:
@@ -811,7 +779,7 @@ class PolygonGroup(object):
     def extrude(self, func=None, stepping=None):
         if stepping is None:
             stepping = min(self.outer.maxx - self.outer.minx,
-                    self.outer.maxy - self.outer.miny) / 80
+                           self.outer.maxy - self.outer.miny) / 80
         grid = []
         for line in self._get_grid_matrix(stepping=stepping):
             line_points = []
@@ -874,8 +842,8 @@ class PolygonGroup(object):
             a[2] = self.z_level
             b[2] = self.z_level
             return Line(a, b)
-        valid_indices = [index for index, p in enumerate(coords)
-                if not p[2] is None]
+
+        valid_indices = [index for index, p in enumerate(coords) if p[2] is not None]
         none_indices = [index for index, p in enumerate(coords) if p[2] is None]
         valid_count = len(valid_indices)
         final_points = []
@@ -895,8 +863,7 @@ class PolygonGroup(object):
             # check if the three fan_points are in line
             if len(fan_points) == 3:
                 fan_points.sort()
-                if Line(fan_points[0], fan_points[2]).is_point_inside(
-                        fan_points[1]):
+                if Line(fan_points[0], fan_points[2]).is_point_inside(fan_points[1]):
                     final_points.remove(fan_points[1])
         elif valid_count == 2:
             if sum(valid_indices) % 2 == 0:
@@ -936,7 +903,7 @@ class PolygonGroup(object):
             final_points.extend(coords)
         valid_points = []
         for p in final_points:
-            if not (p is None) and not (p in valid_points):
+            if (p is not None) and (p not in valid_points):
                 valid_points.append(p)
         if len(valid_points) < 3:
             result = []
@@ -1013,7 +980,7 @@ class TriangleOptimizer(object):
     def append(self, triangle):
         # use a simple tuple instead of an object as the dict's key
         normal = triangle.normal
-        if not normal in self.groups:
+        if normal not in self.groups:
             self.groups[normal] = []
         self.groups[normal].append(triangle)
 
@@ -1065,8 +1032,8 @@ class Rectangle(IDGenerator, TransformableContainer):
     def __init__(self, p1, p2, p3, p4, normal=None):
         super(Rectangle, self).__init__()
         if normal:
-            orders = ((p1, p2, p3, p4), (p1, p2, p4, p3), (p1, p3, p2, p4),
-                    (p1, p3, p4, p2), (p1, p4, p2, p3), (p1, p4, p3, p2))
+            orders = ((p1, p2, p3, p4), (p1, p2, p4, p3), (p1, p3, p2, p4), (p1, p3, p4, p2),
+                      (p1, p4, p2, p3), (p1, p4, p3, p2))
             for order in orders:
                 if abs(pdist(order[0], order[2]) - pdist(order[1], order[3])) < epsilon:
                     t1 = Triangle(order[0], order[1], order[2])
@@ -1075,8 +1042,8 @@ class Rectangle(IDGenerator, TransformableContainer):
                         self.p1, self.p2, self.p3, self.p4 = order
                         break
             else:
-                raise ValueError("Invalid vertices for given normal: " + \
-                        "%s, %s, %s, %s, %s" % (p1, p2, p3, p4, normal))
+                raise ValueError("Invalid vertices for given normal: %s, %s, %s, %s, %s"
+                                 % (p1, p2, p3, p4, normal))
         else:
             self.p1 = p1
             self.p2 = p2
@@ -1103,8 +1070,7 @@ class Rectangle(IDGenerator, TransformableContainer):
         yield "p4"
 
     def __repr__(self):
-        return "Rectangle%d<%s,%s,%s,%s>" % (self.id, self.p1, self.p2,
-                self.p3, self.p4)
+        return "Rectangle%d<%s,%s,%s,%s>" % (self.id, self.p1, self.p2, self.p3, self.p4)
 
     def get_triangles(self):
         return (Triangle(self.p1, self.p2, self.p3),
@@ -1130,16 +1096,15 @@ class Rectangle(IDGenerator, TransformableContainer):
             else:
                 unique_vertices.append(point)
         if len(unique_vertices) != 2:
-            log.error("Invalid number of vertices: %s" % unique_vertices)
+            log.error("Invalid number of vertices: %s", unique_vertices)
             return None
-        if abs(pdist(unique_verticies[0], unique_verticies[1]) - pdist(shared_vertices[0], shared_vertices[1])) < epsilon:
+        if abs(pdist(unique_vertices[0], unique_vertices[1])
+               - pdist(shared_vertices[0], shared_vertices[1])) < epsilon:
             try:
-                return Rectangle(unique_vertices[0], unique_vertices[1],
-                        shared_vertices[0], shared_vertices[1],
-                        normal=t1.normal)
+                return Rectangle(unique_vertices[0], unique_vertices[1], shared_vertices[0],
+                                 shared_vertices[1], normal=t1.normal)
             except ValueError:
-                log.warn("Triangles not combined: %s, %s" % (unique_vertices,
-                        shared_vertices))
+                log.warn("Triangles not combined: %s, %s", unique_vertices, shared_vertices)
                 return None
         else:
             return None
@@ -1158,8 +1123,7 @@ class Rectangle(IDGenerator, TransformableContainer):
             return None
         # check if the two points form an edge (and not a diagonal line)
         corners = []
-        for rectangle, vertices in ((r1, shared_vertices),
-                (r2, shared_vertices2)):
+        for rectangle, vertices in ((r1, shared_vertices), (r2, shared_vertices2)):
             # turn the tuple into a list (".index" was introduced in Python 2.6)
             i1 = list(rectangle.get_points()).index(vertices[0])
             i2 = list(rectangle.get_points()).index(vertices[1])
@@ -1167,15 +1131,12 @@ class Rectangle(IDGenerator, TransformableContainer):
                 # shared vertices are at opposite corners
                 return None
             # collect all non-shared vertices
-            corners.extend([p for p in rectangle.get_points()
-                    if not p in vertices])
+            corners.extend([p for p in rectangle.get_points() if p not in vertices])
         if len(corners) != 4:
-            log.error("Unexpected corner count: %s / %s / %s" % (r1, r2, corners))
+            log.error("Unexpected corner count: %s / %s / %s", r1, r2, corners)
             return None
         try:
-            return Rectangle(corners[0], corners[1], corners[2], corners[3],
-                    normal=r1.normal)
+            return Rectangle(corners[0], corners[1], corners[2], corners[3], normal=r1.normal)
         except ValueError:
-            log.error("No valid rectangle found: %s" % corners)
+            log.error("No valid rectangle found: %s", corners)
             return None
-

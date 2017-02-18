@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -27,11 +25,10 @@ import pycam.Plugins
 
 
 EXTRUSION_TYPES = (("radius_up", "Radius (bulge)", "ExtrusionRadiusUpIcon"),
-        ("radius_down", "Radius (valley)", "ExtrusionRadiusDownIcon"),
-        ("skewed", "Chamfer", "ExtrusionChamferIcon"),
-        ("sine", "Sine", "ExtrusionSineIcon"),
-        ("sigmoid", "Sigmoid", "ExtrusionSigmoidIcon"),
-)
+                   ("radius_down", "Radius (valley)", "ExtrusionRadiusDownIcon"),
+                   ("skewed", "Chamfer", "ExtrusionChamferIcon"),
+                   ("sine", "Sine", "ExtrusionSineIcon"),
+                   ("sigmoid", "Sigmoid", "ExtrusionSigmoidIcon"))
 
 
 class ModelExtrusion(pycam.Plugins.PluginBase):
@@ -44,20 +41,18 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
         if self.gui:
             extrusion_frame = self.gui.get_object("ModelExtrusionFrame")
             extrusion_frame.unparent()
-            self._gtk_handlers = ((self.gui.get_object("ExtrudeButton"),
-                    "clicked", self._extrude_model), )
+            self._gtk_handlers = ((self.gui.get_object("ExtrudeButton"), "clicked",
+                                   self._extrude_model), )
             self._event_handlers = (
-                    ("model-change-after", self._update_extrude_widgets),
-                    ("model-selection-changed", self._update_extrude_widgets))
-            self.core.register_ui("model_handling", "Extrusion",
-                    extrusion_frame, 5)
+                ("model-change-after", self._update_extrude_widgets),
+                ("model-selection-changed", self._update_extrude_widgets))
+            self.core.register_ui("model_handling", "Extrusion", extrusion_frame, 5)
             self.gui.get_object("ExtrusionHeight").set_value(1)
             self.gui.get_object("ExtrusionWidth").set_value(1)
             self.gui.get_object("ExtrusionGrid").set_value(0.5)
             extrusion_model = self.gui.get_object("ExtrusionTypeModel")
             for row in EXTRUSION_TYPES:
-                extrusion_model.append((row[0], row[1],
-                        self.gui.get_object(row[2]).get_pixbuf()))
+                extrusion_model.append((row[0], row[1], self.gui.get_object(row[2]).get_pixbuf()))
             self.gui.get_object("ExtrusionTypeSelector").set_active(0)
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
@@ -66,8 +61,7 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("model_handling",
-                    self.gui.get_object("ModelExtrusionFrame"))
+            self.core.unregister_ui("model_handling", self.gui.get_object("ModelExtrusionFrame"))
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
 
@@ -75,7 +69,7 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
         models = self.core.get("models").get_selected()
         extrudables = []
         for model in models:
-            if (not model is None) and hasattr(model.model, "extrude"):
+            if (model is not None) and hasattr(model.model, "extrude"):
                 extrudables.append(model)
         return extrudables
 
@@ -101,27 +95,28 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
             if type_string == "radius_up":
                 func = lambda x: height * math.sqrt((width ** 2 - max(0, width - x) ** 2))
             elif type_string == "radius_down":
-                func = lambda x: height * (1 - math.sqrt((width ** 2 - min(width, x) ** 2)) / width)
+                func = lambda x: \
+                    height * (1 - math.sqrt((width ** 2 - min(width, x) ** 2)) / width)
             elif type_string == "skewed":
                 func = lambda x: height * min(1, x / width)
             elif type_string == "sine":
                 func = lambda x: height * math.sin(min(x, width) / width * math.pi / 2)
             elif type_string == "sigmoid":
-                func = lambda x: height * ((math.sin(((min(x, width) / width) - 0.5) * math.pi) + 1) / 2)
+                func = lambda x: \
+                    height * ((math.sin(((min(x, width) / width) - 0.5) * math.pi) + 1) / 2)
             else:
-                self.log.error("Unknown extrusion type selected: %s" % type_string)
+                self.log.error("Unknown extrusion type selected: %s", type_string)
                 return
             progress = self.core.get("progress")
             progress.update(text="Extruding models")
             progress.set_multiple(len(selected_models), "Model")
             for model in selected_models:
                 new_model = model.model.extrude(stepping=grid_size, func=func,
-                        callback=progress.update)
+                                                callback=progress.update)
                 if new_model:
                     self.core.get("models").add_model(new_model,
-                            name_template="Extruded model #%d")
+                                                      name_template="Extruded model #%d")
                 else:
                     self.log.info("Extruded model is empty")
                 progress.update_multiple()
             progress.finish()
-

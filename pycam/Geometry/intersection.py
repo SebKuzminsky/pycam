@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2008-2010 Lode Leroy
 
 This file is part of PyCAM.
@@ -21,18 +19,21 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-#import pycam.Geometry
-from pycam.Utils.polynomials import poly4_roots
-from pycam.Geometry.utils import INFINITE, sqrt, epsilon
+from pycam.Geometry import INFINITE, sqrt, epsilon
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Line import Line
-from pycam.Geometry.PointUtils import *
+from pycam.Geometry.PointUtils import padd, pcross, pdiv, pdot, pmul, pnorm, pnormalized, \
+        pnormsq, psub
+from pycam.Utils.polynomials import poly4_roots
+
 
 def isNear(a, b):
     return abs(a - b) < epsilon
 
+
 def isZero(a):
     return isNear(a, 0)
+
 
 def intersect_lines(xl, zl, nxl, nzl, xm, zm, nxm, nzm):
     X = None
@@ -49,14 +50,15 @@ def intersect_lines(xl, zl, nxl, nzl, xm, zm, nxm, nzm):
             Z = zl - (xm - xl) * nxl / nzl
             return (X, Z)
         else:
-            X = (zl - zm +(xm * nxm / nzm - xl * nxl / nzl)) \
+            X = (zl - zm + (xm * nxm / nzm - xl * nxl / nzl)) \
                     / (nxm / nzm - nxl / nzl)
             if X and xl < X and X < xm:
-                Z = zl + (X -xl) * nxl / nzl
+                Z = zl + (X - xl) * nxl / nzl
                 return (X, Z)
     except ZeroDivisionError:
         pass
     return (None, None)
+
 
 def intersect_cylinder_point(center, axis, radius, radiussq, direction, point):
     # take a plane along direction and axis
@@ -66,13 +68,14 @@ def intersect_cylinder_point(center, axis, radius, radiussq, direction, point):
     if abs(d) > radius - epsilon:
         return (None, None, INFINITE)
     # ccl is on cylinder
-    d2 = sqrt(radiussq-d*d)
-    ccl = padd( padd(center, pmul(n, d)), pmul(direction, d2))
+    d2 = sqrt(radiussq - d * d)
+    ccl = padd(padd(center, pmul(n, d)), pmul(direction, d2))
     # take plane through ccl and axis
     plane = Plane(ccl, direction)
     # intersect point with plane
     (ccp, l) = plane.intersect_point(direction, point)
     return (ccp, point, -l)
+
 
 def intersect_cylinder_line(center, axis, radius, radiussq, direction, edge):
     d = edge.dir
@@ -111,10 +114,11 @@ def intersect_cylinder_line(center, axis, radius, radiussq, direction, edge):
     cp = padd(ccp, pmul(direction, -l))
     return (ccp, cp, -l)
 
+
 def intersect_circle_plane(center, radius, direction, triangle):
     # let n be the normal to the plane
     n = triangle.normal
-    if pdot(n,direction) == 0:
+    if pdot(n, direction) == 0:
         return (None, None, INFINITE)
     # project onto z=0
     n2 = (n[0], n[1], 0)
@@ -129,6 +133,7 @@ def intersect_circle_plane(center, radius, direction, triangle):
     (cp, d) = triangle.plane.intersect_point(direction, ccp)
     return (ccp, cp, d)
 
+
 def intersect_circle_point(center, axis, radius, radiussq, direction, point):
     # take a plane through the base
     plane = Plane(center, axis)
@@ -138,6 +143,7 @@ def intersect_circle_point(center, axis, radius, radiussq, direction, point):
     if ccp and (pnormsq(psub(center, ccp)) < radiussq - epsilon):
         return (ccp, point, -l)
     return (None, None, INFINITE)
+
 
 def intersect_circle_line(center, axis, radius, radiussq, direction, edge):
     # make a plane by sliding the line along the direction (1)
@@ -169,7 +175,7 @@ def intersect_circle_line(center, axis, radius, radiussq, direction, edge):
             cp = psub(pc, pmul(direction, l))
         return (ccp, cp, -l)
     n = pcross(d, direction)
-    if pnorm(n)== 0:
+    if pnorm(n) == 0:
         # no contact point, but should check here if circle *always* intersects
         # line...
         return (None, None, INFINITE)
@@ -204,6 +210,7 @@ def intersect_circle_line(center, axis, radius, radiussq, direction, edge):
     (cp, l) = plane.intersect_point(direction, ccp)
     return (ccp, cp, l)
 
+
 def intersect_sphere_plane(center, radius, direction, triangle):
     # let n be the normal to the plane
     n = triangle.normal
@@ -217,6 +224,7 @@ def intersect_sphere_plane(center, radius, direction, triangle):
     # intersect the plane with a line through the contact point
     (cp, d) = triangle.plane.intersect_point(direction, ccp)
     return (ccp, cp, d)
+
 
 def intersect_sphere_point(center, radius, radiussq, direction, point):
     # line equation
@@ -238,6 +246,7 @@ def intersect_sphere_point(center, radius, radiussq, direction, point):
     # cutter contact point
     ccp = padd(point, pmul(direction, -l))
     return (ccp, point, l)
+
 
 def intersect_sphere_line(center, radius, radiussq, direction, edge):
     # make a plane by sliding the line along the direction (1)
@@ -272,8 +281,8 @@ def intersect_sphere_line(center, radius, radiussq, direction, edge):
     (cp, l) = plane.intersect_point(direction, ccp)
     return (ccp, cp, l)
 
-def intersect_torus_plane(center, axis, majorradius, minorradius, direction,
-        triangle):
+
+def intersect_torus_plane(center, axis, majorradius, minorradius, direction, triangle):
     # take normal to the plane
     n = triangle.normal
     if pdot(n, direction) == 0:
@@ -283,7 +292,7 @@ def intersect_torus_plane(center, axis, majorradius, minorradius, direction,
     # find place on torus where surface normal is n
     b = pmul(n, -1)
     z = axis
-    a = psub(b, pmul(z,pdot(z, b)))
+    a = psub(b, pmul(z, pdot(z, b)))
     a_sq = pnormsq(a)
     if a_sq <= 0:
         return (None, None, INFINITE)
@@ -293,8 +302,9 @@ def intersect_torus_plane(center, axis, majorradius, minorradius, direction,
     (cp, l) = triangle.plane.intersect_point(direction, ccp)
     return (ccp, cp, l)
 
-def intersect_torus_point(center, axis, majorradius, minorradius, majorradiussq,
-        minorradiussq, direction, point):
+
+def intersect_torus_point(center, axis, majorradius, minorradius, majorradiussq, minorradiussq,
+                          direction, point):
     dist = 0
     if (direction[0] == 0) and (direction[1] == 0):
         # drop
@@ -350,4 +360,3 @@ def intersect_torus_point(center, axis, majorradius, minorradius, majorradiussq,
         ccp = padd(point, pmul(direction, -l))
         dist = l
     return (ccp, point, dist)
-

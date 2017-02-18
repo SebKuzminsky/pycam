@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
 
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 Copyright 2008-2009 Lode Leroy
@@ -22,52 +21,46 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# extend the PYTHONPATH to include the package directory
-import sys
+import logging
+from optparse import OptionParser
 import os
-BASE_DIR = os.path.realpath(os.path.join(os.path.dirname(
-        os.path.realpath(__file__)), os.pardir))
-sys.path.insert(0, BASE_DIR)
+import socket
+import sys
+import time
+import warnings
+
+# we need the multiprocessing exception for remote connections
+try:
+    import multiprocessing
+    from multiprocessing import AuthenticationError
+except ImportError:
+    multiprocessing = None
+    # use an arbitrary other Exception
+    AuthenticationError = socket.error
 
 # register the glut32.dll manually for the pyinstaller standalone executable
 if hasattr(sys, "frozen") and sys.frozen and "_MEIPASS2" in os.environ:
     from ctypes import windll
-    windll[os.path.join(os.path.normpath(os.environ["_MEIPASS2"]),
-            "glut32.dll")]
+    windll[os.path.join(os.path.normpath(os.environ["_MEIPASS2"]), "glut32.dll")]
 
+from pycam import VERSION
+import pycam.Exporters.GCodeExporter
 import pycam.Gui.common as GuiCommon
 import pycam.Gui.Settings
 import pycam.Gui.Console
 import pycam.Importers.TestModel
 import pycam.Importers
-import pycam.Exporters.GCodeExporter
-import pycam.Toolpath.Generator
-import pycam.Utils.threading
-import pycam.Utils
 from pycam.Toolpath import Bounds, Toolpath
-from pycam import VERSION
+import pycam.Toolpath.Generator
+import pycam.Utils
 import pycam.Utils.log
-from optparse import OptionParser
-import socket
-import warnings
-import logging
-import time
-# we need to import gtk.Warning to silence these warnings later
-#import gtk
-
-# we need the multiprocessing exception for remote connections
-try:
-    import multiprocessing
-except ImportError:
-    class multiprocessing(object):
-        # use an arbitrary other Exception
-        AuthenticationError = socket.error
+import pycam.Utils.threading
 
 
 # The installer for PyODE does not add the required PATH variable.
 if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
     os.environ["PATH"] = os.environ.get("PATH", "") + os.path.pathsep + sys.exec_prefix
-# The GtkGLExt installer does not add the required PATH variable. 
+# The GtkGLExt installer does not add the required PATH variable.
 if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
     import _winreg
     path = None
@@ -90,8 +83,7 @@ if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
     if path:
         os.environ["PATH"] = os.environ.get("PATH", "") + os.path.pathsep + path
 
-
-log = pycam.Utils.log.get_logger()
+BASE_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
 EXAMPLE_MODEL_LOCATIONS = [
         os.path.join(BASE_DIR, "samples"),
@@ -107,6 +99,8 @@ DEFAULT_MODEL_FILE = "pycam-textbox.stl"
 EXIT_CODES = {"ok": 0, "requirements": 1, "load_model_failed": 2,
         "write_output_failed": 3, "parsing_failed": 4,
         "server_without_password": 5, "connection_error": 6}
+
+log = pycam.Utils.log.get_logger()
 
 
 def show_gui(inputfile=None, task_settings_file=None):
@@ -751,4 +745,3 @@ if __name__ == "__main__":
         sys.exit(exit_code)
     else:
         sys.exit(EXIT_CODES["ok"])
-

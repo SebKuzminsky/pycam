@@ -1,8 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2009 Lode Leroy
 
 This file is part of PyCAM.
@@ -21,11 +19,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
-sys.path.insert(0,'.')
-
-from pycam.Geometry.TriangleKdtree import *
-from pycam.Geometry.Model import Model
+from pycam.Geometry.TriangleKdtree import BuildKdtree2d, GetKdtree2dStats, ResetKdtree2dStats, \
+        SearchKdtree2d
 from pycam.Importers.TestModel import TestModel
 
 print "# get model"
@@ -34,7 +29,7 @@ print "# subdivide"
 model = testmodel.subdivide(5)
 print "# build kdtree"
 kdtree = BuildKdtree2d(model.triangles(), 2, 0.1)
-#print "#kdtree=",kdtree
+print "#kdtree=", kdtree
 
 x = 2
 y = 2
@@ -52,6 +47,5 @@ tests = SearchKdtree2d(kdtree, minx, maxx, miny, maxy)
 print "# query kdtree"
 ResetKdtree2dStats(True)
 hits = SearchKdtree2d(kdtree, minx, maxx, miny, maxy)
-#print "# hits=%d / tests=%d" % GetKdtree2dStats(), "/ triangles=%d" % len(model.triangles())
-print "# hits=%d " % len(hits), "/ tests=%d" % len(tests), "/ triangles=%d" % len(model.triangles())
-
+print "# stats=%s / triangles=%d" % (GetKdtree2dStats(), len(model.triangles()))
+print "# hits=%d / tests=%d / triangles=%d" % (len(hits), len(tests), len(model.triangles()))

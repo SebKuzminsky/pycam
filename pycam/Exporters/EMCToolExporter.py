@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -22,6 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 
+
 class EMCToolExporter(object):
 
     def __init__(self, tools):
@@ -36,14 +35,13 @@ class EMCToolExporter(object):
         result = []
         tools = list(self.tools)
         tools.sort(key=lambda item: item["id"])
-        #result.append(self.HEADER_ROW)
+#       result.append(self.HEADER_ROW)
         for tool in tools:
             # use an arbitrary length
             tool_length = tool["radius"] * 10
-            line = "T%d P%d D%f Z-%f ;%s" % (tool["id"], tool["id"],
-                    2 * tool["radius"], tool_length, tool["name"])
+            line = "T%d P%d D%f Z-%f ;%s" % (tool["id"], tool["id"], 2 * tool["radius"],
+                                             tool_length, tool["name"])
             result.append(line)
         # add the dummy line for the "last" tool
         result.append("T99999 P99999 Z+0.100000 ;dummy tool")
         return os.linesep.join(result)
-

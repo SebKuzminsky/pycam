@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -33,8 +31,7 @@ class OpenGLViewAxes(pycam.Plugins.PluginBase):
         import OpenGL.GL
         self._GL = OpenGL.GL
         self.core.register_event("visualize-items", self.draw_axes)
-        self.core.get("register_display_item")("show_axes",
-                "Show Coordinate System", 50)
+        self.core.get("register_display_item")("show_axes", "Show Coordinate System", 50)
         self.core.emit_event("visual-item-updated")
         return True
 
@@ -76,9 +73,8 @@ class OpenGLViewAxes(pycam.Plugins.PluginBase):
             GL.glEnd()
             # Position the cone slightly behind the end of the line - otherwise
             # the end of the line (width=2) is visible at the top of the cone.
-            draw_direction_cone(origin, end, position=1.0 + cone_length,
-                    precision=32, size=cone_length)
+            draw_direction_cone(origin, end, position=1.0 + cone_length, precision=32,
+                                size=cone_length)
         GL.glLineWidth(old_line_width)
         if self.core.get("view_light"):
             GL.glEnable(GL.GL_LIGHTING)
-

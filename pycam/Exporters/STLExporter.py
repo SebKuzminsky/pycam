@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -21,15 +19,16 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam import VERSION
-from pycam.Geometry.PointUtils import pnormalized
 import datetime
 import os
 
+from pycam import VERSION
+from pycam.Geometry.PointUtils import pnormalized
+
+
 class STLExporter(object):
 
-    def __init__(self, model, name="model", created_by="pycam", linesep=None,
-            **kwargs):
+    def __init__(self, model, name="model", created_by="pycam", linesep=None, **kwargs):
         self.model = model
         self.name = name
         self.created_by = created_by
@@ -48,8 +47,8 @@ class STLExporter(object):
 
     def get_output_lines(self):
         date = datetime.date.today().isoformat()
-        yield """solid "%s"; Produced by %s (v%s), %s""" \
-                % (self.name, self.created_by, VERSION, date)
+        yield ("""solid "%s"; Produced by %s (v%s), %s"""
+               % (self.name, self.created_by, VERSION, date))
         for triangle in self.model.triangles():
             norm = pnormalized(triangle.normal)
             yield "facet normal %f %f %f" % (norm[0], norm[1], norm[2])
@@ -61,4 +60,3 @@ class STLExporter(object):
             yield "  endloop"
             yield "endfacet"
         yield "endsolid"
-

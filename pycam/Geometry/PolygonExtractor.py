@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2008-2009 Lode Leroy
 
 This file is part of PyCAM.
@@ -20,12 +18,10 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry import INFINITE
+from pycam.Geometry.Path import Path
 from pycam.Utils.iterators import Iterator, CyclicIterator
 
-from pycam.Geometry.utils import INFINITE
-from pycam.Geometry.Path import Path
-
-from pycam.Exporters.SVGExporter import SVGExporter
 
 DEBUG_POLYGONEXTRACTOR = False
 DEBUG_POLYGONEXTRACTOR2 = False
@@ -50,6 +46,7 @@ class PolygonExtractor(object):
         self.curr_line = []
 
         if DEBUG_POLYGONEXTRACTOR3:
+            from pycam.Exporters.SVGExporter import SVGExporter
             self.svg = SVGExporter("test-%d.svg" % direction)
             if direction == 0:
                 self.svg.fill("red")
@@ -146,10 +143,11 @@ class PolygonExtractor(object):
                 self.ver_path_list = path_list
 
         if DEBUG_POLYGONEXTRACTOR3:
+            from pycam.Exporters.SVGExporter import SVGExporter
             self.svg = SVGExporter("test-3.svg")
             for path in path_list:
                 prev = None
-                if len(path.points)<=1:
+                if len(path.points) <= 1:
                     continue
                 for p in path.points:
                     if p.dir == 0:
@@ -260,7 +258,7 @@ class PolygonExtractor(object):
                 continue
 
             if (prev_point.remains() >= 2) and (curr_point.remains() == 0):
-                #old path ends
+                # old path ends
                 p0 = curr_path.takeNext()
                 if DEBUG_POLYGONEXTRACTOR:
                     print "end path %d" % p0.id
@@ -338,7 +336,7 @@ class PolygonExtractor(object):
                         overlap_p = False
                         overlap_c = False
                         # check for path joins
-                        if prev_point.remains()>=2:
+                        if prev_point.remains() >= 2:
                             p2 = prev_point.peek(1)
                             if DEBUG_POLYGONEXTRACTOR:
                                 print "join test: p0=%g p1=%g p2=%g" \
@@ -349,7 +347,7 @@ class PolygonExtractor(object):
                                 if self.policy == PolygonExtractor.CONTOUR:
                                     s0 = curr_path.takeNext()
                                     s1 = curr_path.takeNext()
-                                    if curr_path.remains()>=1:
+                                    if curr_path.remains() >= 1:
                                         right_path = curr_path.peek()
                                     self.all_path_list.append(s0)
                                     self.all_path_list.append(s1)
@@ -375,18 +373,17 @@ class PolygonExtractor(object):
                                 prev_point.next()
                                 winding = s1.winding
                                 p0 = p2
-                                if prev_point.remains()>=1:
+                                if prev_point.remains() >= 1:
                                     p1 = prev_point.peek(0)
                             else:
                                 overlap_p = False
 
                         # check for path splits
-                        if curr_point.remains()>=2:
+                        if curr_point.remains() >= 2:
                             c2 = curr_point.peek(1)
                             if DEBUG_POLYGONEXTRACTOR:
                                 print "split test: p0=%g p1=%g" % (p0[0], p1[0])
-                                print "split test: c0=%g c1=%g c2=%g" \
-                                        % (c0[0], c1[0], c2[0])
+                                print "split test: c0=%g c1=%g c2=%g" % (c0[0], c1[0], c2[0])
                             if c2[0] <= p1[0]:
                                 overlap_c = True
                                 s0 = Path()
@@ -396,8 +393,8 @@ class PolygonExtractor(object):
                                 s0.top_join = s1
                                 s1.top_join = s0
                                 if DEBUG_POLYGONEXTRACTOR:
-                                    print "region split into %d and %d (w=%d)" \
-                                            % (s0.id, s1.id, winding + 1)
+                                    print("region split into %d and %d (w=%d)"
+                                          % (s0.id, s1.id, winding + 1))
                                 curr_point.next()
                                 c0 = curr_point.next()
                                 if self.policy == PolygonExtractor.CONTOUR:
@@ -432,11 +429,11 @@ class PolygonExtractor(object):
                     curr_point.next()
 
         if DEBUG_POLYGONEXTRACTOR:
-            print "active paths: ",
+            output = "active paths: "
             for path in self.curr_path_list:
-                print "%d(%g,%g,w=%d)" % (path.id, path.points[-1][0],
-                        path.points[-1][1], path.winding),
-            print
+                output += "%d(%g,%g,w=%d)" % (path.id, path.points[-1][0], path.points[-1][1],
+                                              path.winding)
+            print(output)
 
         self.prev_line = scanline
 
@@ -516,7 +513,7 @@ class PolygonExtractor(object):
                 continue
 
             if (prev_point.remains() >= 2) and (curr_point.remains() == 0):
-                #old path ends
+                # old path ends
                 p0 = curr_path.takeNext()
                 if DEBUG_POLYGONEXTRACTOR:
                     print "end path %d" % p0.id
@@ -637,12 +634,11 @@ class PolygonExtractor(object):
                                 overlap_p = False
 
                         # check for path splits
-                        if curr_point.remains()>=2:
+                        if curr_point.remains() >= 2:
                             c2 = curr_point.peek(1)
                             if DEBUG_POLYGONEXTRACTOR:
                                 print "split test: p0=%g p1=%g" % (p0[0], p1[0])
-                                print "split test: c0=%g c1=%g c2=%g" \
-                                        % (c0[0], c1[0], c2[0])
+                                print "split test: c0=%g c1=%g c2=%g" % (c0[0], c1[0], c2[0])
                             if c2[1] <= p1[1]:
                                 overlap_c = True
                                 s0 = Path()
@@ -652,8 +648,8 @@ class PolygonExtractor(object):
                                 s0.top_join = s1
                                 s1.top_join = s0
                                 if DEBUG_POLYGONEXTRACTOR:
-                                    print "region split into %d and %d (w=%d)" \
-                                            % (s0.id, s1.id, winding + 1)
+                                    print("region split into %d and %d (w=%d)"
+                                          % (s0.id, s1.id, winding + 1))
                                 curr_point.next()
                                 c0 = curr_point.next()
                                 if self.policy == PolygonExtractor.CONTOUR:
@@ -688,11 +684,11 @@ class PolygonExtractor(object):
                     curr_point.next()
 
         if DEBUG_POLYGONEXTRACTOR:
-            print "active paths: ",
+            output = "active paths: "
             for path in self.curr_path_list:
-                print "%d(%g,%g,w=%d)" % (path.id, path.points[-1][0],
-                        path.points[-1][1], path.winding),
-            print
+                output += "%d(%g,%g,w=%d)" % (path.id, path.points[-1][0], path.points[-1][1],
+                                              path.winding)
+            print(output)
 
         self.prev_line = scanline
 
@@ -776,7 +772,6 @@ class PolygonExtractor(object):
 
         self.act_hor_path_list = []
 
-
     def process_virtual_hor_scanline(self, next_x):
 
         _next_x = next_x
@@ -806,8 +801,7 @@ class PolygonExtractor(object):
                         and (self.ver_hor_path_list[0].points[0][0] <= next_x):
                     self.act_hor_path_list.append(self.ver_hor_path_list[0])
                     self.ver_hor_path_list = self.ver_hor_path_list[1:]
-                self.act_hor_path_list.sort(cmp=lambda a, b:
-                        cmp(a.points[0][0], b.points[0][0]))
+                self.act_hor_path_list.sort(cmp=lambda a, b: cmp(a.points[0][0], b.points[0][0]))
 
             scanline = []
             i = 0
@@ -820,24 +814,15 @@ class PolygonExtractor(object):
                     if len(s.points) <= 1:
                         if DEBUG_POLYGONEXTRACTOR2:
                             print "remove list"
-                        self.act_hor_path_list = self.act_hor_path_list[:i] \
-                                + self.act_hor_path_list[i+1:]
-                        # TODO: the variable "hor_list_removed" is never used.
-                        # Any idea?
-                        hor_list_removed = True
+                        self.act_hor_path_list.pop(i)
                         continue
                     else:
                         if DEBUG_POLYGONEXTRACTOR2:
                             print "remove point", s.points[0]
-                        s.points = s.points[1:]
-                        if len(s.points)> 0 and s.points[0][0] == next_x:
-                            # TODO: the variable "repeat" is never used.
-                            # Any idea?
-                            repeat = True
+                        s.points.pop(0)
                 i += 1
-            self.act_hor_path_list.sort(cmp=lambda a, b:
-                    cmp(a.points[0][0], b.points[0][0]))
-            if len(scanline) == 0:
+            self.act_hor_path_list.sort(cmp=lambda a, b: cmp(a.points[0][0], b.points[0][0]))
+            if not scanline:
                 return
 
             scanline.sort(cmp=lambda a, b: cmp(a[1], b[1]))
@@ -846,4 +831,3 @@ class PolygonExtractor(object):
                 print "ver_hor_path_list =", self.ver_hor_path_list
                 print "act_hor_path_list =", self.act_hor_path_list
             self.process_ver_scanline(scanline)
-

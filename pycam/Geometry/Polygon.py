@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -20,15 +18,16 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry import epsilon, number, TransformableContainer, IDGenerator
 from pycam.Geometry.Line import Line
-from pycam.Geometry.PointUtils import *
 from pycam.Geometry.Plane import Plane
-from pycam.Geometry import TransformableContainer, IDGenerator, get_bisector
-from pycam.Geometry.utils import number, epsilon
+from pycam.Geometry.PointUtils import padd, pcross, pdist, pdiv, pdot, pis_inside, pmul, pnorm, \
+        pnormsq, pnormalized, psub
+from pycam.Geometry.utils import get_bisector
 from pycam.Utils import log
 log = log.get_logger()
 # import later to avoid circular imports
-#from pycam.Geometry.Model import ContourModel
+# from pycam.Geometry.Model import ContourModel
 
 try:
     import OpenGL.GL as GL
@@ -39,6 +38,7 @@ except ImportError:
 
 LINE_WIDTH_INNER = 0.7
 LINE_WIDTH_OUTER = 1.3
+
 
 class PolygonInTree(IDGenerator):
     """ This class is a wrapper around Polygon objects that is used for sorting.
@@ -135,7 +135,6 @@ class PolygonPositionSorter(object):
         if min_branch:
             min_branch.append(poly)
 
-
     def optimize_order(self):
         """ re-insert all items until their order stabilizes """
         finished = False
@@ -190,7 +189,7 @@ class PolygonSorter(object):
             usable_polys = []
             for poly in remaining_polygons:
                 for child in poly.children:
-                    if not child in done_polygons:
+                    if child not in done_polygons:
                         break
                 else:
                     usable_polys.append(poly)
@@ -216,7 +215,7 @@ class Polygon(TransformableContainer):
         super(Polygon, self).__init__()
         if plane is None:
             # the default plane points upwards along the z axis
-            plane = Plane((0, 0, 0), (0, 0, 1,'v'))
+            plane = Plane((0, 0, 0), (0, 0, 1, 'v'))
         self.plane = plane
         self._points = []
         self.is_closed = False
@@ -240,8 +239,7 @@ class Polygon(TransformableContainer):
         if not self.is_connectable(line):
             raise ValueError("This line does not fit to the polygon")
         elif line.len < epsilon:
-            raise ValueError("A line with zero length may not be part of a " \
-                    + "polygon")
+            raise ValueError("A line with zero length may not be part of a polygon")
         else:
             if not self._points:
                 self._points.append(line.p1)
@@ -264,7 +262,8 @@ class Polygon(TransformableContainer):
                 self.reset_cache()
             else:
                 # the new Line can be added to the beginning of the polygon
-                if (len(self._points) > 1) and (line.dir == pnormalized(psub(self._points[1], self._points[0]))):
+                if (len(self._points) > 1) and \
+                        (line.dir == pnormalized(psub(self._points[1], self._points[0]))):
                     # Avoid points on straight lines - see above.
                     self._points.pop(0)
                 if line.p1 != self._points[-1]:
@@ -290,9 +289,7 @@ class Polygon(TransformableContainer):
         self.reset_cache()
 
     def get_reversed(self):
-        result = Polygon(plane=self.plane)
-        result._points = self._points[:]
-        result.is_closed = self.is_closed
+        result = self.copy()
         result.reverse_direction()
         return result
 
@@ -314,10 +311,7 @@ class Polygon(TransformableContainer):
         else:
             # it is a point
             point = line_or_point
-            if (point == self._points[-1]) or (point == self._points[0]):
-                return True
-            else:
-                return False
+            return (point == self._points[-1]) or (point == self._points[0])
 
     def next(self):
         yield "_points"
@@ -347,8 +341,9 @@ class Polygon(TransformableContainer):
                 value[0] += p1[1] * p2[2] - p1[2] * p2[1]
                 value[1] += p1[2] * p2[0] - p1[0] * p2[2]
                 value[2] += p1[0] * p2[1] - p1[1] * p2[0]
-            result = self.plane.n[0] * value[0] + self.plane.n[1] * value[1] \
-                    + self.plane.n[2] * value[2]
+            result = (self.plane.n[0] * value[0]
+                      + self.plane.n[1] * value[1]
+                      + self.plane.n[2] * value[2])
             self._area_cache = result / 2
         return self._area_cache
 
@@ -356,7 +351,7 @@ class Polygon(TransformableContainer):
         area = self.get_area()
         if not area:
             return None
-        # see: http://stackoverflow.com/questions/2355931/compute-the-centroid-of-a-3d-planar-polygon/2360507
+        # see: http://stackoverflow.com/questions/2355931/foo/2360507
         # first: calculate cx and y
         cxy, cxz, cyx, cyz, czx, czy = (0, 0, 0, 0, 0, 0)
         for index in range(len(self._points)):
@@ -376,31 +371,29 @@ class Polygon(TransformableContainer):
             return (self.minx, cyz / (6 * area), czy / (6 * area))
         else:
             # calculate area of xy projection
-            poly_xy = self.get_plane_projection(Plane((0, 0, 0),(0, 0, 1)))
-            poly_xz = self.get_plane_projection(Plane((0, 0, 0),(0, 1, 0)))
-            poly_yz = self.get_plane_projection(Plane((0, 0, 0),(1, 0, 0)))
+            poly_xy = self.get_plane_projection(Plane((0, 0, 0), (0, 0, 1)))
+            poly_xz = self.get_plane_projection(Plane((0, 0, 0), (0, 1, 0)))
+            poly_yz = self.get_plane_projection(Plane((0, 0, 0), (1, 0, 0)))
             if (poly_xy is None) or (poly_xz is None) or (poly_yz is None):
-                log.warn("Invalid polygon projection for barycenter: %s" \
-                        % str(self))
+                log.warn("Invalid polygon projection for barycenter: %s", str(self))
                 return None
             area_xy = poly_xy.get_area()
             area_xz = poly_xz.get_area()
             area_yz = poly_yz.get_area()
             if 0 in (area_xy, area_xz, area_yz):
-                log.info("Failed assumtion: zero-sized projected area - " + \
-                        "%s / %s / %s" % (area_xy, area_xz, area_yz))
+                log.info("Failed assumtion: zero-sized projected area - %s / %s / %s",
+                         area_xy, area_xz, area_yz)
                 return None
             if abs(cxy / area_xy - cxz / area_xz) > epsilon:
-                log.info("Failed assumption: barycenter xy/xz - %s / %s" % \
-                        (cxy / area_xy, cxz / area_xz))
+                log.info("Failed assumption: barycenter xy/xz - %s / %s",
+                         cxy / area_xy, cxz / area_xz)
             if abs(cyx / area_xy - cyz / area_yz) > epsilon:
-                log.info("Failed assumption: barycenter yx/yz - %s / %s" % \
-                        (cyx / area_xy, cyz / area_yz))
+                log.info("Failed assumption: barycenter yx/yz - %s / %s",
+                         cyx / area_xy, cyz / area_yz)
             if abs(czx / area_xz - czy / area_yz) > epsilon:
-                log.info("Failed assumption: barycenter zx/zy - %s / %s" % \
-                        (czx / area_xz, cyz / area_yz))
-            return Point(cxy / (6 * area_xy), cyx / (6 * area_xy),
-                    czx / (6 * area_xz))
+                log.info("Failed assumption: barycenter zx/zy - %s / %s",
+                         czx / area_xz, cyz / area_yz)
+            return (cxy / (6 * area_xy), cyx / (6 * area_xy), czx / (6 * area_xz))
 
     def get_length(self):
         """ add the length of all lines within the polygon
@@ -412,7 +405,8 @@ class Polygon(TransformableContainer):
                 or (not self.is_closed and index == len(self._points) - 1):
             return None
         else:
-            return pdiv(padd(self._points[index], self._points[(index + 1) % len(self._points)]), 2)
+            return pdiv(padd(self._points[index], self._points[(index + 1) % len(self._points)]),
+                        2)
 
     def get_lengths(self):
         result = []
@@ -445,7 +439,7 @@ class Polygon(TransformableContainer):
                 (self.miny > polygon.maxy) or (self.maxy < polygon.miny) or \
                 (self.minz > polygon.maxz) or (self.maxz < polygon.minz):
             return False
-        for point in polygon._points:
+        for point in polygon.get_points():
             if not self.is_point_inside(point):
                 return False
         return True
@@ -603,16 +597,17 @@ class Polygon(TransformableContainer):
         for index in range(len(self._points)):
             points.append(get_shifted_vertex(index, offset))
         max_dist = 1000 * epsilon
+
         def test_point_near(p, others):
             for o in others:
                 if pdist(p, o) < max_dist:
                     return True
             return False
+
         reverse_lines = []
         shifted_lines = []
-        for index in range(len(points)):
+        for index, p1 in enumerate(points):
             next_index = (index + 1) % len(points)
-            p1 = points[index]
             p2 = points[next_index]
             diff = psub(p2, p1)
             old_dir = pnormalized(psub(self._points[next_index], self._points[index]))
@@ -657,12 +652,11 @@ class Polygon(TransformableContainer):
                     shifted_lines[prev_index] = (False, Line(prev_line.p1, cp))
                     shifted_lines[next_index] = (False, Line(cp, next_line.p2))
                 else:
-                    cp, dist = prev_line.get_intersection(next_line,
-                            infinite_lines=True)
-                    raise BaseException("Expected intersection not found: " + \
-                            "%s - %s - %s(%d) / %s(%d)" % \
-                            (cp, shifted_lines[prev_index+1:next_index],
-                                prev_line, prev_index, next_line, next_index))
+                    cp, dist = prev_line.get_intersection(next_line, infinite_lines=True)
+                    raise BaseException(
+                        "Expected intersection not found: %s - %s - %s(%d) / %s(%d)"
+                        % (cp, shifted_lines[prev_index+1:next_index], prev_line, prev_index,
+                           next_line, next_index))
                 if index > next_index:
                     # we wrapped around the end of the list
                     break
@@ -670,8 +664,8 @@ class Polygon(TransformableContainer):
                     index = next_index + 1
             else:
                 index += 1
-        non_reversed = [line for reverse, line in shifted_lines
-                if not reverse and line.len > 0]
+        non_reversed = [one_line for rev, one_line in shifted_lines
+                        if not rev and one_line.len > 0]
         # split the list of lines into groups (based on intersections)
         split_points = []
         index = 0
@@ -688,24 +682,21 @@ class Polygon(TransformableContainer):
                 line = non_reversed[index]
                 cp, dist = line.get_intersection(other_line)
                 if cp:
-                    if not test_point_near(cp,
-                            (line.p1, line.p2, other_line.p1, other_line.p2)):
+                    if not test_point_near(cp, (line.p1, line.p2, other_line.p1, other_line.p2)):
                         # the collision is not close to an end of the line
                         return None
                     elif (cp == line.p1) or (cp == line.p2):
                         # maybe we have been here before
-                        if not cp in split_points:
+                        if cp not in split_points:
                             split_points.append(cp)
                     elif (pdist(cp, line.p1) < max_dist) or (pdist(cp, line.p2) < max_dist):
-                        if pdist(cp, lines.p1) < pdist(cp, line.p2):
+                        if pdist(cp, line.p1) < pdist(cp, line.p2):
                             non_reversed[index] = Line(cp, line.p2)
                         else:
                             non_reversed[index] = Line(line.p1, cp)
                         non_reversed.pop(other_index)
-                        non_reversed.insert(other_index,
-                                Line(other_line.p1, cp))
-                        non_reversed.insert(other_index + 1,
-                                Line(cp, other_line.p2))
+                        non_reversed.insert(other_index, Line(other_line.p1, cp))
+                        non_reversed.insert(other_index + 1, Line(cp, other_line.p2))
                         split_points.append(cp)
                         if other_index < index:
                             index += 1
@@ -744,13 +735,7 @@ class Polygon(TransformableContainer):
                 groups[current_group].append(line)
             if line.p2 in split_points:
                 split_here = True
-        def is_joinable(g1, g2):
-            if g1 and g2 and (g1[0].p1 != g1[-1].p2):
-                if g1[0].p1 == g2[-1].p2:
-                    return g2 + g1
-                if g2[0].p1 == g1[-1].p2:
-                    return g1 + g2
-            return None
+
         # try to combine open groups
         for index1, group1 in enumerate(groups):
             if not group1:
@@ -785,8 +770,7 @@ class Polygon(TransformableContainer):
                     print poly
                     print line
                     raise
-            if self.is_closed and ((not poly.is_closed) \
-                    or (self.is_outer() != poly.is_outer())):
+            if self.is_closed and ((not poly.is_closed) or (self.is_outer() != poly.is_outer())):
                 continue
             elif (not self.is_closed) and (poly.get_area() != 0):
                 continue
@@ -797,25 +781,25 @@ class Polygon(TransformableContainer):
     def get_offset_polygons_incremental(self, offset, depth=20):
         if offset == 0:
             return [self]
-        if self._cached_offset_polygons.has_key(offset):
+        if offset in self._cached_offset_polygons:
             return self._cached_offset_polygons[offset]
+
         def is_better_offset(previous_offset, alternative_offset):
-            return ((offset < alternative_offset < 0) \
-                    or (0 < alternative_offset < offset)) \
-                    and (abs(alternative_offset) > abs(previous_offset))
+            return (((offset < alternative_offset < 0) or (0 < alternative_offset < offset))
+                    and (abs(alternative_offset) > abs(previous_offset)))
+
         # check the cache for a good starting point
         best_offset = 0
         best_offset_polygons = [self]
         for cached_offset in self._cached_offset_polygons:
             if is_better_offset(best_offset, cached_offset):
                 best_offset = cached_offset
-                best_offset_polygons = \
-                        self._cached_offset_polygons[cached_offset]
+                best_offset_polygons = self._cached_offset_polygons[cached_offset]
         remaining_offset = offset - best_offset
         result_polygons = []
         for poly in best_offset_polygons:
             result = poly.get_offset_polygons_validated(remaining_offset)
-            if not result is None:
+            if result is not None:
                 result_polygons.extend(result)
             else:
                 lower = number(0)
@@ -832,10 +816,8 @@ class Polygon(TransformableContainer):
                             print "Next level: %s" % str(middle)
                             shifted_sub_polygons = []
                             for sub_poly in result:
-                                shifted_sub_polygons.extend(
-                                        sub_poly.get_offset_polygons(
-                                            remaining_offset - middle,
-                                            depth=depth-1))
+                                shifted_sub_polygons.extend(sub_poly.get_offset_polygons(
+                                    remaining_offset - middle, depth=depth-1))
                             result_polygons.extend(shifted_sub_polygons)
                             break
                         else:
@@ -860,6 +842,7 @@ class Polygon(TransformableContainer):
                 return padd(p1, bisector_sized)
             else:
                 return p2
+
         def simplify_polygon_intersections(lines):
             new_group = lines[:]
             # remove all non-adjacent intersecting lines (this splits the group)
@@ -869,29 +852,28 @@ class Polygon(TransformableContainer):
                 while index1 < len(new_group):
                     index2 = 0
                     while index2 < len(new_group):
-                        index_distance = min(abs(index2 - index1), \
-                                abs(len(new_group) - (index2 - index1))) 
+                        index_distance = min(abs(index2 - index1),
+                                             abs(len(new_group) - (index2 - index1)))
                         # skip neighbours
                         if index_distance > 1:
                             line1 = new_group[index1]
                             line2 = new_group[index2]
                             intersection, factor = line1.get_intersection(line2)
-                            if intersection and (pdist(intersection, line1.p1) > epsilon) and (pdist(intersection, line1.p2) > epsilon):
+                            if intersection and (pdist(intersection, line1.p1) > epsilon) \
+                                    and (pdist(intersection, line1.p2) > epsilon):
                                 del new_group[index1]
-                                new_group.insert(index1,
-                                        Line(line1.p1, intersection))
-                                new_group.insert(index1 + 1,
-                                        Line(intersection, line1.p2))
+                                new_group.insert(index1, Line(line1.p1, intersection))
+                                new_group.insert(index1 + 1, Line(intersection, line1.p2))
                                 # Shift all items in "group_starts" by one if
                                 # they reference a line whose index changed.
                                 for i in range(len(group_starts)):
                                     if group_starts[i] > index1:
                                         group_starts[i] += 1
-                                if not index1 + 1 in group_starts:
+                                if index1 + 1 not in group_starts:
                                     group_starts.append(index1 + 1)
                                 # don't update index2 -> maybe there are other hits
                             elif intersection and (pdist(intersection, line1.p1) < epsilon):
-                                if not index1 in group_starts:
+                                if index1 not in group_starts:
                                     group_starts.append(index1)
                                 index2 += 1
                             else:
@@ -911,7 +893,7 @@ class Polygon(TransformableContainer):
                         if transfer_group:
                             groups.append(transfer_group)
                         last_start = group_start
-                        
+
                     # Add the remaining lines to the first group or as a new
                     # group.
                     if groups[0][0].p1 == new_group[-1].p2:
@@ -949,6 +931,7 @@ class Polygon(TransformableContainer):
                     return [new_group]
             else:
                 return None
+
         offset = number(offset)
         if offset == 0:
             return [self]
@@ -976,15 +959,13 @@ class Polygon(TransformableContainer):
             return None
         cleaned_line_groups = simplify_polygon_intersections(new_lines)
         if cleaned_line_groups is None:
-            log.debug("Skipping offset polygon: intersections could not be " \
-                    + "simplified")
+            log.debug("Skipping offset polygon: intersections could not be "
+                      "simplified")
             return None
         else:
             if not cleaned_line_groups:
-                log.debug("Skipping offset polygon: no polygons left after " \
-                        + "intersection simplification")
-            # remove all groups with a toggled direction
-            self_is_outer = self.is_outer()
+                log.debug("Skipping offset polygon: no polygons left after "
+                          "intersection simplification")
             groups = []
             for lines in cleaned_line_groups:
                 if callback and callback():
@@ -992,7 +973,6 @@ class Polygon(TransformableContainer):
                 group = Polygon(self.plane)
                 for line in lines:
                     group.append(line)
-
                 groups.append(group)
             if not groups:
                 log.debug("Skipping offset polygon: toggled polygon removed")
@@ -1010,8 +990,7 @@ class Polygon(TransformableContainer):
                 if not inside:
                     result.append(group)
             if not result:
-                log.debug("Skipping offset polygon: polygon is inside of " \
-                        + "another one")
+                log.debug("Skipping offset polygon: polygon is inside of another one")
             return result
 
     def get_offset_polygons_old(self, offset):
@@ -1026,7 +1005,9 @@ class Polygon(TransformableContainer):
                 # get lost instead of just one). Use the "abs" value to
                 # compensate negative offsets.
                 in_line = pmul(line.dir, 2 * abs(offset))
-                return Line(psub(padd(line.p1, cross_offset), in_line), padd(padd(line.p2, cross_offset), in_line))
+                return Line(psub(padd(line.p1, cross_offset), in_line),
+                            padd(padd(line.p2, cross_offset), in_line))
+
         def do_lines_intersection(l1, l2):
             """ calculate the new intersection between two neighbouring lines
             """
@@ -1071,6 +1052,7 @@ class Polygon(TransformableContainer):
                     # shorten both lines according to the new intersection
                     l1.p2 = intersection
                     l2.p1 = intersection
+
         def simplify_polygon_intersections(lines):
             finished = False
             new_group = lines[:]
@@ -1088,8 +1070,7 @@ class Polygon(TransformableContainer):
                         do_lines_intersection(l1, l2)
                 # Remove all lines that were marked as obsolete during
                 # intersection calculation.
-                clean_group = [line for line in new_group
-                        if not line.p1 is None]
+                clean_group = [line for line in new_group if line.p1 is not None]
                 finished = len(new_group) == len(clean_group)
                 if (len(clean_group) == 1) and self.is_closed:
                     new_group = []
@@ -1103,8 +1084,8 @@ class Polygon(TransformableContainer):
                 while index1 < len(new_group):
                     index2 = 0
                     while index2 < len(new_group):
-                        index_distance = min(abs(index2 - index1), \
-                                abs(len(new_group) - (index2 - index1))) 
+                        index_distance = min(abs(index2 - index1),
+                                             abs(len(new_group) - (index2 - index1)))
                         # skip neighbours
                         if index_distance > 1:
                             line1 = new_group[index1]
@@ -1113,20 +1094,18 @@ class Polygon(TransformableContainer):
                             if intersection and (intersection != line1.p1) \
                                     and (intersection != line1.p2):
                                 del new_group[index1]
-                                new_group.insert(index1,
-                                        Line(line1.p1, intersection))
-                                new_group.insert(index1 + 1,
-                                        Line(intersection, line1.p2))
+                                new_group.insert(index1, Line(line1.p1, intersection))
+                                new_group.insert(index1 + 1, Line(intersection, line1.p2))
                                 # Shift all items in "group_starts" by one if
                                 # they reference a line whose index changed.
                                 for i in range(len(group_starts)):
                                     if group_starts[i] > index1:
                                         group_starts[i] += 1
-                                if not index1 + 1 in group_starts:
+                                if index1 + 1 not in group_starts:
                                     group_starts.append(index1 + 1)
                                 # don't update index2 -> maybe there are other hits
                             elif intersection and (intersection == line1.p1):
-                                if not index1 in group_starts:
+                                if index1 not in group_starts:
                                     group_starts.append(index1)
                                 index2 += 1
                             else:
@@ -1180,6 +1159,7 @@ class Polygon(TransformableContainer):
                     return [new_group]
             else:
                 return None
+
         new_lines = []
         for line in self.get_lines():
             new_lines.append(get_parallel_line(line, offset))
@@ -1213,12 +1193,11 @@ class Polygon(TransformableContainer):
             if line.is_completely_inside(minx, maxx, miny, maxy, minz, maxz):
                 new_line = line
             else:
-                cropped_line = line.get_cropped_line(minx, maxx, miny, maxy,
-                        minz, maxz)
-                if not cropped_line is None:
+                cropped_line = line.get_cropped_line(minx, maxx, miny, maxy, minz, maxz)
+                if cropped_line is not None:
                     new_line = cropped_line
             # add the new line to one of the line groups
-            if not new_line is None:
+            if new_line is not None:
                 # try to find a suitable line group
                 for new_group in new_groups:
                     try:
@@ -1241,8 +1220,7 @@ class Polygon(TransformableContainer):
         if plane == self.plane:
             return self
         elif pdot(plane.n, self.plane.n) == 0:
-            log.warn("Polygon projection onto plane: orthogonal projection " \
-                    + "is not possible")
+            log.warn("Polygon projection onto plane: orthogonal projection is not possible")
             return None
         else:
             result = Polygon(plane)
@@ -1259,7 +1237,7 @@ class Polygon(TransformableContainer):
         for line1 in self.get_lines():
             for line2 in other.get_lines():
                 cp, dist = line1.get_intersection(line2)
-                if not cp is None:
+                if cp is not None:
                     return True
         return False
 
@@ -1279,13 +1257,14 @@ class Polygon(TransformableContainer):
             # no changes
             return [self, other]
         contour = ContourModel(self.plane)
+
         def get_outside_lines(poly1, poly2):
             result = []
             for line in poly1.get_lines():
                 collisions = []
                 for o_line in poly2.get_lines():
                     cp, dist = o_line.get_intersection(line)
-                    if (not cp is None) and (0 < dist < 1):
+                    if (cp is not None) and (0 < dist < 1):
                         collisions.append((cp, dist))
                 # sort the collisions according to the distance
                 collisions.append((line.p1, 0))
@@ -1300,11 +1279,12 @@ class Polygon(TransformableContainer):
                     # Use the middle between p1 and p2 to check the
                     # inner/outer state.
                     p_middle = pdiv(padd(p1, p2), 2)
-                    p_inside = poly2.is_point_inside(p_middle) \
-                            and not poly2.is_point_on_outline(p_middle)
+                    p_inside = (poly2.is_point_inside(p_middle)
+                                and not poly2.is_point_on_outline(p_middle))
                     if not p_inside:
                         result.append(Line(p1, p2))
             return result
+
         outside_lines = []
         outside_lines.extend(get_outside_lines(self, other))
         outside_lines.extend(get_outside_lines(other, self))
@@ -1339,7 +1319,10 @@ class Polygon(TransformableContainer):
         intersections.sort(key=lambda (cp, d): d)
         intersections.insert(0, (proj_line.p1, 0))
         intersections.append((proj_line.p2, 1))
-        get_original_point = lambda d: padd(line.p1, pmul(line.vector, d))
+
+        def get_original_point(d):
+            return padd(line.p1, pmul(line.vector, d))
+
         for index in range(len(intersections) - 1):
             p1, d1 = intersections[index]
             p2, d2 = intersections[index + 1]
@@ -1351,4 +1334,3 @@ class Polygon(TransformableContainer):
                 else:
                     outer.append(new_line)
         return (inner, outer)
-

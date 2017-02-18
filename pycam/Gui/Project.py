@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -22,30 +20,30 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import os
-import sys
-import datetime
-import gtk
-import gobject
-import webbrowser
 import ConfigParser
-import StringIO
-import pickle
+import datetime
 import logging
-import xml.etree.ElementTree as ET
+import os
+import pickle
+import StringIO
+import sys
+import webbrowser
 
+import gobject
+import gtk
+
+from pycam import VERSION, HELP_WIKI_URL
 import pycam.Gui.Settings
 import pycam.Importers.CXFImporter
 import pycam.Importers.TestModel
 import pycam.Importers
-import pycam.Utils.log
-from pycam.Utils.locations import get_data_file_location, \
-        get_ui_file_location, get_external_program_location, \
+import pycam.Physics.ode_physics
+import pycam.Plugins
+from pycam.Utils.locations import get_ui_file_location, get_external_program_location, \
         get_all_program_locations
 import pycam.Utils
-import pycam.Plugins
-from pycam import VERSION
-import pycam.Physics.ode_physics
+import pycam.Utils.log
+
 
 GTKBUILD_FILE = "pycam-project.ui"
 GTKMENU_FILE = "menubar.xml"
@@ -54,63 +52,62 @@ PICKLE_PROTOCOL = 2
 
 WINDOW_ICON_FILENAMES = ["logo_%dpx.png" % pixels for pixels in (16, 32, 48, 64, 128)]
 
-HELP_WIKI_URL = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=%s"
-
 FILTER_MODEL = (("All supported model filetypes",
-                ("*.stl", "*.dxf", "*.svg", "*.eps", "*.ps")),
-        ("STL models", "*.stl"), ("DXF contours", "*.dxf"),
-        ("SVG contours", "*.svg"), ("PS contours", ("*.eps", "*.ps")))
-FILTER_CONFIG = (("Config files", "*.conf"),)
+                 ("*.stl", "*.dxf", "*.svg", "*.eps", "*.ps")),
+                ("STL models", "*.stl"),
+                ("DXF contours", "*.dxf"),
+                ("SVG contours", "*.svg"),
+                ("PS contours", ("*.eps", "*.ps")))
 
 PREFERENCES_DEFAULTS = {
-        "enable_ode": False,
-        "unit": "mm",
-        "default_task_settings_file": "",
-        "show_model": True,
-        "show_support_preview": True,
-        "show_axes": True,
-        "show_dimensions": True,
-        "show_bounding_box": True,
-        "show_toolpath": True,
-        "show_drill": False,
-        "show_directions": False,
-        "color_background": {"red": 0.0, "green": 0.0, "blue": 0.0, "alpha": 1.0},
-        "color_model": {"red": 0.5, "green": 0.5, "blue": 1.0, "alpha": 1.0},
-        "color_support_preview": {"red": 0.8, "green": 0.8, "blue": 0.3, "alpha": 1.0},
-        "color_bounding_box": {"red": 0.3, "green": 0.3, "blue": 0.3, "alpha": 1.0},
-        "color_cutter": {"red": 1.0, "green": 0.2, "blue": 0.2, "alpha": 1.0},
-        "color_toolpath_cut": {"red": 1.0, "green": 0.5, "blue": 0.5, "alpha": 1.0},
-        "color_toolpath_return": {"red": 0.9, "green": 1.0, "blue": 0.1, "alpha": 0.4},
-        "color_material": {"red": 1.0, "green": 0.5, "blue": 0.0, "alpha": 1.0},
-        "color_grid": {"red": 0.75, "green": 1.0, "blue": 0.7, "alpha": 0.55},
-        "view_light": True,
-        "view_shadow": True,
-        "view_polygon": True,
-        "view_perspective": True,
-        "drill_progress_max_fps": 2,
-        "gcode_safety_height": 25.0,
-        "gcode_minimum_step_x": 0.0001,
-        "gcode_minimum_step_y": 0.0001,
-        "gcode_minimum_step_z": 0.0001,
-        "gcode_path_mode": 0,
-        "gcode_motion_tolerance": 0,
-        "gcode_naive_tolerance": 0,
-        "gcode_start_stop_spindle": True,
-        "gcode_filename_extension": "",
-        "gcode_spindle_delay": 3,
-        "external_program_inkscape": "",
-        "external_program_pstoedit": "",
-        "touch_off_on_startup": False,
-        "touch_off_on_tool_change": False,
-        "touch_off_position_type": "absolute",
-        "touch_off_position_x": 0.0,
-        "touch_off_position_y": 0.0,
-        "touch_off_position_z": 0.0,
-        "touch_off_rapid_move": 0.0,
-        "touch_off_slow_move": 1.0,
-        "touch_off_slow_feedrate": 20,
-        "touch_off_height": 0.0,
-        "touch_off_pause_execution": False,
+    "enable_ode": False,
+    "unit": "mm",
+    "default_task_settings_file": "",
+    "show_model": True,
+    "show_support_preview": True,
+    "show_axes": True,
+    "show_dimensions": True,
+    "show_bounding_box": True,
+    "show_toolpath": True,
+    "show_drill": False,
+    "show_directions": False,
+    "color_background": {"red": 0.0, "green": 0.0, "blue": 0.0, "alpha": 1.0},
+    "color_model": {"red": 0.5, "green": 0.5, "blue": 1.0, "alpha": 1.0},
+    "color_support_preview": {"red": 0.8, "green": 0.8, "blue": 0.3, "alpha": 1.0},
+    "color_bounding_box": {"red": 0.3, "green": 0.3, "blue": 0.3, "alpha": 1.0},
+    "color_cutter": {"red": 1.0, "green": 0.2, "blue": 0.2, "alpha": 1.0},
+    "color_toolpath_cut": {"red": 1.0, "green": 0.5, "blue": 0.5, "alpha": 1.0},
+    "color_toolpath_return": {"red": 0.9, "green": 1.0, "blue": 0.1, "alpha": 0.4},
+    "color_material": {"red": 1.0, "green": 0.5, "blue": 0.0, "alpha": 1.0},
+    "color_grid": {"red": 0.75, "green": 1.0, "blue": 0.7, "alpha": 0.55},
+    "view_light": True,
+    "view_shadow": True,
+    "view_polygon": True,
+    "view_perspective": True,
+    "drill_progress_max_fps": 2,
+    "gcode_safety_height": 25.0,
+    "gcode_minimum_step_x": 0.0001,
+    "gcode_minimum_step_y": 0.0001,
+    "gcode_minimum_step_z": 0.0001,
+    "gcode_path_mode": 0,
+    "gcode_motion_tolerance": 0,
+    "gcode_naive_tolerance": 0,
+    "gcode_start_stop_spindle": True,
+    "gcode_filename_extension": "",
+    "gcode_spindle_delay": 3,
+    "external_program_inkscape": "",
+    "external_program_pstoedit": "",
+    "touch_off_on_startup": False,
+    "touch_off_on_tool_change": False,
+    "touch_off_position_type": "absolute",
+    "touch_off_position_x": 0.0,
+    "touch_off_position_y": 0.0,
+    "touch_off_position_z": 0.0,
+    "touch_off_rapid_move": 0.0,
+    "touch_off_slow_move": 1.0,
+    "touch_off_slow_feedrate": 20,
+    "touch_off_height": 0.0,
+    "touch_off_pause_execution": False,
 }
 """ the listed items will be loaded/saved via the preferences file in the
 user's home directory on startup/shutdown"""
@@ -121,6 +118,7 @@ FILENAME_DRAG_TARGETS = ("text/uri-list", "text-plain")
 
 log = pycam.Utils.log.get_logger()
 
+
 def get_icons_pixbuffers():
     result = []
     for icon_filename in WINDOW_ICON_FILENAMES:
@@ -130,16 +128,14 @@ def get_icons_pixbuffers():
                 result.append(gtk.gdk.pixbuf_new_from_file(abs_filename))
             except gobject.GError, err_msg:
                 # ignore icons that are not found
-                log.debug("Failed to process window icon (%s): %s" \
-                        % (abs_filename, err_msg))
+                log.debug("Failed to process window icon (%s): %s", abs_filename, err_msg)
         else:
-            log.debug("Failed to locate window icon: %s" % icon_filename)
+            log.debug("Failed to locate window icon: %s", icon_filename)
     return result
 
 
 UI_FUNC_INDEX, UI_WIDGET_INDEX = range(2)
-WIDGET_NAME_INDEX, WIDGET_OBJ_INDEX, WIDGET_WEIGHT_INDEX, WIDGET_ARGS_INDEX = \
-        range(4)
+WIDGET_NAME_INDEX, WIDGET_OBJ_INDEX, WIDGET_WEIGHT_INDEX, WIDGET_ARGS_INDEX = range(4)
 HANDLER_FUNC_INDEX, HANDLER_ARG_INDEX = range(2)
 EVENT_HANDLER_INDEX, EVENT_BLOCKER_INDEX = range(2)
 CHAIN_FUNC_INDEX, CHAIN_WEIGHT_INDEX = range(2)
@@ -156,7 +152,7 @@ class EventCore(pycam.Gui.Settings.Settings):
         self.namespace = {}
 
     def register_event(self, event, func, *args):
-        if not event in self.event_handlers:
+        if event not in self.event_handlers:
             assert EVENT_HANDLER_INDEX == 0
             assert EVENT_BLOCKER_INDEX == 1
             self.event_handlers[event] = [[], 0]
@@ -175,10 +171,10 @@ class EventCore(pycam.Gui.Settings.Settings):
             for index in removal_list:
                 handlers[EVENT_HANDLER_INDEX].pop(index)
         else:
-            log.debug("Trying to unregister an unknown event: %s" % event)
+            log.debug("Trying to unregister an unknown event: %s", event)
 
     def emit_event(self, event, *args, **kwargs):
-        log.debug2("Event emitted: %s" % str(event))
+        log.debug2("Event emitted: %s", str(event))
         if event in self.event_handlers:
             if self.event_handlers[event][EVENT_BLOCKER_INDEX] != 0:
                 return
@@ -190,26 +186,25 @@ class EventCore(pycam.Gui.Settings.Settings):
                 func(*(data + args), **kwargs)
             self.unblock_event(event)
         else:
-            log.debug("No events registered for event '%s'" % str(event))
+            log.debug("No events registered for event '%s'", str(event))
 
     def block_event(self, event):
         if event in self.event_handlers:
             self.event_handlers[event][EVENT_BLOCKER_INDEX] += 1
         else:
-            log.debug("Trying to block an unknown event: %s" % str(event))
+            log.debug("Trying to block an unknown event: %s", str(event))
 
     def unblock_event(self, event):
         if event in self.event_handlers:
             if self.event_handlers[event][EVENT_BLOCKER_INDEX] > 0:
                 self.event_handlers[event][EVENT_BLOCKER_INDEX] -= 1
             else:
-                log.debug("Trying to unblock non-blocked event '%s'" % \
-                        str(event))
+                log.debug("Trying to unblock non-blocked event '%s'", str(event))
         else:
-            log.debug("Trying to unblock an unknown event: %s" % str(event))
+            log.debug("Trying to unblock an unknown event: %s", str(event))
 
     def register_ui_section(self, section, add_action, clear_action):
-        if not section in self.ui_sections:
+        if section not in self.ui_sections:
             self.ui_sections[section] = [None, None]
             self.ui_sections[section][UI_WIDGET_INDEX] = []
         self.ui_sections[section][UI_FUNC_INDEX] = (add_action, clear_action)
@@ -222,48 +217,42 @@ class EventCore(pycam.Gui.Settings.Settings):
                 ui_section[UI_WIDGET_INDEX].pop()
             del self.ui_sections[section]
         else:
-            log.debug("Trying to unregister a non-existent ui section: %s" % \
-                    str(section))
+            log.debug("Trying to unregister a non-existent ui section: %s", str(section))
 
     def _rebuild_ui_section(self, section):
         if section in self.ui_sections:
             ui_section = self.ui_sections[section]
             if ui_section[UI_FUNC_INDEX]:
                 add_func, clear_func = ui_section[UI_FUNC_INDEX]
-                ui_section[UI_WIDGET_INDEX].sort(
-                        key=lambda x: x[WIDGET_WEIGHT_INDEX])
+                ui_section[UI_WIDGET_INDEX].sort(key=lambda x: x[WIDGET_WEIGHT_INDEX])
                 clear_func()
                 for item in ui_section[UI_WIDGET_INDEX]:
                     if item[WIDGET_ARGS_INDEX]:
                         args = item[WIDGET_ARGS_INDEX]
                     else:
                         args = {}
-                    add_func(item[WIDGET_OBJ_INDEX], item[WIDGET_NAME_INDEX],
-                            **args)
+                    add_func(item[WIDGET_OBJ_INDEX], item[WIDGET_NAME_INDEX], **args)
         else:
-            log.debug("Failed to rebuild unknown ui section: %s" % str(section))
+            log.debug("Failed to rebuild unknown ui section: %s", str(section))
 
     def register_ui(self, section, name, widget, weight=0, args_dict=None):
-        if not section in self.ui_sections:
+        if section not in self.ui_sections:
             self.ui_sections[section] = [None, None]
             self.ui_sections[section][UI_WIDGET_INDEX] = []
         assert WIDGET_NAME_INDEX == 0
         assert WIDGET_OBJ_INDEX == 1
         assert WIDGET_WEIGHT_INDEX == 2
         assert WIDGET_ARGS_INDEX == 3
-        current_widgets = [item[1]
-                for item in self.ui_sections[section][UI_WIDGET_INDEX]]
-        if (not widget is None) and (widget in current_widgets):
-            log.debug("Tried to register widget twice: %s -> %s" % \
-                    (section, name))
+        current_widgets = [item[1] for item in self.ui_sections[section][UI_WIDGET_INDEX]]
+        if (widget is not None) and (widget in current_widgets):
+            log.debug("Tried to register widget twice: %s -> %s", section, name)
             return
-        self.ui_sections[section][UI_WIDGET_INDEX].append((name, widget,
-                weight, args_dict))
+        self.ui_sections[section][UI_WIDGET_INDEX].append((name, widget, weight, args_dict))
         self._rebuild_ui_section(section)
 
     def unregister_ui(self, section, widget):
         if (section in self.ui_sections) or (None in self.ui_sections):
-            if not section in self.ui_sections:
+            if section not in self.ui_sections:
                 section = None
             ui_section = self.ui_sections[section]
             removal_list = []
@@ -275,10 +264,10 @@ class EventCore(pycam.Gui.Settings.Settings):
                 ui_section[UI_WIDGET_INDEX].pop(index)
             self._rebuild_ui_section(section)
         else:
-            log.debug("Trying to unregister unknown ui section: %s" % section)
+            log.debug("Trying to unregister unknown ui section: %s", section)
 
     def register_chain(self, name, func, weight=100):
-        if not name in self.chains:
+        if name not in self.chains:
             self.chains[name] = []
         self.chains[name].append((func, weight))
         self.chains[name].sort(key=lambda item: item[CHAIN_WEIGHT_INDEX])
@@ -290,31 +279,28 @@ class EventCore(pycam.Gui.Settings.Settings):
                     self.chains[name].pop(index)
                     break
             else:
-                log.debug("Trying to unregister unknown function from " + \
-                        "%s: %s" % (name, func))
+                log.debug("Trying to unregister unknown function from %s: %s", name, func)
         else:
-            log.debug("Trying to unregister from unknown chain: %s" % name)
+            log.debug("Trying to unregister from unknown chain: %s", name)
 
     def call_chain(self, name, *args, **kwargs):
         if name in self.chains:
             for data in self.chains[name]:
                 data[CHAIN_FUNC_INDEX](*args, **kwargs)
         else:
-            log.debug("Called an unknown chain: %s" % name)
+            log.debug("Called an unknown chain: %s", name)
 
     def reset_state(self):
         pass
 
     def register_namespace(self, name, value):
         if name in self.namespace:
-            log.info("Trying to register the same key in namespace twice: " + \
-                    str(name))
+            log.info("Trying to register the same key in namespace twice: %s", str(name))
         self.namespace[name] = value
 
     def unregister_namespace(self, name):
-        if not name in self.namespace:
-            log.info("Tried to unregister an unknown name from namespace: " + \
-                      str(name))
+        if name not in self.namespace:
+            log.info("Tried to unregister an unknown name from namespace: %s", str(name))
 
     def get_namespace(self):
         return self.namespace
@@ -351,7 +337,8 @@ class ProjectGui(object):
         if False and pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
             # The pyinstaller binary for Windows fails mysteriously when trying
             # to display the stock item.
-            # Error message: Gtk:ERROR:gtkrecentmanager.c:1942:get_icon_fallback: assertion failed: (retval != NULL)
+            # Error message: Gtk:ERROR:gtkrecentmanager.c:1942:get_icon_fallback:
+            #    assertion failed: (retval != NULL)
             self.recent_manager = None
         else:
             try:
@@ -390,8 +377,10 @@ class ProjectGui(object):
                 ("ProjectWebsite", self.show_help, "http://pycam.sourceforge.net", None),
                 ("DevelopmentBlog", self.show_help, "http://fab.senselab.org/pycam", None),
                 ("Forum", self.show_help, "http://sourceforge.net/projects/pycam/forums", None),
-                ("BugTracker", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104176", None),
-                ("FeatureRequest", self.show_help, "http://sourceforge.net/tracker/?group_id=237831&atid=1104179", None)):
+                ("BugTracker", self.show_help,
+                 "http://sourceforge.net/tracker/?group_id=237831&atid=1104176", None),
+                ("FeatureRequest", self.show_help,
+                 "http://sourceforge.net/tracker/?group_id=237831&atid=1104179", None)):
             item = self.gui.get_object(objname)
             action = "activate"
             if data is None:
@@ -410,25 +399,23 @@ class ProjectGui(object):
             gtk.link_button_set_uri_hook(open_url)
         # no undo is allowed at the beginning
         self.gui.get_object("UndoButton").set_sensitive(False)
-        self.settings.register_event("model-change-before",
-                self._store_undo_state)
+        self.settings.register_event("model-change-before", self._store_undo_state)
         self.settings.register_event("model-change-after",
-                lambda: self.settings.emit_event("visual-item-updated"))
+                                     lambda: self.settings.emit_event("visual-item-updated"))
         # set the availability of ODE
         self.enable_ode_control = self.gui.get_object("SettingEnableODE")
         self.settings.add_item("enable_ode", self.enable_ode_control.get_active,
-                self.enable_ode_control.set_active)
-        self.settings.register_event("parallel-processing-changed",
-                self.update_ode_settings)
+                               self.enable_ode_control.set_active)
+        self.settings.register_event("parallel-processing-changed", self.update_ode_settings)
         # configure drag-n-drop for config files and models
-        self.settings.set("configure-drag-drop-func",
-                self.configure_drag_and_drop)
+        self.settings.set("configure-drag-drop-func", self.configure_drag_and_drop)
         self.settings.get("configure-drag-drop-func")(self.window)
         # other events
         self.window.connect("destroy", self.destroy)
         self.window.connect("delete-event", self.destroy)
         # the settings window
-        self.gui.get_object("CloseSettingsWindow").connect("clicked", self.toggle_preferences_window, False)
+        self.gui.get_object("CloseSettingsWindow").connect("clicked",
+                                                           self.toggle_preferences_window, False)
         self.gui.get_object("ResetPreferencesButton").connect("clicked", self.reset_preferences)
         self.preferences_window = self.gui.get_object("GeneralSettingsWindow")
         self.preferences_window.connect("delete-event", self.toggle_preferences_window, False)
@@ -440,30 +427,35 @@ class ProjectGui(object):
         self.gui.get_object("About").connect("activate", self.toggle_about_window, True)
         # we assume, that the last child of the window is the "close" button
         # TODO: fix this ugly hack!
-        self.gui.get_object("AboutWindowButtons").get_children()[-1].connect("clicked", self.toggle_about_window, False)
+        self.gui.get_object("AboutWindowButtons").get_children()[-1].connect(
+            "clicked", self.toggle_about_window, False)
         self.about_window.connect("delete-event", self.toggle_about_window, False)
         # menu bar
         uimanager = gtk.UIManager()
         self.settings.set("gtk-uimanager", uimanager)
         self._accel_group = uimanager.get_accel_group()
+
         # send a "delete" event on "CTRL-w" for every window
         def handle_window_close(accel_group, window, *args):
             window.emit("delete-event", gtk.gdk.Event(gtk.gdk.DELETE))
-        self._accel_group.connect_group(ord('w'), gtk.gdk.CONTROL_MASK,
-                gtk.ACCEL_LOCKED, handle_window_close)
+
+        self._accel_group.connect_group(ord('w'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_LOCKED,
+                                        handle_window_close)
         self.settings.add_item("gtk-accel-group", lambda: self._accel_group)
         for obj in self.gui.get_objects():
             if isinstance(obj, gtk.Window):
                 obj.add_accel_group(self._accel_group)
         # preferences tab
         preferences_book = self.gui.get_object("PreferencesNotebook")
+
         def clear_preferences():
             for child in preferences_book.get_children():
                 preferences_book.remove(child)
+
         def add_preferences_item(item, name):
             preferences_book.append_page(item, gtk.Label(name))
-        self.settings.register_ui_section("preferences",
-                add_preferences_item, clear_preferences)
+
+        self.settings.register_ui_section("preferences", add_preferences_item, clear_preferences)
         for obj_name, label, priority in (
                 ("GeneralSettingsPrefTab", "General", -50),
                 ("ProgramsPrefTab", "Programs", 50)):
@@ -472,68 +464,74 @@ class ProjectGui(object):
             self.settings.register_ui("preferences", label, obj, priority)
         # general preferences
         general_prefs = self.gui.get_object("GeneralPreferencesBox")
+
         def clear_general_prefs():
             for item in general_prefs.get_children():
                 general_prefs.remove(item)
+
         def add_general_prefs_item(item, name):
             general_prefs.pack_start(item, expand=False, padding=3)
-        self.settings.register_ui_section("preferences_general",
-                add_general_prefs_item, clear_general_prefs)
-        for obj_name, priority in (("SettingEnableODE", 10),
-                ("TaskSettingsDefaultFileBox", 30)):
+
+        self.settings.register_ui_section("preferences_general", add_general_prefs_item,
+                                          clear_general_prefs)
+        for obj_name, priority in (("SettingEnableODE", 10), ("TaskSettingsDefaultFileBox", 30)):
             obj = self.gui.get_object(obj_name)
             obj.unparent()
-            self.settings.register_ui("preferences_general", None,
-                    obj, priority)
+            self.settings.register_ui("preferences_general", None, obj, priority)
         # set defaults
         self.cutter = None
         # add some dummies - to be implemented later ...
         self.settings.add_item("cutter", lambda: self.cutter)
         main_tab = self.gui.get_object("MainTabs")
+
         def clear_main_tab():
             while main_tab.get_n_pages() > 0:
                 main_tab.remove_page(0)
+
         def add_main_tab_item(item, name):
             main_tab.append_page(item, gtk.Label(name))
+
         # TODO: move these to plugins, as well
-        self.settings.register_ui_section("main", add_main_tab_item,
-                clear_main_tab)
+        self.settings.register_ui_section("main", add_main_tab_item, clear_main_tab)
         main_window = self.gui.get_object("WindowBox")
+
         def clear_main_window():
-            main_window.foreach(lambda x: main_window.remove(x))
+            main_window.foreach(main_window.remove)
+
         def add_main_window_item(item, name, **extra_args):
             # some widgets may want to override the defaults
             args = {"expand": False, "fill": False}
             args.update(extra_args)
             main_window.pack_start(item, **args)
+
         main_tab.unparent()
-        self.settings.register_ui_section("main_window", add_main_window_item,
-                clear_main_window)
+        self.settings.register_ui_section("main_window", add_main_window_item, clear_main_window)
         self.settings.register_ui("main_window", "Tabs", main_tab, -20,
-                args_dict={"expand": True, "fill": True})
+                                  args_dict={"expand": True, "fill": True})
+
         def disable_gui():
             self.menubar.set_sensitive(False)
             main_tab.set_sensitive(False)
+
         def enable_gui():
             self.menubar.set_sensitive(True)
             main_tab.set_sensitive(True)
+
         self.settings.register_event("gui-disable", disable_gui)
         self.settings.register_event("gui-enable", enable_gui)
         # configure locations of external programs
         for auto_control_name, location_control_name, browse_button, key in (
-                ("ExternalProgramInkscapeAuto",
-                "ExternalProgramInkscapeControl",
-                "ExternalProgramInkscapeBrowse", "inkscape"),
-                ("ExternalProgramPstoeditAuto",
-                "ExternalProgramPstoeditControl",
-                "ExternalProgramPstoeditBrowse", "pstoedit")):
+                ("ExternalProgramInkscapeAuto", "ExternalProgramInkscapeControl",
+                 "ExternalProgramInkscapeBrowse", "inkscape"),
+                ("ExternalProgramPstoeditAuto", "ExternalProgramPstoeditControl",
+                 "ExternalProgramPstoeditBrowse", "pstoedit")):
             self.gui.get_object(auto_control_name).connect("clicked",
-                    self._locate_external_program, key)
+                                                           self._locate_external_program, key)
             location_control = self.gui.get_object(location_control_name)
-            self.settings.add_item("external_program_%s" % key,
-                    location_control.get_text, location_control.set_text)
+            self.settings.add_item("external_program_%s" % key, location_control.get_text,
+                                   location_control.set_text)
             self.gui.get_object(browse_button).connect("clicked",
-                    self._browse_external_program_location, key)
+                                                       self._browse_external_program_location, key)
         # set the icons (in different sizes) for all windows
         gtk.window_set_default_icon_list(*get_icons_pixbuffers())
         # load menu data
@@ -543,13 +541,12 @@ class ProjectGui(object):
         uimanager.add_ui_from_file(gtk_menu_file)
         # make the actions defined in the GTKBUILD file available in the menu
         actiongroup = gtk.ActionGroup("menubar")
-        for action in [action for action in self.gui.get_objects()
-                if isinstance(action, gtk.Action)]:
+        for action in [aobj for aobj in self.gui.get_objects() if isinstance(aobj, gtk.Action)]:
             actiongroup.add_action(action)
         # the "pos" parameter is optional since 2.12 - we can remove it later
         uimanager.insert_action_group(actiongroup, pos=-1)
         # the "recent files" sub-menu
-        if not self.recent_manager is None:
+        if self.recent_manager is not None:
             recent_files_menu = gtk.RecentChooserMenu(self.recent_manager)
             recent_files_menu.set_name("RecentFilesMenu")
             recent_menu_filter = gtk.RecentFilter()
@@ -571,48 +568,50 @@ class ProjectGui(object):
             recent_files_menu.set_sort_type(gtk.RECENT_SORT_MRU)
             # show only ten files
             recent_files_menu.set_limit(10)
-            uimanager.get_widget("/MenuBar/FileMenu/OpenRecentModelMenu")\
-                    .set_submenu(recent_files_menu)
-            recent_files_menu.connect("item-activated",
-                    self.load_recent_model_file)
+            uimanager.get_widget("/MenuBar/FileMenu/OpenRecentModelMenu").set_submenu(
+                recent_files_menu)
+            recent_files_menu.connect("item-activated", self.load_recent_model_file)
         else:
             self.gui.get_object("OpenRecentModel").set_visible(False)
         # load the menubar and connect functions to its items
         self.menubar = uimanager.get_widget("/MenuBar")
         # dict of all merge-ids
         menu_merges = {}
+
         def clear_menu(menu_key):
             for merge in menu_merges.get(menu_key, []):
                 uimanager.remove_ui(merge)
+
         def append_menu_item(menu_key, base_path, widget, name):
             merge_id = uimanager.new_merge_id()
             if widget:
                 action_group = widget.props.action_group
-                if not action_group in uimanager.get_action_groups():
+                if action_group not in uimanager.get_action_groups():
                     uimanager.insert_action_group(action_group, -1)
                 widget_name = widget.get_name()
                 item_type = gtk.UI_MANAGER_MENUITEM
             else:
                 widget_name = name
                 item_type = gtk.UI_MANAGER_SEPARATOR
-            uimanager.add_ui(merge_id, base_path, name, widget_name, item_type,
-                    False)
-            if not menu_key in menu_merges:
+            uimanager.add_ui(merge_id, base_path, name, widget_name, item_type, False)
+            if menu_key not in menu_merges:
                 menu_merges[menu_key] = []
             menu_merges[menu_key].append(merge_id)
+
         def get_menu_funcs(menu_key, base_path):
-            append_func = lambda widget, name: \
-                    append_menu_item(menu_key, base_path, widget, name)
-            clear_func = lambda: clear_menu(menu_key)
-            return append_func, clear_func
-        for ui_name, base_path in (("view_menu", "/MenuBar/ViewMenu"),
+            return (
+                lambda widget, name: append_menu_item(menu_key, base_path, widget, name),
+                lambda: clear_menu(menu_key)
+            )
+
+        for ui_name, base_path in (
+                ("view_menu", "/MenuBar/ViewMenu"),
                 ("file_menu", "/MenuBar/FileMenu"),
                 ("edit_menu", "/MenuBar/EditMenu"),
                 ("export_menu", "/MenuBar/FileMenu/ExportMenu")):
             append_func, clear_func = get_menu_funcs(ui_name, base_path)
             self.settings.register_ui_section(ui_name, append_func, clear_func)
-        self.settings.register_ui("file_menu", "Quit",
-                self.gui.get_object("Quit"), 100)
+        self.settings.register_ui("file_menu", "Quit", self.gui.get_object("Quit"), 100)
         self.settings.register_ui("file_menu", "QuitSeparator", None, 95)
         self.settings.register_ui("main_window", "Main", self.menubar, -100)
         # initialize plugins
@@ -621,12 +620,10 @@ class ProjectGui(object):
         # some more initialization
         self.reset_preferences()
         # TODO: preferences are not loaded until the new format is stable
-        #self.load_preferences()
-        #self.load_task_settings()
-        self.settings.register_event("notify-file-saved",
-                self.add_to_recent_file_list)
-        self.settings.register_event("notify-file-opened",
-                self.add_to_recent_file_list)
+#       self.load_preferences()
+#       self.load_task_settings()
+        self.settings.register_event("notify-file-saved", self.add_to_recent_file_list)
+        self.settings.register_event("notify-file-opened", self.add_to_recent_file_list)
         # fallback - in case of a failure when opening a model file
         model = pycam.Importers.TestModel.get_test_model()
         self.settings.get("models").add_model(model, "Tiny pyramid")
@@ -678,8 +675,8 @@ class ProjectGui(object):
         if not self.settings.get("models"):
             return
         # TODO: store all models
-        self._undo_states.append(pickle.dumps(
-                self.settings.get("models")[0].model, PICKLE_PROTOCOL))
+        self._undo_states.append(pickle.dumps(self.settings.get("models")[0].model,
+                                              PICKLE_PROTOCOL))
         log.debug("Stored the current state of the model for undo")
         while len(self._undo_states) > MAX_UNDO_STATES:
             self._undo_states.pop(0)
@@ -690,8 +687,7 @@ class ProjectGui(object):
             latest = StringIO.StringIO(self._undo_states.pop(-1))
             model = pickle.Unpickler(latest).load()
             self.load_model(model)
-            self.gui.get_object("UndoButton").set_sensitive(
-                    len(self._undo_states) > 0)
+            self.gui.get_object("UndoButton").set_sensitive(len(self._undo_states) > 0)
             log.info("Restored the previous state of the model")
             self.settings.emit_event("model-change-after")
         else:
@@ -719,21 +715,19 @@ class ProjectGui(object):
         self.settings.emit_event("model-change-after")
 
     def _browse_external_program_location(self, widget=None, key=None):
-        location = self.settings.get("get_filename_func")(title="Select the executable " \
-                + "for '%s'" % key, mode_load=True,
-                parent=self.preferences_window)
-        if not location is None:
+        title = "Select the executable for '%s'" % key
+        location = self.settings.get("get_filename_func")(title=title, mode_load=True,
+                                                          parent=self.preferences_window)
+        if location is not None:
             self.settings.set("external_program_%s" % key, location)
-
 
     def _locate_external_program(self, widget=None, key=None):
         # the button was just activated
         location = get_external_program_location(key)
         if not location:
-            log.error("Failed to locate the external program '%s'. " % key \
-                    + "Please install the program and try again." \
-                    + os.linesep \
-                    + "Or maybe you need to specify the location manually.")
+            log.error("Failed to locate the external program '%s'. Please install the program and "
+                      "try again.%sOr maybe you need to specify the location manually.",
+                      key, os.linesep)
         else:
             # store the new setting
             self.settings.set("external_program_%s" % key, location)
@@ -741,7 +735,8 @@ class ProjectGui(object):
     @gui_activity_guard
     def toggle_about_window(self, widget=None, event=None, state=None):
         # only "delete-event" uses four arguments
-        # TODO: unify all these "toggle" functions for different windows into one single function (including storing the position)
+        # TODO: unify all these "toggle" functions for different windows into one single function
+        #       (including storing the position)
         if state is None:
             state = event
         if state:
@@ -790,14 +785,13 @@ class ProjectGui(object):
             return
         # report any ignored (obsolete) preference keys present in the file
         for item, value in config.items("DEFAULT"):
-            if not item in PREFERENCES_DEFAULTS.keys():
-                log.warn("Skipping obsolete preference item: %s" % str(item))
-        for item in PREFERENCES_DEFAULTS.keys():
+            if item not in PREFERENCES_DEFAULTS.keys():
+                log.warn("Skipping obsolete preference item: %s", str(item))
+        for item in PREFERENCES_DEFAULTS:
             if not config.has_option("DEFAULT", item):
                 # a new preference setting is missing in the (old) file
                 continue
             value_raw = config.get("DEFAULT", item)
-            old_value = self.settings.get(item)
             value_type = type(PREFERENCES_DEFAULTS[item])
             if isinstance(value_type(), basestring):
                 # keep strings as they are
@@ -813,40 +807,37 @@ class ProjectGui(object):
         config_filename = pycam.Gui.Settings.get_config_filename()
         if config_filename is None:
             # failed to create the personal preferences directory
-            log.warn("Failed to create a preferences directory in " \
-                    + "your user's home directory.")
+            log.warn("Failed to create a preferences directory in your user's home directory.")
             return
         config = ConfigParser.ConfigParser()
-        for item in PREFERENCES_DEFAULTS.keys():
+        for item in PREFERENCES_DEFAULTS:
             config.set("DEFAULT", item, self.settings.get(item))
         try:
             config_file = file(config_filename, "w")
             config.write(config_file)
             config_file.close()
         except IOError, err_msg:
-            log.warn("Failed to write preferences file (%s): %s" % (config_filename, err_msg))
+            log.warn("Failed to write preferences file (%s): %s", config_filename, err_msg)
 
     def destroy(self, widget=None, data=None):
         gtk.main_quit()
         self.quit()
 
     def quit(self):
-        # TODO: disabled until the format is stable
-        #self.save_preferences()
         pass
+        # TODO: disabled until the format is stable
+#       self.save_preferences()
 
     def configure_drag_and_drop(self, obj):
         obj.connect("drag-data-received", self.handle_data_drop)
         flags = gtk.DEST_DEFAULT_ALL
         targets = [(key, gtk.TARGET_OTHER_APP, index)
-                for index, key in enumerate(FILENAME_DRAG_TARGETS)]
-        actions = gtk.gdk.ACTION_COPY | gtk.gdk.ACTION_LINK | \
-                gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_PRIVATE | \
-                gtk.gdk.ACTION_ASK
+                   for index, key in enumerate(FILENAME_DRAG_TARGETS)]
+        actions = (gtk.gdk.ACTION_COPY | gtk.gdk.ACTION_LINK | gtk.gdk.ACTION_DEFAULT
+                   | gtk.gdk.ACTION_PRIVATE | gtk.gdk.ACTION_ASK)
         obj.drag_dest_set(flags, targets, actions)
 
-    def handle_data_drop(self, widget, drag_context, x, y, selection_data, info,
-            timestamp):
+    def handle_data_drop(self, widget, drag_context, x, y, selection_data, info, timestamp):
         if info != 0:
             uris = [str(selection_data.data)]
         elif pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
@@ -860,17 +851,15 @@ class ProjectGui(object):
             if not uri or (uri == chr(0)):
                 continue
             uri = pycam.Utils.URIHandler(uri)
-            file_type, importer = pycam.Importers.detect_file_type(uri,
-                    quiet=True)
+            file_type, importer = pycam.Importers.detect_file_type(uri, quiet=True)
             if importer:
                 # looks like the file can be loaded
                 if self.load_model_file(filename=uri):
                     return True
         if len(uris) > 1:
-            log.error("Failed to open any of the given models: %s" % \
-                    str(uris))
+            log.error("Failed to open any of the given models: %s", str(uris))
         else:
-            log.error("Failed to open the model: %s" % str(uris[0]))
+            log.error("Failed to open the model: %s", str(uris[0]))
         return False
 
     def load_recent_model_file(self, widget):
@@ -882,8 +871,8 @@ class ProjectGui(object):
         if callable(filename):
             filename = filename()
         if not filename:
-            filename = self.settings.get("get_filename_func")("Loading model ...",
-                    mode_load=True, type_filter=FILTER_MODEL)
+            filename = self.settings.get("get_filename_func")("Loading model ...", mode_load=True,
+                                                              type_filter=FILTER_MODEL)
         if filename:
             file_type, importer = pycam.Importers.detect_file_type(filename)
             if file_type and callable(importer):
@@ -891,11 +880,12 @@ class ProjectGui(object):
                 progress.update(text="Loading model ...")
                 # "cancel" is not allowed
                 progress.disable_cancel()
-                if self.load_model(importer(filename,
-                        program_locations=get_all_program_locations(self.settings),
-                        unit=self.settings.get("unit"),
-                        fonts_cache=self.settings.get("fonts"),
-                        callback=progress.update)):
+                model = importer(filename,
+                                 program_locations=get_all_program_locations(self.settings),
+                                 unit=self.settings.get("unit"),
+                                 fonts_cache=self.settings.get("fonts"),
+                                 callback=progress.update)
+                if self.load_model(model):
                     if store_filename:
                         self.set_model_filename(filename)
                     self.add_to_recent_file_list(filename)
@@ -964,9 +954,9 @@ class ProjectGui(object):
             except KeyboardInterrupt:
                 self.quit()
 
+
 if __name__ == "__main__":
     GUI = ProjectGui()
     if len(sys.argv) > 1:
         GUI.load_model_file(sys.argv[1])
     GUI.mainloop()
-

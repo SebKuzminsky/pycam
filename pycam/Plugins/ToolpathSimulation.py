@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-$Id$
-
 Copyright 2011 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
@@ -20,14 +18,15 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import math
 import datetime
+
 import gobject
 
-import pycam.Plugins
+from pycam.Geometry import sqrt
 import pycam.Gui.common
+import pycam.Plugins
 # this requires ODE - we import it later, if necessary
-#import pycam.Simulation.ODEBlocks
+# import pycam.Simulation.ODEBlocks
 
 
 class ToolpathSimulation(pycam.Plugins.PluginBase):
@@ -41,15 +40,11 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
         if self.gui:
             self._gtk_handlers = []
             self._frame = self.gui.get_object("SimulationBox")
-            self.core.register_ui("toolpath_handling", "Simulation",
-                    self._frame, 25)
-            self._speed_factor_widget = self.gui.get_object(
-                    "SimulationSpeedFactorValue")
+            self.core.register_ui("toolpath_handling", "Simulation", self._frame, 25)
+            self._speed_factor_widget = self.gui.get_object("SimulationSpeedFactorValue")
             self._speed_factor_widget.set_value(1.0)
-            self._progress = self.gui.get_object(
-                    "SimulationProgressTimelineValue")
-            self._timer_widget = self.gui.get_object(
-                    "SimulationProgressTimeDisplay")
+            self._progress = self.gui.get_object("SimulationProgressTimelineValue")
+            self._timer_widget = self.gui.get_object("SimulationProgressTimeDisplay")
             self._timer_widget.set_label("")
             self.core.set("show_simulation", False)
             self._toolpath_moves = None
@@ -57,15 +52,13 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
             self._pause_button = self.gui.get_object("SimulationPauseButton")
             self._stop_button = self.gui.get_object("SimulationStopButton")
             for obj, handler in ((self._start_button, self._start_simulation),
-                    (self._pause_button, self._pause_simulation),
-                    (self._stop_button, self._stop_simulation)):
+                                 (self._pause_button, self._pause_simulation),
+                                 (self._stop_button, self._stop_simulation)):
                 self._gtk_handlers.append((obj, "clicked", handler))
-            self._gtk_handlers.append((self._progress, "value-changed",
-                    self._update_toolpath))
-            self._gtk_handlers.append((self._speed_factor_widget,
-                    "value-changed", self._update_speed_factor_step))
-            self._event_handlers = (
-                    ("toolpath-selection-changed", self._update_visibility), )
+            self._gtk_handlers.append((self._progress, "value-changed", self._update_toolpath))
+            self._gtk_handlers.append((self._speed_factor_widget, "value-changed",
+                                       self._update_speed_factor_step))
+            self._event_handlers = (("toolpath-selection-changed", self._update_visibility), )
             self.register_event_handlers(self._event_handlers)
             self.register_gtk_handlers(self._gtk_handlers)
             self._update_visibility()
@@ -101,7 +94,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
                 return
             # we use only one toolpath
             self._toolpath = toolpaths[0]
-            # calculate duration (in seconds) 
+            # calculate duration (in seconds)
             self._duration = 60 * self._toolpath.get_machine_move_distance_and_time()[1]
             self._progress.set_upper(self._duration)
             self._progress.set_value(0)
@@ -142,8 +135,8 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
             # pause -> no change
             return True
         if self._progress.get_value() < self._progress.get_upper():
-            time_step = self._speed_factor_widget.get_value() / \
-                    self.core.get("drill_progress_max_fps")
+            time_step = (self._speed_factor_widget.get_value()
+                         / self.core.get("drill_progress_max_fps"))
             new_time = self._progress.get_value() + time_step
             new_time = min(new_time, self._progress.get_upper())
             if new_time != self._progress.get_value():
@@ -152,15 +145,13 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
         return True
 
     def _update_toolpath(self, widget=None):
-        if (not self._running is None) and (self._progress.get_upper() > 0):
+        if (self._running is not None) and (self._progress.get_upper() > 0):
             fraction = self._progress.get_value() / self._progress.get_upper()
-            current = datetime.timedelta(
-                    seconds=int(self._progress.get_value()))
-            complete = datetime.timedelta(
-                    seconds=int(self._progress.get_upper()))
+            current = datetime.timedelta(seconds=int(self._progress.get_value()))
+            complete = datetime.timedelta(seconds=int(self._progress.get_upper()))
             self._timer_widget.set_label("%s / %s" % (current, complete))
             self._toolpath_moves = self._toolpath.get_moves(
-                    max_time=self._duration * fraction / 60)
+                max_time=self._duration * fraction / 60)
             self.core.emit_event("visual-item-updated")
 
     def show_simulation(self):
@@ -178,8 +169,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
                 toolpath = self.toolpath[toolpath_index]
         paths = toolpath.path
         # set the current cutter
-        self.cutter = pycam.Cutters.get_tool_from_settings(
-                toolpath.get_tool_settings())
+        self.cutter = pycam.Cutters.get_tool_from_settings(toolpath.get_tool_settings())
         # calculate steps
         detail_level = self.gui.get_object("SimulationDetailsValue").get_value()
         grid_size = 100 * pow(2, detail_level - 1)
@@ -190,10 +180,11 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
         x_steps = int(sqrt(grid_size) * proportion)
         y_steps = int(sqrt(grid_size) / proportion)
         simulation_backend = ODEBlocks.ODEBlocks(toolpath.get_tool_settings(),
-                toolpath.get_bounding_box(), x_steps=x_steps, y_steps=y_steps)
+                                                 toolpath.get_bounding_box(),
+                                                 x_steps=x_steps, y_steps=y_steps)
         self.core.set("simulation_object", simulation_backend)
         # disable the simulation widget (avoids confusion regarding "cancel")
-        if not widget is None:
+        if widget is not None:
             self.gui.get_object("SimulationTab").set_sensitive(False)
         # update the view
         self.update_view()
@@ -218,6 +209,5 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
                     break
             progress.finish()
         # enable the simulation widget again (if we were started from the GUI)
-        if not widget is None:
+        if widget is not None:
             self.gui.get_object("SimulationTab").set_sensitive(True)
-

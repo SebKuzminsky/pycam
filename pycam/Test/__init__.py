@@ -48,4 +48,3 @@ class PycamTestCase(unittest.TestCase):
 
 
 main = unittest.main
-
