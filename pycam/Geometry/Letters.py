@@ -35,7 +35,7 @@ TEXT_ALIGN_RIGHT = 2
 class Letter(TransformableContainer):
 
     def __init__(self, lines):
-        self.lines = lines
+        self.lines = tuple(lines)
 
     def minx(self):
         return min([line.minx for line in self.lines])
