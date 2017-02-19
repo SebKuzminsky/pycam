@@ -38,11 +38,6 @@ except ImportError:
     # use an arbitrary other Exception
     AuthenticationError = socket.error
 
-# register the glut32.dll manually for the pyinstaller standalone executable
-if hasattr(sys, "frozen") and sys.frozen and "_MEIPASS2" in os.environ:
-    from ctypes import windll
-    windll[os.path.join(os.path.normpath(os.environ["_MEIPASS2"]), "glut32.dll")]
-
 from pycam import VERSION
 import pycam.Exporters.GCodeExporter
 import pycam.Gui.common as GuiCommon
@@ -51,11 +46,15 @@ import pycam.Gui.Console
 import pycam.Importers.TestModel
 import pycam.Importers
 from pycam.Toolpath import Bounds, Toolpath
-import pycam.Toolpath.Generator
 import pycam.Utils
 import pycam.Utils.log
 import pycam.Utils.threading
 
+
+# register the glut32.dll manually for the pyinstaller standalone executable
+if hasattr(sys, "frozen") and sys.frozen and "_MEIPASS2" in os.environ:
+    from ctypes import windll
+    windll[os.path.join(os.path.normpath(os.environ["_MEIPASS2"]), "glut32.dll")]
 
 # The installer for PyODE does not add the required PATH variable.
 if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
@@ -86,19 +85,24 @@ if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
 BASE_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
 EXAMPLE_MODEL_LOCATIONS = [
-        os.path.join(BASE_DIR, "samples"),
-        os.path.join(sys.prefix, "share", "pycam", "samples"),
-        os.path.join(sys.prefix, "local", "share", "pycam", "samples"),
-        os.path.join("usr", "share", "pycam", "samples")]
+    os.path.join(BASE_DIR, "samples"),
+    os.path.join(sys.prefix, "share", "pycam", "samples"),
+    os.path.join(sys.prefix, "local", "share", "pycam", "samples"),
+    os.path.join("usr", "share", "pycam", "samples")]
+
 # for pyinstaller (windows distribution)
 if "_MEIPASS2" in os.environ:
-    EXAMPLE_MODEL_LOCATIONS.insert(0, os.path.join(os.path.normpath(
-            os.environ["_MEIPASS2"]), "samples"))
+    EXAMPLE_MODEL_LOCATIONS.insert(0, os.path.join(os.path.normpath(os.environ["_MEIPASS2"]),
+                                                   "samples"))
 DEFAULT_MODEL_FILE = "pycam-textbox.stl"
-#DEFAULT_MODEL_FILE = "problem_1_triangle.stl"
-EXIT_CODES = {"ok": 0, "requirements": 1, "load_model_failed": 2,
-        "write_output_failed": 3, "parsing_failed": 4,
-        "server_without_password": 5, "connection_error": 6}
+# DEFAULT_MODEL_FILE = "problem_1_triangle.stl"
+EXIT_CODES = {"ok": 0,
+              "requirements": 1,
+              "load_model_failed": 2,
+              "write_output_failed": 3,
+              "parsing_failed": 4,
+              "server_without_password": 5,
+              "connection_error": 6}
 
 log = pycam.Utils.log.get_logger()
 
@@ -116,8 +120,7 @@ def show_gui(inputfile=None, task_settings_file=None):
         full_report.append("Details:")
         full_report.append(report_gtk)
         full_report.append("")
-        full_report.append("Detailed list of requirements: %s" % \
-                GuiCommon.REQUIREMENTS_LINK)
+        full_report.append("Detailed list of requirements: %s" % GuiCommon.REQUIREMENTS_LINK)
         log.critical(os.linesep.join(full_report))
         return EXIT_CODES["requirements"]
 
@@ -134,8 +137,8 @@ def show_gui(inputfile=None, task_settings_file=None):
         gui.load_model_file(filename=inputfile)
 
     # load task settings file
-    if not task_settings_file is None:
-        gui.open_task_settings_file(task_settings_file)
+    if task_settings_file is not None:
+        gui.settings.get("open-task-settings-file-func")(task_settings_file)
 
     # tell the GUI to empty the "undo" queue
     gui.finish_startup()
@@ -153,27 +156,27 @@ def get_default_model():
         inputfile = os.path.join(inputdir, DEFAULT_MODEL_FILE)
         if os.path.isfile(inputfile):
             return inputfile
-    else:
-        # fall back to the simple test model
-        log.warn("Failed to find the default model (%s) in the " \
-                "following locations: %s" % (DEFAULT_MODEL_FILE,
-                        ", ".join(EXAMPLE_MODEL_LOCATIONS)))
-        return pycam.Importers.TestModel.get_test_model()
+    # fall back to the simple test model
+    log.warn("Failed to find the default model (%s) in the following locations: %s",
+             DEFAULT_MODEL_FILE, ", ".join(EXAMPLE_MODEL_LOCATIONS))
+    return pycam.Importers.TestModel.get_test_model()
+
 
 def load_model_file(filename, program_locations, unit=None):
     uri = pycam.Utils.URIHandler(filename)
     if uri.is_local():
         uri = pycam.Utils.URIHandler(os.path.expanduser(str(filename)))
     if not uri.exists():
-        log.warn("The input file ('%s') was not found!" % uri)
+        log.warn("The input file ('%s') was not found!", uri)
         return None
     importer = pycam.Importers.detect_file_type(uri)[1]
     model = importer(uri, program_locations=program_locations, unit=unit)
     if not model:
-        log.warn("Failed to load the model file (%s)." % uri)
+        log.warn("Failed to load the model file (%s).", uri)
         return None
     else:
         return model
+
 
 def get_output_handler(destination):
     if destination == "-":
@@ -185,11 +188,11 @@ def get_output_handler(destination):
         try:
             handler = open(destination, "w")
         except IOError, err_msg:
-            log.error("Failed to open output file (%s) for writing: %s" \
-                    % (destination, err_msg))
+            log.error("Failed to open output file (%s) for writing: %s", destination, err_msg)
             return None, None
         closer = handler.close
     return (handler, closer)
+
 
 def execute(parser, opts, args, pycam):
     # try to change the process name
@@ -240,101 +243,93 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
             psyco.full()
             log.info("Psyco enabled")
         except ImportError:
-            log.info("Psyco is not available (performance will probably " \
-                    + "suffer slightly)")
+            log.info("Psyco is not available (performance will probably suffer slightly)")
     else:
         log.info("Psyco was disabled via the commandline")
 
     # check if server-auth-key is given -> this is mandatory for server mode
     if (opts.enable_server or opts.start_server) and not opts.server_authkey:
-        parser.error("You need to supply a shared secret for server mode. " \
-                + "This is supposed to prevent you from exposing your host " \
-                + "to remote access without authentication.\n" \
-                + "Please add the '--server-auth-key' argument followed by " \
-                + "a shared secret password.")
+        parser.error(
+            "You need to supply a shared secret for server mode. This is supposed to prevent you "
+            "from exposing your host to remote access without authentication.\nPlease add the "
+            "'--server-auth-key' argument followed by a shared secret password.")
         return EXIT_CODES["server_without_password"]
 
     # initialize multiprocessing
     try:
         if opts.start_server:
-            pycam.Utils.threading.init_threading(opts.parallel_processes,
-                    remote=opts.remote_server, run_server=True,
-                    server_credentials=opts.server_authkey)
+            pycam.Utils.threading.init_threading(
+                opts.parallel_processes, remote=opts.remote_server, run_server=True,
+                server_credentials=opts.server_authkey)
             pycam.Utils.threading.cleanup()
             return EXIT_CODES["ok"]
         else:
-            pycam.Utils.threading.init_threading(opts.parallel_processes,
-                    enable_server=opts.enable_server, remote=opts.remote_server,
-                    server_credentials=opts.server_authkey)
+            pycam.Utils.threading.init_threading(
+                opts.parallel_processes, enable_server=opts.enable_server,
+                remote=opts.remote_server, server_credentials=opts.server_authkey)
     except socket.error, err_msg:
-        log.error("Failed to connect to remote server: %s" % err_msg)
+        log.error("Failed to connect to remote server: %s", err_msg)
         return EXIT_CODES["connection_error"]
-    except multiprocessing.AuthenticationError, err_msg:
-        log.error("The remote server rejected your authentication key: %s" \
-                % err_msg)
+    except AuthenticationError, err_msg:
+        log.error("The remote server rejected your authentication key: %s", err_msg)
         return EXIT_CODES["connection_error"]
 
     # initialize the progress bar
     progress_styles = {"none": pycam.Gui.Console.ConsoleProgressBar.STYLE_NONE,
-            "text": pycam.Gui.Console.ConsoleProgressBar.STYLE_TEXT,
-            "bar": pycam.Gui.Console.ConsoleProgressBar.STYLE_BAR,
-            "dot": pycam.Gui.Console.ConsoleProgressBar.STYLE_DOT,
-    }
-    progress_bar = pycam.Gui.Console.ConsoleProgressBar(sys.stdout,
-            progress_styles[opts.progress])
+                       "text": pycam.Gui.Console.ConsoleProgressBar.STYLE_TEXT,
+                       "bar": pycam.Gui.Console.ConsoleProgressBar.STYLE_BAR,
+                       "dot": pycam.Gui.Console.ConsoleProgressBar.STYLE_DOT}
+    progress_bar = pycam.Gui.Console.ConsoleProgressBar(sys.stdout, progress_styles[opts.progress])
 
     if opts.config_file:
         opts.config_file = os.path.expanduser(opts.config_file)
 
     if not opts.export_gcode and not opts.export_task_config:
         result = show_gui(inputfile, opts.config_file)
-        if not result is None:
+        if result is not None:
             # deliver the error code to our caller
             return result
     else:
         # generate toolpath
         tps = pycam.Gui.Settings.ToolpathSettings()
-        tool_shape = {"cylindrical": "CylindricalCutter",
-                "spherical": "SphericalCutter",
-                "toroidal": "ToroidalCutter",
-            }[opts.tool_shape]
+        tool_shape = {
+            "cylindrical": "CylindricalCutter",
+            "spherical": "SphericalCutter",
+            "toroidal": "ToroidalCutter",
+        }[opts.tool_shape]
         tps.set_tool(opts.tool_id, tool_shape, 0.5 * opts.tool_diameter,
-                0.5 * opts.tool_torus_diameter, opts.tool_spindle_speed,
-                opts.tool_feedrate)
+                     0.5 * opts.tool_torus_diameter, opts.tool_spindle_speed, opts.tool_feedrate)
         if opts.support_type == "grid":
-            tps.set_support_grid(opts.support_grid_distance_x,
-                    opts.support_grid_distance_y,
-                    opts.support_profile_thickness, opts.support_profile_height,
-                    opts.support_grid_offset_x, opts.support_grid_offset_y)
+            tps.set_support_grid(opts.support_grid_distance_x, opts.support_grid_distance_y,
+                                 opts.support_profile_thickness, opts.support_profile_height,
+                                 opts.support_grid_offset_x, opts.support_grid_offset_y)
         elif opts.support_type in ("distributed-edges", "distributed-corners"):
             start_at_corners = (opts.support_type == "distributed-corners")
             tps.set_support_distributed(opts.support_distributed_distance,
-                    opts.support_distributed_minimum,
-                    opts.support_profile_thickness, opts.support_profile_height,
-                    opts.support_distributed_length,
-                    start_at_corners=start_at_corners)
+                                        opts.support_distributed_minimum,
+                                        opts.support_profile_thickness,
+                                        opts.support_profile_height,
+                                        opts.support_distributed_length,
+                                        start_at_corners=start_at_corners)
         elif opts.support_type == "none":
             pass
         else:
-            raise NotImplementedError, "Invalid support type specified: %s" % \
-                    opts.support_type
+            raise NotImplementedError("Invalid support type specified: %s" % opts.support_type)
         if opts.collision_engine == "ode":
             tps.set_calculation_backend("ODE")
         tps.set_unit_size(opts.unit_size)
         path_generator, postprocessor = {
-                "layer": ("PushCutter", "SimpleCutter"),
-                "contour-follow": ("ContourFollow", "SimpleCutter"),
-                "contour-polygon": ("PushCutter", "ContourCutter"),
-                "surface": ("DropCutter", "PathAccumulator"),
-                "engrave": ("EngraveCutter", "SimpleCutter"),
-            }[opts.process_path_strategy]
-        tps.set_process_settings(path_generator, postprocessor,
-                opts.process_path_direction,
-                material_allowance=opts.process_material_allowance,
-                overlap_percent=opts.process_overlap_percent,
-                step_down=opts.process_step_down,
-                engrave_offset=opts.process_engrave_offset,
-                milling_style=opts.process_milling_style)
+            "layer": ("PushCutter", "SimpleCutter"),
+            "contour-follow": ("ContourFollow", "SimpleCutter"),
+            "contour-polygon": ("PushCutter", "ContourCutter"),
+            "surface": ("DropCutter", "PathAccumulator"),
+            "engrave": ("EngraveCutter", "SimpleCutter"),
+        }[opts.process_path_strategy]
+        tps.set_process_settings(
+            path_generator, postprocessor, opts.process_path_direction,
+            material_allowance=opts.process_material_allowance,
+            overlap_percent=opts.process_overlap_percent, step_down=opts.process_step_down,
+            engrave_offset=opts.process_engrave_offset, milling_style=opts.process_milling_style)
         # set locations of external programs
         program_locations = {}
         if opts.external_program_inkscape:
@@ -346,12 +341,11 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
             model = get_default_model()
             # the "get_default_model" function returns a string or a model
             if isinstance(model, basestring):
-                model = load_model_file(model,
-                        program_locations=program_locations,
-                        unit=opts.unit_size)
+                model = load_model_file(model, program_locations=program_locations,
+                                        unit=opts.unit_size)
         else:
-            model = load_model_file(inputfile,
-                    program_locations=program_locations, unit=opts.unit_size)
+            model = load_model_file(inputfile, program_locations=program_locations,
+                                    unit=opts.unit_size)
         if not model:
             # something went wrong - we quit
             return EXIT_CODES["load_model_failed"]
@@ -372,6 +366,7 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
             bounds.set_type(Bounds.TYPE_CUSTOM)
             bounds_default_low = (model.minx, model.miny, model.minz)
             bounds_default_high = (model.maxx, model.maxy, model.maxz)
+
         # TODO: use the optparse conversion callback instead
         def parse_triple_float(text):
             nums = text.split(",")
@@ -387,15 +382,14 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
                     else:
                         return None
             return result
+
         bounds_lower_nums = parse_triple_float(opts.bounds_lower)
         if opts.bounds_lower and not bounds_lower_nums:
-            parser.error("Failed to parse the lower boundary limit: %s" \
-                    % opts.bounds_lower)
+            parser.error("Failed to parse the lower boundary limit: %s" % opts.bounds_lower)
             return EXIT_CODES["parsing_failed"]
         bounds_upper_nums = parse_triple_float(opts.bounds_upper)
         if opts.bounds_upper and not bounds_upper_nums:
-            parser.error("Failed to parse the upper boundary limit: %s" \
-                    % opts.bounds_upper)
+            parser.error("Failed to parse the upper boundary limit: %s" % opts.bounds_upper)
             return EXIT_CODES["parsing_failed"]
         if bounds_lower_nums is None:
             bounds_lower_nums = bounds_default_low
@@ -416,12 +410,13 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
         tps.set_bounds(process_bounds)
         if opts.export_gcode:
             # generate the toolpath
+            # TODO: convert to the new toolpath generator code
+            import pycam.Toolpath.Generator
             start_time = time.time()
             toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(
-                    model, tps, callback=progress_bar.update)
+                model, tps, callback=progress_bar.update)
             progress_bar.finish()
-            log.info("Toolpath generation time: %f" \
-                    % (time.time() - start_time))
+            log.info("Toolpath generation time: %f", time.time() - start_time)
             # write result
             if isinstance(toolpath, basestring):
                 # an error occoured
@@ -433,25 +428,24 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
                 if handler is None:
                     return EXIT_CODES["write_output_failed"]
                 generator = pycam.Exporters.GCodeExporter.GCodeGenerator(
-                        handler, metric_units = (opts.unit_size == "mm"),
-                        safety_height=opts.safety_height,
-                        toggle_spindle_status=opts.gcode_no_start_stop_spindle,
-                        minimum_steps=[opts.gcode_minimum_step])
+                    handler, metric_units=(opts.unit_size == "mm"),
+                    safety_height=opts.safety_height,
+                    toggle_spindle_status=opts.gcode_no_start_stop_spindle,
+                    minimum_steps=[opts.gcode_minimum_step])
                 generator.set_speed(opts.tool_feedrate, opts.tool_spindle_speed)
                 path_mode = opts.gcode_path_mode
                 PATH_MODES = pycam.Exporters.GCodeExporter.PATH_MODES
-                if (path_mode == "continuous") \
-                        and (not opts.gcode_motion_tolerance is None):
+                if (path_mode == "continuous") and (opts.gcode_motion_tolerance is not None):
                     if opts.gcode_naive_tolerance == 0:
                         naive_tolerance = None
                     else:
                         naive_tolerance = opts.gcode_naive_tolerance
-                    generator.set_path_mode(PATH_MODES["continuous"],
-                            opts.gcode_motion_tolerance, naive_tolerance)
+                    generator.set_path_mode(PATH_MODES["continuous"], opts.gcode_motion_tolerance,
+                                            naive_tolerance)
                 else:
                     generator.set_path_mode(PATH_MODES[opts.gcode_path_mode])
                 generator.add_moves(tp_obj.get_moves(opts.safety_height),
-                        comment=tp_obj.get_meta_data())
+                                    comment=tp_obj.get_meta_data())
                 generator.finish()
                 closer()
         if opts.export_task_config:
@@ -466,273 +460,252 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
 
 # define the commandline interface
 if __name__ == "__main__":
-    # The PyInstaller standalone executable requires this "freeze_support" call.
-    # Otherwise we will see a warning regarding an invalid argument called
-    # "--multiprocessing-fork". This problem can be triggered on single-core
-    # systems with these arguments: "--enable-server --server-auth-key foo".
+    # The PyInstaller standalone executable requires this "freeze_support" call. Otherwise we will
+    # see a warning regarding an invalid argument called "--multiprocessing-fork". This problem can
+    # be triggered on single-core systems with these arguments:
+    #    "--enable-server --server-auth-key foo".
     if hasattr(multiprocessing, "freeze_support"):
         multiprocessing.freeze_support()
-    parser = OptionParser(prog="PyCAM",
-            usage="usage: pycam [options] [inputfile]\n\n" \
-                + "Start the PyCAM toolpath generator. Supplying one of " \
-                + "the '--export-?' parameters will cause PyCAM to start " \
-                + "in batch mode. Most parameters are useful only for " \
-                + "batch mode.",
-            epilog="PyCAM website: http://pycam.sf.net")
+    parser = OptionParser(
+        prog="PyCAM", usage=("usage: pycam [options] [inputfile]\n\n"
+                             "Start the PyCAM toolpath generator. Supplying one of the "
+                             "'--export-?' parameters will cause PyCAM to start in batch mode. "
+                             "Most parameters are useful only for batch mode."),
+        epilog="PyCAM website: https://github.com/SebKuzminsky/pycam")
     group_general = parser.add_option_group("General options")
-    group_export = parser.add_option_group("Export formats",
-            "Export the resulting toolpath or meta-data in various formats. " \
-            + "These options trigger the non-interactive mode. Thus the GUI " \
-            + "is disabled.")
-    group_tool = parser.add_option_group("Tool definition",
-            "Specify the tool parameters. The default tool is spherical and " \
-            + "has a diameter of 1 unit. The default speeds are 1000 " \
-            + "units/minute (feedrate) and 250 (spindle rotations per minute)")
-    group_process = parser.add_option_group("Process definition",
-            "Specify the process parameters: toolpath strategy, layer height," \
-            + " and others. A typical roughing operation is configured by " \
-            + "default.")
-    group_bounds = parser.add_option_group("Boundary definition",
-            "Specify the outer limits of the processing area (x/y/z). " \
-            + "You may choose between 'relative_margin' (margin is given as " \
-            + "percentage of the respective model dimension), 'fixed_margin' " \
-            + "(margin for each face given in absolute units of length) " \
-            + "and 'custom' (absolute coordinates of the bounding box - " \
-            + "regardless of the model size and position). Negative values " \
-            + "are allowed and can make sense (e.g. negative margin).")
-    group_support_structure = parser.add_option_group("Support structure",
-            "An optional support structure can be used to keep the object in " \
-            + "place during the mill operation. The support structure can be " \
-            + "removed manually afterwards. Various types of support " \
-            + "structures are available. Support structures are disabled " \
-            + "by default.")
-    group_gcode = parser.add_option_group("GCode settings",
-            "Specify some details of the generated GCode.")
-    group_external_programs = parser.add_option_group("External programs",
-            "Some optional external programs are used for format conversions.")
+    group_export = parser.add_option_group(
+        "Export formats", ("Export the resulting toolpath or meta-data in various formats. These "
+                           "options trigger the non-interactive mode. Thus the GUI is disabled."))
+    group_tool = parser.add_option_group(
+        "Tool definition", ("Specify the tool parameters. The default tool is spherical and has a "
+                            "diameter of 1 unit. The default speeds are 1000 units/minute "
+                            "(feedrate) and 250 (spindle rotations per minute)"))
+    group_process = parser.add_option_group(
+        "Process definition", ("Specify the process parameters: toolpath strategy, layer height, "
+                               "and more. A typical roughing operation is configured by default."))
+    group_bounds = parser.add_option_group(
+        "Boundary definition", ("Specify the outer limits of the processing area (x/y/z). "
+                                "You may choose between 'relative_margin' (margin is given as "
+                                "percentage of the respective model dimension), 'fixed_margin' "
+                                "(margin for each face given in absolute units of length) and "
+                                "'custom' (absolute coordinates of the bounding box - regardless "
+                                "of the model size and position). Negative values are allowed and "
+                                "can make sense (e.g. negative margin)."))
+    group_support_structure = parser.add_option_group(
+        "Support structure", ("An optional support structure can be used to keep the object in "
+                              "place during the mill operation. The support structure can be "
+                              "removed manually afterwards. Various types of support structures "
+                              "are available. Support structures are disabled by default."))
+    group_gcode = parser.add_option_group(
+        "GCode settings", "Specify some details of the generated GCode.")
+    group_external_programs = parser.add_option_group(
+        "External programs", "Some optional external programs are used for format conversions.")
     # general options
-    group_general.add_option("-c", "--config", dest="config_file",
-            default=None, action="store", type="string",
-            help="load a task settings file")
-    group_general.add_option("", "--unit", dest="unit_size",
-            default="mm", action="store", type="choice",
-            choices=["mm", "inch"], help="choose 'mm' or 'inch' for all " \
-            + "numbers. By default 'mm' is assumed.")
-    group_general.add_option("", "--collision-engine", dest="collision_engine",
-            default="triangles", action="store", type="choice",
-            choices=["triangles", "ode"],
-            help="choose a specific collision detection engine. The default " \
-                    + "is 'triangles'. Use 'help' to get a list of possible " \
-                    + "engines.")
-    group_general.add_option("", "--boundary-mode", dest="boundary_mode",
-            default="along", action="store", type="choice",
-            choices=["inside", "along", "outside"],
-            help="specify if the mill tool (including its radius) should " \
-                    + "move completely 'inside', 'along' or 'outside' the " \
-                    + "defined processing boundary.")
-    group_general.add_option("", "--disable-psyco", dest="disable_psyco",
-            default=False, action="store_true", help="disable the Psyco " \
-                    + "just-in-time-compiler even if it is available")
-    group_general.add_option("", "--number-of-processes",
-            dest="parallel_processes", default=None, type="int", action="store",
-            help="override the default detection of multiple CPU cores. " \
-                    + "Parallel processing only works with Python 2.6 (or " \
-                    + "later) or with the additional 'multiprocessing' " \
-                    + "module.")
-    group_general.add_option("", "--enable-server", dest="enable_server",
-            default=False, action="store_true", help="enable a local server " \
-                    + "and (optionally) remote worker servers.")
-    group_general.add_option("", "--remote-server", dest="remote_server",
-            default=None, action="store", type="string", help="Connect to a " \
-                    + "remote task server to distribute the processing load. " \
-                    + "The server is given as an IP or a hostname with an " \
-                    + "optional port (default: 1250) separated by a colon.")
-    group_general.add_option("", "--start-server-only", dest="start_server",
-            default=False, action="store_true", help="Start only a local " \
-                    + "server for handling remote requests.")
-    group_general.add_option("", "--server-auth-key", dest="server_authkey",
-            default="", action="store", type="string", help="Secret used for " \
-                    + "connecting to a remote server or for granting access " \
-                    + "to remote clients.")
-    group_general.add_option("-q", "--quiet", dest="quiet",
-            default=False, action="store_true", help="output only warnings " \
-            + "and errors.")
-    group_general.add_option("-d", "--debug", dest="debug",
-            default=False, action="store_true", help="enable output of debug " \
-            + "messages.")
-    group_general.add_option("", "--trace", dest="trace",
-            default=False, action="store_true", help="enable more verbose " + \
-            "debug messages.")
-    group_general.add_option("", "--progress", dest="progress",
-            default="text", action="store", type="choice",
-            choices=["none", "text", "bar", "dot"],
-            help="specify the type of progress bar used in non-GUI mode. " \
-            + "The following options are available: text, none, bar, dot.")
-    group_general.add_option("", "--profiling", dest="profile_destination",
-            action="store", type="string",
-            help="store profiling statistics in a file (only for debugging)")
-    group_general.add_option("-v", "--version", dest="show_version",
-            default=False, action="store_true", help="output the current " \
-            + "version of PyCAM and exit")
+    group_general.add_option(
+        "-c", "--config", dest="config_file", default=None, action="store", type="string",
+        help="load a task settings file")
+    group_general.add_option(
+        "", "--unit", dest="unit_size", default="mm", action="store", type="choice",
+        choices=["mm", "inch"],
+        help="choose 'mm' or 'inch' for all numbers. By default 'mm' is assumed.")
+    group_general.add_option(
+        "", "--collision-engine", dest="collision_engine", default="triangles", action="store",
+        type="choice", choices=["triangles", "ode"],
+        help=("choose a specific collision detection engine. The default is 'triangles'. "
+              "Use 'help' to get a list of possible engines."))
+    group_general.add_option(
+        "", "--boundary-mode", dest="boundary_mode", default="along", action="store",
+        type="choice", choices=["inside", "along", "outside"],
+        help=("specify if the mill tool (including its radius) should move completely 'inside', "
+              "'along' or 'outside' the defined processing boundary."))
+    group_general.add_option(
+        "", "--disable-psyco", dest="disable_psyco", default=False, action="store_true",
+        help="disable the Psyco just-in-time-compiler even if it is available")
+    group_general.add_option(
+        "", "--number-of-processes", dest="parallel_processes", default=None, type="int",
+        action="store",
+        help=("override the default detection of multiple CPU cores. Parallel processing only "
+              "works with Python 2.6 (or later) or with the additional 'multiprocessing' module."))
+    group_general.add_option(
+        "", "--enable-server", dest="enable_server", default=False, action="store_true",
+        help="enable a local server and (optionally) remote worker servers.")
+    group_general.add_option(
+        "", "--remote-server", dest="remote_server", default=None, action="store", type="string",
+        help=("Connect to a remote task server to distribute the processing load. "
+              "The server is given as an IP or a hostname with an optional port (default: 1250) "
+              "separated by a colon."))
+    group_general.add_option(
+        "", "--start-server-only", dest="start_server", default=False, action="store_true",
+        help="Start only a local server for handling remote requests.")
+    group_general.add_option(
+        "", "--server-auth-key", dest="server_authkey", default="", action="store", type="string",
+        help=("Secret used for connecting to a remote server or for granting access to remote "
+              "clients."))
+    group_general.add_option(
+        "-q", "--quiet", dest="quiet", default=False, action="store_true",
+        help="output only warnings and errors.")
+    group_general.add_option(
+        "-d", "--debug", dest="debug", default=False, action="store_true",
+        help="enable output of debug messages.")
+    group_general.add_option(
+        "", "--trace", dest="trace", default=False, action="store_true",
+        help="enable more verbose debug messages.")
+    group_general.add_option(
+        "", "--progress", dest="progress", default="text", action="store", type="choice",
+        choices=["none", "text", "bar", "dot"],
+        help=("specify the type of progress bar used in non-GUI mode. The following options are "
+              "available: text, none, bar, dot."))
+    group_general.add_option(
+        "", "--profiling", dest="profile_destination", action="store", type="string",
+        help="store profiling statistics in a file (only for debugging)")
+    group_general.add_option(
+        "-v", "--version", dest="show_version", default=False, action="store_true",
+        help="output the current version of PyCAM and exit")
     # export options
-    group_export.add_option("", "--export-gcode", dest="export_gcode",
-            default=None, action="store", type="string",
-            help="export the generated toolpaths to a file")
-    group_export.add_option("", "--export-task-config",
-            dest="export_task_config", default=None, action="store",
-            type="string",
-            help="export the current task configuration (mainly for debugging)")
+    group_export.add_option(
+        "", "--export-gcode", dest="export_gcode", default=None, action="store", type="string",
+        help="export the generated toolpaths to a file")
+    group_export.add_option(
+        "", "--export-task-config", dest="export_task_config", default=None, action="store",
+        type="string", help="export the current task configuration (mainly for debugging)")
     # tool options
-    group_tool.add_option("", "--tool-shape", dest="tool_shape",
-            default="cylindrical", action="store", type="choice",
-            choices=["cylindrical", "spherical", "toroidal"],
-            help="tool shape for the operation (cylindrical, spherical, " \
-            + "toroidal)")
-    group_tool.add_option("", "--tool-size", dest="tool_diameter",
-            default=1.0, action="store", type="float",
-            help="diameter of the tool")
-    group_tool.add_option("", "--tool-torus-size", dest="tool_torus_diameter",
-            default=0.25, action="store", type="float",
-            help="torus diameter of the tool (only for toroidal tool shape)")
-    group_tool.add_option("", "--tool-feedrate", dest="tool_feedrate",
-            default=1000, action="store", type="float",
-            help="allowed movement velocity of the tool (units/minute)")
-    group_tool.add_option("", "--tool-spindle-speed", dest="tool_spindle_speed",
-            default=250, action="store", type="float",
-            help="rotation speed of the tool (per minute)")
-    group_tool.add_option("", "--tool-id", dest="tool_id",
-            default=1, action="store", type="int",
-            help="tool ID - to be used for tool selection via GCode " \
-            + "(default: 1)")
+    group_tool.add_option(
+        "", "--tool-shape", dest="tool_shape", default="cylindrical", action="store",
+        type="choice", choices=["cylindrical", "spherical", "toroidal"],
+        help="tool shape for the operation (cylindrical, spherical, toroidal)")
+    group_tool.add_option(
+        "", "--tool-size", dest="tool_diameter", default=1.0, action="store", type="float",
+        help="diameter of the tool")
+    group_tool.add_option(
+        "", "--tool-torus-size", dest="tool_torus_diameter", default=0.25, action="store",
+        type="float", help="torus diameter of the tool (only for toroidal tool shape)")
+    group_tool.add_option(
+        "", "--tool-feedrate", dest="tool_feedrate", default=1000, action="store", type="float",
+        help="allowed movement velocity of the tool (units/minute)")
+    group_tool.add_option(
+        "", "--tool-spindle-speed", dest="tool_spindle_speed", default=250, action="store",
+        type="float", help="rotation speed of the tool (per minute)")
+    group_tool.add_option(
+        "", "--tool-id", dest="tool_id", default=1, action="store", type="int",
+        help="tool ID - to be used for tool selection via GCode (default: 1)")
     # process options
-    group_process.add_option("", "--process-path-direction",
-            dest="process_path_direction", default="x", action="store",
-            type="choice", choices=["x", "y", "xy"],
-            help="primary direction of the generated toolpath (x/y/xy)")
-    group_process.add_option("", "--process-path-strategy",
-            dest="process_path_strategy", default="surface", action="store",
-            type="choice", choices=["layer", "contour-follow",
-                    "contour-polygon", "surface", "engrave"],
-            help="one of the available toolpath strategies (layer, surface, " \
-            + "contour-follow, contour-polygon, engrave)")
-    group_process.add_option("", "--process-material-allowance",
-            dest="process_material_allowance", default=0.0, action="store",
-            type="float", help="minimum distance between the tool and the " \
-            + "object (for rough processing)")
-    group_process.add_option("", "--process-step-down",
-            dest="process_step_down", default=3.0, action="store", type="float",
-            help="the maximum thickness of each processed material layer " \
-            + "(only for 'layer' strategy)")
-    group_process.add_option("", "--process-overlap-percent",
-            dest="process_overlap_percent", default=0, action="store",
-            type="int", help="how much should two adjacent parallel " \
-            + "toolpaths overlap each other (0..99)")
-    group_process.add_option("", "--process-milling-style",
-            dest="process_milling_style", default="ignore",
-            action="store", type="choice",
-            choices=["ignore", "conventional", "climb"],
-            help="milling style (conventional / climb / ignore)")
-    group_process.add_option("", "--safety-height", dest="safety_height",
-            default=25.0, action="store", type="float",
-            help="height for safe re-positioning moves")
-    group_process.add_option("", "--process-engrave-offset",
-            dest="process_engrave_offset", default=0.0, action="store",
-            type="float", help="engrave along the contour of a model with a " \
-            + "given distance (only for 'engrave' strategy)")
+    group_process.add_option(
+        "", "--process-path-direction", dest="process_path_direction", default="x", action="store",
+        type="choice", choices=["x", "y", "xy"],
+        help="primary direction of the generated toolpath (x/y/xy)")
+    group_process.add_option(
+        "", "--process-path-strategy", dest="process_path_strategy", default="surface",
+        action="store", type="choice",
+        choices=["layer", "contour-follow", "contour-polygon", "surface", "engrave"],
+        help=("one of the available toolpath strategies (layer, surface, contour-follow, "
+              "contour-polygon, engrave)"))
+    group_process.add_option(
+        "", "--process-material-allowance", dest="process_material_allowance", default=0.0,
+        action="store", type="float",
+        help="minimum distance between the tool and the object (for rough processing)")
+    group_process.add_option(
+        "", "--process-step-down", dest="process_step_down", default=3.0, action="store",
+        type="float",
+        help="the maximum thickness of each processed material layer (only for 'layer' strategy)")
+    group_process.add_option(
+        "", "--process-overlap-percent", dest="process_overlap_percent", default=0, action="store",
+        type="int",
+        help="how much should two adjacent parallel toolpaths overlap each other (0..99)")
+    group_process.add_option(
+        "", "--process-milling-style", dest="process_milling_style", default="ignore",
+        action="store", type="choice", choices=["ignore", "conventional", "climb"],
+        help="milling style (conventional / climb / ignore)")
+    group_process.add_option(
+        "", "--safety-height", dest="safety_height", default=25.0, action="store", type="float",
+        help="height for safe re-positioning moves")
+    group_process.add_option(
+        "", "--process-engrave-offset", dest="process_engrave_offset", default=0.0, action="store",
+        type="float", help=("engrave along the contour of a model with a given distance (only for "
+                            "'engrave' strategy)"))
     # bounds settings
-    group_bounds.add_option("", "--bounds-type", dest="bounds_type",
-            default="fixed-margin", action="store", type="choice",
-            choices=["relative-margin", "fixed-margin", "custom"],
-            help="type of the boundary definition (relative-margin, " \
-            + "fixed-margin, custom)")
-    group_bounds.add_option("", "--bounds-lower", dest="bounds_lower",
-            default="", action="store", type="string",
-            help="comma-separated x/y/z combination of the lower boundary " \
-            + "(e.g. '4,4,-0.5')")
-    group_bounds.add_option("", "--bounds-upper", dest="bounds_upper",
-            default="", action="store", type="string",
-            help="comma-separated x/y/z combination of the upper boundary " \
-            + "(e.g. '12,5.5,0')")
+    group_bounds.add_option(
+        "", "--bounds-type", dest="bounds_type", default="fixed-margin", action="store",
+        type="choice", choices=["relative-margin", "fixed-margin", "custom"],
+        help="type of the boundary definition (relative-margin, fixed-margin, custom)")
+    group_bounds.add_option(
+        "", "--bounds-lower", dest="bounds_lower", default="", action="store", type="string",
+        help="comma-separated x/y/z combination of the lower boundary (e.g. '4,4,-0.5')")
+    group_bounds.add_option(
+        "", "--bounds-upper", dest="bounds_upper", default="", action="store", type="string",
+        help="comma-separated x/y/z combination of the upper boundary (e.g. '12,5.5,0')")
     # support grid settings
-    group_support_structure.add_option("", "--support-type",
-            dest="support_type", default="none", type="choice", action="store",
-            choices=["none", "grid", "distributed-edges",
-                    "distributed-corners"],
-            help="type of the support structure (default: none)")
-    group_support_structure.add_option("", "--support-profile-height",
-            dest="support_profile_height", default=2.0, action="store",
-            type="float", help="height of the support profile")
-    group_support_structure.add_option("", "--support-profile-thickness",
-            dest="support_profile_thickness", default=0.5, action="store",
-            type="float", help="width of the support profile")
-    group_support_structure.add_option("", "--support-grid-distance-x",
-            dest="support_grid_distance_x", default=10.0, action="store",
-            type="float", help="distance along the x-axis between two " \
-            + "adjacent parallel lines of the support structure" \
-            + "(only for grid type)")
-    group_support_structure.add_option("", "--support-grid-distance-y",
-            dest="support_grid_distance_y", default=10.0, action="store",
-            type="float", help="distance along the y-axis between two " \
-            + "adjacent parallel lines of the support structure " \
-            + "(only for grid type)")
-    group_support_structure.add_option("", "--support-grid-offset-x",
-            dest="support_grid_offset_x", default=0.0, action="store",
-            type="float", help="shift the support grid along the x axis")
-    group_support_structure.add_option("", "--support-grid-offset-y",
-            dest="support_grid_offset_y", default=0.0, action="store",
-            type="float", help="shift the support grid along the y axis")
-    group_support_structure.add_option("", "--support-distributed-distance",
-            dest="support_distributed_distance", default=30.0, action="store",
-            type="float", help="average distance between two adjacent " \
-            + "support bridges")
-    group_support_structure.add_option("", "--support-distributed-minimum",
-            dest="support_distributed_minimum", default=2, action="store",
-            type="int", help="minimum number of support bridges per polygon")
-    group_support_structure.add_option("", "--support-distributed-length",
-            dest="support_distributed_length", default=5.0, action="store",
-            type="float", help="length of each support bridge")
+    group_support_structure.add_option(
+        "", "--support-type", dest="support_type", default="none", type="choice", action="store",
+        choices=["none", "grid", "distributed-edges", "distributed-corners"],
+        help="type of the support structure (default: none)")
+    group_support_structure.add_option(
+        "", "--support-profile-height", dest="support_profile_height", default=2.0, action="store",
+        type="float", help="height of the support profile")
+    group_support_structure.add_option(
+        "", "--support-profile-thickness", dest="support_profile_thickness", default=0.5,
+        action="store", type="float", help="width of the support profile")
+    group_support_structure.add_option(
+        "", "--support-grid-distance-x", dest="support_grid_distance_x", default=10.0,
+        action="store", type="float",
+        help=("distance along the x-axis between two adjacent parallel lines of the support "
+              "structure (only for grid type)"))
+    group_support_structure.add_option(
+        "", "--support-grid-distance-y", dest="support_grid_distance_y", default=10.0,
+        action="store", type="float",
+        help=("distance along the y-axis between two adjacent parallel lines of the support "
+              "structure (only for grid type)"))
+    group_support_structure.add_option(
+        "", "--support-grid-offset-x", dest="support_grid_offset_x", default=0.0, action="store",
+        type="float", help="shift the support grid along the x axis")
+    group_support_structure.add_option(
+        "", "--support-grid-offset-y", dest="support_grid_offset_y", default=0.0, action="store",
+        type="float", help="shift the support grid along the y axis")
+    group_support_structure.add_option(
+        "", "--support-distributed-distance", dest="support_distributed_distance", default=30.0,
+        action="store", type="float", help="average distance between two adjacent support bridges")
+    group_support_structure.add_option(
+        "", "--support-distributed-minimum", dest="support_distributed_minimum", default=2,
+        action="store", type="int", help="minimum number of support bridges per polygon")
+    group_support_structure.add_option(
+        "", "--support-distributed-length", dest="support_distributed_length", default=5.0,
+        action="store", type="float", help="length of each support bridge")
     # gcode options
-    group_gcode.add_option("", "--gcode-no-start-stop-spindle",
-            dest="gcode_no_start_stop_spindle", default=True,
-            action="store_false", help="do not start the spindle before " \
-            + "and stop it after each operation (M3/M5)")
-    group_gcode.add_option("", "--gcode-minimum-step",
-            dest="gcode_minimum_step", default=0.00001,
-            type="float", action="store", help="minimum axial distance " \
-            + "between two machine positions. Any shorter move is not " \
-            + "written to GCode (default: 0.00001).")
-    group_gcode.add_option("", "--gcode-path-mode", dest="gcode_path_mode",
-            default="exact_path", action="store", type="choice",
-            choices=["exact_path", "exact_stop", "continuous"],
-            help="choose the GCode path mode from 'exact_path', 'exact_stop' " \
-            + "and 'continuous'. Use '--gcode-motion-tolerance' and " \
-            + "and '--gcode-naive-tolerance' if you want to limit the " \
-            + "deviation. See http://linuxcnc.org/docs/html/gcode_main.html " \
-            + "(G61) for details.")
-    group_gcode.add_option("", "--gcode-motion-tolerance",
-            dest="gcode_motion_tolerance", default=None,
-            action="store", help="the optional motion tolerance for " \
-            + "'continuous' path mode (G64).")
-    group_gcode.add_option("", "--gcode-naive-tolerance",
-            dest="gcode_naive_tolerance", default=None,
-            action="store", help="the optional naive CAM tolerance for " \
-            + "'continuous' path mode (G64).")
+    group_gcode.add_option(
+        "", "--gcode-no-start-stop-spindle", dest="gcode_no_start_stop_spindle", default=True,
+        action="store_false",
+        help="do not start the spindle before and stop it after each operation (M3/M5)")
+    group_gcode.add_option(
+        "", "--gcode-minimum-step", dest="gcode_minimum_step", default=0.00001, type="float",
+        action="store", help=("minimum axial distance between two machine positions. Any shorter "
+                              "move is not written to GCode (default: 0.00001)."))
+    group_gcode.add_option(
+        "", "--gcode-path-mode", dest="gcode_path_mode", default="exact_path", action="store",
+        type="choice", choices=["exact_path", "exact_stop", "continuous"],
+        help=("choose the GCode path mode from 'exact_path', 'exact_stop' and 'continuous'. "
+              "Use '--gcode-motion-tolerance' and and '--gcode-naive-tolerance' if you want to "
+              "limit the deviation. See http://linuxcnc.org/docs/html/gcode_main.html (G61) for "
+              "details."))
+    group_gcode.add_option(
+        "", "--gcode-motion-tolerance", dest="gcode_motion_tolerance", default=None,
+        action="store", help="the optional motion tolerance for 'continuous' path mode (G64).")
+    group_gcode.add_option(
+        "", "--gcode-naive-tolerance", dest="gcode_naive_tolerance", default=None, action="store",
+        help="the optional naive CAM tolerance for 'continuous' path mode (G64).")
     # external program settings
-    group_external_programs.add_option("", "--location-inkscape",
-            dest="external_program_inkscape", default="", action="store",
-            type="string", help="location of the Inkscape executable. " \
-            + "This program is required for importing SVG files.")
-    group_external_programs.add_option("", "--location-pstoedit",
-            dest="external_program_pstoedit", default="", action="store",
-            type="string", help="location of the PStoEdit executable. " \
-            + "This program is required for importing SVG files.")
+    group_external_programs.add_option(
+        "", "--location-inkscape", dest="external_program_inkscape", default="", action="store",
+        type="string", help=("location of the Inkscape executable. This program is required for "
+                             "importing SVG files."))
+    group_external_programs.add_option(
+        "", "--location-pstoedit", dest="external_program_pstoedit", default="", action="store",
+        type="string", help=("location of the PStoEdit executable. This program is required for "
+                             "importing SVG files."))
     (opts, args) = parser.parse_args()
-
     try:
         if opts.profile_destination:
             import cProfile
             exit_code = cProfile.run('execute(parser, opts, args, pycam)',
-                    opts.profile_destination)
+                                     opts.profile_destination)
         else:
             # We need to add the parameter "pycam" to avoid weeeeird namespace
             # issues. Any idea how to fix this?
@@ -741,7 +714,7 @@ if __name__ == "__main__":
         log.info("Quit requested")
         exit_code = None
     pycam.Utils.threading.cleanup()
-    if not exit_code is None:
+    if exit_code is not None:
         sys.exit(exit_code)
     else:
         sys.exit(EXIT_CODES["ok"])

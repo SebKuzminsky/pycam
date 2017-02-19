@@ -70,6 +70,7 @@ class StatusManager(pycam.Plugins.PluginBase):
             self.core.settings.add_item("default_task_settings_file", get_autoload_task_file,
                                         set_autoload_task_file)
             autoload_task_filename = self.core.settings.get("default_task_settings_file")
+            self.core.settings.set("open-task-settings-file-func", self.open_task_settings_file)
             # TODO: use "startup" hook instead
             if autoload_task_filename:
                 self.open_task_settings_file(autoload_task_filename)
