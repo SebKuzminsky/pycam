@@ -1,4 +1,4 @@
-Version 0.6 - UNRELEASED
+Version 0.6.0 - 2016-02-18
  * greatly improved OpenGL visualization (contributed by Mattes)
  * DXF importer:
   * added bezier support for POLYLINE and LWPOLYLINE
