@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/SebKuzminsky/pycam.svg?branch=master)](https://travis-ci.org/SebKuzminsky/pycam)
+
 pycam : Python CAM
 ==================
 
