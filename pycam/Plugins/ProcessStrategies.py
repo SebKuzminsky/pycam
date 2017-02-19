@@ -20,6 +20,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import pycam.Plugins
+import pycam.PathGenerators.DropCutter
+import pycam.PathGenerators.EngraveCutter
 import pycam.PathGenerators.PushCutter
 import pycam.Toolpath.MotionGrid
 

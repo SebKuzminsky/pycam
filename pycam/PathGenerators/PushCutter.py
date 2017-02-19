@@ -24,7 +24,7 @@ import math
 from pycam.Geometry.PointUtils import pdist
 from pycam.Geometry.utils import ceil
 from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
-import pycam.PathProcessors
+import pycam.PathProcessors.ContourCutter
 from pycam.Utils.threading import run_in_parallel
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
@@ -56,8 +56,7 @@ class PushCutter(object):
 
     def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None,
                          draw_callback=None):
-        # Transfer the grid (a generator) into a list of lists and count the
-        # items.
+        # Transfer the grid (a generator) into a list of lists and count the items.
         grid = []
         num_of_grid_positions = 0
         for layer in motion_grid:

@@ -20,6 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Geometry.Model
 import pycam.Plugins
+import pycam.Toolpath.SupportGrid
 
 
 class ModelSupportGrid(pycam.Plugins.PluginBase):
