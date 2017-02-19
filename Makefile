@@ -16,7 +16,7 @@ PYTHON_EXE ?= python
 # (introduced in python 2.6)
 DISTUTILS_PLAT_NAME = $(shell $(PYTHON_EXE) setup.py --help build_ext \
 		      | grep -q -- "--plat-name" && echo "--plat-name win32")
-PYLINT_TARGETS = pycam Tests pyinstaller/hooks scripts setup
+PYTHON_CHECK_STYLE_TARGETS = pycam Tests pyinstaller/hooks/hook-pycam.py scripts/pycam setup.py
 
 # turn the destination directory into an absolute path
 ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
@@ -67,10 +67,10 @@ upload:
 		-m "added released win32 installer for version $(VERSION)"
 
 check-style:
-	python -m flake8
+	python -m flake8 $(PYTHON_CHECK_STYLE_TARGETS)
 
 pylint-strict:
-	pylint $(PYLINT_TARGETS)
+	pylint $(PYTHON_CHECK_STYLE_TARGETS)
 
 pylint-relaxed:
 	pylint -d missing-docstring,invalid-name,pointless-string-statement,fixme,no-self-use \
@@ -80,6 +80,6 @@ pylint-relaxed:
 		-d attribute-defined-outside-init,superfluous-parens,too-many-nested-blocks \
 		-d too-many-statements,unused-argument,too-many-lines \
 		-d too-many-boolean-expressions,too-many-public-methods \
-		$(PYLINT_TARGETS)
+		$(PYTHON_CHECK_STYLE_TARGETS)
 
 test: check-style
