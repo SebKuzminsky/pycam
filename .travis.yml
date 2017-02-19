@@ -11,4 +11,5 @@ before_install:
   - sudo apt-get install -y python-rsvg
 
 script:
+  - make check-style
   - python setup.py sdist
