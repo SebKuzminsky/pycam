@@ -116,7 +116,7 @@ def draw_complete_model_view(settings):
             for point in path.points:
                 moves.append((point, False))
         if toolpath_in_progress is not None:
-            draw_toolpath(moves,
+            draw_toolpath(moves,  # noqa: F821 - not implemented, yet
                           settings.get("color_toolpath_cut"),
                           settings.get("color_toolpath_return"),
                           show_directions=settings.get("show_directions"),

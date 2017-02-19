@@ -38,7 +38,8 @@ class LinuxCNCToolExport(pycam.Plugins.PluginBase):
             self.register_gtk_accelerator("export", self.export_action, None,
                                           "ExportLinuxCNCToolDefinition")
             self._gtk_handlers = ((self.export_action, "activate", self.export_emc_tools), )
-            self.core.register_ui("export_menu", "ExportLinuxCNCToolDefinition", self.export_action, 80)
+            self.core.register_ui("export_menu", "ExportLinuxCNCToolDefinition",
+                                  self.export_action, 80)
             self._event_handlers = (("tool-selection-changed", self._update_emc_tool_button), )
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
