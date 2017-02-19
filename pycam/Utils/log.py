@@ -127,9 +127,8 @@ class RepetitionsFilter(logging.Filter):
         else:
             if self._suppressed_messages_counter > 0:
                 # inject a message regarding the previously suppressed messages
-                self._last_record.msg =  \
-                        "*** skipped %d %s message(s) ***" % \
-                        (self._suppressed_messages_counter, similarity)
+                self._last_record.msg = "*** skipped %d %s message(s) ***"
+                self._last_record.args = (self._suppressed_messages_counter, similarity)
                 self._handler.emit(self._last_record)
             self._last_record = record
             self._last_timestamp = now
