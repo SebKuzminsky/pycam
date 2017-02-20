@@ -1,0 +1,12 @@
+/* CSS placed here will be applied to all skins */
+#p-logo a, #p-logo a:hover{
+  height: 400px;
+}
+
+#p-logo{
+  height: 400px;
+}
+
+#column-one {
+  padding-top: 400px;
+}

@@ -1,0 +1,20 @@
+== Installing the latest release ==
+
+=== Linux / *BSD ===
+# [http://sourceforge.net/projects/pycam/files/ download] the archive of your choice
+# install the [[Requirements|requirements]] for your system
+# run <tt>./pycam</tt> in the PyCAM directory
+
+=== Mac OS X ===
+See [[Installation MacOS]] for details.
+
+===  Windows ===
+Use the [http://pycam.sourceforge.net/download.html standalone executable for Windows]. There are no further requirements.
+
+If you want to use [[Parallel Processing on different Platforms|multiple CPU cores or distributed processing]], then you will need to use the [http://pycam.sourceforge.net/download.html dependency installer and the PyCAM installer package].
+
+== Installing the development version ==
+# install the [http://git-scm.com/ git] client (via your package manager or by [http://git-scm.com/downloads downloading] it)
+# checkout the PyCAM repository: <tt>git clone git://pycam.git.sourceforge.net/gitroot/pycam/pycam</tt>
+# install the [[Requirements|requirements]] for your system
+# run <tt>scripts/pycam</tt> in the PyCAM directory

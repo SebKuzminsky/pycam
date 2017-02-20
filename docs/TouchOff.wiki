@@ -1,0 +1,53 @@
+== Overview ==
+[[Image:touch_off_settings.png|thumb||180px|Settings for touch off operation]]
+
+Before milling an object you always need to adjust the coordinate system of your machine controller (e.g. [http://linuxcnc.org EMC2]). This operation is quite easy for the planar axes x and y. Only z is a bit tricky, since it usually needs to be quite acurate. Otherwise you risk to mill slightly too deep (damaging the base of the milling machine) or slightly too high (the cut through the object is not complete).
+
+Touch off is the initial adjustment of the z axis by measuring the height of the lowest point of the milling tool.
+
+Tool change is the process of switching from one tool to another. Manual tool change involves a length compensation: adjusting the coordinate system of the machine controller according to the length of the new tool. Usually this is accomplished by shifting the coordinate system by the difference between the height of the old tool and the new tool.
+
+'''Beware:''' the generated GCode probably only works with EMC2. Please check carefully (and slowly) if it works for your machine controller, as well. Any feedback (just edit this page) is highly appreciated!
+
+== Touch off on startup ==
+[[Image:touch_off.png|thumb||180px|Visualization of touch off settings]]
+
+The following description is only valid if the ''Touch probe position'' value is ''Initial location''. The ''Fixed location (absolute)'' setting follows a similar pattern.
+
+The ''touch off on startup'' procedure follows these steps:
+# position the tool above the probe switch
+## the vertical distance between the tool and the switch must clearly exceed the ''Rapid move down'' value
+## the vertical distance between the tool and the switch may not exceed the sum of ''Rapid move down'' and ''Probing distance''
+# run the GCode program
+
+The GCode will tell the machine controller to do the following:
+# store the initial position of the machine as the touch off position
+# move down rapidly: the distance is specified via ''Rapid move down''
+# move down slowly and wait for the probe switch to close (the maximum way down is defined by ''Probing distance'')
+# shift the z axis of the coordinate system in such a way, that the z level of the touch off location is equal to the value specified by ''Z level of touch probe''
+# rapidly move up to the initial location
+# optional pause (M0) of GCode execution (should be enabled if your spindle is controlled manually)
+# start execution of the first toolpath
+
+The spindle will start after the touch off (via M3).
+
+== Tool change ==
+A tool change occours between two toolpaths using different tools.
+
+The tool change operation follows these steps:
+# optional pause of GCode execution (should be enabled if your spindle is controlled manually)
+# stop spindle (M5)
+# move to touch off position (''initial location (on startup)'' or ''fixed location (absolute)'')
+# move down rapidly: the distance is specified via ''Rapid move down''
+# move down slowly and wait for the probe switch to close (the maximum way down is defined by ''Probing distance'')
+# remember the height of the current tool
+# rapidly move up to the touch off location
+# request tool change (Tx M6)
+## your machine controller will wait for confirmation
+# repeat the rapid and slow move down with the new tool
+# adjust the z axis of the coordinate system by the difference between the height of the new tool and the height of the old tool
+## this compensates the change of the tool's length
+# rapidly move up to the touch off position
+# optional pause of GCode execution
+# start spindle (M3)
+# continue with the next toolpath

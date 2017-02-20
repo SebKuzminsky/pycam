@@ -1,0 +1,29 @@
+''This manual is work in progress. Please help us by [[Contributing to this Wiki]]!''
+
+# [[Installation]]
+## [[Requirements]]
+# [[Introduction]]
+## [[BigPictureOfProcessing|From design to the machine]]
+## [[Get started|A quick guide to PyCAM]]
+## [[Features]]
+## [[SupportedFormats|Supported file formats]]
+### [[Hints for 2D modeling with Inkscape (SVG)]]
+### [[Hints for 2D modeling with OpenSCAD (DXF)]]
+### [[Hints for 3D modeling with OpenSCAD (STL)]]
+# Using the GUI
+## [[Menu Items]]
+## Configure a toolpath
+### [[Tool definition]]
+### [[ProcessSettings|Processing settings]]
+### [[Bounding box]]
+### [[Task settings]]
+## [[GCodeExport|Export GCode]]
+## Miscellaneous
+### [[3D View]]
+### [[ModelTransformations|Model transformations]]
+### [[EngraveFonts|Engrave fonts]]
+# Advanced usage
+## [[KeyboardShortcuts|Using keyboard shortcuts]]
+## [[CommandlineExamples|Using the commandline mode]]
+## [[ServerMode|Distributed parallel processing (Server Mode)]]
+## [[TouchOff|Touch off and tool change]]

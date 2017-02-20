@@ -1,0 +1,59 @@
+PyCAM uses the single-line fonts created by the [http://qcad.org QCAD]-developers.
+
+See ''Extras -> Engrave Text'' in the PyCAM menu.
+
+Single-line fonts are usually more suitable for engraving than common contour-based fonts. You will see the difference when you try to engrave a regular font (e.g. created with [http://inkscape.org Inkscape]). The inner sections of each letter will be less blurry with a single-line font (especially for small engravings).
+
+The following list shows all fonts available in PyCAM. The example text is: <pre>
+ABCDEFGHIJKLM
+NOPQRSTUVWXYZ
+01234567890
+!"$%&*()[]{}-_=
++/#@~?<>,.;\|^</pre>
+
+{| class="wikitable" border="1" cellpadding="4"
+|-valign="top"
+| Courier <br/> [[File:courier.png|200px]]
+| Cursive <br/> [[File:cursive.png|200px]]
+| Cyrillic II <br/> [[File:cyrillic2.png|200px]]
+| Gothic German Triplex <br/> [[File:gothic_german_triplex.png|200px]]
+|-valign="top"
+| Gothic Great Britain Triplex <br/> [[File:gothic_great_britain_triplex.png|200px]]
+| Gothic Italian Triplex <br/> [[File:gothic_italian_triplex.png|200px]]
+| Greek Complex <br/> [[File:greek_complex.png|200px]]
+| Greek Complex Small <br/> [[File:greek_complex_small.png|200px]]
+|-valign="top"
+| Greek OL <br/> [[File:greek_ol.png|200px]]
+| Greek OL+ <br/> [[File:greek_ol+.png|200px]]
+| Greek Plain <br/> [[File:greek_plain.png|200px]]
+| Greek Simplex <br/> [[File:greek_simplex.png|200px]]
+|-valign="top"
+| ISO8859-11 <br/> [[File:iso8859-11.png|200px]]
+| Italian Complex <br/> [[File:italian_complex.png|200px]]
+| Italian Complex Small <br/> [[File:italian_complex_small.png|200px]]
+| Italian Triplex <br/> [[File:italian_triplex.png|200px]]
+|-valign="top"
+| Japanese <br/> [[File:japanese.png|200px]]
+| Kochi Gothic <br/> [[File:kochi_gothic.png|200px]]
+| Kochi Mincho <br/> [[File:kochi_mincho.png|200px]]
+| Normal <br/> [[File:normal.png|200px]]
+|-valign="top"
+| Normal Latin 1 <br/> [[File:normal_latin1.png|200px]]
+| Normal Latin 2 <br/> [[File:normal_latin2.png|200px]]
+| Roman Complex <br/> [[File:roman_complex.png|200px]]
+| Roman Complex Small <br/> [[File:roman_complex_small.png|200px]]
+|-valign="top"
+| Roman Duplex <br/> [[File:roman_duplex.png|200px]]
+| Roman Plain <br/> [[File:roman_plain.png|200px]]
+| Roman Simplex <br/> [[File:roman_simplex.png|200px]]
+| Roman Triplex <br/> [[File:roman_triplex.png|200px]]
+|-valign="top"
+| Script Complex <br/> [[File:script_complex.png|200px]]
+| Standards <br/> [[File:standard.png|200px]]
+| Symbol <br/> [[File:symbol.png|200px]]
+| Symbol Astro <br/> [[File:symbol_astro.png|200px]]
+|-valign="top"
+| Symbol Misc 1 <br/> [[File:symbol_misc1.png|200px]]
+| Symbol Misc 2 <br/> [[File:symbol_misc2.png|200px]]
+| Unicode <br/> [[File:unicode.png|200px]]
+|}

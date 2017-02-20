@@ -1,0 +1,33 @@
+Video tutorials are useful for presenting the various features of PyCAM to new users.
+
+The existing video tutorials can be found at [http://vimeo.com/channels/158481 vimeo].
+
+Providing these videos in different languages is quite simple - you just need to translate a small subtitles file. This will usually take around 15 minutes.
+
+== Available videos ==
+{| border="1"
+|-
+! Video
+! Subtitle files
+! Languages
+|-
+| [http://vimeo.com/18254871 Toolpaths for 2D models] (incl. simulation)
+| [http://pycam.svn.sourceforge.net/viewvc/pycam/video-tutorials/20101227-2D_Toolpaths_and_Simulation/ download]
+| en, de
+|-
+| [http://vimeo.com/21502122 Using multi-layered 2D models]
+| [http://pycam.svn.sourceforge.net/viewvc/pycam/video-tutorials/20110324-Multi_Layered_2D_Model/ download]
+| en, de
+|}
+
+== How to translate ==
+# download an existing subtitle file (preferably in English)
+# copy the file to <tt>YOUR_LANGUAGE.srt</tt> (e.g. <tt>danish.srt</tt>)
+# open the file with an editor that is capable of handling the UTF-8 character set (almost every modern editor should suffice)
+# replace the English strings with your translations
+# store the file - BEWARE: specify the UTF-8 encoding, please!
+# send the file to the developer's mailing list: [mailto:pycam-devel@lists.sourceforge.net pycam-devel@lists.sourceforge.net]
+
+Afterwards a PyCAM developer will transcode a new video with your subtitles and upload it to PyCAM's video channel.
+
+Thanks for your contribution!
