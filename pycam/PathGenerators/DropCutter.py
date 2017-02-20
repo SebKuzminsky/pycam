@@ -21,7 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Geometry.Model
 from pycam.PathGenerators import get_max_height_dynamic
-from pycam.Toolpath import MOVE_STRAIGHT, MOVE_SAFETY
+from pycam.Toolpath.Steps import MoveStraight, MoveSafety
 from pycam.Utils import ProgressCounter
 from pycam.Utils.threading import run_in_parallel
 import pycam.Utils.log
@@ -77,15 +77,15 @@ class DropCutter(object):
             for point in points:
                 if point is None:
                     # exceeded maxz - the cutter has to skip this point
-                    path.append((MOVE_SAFETY, None))
+                    path.append(MoveSafety())
                 else:
-                    path.append((MOVE_STRAIGHT, point))
+                    path.append(MoveStraight(point))
                 # The progress counter may return True, if cancel was requested.
                 if draw_callback and draw_callback(tool_position=point, toolpath=path):
                     quit_requested = True
                     break
             # add a move to safety height after each line of moves
-            path.append((MOVE_SAFETY, None))
+            path.append(MoveSafety())
             progress_counter.increment()
             # update progress
             current_line += 1

@@ -28,7 +28,7 @@ import pycam.PathProcessors.ContourCutter
 from pycam.Utils.threading import run_in_parallel
 from pycam.Utils import ProgressCounter
 import pycam.Utils.log
-from pycam.Toolpath import MOVE_STRAIGHT, MOVE_SAFETY
+from pycam.Toolpath.Steps import MoveStraight, MoveSafety
 
 
 log = pycam.Utils.log.get_logger()
@@ -111,14 +111,14 @@ class PushCutter(object):
                     for p1, p2 in pairs:
                         free_points = get_free_paths_triangles(other_models, cutter, p1, p2)
                         for index in range(len(free_points) / 2):
-                            result.append((MOVE_STRAIGHT, free_points[2 * index]))
-                            result.append((MOVE_STRAIGHT, free_points[2 * index + 1]))
-                            result.append((MOVE_SAFETY, None))
+                            result.append(MoveStraight(free_points[2 * index]))
+                            result.append(MoveStraight(free_points[2 * index + 1]))
+                            result.append(MoveSafety())
                 else:
                     for p1, p2 in pairs:
-                        result.append((MOVE_STRAIGHT, p1))
-                        result.append((MOVE_STRAIGHT, p2))
-                        result.append((MOVE_SAFETY, None))
+                        result.append(MoveStraight(p1))
+                        result.append(MoveStraight(p2))
+                        result.append(MoveSafety())
             return result
         else:
             return path
@@ -155,9 +155,9 @@ class PushCutter(object):
                         self.pa.append(point)
                 else:
                     for index in range(len(points) / 2):
-                        path.append((MOVE_STRAIGHT, points[2 * index]))
-                        path.append((MOVE_STRAIGHT, points[2 * index + 1]))
-                        path.append((MOVE_SAFETY, None))
+                        path.append(MoveStraight(points[2 * index]))
+                        path.append(MoveStraight(points[2 * index + 1]))
+                        path.append(MoveSafety())
                 if self.waterlines:
                     if draw_callback:
                         draw_callback(tool_position=points[-1])

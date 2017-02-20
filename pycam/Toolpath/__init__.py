@@ -34,7 +34,7 @@ _log = pycam.Utils.log.get_logger()
 
 
 MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC, MOVE_SAFETY, MACHINE_SETTING, COMMENT = range(6)
-MOVES_LIST = (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC, MOVE_SAFETY)
+MOVES_LIST = (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC)
 CORNER_STYLE_EXACT_PATH, CORNER_STYLE_EXACT_STOP, CORNER_STYLE_OPTIMIZE_SPEED, \
     CORNER_STYLE_OPTIMIZE_TOLERANCE = range(4)
 
@@ -116,8 +116,7 @@ class Toolpath(object):
         self._maxz = None
 
     def _get_limit_generic(self, idx, func):
-        values = [p[idx] for move_type, p in self.path
-                  if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID)]
+        values = [step.position[idx] for step in self.path if step.action in MOVES_LIST]
         return func(values)
 
     @property
@@ -317,9 +316,9 @@ class Toolpath(object):
         safety height, metric/imperial, ...). Additional occourences of this
         setting are ignored.
         """
-        for move_type, args in self.path:
-            if (move_type == MACHINE_SETTING) and (key == args[0]):
-                return args[1]
+        for step in self.path:
+            if (step.action == MACHINE_SETTING) and (step.key == key):
+                return step.value
         return default
 
     def get_machine_time(self, safety_height=0.0):
@@ -338,15 +337,15 @@ class Toolpath(object):
         feedrate = min_feedrate
         current_position = None
         # go through all points of the path
-        for move_type, args in self.get_basic_moves():
-            if (move_type == MACHINE_SETTING) and (args[0] == "feedrate"):
-                feedrate = args[1]
-            elif move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
+        for step in self.get_basic_moves():
+            if (step.action == MACHINE_SETTING) and (step.key == "feedrate"):
+                feedrate = step.value
+            elif step.action in MOVES_LIST:
                 if current_position is not None:
-                    distance = pdist(args, current_position)
+                    distance = pdist(step.position, current_position)
                     duration += distance / max(feedrate, min_feedrate)
                     length += distance
-                current_position = args
+                current_position = step.position
         return length, duration
 
     def get_basic_moves(self, filters=None, reset_cache=False):

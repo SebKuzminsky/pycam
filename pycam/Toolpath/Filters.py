@@ -24,8 +24,8 @@ import decimal
 from pycam.Geometry import epsilon
 from pycam.Geometry.Line import Line
 from pycam.Geometry.PointUtils import padd, psub, pmul, pdist, pnear, ptransform_by_matrix
-from pycam.Toolpath import MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_SAFETY, MOVES_LIST, \
-        MACHINE_SETTING
+from pycam.Toolpath import MOVE_SAFETY, MOVES_LIST, MACHINE_SETTING
+import pycam.Toolpath.Steps as ToolpathSteps
 import pycam.Utils.log
 
 
@@ -35,12 +35,6 @@ _log = pycam.Utils.log.get_logger()
 
 
 """ Toolpath filters are used for applying parameters to generic toolpaths.
-
-A generic toolpath is a simple list of actions.
-Each action is described by a tuple of (TYPE, ARGUMENTS).
-TYPE is usually one of MOVE_STRAIGHT, MOVE_RAPID and MOVE_SAFETY.
-The other possible types describe machine settings and so on.
-ARGUMENTS (in case of moves) is a tuple of x/y/z for the move's destination.
 """
 
 
@@ -141,16 +135,16 @@ class SafetyHeightFilter(BaseFilter):
         new_path = []
         safety_pending = False
         get_safe = lambda pos: tuple((pos[0], pos[1], self.settings["safety_height"]))
-        for move_type, args in toolpath:
-            if move_type == MOVE_SAFETY:
+        for step in toolpath:
+            if step.action == MOVE_SAFETY:
                 safety_pending = True
-            elif move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
-                new_pos = tuple(args)
+            elif step.action in MOVES_LIST:
+                new_pos = tuple(step.position)
                 max_height = max(max_height, new_pos[2])
                 if not last_pos:
                     # there was a safety move (or no move at all) before
                     # -> move sideways
-                    new_path.append((MOVE_STRAIGHT_RAPID, get_safe(new_pos)))
+                    new_path.append(ToolpathSteps.MoveStraightRapid(get_safe(new_pos)))
                 elif safety_pending:
                     safety_pending = False
                     if pnear(last_pos, new_pos, axes=(0, 1)):
@@ -158,19 +152,19 @@ class SafetyHeightFilter(BaseFilter):
                         pass
                     else:
                         # go up, sideways and down
-                        new_path.append((MOVE_STRAIGHT_RAPID, get_safe(last_pos)))
-                        new_path.append((MOVE_STRAIGHT_RAPID, get_safe(new_pos)))
+                        new_path.append(ToolpathSteps.MoveStraightRapid(get_safe(last_pos)))
+                        new_path.append(ToolpathSteps.MoveStraightRapid(get_safe(new_pos)))
                 else:
                     # we are in the middle of usual moves -> keep going
                     pass
-                new_path.append((move_type, new_pos))
+                new_path.append(step)
                 last_pos = new_pos
             else:
                 # unknown move -> keep it
-                new_path.append((move_type, args))
+                new_path.append(step)
         # process pending safety moves
         if safety_pending and last_pos:
-            new_path.append((MOVE_STRAIGHT_RAPID, get_safe(last_pos)))
+            new_path.append(ToolpathSteps.MoveStraightRapid(get_safe(last_pos)))
         if max_height > self.settings["safety_height"]:
             _log.warn("Toolpath exceeds safety height: %f => %f",
                       max_height, self.settings["safety_height"])
@@ -185,11 +179,11 @@ class MachineSetting(BaseFilter):
     def filter_toolpath(self, toolpath):
         result = []
         # move all previous machine settings
-        while toolpath and toolpath[0][0] == MACHINE_SETTING:
+        while toolpath and toolpath[0].action == MACHINE_SETTING:
             result.append(toolpath.pop(0))
         # add the new setting
-        for setting in self._get_settings():
-            result.append((MACHINE_SETTING, setting))
+        for key, value in self._get_settings():
+            result.append(ToolpathSteps.MachineSetting(key, value))
         return result + toolpath
 
     def _get_settings(self):
@@ -225,7 +219,8 @@ class SelectTool(BaseFilter):
         # skip all non-moves
         while (index < len(toolpath)) and (toolpath[index][0] not in MOVES_LIST):
             index += 1
-        toolpath.insert(index, (MACHINE_SETTING, ("select_tool", self.settings["tool_id"])))
+        toolpath.insert(index, ToolpathSteps.MachineSetting("select_tool",
+                                                            self.settings["tool_id"]))
         return toolpath
 
 
@@ -236,30 +231,32 @@ class TriggerSpindle(BaseFilter):
 
     def filter_toolpath(self, toolpath):
         def enable_spindle(path, index):
-            path.insert(index, (MACHINE_SETTING, ("spindle_enabled", True)))
+            path.insert(index, ToolpathSteps.MachineSetting("spindle_enabled", True))
             if self.settings["delay"]:
-                path.insert(index + 1, (MACHINE_SETTING, ("delay", self.settings["delay"])))
+                path.insert(index + 1, ToolpathSteps.MachineSetting("delay",
+                                                                    self.settings["delay"]))
 
         def disable_spindle(path, index):
-            path.insert(index, (MACHINE_SETTING, ("spindle_enabled", False)))
+            path.insert(index, ToolpathSteps.MachineSetting("spindle_enabled", False))
 
         # find all positions of "select_tool"
-        tool_changes = [index for index, (move, args) in enumerate(toolpath)
-                        if (move == MACHINE_SETTING) and (args[0] == "select_tool")]
+        tool_changes = [index for index, step in enumerate(toolpath)
+                        if (step.action == MACHINE_SETTING) and (step.key == "select_tool")]
         if tool_changes:
             tool_changes.reverse()
             for index in tool_changes:
                 enable_spindle(toolpath, index + 1)
         else:
-            for index, (move_type, args) in enumerate(toolpath):
-                if move_type in MOVES_LIST:
+            # add a single tool selection before the first move
+            for index, step in enumerate(toolpath):
+                if step.action in MOVES_LIST:
                     enable_spindle(toolpath, index)
                     break
         # add "stop spindle" just after the last move
         index = len(toolpath) - 1
-        while (not toolpath[index][0] in MOVES_LIST) and (index > 0):
+        while (toolpath[index].action not in MOVES_LIST) and (index > 0):
             index -= 1
-        if toolpath[index][0] in MOVES_LIST:
+        if toolpath[index].action in MOVES_LIST:
             disable_spindle(toolpath, index + 1)
         return toolpath
 
@@ -273,36 +270,38 @@ class Crop(BaseFilter):
         new_path = []
         last_pos = None
         optional_moves = []
-        for move_type, args in toolpath:
-            if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
+        for step in toolpath:
+            if step.action in MOVES_LIST:
                 if last_pos:
                     # find all remaining pieces of this line
                     inner_lines = []
                     for polygon in self.settings["polygons"]:
-                        inner, outer = polygon.split_line(Line(last_pos, args))
+                        inner, outer = polygon.split_line(Line(last_pos, step.position))
                         inner_lines.extend(inner)
                     # turn these lines into moves
                     for line in inner_lines:
                         if pdist(line.p1, last_pos) > epsilon:
-                            new_path.append((MOVE_SAFETY, None))
-                            new_path.append((move_type, line.p1))
+                            new_path.append(ToolpathSteps.MoveSafety())
+                            new_path.append(
+                                ToolpathSteps.get_step_class_by_action(step.action)(line.p1))
                         else:
-                            # we continue were we left
+                            # we continue where we left
                             if optional_moves:
                                 new_path.extend(optional_moves)
                                 optional_moves = []
-                        new_path.append((move_type, line.p2))
+                        new_path.append(
+                            ToolpathSteps.get_step_class_by_action(step.action)(line.p2))
                         last_pos = line.p2
                     optional_moves = []
                     # finish the line by moving to its end (if necessary)
-                    if pdist(last_pos, args) > epsilon:
-                        optional_moves.append((MOVE_SAFETY, None))
-                        optional_moves.append((move_type, args))
-                last_pos = args
-            elif move_type == MOVE_SAFETY:
+                    if pdist(last_pos, step.position) > epsilon:
+                        optional_moves.append(ToolpathSteps.MoveSafety())
+                        optional_moves.append(step)
+                last_pos = step.position
+            elif step.action == MOVE_SAFETY:
                 optional_moves = []
             else:
-                new_path.append((move_type, args))
+                new_path.append(step)
         return new_path
 
 
@@ -315,18 +314,18 @@ class TransformPosition(BaseFilter):
 
     def filter_toolpath(self, toolpath):
         new_path = []
-        for move_type, args in toolpath:
-            if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
-                new_pos = ptransform_by_matrix(args, self.settings["matrix"])
-                new_path.append((move_type, new_pos))
+        for step in toolpath:
+            if step.action in MOVES_LIST:
+                new_pos = ptransform_by_matrix(step.position, self.settings["matrix"])
+                new_path.append(ToolpathSteps.get_step_class_by_action(step.action)(new_pos))
             else:
-                new_path.append((move_type, args))
+                new_path.append(step)
         return new_path
 
 
 class TimeLimit(BaseFilter):
-    """ This filter is used for the toolpath simulation. It returns only a
-    partial toolpath within a given duration limit.
+    """ This filter is used for the toolpath simulation. It returns only a partial toolpath within
+    a given duration limit.
     """
 
     PARAMS = ("timelimit", )
@@ -338,24 +337,24 @@ class TimeLimit(BaseFilter):
         last_pos = None
         limit = self.settings["timelimit"]
         duration = 0
-        for move_type, args in toolpath:
-            if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
+        for step in toolpath:
+            if step.action in MOVES_LIST:
                 if last_pos:
-                    new_distance = pdist(args, last_pos)
+                    new_distance = pdist(step.position, last_pos)
                     new_duration = new_distance / max(feedrate, min_feedrate)
                     if (new_duration > 0) and (duration + new_duration > limit):
                         partial = (limit - duration) / new_duration
-                        destination = padd(last_pos, pmul(psub(args, last_pos), partial))
+                        destination = padd(last_pos, pmul(psub(step.position, last_pos), partial))
                         duration = limit
                     else:
-                        destination = args
+                        destination = step.position
                         duration += new_duration
                 else:
-                    destination = args
-                new_path.append((move_type, destination))
-                last_pos = args
-            if (move_type == MACHINE_SETTING) and (args[0] == "feedrate"):
-                feedrate = args[1]
+                    destination = step.position
+                new_path.append(ToolpathSteps.get_step_class_by_action(step.action)(destination))
+                last_pos = step.position
+            if (step.action == MACHINE_SETTING) and (step.key == "feedrate"):
+                feedrate = step.value
             if duration >= limit:
                 break
         return new_path
@@ -369,8 +368,7 @@ class MovesOnly(BaseFilter):
     WEIGHT = 95
 
     def filter_toolpath(self, toolpath):
-        return [item for item in toolpath
-                if item[0] in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID)]
+        return [step for step in toolpath if step.action in MOVES_LIST]
 
 
 class Copy(BaseFilter):
@@ -378,7 +376,7 @@ class Copy(BaseFilter):
     WEIGHT = 100
 
     def filter_toolpath(self, toolpath):
-        return toolpath
+        return list(toolpath)
 
 
 def _get_num_of_significant_digits(number):
@@ -425,10 +423,11 @@ class StepWidth(BaseFilter):
             conv.append(_get_num_converter(step_width)[0])
         last_pos = None
         path = []
-        for move_type, args in toolpath:
-            if move_type in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
+        for step in toolpath:
+            if step.action in MOVES_LIST:
                 if last_pos:
-                    diff = [(abs(conv[i](last_pos[i]) - conv[i](args[i]))) for i in range(3)]
+                    diff = [(abs(a_conv(a_last_pos) - a_conv(a_pos)))
+                            for a_conv, a_last_pos, a_pos in zip(conv, last_pos, step.position)]
                     if all([d < lim for d, lim in zip(diff, minimum_steps)]):
                         # too close: ignore this move
                         continue
@@ -436,12 +435,12 @@ class StepWidth(BaseFilter):
                 # this, but it sadly breaks other code pieces that rely on
                 # floats instead of decimals at this point. The output
                 # conversion needs to move into the GCode output hook.
-#               destination = [conv[i](args[i]) for i in range(3)]
-                destination = args
-                path.append((move_type, destination))
-                last_pos = args
+#               destination = [a_conv(a_pos) for a_conv, a_pos in zip(conv, step.position)]
+                destination = step.position
+                path.append(ToolpathSteps.get_step_class_by_action(step.action)(destination))
+                last_pos = step.position
             else:
                 # forget "last_pos" - we don't know what happened in between
                 last_pos = None
-                path.append((move_type, args))
+                path.append(step)
         return path

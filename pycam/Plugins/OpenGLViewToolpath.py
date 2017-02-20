@@ -20,7 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 import pycam.Gui.OpenGLTools
-from pycam.Toolpath import MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID
+from pycam.Toolpath import MOVES_LIST, MOVE_STRAIGHT_RAPID
 
 
 class OpenGLViewToolpath(pycam.Plugins.PluginBase):
@@ -131,13 +131,13 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
         last_rapid = None
         GL.glBegin(GL.GL_LINE_STRIP)
         transitions = []
-        for move_type, position in moves:
-            if move_type not in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
+        for step in moves:
+            if step.action not in MOVES_LIST:
                 continue
-            rapid = move_type == MOVE_STRAIGHT_RAPID
-            if last_rapid != rapid:
+            is_rapid = step.action == MOVE_STRAIGHT_RAPID
+            if last_rapid != is_rapid:
                 GL.glEnd()
-                if rapid:
+                if is_rapid:
                     GL.glColor4f(color_rapid["red"], color_rapid["green"], color_rapid["blue"],
                                  color_rapid["alpha"])
                 else:
@@ -148,11 +148,11 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
                 GL.glBegin(GL.GL_LINE_STRIP)
                 if last_position is not None:
                     GL.glVertex3f(*last_position)
-                last_rapid = rapid
-            GL.glVertex3f(*position)
+                last_rapid = is_rapid
+            GL.glVertex3f(*step.position)
             if show_directions and (last_position is not None):
-                transitions.append((last_position, position))
-            last_position = position
+                transitions.append((last_position, step.position))
+            last_position = step.position
         GL.glEnd()
         if show_directions:
             for p1, p2 in transitions:
