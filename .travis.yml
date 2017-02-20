@@ -12,3 +12,4 @@ before_install: ./scripts/travis-install-build-deps.sh
 script:
   - make check-style || true
   - python setup.py sdist
+  - ./scripts/pycam --help
