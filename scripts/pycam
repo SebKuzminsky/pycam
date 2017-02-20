@@ -38,7 +38,6 @@ except ImportError:
     # use an arbitrary other Exception
     AuthenticationError = socket.error
 
-from pycam import VERSION
 import pycam.Exporters.GCodeExporter
 import pycam.Gui.common as GuiCommon
 import pycam.Gui.Settings
@@ -49,6 +48,7 @@ from pycam.Toolpath import Bounds, Toolpath
 import pycam.Utils
 import pycam.Utils.log
 import pycam.Utils.threading
+from pycam import VERSION
 
 
 # register the glut32.dll manually for the pyinstaller standalone executable
