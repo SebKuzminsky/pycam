@@ -1,2 +1,0 @@
-= Big Picture of Processing =
-[[Image:big_picture_of_processing.svg|800px]]
