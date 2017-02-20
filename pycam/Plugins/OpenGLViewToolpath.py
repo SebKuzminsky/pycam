@@ -126,6 +126,7 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
         last_position = None
         last_rapid = None
         GL.glBegin(GL.GL_LINE_STRIP)
+        transitions = []
         for move_type, position in moves:
             if move_type not in (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID):
                 continue
@@ -145,10 +146,10 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
                     GL.glVertex3f(*last_position)
                 last_rapid = rapid
             GL.glVertex3f(*position)
+            if show_directions and (last_position is not None):
+                transitions.append((last_position, position))
             last_position = position
         GL.glEnd()
         if show_directions:
-            for index in range(len(moves) - 1):
-                p1 = moves[index][0]
-                p2 = moves[index + 1][0]
+            for p1, p2 in transitions:
                 pycam.Gui.OpenGLTools.draw_direction_cone(p1, p2)
