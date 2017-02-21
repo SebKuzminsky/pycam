@@ -1,7 +1,7 @@
 PyCAM server mode
 =================
 
-![](process_statistics.png "process_statistics.png"){width="300"}
+![Screenshot of Process Statistics window](img/process-statistics.png)
 
 PyCAM supports the distribution of its calculations among multiple
 different hosts. This can speed up processing especially for big models.
@@ -9,7 +9,8 @@ different hosts. This can speed up processing especially for big models.
 Overview
 --------
 
-![](multiprocessing_gui_preferences.png "fig:multiprocessing_gui_preferences.png"){width="300"}
+![](img/server-mode-gui-preferences.png)
+
 Basically there are two different modes of operation:
 
 -   local mode: the toolpath generation will be done on your computer -
@@ -23,25 +24,15 @@ Basically there are two different modes of operation:
 Technical details
 -----------------
 
-![](Server_Mode.svg "fig:Server_Mode.svg"){width="200"} The following
-graph shows four hosts (A..D) belonging to one pool of PyCAM servers.
+![Illustration of four processing hosts](img/server-mode.png)
+
+The following graph shows four hosts (A..D) belonging to one pool of PyCAM servers.
 Below you find the specific commands used for starting these hosts:
 
--   Host D:
-
-`pycam --enable-server --server-auth-key MY_SECRET_KEY`
-
--   Host B:
-
-`pycam --enable-server --server-auth-key MY_SECRET_KEY --remote-server HOST_D`
-
--   Host C:
-
-`pycam --enable-server --server-auth-key MY_SECRET_KEY --remote-server HOST_B`
-
--   Host A:
-
-`pycam --enable-server --server-auth-key MY_SECRET_KEY --remote-server HOST_B`
+-   Host D: `pycam --enable-server --server-auth-key MY_SECRET_KEY`
+-   Host B: `pycam --enable-server --server-auth-key MY_SECRET_KEY --remote-server HOST_D`
+-   Host C: `pycam --enable-server --server-auth-key MY_SECRET_KEY --remote-server HOST_B`
+-   Host A: `pycam --enable-server --server-auth-key MY_SECRET_KEY --remote-server HOST_B`
 
 As you can see above, there is no specific network topology required.
 Thus you can organize your connections according to your preference:
