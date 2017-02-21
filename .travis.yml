@@ -12,6 +12,7 @@ before_install: ./scripts/travis-install-build-deps.sh
 install: true
 
 script:
+  - export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
   - make check-style
   - python setup.py sdist
   - ./scripts/pycam --help
