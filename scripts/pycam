@@ -38,11 +38,14 @@ except ImportError:
     # use an arbitrary other Exception
     AuthenticationError = socket.error
 
-# running locally (without a proper PYTHONPATH) requires manual intervention
-BASE_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
-sys.path.insert(0, BASE_DIR)
+try:
+    from pycam import VERSION
+except ImportError:
+    # running locally (without a proper PYTHONPATH) requires manual intervention
+    sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                                     os.pardir)))
+    from pycam import VERSION
 
-from pycam import VERSION
 import pycam.Exporters.GCodeExporter
 import pycam.Gui.common as GuiCommon
 import pycam.Gui.Settings
@@ -53,7 +56,6 @@ from pycam.Toolpath import Bounds, Toolpath
 import pycam.Utils
 import pycam.Utils.log
 import pycam.Utils.threading
-
 
 # register the glut32.dll manually for the pyinstaller standalone executable
 if hasattr(sys, "frozen") and sys.frozen and "_MEIPASS2" in os.environ:
@@ -85,6 +87,8 @@ if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
         index += 1
     if path:
         os.environ["PATH"] = os.environ.get("PATH", "") + os.path.pathsep + path
+
+BASE_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
 EXAMPLE_MODEL_LOCATIONS = [
     os.path.join(BASE_DIR, "samples"),
