@@ -3,7 +3,7 @@ Model transformations
 
 PyCAM can help you to prepare the model for the final processing.
 
-![](model_transformations.png "model_transformations.png")
+![Screenshot of the Model tab](img/model-transformations.png)
 
 Rotate, Mirror, Swap
 --------------------
