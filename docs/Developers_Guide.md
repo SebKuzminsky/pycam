@@ -136,5 +136,5 @@ if you need access to the blog.
 
 The original video file and the available subtitles should be later
 committed to the development repository. Additionally the new video
-should be added to the [VideoTranslations](VideoTranslations "wikilink")
+should be added to the [VideoTranslations](VideoTranslations)
 wiki page.

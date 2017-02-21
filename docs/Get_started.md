@@ -4,7 +4,7 @@ Dive into PyCAM
 The following guide tries to push you as quickly as possible through the
 process of milling your first model based on a toolpath made with PyCAM.
 All the gory details will be missing - but at least you will know the
-basics. Please read the [User Manual](User_Manual "wikilink") if you
+basics. Please read the [User Manual](User_Manual) if you
 need more details.
 
 Prepare a GCode file with PyCAM
