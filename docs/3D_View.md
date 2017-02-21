@@ -1,10 +1,12 @@
-![](3d_view.png "fig:3d_view.png") The 3D view window opens
+![Screenshot showing the 3D View](img/3d-view.png)
+
+The 3D view window opens
 automatically during PyCAM's startup. You can hide it via the usual
 *close* icon of your window manager or by disabling the *3D View Window*
 checkbx in the *Windows* menu.
 
 The 3D view is based on OpenGL. Thus the respective libraries are
-recommended. See the [list of dependencies](Requirements "wikilink") for
+recommended. See the [list of dependencies](Requirements) for
 more details. You can use PyCAM even without OpenGL, but the lack of a
 3D preview will probably hinder your workflow.
 
@@ -15,7 +17,7 @@ models (eg. some 10k triangles).
 Visual features
 ---------------
 
-![](3d_view_context_menu.png "3d_view_context_menu.png")
+![Screenshot of 3D View with Context Menu](img/3d-view-context-menu.png)
 
 ### Model
 
@@ -24,7 +26,7 @@ The 2D contour model or the solid 3D model is displayed. See the
 
 ### Support bridges
 
-[Support bridges](Support_Bridges "wikilink") are only visible if you
+[Support bridges](Support_Bridges) are only visible if you
 enabled this feature for your model.
 
 ### Toolpaths
@@ -78,8 +80,9 @@ Configuration
 
 ### Visible items
 
-![](visible_items_in_3d_view.png "fig:visible_items_in_3d_view.png") All
-visible features of the 3D view can be selected in two different
+![Screenshot of Visible Items menu](img/3d-view-visible-items.png)
+
+All visible features of the 3D view can be selected in two different
 locations:
 
 -   the *Visible items* tab in the *Preferences* window
@@ -154,6 +157,5 @@ The scroll wheel of your mouse allows the following operations
 
 ### Keyboard control
 
-See the [list of
-shortcuts](KeyboardShortcuts#Visualization_window "wikilink") for the
+See the [list of shortcuts](KeyboardShortcuts#Visualization_window) for the
 complete reference of keyboard controls.
