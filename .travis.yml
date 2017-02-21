@@ -9,6 +9,8 @@ python:
 
 before_install: ./scripts/travis-install-build-deps.sh
 
+install: true
+
 script:
   - make check-style
   - python setup.py sdist
