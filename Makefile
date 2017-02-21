@@ -30,7 +30,7 @@ ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
 RM = rm -f
 
 .PHONY: zip tgz win32 clean dist git_export create_archive_dir man check-style test \
-	pylint-relaxed pylint-strict docs upload-docs update-version
+	pylint-relaxed pylint-strict docs upload-docs update-version update-deb-changelog
 
 dist: zip tgz win32
 	@# we can/should remove the version file in order to avoid a stale local version
@@ -58,6 +58,14 @@ win32: create_archive_dir man
 	# this is a binary release
 	$(PYTHON_EXE) setup.py bdist_wininst --user-access-control force \
 		--dist-dir "$(ARCHIVE_DIR)" $(DISTUTILS_PLAT_NAME)
+
+update-deb-changelog:
+	@# retrieve the log of all commits since the latest release and add it to the deb changelog
+	if ! grep -qFw "$(VERSION)" debian/changelog; then \
+		git log --pretty=format:%s v$(shell dpkg-parsechangelog -S version).. | \
+			DEBFULLNAME="PyCAM Builder" DEBEMAIL="builder@pycam.org" \
+			xargs -r -d '\n' -n 1 -- debchange --newversion "$(subst -,.,$(VERSION))"; \
+	fi
 
 update-version:
 	@echo 'VERSION = "$(VERSION)"' >| "$(VERSION_FILE)"
