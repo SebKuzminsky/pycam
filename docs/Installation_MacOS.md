@@ -14,13 +14,12 @@ Afterwards you need to install the following packages:
 
 Simply run the following to install all dependencies:
 
-`sudo port install py25-gtk py25-gtkglext py25-opengl py25-psyco py25-ode`
+     sudo port install py25-gtk py25-gtkglext py25-opengl py25-psyco py25-ode
 
 Run PyCAM
 ---------
 
--   extract the [PyCAM
-    archive](http://pycam.sourceforge.net/download.html)
+-   extract the [PyCAM archive](http://pycam.sourceforge.net/download.html)
 -   run */opt/local/bin/python2.5 pycam* from within PyCAM's directory
     -   the above line refers to MacPorts' Python interpreter (instead
         of MacOS' native Python) - otherwise it will not find OpenGL and
@@ -38,18 +37,18 @@ provide the following relevant information about your setup.
 
 Get the list of installed python-related packages:
 
-`port installed | grep py`
+    port installed | grep py
 
 Get Python's output for every interesting *import* statement:
 
-`foo@bar:~$ /opt/local/bin/python2.5`\
-`Python 2.5.5 (r255:77872, Nov 28 2010, 19:00:19) `\
-`[GCC 4.4.5] on linux2`\
-`Type `“`help`”`, `“`copyright`”`, `“`credits`”` or `“`license`”` for more information.`\
-`>>> import gtk.gtkgl`\
-`>>> import OpenGL.GL as GL`\
-`>>> import OpenGL.GLU as GLU`\
-`>>> import OpenGL.GLUT as GLUT`
+    foo@bar:~$ /opt/local/bin/python2.5
+    Python 2.5.5 (r255:77872, Nov 28 2010, 19:00:19)
+    [GCC 4.4.5] on linux2
+    Type "help", "copyright", "credits” or "license" for more information.
+    >>> import gtk.gtkgl
+    >>> import OpenGL.GL as GL
+    >>> import OpenGL.GLU as GLU
+    >>> import OpenGL.GLUT as GLUT
 
 (the above output of a successful test was taken on Linux - your
 installed versions may differ slightly)
@@ -59,7 +58,7 @@ installed versions may differ slightly)
 Some users reported the following warning from PyCAM, even though they
 installed all required packages:
 
-`Please install 'python-gtkglext1'`
+> Please install 'python-gtkglext1'
 
 Since none of the PyCAM developers is a Mac OS user, it is not easy for
 us to track down this issue. Currently it looks like a problem of

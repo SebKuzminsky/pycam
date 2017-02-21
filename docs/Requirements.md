@@ -29,7 +29,7 @@ Install the following packages with your package manager (see below):
 
 Run the following command in a *root* terminal:
 
-`apt-get install python-gtk2 python-opengl python-gtkglext1 python-rsvg python-pyode python-guppy`
+    apt-get install python-gtk2 python-opengl python-gtkglext1 python-rsvg python-pyode python-guppy
 
 Please note, that the outdated Debian *Lenny* contains broken
 *python-opengl* and *python-pyode* packages. You need to temporarily add
@@ -40,7 +40,7 @@ the *Squeeze* repository during the installation of these two packages.
 Enable the *universe* repository. See detailed instructions
 [here](http://help.ubuntu.com/community/Repositories/Ubuntu).
 
-`sudo apt-get install python-gtk2 python-opengl python-gtkglext1 python-rsvg python-pyode python-guppy`
+    sudo apt-get install python-gtk2 python-opengl python-gtkglext1 python-rsvg python-pyode python-guppy
 
 Please note, that Ubuntu *Jaunty* (maybe also *Dapper/Hardy/Intrepid*)
 contains broken *python-opengl* and *python-pyode* packages. You need to
@@ -51,13 +51,13 @@ two packages.
 
 Run the following command in a *root* terminal:
 
-`zypper install python-gtk2 python-gtkglext python-opengl python-rsvg python-guppy`
+    zypper install python-gtk2 python-gtkglext python-opengl python-rsvg python-guppy
 
 ### Fedora
 
 Run the following command in a *root* terminal:
 
-`yum install pygtk2 pygtkglext python-opengl gnome-python2-rsvg python-guppy`
+    yum install pygtk2 pygtkglext python-opengl gnome-python2-rsvg python-guppy
 
 Windows
 -------
@@ -84,6 +84,7 @@ Optional external programs
 
 Some features of PyCAM require additional external programs.
 
+
 SVG/PS/EPS import
 -----------------
 
@@ -106,9 +107,9 @@ external programs for conversions of other file formats.
 
 Download and install the following programs:
 
-inkscape: <http://inkscape.org>\
-pstoedit: <http://www.pstoedit.net/pstoedit>\
-ghostscript: <http://pages.cs.wisc.edu/~ghost/>
+* inkscape: <http://inkscape.org>
+* pstoedit: <http://www.pstoedit.net/pstoedit>
+* ghostscript: <http://pages.cs.wisc.edu/~ghost/>
 
 *Hint: there is no need to install GraphicMagick - even though pstoedit
 suggests it.*

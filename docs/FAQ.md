@@ -50,8 +50,8 @@ solution depends on your platform and your method of installation.
 Please take a look at [OpenGL troubles](OpenGL_troubles) for
 details.
 
-PyCAM consumes all my memory! \[only \*nix\]
---------------------------------------------
+PyCAM consumes all my memory! \[only Unix\]
+-------------------------------------------
 
 There seems to be a problem with PyCAM v0.5.x running under Python 2.7.
 Ubuntu Natty and Oneiric (11.04 / 11.10)) and other distributions ship
@@ -59,8 +59,8 @@ this version of Python by default. The specific cause of the problem was
 discovered recently by jferrara. It will be fixed in release v0.6 of
 PyCAM.
 
-Solution A: install Python 2.6 and use it for running PyCAM.\
-Solution B: apply this small patch for PyCAM: <http://sourceforge.net/projects/pycam/forums/forum/860184/topic/4753623?message=10917042>
+* Solution A: install Python 2.6 and use it for running PyCAM.
+* Solution B: apply this small patch for PyCAM: <http://sourceforge.net/projects/pycam/forums/forum/860184/topic/4753623?message=10917042>
 
 SVG import: postoedit reports a missing MSVCR100.dll library \[only Windows\]
 -----------------------------------------------------------------------------
@@ -72,8 +72,8 @@ MSVCR100.dll.
 pstoedit v3.60 (or later) depends on the MS Visual C++ 2010 library.
 Thus you have to options to solve this issue:
 
-Solution A: install an older version of *pstoedit* (e.g. [v3.50](http://sourceforge.net/projects/pstoedit/files/pstoedit/3.50/))\
-Solution B: install [Microsoft Visual C++ 2010 Redistributable Package (x86)](http://www.microsoft.com/download/en/details.aspx?id=5555) - maybe you also need to install [Windows Installer 3.1 Redistributable (v2)](http://www.microsoft.com/download/en/details.aspx?displaylang=en&id=25)
+* Solution A: install an older version of *pstoedit* (e.g. [v3.50](http://sourceforge.net/projects/pstoedit/files/pstoedit/3.50/))
+* Solution B: install [Microsoft Visual C++ 2010 Redistributable Package (x86)](http://www.microsoft.com/download/en/details.aspx?id=5555) - maybe you also need to install [Windows Installer 3.1 Redistributable (v2)](http://www.microsoft.com/download/en/details.aspx?displaylang=en&id=25)
 
 Toolpaths (general)
 ===================
@@ -157,8 +157,8 @@ Toolpaths with an offset are placed inside of the model instead of outside
 
 There can be two reasons:
 
-you specified a negative engraving offset: In this case the toolpath is supposed to be inside of the polygons. This is a feature.\
-the polygon's winding is clockwise instead of counter-clockwise (or vice versa): use the *toggle directions* or *revise directions* button to fix this issue.
+* you specified a negative engraving offset: In this case the toolpath is supposed to be inside of the polygons. This is a feature.
+* the polygon's winding is clockwise instead of counter-clockwise (or vice versa): use the *toggle directions* or *revise directions* button to fix this issue.
 
 How can I specify the depth for gravures?
 -----------------------------------------

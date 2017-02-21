@@ -11,11 +11,11 @@ The code of PyCAM including all related files and previous releases is
 stored in a subversion repository. You need to checkout a local working
 copy to start working on PyCAM:
 
-`svn co `[`https://pycam.svn.sourceforge.net/svnroot/pycam/trunk`](https://pycam.svn.sourceforge.net/svnroot/pycam/trunk)` pycam`
+    svn co https://pycam.svn.sourceforge.net/svnroot/pycam/trunk pycam
 
 Upload your changes with:
 
-`svn commit`
+    svn commit
 
 Previous versions are stored in the *tags* path of the repository:
 <https://pycam.svn.sourceforge.net/svnroot/pycam/tags>
@@ -31,7 +31,7 @@ of the same name in Debian and Ubuntu).
 
 Whenever you change the name (this is not the label) of a control, you
 should also replace all occurrences of this string in the file
-*src/pycam/Gui/Project.py*.
+`src/pycam/Gui/Project.py`.
 
 Please add tooltips wherever it is suitable.
 
@@ -46,9 +46,9 @@ Three steps are required to add a new menu item:
     2.  put an underscore in front of a character to mark it as the
         hotkey of this item
 2.  add the item with its name to the file
-    *share/gtk-interface/menubar.xml*
-3.  add a handler for this action to *src/pycam/Gui/Project.py*
-    1.  search for *accel\_key* (around line 160)
+    `share/gtk-interface/menubar.xml`
+3.  add a handler for this action to `src/pycam/Gui/Project.py`
+    1.  search for `accel\_key` (around line 160)
 
 Changing default settings
 -------------------------
@@ -57,7 +57,7 @@ PyCAM uses two types of settings.
 
 The general settings define the unit size (imperial or metric), colors,
 program locations and so on. They are stored automatically on exit in
-the file *\~/.pycam/preferences.conf*.
+the file `\~/.pycam/preferences.conf`.
 
 The task settings describe the tools, processes, bounding boxes and
 tasks. They are not stored automatically. Thus they are at their default
@@ -66,12 +66,12 @@ values on each start of PyCAM.
 ### General preferences
 
 The default general PyCAM settings are defined at the top of
-*src/pycam/Gui/Project.py* in the dictionary *PREFERENCES\_DEFAULTS*.
+`src/pycam/Gui/Project.py` in the dictionary `PREFERENCES_DEFAULTS`.
 
 ### Task settings
 
 The default task settings are defined in the file
-*src/pycam/Gui/Settings.py* in the dictionay *BASIC\_DEFAULT\_CONFIG*.
+`src/pycam/Gui/Settings.py` in the dictionay `BASIC_DEFAULT_CONFIG`.
 
 Preparing a tutorial video
 --------------------------
@@ -93,7 +93,7 @@ probably black - before starting the session.
 If you recorded the whole screen, but you need only a part of it, then
 run the following:
 
-`ffmpeg -i INPUT_FILE -crop WIDTH:HEIGHT:LEFT_X:TOP_Y -vcodec ffv1 OUTPUT_FILE`
+    ffmpeg -i INPUT_FILE -crop WIDTH:HEIGHT:LEFT_X:TOP_Y -vcodec ffv1 OUTPUT_FILE
 
 Even if you don't need to crop the video, you should still use the line
 above (without the *-crop* parameter) to convert the video into a
@@ -105,11 +105,11 @@ startup frames.
 
 Use the following example for cutting a small part of the video:
 
-`mencoder -ovc raw -noskip -forceidx -vf harddup -ss START_TIME -endpos DURATION INPUT_FILE -o OUTPUT_FILE`
+    mencoder -ovc raw -noskip -forceidx -vf harddup -ss START_TIME -endpos DURATION INPUT_FILE -o OUTPUT_FILE
 
 Combine multiple cutted video pieces:
 
-`mencode -idx -ovc raw INPUT_FILE1 INPUT_FILE2 -o OUTPUT_FILE`
+    mencode -idx -ovc raw INPUT_FILE1 INPUT_FILE2 -o OUTPUT_FILE
 
 ### Add subtitles
 
@@ -120,7 +120,7 @@ text editor.
 
 Run the following to merge the subtitles permanently with the video:
 
-`mencoder -sub SUBTITLE_FILE -subfont-text-scale 3 -subalign 0 -subpos 2 -utf8 INPUT_FILE -o OUTPUT_FILE -ovc lavc -lavcopts vbitrate=1200`
+    mencoder -sub SUBTITLE_FILE -subfont-text-scale 3 -subalign 0 -subpos 2 -utf8 INPUT_FILE -o OUTPUT_FILE -ovc lavc -lavcopts vbitrate=1200
 
 ### Uploading
 

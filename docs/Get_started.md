@@ -10,15 +10,23 @@ need more details.
 Prepare a GCode file with PyCAM
 -------------------------------
 
-Load a model: Open an STL file of your choice OR just continue with PyCAM's default model (a box with text elevated on top)\
-Fix the dimensions of the model: Rotate, mirror and scale the model until its dimensions are fine for you. In a perfect world you would do this with your 3D modeler - but in case of emergency this can also be done with PyCAM.\
-Position the model: Many people adjust the top of their model to z=0. This makes it quite easy to touch-off (calibrate *z*) the tip of the tool at the top of your material.\
-Define the bounding box: This part is a bit tricky and depends on your approach of clamping the base material to the milling machine. Basically the bounding box describes the shape of the available material.\
-Define a first task: The first milling task will usually remove big amounts of material without caring too much for a high surface quality. Choose a big tool and configure a *slice removal* process with a minimum overlap. This process will remove a lot of material with as few moves as possible.\
-Define more granular tasks: Now you are ready for a smaller tool and the *surface* strategy with a high overlap (e.g. 60%). This will give you quite a good surface quality.\
-Generate the toolpath for both tasks: This can take some minutes.\
-Configure GCode details: The most important GCode setting is the safety height. This defines the z-level at which the machine (including the tool) is free to move without any obstacles. The default is slightly aboe zero. You absolutely need to make sure that the safety height is always clearly above the level of the top of your material. You will see all changes reflected in the 3D preview immediately.\
-Write GCode: Now you can export both toolpaths to a file. This GCode file can be imported by your machine controller software (e.g. [LinuxCNC](http://www.linuxcnc.org/)) - see below.
+1. Load a model: Open an STL file of your choice OR just continue with PyCAM's default model (a box with text elevated on top)
+
+2. Fix the dimensions of the model: Rotate, mirror and scale the model until its dimensions are fine for you. In a perfect world you would do this with your 3D modeler - but in case of emergency this can also be done with PyCAM.
+
+3. Position the model: Many people adjust the top of their model to _z=0_. This makes it quite easy to touch-off (calibrate _z_) the tip of the tool at the top of your material.
+
+4. Define the bounding box: This part is a bit tricky and depends on your approach of clamping the base material to the milling machine. Basically the bounding box describes the shape of the available material.
+
+5. Define a first task: The first milling task will usually remove big amounts of material without caring too much for a high surface quality. Choose a big tool and configure a *slice removal* process with a minimum overlap. This process will remove a lot of material with as few moves as possible.
+
+6. Define more granular tasks: Now you are ready for a smaller tool and the *surface* strategy with a high overlap (e.g. 60%). This will give you quite a good surface quality.
+
+7. Generate the toolpath for both tasks: This can take some minutes.
+
+8. Configure GCode details: The most important GCode setting is the safety height. This defines the z-level at which the machine (including the tool) is free to move without any obstacles. The default is slightly aboe zero. You absolutely need to make sure that the safety height is always clearly above the level of the top of your material. You will see all changes reflected in the 3D preview immediately.
+
+9. Write GCode: Now you can export both toolpaths to a file. This GCode file can be imported by your machine controller software (e.g. [LinuxCNC](http://www.linuxcnc.org/)) - see below.
 
 Run the GCode file
 ------------------

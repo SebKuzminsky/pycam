@@ -13,7 +13,7 @@ See also [Hints for 3D modeling with OpenSCAD
 The following example code creates a sectional drawing of a sphere at a
 specific z-level:
 
-`projection(cut=true) translate([0, 0, -3]) sphere(r=10);`
+    projection(cut=true) translate([0, 0, -3]) sphere(r=10);
 
 See the [OpenSCAD User
 Manual](http://en.wikibooks.org/wiki/OpenSCAD_User_Manual/3D_to_2D_Projection)

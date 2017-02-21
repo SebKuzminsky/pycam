@@ -6,11 +6,11 @@ Diganostics for all platforms
 
 First you should try to open a Python console:
 
-; \*nix: open a terminal and type
+On Linux: open a terminal and type
 
     python
 
-Windows: run *C:\\Python25\\python.exe*
+Windows: run `C:\\Python25\\python.exe`
 
 Python's interactive console should now be waiting for your commands.
 Its output could look like this:
@@ -33,20 +33,20 @@ other message could be a sign of a problem. Please report these messages
 via the forum or the developer mailing list if you encounter a problem
 that you cannot solve on your own.
 
-Details for \*nix
------------------
+Details for Unix
+----------------
 
 Verify the installed packages:
 
-;Debian / Ubuntu:
+Debian / Ubuntu:
 
     dpkg -l python-gtk2 python-gtkglext1 python-opengl | grep ^i
 
-;OpenSuSE:
+OpenSuSE:
 
     zypper -i --match-any python-gtk2 python-gtkglext python-opengl
 
-;MacOS:
+MacOS:
 
     port installed | grep python
 
@@ -70,9 +70,13 @@ Details for Windows
 
 ### missing libgdkglext-win32-1.0-0.dll
 
-Valid for: Windows, installer package with dependency installer\
-Description: In the beginning of 2012 a download site went down that hosted one of the programs that are downloaded during the installation process of the dependency installer. Older dependency installers are also affected - even the ones that were working before.\
-Solution: Download the [updated dependency installer](http://sourceforge.net/projects/pycam/files/dependency-installer/win32/external_binaries/gtkglext/gtkglext-win32-1.2.0.exe/download) and run it again.
+Valid for: Windows, installer package with dependency installer
+
+In the beginning of 2012 a download site went down that hosted one of the programs that
+are downloaded during the installation process of the dependency installer.
+Older dependency installers are also affected - even the ones that were working before.
+
+Download the [updated dependency installer](http://sourceforge.net/projects/pycam/files/dependency-installer/win32/external_binaries/gtkglext/gtkglext-win32-1.2.0.exe/download) and run it again.
 
 ### missing DLL (name is known)
 
@@ -100,9 +104,9 @@ The following example error message is given:
         from _gtkgl import *
     ImportError: DLL load failed: The specified module could not be found.
 
-Step 1: locate the related *PYD* file (a kind of Python DLL) - it resides just next to the \*.py file that caused the error message. Here: *C:\\Python25\\Lib\\site-packages\\gtk-2.0\\gtk\\gtkgl\\\_gtkgl.pyd*\
-Step 2: Download and run [DependencyWalker](http://dependencywalker.com)\
-Step 3: Open the *PYD* file with Depdendy Walker and check if any of the libraries are marked as missing or unknown.
+* Step 1: locate the related *PYD* file (a kind of Python DLL) - it resides just next to the \*.py file that caused the error message. Here: *C:\\Python25\\Lib\\site-packages\\gtk-2.0\\gtk\\gtkgl\\\_gtkgl.pyd*
+* Step 2: Download and run [DependencyWalker](http://dependencywalker.com)
+* Step 3: Open the *PYD* file with Depdendy Walker and check if any of the libraries are marked as missing or unknown.
 
 Now you should know the name of the missing library - thus you can
 continue with the section above.

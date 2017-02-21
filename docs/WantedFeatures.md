@@ -17,7 +17,7 @@ Support for opencamlib
 
 [opencamlib](http://code.google.com/p/opencamlib/) ...
 
-`... a GPL licensed C++ library with Python bindings for creating toolpaths for cnc-machines.'`
+> ... a GPL licensed C++ library with Python bindings for creating toolpaths for cnc-machines.
 
 *opencamlib* currently supports some features that are not available in
 PyCAM:
