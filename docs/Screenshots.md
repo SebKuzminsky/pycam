@@ -4,44 +4,45 @@ Screenshots
 Startup Screen
 --------------
 
-![](startup.png "startup.png")
+![Screenshot of PyCAM at startup](img/screenshot-startup.png)
 
 Model operations
 ----------------
 
-![](model_operations.png "model_operations.png")
+![Screenshot of the Model Operations](img/screenshot-model-operations.png)
 
 Processing settings
 -------------------
 
-![](processing_settings.png "processing_settings.png")
+![Screenshot of Processing Settings](img/screenshot-processing-settings.png)
 
 Roughing Operation
 ------------------
 
-![](polygon_cutter.png "polygon_cutter.png")
+![Screenshot of Polygon Cutter 3D View](img/screenshot-polygon-cutter.png)
 
 Semi-finishing Operation
 ------------------------
 
-![](contour_cutter.png "contour_cutter.png")
+![Screenshot of Contour Cutter 3D View](img/screenshot-contour-cutter.png)
 
 Finishing Operation
 -------------------
 
-![](finishing_operation.png "finishing_operation.png")
+![Screenshot of Finishing Operation 3D View](img/screenshot-finishing-operation.png)
 
 Toolpath management
 -------------------
 
-![](toolpath_view.png "toolpath_view.png")
+![Screenshot of list of Toolpaths](img/screenshot-toolpath-view.png)
 
 Settings
 --------
 
-![](settings.png "settings.png")
+![Screenshot of list of PyCAM setting](img/screenshot-settings.png)
 
 Importing the GCode in LinuxCNC
 ---------------------------
 
-![](linuxcnc_example.png "linuxcnc_example.png")
+![Screenshot of G-Code imported into LinuxCNC](img/screenshot-linuxcnc-example.png)
+
