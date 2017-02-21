@@ -87,7 +87,7 @@ class ODEBlocks(object):
         aabb = cutter_shape.getAABB()
         cutter_height = aabb[5] - aabb[4]
         # add a ray along the drill to work around an ODE bug in v0.11.1
-        # http://sourceforge.net/tracker/index.php?func=detail&aid=2973876&group_id=24884&atid=382799
+        # http://sf.net/tracker/index.php?func=detail&aid=2973876&group_id=24884&atid=382799
         currx, curry, currz = cutter_shape.getPosition()
         ray = ode.GeomRay(self.space, cutter_height)
         ray.set((currx, curry, aabb[5]), (0.0, 0.0, -1.0))
