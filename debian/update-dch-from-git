@@ -1,0 +1,41 @@
+#!/bin/bash
+#set -x
+
+if [ ! -d debian -o ! -d pycam -o ! -f scripts/pycam ]; then
+    echo "this script must be run from the root of the source tree (the directory with debian/ and pycam/ in it)"
+    exit 1
+fi
+
+GIT_DESCRIBE=$(git describe --dirty --tags --match 'v[0-9].*')
+GIT_TAG=$(echo ${GIT_DESCRIBE} | sed -re 's/-.*$//')
+GIT_VERSION=$(echo ${GIT_DESCRIBE#v} | sed -e 's/-test/~test/')
+if [ $? -ne 0 ]; then
+    echo "error determining version!"
+    exit 1
+fi
+
+DEB_PACKAGE_NAME=$(dpkg-parsechangelog -SSource)
+
+DEB_VERSION=`git show HEAD:debian/changelog | head -1 | sed 's/.*(\(.*\)).*/\1/'`
+
+NEW_DEB_VERSION=$(echo $GIT_VERSION | sed -r 's/-pre/~pre/; s/-/./g')
+
+if [ "$NEW_DEB_VERSION" = "$DEB_VERSION" ]; then
+    echo "no changes since the version at the top of the debian/changelog file"
+    echo "not modifying debian/changelog"
+    exit 0
+fi
+
+set -e
+(
+    echo "${DEB_PACKAGE_NAME} ($NEW_DEB_VERSION) UNRELEASED; urgency=low"
+    echo
+    git log --pretty=format:"  * %w(72,0,6)%s" $GIT_TAG..
+    echo
+    echo
+    echo " -- PyCAM Builder <builder@pycam.org>  $(date -R)"
+    echo
+    git show HEAD:debian/changelog
+) > debian/changelog
+
+#dch -r --nomultimaint ""
