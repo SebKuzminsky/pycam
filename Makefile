@@ -82,4 +82,10 @@ pylint-relaxed:
 		-d too-many-boolean-expressions,too-many-public-methods \
 		$(PYTHON_CHECK_STYLE_TARGETS)
 
-test: check-style
+
+## Building the documentation/website
+docs:
+	mkdocs build
+	
+upload-docs: docs
+	rsync -avz --delete --exclude=.DS_Store -e ssh site/ web.sourceforge.net:/home/project-web/pycam/htdocs/
