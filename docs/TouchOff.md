@@ -1,8 +1,7 @@
 Overview
 --------
 
-![|180px|Settings for touch off
-operation](touch_off_settings.png "|180px|Settings for touch off operation")
+![Settings for touch off operation](img/touch-off-settings.png)
 
 Before milling an object you always need to adjust the coordinate system
 of your machine controller (e.g. [LinuxCNC](http://www.linuxcnc.org/)). This
@@ -27,8 +26,7 @@ well. Any feedback (just edit this page) is highly appreciated!
 Touch off on startup
 --------------------
 
-![|180px|Visualization of touch off
-settings](touch_off.png "|180px|Visualization of touch off settings")
+![Screenshot of touch off settings](img/touch-off.png)
 
 The following description is only valid if the *Touch probe position*
 value is *Initial location*. The *Fixed location (absolute)* setting
