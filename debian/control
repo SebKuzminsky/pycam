@@ -3,7 +3,7 @@ Section: python
 Priority: extra
 Maintainer: Lars Kruse <devel@sumpfralle.de>
 Build-Depends: python, debhelper (>= 9), dh-python, help2man,
- python-opengl, python-numpy, python-setuptools, pyflakes
+ python-opengl, python-numpy, python-setuptools, python-flake8
 Standards-Version: 3.9.6
 Homepage: http://github.com/SebKuzminsky/pycam
 
