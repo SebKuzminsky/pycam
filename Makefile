@@ -67,7 +67,7 @@ upload:
 		-m "added released win32 installer for version $(VERSION)"
 
 check-style:
-	pyflakes $(PYTHON_CHECK_STYLE_TARGETS)
+	scripts/run_flake8 $(PYTHON_CHECK_STYLE_TARGETS)
 
 pylint-strict:
 	pylint $(PYTHON_CHECK_STYLE_TARGETS)

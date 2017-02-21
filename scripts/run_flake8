@@ -1,0 +1,19 @@
+#!/usr/bin/env python
+"""
+This script is just a wrapper around different versions of flake8.
+It can be removed as soon as "python -m flake8" works across all common distributions.
+"""
+
+import sys
+
+# the "flake8" module in Debian Jessie and Stretch, as well as Ubuntu Trusty use different names
+try:
+    # Debian Stretch
+    from flake8.main.cli import main
+except ImportError:
+    # Debian Jessie and Ubuntu Trusty
+    from flake8.main import main
+
+
+if __name__ == "__main__":
+    main()
