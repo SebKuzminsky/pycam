@@ -12,7 +12,7 @@ machines). Your workflow will probably look like this:
 3.  save the resulting GCode to a file
 
 The GCode file can be used by most standards-compliant machine
-controllers (e.g. [EMC2](http://linuxcnc.org)).
+controllers (e.g. [LinuxCNC](http://www.linuxcnc.org/)).
 
 What licence applies to PyCAM? Does it cost money?
 --------------------------------------------------

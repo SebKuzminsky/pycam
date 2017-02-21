@@ -28,11 +28,10 @@ The following list contains only Free Software (GPL/BSD/...):
 External software lists
 =======================
 
--   [EMC-Wiki](http://wiki.linuxcnc.org/cgi-bin/emcinfo.pl?Cam):
-    exhausting list of CAD/CAM/conversion software
+-   [LinuxCNC Wiki](http://wiki.linuxcnc.org/cgi-bin/wiki.pl?Cam):
+    exhaustive list of CAD/CAM/conversion software
 -   [xtronics wiki](http://wiki.xtronics.com/index.php/CAD_CAM): broad
     overview of CAD/CAM software
--   [Simple G-Code
-    generators](http://wiki.linuxcnc.org/cgi-bin/emcinfo.pl?Simple_EMC_G-Code_Generators):
+-   [Simple G-Code generators](https://github.com/linuxcnc/simple-gcode-generators):
     a list of small scripts and simple interface for generating basic
-    toolpaths for EMC2
+    toolpaths for LinuxCNC

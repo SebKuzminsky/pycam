@@ -5,7 +5,7 @@ Overview
 operation](touch_off_settings.png "|180px|Settings for touch off operation")
 
 Before milling an object you always need to adjust the coordinate system
-of your machine controller (e.g. [EMC2](http://linuxcnc.org)). This
+of your machine controller (e.g. [LinuxCNC](http://www.linuxcnc.org/)). This
 operation is quite easy for the planar axes x and y. Only z is a bit
 tricky, since it usually needs to be quite acurate. Otherwise you risk
 to mill slightly too deep (damaging the base of the milling machine) or
@@ -20,7 +20,7 @@ system of the machine controller according to the length of the new
 tool. Usually this is accomplished by shifting the coordinate system by
 the difference between the height of the old tool and the new tool.
 
-**Beware:** the generated GCode probably only works with EMC2. Please
+**Beware:** the generated GCode probably only works with LinuxCNC. Please
 check carefully (and slowly) if it works for your machine controller, as
 well. Any feedback (just edit this page) is highly appreciated!
 

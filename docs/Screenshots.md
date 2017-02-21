@@ -41,7 +41,7 @@ Settings
 
 ![](settings.png "settings.png")
 
-Importing the GCode in EMC²
+Importing the GCode in LinuxCNC
 ---------------------------
 
-![](emc_example.png "emc_example.png")
+![](linuxcnc_example.png "linuxcnc_example.png")

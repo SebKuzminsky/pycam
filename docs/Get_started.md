@@ -18,7 +18,7 @@ Define a first task: The first milling task will usually remove big amounts of m
 Define more granular tasks: Now you are ready for a smaller tool and the *surface* strategy with a high overlap (e.g. 60%). This will give you quite a good surface quality.\
 Generate the toolpath for both tasks: This can take some minutes.\
 Configure GCode details: The most important GCode setting is the safety height. This defines the z-level at which the machine (including the tool) is free to move without any obstacles. The default is slightly aboe zero. You absolutely need to make sure that the safety height is always clearly above the level of the top of your material. You will see all changes reflected in the 3D preview immediately.\
-Write GCode: Now you can export both toolpaths to a file. This GCode file can be imported by your machine controller software (e.g. [LinuxCNC](http://linuxcnc.org)) - see below.
+Write GCode: Now you can export both toolpaths to a file. This GCode file can be imported by your machine controller software (e.g. [LinuxCNC](http://www.linuxcnc.org/)) - see below.
 
 Run the GCode file
 ------------------

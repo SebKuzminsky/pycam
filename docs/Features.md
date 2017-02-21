@@ -113,7 +113,7 @@ GCode features
 --------------
 
 GCode is a common input format for machine control software (e.g.
-[EMC²](http://linuxcnc.org)). The GCode file may contain one or mothe
+[LinuxCNC](http://www.linuxcnc.org/)). The GCode file may contain one or mothe
 toolpaths.
 
 Available Features:
@@ -125,10 +125,10 @@ Available Features:
 -   join multiple toolpaths into one gcode file (including tool changes)
 -   Safety height: z-value of the safe position above the object
 -   specify path precision vs. processing speed
-    ([G61/G64](http://linuxcnc.org/docs/html/gcode_main.html#G61,%20G61.1,%20G64%20Path%20Control%7CGCode))
+    ([G61/G64](http://www.linuxcnc.org/docs/html/gcode_main.html#G61,%20G61.1,%20G64%20Path%20Control%7CGCode))
 -   specify the minimum step width for all three axes
 -   [*touch off* and *tool change*](TouchOff "wikilink") operations
--   export tool definitions to EMC2 (for improved visualization)
+-   export tool definitions to LinuxCNC (for improved visualization)
 
 GUI features
 ------------

@@ -53,7 +53,7 @@ A common workflow could look like this:
 5.  repeat steps 2..4 if you want to add more toolpaths
 6.  export the generated toolpaths to a file (in GCode format)
 
-The output (GCode) can be used for [EMC²](http://linuxcnc.org) and other
+The output (GCode) can be used for [LinuxCNC](http://www.linuxcnc.org/) and other
 machine controller software.
 
 Graphical User Interface

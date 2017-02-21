@@ -58,7 +58,7 @@ necessary to determine the line width.
 ### Single-line font support
 
 QCAD implements support for CXF fonts. See some example font files
-[here](http://linuxcnc.org/dropbox/cxf_fonts.tgz). Maybe this [code
+[here](http://www.linuxcnc.org/dropbox/cxf_fonts.tgz). Maybe this [code
 snippet](http://wiki.linuxcnc.org/uploads/engrave-11.py) could be a
 starting point. Probably it would be nicer, if inkscape or other 2D
 vector programs would support CXF fonts, but it currently does not look

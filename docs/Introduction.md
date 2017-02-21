@@ -160,4 +160,5 @@ Choose *Export Toolpaths* from the *File* menu to store all toolpaths
 (see *Toolpaths* tab) in a GCode file.
 
 The GCode file can be used with any common machine controller software,
-e.g. [EMC2](http://linuxcnc.org).
+e.g. [LinuxCNC](http://www.linuxcnc.org/).
+
