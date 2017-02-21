@@ -7,7 +7,7 @@ trying to create a 2D model with Inkscape, since this process could
 otherwise fail in non-obvious ways ...
 
 Importing SVG files require external programs. Read PyCAM's
-[requirements](Requirements#Optional_external_programs "wikilink") for
+[requirements](Requirements#Optional_external_programs) for
 details
 
 Export file format
@@ -44,13 +44,12 @@ Colors
 PyCAM's import uses the color of an object as an indication of its
 height. You need to stick to a single color (e.g. black) if you want to
 create a single-plane 2D model. See [Pseudo 3D
-support](#Pseudo_3D_support "wikilink") below for more details.
+support](#Pseudo_3D_support) below for more details.
 
 Outlines and holes
 ------------------
 
-![|180px|Combining polygons with proper
-directions](Polygon_directions_in_Inkscape.png "|180px|Combining polygons with proper directions")
+![Combining polygons with proper directions](img/2d-modelling-polygon_directions.png)
 
 The following hints are only necesary, if you need an SVG with
 consistent winding states. Alternatively you can repair inconsistent
@@ -87,14 +86,13 @@ PyCAM. You don't need to care about embedding fonts.
 
 Beware: TrueType fonts (used by Inkscape) are *outline* fonts. Thus
 every glyph is described by its outline and inner holes. Alternatively
-you may want to use the [single-line fonts](EngraveFonts "wikilink")
+you may want to use the [single-line fonts](EngraveFonts)
 supplied with PyCAM.
 
 Pseudo 3D support
 -----------------
 
-![A multi-colored SVG
-graphic.](multilayer_engrave.svg "A multi-colored SVG graphic."){width="200"}
+![A multi-colored SVG graphic.](img/2d-multilayer-engrave.png)
 
 You can create 2D shapes at different heights (z-levels) by using
 different colors. Thus you should use only a single color if all your 2D
@@ -109,8 +107,7 @@ conversion works as follows:
 -   the resulting value (between 0 and 1) is used as the height of the
     object/path
 
-![A contour model with two
-layers.](multilayer_engrave_model.png "A contour model with two layers."){width="200"}
+![A contour model with two layers.](img/2d-multilayer-engrave-model.png)
 
 This complicated color-to-height conversion sadly makes it impossible to
 position objects precisely. Additionally the DXF color palette is not
@@ -123,8 +120,7 @@ placement of 2D shapes in PyCAM, then you need to decide between *Two
 vertical levels* and *Multiple vertical levels*. Read more details
 below.
 
-![The resulting toolpath with different engrave
-depths.](multilayer_engrave_toolpath.png "The resulting toolpath with different engrave depths."){width="200"}
+![The resulting toolpath with different engrave depths.](img/2d-multilayer-engrave-toolpath.png)
 
 ### Two vertical levels
 
