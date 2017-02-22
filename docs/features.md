@@ -96,8 +96,7 @@ PyCAM includes the single-line fonts developed by
 (skew, pitch, line spacing). The result can be exported to an SVG file
 or used directly in PyCAM (for engraving).
 
-See the rendered output of all [single-line
-fonts](EngraveFonts) included in PyCAM.
+See the rendered output of all [single-line fonts](engrave-fonts) included in PyCAM.
 
 Toolpath handling
 -----------------
@@ -127,13 +126,13 @@ Available Features:
 -   specify path precision vs. processing speed
     ([G61/G64](http://www.linuxcnc.org/docs/html/gcode_main.html#G61,%20G61.1,%20G64%20Path%20Control%7CGCode))
 -   specify the minimum step width for all three axes
--   [*touch off* and *tool change*](TouchOff) operations
+-   [*touch off* and *tool change*](touch-off) operations
 -   export tool definitions to LinuxCNC (for improved visualization)
 
 GUI features
 ------------
 
--   interactive [visualization of the 3D model](3D_View)
+-   interactive [visualization of the 3D model](3d-view)
     (rotate, pan and zoom with mouse or keyboard)
 -   load and save processing settings file
     -   useful for extending the current processing templates
@@ -146,7 +145,7 @@ GUI features
 -   show a [simulation of tool
     moves](http://fab.senselab.org/en/blog/new-simulation-mode-video-tutorial)
 -   show statistics of connected worker threads in a process pool (see
-    [Server Mode](ServerMode))
+    [Server Mode](server-mode))
 
 Commandline features
 --------------------
@@ -164,11 +163,11 @@ PyCAM automatically uses all available CPU cores to run toolpath
 calculations in parallel.
 
 Additionally you can connect multiple hosts for distributed processing
-within the pool. See the [Server Mode](ServerMode) for more
+within the pool. See the [Server Mode](server-mode) for more
 details.
 
 Please check the requirements for all possible [features on different
-platforms](Parallel_Processing_on_different_Platforms).
+platforms](parallel-processing).
 
 Internal features
 -----------------

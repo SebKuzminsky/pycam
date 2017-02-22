@@ -6,7 +6,7 @@ automatically during PyCAM's startup. You can hide it via the usual
 checkbx in the *Windows* menu.
 
 The 3D view is based on OpenGL. Thus the respective libraries are
-recommended. See the [list of dependencies](Requirements) for
+recommended. See the [list of dependencies](requirements) for
 more details. You can use PyCAM even without OpenGL, but the lack of a
 3D preview will probably hinder your workflow.
 
@@ -26,7 +26,7 @@ The 2D contour model or the solid 3D model is displayed. See the
 
 ### Support bridges
 
-[Support bridges](Support_Bridges) are only visible if you
+Support bridges are only visible if you
 enabled this feature for your model.
 
 ### Toolpaths
@@ -157,5 +157,5 @@ The scroll wheel of your mouse allows the following operations
 
 ### Keyboard control
 
-See the [list of shortcuts](KeyboardShortcuts#Visualization_window) for the
+See the [list of shortcuts](keyboard-shortcuts#Visualization_window) for the
 complete reference of keyboard controls.

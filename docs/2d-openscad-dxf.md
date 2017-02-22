@@ -4,9 +4,6 @@ Overview
 [OpenSCAD](http://openscad.org) is a parametric (non-interactive) 2D/3D
 modeller. The following hints refer to 2D modelling.
 
-See also [Hints for 3D modeling with OpenSCAD
-(STL)](Hints_for_3D_modeling_with_OpenSCAD_(STL)).
-
 3D to 2D projection / Sectional drawing
 ---------------------------------------
 
@@ -44,4 +41,4 @@ Sadly there are currently several limitations:
     inner lines with a vector graphics editor (e.g. Inkscape).
 
 Both of the above issues can be easily fixed with PyCAM's [Revise
-directions](ModelTransformations#Miscellaneous) operation.
+directions](model-transformations#Miscellaneous) operation.

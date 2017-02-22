@@ -17,10 +17,10 @@ PyCAM supports the following file types:
 -   DXF -- for engravings (limited DXF support: only 2D with basic
     elements)
 -   SVG -- for engravings (see
-    [requirements](Requirements#Optional_external_programs)
+    [requirements](requirements#Optional_external_programs)
     for details)
 
-See [supported formats](SupportedFormats) for more details.
+See [supported formats](supported-formats) for more details.
 
 You can create your model file with the program of your choice. After
 loading the file in PyCAM you will see the model shape in the 3D
@@ -88,8 +88,6 @@ It is common to use a big tool for the first rough milling operation.
 The finish milling operation is usually done with a smaller tool.
 Specify all necessary tools for your planned operations.
 
-See [ToolTypes](ToolTypes) for more details about tool
-settings.
 
 ### Specify the milling processes
 
@@ -116,7 +114,7 @@ You will want to take a look at the following process settings:
 -   Step Down: the maximum material height of each layer during a rough
     operation - this depends on the material and the tool size
 
-See [ProcessSettings](ProcessSettings) for more details about
+See [ProcessSettings](process-settings) for more details about
 process settings.
 
 ### Specify the bounding box
@@ -131,7 +129,7 @@ margin* or *fixed margin*). Alternatively you can also define a custom
 bounding box that does not depend on the model size. These three ways of
 defining the bounding box are just different views of the same data.
 
-See [BoundsSettings](BoundsSettings) for more details about
+See [Bounding Box](bounding-box) for more details about
 specifying bounding boxes.
 
 Generate the toolpath(s)
@@ -144,7 +142,6 @@ when clicking on *Generate all toolpaths*. Alternatively you can als
 click at *Generate Toolpath* to process only the currently selected
 task.
 
-See [TaskSetup](TaskSetup) for more details about tasks.
 
 Examine generated toolpaths
 ---------------------------

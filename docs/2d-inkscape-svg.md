@@ -7,7 +7,7 @@ trying to create a 2D model with Inkscape, since this process could
 otherwise fail in non-obvious ways ...
 
 Importing SVG files require external programs. Read PyCAM's
-[requirements](Requirements#Optional_external_programs) for
+[requirements](requirements#Optional_external_programs) for
 details
 
 Export file format
@@ -43,8 +43,8 @@ Colors
 
 PyCAM's import uses the color of an object as an indication of its
 height. You need to stick to a single color (e.g. black) if you want to
-create a single-plane 2D model. See [Pseudo 3D
-support](#Pseudo_3D_support) below for more details.
+create a single-plane 2D model. See [Pseudo 3D support](#Pseudo_3D_support)
+below for more details.
 
 Outlines and holes
 ------------------
@@ -86,7 +86,7 @@ PyCAM. You don't need to care about embedding fonts.
 
 Beware: TrueType fonts (used by Inkscape) are *outline* fonts. Thus
 every glyph is described by its outline and inner holes. Alternatively
-you may want to use the [single-line fonts](EngraveFonts)
+you may want to use the [single-line fonts](engrave-fonts)
 supplied with PyCAM.
 
 Pseudo 3D support

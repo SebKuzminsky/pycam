@@ -1,27 +1,18 @@
-**Do you want to edit these wiki pages? We really wish, you would!**
-Please read [Contributing to this
-Wiki](Contributing_to_this_Wiki) for details.
-
 Use PyCAM to generate toolpaths suitable for 3-Axis CNC machining
 -----------------------------------------------------------------
 
 You can use **svg and dxf files for 2.5D milling** and **stl files for
 full 3-axis 3D milling!**
 
-Take a look at some [screenshots](Screenshots) for a quick
-overview of the features. The [list of features](Features)
+Take a look at some [screenshots](screenshots) for a quick
+overview of the features. The [list of features](features)
 gives you more details.
 
-See the [big picture of processing](BigPictureOfProcessing)
-for the CNC workflow from design to the machine.
-
-Read the [Installation](Installation) instructions.
-
-Read the [User Manual](User_Manual) for usage instructions.
+Read the [Installation](installation) instructions.
 
 Watch some [Videos Tutorials](http://vimeo.com/channels/pycam) in
 multiple languages. You are welcome to
-[translate](VideoTranslations) the subtitles to your native
+[translate](video-translations) the subtitles to your native
 language!
 
 Join the [mailing lists](http://sourceforge.net/mail/?group_id=237831)
@@ -30,15 +21,15 @@ if you want to follow recent developments.
 Read our [development blog](http://fab.senselab.org/pycam) about
 interesting new features and plans.
 
-Check the [FAQ](FAQ) section if are looking for answers.
+Check the [FAQ](faq) section if are looking for answers.
 
-Look for [alternative programs](OtherPrograms) generating
+Look for [alternative programs](other-programs) generating
 G-Code for CNC machining, if PyCAM should not fulfill your needs. In
 this case: please [let us know, what's
-missing](WantedFeatures)!
+missing](wanted-features)!
 
 Add the features that you want to see in PyCAM to the
-[wishlist](WantedFeatures) ....
+[wishlist](wanted-features) ....
 
 Common workflow
 ---------------
@@ -61,15 +52,14 @@ Graphical User Interface
 
 The graphical user interface of PyCAM is based on GTK. All available
 features are configurable in different tabs. The complete setup can be
-stored in task settings file for later re-use. Read the [User
-Manual](User_Manual) for usage detais.
+stored in task settings file for later re-use.
 
-The [3D View](3D_View) is based on OpenGL. It is not strictly
+The [3D View](3d-view) is based on OpenGL. It is not strictly
 required for the operation. But it is very helpful for making sure that
 the result meets your expectations.
 
 Alternatively you can also use most features of PyCAM via its
-[commandline](CommandlineExamples) interface (e.g. for batch
+[command line interface](cli-examples) (e.g. for batch
 processing).
 
 Commandline Interface
@@ -78,24 +68,23 @@ Commandline Interface
 PyCAM supports non-interactive toolpath generation. This is useful for
 batch processing.
 
-See some [examples](CommandlineExamples) for the commandline
+See some [examples](cli-examples) for the commandline
 usage.
 
 Requirements
 ------------
 
-See the requirement list for the different platforms:
-[Requirements](Requirements).
+See the requirement list for the different platforms: [Requirements](requirements).
 
 Open issues / Plans
 -------------------
 
-Take a look at our [TODO](TODO) list.
+Take a look at our [TODO](todo) list.
 
 Development
 -----------
 
-Take a look at [Developer's Guide](Developer's_Guide) if you
+Take a look at [Developer's Guide](developers-guide) if you
 want to improve PyCAM.
 
 How to use this wiki

@@ -74,7 +74,7 @@ Alternatives:
 MacOS
 -----
 
-Please take a look at [Installation MacOS](Installation_MacOS)
+Please take a look at [Installation MacOS](installation-macos)
 for the details of installing PyCAM's requirements via
 [MacPorts](http://www.macports.org/).
 

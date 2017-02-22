@@ -47,7 +47,7 @@ Failed to initialize the interactive 3D model view
 A lot of new users of PyCAM stumble upon this error message. The
 solution depends on your platform and your method of installation.
 
-Please take a look at [OpenGL troubles](OpenGL_troubles) for
+Please take a look at [OpenGL troubles](opengl-troubles) for
 details.
 
 PyCAM consumes all my memory! \[only Unix\]
@@ -107,9 +107,8 @@ My *Art of Illusion* models are half-way turned over
 The coordinate system of [Art of Illusion](http://artofillusion.org/)
 assumes that the xy plane is the front face of a model. Thus the height
 of the model goes along the y axis - instead of the more common z axis.
-Just swap the y and z axes (see
-[ModelTransformations](ModelTransformations)) to fix this
-issue.
+Just swap the y and z axes (see 
+[Model Transformations](model-transformations)) to fix this issue.
 
 Some toolpaths go straight through the model and some are OK
 ------------------------------------------------------------
@@ -129,14 +128,13 @@ PyCAM contains no built-in support for SVG. Thus you need to install
 [pstoedit](http://www.pstoedit.net/pstoedit).
 
 See the list of
-[requirements](Requirements#Optional_external_programs) for
+[requirements](requirements#Optional_external_programs) for
 details.
 
 My SVG models are empty
 -----------------------
 
-Please read the [Hints for 2D modeling with Inkscape
-(SVG)](Hints_for_2D_modeling_with_Inkscape_(SVG)).
+Please read the [Hints for 2D modeling with Inkscape (SVG)](2d-inkscape-svg.md).
 
 The most common problems are:
 
