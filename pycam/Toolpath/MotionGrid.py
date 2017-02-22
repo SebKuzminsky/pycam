@@ -428,6 +428,9 @@ def _get_sorted_polygons(models, callback=None):
 def get_lines_grid(models, (low, high), layer_distance, line_distance=None, step_width=None,
                    milling_style=MILLING_STYLE_CONVENTIONAL, start_position=START_Z,
                    pocketing_type=POCKETING_TYPE_NONE, skip_first_layer=False, callback=None):
+    _log.debug("Calculating lines grid: {} model(s), z={}..{} ({}), line_distance={}, "
+               "step_width={}".format(len(models), low, high, layer_distance, line_distance,
+                                      step_width))
     # the lower limit is never below the model
     polygons = _get_sorted_polygons(models, callback=callback)
     if polygons:
