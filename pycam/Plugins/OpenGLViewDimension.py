@@ -25,7 +25,7 @@ import pycam.Plugins
 class OpenGLViewDimension(pycam.Plugins.PluginBase):
 
     UI_FILE = "opengl_view_dimension.ui"
-    DEPENDS = ["Models", "OpenGLWindow"]
+    DEPENDS = ["Bounds", "Models", "OpenGLWindow"]
     CATEGORIES = ["Model", "Visualization", "OpenGL"]
 
     def setup(self):
@@ -67,21 +67,26 @@ class OpenGLViewDimension(pycam.Plugins.PluginBase):
     def update_model_dimensions(self, widget=None):
         dimension_bar = self.gui.get_object("DimensionTable")
         models = [m.model for m in self.core.get("models").get_visible()]
-        low, high = pycam.Geometry.Model.get_combined_bounds(models)
-        if None in low or None in high:
-            low, high = (0, 0, 0), (0, 0, 0)
+        model_low, model_high = pycam.Geometry.Model.get_combined_bounds(models)
+        if None in model_low or None in model_high:
+            model_low, model_high = (0, 0, 0), (0, 0, 0)
+        bounds = self.core.get("bounds").get_selected()
         if self.core.get("show_dimensions"):
-            for value, label_suffix in ((low[0], "XMin"), (low[1], "YMin"), (low[2], "ZMin"),
-                                        (high[0], "XMax"), (high[1], "YMax"), (high[2], "ZMax")):
+            for value, label_suffix in ((model_low[0], "XMin"), (model_high[0], "XMax"),
+                                        (model_low[1], "YMin"), (model_high[1], "YMax"),
+                                        (model_low[2], "ZMin"), (model_high[2], "ZMax")):
                 label_name = "ModelCorner%s" % label_suffix
                 value = "%.3f" % value
                 self.gui.get_object(label_name).set_label(value)
-            for name, size in (
-                    ("model_dim_x", high[0] - low[0]),
-                    ("model_dim_y", high[1] - low[1]),
-                    ("model_dim_z", high[2] - low[2])):
-                self.gui.get_object(name).set_text(
-                    "%.3f %s" % (size, self.core.get("unit_string")))
+            if bounds:
+                bounds_low, bounds_high = bounds.get_absolute_limits()
+                if None in bounds_low or None in bounds_high:
+                    bounds_size = ("", "", "")
+                else:
+                    bounds_size = ["%.3f %s" % (high - low, self.core.get("unit_string"))
+                                   for low, high in zip(bounds_low, bounds_high)]
+                for axis, size_string in zip("xyz", bounds_size):
+                    self.gui.get_object("model_dim_" + axis).set_text(size_string)
             dimension_bar.show()
         else:
             dimension_bar.hide()

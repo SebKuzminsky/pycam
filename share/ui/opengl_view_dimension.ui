@@ -159,7 +159,7 @@
           <object class="GtkLabel" id="model_dim_x">
             <property name="visible">True</property>
             <property name="xalign">0</property>
-            <property name="label" translatable="yes">x</property>
+            <property name="label"></property>
             <property name="single_line_mode">True</property>
           </object>
           <packing>
@@ -192,7 +192,7 @@
           <object class="GtkLabel" id="model_dim_z">
             <property name="visible">True</property>
             <property name="xalign">0</property>
-            <property name="label" translatable="yes">z</property>
+            <property name="label"></property>
             <property name="single_line_mode">True</property>
           </object>
           <packing>
@@ -225,7 +225,7 @@
           <object class="GtkLabel" id="model_dim_y">
             <property name="visible">True</property>
             <property name="xalign">0</property>
-            <property name="label" translatable="yes">y</property>
+            <property name="label"></property>
             <property name="single_line_mode">True</property>
           </object>
           <packing>
