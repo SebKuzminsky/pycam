@@ -3,7 +3,7 @@ Global
 
   Shortcut          | Description
   ----------------- | ------------------------------------------------------------------------
-  F1                | open the introduction page of PyCAM (in this wiki) with a browser
+  F1                | open the introduction page of PyCAM with a browser
   [CTRL] o          | load model file
   [CTRL] s          | save model file
   [CTRL] [Shift] s  | save model file with a different name

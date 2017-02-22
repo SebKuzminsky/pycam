@@ -86,9 +86,3 @@ Development
 
 Take a look at [Developer's Guide](developers-guide) if you
 want to improve PyCAM.
-
-How to use this wiki
---------------------
-
-Consult the [User's Guide](http://meta.wikimedia.org/wiki/Help:Contents)
-for information on using the wiki software.
