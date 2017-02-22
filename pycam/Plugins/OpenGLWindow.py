@@ -450,7 +450,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.paint()
         else:
             # see dir(gtk.keysyms)
-            self.log.info("Unhandled key pressed: %s (%s)", keyval, get_state())
+            self.log.debug("Unhandled key pressed: %s (%s)", keyval, get_state())
 
     def check_busy(func):
         def check_busy_wrapper(self, *args, **kwargs):
