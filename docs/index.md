@@ -21,7 +21,7 @@ New releases are available from the GitHub releases page:
 
 The Debian package installs and runs on Debian Jessie and Stretch.  The 
 source code may work on other platforms, like Windows and Mac, but is untested.
-Before installing you might want to take a look at the [System requirements][requirements].
+Before installing you might want to take a look at the [System requirements](requirements).
 
 Older releases are still available on the 
 [SourceForge download page](https://sourceforge.net/projects/pycam/files/pycam/).
