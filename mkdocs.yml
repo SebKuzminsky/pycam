@@ -12,7 +12,7 @@ pages:
 - 3D View: 3d-view.md
 - Articles mentioning PyCAM: articles.md
 - Bounding Box: bounding-box.md
-- Commandline Examples: cli-examples.md
+- Command-line Examples: cli-examples.md
 - Developers Guide: developers-guide.md
 - Engrave Fonts: engrave-fonts.md
 - FAQ: faq.md

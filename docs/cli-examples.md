@@ -1,5 +1,5 @@
-Using PyCAM via the commandline
-===============================
+Using PyCAM via the command-line
+================================
 
 **WARNING: this page is slightly outdated. Please refer to the output of
 “pycam --help” or take a look at it as

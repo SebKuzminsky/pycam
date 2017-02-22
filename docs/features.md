@@ -147,14 +147,14 @@ GUI features
 -   show statistics of connected worker threads in a process pool (see
     [Server Mode](server-mode))
 
-Commandline features
---------------------
+Command-line features
+---------------------
 
 -   load an STL/DXF/PS/EPS/SVG model file
 -   load a processing settings file
 -   create a GCode file non-interactively (currently with only one
     toolpath):
-    -   almost all GUI options are usable via commandline arguments
+    -   almost all GUI options are usable via command-line arguments
 
 Parallel processing
 -------------------

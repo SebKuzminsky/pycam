@@ -62,13 +62,13 @@ Alternatively you can also use most features of PyCAM via its
 [command line interface](cli-examples) (e.g. for batch
 processing).
 
-Commandline Interface
----------------------
+Command-line Interface
+----------------------
 
 PyCAM supports non-interactive toolpath generation. This is useful for
 batch processing.
 
-See some [examples](cli-examples) for the commandline
+See some [examples](cli-examples) for the command-line
 usage.
 
 Requirements
