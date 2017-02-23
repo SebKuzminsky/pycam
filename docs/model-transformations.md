@@ -20,7 +20,7 @@ Scale
 Operation | Description
 --------  | -----------
 **scale** | resize the complete model proportionally with a given factor via an input control (as a percent value). An input of 200% doubles the size of the model. The location center of the model will be preserved.
-**fit dimension** | scale one axis to a given value (e.g. if the unit size of your modelling software is not metric). By default all axes are scaled proportionally. This can be changed via the corresponding checkbox.
+**fit dimension** | scale one axis to a given value (e.g. if the unit size of your modeling software is not metric). By default all axes are scaled proportionally. This can be changed via the corresponding checkbox.
 
 Move
 ----

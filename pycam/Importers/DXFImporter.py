@@ -928,5 +928,5 @@ def import_model(filename, color_as_height=False, fonts_cache=None, callback=Non
     else:
         link = "http://sf.net/apps/mediawiki/pycam/?title=SupportedFormats"
         log.error('DXFImporter: No supported elements found in DXF file!\n'
-                  '<a href="%s">Read PyCAM\'s modelling hints.</a>', link)
+                  '<a href="%s">Read PyCAM\'s modeling hints.</a>', link)
         return None

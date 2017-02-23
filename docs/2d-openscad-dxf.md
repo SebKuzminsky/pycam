@@ -2,7 +2,7 @@ Overview
 --------
 
 [OpenSCAD](http://openscad.org) is a parametric (non-interactive) 2D/3D
-modeller. The following hints refer to 2D modelling.
+modeller. The following hints refer to 2D modeling.
 
 3D to 2D projection / Sectional drawing
 ---------------------------------------
@@ -16,7 +16,7 @@ See the [OpenSCAD User
 Manual](http://en.wikibooks.org/wiki/OpenSCAD_User_Manual/3D_to_2D_Projection)
 for details.
 
-2D modelling
+2D modeling
 ------------
 
 OpenSCAD supports a variety of 2D primitives. See the [OpenSCAD User
