@@ -84,7 +84,7 @@ PREFERENCES_DEFAULTS = {
     "view_shadow": True,
     "view_polygon": True,
     "view_perspective": True,
-    "drill_progress_max_fps": 2,
+    "drill_progress_max_fps": 30,
     "gcode_safety_height": 25.0,
     "gcode_minimum_step_x": 0.0001,
     "gcode_minimum_step_y": 0.0001,
