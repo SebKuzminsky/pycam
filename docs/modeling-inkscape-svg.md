@@ -49,7 +49,7 @@ below for more details.
 Outlines and holes
 ------------------
 
-![Combining polygons with proper directions](img/2d-modelling-polygon_directions.png)
+![Combining polygons with proper directions](img/2d-modeling-polygon_directions.png)
 
 The following hints are only necesary, if you need an SVG with
 consistent winding states. Alternatively you can repair inconsistent

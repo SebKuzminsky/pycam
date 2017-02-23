@@ -18,8 +18,8 @@ pages:
 - FAQ: faq.md
 - Features: features.md
 - Getting Started: getting-started.md
-- Hints for 2D modeling with Inkscape SVG: 2d-inkscape-svg.md
-- Hints for 2D modeling with OpenSCAD DXF: 2d-openscad-dxf.md
+- Modeling with Inkscape SVG: modeling-inkscape-svg.md
+- Modeling with OpenSCAD DXF: modeling-openscad-dxf.md
 - Installation: installation.md
 - Installation MacOS: installation-macos.md
 - Introduction: introduction.md

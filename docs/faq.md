@@ -134,7 +134,7 @@ details.
 My SVG models are empty
 -----------------------
 
-Please read the [Hints for 2D modeling with Inkscape (SVG)](2d-inkscape-svg.md).
+Please read the [2D modeling with Inkscape (SVG)](modeling-inkscape-svg).
 
 The most common problems are:
 

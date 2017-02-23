@@ -5,8 +5,8 @@ PyCAM can import and export data from and to different formats.
 
 Read the following pages for hints about creating usable models:
 
-- [Hints for 2D modeling with Inkscape (SVG)](2d-inkscape-svg.md)
-- [Hints for 2D modeling with OpenSCAD (DXF)](2d-openscad-dxf.md)
+- [2D modeling with Inkscape (SVG)](modeling-inkscape-svg)
+- [2D modeling with OpenSCAD (DXF)](modeling-openscad-dxf)
 
 STL
 ---
@@ -40,5 +40,5 @@ files. Please take a look at the
 [requirements](requirements#Optional_external_programs) for
 more details.
 
-Additionally you should read the [hints for Inkscape](2d-inkscape-svg) to avoid 
+Additionally you should read the [hints for Inkscape](modeling-inkscape-svg) to avoid 
 common pitfalls.
