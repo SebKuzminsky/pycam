@@ -22,7 +22,7 @@ PYTHON_CHECK_STYLE_TARGETS = pycam Tests pyinstaller/hooks/hook-pycam.py scripts
 ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
 
 .PHONY: zip tgz win32 clean dist git_export upload create_archive_dir man check-style test \
-	pylint-relaxed pylint-strict
+	pylint-relaxed pylint-strict docs upload-docs
 
 dist: zip tgz win32
 	@# remove the tmp directory when everything is done
