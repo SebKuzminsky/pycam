@@ -136,4 +136,4 @@ if you need access to the blog.
 
 The original video file and the available subtitles should be later
 committed to the development repository. Additionally the new video
-should be added to the [VideoTranslations](video-translations) page.
+should be added to the [Video Translations](video-translations) page.

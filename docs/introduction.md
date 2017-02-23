@@ -114,7 +114,7 @@ You will want to take a look at the following process settings:
 -   Step Down: the maximum material height of each layer during a rough
     operation - this depends on the material and the tool size
 
-See [ProcessSettings](process-settings) for more details about
+See [Process Settings](process-settings) for more details about
 process settings.
 
 ### Specify the bounding box
