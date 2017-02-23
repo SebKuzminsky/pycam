@@ -62,7 +62,7 @@ following versions are known to work:
 -   python-opengl may not be older than v3.0.1b2 - otherwise you get a
     blank 3D view window
 -   please take a look at the [MacOS installation
-    instructions](https://sourceforge.net/apps/mediawiki/pycam/index.php?title=Installation_MacOS#OpenGL_.28python-gtkglext1.29_missing)
+    instructions](installation-macos)
     for platform-specific issues
 
 Details for Windows
