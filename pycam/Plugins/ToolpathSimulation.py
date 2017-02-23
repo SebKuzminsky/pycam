@@ -101,7 +101,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
             self._toolpath_moves = None
             self.core.set("show_simulation", True)
             self._running = True
-            interval_ms = int(1000 / self.core.get("drill_progress_max_fps"))
+            interval_ms = int(1000 / self.core.get("tool_progress_max_fps"))
             pycam.Gui.common.set_parent_controls_sensitivity(self._frame, False)
             gobject.timeout_add(interval_ms, self._next_timestep)
         else:
@@ -136,7 +136,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
             return True
         if self._progress.get_value() < self._progress.get_upper():
             time_step = (self._speed_factor_widget.get_value()
-                         / self.core.get("drill_progress_max_fps"))
+                         / self.core.get("tool_progress_max_fps"))
             new_time = self._progress.get_value() + time_step
             new_time = min(new_time, self._progress.get_upper())
             if new_time != self._progress.get_value():

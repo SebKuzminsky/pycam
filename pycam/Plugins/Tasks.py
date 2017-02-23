@@ -293,7 +293,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
                 return progress.update(text=text, percent=percent)
 
         draw_callback = UpdateView(lambda: self.core.emit_event("visual-item-updated"),
-                                   max_fps=self.core.get("drill_progress_max_fps")).update
+                                   max_fps=self.core.get("tool_progress_max_fps")).update
         progress.update(text="Generating collision model")
         # run the toolpath generation
         progress.update(text="Starting the toolpath generation")

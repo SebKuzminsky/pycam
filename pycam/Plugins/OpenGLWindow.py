@@ -104,7 +104,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 self._gtk_handlers.append((obj, "toggled", "visual-item-updated"))
             # frames per second
             skip_obj = self.gui.get_object("DrillProgressFrameSkipControl")
-            self.core.add_item("drill_progress_max_fps", skip_obj.get_value, skip_obj.set_value)
+            self.core.add_item("tool_progress_max_fps", skip_obj.get_value, skip_obj.set_value)
             # info bar above the model view
             detail_box = self.gui.get_object("InfoBox")
 
@@ -213,7 +213,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 return get_func, set_func
 
             for name in ("view_light", "view_shadow", "view_polygon", "view_perspective",
-                         "opengl_cache_enable", "drill_progress_max_fps"):
+                         "opengl_cache_enable", "tool_progress_max_fps"):
                 self.register_state_item("settings/view/opengl/%s" % name,
                                          *get_get_set_functions(name))
         return True
