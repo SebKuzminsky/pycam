@@ -107,7 +107,7 @@ def draw_complete_model_view(settings):
             GL.glColor4f(color["red"], color["green"], color["blue"], color["alpha"])
             GL.glFinish()
             cutter.to_OpenGL()
-    if settings.get("show_drill_progress") and settings.get("toolpath_in_progress"):
+    if settings.get("show_tool_progress") and settings.get("toolpath_in_progress"):
         # show the toolpath that is currently being calculated
         toolpath_in_progress = settings.get("toolpath_in_progress")
         # do a quick conversion from a list of Paths to a list of points
