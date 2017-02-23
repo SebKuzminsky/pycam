@@ -144,7 +144,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.core.set("unregister_display_item", self.unregister_display_item)
             # visual and general settings
             # TODO: move drill and directions to a separate plugin
-            for name, label, weight in (("show_drill", "Show Tool", 70),
+            for name, label, weight in (("show_tool", "Show Tool", 70),
                                         ("show_directions", "Show Directions", 80)):
                 self.core.get("register_display_item")(name, label, weight)
             # toggle window state
@@ -228,7 +228,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.unregister_gtk_accelerator("opengl", toggle_3d)
             for name in ("color_background", "color_cutter", "color_material"):
                 self.core.get("unregister_color")(name)
-            for name in ("show_drill", "show_directions"):
+            for name in ("show_tool", "show_directions"):
                 self.core.get("unregister_display_item")(name)
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)

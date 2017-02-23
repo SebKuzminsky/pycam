@@ -100,7 +100,7 @@ def draw_complete_model_view(settings):
     GL.glMatrixMode(GL.GL_MODELVIEW)
     GL.glLoadIdentity()
     # draw the drill
-    if settings.get("show_drill"):
+    if settings.get("show_tool"):
         cutter = settings.get("cutter")
         if cutter is not None:
             color = settings.get("color_cutter")

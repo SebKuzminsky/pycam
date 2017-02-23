@@ -69,7 +69,7 @@ PREFERENCES_DEFAULTS = {
     "show_dimensions": True,
     "show_bounding_box": True,
     "show_toolpath": True,
-    "show_drill": False,
+    "show_tool": False,
     "show_directions": False,
     "color_background": {"red": 0.0, "green": 0.0, "blue": 0.0, "alpha": 1.0},
     "color_model": {"red": 0.5, "green": 0.5, "blue": 1.0, "alpha": 1.0},
