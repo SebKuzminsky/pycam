@@ -16,3 +16,5 @@ Thumbs.db
 *~
 .*.swp
 
+# Generated mkdocs files go into the site directory
+site/
