@@ -91,7 +91,7 @@ quickly when the edge of the tool cuts into the material (with every
 rotation). The resulting quality is slightly better than with
 conventional cutting. A mill with backlash elimination is recommended.
 
-![Diagram of climb milling style](img/proccess-milling-climb.svg)
+![Diagram of climb milling style](img/process-milling-climb.svg)
 
 ### Ignore
 
