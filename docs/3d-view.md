@@ -6,7 +6,7 @@ automatically during PyCAM's startup. You can hide it via the usual
 checkbx in the *Windows* menu.
 
 The 3D view is based on OpenGL. Thus the respective libraries are
-recommended. See the [list of dependencies](requirements) for
+recommended. See the [list of dependencies](requirements.md) for
 more details. You can use PyCAM even without OpenGL, but the lack of a
 3D preview will probably hinder your workflow.
 

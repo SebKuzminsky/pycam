@@ -20,7 +20,7 @@ PyCAM supports the following file types:
     [requirements](requirements#Optional_external_programs)
     for details)
 
-See [supported formats](supported-formats) for more details.
+See [supported formats](supported-formats.md) for more details.
 
 You can create your model file with the program of your choice. After
 loading the file in PyCAM you will see the model shape in the 3D
@@ -114,7 +114,7 @@ You will want to take a look at the following process settings:
 -   Step Down: the maximum material height of each layer during a rough
     operation - this depends on the material and the tool size
 
-See [Process Settings](process-settings) for more details about
+See [Process Settings](process-settings.md) for more details about
 process settings.
 
 ### Specify the bounding box
@@ -129,7 +129,7 @@ margin* or *fixed margin*). Alternatively you can also define a custom
 bounding box that does not depend on the model size. These three ways of
 defining the bounding box are just different views of the same data.
 
-See [Bounding Box](bounding-box) for more details about
+See [Bounding Box](bounding-box.md) for more details about
 specifying bounding boxes.
 
 Generate the toolpath(s)

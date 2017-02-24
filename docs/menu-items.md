@@ -15,7 +15,7 @@ File menu
 
 **Export all toolpaths ...**   Store _all_ generated toolpaths in a single GCode file. A file chooser dialog will pop up. The order of toolpaths is important. See the <em>Toolpaths</em> tab for the list of all generated toolpaths.
 
-**Quit**   Request PyCAM to quit. This may take some seconds if you are connected to remote [processing servers](server-mode).
+**Quit**   Request PyCAM to quit. This may take some seconds if you are connected to remote [processing servers](server-mode.md).
 
 Edit menu
 ---------

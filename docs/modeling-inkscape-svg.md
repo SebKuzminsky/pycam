@@ -86,7 +86,7 @@ PyCAM. You don't need to care about embedding fonts.
 
 Beware: TrueType fonts (used by Inkscape) are *outline* fonts. Thus
 every glyph is described by its outline and inner holes. Alternatively
-you may want to use the [single-line fonts](engrave-fonts)
+you may want to use the [single-line fonts](engrave-fonts.md)
 supplied with PyCAM.
 
 Pseudo 3D support

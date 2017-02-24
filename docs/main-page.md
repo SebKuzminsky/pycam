@@ -4,15 +4,15 @@ Use PyCAM to generate toolpaths suitable for 3-Axis CNC machining
 You can use **svg and dxf files for 2.5D milling** and **stl files for
 full 3-axis 3D milling!**
 
-Take a look at some [screenshots](screenshots) for a quick
-overview of the features. The [list of features](features)
+Take a look at some [screenshots](screenshots.md) for a quick
+overview of the features. The [list of features](features.md)
 gives you more details.
 
-Read the [Installation](installation) instructions.
+Read the [Installation](installation.md) instructions.
 
 Watch some [Videos Tutorials](http://vimeo.com/channels/pycam) in
 multiple languages. You are welcome to
-[translate](video-translations) the subtitles to your native
+[translate](video-translations.md) the subtitles to your native
 language!
 
 Join the [mailing lists](http://sourceforge.net/mail/?group_id=237831)
@@ -21,15 +21,15 @@ if you want to follow recent developments.
 Read our [development blog](http://fab.senselab.org/pycam) about
 interesting new features and plans.
 
-Check the [FAQ](faq) section if are looking for answers.
+Check the [FAQ](faq.md) section if are looking for answers.
 
-Look for [alternative programs](other-programs) generating
+Look for [alternative programs](other-programs.md) generating
 G-Code for CNC machining, if PyCAM should not fulfill your needs. In
 this case: please [let us know, what's
 missing](wanted-features)!
 
 Add the features that you want to see in PyCAM to the
-[wishlist](wanted-features) ....
+[wishlist](wanted-features.md) ....
 
 Common workflow
 ---------------
@@ -59,7 +59,7 @@ required for the operation. But it is very helpful for making sure that
 the result meets your expectations.
 
 Alternatively you can also use most features of PyCAM via its
-[command line interface](cli-examples) (e.g. for batch
+[command line interface](cli-examples.md) (e.g. for batch
 processing).
 
 Command-line Interface
@@ -68,21 +68,21 @@ Command-line Interface
 PyCAM supports non-interactive toolpath generation. This is useful for
 batch processing.
 
-See some [examples](cli-examples) for the command-line
+See some [examples](cli-examples.md) for the command-line
 usage.
 
 Requirements
 ------------
 
-See the requirement list for the different platforms: [Requirements](requirements).
+See the requirement list for the different platforms: [Requirements](requirements.md).
 
 Open issues / Plans
 -------------------
 
-Take a look at our [TODO](todo) list.
+Take a look at our [TODO](todo.md) list.
 
 Development
 -----------
 
-Take a look at [Developer's Guide](developers-guide) if you
+Take a look at [Developer's Guide](developers-guide.md) if you
 want to improve PyCAM.
