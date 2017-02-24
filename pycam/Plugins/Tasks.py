@@ -279,7 +279,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
                 self.func = func
 
             def update(self, text=None, percent=None, tool_position=None, toolpath=None):
-                if parent.core.get("show_tool_progress"):
+                if parent.core.get("show_toolpath_progress"):
                     if tool_position is not None:
                         parent.cutter.moveto(tool_position)
                     if toolpath is not None:
