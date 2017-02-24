@@ -22,6 +22,14 @@ include /usr/share/dpkg/default.mk
 %:
 	dh $@ --with python2
 
+# This target updates pycam/Version.py and debian/changelog with current
+# information from git.  It's intended to be run before generating the
+# debian source package.
+prep-source:
+	$(MAKE) update-version
+	$(MAKE) update-deb-changelog
+	rm -f pycam/*.pyc
+
 override_dh_auto_build:
 	$(MAKE) -C man
 	python setup.py build
