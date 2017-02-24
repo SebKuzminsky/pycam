@@ -40,10 +40,15 @@ class ProgressBar(pycam.Plugins.PluginBase):
             # TODO: move this setting somewhere else or rename it
             self.core.add_item("show_toolpath_progress", show_progress_button.get_active,
                                show_progress_button.set_active)
+            self._gtk_handlers = []
+            self._gtk_handlers.append((show_progress_button, "clicked",
+                                       lambda widget: self.core.emit_event("visual-item-updated")))
+            self.register_gtk_handlers(self._gtk_handlers)
         return True
 
     def teardown(self):
         if self.gui:
+            self.unregister_gtk_handlers(self._gtk_handlers)
             self.core.unregister_ui("main_window", self.gui.get_object("ProgressBox"))
         self.core.set("progress", None)
 
