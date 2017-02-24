@@ -303,7 +303,11 @@ class Tasks(pycam.Plugins.ListPluginBase):
                 # break the loop if someone clicked the "cancel" button
                 return progress.update(text=text, percent=percent)
 
-        draw_callback = UpdateView(lambda: self.core.emit_event("visual-item-updated"),
+        tool_shape = task["parameters"]["tool"]["shape"]
+        tool_parameters = task["parameters"]["tool"]["parameters"]
+        tool = self.core.get("get_parameter_sets")("tool")[tool_shape]["func"](tool_parameters)[0]
+        self.core.set("current_tool", tool)
+        draw_callback = UpdateView(self, lambda: self.core.emit_event("visual-item-updated"),
                                    max_fps=self.core.get("tool_progress_max_fps")).update
         progress.update(text="Generating collision model")
         # run the toolpath generation

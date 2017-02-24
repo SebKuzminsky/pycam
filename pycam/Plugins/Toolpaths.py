@@ -147,13 +147,14 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
     def add_new(self, new_tp):
         if isinstance(new_tp, pycam.Toolpath.Toolpath):
             moves = new_tp.path
+            tool = new_tp.tool
             filters = new_tp.filters
         else:
-            moves, filters = new_tp
+            moves, tool, filters = new_tp
         name = get_non_conflicting_name("Toolpath #%d", [tp["name"] for tp in self])
         attributes = {"visible": True, "name": name}
         new_tp = ToolpathEntity(toolpath_path=moves, attributes=attributes,
-                                toolpath_filters=filters)
+                                toolpath_filters=filters, tool=tool)
         self.append(new_tp)
 
 

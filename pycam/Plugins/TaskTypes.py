@@ -72,4 +72,4 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
         if not moves:
             self.log.info("No valid moves found")
             return None
-        return moves, tool_filters
+        return moves, tool, tool_filters

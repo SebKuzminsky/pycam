@@ -70,7 +70,7 @@ def simplify_toolpath(path):
 
 class Toolpath(object):
 
-    def __init__(self, toolpath_path=None, toolpath_filters=None, **kwargs):
+    def __init__(self, toolpath_path=None, toolpath_filters=None, tool=None, **kwargs):
         super(Toolpath, self).__init__(**kwargs)
         if toolpath_path is None:
             toolpath_path = []
@@ -78,6 +78,7 @@ class Toolpath(object):
             toolpath_filters = []
         self.filters = toolpath_filters
         self.path = toolpath_path
+        self.tool = tool
         self.clear_cache()
 
     def __get_path(self):
