@@ -75,7 +75,7 @@ PREFERENCES_DEFAULTS = {
     "color_model": {"red": 0.5, "green": 0.5, "blue": 1.0, "alpha": 1.0},
     "color_support_preview": {"red": 0.8, "green": 0.8, "blue": 0.3, "alpha": 1.0},
     "color_bounding_box": {"red": 0.3, "green": 0.3, "blue": 0.3, "alpha": 1.0},
-    "color_cutter": {"red": 1.0, "green": 0.2, "blue": 0.2, "alpha": 1.0},
+    "color_tool": {"red": 1.0, "green": 0.2, "blue": 0.2, "alpha": 1.0},
     "color_toolpath_cut": {"red": 1.0, "green": 0.5, "blue": 0.5, "alpha": 1.0},
     "color_toolpath_return": {"red": 0.9, "green": 1.0, "blue": 0.1, "alpha": 0.4},
     "color_material": {"red": 1.0, "green": 0.5, "blue": 0.0, "alpha": 1.0},

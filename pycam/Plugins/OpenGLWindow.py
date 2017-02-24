@@ -132,7 +132,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.core.set("unregister_color", self.unregister_color_setting)
             # TODO: move "cutter" and "material" to simulation viewer
             for name, label, weight in (("color_background", "Background", 10),
-                                        ("color_cutter", "Tool", 50),
+                                        ("color_tool", "Tool", 50),
                                         ("color_material", "Material", 80)):
                 self.core.get("register_color")(name, label, weight)
             # display items
@@ -226,7 +226,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             toggle_3d.set_active(False)
             self.core.unregister_ui("view_menu", toggle_3d)
             self.unregister_gtk_accelerator("opengl", toggle_3d)
-            for name in ("color_background", "color_cutter", "color_material"):
+            for name in ("color_background", "color_tool", "color_material"):
                 self.core.get("unregister_color")(name)
             for name in ("show_tool", "show_directions"):
                 self.core.get("unregister_display_item")(name)
