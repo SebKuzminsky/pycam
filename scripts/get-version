@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [ ! -d debian -o ! -d pycam -o ! -f scripts/pycam ]; then
+    echo "this script must be run from the root of the source tree (the directory with debian/ and pycam/ in it)"
+    exit 1
+fi
+
+GIT_DESCRIBE=$(git describe --dirty --tags --match 'v[0-9].*')
+echo ${GIT_DESCRIBE#v}
