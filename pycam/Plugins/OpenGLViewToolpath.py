@@ -69,7 +69,8 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
                 and not self.core.get("show_simulation")
 
     def draw_toolpaths(self):
-        if self._is_visible():
+        toolpath_in_progress = self.core.get("toolpath_in_progress")
+        if toolpath_in_progress is None and self.core.get("show_toolpath"):
             # TODO: this is ugly copy'n'paste from pycam.Plugins.ToolpathExport (_export_toolpaths)
             # KEEP IN SYNC
             processor = self.core.get("toolpath_processors").get_selected()
@@ -85,6 +86,9 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
                 # self._draw_toolpath_moves2(moves)
                 moves = toolpath.get_basic_moves(filters=settings_filters)
                 self._draw_toolpath_moves(moves)
+        elif toolpath_in_progress is not None:
+            if self.core.get("show_simulation") or self.core.get("show_toolpath_progress"):
+                self._draw_toolpath_moves(toolpath_in_progress)
 
     def _draw_toolpath_moves2(self, paths):
         GL = self._GL

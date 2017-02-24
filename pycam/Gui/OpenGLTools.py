@@ -107,17 +107,3 @@ def draw_complete_model_view(settings):
             GL.glColor4f(color["red"], color["green"], color["blue"], color["alpha"])
             GL.glFinish()
             cutter.to_OpenGL()
-    if settings.get("show_tool_progress") and settings.get("toolpath_in_progress"):
-        # show the toolpath that is currently being calculated
-        toolpath_in_progress = settings.get("toolpath_in_progress")
-        # do a quick conversion from a list of Paths to a list of points
-        moves = []
-        for path in toolpath_in_progress:
-            for point in path.points:
-                moves.append((point, False))
-        if toolpath_in_progress is not None:
-            draw_toolpath(moves,  # noqa: F821 - not implemented, yet
-                          settings.get("color_toolpath_cut"),
-                          settings.get("color_toolpath_return"),
-                          show_directions=settings.get("show_directions"),
-                          lighting=settings.get("view_light"))

@@ -62,7 +62,6 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
             self.register_event_handlers(self._event_handlers)
             self.register_gtk_handlers(self._gtk_handlers)
             self._update_visibility()
-            self.core.register_event("visualize-items", self.show_simulation)
         return True
 
     def teardown(self):
@@ -100,6 +99,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
             self._progress.set_value(0)
             self._toolpath_moves = None
             self.core.set("show_simulation", True)
+            self.core.set("current_tool", self._toolpath.tool)
             self._running = True
             interval_ms = int(1000 / self.core.get("tool_progress_max_fps"))
             pycam.Gui.common.set_parent_controls_sensitivity(self._frame, False)
@@ -118,6 +118,8 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
     def _stop_simulation(self, widget=None):
         self._running = None
         self.core.set("show_simulation", False)
+        self.core.set("toolpath_in_progress", None)
+        self.core.set("current_tool", None)
         self._toolpath_moves = None
         self._timer_widget.set_label("")
         self._progress.set_value(0)
@@ -150,13 +152,14 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
             current = datetime.timedelta(seconds=int(self._progress.get_value()))
             complete = datetime.timedelta(seconds=int(self._progress.get_upper()))
             self._timer_widget.set_label("%s / %s" % (current, complete))
-            self._toolpath_moves = self._toolpath.get_moves(
-                max_time=self._duration * fraction / 60)
+            moves = self._toolpath.get_moves(max_time=self._duration * fraction / 60)
+            if moves:
+                tool = self.core.get("current_tool")
+                if tool:
+                    last_position = moves[-1][1]
+                    tool.moveto(last_position)
+            self.core.set("toolpath_in_progress", moves)
             self.core.emit_event("visual-item-updated")
-
-    def show_simulation(self):
-        if self._toolpath_moves and self.core.get("show_simulation"):
-            self.core.get("draw_toolpath_moves_func")(self._toolpath_moves)
 
     def update_toolpath_simulation_ode(self, widget=None, toolpath=None):
         import pycam.Simulation.ODEBlocks as ODEBlocks
