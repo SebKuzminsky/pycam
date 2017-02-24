@@ -313,8 +313,8 @@ class Tasks(pycam.Plugins.ListPluginBase):
         # run the toolpath generation
         progress.update(text="Starting the toolpath generation")
         try:
-            func = self.core.get("get_parameter_sets")("task")[task["type"]]["func"]
-            toolpath = func(task, callback=draw_callback)
+            task_resolver = self.core.get("get_parameter_sets")("task")[task["type"]]["func"]
+            toolpath = task_resolver(task, callback=draw_callback)
         except Exception:
             # catch all non-system-exiting exceptions
             self.log.error(pycam.Utils.get_exception_report())
