@@ -35,7 +35,6 @@ import gtk
 from pycam.Geometry import number, sqrt
 from pycam.Geometry.PointUtils import pcross, pmul, pnormalized
 import pycam.Geometry.Matrix as Matrix
-from pycam.Gui.OpenGLTools import draw_complete_model_view
 import pycam.Plugins
 
 
@@ -130,9 +129,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.core.register_ui("preferences", "Colors", color_frame, 30)
             self.core.set("register_color", self.register_color_setting)
             self.core.set("unregister_color", self.unregister_color_setting)
-            # TODO: move "cutter" and "material" to simulation viewer
+            # TODO: move "material" to simulation viewer
             for name, label, weight in (("color_background", "Background", 10),
-                                        ("color_tool", "Tool", 50),
                                         ("color_material", "Material", 80)):
                 self.core.get("register_color")(name, label, weight)
             # display items
@@ -143,10 +141,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.core.set("register_display_item", self.register_display_item)
             self.core.set("unregister_display_item", self.unregister_display_item)
             # visual and general settings
-            # TODO: move drill and directions to a separate plugin
-            for name, label, weight in (("show_tool", "Show Tool", 70),
-                                        ("show_directions", "Show Directions", 80)):
-                self.core.get("register_display_item")(name, label, weight)
+            # TODO: should directions be here?
+            self.core.get("register_display_item")("show_directions", "Show Directions", 80)
             # toggle window state
             toggle_3d = self.gui.get_object("Toggle3DView")
             self._gtk_handlers.append((toggle_3d, "toggled", self.toggle_3d_view))
@@ -478,7 +474,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                         v["center"][1] + v["distance"][1],
                         v["center"][2] + v["distance"][2])
             GL.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, lightpos)
-            self._paint_raw()
+            # trigger the visualization of all items
+            self.core.emit_event("visualize-items")
             GL.glMatrixMode(prev_mode)
             GL.glFlush()
             self.area.get_gl_drawable().swap_buffers()
@@ -749,11 +746,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
     @gtkgl_refresh
     def _paint_ignore_busy(self, widget=None):
         pass
-
-    def _paint_raw(self, widget=None):
-        # draw the model
-        draw_complete_model_view(self.core)
-        self.core.emit_event("visualize-items")
 
 
 class Camera(object):

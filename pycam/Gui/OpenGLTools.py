@@ -92,18 +92,3 @@ def draw_direction_cone(p1, p2, position=0.5, precision=12, size=0.1):
     GL.glTranslatef(0, 0, -cone_length * position)
     # draw the cone
     GLUT.glutSolidCone(cone_radius, cone_length, precision, 1)
-
-
-@keep_gl_mode
-@keep_matrix
-def draw_complete_model_view(settings):
-    GL.glMatrixMode(GL.GL_MODELVIEW)
-    GL.glLoadIdentity()
-    # draw the drill
-    if settings.get("show_tool"):
-        cutter = settings.get("cutter")
-        if cutter is not None:
-            color = settings.get("color_cutter")
-            GL.glColor4f(color["red"], color["green"], color["blue"], color["alpha"])
-            GL.glFinish()
-            cutter.to_OpenGL()
