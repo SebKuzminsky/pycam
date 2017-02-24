@@ -270,25 +270,36 @@ class Tasks(pycam.Plugins.ListPluginBase):
             use_multi_progress = False
             progress = self.core.get("progress")
         progress.update(text="Preparing toolpath generation")
-        parent = self
 
         class UpdateView(object):
-            def __init__(self, func, max_fps=1):
-                self.last_update = time.time()
+            def __init__(self, task_plugin, request_redraw_function, max_fps=1):
+                self.task_plugin = task_plugin
+                self.last_update_time = time.time()
                 self.max_fps = max_fps
-                self.func = func
+                self.request_redraw_function = request_redraw_function
+                self.last_tool_position = None
+                self.current_tool_position = None
 
             def update(self, text=None, percent=None, tool_position=None, toolpath=None):
-                if parent.core.get("show_toolpath_progress"):
-                    if tool_position is not None:
-                        parent.cutter.moveto(tool_position)
-                    if toolpath is not None:
-                        parent.core.set("toolpath_in_progress", toolpath)
-                    current_time = time.time()
-                    if (current_time - self.last_update) > 1.0 / self.max_fps:
-                        self.last_update = current_time
-                        if self.func:
-                            self.func()
+                if toolpath is not None:
+                    self.task_plugin.core.set("toolpath_in_progress", toolpath)
+                # always store the most recently reported tool_position for the next visualization
+                if tool_position is not None:
+                    self.current_tool_position = tool_position
+                redraw_wanted = False
+                current_time = time.time()
+                if (current_time - self.last_update_time) > 1.0 / self.max_fps:
+                    if self.current_tool_position != self.last_tool_position:
+                        tool = self.task_plugin.core.get("current_tool")
+                        if tool:
+                            tool.moveto(self.current_tool_position)
+                        self.last_tool_position = self.current_tool_position
+                        redraw_wanted = True
+                    if self.task_plugin.core.get("show_toolpath_progress"):
+                        redraw_wanted = True
+                    self.last_update_time = current_time
+                    if redraw_wanted and self.request_redraw_function:
+                        self.request_redraw_function()
                 # break the loop if someone clicked the "cancel" button
                 return progress.update(text=text, percent=percent)
 
@@ -303,13 +314,14 @@ class Tasks(pycam.Plugins.ListPluginBase):
         except Exception:
             # catch all non-system-exiting exceptions
             self.log.error(pycam.Utils.get_exception_report())
+            return False
+        finally:
+            self.core.set("current_tool", None)
+            self.core.set("toolpath_in_progress", None)
             if not use_multi_progress:
                 progress.finish()
-            return False
 
         self.log.info("Toolpath generation time: %f", time.time() - start_time)
-        # don't show the new toolpath anymore
-        self.core.set("toolpath_in_progress", None)
 
         if toolpath is None:
             # user interruption
@@ -324,8 +336,6 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self.core.get("toolpaths").add_new(toolpath)
             # return "False" if the action was cancelled
             result = not progress.update()
-        if not use_multi_progress:
-            progress.finish()
         return result
 
 
