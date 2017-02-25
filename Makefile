@@ -32,17 +32,18 @@ WEBSITE_UPLOAD_LOCATION ?= web.sourceforge.net:/home/project-web/pycam/htdocs
 
 # turn the destination directory into an absolute path
 ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
+RM = rm -f
 
 .PHONY: zip tgz win32 clean dist git_export upload create_archive_dir man check-style test \
 	pylint-relaxed pylint-strict docs upload-docs
 
 dist: zip tgz win32
 	@# remove the tmp directory when everything is done
-	@rm -rf "$(EXPORT_DIR)"
+	@$(RM) -r "$(EXPORT_DIR)"
 
 clean:
-	@rm -rf "$(EXPORT_DIR)"
-	@rm -rf "$(MKDOCS_EXPORT_DIR)"
+	@$(RM) -r "$(EXPORT_DIR)"
+	@$(RM) -r "$(MKDOCS_EXPORT_DIR)"
 	$(MAKE) -C man clean
 
 man:

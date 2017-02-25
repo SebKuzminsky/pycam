@@ -2,6 +2,7 @@ RUN_SCRIPT = ../scripts/pycam
 PYCAM_MAN_INCLUDE_FILE = pycam.1.inc
 MAN_FILES = pycam.1
 HTML_FILES = $(patsubst %,%.html,$(MAN_FILES))
+RM = rm -f
 
 
 .PHONY: build clean html man
@@ -20,4 +21,4 @@ pycam.1: $(RUN_SCRIPT) $(PYCAM_MAN_INCLUDE_FILE)
 	man2html $* >"$@"
 
 clean:
-	rm -f $(MAN_FILES) $(HTML_FILES)
+	$(RM) $(MAN_FILES) $(HTML_FILES)
