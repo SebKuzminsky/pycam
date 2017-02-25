@@ -104,5 +104,5 @@ $(MKDOCS_BUILD_STAMP): $(MKDOCS_SOURCE_FILES)
 	touch "$@"
 	
 upload-docs: $(MKDOCS_BUILD_STAMP)
-	rsync -avz --delete --exclude=.DS_Store --exclude="$(notdir $(MKDOCS_BUILD_STAMP))" -e ssh \
+	rsync -axz --delete --exclude=.DS_Store --exclude="$(notdir $(MKDOCS_BUILD_STAMP))" -e ssh \
 		"$(MKDOCS_EXPORT_DIR)/" "$(WEBSITE_UPLOAD_PREFIX)$(WEBSITE_UPLOAD_LOCATION)/"
