@@ -19,7 +19,10 @@ DISTUTILS_PLAT_NAME = $(shell $(PYTHON_EXE) setup.py --help build_ext \
 PYTHON_CHECK_STYLE_TARGETS = pycam Tests pyinstaller/hooks/hook-pycam.py scripts/pycam setup.py
 
 # default location of mkdocs' build process
+MKDOCS_SOURCE_DIR = docs
 MKDOCS_EXPORT_DIR = site
+MKDOCS_SOURCE_FILES = $(shell find "$(MKDOCS_SOURCE_DIR)" -type f)
+MKDOCS_BUILD_STAMP = $(MKDOCS_EXPORT_DIR)/.build-stamp
 # specify the remote user (e.g. for sourceforge: user,project) via ssh_config or directly on the
 # commandline: "make upload-docs SF_USER=foobar"
 ifdef SF_USER
@@ -94,9 +97,12 @@ pylint-relaxed:
 
 
 ## Building the documentation/website
-docs:
+docs: $(MKDOCS_BUILD_STAMP)
+
+$(MKDOCS_BUILD_STAMP): $(MKDOCS_SOURCE_FILES)
 	mkdocs build
+	touch "$@"
 	
-upload-docs: docs
-	rsync -avz --delete --exclude=.DS_Store -e ssh \
+upload-docs: $(MKDOCS_BUILD_STAMP)
+	rsync -avz --delete --exclude=.DS_Store --exclude="$(notdir $(MKDOCS_BUILD_STAMP))" -e ssh \
 		"$(MKDOCS_EXPORT_DIR)/" "$(WEBSITE_UPLOAD_PREFIX)$(WEBSITE_UPLOAD_LOCATION)/"
