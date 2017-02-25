@@ -4,10 +4,12 @@ MAN_FILES = pycam.1
 HTML_FILES = $(patsubst %,%.html,$(MAN_FILES))
 
 
-.PHONY: build clean
+.PHONY: build clean html man
 
 
-build: $(MAN_FILES) $(HTML_FILES)
+man: $(MAN_FILES)
+
+html: $(HTML_FILES)
 
 pycam.1: $(RUN_SCRIPT) $(PYCAM_MAN_INCLUDE_FILE)
 	help2man --no-info --name="Toolpath Generation for 3-Axis CNC machining" \

@@ -46,7 +46,7 @@ clean:
 	$(MAKE) -C man clean
 
 man:
-	@$(MAKE) -C man
+	@$(MAKE) -C man man
 
 git_export: clean
 	@if git status 2>/dev/null >&2;\
@@ -101,6 +101,7 @@ pylint-relaxed:
 
 ## Building the documentation/website
 docs: man $(MKDOCS_BUILD_STAMP)
+	@$(MAKE) -C man html
 	install -d "$(MKDOCS_EXPORT_DIR)/manpages/"
 	install --target-directory="$(MKDOCS_EXPORT_DIR)/manpages/" man/*.html
 
