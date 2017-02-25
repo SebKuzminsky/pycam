@@ -101,7 +101,8 @@ class LinuxCNC(pycam.Exporters.GCode.BaseGenerator):
             self.add_command("M5", "stop spindle")
 
     def command_delay(self, seconds):
-        self.add_command("G04 P%d" % seconds, "wait for %d seconds" % seconds)
+        # "seconds" may be floats or integers
+        self.add_command("G04 P{}".format(seconds), "wait for {} seconds".format(seconds))
 
     def command_corner_style(self, (path_mode, motion_tolerance, naive_tolerance)):
         if path_mode == CORNER_STYLE_EXACT_PATH:
