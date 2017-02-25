@@ -1,9 +1,21 @@
-.PHONY: clean
+RUN_SCRIPT = ../scripts/pycam
+PYCAM_MAN_INCLUDE_FILE = pycam.1.inc
+MAN_FILES = pycam.1
+HTML_FILES = $(patsubst %,%.html,$(MAN_FILES))
 
-pycam.1: ../pycam pycam.1.inc
+
+.PHONY: build clean
+
+
+build: $(MAN_FILES) $(HTML_FILES)
+
+pycam.1: $(RUN_SCRIPT) $(PYCAM_MAN_INCLUDE_FILE)
 	help2man --no-info --name="Toolpath Generation for 3-Axis CNC machining" \
-		--section=1 --manual="PyCAM manual" --include=pycam.1.inc --output=pycam.1 ../scripts/pycam
+		--section=1 --manual="PyCAM manual" --include="$(PYCAM_MAN_INCLUDE_FILE)" \
+		--output="$@" "$(RUN_SCRIPT)"
+
+%.html: %
+	man2html $* >"$@"
 
 clean:
-	@rm -f pycam.1
-
+	rm -f $(MAN_FILES) $(HTML_FILES)

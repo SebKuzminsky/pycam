@@ -2,6 +2,9 @@
 *.so
 *.py[cod]
 
+man/pycam.1
+man/pycam.1.html
+
 dist
 build
 eggs
