@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import collections
 
 import gtk
 import gobject
@@ -26,6 +27,10 @@ import pycam.Utils.log
 
 
 _log = pycam.Utils.log.get_logger()
+
+
+ParameterSectionWidget = collections.namedtuple("ParameterSectionWidget",
+                                                ("widget", "label", "weight", "signal_handlers"))
 
 
 def _input_conversion(func):
@@ -249,42 +254,42 @@ class ParameterSection(WidgetBaseClass):
         return self._table
 
     def add_widget(self, widget, label, weight=100):
-        item = (widget, label, weight, [])
+        item = ParameterSectionWidget(widget, label, weight, [])
         self._widgets.append(item)
         for signal in ("hide", "show"):
-            item[3].append(widget.connect(signal, self._update_widgets_visibility))
+            item.signal_handlers.append(widget.connect(signal, self._update_widgets_visibility))
         self.update_widgets()
 
     def clear_widgets(self):
         while self._widgets:
             item = self._widgets.pop()
-            for signal_handler in item[3]:
-                item[0].disconnect(signal_handler)
+            for signal_handler in item.signal_handlers:
+                item.widget.disconnect(signal_handler)
         self.update_widgets()
 
     def update_widgets(self):
         widgets = list(self._widgets)
-        widgets.sort(key=lambda item: item[2])
+        widgets.sort(key=lambda item: item.weight)
         # remove all widgets from the table
         for child in self._table.get_children():
             self._table.remove(child)
         # add the current controls
         for index, widget in enumerate(widgets):
-            if hasattr(widget[0], "get_label"):
+            if hasattr(widget.widget, "get_label"):
                 # checkbox
-                widget[0].set_label(widget[1])
-                self._table.attach(widget[0], 0, 2, index, index + 1, xoptions=gtk.FILL,
+                widget.widget.set_label(widget.label)
+                self._table.attach(widget.widget, 0, 2, index, index + 1, xoptions=gtk.FILL,
                                    yoptions=gtk.FILL)
-            elif not widget[1]:
-                self._table.attach(widget[0], 0, 2, index, index + 1, xoptions=gtk.FILL,
+            elif not widget.label:
+                self._table.attach(widget.widget, 0, 2, index, index + 1, xoptions=gtk.FILL,
                                    yoptions=gtk.FILL)
             else:
                 # spinbutton, combobox, ...
-                label = gtk.Label("%s:" % widget[1])
+                label = gtk.Label("%s:" % widget.label)
                 label.set_alignment(0.0, 0.5)
                 self._table.attach(label, 0, 1, index, index + 1, xoptions=gtk.FILL,
                                    yoptions=gtk.FILL)
-                self._table.attach(widget[0], 1, 2, index, index + 1, xoptions=gtk.FILL,
+                self._table.attach(widget.widget, 1, 2, index, index + 1, xoptions=gtk.FILL,
                                    yoptions=gtk.FILL)
         self._update_widgets_visibility()
 
@@ -302,8 +307,8 @@ class ParameterSection(WidgetBaseClass):
         # configured item (according to its visibility).
         visibility_collector = []
         for widget in self._widgets:
-            table_row = self._get_table_row_of_widget(widget[0])
-            is_visible = widget[0].props.visible
+            table_row = self._get_table_row_of_widget(widget.widget)
+            is_visible = widget.widget.props.visible
             visibility_collector.append(is_visible)
             for child in self._table.get_children():
                 if widget == child:
