@@ -13,17 +13,18 @@ PyCAM runs on Linux, <del>Windows</del> and <del>MacOS</del>. It is free softwar
 
 ## Download
 
-Work on PyCAM has resumed after a period of 6 years and work is being done to 
-modernise the code base and make it run on recent operating systems.
+Work on PyCAM has paused for five years between 2012 (v0.5.1) and 2017 (v0.6.0).
+Currently the code base is being modernized in order to make PyCAM run on recent operating systems
+and libraries.
 
 New releases are available from the GitHub releases page:
 <https://github.com/SebKuzminsky/pycam/releases>
 
-The Debian package installs and runs on Debian Jessie and Stretch.  The 
+The Debian package installs and runs on Debian Jessie and Stretch. The
 source code may work on other platforms, like Windows and Mac, but is untested.
 Before installing you might want to take a look at the [System requirements](requirements.md).
 
-Older releases are still available on the 
+Older releases are still available on the
 [SourceForge download page](https://sourceforge.net/projects/pycam/files/pycam/).
 
 ## Resources
