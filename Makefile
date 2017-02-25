@@ -18,6 +18,15 @@ DISTUTILS_PLAT_NAME = $(shell $(PYTHON_EXE) setup.py --help build_ext \
 		      | grep -q -- "--plat-name" && echo "--plat-name win32")
 PYTHON_CHECK_STYLE_TARGETS = pycam Tests pyinstaller/hooks/hook-pycam.py scripts/pycam setup.py
 
+# default location of mkdocs' build process
+MKDOCS_EXPORT_DIR = site
+# specify the remote user (e.g. for sourceforge: user,project) via ssh_config or directly on the
+# commandline: "make upload-docs SF_USER=foobar"
+ifdef SF_USER
+WEBSITE_UPLOAD_PREFIX ?= $(SF_USER),pycam@
+endif
+WEBSITE_UPLOAD_LOCATION ?= web.sourceforge.net:/home/project-web/pycam/htdocs
+
 # turn the destination directory into an absolute path
 ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
 
@@ -88,4 +97,5 @@ docs:
 	mkdocs build
 	
 upload-docs: docs
-	rsync -avz --delete --exclude=.DS_Store -e ssh site/ web.sourceforge.net:/home/project-web/pycam/htdocs/
+	rsync -avz --delete --exclude=.DS_Store -e ssh \
+		"$(MKDOCS_EXPORT_DIR)/" "$(WEBSITE_UPLOAD_PREFIX)$(WEBSITE_UPLOAD_LOCATION)/"
