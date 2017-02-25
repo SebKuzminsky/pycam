@@ -43,9 +43,10 @@ dist: zip tgz win32
 clean:
 	@rm -rf "$(EXPORT_DIR)"
 	@rm -rf "$(MKDOCS_EXPORT_DIR)"
+	$(MAKE) -C man clean
 
-man: git_export
-	@make -C "$(EXPORT_DIR)/man"
+man:
+	@$(MAKE) -C man
 
 git_export: clean
 	@if git status 2>/dev/null >&2;\
@@ -99,12 +100,14 @@ pylint-relaxed:
 
 
 ## Building the documentation/website
-docs: $(MKDOCS_BUILD_STAMP)
+docs: man $(MKDOCS_BUILD_STAMP)
+	install -d "$(MKDOCS_EXPORT_DIR)/manpages/"
+	install --target-directory="$(MKDOCS_EXPORT_DIR)/manpages/" man/*.html
 
 $(MKDOCS_BUILD_STAMP): $(MKDOCS_SOURCE_FILES)
 	mkdocs build
 	touch "$@"
 	
-upload-docs: $(MKDOCS_BUILD_STAMP)
+upload-docs: docs
 	rsync -axz --delete --exclude=.DS_Store --exclude="$(notdir $(MKDOCS_BUILD_STAMP))" -e ssh \
 		"$(MKDOCS_EXPORT_DIR)/" "$(WEBSITE_UPLOAD_PREFIX)$(WEBSITE_UPLOAD_LOCATION)/"
