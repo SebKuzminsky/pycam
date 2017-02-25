@@ -39,6 +39,7 @@ dist: zip tgz win32
 
 clean:
 	@rm -rf "$(EXPORT_DIR)"
+	@rm -rf "$(MKDOCS_EXPORT_DIR)"
 
 man: git_export
 	@make -C "$(EXPORT_DIR)/man"
