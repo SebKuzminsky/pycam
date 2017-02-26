@@ -22,8 +22,12 @@ from itertools import groupby
 import math
 import os
 
-import numpy
-from OpenGL.arrays import vbo
+try:
+    import numpy
+    from OpenGL.arrays import vbo
+except ImportError:
+    # both modules are required for visualization, only
+    pass
 
 from pycam.Geometry import epsilon, number
 from pycam.Geometry.PointUtils import padd, pcross, pdist, pmul, pnorm, pnormalized, psub
