@@ -71,8 +71,9 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         for param in group["parameters"].values():
             is_visible = param["name"] in active_parameters
             control = param["control"]
-            # allow override but stay compatible with PyGTK before v2.22
-            if hasattr(control, "set_visible"):
+            if control is None:
+                pass
+            elif hasattr(control, "set_visible"):
                 control.set_visible(is_visible)
             elif is_visible:
                 control.show()
