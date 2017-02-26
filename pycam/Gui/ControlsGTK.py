@@ -259,7 +259,13 @@ class ParameterSection(WidgetBaseClass):
     def get_widget(self):
         return self._table
 
-    def add_widget(self, widget, label, weight=100):
+    def add_widget(self, widget, label, weight=None):
+        # if no specific weight is given: keep the order of added events stable
+        if weight is None:
+            if self._widgets:
+                weight = max([item.weight for item in self._widgets]) + 1
+            else:
+                weight = 50
         item = ParameterSectionWidget(widget, label, weight, [])
         self._widgets.append(item)
         for signal in ("hide", "show"):
