@@ -85,4 +85,4 @@ def parse_toolpath_settings(filename):
 
 if __name__ == "__main__":
     # for testing: output the parsed content of the given file (first argument)
-    print "\n#################\n".join(parse_toolpath_settings(sys.argv[1])[1])
+    print("\n#################\n".join(parse_toolpath_settings(sys.argv[1])[1]))

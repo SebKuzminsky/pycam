@@ -225,7 +225,6 @@ class ZBuffer(object):
     def to_OpenGL_2(self):
         for y in range(self.yres - 1):
             for x in range(self.xres - 1):
-                # print "z[%f][%f]=%f" % (self.y[y],self.x[x],self.buf[y][x])
                 if self.buf[y+0][x+0].changed or self.buf[y+0][x+1].changed \
                         or self.buf[y+1][x+0].changed \
                         or self.buf[y+1][x+1].changed:
@@ -350,7 +349,6 @@ class ZBuffer(object):
                                 break
 
                 if changed:
-                    # print "cell[",y,"][",x,"]=",self.cell[y][x].list
                     if self.cell[y][x].list == -1:
                         self.cell[y][x].list = GL.glGenLists(1)
                         self.cell[y][x].array = (ctypes.c_float * 3
@@ -416,7 +414,6 @@ class ZBuffer(object):
                                 break
 
                 if changed:
-                    # print "cell[",y,"][",x,"]=",self.cell[y][x].list
                     if self.cell[y][x].list == -1:
                         self.cell[y][x].list = GL.glGenLists(1)
                         self.cell[y][x].vertex = (ctypes.c_float * 3
@@ -510,7 +507,6 @@ class ZBuffer(object):
                                 break
 
                 if changed:
-                    # print "cell[",y,"][",x,"]=",self.cell[y][x].list
                     if self.cell[y][x].list == -1:
                         self.cell[y][x].list = GL.glGenLists(1)
                         self.cell[y][x].vertex = (ctypes.c_float * 3 * ((y1-y0) * (x1 - x0)))()

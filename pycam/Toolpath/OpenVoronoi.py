@@ -173,14 +173,14 @@ if __name__ == "__main__":
     maxdim = max(model.maxx - model.minx, model.maxy - model.miny)
     # stay well below sqrt(2)/2 in all directions
     scale_value = 1.4 / maxdim
-    print "Scaling factor: %f" % scale_value
+    print("Scaling factor: %f" % scale_value)
     model.scale(scale_value)
     shift_x = - (model.minx + (model.maxx - model.minx) / 2.0)
     shift_y = - (model.miny + (model.maxy - model.miny) / 2.0)
-    print "Shifting x: ", shift_x
-    print "Shifting y: ", shift_y
+    print("Shifting x: ", shift_x)
+    print("Shifting y: ", shift_y)
     model.shift(shift_x, shift_y, 0.0)
-    print "Model dimensions x: %f..%f" % (model.minx, model.maxx)
-    print "Model dimensions y: %f..%f" % (model.miny, model.maxy)
+    print("Model dimensions x: %f..%f" % (model.minx, model.maxx))
+    print("Model dimensions y: %f..%f" % (model.miny, model.maxy))
 
     pocket_model(model.get_polygons(), offset)

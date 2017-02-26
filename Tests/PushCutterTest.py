@@ -38,7 +38,7 @@ if __name__ == "__main__":
     for c in [SphericalCutter(0.1, Point(0, 0, 7)),
               CylindricalCutter(1, Point(0, 0, 7)),
               ToroidalCutter(1, 0.25, Point(0, 0, 7))]:
-        print "c=", c
+        print("c=", c)
 
 #       model = TestModel()
 #       model = STLImporter.ImportModel("Samples/STL/Box0.stl")

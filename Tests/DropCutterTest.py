@@ -31,7 +31,7 @@ if __name__ == "__main__":
     for c in [SphericalCutter(1, Point(0, 0, 7)),
               CylindricalCutter(1, Point(0, 0, 7)),
               ToroidalCutter(1, 0.1, Point(0, 0, 7))]:
-        print "c=", c
+        print("c=", c)
 
         model = Model()
         model.append(Triangle(Point(-3, -4, 1), Point(-3, 4, 1), Point(3, 0, 1)))

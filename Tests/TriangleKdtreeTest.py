@@ -23,13 +23,13 @@ from pycam.Geometry.TriangleKdtree import BuildKdtree2d, GetKdtree2dStats, Reset
         SearchKdtree2d
 from pycam.Importers.TestModel import TestModel
 
-print "# get model"
+print("# get model")
 testmodel = TestModel()
-print "# subdivide"
+print("# subdivide")
 model = testmodel.subdivide(5)
-print "# build kdtree"
+print("# build kdtree")
 kdtree = BuildKdtree2d(model.triangles(), 2, 0.1)
-print "#kdtree=", kdtree
+print("# kdtree=", kdtree)
 
 x = 2
 y = 2
@@ -41,11 +41,11 @@ maxx = x+r
 maxy = y+r
 
 
-print "# query kdtree"
+print("# query kdtree")
 ResetKdtree2dStats(False)
 tests = SearchKdtree2d(kdtree, minx, maxx, miny, maxy)
-print "# query kdtree"
+print("# query kdtree")
 ResetKdtree2dStats(True)
 hits = SearchKdtree2d(kdtree, minx, maxx, miny, maxy)
-print "# stats=%s / triangles=%d" % (GetKdtree2dStats(), len(model.triangles()))
-print "# hits=%d / tests=%d / triangles=%d" % (len(hits), len(tests), len(model.triangles()))
+print("# stats=%s / triangles=%d" % (GetKdtree2dStats(), len(model.triangles())))
+print("# hits=%d / tests=%d / triangles=%d" % (len(hits), len(tests), len(model.triangles())))

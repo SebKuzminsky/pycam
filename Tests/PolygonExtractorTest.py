@@ -25,9 +25,6 @@ from pycam.Geometry import Point
 from pycam.Geometry.PolygonExtractor import PolygonExtractor
 
 
-print ""
-
-
 col = [0xff0000, 0x00ff00, 0x0000ff, 0x00ffff, 0xff00ff, 0xffff00,
        0x007f3f, 0x3f007f, 0x7f3f00, 0x3f7f00, 0x003f7f, 0x7f003f]
 
@@ -150,7 +147,7 @@ def test_image(image, image2=None):
             l += "-"
 
         l += "+"
-        print l
+        print(l)
         for j in range(0, h):
             l = "|"
             for i in range(0, w):
@@ -161,14 +158,14 @@ def test_image(image, image2=None):
                 else:
                     l += "*"
             l += "|"
-            print l
+            print(l)
 
         l = "+"
         for i in range(0, w):
             l += "-"
 
         l += "+"
-        print l
+        print(l)
 
         filename = None
         if dir == 0:

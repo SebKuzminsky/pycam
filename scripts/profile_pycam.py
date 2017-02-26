@@ -22,7 +22,6 @@ threading.__multiprocessing = False
 """
 
 model = ImportModel(get_data_file_location(join('samples', 'pycam-textbox.stl')))
-print model.minx, model.miny, model.maxx, model.maxy
 
 
 def run_dropcutter():
@@ -47,10 +46,11 @@ def run_dropcutter():
 
 
 if __name__ == '__main__':
+    print(model.minx, model.miny, model.maxx, model.maxy)
     start_time = time()
     cProfile.run('run_dropcutter()', 'dropcutter.pyprof')
     run_time = time() - start_time
-    print '\nDropcutter took %f seconds' % run_time
+    print('\nDropcutter took %f seconds' % run_time)
     p = pstats.Stats('dropcutter.pyprof')
-    print 'Top ten time-consuming functions:'
+    print('Top ten time-consuming functions:')
     p.sort_stats('time').print_stats(10)

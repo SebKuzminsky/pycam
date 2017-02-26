@@ -35,6 +35,6 @@ start = time.clock()
 model = STLImporter.ImportModel(filename)
 end = time.clock()
 
-print "time=", (end-start)
+print("time=", (end-start))
 
 ShowTestScene(model)

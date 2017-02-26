@@ -21,6 +21,9 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+# for "print" to stderr
+from __future__ import print_function
+
 import logging
 from optparse import OptionParser
 import os
@@ -231,7 +234,7 @@ def execute(parser, opts, args, pycam):
     if opts.show_version:
         if opts.quiet:
             # print only the bare version number
-            print VERSION
+            print(VERSION)
         else:
             text = '''PyCAM %s
 Copyright (C) 2008-2010 Lode Leroy
@@ -240,7 +243,7 @@ Copyright (C) 2010-2011 Lars Kruse
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.''' % VERSION
-            print text
+            print(text)
         return EXIT_CODES["ok"]
 
     if not opts.disable_psyco:
@@ -458,7 +461,7 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
             handler, closer = get_output_handler(opts.export_task_config)
             if handler is None:
                 return EXIT_CODES["write_output_failed"]
-            print >> handler, tps.get_string()
+            print(tps.get_string(), file=handler)
             closer()
     # no error -> don't return a specific exit code
     return None

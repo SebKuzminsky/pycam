@@ -634,7 +634,7 @@ class Polygon(TransformableContainer):
                     prev_reverse, prev_line = shifted_lines[prev_index]
                 if prev_index == next_index:
                     # no lines are left
-                    print "out 1"
+                    print("out 1")
                     return []
                 next_reverse, next_line = shifted_lines[next_index]
                 while next_reverse and (prev_index != next_index):
@@ -642,7 +642,7 @@ class Polygon(TransformableContainer):
                     next_reverse, next_line = shifted_lines[next_index]
                 if prev_index == next_index:
                     # no lines are left
-                    print "out 2"
+                    print("out 2")
                     return []
                 if pdist(prev_line.p2, next_line.p1) > max_dist:
                     cp, dist = prev_line.get_intersection(next_line)
@@ -751,9 +751,9 @@ class Polygon(TransformableContainer):
                     groups[index2] = []
                     break
         result_polygons = []
-        print "********** GROUPS **************"
+        print("********** GROUPS **************")
         for a in groups:
-            print a
+            print(a)
         for group in groups:
             if len(group) <= 2:
                 continue
@@ -762,13 +762,13 @@ class Polygon(TransformableContainer):
                 try:
                     poly.append(line)
                 except ValueError:
-                    print "NON_REVERSED"
+                    print("NON_REVERSED")
                     for a in non_reversed:
-                        print a
-                    print groups
-                    print split_points
-                    print poly
-                    print line
+                        print(a)
+                    print(groups)
+                    print(split_points)
+                    print(poly)
+                    print(line)
                     raise
             if self.is_closed and ((not poly.is_closed) or (self.is_outer() != poly.is_outer())):
                 continue
@@ -813,7 +813,7 @@ class Polygon(TransformableContainer):
                     else:
                         if depth > 0:
                             # the original polygon was splitted or modified
-                            print "Next level: %s" % str(middle)
+                            print("Next level: %s" % str(middle))
                             shifted_sub_polygons = []
                             for sub_poly in result:
                                 shifted_sub_polygons.extend(sub_poly.get_offset_polygons(
@@ -821,7 +821,7 @@ class Polygon(TransformableContainer):
                             result_polygons.extend(shifted_sub_polygons)
                             break
                         else:
-                            print "Maximum recursion level reached"
+                            print("Maximum recursion level reached")
                             break
                     loop_limit -= 1
                 else:

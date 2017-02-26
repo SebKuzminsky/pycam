@@ -1,5 +1,9 @@
 # -*- mode: python -*-
 
+# for "print" to stderr
+from __future__ import print_function
+
+
 BASE_DIR = os.path.realpath(os.path.join(os.path.dirname(locals()["spec"]),
         os.path.pardir))
 
@@ -48,7 +52,8 @@ if get_platform() == PLATFORM_WINDOWS:
         return None
     gtk_loaders_dir = find_filename_below_dirs(start_dirs, "libpixbufloader-png.dll")
     if gtk_loaders_dir is None:
-        print >>sys.stderr, "Failed to locate Gtk installation (looking for libpixbufloader-png.dll)"
+        print("Failed to locate Gtk installation (looking for libpixbufloader-png.dll)",
+              file=sys.stderr)
         #sys.exit(1)
         gtk_loaders_dir = start_dirs[0]
 
@@ -58,8 +63,8 @@ if get_platform() == PLATFORM_WINDOWS:
     while not os.path.isfile(os.path.join(config_dir, config_relative)):
         new_config_dir = os.path.dirname(config_dir)
         if (not new_config_dir) or (new_config_dir == config_dir):
-            print >>sys.stderr, "Failed to locate '%s' around '%s'" \
-                    % (config_relative, gtk_loaders_dir)
+            print("Failed to locate '%s' around '%s'" % (config_relative, gtk_loaders_dir),
+                  file=sys.stderr)
             config_dir = None
             break
         config_dir = new_config_dir
@@ -68,14 +73,13 @@ if get_platform() == PLATFORM_WINDOWS:
         gtk_pixbuf_config_file = os.path.join(config_dir, config_relative)
         data.append((config_relative, os.path.join(config_dir, config_relative), "DATA"))
 
-
     # look for the GTK theme "MS-Windows"
     # the required gtkrc file is loaded during startup
     import _winreg
     try:
         k = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 'Software\\GTK2-Runtime')
     except EnvironmentError:
-        print "Failed to detect the GTK2 runtime environment - the Windows theme will be missing"
+        print("Failed to detect the GTK2 runtime environment - the Windows theme will be missing")
         gtkdir = None
     else:
         gtkdir = str(_winreg.QueryValueEx(k, 'InstallationDirectory')[0])
@@ -119,7 +123,7 @@ if get_platform() == PLATFORM_WINDOWS:
 
     gtk_pixbuf_loaders_prefix = get_pixbuf_loaders_prefix(gtk_loaders_dir)
     if gtk_pixbuf_loaders_prefix is None:
-        print >>sys.stderr, "Failed to extract the prefix from '%s'" % gtk_loaders_dir
+        print("Failed to extract the prefix from '%s'" % gtk_loaders_dir, file=sys.stderr)
         # no additional files
     else:
         data.extend(Tree(gtk_loaders_dir, prefix=gtk_pixbuf_loaders_prefix))
@@ -132,7 +136,7 @@ elif get_platform() == PLATFORM_MACOS:
 # do the STARTUP_SCRIPT/ORIGINAL_STARTUP_SCRIPT renaming before build
 if rename_startup_script:
     if os.path.exists(STARTUP_SCRIPT):
-        print "New startup script already exists: %s" % STARTUP_SCRIPT
+        print("New startup script already exists: %s" % STARTUP_SCRIPT)
     else:
         os.rename(ORIGINAL_STARTUP_SCRIPT, STARTUP_SCRIPT)
 
@@ -194,5 +198,4 @@ if rename_startup_script:
     if not os.path.exists(ORIGINAL_STARTUP_SCRIPT):
         os.rename(STARTUP_SCRIPT, ORIGINAL_STARTUP_SCRIPT)
     else:
-        print "Keeping original startup script: %s" % ORIGINAL_STARTUP_SCRIPT
-
+        print("Keeping original startup script: %s" % ORIGINAL_STARTUP_SCRIPT)

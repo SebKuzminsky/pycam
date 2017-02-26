@@ -160,7 +160,7 @@ def keyPressed(key, x, y):
     elif key == 'S':
         light = not light
     elif key == '=':
-        print "rot=<%g,%g,%g>" % (xrot, yrot, zrot)
+        print("rot=<%g,%g,%g>" % (xrot, yrot, zrot))
     elif key == 'I':
         xrot = 110
         yrot = 180

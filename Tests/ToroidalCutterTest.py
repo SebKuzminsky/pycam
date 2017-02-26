@@ -31,71 +31,71 @@ if __name__ == "__main__":
         cutter = ToroidalCutter(1, 0.25, Point(-10, 0.5, 0))
         edge = Line(Point(0, 0, -10), Point(0, 0, 10))
         dir = Point(1, 0, 0)
-        print "cutter=", cutter
-        print "edge=", edge
-        print "dir=", dir
+        print("cutter=", cutter)
+        print("edge=", edge)
+        print("dir=", dir)
         (cl, ccp, cp, d) = cutter.intersect_sphere_line(dir, edge)
-        print "cp=", cp
-        print "ccp=", ccp
-        print "d=", d
-        print "cl=", cl
+        print("cp=", cp)
+        print("ccp=", ccp)
+        print("d=", d)
+        print("cl=", cl)
         exit()
 
     if False:
         cutter = ToroidalCutter(1, 0.25, Point(-10, 0, 0))
         edge = Line(Point(0, -5, 1), Point(3, +5, 1))
         dir = Point(1, -0.2, 0)
-        print "cutter=", cutter
-        print "edge=", edge
-        print "dir=", dir
+        print("cutter=", cutter)
+        print("edge=", edge)
+        print("dir=", dir)
         (cl, ccp, cp, d) = cutter.intersect_cylinder_line(dir, edge)
-        print "cp=", cp
-        print "ccp=", ccp
-        print "d=", d
-        print "cl=", cl
+        print("cp=", cp)
+        print("ccp=", ccp)
+        print("d=", d)
+        print("cl=", cl)
 
     for c in [ToroidalCutter(1, 0.25, Point(0, 0, 6)),
               ToroidalCutter(1, 0.25, Point(-2.2, 0.2, 6)),
               ToroidalCutter(1, 0.25, Point(-1.7, 0.5, 6)),
               ToroidalCutter(1, 0.4, Point(-10, 0.1, 1.9))]:
         for dir in [Point(0, 0, -1), Point(1, 0, 0)]:
-            print "c=", c
+            print("c=", c)
             t = Triangle(Point(-2, 0, 2), Point(2, 1, 3), Point(2, -1, 4))
-            print "t=", t
+            print("t=", t)
 
             if False:
                 if False:
                     (cl_p, ccp_p, cp_p, d_p) = c.intersect_torus_plane(dir, t)
-                    print "ccp=", ccp_p
-                    print "cp=", cp_p
-                    print "cl=", cl_p
-                    print "d=", d_p
+                    print("ccp=", ccp_p)
+                    print("cp=", cp_p)
+                    print("cl=", cl_p)
+                    print("d=", d_p)
 
                 if True:
                     p = t.p1
                     (cl_v, ccp_v, cp_v, d_v) = c.intersect_torus_point(dir, p)
-                    print "ccp=", ccp_v
-                    print "cp=", cp_v
-                    print "cl=", cl_v
-                    print "d=", d_v
+                    print("ccp=", ccp_v)
+                    print("cp=", cp_v)
+                    print("cl=", cl_v)
+                    print("d=", d_v)
 
                 if False:
                     e = Line(t.p1, t.p2)
                     (cl_e, ccp_e, cp_e, d_e) = c.intersect_torus_line(dir, e)
-                    print "ccp=", ccp_e
-                    print "cp=", cp_e
-                    print "cl=", cl_e
-                    print "d=", d_e
+                    print("ccp=", ccp_e)
+                    print("cp=", cp_e)
+                    print("cl=", cl_e)
+                    print("d=", d_e)
 
                 if False:
                     e = Line(t.p1, t.p2)
                     (cl_e, d_e) = c.intersect_torus_edge(dir, e)
-                    print "cl=", cl_e
-                    print "d=", d_e
+                    print("cl=", cl_e)
+                    print("d=", d_e)
 
                 if False:
                     (cl, d) = c.intersect(dir, t)
-                    print "cl=", cl
+                    print("cl=", cl)
 
             if True:
                 samples = 100

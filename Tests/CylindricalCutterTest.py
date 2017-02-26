@@ -32,51 +32,51 @@ if __name__ == "__main__":
     c = CylindricalCutter(1, Point(2, 0, 6))
 #   c = CylindricalCutter(1, Point(-2.2, 0.2, 6))
 #   c = CylindricalCutter(1, Point(-1.7, -0.2, 6))
-    print "c=", c
+    print("c=", c)
 #   t = Triangle(Point(-3, 0, 2), Point(2, 2, 3), Point(2, -2, 4))
 #   t = Triangle(Point(-2, 0, 2), Point(2, -1, 4), Point(2, 1, 3))
 #   t = Triangle(Point(2, 0, 4), Point(2, -1, 2), Point(2, 1, 2))
 #   t = Triangle(Point(2, 0, 4), Point(2, 1, 2), Point(2, -1, 2))
 #   t = Triangle(Point(-3, 0, 4), Point(2, 2, 2), Point(2, -2, 2))
     t = Triangle(Point(-3, 0, 2.5), Point(3, 0, 2.5), Point(0, 1, 1.5))
-    print "t=", t
+    print("t=", t)
 
     if False:
-        print "plane:"
+        print("plane:")
         (cl_p, ccp_p, cp_p, d_p) = c.intersect_circle_plane(dir, t)
-        print "ccp=", ccp_p
-        print "cp=", cp_p
-        print "cl=", cl_p
-        print "d=", d_p
+        print("ccp=", ccp_p)
+        print("cp=", cp_p)
+        print("cl=", cl_p)
+        print("d=", d_p)
 
-        print "triangle:"
+        print("triangle:")
         (cl_t, d_t) = c.intersect_circle_triangle(dir, t)
-        print "cl=", cl_t
-        print "d=", d_t
+        print("cl=", cl_t)
+        print("d=", d_t)
 
-        print "point:"
+        print("point:")
         (cl_v, ccp_v, cp_v, d_v) = c.intersect_circle_point(dir, t.p1)
-        print "ccp=", ccp_v
-        print "cp=", cp_v
-        print "cl=", cl_v
-        print "d=", d_v
+        print("ccp=", ccp_v)
+        print("cp=", cp_v)
+        print("cl=", cl_v)
+        print("d=", d_v)
 
         l = Line(t.p2, t.p3)
-        print "line:", l
+        print("line:", l)
         (cl_l, ccp_l, cp_l, d_l) = c.intersect_circle_line(dir, l)
-        print "ccp=", ccp_l
-        print "cp=", cp_l
-        print "cl=", cl_l
-        print "d=", d_l
+        print("ccp=", ccp_l)
+        print("cp=", cp_l)
+        print("cl=", cl_l)
+        print("d=", d_l)
 
-        print "edge:", l
+        print("edge:", l)
         (cl_e, d_e) = c.intersect_circle_edge(dir, l)
-        print "cl=", cl_e
-        print "d=", d_e
+        print("cl=", cl_e)
+        print("d=", d_e)
 
-        print "piece:"
+        print("piece:")
         (cl, d) = c.intersect(dir, t)
-        print "cl=", cl
+        print("cl=", cl)
 
     if False:
         samples = 50

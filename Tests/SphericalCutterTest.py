@@ -31,61 +31,61 @@ if __name__ == "__main__":
         cutter = SphericalCutter(1, Point(-10, 0.5, 0))
         edge = Line(Point(0, 0, -10), Point(0, 0, 10))
         dir = Point(1, 0, 0)
-        print "cutter=", cutter
-        print "edge=", edge
-        print "dir=", dir
+        print("cutter=", cutter)
+        print("edge=", edge)
+        print("dir=", dir)
         (cl, ccp, cp, d) = cutter.intersect_sphere_line(dir, edge)
-        print "cp=", cp
-        print "ccp=", ccp
-        print "d=", d
-        print "cl=", cl
+        print("cp=", cp)
+        print("ccp=", ccp)
+        print("d=", d)
+        print("cl=", cl)
         exit()
 
     if False:
         cutter = SphericalCutter(1, Point(-10, 0, 0))
         edge = Line(Point(0, -5, 1), Point(3, +5, 1))
         dir = Point(1, -0.2, 0)
-        print "cutter=", cutter
-        print "edge=", edge
-        print "dir=", dir
+        print("cutter=", cutter)
+        print("edge=", edge)
+        print("dir=", dir)
         (cl, ccp, cp, d) = cutter.intersect_cylinder_line(dir, edge)
-        print "cp=", cp
-        print "ccp=", ccp
-        print "d=", d
-        print "cl=", cl
+        print("cp=", cp)
+        print("ccp=", ccp)
+        print("d=", d)
+        print("cl=", cl)
 
     dir = Point(0, 0, -1)
     c = SphericalCutter(1, Point(0, 0, 6))
 #   c = SphericalCutter(1, Point(-2.2, 0.2, 6))
 #   c = SphericalCutter(1, Point(-1.7, 0.5, 6))
-    print "c=", c
+    print("c=", c)
     t = Triangle(Point(-2, 0, 2), Point(2, 1, 3), Point(2, -1, 4))
 #   t = Triangle(Point(-2, 0, 2), Point(2, -1, 4), Point(2, 1, 3))
 #   t = Triangle(Point(2, 0, 4), Point(2, -1, 2), Point(2, 1, 2))
 #   t = Triangle(Point(2, 0, 2), Point(-2, 1, 2), Point(-2, -1, 2))
-    print "t=", t
+    print("t=", t)
 
     if False:
         (cl_p, ccp_p, cp_p, d_p) = c.intersect_sphere_plane(dir, t)
-        print "ccp=", ccp_p
-        print "cp=", cp_p
-        print "cl=", cl_p
-        print "d=", d_p
+        print("ccp=", ccp_p)
+        print("cp=", cp_p)
+        print("cl=", cl_p)
+        print("d=", d_p)
 
         (cl_v, ccp_v, cp_v, d_v) = c.intersect_sphere_point(dir, t.p1)
-        print "ccp=", ccp_v
-        print "cp=", cp_v
-        print "cl=", cl_v
-        print "d=", d_v
+        print("ccp=", ccp_v)
+        print("cp=", cp_v)
+        print("cl=", cl_v)
+        print("d=", d_v)
 
         (cl_e, ccp_e, cp_e, d_e) = c.intersect_sphere_line(dir, Line(t.p1, t.p2))
-        print "ccp=", ccp_e
-        print "cp=", cp_e
-        print "cl=", cl_e
-        print "d=", d_e
+        print("ccp=", ccp_e)
+        print("cp=", cp_e)
+        print("cl=", cl_e)
+        print("d=", d_e)
 
         (cl, d) = c.intersect(dir, t)
-        print "cl=", cl
+        print("cl=", cl)
 
     if False:
         samples = 50

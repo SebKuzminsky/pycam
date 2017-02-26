@@ -164,8 +164,6 @@ def poly4_roots(a, b, c, d, e):
             quad2[2] = q1
         else:
             return None
-    # print "f1(x)=%g*x**2%+g*x%+g" % (quad1[0], quad1[1], quad1[2])
-    # print "f2(x)=%g*x**2%+g*x%+g" % (quad2[0], quad2[1], quad2[2])
     roots1 = poly2_roots(quad1[0], quad1[1], quad1[2])
     roots2 = poly2_roots(quad2[0], quad2[1], quad2[2])
     if roots1 and roots2:
@@ -180,47 +178,47 @@ def poly4_roots(a, b, c, d, e):
 
 def test_poly1(a, b):
     roots = poly1_roots(a, b)
-    print a, "*x+", b, "=0 ", roots
+    print(a, "*x+", b, "=0 ", roots)
     if roots:
         for r in roots:
             f = a * r + b
             if not near_zero(f):
-                print "ERROR:",
-            print "    f(%f)=%f" % (r, f)
+                print("ERROR:"),
+            print("    f(%f)=%f" % (r, f))
 
 
 def test_poly2(a, b, c):
     roots = poly2_roots(a, b, c)
-    print a, "*x^2+", b, "*x+", c, "=0 ", roots
+    print(a, "*x^2+", b, "*x+", c, "=0 ", roots)
     if roots:
         for r in roots:
             f = a * r * r + b * r + c
             if not near_zero(f):
-                print "ERROR:",
-            print "    f(%f)=%f" % (r, f)
+                print("ERROR:"),
+            print("    f(%f)=%f" % (r, f))
 
 
 def test_poly3(a, b, c, d):
     roots = poly3_roots(a, b, c, d)
-    print a, "*x^3+", b, "*x^2+", c, "*x+", d, "=0 ", roots
+    print(a, "*x^3+", b, "*x^2+", c, "*x+", d, "=0 ", roots)
     if roots:
         for r in roots:
             f = a * r * r * r + b * r * r + c * r + d
             if not near_zero(f):
-                print "ERROR:",
-            print "    f(%f)=%f" % (r, f)
+                print("ERROR:"),
+            print("    f(%f)=%f" % (r, f))
 
 
 def test_poly4(a, b, c, d, e):
     roots = poly4_roots(a, b, c, d, e)
-    print "f(x)=%g*x**4%+g*x**3%+g*x**2%+g*x%+g" % (a, b, c, d, e)
-    print "roots:", roots
+    print("f(x)=%g*x**4%+g*x**3%+g*x**2%+g*x%+g" % (a, b, c, d, e))
+    print("roots:", roots)
     if roots:
         for r in roots:
             f = a * r * r * r * r + b * r * r * r + c * r * r + d * r + e
             if not near_zero(f, epsilon=SMALL):
-                print "ERROR:",
-            print "    f(%f)=%f" % (r, f)
+                print("ERROR:"),
+            print("    f(%f)=%f" % (r, f))
     return roots
 
 
