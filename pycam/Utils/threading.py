@@ -777,11 +777,15 @@ class PendingTasks(object):
         if task_id is None:
             # remove all tasks of this job
             remove_keys = []
-            for key in self._jobs:
+            for key in list(self._jobs.keys()):
                 if key[0] == job_id:
                     remove_keys.append(key)
             for key in remove_keys:
-                del self._jobs[key]
+                try:
+                    del self._jobs[key]
+                except KeyError:
+                    # maybe they were removed in between
+                    pass
         else:
             # remove only a specific task
             if (job_id, task_id) in self._jobs:
