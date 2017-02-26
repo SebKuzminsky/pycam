@@ -122,7 +122,7 @@ class InputString(InputBaseClass):
 
 class InputChoice(InputBaseClass):
 
-    def __init__(self, choices, change_handler=None):
+    def __init__(self, choices, start=None, change_handler=None):
         self.model = gtk.ListStore(gobject.TYPE_STRING)
         self._values = []
         for label, value in choices:
@@ -132,7 +132,10 @@ class InputChoice(InputBaseClass):
         self.control = gtk.ComboBox(self.model)
         self.control.pack_start(renderer)
         self.control.set_attributes(renderer, text=0)
-        self.control.set_active(0)
+        if start is None:
+            self.control.set_active(0)
+        else:
+            self.set_value(start)
         self.connect("changed", change_handler)
 
     @_output_conversion
