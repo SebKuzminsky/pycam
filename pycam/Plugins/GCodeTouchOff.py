@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright 2011 Lars Kruse <devel@sumpfralle.de>
+Copyright 2017 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
 
@@ -18,94 +18,93 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-
 import pycam.Plugins
 import pycam.Utils.log
+from pycam.Gui.ControlsGTK import InputCheckBox, InputChoice, InputNumber
 
 _log = pycam.Utils.log.get_logger()
 
 
 class GCodeTouchOff(pycam.Plugins.PluginBase):
+    """ TODO: this plugin currently does not change the generated toolpath - it is just the UI part
+    """
 
     DEPENDS = ["ToolpathProcessors"]
     CATEGORIES = ["GCode"]
-    UI_FILE = "gcode_touch_off.ui"
-    _NAME_CONTROL_MAP = (("ToolChangePosX", "change_pos_x", 0),
-                         ("ToolChangePosY", "change_pos_y", 0),
-                         ("ToolChangePosZ", "change_pos_z", 0),
-                         ("GCodeTouchOffOnStartup", "on_startup", False),
-                         ("GCodeTouchOffOnToolChange", "on_tool_change", False),
-                         ("TouchOffLocationSelector", "location_selector", 0),
-                         ("ToolChangeRapidMoveDown", "rapid_move_down", 0.0),
-                         ("ToolChangeSlowMoveDown", "slow_move_down", 0.0),
-                         ("ToolChangeSlowMoveSpeed", "slow_move_speed", 1),
-                         ("TouchOffHeight", "height", 0.0),
-                         ("TouchOffPauseExecution", "pause_execution", False))
+    CONTROL_MAP = {
+        "on_startup": ("Touch off on startup (initializes coordinate system for Z)", False, 10,
+                       InputCheckBox, [], {}),
+        "on_tool_change": ("Measure and compensate tool length on tool change", False, 20,
+                           InputCheckBox, [], {}),
+        "location_selector": ("Touch probe position", "startup", 30,
+                              InputChoice, [(("Initial location (at startup)", "startup"),
+                                             ("Fixed location (absolute)", "absolute"))], {}),
+        "probe_position_x": ("Fixed probe position X", 0, 35, InputNumber, [], {"digits": 3}),
+        "probe_position_y": ("Fixed probe position Y", 0, 36, InputNumber, [], {"digits": 3}),
+        "probe_position_z": ("Fixed probe position Z", 0, 37, InputNumber, [], {"digits": 3}),
+        "rapid_move_down": ("Rapid move down distance", 0.0, 50, InputNumber, [], {"digits": 1}),
+        "slow_move_down": ("Probing distance (limit)", 0.1, 60, InputNumber, [], {"digits": 0}),
+        "slow_move_speed": ("Probing speed", 100, 70, InputNumber, [], {"digits": 3, "lower": 1}),
+        "probe_level_z": ("Z level of touch probe", 0.0, 80, InputNumber, [], {"digits": 3})}
 
     def setup(self):
-        # TODO: fix the settings handler to fit into the common dict-model
-        _log.warn("The plugin 'GCodeTouchOff' is disabled for now - please ignore any related "
-                  "messages")
-        return False
-        if self.gui:
-            self.box = self.gui.get_object("TouchOffBox")
-            self.box.unparent()
-            self.core.get("register_parameter")("toolpath_processor", "touch_off", self.box,
-                                                get_func=self._get_value, set_func=self._set_value)
-            self.core.register_ui("gcode_preferences", "Touch Off", self.box, weight=70)
-            self._gtk_handlers = []
-            for objname in ("GCodeTouchOffOnStartup", "GCodeTouchOffOnToolChange"):
-                obj = self.gui.get_object(objname)
-                self._gtk_handlers.append((obj, "toggled", self.update_widgets))
-            selector = self.gui.get_object("TouchOffLocationSelector")
-            self._gtk_handlers.append((selector, "changed", self.update_widgets))
-            selector.set_active(0)
-            self.register_gtk_handlers(self._gtk_handlers)
-            self.update_widgets()
+        self.controls = {}
+        self.core.get("register_parameter")("toolpath_processor", "touch_off", None,
+                                            get_func=self._get_control_values,
+                                            set_func=self._set_control_values)
+        self._table = pycam.Gui.ControlsGTK.ParameterSection()
+        self.core.register_ui("gcode_preferences", "Touch Off", self._table.get_widget(),
+                              weight=70)
+        self.core.register_ui_section("gcode_touch_off", self._table.add_widget,
+                                      self._table.clear_widgets)
+        for name, (label, start, weight, input_class, args, kwargs) in self.CONTROL_MAP.items():
+            all_kw_args = dict(kwargs)
+            all_kw_args.update({"change_handler": self.update_widgets, "start": start})
+            control = input_class(*args, **all_kw_args)
+            self.core.register_ui("gcode_touch_off", label, control.get_widget(), weight=weight)
+            self.controls[name] = control
+        self.update_widgets()
+        self._table.get_widget().show()
         return True
 
     def teardown(self):
+        for key, control in self.controls.items():
+            self.core.unregister_ui("gcode_touch_off", control.get_widget())
+        self.core.unregister_ui_section("gcode_touch_off")
+        self.core.unregister_ui("gcode_preferences", self._table.get_widget())
+        self.core.get("unregister_parameter")("toolpath_processor", "touch_off", self.box)
+
+    def _get_control_values(self):
+        """ used by the parameter manager for retrieving the current state """
+        return {key: value.get_value() for key, value in self.controls.items()}
+
+    def _set_control_values(self, params):
+        """ used by the parameter manager for applying a new configuration """
+        if params is None:
+            # reset to defaults
+            for key, control in self.controls.items():
+                control.set_value(self.CONTROL_MAP[key][1])
+        else:
+            for key, value in params.items():
+                self.controls[key].set_value(value)
         if self.gui:
-            self.core.unregister_ui("gcode_preferences", self.gui.get_object("TouchOffBox"))
-            self.unregister_gtk_handlers(self._gtk_handlers)
-            self.core.get("unregister_parameter")("toolpath_processor", "touch_off", self.box)
-
-    def _get_value(self):
-        result = {}
-        for objname, key, default in self._NAME_CONTROL_MAP:
-            result[key] = self.gui.get_object(objname).get_value()
-
-    def _set_value(self, value=None):
-        if value is None:
-            value = {}
-        for objname, key, default in self._NAME_CONTROL_MAP:
-            self.gui.get_object(objname).set_value(value.get(key, default))
+            self.update_widgets()
 
     def update_widgets(self, widget=None):
-        # tool change controls
-        pos_control = self.gui.get_object("TouchOffLocationSelector")
-        tool_change_pos_model = pos_control.get_model()
-        active_pos_index = pos_control.get_active()
-        if active_pos_index < 0:
-            pos_key = None
-        else:
-            pos_key = tool_change_pos_model[active_pos_index][0]
+        self._table.get_widget().show()
+        self.controls["on_startup"].set_visible(True)
+        self.controls["on_tool_change"].set_visible(True)
         # disable/enable the touch off position controls
-        position_controls_table = self.gui.get_object("TouchOffLocationTable")
-        touch_off_enabled = any(
-            [self.gui.get_object(objname).get_active()
-             for objname in ("GCodeTouchOffOnStartup", "GCodeTouchOffOnToolChange")])
-        position_controls_table.set_sensitive(touch_off_enabled)
+        touch_off_enabled = (self.controls["on_startup"].get_value()
+                             or self.controls["on_tool_change"].get_value())
+        self.controls["location_selector"].set_visible(touch_off_enabled)
+        # tool change controls
+        pos_key = self.controls["location_selector"].get_value()
         # show or hide the vbox containing the absolute tool change location
-        absolute_pos_box = self.gui.get_object("AbsoluteToolChangePositionBox")
-        if (pos_key == "absolute") and touch_off_enabled:
-            absolute_pos_box.show()
-        else:
-            absolute_pos_box.hide()
+        for name in ("probe_position_x",
+                     "probe_position_y",
+                     "probe_position_z"):
+            self.controls[name].set_visible(touch_off_enabled and (pos_key == "absolute"))
         # disable/enable touch probe height
-        if self.gui.get_object("GCodeTouchOffOnStartup").get_active():
-            update_func = "show"
-        else:
-            update_func = "hide"
-        for objname in ("TouchOffHeight", "TouchOffHeightLabel", "LengthUnitTouchOffHeight"):
-            getattr(self.gui.get_object(objname), update_func)()
+        for name in ("rapid_move_down", "slow_move_down", "slow_move_speed", "probe_level_z"):
+            self.controls[name].set_visible(touch_off_enabled)
