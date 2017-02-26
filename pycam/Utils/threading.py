@@ -740,21 +740,20 @@ class ProcessStatistics(object):
         result = []
         # Cache the key list instead of iterating it - otherwise a
         # "RuntimeError: dictionary changed size during iteration" may occour.
-        all_keys = self.workers.keys()
-        for key in all_keys:
+        for key, worker_start_time in list(self.workers.items()):
             try:
                 one_process = self.processes[key]
-                last_notification = int(now - self.workers[key])
-                num_of_tasks = one_process.process_count
-                process_time = one_process.process_time
-                # avoid divide-by-zero
-                avg_process_time = process_time / max(1, num_of_tasks)
-                avg_transfer_time = one_process.transfer_time / max(1, num_of_tasks)
-                result.append((key, last_notification, num_of_tasks, process_time,
-                               avg_process_time, avg_transfer_time))
+                last_notification = int(now - worker_start_time)
             except KeyError:
                 # no data available yet or the item was removed meanwhile
-                pass
+                continue
+            num_of_tasks = one_process.process_count
+            process_time = one_process.process_time
+            # avoid divide-by-zero
+            avg_process_time = process_time / max(1, num_of_tasks)
+            avg_transfer_time = one_process.transfer_time / max(1, num_of_tasks)
+            result.append((key, last_notification, num_of_tasks, process_time, avg_process_time,
+                           avg_transfer_time))
         return result
 
 
