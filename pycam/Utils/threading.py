@@ -701,14 +701,13 @@ class ProcessStatistics(object):
 
     def _refresh_workers(self):
         oldest_valid = time.time() - self.timeout
-        for key in self.workers:
-            # be careful: maybe the workers dictionary changed in between
-            try:
-                timestamp = self.workers[key]
-                if timestamp < oldest_valid:
+        # be careful: the workers dictionary can be changed within the loop
+        for key, timestamp in list(self.workers.items()):
+            if timestamp < oldest_valid:
+                try:
                     del self.workers[key]
-            except KeyError:
-                pass
+                except KeyError:
+                    pass
 
     def get_stats(self):
         return str(self)
