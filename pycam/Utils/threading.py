@@ -830,7 +830,8 @@ class ProcessDataCache(object):
 
     def expire_cache_items(self):
         expired = time.time() - self.timeout
-        for key in self.cache:
+        # use a copy in order to avoid "changed size during iteration" errors
+        for key in list(self.cache):
             try:
                 if self.cache[key][1] < expired:
                     del self.cache[key]
