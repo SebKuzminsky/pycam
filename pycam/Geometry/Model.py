@@ -509,9 +509,9 @@ class ContourModel(BaseModel):
                         new_queue = processed
                 while len(self._line_groups) > 0:
                     self._line_groups.pop()
-                print("Processed polygons: %s" % str([len(p.get_lines())
-                                                      for p in processed_polygons]))
-                print("New queue: %s" % str([len(p.get_lines()) for p in new_queue]))
+                log.info("Processed polygons: %s", [len(p.get_lines())
+                                                    for p in processed_polygons])
+                log.info("New queue: %s", [len(p.get_lines()) for p in new_queue])
                 for processed_polygon in processed_polygons + new_queue:
                     self._line_groups.append(processed_polygon)
                 # TODO: this is quite expensive - can we do it differently?
