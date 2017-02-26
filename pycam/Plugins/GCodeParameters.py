@@ -33,8 +33,7 @@ class GCodeSafetyHeight(pycam.Plugins.PluginBase):
     def setup(self):
         # TODO: update the current filters after a change
         self.control = pycam.Gui.ControlsGTK.InputNumber(
-            digits=0, lower=-1000, upper=1000,
-            change_handler=lambda *args: self.core.emit_event("visual-item-updated"))
+            digits=1, change_handler=lambda *args: self.core.emit_event("visual-item-updated"))
         self.core.get("register_parameter")("toolpath_processor", "safety_height", self.control)
         self.core.register_ui("gcode_general_parameters", "Safety Height",
                               self.control.get_widget(), weight=20)
@@ -87,7 +86,8 @@ class GCodeStepWidth(pycam.Plugins.PluginBase):
                                       self._table.clear_widgets)
         self.controls = []
         for key in "xyz":
-            control = pycam.Gui.ControlsGTK.InputNumber(digits=8, start=0.0001, increment=0.00005)
+            control = pycam.Gui.ControlsGTK.InputNumber(digits=8, start=0.0001, increment=0.00005,
+                                                        lower=0.00000001)
             self.core.register_ui("gcode_step_width", key.upper(), control.get_widget(),
                                   weight="xyz".index(key))
             self.core.get("register_parameter")("toolpath_processor", "step_width_%s" % key,
@@ -118,7 +118,7 @@ class GCodeSpindle(pycam.Plugins.PluginBase):
         self.core.register_ui("gcode_preferences", "Spindle control", self._table.get_widget())
         self.core.register_ui_section("gcode_spindle", self._table.add_widget,
                                       self._table.clear_widgets)
-        self.spindle_delay = pycam.Gui.ControlsGTK.InputNumber(digits=1)
+        self.spindle_delay = pycam.Gui.ControlsGTK.InputNumber(digits=1, lower=0)
         self.core.register_ui("gcode_spindle", "Delay (in seconds) after start/stop",
                               self.spindle_delay.get_widget(), weight=50)
         self.core.get("register_parameter")("toolpath_processor", "spindle_delay",
@@ -164,12 +164,12 @@ class GCodeCornerStyle(pycam.Plugins.PluginBase):
         self.core.register_ui("gcode_preferences", "Corner style", self._table.get_widget())
         self.core.register_ui_section("gcode_corner_style", self._table.add_widget,
                                       self._table.clear_widgets)
-        self.motion_tolerance = pycam.Gui.ControlsGTK.InputNumber(digits=3)
+        self.motion_tolerance = pycam.Gui.ControlsGTK.InputNumber(digits=3, lower=0)
         self.core.register_ui("gcode_corner_style", "Motion blending tolerance",
                               self.motion_tolerance.get_widget(), weight=30)
         self.core.get("register_parameter")("toolpath_processor", "motion_tolerance",
                                             self.motion_tolerance)
-        self.naive_tolerance = pycam.Gui.ControlsGTK.InputNumber(digits=3)
+        self.naive_tolerance = pycam.Gui.ControlsGTK.InputNumber(digits=3, lower=0)
         self.core.register_ui("gcode_corner_style", "Naive CAM tolerance",
                               self.naive_tolerance.get_widget(), weight=50)
         self.core.get("register_parameter")("toolpath_processor", "naive_tolerance",

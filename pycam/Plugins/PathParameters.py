@@ -54,7 +54,7 @@ class PathParamStepDown(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputNumber(
-            lower=0.01, upper=1000, digits=2, start=1,
+            lower=0.01, digits=2, start=1,
             change_handler=lambda widget=None: self.core.emit_event("process-changed"))
         self.core.get("register_parameter")("process", "step_down", self.control)
         self.core.register_ui("process_path_parameters", "Step down", self.control.get_widget(),
@@ -73,7 +73,7 @@ class PathParamMaterialAllowance(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputNumber(
-            start=0, lower=0, upper=100, digits=2,
+            start=0, lower=0, digits=2,
             change_handler=lambda widget=None: self.core.emit_event("process-changed"))
         self.core.get("register_parameter")("process", "material_allowance", self.control)
         self.core.register_ui("process_path_parameters", "Material allowance",

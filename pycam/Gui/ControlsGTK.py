@@ -89,7 +89,10 @@ class InputBaseClass(WidgetBaseClass):
 
 class InputNumber(InputBaseClass):
 
-    def __init__(self, digits=0, start=0, lower=0, upper=100, increment=1, change_handler=None):
+    # 'float("inf")' was not accepted by pygtk - thus we use reasonable large limits
+    def __init__(self, digits=0, start=0, lower=-999999, upper=999999, increment=1,
+                 change_handler=None):
+        # beware: the default values for lower/upper are both zero
         adjustment = gtk.Adjustment(value=start, lower=lower, upper=upper, step_incr=increment)
         self.control = gtk.SpinButton(adjustment, digits=digits)
         self.control.set_value(start)
