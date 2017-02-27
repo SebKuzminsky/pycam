@@ -745,7 +745,7 @@ class PolygonExtractor(object):
                         and (s1.points[-2][0] == s1.points[-1][0]):
                     s1.points = s1.points[:-1]
                 hor_path_list.append(s1)
-        hor_path_list.sort(cmp=lambda a, b: cmp(a.points[0][0], b.points[0][0]))
+        hor_path_list.sort(key=lambda p: p.points[0][0])
         if DEBUG_POLYGONEXTRACTOR2:
             print("ver_hor_path_list = ", hor_path_list)
             for s in hor_path_list:
@@ -786,7 +786,7 @@ class PolygonExtractor(object):
                         and (self.ver_hor_path_list[0].points[0][0] <= next_x):
                     self.act_hor_path_list.append(self.ver_hor_path_list[0])
                     self.ver_hor_path_list = self.ver_hor_path_list[1:]
-                self.act_hor_path_list.sort(cmp=lambda a, b: cmp(a.points[0][0], b.points[0][0]))
+                self.act_hor_path_list.sort(key=lambda p: p.points[0][0])
 
             scanline = []
             i = 0
@@ -806,11 +806,11 @@ class PolygonExtractor(object):
                             print("remove point", s.points[0])
                         s.points.pop(0)
                 i += 1
-            self.act_hor_path_list.sort(cmp=lambda a, b: cmp(a.points[0][0], b.points[0][0]))
+            self.act_hor_path_list.sort(key=lambda p: p.points[0][0])
             if not scanline:
                 return
 
-            scanline.sort(cmp=lambda a, b: cmp(a[1], b[1]))
+            scanline.sort(key=lambda l: l[1])
             if DEBUG_POLYGONEXTRACTOR2:
                 print("scanline' =", scanline)
                 print("ver_hor_path_list =", self.ver_hor_path_list)

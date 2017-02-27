@@ -219,17 +219,8 @@ def get_all_ips():
     for one_ip in result:
         if one_ip not in filtered_result:
             filtered_result.append(one_ip)
-
-    def sort_ip_by_relevance(ip1, ip2):
-        if ip1.startswith("127."):
-            return 1
-        if ip2.startswith("127."):
-            return -1
-        else:
-            return cmp(ip1, ip2)
-
     # non-local IPs first
-    filtered_result.sort(cmp=sort_ip_by_relevance)
+    filtered_result.sort(key=lambda ip: ((1 if ip.startswith("127.") else 0), ip))
     return filtered_result
 
 

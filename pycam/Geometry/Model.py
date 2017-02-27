@@ -448,7 +448,7 @@ class ContourModel(BaseModel):
             found = False
             # Going back from the end to start. The last line_group always has
             # the highest chance of being suitable for the next line.
-            line_group_indexes = xrange(len(self._line_groups) - 1, -1, -1)
+            line_group_indexes = range(len(self._line_groups) - 1, -1, -1)
             for line_group_index in line_group_indexes:
                 line_group = self._line_groups[line_group_index]
                 for candidate in item_list:

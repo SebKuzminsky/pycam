@@ -65,15 +65,10 @@ class ToroidalCutter(BaseCutter):
         return "ToroidalCutter<%s,%f,R=%f,r=%f>" % (self.location, self.radius, self.majorradius,
                                                     self.minorradius)
 
-    def __cmp__(self, other):
+    def __lt__(self, other):
         """ Compare Cutters by shape and size (ignoring the location) """
-        if isinstance(other, ToroidalCutter):
-            # compare the relevant attributes
-            return cmp((self.radius, self.majorradius, self.minorradius),
-                       (other.radius, other.majorradius, other.minorradius))
-        else:
-            # just return a string comparison
-            return cmp(str(self), str(other))
+        return ((self.radius, self.majorradius, self.minorradius)
+                < (other.radius, other.majorradius, other.minorradius))
 
     def get_shape(self, engine="ODE"):
         if engine == "ODE":

@@ -76,17 +76,13 @@ class BaseCutter(IDGenerator):
     def __repr__(self):
         return "BaseCutter"
 
-    def __cmp__(self, other):
+    def __lt__(self, other):
         """ Compare Cutters by shape and size (ignoring the location)
         This function should be overridden by subclasses, if they describe
         cutters with a shape depending on more than just the radius.
         See the ToroidalCutter for an example.
         """
-        if self.__class__ == other.__class__:
-            return cmp(self.radius, other.radius)
-        else:
-            # just return a string comparison
-            return cmp(str(self), str(other))
+        return self.radius < other.radius
 
     def set_required_distance(self, value):
         if value >= 0:

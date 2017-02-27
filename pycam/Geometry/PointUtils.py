@@ -52,7 +52,7 @@ def pcmp(a, b, axes=None):
         axes = (0, 1, 2)
     for axis in axes:
         if abs(a[axis] - b[axis]) > epsilon:
-            return cmp(a[axis], b[axis])
+            return -1 if a[axis] < b[axis] else (0 if a[axis] == b[axis] else 1)
     # both points are at the same position
     return 0
 
