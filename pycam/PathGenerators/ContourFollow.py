@@ -23,13 +23,11 @@ take a look at the related blog posting describing this algorithm:
   http://fab.senselab.org/node/43
 """
 
-import math
-
 from pycam.Geometry import ceil, epsilon, sqrt
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.PointUtils import padd, pcross, pdot, pmul, pnorm, pnormalized, psub
-from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
+from pycam.PathGenerators import get_free_paths_triangles
 from pycam.Utils import ProgressCounter
 from pycam.Utils.threading import run_in_parallel
 import pycam.Utils.log
@@ -192,28 +190,13 @@ class CollisionPaths(object):
 
 class ContourFollow(object):
 
-    def __init__(self, path_processor, physics=None):
+    def __init__(self, path_processor):
         self.pa = path_processor
         self._up_vector = (0, 0, 1, 'v')
-        self.physics = physics
         self._processed_triangles = []
-        if self.physics:
-            accuracy = 20
-            max_depth = 16
-            # TODO: migrate to new interface
-            maxx = max([m.maxx for m in self.models])
-            minx = max([m.minx for m in self.models])
-            maxy = max([m.maxy for m in self.models])
-            miny = max([m.miny for m in self.models])
-            model_dim = max(abs(maxx - minx), abs(maxy - miny))
-            depth = math.log(accuracy * model_dim / self.cutter.radius) / math.log(2)
-            self._physics_maxdepth = min(max_depth, max(ceil(depth), 4))
 
     def _get_free_paths(self, cutter, models, p1, p2):
-        if self.physics:
-            return get_free_paths_ode(self.physics, p1, p2, depth=self._physics_maxdepth)
-        else:
-            return get_free_paths_triangles(models, cutter, p1, p2)
+        return get_free_paths_triangles(models, cutter, p1, p2)
 
     def GenerateToolPath(self, cutter, models, minx, maxx, miny, maxy, minz, maxz, dz,
                          draw_callback=None):

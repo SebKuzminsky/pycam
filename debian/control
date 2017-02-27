@@ -10,7 +10,7 @@ Homepage: http://github.com/SebKuzminsky/pycam
 Package: pycam
 Architecture: all
 Depends: python-gtk2, python-opengl, python-gtkglext1, python-rsvg,
- python-gobject-2, python-numpy, python-pyode, python-setproctitle,
+ python-gobject-2, python-numpy, python-setproctitle,
  inkscape, pstoedit, librecad-data, ${misc:Depends}, ${python:Depends}
 Recommends: python-psyco, python-guppy
 Description: CAM program & Python library for generating toolpaths

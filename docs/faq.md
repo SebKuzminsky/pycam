@@ -110,13 +110,6 @@ of the model goes along the y axis - instead of the more common z axis.
 Just swap the y and z axes (see 
 [Model Transformations](model-transformations.md)) to fix this issue.
 
-Some toolpaths go straight through the model and some are OK
-------------------------------------------------------------
-
-Maybe you enabled the ODE collision detection engine. It is fast, but
-sadly sometimes it fails to detect a collision correctly. Disable ODE
-(in the preferences window) and everything should be fine.
-
 Toolpaths for 2D models
 =======================
 

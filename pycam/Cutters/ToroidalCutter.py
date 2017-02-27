@@ -70,17 +70,6 @@ class ToroidalCutter(BaseCutter):
         return ((self.radius, self.majorradius, self.minorradius)
                 < (other.radius, other.majorradius, other.minorradius))
 
-    def get_shape(self, engine="ODE"):
-        if engine == "ODE":
-            from pycam.Cutters.CylindricalCutter import CylindricalCutter
-            # TODO: use an appromixated trimesh instead (ODE does not support
-            # toroidal shapes)
-            # for now: use the simple cylinder shape - this should be ok
-            cylinder = CylindricalCutter(self.radius, location=self.location, height=self.height)
-            cylinder.set_required_distance(self.get_required_distance())
-            self.shape[engine] = cylinder.get_shape(engine)
-            return self.shape[engine]
-
     def to_OpenGL(self):
         if not GL_enabled:
             return

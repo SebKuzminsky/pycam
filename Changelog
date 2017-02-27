@@ -1,3 +1,7 @@
+Version ?
+ * removed experimental support for ODE
+  * the ODE library seems to be not actively developed anymore
+
 Version 0.6.0 - 2016-02-18
  * greatly improved OpenGL visualization (contributed by Mattes)
  * DXF importer:

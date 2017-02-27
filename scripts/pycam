@@ -324,8 +324,6 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
             pass
         else:
             raise NotImplementedError("Invalid support type specified: %s" % opts.support_type)
-        if opts.collision_engine == "ode":
-            tps.set_calculation_backend("ODE")
         tps.set_unit_size(opts.unit_size)
         path_generator, postprocessor = {
             "layer": ("PushCutter", "SimpleCutter"),
@@ -519,7 +517,7 @@ if __name__ == "__main__":
         help="choose 'mm' or 'inch' for all numbers. By default 'mm' is assumed.")
     group_general.add_option(
         "", "--collision-engine", dest="collision_engine", default="triangles", action="store",
-        type="choice", choices=["triangles", "ode"],
+        type="choice", choices=["triangles"],
         help=("choose a specific collision detection engine. The default is 'triangles'. "
               "Use 'help' to get a list of possible engines."))
     group_general.add_option(

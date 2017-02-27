@@ -26,9 +26,6 @@ log = pycam.Utils.log.get_logger()
 
 class EngraveCutter(object):
 
-    def __init__(self, physics=None):
-        self.physics = physics
-
     def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None,
                          draw_callback=None):
         quit_requested = False
@@ -43,7 +40,7 @@ class EngraveCutter(object):
         num_of_layers = len(motion_grid)
 
         push_layers = motion_grid[:-1]
-        push_generator = pycam.PathGenerators.PushCutter.PushCutter(physics=self.physics)
+        push_generator = pycam.PathGenerators.PushCutter.PushCutter()
         current_layer = 0
         push_moves = []
         for push_layer in push_layers:
@@ -64,7 +61,7 @@ class EngraveCutter(object):
         if quit_requested:
             return push_moves
 
-        drop_generator = pycam.PathGenerators.DropCutter.DropCutter(physics=self.physics)
+        drop_generator = pycam.PathGenerators.DropCutter.DropCutter()
         drop_layers = motion_grid[-1:]
         if draw_callback:
             draw_callback(

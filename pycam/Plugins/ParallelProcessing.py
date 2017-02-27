@@ -186,7 +186,7 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
         else:
             parallel_settings.set_sensitive(False)
             server_enabled.set_active(False)
-        # check availability of ODE again (conflicts with multiprocessing)
+        # check suitability of collision detection engines
         self.core.emit_event("parallel-processing-changed")
 
     def handle_parallel_processes_settings(self, widget=None):

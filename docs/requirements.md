@@ -19,8 +19,6 @@ Install the following packages with your package manager (see below):
 -   **python-rsvg**
 -   **python-guppy** (optional; required by the *Memory Analyzer*
     plugin - only useful for development)
--   **python-pyode** (optional; use at least v1.2.0-4; probably you do
-    not need it)
 -   **python-psyco** - this optional dependency is not available in
     recent distributions - just ignore it (*PyCAM* until v0.5.1 issues a
     negligible warning)
@@ -29,23 +27,21 @@ Install the following packages with your package manager (see below):
 
 Run the following command in a *root* terminal:
 
-    apt-get install python-gtk2 python-opengl python-gtkglext1 python-rsvg python-pyode python-guppy
+    apt-get install python-gtk2 python-opengl python-gtkglext1 python-rsvg python-guppy
 
-Please note, that the outdated Debian *Lenny* contains broken
-*python-opengl* and *python-pyode* packages. You need to temporarily add
-the *Squeeze* repository during the installation of these two packages.
+Please note, that the outdated Debian *Lenny* contains broken *python-opengl* packages.
+You need to temporarily add the *Squeeze* repository during the installation of these two packages.
 
 ### Ubuntu
 
 Enable the *universe* repository. See detailed instructions
 [here](http://help.ubuntu.com/community/Repositories/Ubuntu).
 
-    sudo apt-get install python-gtk2 python-opengl python-gtkglext1 python-rsvg python-pyode python-guppy
+    sudo apt-get install python-gtk2 python-opengl python-gtkglext1 python-rsvg python-guppy
 
-Please note, that Ubuntu *Jaunty* (maybe also *Dapper/Hardy/Intrepid*)
-contains broken *python-opengl* and *python-pyode* packages. You need to
-temporarily add the *Karmic* repository during the installation of these
-two packages.
+Please note, that Ubuntu *Jaunty* (maybe also *Dapper/Hardy/Intrepid*) contains broken
+*python-opengl* packages. You need to temporarily add the *Karmic* repository during the
+installation of these two packages.
 
 ### OpenSuSE
 

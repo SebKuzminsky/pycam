@@ -22,11 +22,8 @@ import datetime
 
 import gobject
 
-from pycam.Geometry import sqrt
 import pycam.Gui.common
 import pycam.Plugins
-# this requires ODE - we import it later, if necessary
-# import pycam.Simulation.ODEBlocks
 
 
 class ToolpathSimulation(pycam.Plugins.PluginBase):
@@ -160,57 +157,3 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
                     tool.moveto(last_position)
             self.core.set("toolpath_in_progress", moves)
             self.core.emit_event("visual-item-updated")
-
-    def update_toolpath_simulation_ode(self, widget=None, toolpath=None):
-        import pycam.Simulation.ODEBlocks as ODEBlocks
-        # get the currently selected toolpath, if none is give
-        if toolpath is None:
-            toolpath_index = self._treeview_get_active_index(self.toolpath_table, self.toolpath)
-            if toolpath_index is None:
-                return
-            else:
-                toolpath = self.toolpath[toolpath_index]
-        paths = toolpath.path
-        # set the current cutter
-        self.cutter = pycam.Cutters.get_tool_from_settings(toolpath.get_tool_settings())
-        # calculate steps
-        detail_level = self.gui.get_object("SimulationDetailsValue").get_value()
-        grid_size = 100 * pow(2, detail_level - 1)
-        bounding_box = toolpath.get_toolpath_settings().get_bounds()
-        (minx, miny, minz), (maxx, maxy, maxz) = bounding_box.get_bounds()
-        # proportion = dimension_x / dimension_y
-        proportion = (maxx - minx) / (maxy - miny)
-        x_steps = int(sqrt(grid_size) * proportion)
-        y_steps = int(sqrt(grid_size) / proportion)
-        simulation_backend = ODEBlocks.ODEBlocks(toolpath.get_tool_settings(),
-                                                 toolpath.get_bounding_box(),
-                                                 x_steps=x_steps, y_steps=y_steps)
-        self.core.set("simulation_object", simulation_backend)
-        # disable the simulation widget (avoids confusion regarding "cancel")
-        if widget is not None:
-            self.gui.get_object("SimulationTab").set_sensitive(False)
-        # update the view
-        self.update_view()
-        # calculate the simulation and show it simultaneously
-        progress = self.core.get("progress")
-        for path_index, path in enumerate(paths):
-            progress_text = "Simulating path %d/%d" % (path_index, len(paths))
-            progress_value_percent = 100.0 * path_index / len(paths)
-            if progress.update(text=progress_text, percent=progress_value_percent):
-                # break if the user pressed the "cancel" button
-                break
-            for index in range(len(path)):
-                self.cutter.moveto(path[index])
-                if index != 0:
-                    start = path[index - 1]
-                    end = path[index]
-                    if start != end:
-                        simulation_backend.process_cutter_movement(start, end)
-                self.update_view()
-                # break the loop if someone clicked the "cancel" button
-                if progress.update():
-                    break
-            progress.finish()
-        # enable the simulation widget again (if we were started from the GUI)
-        if widget is not None:
-            self.gui.get_object("SimulationTab").set_sensitive(True)

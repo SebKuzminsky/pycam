@@ -23,7 +23,7 @@ import math
 
 from pycam.Geometry.PointUtils import pdist
 from pycam.Geometry.utils import ceil
-from pycam.PathGenerators import get_free_paths_ode, get_free_paths_triangles
+from pycam.PathGenerators import get_free_paths_triangles
 import pycam.PathProcessors.ContourCutter
 from pycam.Utils.threading import run_in_parallel
 from pycam.Utils import ProgressCounter
@@ -36,22 +36,15 @@ log = pycam.Utils.log.get_logger()
 
 # We need to use a global function here - otherwise it does not work with
 # the multiprocessing Pool.
-def _process_one_line((p1, p2, depth, models, cutter, physics)):
-    if physics:
-        points = get_free_paths_ode(physics, p1, p2, depth=depth)
-    else:
-        points = get_free_paths_triangles(models, cutter, p1, p2)
+def _process_one_line((p1, p2, depth, models, cutter)):
+    points = get_free_paths_triangles(models, cutter, p1, p2)
     return points
 
 
 class PushCutter(object):
 
-    def __init__(self, waterlines=False, physics=None):
-        if physics is None:
-            log.debug("Starting PushCutter (without ODE)")
-        else:
-            log.debug("Starting PushCutter (with ODE)")
-        self.physics = physics
+    def __init__(self, waterlines=False):
+        log.debug("Starting PushCutter")
         self.waterlines = waterlines
 
     def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None,
@@ -97,7 +90,7 @@ class PushCutter(object):
 
         if self.waterlines:
             # TODO: this is complicated and hacky :(
-            # we don't use parallelism or ODE (for the sake of simplicity)
+            # we don't use parallelism (for the sake of simplicity)
             result = []
             # turn the waterline points into cutting segments
             for path in self.pa.paths:
@@ -145,7 +138,7 @@ class PushCutter(object):
             # TODO: accessing cutter.radius here is slightly ugly
             depth = math.log(accuracy * distance / cutter.radius) / math.log(2)
             depth = min(max(ceil(depth), 4), max_depth)
-            args.append((p1, p2, depth, models, cutter, self.physics))
+            args.append((p1, p2, depth, models, cutter))
 
         for points in run_in_parallel(_process_one_line, args, callback=progress_counter.update):
             if points:

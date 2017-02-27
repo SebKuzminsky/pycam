@@ -101,11 +101,9 @@ See the rendered output of all [single-line fonts](engrave-fonts.md) included in
 Toolpath handling
 -----------------
 
--   [crop
-    toolpath](http://fab.senselab.org/en/blog/cropping-toolpaths-model-outline)
+-   [crop toolpath](http://fab.senselab.org/en/blog/cropping-toolpaths-model-outline)
     to the outline of a model or to arbitrary 2D contours
--   [clone a
-    toolpath](http://fab.senselab.org/en/blog/cloning-toolpath-mass-production)
+-   [clone a toolpath](http://fab.senselab.org/en/blog/cloning-toolpath-mass-production)
     in a grid of columns and rows
 
 GCode features
@@ -174,11 +172,8 @@ Internal features
 
 ### Collision detection
 
-Currently there are two implementations used for generating a toolpath:
+Currently there is one implementation used for generating a toolpath:
 
--   based on the *Open Dynamic Engine* (ODE):
-    -   collision detection with adaptive step size
-    -   still experimental due to a bug of the ODE engine
 -   triangular collision calculation:
     -   calculates the collision position by checking all relevant
         triangles and their direction

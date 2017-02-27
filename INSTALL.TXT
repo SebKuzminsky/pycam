@@ -23,9 +23,6 @@ should use the standalone executable for Windows (see above).
                 http://www.bonifazi.eu/appunti/ (Blog)
                 http://www.bonifazi.eu/appunti/pygtk_windows_installer.exe
 
-    PyODE (optional):
-                http://sourceforge.net/projects/pyode/files/pyode/snapshot-2010-03-22/PyODE-snapshot-2010-03-22.win32-py2.6.exe/download
-
 
 Notes:
  - you will probably need to add some directories manually to your search PATH setting:
@@ -35,7 +32,6 @@ Notes:
         import gtk
         import gtk.gtkgl
         import OpenGL
-        import ode       # this is optional
 
 
 Unix:
@@ -46,21 +42,19 @@ Install the following packages with your package manager:
     python-gtk2
     python-opengl
     python-gtkglext1
-    python-pyode        (optional)
     python-setproctitle (optional)
     python-psyco        (optional)
 
 On a debian or ubuntu system you would just type the following in a root console:
-    apt-get install python-gtkglext1 python-opengl python-gtk2 python-pyode python-setproctitle python-psyco
+    apt-get install python-gtkglext1 python-opengl python-gtk2 python-setproctitle python-psyco
 Please note that you need to enable the "universe" repository in Ubuntu.
 
 BEWARE: Debian "Lenny" and Ubuntu "Jaunty" (maybe also Dapper/Hardy/Intrepid)
-contain older "python-opengl" and "python-pyode" packages, that expose problems
-with PyCAM.
+contain older "python-opengl" packages, that expose problems with PyCAM.
 You need to add "Squeeze" (for Debian) or "Karmic/Lucid" (for Ubuntu) to your
 package repository list and run the following:
     apt-get update
-    apt-get install python-pyode python-opengl
+    apt-get install python-opengl
 Afterwards you can remove the new package repository again.
 
 Users of Python 2.5 with multiple CPU cores may want to install the package
@@ -80,4 +74,3 @@ Minimal requirements for non-GUI mode
 If you plan to use PyCAM only in batch mode (without a graphical user
 interface), then you just need to install Python.
 See the manpage (man pycam) or the output of "pycam --help" for further defails.
-

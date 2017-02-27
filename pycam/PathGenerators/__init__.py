@@ -128,99 +128,6 @@ def get_free_paths_triangles(models, cutter, p1, p2, return_triangles=False):
         return [cut_info[0] for cut_info in points]
 
 
-def get_free_paths_ode(physics, p1, p2, depth=8):
-    """ Recursive function for splitting a line (usually along x or y) into
-    small pieces to gather connected paths for the PushCutter.
-    Strategy: check if the whole line is free (without collisions). Do a
-    recursive call (for the first and second half), if there was a
-    collision.
-
-    Usually either minx/maxx or miny/maxy should be equal, unless you want
-    to do a diagonal cut.
-    @param minx: lower limit of x
-    @type minx: float
-    @param maxx: upper limit of x; should equal minx for a cut along the x axis
-    @type maxx: float
-    @param miny: lower limit of y
-    @type miny: float
-    @param maxy: upper limit of y; should equal miny for a cut along the y axis
-    @type maxy: float
-    @param z: the fixed z level
-    @type z: float
-    @param depth: number of splits to be calculated via recursive calls; the
-        accuracy can be calculated as (maxx-minx)/(2^depth)
-    @type depth: int
-    @returns: a list of points that describe the tool path of the PushCutter;
-        each pair of points defines a collision-free path
-    @rtype: list(pycam.Geometry.Point.Point)
-    """
-    points = []
-    # "resize" the drill along the while x/y range and check for a collision
-    physics.extend_drill(p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2])
-    physics.set_drill_position((p1[0], p1[1], p1[2]))
-    if physics.check_collision():
-        # collision detected
-        if depth > 0:
-            middle_x = (p1[0] + p2[0]) / 2
-            middle_y = (p1[1] + p2[1]) / 2
-            middle_z = (p1[2] + p2[2]) / 2
-            p_middle = (middle_x, middle_y, middle_z)
-            group1 = get_free_paths_ode(physics, p1, p_middle, depth - 1)
-            group2 = get_free_paths_ode(physics, p_middle, p2, depth - 1)
-            if group1 and group2 and (group1[-1] == group2[0]):
-                # The last pair of the first group ends where the first pair of
-                # the second group starts.
-                # We will combine them into a single pair.
-                points.extend(group1[:-1])
-                points.extend(group2[1:])
-            else:
-                # the two groups are not connected - just add both
-                points.extend(group1)
-                points.extend(group2)
-        else:
-            # no points to be added
-            pass
-    else:
-        # no collision - the line is free
-        points.append(p1)
-        points.append(p2)
-    physics.reset_drill()
-    return points
-
-
-def get_max_height_ode(physics, x, y, minz, maxz):
-    # Take a small float inaccuracy for the upper limit into account.
-    # Otherwise an upper bound at maxz of the model will not return
-    # a valid surface. That's why we add 'epsilon'.
-    low, high = minz, maxz + epsilon
-    trip_start = 20
-    safe_z = None
-    # check if the full step-down would be ok
-    physics.set_drill_position((x, y, minz))
-    if physics.check_collision():
-        # there is an object between z1 and z0 - we need more=None loops
-        trips = trip_start
-    else:
-        # No need for further collision detection - we can go down the whole
-        # range z1..z0.
-        trips = 0
-        safe_z = minz
-    while trips > 0:
-        current_z = (low + high) / 2
-        physics.set_drill_position((x, y, current_z))
-        if physics.check_collision():
-            low = current_z
-        else:
-            high = current_z
-            safe_z = current_z
-        trips -= 1
-    if safe_z is None:
-        # skip this point (by going up to safety height)
-        return None
-    else:
-        return (x, y, safe_z)
-
-
 def get_max_height_triangles(model, cutter, x, y, minz, maxz):
     if model is None:
         return (x, y, minz)
@@ -259,17 +166,12 @@ def _check_deviance_of_adjacent_points(p1, p2, p3, min_distance):
         return (added / pnorm(straight)) < 1.001
 
 
-def get_max_height_dynamic(model, cutter, positions, minz, maxz, physics=None):
+def get_max_height_dynamic(model, cutter, positions, minz, maxz):
     max_depth = 8
     # the points don't need to get closer than 1/1000 of the cutter radius
     min_distance = cutter.distance_radius / 1000
     points = []
-    if physics:
-        def get_max_height(x, y):
-            return get_max_height_ode(physics, x, y, minz, maxz)
-    else:
-        def get_max_height(x, y):
-            return get_max_height_triangles(model, cutter, x, y, minz, maxz)
+    get_max_height = lambda x, y: get_max_height_triangles(model, cutter, x, y, minz, maxz)
     # add one point between all existing points
     for index, p in enumerate(positions):
         points.append(get_max_height(p[0], p[1]))

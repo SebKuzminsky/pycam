@@ -37,7 +37,6 @@ import pycam.Gui.Settings
 import pycam.Importers.CXFImporter
 import pycam.Importers.TestModel
 import pycam.Importers
-import pycam.Physics.ode_physics
 import pycam.Plugins
 from pycam.Utils.locations import get_ui_file_location, get_external_program_location, \
         get_all_program_locations
@@ -60,7 +59,6 @@ FILTER_MODEL = (("All supported model filetypes",
                 ("PS contours", ("*.eps", "*.ps")))
 
 PREFERENCES_DEFAULTS = {
-    "enable_ode": False,
     "unit": "mm",
     "default_task_settings_file": "",
     "show_model": True,
@@ -402,11 +400,6 @@ class ProjectGui(object):
         self.settings.register_event("model-change-before", self._store_undo_state)
         self.settings.register_event("model-change-after",
                                      lambda: self.settings.emit_event("visual-item-updated"))
-        # set the availability of ODE
-        self.enable_ode_control = self.gui.get_object("SettingEnableODE")
-        self.settings.add_item("enable_ode", self.enable_ode_control.get_active,
-                               self.enable_ode_control.set_active)
-        self.settings.register_event("parallel-processing-changed", self.update_ode_settings)
         # configure drag-n-drop for config files and models
         self.settings.set("configure-drag-drop-func", self.configure_drag_and_drop)
         self.settings.get("configure-drag-drop-func")(self.window)
@@ -474,10 +467,10 @@ class ProjectGui(object):
 
         self.settings.register_ui_section("preferences_general", add_general_prefs_item,
                                           clear_general_prefs)
-        for obj_name, priority in (("SettingEnableODE", 10), ("TaskSettingsDefaultFileBox", 30)):
-            obj = self.gui.get_object(obj_name)
-            obj.unparent()
-            self.settings.register_ui("preferences_general", None, obj, priority)
+        # defaults settings file
+        obj = self.gui.get_object("TaskSettingsDefaultFileBox")
+        obj.unparent()
+        self.settings.register_ui("preferences_general", None, obj, 30)
         # set defaults
         self.cutter = None
         # add some dummies - to be implemented later ...
@@ -631,24 +624,12 @@ class ProjectGui(object):
         # control would not be updated in time.
         while gtk.events_pending():
             gtk.main_iteration()
-        self.update_all_controls()
         self.no_dialog = no_dialog
         if not self.no_dialog:
             # register a logging handler for displaying error messages
             pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
             self.window.show()
         self.settings.emit_event("notify-initialization-finished")
-
-    def update_all_controls(self):
-        self.update_ode_settings()
-
-    def update_ode_settings(self, widget=None):
-        if pycam.Utils.threading.is_multiprocessing_enabled() \
-                or not pycam.Physics.ode_physics.is_ode_available():
-            self.enable_ode_control.set_sensitive(False)
-            self.enable_ode_control.set_active(False)
-        else:
-            self.enable_ode_control.set_sensitive(True)
 
     def gui_activity_guard(func):
         def gui_activity_guard_wrapper(self, *args, **kwargs):

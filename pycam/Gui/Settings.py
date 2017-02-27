@@ -555,7 +555,6 @@ class ToolpathSettings(object):
         },
         "Program": {
             "unit": str,
-            "enable_ode": bool,
         },
         "Process": {
             "generator": str,
@@ -617,15 +616,6 @@ class ToolpathSettings(object):
 
     def get_support_model(self):
         return self.support_model
-
-    def set_calculation_backend(self, backend=None):
-        self.program["enable_ode"] = (backend.upper() == "ODE")
-
-    def get_calculation_backend(self):
-        if self.program.get("enable_ode", False):
-            return "ODE"
-        else:
-            return None
 
     def set_unit_size(self, unit_size):
         self.program["unit"] = unit_size

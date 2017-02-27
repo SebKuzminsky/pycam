@@ -69,7 +69,6 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
     """ calculate the rotation matrix used to transform one vector into another
 
     The result is useful for modifying the rotation matrix of a 3d object.
-    See the "extend_shape" code in each of the cutter classes (for ODE).
     The simplest example is the following with the original vector pointing
     along the x axis, while the destination vectors goes along the y axis:
         get_rotation_matrix((1, 0, 0), (0, 1, 0))

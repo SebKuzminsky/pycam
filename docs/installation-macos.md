@@ -10,11 +10,10 @@ Afterwards you need to install the following packages:
 -   py25-gtkglext
 -   py25-opengl (at least v3.0.1b2)
 -   py25-psyco (optional)
--   py25-ode (optional)
 
 Simply run the following to install all dependencies:
 
-     sudo port install py25-gtk py25-gtkglext py25-opengl py25-psyco py25-ode
+     sudo port install py25-gtk py25-gtkglext py25-opengl py25-psyco
 
 Run PyCAM
 ---------

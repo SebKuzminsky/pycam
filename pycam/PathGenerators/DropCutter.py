@@ -31,18 +31,15 @@ log = pycam.Utils.log.get_logger()
 
 # We need to use a global function here - otherwise it does not work with
 # the multiprocessing Pool.
-def _process_one_grid_line((positions, minz, maxz, model, cutter, physics)):
+def _process_one_grid_line((positions, minz, maxz, model, cutter)):
     """ This function assumes, that the positions are next to each other.
     Otherwise the dynamic over-sampling (in get_max_height_dynamic) is
     pointless.
     """
-    return get_max_height_dynamic(model, cutter, positions, minz, maxz, physics)
+    return get_max_height_dynamic(model, cutter, positions, minz, maxz)
 
 
 class DropCutter(object):
-
-    def __init__(self, physics=None):
-        self.physics = physics
 
     def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None,
                          draw_callback=None):
@@ -66,7 +63,7 @@ class DropCutter(object):
         for one_grid_line in lines:
             # simplify the data (useful for remote processing)
             xy_coords = [(pos[0], pos[1]) for pos in one_grid_line]
-            args.append((xy_coords, minz, maxz, model, cutter, self.physics))
+            args.append((xy_coords, minz, maxz, model, cutter))
         for points in run_in_parallel(_process_one_grid_line, args,
                                       callback=progress_counter.update):
             if draw_callback and draw_callback(

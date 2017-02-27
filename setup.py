@@ -57,7 +57,7 @@ setup(
     author="Lars Kruse",
     author_email="devel@sumpfralle.de",
     provides=["pycam"],
-    requires=["ode", "gtk", "gtk.gtkgl", "OpenGL"],
+    requires=["gtk", "gtk.gtkgl", "OpenGL"],
     url="http://sourceforge.net/projects/pycam",
     download_url="http://sourceforge.net/projects/pycam/files",
     keywords=["3-axis", "cnc", "cam", "toolpath", "machining", "g-code"],
