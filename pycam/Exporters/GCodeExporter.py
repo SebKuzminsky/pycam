@@ -72,7 +72,7 @@ class GCodeGenerator(object):
                  touch_off_slow_feedrate=20, touch_off_height=0, touch_off_pause_execution=False):
         if isinstance(destination, basestring):
             # open the file
-            self.destination = file(destination, "w")
+            self.destination = open(destination, "w")
             self._close_stream_on_exit = True
         else:
             # assume that "destination" is something like a StringIO instance

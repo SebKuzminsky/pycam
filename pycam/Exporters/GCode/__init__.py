@@ -30,7 +30,7 @@ class BaseGenerator(object):
     def __init__(self, destination):
         if isinstance(destination, basestring):
             # open the file
-            self.destination = file(destination, "w")
+            self.destination = open(destination, "w")
             self._close_stream_on_exit = True
         else:
             # assume that "destination" is something like a StringIO instance

@@ -813,7 +813,7 @@ class ProjectGui(object):
         for item in PREFERENCES_DEFAULTS:
             config.set("DEFAULT", item, self.settings.get(item))
         try:
-            config_file = file(config_filename, "w")
+            config_file = open(config_filename, "w")
             config.write(config_file)
             config_file.close()
         except IOError as err_msg:

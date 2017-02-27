@@ -27,7 +27,7 @@ class SVGExporter(object):
     def __init__(self, output, unit="mm", maxx=None, maxy=None):
         if isinstance(output, basestring):
             # a filename was given
-            self.output = file(output, "w")
+            self.output = open(output, "w")
         else:
             # a stream was given
             self.output = output

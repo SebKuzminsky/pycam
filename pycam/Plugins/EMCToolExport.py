@@ -78,7 +78,7 @@ class LinuxCNCToolExport(pycam.Plugins.PluginBase):
             export = pycam.Exporters.LinuxCNCToolExporter.LinuxCNCToolExporter(tools_dict)
             text = export.get_tool_definition_string()
             try:
-                out = file(filename, "w")
+                out = open(filename, "w")
                 out.write(text)
                 out.close()
                 self.log.info("LinuxCNC tool file written: %s", filename)
