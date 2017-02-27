@@ -168,12 +168,12 @@ class CXFParser(object):
 def import_font(filename, callback=None):
     try:
         infile = pycam.Utils.URIHandler(filename).open()
-    except IOError, err_msg:
+    except IOError as err_msg:
         log.error("CXFImporter: Failed to read file (%s): %s", filename, err_msg)
         return None
     try:
         parsed_font = CXFParser(infile, callback=callback)
-    except _CXFParseError, err_msg:
+    except _CXFParseError as err_msg:
         log.warn("CFXImporter: Skipped font defintion file '%s'. Reason: %s.", filename, err_msg)
         return None
     charset = Charset(**parsed_font.meta)

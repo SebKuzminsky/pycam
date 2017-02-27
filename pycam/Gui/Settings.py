@@ -109,7 +109,7 @@ class Settings(dict):
     def __getitem__(self, key):
         try:
             return self.__getitem_orig(key)[self.GET_INDEX]()
-        except TypeError, err_msg:
+        except TypeError as err_msg:
             log.info("Failed to retrieve setting '%s': %s", key, err_msg)
             return None
 
@@ -331,12 +331,12 @@ process: 3
         try:
             handle = uri.open()
             content = handle.read()
-        except IOError, err_msg:
+        except IOError as err_msg:
             log.error("Settings: Failed to read config file '%s': %s", uri, err_msg)
             return False
         try:
             self.reset(content)
-        except ConfigParser.ParsingError, err_msg:
+        except ConfigParser.ParsingError as err_msg:
             log.error("Settings: Failed to parse config file '%s': %s", uri, err_msg)
             return False
         return True
@@ -345,7 +345,7 @@ process: 3
         input_text = StringIO.StringIO(config_text)
         try:
             self.reset(input_text)
-        except ConfigParser.ParsingError, err_msg:
+        except ConfigParser.ParsingError as err_msg:
             log.error("Settings: Failed to parse config data: %s", str(err_msg))
             return False
         return True
@@ -357,7 +357,7 @@ process: 3
             handle = open(uri.get_local_path(), "w")
             handle.write(text)
             handle.close()
-        except IOError, err_msg:
+        except IOError as err_msg:
             log.error("Settings: Failed to write configuration to file (%s): %s",
                       filename, err_msg)
             return False

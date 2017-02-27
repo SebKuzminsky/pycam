@@ -196,7 +196,7 @@ def get_output_handler(destination):
         destination = os.path.expanduser(destination)
         try:
             handler = open(destination, "w")
-        except IOError, err_msg:
+        except IOError as err_msg:
             log.error("Failed to open output file (%s) for writing: %s", destination, err_msg)
             return None, None
         closer = handler.close
@@ -276,10 +276,10 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
             pycam.Utils.threading.init_threading(
                 opts.parallel_processes, enable_server=opts.enable_server,
                 remote=opts.remote_server, server_credentials=opts.server_authkey)
-    except socket.error, err_msg:
+    except socket.error as err_msg:
         log.error("Failed to connect to remote server: %s", err_msg)
         return EXIT_CODES["connection_error"]
-    except AuthenticationError, err_msg:
+    except AuthenticationError as err_msg:
         log.error("The remote server rejected your authentication key: %s", err_msg)
         return EXIT_CODES["connection_error"]
 

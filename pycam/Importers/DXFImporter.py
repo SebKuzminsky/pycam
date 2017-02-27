@@ -874,7 +874,7 @@ def import_model(filename, color_as_height=False, fonts_cache=None, callback=Non
     else:
         try:
             infile = pycam.Utils.URIHandler(filename).open()
-        except IOError, err_msg:
+        except IOError as err_msg:
             log.error("DXFImporter: Failed to read file (%s): %s", filename, err_msg)
             return None
 

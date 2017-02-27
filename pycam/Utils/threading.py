@@ -37,7 +37,7 @@ log = pycam.Utils.log.get_logger()
 
 try:
     from multiprocessing.managers import SyncManager as _SyncManager
-except ImportError, msg:
+except ImportError as msg:
     log.debug("Failed to import multiprocessing.managers.SyncMananger: %s", msg)
 else:
     # this class definition needs to be at the top level - for pyinstaller
@@ -316,7 +316,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None, r
             else:
                 __manager.connect()
                 log.info("Connected to a remote task server.")
-        except (multiprocessing.AuthenticationError, socket.error), err_msg:
+        except (multiprocessing.AuthenticationError, socket.error) as err_msg:
             __manager = None
             return err_msg
         except EOFError:

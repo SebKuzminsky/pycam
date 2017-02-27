@@ -59,7 +59,7 @@ def parse_toolpath_settings(filename):
         # open the file
         try:
             infile = pycam.Utils.URIHandler(filename).open()
-        except IOError, err_msg:
+        except IOError as err_msg:
             log.warn("ToolpathSettingsParser: Failed to read file (%s): %s", filename, err_msg)
             return None
         close_file = True

@@ -53,7 +53,7 @@ class PluginBase(object):
                 self.gui = gtk.Builder()
                 try:
                     self.gui.add_from_file(gtk_build_file)
-                except RuntimeError, err_msg:
+                except RuntimeError as err_msg:
                     self.log.info("Failed to import UI file (%s): %s", gtk_build_file, err_msg)
                     self.gui = None
                 else:
@@ -262,7 +262,7 @@ class PluginManager(object):
             else:
                 self.modules[plugin_name] = new_plugin
                 self.core.emit_event("plugin-list-changed")
-        except NotImplementedError, err_msg:
+        except NotImplementedError as err_msg:
             _log.info("Skipping incomplete plugin '%s': %s", plugin_name, err_msg)
 
     def get_plugin(self, name):

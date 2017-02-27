@@ -100,7 +100,7 @@ def requirements_details_gtk():
     try:
         import_gtk_carefully()
         result["gtk"] = True
-    except ImportError, err_msg:
+    except ImportError as err_msg:
         log.error("Failed to import GTK: %s", str(err_msg))
         result["gtk"] = False
     return result
@@ -112,16 +112,16 @@ def recommends_details_gtk():
         import gtk.gtkgl  # noqa F401
         result["gtkgl"] = True
         result["gl"] = True
-    except ImportError, err_msg:
+    except ImportError as err_msg:
         log.warn("Failed to import OpenGL for GTK (ImportError): %s", str(err_msg))
         result["gtkgl"] = False
-    except RuntimeError, err_msg:
+    except RuntimeError as err_msg:
         log.warn("Failed to import OpenGL for GTK (RuntimeError): %s", str(err_msg))
         result["gl"] = False
     try:
         import OpenGL  # noqa F401
         result["opengl"] = True
-    except ImportError, err_msg:
+    except ImportError as err_msg:
         log.warn("Failed to import OpenGL: %s", str(err_msg))
         result["opengl"] = False
 
@@ -189,7 +189,7 @@ class EmergencyDialog(object):
             return
         try:
             root = Tkinter.Tk()
-        except Tkinter.TclError, err_msg:
+        except Tkinter.TclError as err_msg:
             log.info("Failed to create error dialog window (%s). Probably you are running PyCAM "
                      "from a terminal.", err_msg)
             return

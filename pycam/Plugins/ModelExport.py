@@ -129,7 +129,7 @@ class ModelExportTrimesh(pycam.Plugins.PluginBase):
                 model.model.export(unit=self.core.get("unit")).write(file_in)
                 file_in.close()
                 removal_list.append(index)
-            except IOError, err_msg:
+            except IOError as err_msg:
                 self.log.error("Failed to save model file: %s", err_msg)
             else:
                 self.log.info("Successfully stored '%s' as '%s'.", filename, model_name)
@@ -176,7 +176,7 @@ class ModelExportContour(pycam.Plugins.PluginBase):
                 model.model.export(unit=self.core.get("unit")).write(file_in)
                 file_in.close()
                 removal_list.append(index)
-            except IOError, err_msg:
+            except IOError as err_msg:
                 self.log.error("Failed to save model file: %s", err_msg)
             else:
                 self.log.info("Successfully stored '%s' as '%s'.", filename, model["name"])

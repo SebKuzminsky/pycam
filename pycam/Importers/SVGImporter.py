@@ -38,7 +38,7 @@ def convert_svg2eps(svg_filename, eps_filename, location=None):
                                    stderr=subprocess.PIPE,
                                    args=[location, "--export-area-page", "--export-eps",
                                          eps_filename, svg_filename])
-    except OSError, err_msg:
+    except OSError as err_msg:
         log.error("SVGImporter: failed to execute 'inkscape' (%s): %s%sMaybe you need to install "
                   "Inkscape (http://inkscape.org)?", location, err_msg, os.linesep)
         return False
@@ -65,7 +65,7 @@ def convert_eps2dxf(eps_filename, dxf_filename, location=None, unit="mm"):
     try:
         process = subprocess.Popen(stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, args=args)
-    except OSError, err_msg:
+    except OSError as err_msg:
         log.error("SVGImporter: failed to execute 'pstoedit' (%s): %s%sMaybe you need to install "
                   "pstoedit (http://pstoedit.net)?", location, err_msg, os.linesep)
         return False
@@ -106,7 +106,7 @@ def import_model(filename, program_locations=None, unit="mm", callback=None, **k
             temp_file = os.fdopen(svg_file_handle, "w")
             temp_file.write(infile.read())
             temp_file.close()
-        except IOError, err_msg:
+        except IOError as err_msg:
             log.error("SVGImporter: Failed to create temporary local file (%s): %s",
                       svg_file_name, err_msg)
             return
@@ -153,7 +153,7 @@ def import_model(filename, program_locations=None, unit="mm", callback=None, **k
         if os.path.isfile(filename):
             try:
                 os.remove(filename)
-            except OSError, err_msg:
+            except OSError as err_msg:
                 log.warn("SVGImporter: failed to remove temporary file (%s): %s",
                          filename, err_msg)
 

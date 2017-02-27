@@ -37,7 +37,7 @@ def import_model(filename, program_locations=None, unit="mm", callback=None, **k
             temp_file = os.fdopen(ps_file_handle, "w")
             temp_file.write(infile.read())
             temp_file.close()
-        except IOError, err_msg:
+        except IOError as err_msg:
             log.error("PSImporter: Failed to create temporary local file (%s): %s",
                       ps_file_name, err_msg)
             return
@@ -70,7 +70,7 @@ def import_model(filename, program_locations=None, unit="mm", callback=None, **k
         if os.path.isfile(filename):
             try:
                 os.remove(filename)
-            except OSError, err_msg:
+            except OSError as err_msg:
                 log.warn("PSImporter: failed to remove temporary file (%s): %s", filename, err_msg)
 
     # convert eps to dxf via pstoedit

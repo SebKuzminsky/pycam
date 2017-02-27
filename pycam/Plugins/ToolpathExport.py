@@ -161,7 +161,7 @@ class ToolpathExport(pycam.Plugins.PluginBase):
             generator.finish()
             destination.close()
             self.log.info("GCode file successfully written: %s", str(filename))
-        except IOError, err_msg:
+        except IOError as err_msg:
             self.log.error("Failed to save toolpath file: %s", err_msg)
         else:
             self.core.emit_event("notify-file-saved", filename)

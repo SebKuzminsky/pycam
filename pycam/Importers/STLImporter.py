@@ -74,7 +74,7 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
             # see http://patrakov.blogspot.com/2011/03/case-of-non-raised-exception.html
             # and http://stackoverflow.com/questions/1824069/
             url_file.close()
-        except IOError, err_msg:
+        except IOError as err_msg:
             log.error("STLImporter: Failed to read file (%s): %s", filename, err_msg)
             return None
     # Read the first two lines of (potentially non-binary) input - they should

@@ -126,7 +126,7 @@ def get_icons_pixbuffers():
         if abs_filename:
             try:
                 result.append(gtk.gdk.pixbuf_new_from_file(abs_filename))
-            except gobject.GError, err_msg:
+            except gobject.GError as err_msg:
                 # ignore icons that are not found
                 log.debug("Failed to process window icon (%s): %s", abs_filename, err_msg)
         else:
@@ -816,7 +816,7 @@ class ProjectGui(object):
             config_file = file(config_filename, "w")
             config.write(config_file)
             config_file.close()
-        except IOError, err_msg:
+        except IOError as err_msg:
             log.warn("Failed to write preferences file (%s): %s", config_filename, err_msg)
 
     def destroy(self, widget=None, data=None):
