@@ -84,7 +84,7 @@ class BaseModel(IDGenerator, TransformableContainer):
     def __add__(self, other_model):
         """ combine two models """
         result = self.copy()
-        for item in other_model.next():
+        for item in next(other_model):
             result.append(item.copy())
         return result
 
@@ -158,7 +158,7 @@ class BaseModel(IDGenerator, TransformableContainer):
 
     def subdivide(self, depth):
         model = self.__class__()
-        for item in self.next():
+        for item in next(self):
             for s in item.subdivide(depth):
                 model.append(s)
         return model
@@ -170,7 +170,7 @@ class BaseModel(IDGenerator, TransformableContainer):
         self.maxx = None
         self.maxy = None
         self.maxz = None
-        for item in self.next():
+        for item in next(self):
             self._update_limits(item)
 
     def _get_progress_callback(self, update_callback):
@@ -467,7 +467,7 @@ class ContourModel(BaseModel):
         elif isinstance(item, Polygon):
             if not unify_overlaps or (len(self._line_groups) == 0):
                 self._line_groups.append(item)
-                for subitem in item.next():
+                for subitem in next(item):
                     self._update_limits(subitem)
             else:
                 # go through all polygons and check if they can be combined

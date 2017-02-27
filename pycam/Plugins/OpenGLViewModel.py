@@ -184,7 +184,7 @@ class OpenGLViewModelGeneric(pycam.Plugins.PluginBase):
     def draw_generic_model(self, models):
         removal_list = []
         for index, model in enumerate(models):
-            for item in model.next():
+            for item in next(model):
                 # ignore invisible things like the normal of a ContourModel
                 if hasattr(item, "to_OpenGL"):
                     item.to_OpenGL(show_directions=self.core.get("show_directions"))

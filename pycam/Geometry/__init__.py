@@ -66,7 +66,7 @@ class IDGenerator(object):
     __id_gen_func = _id_generator()
 
     def __init__(self):
-        self.id = self.__id_gen_func.next()
+        self.id = next(self.__id_gen_func)
 
 
 class TransformableContainer(object):
@@ -101,7 +101,7 @@ class TransformableContainer(object):
         # Prevent any kind of loops or double transformations (e.g. Points in
         # multiple containers (Line, Triangle, ...).
         # Use the 'id' builtin to prevent expensive object comparions.
-        for item in self.next():
+        for item in next(self):
             if isinstance(item, TransformableContainer):
                 item.transform_by_matrix(matrix, transformed_list, callback=callback)
             elif not id(item) in transformed_list:

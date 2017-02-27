@@ -101,7 +101,7 @@ if __name__ == "__main__":
     i = Iterator(l)
     print(i.peek())
     while True:
-        val = i.next()
+        val = next(i)
         if val is None:
             break
         if val == 4:
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     i = Iterator(l)
     print("peek(0)=", i.peek(0))
     print("peek(1)=", i.peek(1))
-    print("i.next()=", i.next())
+    print("i.next()=", next(i))
     print("peek(0)=", i.peek(0))
     print("peek(1)=", i.peek(1))
 
@@ -123,15 +123,15 @@ if __name__ == "__main__":
     i = CyclicIterator(l)
     print("cycle :"),
     while sum_value < 30:
-        val = i.next()
+        val = next(i)
         print(val),
         sum_value += val
     print("=", sum_value)
 
     i = Iterator(l)
     print("l=", l)
-    i.next()
-    i.next()
+    next(i)
+    next(i)
     print("next,next : ", i.peek())
     i.remove(2)
     print("remove(2) : ", i.peek())
