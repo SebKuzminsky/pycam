@@ -140,10 +140,10 @@ GUI features
     “semi-finish”, “finish”)
 -   show progress bar for time consuming operations
 -   show drill progress during path generation (optional)
--   show a [simulation of tool
-    moves](http://fab.senselab.org/en/blog/new-simulation-mode-video-tutorial)
--   show statistics of connected worker threads in a process pool (see
-    [Server Mode](server-mode.md))
+-   show a
+    [simulation of tool moves](http://fab.senselab.org/en/blog/new-simulation-mode-video-tutorial)
+-   show statistics of connected worker threads in a process pool
+    (see [Server Mode](server-mode.md))
 
 Command-line features
 ---------------------
@@ -164,8 +164,8 @@ Additionally you can connect multiple hosts for distributed processing
 within the pool. See the [Server Mode](server-mode.md) for more
 details.
 
-Please check the requirements for all possible [features on different
-platforms](parallel-processing).
+Please check the requirements for all possible
+[features on different platforms](parallel-processing).
 
 Internal features
 -----------------

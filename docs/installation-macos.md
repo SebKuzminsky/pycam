@@ -30,8 +30,8 @@ Problems? Solutions!
 Below you will find a list of potential problems reported by PyCAM
 users.
 
-If these workarounds do not help: please ask a question in the [*Help*
-forum](http://sourceforge.net/projects/pycam/forums/forum/860184) and
+If these workarounds do not help: please ask a question in the
+[*Help* forum](http://sourceforge.net/projects/pycam/forums/forum/860184) and
 provide the following relevant information about your setup.
 
 Get the list of installed python-related packages:

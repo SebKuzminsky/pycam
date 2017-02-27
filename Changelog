@@ -6,6 +6,8 @@ Version 0.6.0 - 2016-02-18
  * greatly improved OpenGL visualization (contributed by Mattes)
  * DXF importer:
   * added bezier support for POLYLINE and LWPOLYLINE
+ * modularization of most features
+ * many more new features
 
 Version 0.5.1 - 2011-06-13
  * added extrusion for 2D models
