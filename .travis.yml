@@ -17,3 +17,4 @@ script:
   - make check-style
   - python setup.py sdist
   - ./scripts/pycam --help
+  - dpkg-buildpackage -us -uc
