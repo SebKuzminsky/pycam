@@ -106,7 +106,7 @@ class CXFParser(object):
                     # single character
                     for encoding in ("utf-8", "iso8859-1", "iso8859-15"):
                         try:
-                            character = unicode(line[1], encoding)
+                            character = line[1].decode(encoding)
                             break
                         except UnicodeDecodeError:
                             pass
@@ -114,6 +114,11 @@ class CXFParser(object):
                         raise _CXFParseError("Failed to decode character at line %d"
                                              % feeder.get_index())
                 elif (len(line) >= 6) and (line[5] == "]"):
+                    # python2/3 compatibility
+                    try:
+                        unichr
+                    except NameError:
+                        unichr = chr
                     # unicode character (e.g. "[1ae4]")
                     try:
                         character = unichr(int(line[1:5], 16))
@@ -124,7 +129,7 @@ class CXFParser(object):
                     # read UTF8 (qcad 1 compatibility)
                     end_bracket = line.find("] ")
                     text = line[1:end_bracket]
-                    character = unicode(text, "utf-8")[0]
+                    character = text.decode("utf-8", errors="ignore")[0]
                 else:
                     # unknown format
                     raise _CXFParseError("Failed to parse character at line %d"

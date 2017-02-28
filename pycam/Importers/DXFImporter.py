@@ -42,6 +42,11 @@ def _unescape_control_characters(text):
     for src, dest in (("%%d", u"\u00B0"), ("%%p", u"\u00B1"), ("%%c", u"\u2205"),
                       (r"\P", os.linesep), (r"\~", " ")):
         text = text.replace(src, dest)
+    # python2/3 compatibility
+    try:
+        unichr
+    except NameError:
+        unichr = chr
     # convert "\U+xxxx" to unicode characters
     return re.sub(r"\\U\+([0-9a-fA-F]{4})",
                   lambda hex_in: unichr(int(hex_in.groups()[0], 16)), text)
@@ -210,16 +215,10 @@ class DXFParser(object):
         elif line1 in [self.KEYS[key] for key in ("DEFAULT", "TEXT_MORE")]:
             # check the string for invalid characters
             try:
-                text = unicode(line2)
+                text = line2.decode("utf")
             except UnicodeDecodeError:
                 log.warn("DXFImporter: Invalid character in string in line %d", self.line_number)
-                text_chars = []
-                for char in line2:
-                    try:
-                        text_chars.append(unicode(char))
-                    except UnicodeDecodeError:
-                        pass
-                text = u"".join(text_chars)
+                text = line2.decode("utf", errors="ignore")
             line2 = _unescape_control_characters(text)
         else:
             line2 = line2.upper()

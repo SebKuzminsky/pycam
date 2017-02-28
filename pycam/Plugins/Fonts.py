@@ -136,7 +136,7 @@ class Fonts(pycam.Plugins.PluginBase):
         input_field = self.gui.get_object("FontDialogInput")
         text_buffer = input_field.get_buffer()
         text = text_buffer.get_text(text_buffer.get_start_iter(), text_buffer.get_end_iter())
-        return unicode(text)
+        return text.decode("utf-8")
 
     def get_font_dialog_text_rendered(self):
         text = self._get_text_from_input()
