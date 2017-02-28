@@ -41,7 +41,9 @@ class PycamTestCase(unittest.TestCase):
     def assertVectorNotEqual(self, v1, v2):
         self.assertIsNotNone(self._compare_vectors(v1, v2))
 
-    def assertCollisionEqual(self, (ccp1, cp1, d1), (ccp2, cp2, d2)):
+    def assertCollisionEqual(self, collision1, collision2):
+        ccp1, cp1, d1 = collision1
+        ccp2, cp2, d2 = collision2
         self.assertVectorEqual(ccp1, ccp2)
         self.assertVectorEqual(cp1, cp2)
         self.assertAlmostEqual(d1, d2)
