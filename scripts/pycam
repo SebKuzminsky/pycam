@@ -49,6 +49,7 @@ except ImportError:
                                                      os.pardir)))
     from pycam import VERSION
 
+from pycam import GenericError
 import pycam.Exporters.GCodeExporter
 from pycam.Geometry import Box3D, Point3D
 import pycam.Gui.common as GuiCommon
@@ -112,7 +113,8 @@ EXIT_CODES = {"ok": 0,
               "write_output_failed": 3,
               "parsing_failed": 4,
               "server_without_password": 5,
-              "connection_error": 6}
+              "connection_error": 6,
+              "toolpath_error": 7}
 
 log = pycam.Utils.log.get_logger()
 
@@ -139,7 +141,7 @@ def show_gui(inputfile=None, task_settings_file=None):
     # load the given model or the default
     if not inputfile:
         default_model = get_default_model()
-        if isinstance(default_model, (basestring, pycam.Utils.URIHandler)):
+        if hasattr(default_model, "split") or isinstance(default_model, pycam.Utils.URIHandler):
             gui.load_model_file(filename=default_model, store_filename=False)
         else:
             gui.load_model(default_model)
@@ -348,7 +350,7 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
         if inputfile is None:
             model = get_default_model()
             # the "get_default_model" function returns a string or a model
-            if isinstance(model, basestring):
+            if hasattr(model, "split"):
                 model = load_model_file(model, program_locations=program_locations,
                                         unit=opts.unit_size)
         else:
@@ -422,41 +424,41 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
             # TODO: convert to the new toolpath generator code
             import pycam.Toolpath.Generator
             start_time = time.time()
-            toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(
-                model, tps, callback=progress_bar.update)
-            progress_bar.finish()
+            try:
+                toolpath = pycam.Toolpath.Generator.generate_toolpath_from_settings(
+                    model, tps, callback=progress_bar.update)
+            except GenericError as exc:
+                log.error("Failed to generate toolpath: %s", exc)
+                return EXIT_CODES["toolpath_error"]
+            finally:
+                progress_bar.finish()
             log.info("Toolpath generation time: %f", time.time() - start_time)
-            # write result
-            if isinstance(toolpath, basestring):
-                # an error occoured
-                log.error(toolpath)
-            else:
-                description = "Toolpath generated via PyCAM v%s" % VERSION
-                tp_obj = Toolpath(toolpath, description, tps)
-                handler, closer = get_output_handler(opts.export_gcode)
-                if handler is None:
-                    return EXIT_CODES["write_output_failed"]
-                generator = pycam.Exporters.GCodeExporter.GCodeGenerator(
-                    handler, metric_units=(opts.unit_size == "mm"),
-                    safety_height=opts.safety_height,
-                    toggle_spindle_status=opts.gcode_no_start_stop_spindle,
-                    minimum_steps=[opts.gcode_minimum_step])
-                generator.set_speed(opts.tool_feedrate, opts.tool_spindle_speed)
-                path_mode = opts.gcode_path_mode
-                PATH_MODES = pycam.Exporters.GCodeExporter.PATH_MODES
-                if (path_mode == "continuous") and (opts.gcode_motion_tolerance is not None):
-                    if opts.gcode_naive_tolerance == 0:
-                        naive_tolerance = None
-                    else:
-                        naive_tolerance = opts.gcode_naive_tolerance
-                    generator.set_path_mode(PATH_MODES["continuous"], opts.gcode_motion_tolerance,
-                                            naive_tolerance)
+            description = "Toolpath generated via PyCAM v%s" % VERSION
+            tp_obj = Toolpath(toolpath, description, tps)
+            handler, closer = get_output_handler(opts.export_gcode)
+            if handler is None:
+                return EXIT_CODES["write_output_failed"]
+            generator = pycam.Exporters.GCodeExporter.GCodeGenerator(
+                handler, metric_units=(opts.unit_size == "mm"),
+                safety_height=opts.safety_height,
+                toggle_spindle_status=opts.gcode_no_start_stop_spindle,
+                minimum_steps=[opts.gcode_minimum_step])
+            generator.set_speed(opts.tool_feedrate, opts.tool_spindle_speed)
+            path_mode = opts.gcode_path_mode
+            PATH_MODES = pycam.Exporters.GCodeExporter.PATH_MODES
+            if (path_mode == "continuous") and (opts.gcode_motion_tolerance is not None):
+                if opts.gcode_naive_tolerance == 0:
+                    naive_tolerance = None
                 else:
-                    generator.set_path_mode(PATH_MODES[opts.gcode_path_mode])
-                generator.add_moves(tp_obj.get_moves(opts.safety_height),
-                                    comment=tp_obj.get_meta_data())
-                generator.finish()
-                closer()
+                    naive_tolerance = opts.gcode_naive_tolerance
+                generator.set_path_mode(PATH_MODES["continuous"], opts.gcode_motion_tolerance,
+                                        naive_tolerance)
+            else:
+                generator.set_path_mode(PATH_MODES[opts.gcode_path_mode])
+            generator.add_moves(tp_obj.get_moves(opts.safety_height),
+                                comment=tp_obj.get_meta_data())
+            generator.finish()
+            closer()
         if opts.export_task_config:
             handler, closer = get_output_handler(opts.export_task_config)
             if handler is None:
