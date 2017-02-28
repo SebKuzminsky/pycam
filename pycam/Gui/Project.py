@@ -774,7 +774,7 @@ class ProjectGui(object):
                 continue
             value_raw = config.get("DEFAULT", item)
             value_type = type(PREFERENCES_DEFAULTS[item])
-            if isinstance(value_type(), basestring):
+            if hasattr(value_type(), "split"):
                 # keep strings as they are
                 value = str(value_raw)
             else:

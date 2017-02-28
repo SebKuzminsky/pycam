@@ -164,7 +164,7 @@ class URIHandler(object):
             return False
 
     def __eq__(self, other):
-        if isinstance(other, basestring):
+        if hasattr(other, "split"):
             return self == URIHandler(other)
         elif self.__class__ == other.__class__:
             if self.is_local() and other.is_local():

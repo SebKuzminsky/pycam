@@ -137,7 +137,7 @@ class StatusManager(pycam.Plugins.PluginBase):
     def save_task_settings_file(self, widget=None, filename=None):
         if callable(filename):
             filename = filename()
-        if not isinstance(filename, (basestring, pycam.Utils.URIHandler)):
+        if not hasattr(filename, "split") and not isinstance(filename, pycam.Utils.URIHandler):
             # we open a dialog
             filename = self.core.settings.get("get_filename_func")(
                 "Save settings to ...", mode_load=False, type_filter=FILTER_CONFIG,

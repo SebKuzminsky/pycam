@@ -22,3 +22,15 @@ VERSION = "0.6.1-dev"
 
 FILTER_CONFIG = (("Config files", "*.conf"),)
 HELP_WIKI_URL = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=%s"
+
+
+class GenericError(Exception):
+    pass
+
+
+class InvalidValueError(GenericError):
+    pass
+
+
+class CommunicationError(GenericError):
+    pass

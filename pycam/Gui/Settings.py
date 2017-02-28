@@ -658,7 +658,7 @@ class ToolpathSettings(object):
                     continue
                 elif value_type == bool:
                     value = value_raw.lower() in ("1", "true", "yes", "on")
-                elif isinstance(value_type, basestring) and (value_type.startswith("list_of_")):
+                elif hasattr(value_type, "startswith") and (value_type.startswith("list_of_")):
                     item_type = value_type[len("list_of_"):]
                     if item_type == "float":
                         item_type = float
@@ -692,7 +692,7 @@ class ToolpathSettings(object):
             for key, value_type in self.SECTIONS[section].items():
                 if key in config_dict:
                     value = config_dict[key]
-                    if isinstance(value_type, basestring) and (value_type.startswith("list_of_")):
+                    if hasattr(value_type, "startswith") and (value_type.startswith("list_of_")):
                         result.append("%s = %s" % (key, ",".join([str(val) for val in value])))
                     elif type(value) == value_type:
                         result.append("%s = %s" % (key, value))

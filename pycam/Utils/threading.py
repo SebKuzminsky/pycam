@@ -30,6 +30,7 @@ import sys
 import time
 import uuid
 
+from pycam import CommunicationError
 import pycam.Utils
 import pycam.Utils.log
 log = pycam.Utils.log.get_logger()
@@ -271,7 +272,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None, r
                     address = (all_ips[0], local_port)
                     log.info("Binding to local interface with IP %s", str(all_ips[0]))
                 else:
-                    return "Failed to find any local IP"
+                    raise CommunicationError("Failed to find any local IP")
             else:
                 # empty hostname -> wildcard interface
                 # (this does not work with Windows - see above)
@@ -321,7 +322,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None, r
             return err_msg
         except EOFError:
             __manager = None
-            return "Failed to bind to socket for unknown reasons"
+            raise CommunicationError("Failed to bind to socket for unknown reasons")
         # create the spawning process
         __closing = __manager.Value("b", False)
         if __num_of_processes > 0:

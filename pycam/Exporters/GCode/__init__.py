@@ -28,16 +28,15 @@ _log = pycam.Utils.log.get_logger()
 class BaseGenerator(object):
 
     def __init__(self, destination):
-        if isinstance(destination, basestring):
-            # open the file
-            self.destination = open(destination, "w")
-            self._close_stream_on_exit = True
-        else:
-            # assume that "destination" is something like a StringIO instance
-            # or an open file
+        if hasattr(destination, "write"):
+            # assume that "destination" is something like a StringIO instance or an open file
             self.destination = destination
             # don't close the stream if we did not open it on our own
             self._close_stream_on_exit = False
+        else:
+            # open the file
+            self.destination = open(destination, "w")
+            self._close_stream_on_exit = True
         self._filters = []
         self._cache = {}
         self.add_header()

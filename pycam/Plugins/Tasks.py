@@ -20,6 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import time
 
+from pycam import GenericError
 import pycam.Plugins
 import pycam.Utils
 from pycam.Utils import get_non_conflicting_name
@@ -315,6 +316,11 @@ class Tasks(pycam.Plugins.ListPluginBase):
         try:
             task_resolver = self.core.get("get_parameter_sets")("task")[task["type"]]["func"]
             toolpath = task_resolver(task, callback=draw_callback)
+        except GenericError as exc:
+            # an error occoured - "toolpath" contains the error message
+            self.log.error("Failed to generate toolpath: %s", exc)
+            # we were not successful (similar to a "cancel" request)
+            return False
         except Exception:
             # catch all non-system-exiting exceptions
             self.log.error(pycam.Utils.get_exception_report())
@@ -331,11 +337,6 @@ class Tasks(pycam.Plugins.ListPluginBase):
             # user interruption
             # return "False" if the action was cancelled
             result = not progress.update()
-        elif isinstance(toolpath, basestring):
-            # an error occoured - "toolpath" contains the error message
-            self.log.error("Failed to generate toolpath: %s", toolpath)
-            # we were not successful (similar to a "cancel" request)
-            result = False
         else:
             self.core.get("toolpaths").add_new(toolpath)
             # return "False" if the action was cancelled
