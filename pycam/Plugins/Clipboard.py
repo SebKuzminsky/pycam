@@ -102,7 +102,8 @@ class Clipboard(pycam.Plugins.PluginBase):
             clip_targets = [(key, self._gtk.TARGET_OTHER_WIDGET, index)
                             for index, key in enumerate(targets)]
 
-            def get_func(clipboard, selectiondata, info, (text, clip_type)):
+            def get_func(clipboard, selectiondata, info, extra_args):
+                text, clip_type = extra_args
                 selectiondata.set(clip_type, 8, text)
 
             if "svg" in "".join(targets).lower():

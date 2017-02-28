@@ -159,7 +159,8 @@ def set_parent_controls_sensitivity(widget, new_state):
     labels (e.g for notebook tabs).
     Useful for disabling the screen while an action is going on.
     """
-    def disable_if_different(obj, (parent, active)):
+    def disable_if_different(obj, extra_args):
+        parent, active = extra_args
         if hasattr(parent, "get_tab_label") and (obj is parent.get_tab_label(active)):
             # skip the label of the current tab (in a notebook)
             return

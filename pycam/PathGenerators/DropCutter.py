@@ -31,11 +31,12 @@ log = pycam.Utils.log.get_logger()
 
 # We need to use a global function here - otherwise it does not work with
 # the multiprocessing Pool.
-def _process_one_grid_line((positions, minz, maxz, model, cutter)):
+def _process_one_grid_line(extra_args):
     """ This function assumes, that the positions are next to each other.
     Otherwise the dynamic over-sampling (in get_max_height_dynamic) is
     pointless.
     """
+    positions, minz, maxz, model, cutter = extra_args
     return get_max_height_dynamic(model, cutter, positions, minz, maxz)
 
 

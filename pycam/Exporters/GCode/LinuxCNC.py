@@ -104,7 +104,8 @@ class LinuxCNC(pycam.Exporters.GCode.BaseGenerator):
         # "seconds" may be floats or integers
         self.add_command("G04 P{}".format(seconds), "wait for {} seconds".format(seconds))
 
-    def command_corner_style(self, (path_mode, motion_tolerance, naive_tolerance)):
+    def command_corner_style(self, extra_args):
+        path_mode, motion_tolerance, naive_tolerance = extra_args
         if path_mode == CORNER_STYLE_EXACT_PATH:
             self.add_command("G61", "exact path mode")
         elif path_mode == CORNER_STYLE_EXACT_STOP:

@@ -36,7 +36,8 @@ log = pycam.Utils.log.get_logger()
 
 # We need to use a global function here - otherwise it does not work with
 # the multiprocessing Pool.
-def _process_one_line((p1, p2, depth, models, cutter)):
+def _process_one_line(extra_args):
+    p1, p2, models, cutter = extra_args
     points = get_free_paths_triangles(models, cutter, p1, p2)
     return points
 
@@ -119,27 +120,15 @@ class PushCutter(object):
     def GenerateToolPathSlice(self, cutter, models, layer_grid, draw_callback=None,
                               progress_counter=None):
         path = []
-
-        # settings for calculation of depth
-        accuracy = 20
-        max_depth = 20
-
         # the ContourCutter pathprocessor does not work with combined models
         if self.waterlines:
             models = models[:1]
         else:
             models = models
-
         args = []
         for line in layer_grid:
             p1, p2 = line
-            # calculate the required calculation depth (recursion)
-            distance = pdist(p2, p1)
-            # TODO: accessing cutter.radius here is slightly ugly
-            depth = math.log(accuracy * distance / cutter.radius) / math.log(2)
-            depth = min(max(ceil(depth), 4), max_depth)
-            args.append((p1, p2, depth, models, cutter))
-
+            args.append((p1, p2, models, cutter))
         for points in run_in_parallel(_process_one_line, args, callback=progress_counter.update):
             if points:
                 if self.waterlines:
