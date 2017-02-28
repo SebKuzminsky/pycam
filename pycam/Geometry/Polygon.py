@@ -55,10 +55,12 @@ class PolygonInTree(IDGenerator):
         self.children = []
 
     def __eq__(self, other):
+        """ equality by ID """
         return self.id == other.id
 
-    def __cmp__(self, other):
-        return cmp(self.area, other.area)
+    def __lt__(self, other):
+        """ comparison by size """
+        return self.area < other.area
 
     def insert_if_child(self, other):
         if self.polygon.is_polygon_inside(other.polygon):

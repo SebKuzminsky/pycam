@@ -100,21 +100,13 @@ class Line(IDGenerator, TransformableContainer):
         return "Line<%g,%g,%g>-<%g,%g,%g>" % (self.p1[0], self.p1[1], self.p1[2], self.p2[0],
                                               self.p2[1], self.p2[2])
 
-    def __cmp__(self, other):
+    def __lt__(self, other):
         """ Two lines are equal if both pairs of points are at the same
         locations.
         Otherwise the result is based on the comparison of the first and then
         the second point.
         """
-        if self.__class__ == other.__class__:
-            if (self.p1 == other.p1) and (self.p2 == other.p2):
-                return 0
-            elif self.p1 != other.p1:
-                return cmp(self.p1, other.p1)
-            else:
-                return cmp(self.p2, other.p2)
-        else:
-            return cmp(str(self), str(other))
+        return (self.p1, self.p2) < (other.p1, other.p2)
 
     def next(self):
         yield "p1"
