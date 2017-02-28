@@ -261,6 +261,50 @@ class TriggerSpindle(BaseFilter):
         return toolpath
 
 
+class PlungeFeedrate(BaseFilter):
+
+    PARAMS = ("plunge_feedrate", )
+    # must be greater than the weight of the SafetyHeight filter
+    WEIGHT = 82
+
+    def filter_toolpath(self, toolpath):
+        new_path = []
+        last_pos = None
+        original_feedrate = None
+        current_feedrate = None
+        for step in toolpath:
+            if (step.action == MACHINE_SETTING) and (step.key == "feedrate"):
+                # store the current feedrate
+                original_feedrate = step.value
+                current_feedrate = step.value
+            elif step.action in MOVES_LIST:
+                # track the current position and adjust the feedrate if necessary
+                if last_pos is not None and (step.position[2] < last_pos[2]):
+                    # we are moving downwards
+                    vertical_move = last_pos[2] - step.position[2]
+                    # the ratio is 1.0 for a straight vertical move - otherwise between 0 and 1
+                    vertical_ratio = vertical_move / pdist(last_pos, step.position)
+                    max_feedrate = self.settings["plunge_feedrate"] / vertical_ratio
+                    # never exceed the original feedrate
+                    max_feedrate = min(original_feedrate, max_feedrate)
+                    if current_feedrate != max_feedrate:
+                        # we are too slow or too fast
+                        new_path.append(ToolpathSteps.MachineSetting("feedrate", max_feedrate))
+                        current_feedrate = max_feedrate
+                else:
+                    # we do not move down
+                    if current_feedrate != original_feedrate:
+                        # switch back to the maximum feedrate
+                        new_path.append(ToolpathSteps.MachineSetting("feedrate",
+                                                                     original_feedrate))
+                        current_feedrate = original_feedrate
+                last_pos = step.position
+            else:
+                pass
+            new_path.append(step)
+        return new_path
+
+
 class Crop(BaseFilter):
 
     PARAMS = ("polygons", )

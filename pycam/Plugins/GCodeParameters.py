@@ -50,6 +50,29 @@ class GCodeSafetyHeight(pycam.Plugins.PluginBase):
         return [Filters.SafetyHeight(safety_height)]
 
 
+class GCodePlungeFeedrate(pycam.Plugins.PluginBase):
+
+    DEPENDS = ["ToolpathProcessors"]
+    CATEGORIES = ["GCode"]
+
+    def setup(self):
+        self.control = pycam.Gui.ControlsGTK.InputNumber(digits=1)
+        self.core.get("register_parameter")("toolpath_processor", "plunge_feedrate", self.control)
+        self.core.register_ui("gcode_general_parameters", "Plunge feedrate limit",
+                              self.control.get_widget(), weight=25)
+        self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
+        return True
+
+    def teardown(self):
+        self.core.unregister_chain("toolpath_filters", self.get_toolpath_filters)
+        self.core.unregister_ui("gcode_general_parameters", self.control.get_widget())
+        self.core.get("unregister_parameter")("toolpath_processor", "plunge_feedrate")
+
+    @Filters.toolpath_filter("settings", "plunge_feedrate")
+    def get_toolpath_filters(self, plunge_feedrate):
+        return [Filters.PlungeFeedrate(plunge_feedrate)]
+
+
 # TODO: move to settings for ToolpathOutputDialects
 class GCodeFilenameExtension(pycam.Plugins.PluginBase):
 

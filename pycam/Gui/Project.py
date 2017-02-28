@@ -84,6 +84,7 @@ PREFERENCES_DEFAULTS = {
     "view_perspective": True,
     "tool_progress_max_fps": 30,
     "gcode_safety_height": 25.0,
+    "gcode_plunge_feedrate": 100.0,
     "gcode_minimum_step_x": 0.0001,
     "gcode_minimum_step_y": 0.0001,
     "gcode_minimum_step_z": 0.0001,

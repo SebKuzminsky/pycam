@@ -1,4 +1,5 @@
 Version ?
+ * GCode: limit vertical feedrate (maximum speed of plunge move)
  * removed experimental support for ODE
   * the ODE library seems to be not actively developed anymore
 

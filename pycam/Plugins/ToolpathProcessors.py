@@ -205,12 +205,13 @@ def _get_processor_filters(core, parameters):
 
 class ToolpathProcessorMilling(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["Toolpaths", "GCodeSafetyHeight", "GCodeFilenameExtension", "GCodeStepWidth",
-               "GCodeSpindle", "GCodeCornerStyle"]
+    DEPENDS = ["Toolpaths", "GCodeSafetyHeight", "GCodePlungeFeedrate", "GCodeFilenameExtension",
+               "GCodeStepWidth", "GCodeSpindle", "GCodeCornerStyle"]
     CATEGORIES = ["Toolpath"]
 
     def setup(self):
         parameters = {"safety_height": 25,
+                      "plunge_feedrate": 100,
                       "filename_extension": "",
                       "step_width_x": 0.0001,
                       "step_width_y": 0.0001,
