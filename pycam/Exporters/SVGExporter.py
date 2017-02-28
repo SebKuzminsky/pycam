@@ -25,12 +25,12 @@ SVG_OUTPUT_DPI = 90
 class SVGExporter(object):
 
     def __init__(self, output, unit="mm", maxx=None, maxy=None):
-        if isinstance(output, basestring):
-            # a filename was given
-            self.output = open(output, "w")
-        else:
+        if hasattr(output, "write"):
             # a stream was given
             self.output = output
+        else:
+            # a filename was given
+            self.output = open(output, "w")
         if unit == "mm":
             dots_per_px = SVG_OUTPUT_DPI / 25.4
         else:

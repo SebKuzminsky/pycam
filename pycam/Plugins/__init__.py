@@ -117,13 +117,14 @@ class PluginBase(object):
         except TypeError:
             key = (id(func), repr(params))
         if key not in self._func_cache:
-            if isinstance(func, basestring):
-                result = lambda *args: self.core.emit_event(func, *params)
-            else:
+            if callable(func):
                 if not params:
                     result = func
                 else:
                     result = lambda *args, **kwargs: func(*(args + params), **kwargs)
+            else:
+                # it is the name of a signal
+                result = lambda *args: self.core.emit_event(func, *params)
             self._func_cache[key] = result
         return self._func_cache[key]
 

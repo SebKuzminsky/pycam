@@ -70,16 +70,16 @@ class GCodeGenerator(object):
                  minimum_steps=None, touch_off_on_startup=False, touch_off_on_tool_change=False,
                  touch_off_position=None, touch_off_rapid_move=0, touch_off_slow_move=1,
                  touch_off_slow_feedrate=20, touch_off_height=0, touch_off_pause_execution=False):
-        if isinstance(destination, basestring):
-            # open the file
-            self.destination = open(destination, "w")
-            self._close_stream_on_exit = True
-        else:
+        if hasattr(destination, "write"):
             # assume that "destination" is something like a StringIO instance
             # or an open file
             self.destination = destination
             # don't close the stream if we did not open it on our own
             self._close_stream_on_exit = False
+        else:
+            # open the file by its name
+            self.destination = open(destination, "w")
+            self._close_stream_on_exit = True
         self.safety_height = safety_height
         self.toggle_spindle_status = toggle_spindle_status
         self.spindle_delay = spindle_delay
@@ -310,7 +310,7 @@ class GCodeGenerator(object):
         self._finished = True
 
     def add_comment(self, comment):
-        if isinstance(comment, basestring):
+        if hasattr(comment, "split"):
             lines = comment.split(os.linesep)
         else:
             lines = comment
@@ -321,7 +321,8 @@ class GCodeGenerator(object):
         if self._finished:
             raise TypeError("GCodeGenerator: can't add further commands to a finished "
                             "GCodeGenerator instance: %s" % str(command))
-        if isinstance(command, basestring):
+        if hasattr(command, "split"):
+            # single strings are turned into lists
             command = [command]
         for line in command:
             self.destination.write(line + os.linesep)
