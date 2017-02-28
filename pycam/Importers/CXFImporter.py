@@ -87,8 +87,8 @@ class CXFParser(object):
                             else:
                                 self.meta[key] = value
                         except ValueError:
-                            raise _CXFParseError("Invalid meta information in line %d",
-                                                 feeder.get_index())
+                            raise _CXFParseError("Invalid meta information in line %d"
+                                                 % feeder.get_index())
                     elif key in self.META_KEYWORDS_MULTI:
                         if key in self.meta:
                             self.meta[key].append(value)
@@ -111,15 +111,15 @@ class CXFParser(object):
                         except UnicodeDecodeError:
                             pass
                     else:
-                        raise _CXFParseError("Failed to decode character at line %d",
-                                             feeder.get_index())
+                        raise _CXFParseError("Failed to decode character at line %d"
+                                             % feeder.get_index())
                 elif (len(line) >= 6) and (line[5] == "]"):
                     # unicode character (e.g. "[1ae4]")
                     try:
                         character = unichr(int(line[1:5], 16))
                     except ValueError:
-                        raise _CXFParseError("Failed to parse unicode character at line %d",
-                                             feeder.get_index())
+                        raise _CXFParseError("Failed to parse unicode character at line %d"
+                                             % feeder.get_index())
                 elif (len(line) > 3) and (line.find("]") > 2):
                     # read UTF8 (qcad 1 compatibility)
                     end_bracket = line.find("] ")
@@ -127,8 +127,8 @@ class CXFParser(object):
                     character = unicode(text, "utf-8")[0]
                 else:
                     # unknown format
-                    raise _CXFParseError("Failed to parse character at line %d",
-                                         feeder.get_index())
+                    raise _CXFParseError("Failed to parse character at line %d"
+                                         % feeder.get_index())
                 # parse the following lines up to the next empty line
                 char_definition = []
                 while not feeder.is_empty() and (len(feeder.get()) > 0):
@@ -156,13 +156,13 @@ class CXFParser(object):
                                 char_definition.append(Line(previous, current))
                             previous = current
                     else:
-                        raise _CXFParseError("Failed to read item coordinates in line %d",
-                                             feeder.get_index())
+                        raise _CXFParseError("Failed to read item coordinates in line %d"
+                                             % feeder.get_index())
                 self.letters[character] = char_definition
             else:
                 # unknown line format
-                raise _CXFParseError("Failed to parse unknown content in line %d",
-                                     feeder.get_index())
+                raise _CXFParseError("Failed to parse unknown content in line %d"
+                                     % feeder.get_index())
 
 
 def import_font(filename, callback=None):
