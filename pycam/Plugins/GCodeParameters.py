@@ -47,7 +47,7 @@ class GCodeSafetyHeight(pycam.Plugins.PluginBase):
 
     @Filters.toolpath_filter("settings", "safety_height")
     def get_toolpath_filters(self, safety_height):
-        return [Filters.SafetyHeightFilter(safety_height)]
+        return [Filters.SafetyHeight(safety_height)]
 
 
 # TODO: move to settings for ToolpathOutputDialects

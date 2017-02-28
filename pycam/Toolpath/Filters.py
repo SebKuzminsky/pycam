@@ -124,7 +124,7 @@ class BaseFilter(object):
                                    "method") % str(type(self)))
 
 
-class SafetyHeightFilter(BaseFilter):
+class SafetyHeight(BaseFilter):
 
     PARAMS = ("safety_height", )
     WEIGHT = 80
