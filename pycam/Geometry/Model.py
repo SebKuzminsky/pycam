@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import math
 import uuid
 
-from pycam.Geometry import epsilon, INFINITE, TransformableContainer, IDGenerator
+from pycam.Geometry import epsilon, INFINITE, TransformableContainer, IDGenerator, Box3D, Point3D
 from pycam.Geometry.Matrix import TRANSFORMATIONS
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
@@ -52,7 +52,10 @@ def get_combined_bounds(models):
             high[1] = model.maxy
         if (high[2] is None) or (model.maxz > high[2]):
             high[2] = model.maxz
-    return low, high
+    if None in low or None in high:
+        return None
+    else:
+        return Box3D(Point3D(*low), Point3D(*high))
 
 
 def get_combined_model(models):
@@ -198,8 +201,8 @@ class BaseModel(IDGenerator, TransformableContainer):
         self.transform_by_matrix(matrix, callback=self._get_progress_callback(callback))
 
     def get_bounds(self):
-        return Bounds(Bounds.TYPE_CUSTOM, (self.minx, self.miny, self.minz),
-                      (self.maxx, self.maxy, self.maxz))
+        return Bounds(Bounds.TYPE_CUSTOM, Box3D(Point3D(self.minx, self.miny, self.minz),
+                                                Point3D(self.maxx, self.maxy, self.maxz)))
 
 
 class Model(BaseModel):

@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import collections
 import decimal
 import math
 
@@ -52,6 +53,19 @@ if _use_precision:
     number = lambda value: decimal.Decimal(str(value))
 else:
     number = float
+
+
+Point3D = collections.namedtuple("Point3D", ("x", "y", "z"))
+Vector3D = collections.namedtuple("Vector3D", ("x", "y", "z"))
+
+
+class Box3D(collections.namedtuple("Box3D", ("lower", "upper"))):
+
+    def get_diagonal(self):
+        return Vector3D(*[high - low for low, high in zip(self.lower, self.upper)])
+
+    def get_center(self):
+        return Point3D(*[(low + high / 2) for low, high in zip(self.lower, self.upper)])
 
 
 def _id_generator():

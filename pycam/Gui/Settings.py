@@ -23,6 +23,7 @@ import os
 import StringIO
 
 import pycam.Cutters
+from pycam.Geometry import Box3D, Point3D
 import pycam.Toolpath
 from pycam.Toolpath import Bounds
 import pycam.Utils
@@ -384,7 +385,7 @@ process: 3
             bounds_type = Bounds.TYPE_FIXED_MARGIN
         else:
             bounds_type = Bounds.TYPE_CUSTOM
-        new_bound = Bounds(bounds_type, low_bounds, high_bounds)
+        new_bound = Bounds(bounds_type, Box3D(Point3D(*low_bounds), Point3D(*high_bounds)))
         new_bound.set_name(indict["name"])
         return new_bound
 
@@ -474,10 +475,10 @@ process: 3
             else:
                 bounds_type_name = "custom"
             result["type"] = bounds_type_name
-            low, high = boundary.get_bounds()
+            box = boundary.get_bounds()
             for index, axis in enumerate("xyz"):
-                result["%s_low" % axis] = low[index]
-                result["%s_high" % axis] = high[index]
+                result["%s_low" % axis] = box.lower[index]
+                result["%s_high" % axis] = box.upper[index]
             # special handler to allow tasks to track this new object
             result[self.REFERENCE_TAG] = boundary
             return result
@@ -580,20 +581,20 @@ class ToolpathSettings(object):
         self.support_model = None
 
     def set_bounds(self, bounds):
-        low, high = bounds.get_absolute_limits()
+        box = bounds.get_absolute_limits()
         self.bounds = {
-            "minx": low[0],
-            "maxx": high[0],
-            "miny": low[1],
-            "maxy": high[1],
-            "minz": low[2],
-            "maxz": high[2],
+            "minx": box.lower.x,
+            "maxx": box.upper.x,
+            "miny": box.lower.y,
+            "maxy": box.upper.y,
+            "minz": box.lower.z,
+            "maxz": box.upper.z,
         }
 
     def get_bounds(self):
         low = (self.bounds["minx"], self.bounds["miny"], self.bounds["minz"])
         high = (self.bounds["maxx"], self.bounds["maxy"], self.bounds["maxz"])
-        return Bounds(Bounds.TYPE_CUSTOM, low, high)
+        return Bounds(Bounds.TYPE_CUSTOM, Box3D(Point3D(low), Point3D(high)))
 
     def set_tool(self, index, shape, tool_radius, torus_radius=None, speed=0.0, feedrate=0.0):
         self.tool_settings = {

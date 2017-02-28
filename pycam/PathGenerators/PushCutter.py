@@ -19,10 +19,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import math
-
-from pycam.Geometry.PointUtils import pdist
-from pycam.Geometry.utils import ceil
 from pycam.PathGenerators import get_free_paths_triangles
 import pycam.PathProcessors.ContourCutter
 from pycam.Utils.threading import run_in_parallel

@@ -142,15 +142,15 @@ class ModelSupport(pycam.Plugins.PluginBase):
     def get_draw_dimension(self, low, high):
         if not self.core.get("show_support_preview"):
             return
-        mlow, mhigh = pycam.Geometry.Model.get_combined_bounds(
+        model_box = pycam.Geometry.Model.get_combined_bounds(
             self.core.get("current_support_models"))
-        if None in mlow or None in mhigh:
+        if model_box is None:
             return
-        for index in range(3):
-            if (low[index] is None) or (mlow[index] < low[index]):
-                low[index] = mlow[index]
-            if (high[index] is None) or (mhigh[index] > high[index]):
-                high[index] = mhigh[index]
+        for index, (mlow, mhigh) in enumerate(zip(model_box.lower, model_box.upper)):
+            if (low[index] is None) or (mlow < low[index]):
+                low[index] = mlow
+            if (high[index] is None) or (mhigh > high[index]):
+                high[index] = mhigh
 
     def update_support_model(self, widget=None):
         old_support_models = self.core.get("current_support_models")

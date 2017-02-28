@@ -50,6 +50,7 @@ except ImportError:
     from pycam import VERSION
 
 import pycam.Exporters.GCodeExporter
+from pycam.Geometry import Box3D, Point3D
 import pycam.Gui.common as GuiCommon
 import pycam.Gui.Settings
 import pycam.Gui.Console
@@ -357,7 +358,7 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
             # something went wrong - we quit
             return EXIT_CODES["load_model_failed"]
         # calculate the processing boundary
-        bounds = Bounds()
+        bounds = Bounds(Bounds.TYPE_CUSTOM)
         bounds.set_reference(model.get_bounds())
         # set the bounds type and let the default bounding box match the model
         if opts.bounds_type == "relative-margin":
@@ -412,7 +413,8 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
         else:
             # "outside"
             offset = (0.5 * opts.tool_diameter, 0.5 * opts.tool_diameter, 0)
-        process_bounds = Bounds(Bounds.TYPE_FIXED_MARGIN, offset, offset)
+        process_bounds = Bounds(Bounds.TYPE_FIXED_MARGIN, Box3D(Point3D(*offset),
+                                                                Point3D(*offset)))
         process_bounds.set_reference(bounds)
         tps.set_bounds(process_bounds)
         if opts.export_gcode:

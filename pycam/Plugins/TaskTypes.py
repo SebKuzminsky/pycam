@@ -55,10 +55,9 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
             funcs[key] = self.core.get("get_parameter_sets")(
                 key)[environment[key][set_name]]["func"]
         tool, tool_filters = funcs["tool"](environment["tool"]["parameters"])
-        low, high = environment["bounds"].get_absolute_limits(
-            tool_radius=tool.radius, models=environment["collision_models"])
-        path_generator, motion_grid = funcs["process"](environment["process"], tool.radius,
-                                                       (low, high))
+        box = environment["bounds"].get_absolute_limits(tool_radius=tool.radius,
+                                                        models=environment["collision_models"])
+        path_generator, motion_grid = funcs["process"](environment["process"], tool.radius, box)
         if path_generator is None:
             # we assume that an error message was given already
             return
@@ -67,8 +66,8 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
             # issue a warning - and go ahead ...
             self.log.warn("No collision model was selected. This can be intentional, but maybe "
                           "you simply forgot it.")
-        moves = path_generator.GenerateToolPath(tool, models, motion_grid, minz=low[2],
-                                                maxz=high[2], draw_callback=callback)
+        moves = path_generator.GenerateToolPath(tool, models, motion_grid, minz=box.lower.z,
+                                                maxz=box.upper.z, draw_callback=callback)
         if not moves:
             self.log.info("No valid moves found")
             return None

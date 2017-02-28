@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry import Box3D, Point3D
 import pycam.Geometry.Model
 import pycam.Plugins
 import pycam.Toolpath.SupportGrid
@@ -138,8 +139,9 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
             # we create exactly one support model for all input models
             s = self.core
             support_grid = None
-            low, high = self._get_bounds(models)
-            if ((s.get("support_grid_thickness") > 0)
+            box = self._get_bounds(models)
+            if (box is not None
+                    and (s.get("support_grid_thickness") > 0)
                     and ((s.get("support_grid_distance_x") > 0)
                          or (s.get("support_grid_distance_y") > 0))
                     and ((s.get("support_grid_distance_x") == 0)
@@ -148,7 +150,7 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
                          or (s.get("support_grid_distance_y") > s.get("support_grid_thickness")))
                     and (s.get("support_grid_height") > 0)):
                 support_grid = pycam.Toolpath.SupportGrid.get_support_grid(
-                    low[0], high[0], low[1], high[1], low[2],
+                    box.lower.x, box.upper.x, box.lower.y, box.upper.y, box.lower.z,
                     s.get("support_grid_distance_x"),
                     s.get("support_grid_distance_y"),
                     s.get("support_grid_thickness"),
@@ -239,9 +241,9 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
         model.clear()
         s = self.core
         # get the toolpath without adjustments
-        low, high = self._get_bounds()
+        box = self._get_bounds()
         base_x, base_y = pycam.Toolpath.SupportGrid.get_support_grid_locations(
-            low[0], high[0], low[1], high[1],
+            box.lower.x, box.upper.x, box.lower.y, box.upper.y,
             s.get("support_grid_distance_x"),
             s.get("support_grid_distance_y"),
             offset_x=s.get("support_grid_offset_x"),
@@ -275,12 +277,11 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
         if not models:
             models = self.core.get("models").get_selected()
         models = [m.model for m in models]
-        low, high = pycam.Geometry.Model.get_combined_bounds(models)
-        if None in low or None in high:
-            return [0, 0, 0], [0, 0, 0]
+        box = pycam.Geometry.Model.get_combined_bounds(models)
+        if box is None:
+            return None
         else:
             # TODO: the x/y offset should be configurable via a control
-            for index in range(2):
-                low[index] -= 5
-                high[index] += 5
-            return low, high
+            margin = 5
+            return Box3D(Point3D(box.lower.x - margin, box.lower.y - margin, box.lower.z),
+                         Point3D(box.upper.x + margin, box.upper.y + margin, box.upper.z))

@@ -66,15 +66,15 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
 
     def get_draw_dimension(self, low, high):
         if self._is_visible():
-            mlow, mhigh = pycam.Geometry.Model.get_combined_bounds(
+            model_box = pycam.Geometry.Model.get_combined_bounds(
                 [m.model for m in self.core.get("models").get_visible()])
-            if None in mlow or None in mhigh:
+            if model_box is None:
                 return
-            for index in range(3):
-                if (low[index] is None) or (mlow[index] < low[index]):
-                    low[index] = mlow[index]
-                if (high[index] is None) or (mhigh[index] > high[index]):
-                    high[index] = mhigh[index]
+            for index, (mlow, mhigh) in enumerate(zip(model_box.lower, model_box.upper)):
+                if (low[index] is None) or (mlow < low[index]):
+                    low[index] = mlow
+                if (high[index] is None) or (mhigh > high[index]):
+                    high[index] = mhigh
 
     def draw_model(self):
         GL = self._GL

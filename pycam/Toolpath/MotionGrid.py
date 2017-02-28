@@ -20,7 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import math
 
-from pycam.Geometry import epsilon
+from pycam.Geometry import epsilon, Point3D, Box3D
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.PointUtils import padd, pcross, pmul, pnormalized, psub
@@ -194,7 +194,7 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance, step_width=No
     return get_lines(start, end, end_position)
 
 
-def get_fixed_grid((low, high), layer_distance, line_distance=None, step_width=None,
+def get_fixed_grid(box, layer_distance, line_distance=None, step_width=None,
                    grid_direction=GRID_DIRECTION_X, milling_style=MILLING_STYLE_IGNORE,
                    start_position=START_Z):
     """ Calculate the grid positions for toolpath moves
@@ -203,9 +203,9 @@ def get_fixed_grid((low, high), layer_distance, line_distance=None, step_width=N
         layers = layer_distance
     elif layer_distance is None:
         # useful for DropCutter
-        layers = [low[2]]
+        layers = [box.lower.z]
     else:
-        layers = floatrange(low[2], high[2], inc=layer_distance,
+        layers = floatrange(box.lower.z, box.upper.z, inc=layer_distance,
                             reverse=bool(start_position & START_Z))
 
     def get_layers_with_direction(layers):
@@ -218,8 +218,9 @@ def get_fixed_grid((low, high), layer_distance, line_distance=None, step_width=N
 
     for z, direction in get_layers_with_direction(layers):
         result, start_position = get_fixed_grid_layer(
-            low[0], high[0], low[1], high[1], z, line_distance, step_width=step_width,
-            grid_direction=direction, milling_style=milling_style, start_position=start_position)
+            box.lower.x, box.upper.x, box.lower.y, box.upper.y, z, line_distance,
+            step_width=step_width, grid_direction=direction, milling_style=milling_style,
+            start_position=start_position)
         yield result
 
 
@@ -328,7 +329,7 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width, grid_
             yield points
 
 
-def get_spiral((low, high), layer_distance, line_distance=None, step_width=None,
+def get_spiral(box, layer_distance, line_distance=None, step_width=None,
                milling_style=MILLING_STYLE_IGNORE, spiral_direction=SPIRAL_DIRECTION_IN,
                rounded_corners=False, start_position=(START_X | START_Y | START_Z)):
     """ Calculate the grid positions for toolpath moves
@@ -337,9 +338,9 @@ def get_spiral((low, high), layer_distance, line_distance=None, step_width=None,
         layers = layer_distance
     elif layer_distance is None:
         # useful for DropCutter
-        layers = [low[2]]
+        layers = [box.lower.z]
     else:
-        layers = floatrange(low[2], high[2], inc=layer_distance,
+        layers = floatrange(box.lower.z, box.upper.z, inc=layer_distance,
                             reverse=bool(start_position & START_Z))
     if (milling_style == MILLING_STYLE_CLIMB) == (start_position & START_X > 0):
         start_direction = GRID_DIRECTION_X
@@ -347,10 +348,10 @@ def get_spiral((low, high), layer_distance, line_distance=None, step_width=None,
         start_direction = GRID_DIRECTION_Y
     reverse = (spiral_direction == SPIRAL_DIRECTION_OUT)
     for z in layers:
-        yield get_spiral_layer(low[0], high[0], low[1], high[1], z, line_distance,
-                               step_width=step_width, grid_direction=start_direction,
-                               start_position=start_position, rounded_corners=rounded_corners,
-                               reverse=reverse)
+        yield get_spiral_layer(box.lower.x, box.upper.x, box.lower.y, box.upper.y, z,
+                               line_distance, step_width=step_width,
+                               grid_direction=start_direction, start_position=start_position,
+                               rounded_corners=rounded_corners, reverse=reverse)
 
 
 def get_lines_layer(lines, z, last_z=None, step_width=None,
@@ -425,17 +426,18 @@ def _get_sorted_polygons(models, callback=None):
     return inner_sorter.get_polygons() + outer_sorter.get_polygons()
 
 
-def get_lines_grid(models, (low, high), layer_distance, line_distance=None, step_width=None,
+def get_lines_grid(models, box, layer_distance, line_distance=None, step_width=None,
                    milling_style=MILLING_STYLE_CONVENTIONAL, start_position=START_Z,
                    pocketing_type=POCKETING_TYPE_NONE, skip_first_layer=False, callback=None):
     _log.debug("Calculating lines grid: {} model(s), z={}..{} ({}), line_distance={}, "
-               "step_width={}".format(len(models), low, high, layer_distance, line_distance,
-                                      step_width))
+               "step_width={}".format(len(models), box.lower, box.upper, layer_distance,
+                                      line_distance, step_width))
     # the lower limit is never below the model
     polygons = _get_sorted_polygons(models, callback=callback)
     if polygons:
         low_limit_lines = min([polygon.minz for polygon in polygons])
-        low[2] = max(low[2], low_limit_lines)
+        new_lower = Point3D(box.lower.x, box.lower.y, max(box.lower.z, low_limit_lines))
+        box = Box3D(new_lower, box.upper)
     # calculate pockets
     if pocketing_type != POCKETING_TYPE_NONE:
         if callback is not None:
@@ -456,9 +458,9 @@ def get_lines_grid(models, (low, high), layer_distance, line_distance=None, step
         layers = layer_distance
     elif layer_distance is None:
         # only one layer
-        layers = [low[2]]
+        layers = [box.lower.z]
     else:
-        layers = floatrange(low[2], high[2], inc=layer_distance,
+        layers = floatrange(box.lower.z, box.upper.z, inc=layer_distance,
                             reverse=bool(start_position & START_Z))
     # turn the generator into a list - otherwise the slicing fails
     layers = list(layers)

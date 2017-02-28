@@ -29,7 +29,7 @@ except ImportError:
     # both modules are required for visualization, only
     pass
 
-from pycam.Geometry import epsilon, number
+from pycam.Geometry import epsilon, number, Box3D, Point3D
 from pycam.Geometry.PointUtils import padd, pcross, pdist, pmul, pnorm, pnormalized, psub
 import pycam.Utils.log
 
@@ -378,7 +378,7 @@ class Bounds(object):
     TYPE_FIXED_MARGIN = 1
     TYPE_CUSTOM = 2
 
-    def __init__(self, bounds_type=None, bounds_low=None, bounds_high=None, reference=None):
+    def __init__(self, bounds_type=None, box=None, reference=None):
         """ create a new Bounds instance
 
         @value bounds_type: any of TYPE_RELATIVE_MARGIN | TYPE_FIXED_MARGIN |
@@ -395,20 +395,10 @@ class Bounds(object):
         @type reference: Bounds
         """
         self.name = "No name"
-        # set type
-        self.bounds_type = None
-        if bounds_type is None:
-            self.set_type(Bounds.TYPE_CUSTOM)
-        else:
-            self.set_type(bounds_type)
-        # store the bounds values
-        self.bounds_low = None
-        self.bounds_high = None
-        if bounds_low is None:
-            bounds_low = [0, 0, 0]
-        if bounds_high is None:
-            bounds_high = [0, 0, 0]
-        self.set_bounds(bounds_low, bounds_high)
+        self.set_type(bounds_type)
+        if box is None:
+            box = Box3D(Point3D(0, 0, 0), Point3D(0, 0, 0))
+        self.set_bounds(box)
         self.reference = reference
 
     def __repr__(self):
@@ -444,25 +434,16 @@ class Bounds(object):
             self.bounds_type = bounds_type
 
     def get_referenced_bounds(self, reference):
-        return Bounds(bounds_type=self.bounds_type, bounds_low=self.bounds_low,
-                      bounds_high=self.bounds_high, reference=reference)
+        return Bounds(self.bounds_type,
+                      Box3D(Point3D(*self.bounds_low), Point3D(*self.bounds_high)),
+                      reference=reference)
 
     def get_bounds(self):
-        return self.bounds_low[:], self.bounds_high[:]
+        return Box3D(Point3D(*self.bounds_low), Point3D(*self.bounds_high))
 
-    def set_bounds(self, low=None, high=None):
-        if low is not None:
-            if len(low) != 3:
-                raise ValueError("lower bounds should be supplied as a tuple/list of 3 items - "
-                                 "but %d were given" % len(low))
-            else:
-                self.bounds_low = [number(value) for value in low]
-        if high is not None:
-            if len(high) != 3:
-                raise ValueError("upper bounds should be supplied as a tuple/list of 3 items - "
-                                 "but %d were given" % len(high))
-            else:
-                self.bounds_high = [number(value) for value in high]
+    def set_bounds(self, box):
+        self.bounds_low = box.lower
+        self.bounds_high = box.upper
 
     def get_absolute_limits(self, reference=None):
         """ calculate the current absolute limits of the Bounds instance
@@ -507,16 +488,14 @@ class Bounds(object):
             raise NotImplementedError("the function 'get_absolute_limits' is currently not "
                                       "implemented for the bounds_type '%s'"
                                       % str(self.bounds_type))
-        return low, high
+        return Box3D(Point3D(low), Point3D(high))
 
-    def adjust_bounds_to_absolute_limits(self, limits_low, limits_high, reference=None):
+    def adjust_bounds_to_absolute_limits(self, box_limit, reference=None):
         """ change the current bounds settings according to some absolute values
 
         This does not change the type of this bounds instance (e.g. relative).
-        @value limits_low: a tuple describing the new lower absolute boundary
-        @type limits_low: (tuple|list) of float
-        @value limits_high: a tuple describing the new lower absolute boundary
-        @type limits_high: (tuple|list) of float
+        @value box_limit: the maximum allowed box
+        @type box_limit: Box3D
         @value reference: a reference object described by a tuple (or list) of
             three item. These three values describe only the lower boundary of
             this object (for the x, y and z axes). Each item must be a float
@@ -545,23 +524,24 @@ class Bounds(object):
                                "due to zero size dimension '%s'." % "xyz"[index])
                     # Display warning messages, if we can't reach the requested
                     # absolute dimension.
-                    if ref_low[index] != limits_low[index]:
+                    if ref_low[index] != box_limit.lower[index]:
                         _log.info(message, "lower")
-                    if ref_high[index] != limits_high[index]:
+                    if ref_high[index] != box_limit.upper[index]:
                         _log.info(message, "upper")
                     self.bounds_low[index] = 0
                     self.bounds_high[index] = 0
                 else:
-                    self.bounds_low[index] = (ref_low[index] - limits_low[index]) / dim_width
-                    self.bounds_high[index] = (limits_high[index] - ref_high[index]) / dim_width
+                    self.bounds_low[index] = (ref_low[index] - box_limit.lower[index]) / dim_width
+                    self.bounds_high[index] = ((box_limit.upper[index] - ref_high[index])
+                                               / dim_width)
         elif self.bounds_type == Bounds.TYPE_FIXED_MARGIN:
             for index in range(3):
-                self.bounds_low[index] = ref_low[index] - limits_low[index]
-                self.bounds_high[index] = limits_high[index] - ref_high[index]
+                self.bounds_low[index] = ref_low[index] - box_limit.lower[index]
+                self.bounds_high[index] = box_limit.upper[index] - ref_high[index]
         elif self.bounds_type == Bounds.TYPE_CUSTOM:
             for index in range(3):
-                self.bounds_low[index] = limits_low[index]
-                self.bounds_high[index] = limits_high[index]
+                self.bounds_low[index] = box_limit.lower[index]
+                self.bounds_high[index] = box_limit.upper[index]
         else:
             # this should not happen
             raise NotImplementedError("the function 'adjust_bounds_to_absolute_limits' is "

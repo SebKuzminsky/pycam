@@ -5,6 +5,7 @@ import sys
 from time import time
 
 from pycam.Cutters.CylindricalCutter import CylindricalCutter
+from pycam.Geometry import Box3D, Point3D
 from pycam.Gui.Console import ConsoleProgressBar
 from pycam.Importers.STLImporter import ImportModel
 from pycam.PathGenerators.DropCutter import DropCutter
@@ -32,9 +33,8 @@ def run_dropcutter():
     layer_distance = 1
     tool = CylindricalCutter(10)
     path_generator = DropCutter(PathAccumulator())
-    bounds = Bounds(Bounds.TYPE_CUSTOM,
-                    (model.minx-5, model.miny-5, model.minz),
-                    (model.maxx+5, model.maxy+5, model.maxz))
+    bounds = Bounds(Bounds.TYPE_CUSTOM, Box3D(Point3D(model.minx-5, model.miny-5, model.minz),
+                                              Point3D(model.maxx+5, model.maxy+5, model.maxz)))
 
     low, high = bounds.get_absolute_limits()
     line_distance = 2 * tool.radius * (1.0 - overlap)

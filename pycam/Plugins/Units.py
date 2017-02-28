@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry import Box3D, Point3D
+from pycam.Geometry.PointUtils import pmul
 import pycam.Plugins
 from pycam.Toolpath import Bounds
 
@@ -119,23 +121,18 @@ class Units(pycam.Plugins.PluginBase):
                 if self.gui.get_object("UnitChangeBounds").get_active():
                     # scale the boundaries and keep their center
                     for bounds in self.core.get("bounds"):
-                        low, high = bounds.get_bounds()
+                        box = bounds.get_bounds()
                         if bounds.get_type() == Bounds.TYPE_FIXED_MARGIN:
-                            low[0] *= factor
-                            high[0] *= factor
-                            low[1] *= factor
-                            high[1] *= factor
-                            low[2] *= factor
-                            high[2] *= factor
-                            bounds.set_bounds(low, high)
+                            low = Point3D(pmul(box.lower, factor))
+                            high = Point3D(pmul(box.upper, factor))
+                            bounds.set_bounds(Box3D(low, high))
                         elif bounds.get_type() == Bounds.TYPE_CUSTOM:
-                            center = [0, 0, 0]
-                            for i in range(3):
-                                center[i] = (high[i] + low[i]) / 2
-                            for i in range(3):
-                                low[i] = center[i] + (low[i] - center[i]) * factor
-                                high[i] = center[i] + (high[i] - center[i]) * factor
-                            bounds.set_bounds(low, high)
+                            center = box.get_center()
+                            low = Point3D(*[c - factor * (c - l)
+                                            for l, c in zip(box.lower, center)])
+                            high = Point3D(*[c + factor * (h - c)
+                                             for h, c in zip(box.upper, center)])
+                            bounds.set_bounds(Box3D(low, high))
                         elif bounds.get_type() == Bounds.TYPE_RELATIVE_MARGIN:
                             # no need to change relative margins
                             pass

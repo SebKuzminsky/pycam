@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.Geometry import Box3D, Point3D
 import pycam.Plugins
 # TODO: move Toolpath.Bounds here?
 import pycam.Toolpath
@@ -147,11 +148,11 @@ class Bounds(pycam.Plugins.ListPluginBase):
         bounds = self.get_by_path(model.get_path(m_iter))
         if not bounds:
             return
-        low, high = bounds.get_absolute_limits()
-        if None in low or None in high:
+        box = bounds.get_absolute_limits()
+        if box is None:
             text = ""
         else:
-            text = "%g x %g x %g" % tuple([high[i] - low[i] for i in range(3)])
+            text = "%g x %g x %g" % tuple([box.upper[i] - box.lower[i] for i in range(3)])
         cell.set_property("text", text)
 
     def _render_bounds_name(self, column, cell, model, m_iter):
@@ -229,19 +230,17 @@ class Bounds(pycam.Plugins.ListPluginBase):
         else:
             # relative margins -> absolute coordinates
             # calculate the model bounds
-            low, high = pycam.Geometry.Model.get_combined_bounds(models)
-            if None in low or None in high:
+            box = pycam.Geometry.Model.get_combined_bounds(models)
+            if box is None:
                 # zero-sized models -> no action
                 return
-            dim = []
-            for axis in range(3):
-                dim.append(high[axis] - low[axis])
+            dim = box.get_diagonal()
             if self._is_percent():
-                func_low = lambda value, axis: low[axis] - (value / 100.0 * dim[axis])
-                func_high = lambda value, axis: high[axis] + (value / 100.0 * dim[axis])
+                func_low = lambda value, axis: box.lower[axis] - (value / 100.0 * dim[axis])
+                func_high = lambda value, axis: box.upper[axis] + (value / 100.0 * dim[axis])
             else:
-                func_low = lambda value, axis: low[axis] - value
-                func_high = lambda value, axis: high[axis] + value
+                func_low = lambda value, axis: box.lower[axis] - value
+                func_high = lambda value, axis: box.upper[axis] + value
             # absolute mode -> no models may be selected
             self.select_models([])
         for axis in "XYZ":
@@ -265,13 +264,11 @@ class Bounds(pycam.Plugins.ListPluginBase):
             return
         models = [m.model for m in bounds["parameters"]["Models"]]
         # calculate the model bounds
-        low, high = pycam.Geometry.Model.get_combined_bounds(models)
-        if None in low or None in high:
+        box = pycam.Geometry.Model.get_combined_bounds(models)
+        if box is None:
             # zero-sized models -> no action
             return
-        dim = []
-        for axis in range(3):
-            dim.append(high[axis] - low[axis])
+        dim = box.get_diagonal()
         if self._is_percent():
             # switched from absolute to percent
             func = lambda value, axis: value / dim[axis] * 100.0
@@ -305,10 +302,10 @@ class Bounds(pycam.Plugins.ListPluginBase):
         else:
             # absolute margin
             models = [m.model for m in self.get_selected_models()]
-            model_low, model_high = pycam.Geometry.Model.get_combined_bounds(models)
-            if None in model_low or None in model_high:
+            model_box = pycam.Geometry.Model.get_combined_bounds(models)
+            if model_box is None:
                 return
-            change_value = (model_high[axis_index] - model_low[axis_index]) * 0.1
+            change_value = (model_box.upper[axis_index] - model_box.lower[axis_index]) * 0.1
             bounds["parameters"]["BoundaryLow%s" % axis.upper()] += change_value * change_factor
             bounds["parameters"]["BoundaryHigh%s" % axis.upper()] += change_value * change_factor
         self._update_controls()
@@ -385,7 +382,6 @@ class BoundsDict(pycam.Plugins.ObjectWithAttributes):
         })
 
     def get_absolute_limits(self, tool_radius=None, models=None):
-        default = (None, None, None), (None, None, None)
         get_low_value = lambda axis: self["parameters"]["BoundaryLow%s" % "XYZ"[axis]]
         get_high_value = lambda axis: self["parameters"]["BoundaryHigh%s" % "XYZ"[axis]]
         if self["parameters"]["TypeRelativeMargin"]:
@@ -399,22 +395,21 @@ class BoundsDict(pycam.Plugins.ObjectWithAttributes):
             else:
                 # use all visible models -> for live visualization
                 models = self.core.get("models").get_visible()
-            low_model, high_model = pycam.Geometry.Model.get_combined_bounds([model.model
-                                                                              for model in models])
-            if None in low_model or None in high_model:
+            model_box = pycam.Geometry.Model.get_combined_bounds([model.model for model in models])
+            if model_box is None:
                 # zero-sized models -> no action
-                return default
+                return None
             is_percent = _RELATIVE_UNIT[self["parameters"]["RelativeUnit"]] == "%"
             low, high = [], []
             if is_percent:
                 for axis in range(3):
-                    dim = high_model[axis] - low_model[axis]
-                    low.append(low_model[axis] - (get_low_value(axis) / 100.0 * dim))
-                    high.append(high_model[axis] + (get_high_value(axis) / 100.0 * dim))
+                    dim = model_box.upper[axis] - model_box.lower[axis]
+                    low.append(model_box.lower[axis] - (get_low_value(axis) / 100.0 * dim))
+                    high.append(model_box.upper[axis] + (get_high_value(axis) / 100.0 * dim))
             else:
                 for axis in range(3):
-                    low.append(low_model[axis] - get_low_value(axis))
-                    high.append(high_model[axis] + get_high_value(axis))
+                    low.append(model_box.lower[axis] - get_low_value(axis))
+                    high.append(model_box.upper[axis] + get_high_value(axis))
         else:
             low, high = [], []
             for axis in range(3):
@@ -431,4 +426,4 @@ class BoundsDict(pycam.Plugins.ObjectWithAttributes):
             for index in range(2):
                 low[index] -= offset
                 high[index] += offset
-        return low, high
+        return Box3D(Point3D(*low), Point3D(*high))
