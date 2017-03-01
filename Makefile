@@ -1,12 +1,11 @@
 # export SVN_REPO_BASE=. if you want to use the local version instead of trunk
 # from the subversion repository.
 
-# use something like "VERSION=0.2 make" to override the VERSION on the command line
-VERSION ?= $(shell sed -n "s/^.*[\t ]*VERSION[\t ]*=[\t ]*[\"']\([^\"']*\)[\"'].*/\1/gp" pycam/__init__.py)
+VERSION ?= $(shell git describe --tags | sed 's/^v//')
 REPO_TAGS ?= https://pycam.svn.sourceforge.net/svnroot/pycam/tags
 RELEASE_PREFIX ?= pycam-
 ARCHIVE_DIR_RELATIVE ?= release-archives
-EXPORT_DIR = $(RELEASE_PREFIX)$(VERSION)
+EXPORT_DIR = build/$(RELEASE_PREFIX)$(VERSION)
 EXPORT_FILE_PREFIX = $(EXPORT_DIR)
 EXPORT_ZIP = $(EXPORT_FILE_PREFIX).zip
 EXPORT_TGZ = $(EXPORT_FILE_PREFIX).tar.gz
@@ -35,7 +34,7 @@ ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
 RM = rm -f
 
 .PHONY: zip tgz win32 clean dist git_export upload create_archive_dir man check-style test \
-	pylint-relaxed pylint-strict docs upload-docs
+	pylint-relaxed pylint-strict docs upload-docs deb
 
 dist: zip tgz win32
 	@# remove the tmp directory when everything is done
@@ -57,6 +56,11 @@ git_export: clean
 	# Windows needs a different name for the startup script - due to process creation
 	# (no fork/exec)
 	@cp "$(EXPORT_DIR)/scripts/pycam" "$(EXPORT_DIR)/scripts/pycam-loader.py"
+	# overwrite dynamic version detection with a hardcoded string and update deb changelog
+	cd "$(EXPORT_DIR)"; \
+		echo 'VERSION = "$(VERSION)"' >pycam/version.py; \
+		debchange --newversion "$$(echo "$(VERSION)" | tr - .)" "Upstream build"; \
+		debchange --release ""
 
 create_archive_dir:
 	@mkdir -p "$(ARCHIVE_DIR)"
@@ -71,6 +75,9 @@ win32: create_archive_dir man git_export
 	# this is a binary release
 	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py bdist_wininst --user-access-control force \
 		--dist-dir "$(ARCHIVE_DIR)" $(DISTUTILS_PLAT_NAME)
+
+deb: git_export
+	cd "$(EXPORT_DIR)"; dpkg-buildpackage -us -uc
 
 upload:
 	svn cp "$(SVN_REPO_BASE)" "$(REPO_TAGS)/release-$(VERSION)" -m "tag release $(VERSION)"

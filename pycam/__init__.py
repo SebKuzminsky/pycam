@@ -18,7 +18,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-VERSION = "0.6.1-dev"
+from pycam.version import VERSION  # noqa F401
+
 
 FILTER_CONFIG = (("Config files", "*.conf"),)
 HELP_WIKI_URL = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=%s"
