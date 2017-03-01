@@ -26,7 +26,7 @@ include /usr/share/dpkg/default.mk
 # information from git.  It's intended to be run before generating the
 # debian source package.
 prep-source:
-	$(MAKE) pycam/Version.py
+	@echo "VERSION = '$(shell scripts/get-version)'" >| pycam/Version.py
 	debian/update-dch-from-git
 
 override_dh_auto_build:
