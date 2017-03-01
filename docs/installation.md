@@ -6,7 +6,7 @@ Installing the latest release
 1.  [download](http://sourceforge.net/projects/pycam/files/) the archive
     of your choice
 2.  install the [requirements](requirements.md) for your system
-3.  run `./pycam` in the PyCAM directory
+3.  run `scripts/pycam` in the PyCAM directory
 
 ### Mac OS X
 
