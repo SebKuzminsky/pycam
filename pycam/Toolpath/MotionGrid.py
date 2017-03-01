@@ -451,7 +451,7 @@ def get_lines_grid(models, box, layer_distance, line_distance=None, step_width=N
             callback()
         if polygon.is_closed and (milling_style == MILLING_STYLE_CONVENTIONAL):
             polygon = polygon.copy()
-            polygon.reverse()
+            polygon.reverse_direction()
         for line in polygon.get_lines():
             lines.append(line)
     if isiterable(layer_distance):
