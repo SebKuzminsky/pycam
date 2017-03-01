@@ -66,11 +66,6 @@ upload:
 	svn import "$(ARCHIVE_DIR)/$(EXPORT_WIN32)" "$(REPO_TAGS)/archives/$(EXPORT_WIN32)" \
 		-m "added released win32 installer for version $(VERSION)"
 
-.PHONY: pycam/Version.py
-pycam/Version.py:
-	@echo "VERSION = '$(shell scripts/get-version)'" >| $@
-	@cat $@
-
 check-style:
 	scripts/run_flake8 $(PYTHON_CHECK_STYLE_TARGETS)
 
