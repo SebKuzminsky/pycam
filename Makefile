@@ -5,7 +5,10 @@
 VERSION = $(shell python -c 'import pycam; print(pycam.VERSION)')
 VERSION_FILE = pycam/Version.py
 REPO_TAGS ?= https://pycam.svn.sourceforge.net/svnroot/pycam/tags
-ARCHIVE_DIR_RELATIVE ?= release-archives
+DIST_DIR = dist
+DIST_PREFIX = pycam-
+DIST_TGZ = $(DIST_DIR)/$(DIST_PREFIX)$(VERSION).tar.gz
+DIST_WIN32 = $(DIST_DIR)/$(DIST_PREFIX)$(VERSION).win32.exe
 PYTHON_EXE ?= python
 # check if the local version of python's distutils support "--plat-name"
 # (introduced in python 2.6)
@@ -25,14 +28,14 @@ WEBSITE_UPLOAD_PREFIX ?= $(SF_USER),pycam@
 endif
 WEBSITE_UPLOAD_LOCATION ?= web.sourceforge.net:/home/project-web/pycam/htdocs
 
-# turn the destination directory into an absolute path
-ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
 RM = rm -f
 
-.PHONY: zip tgz win32 clean dist git_export create_archive_dir man check-style test \
-	pylint-relaxed pylint-strict docs upload-docs update-version update-deb-changelog
+.PHONY: build clean dist tgz win32 clean \
+	docs man upload-docs \
+	check-style pylint-relaxed pylint-strict test \
+	update-version update-deb-changelog
 
-dist: zip tgz win32
+archive: tgz win32
 	@# we can/should remove the version file in order to avoid a stale local version
 	@$(RM) "$(VERSION_FILE)"
 
@@ -45,19 +48,20 @@ clean:
 man:
 	@$(MAKE) -C man man
 
-create_archive_dir:
-	@mkdir -p "$(ARCHIVE_DIR)"
+$(DIST_DIR):
+	@mkdir -p "$@"
 
-zip: create_archive_dir man
-	$(PYTHON_EXE) setup.py sdist --format zip --dist-dir "$(ARCHIVE_DIR)"
+tgz: $(DIST_TGZ)
 
-tgz: create_archive_dir man
-	$(PYTHON_EXE) setup.py sdist --format gztar --dist-dir "$(ARCHIVE_DIR)"
+$(DIST_TGZ): $(DIST_DIR) build
+	$(PYTHON_EXE) setup.py sdist --format gztar --dist-dir "$(DIST_DIR)"
 
-win32: create_archive_dir man
+win32: $(DIST_WIN32)
+
+$(DIST_WIN32): $(DIST_DIR) build
 	# this is a binary release
 	$(PYTHON_EXE) setup.py bdist_wininst --user-access-control force \
-		--dist-dir "$(ARCHIVE_DIR)" $(DISTUTILS_PLAT_NAME)
+		--dist-dir "$(DIST_DIR)" $(DISTUTILS_PLAT_NAME)
 
 update-deb-changelog:
 	@# retrieve the log of all commits since the latest release and add it to the deb changelog
