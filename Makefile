@@ -35,6 +35,9 @@ RM = rm -f
 	check-style pylint-relaxed pylint-strict test \
 	update-version update-deb-changelog
 
+build: man update-version
+	$(PYTHON_EXE) setup.py build
+
 archive: tgz win32
 	@# we can/should remove the version file in order to avoid a stale local version
 	@$(RM) "$(VERSION_FILE)"
