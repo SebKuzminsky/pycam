@@ -34,7 +34,7 @@ WEBSITE_UPLOAD_LOCATION ?= web.sourceforge.net:/home/project-web/pycam/htdocs
 ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
 RM = rm -f
 
-.PHONY: zip tgz win32 clean dist git_export upload create_archive_dir man check-style test \
+.PHONY: zip tgz win32 clean dist git_export create_archive_dir man check-style test \
 	pylint-relaxed pylint-strict docs upload-docs
 
 dist: zip tgz win32
@@ -71,15 +71,6 @@ win32: create_archive_dir man git_export
 	# this is a binary release
 	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py bdist_wininst --user-access-control force \
 		--dist-dir "$(ARCHIVE_DIR)" $(DISTUTILS_PLAT_NAME)
-
-upload:
-	svn cp "$(SVN_REPO_BASE)" "$(REPO_TAGS)/release-$(VERSION)" -m "tag release $(VERSION)"
-	svn import "$(ARCHIVE_DIR)/$(EXPORT_ZIP)" "$(REPO_TAGS)/archives/$(EXPORT_ZIP)" \
-		-m "added released zip file for version $(VERSION)"
-	svn import "$(ARCHIVE_DIR)/$(EXPORT_TGZ)" "$(REPO_TAGS)/archives/$(EXPORT_TGZ)" \
-		-m "added released tgz file for version $(VERSION)"
-	svn import "$(ARCHIVE_DIR)/$(EXPORT_WIN32)" "$(REPO_TAGS)/archives/$(EXPORT_WIN32)" \
-		-m "added released win32 installer for version $(VERSION)"
 
 test: check-style
 
