@@ -35,6 +35,20 @@ RM = rm -f
 	check-style pylint-relaxed pylint-strict test \
 	update-version update-deb-changelog
 
+info:
+	@echo "Available targets:"
+	@echo "    build"
+	@echo "    clean"
+	@echo "    dist"
+	@echo "    docs"
+	@echo "    man"
+	@echo "    upload-docs"
+	@echo
+	@echo "Style checks:"
+	@echo "    check-style"
+	@echo "    pylint-relaxed"
+	@echo "    pylint-strict"
+
 build: man update-version
 	$(PYTHON_EXE) setup.py build
 
