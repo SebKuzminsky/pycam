@@ -22,6 +22,16 @@ Thumbs.db
 .*.swp
 
 man/pycam.1
+# windows build remainder
+scripts/pycam-loader.py
 
 # Generated mkdocs files go into the site directory
 site/
+
+# debian packaging
+debian/debhelper-build-stamp
+debian/files
+debian/pycam/
+debian/pycam.debhelper.log
+debian/pycam.*.debhelper
+debian/pycam.substvars
