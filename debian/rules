@@ -30,6 +30,10 @@ prep-source:
 	$(MAKE) update-deb-changelog
 	rm -f pycam/*.pyc
 
+override_dh_auto_clean:
+	$(MAKE) clean
+	debian/rules prep-source
+
 override_dh_auto_build:
 	$(MAKE) -C man
 	python setup.py build
