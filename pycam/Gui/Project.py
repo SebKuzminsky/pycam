@@ -618,9 +618,6 @@ class ProjectGui(object):
 #       self.load_task_settings()
         self.settings.register_event("notify-file-saved", self.add_to_recent_file_list)
         self.settings.register_event("notify-file-opened", self.add_to_recent_file_list)
-        # fallback - in case of a failure when opening a model file
-        model = pycam.Importers.TestModel.get_test_model()
-        self.settings.get("models").add_model(model, "Tiny pyramid")
         # Without this "gkt.main_iteration" loop the task settings file
         # control would not be updated in time.
         while gtk.events_pending():
