@@ -19,9 +19,6 @@ Install the following packages with your package manager (see below):
 -   **python-rsvg**
 -   **python-guppy** (optional; required by the *Memory Analyzer*
     plugin - only useful for development)
--   **python-psyco** - this optional dependency is not available in
-    recent distributions - just ignore it (*PyCAM* until v0.5.1 issues a
-    negligible warning)
 
 ### Debian
 

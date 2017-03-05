@@ -249,16 +249,6 @@ There is NO WARRANTY, to the extent permitted by law.''' % VERSION
             print(text)
         return EXIT_CODES["ok"]
 
-    if not opts.disable_psyco:
-        try:
-            import psyco
-            psyco.full()
-            log.info("Psyco enabled")
-        except ImportError:
-            log.info("Psyco is not available (performance will probably suffer slightly)")
-    else:
-        log.info("Psyco was disabled via the commandline")
-
     # check if server-auth-key is given -> this is mandatory for server mode
     if (opts.enable_server or opts.start_server) and not opts.server_authkey:
         parser.error(
@@ -529,9 +519,6 @@ if __name__ == "__main__":
         type="choice", choices=["inside", "along", "outside"],
         help=("specify if the mill tool (including its radius) should move completely 'inside', "
               "'along' or 'outside' the defined processing boundary."))
-    group_general.add_option(
-        "", "--disable-psyco", dest="disable_psyco", default=False, action="store_true",
-        help="disable the Psyco just-in-time-compiler even if it is available")
     group_general.add_option(
         "", "--number-of-processes", dest="parallel_processes", default=None, type="int",
         action="store",

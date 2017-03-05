@@ -2,6 +2,7 @@ Version ?
  * GCode: limit vertical feedrate (maximum speed of plunge move)
  * removed experimental support for ODE
   * the ODE library seems to be not actively developed anymore
+ * removed obsolete support for psyco
 
 Version 0.6.0 - 2016-02-18
  * greatly improved OpenGL visualization (contributed by Mattes)

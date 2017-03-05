@@ -12,7 +12,7 @@ Architecture: all
 Depends: python-gtk2, python-opengl, python-gtkglext1, python-rsvg,
  python-gobject-2, python-numpy, python-setproctitle,
  inkscape, pstoedit, librecad-data, ${misc:Depends}, ${python:Depends}
-Recommends: python-psyco, python-guppy
+Recommends: python-guppy
 Description: CAM program & Python library for generating toolpaths
  PyCAM is a toolpath generator for 3 axis machines. The generated
  GCode can be used with LinuxCNC and other machine controllers.
