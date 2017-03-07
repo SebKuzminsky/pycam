@@ -41,7 +41,6 @@ import pycam.Plugins
 from pycam.Utils.locations import get_ui_file_location, get_external_program_location, \
         get_all_program_locations
 import pycam.Utils
-from pycam.Utils.events import EventCore
 import pycam.Utils.log
 
 
@@ -138,8 +137,8 @@ class ProjectGui(object):
 
     META_DATA_PREFIX = "PYCAM-META-DATA:"
 
-    def __init__(self, no_dialog=False):
-        self.settings = EventCore()
+    def __init__(self, event_manager, no_dialog=False):
+        self.settings = event_manager
         self.gui_is_active = False
         # during initialization any dialog (e.g. "Unit change") is not allowed
         # we set the final value later

@@ -59,6 +59,7 @@ import pycam.Importers.TestModel
 import pycam.Importers
 from pycam.Toolpath import Bounds, Toolpath
 import pycam.Utils
+from pycam.Utils.events import EventCore
 import pycam.Utils.log
 import pycam.Utils.threading
 
@@ -136,7 +137,8 @@ def show_gui(inputfile=None, task_settings_file=None):
         log.critical(os.linesep.join(full_report))
         return EXIT_CODES["requirements"]
 
-    gui = gui_class()
+    event_manager = EventCore()
+    gui = gui_class(event_manager)
 
     # load the given model or the default
     if not inputfile:
