@@ -31,7 +31,9 @@ class TaskParamCollisionModels(pycam.Plugins.PluginBase):
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputTable(
             [], change_handler=lambda widget=None: self.core.emit_event("task-changed"))
-        self.control.get_widget().set_size_request(240, -1)
+        # The usual height of "-1" seems to hide this widget at least for the GTK version
+        # shipped with 12.04 and 13.04 - see https://github.com/SebKuzminsky/pycam/issues/43.
+        self.control.get_widget().set_size_request(240, 120)
         self.core.get("register_parameter")("task", "collision_models", self.control)
         self.core.register_ui("task_models", "", self.control.get_widget(), weight=5)
         self.core.register_event("model-list-changed", self._update_models)
