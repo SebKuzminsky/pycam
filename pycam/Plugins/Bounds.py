@@ -252,13 +252,14 @@ class Bounds(pycam.Plugins.ListPluginBase):
         dim = box.get_diagonal()
         if self._is_percent():
             # switched from absolute to percent
-            func = lambda value, axis: value / dim[axis] * 100.0
+            func = lambda value, axis_index: value / dim[axis_index] * 100.0
         else:
-            func = lambda value, axis: (value / 100.0) * dim[axis]
+            func = lambda value, axis_index: (value / 100.0) * dim[axis_index]
         for axis in "XYZ":
+            axis_index = "XYZ".index(axis)
             for name in ("BoundaryLow", "BoundaryHigh"):
                 try:
-                    result = func(bounds["parameters"][name + axis], "XYZ".index(axis))
+                    result = func(bounds["parameters"][name + axis], axis_index)
                 except ZeroDivisionError:
                     # this happens for flat models
                     result = 0
