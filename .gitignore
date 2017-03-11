@@ -4,6 +4,7 @@
 
 man/pycam.1
 man/pycam.1.html
+docs/release-notes.md
 
 dist
 build
