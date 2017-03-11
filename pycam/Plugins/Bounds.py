@@ -374,10 +374,8 @@ class BoundsDict(pycam.Plugins.ObjectWithAttributes):
             "BoundaryHighZ": 0,
             "TypeRelativeMargin": True,
             "TypeCustom": False,
-            # Use "list" conversion here: python 2.5 does not support
-            # "index" for tuples.
-            "RelativeUnit": list(_RELATIVE_UNIT).index("%"),
-            "ToolLimit": list(_BOUNDARY_MODES).index("along"),
+            "RelativeUnit": _RELATIVE_UNIT.index("%"),
+            "ToolLimit": _BOUNDARY_MODES.index("along"),
             "Models": [],
         })
 
