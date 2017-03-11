@@ -76,7 +76,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
             for obj_name in ("MarginIncreaseX", "MarginIncreaseY", "MarginIncreaseZ",
                              "MarginDecreaseX", "MarginDecreaseY", "MarginDecreaseZ",
                              "MarginResetX", "MarginResetY", "MarginResetZ"):
-                axis = obj_name[-1].lower()
+                axis = obj_name[-1]
                 if "Increase" in obj_name:
                     args = "+"
                 elif "Decrease" in obj_name:
@@ -290,15 +290,15 @@ class Bounds(pycam.Plugins.ListPluginBase):
         bounds = self.get_selected()
         if not bounds:
             return
-        axis_index = "xyz".index(axis)
+        axis_index = "XYZ".index(axis)
         change_factor = {"0": 0, "+": 1, "-": -1}[change]
         if change == "0":
-            bounds["parameters"]["BoundaryLow%s" % axis.upper()] = 0
-            bounds["parameters"]["BoundaryHigh%s" % axis.upper()] = 0
+            bounds["parameters"]["BoundaryLow%s" % axis] = 0
+            bounds["parameters"]["BoundaryHigh%s" % axis] = 0
         elif self._is_percent():
             # % margin
-            bounds["parameters"]["BoundaryLow%s" % axis.upper()] += change_factor * 10
-            bounds["parameters"]["BoundaryHigh%s" % axis.upper()] += change_factor * 10
+            bounds["parameters"]["BoundaryLow%s" % axis] += change_factor * 10
+            bounds["parameters"]["BoundaryHigh%s" % axis] += change_factor * 10
         else:
             # absolute margin
             models = [m.model for m in self.get_selected_models()]
@@ -306,8 +306,8 @@ class Bounds(pycam.Plugins.ListPluginBase):
             if model_box is None:
                 return
             change_value = (model_box.upper[axis_index] - model_box.lower[axis_index]) * 0.1
-            bounds["parameters"]["BoundaryLow%s" % axis.upper()] += change_value * change_factor
-            bounds["parameters"]["BoundaryHigh%s" % axis.upper()] += change_value * change_factor
+            bounds["parameters"]["BoundaryLow%s" % axis] += change_value * change_factor
+            bounds["parameters"]["BoundaryHigh%s" % axis] += change_value * change_factor
         self._update_controls()
         self.core.emit_event("bounds-changed")
 
