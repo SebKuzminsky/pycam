@@ -21,7 +21,7 @@ PYTHON_CHECK_STYLE_TARGETS = pycam Tests pyinstaller/hooks/hook-pycam.py scripts
 # default location of mkdocs' build process
 MKDOCS_SOURCE_DIR = docs
 MKDOCS_EXPORT_DIR = site
-MKDOCS_SOURCE_FILES = mkdocs.yml $(shell find "$(MKDOCS_SOURCE_DIR)" -type f)
+MKDOCS_SOURCE_FILES = Makefile mkdocs.yml Changelog $(shell find "$(MKDOCS_SOURCE_DIR)" -type f)
 MKDOCS_BUILD_STAMP = $(MKDOCS_EXPORT_DIR)/.build-stamp
 # specify the remote user (e.g. for sourceforge: user,project) via ssh_config or directly on the
 # commandline: "make upload-docs SF_USER=foobar"
@@ -107,6 +107,8 @@ docs: man $(MKDOCS_BUILD_STAMP)
 	install --target-directory="$(MKDOCS_EXPORT_DIR)/manpages/" man/*.html
 
 $(MKDOCS_BUILD_STAMP): $(MKDOCS_SOURCE_FILES)
+	sed 's/^Version/# Version/; s/^  \*/    */' Changelog \
+		>"$(MKDOCS_SOURCE_DIR)/release-notes.md"
 	mkdocs build
 	touch "$@"
 	

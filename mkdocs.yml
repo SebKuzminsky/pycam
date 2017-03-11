@@ -13,6 +13,7 @@ pages:
   - Installing: installation.md
   - Requirements: requirements.md
   - MacOS: installation-macos.md
+  - Release Notes: release-notes.md
 - Introduction:
   - Introduction: introduction.md
   - Features: features.md
