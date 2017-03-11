@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-VERSION = "0.6.1-dev"
+VERSION = "0.6.1"
 
 FILTER_CONFIG = (("Config files", "*.conf"),)
 DOC_BASE_URL = "http://pycam.sourceforge.net/%s/"
