@@ -144,6 +144,13 @@ class Bounds(pycam.Plugins.ListPluginBase):
     def select_models(self, models):
         self.models_control.set_value(models)
 
+    def _get_current_bounds_box(self):
+        bounds = self.get_selected()
+        models = [m.model for m in bounds["parameters"]["Models"]]
+        if not models:
+            models = [m.model for m in self.core.get("models").get_visible()]
+        return pycam.Geometry.Model.get_combined_bounds(models)
+
     def _render_bounds_size(self, column, cell, model, m_iter):
         bounds = self.get_by_path(model.get_path(m_iter))
         if not bounds:
@@ -222,7 +229,6 @@ class Bounds(pycam.Plugins.ListPluginBase):
         bounds = self.get_selected()
         if not bounds:
             return
-        models = [m.model for m in bounds["parameters"]["Models"]]
         if self.gui.get_object("TypeRelativeMargin").get_active():
             # no models are currently selected
             func_low = lambda value, axis: 0
@@ -230,7 +236,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         else:
             # relative margins -> absolute coordinates
             # calculate the model bounds
-            box = pycam.Geometry.Model.get_combined_bounds(models)
+            box = self._get_current_bounds_box()
             if box is None:
                 # zero-sized models -> no action
                 return
@@ -262,9 +268,8 @@ class Bounds(pycam.Plugins.ListPluginBase):
         bounds = self.get_selected()
         if not bounds:
             return
-        models = [m.model for m in bounds["parameters"]["Models"]]
         # calculate the model bounds
-        box = pycam.Geometry.Model.get_combined_bounds(models)
+        box = self._get_current_bounds_box()
         if box is None:
             # zero-sized models -> no action
             return
@@ -301,8 +306,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
             bounds["parameters"]["BoundaryHigh%s" % axis] += change_factor * 10
         else:
             # absolute margin
-            models = [m.model for m in self.get_selected_models()]
-            model_box = pycam.Geometry.Model.get_combined_bounds(models)
+            model_box = self._get_current_bounds_box()
             if model_box is None:
                 return
             change_value = (model_box.upper[axis_index] - model_box.lower[axis_index]) * 0.1
