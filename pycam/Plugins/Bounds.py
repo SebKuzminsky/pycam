@@ -183,10 +183,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
     def _store_bounds_settings(self, widget=None):
         data = self.get_selected()
         control_box = self.gui.get_object("BoundsSettingsControlsBox")
-        if data is None:
-            control_box.hide()
-            return
-        else:
+        if data is not None:
             for obj_name in self.CONTROL_BUTTONS:
                 obj = self.gui.get_object(obj_name)
                 for get_func in self.CONTROL_GET:
