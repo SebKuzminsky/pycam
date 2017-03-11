@@ -168,30 +168,3 @@ def multiply_vector_matrix(v, m):
     return (v[0] * m[0][0] + v[1] * m[0][1] + v[2] * m[0][2],
             v[0] * m[1][0] + v[1] * m[1][1] + v[2] * m[1][2],
             v[0] * m[2][0] + v[1] * m[2][1] + v[2] * m[2][2])
-
-
-def multiply_matrix_matrix(m1, m2):
-    def multi(row1, col2):
-        return m1[row1][0] * m2[0][col2] + m1[row1][1] * m2[1][col2] + m1[row1][2] * m2[2][col2]
-    return ((multi(0, 0), multi(0, 1), multi(0, 2)),
-            (multi(1, 0), multi(1, 1), multi(1, 2)),
-            (multi(2, 0), multi(2, 1), multi(2, 2)))
-
-
-def get_inverse_matrix(m):
-    _a = m[1][1] * m[2][2] - m[1][2] * m[2][1]
-    _b = m[0][2] * m[2][1] - m[0][1] * m[2][2]
-    _c = m[0][1] * m[1][2] - m[0][2] * m[1][1]
-    _d = m[1][2] * m[2][0] - m[1][0] * m[2][2]
-    _e = m[0][0] * m[2][2] - m[0][2] * m[2][0]
-    _f = m[0][2] * m[1][0] - m[0][0] * m[1][2]
-    _g = m[1][0] * m[2][1] - m[1][1] * m[2][0]
-    _h = m[0][1] * m[2][0] - m[0][0] * m[2][1]
-    _k = m[0][0] * m[1][1] - m[0][1] * m[1][0]
-    det = m[0][0] * _a + m[0][1] * _d + m[0][2] * _g
-    if det == 0:
-        return None
-    else:
-        return ((_a / det, _b / det, _c / det),
-                (_d / det, _e / det, _f / det),
-                (_g / det, _h / det, _k / det))

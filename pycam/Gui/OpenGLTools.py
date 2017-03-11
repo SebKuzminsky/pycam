@@ -31,15 +31,6 @@ from pycam.Geometry import sqrt
 from pycam.Geometry.PointUtils import pcross, pnorm, pnormalized, psub
 
 
-def keep_gl_mode(func):
-    def keep_gl_mode_wrapper(*args, **kwargs):
-        prev_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
-        result = func(*args, **kwargs)
-        GL.glMatrixMode(prev_mode)
-        return result
-    return keep_gl_mode_wrapper
-
-
 def keep_matrix(func):
     def keep_matrix_wrapper(*args, **kwargs):
         pushed_matrix_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)

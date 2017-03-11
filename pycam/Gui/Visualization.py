@@ -49,7 +49,6 @@ xdist = 0
 ydist = -1.0
 zdist = -8.0
 
-texture_num = 2
 light = 1
 shade_model = GL.GL_FLAT
 polygon_mode = GL.GL_FILL

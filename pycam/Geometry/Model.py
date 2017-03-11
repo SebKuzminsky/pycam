@@ -155,10 +155,6 @@ class BaseModel(IDGenerator, TransformableContainer):
         for item in items:
             self.append(item)
 
-    def maxsize(self):
-        return max(abs(self.maxx), abs(self.minx), abs(self.maxy), abs(self.miny), abs(self.maxz),
-                   abs(self.minz))
-
     def subdivide(self, depth):
         model = self.__class__()
         for item in next(self):
@@ -218,7 +214,6 @@ class Model(BaseModel):
         # enable/disable kdtree
         self._use_kdtree = use_kdtree
         self._t_kdtree = None
-        self.__flat_groups_cache = {}
         self.__uuid = None
 
     def __len__(self):
@@ -255,7 +250,6 @@ class Model(BaseModel):
         if self._use_kdtree:
             self._t_kdtree = TriangleKdtree(self.triangles())
         self.__uuid = str(uuid.uuid4())
-        self.__flat_groups_cache = {}
         # the kdtree is up-to-date again
         self._dirty = False
 
@@ -294,50 +288,6 @@ class Model(BaseModel):
                   [len(p.get_lines()) for p in contour.get_polygons()])
         return contour
 
-    def get_flat_areas(self, min_area=None):
-        """ Find plane areas (combinations of triangles) bigger than 'min_area'
-        and ignore vertical planes. The result is cached.
-        """
-        if min_area not in self.__flat_groups_cache:
-            def has_shared_edge(t1, t2):
-                count = 0
-                for p in (t1.p1, t1.p2, t1.p3):
-                    if p in (t2.p1, t2.p2, t2.p3):
-                        count += 1
-                return count >= 2
-
-            groups = []
-            for t in self.triangles():
-                # Find all groups with the same direction (see 'normal') that
-                # share at least one edge with the current triangle.
-                touch_groups = []
-                if t.normal[2] == 0:
-                    # ignore vertical triangles
-                    continue
-                for group_index, group in enumerate(groups):
-                    if t.normal == group[0].normal:
-                        for group_t in group:
-                            if has_shared_edge(t, group_t):
-                                touch_groups.append(group_index)
-                                break
-                if len(touch_groups) > 1:
-                    # combine multiple areas with this new triangle
-                    touch_groups.reverse()
-                    combined = [t]
-                    for touch_group_index in touch_groups:
-                        combined.extend(groups.pop(touch_group_index))
-                    groups.append(combined)
-                elif len(touch_groups) == 1:
-                    groups[touch_groups[0]].append(t)
-                else:
-                    groups.append([t])
-            # check the size of each area
-            if min_area is not None:
-                groups = [group for group in groups
-                          if sum([t.get_area() for t in group]) >= min_area]
-            self.__flat_groups_cache[min_area] = groups
-        return self.__flat_groups_cache[min_area]
-
 
 class ContourModel(BaseModel):
 
@@ -354,7 +304,6 @@ class ContourModel(BaseModel):
         # there is always just one plane
         self._plane_groups = [self._plane]
         self._item_groups.append(self._plane_groups)
-        self._cached_offset_models = {}
         self._export_function = pycam.Exporters.SVGExporter.SVGExporterContourModel
 
     def __len__(self):
@@ -368,11 +317,6 @@ class ContourModel(BaseModel):
         for polygon in self.get_polygons():
             result.append(polygon.copy())
         return result
-
-    def reset_cache(self):
-        super(ContourModel, self).reset_cache()
-        # reset the offset model cache
-        self._cached_offset_models = {}
 
     def _merge_polygon_if_possible(self, other_polygon, allow_reverse=False):
         """ Check if the given 'other_polygon' can be connected to another
@@ -524,9 +468,6 @@ class ContourModel(BaseModel):
             # parent class)
             pass
 
-    def get_num_of_lines(self):
-        return sum([len(group) for group in self._line_groups])
-
     def get_polygons(self, z=None, ignore_below=True):
         if z is None:
             return self._line_groups
@@ -635,34 +576,6 @@ class ContourModel(BaseModel):
         else:
             return None
 
-    def get_offset_model_simple(self, offset, callback=None):
-        """ calculate a contour model that surrounds the current model with
-        a given offset.
-        This is mainly useful for engravings that should not proceed _on_ the
-        lines but besides these.
-        @value offset: shifting distance; positive values enlarge the model
-        @type offset: float
-        @value callback: function to call after finishing a single line.
-            It should return True if the user interrupted the operation.
-        @type callback: callable
-        @returns: the new shifted model
-        @rtype: pycam.Geometry.Model.Model
-        """
-        # use a cached offset model if it exists
-        if offset in self._cached_offset_models:
-            return self._cached_offset_models[offset]
-        result = ContourModel(plane=self._plane)
-        for group in self._line_groups:
-            new_groups = group.get_offset_polygons(offset)
-            if new_groups is not None:
-                for new_group in new_groups:
-                    result.append(new_group)
-            if callback and callback():
-                return None
-        # cache the result
-        self._cached_offset_models[offset] = result
-        return result
-
     def get_offset_model(self, offset, callback=None):
         result = ContourModel(plane=self._plane)
         for group in self.get_polygons():
@@ -671,63 +584,6 @@ class ContourModel(BaseModel):
             if callback and callback():
                 return None
         return result
-
-    def get_copy(self):
-        result = ContourModel(plane=self._plane)
-        for group in self.get_polygons():
-            result.append(group)
-        return result
-
-    def check_for_collisions(self, callback=None, find_all_collisions=False):
-        """ check if lines in different line groups of this model collide
-
-        Returns a pycam.Geometry.Point.Point instance in case of an
-        intersection.
-        Returns None if the optional "callback" returns True (e.g. the user
-        interrupted the operation).
-        Otherwise it returns False if no intersections were found.
-        """
-        def check_bounds_of_groups(g1, g2):
-            if (g1.minx <= g2.minx <= g1.maxx) or (g1.minx <= g2.maxx <= g1.maxx) \
-                    or (g2.minx <= g1.minx <= g2.maxx) or (g2.minx <= g1.maxx <= g2.maxx):
-                # the x boundaries overlap
-                if (g1.miny <= g2.miny <= g1.maxy) or (g1.miny <= g2.maxy <= g1.maxy) \
-                        or (g2.miny <= g1.miny <= g2.maxy) or (g2.miny <= g1.maxy <= g2.maxy):
-                    # also the y boundaries overlap
-                    if (g1.minz <= g2.minz <= g1.maxz) or (g1.minz <= g2.maxz <= g1.maxz) \
-                            or (g2.minz <= g1.minz <= g2.maxz) or (g2.minz <= g1.maxz <= g2.maxz):
-                        # z overlaps as well
-                        return True
-            return False
-        # check each pair of line groups for intersections
-        intersections = []
-        for index1, group1 in enumerate(self._line_groups[:-1]):
-            for index2, group2 in enumerate(self._line_groups):
-                if index2 <= index1:
-                    # avoid double-checks
-                    continue
-                # check if both groups overlap - otherwise skip this pair
-                if check_bounds_of_groups(group1, group2):
-                    # check each pair of lines for intersections
-                    for line1 in group1.get_lines():
-                        for line2 in group2.get_lines():
-                            intersection, factor = line1.get_intersection(line2)
-                            if intersection:
-                                if find_all_collisions:
-                                    intersections.append((index1, index2))
-                                else:
-                                    # return just the place of intersection
-                                    return intersection
-            # update the progress visualization and quit if requested
-            if callback and callback():
-                if find_all_collisions:
-                    return intersections
-                else:
-                    return None
-        if find_all_collisions:
-            return intersections
-        else:
-            return False
 
     def extrude(self, stepping=None, func=None, callback=None):
         """ do a spherical extrusion of a 2D model.

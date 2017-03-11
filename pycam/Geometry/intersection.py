@@ -27,39 +27,6 @@ from pycam.Geometry.PointUtils import padd, pcross, pdiv, pdot, pmul, pnorm, pno
 from pycam.Utils.polynomials import poly4_roots
 
 
-def isNear(a, b):
-    return abs(a - b) < epsilon
-
-
-def isZero(a):
-    return isNear(a, 0)
-
-
-def intersect_lines(xl, zl, nxl, nzl, xm, zm, nxm, nzm):
-    X = None
-    Z = None
-    try:
-        if isZero(nzl) and isZero(nzm):
-            pass
-        elif isZero(nzl) or isZero(nxl):
-            X = xl
-            Z = zm + (xm - xl) * nxm / nzm
-            return (X, Z)
-        elif isZero(nzm) or isZero(nxm):
-            X = xm
-            Z = zl - (xm - xl) * nxl / nzl
-            return (X, Z)
-        else:
-            X = (zl - zm + (xm * nxm / nzm - xl * nxl / nzl)) \
-                    / (nxm / nzm - nxl / nzl)
-            if X and xl < X and X < xm:
-                Z = zl + (X - xl) * nxl / nzl
-                return (X, Z)
-    except ZeroDivisionError:
-        pass
-    return (None, None)
-
-
 def intersect_cylinder_point(center, axis, radius, radiussq, direction, point):
     # take a plane along direction and axis
     n = pnormalized(pcross(direction, axis))

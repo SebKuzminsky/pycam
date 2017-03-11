@@ -36,9 +36,6 @@ class Bounds(pycam.Plugins.ListPluginBase):
     CATEGORIES = ["Bounds"]
 
     # mapping of boundary types and GUI control elements
-    BOUNDARY_TYPES = {
-        pycam.Toolpath.Bounds.TYPE_RELATIVE_MARGIN: "TypeRelativeMargin",
-        pycam.Toolpath.Bounds.TYPE_CUSTOM: "TypeCustom"}
     CONTROL_BUTTONS = ("TypeRelativeMargin", "TypeCustom",
                        "ToolLimit", "RelativeUnit", "BoundaryLowX",
                        "BoundaryLowY", "BoundaryLowZ", "BoundaryHighX",
