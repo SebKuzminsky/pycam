@@ -4,7 +4,7 @@ Version ?
   * the ODE library seems to be not actively developed anymore
  * removed obsolete support for psyco
 
-Version 0.6.0 - 2016-02-18
+Version 0.6.0 - 2017-02-18
  * greatly improved OpenGL visualization (contributed by Mattes)
  * DXF importer:
   * added bezier support for POLYLINE and LWPOLYLINE
