@@ -316,6 +316,17 @@ class Bounds(pycam.Plugins.ListPluginBase):
                     self.log.info("Failed to set value of control: %s", obj_name)
             self.register_gtk_handlers(self._gtk_handlers)
             control_box.show()
+            # enable/disable margin controls for percent-style changes and zero-dimensions
+            box = self._get_current_bounds_box()
+            if box:
+                dim = box.get_diagonal()
+            for axis in "XYZ":
+                axis_index = "XYZ".index(axis)
+                for name in ("BoundaryLow", "BoundaryHigh"):
+                    # disallow editing the controls if percent fails to work with zero dimension
+                    percent_for_zero_dim = (self._is_percent()
+                                            and (box is None or (dim[axis_index] == 0)))
+                    self.gui.get_object(name + axis).set_sensitive(not percent_for_zero_dim)
         # show the proper descriptive label for the current margin type
         relative_label = self.gui.get_object("MarginTypeRelativeLabel")
         custom_label = self.gui.get_object("MarginTypeCustomLabel")
