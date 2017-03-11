@@ -113,14 +113,14 @@ class Bounds(pycam.Plugins.ListPluginBase):
             self._gtk_handlers.append((self.gui.get_object("NameCell"), "edited",
                                        self._edit_bounds_name))
             self._event_handlers.extend((
-                ("bounds-selection-changed", self._switch_bounds),
+                ("bounds-selection-changed", self._update_controls),
                 ("bounds-changed", self._store_bounds_settings),
                 ("bounds-changed", self._trigger_table_update),
                 ("model-list-changed", self._update_model_list)))
             self.register_gtk_handlers(self._gtk_handlers)
             self._trigger_table_update()
-            self._switch_bounds()
             self._update_model_list()
+            self._update_controls()
         self._event_handlers.append(("bounds-changed", "visual-item-updated"))
         self.register_event_handlers(self._event_handlers)
         self.register_state_item("bounds-list", self)
@@ -178,6 +178,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         for model in models:
             choices.append((model["name"], model))
         self.models_control.update_choices(choices)
+        self._update_controls()
 
     def _store_bounds_settings(self, widget=None):
         data = self.get_selected()
@@ -197,33 +198,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
                     self.log.info("Failed to update value of control %s", obj_name)
             data["parameters"]["Models"] = self.get_selected_models()
             control_box.show()
-        self._hide_and_show_controls()
-
-    def _hide_and_show_controls(self):
-        # show the proper descriptive label for the current margin type
-        relative_label = self.gui.get_object("MarginTypeRelativeLabel")
-        custom_label = self.gui.get_object("MarginTypeCustomLabel")
-        model_list = self.gui.get_object("ModelsTableFrame")
-        percent_switch = self.gui.get_object("RelativeUnit")
-        controls_x = self.gui.get_object("MarginControlsX")
-        controls_y = self.gui.get_object("MarginControlsY")
-        controls_z = self.gui.get_object("MarginControlsZ")
-        if self.gui.get_object("TypeRelativeMargin").get_active():
-            relative_label.show()
-            custom_label.hide()
-            model_list.show()
-            percent_switch.show()
-            controls_x.show()
-            controls_y.show()
-            controls_z.show()
-        else:
-            relative_label.hide()
-            custom_label.show()
-            model_list.hide()
-            percent_switch.hide()
-            controls_x.hide()
-            controls_y.hide()
-            controls_z.hide()
+        self._update_controls()
 
     def _switch_relative_custom(self, widget=None):
         bounds = self.get_selected()
@@ -257,6 +232,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
                     # this happens for flat models
                     result = 0
                 self.gui.get_object(name + axis).set_value(result)
+        self._update_controls()
 
     def _switch_percent_absolute(self, widget=None):
         """ re-calculate the values of the controls for the lower and upper
@@ -290,6 +266,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         # Make sure that the new state of %/mm is always stored - even if no
         # control value has really changed (e.g. if all margins were zero).
         self._store_bounds_settings()
+        self._update_controls()
 
     def _adjust_bounds(self, widget, axis, change):
         bounds = self.get_selected()
@@ -313,12 +290,11 @@ class Bounds(pycam.Plugins.ListPluginBase):
             bounds["parameters"]["BoundaryLow%s" % axis] += change_value * change_factor
             bounds["parameters"]["BoundaryHigh%s" % axis] += change_value * change_factor
         self._update_controls()
-        self.core.emit_event("bounds-changed")
 
     def _is_percent(self):
         return _RELATIVE_UNIT[self.gui.get_object("RelativeUnit").get_active()] == "%"
 
-    def _update_controls(self):
+    def _update_controls(self, widget=None):
         bounds = self.get_selected()
         control_box = self.gui.get_object("BoundsSettingsControlsBox")
         if not bounds:
@@ -341,12 +317,31 @@ class Bounds(pycam.Plugins.ListPluginBase):
                 else:
                     self.log.info("Failed to set value of control: %s", obj_name)
             self.register_gtk_handlers(self._gtk_handlers)
-            self._hide_and_show_controls()
             control_box.show()
-
-    def _switch_bounds(self, widget=None):
-        self._update_controls()
-        # update the sensitivity of the lower z margin for contour models
+        # show the proper descriptive label for the current margin type
+        relative_label = self.gui.get_object("MarginTypeRelativeLabel")
+        custom_label = self.gui.get_object("MarginTypeCustomLabel")
+        model_list = self.gui.get_object("ModelsTableFrame")
+        percent_switch = self.gui.get_object("RelativeUnit")
+        controls_x = self.gui.get_object("MarginControlsX")
+        controls_y = self.gui.get_object("MarginControlsY")
+        controls_z = self.gui.get_object("MarginControlsZ")
+        if self.gui.get_object("TypeRelativeMargin").get_active():
+            relative_label.show()
+            custom_label.hide()
+            model_list.show()
+            percent_switch.show()
+            controls_x.show()
+            controls_y.show()
+            controls_z.show()
+        else:
+            relative_label.hide()
+            custom_label.show()
+            model_list.hide()
+            percent_switch.hide()
+            controls_x.hide()
+            controls_y.hide()
+            controls_z.hide()
         self.core.emit_event("bounds-changed")
 
     def _bounds_new(self, *args):
