@@ -174,5 +174,3 @@ class EventCore(pycam.Gui.Settings.Settings):
 
     def get_namespace(self):
         return self.namespace
-
-
