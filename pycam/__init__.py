@@ -21,7 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 VERSION = "0.6.1-dev"
 
 FILTER_CONFIG = (("Config files", "*.conf"),)
-HELP_WIKI_URL = "http://sourceforge.net/apps/mediawiki/pycam/index.php?title=%s"
+DOC_BASE_URL = "http://pycam.sourceforge.net/%s/"
 
 
 class GenericError(Exception):

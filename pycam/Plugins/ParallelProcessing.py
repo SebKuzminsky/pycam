@@ -25,7 +25,6 @@ import string
 
 import gobject
 
-from pycam import HELP_WIKI_URL
 import pycam.Plugins
 
 
@@ -225,9 +224,7 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
                 if self.number_of_processes.get_value() > 0:
                     self.log.warn("Mixed local and remote processes are currently not available "
                                   "on the Windows platform. Setting the number of local processes "
-                                  'to zero.%sSee <a href="%s">platform feature matrix</a> for '
-                                  "more details.", os.linesep,
-                                  HELP_WIKI_URL % "Parallel_Processing_on_different_Platforms")
+                                  "to zero.")
                     self.number_of_processes.set_value(0)
                 self.number_of_processes.set_sensitive(False)
             else:

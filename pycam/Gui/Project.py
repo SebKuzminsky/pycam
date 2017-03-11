@@ -32,7 +32,7 @@ import webbrowser
 import gobject
 import gtk
 
-from pycam import VERSION, HELP_WIKI_URL
+from pycam import VERSION, DOC_BASE_URL
 import pycam.Gui.Settings
 import pycam.Importers.CXFImporter
 import pycam.Importers.TestModel
@@ -358,28 +358,23 @@ class ProjectGui(object):
                 ("Quit", self.destroy, None, "<Control>q"),
                 ("GeneralSettings", self.toggle_preferences_window, None, "<Control>p"),
                 ("UndoButton", self._restore_undo_state, None, "<Control>z"),
-                ("HelpUserManual", self.show_help, "User_Manual", "F1"),
-                ("HelpIntroduction", self.show_help, "Introduction", None),
-                ("HelpSupportedFormats", self.show_help, "SupportedFormats", None),
-                ("HelpModelTransformations", self.show_help, "ModelTransformations", None),
-                ("HelpToolTypes", self.show_help, "ToolTypes", None),
-                ("HelpProcessSettings", self.show_help, "ProcessSettings", None),
-                ("HelpBoundsSettings", self.show_help, "BoundsSettings", None),
-                ("HelpTaskSetup", self.show_help, "TaskSetup", None),
-                ("HelpGCodeExport", self.show_help, "GCodeExport", None),
-                ("HelpTouchOff", self.show_help, "TouchOff", None),
-                ("HelpSimulation", self.show_help, "Simulation", None),
-                ("Help3DView", self.show_help, "3D_View", None),
-                ("HelpServerMode", self.show_help, "ServerMode", None),
-                ("HelpCommandLine", self.show_help, "CommandlineExamples", None),
-                ("HelpHotkeys", self.show_help, "KeyboardShortcuts", None),
+                ("HelpIntroduction", self.show_help, "introduction", "F1"),
+                ("HelpSupportedFormats", self.show_help, "supported-formats", None),
+                ("HelpModelTransformations", self.show_help, "model-transformations", None),
+                ("HelpProcessSettings", self.show_help, "process-settings", None),
+                ("HelpBoundsSettings", self.show_help, "bounding-box", None),
+                ("HelpTouchOff", self.show_help, "touch-off", None),
+                ("Help3DView", self.show_help, "3d-view", None),
+                ("HelpServerMode", self.show_help, "server-mode", None),
+                ("HelpCommandLine", self.show_help, "cli-examples", None),
+                ("HelpHotkeys", self.show_help, "keyboard-shortcuts", None),
                 ("ProjectWebsite", self.show_help, "http://pycam.sourceforge.net", None),
                 ("DevelopmentBlog", self.show_help, "http://fab.senselab.org/pycam", None),
                 ("Forum", self.show_help, "http://sourceforge.net/projects/pycam/forums", None),
                 ("BugTracker", self.show_help,
-                 "http://sourceforge.net/tracker/?group_id=237831&atid=1104176", None),
+                 "https://github.com/SebKuzminsky/pycam/issues/", None),
                 ("FeatureRequest", self.show_help,
-                 "http://sourceforge.net/tracker/?group_id=237831&atid=1104179", None)):
+                 "https://github.com/SebKuzminsky/pycam/issues/", None)):
             item = self.gui.get_object(objname)
             action = "activate"
             if data is None:
@@ -674,7 +669,7 @@ class ProjectGui(object):
 
     def show_help(self, widget=None, page="Main_Page"):
         if not page.startswith("http"):
-            url = HELP_WIKI_URL % page
+            url = DOC_BASE_URL % page
         else:
             url = page
         webbrowser.open(url)
