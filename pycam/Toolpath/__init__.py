@@ -115,6 +115,7 @@ class Toolpath(object):
         self._cache_basic_moves = None
         self._cache_visual_filters_string = None
         self._cache_visual_filters = None
+        self._cache_machine_distance_and_time = None
         self._minx = None
         self._maxx = None
         self._miny = None
@@ -338,22 +339,24 @@ class Toolpath(object):
         return self.get_machine_move_distance_and_time()[1]
 
     def get_machine_move_distance_and_time(self):
-        min_feedrate = 1
-        length = 0
-        duration = 0
-        feedrate = min_feedrate
-        current_position = None
-        # go through all points of the path
-        for step in self.get_basic_moves():
-            if (step.action == MACHINE_SETTING) and (step.key == "feedrate"):
-                feedrate = step.value
-            elif step.action in MOVES_LIST:
-                if current_position is not None:
-                    distance = pdist(step.position, current_position)
-                    duration += distance / max(feedrate, min_feedrate)
-                    length += distance
-                current_position = step.position
-        return length, duration
+        if self._cache_machine_distance_and_time is None:
+            min_feedrate = 1
+            length = 0
+            duration = 0
+            feedrate = min_feedrate
+            current_position = None
+            # go through all points of the path
+            for step in self.get_basic_moves():
+                if (step.action == MACHINE_SETTING) and (step.key == "feedrate"):
+                    feedrate = step.value
+                elif step.action in MOVES_LIST:
+                    if current_position is not None:
+                        distance = pdist(step.position, current_position)
+                        duration += distance / max(feedrate, min_feedrate)
+                        length += distance
+                    current_position = step.position
+            self._cache_machine_distance_and_time = length, duration
+        return self._cache_machine_distance_and_time
 
     def get_basic_moves(self, filters=None, reset_cache=False):
         if filters is None:
