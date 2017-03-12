@@ -20,6 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import pycam.Plugins
+import pycam.Toolpath
 
 
 class TaskTypeMilling(pycam.Plugins.PluginBase):
@@ -71,4 +72,5 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
         if not moves:
             self.log.info("No valid moves found")
             return None
-        return moves, tool, tool_filters
+        return pycam.Toolpath.Toolpath(toolpath_path=moves, tool=tool,
+                                       toolpath_filters=tool_filters)
