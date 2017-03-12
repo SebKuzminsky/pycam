@@ -88,8 +88,7 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
         y_space = self.gui.get_object("GridYDistance").get_value()
         x_dim, y_dim = self._get_toolpaths_dim(toolpaths)
         for toolpath in toolpaths:
-            # start with a copy of the original
-            new_moves = toolpath | Filters.Copy()
+            new_moves = []
             for x in range(x_count):
                 for y in range(y_count):
                     shift_matrix = (
