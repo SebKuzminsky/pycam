@@ -89,7 +89,7 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
         x_dim, y_dim = self._get_toolpaths_dim(toolpaths)
         for toolpath in toolpaths:
             # start with a copy of the original
-            new_path = toolpath | Filters.Copy()
+            new_moves = toolpath | Filters.Copy()
             for x in range(x_count):
                 for y in range(y_count):
                     shift_matrix = (
@@ -97,10 +97,12 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
                         (0, 1, 0, y * (y_space + y_dim)),
                         (0, 0, 1, 0))
                     shifted = toolpath | Filters.TransformPosition(shift_matrix)
-                    new_path.extend(shifted)
+                    new_moves.extend(shifted)
             if not self.gui.get_object("KeepOriginal").get_active():
-                toolpath.path = new_path
+                toolpath.path = new_moves
                 self.core.emit_event("toolpath-changed")
             else:
-                self.core.get("toolpaths").add_new((new_path, toolpath.filters))
+                new_toolpath = toolpath.copy()
+                new_toolpath.path = new_moves
+                self.core.get("toolpaths").add_new(new_toolpath)
         self.core.get("toolpaths").select(toolpaths)

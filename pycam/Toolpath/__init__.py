@@ -107,6 +107,9 @@ class Toolpath(object):
     path = property(__get_path, __set_path)
     filters = property(__get_filters, __set_filters)
 
+    def copy(self):
+        return type(self)(toolpath_path=self.path, toolpath_filters=self.filters, tool=self.tool)
+
     def clear_cache(self):
         self.opengl_safety_height = None
         self._cache_basic_moves = None

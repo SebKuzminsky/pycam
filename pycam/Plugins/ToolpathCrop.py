@@ -158,12 +158,14 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
         for toolpath in self.core.get("toolpaths").get_selected():
             # Store the new toolpath first separately - otherwise we can't
             # revert the changes in case of an empty result.
-            new_path = toolpath | Filters.Crop(polygons)
-            if new_path | Filters.MovesOnly():
+            new_moves = toolpath | Filters.Crop(polygons)
+            if new_moves | Filters.MovesOnly():
                 if keep_original:
-                    self.core.get("toolpaths").add_new((new_path, toolpath.filters))
+                    new_toolpath = toolpath.copy()
+                    new_toolpath.path = new_moves
+                    self.core.get("toolpaths").add_new(new_toolpath)
                 else:
-                    toolpath.path = new_path
+                    toolpath.path = new_moves
                     self.core.emit_event("toolpath-changed")
             else:
                 self.log.info("Toolpath cropping: the result is empty")
