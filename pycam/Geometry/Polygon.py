@@ -1075,7 +1075,7 @@ class Polygon(TransformableContainer):
                 # sort the collisions according to the distance
                 collisions.append((line.p1, 0))
                 collisions.append((line.p2, 1))
-                collisions.sort(key=lambda cp, dist: dist)
+                collisions.sort(key=lambda collision: collision[1])
                 for index in range(len(collisions) - 1):
                     p1 = collisions[index][0]
                     p2 = collisions[index + 1][0]
@@ -1121,8 +1121,8 @@ class Polygon(TransformableContainer):
             cp, d = proj_line.get_intersection(pline)
             if cp:
                 intersections.append((cp, d))
-        # sort the intersections
-        intersections.sort(key=lambda cp, d: d)
+        # sort the intersections by distance
+        intersections.sort(key=lambda collision: collision[1])
         intersections.insert(0, (proj_line.p1, 0))
         intersections.append((proj_line.p2, 1))
 

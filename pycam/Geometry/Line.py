@@ -201,7 +201,7 @@ class Line(IDGenerator, TransformableContainer):
             else:
                 return None, None
             # return the collision candidate with the lowest distance
-            candidates.sort(key=lambda cp, dist: dist)
+            candidates.sort(key=lambda collision: collision[1])
             return candidates[0]
         if infinite_lines or (-epsilon <= factor <= 1 + epsilon):
             intersec = padd(x1, pmul(a, factor))
@@ -242,7 +242,7 @@ class Line(IDGenerator, TransformableContainer):
                                    if cp and (-epsilon <= dist <= self.len + epsilon)
                                    and cp.is_inside(minx, maxx, miny, maxy, minz, maxz)]
             # sort the intersections according to their distance to self.p1
-            valid_intersections.sort(key=lambda cp, dist: dist)
+            valid_intersections.sort(key=lambda collision: collision[1])
             # Check if p1 is within the box - otherwise use the closest
             # intersection. The check for "valid_intersections" is necessary
             # to prevent an IndexError due to floating point inaccuracies.
