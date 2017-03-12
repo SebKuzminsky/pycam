@@ -46,31 +46,28 @@ class OpenGLViewBounds(pycam.Plugins.PluginBase):
     def get_draw_dimension(self, low, high):
         if not self.core.get("show_bounding_box"):
             return
-        mlow, mhigh = self._get_bounds()
-        if None in mlow or None in mhigh:
+        model_box = self._get_bounds()
+        if model_box is None:
             return
         for index in range(3):
-            if (low[index] is None) or (mlow[index] < low[index]):
-                low[index] = mlow[index]
-            if (high[index] is None) or (mhigh[index] > high[index]):
-                high[index] = mhigh[index]
+            if (low[index] is None) or (model_box.lower[index] < low[index]):
+                low[index] = model_box.lower[index]
+            if (high[index] is None) or (model_box.upper[index] > high[index]):
+                high[index] = model_box.upper[index]
 
     def _get_bounds(self):
         bounds = self.core.get("bounds").get_selected()
-        if not bounds:
-            return ([None, None, None], [None, None, None])
-        low, high = bounds.get_absolute_limits()
-        return low, high
+        return bounds.get_absolute_limits() if bounds else None
 
     def draw_bounds(self):
         GL = self._GL
         if not self.core.get("show_bounding_box"):
             return
-        low, high = self._get_bounds()
-        if None in low or None in high:
+        box = self._get_bounds()
+        if box is None:
             return
-        minx, miny, minz = low[0], low[1], low[2]
-        maxx, maxy, maxz = high[0], high[1], high[2]
+        minx, miny, minz = box.lower
+        maxx, maxy, maxz = box.upper
         p1 = [minx, miny, minz]
         p2 = [minx, maxy, minz]
         p3 = [maxx, maxy, minz]
