@@ -467,7 +467,7 @@ class Bounds(object):
                 in (Bounds.TYPE_RELATIVE_MARGIN, Bounds.TYPE_FIXED_MARGIN):
             if reference is None:
                 raise ValueError("any non-custom boundary definition requires a reference "
-                                 "object for caluclating absolute limits")
+                                 "object for calculating absolute limits")
             else:
                 ref_low, ref_high = reference.get_absolute_limits()
         low = [None] * 3
@@ -513,7 +513,7 @@ class Bounds(object):
                 in (Bounds.TYPE_RELATIVE_MARGIN, Bounds.TYPE_FIXED_MARGIN):
             if reference is None:
                 raise ValueError("any non-custom boundary definition requires an a reference "
-                                 "object for caluclating absolute limits")
+                                 "object for calculating absolute limits")
             else:
                 ref_low, ref_high = reference.get_absolute_limits()
         # calculate the new settings
