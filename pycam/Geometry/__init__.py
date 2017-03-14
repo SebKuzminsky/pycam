@@ -67,6 +67,9 @@ class Box3D(collections.namedtuple("Box3D", ("lower", "upper"))):
     def get_center(self):
         return Point3D(*[(low + high / 2) for low, high in zip(self.lower, self.upper)])
 
+    def get_dimensions(self):
+        return Point3D(*[high - low for low, high in zip(self.lower, self.upper)])
+
 
 def _id_generator():
     current_id = 0

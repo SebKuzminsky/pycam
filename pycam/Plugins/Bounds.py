@@ -268,26 +268,66 @@ class Bounds(pycam.Plugins.ListPluginBase):
         if not bounds:
             return
         axis_index = "XYZ".index(axis)
+        key_low = "BoundaryLow%s" % axis
+        key_high = "BoundaryHigh%s" % axis
         change_factor = {"0": 0, "+": 1, "-": -1}[change]
         if change == "0":
-            bounds["parameters"]["BoundaryLow%s" % axis] = 0
-            bounds["parameters"]["BoundaryHigh%s" % axis] = 0
+            bounds["parameters"][key_low] = 0
+            bounds["parameters"][key_high] = 0
         elif self._is_percent():
             # % margin
-            bounds["parameters"]["BoundaryLow%s" % axis] += change_factor * 10
-            bounds["parameters"]["BoundaryHigh%s" % axis] += change_factor * 10
+            percent_change_per_side = 10
+            # reduce the change value, if the boundary would turn negative afterwards
+            dim_percent = 100 + bounds["parameters"][key_low] + bounds["parameters"][key_high]
+            if (change_factor < 0) and (dim_percent < 2 * percent_change_per_side):
+                percent_change_per_side = dim_percent / 2
+            bounds["parameters"][key_low] += change_factor * percent_change_per_side
+            bounds["parameters"][key_high] += change_factor * percent_change_per_side
         else:
             # absolute margin
             model_box = self._get_current_bounds_box()
             if model_box is None:
                 return
-            change_value = (model_box.upper[axis_index] - model_box.lower[axis_index]) * 0.1
-            bounds["parameters"]["BoundaryLow%s" % axis] += change_value * change_factor
-            bounds["parameters"]["BoundaryHigh%s" % axis] += change_value * change_factor
+            change_value = model_box.get_dimensions()[axis_index] * 0.1
+            dim = (model_box.get_dimensions()[axis_index]
+                   + bounds["parameters"][key_low] + bounds["parameters"][key_high])
+            if (change_factor < 0) and (dim < 2 * change_value):
+                change_value = dim / 2
+            bounds["parameters"][key_low] += change_value * change_factor
+            bounds["parameters"][key_high] += change_value * change_factor
         self._update_controls()
 
     def _is_percent(self):
         return _RELATIVE_UNIT[self.gui.get_object("RelativeUnit").get_active()] == "%"
+
+    def _validate_bounds(self):
+        """ check if any dimensions is below zero and fix these problems """
+        bounds = self.get_selected()
+        if not bounds:
+            return
+        margins = bounds["parameters"]
+        for axis_index, axis in enumerate("XYZ"):
+            key_low = "BoundaryLow%s" % axis
+            key_high = "BoundaryHigh%s" % axis
+            if self._is_percent():
+                # % margin
+                dim_percent = margins[key_low] + margins[key_high]
+                if dim_percent < -100:
+                    # this dimension went below zero -> reduce the relative margins
+                    margins[key_low] /= dim_percent / -100
+                    margins[key_high] = 100 - margins[key_low]
+            else:
+                # absolute margin
+                model_box = self._get_current_bounds_box()
+                if model_box is None:
+                    return
+                dim = margins[key_low] + margins[key_high]
+                if dim < -model_box.get_dimensions()[axis_index]:
+                    if model_box.get_dimensions()[axis_index] > 0:
+                        margins[key_low] /= dim / -model_box.get_dimensions()[axis_index]
+                    else:
+                        margins[key_low] += -dim / 2
+                    margins[key_high] = -model_box.get_dimensions()[axis_index] - margins[key_low]
 
     def _update_controls(self, widget=None):
         bounds = self.get_selected()
@@ -295,6 +335,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         if not bounds:
             control_box.hide()
         else:
+            self._validate_bounds()
             self.unregister_gtk_handlers(self._gtk_handlers)
             for obj_name, value in bounds["parameters"].iteritems():
                 if obj_name == "Models":
