@@ -19,9 +19,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import ctypes
-import math
-
-from pycam.Geometry import sqrt
 
 try:
     import OpenGL.GL as GL

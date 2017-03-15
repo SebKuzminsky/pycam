@@ -27,7 +27,7 @@ except ImportError:
 
 from pycam.Geometry import epsilon, TransformableContainer, IDGenerator
 from pycam.Geometry.Plane import Plane
-from pycam.Geometry.PointUtils import (padd, pcross, pdist, pdist_sq, pdot, pmul, pnorm, pnormsq,
+from pycam.Geometry.PointUtils import (padd, pcross, pdist, pdot, pmul, pnorm, pnormsq,
                                        pnormalized, psub)
 # OpenGLTools will be imported later, if necessary
 # import pycam.Gui.OpenGLTools

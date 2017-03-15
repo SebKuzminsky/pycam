@@ -22,7 +22,7 @@ from pycam.Geometry import epsilon, number, TransformableContainer, IDGenerator
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.PointUtils import padd, pcross, pdist, pdiv, pdot, pis_inside, pmul, pnorm, \
-        pnormsq, pnormalized, psub
+        pnormalized, psub
 from pycam.Geometry.utils import get_bisector
 from pycam.Utils import log
 log = log.get_logger()
