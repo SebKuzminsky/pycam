@@ -1,4 +1,4 @@
--- example processing flow description (not implemented)
+# example processing flow description (not implemented)
 
 models:
         model1:
@@ -67,8 +67,8 @@ tools:
         tool1:
                 shape: flat
                 diameter: 3
-                feedrate: 300
-                spindlespeed: 1000
+                feed: 300
+                speed: 1000
 
 processes:
         process1:
