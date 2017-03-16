@@ -1,0 +1,171 @@
+-- example processing flow description (not implemented)
+
+models:
+        model1:
+                source:
+                        type: file
+                        location: samples/Box0.stl
+                transformations:
+                        - action: scale
+                          factors:
+                                  z: 1.25
+                        - action: scale
+                          width:
+                                  x: 120
+                        - action: shift
+                          distance:
+                                  x: -20
+                        - action: shift
+                          max:
+                                  z: 0
+                        - action: shift
+                          min:
+                                  y: 0
+                        - action: shift
+                          center:
+                                  x: 50
+                        - action: rotate
+                          angle: 90
+                          center:
+                                  x: 10
+                          axis:
+                                  x: 0
+                                  y: 0
+                                  z: 1
+                        - action: mirror
+                          center:
+                                  y: 20
+                          plane:
+                                  x: 1
+                                  y: 0
+                                  z: 0
+                        - action: projection
+                          center:
+                                  z: 0
+                          plane:
+                                  x: 0
+                                  y: 0
+                                  z: 1
+        model2:
+                source:
+                        type: copy
+                        original_model: model1
+                transformations:
+                        - action: toggle_polygon_direction
+                        - action: revise_polygon_direction
+                        - action: extrude
+                          shape: bulge
+                          height: 1.0
+                          width: 2.3
+                          accuracy: 0.2
+        model3:
+                source:
+                        type: url
+                        location: http://foo.example.org/baz.stl
+
+tools:
+        tool1:
+                shape: flat
+                diameter: 3
+                feedrate: 300
+                spindlespeed: 1000
+
+processes:
+        process1:
+                strategy: slice_removal
+                pattern: grid
+                overlap: 0.10
+                step_down: 1.0
+                direction: x
+                milling_style: ignore
+
+bounds:
+        bounds1:
+                specification: absolute
+                lower:
+                        x: -10
+                        y: 0
+                        z: -5
+                upper:
+                        x: 30
+                        y: 20
+                        z: 0
+        bounds2:
+                specification: margins
+                reference:
+                        models:
+                                - model1
+                lower:
+                        x: 10%
+                        y: 10%
+                        z: 0
+                upper:
+                        x: 10%
+                        y: 10%
+                        z: 5
+
+tasks:
+        task1:
+                type: milling
+                tool: tool1
+                process: process1
+                bounds: bounds1
+                collision_models:
+                        - model2
+        task1:
+                type: milling
+                tool: tool1
+                process: process1
+                bounds: bounds2
+                collision_models:
+                        - model2
+
+toolpaths:
+        toolpath1:
+                source: task
+                tasks:
+                        - task1
+                        - task2
+                transformations:
+                        - action: crop
+                          lower:
+                                  x: 0
+                                  y: 0
+                          upper:
+                                  x: 30
+                                  y: 40
+
+        toolpath2:
+                source: toolpath
+                toolpaths:
+                        - toolpath1
+                transformations:
+                        - action: clone
+                          offset:
+                                  x: 102%
+                          count: 5
+                        - action: clone
+                          offset:
+                                  y: 105%
+                          count: 3
+
+export:
+        - source:
+                type: toolpath
+                name: toolpath2
+          format:
+                type: gcode
+                dialect: linuxcnc
+                comment: Complete grid of 5x3 toolpaths.
+                safety_height: 10
+          target:
+                type: file
+                location: grid_5x3.ngc
+        - source:
+                type: toolpath
+                name: toolpath1
+          format:
+                type: preview_2d
+                filetype: png
+          target:
+                type: clipboard
