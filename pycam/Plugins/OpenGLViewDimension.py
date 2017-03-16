@@ -78,6 +78,8 @@ class OpenGLViewDimension(pycam.Plugins.PluginBase):
                                         (model_box.lower.z, "ZMin"), (model_box.upper.z, "ZMax")):
                 label_name = "ModelCorner%s" % label_suffix
                 value = "%.3f" % value
+                if label_suffix.lower().endswith("max"):
+                    value += self.core.get("unit_string")
                 self.gui.get_object(label_name).set_label(value)
             if bounds:
                 bounds_box = bounds.get_absolute_limits()
