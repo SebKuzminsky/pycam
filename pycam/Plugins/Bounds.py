@@ -393,7 +393,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
 
     def _bounds_new(self, *args):
         name = get_non_conflicting_name("Bounds #%d", [bounds["name"] for bounds in self])
-        new_bounds = BoundsDict(self.core, name)
+        new_bounds = BoundsEntity(self.core, name)
         self.append(new_bounds)
         self.select(new_bounds)
 
@@ -404,10 +404,10 @@ class Bounds(pycam.Plugins.ListPluginBase):
             self.core.emit_event("bounds-list-changed")
 
 
-class BoundsDict(pycam.Plugins.ObjectWithAttributes):
+class BoundsEntity(pycam.Plugins.ObjectWithAttributes):
 
     def __init__(self, core, name, *args, **kwargs):
-        super(BoundsDict, self).__init__("bounds", *args, **kwargs)
+        super(BoundsEntity, self).__init__("bounds", *args, **kwargs)
         self["name"] = name
         self["parameters"] = {}
         self.core = core
