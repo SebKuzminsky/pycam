@@ -19,8 +19,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import StringIO
-# imported later (on demand)
-# import gtk
 
 import pycam.Plugins
 from pycam.Utils.locations import get_all_program_locations
@@ -41,9 +39,9 @@ class Clipboard(pycam.Plugins.PluginBase):
     CATEGORIES = ["System"]
 
     def setup(self):
+        if not self._gtk:
+            return False
         if self.gui:
-            import gtk
-            self._gtk = gtk
             self._gtk_handlers = []
             self.clipboard = self._gtk.clipboard_get()
             self.core.set("clipboard-set", self._copy_text_to_clipboard)

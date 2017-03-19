@@ -38,9 +38,7 @@ class Fonts(pycam.Plugins.PluginBase):
         self._fonts_cache = pycam.Utils.FontCache.FontCache(get_font_dir(), core=self.core)
         self.core.set("fonts", self._fonts_cache)
         # "font dialog" window
-        if self.gui:
-            import gtk
-            self._gtk = gtk
+        if self.gui and self._gtk:
             self.font_dialog_window = self.gui.get_object("FontDialog")
             window = self.font_dialog_window
             hide_window = lambda *args: self.toggle_font_dialog_window(state=False)
@@ -84,7 +82,7 @@ class Fonts(pycam.Plugins.PluginBase):
 
     def teardown(self):
         del self.core["fonts"]
-        if self.gui:
+        if self.gui and self._gtk:
             font_toggle = self.gui.get_object("ShowFontDialog")
             self.core.unregister_ui("edit_menu", None)
             self.core.unregister_ui("edit_menu", font_toggle)

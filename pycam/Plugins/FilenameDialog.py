@@ -24,8 +24,7 @@ import pycam.Plugins
 import pycam.Utils
 
 
-def _get_filters_from_list(filter_list):
-    import gtk
+def _get_filters_from_list(gtk, filter_list):
     result = []
     for one_filter in filter_list:
         current_filter = gtk.FileFilter()
@@ -68,8 +67,8 @@ class FilenameDialog(pycam.Plugins.PluginBase):
     CATEGORIES = ["System"]
 
     def setup(self):
-        import gtk
-        self._gtk = gtk
+        if not self._gtk:
+            return False
         self.last_dirname = None
         self.core.set("get_filename_func", self.get_filename_dialog)
         return True
@@ -102,7 +101,7 @@ class FilenameDialog(pycam.Plugins.PluginBase):
             dialog.get_content_area().pack_start(extra_widget, expand=False)
         # add filter for files
         if type_filter:
-            for file_filter in _get_filters_from_list(type_filter):
+            for file_filter in _get_filters_from_list(self._gtk, type_filter):
                 dialog.add_filter(file_filter)
         # guess the export filename based on the model's filename
         valid_templates = []

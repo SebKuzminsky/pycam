@@ -22,8 +22,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import csv
 import StringIO
 
-import gobject
-
 import pycam.Plugins
 import pycam.Utils.log
 
@@ -37,9 +35,9 @@ class MemoryAnalyzer(pycam.Plugins.PluginBase):
     CATEGORIES = ["System"]
 
     def setup(self):
+        if not self._gtk:
+            return False
         if self.gui:
-            import gtk
-            self._gtk = gtk
             # menu item and shortcut
             self.toggle_action = self.gui.get_object("ToggleMemoryAnalyzerAction")
             self._gtk_handlers = []
@@ -108,7 +106,7 @@ class MemoryAnalyzer(pycam.Plugins.PluginBase):
         self.gui.get_object("MemoryAnalyzerLoadingLabel").show()
         for objname in ("MemoryAnalyzerRefreshButton", "MemoryAnalyzerCopyButton"):
             self.gui.get_object(objname).set_sensitive(False)
-        gobject.idle_add(self._refresh_data_in_background)
+        self._gobject.idle_add(self._refresh_data_in_background)
 
     def _refresh_data_in_background(self):
         if not self._guppy:

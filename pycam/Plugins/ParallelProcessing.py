@@ -23,8 +23,6 @@ import os
 import random
 import string
 
-import gobject
-
 import pycam.Plugins
 
 
@@ -34,9 +32,7 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
     CATEGORIES = ["System"]
 
     def setup(self):
-        if self.gui:
-            import gtk
-            self._gtk = gtk
+        if self.gui and self._gtk:
             box = self.gui.get_object("MultiprocessingFrame")
             box.unparent()
             self.core.register_ui("preferences", "Parallel processing", box, 60)
@@ -63,8 +59,6 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
             else:
                 self.gui.get_object("ParallelProcessSettingsBox").hide()
                 self.gui.get_object("EnableParallelProcesses").hide()
-            self.enable_parallel_processes.set_active(
-                pycam.Utils.threading.is_multiprocessing_enabled())
             self._gtk_handlers.append((self.enable_parallel_processes,
                                        "toggled", self.handle_parallel_processes_settings))
             self.number_of_processes = self.gui.get_object("NumberOfProcesses")
@@ -92,6 +86,8 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
             self.core.register_ui("view_menu", "ToggleProcessPoolWindow", toggle_button, 40)
             self.register_gtk_handlers(self._gtk_handlers)
             self.update_parallel_processes_settings()
+        self.enable_parallel_processes.set_active(
+            pycam.Utils.threading.is_multiprocessing_enabled())
         return True
 
     def teardown(self):
@@ -102,6 +98,7 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
             self.core.unregister_ui("view_menu", toggle_button)
             self.unregister_gtk_accelerator("processes", toggle_button)
             self.unregister_gtk_handlers(self._gtk_handlers)
+        self.enable_parallel_processes.set_active(False)
 
     def toggle_process_pool_window(self, widget=None, value=None, action=None):
         toggle_process_pool_checkbox = self.gui.get_object("ToggleProcessPoolWindow")
@@ -123,8 +120,8 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
                 # start the refresh function
                 interval = int(max(1,
                                    self.gui.get_object("ProcessPoolRefreshInterval").get_value()))
-                gobject.timeout_add_seconds(interval,
-                                            self.update_process_pool_statistics, interval)
+                self._gobject.timeout_add_seconds(interval, self.update_process_pool_statistics,
+                                                  interval)
             else:
                 disabled_box.show()
                 statistics_box.hide()
@@ -150,8 +147,8 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
                                    self.gui.get_object("ProcessPoolRefreshInterval").get_value()))
         if original_interval != current_interval:
             # initiate a new repetition
-            gobject.timeout_add_seconds(current_interval, self.update_process_pool_statistics,
-                                        current_interval)
+            self._gobject.timeout_add_seconds(
+                current_interval, self.update_process_pool_statistics, current_interval)
             # stop the current repetition
             return False
         else:

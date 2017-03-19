@@ -33,9 +33,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
     DEPENDS = ["Models", "Tools", "Processes", "Bounds", "Toolpaths"]
 
     def setup(self):
-        if self.gui:
-            import gtk
-            self._gtk = gtk
+        if self.gui and self._gtk:
             self._gtk_handlers = []
             task_frame = self.gui.get_object("TaskBox")
             task_frame.unparent()
@@ -58,11 +56,11 @@ class Tasks(pycam.Plugins.ListPluginBase):
                 # create a frame within an alignment and the item inside
                 if item.get_parent():
                     item.unparent()
-                frame_label = gtk.Label()
+                frame_label = self._gtk.Label()
                 frame_label.set_markup("<b>%s</b>" % name)
-                frame = gtk.Frame()
+                frame = self._gtk.Frame()
                 frame.set_label_widget(frame_label)
-                align = gtk.Alignment()
+                align = self._gtk.Alignment()
                 frame.add(align)
                 align.set_padding(0, 3, 12, 3)
                 align.add(item)
@@ -122,7 +120,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
 
     def teardown(self):
         self.clear_state_items()
-        if self.gui:
+        if self.gui and self._gtk:
             self.core.unregister_ui("main", self.gui.get_object("TaskBox"))
             self.core.unregister_ui("task_parameters", self.models_widget)
             self.core.unregister_ui("task_parameters", self.components_widget)

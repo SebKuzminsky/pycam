@@ -31,8 +31,7 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
     CATEGORIES = ["Model", "Support bridges"]
 
     def setup(self):
-        if self.gui:
-            import gtk
+        if self.gui and self._gtk:
             grid_box = self.gui.get_object("SupportModelGridBox")
             grid_box.unparent()
             self.core.register_ui("support_model_type_selector", "Grid", "grid", weight=-10)
@@ -87,7 +86,7 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
             self.grid_adjustment_value = self.gui.get_object("SupportGridPositionManualAdjustment")
             self.grid_adjustment_value_control = self.gui.get_object(
                 "SupportGridPositionManualShiftControl")
-            self.grid_adjustment_value_control.set_update_policy(gtk.UPDATE_DISCONTINUOUS)
+            self.grid_adjustment_value_control.set_update_policy(self._gtk.UPDATE_DISCONTINUOUS)
             self._gtk_handlers.extend((
                 (self.grid_adjustment_value_control, "move-slider",
                  self.update_support_grid_manual_adjust),
@@ -117,15 +116,15 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
                                get_set_grid_adjustment_value)
             grid_distance_square.set_active(True)
             self.core.set("support_grid_distance_x", 10.0)
-            self.core.register_chain("get_support_models", self._get_support_models)
             # handlers
             self._event_handlers = (("support-model-changed", self.update_support_controls), )
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
+        self.core.register_chain("get_support_models", self._get_support_models)
         return True
 
     def teardown(self):
-        if self.gui:
+        if self.gui and self._gtk:
             self.core.unregister_chain("get_support_models", self._get_support_models)
             self.core.unregister_ui("support_model_type_selector", "grid")
             self.core.unregister_ui("support_model_settings",

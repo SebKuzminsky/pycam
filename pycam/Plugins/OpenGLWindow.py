@@ -30,7 +30,6 @@ try:
 except (ImportError, RuntimeError):
     GL_ENABLED = False
 
-import gtk
 
 from pycam.Geometry import number, sqrt
 from pycam.Geometry.PointUtils import pcross, pmul, pnormalized
@@ -78,7 +77,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                            "'python-gtkglext1' to enable it.")
             return False
         if self.gui:
-            self.context_menu = gtk.Menu()
+            self.context_menu = self._gtk.Menu()
             self.window = self.gui.get_object("OpenGLWindow")
             self.core.get("configure-drag-drop-func")(self.window)
             self.initialized = False
@@ -113,7 +112,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
             def add_widget_to_window(item, name):
                 if len(detail_box.get_children()) > 0:
-                    sep = gtk.HSeparator()
+                    sep = self._gtk.HSeparator()
                     detail_box.pack_start(sep)
                     sep.show()
                 detail_box.pack_start(item)
@@ -166,10 +165,10 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # key binding
             self._gtk_handlers.append((self.window, "key-press-event", self.key_handler))
             # OpenGL stuff
-            glconfig = gtk.gdkgl.Config(mode=(gtk.gdkgl.MODE_RGBA
-                                              | gtk.gdkgl.MODE_DEPTH
-                                              | gtk.gdkgl.MODE_DOUBLE))
-            self.area = gtk.gtkgl.DrawingArea(glconfig)
+            glconfig = self._gtk.gdkgl.Config(mode=(self._gtk.gdkgl.MODE_RGBA
+                                                    | self._gtk.gdkgl.MODE_DEPTH
+                                                    | self._gtk.gdkgl.MODE_DOUBLE))
+            self.area = self._gtk.gtkgl.DrawingArea(glconfig)
             # first run; might also be important when doing other fancy
             # gtk/gdk stuff
 #           self.area.connect_after('realize', self.paint)
@@ -178,11 +177,11 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # resize window
             self._gtk_handlers.append((self.area, 'configure-event', self._resize_window))
             # catch mouse events
-            self.area.set_events((gtk.gdk.MOUSE
-                                  | gtk.gdk.POINTER_MOTION_HINT_MASK
-                                  | gtk.gdk.BUTTON_PRESS_MASK
-                                  | gtk.gdk.BUTTON_RELEASE_MASK
-                                  | gtk.gdk.SCROLL_MASK))
+            self.area.set_events((self._gtk.gdk.MOUSE
+                                  | self._gtk.gdk.POINTER_MOTION_HINT_MASK
+                                  | self._gtk.gdk.BUTTON_PRESS_MASK
+                                  | self._gtk.gdk.BUTTON_RELEASE_MASK
+                                  | self._gtk.gdk.SCROLL_MASK))
             self._gtk_handlers.extend((
                 (self.area, "button-press-event", self.mouse_press_handler),
                 (self.area, "motion-notify-event", self.mouse_handler),
@@ -255,9 +254,9 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         #  - a checkbox for the preferences window
         #  - a tool item for the drop-down list in the 3D window
         #  - a menu item for the context menu in the 3D window
-        action = gtk.ToggleAction(name, label, "Show/hide %s" % label, None)
+        action = self._gtk.ToggleAction(name, label, "Show/hide %s" % label, None)
         action.connect("toggled", lambda widget: self.core.emit_event("visual-item-updated"))
-        checkbox = gtk.CheckButton(label)
+        checkbox = self._gtk.CheckButton(label)
         action.connect_proxy(checkbox)
         tool_item = action.create_tool_item()
         menu_item = action.create_menu_item()
@@ -312,13 +311,13 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
         def set_color_wrapper(obj):
             def set_gtk_color_by_dict(color):
-                obj.set_color(gtk.gdk.Color(int(color["red"] * GTK_COLOR_MAX),
-                                            int(color["green"] * GTK_COLOR_MAX),
-                                            int(color["blue"] * GTK_COLOR_MAX)))
+                obj.set_color(self._gtk.gdk.Color(int(color["red"] * GTK_COLOR_MAX),
+                                                  int(color["green"] * GTK_COLOR_MAX),
+                                                  int(color["blue"] * GTK_COLOR_MAX)))
                 obj.set_alpha(int(color["alpha"] * GTK_COLOR_MAX))
             return set_gtk_color_by_dict
 
-        widget = gtk.ColorButton()
+        widget = self._gtk.ColorButton()
         widget.set_use_alpha(True)
         wrappers = (get_color_wrapper(widget), set_color_wrapper(widget))
         self._color_settings[name] = {"name": name, "label": label, "weight": weight,
@@ -344,11 +343,12 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         items = self._color_settings.values()
         items.sort(key=lambda item: item["weight"])
         for index, item in enumerate(items):
-            label = gtk.Label("%s:" % item["label"])
+            label = self._gtk.Label("%s:" % item["label"])
             label.set_alignment(0.0, 0.5)
-            color_table.attach(label, 0, 1, index, index + 1, xoptions=gtk.FILL, yoptions=gtk.FILL)
-            color_table.attach(item["widget"], 1, 2, index, index + 1, xoptions=gtk.FILL,
-                               yoptions=gtk.FILL)
+            color_table.attach(label, 0, 1, index, index + 1, xoptions=self._gtk.FILL,
+                               yoptions=self._gtk.FILL)
+            color_table.attach(item["widget"], 1, 2, index, index + 1, xoptions=self._gtk.FILL,
+                               yoptions=self._gtk.FILL)
         color_table.show_all()
 
     def toggle_3d_view(self, widget=None, value=None):
@@ -389,10 +389,10 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             return
         # define arrow keys and "vi"-like navigation keys
         move_keys_dict = {
-            gtk.keysyms.Left: (1, 0),
-            gtk.keysyms.Down: (0, -1),
-            gtk.keysyms.Up: (0, 1),
-            gtk.keysyms.Right: (-1, 0),
+            self._gtk.keysyms.Left: (1, 0),
+            self._gtk.keysyms.Down: (0, -1),
+            self._gtk.keysyms.Up: (0, 1),
+            self._gtk.keysyms.Right: (-1, 0),
             ord("h"): (1, 0),
             ord("j"): (0, -1),
             ord("k"): (0, 1),
@@ -434,7 +434,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         elif keyval in move_keys_dict.keys():
             self._last_view = None
             move_x, move_y = move_keys_dict[keyval]
-            if get_state() & gtk.gdk.SHIFT_MASK:
+            if get_state() & self._gtk.gdk.SHIFT_MASK:
                 # shift key pressed -> rotation
                 base = 0
                 factor = 10
@@ -625,26 +625,26 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         except AttributeError:
             # this should probably never happen
             return
-        control_pressed = modifier_state & gtk.gdk.CONTROL_MASK
-        shift_pressed = modifier_state & gtk.gdk.SHIFT_MASK
-        if ((event.direction == gtk.gdk.SCROLL_RIGHT)
-                or ((event.direction == gtk.gdk.SCROLL_UP) and shift_pressed)):
+        control_pressed = modifier_state & self._gtk.gdk.CONTROL_MASK
+        shift_pressed = modifier_state & self._gtk.gdk.SHIFT_MASK
+        if ((event.direction == self._gtk.gdk.SCROLL_RIGHT)
+                or ((event.direction == self._gtk.gdk.SCROLL_UP) and shift_pressed)):
             # horizontal move right
             self.camera.shift_view(x_dist=-1)
-        elif (event.direction == gtk.gdk.SCROLL_LEFT) \
-                or ((event.direction == gtk.gdk.SCROLL_DOWN) and shift_pressed):
+        elif (event.direction == self._gtk.gdk.SCROLL_LEFT) \
+                or ((event.direction == self._gtk.gdk.SCROLL_DOWN) and shift_pressed):
             # horizontal move left
             self.camera.shift_view(x_dist=1)
-        elif (event.direction == gtk.gdk.SCROLL_UP) and control_pressed:
+        elif (event.direction == self._gtk.gdk.SCROLL_UP) and control_pressed:
             # zoom in
             self.camera.zoom_in()
-        elif event.direction == gtk.gdk.SCROLL_UP:
+        elif event.direction == self._gtk.gdk.SCROLL_UP:
             # vertical move up
             self.camera.shift_view(y_dist=1)
-        elif (event.direction == gtk.gdk.SCROLL_DOWN) and control_pressed:
+        elif (event.direction == self._gtk.gdk.SCROLL_DOWN) and control_pressed:
             # zoom out
             self.camera.zoom_out()
-        elif event.direction == gtk.gdk.SCROLL_DOWN:
+        elif event.direction == self._gtk.gdk.SCROLL_DOWN:
             # vertical move down
             self.camera.shift_view(y_dist=-1)
         else:

@@ -30,8 +30,7 @@ class Tools(pycam.Plugins.ListPluginBase):
 
     def setup(self):
         self.core.set("tools", self)
-        if self.gui:
-            import gtk
+        if self.gui and self._gtk:
             tool_frame = self.gui.get_object("ToolBox")
             tool_frame.unparent()
             self.core.register_ui("main", "Tools", tool_frame, weight=10)
@@ -54,11 +53,11 @@ class Tools(pycam.Plugins.ListPluginBase):
                 # create a frame within an alignment and the item inside
                 if item.get_parent():
                     item.unparent()
-                frame_label = gtk.Label()
+                frame_label = self._gtk.Label()
                 frame_label.set_markup("<b>%s</b>" % name)
-                frame = gtk.Frame()
+                frame = self._gtk.Frame()
                 frame.set_label_widget(frame_label)
-                align = gtk.Alignment()
+                align = self._gtk.Alignment()
                 frame.add(align)
                 align.set_padding(0, 3, 12, 3)
                 align.add(item)
@@ -117,7 +116,7 @@ class Tools(pycam.Plugins.ListPluginBase):
         self.clear_state_items()
         self.core.unregister_namespace("tools")
         self.core.unregister_chain("toolpath_filters", self.get_toolpath_filters)
-        if self.gui:
+        if self.gui and self._gtk:
             self.core.unregister_ui("main", self.gui.get_object("ToolBox"))
             self.core.unregister_ui_section("tool_speed")
             self.core.unregister_ui_section("tool_size")

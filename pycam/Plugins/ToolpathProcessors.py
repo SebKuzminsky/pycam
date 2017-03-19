@@ -32,8 +32,7 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
     UI_FILE = "toolpath_processors.ui"
 
     def setup(self):
-        if self.gui:
-            import gtk
+        if self._gtk and self._gtk:
             notebook = self.gui.get_object("GCodePrefsNotebook")
             self._pref_items = []
 
@@ -79,12 +78,12 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                     current_entry = (item, [])
                     self._pref_items.append(current_entry)
                 item.unparent()
-                if not isinstance(item, gtk.Frame):
+                if not isinstance(item, self._gtk.Frame):
                     # create a simple default frame if none was given
-                    frame = gtk.Frame(name)
+                    frame = self._gtk.Frame(name)
                     frame.get_label_widget().set_markup("<b>%s</b>" % name)
-                    frame.set_shadow_type(gtk.SHADOW_NONE)
-                    align = gtk.Alignment()
+                    frame.set_shadow_type(self._gtk.SHADOW_NONE)
+                    align = self._gtk.Alignment()
                     align.set_padding(3, 0, 12, 0)
                     frame.add(align)
                     frame.show()
@@ -97,7 +96,7 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                     for signal in ("hide", "show"):
                         current_entry[1].append(
                             item.connect(signal, update_preference_item_visibility, parent))
-                notebook.append_page(parent, gtk.Label(name))
+                notebook.append_page(parent, self._gtk.Label(name))
                 update_preference_item_visibility(item, parent)
 
             self.core.register_ui_section("gcode_preferences", add_preferences_item,
@@ -142,7 +141,7 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
         return True
 
     def teardown(self):
-        if self.gui:
+        if self.gui and self._gtk:
             self._set_window_visibility(False)
         self.core.set("toolpath_processors", None)
         self.unregister_event_handlers(self._event_handlers)

@@ -39,9 +39,9 @@ class GtkConsole(pycam.Plugins.PluginBase):
     def setup(self):
         self._history = []
         self._history_position = None
+        if not self._gtk:
+            return False
         if self.gui:
-            import gtk
-            self._gtk = gtk
             self._console = code.InteractiveConsole(locals=self.core.get_namespace(),
                                                     filename="PyCAM")
             # redirect sys.stdin/stdout - "exec" always writes there

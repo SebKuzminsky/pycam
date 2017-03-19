@@ -32,8 +32,7 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
 
     def setup(self):
         self.last_toolpath_file = None
-        if self.gui:
-            import gtk
+        if self.gui and self._gtk:
             self.tp_box = self.gui.get_object("ToolpathsBox")
             self.tp_box.unparent()
             self.core.register_ui("main", "Toolpaths", self.tp_box, weight=50)
@@ -56,7 +55,7 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
                     toolpath_handling_obj.remove_page(0)
 
             def add_toolpath_handling_item(item, name):
-                toolpath_handling_obj.append_page(item, gtk.Label(name))
+                toolpath_handling_obj.append_page(item, self._gtk.Label(name))
 
             self.core.register_ui_section("toolpath_handling", add_toolpath_handling_item,
                                           clear_toolpath_handling_obj)
@@ -68,7 +67,7 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             # handle selection changes
             selection = self._modelview.get_selection()
             self._gtk_handlers.append((selection, "changed", "toolpath-selection-changed"))
-            selection.set_mode(gtk.SELECTION_MULTIPLE)
+            selection.set_mode(self._gtk.SELECTION_MULTIPLE)
             self._event_handlers = (
                 ("toolpath-changed", self._update_widgets),
                 ("toolpath-list-changed", self._update_widgets),
@@ -84,7 +83,7 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
 
     def teardown(self):
         self.core.unregister_namespace("toolpaths")
-        if self.gui:
+        if self.gui and self._gtk:
             self.core.unregister_ui("main", self.gui.get_object("ToolpathsBox"))
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)

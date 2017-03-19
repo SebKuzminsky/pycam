@@ -18,13 +18,19 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os
 import imp
 import inspect
+import os
 import uuid
-# TODO: load these modules only on demand
-import gtk
-import gobject
+
+try:
+    import gtk
+except ImportError:
+    gtk = None
+try:
+    import gobject
+except ImportError:
+    gobject = None
 
 import pycam.Utils.log
 import pycam.Utils.locations
@@ -47,10 +53,12 @@ class PluginBase(object):
         self.core = core
         self.gui = None
         self.log = _log
-        if self.UI_FILE:
+        self._gtk = gtk
+        self._gobject = gobject
+        if self.UI_FILE and self._gtk:
             gtk_build_file = pycam.Utils.locations.get_ui_file_location(self.UI_FILE)
             if gtk_build_file:
-                self.gui = gtk.Builder()
+                self.gui = self._gtk.Builder()
                 try:
                     self.gui.add_from_file(gtk_build_file)
                 except RuntimeError as err_msg:
@@ -62,22 +70,23 @@ class PluginBase(object):
                     common_accel_group = self.core["gtk-accel-group"]
                     if common_accel_group:
                         for obj in self.gui.get_objects():
-                            if isinstance(obj, gtk.Window):
+                            if isinstance(obj, self._gtk.Window):
                                 obj.add_accel_group(common_accel_group)
 
-        for key in self.ICONS:
-            icon_location = pycam.Utils.locations.get_ui_file_location(self.ICONS[key])
-            if icon_location:
-                try:
-                    pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(icon_location, self.ICON_SIZE,
-                                                                  self.ICON_SIZE)
-                except gobject.GError:
-                    self.ICONS[key] = None
+        if self._gtk:
+            for key in self.ICONS:
+                icon_location = pycam.Utils.locations.get_ui_file_location(self.ICONS[key])
+                if icon_location:
+                    try:
+                        pixbuf = self._gtk.gdk.pixbuf_new_from_file_at_size(
+                            icon_location, self.ICON_SIZE, self.ICON_SIZE)
+                    except self._gobject.GError:
+                        self.ICONS[key] = None
+                    else:
+                        self.ICONS[key] = pixbuf
                 else:
-                    self.ICONS[key] = pixbuf
-            else:
-                self.log.debug("Failed to locate icon: %s", self.ICONS[key])
-                self.ICONS[key] = None
+                    self.log.debug("Failed to locate icon: %s", self.ICONS[key])
+                    self.ICONS[key] = None
         self._func_cache = {}
         self._gtk_handler_id_cache = []
         self.enabled = True
@@ -171,22 +180,20 @@ class PluginBase(object):
 
     def register_gtk_accelerator(self, groupname, action, accel_string, accel_name):
         # menu item and shortcut
-        try:
-            import gtk
-        except ImportError:
+        if not self._gtk:
             return
-        actiongroup = gtk.ActionGroup(groupname)
+        actiongroup = self._gtk.ActionGroup(groupname)
         accel_path = "<pycam>/%s" % accel_name
         action.set_accel_path(accel_path)
         # it is a bit pointless, but we allow an empty accel_string anyway ...
         if accel_string:
-            key, mod = gtk.accelerator_parse(accel_string)
-            gtk.accel_map_change_entry(accel_path, key, mod, True)
+            key, mod = self._gtk.accelerator_parse(accel_string)
+            self._gtk.accel_map_change_entry(accel_path, key, mod, True)
         actiongroup.add_action(action)
         self.core.get("gtk-uimanager").insert_action_group(actiongroup, pos=-1)
 
     def unregister_gtk_accelerator(self, groupname, action):
-        actiongroup = gtk.ActionGroup(groupname)
+        actiongroup = self._gtk.ActionGroup(groupname)
         actiongroup.remove_action(action)
         if (len(actiongroup.list_actions()) == 0) \
                 and (actiongroup in self.core.get("gtk-uimanager").get_action_groups()):
@@ -364,7 +371,7 @@ class ListPluginBase(PluginBase, list):
             paths = selection.get_selected_rows()[1]
         elif hasattr(modelview, "get_active"):
             # combobox
-            selection_mode = gtk.SELECTION_SINGLE
+            selection_mode = self._gtk.SELECTION_SINGLE
             active = modelview.get_active()
             if active < 0:
                 paths = []
@@ -378,7 +385,7 @@ class ListPluginBase(PluginBase, list):
             get_result = lambda path: path[0]
         else:
             get_result = self.get_by_path
-        if (selection_mode == gtk.SELECTION_MULTIPLE) or force_list:
+        if (selection_mode == self._gtk.SELECTION_MULTIPLE) or force_list:
             result = []
             for path in paths:
                 result.append(get_result(path))

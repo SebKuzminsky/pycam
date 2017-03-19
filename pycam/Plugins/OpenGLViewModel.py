@@ -31,9 +31,7 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
     CATEGORIES = ["Model", "Visualization", "OpenGL"]
 
     def setup(self):
-        import gtk
         import OpenGL.GL
-        self._gtk = gtk
         self._GL = OpenGL.GL
         self._event_handlers = (("visualize-items", self.draw_model),
                                 ("model-changed", "visual-item-updated"),

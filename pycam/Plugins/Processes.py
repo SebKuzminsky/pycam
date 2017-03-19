@@ -30,9 +30,7 @@ class Processes(pycam.Plugins.ListPluginBase):
 
     def setup(self):
         self.core.set("processes", self)
-        if self.gui:
-            import gtk
-            self._gtk = gtk
+        if self.gui and self._gtk:
             process_frame = self.gui.get_object("ProcessBox")
             process_frame.unparent()
             self._gtk_handlers = []
@@ -56,11 +54,11 @@ class Processes(pycam.Plugins.ListPluginBase):
                 # create a frame with an align and the item inside
                 if item.get_parent():
                     item.unparent()
-                frame_label = gtk.Label()
+                frame_label = self._gtk.Label()
                 frame_label.set_markup("<b>%s</b>" % name)
-                frame = gtk.Frame()
+                frame = self._gtk.Frame()
                 frame.set_label_widget(frame_label)
-                align = gtk.Alignment()
+                align = self._gtk.Alignment()
                 frame.add(align)
                 align.set_padding(0, 3, 12, 3)
                 align.add(item)
@@ -102,7 +100,7 @@ class Processes(pycam.Plugins.ListPluginBase):
     def teardown(self):
         self.clear_state_items()
         self.core.unregister_namespace("processes")
-        if self.gui:
+        if self.gui and self._gtk:
             self.core.unregister_ui("main", self.gui.get_object("ProcessBox"))
             self.core.unregister_ui_section("process_path_parameters")
             self.core.unregister_ui("process_parameters", self.parameter_widget.get_widget())

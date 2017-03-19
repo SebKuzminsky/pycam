@@ -34,9 +34,9 @@ class Log(pycam.Plugins.PluginBase):
     CATEGORIES = ["System"]
 
     def setup(self):
+        if not self._gtk:
+            return False
         if self.gui:
-            import gtk
-            self._gtk = gtk
             # menu item and shortcut
             log_action = self.gui.get_object("ToggleLogWindow")
             self._gtk_handlers = []

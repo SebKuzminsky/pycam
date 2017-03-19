@@ -31,6 +31,8 @@ class ProgressBar(pycam.Plugins.PluginBase):
     CATEGORIES = ["System"]
 
     def setup(self):
+        if not self._gtk:
+            return False
         if self.gui:
             box = self.gui.get_object("ProgressBox")
             box.unparent()

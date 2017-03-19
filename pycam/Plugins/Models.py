@@ -33,9 +33,7 @@ class Models(pycam.Plugins.ListPluginBase):
     FALLBACK_COLOR = {"red": 0.5, "green": 0.5, "blue": 1.0, "alpha": 1.0}
 
     def setup(self):
-        if self.gui:
-            import gtk
-            self._gtk = gtk
+        if self.gui and self._gtk:
             self.model_frame = self.gui.get_object("ModelBox")
             self.model_frame.unparent()
             self.core.register_ui("main", "Models", self.model_frame, weight=-50)
@@ -85,7 +83,7 @@ class Models(pycam.Plugins.ListPluginBase):
     def teardown(self):
         self.clear_state_items()
         self.core.unregister_namespace("models")
-        if self.gui:
+        if self.gui and self._gtk:
             self.core.unregister_ui_section("model_handling")
             self.core.unregister_ui("main", self.gui.get_object("ModelBox"))
             self.core.unregister_ui("main", self.model_frame)
