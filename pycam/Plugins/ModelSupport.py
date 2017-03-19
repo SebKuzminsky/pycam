@@ -142,8 +142,10 @@ class ModelSupport(pycam.Plugins.PluginBase):
     def get_draw_dimension(self, low, high):
         if not self.core.get("show_support_preview"):
             return
-        model_box = pycam.Geometry.Model.get_combined_bounds(
-            self.core.get("current_support_models"))
+        support_models = self.core.get("current_support_models")
+        if not support_models:
+            return
+        model_box = pycam.Geometry.Model.get_combined_bounds(support_models)
         if model_box is None:
             return
         for index, (mlow, mhigh) in enumerate(zip(model_box.lower, model_box.upper)):
