@@ -1,4 +1,6 @@
 import ConfigParser
+import pickle
+import StringIO
 
 import pycam.Gui.Settings
 import pycam.Utils.log
@@ -57,10 +59,18 @@ PREFERENCES_DEFAULTS = {
 """ the listed items will be loaded/saved via the preferences file in the
 user's home directory on startup/shutdown"""
 
+MAX_UNDO_STATES = 10
+PICKLE_PROTOCOL = 2
+
 log = pycam.Utils.log.get_logger()
 
 
 class BaseUI(object):
+
+    def __init__(self, event_manager):
+        self.settings = event_manager
+        self._undo_states = []
+        self.settings.register_event("model-change-before", self.store_undo_state)
 
     def reset_preferences(self, widget=None):
         """ reset all preferences to their default values """
@@ -115,3 +125,33 @@ class BaseUI(object):
             config_file.close()
         except IOError as err_msg:
             log.warn("Failed to write preferences file (%s): %s", config_filename, err_msg)
+
+    def clear_undo_states(self):
+        """ This function is called by the pycam script after everything is set up properly.  """
+        # empty the "undo" states (accumulated by loading the default model)
+        while self._undo_states:
+            self._undo_states.pop(0)
+        self.settings.emit_event("undo-states-changed")
+
+    def store_undo_state(self):
+        # for now we only store the model
+        if not self.settings.get("models"):
+            return
+        # TODO: store all models
+        self._undo_states.append(pickle.dumps(self.settings.get("models")[0].model,
+                                              PICKLE_PROTOCOL))
+        log.debug("Stored the current state of the model for undo")
+        while len(self._undo_states) > MAX_UNDO_STATES:
+            self._undo_states.pop(0)
+        self.settings.emit_event("undo-states-changed")
+
+    def restore_undo_state(self, widget=None, event=None):
+        if len(self._undo_states) > 0:
+            latest = StringIO.StringIO(self._undo_states.pop(-1))
+            model = pickle.Unpickler(latest).load()
+            self.load_model(model)
+            self.gui.get_object("UndoButton").set_sensitive(len(self._undo_states) > 0)
+            log.info("Restored the previous state of the model")
+            self.settings.emit_event("model-change-after")
+        else:
+            log.info("No previous undo state available - request ignored")

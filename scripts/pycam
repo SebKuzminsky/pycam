@@ -163,7 +163,7 @@ def show_gui(inputfile=None, task_settings_file=None):
         gui.settings.get("open-task-settings-file-func")(task_settings_file)
 
     # tell the GUI to empty the "undo" queue
-    gui.finish_startup()
+    gui.clear_undo_states()
 
     # open the GUI
     gui.mainloop()

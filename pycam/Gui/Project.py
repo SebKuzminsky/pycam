@@ -23,8 +23,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import datetime
 import logging
 import os
-import pickle
-import StringIO
 import sys
 import webbrowser
 
@@ -46,7 +44,6 @@ import pycam.Utils.log
 GTKBUILD_FILE = "pycam-project.ui"
 GTKMENU_FILE = "menubar.xml"
 GTKRC_FILE_WINDOWS = "gtkrc_windows"
-PICKLE_PROTOCOL = 2
 
 WINDOW_ICON_FILENAMES = ["logo_%dpx.png" % pixels for pixels in (16, 32, 48, 64, 128)]
 
@@ -57,7 +54,6 @@ FILTER_MODEL = (("All supported model filetypes",
                 ("SVG contours", "*.svg"),
                 ("PS contours", ("*.eps", "*.ps")))
 
-MAX_UNDO_STATES = 10
 FILENAME_DRAG_TARGETS = ("text/uri-list", "text-plain")
 
 
@@ -84,12 +80,11 @@ class ProjectGui(pycam.Gui.BaseUI):
     META_DATA_PREFIX = "PYCAM-META-DATA:"
 
     def __init__(self, event_manager, no_dialog=False):
-        self.settings = event_manager
+        super(ProjectGui, self).__init__(event_manager)
         self.gui_is_active = False
         # during initialization any dialog (e.g. "Unit change") is not allowed
         # we set the final value later
         self.no_dialog = True
-        self._undo_states = []
         self.gui = gtk.Builder()
         gtk_build_file = get_ui_file_location(GTKBUILD_FILE)
         if gtk_build_file is None:
@@ -130,7 +125,7 @@ class ProjectGui(pycam.Gui.BaseUI):
                 ("OpenModel", self.load_model_file, None, "<Control>o"),
                 ("Quit", self.destroy, None, "<Control>q"),
                 ("GeneralSettings", self.toggle_preferences_window, None, "<Control>p"),
-                ("UndoButton", self._restore_undo_state, None, "<Control>z"),
+                ("UndoButton", self.restore_undo_state, None, "<Control>z"),
                 ("HelpIntroduction", self.show_help, "introduction", "F1"),
                 ("HelpSupportedFormats", self.show_help, "supported-formats", None),
                 ("HelpModelTransformations", self.show_help, "model-transformations", None),
@@ -164,9 +159,7 @@ class ProjectGui(pycam.Gui.BaseUI):
             def open_url(widget, data=None):
                 webbrowser.open(widget.get_uri())
             gtk.link_button_set_uri_hook(open_url)
-        # no undo is allowed at the beginning
-        self.gui.get_object("UndoButton").set_sensitive(False)
-        self.settings.register_event("model-change-before", self._store_undo_state)
+        self.settings.register_event("undo-states-changed", self._update_undo_button)
         self.settings.register_event("model-change-after",
                                      lambda: self.settings.emit_event("visual-item-updated"))
         # configure drag-n-drop for config files and models
@@ -405,29 +398,6 @@ class ProjectGui(pycam.Gui.BaseUI):
             return result
         return gui_activity_guard_wrapper
 
-    def _store_undo_state(self):
-        # for now we only store the model
-        if not self.settings.get("models"):
-            return
-        # TODO: store all models
-        self._undo_states.append(pickle.dumps(self.settings.get("models")[0].model,
-                                              PICKLE_PROTOCOL))
-        log.debug("Stored the current state of the model for undo")
-        while len(self._undo_states) > MAX_UNDO_STATES:
-            self._undo_states.pop(0)
-        self.gui.get_object("UndoButton").set_sensitive(True)
-
-    def _restore_undo_state(self, widget=None, event=None):
-        if len(self._undo_states) > 0:
-            latest = StringIO.StringIO(self._undo_states.pop(-1))
-            model = pickle.Unpickler(latest).load()
-            self.load_model(model)
-            self.gui.get_object("UndoButton").set_sensitive(len(self._undo_states) > 0)
-            log.info("Restored the previous state of the model")
-            self.settings.emit_event("model-change-after")
-        else:
-            log.info("No previous undo state available - request ignored")
-
     def show_help(self, widget=None, page="Main_Page"):
         if not page.startswith("http"):
             url = DOC_BASE_URL % page
@@ -498,6 +468,9 @@ class ProjectGui(pycam.Gui.BaseUI):
         self._preferences_window_visible = state
         # don't close the window - just hide it (for "delete-event")
         return True
+
+    def _update_undo_button(self):
+        self.gui.get_object("UndoButton").set_sensitive(len(self._undo_states) > 0)
 
     def destroy(self, widget=None, data=None):
         gtk.main_quit()
@@ -577,14 +550,6 @@ class ProjectGui(pycam.Gui.BaseUI):
             else:
                 log.error("Failed to detect filetype!")
                 return False
-
-    def finish_startup(self):
-        """ This function is called by the pycam script after everything is
-        set up properly.
-        """
-        # empty the "undo" states (accumulated by loading the defualt model)
-        while self._undo_states:
-            self._undo_states.pop(0)
 
     def load_model(self, model):
         # load the new model only if the import worked
