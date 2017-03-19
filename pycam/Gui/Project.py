@@ -143,7 +143,6 @@ class ProjectGui(object):
         # during initialization any dialog (e.g. "Unit change") is not allowed
         # we set the final value later
         self.no_dialog = True
-        self._batch_queue = []
         self._undo_states = []
         self.gui = gtk.Builder()
         gtk_build_file = get_ui_file_location(GTKBUILD_FILE)
@@ -465,10 +464,6 @@ class ProjectGui(object):
                 log.error(pycam.Utils.get_exception_report())
                 result = None
             self.gui_is_active = False
-            while self._batch_queue:
-                batch_func, batch_args, batch_kwargs = self._batch_queue[0]
-                del self._batch_queue[0]
-                batch_func(*batch_args, **batch_kwargs)
             return result
         return gui_activity_guard_wrapper
 
