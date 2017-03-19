@@ -56,6 +56,6 @@ class Units(pycam.Plugins.PluginBase):
             # TODO: reset setting "unit" back to a default value?
 
     def change_unit_init(self, widget=None):
-        new_unit = self.gui.get_object("unit_control").get_active_text()
+        self.gui.get_object("unit_control").get_active_text()
         # redraw the model
         self.core.emit_event("model-change-after")
