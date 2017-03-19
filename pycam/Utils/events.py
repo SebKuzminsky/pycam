@@ -1,3 +1,4 @@
+import pycam.Gui.Settings
 import pycam.Utils.log
 
 
