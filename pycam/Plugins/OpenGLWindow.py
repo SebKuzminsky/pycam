@@ -79,7 +79,9 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         if self.gui:
             self.context_menu = self._gtk.Menu()
             self.window = self.gui.get_object("OpenGLWindow")
-            self.core.get("configure-drag-drop-func")(self.window)
+            drag_n_drop_func = self.core.get("configure-drag-drop-func")
+            if drag_n_drop_func:
+                drag_n_drop_func(self.window)
             self.initialized = False
             self.busy = False
             self.is_visible = False

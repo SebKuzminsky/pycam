@@ -67,7 +67,11 @@ class PluginBase(object):
                 else:
                     # All windows should share the same accel group (for
                     # keyboard shortcuts).
-                    common_accel_group = self.core["gtk-accel-group"]
+                    try:
+                        common_accel_group = self.core["gtk-accel-group"]
+                    except KeyError:
+                        self.log.info("Failed to connect to a common GTK accelerator group")
+                        common_accel_group = None
                     if common_accel_group:
                         for obj in self.gui.get_objects():
                             if isinstance(obj, self._gtk.Window):
@@ -190,14 +194,18 @@ class PluginBase(object):
             key, mod = self._gtk.accelerator_parse(accel_string)
             self._gtk.accel_map_change_entry(accel_path, key, mod, True)
         actiongroup.add_action(action)
-        self.core.get("gtk-uimanager").insert_action_group(actiongroup, pos=-1)
+        ui_manager = self.core.get("gtk-uimanager")
+        # it can happen that there is no gtk ui manager available (in script mode)
+        if ui_manager:
+            ui_manager.insert_action_group(actiongroup, pos=-1)
 
     def unregister_gtk_accelerator(self, groupname, action):
         actiongroup = self._gtk.ActionGroup(groupname)
         actiongroup.remove_action(action)
-        if (len(actiongroup.list_actions()) == 0) \
-                and (actiongroup in self.core.get("gtk-uimanager").get_action_groups()):
-            self.core.get("gtk-uimanager").remove_action_group(actiongroup)
+        ui_manager = self.core.get("gtk-uimanager")
+        if ui_manager and (len(actiongroup.list_actions()) == 0) \
+                and (actiongroup in ui_manager.get_action_groups()):
+            ui_manager.remove_action_group(actiongroup)
 
 
 class PluginManager(object):
