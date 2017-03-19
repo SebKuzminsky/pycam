@@ -1,7 +1,9 @@
 System requirements for PyCAM
 =============================
 
-PyCAM currently runs on Windows, Unix/Linux and MacOS ([via
+PyCAM currently runs on Unix/Linux.
+
+Older releases of PyCAM were also running on Windows and MacOS ([via
 MacPorts](http://sourceforge.net/projects/pycam/forums/forum/860183/topic/3800091)).
 
 Please document your experiences here, if you successfully used PyCAM
@@ -55,14 +57,12 @@ Run the following command in a *root* terminal:
 Windows
 -------
 
-Alternatives:
+The latest releases do not run under Windows.
 
--   Use the [standalone executable for
-    Windows](http://pycam.sf.net/downloads.html). It does not require
-    any additional software.
--   Use the package installer, but make sure that you installed the
-    dependency installer before. Both are available for
-    [download](http://pycam.sf.net/downloads.html).
+You may want to use the standalone executable of [v0.5.1 (the latest release supporting
+Windows)](https://sourceforge.net/projects/pycam/files/pycam/0.5.1/). This old version is not
+maintained anymore - but maybe you are lucky and it just works for you.
+
 
 MacOS
 -----
