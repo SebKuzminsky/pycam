@@ -57,6 +57,7 @@ import pycam.Gui.Settings
 import pycam.Gui.Console
 import pycam.Importers.TestModel
 import pycam.Importers
+import pycam.Plugins
 from pycam.Toolpath import Bounds, Toolpath
 import pycam.Utils
 from pycam.Utils.events import EventCore

@@ -33,7 +33,6 @@ from pycam import VERSION, DOC_BASE_URL
 import pycam.Importers.CXFImporter
 import pycam.Importers.TestModel
 import pycam.Importers
-import pycam.Plugins
 import pycam.Gui
 from pycam.Utils.locations import get_ui_file_location, get_external_program_location, \
         get_all_program_locations
