@@ -1,6 +1,16 @@
-import ConfigParser
+try:
+    # Python3
+    from configparser import ConfigParser
+except ImportError:
+    # Python2
+    from ConfigParser import ConfigParser
 import pickle
-import StringIO
+try:
+    # Python2 (load first - due to incompatible interface)
+    from StringIO import StringIO
+except ImportError:
+    # Python3
+    from io import StringIO
 
 import pycam.Gui.Settings
 import pycam.Utils.log
@@ -86,7 +96,7 @@ class BaseUI(object):
         if config_filename is None:
             # failed to create the personal preferences directory
             return
-        config = ConfigParser.ConfigParser()
+        config = ConfigParser()
         if not config.read(config_filename):
             # no config file was read
             return
@@ -116,7 +126,7 @@ class BaseUI(object):
             # failed to create the personal preferences directory
             log.warn("Failed to create a preferences directory in your user's home directory.")
             return
-        config = ConfigParser.ConfigParser()
+        config = ConfigParser()
         for item in PREFERENCES_DEFAULTS:
             config.set("DEFAULT", item, self.settings.get(item))
         try:
@@ -147,7 +157,7 @@ class BaseUI(object):
 
     def restore_undo_state(self, widget=None, event=None):
         if len(self._undo_states) > 0:
-            latest = StringIO.StringIO(self._undo_states.pop(-1))
+            latest = StringIO(self._undo_states.pop(-1))
             model = pickle.Unpickler(latest).load()
             self.load_model(model)
             self.gui.get_object("UndoButton").set_sensitive(len(self._undo_states) > 0)

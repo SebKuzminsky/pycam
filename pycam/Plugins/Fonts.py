@@ -20,7 +20,12 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import re
-import StringIO
+try:
+    # Python2 (load first - due to incompatible interface)
+    from StringIO import StringIO
+except ImportError:
+    # Python3
+    from io import StringIO
 
 from pycam.Geometry.Letters import TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, TEXT_ALIGN_RIGHT
 import pycam.Plugins
@@ -173,7 +178,7 @@ class Fonts(pycam.Plugins.PluginBase):
     def copy_font_dialog_to_clipboard(self, widget=None):
         text_model = self.get_font_dialog_text_rendered()
         if text_model and (text_model.maxx is not None):
-            text_buffer = StringIO.StringIO()
+            text_buffer = StringIO()
             # TODO: add "comment=get_meta_data()"
             text_model.export(unit=self.core.get("unit")).write(text_buffer)
             text_buffer.seek(0)

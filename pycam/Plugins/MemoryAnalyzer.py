@@ -20,7 +20,12 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import csv
-import StringIO
+try:
+    # Python2 (load first - due to incompatible interface)
+    from StringIO import StringIO
+except ImportError:
+    # Python3
+    from io import StringIO
 
 import pycam.Plugins
 import pycam.Utils.log
@@ -121,7 +126,7 @@ class MemoryAnalyzer(pycam.Plugins.PluginBase):
         self.gui.get_object("MemoryAnalyzerLoadingLabel").hide()
 
     def copy_to_clipboard(self, widget=None):
-        text_buffer = StringIO.StringIO()
+        text_buffer = StringIO()
         writer = csv.writer(text_buffer)
         writer.writerow(("Type", "Count", "Size (all) [kB]", "Average size [B]"))
         for row in self.model:

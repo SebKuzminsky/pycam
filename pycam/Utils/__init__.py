@@ -24,7 +24,12 @@ import socket
 import sys
 import traceback
 import urllib
-import urlparse
+try:
+    # Python3
+    from urllib.parse import urlparse
+except ImportError:
+    # Python2
+    from urlparse import urlparse
 # this is imported below on demand
 # import win32com
 # import win32api
@@ -116,15 +121,15 @@ class URIHandler(object):
         if isinstance(location, URIHandler):
             self._uri = location._uri
         elif not location:
-            self._uri = urlparse.urlparse(self.DEFAULT_PREFIX)
+            self._uri = urlparse(self.DEFAULT_PREFIX)
         elif (get_platform() == PLATFORM_WINDOWS) and (location[1:3] == ":\\"):
-            self._uri = urlparse.urlparse(self.DEFAULT_PREFIX + location.replace("\\", "/"))
+            self._uri = urlparse(self.DEFAULT_PREFIX + location.replace("\\", "/"))
         else:
-            self._uri = urlparse.urlparse(location)
+            self._uri = urlparse(location)
             if not self._uri.scheme:
                 # always fill the "scheme" field - some functions expect this
-                self._uri = urlparse.urlparse(self.DEFAULT_PREFIX
-                                              + os.path.realpath(os.path.abspath(location)))
+                self._uri = urlparse(self.DEFAULT_PREFIX
+                                     + os.path.realpath(os.path.abspath(location)))
 
     def is_local(self):
         return bool(self and (not self._uri.scheme or (self._uri.scheme == "file")))

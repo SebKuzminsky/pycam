@@ -20,7 +20,12 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
-import StringIO
+try:
+    # Python2 (load first - due to incompatible interface)
+    from StringIO import StringIO
+except ImportError:
+    # Python3
+    from io import StringIO
 from struct import unpack
 
 from pycam.Geometry import epsilon
@@ -61,7 +66,7 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
 
     if hasattr(filename, "read"):
         # make sure that the input stream can seek and has ".len"
-        f = StringIO.StringIO(filename.read())
+        f = StringIO(filename.read())
         # useful for later error messages
         filename = "input stream"
     else:
@@ -69,7 +74,7 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
             url_file = pycam.Utils.URIHandler(filename).open()
             # urllib.urlopen objects do not support "seek" - so we need to read
             # the whole file at once. This is ugly - anyone with a better idea?
-            f = StringIO.StringIO(url_file.read())
+            f = StringIO(url_file.read())
             # TODO: the above ".read" may be incomplete - this is ugly
             # see http://patrakov.blogspot.com/2011/03/case-of-non-raised-exception.html
             # and http://stackoverflow.com/questions/1824069/

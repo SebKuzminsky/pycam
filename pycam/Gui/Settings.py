@@ -20,7 +20,12 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import ConfigParser
 import os
-import StringIO
+try:
+    # Python2 (load first - due to incompatible interface)
+    from StringIO import StringIO
+except ImportError:
+    # Python3
+    from io import StringIO
 
 import pycam.Cutters
 from pycam.Geometry import Box3D, Point3D
@@ -317,14 +322,14 @@ process: 3
         self._cache = {}
         self.config = ConfigParser.SafeConfigParser()
         if config_text is None:
-            config_text = StringIO.StringIO(self.DEFAULT_CONFIG)
+            config_text = StringIO(self.DEFAULT_CONFIG)
         else:
             # Read the basic default config first - in case some new options
             # are missing in an older config file.
-            basic_default_config = StringIO.StringIO(self.BASIC_DEFAULT_CONFIG)
+            basic_default_config = StringIO(self.BASIC_DEFAULT_CONFIG)
             self.config.readfp(basic_default_config)
             # Read the real config afterwards.
-            config_text = StringIO.StringIO(config_text)
+            config_text = StringIO(config_text)
         self.config.readfp(config_text)
 
     def load_file(self, filename):
@@ -343,7 +348,7 @@ process: 3
         return True
 
     def load_from_string(self, config_text):
-        input_text = StringIO.StringIO(config_text)
+        input_text = StringIO(config_text)
         try:
             self.reset(input_text)
         except ConfigParser.ParsingError as err_msg:
@@ -646,7 +651,7 @@ class ToolpathSettings(object):
         return self.process_settings
 
     def parse(self, text):
-        text_stream = StringIO.StringIO(text)
+        text_stream = StringIO(text)
         config = ConfigParser.SafeConfigParser()
         config.readfp(text_stream)
         for config_dict, section in ((self.bounds, "Bounds"),

@@ -18,7 +18,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import StringIO
+try:
+    # Python2 (load first - due to incompatible interface)
+    from StringIO import StringIO
+except ImportError:
+    # Python3
+    from io import StringIO
 
 import pycam.Plugins
 from pycam.Utils.locations import get_all_program_locations
@@ -117,7 +122,7 @@ class Clipboard(pycam.Plugins.PluginBase):
         models = self._get_exportable_models()
         if not models:
             return
-        text_buffer = StringIO.StringIO()
+        text_buffer = StringIO()
 
         # TODO: use a better way to discover the "merge" ability
         def same_type(m1, m2):
@@ -157,7 +162,7 @@ class Clipboard(pycam.Plugins.PluginBase):
         progress = self.core.get("progress")
         if data:
             progress.update(text="Loading model from clipboard")
-            text_buffer = StringIO.StringIO(data.data)
+            text_buffer = StringIO(data.data)
             model = importer(text_buffer, program_locations=get_all_program_locations(self.core),
                              unit=self.core.get("unit"), fonts_cache=self.core.get("fonts"),
                              callback=progress.update)

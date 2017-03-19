@@ -20,8 +20,13 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import code
 import os
+try:
+    # Python2 (load first - due to incompatible interface)
+    from StringIO import StringIO
+except ImportError:
+    # Python3
+    from io import StringIO
 import sys
-import StringIO
 
 import pycam.Plugins
 
@@ -49,7 +54,7 @@ class GtkConsole(pycam.Plugins.PluginBase):
             self._original_stdin = sys.stdin
             self._console_buffer = self.gui.get_object("ConsoleViewBuffer")
             # redirect the virtual console output to the window
-            sys.stdout = StringIO.StringIO()
+            sys.stdout = StringIO()
 
             def console_write(data):
                 self._console_buffer.insert(self._console_buffer.get_end_iter(), data)
@@ -57,7 +62,7 @@ class GtkConsole(pycam.Plugins.PluginBase):
 
             self._console.write = console_write
             # make sure that we are never waiting for input (e.g. "help()")
-            sys.stdin = StringIO.StringIO()
+            sys.stdin = StringIO()
             # multiprocessing has a bug regarding the handling of sys.stdin:
             # see http://bugs.python.org/issue10174
             sys.stdin.fileno = lambda: -1
