@@ -139,6 +139,14 @@ def show_gui(inputfile=None, task_settings_file=None):
 
     event_manager = EventCore()
     gui = gui_class(event_manager)
+    # initialize plugins
+    plugin_manager = pycam.Plugins.PluginManager(core=event_manager)
+    plugin_manager.import_plugins()
+    # some more initialization
+    gui.reset_preferences()
+    # TODO: preferences are not loaded until the new format is stable
+#   self.load_preferences()
+#   self.load_task_settings()
 
     # load the given model or the default
     if not inputfile:
