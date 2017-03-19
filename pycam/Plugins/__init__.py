@@ -215,7 +215,9 @@ class PluginManager(object):
         self.modules = {}
         self.core.set("plugin-manager", self)
 
-    def import_plugins(self, directory=None):
+    def import_plugins(self, directory=None, ignore_names=None):
+        if ignore_names is None:
+            ignore_names = []
         if directory is None:
             directory = os.path.dirname(__file__)
         try:
@@ -228,6 +230,9 @@ class PluginManager(object):
                     and (filename.lower() != "__init__.py")
                     and os.path.isfile(os.path.join(directory, filename))):
                 mod_name = filename[0:-(len(".py"))]
+                if mod_name in ignore_names:
+                    _log.info("Skipping plugin %s (marked as 'ignore')", mod_name)
+                    continue
                 try:
                     mod_file, mod_filename, mod_desc = imp.find_module(mod_name, [directory])
                     full_mod_name = "pycam.Plugins.%s" % mod_name
