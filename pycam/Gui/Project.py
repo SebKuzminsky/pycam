@@ -234,9 +234,6 @@ class ProjectGui(pycam.Gui.BaseUI):
         obj.unparent()
         self.settings.register_ui("preferences_general", None, obj, 30)
         # set defaults
-        self.cutter = None
-        # add some dummies - to be implemented later ...
-        self.settings.add_item("cutter", lambda: self.cutter)
         main_tab = self.gui.get_object("MainTabs")
 
         def clear_main_tab():
