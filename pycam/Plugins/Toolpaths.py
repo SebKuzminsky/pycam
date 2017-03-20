@@ -143,13 +143,14 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
         text = get_time_string(toolpath.get_machine_time())
         cell.set_property("text", text)
 
-    def add_new(self, new_tp):
+    def add_new(self, new_tp, name=None):
         assert isinstance(new_tp, pycam.Toolpath.Toolpath), \
                 "Invalid type: %s (%s)" % (type(new_tp), new_tp)
         moves = new_tp.path
         tool = new_tp.tool
         filters = new_tp.filters
-        name = get_non_conflicting_name("Toolpath #%d", [tp["name"] for tp in self])
+        if name is None:
+            name = get_non_conflicting_name("Toolpath #%d", [tp["name"] for tp in self])
         attributes = {"visible": True, "name": name}
         new_tp = ToolpathEntity(toolpath_path=moves, attributes=attributes,
                                 toolpath_filters=filters, tool=tool)
