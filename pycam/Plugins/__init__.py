@@ -459,6 +459,12 @@ class ListPluginBase(PluginBase, list):
         else:
             return None
 
+    def get_by_attribute(self, key, value):
+        for item in self:
+            if item.get(key, None) == value:
+                return item
+        return None
+
     def _update_model(self):
         self._update_gtk_treemodel()
         for update_func in self._update_model_funcs:
