@@ -166,6 +166,8 @@ def show_gui(inputfile=None, task_settings_file=None):
     # tell the GUI to empty the "undo" queue
     gui.clear_undo_states()
 
+    event_manager.emit_event("notify-initialization-finished")
+
     # open the GUI
     gui.mainloop()
     # no error -> return no error code

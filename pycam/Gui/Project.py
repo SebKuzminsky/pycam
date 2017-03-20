@@ -376,7 +376,6 @@ class ProjectGui(pycam.Gui.BaseUI):
             # register a logging handler for displaying error messages
             pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
             self.window.show()
-        self.settings.emit_event("notify-initialization-finished")
 
     def gui_activity_guard(func):
         def gui_activity_guard_wrapper(self, *args, **kwargs):
