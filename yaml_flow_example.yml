@@ -72,11 +72,11 @@ tools:
 
 processes:
         process1:
-                strategy: slice_removal
-                pattern: grid
+                strategy: slicing
+                path_pattern: grid
                 overlap: 0.10
                 step_down: 1.0
-                direction: x
+                grid_direction: x
                 milling_style: ignore
 
 bounds:
@@ -122,10 +122,11 @@ tasks:
 
 toolpaths:
         toolpath1:
-                source: task
-                tasks:
-                        - task1
-                        - task2
+                source:
+                        type: task
+                        tasks:
+                                - task1
+                                - task2
                 transformations:
                         - action: crop
                           lower:
@@ -136,9 +137,10 @@ toolpaths:
                                   y: 40
 
         toolpath2:
-                source: toolpath
-                toolpaths:
-                        - toolpath1
+                source:
+                        type: toolpath
+                        toolpaths:
+                                - toolpath1
                 transformations:
                         - action: clone
                           offset:
@@ -149,10 +151,11 @@ toolpaths:
                                   y: 105%
                           count: 3
 
-export:
+exports:
         - source:
                 type: toolpath
-                name: toolpath2
+                toolpaths:
+                        - toolpath1
           format:
                 type: gcode
                 dialect: linuxcnc
@@ -163,7 +166,9 @@ export:
                 location: grid_5x3.ngc
         - source:
                 type: toolpath
-                name: toolpath1
+                toolpaths:
+                        - toolpath1
+                        - toolpath2
           format:
                 type: preview_2d
                 filetype: png
