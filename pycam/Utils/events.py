@@ -40,7 +40,7 @@ class EventCore(pycam.Gui.Settings.Settings):
             for index in removal_list:
                 handlers.handlers.pop(index)
         else:
-            log.debug("Trying to unregister an unknown event: %s", event)
+            log.info("Trying to unregister an unknown event: %s", event)
 
     def emit_event(self, event, *args, **kwargs):
         log.debug2("Event emitted: %s", str(event))
@@ -59,7 +59,7 @@ class EventCore(pycam.Gui.Settings.Settings):
         if event in self.event_handlers:
             self.event_handlers[event].blocker_tokens.append(True)
         else:
-            log.debug("Trying to block an unknown event: %s", str(event))
+            log.info("Trying to block an unknown event: %s", str(event))
 
     def unblock_event(self, event):
         if event in self.event_handlers:
@@ -68,11 +68,13 @@ class EventCore(pycam.Gui.Settings.Settings):
             else:
                 log.debug("Trying to unblock non-blocked event '%s'", str(event))
         else:
-            log.debug("Trying to unblock an unknown event: %s", str(event))
+            log.info("Trying to unblock an unknown event: %s", str(event))
 
     def register_ui_section(self, section, add_action, clear_action):
         if section not in self.ui_sections:
             self.ui_sections[section] = UISection(None, None, [])
+        else:
+            log.error("Trying to register a ui section twice: %s", section)
         self.ui_sections[section] = UISection(add_action, clear_action,
                                               self.ui_sections[section].widgets)
         self._rebuild_ui_section(section)
@@ -84,7 +86,7 @@ class EventCore(pycam.Gui.Settings.Settings):
                 ui_section.widgets.pop()
             del self.ui_sections[section]
         else:
-            log.debug("Trying to unregister a non-existent ui section: %s", str(section))
+            log.info("Trying to unregister a non-existent ui section: %s", str(section))
 
     def _rebuild_ui_section(self, section):
         if section in self.ui_sections:
@@ -95,14 +97,15 @@ class EventCore(pycam.Gui.Settings.Settings):
                 for item in ui_section.widgets:
                     ui_section.add_func(item.obj, item.name, **(item.args or {}))
         else:
-            log.debug("Failed to rebuild unknown ui section: %s", str(section))
+            log.info("Failed to rebuild unknown ui section: %s", str(section))
 
     def register_ui(self, section, name, widget, weight=0, args_dict=None):
         if section not in self.ui_sections:
+            log.info("Tried to register widget for non-existing UI: %s -> %s", name, section)
             self.ui_sections[section] = UISection(None, None, [])
         current_widgets = [item.obj for item in self.ui_sections[section].widgets]
         if (widget is not None) and (widget in current_widgets):
-            log.debug("Tried to register widget twice: %s -> %s", section, name)
+            log.info("Tried to register widget twice: %s -> %s", section, name)
             return
         self.ui_sections[section].widgets.append(UIWidget(name, widget, weight, args_dict))
         self._rebuild_ui_section(section)
@@ -121,7 +124,7 @@ class EventCore(pycam.Gui.Settings.Settings):
                 ui_section.widgets.pop(index)
             self._rebuild_ui_section(section)
         else:
-            log.debug("Trying to unregister unknown ui section: %s", section)
+            log.info("Trying to unregister unknown ui section: %s", section)
 
     def register_chain(self, name, func, weight=100):
         if name not in self.chains:
@@ -136,15 +139,16 @@ class EventCore(pycam.Gui.Settings.Settings):
                     self.chains[name].pop(index)
                     break
             else:
-                log.debug("Trying to unregister unknown function from %s: %s", name, func)
+                log.info("Trying to unregister unknown function from %s: %s", name, func)
         else:
-            log.debug("Trying to unregister from unknown chain: %s", name)
+            log.info("Trying to unregister from unknown chain: %s", name)
 
     def call_chain(self, name, *args, **kwargs):
         if name in self.chains:
             for data in self.chains[name]:
                 data.func(*args, **kwargs)
         else:
+            # this may happen during startup
             log.debug("Called an unknown chain: %s", name)
 
     def reset_state(self):
