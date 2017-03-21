@@ -34,13 +34,25 @@ def parse_yaml(event_manager, source):
         for name, spec in parsed.get(collection, {}).items():
             if collection == "bounds":
                 obj = parser_func(event_manager, name, **spec)
+                obj["parameters"]["BoundaryLowX"] = obj["lower"]["x"]
+                obj["parameters"]["BoundaryLowY"] = obj["lower"]["y"]
+                obj["parameters"]["BoundaryLowZ"] = obj["lower"]["z"]
+                obj["parameters"]["BoundaryHighX"] = obj["upper"]["x"]
+                obj["parameters"]["BoundaryHighY"] = obj["upper"]["y"]
+                obj["parameters"]["BoundaryHighZ"] = obj["upper"]["z"]
+                if obj["specification"] == "absolute":
+                    obj["parameters"]["TypeCustom"] = True
+                    obj["parameters"]["TypeRelativeMargin"] = False
+                else:
+                    obj["parameters"]["TypeCustom"] = False
+                    obj["parameters"]["TypeRelativeMargin"] = True
             elif collection == "toolpaths":
                 obj = parser_func(event_manager, spec)
             else:
                 spec["name"] = name
                 if collection == "tools":
                     spec["radius"] = spec["diameter"] / 2
-                if collection == "processes":
+                elif collection == "processes":
                     spec["path_pattern"] = {"name": spec["path_pattern"]}
                     parameters = dict(spec)
                     parameters["milling_style"] = milling_style_map[parameters["milling_style"]]
@@ -63,7 +75,7 @@ def parse_yaml(event_manager, source):
                 else:
                     event_manager.get(collection).append(obj)
             else:
-                _log.error("Failed to import model '%s'.", name)
+                _log.error("Failed to import '%s' into '%s'.", name, collection)
     for export_params in parsed.get("exports", []):
         export_toolpath(event_manager, export_params)
 
@@ -125,13 +137,18 @@ def generate_toolpath_by_specification(event_manager, params):
             task["parameters"]["process"] = get_component("processes", task_references["process"])
             task["parameters"]["tool"] = get_component("tools", task_references["tool"])
             collision_models = []
-            for model_name in task_references["collision_models"]:
-                model = get_component("models", model_name)
-                if model:
-                    collision_models.append(model)
-                else:
-                    _log.error("Failed to retrieve model: %s", model_name)
+            bounds_models = []
+            for model_source, model_destination in (
+                    (task_references["collision_models"], collision_models),
+                    (task["parameters"]["bounds"].get("models", []), bounds_models)):
+                for model_name in model_source:
+                    model = get_component("models", model_name)
+                    if model:
+                        model_destination.append(model)
+                    else:
+                        _log.error("Failed to retrieve model: %s", model_name)
             task["parameters"]["collision_models"] = collision_models
+            task["parameters"]["bounds"]["Models"] = bounds_models
             task_resolver = event_manager.get("get_parameter_sets")(
                 "task")[task_references["type"]]["func"]
             return task_resolver(task)
