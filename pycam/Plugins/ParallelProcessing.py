@@ -85,9 +85,9 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
                                           "ToggleProcessPoolWindow")
             self.core.register_ui("view_menu", "ToggleProcessPoolWindow", toggle_button, 40)
             self.register_gtk_handlers(self._gtk_handlers)
+            self.enable_parallel_processes.set_active(
+                pycam.Utils.threading.is_multiprocessing_enabled())
             self.update_parallel_processes_settings()
-        self.enable_parallel_processes.set_active(
-            pycam.Utils.threading.is_multiprocessing_enabled())
         return True
 
     def teardown(self):
