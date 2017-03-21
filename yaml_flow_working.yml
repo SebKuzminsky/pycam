@@ -1,0 +1,64 @@
+# currently implemented features
+# see "yaml_flow_example.yml" for a full format description (not fully implemented)
+
+models:
+        model1:
+                source:
+                        type: file
+                        location: samples/Box0.stl
+
+tools:
+        tool1:
+                shape: flat
+                diameter: 3
+                feed: 300
+                speed: 1000
+
+processes:
+        process1:
+                strategy: slicing
+                path_pattern: grid
+                overlap: 0.10
+                step_down: 1.0
+                grid_direction: x
+                milling_style: ignore
+
+bounds:
+        bounds1:
+                specification: absolute
+                lower:
+                        x: -5
+                        y: -5
+                        z: 0
+                upper:
+                        x: 5
+                        y: 5
+                        z: 1
+                models:
+                        - model1
+
+tasks:
+        task1:
+                type: milling
+                tool: tool1
+                process: process1
+                bounds: bounds1
+                collision_models:
+                        - model1
+
+
+toolpaths:
+        toolpath1:
+                source:
+                        type: task
+                        tasks:
+                                - task1
+
+exports:
+        - source:
+                type: toolpath
+                toolpaths:
+                        - toolpath1
+          target:
+                type: file
+                location: test.ngc

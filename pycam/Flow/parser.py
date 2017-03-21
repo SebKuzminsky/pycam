@@ -1,8 +1,3 @@
-import os
-import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
-
 import yaml
 
 import pycam.Exporters.GCode.LinuxCNC
@@ -219,9 +214,8 @@ def get_environment():
 
 
 if __name__ == "__main__":
-    import os
-    example_filename = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
-                                    "yaml_flow_example.yml")
+    import sys
+    filename = sys.argv[1]
     event_manager = get_environment()
-    with open(example_filename, "r") as config_file:
+    with open(filename, "r") as config_file:
         parse_yaml(event_manager, config_file)

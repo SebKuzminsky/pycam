@@ -91,7 +91,7 @@ update-deb-changelog:
 update-version:
 	@echo 'VERSION = "$(VERSION)"' >| "$(VERSION_FILE)"
 
-test: check-style pytest
+test: check-style pytest check-yaml-flow
 
 # The "make pytest" target calls pytest via the obsolete `py.test` name,
 # instead of the modern `pytest` name.  This is in order to support
@@ -103,6 +103,11 @@ pytest:
 
 check-style:
 	scripts/run_flake8 $(PYTHON_CHECK_STYLE_TARGETS)
+
+check-yaml-flow:
+	$(RM) test.ngc
+	python pycam.Flow.parser yaml_flow_working.yml
+	grep -q "Z" test.ngc
 
 pylint-strict:
 	pylint $(PYTHON_CHECK_STYLE_TARGETS)
