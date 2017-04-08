@@ -29,6 +29,7 @@ from pycam.Geometry.PointUtils import pdist
 from pycam.Geometry.Line import Line
 import pycam.Geometry.Model
 import pycam.Geometry.Matrix
+from pycam.Geometry.utils import get_points_of_arc
 import pycam.Geometry
 import pycam.Utils.log
 import pycam.Utils
@@ -841,8 +842,7 @@ class DXFParser(object):
                 # use the color code as the z coordinate
                 center[2] = float(color) / 255
             center = tuple(center)
-            xy_point_coords = pycam.Geometry.get_points_of_arc(center, radius, angle_start,
-                                                               angle_end)
+            xy_point_coords = get_points_of_arc(center, radius, angle_start, angle_end)
             # Somehow the order of points seems to be the opposite of what is
             # expected.
             xy_point_coords.reverse()
