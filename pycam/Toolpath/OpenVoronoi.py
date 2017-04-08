@@ -21,6 +21,7 @@ from pycam.Geometry import epsilon
 import pycam.Geometry.Model
 from pycam.Geometry.Line import Line
 import pycam.Geometry.Polygon
+from pycam.Geometry.utils import get_points_of_arc
 import pycam.Utils.log
 
 _log = pycam.Utils.log.get_logger()
@@ -115,7 +116,7 @@ def _offset_loops_to_polygons(offset_loops):
                               for direction in (direction_before, direction_end)]
                     if clock_wise:
                         angles.reverse()
-                    points = pycam.Geometry.get_points_of_arc(center, radius, angles[0], angles[1])
+                    points = get_points_of_arc(center, radius, angles[0], angles[1])
                     last_p = before
                     for p in points:
                         lines.append(Line(last_p, p))
