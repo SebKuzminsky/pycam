@@ -229,7 +229,7 @@ Please read the description of the Server Mode (linked below) to understand the 
                     <property name="receives_default">True</property>
                     <property name="relief">none</property>
                     <property name="xalign">0</property>
-                    <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=ServerMode</property>
+                    <property name="uri">http://pycam.sourceforge.net/server-mode</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -471,7 +471,7 @@ You will need remote workers.&lt;/span&gt;</property>
 You are probably using the Windows standalone executable.
 Instead you could use the PyCAM installer package along with the all-in-one installer of all dependencies.
 
-See the &lt;a href="http://sf.net/apps/mediawiki/pycam/?title=Parallel_Processing_on_different_Platforms"&gt;platform feature matrix&lt;/a&gt; for details.</property>
+See the &lt;a href="http://pycam.sourceforge.net/parallel-processing"&gt;platform feature matrix&lt;/a&gt; for details.</property>
                     <property name="use_markup">True</property>
                     <property name="wrap">True</property>
                   </object>
@@ -677,7 +677,7 @@ See the &lt;a href="http://sf.net/apps/mediawiki/pycam/?title=Parallel_Processin
                                     <property name="receives_default">True</property>
                                     <property name="relief">none</property>
                                     <property name="use_stock">True</property>
-                                    <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=ServerMode</property>
+                                    <property name="uri">http://pycam.sourceforge.net/server-mode</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">2</property>

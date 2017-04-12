@@ -117,8 +117,8 @@ def is_multiprocessing_enabled():
 
 
 def is_server_mode_available():
-    # the following definition should be kept in sync with the wiki:
-    # http://sf.net/apps/mediawiki/pycam/?title=Parallel_Processing_on_different_Platforms
+    # the following definition should be kept in sync with the documentation in
+    # docs/parallel-processing.md
     return is_multiprocessing_available()
 
 
@@ -198,8 +198,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None, r
         # due to "pickle errors". How to reproduce: run the standalone binary
         # with "--enable-server --server-auth-key foo".
         feature_matrix_text = ("Take a look at the wiki for a matrix of platforms and available "
-                               "features: http://sf.net/apps/mediawiki/pycam/?title="
-                               "Parallel_Processing_on_different_Platforms")
+                               "features: http://pycam.sourceforge.net/parallel-processing")
         if enable_server:
             log.warn("Unable to enable server mode with your current setup.\n%s",
                      feature_matrix_text)

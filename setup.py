@@ -62,7 +62,7 @@ setup(
     download_url="http://sourceforge.net/projects/pycam/files",
     keywords=["3-axis", "cnc", "cam", "toolpath", "machining", "g-code"],
     long_description="""IMPORTANT NOTE: Please read the list of requirements:
-http://sourceforge.net/apps/mediawiki/pycam/index.php?title=Requirements
+http://pycam.sourceforge.net/requirements
 Basically you will need Python, GTK and OpenGL.
 
 Windows: select Python 2.5 in the following dialog.

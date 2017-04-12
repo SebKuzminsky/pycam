@@ -44,7 +44,7 @@ DEPENDENCY_DESCRIPTION = {
            ""),
 }
 
-REQUIREMENTS_LINK = "http://sf.net/apps/mediawiki/pycam/?title=Requirements"
+REQUIREMENTS_LINK = "http://pycam.sourceforge.net/requirements"
 
 # Usually the windows registry "HKEY_LOCAL_MACHINE/SOFTWARE/Gtk+/Path" contains
 # something like: C:\Programs\Common files\GTK

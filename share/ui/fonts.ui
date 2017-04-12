@@ -235,7 +235,7 @@
                 <property name="receives_default">True</property>
                 <property name="relief">none</property>
                 <property name="use_stock">True</property>
-                <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=EngraveFonts</property>
+                <property name="uri">http://pycam.sourceforge.net/engrave-fonts</property>
               </object>
               <packing>
                 <property name="expand">False</property>
