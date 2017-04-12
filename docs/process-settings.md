@@ -17,7 +17,7 @@ roughly cleaning the material if it is deeper than the maximum
 penetration depth of your current tool. The *Step Down* value specifies
 the maximum height of each layer.
 
-### Contour (polygon)
+### Waterline/Contour (polygon)
 
 ![Screenshot of 3D view showing Contour (polygon) strategy](img/process-strategy-contour-polygon.png)
 
@@ -40,7 +40,9 @@ requires more processing time.
 The contour-&gt;follow strategy is quite new (v0.4) and thus should be
 considered experimental.
 
-### Surface
+This strategy is not (yet) available from the GUI.
+
+### Surfacing
 
 ![Screenshot of 3D view showing surface strategy](img/process-strategy-surface.png)
 
@@ -74,7 +76,7 @@ Specify if the toolpath lines should move along the X or the Y axis.
 Milling style
 -------------
 
-### Conventional
+### Conventional / up
 
 In conventional milling style the cutter (rotating clockwise) moves with
 the material on its left side. Thus the force applied to tool is quite
@@ -83,7 +85,7 @@ style. This should be mainly used for older machines or hard material.
 
 ![Diagram of conventional milling style](img/process-milling-conventional.png)
 
-### Climb
+### Climb / down
 
 In climb milling style the cutter (rotating clockwise) moves with the
 material on its right side. Thus the force applied to the tool rises
@@ -101,12 +103,6 @@ height.
 
 Parameters
 ----------
-
-### Safety height
-
-The safety height is the absolute z-level that is considered to be safe
-for rapid movements. This should be clearly above the highest point of
-your model.
 
 ### Overlap \[%\]
 
@@ -172,3 +168,12 @@ The following conditions must be fulfilled for any pocketed area:
     inside of the surrounding polygon
 
 Pocketing is done with 20% overlap (not configurable).
+
+### Safety height
+
+The safety height is the absolute z-level that is considered to be safe
+for rapid movements. This should be clearly above the highest point of
+your model.
+
+This parameter is set after generating the toolpath, and can be found for each 
+toolpath under Settings/Preferences.
