@@ -350,7 +350,7 @@
         <property name="relief">none</property>
         <property name="use_stock">True</property>
         <property name="xalign">1</property>
-        <property name="uri">http://sourceforge.net/apps/mediawiki/pycam/index.php?title=3D_View</property>
+        <property name="uri">http://pycam.sourceforge.net/3d-view</property>
       </object>
       <packing>
         <property name="expand">False</property>

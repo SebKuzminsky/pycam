@@ -925,7 +925,7 @@ def import_model(filename, color_as_height=False, fonts_cache=None, callback=Non
                  len(lines), len(model.get_polygons()))
         return model
     else:
-        link = "http://sf.net/apps/mediawiki/pycam/?title=SupportedFormats"
+        link = "http://pycam.sourceforge.net/supported-formats"
         log.error('DXFImporter: No supported elements found in DXF file!\n'
                   '<a href="%s">Read PyCAM\'s modeling hints.</a>', link)
         return None

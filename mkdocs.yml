@@ -28,8 +28,10 @@ pages:
   - 3D View: 3d-view.md
   - Model Transformations: model-transformations.md
   - Engrave Fonts: engrave-fonts.md
+  - Tool Types: tool-types.md
   - Process Settings: process-settings.md
   - Bounding Box: bounding-box.md
+  - Task Settings: task-settings.md
 - Advanced Usage:
   - Keyboard Shortcuts: keyboard-shortcuts.md
   - Command-line Examples: cli-examples.md
