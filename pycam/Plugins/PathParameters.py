@@ -92,9 +92,9 @@ class PathParamMillingStyle(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputChoice(
-            (("ignore", pycam.Toolpath.MotionGrid.MILLING_STYLE_IGNORE),
-             ("climb / down", pycam.Toolpath.MotionGrid.MILLING_STYLE_CLIMB),
-             ("conventional / up", pycam.Toolpath.MotionGrid.MILLING_STYLE_CONVENTIONAL)),
+            (("ignore", pycam.Toolpath.MotionGrid.MillingStyle.IGNORE),
+             ("climb / down", pycam.Toolpath.MotionGrid.MillingStyle.CLIMB),
+             ("conventional / up", pycam.Toolpath.MotionGrid.MillingStyle.CONVENTIONAL)),
             change_handler=lambda widget=None: self.core.emit_event("process-changed"))
         self.core.get("register_parameter")("path_pattern", "milling_style", self.control)
         self.core.get("register_parameter")("process", "milling_style", self.control)

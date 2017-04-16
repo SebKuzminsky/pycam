@@ -70,7 +70,7 @@ class ProcessStrategyContour(pycam.Plugins.PluginBase):
         parameters = {"step_down": 1.0,
                       "material_allowance": 0,
                       "overlap": 0.8,
-                      "milling_style": pycam.Toolpath.MotionGrid.MILLING_STYLE_IGNORE}
+                      "milling_style": pycam.Toolpath.MotionGrid.MillingStyle.IGNORE}
         self.core.get("register_parameter_set")("process", "contour", "Waterline",
                                                 self.run_process, parameters=parameters, weight=20)
         return True
@@ -126,7 +126,7 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
 
     def setup(self):
         parameters = {"step_down": 1.0,
-                      "milling_style": pycam.Toolpath.MotionGrid.MILLING_STYLE_IGNORE,
+                      "milling_style": pycam.Toolpath.MotionGrid.MillingStyle.IGNORE,
                       "radius_compensation": False,
                       "trace_models": [],
                       "pocketing_type": pycam.Toolpath.MotionGrid.POCKETING_TYPE_NONE}

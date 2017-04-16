@@ -30,7 +30,7 @@ class PathPatternSpiral(pycam.Plugins.PluginBase):
     CATEGORIES = ["Process", "Path pattern"]
 
     def setup(self):
-        parameters = {"milling_style": pycam.Toolpath.MotionGrid.MILLING_STYLE_IGNORE,
+        parameters = {"milling_style": pycam.Toolpath.MotionGrid.MillingStyle.IGNORE,
                       "spiral_direction": None,
                       "rounded_corners": False}
         self.core.get("register_parameter_set")("path_pattern", "spiral", "Spiral",
