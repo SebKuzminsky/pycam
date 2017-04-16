@@ -52,10 +52,10 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
             self.log.error("You need to assign bounds to this task.")
             return
         funcs = {}
-        for key, set_name in (("tool", "shape"), ("process", "strategy")):
+        for key, set_name in (("process", "strategy"), ):
             funcs[key] = self.core.get("get_parameter_sets")(
                 key)[environment[key][set_name]]["func"]
-        tool, tool_filters = funcs["tool"](environment["tool"]["parameters"])
+        tool = environment["tool"]
         box = environment["bounds"].get_absolute_limits(tool_radius=tool.radius,
                                                         models=environment["collision_models"])
         if not box:
@@ -70,10 +70,11 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
             # issue a warning - and go ahead ...
             self.log.warn("No collision model was selected. This can be intentional, but maybe "
                           "you simply forgot it.")
-        moves = path_generator.GenerateToolPath(tool, models, motion_grid, minz=box.lower.z,
-                                                maxz=box.upper.z, draw_callback=callback)
+        moves = path_generator.GenerateToolPath(tool.get_tool_geometry(), models, motion_grid,
+                                                minz=box.lower.z, maxz=box.upper.z,
+                                                draw_callback=callback)
         if not moves:
             self.log.info("No valid moves found")
             return None
         return pycam.Toolpath.Toolpath(toolpath_path=moves, tool=tool,
-                                       toolpath_filters=tool_filters)
+                                       toolpath_filters=tool.get_toolpath_filters())

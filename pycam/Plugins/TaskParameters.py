@@ -75,7 +75,7 @@ class TaskParamTool(pycam.Plugins.PluginBase):
         choices = []
         tools = self.core.get("tools")
         for tool in tools:
-            choices.append((tool["name"], tool))
+            choices.append((tool.get_value("name"), tool))
         self.control.update_choices(choices)
 
 

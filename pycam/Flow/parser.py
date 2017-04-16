@@ -1,6 +1,7 @@
 import yaml
 
 import pycam.Exporters.GCode.LinuxCNC
+import pycam.Flow.data_models
 import pycam.Importers
 import pycam.Plugins
 from pycam.Utils.events import EventCore
@@ -15,19 +16,22 @@ def parse_yaml(event_manager, source):
     from pycam.Plugins.Bounds import BoundsEntity
     from pycam.Plugins.Processes import ProcessEntity
     from pycam.Plugins.Tasks import TaskEntity
-    from pycam.Plugins.Tools import ToolEntity
     milling_style_map = {"ignore": pycam.Toolpath.MotionGrid.MillingStyle.IGNORE,
                          "conventional": pycam.Toolpath.MotionGrid.MillingStyle.CONVENTIONAL,
                          "climb": pycam.Toolpath.MotionGrid.MillingStyle.CLIMB}
     parsed = yaml.safe_load(source)
-    for collection, parser_func in (("tools", ToolEntity),
+    for collection, parser_func in (("tools", pycam.Flow.data_models.Tool),
                                     ("processes", ProcessEntity),
                                     ("bounds", BoundsEntity),
                                     ("tasks", TaskEntity),
                                     ("models", import_model_by_attributes),
                                     ("toolpaths", generate_toolpath_by_specification)):
         for name, spec in parsed.get(collection, {}).items():
-            if collection == "bounds":
+            if collection in ("tools", ):
+                data = dict(spec)
+                data["name"] = name
+                obj = parser_func(data)
+            elif collection == "bounds":
                 obj = parser_func(event_manager, name, **spec)
                 obj["parameters"]["BoundaryLowX"] = obj["lower"]["x"]
                 obj["parameters"]["BoundaryLowY"] = obj["lower"]["y"]
@@ -45,9 +49,7 @@ def parse_yaml(event_manager, source):
                 obj = parser_func(event_manager, spec)
             else:
                 spec["name"] = name
-                if collection == "tools":
-                    spec["radius"] = spec["diameter"] / 2
-                elif collection == "processes":
+                if collection == "processes":
                     spec["path_pattern"] = {"name": spec["path_pattern"]}
                     parameters = dict(spec)
                     parameters["milling_style"] = milling_style_map[parameters["milling_style"]]

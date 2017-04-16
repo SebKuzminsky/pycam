@@ -65,7 +65,7 @@ models:
 
 tools:
         tool1:
-                shape: flat
+                shape: flat_bottom
                 diameter: 3
                 feed: 300
                 speed: 1000

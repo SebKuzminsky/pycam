@@ -19,6 +19,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Plugins
+from pycam.Flow.data_models import Tool
 from pycam.Toolpath.Filters import toolpath_filter
 
 
@@ -132,7 +133,7 @@ class Tools(pycam.Plugins.ListPluginBase):
 
     def _trigger_table_update(self):
         self.gui.get_object("IDColumn").set_cell_data_func(
-            self.gui.get_object("IDCell"), self._render_tool_info, "id")
+            self.gui.get_object("IDCell"), self._render_tool_info, "tool_id")
         self.gui.get_object("NameColumn").set_cell_data_func(
             self.gui.get_object("NameCell"), self._render_tool_info, "name")
         self.gui.get_object("ShapeColumn").set_cell_data_func(
@@ -141,23 +142,22 @@ class Tools(pycam.Plugins.ListPluginBase):
     def _render_tool_info(self, column, cell, model, m_iter, key):
         path = model.get_path(m_iter)
         tool = self[path[0]]
-        cell.set_property("text", str(tool[key]))
+        cell.set_property("text", str(tool.get_value(key)))
 
     def _render_tool_shape(self, column, cell, model, m_iter, data):
         tool = self.get_by_path(model.get_path(m_iter))
         if not tool:
             return
-        parameters = tool["parameters"]
-        if "radius" in parameters:
-            text = "%g%s" % (2 * parameters["radius"], self.core.get("unit"))
+        if tool.diameter:
+            text = "%g%s" % (tool.diameter, self.core.get("unit"))
         else:
             text = ""
         cell.set_property("text", text)
 
     def _edit_tool_name(self, cell, path, new_text):
         tool = self.get_by_path(path)
-        if tool and (new_text != tool["name"]) and new_text:
-            tool["name"] = new_text
+        if tool and (new_text != tool.get_value("name")) and new_text:
+            tool.set_value("name", new_text)
             self.core.emit_event("tool-list-changed")
 
     def _edit_tool_id(self, cell, path, new_text):
@@ -166,8 +166,8 @@ class Tools(pycam.Plugins.ListPluginBase):
             new_value = int(new_text)
         except ValueError:
             return
-        if tool and (new_value != tool["id"]):
-            tool["id"] = new_value
+        if tool and (new_value != tool.get_value("tool_id", raise_if_missing=False)):
+            tool.set_value("tool_id", new_value)
 
     def _get_shape(self, name=None):
         shapes = self.core.get("get_parameter_sets")("tool")
@@ -207,7 +207,7 @@ class Tools(pycam.Plugins.ListPluginBase):
         removal = []
         shape_names = [shape["name"] for shape in shapes]
         for index, tool in enumerate(self):
-            if not tool["shape"] in shape_names:
+            if not tool.get_value("shape") in shape_names:
                 removal.append(index)
         removal.reverse()
         for index in removal:
@@ -220,7 +220,7 @@ class Tools(pycam.Plugins.ListPluginBase):
         else:
             selector_box.show()
         if selected:
-            self.select_shape(selected["name"])
+            self.select_shape(selected.get_value("name"))
 
     def _store_tool_settings(self):
         tool = self.get_selected()
@@ -229,9 +229,9 @@ class Tools(pycam.Plugins.ListPluginBase):
         if tool is None or shape is None:
             control_box.hide()
         else:
-            tool["shape"] = shape["name"]
-            parameters = tool["parameters"]
-            parameters.update(self.core.get("get_parameter_values")("tool"))
+            tool.set_value("shape", shape["name"])
+            for key, value in self.core.get("get_parameter_values")("tool").items():
+                tool.set_value(key, value)
             control_box.show()
             self._trigger_table_update()
 
@@ -243,9 +243,9 @@ class Tools(pycam.Plugins.ListPluginBase):
         else:
             self.core.block_event("tool-changed")
             self.core.block_event("tool-shape-changed")
-            shape_name = tool["shape"]
+            shape_name = tool.get_value("shape")
             self.select_shape(shape_name)
-            self.core.get("set_parameter_values")("tool", tool["parameters"])
+            self.core.get("set_parameter_values")("tool", tool.get_dict())
             control_box.show()
             self.core.unblock_event("tool-shape-changed")
             self.core.unblock_event("tool-changed")
@@ -254,28 +254,20 @@ class Tools(pycam.Plugins.ListPluginBase):
 
     def _get_new_tool_id_and_name(self):
         tools = self.core.get("tools")
-        tool_ids = [tool["id"] for tool in tools]
+        tool_ids = [tool.get_value("tool_id") for tool in tools]
         tool_id = 1
         while tool_id in tool_ids:
             tool_id += 1
         return (tool_id, "Tool #%d" % tool_id)
 
     def _tool_new(self, *args):
-        shapes = list(self.core.get("get_parameter_sets")("tool").values())
-        shapes.sort(key=lambda item: item["weight"])
-        shape = shapes[0]
+        new_tool = Tool({"shape": "flat", "radius": 1.0, "feed": 300})
         tool_id, tool_name = self._get_new_tool_id_and_name()
-        new_tool = ToolEntity({"shape": shape["name"], "parameters": shape["parameters"].copy(),
-                               "id": tool_id, "name": tool_name})
+        new_tool.set_value("tool_id", tool_id)
+        new_tool.set_value("name", tool_name)
         self.append(new_tool)
         self.select(new_tool)
 
     @toolpath_filter("tool", "tool_id")
     def get_toolpath_filters(self, tool_id):
         return [pycam.Toolpath.Filters.SelectTool(tool_id)]
-
-
-class ToolEntity(pycam.Plugins.ObjectWithAttributes):
-
-    def __init__(self, parameters):
-        super(ToolEntity, self).__init__("tool", parameters)

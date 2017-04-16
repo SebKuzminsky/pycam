@@ -450,9 +450,9 @@ class ListPluginBase(PluginBase, list):
 
     def _select_gtk(self, selected_objs):
         selection = self._gtk_modelview.get_selection()
-        selected_uuids = [item["uuid"] for item in selected_objs]
+        selected_uuids = [self._get_item_uuid(item) for item in selected_objs]
         for index, item in enumerate(self):
-            if item["uuid"] in selected_uuids:
+            if self._get_item_uuid(item) in selected_uuids:
                 selection.select_path((index, ))
             else:
                 selection.unselect_path((index, ))
@@ -460,11 +460,18 @@ class ListPluginBase(PluginBase, list):
     def set_gtk_modelview(self, modelview):
         self._gtk_modelview = modelview
 
+    def _get_item_uuid(self, item):
+        try:
+            return item["uuid"]
+        except TypeError:
+            # use the new style instead of the old dict
+            return item.get_dict()["name"]
+
     def _update_gtk_treemodel(self):
         if not self._gtk_modelview:
             return
         treemodel = self._gtk_modelview.get_model()
-        current_uuids = [item["uuid"] for item in self]
+        current_uuids = [self._get_item_uuid(item) for item in self]
         # remove all superfluous rows from "treemodel"
         removal_indices = [index for index, item in enumerate(treemodel)
                            if item[0] not in current_uuids]
@@ -480,21 +487,26 @@ class ListPluginBase(PluginBase, list):
         sorted_indices = [current_uuids.index(row[0]) for row in treemodel]
         if sorted_indices:
             treemodel.reorder(sorted_indices)
-        self.core.emit_event("tool-list-changed")
 
     def get_by_path(self, path):
         if not self._gtk_modelview:
             return None
         this_uuid = self._gtk_modelview.get_model()[int(path[0])][0]
-        objs = [t for t in self if this_uuid == t["uuid"]]
+        objs = [t for t in self if this_uuid == self._get_item_uuid(t)]
         if objs:
             return objs[0]
         else:
             return None
 
     def get_by_attribute(self, key, value):
+        """ TODO: maybe remove this after the data migration - it is only used by pycam.Flow.parser
+        """
         for item in self:
-            if item.get(key, None) == value:
+            if hasattr(item, "get_value"):
+                item_value = item.get_value(key, raise_if_missing=False)
+            else:
+                item_value = item.get(key, None)
+            if item_value == value:
                 return item
         return None
 

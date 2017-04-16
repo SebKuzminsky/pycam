@@ -300,8 +300,8 @@ class Tasks(pycam.Plugins.ListPluginBase):
                 # break the loop if someone clicked the "cancel" button
                 return progress.update(text=text, percent=percent)
 
-        tool_shape = task["parameters"]["tool"]["shape"]
-        tool_parameters = task["parameters"]["tool"]["parameters"]
+        tool_shape = task["parameters"]["tool"].get_value("shape")
+        tool_parameters = task["parameters"]["tool"].get_dict()
         tool = self.core.get("get_parameter_sets")("tool")[tool_shape]["func"](tool_parameters)[0]
         self.core.set("current_tool", tool)
         draw_callback = UpdateView(self, lambda: self.core.emit_event("visual-item-updated"),
