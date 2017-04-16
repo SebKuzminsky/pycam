@@ -138,8 +138,8 @@ class PathParamSpiralDirection(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputChoice(
-            (("outside -> center", pycam.Toolpath.MotionGrid.SPIRAL_DIRECTION_IN),
-             ("center -> outside", pycam.Toolpath.MotionGrid.SPIRAL_DIRECTION_OUT)),
+            (("outside -> center", pycam.Toolpath.MotionGrid.SpiralDirection.IN),
+             ("center -> outside", pycam.Toolpath.MotionGrid.SpiralDirection.OUT)),
             change_handler=lambda widget=None: self.core.emit_event("process-changed"))
         self.core.get("register_parameter")("path_pattern", "spiral_direction", self.control)
         self.core.register_ui("process_path_parameters", "Direction", self.control.get_widget(),

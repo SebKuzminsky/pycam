@@ -51,8 +51,9 @@ class StartPosition(IntEnum):
     Z = 0x4
 
 
-SPIRAL_DIRECTION_IN = 0
-SPIRAL_DIRECTION_OUT = 1
+class SpiralDirection(Enum):
+    IN = "in"
+    OUT = "out"
 
 POCKETING_TYPE_NONE = 0
 POCKETING_TYPE_HOLES = 1
@@ -337,7 +338,7 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width, grid_
 
 
 def get_spiral(box, layer_distance, line_distance=None, step_width=None,
-               milling_style=MillingStyle.IGNORE, spiral_direction=SPIRAL_DIRECTION_IN,
+               milling_style=MillingStyle.IGNORE, spiral_direction=SpiralDirection.IN,
                rounded_corners=False,
                start_position=(StartPosition.X | StartPosition.Y | StartPosition.Z)):
     """ Calculate the grid positions for toolpath moves
@@ -354,7 +355,7 @@ def get_spiral(box, layer_distance, line_distance=None, step_width=None,
         start_direction = GridDirection.X
     else:
         start_direction = GridDirection.Y
-    reverse = (spiral_direction == SPIRAL_DIRECTION_OUT)
+    reverse = (spiral_direction == SpiralDirection.OUT)
     for z in layers:
         yield get_spiral_layer(box.lower.x, box.upper.x, box.lower.y, box.upper.y, z,
                                line_distance, step_width=step_width,
