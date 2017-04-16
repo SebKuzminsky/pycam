@@ -24,6 +24,7 @@ import random
 import string
 
 import pycam.Plugins
+import pycam.Utils.threading
 
 
 class ParallelProcessing(pycam.Plugins.PluginBase):
