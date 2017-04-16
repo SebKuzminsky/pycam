@@ -129,7 +129,7 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
                       "milling_style": pycam.Toolpath.MotionGrid.MillingStyle.IGNORE,
                       "radius_compensation": False,
                       "trace_models": [],
-                      "pocketing_type": pycam.Toolpath.MotionGrid.POCKETING_TYPE_NONE}
+                      "pocketing_type": pycam.Toolpath.MotionGrid.PocketingType.NONE}
         self.core.get("register_parameter_set")("process", "engraving", "Engraving",
                                                 self.run_process, parameters=parameters, weight=80)
         return True

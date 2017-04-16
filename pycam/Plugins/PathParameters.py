@@ -313,9 +313,9 @@ class PathParamPocketingType(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputChoice(
-            (("none", pycam.Toolpath.MotionGrid.POCKETING_TYPE_NONE),
-             ("holes", pycam.Toolpath.MotionGrid.POCKETING_TYPE_HOLES),
-             ("material", pycam.Toolpath.MotionGrid.POCKETING_TYPE_MATERIAL)),
+            (("none", pycam.Toolpath.MotionGrid.PocketingType.NONE),
+             ("holes", pycam.Toolpath.MotionGrid.PocketingType.HOLES),
+             ("material", pycam.Toolpath.MotionGrid.PocketingType.MATERIAL)),
             change_handler=lambda widget=None: self.core.emit_event("process-changed"))
         self.core.get("register_parameter")("process", "pocketing_type", self.control)
         self.core.register_ui("process_path_parameters", "Pocketing", self.control.get_widget(),

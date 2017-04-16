@@ -55,9 +55,11 @@ class SpiralDirection(Enum):
     IN = "in"
     OUT = "out"
 
-POCKETING_TYPE_NONE = 0
-POCKETING_TYPE_HOLES = 1
-POCKETING_TYPE_MATERIAL = 2
+
+class PocketingType(Enum):
+    NONE = "none"
+    HOLES = "holes"
+    MATERIAL = "material"
 
 
 def isiterable(obj):
@@ -437,7 +439,7 @@ def _get_sorted_polygons(models, callback=None):
 
 def get_lines_grid(models, box, layer_distance, line_distance=None, step_width=None,
                    milling_style=MillingStyle.CONVENTIONAL, start_position=StartPosition.Z,
-                   pocketing_type=POCKETING_TYPE_NONE, skip_first_layer=False, callback=None):
+                   pocketing_type=PocketingType.NONE, skip_first_layer=False, callback=None):
     _log.debug("Calculating lines grid: {} model(s), z={}..{} ({}), line_distance={}, "
                "step_width={}".format(len(models), box.lower, box.upper, layer_distance,
                                       line_distance, step_width))
@@ -448,7 +450,7 @@ def get_lines_grid(models, box, layer_distance, line_distance=None, step_width=N
         new_lower = Point3D(box.lower.x, box.lower.y, max(box.lower.z, low_limit_lines))
         box = Box3D(new_lower, box.upper)
     # calculate pockets
-    if pocketing_type != POCKETING_TYPE_NONE:
+    if pocketing_type != PocketingType.NONE:
         if callback is not None:
             callback(text="Generating pocketing polygons ...")
         polygons = get_pocketing_polygons(polygons, line_distance, pocketing_type,
@@ -518,7 +520,7 @@ def get_pocketing_polygons_simple(polygons, offset, pocketing_type, callback=Non
     pocketing_limit = 1000
     base_polygons = []
     other_polygons = []
-    if pocketing_type == POCKETING_TYPE_HOLES:
+    if pocketing_type == PocketingType.HOLES:
         # go inwards
         offset *= -1
         for poly in polygons:
@@ -526,7 +528,7 @@ def get_pocketing_polygons_simple(polygons, offset, pocketing_type, callback=Non
                 base_polygons.append(poly)
             else:
                 other_polygons.append(poly)
-    elif pocketing_type == POCKETING_TYPE_MATERIAL:
+    elif pocketing_type == PocketingType.MATERIAL:
         for poly in polygons:
             if poly.is_closed and not poly.is_outer():
                 base_polygons.append(poly)
