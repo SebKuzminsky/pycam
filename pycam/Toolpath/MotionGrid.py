@@ -46,6 +46,7 @@ class MillingStyle(Enum):
 
 
 class StartPosition(IntEnum):
+    NONE = 0x0
     X = 0x1
     Y = 0x2
     Z = 0x4
@@ -110,7 +111,7 @@ def get_fixed_grid_line(start, end, line_pos, z, step_width=None, grid_direction
 
 def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance, step_width=None,
                          grid_direction=GridDirection.X, milling_style=MillingStyle.IGNORE,
-                         start_position=0):
+                         start_position=StartPosition.NONE):
     if grid_direction == GridDirection.XY:
         raise ValueError("'get_one_layer_fixed_grid' does not accept XY direction")
     # zigzag is only available if the milling
@@ -209,6 +210,9 @@ def get_fixed_grid(box, layer_distance, line_distance=None, step_width=None,
                    start_position=StartPosition.Z):
     """ Calculate the grid positions for toolpath moves
     """
+    assert isinstance(milling_style, MillingStyle)
+    assert isinstance(grid_direction, GridDirection)
+    assert isinstance(start_position, StartPosition)
     if isiterable(layer_distance):
         layers = layer_distance
     elif layer_distance is None:
