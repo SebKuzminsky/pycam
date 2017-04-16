@@ -84,7 +84,7 @@ class ProcessStrategyContour(pycam.Plugins.PluginBase):
         # TODO: milling_style currently refers to the grid lines - not to the waterlines
         motion_grid = pycam.Toolpath.MotionGrid.get_fixed_grid(
             box, process["parameters"]["step_down"], line_distance=line_distance,
-            grid_direction=pycam.Toolpath.MotionGrid.GRID_DIRECTION_X,
+            grid_direction=pycam.Toolpath.MotionGrid.GridDirection.X,
             milling_style=process["parameters"]["milling_style"])
         return path_generator, motion_grid
 

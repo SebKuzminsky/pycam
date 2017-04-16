@@ -54,8 +54,8 @@ class PathPatternGrid(pycam.Plugins.PluginBase):
     CATEGORIES = ["Process", "Path pattern"]
 
     def setup(self):
-        parameters = {"milling_style": pycam.Toolpath.MotionGrid.MILLING_STYLE_IGNORE,
-                      "grid_direction": pycam.Toolpath.MotionGrid.GRID_DIRECTION_X}
+        parameters = {"milling_style": pycam.Toolpath.MotionGrid.MillingStyle.IGNORE,
+                      "grid_direction": pycam.Toolpath.MotionGrid.GridDirection.X}
         self.core.get("register_parameter_set")("path_pattern", "grid", "Grid",
                                                 self.get_grid_generator, parameters=parameters,
                                                 weight=10)

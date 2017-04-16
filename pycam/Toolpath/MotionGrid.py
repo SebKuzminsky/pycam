@@ -19,6 +19,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import math
+from enum import Enum, IntEnum
 
 from pycam.Geometry import epsilon, Point3D, Box3D
 from pycam.Geometry.Line import Line
@@ -32,9 +33,11 @@ import pycam.Utils.log
 _log = pycam.Utils.log.get_logger()
 
 
-GRID_DIRECTION_X = 0
-GRID_DIRECTION_Y = 1
-GRID_DIRECTION_XY = 2
+class GridDirection(Enum):
+    X = "x"
+    Y = "y"
+    XY = "xy"
+
 
 MILLING_STYLE_IGNORE = 0
 MILLING_STYLE_CONVENTIONAL = 1
@@ -82,7 +85,7 @@ def floatrange(start, end, inc=None, steps=None, reverse=False):
             yield start + inc * index
 
 
-def get_fixed_grid_line(start, end, line_pos, z, step_width=None, grid_direction=GRID_DIRECTION_X):
+def get_fixed_grid_line(start, end, line_pos, z, step_width=None, grid_direction=GridDirection.X):
     if step_width is None:
         # useful for PushCutter operations
         steps = (start, end)
@@ -90,7 +93,7 @@ def get_fixed_grid_line(start, end, line_pos, z, step_width=None, grid_direction
         steps = step_width
     else:
         steps = floatrange(start, end, inc=step_width)
-    if grid_direction == GRID_DIRECTION_X:
+    if grid_direction == GridDirection.X:
         get_point = lambda pos: (pos, line_pos, z)
     else:
         get_point = lambda pos: (line_pos, pos, z)
@@ -99,9 +102,9 @@ def get_fixed_grid_line(start, end, line_pos, z, step_width=None, grid_direction
 
 
 def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance, step_width=None,
-                         grid_direction=GRID_DIRECTION_X, milling_style=MILLING_STYLE_IGNORE,
+                         grid_direction=GridDirection.X, milling_style=MILLING_STYLE_IGNORE,
                          start_position=0):
-    if grid_direction == GRID_DIRECTION_XY:
+    if grid_direction == GridDirection.XY:
         raise ValueError("'get_one_layer_fixed_grid' does not accept XY direction")
     # zigzag is only available if the milling
     zigzag = (milling_style == MILLING_STYLE_IGNORE)
@@ -117,7 +120,7 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance, step_width=No
             # toggle the Y position bit
             return start ^ START_Y
 
-    if grid_direction == GRID_DIRECTION_X:
+    if grid_direction == GridDirection.X:
         primary_dir = START_X
         secondary_dir = START_Y
     else:
@@ -128,18 +131,18 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance, step_width=No
     if milling_style == MILLING_STYLE_IGNORE:
         # just move forward - milling style is not important
         pass
-    elif (milling_style == MILLING_STYLE_CLIMB) == (grid_direction == GRID_DIRECTION_X):
+    elif (milling_style == MILLING_STYLE_CLIMB) == (grid_direction == GridDirection.X):
         if bool(start_position & START_X) == bool(start_position & START_Y):
             # we can't start from here - choose an alternative
             start_position = get_alternative_start_position(start_position)
-    elif (milling_style == MILLING_STYLE_CONVENTIONAL) == (grid_direction == GRID_DIRECTION_X):
+    elif (milling_style == MILLING_STYLE_CONVENTIONAL) == (grid_direction == GridDirection.X):
         if bool(start_position & START_X) != bool(start_position & START_Y):
             # we can't start from here - choose an alternative
             start_position = get_alternative_start_position(start_position)
     else:
         raise ValueError("Invalid milling style given: %s" % str(milling_style))
     # sort out the coordinates (primary/secondary)
-    if grid_direction == GRID_DIRECTION_X:
+    if grid_direction == GridDirection.X:
         start, end = minx, maxx
         line_start, line_end = miny, maxy
     else:
@@ -195,7 +198,7 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance, step_width=No
 
 
 def get_fixed_grid(box, layer_distance, line_distance=None, step_width=None,
-                   grid_direction=GRID_DIRECTION_X, milling_style=MILLING_STYLE_IGNORE,
+                   grid_direction=GridDirection.X, milling_style=MILLING_STYLE_IGNORE,
                    start_position=START_Z):
     """ Calculate the grid positions for toolpath moves
     """
@@ -211,10 +214,10 @@ def get_fixed_grid(box, layer_distance, line_distance=None, step_width=None,
     def get_layers_with_direction(layers):
         for layer in layers:
             # this will produce a nice xy-grid, as well as simple x and y grids
-            if grid_direction != GRID_DIRECTION_Y:
-                yield (layer, GRID_DIRECTION_X)
-            if grid_direction != GRID_DIRECTION_X:
-                yield (layer, GRID_DIRECTION_Y)
+            if grid_direction != GridDirection.Y:
+                yield (layer, GridDirection.X)
+            if grid_direction != GridDirection.X:
+                yield (layer, GridDirection.Y)
 
     for z, direction in get_layers_with_direction(layers):
         result, start_position = get_fixed_grid_layer(
@@ -238,18 +241,18 @@ def _get_position(minx, maxx, miny, maxy, z, position):
 
 def get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x, line_distance_y,
                            grid_direction, start_position, current_location):
-    xor_map = {GRID_DIRECTION_X: START_X, GRID_DIRECTION_Y: START_Y}
+    xor_map = {GridDirection.X: START_X, GridDirection.Y: START_Y}
     end_position = start_position ^ xor_map[grid_direction]
     end_location = _get_position(minx, maxx, miny, maxy, z, end_position)
     lines = [(current_location, end_location)]
-    if grid_direction == GRID_DIRECTION_X:
-        next_grid_direction = GRID_DIRECTION_Y
+    if grid_direction == GridDirection.X:
+        next_grid_direction = GridDirection.Y
         if start_position & START_Y > 0:
             miny += line_distance_y
         else:
             maxy -= line_distance_y
     else:
-        next_grid_direction = GRID_DIRECTION_X
+        next_grid_direction = GridDirection.X
         if start_position & START_X > 0:
             minx += line_distance_x
         else:
@@ -343,9 +346,9 @@ def get_spiral(box, layer_distance, line_distance=None, step_width=None,
         layers = floatrange(box.lower.z, box.upper.z, inc=layer_distance,
                             reverse=bool(start_position & START_Z))
     if (milling_style == MILLING_STYLE_CLIMB) == (start_position & START_X > 0):
-        start_direction = GRID_DIRECTION_X
+        start_direction = GridDirection.X
     else:
-        start_direction = GRID_DIRECTION_Y
+        start_direction = GridDirection.Y
     reverse = (spiral_direction == SPIRAL_DIRECTION_OUT)
     for z in layers:
         yield get_spiral_layer(box.lower.x, box.upper.x, box.lower.y, box.upper.y, z,

@@ -115,9 +115,9 @@ class PathParamGridDirection(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputChoice(
-            (("x", pycam.Toolpath.MotionGrid.GRID_DIRECTION_X),
-             ("y", pycam.Toolpath.MotionGrid.GRID_DIRECTION_Y),
-             ("xy", pycam.Toolpath.MotionGrid.GRID_DIRECTION_XY)),
+            (("x", pycam.Toolpath.MotionGrid.GridDirection.X),
+             ("y", pycam.Toolpath.MotionGrid.GridDirection.Y),
+             ("xy", pycam.Toolpath.MotionGrid.GridDirection.XY)),
             change_handler=lambda widget=None: self.core.emit_event("process-changed"))
         self.core.get("register_parameter")("path_pattern", "grid_direction", self.control)
         self.core.get("register_parameter")("process", "grid_direction", self.control)
