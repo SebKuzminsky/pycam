@@ -45,6 +45,7 @@ class MillingStyle(Enum):
     CLIMB = "climb"
 
 
+
 class StartPosition(IntEnum):
     X = 0x1
     Y = 0x2
