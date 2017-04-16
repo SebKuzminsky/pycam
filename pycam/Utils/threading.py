@@ -22,7 +22,11 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 # import multiprocessing
 import os
 import platform
-import Queue
+try:
+    import queue
+except ImportError:
+    # fallback for python2
+    import Queue as queue
 import random
 import signal
 import socket
@@ -425,7 +429,7 @@ def _handle_tasks(tasks, results, stats, cache, pending_tasks, closing):
             start_time = time.time()
             try:
                 job_id, task_id, func, args = tasks.get(timeout=0.2)
-            except Queue.Empty:
+            except queue.Empty:
                 time.sleep(1.8)
                 timeout_counter += 1
                 continue
@@ -550,7 +554,7 @@ def run_in_parallel_remote(func, args_list, unordered=False, disable_multiproces
                               stale_job_id, stale_task_id)
             try:
                 result_job_id, task_id, result = results_queue.get(timeout=1.0)
-            except Queue.Empty:
+            except queue.Empty:
                 time.sleep(1.0)
                 continue
             if result_job_id == job_id:
@@ -610,7 +614,7 @@ def _cleanup_job(job_id, tasks_queue, pending_tasks, finished_jobs):
     for index in range(queue_len):
         try:
             this_job_id, task_id, func, args = tasks_queue.get(timeout=0.1)
-        except Queue.Empty:
+        except queue.Empty:
             break
         if this_job_id != job_id:
             tasks_queue.put((this_job_id, task_id, func, args))
