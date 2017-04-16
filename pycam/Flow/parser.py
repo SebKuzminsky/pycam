@@ -14,19 +14,18 @@ _log = pycam.Utils.log.get_logger()
 def parse_yaml(event_manager, source):
     import pycam.Toolpath.MotionGrid
     from pycam.Plugins.Bounds import BoundsEntity
-    from pycam.Plugins.Processes import ProcessEntity
     milling_style_map = {"ignore": pycam.Toolpath.MotionGrid.MillingStyle.IGNORE,
                          "conventional": pycam.Toolpath.MotionGrid.MillingStyle.CONVENTIONAL,
                          "climb": pycam.Toolpath.MotionGrid.MillingStyle.CLIMB}
     parsed = yaml.safe_load(source)
     for collection, parser_func in (("tools", pycam.Flow.data_models.Tool),
-                                    ("processes", ProcessEntity),
+                                    ("processes", pycam.Flow.data_models.Process),
                                     ("bounds", BoundsEntity),
                                     ("tasks", pycam.Flow.data_models.Task),
                                     ("models", import_model_by_attributes),
                                     ("toolpaths", generate_toolpath_by_specification)):
         for name, spec in parsed.get(collection, {}).items():
-            if collection in ("tools", ):
+            if collection in ("tools", "processes"):
                 data = dict(spec)
                 data["name"] = name
                 obj = parser_func(data)

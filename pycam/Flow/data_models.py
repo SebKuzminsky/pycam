@@ -28,6 +28,7 @@ import pycam.PathGenerators.DropCutter
 import pycam.PathGenerators.EngraveCutter
 import pycam.PathGenerators.PushCutter
 from pycam.Toolpath.Filters import MachineSetting
+import pycam.Toolpath.MotionGrid
 import pycam.Utils.log
 
 _log = pycam.Utils.log.get_logger()
@@ -58,6 +59,18 @@ class ToolShape(Enum):
     FLAT_BOTTOM = "flat_bottom"
     BALL_NOSE = "ball_nose"
     TORUS = "torus"
+
+
+class ProcessStrategy(Enum):
+    SLICE = "slice"
+    CONTOUR = "contour"
+    SURFACE = "surface"
+    ENGRAVE = "engrave"
+
+
+class PathPattern(Enum):
+    SPIRAL = "spiral"
+    GRID = "grid"
 
 
 class TaskType(Enum):
@@ -131,6 +144,82 @@ class Tool(BaseDataContainer):
         feed = self.get_value("feed")
         speed = self.get_value("speed", default=1000, raise_if_missing=False)
         return [MachineSetting("feedrate", feed), MachineSetting("spindle_speed", speed)]
+
+
+class Process(BaseDataContainer):
+
+    def get_path_generator(self):
+        strategy = _get_enum_value(ProcessStrategy, self.get_value("strategy"))
+        if strategy == ProcessStrategy.SLICE:
+            return pycam.PathGenerators.PushCutter.PushCutter(waterlines=False)
+        elif strategy == ProcessStrategy.CONTOUR:
+            return pycam.PathGenerators.PushCutter.PushCutter(waterlines=True)
+        elif strategy == ProcessStrategy.SURFACE:
+            return pycam.PathGenerators.DropCutter.DropCutter()
+        elif strategy == ProcessStrategy.ENGRAVE:
+            return pycam.PathGenerators.EngraveCutter.EngraveCutter()
+        else:
+            raise InvalidKeyError(strategy, ProcessStrategy)
+
+    def get_motion_grid(self, tool_radius, box):
+        strategy = _get_enum_value(ProcessStrategy, self.get_value("strategy"))
+        overlap = self.get_value("overlap", 0)
+        line_distance = 2 * tool_radius * (1 - overlap)
+        milling_style = _get_enum_value(pycam.Toolpath.MotionGrid.MillingStyle,
+                                        self.get_value("milling_style"))
+        if strategy == ProcessStrategy.SLICE:
+            return pycam.Toolpath.MotionGrid.get_fixed_grid(
+                box, self.get_value("step_down"), line_distance=line_distance,
+                grid_direction=pycam.Toolpath.MotionGrid.GridDirection.X,
+                milling_style=milling_style)
+        elif strategy == ProcessStrategy.CONTOUR:
+            # TODO: milling_style currently refers to the grid lines - not to the waterlines
+            return pycam.Toolpath.MotionGrid.get_fixed_grid(
+                box, self.get_value("step_down"), line_distance=line_distance,
+                grid_direction=pycam.Toolpath.MotionGrid.GridDirection.X,
+                milling_style=milling_style)
+        elif strategy == ProcessStrategy.SURFACE:
+            path_pattern = _get_enum_value(PathPattern, self.get_value("path_pattern"))
+            if path_pattern == PathPattern.SPIRAL:
+                func = pycam.Toolpath.MotionGrid.get_spiral
+                kwarg_names = ("grid_direction", )
+            elif path_pattern == PathPattern.GRID:
+                func = pycam.Toolpath.MotionGrid.get_fixed_grid
+                kwarg_names = ("spiral_direction", "rounded_corners")
+            else:
+                raise InvalidKeyError(path_pattern, PathPattern)
+            # surfacing requires a finer grid (arbitrary factor)
+            step_width = tool_radius / 4.0
+            kwargs = {key: self.get_value(key) for key in kwarg_names}
+            return func(box, None, step_width=step_width, line_distance=line_distance,
+                        milling_style=milling_style, **kwargs)
+        elif strategy == ProcessStrategy.ENGRAVE:
+            models = [m.model for m in self.get_value("trace_models")]
+            if not models:
+                _log.error("No trace models given: you need to assign a 2D model to the engraving "
+                           "process.")
+                return None
+            progress = self.core.get("progress")
+            radius_compensation = self.get_value("radius_compensation", raise_if_missing=False)
+            if radius_compensation:
+                progress.update(text="Offsetting models")
+                progress.set_multiple(len(models), "Model")
+                for index, model in enumerate(models):
+                    models[index] = model.get_offset_model(tool_radius, callback=progress.update)
+                    progress.update_multiple()
+                progress.finish()
+            progress.update(text="Calculating moves")
+            line_distance = 1.8 * tool_radius
+            step_width = tool_radius / 4.0
+            pocketing_type = _get_enum_value(PocketingType, self.get_value("pocketing_type"))
+            motion_grid = pycam.Toolpath.MotionGrid.get_lines_grid(
+                models, box, self.get_value("step_down"), line_distance=line_distance,
+                step_width=step_width, milling_style=milling_style, pocketing_type=pocketing_type,
+                skip_first_layer=True, callback=progress.update)
+            progress.finish()
+            return motion_grid
+        else:
+            raise InvalidKeyError(strategy, ProcessStrategy)
 
 
 class Task(BaseDataContainer):

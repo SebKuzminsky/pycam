@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import pycam.Flow.data_models
 import pycam.Plugins
 from pycam.Utils import get_non_conflicting_name
 
@@ -234,18 +235,6 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.core.emit_event("process-changed")
 
     def _process_new(self, *args):
-        strategies = list(self.core.get("get_parameter_sets")("process").values())
-        strategies.sort(key=lambda item: item["weight"])
-        strategy = strategies[0]
-        name = get_non_conflicting_name("Process #%d", [process["name"] for process in self])
-        new_process = ProcessEntity({"strategy": strategy["name"],
-                                     "parameters": strategy["parameters"].copy(),
-                                     "name": name})
+        new_process = pycam.Flow.data_models.Process({"strategy": "slice"})
         self.append(new_process)
         self.select(new_process)
-
-
-class ProcessEntity(pycam.Plugins.ObjectWithAttributes):
-
-    def __init__(self, parameters):
-        super(ProcessEntity, self).__init__("process", parameters)

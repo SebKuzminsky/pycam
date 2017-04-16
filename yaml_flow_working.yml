@@ -16,7 +16,7 @@ tools:
 
 processes:
         process1:
-                strategy: slicing
+                strategy: slice
                 path_pattern: grid
                 overlap: 0.10
                 step_down: 1.0

@@ -101,7 +101,7 @@ class TaskParamProcess(pycam.Plugins.PluginBase):
         choices = []
         processes = self.core.get("processes")
         for process in processes:
-            choices.append((process["name"], process))
+            choices.append((process.get_value("name"), process))
         self.control.update_choices(choices)
 
 
