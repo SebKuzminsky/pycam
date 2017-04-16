@@ -28,7 +28,9 @@ import pycam.PathGenerators.DropCutter
 import pycam.PathGenerators.EngraveCutter
 import pycam.PathGenerators.PushCutter
 from pycam.Toolpath.Filters import MachineSetting
+import pycam.Utils.log
 
+_log = pycam.Utils.log.get_logger()
 
 
 class FlowDescriptionBaseException(Exception):
@@ -129,3 +131,35 @@ class Tool(BaseDataContainer):
         feed = self.get_value("feed")
         speed = self.get_value("speed", default=1000, raise_if_missing=False)
         return [MachineSetting("feedrate", feed), MachineSetting("spindle_speed", speed)]
+
+
+class Task(BaseDataContainer):
+
+    def generate_toolpath(self, callback=None):
+        process = self.get_value("process")
+        bounds = self.get_value("bounds")
+        task_type = _get_enum_value(TaskType, self.get_value("type"))
+        if task_type == TaskType.MILLING:
+            tool = self.get_value("tool")
+            box = bounds.get_absolute_limits(tool_radius=tool.radius,
+                                             models=self.get_value("collision_models"))
+            path_generator = process.get_path_generator()
+            motion_grid = process.get_motion_grid(tool.radius, box)
+            if path_generator is None:
+                # we assume that an error message was given already
+                return
+            models = [m.model for m in self.get_value("collision_models")]
+            if not models:
+                # issue a warning - and go ahead ...
+                _log.warn("No collision model was selected. This can be intentional, but maybe "
+                          "you simply forgot it.")
+            moves = path_generator.GenerateToolPath(tool.get_tool_geometry(), models, motion_grid,
+                                                    minz=box.lower.z, maxz=box.upper.z,
+                                                    draw_callback=callback)
+            if not moves:
+                _log.info("No valid moves found")
+                return None
+            return pycam.Toolpath.Toolpath(toolpath_path=moves, tool=tool,
+                                           toolpath_filters=tool.get_toolpath_filters())
+        else:
+            raise InvalidKeyError(task_type, TaskType)

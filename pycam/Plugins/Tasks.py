@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import time
 
 from pycam import GenericError
+from pycam.Flow.data_models import Task
 import pycam.Plugins
 import pycam.Utils
 from pycam.Utils import get_non_conflicting_name
@@ -233,12 +234,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             details_box.show()
 
     def _task_new(self, *args):
-        types = list(self.core.get("get_parameter_sets")("task").values())
-        one_type = sorted(types, key=lambda item: item["weight"])[0]
-        name = get_non_conflicting_name("Task #%d", [task["name"] for task in self])
-        new_task = TaskEntity({"type": one_type["name"],
-                               "parameters": one_type["parameters"].copy(),
-                               "name": name})
+        new_task = Task({"type": "milling"})
         self.append(new_task)
         self.select(new_task)
 
@@ -338,9 +334,3 @@ class Tasks(pycam.Plugins.ListPluginBase):
             # return "False" if the action was cancelled
             result = not progress.update()
         return result
-
-
-class TaskEntity(pycam.Plugins.ObjectWithAttributes):
-
-    def __init__(self, parameters):
-        super(TaskEntity, self).__init__("task", parameters)

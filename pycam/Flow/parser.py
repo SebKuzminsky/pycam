@@ -15,7 +15,6 @@ def parse_yaml(event_manager, source):
     import pycam.Toolpath.MotionGrid
     from pycam.Plugins.Bounds import BoundsEntity
     from pycam.Plugins.Processes import ProcessEntity
-    from pycam.Plugins.Tasks import TaskEntity
     milling_style_map = {"ignore": pycam.Toolpath.MotionGrid.MillingStyle.IGNORE,
                          "conventional": pycam.Toolpath.MotionGrid.MillingStyle.CONVENTIONAL,
                          "climb": pycam.Toolpath.MotionGrid.MillingStyle.CLIMB}
@@ -23,7 +22,7 @@ def parse_yaml(event_manager, source):
     for collection, parser_func in (("tools", pycam.Flow.data_models.Tool),
                                     ("processes", ProcessEntity),
                                     ("bounds", BoundsEntity),
-                                    ("tasks", TaskEntity),
+                                    ("tasks", pycam.Flow.data_models.Task),
                                     ("models", import_model_by_attributes),
                                     ("toolpaths", generate_toolpath_by_specification)):
         for name, spec in parsed.get(collection, {}).items():
@@ -126,29 +125,24 @@ def generate_toolpath_by_specification(event_manager, params):
             _log.error("Missing 'tasks' attribute for task-based toolpath")
             return None
         for task_name in task_names:
-            task_references = get_component("tasks", task_name)
-            task = {}
-            task["name"] = task_name
-            task["parameters"] = {}
-            task["parameters"]["bounds"] = get_component("bounds", task_references["bounds"])
-            task["parameters"]["process"] = get_component("processes", task_references["process"])
-            task["parameters"]["tool"] = get_component("tools", task_references["tool"])
+            task = get_component("tasks", task_name)
+            task.set_value("tool", get_component("tools", task.get_value("tool")))
+            task.set_value("process", get_component("processes", task.get_value("process")))
+            task.set_value("bounds", get_component("bounds", task.get_value("bounds")))
             collision_models = []
             bounds_models = []
             for model_source, model_destination in (
-                    (task_references["collision_models"], collision_models),
-                    (task["parameters"]["bounds"].get("models", []), bounds_models)):
+                    (task.get_value("collision_models"), collision_models),
+                    (task.get_value("bounds")["models"], bounds_models)):
                 for model_name in model_source:
                     model = get_component("models", model_name)
                     if model:
                         model_destination.append(model)
                     else:
                         _log.error("Failed to retrieve model: %s", model_name)
-            task["parameters"]["collision_models"] = collision_models
-            task["parameters"]["bounds"]["Models"] = bounds_models
-            task_resolver = event_manager.get("get_parameter_sets")(
-                "task")[task_references["type"]]["func"]
-            return task_resolver(task)
+            task.set_value("collision_models", collision_models)
+            # task["bounds"]["Models"] = bounds_models
+            return task.generate_toolpath()
     else:
         _log.error("Unsupported 'source' type for toolpath: %s", source_type)
         return None
