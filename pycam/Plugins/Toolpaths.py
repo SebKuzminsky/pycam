@@ -152,12 +152,7 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
         if name is None:
             name = get_non_conflicting_name("Toolpath #%d", [tp["name"] for tp in self])
         attributes = {"visible": True, "name": name}
+        # TODO: move to the new data_model
         new_tp = ToolpathEntity(toolpath_path=moves, attributes=attributes,
                                 toolpath_filters=filters, tool=tool)
         self.append(new_tp)
-
-
-class ToolpathEntity(pycam.Toolpath.Toolpath, pycam.Plugins.ObjectWithAttributes):
-
-    def __init__(self, **kwargs):
-        super(ToolpathEntity, self).__init__(node_key="toolpath", **kwargs)

@@ -123,9 +123,7 @@ toolpaths:
         toolpath1:
                 source:
                         type: task
-                        tasks:
-                                - task1
-                                - task2
+                        task: task1
                 transformations:
                         - action: crop
                           lower:
@@ -137,9 +135,8 @@ toolpaths:
 
         toolpath2:
                 source:
-                        type: toolpath
-                        toolpaths:
-                                - toolpath1
+                        type: copy
+                        original: toolpath1
                 transformations:
                         - action: clone
                           offset:

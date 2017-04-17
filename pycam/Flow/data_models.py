@@ -96,6 +96,7 @@ class SourceType(Enum):
     FILE = "file"
     URL = "url"
     COPY = "copy"
+    TASK = "task"
 
 
 def _get_enum_value(enum_class, value):
@@ -193,6 +194,13 @@ def _get_source(collection_name, source_params):
             return detected_filetype.importer(detected_filetype.uri)
         else:
             raise InvalidDataError("Failed to load model from '{}'".format(location))
+    elif source_type == SourceType.TASK:
+        try:
+            task_name = source_params["task"]
+        except KeyError:
+            raise MissingAttributeError("Sourcing a task for '{}' requires a 'task' attribute: {}"
+                                        .format(collection_name, source_params))
+        return _get_from_collection("task", task_name)
     else:
         raise InvalidKeyError(source_type, SourceType)
 
@@ -532,3 +540,13 @@ class Task(BaseDataContainer):
                                            toolpath_filters=tool.get_toolpath_filters())
         else:
             raise InvalidKeyError(task_type, TaskType)
+
+
+class Toolpath(BaseDataContainer):
+
+    collection_name = "toolpath"
+    attribute_converters = {"source": _get_source_loader("toolpath")}
+
+    def generate_toolpath(self):
+        task = self.get_value("source")
+        return task.generate_toolpath()

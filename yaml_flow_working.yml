@@ -51,8 +51,7 @@ toolpaths:
         toolpath1:
                 source:
                         type: task
-                        tasks:
-                                - task1
+                        task: task1
 
 exports:
         - source:
