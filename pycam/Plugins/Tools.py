@@ -166,7 +166,7 @@ class Tools(pycam.Plugins.ListPluginBase):
             new_value = int(new_text)
         except ValueError:
             return
-        if tool and (new_value != tool.get_value("tool_id", raise_if_missing=False)):
+        if tool and (new_value != tool.get_value("tool_id")):
             tool.set_value("tool_id", new_value)
 
     def _get_shape(self, name=None):

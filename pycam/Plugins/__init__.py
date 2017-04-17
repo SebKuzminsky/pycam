@@ -503,7 +503,7 @@ class ListPluginBase(PluginBase, list):
         """
         for item in self:
             if hasattr(item, "get_value"):
-                item_value = item.get_value(key, raise_if_missing=False)
+                item_value = item.get_value(key)
             else:
                 item_value = item.get(key, None)
             if item_value == value:

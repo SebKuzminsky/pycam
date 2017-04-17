@@ -174,15 +174,19 @@ class BaseDataContainer(object):
     def parse_from_dict(cls, data):
         return cls(data)
 
-    def get_value(self, key, default=None, raise_if_missing=True):
+    def get_value(self, key):
         try:
-            return self._data[key]
+            raw = self._data[key]
         except KeyError:
-            if (default is None) and raise_if_missing:
+            if key not in self.attribute_defaults:
                 raise MissingAttributeError("The attribute '{}' is missing in '{}'"
                                             .format(key, type(self)))
             else:
-                return default
+                raw = self.attribute_defaults[key]
+        if key in self.attribute_converters:
+            return self.attribute_converters[key](raw)
+        else:
+            return raw
 
     def set_value(self, key, value):
         self._data[key] = value
@@ -304,7 +308,7 @@ class Process(BaseDataContainer):
                            "process.")
                 return None
             progress = self.core.get("progress")
-            radius_compensation = self.get_value("radius_compensation", raise_if_missing=False)
+            radius_compensation = self.get_value("radius_compensation")
             if radius_compensation:
                 progress.update(text="Offsetting models")
                 progress.set_multiple(len(models), "Model")
