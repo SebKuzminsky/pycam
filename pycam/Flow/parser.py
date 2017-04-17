@@ -12,86 +12,30 @@ _log = pycam.Utils.log.get_logger()
 
 
 def parse_yaml(event_manager, source):
-    import pycam.Toolpath.MotionGrid
-    milling_style_map = {"ignore": pycam.Toolpath.MotionGrid.MillingStyle.IGNORE,
-                         "conventional": pycam.Toolpath.MotionGrid.MillingStyle.CONVENTIONAL,
-                         "climb": pycam.Toolpath.MotionGrid.MillingStyle.CLIMB}
     parsed = yaml.safe_load(source)
     for collection, parser_func in (("tools", pycam.Flow.data_models.Tool),
                                     ("processes", pycam.Flow.data_models.Process),
                                     ("bounds", pycam.Flow.data_models.Boundary),
                                     ("tasks", pycam.Flow.data_models.Task),
-                                    ("models", import_model_by_attributes),
+                                    ("models", pycam.Flow.data_models.Model),
                                     ("toolpaths", generate_toolpath_by_specification)):
         for name, spec in parsed.get(collection, {}).items():
-            if collection in ("tools", "processes", "bounds"):
+            if collection in ("tools", "processes", "bounds", "tasks", "models"):
                 data = dict(spec)
                 data["name"] = name
                 obj = parser_func(data)
             elif collection == "toolpaths":
                 obj = parser_func(event_manager, spec)
-            else:
-                spec["name"] = name
-                if collection == "processes":
-                    spec["path_pattern"] = {"name": spec["path_pattern"]}
-                    parameters = dict(spec)
-                    parameters["milling_style"] = milling_style_map[parameters["milling_style"]]
-                    del parameters["name"]
-                    # TODO: where does this value come from?
-                    del parameters["step_down"]
-                    # TODO: where does this value come from?
-                    del parameters["overlap"]
-                    del parameters["path_pattern"]
-                    del parameters["strategy"]
-                    spec["path_pattern"]["parameters"] = parameters
-                obj = parser_func(spec)
-                if isinstance(obj, dict):
-                    obj["parameters"] = spec
             if obj:
-                if collection == "models":
-                    event_manager.get(collection).add_model(obj, name=name)
-                elif collection == "toolpaths":
+                if collection == "toolpaths":
                     event_manager.get(collection).add_new(obj, name=name)
-                else:
-                    event_manager.get(collection).append(obj)
             else:
                 _log.error("Failed to import '%s' into '%s'.", name, collection)
     for export_params in parsed.get("exports", []):
         export_toolpath(event_manager, export_params)
 
 
-def import_model_by_attributes(params):
-    try:
-        source = params["source"]
-    except KeyError:
-        _log.error("Failed to load model without 'source' attribute")
-        return None
-    try:
-        source_type = source["type"]
-    except KeyError:
-        _log.error("Failed to load model without 'source.type' attribute")
-        return None
-    if source_type == "file":
-        try:
-            file_path = source["location"]
-        except KeyError:
-            _log.error("Failed to load model from file without 'source.location' attribute")
-            return None
-        file_type, importer = pycam.Importers.detect_file_type(file_path)
-        if file_type and callable(importer):
-            return importer(file_path)
-        else:
-            _log.error("Failed to detect filetype: %s", file_path)
-            return None
-    else:
-        _log.error("Unsupported model 'source' given: %s", source)
-        return None
-
-
 def generate_toolpath_by_specification(event_manager, params):
-    def get_component(collection, name, event_manager=event_manager):
-        return event_manager.get(collection).get_by_attribute("name", name)
-
     try:
         source = params["source"]
     except KeyError:
@@ -109,7 +53,7 @@ def generate_toolpath_by_specification(event_manager, params):
             _log.error("Missing 'tasks' attribute for task-based toolpath")
             return None
         for task_name in task_names:
-            task = get_component("tasks", task_name)
+            task = pycam.Flow.data_models._get_from_collection("task", task_name)
             return task.generate_toolpath()
     else:
         _log.error("Unsupported 'source' type for toolpath: %s", source_type)

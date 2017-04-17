@@ -22,6 +22,7 @@ import collections
 import copy
 from enum import Enum
 import functools
+import os.path
 
 from pycam.Cutters.CylindricalCutter import CylindricalCutter
 from pycam.Cutters.SphericalCutter import SphericalCutter
@@ -33,6 +34,7 @@ import pycam.PathGenerators.PushCutter
 from pycam.Plugins.Bounds import ToolBoundaryMode
 from pycam.Toolpath.Filters import MachineSetting
 import pycam.Toolpath.MotionGrid as MotionGrid
+from pycam.Importers import detect_file_type
 import pycam.Utils.log
 
 _log = pycam.Utils.log.get_logger()
@@ -88,6 +90,12 @@ class BoundsSpecification(Enum):
 
 class TaskType(Enum):
     MILLING = "milling"
+
+
+class SourceType(Enum):
+    FILE = "file"
+    URL = "url"
+    COPY = "copy"
 
 
 def _get_enum_value(enum_class, value):
@@ -158,6 +166,41 @@ def _limit3d_converter(point):
     return Limit3D(*result)
 
 
+def _get_source(collection_name, source_params):
+    try:
+        source_type_name = source_params["type"]
+    except KeyError:
+        raise MissingAttributeError("Source for '{}' requires a 'type' attribute: {}"
+                                    .format(collection_name, source_params))
+    source_type = _get_enum_value(SourceType, source_type_name)
+    if source_type == SourceType.COPY:
+        try:
+            source_name = source_params["original"]
+        except KeyError:
+            raise MissingAttributeError("Source for '{}' copy requires an 'original' attribute: {}"
+                                        .format(collection_name, source_params))
+        return _get_from_collection(collection_name, source_name)
+    elif source_type in (SourceType.FILE, SourceType.URL):
+        try:
+            location = source_params["location"]
+        except KeyError:
+            raise MissingAttributeError("Source for '{}' requires a 'location' attribute: {}"
+                                        .format(collection_name, source_params))
+        if source_type == SourceType.FILE:
+            location = "file://" + os.path.abspath(location)
+        detected_filetype = detect_file_type(location)
+        if detected_filetype:
+            return detected_filetype.importer(detected_filetype.uri)
+        else:
+            raise InvalidDataError("Failed to load model from '{}'".format(location))
+    else:
+        raise InvalidKeyError(source_type, SourceType)
+
+
+def _get_source_loader(collection_name):
+    return functools.partial(_get_source, collection_name)
+
+
 def _get_from_collection(collection_name, wanted, many=False):
     default_result = [] if many else None
     try:
@@ -208,10 +251,13 @@ class BaseDataContainer(object):
 
     def __del__(self):
         item_id = self._data[self.unique_attribute]
-        try:
-            self.__get_collection()[item_id]
-        except KeyError:
-            pass
+        # maybe the dict of collections is already gone (during shutdown)
+        if _data_collections:
+            collection = self.__get_collection()
+            try:
+                del collection[item_id]
+            except KeyError:
+                pass
 
     @classmethod
     def parse_from_dict(cls, data):
@@ -236,6 +282,15 @@ class BaseDataContainer(object):
 
     def get_dict(self):
         return copy.deepcopy(self._data)
+
+
+class Model(BaseDataContainer):
+
+    collection_name = "model"
+    attribute_converters = {"source": _get_source_loader("model")}
+
+    def get_model(self):
+        return self.get_value("source")
 
 
 class Tool(BaseDataContainer):
@@ -345,7 +400,7 @@ class Process(BaseDataContainer):
             return func(box, None, step_width=step_width, line_distance=line_distance,
                         milling_style=milling_style, **kwargs)
         elif strategy == ProcessStrategy.ENGRAVE:
-            models = [m.model for m in self.get_value("trace_models")]
+            models = [m.get_model() for m in self.get_value("trace_models")]
             if not models:
                 _log.error("No trace models given: you need to assign a 2D model to the engraving "
                            "process.")
@@ -462,7 +517,7 @@ class Task(BaseDataContainer):
             if path_generator is None:
                 # we assume that an error message was given already
                 return
-            models = [m.model for m in self.get_value("collision_models")]
+            models = [m.get_model() for m in self.get_value("collision_models")]
             if not models:
                 # issue a warning - and go ahead ...
                 _log.warn("No collision model was selected. This can be intentional, but maybe "
