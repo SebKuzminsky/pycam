@@ -28,7 +28,7 @@ import pycam.PathGenerators.DropCutter
 import pycam.PathGenerators.EngraveCutter
 import pycam.PathGenerators.PushCutter
 from pycam.Toolpath.Filters import MachineSetting
-import pycam.Toolpath.MotionGrid
+import pycam.Toolpath.MotionGrid as MotionGrid
 import pycam.Utils.log
 
 _log = pycam.Utils.log.get_logger()
@@ -165,26 +165,26 @@ class Process(BaseDataContainer):
         strategy = _get_enum_value(ProcessStrategy, self.get_value("strategy"))
         overlap = self.get_value("overlap", 0)
         line_distance = 2 * tool_radius * (1 - overlap)
-        milling_style = _get_enum_value(pycam.Toolpath.MotionGrid.MillingStyle,
+        milling_style = _get_enum_value(MotionGrid.MillingStyle,
                                         self.get_value("milling_style"))
         if strategy == ProcessStrategy.SLICE:
-            return pycam.Toolpath.MotionGrid.get_fixed_grid(
+            return MotionGrid.get_fixed_grid(
                 box, self.get_value("step_down"), line_distance=line_distance,
-                grid_direction=pycam.Toolpath.MotionGrid.GridDirection.X,
+                grid_direction=MotionGrid.GridDirection.X,
                 milling_style=milling_style)
         elif strategy == ProcessStrategy.CONTOUR:
             # TODO: milling_style currently refers to the grid lines - not to the waterlines
-            return pycam.Toolpath.MotionGrid.get_fixed_grid(
-                box, self.get_value("step_down"), line_distance=line_distance,
-                grid_direction=pycam.Toolpath.MotionGrid.GridDirection.X,
-                milling_style=milling_style)
+            return MotionGrid.get_fixed_grid(box, self.get_value("step_down"),
+                                             line_distance=line_distance,
+                                             grid_direction=MotionGrid.GridDirection.X,
+                                             milling_style=milling_style)
         elif strategy == ProcessStrategy.SURFACE:
             path_pattern = _get_enum_value(PathPattern, self.get_value("path_pattern"))
             if path_pattern == PathPattern.SPIRAL:
-                func = pycam.Toolpath.MotionGrid.get_spiral
+                func = MotionGrid.get_spiral
                 kwarg_names = ("grid_direction", )
             elif path_pattern == PathPattern.GRID:
-                func = pycam.Toolpath.MotionGrid.get_fixed_grid
+                func = MotionGrid.get_fixed_grid
                 kwarg_names = ("spiral_direction", "rounded_corners")
             else:
                 raise InvalidKeyError(path_pattern, PathPattern)
@@ -212,7 +212,7 @@ class Process(BaseDataContainer):
             line_distance = 1.8 * tool_radius
             step_width = tool_radius / 4.0
             pocketing_type = _get_enum_value(PocketingType, self.get_value("pocketing_type"))
-            motion_grid = pycam.Toolpath.MotionGrid.get_lines_grid(
+            motion_grid = MotionGrid.get_lines_grid(
                 models, box, self.get_value("step_down"), line_distance=line_distance,
                 step_width=step_width, milling_style=milling_style, pocketing_type=pocketing_type,
                 skip_first_layer=True, callback=progress.update)
