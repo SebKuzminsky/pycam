@@ -485,6 +485,11 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         return gtkgl_refresh_wrapper
 
     def glsetup(self, widget=None):
+        if not GLUT.glutInit:
+            self.log.error("Failed to execute 'GLUT.glutInit': probably you need to install the"
+                           "C library providing GLUT functions (e.g. 'freeglut3-dev' or "
+                           "'freeglut-devel'). OpenGL visualization is disabled.")
+            return
         GLUT.glutInit()
         GLUT.glutInitDisplayMode(GLUT.GLUT_RGBA | GLUT.GLUT_DOUBLE | GLUT.GLUT_DEPTH
                                  | GLUT.GLUT_MULTISAMPLE | GLUT.GLUT_ALPHA | GLUT.GLUT_ACCUM)
