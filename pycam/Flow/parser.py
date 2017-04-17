@@ -125,22 +125,6 @@ def generate_toolpath_by_specification(event_manager, params):
             return None
         for task_name in task_names:
             task = get_component("tasks", task_name)
-            task.set_value("tool", get_component("tools", task.get_value("tool")))
-            task.set_value("process", get_component("processes", task.get_value("process")))
-            task.set_value("bounds", get_component("bounds", task.get_value("bounds")))
-            collision_models = []
-            bounds_models = []
-            for model_source, model_destination in (
-                    (task.get_value("collision_models"), collision_models),
-                    (task.get_value("bounds")["models"], bounds_models)):
-                for model_name in model_source:
-                    model = get_component("models", model_name)
-                    if model:
-                        model_destination.append(model)
-                    else:
-                        _log.error("Failed to retrieve model: %s", model_name)
-            task.set_value("collision_models", collision_models)
-            # task["bounds"]["Models"] = bounds_models
             return task.generate_toolpath()
     else:
         _log.error("Unsupported 'source' type for toolpath: %s", source_type)

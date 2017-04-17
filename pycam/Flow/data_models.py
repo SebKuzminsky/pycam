@@ -20,6 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
 from enum import Enum
+import functools
 
 from pycam.Cutters.CylindricalCutter import CylindricalCutter
 from pycam.Cutters.SphericalCutter import SphericalCutter
@@ -32,6 +33,10 @@ import pycam.Toolpath.MotionGrid as MotionGrid
 import pycam.Utils.log
 
 _log = pycam.Utils.log.get_logger()
+
+
+# dictionary of all collections by name
+_data_collections = {}
 
 
 class FlowDescriptionBaseException(Exception):
@@ -84,10 +89,86 @@ def _get_enum_value(enum_class, value):
         raise InvalidKeyError(value, enum_class)
 
 
+def _get_enum_resolver(enum_class):
+    """ return a function that would convert a raw value to an enum item of the given class """
+    return functools.partial(_get_enum_value, enum_class)
+
+
+def _bool_converter(value):
+    if isinstance(value, int):
+        if value == 1:
+            return True
+        elif value == 0:
+            return False
+        else:
+            raise InvalidDataError("Invalid boolean value: {} (int)".format(value))
+    elif isinstance(value, str):
+        if value.lower() in ("true", "yes", "1", "on", "enabled"):
+            return True
+        elif value.lower() in ("false", "no", "0", "off", "disabled"):
+            return False
+        else:
+            raise InvalidDataError("Invalid boolean value: {} (string)".format(value))
+    elif isinstance(value, bool):
+        return value
+    else:
+        raise InvalidDataError("Invalid boolean value type ({}): {}".format(type(value), value))
+
+
+def _get_from_collection(collection_name, wanted, many=False):
+    default_result = [] if many else None
+    try:
+        collection = _data_collections[collection_name]
+    except KeyError:
+        return default_result
+    try:
+        if many:
+            return tuple([collection[item_id] for item_id in wanted])
+        else:
+            return collection[wanted]
+    except KeyError:
+        return default_result
+
+
+def _get_full_collection(collection_name):
+    try:
+        return _data_collections[collection_name].values()
+    except KeyError:
+        return None
+
+
+def _get_collection_resolver(collection_name, many=False):
+    return functools.partial(_get_from_collection, collection_name, many=many)
+
+
 class BaseDataContainer(object):
+
+    # the name of the collection should be overwritten in every subclass
+    collection_name = None
+    unique_attribute = "name"
+    attribute_converters = {}
+    attribute_defaults = {}
 
     def __init__(self, data):
         self._data = copy.deepcopy(data)
+        assert self.collection_name is not None
+        item_id = data[self.unique_attribute]
+        self.__get_collection()[item_id] = self
+
+    def __get_collection(self):
+        try:
+            return _data_collections[self.collection_name]
+        except KeyError:
+            collection = {}
+            _data_collections[self.collection_name] = collection
+            return collection
+
+    def __del__(self):
+        item_id = self._data[self.unique_attribute]
+        try:
+            self.__get_collection()[item_id]
+        except KeyError:
+            pass
 
     @classmethod
     def parse_from_dict(cls, data):
@@ -112,9 +193,15 @@ class BaseDataContainer(object):
 
 class Tool(BaseDataContainer):
 
+    collection_name = "tool"
+    attribute_converters = {"shape": _get_enum_resolver(ToolShape)}
+    attribute_defaults = {"height": 10,
+                          "feed": 300,
+                          "speed": 1000}
+
     def get_tool_geometry(self):
-        height = self.get_value("height", default=10, raise_if_missing=False)
-        shape = _get_enum_value(ToolShape, self.get_value("shape"))
+        height = self.get_value("height")
+        shape = self.get_value("shape")
         if shape == ToolShape.FLAT_BOTTOM:
             return CylindricalCutter(self.radius, height=height)
         elif shape == ToolShape.BALL_NOSE:
@@ -131,10 +218,11 @@ class Tool(BaseDataContainer):
 
         May raise MissingAttributeError if valid input sources are missing.
         """
-        radius = self.get_value("radius", raise_if_missing=False)
-        if radius is None:
-            radius = self.get_value("diameter") / 2
-        return radius
+        try:
+            return self.get_value("radius")
+        except MissingAttributeError:
+            pass
+        return self.get_value("diameter") / 2
 
     @property
     def diameter(self):
@@ -142,11 +230,29 @@ class Tool(BaseDataContainer):
 
     def get_toolpath_filters(self):
         feed = self.get_value("feed")
-        speed = self.get_value("speed", default=1000, raise_if_missing=False)
+        speed = self.get_value("speed")
         return [MachineSetting("feedrate", feed), MachineSetting("spindle_speed", speed)]
 
 
 class Process(BaseDataContainer):
+
+    collection_name = "process"
+    attribute_converters = {"strategy": _get_enum_resolver(ProcessStrategy),
+                            "milling_style": _get_enum_resolver(MotionGrid.MillingStyle),
+                            "path_pattern": _get_enum_resolver(PathPattern),
+                            "grid_direction": _get_enum_resolver(MotionGrid.GridDirection),
+                            "spiral_direction": _get_enum_resolver(MotionGrid.SpiralDirection),
+                            "pocketing_type": _get_enum_resolver(MotionGrid.PocketingType),
+                            "trace_models": _get_collection_resolver("model", many=True),
+                            "rounded_corners": _bool_converter,
+                            "radius_compensation": _bool_converter,
+                            "step_down": float}
+    attribute_defaults = {"overlap": 0,
+                          "path_pattern": PathPattern.GRID,
+                          "grid_direction": MotionGrid.GridDirection.X,
+                          "spiral_direction": MotionGrid.SpiralDirection.OUT,
+                          "rounded_corners": True,
+                          "radius_compensation": False}
 
     def get_path_generator(self):
         strategy = _get_enum_value(ProcessStrategy, self.get_value("strategy"))
@@ -162,11 +268,10 @@ class Process(BaseDataContainer):
             raise InvalidKeyError(strategy, ProcessStrategy)
 
     def get_motion_grid(self, tool_radius, box):
-        strategy = _get_enum_value(ProcessStrategy, self.get_value("strategy"))
-        overlap = self.get_value("overlap", 0)
+        strategy = self.get_value("strategy")
+        overlap = self.get_value("overlap")
         line_distance = 2 * tool_radius * (1 - overlap)
-        milling_style = _get_enum_value(MotionGrid.MillingStyle,
-                                        self.get_value("milling_style"))
+        milling_style = self.get_value("milling_style")
         if strategy == ProcessStrategy.SLICE:
             return MotionGrid.get_fixed_grid(
                 box, self.get_value("step_down"), line_distance=line_distance,
@@ -179,13 +284,12 @@ class Process(BaseDataContainer):
                                              grid_direction=MotionGrid.GridDirection.X,
                                              milling_style=milling_style)
         elif strategy == ProcessStrategy.SURFACE:
-            path_pattern = _get_enum_value(PathPattern, self.get_value("path_pattern"))
             if path_pattern == PathPattern.SPIRAL:
                 func = MotionGrid.get_spiral
-                kwarg_names = ("grid_direction", )
+                kwarg_names = ("path_pattern", "grid_direction")
             elif path_pattern == PathPattern.GRID:
                 func = MotionGrid.get_fixed_grid
-                kwarg_names = ("spiral_direction", "rounded_corners")
+                kwarg_names = ("path_pattern", "spiral_direction", "rounded_corners")
             else:
                 raise InvalidKeyError(path_pattern, PathPattern)
             # surfacing requires a finer grid (arbitrary factor)
@@ -211,7 +315,7 @@ class Process(BaseDataContainer):
             progress.update(text="Calculating moves")
             line_distance = 1.8 * tool_radius
             step_width = tool_radius / 4.0
-            pocketing_type = _get_enum_value(PocketingType, self.get_value("pocketing_type"))
+            pocketing_type = self.get_value("pocketing_type")
             motion_grid = MotionGrid.get_lines_grid(
                 models, box, self.get_value("step_down"), line_distance=line_distance,
                 step_width=step_width, milling_style=milling_style, pocketing_type=pocketing_type,
@@ -224,10 +328,18 @@ class Process(BaseDataContainer):
 
 class Task(BaseDataContainer):
 
+    collection_name = "task"
+    attribute_converters = {"process": _get_collection_resolver("process"),
+                            "bounds": _get_collection_resolver("bounds"),
+                            "tool": _get_collection_resolver("tool"),
+                            "type": _get_enum_resolver(TaskType),
+                            "collision_models": _get_collection_resolver("model", many=True)}
+
+
     def generate_toolpath(self, callback=None):
         process = self.get_value("process")
         bounds = self.get_value("bounds")
-        task_type = _get_enum_value(TaskType, self.get_value("type"))
+        task_type = self.get_value("type")
         if task_type == TaskType.MILLING:
             tool = self.get_value("tool")
             box = bounds.get_absolute_limits(tool_radius=tool.radius,
