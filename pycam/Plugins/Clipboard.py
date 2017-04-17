@@ -153,8 +153,11 @@ class Clipboard(pycam.Plugins.PluginBase):
             for target in targets:
                 data = self.clipboard.wait_for_contents(target)
                 if data is not None:
-                    importer = pycam.Importers.detect_file_type(filename)[1]
-                    return data, importer
+                    detected_filetype = pycam.Importers.detect_file_type(filename)
+                    if detected_filetype:
+                        return data, detected_filetype.importer
+                    else:
+                        return None, None
         return None, None
 
     def paste_model_from_clipboard(self, widget=None):

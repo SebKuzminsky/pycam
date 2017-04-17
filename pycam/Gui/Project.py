@@ -498,11 +498,10 @@ class ProjectGui(pycam.Gui.BaseUI):
         for uri in uris:
             if not uri or (uri == chr(0)):
                 continue
-            uri = pycam.Utils.URIHandler(uri)
-            file_type, importer = pycam.Importers.detect_file_type(uri, quiet=True)
-            if importer:
+            detected_filetype = pycam.Importers.detect_file_type(uri, quiet=True)
+            if detected_filetype:
                 # looks like the file can be loaded
-                if self.load_model_file(filename=uri):
+                if self.load_model_file(filename=detected_filetype.uri):
                     return True
         if len(uris) > 1:
             log.error("Failed to open any of the given models: %s", str(uris))
@@ -522,17 +521,17 @@ class ProjectGui(pycam.Gui.BaseUI):
             filename = self.settings.get("get_filename_func")("Loading model ...", mode_load=True,
                                                               type_filter=FILTER_MODEL)
         if filename:
-            file_type, importer = pycam.Importers.detect_file_type(filename)
-            if file_type and callable(importer):
+            detected_filetype = pycam.Importers.detect_file_type(filename)
+            if detected_filetype:
                 progress = self.settings.get("progress")
                 progress.update(text="Loading model ...")
                 # "cancel" is not allowed
                 progress.disable_cancel()
-                model = importer(filename,
-                                 program_locations=get_all_program_locations(self.settings),
-                                 unit=self.settings.get("unit"),
-                                 fonts_cache=self.settings.get("fonts"),
-                                 callback=progress.update)
+                model = detected_filetype.importer(
+                    detected_filetype.uri,
+                    program_locations=get_all_program_locations(self.settings),
+                    unit=self.settings.get("unit"), fonts_cache=self.settings.get("fonts"),
+                    callback=progress.update)
                 if self.load_model(model):
                     if store_filename:
                         self.set_model_filename(filename)
