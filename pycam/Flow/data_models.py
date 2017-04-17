@@ -97,6 +97,15 @@ class SourceType(Enum):
     URL = "url"
     COPY = "copy"
     TASK = "task"
+    TOOLPATH = "toolpath"
+
+
+class TargetType(Enum):
+    FILE = "file"
+
+
+class ExportType(Enum):
+    GCODE = "gcode"
 
 
 def _get_enum_value(enum_class, value):
@@ -201,12 +210,41 @@ def _get_source(collection_name, source_params):
             raise MissingAttributeError("Sourcing a task for '{}' requires a 'task' attribute: {}"
                                         .format(collection_name, source_params))
         return _get_from_collection("task", task_name)
+    elif source_type == SourceType.TOOLPATH:
+        try:
+            toolpath_names = source_params["toolpaths"]
+        except KeyError:
+            raise MissingAttributeError("Sourcing a toolpath for '{}' requires a 'toolpaths' "
+                                        "attribute: {}".format(collection_name, source_params))
+        return _get_from_collection("toolpath", toolpath_names, many=True)
     else:
         raise InvalidKeyError(source_type, SourceType)
 
 
 def _get_source_loader(collection_name):
     return functools.partial(_get_source, collection_name)
+
+
+def _get_target(collection_name, target_params):
+    try:
+        target_type_name = target_params["type"]
+    except KeyError:
+        raise MissingAttributeError("Target for '{}' requires a 'type' attribute: {}"
+                                    .format(collection_name, target_params))
+    target_type = _get_enum_value(TargetType, target_type_name)
+    if target_type == TargetType.FILE:
+        try:
+            location = target_params["location"]
+        except KeyError:
+            raise MissingAttributeError("Target for '{}' requires a 'location' attribute: {}"
+                                        .format(collection_name, target_params))
+        return open(location, "w")
+    else:
+        raise InvalidKeyError(target_type, TargetType)
+
+
+def _get_target_loader(collection_name):
+    return functools.partial(_get_target, collection_name)
 
 
 def _get_from_collection(collection_name, wanted, many=False):
@@ -550,3 +588,38 @@ class Toolpath(BaseDataContainer):
     def generate_toolpath(self):
         task = self.get_value("source")
         return task.generate_toolpath()
+
+
+class Export(BaseDataContainer):
+
+    collection_name = "export"
+    attribute_converters = {"export_type": _get_enum_resolver(ExportType),
+                            "source": _get_source_loader("export"),
+                            "target": _get_target_loader("export")}
+
+    def run_export(self):
+        export_type = self.get_value("export_type")
+        source = self.get_value("source")
+        target = self.get_value("target")
+        if export_type == ExportType.GCODE:
+            # we expect a tuple of toolpaths as input
+            if not isinstance(source, tuple):
+                raise InvalidDataError("Invalid source data type for export type '{}': {} "
+                                       "(expected: list of toolpaths)"
+                                       .format(export_type, type(source)))
+            if not all([isinstance(item, Toolpath) for item in source]):
+                raise InvalidDataError("Invalid source data type for export type '{}': {} "
+                                       "(expected: list of toolpaths)"
+                                       .format(export_type, [type(item) for item in source]))
+            generator = pycam.Exporters.GCode.LinuxCNC.LinuxCNC(target)
+            # TODO: retrieve the filters from settings
+#           generator.add_filters(settings_filters)
+#           generator.add_filters(common_filters)
+            for toolpath in source:
+                calculated = toolpath.generate_toolpath()
+                # TODO: implement toolpath.get_meta_data()
+                generator.add_moves(calculated.path, calculated.filters)
+            generator.finish()
+            target.close()
+        else:
+            raise InvalidKeyError(export_type, ExportType)

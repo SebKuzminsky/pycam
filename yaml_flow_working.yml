@@ -54,10 +54,12 @@ toolpaths:
                         task: task1
 
 exports:
-        - source:
-                type: toolpath
-                toolpaths:
-                        - toolpath1
-          target:
-                type: file
-                location: test.ngc
+        export1:
+                export_type: gcode
+                source:
+                        type: toolpath
+                        toolpaths:
+                                - toolpath1
+                target:
+                        type: file
+                        location: test.ngc
