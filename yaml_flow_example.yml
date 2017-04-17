@@ -92,9 +92,8 @@ bounds:
                         z: 0
         bounds2:
                 specification: margins
-                reference:
-                        models:
-                                - model1
+                reference_models:
+                        - model1
                 lower:
                         x: 10%
                         y: 10%

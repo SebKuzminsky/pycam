@@ -34,7 +34,7 @@ bounds:
                         x: 5
                         y: 5
                         z: 1
-                models:
+                reference_models:
                         - model1
 
 tasks:

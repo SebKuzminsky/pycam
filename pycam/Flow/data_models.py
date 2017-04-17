@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import collections
 import copy
 from enum import Enum
 import functools
@@ -25,9 +26,11 @@ import functools
 from pycam.Cutters.CylindricalCutter import CylindricalCutter
 from pycam.Cutters.SphericalCutter import SphericalCutter
 from pycam.Cutters.ToroidalCutter import ToroidalCutter
+from pycam.Geometry import Box3D, Point3D
 import pycam.PathGenerators.DropCutter
 import pycam.PathGenerators.EngraveCutter
 import pycam.PathGenerators.PushCutter
+from pycam.Plugins.Bounds import ToolBoundaryMode
 from pycam.Toolpath.Filters import MachineSetting
 import pycam.Toolpath.MotionGrid as MotionGrid
 import pycam.Utils.log
@@ -78,6 +81,11 @@ class PathPattern(Enum):
     GRID = "grid"
 
 
+class BoundsSpecification(Enum):
+    ABSOLUTE = "absolute"
+    MARGINS = "margins"
+
+
 class TaskType(Enum):
     MILLING = "milling"
 
@@ -113,6 +121,41 @@ def _bool_converter(value):
         return value
     else:
         raise InvalidDataError("Invalid boolean value type ({}): {}".format(type(value), value))
+
+
+LimitSingle = collections.namedtuple("LimitSingle", ("value", "is_relative"))
+Limit3D = collections.namedtuple("Limit3D", ("x", "y", "z"))
+
+
+def _limit3d_converter(point):
+    """ convert a tuple or list of three numbers or a dict with x/y/z keys into a 'Limit3D' """
+    if len(point) != 3:
+        raise InvalidDataError("A 3D limit needs to contain exactly three items: {}"
+                               .format(point))
+    result = []
+    if isinstance(point, dict):
+        try:
+            point = (point["x"], point["y"], point["z"])
+        except KeyError:
+            raise InvalidDataError("All three axis are required for lower/upper limits")
+    for value in point:
+        is_relative = False
+        if isinstance(value, str):
+            try:
+                if value.endswith("%"):
+                    is_relative = True
+                    # convert percent value to 0..1
+                    value = float(value[:-1]) / 100.0
+                else:
+                    value = float(value)
+            except ValueError:
+                raise InvalidDataError("Failed to parse float from 3D limit: {}".format(value))
+        elif isinstance(value, (int, float)):
+            value = float(value)
+        else:
+            raise InvalidDataError("Non-numeric data supplied for 3D limit: {}".format(value))
+        result.append(LimitSingle(value, is_relative))
+    return Limit3D(*result)
 
 
 def _get_from_collection(collection_name, wanted, many=False):
@@ -328,6 +371,72 @@ class Process(BaseDataContainer):
             return motion_grid
         else:
             raise InvalidKeyError(strategy, ProcessStrategy)
+
+
+class Boundary(BaseDataContainer):
+
+    collection_name = "bounds"
+    attribute_converters = {"specification": _get_enum_resolver(BoundsSpecification),
+                            "reference_models": _get_collection_resolver("model", many=True),
+                            "lower": _limit3d_converter,
+                            "upper": _limit3d_converter,
+                            "tool_boundary": _get_enum_resolver(ToolBoundaryMode)}
+    attribute_defaults = {"tool_boundary": ToolBoundaryMode.ALONG}
+
+    def get_absolute_limits(self, tool_radius=None, models=None):
+        lower = self.get_value("lower")
+        upper = self.get_value("upper")
+        if self.get_value("specification") == BoundsSpecification.MARGINS:
+            # choose the appropriate set of models
+            reference_models = self.get_value("reference_models")
+            if reference_models:
+                # configured models always take precedence
+                models = reference_models
+            elif models:
+                # use the supplied models (e.g. for toolpath calculation)
+                pass
+            else:
+                # use all visible models -> for live visualization
+                # TODO: filter for visible models
+                models = self._get_full_collection("model")
+            model_box = pycam.Geometry.Model.get_combined_bounds([model.model for model in models])
+            if model_box is None:
+                # zero-sized models -> no action
+                return None
+            is_percent = _RELATIVE_UNIT[self["parameters"]["RelativeUnit"]] == "%"
+            low, high = [], []
+            for model_lower, model_upper, margin_lower, margin_upper in zip(
+                    model_box.lower, model_box.upper, lower, upper):
+                dim = model_upper - model_lower
+                if margin_lower.is_relative:
+                    low.append(model_lower - margin_lower.value * dim)
+                else:
+                    low.append(model_lower - margin_lower.value)
+                if margin_upper.is_relative:
+                    low.append(model_upper - margin_upper.value * dim)
+                else:
+                    low.append(model_upper - margin_upper.value)
+        else:
+            low, high = [], []
+            for abs_lower, abs_upper in zip(lower, upper):
+                if abs_lower.is_relative:
+                    raise InvalidDataError("Relative (%) values not allowed for absolute boundary")
+                low.append(abs_lower.value)
+                if abs_upper.is_relative:
+                    raise InvalidDataError("Relative (%) values not allowed for absolute boundary")
+                high.append(abs_upper.value)
+        tool_limit = self.get_value("tool_boundary")
+        # apply inside/along/outside if a tool is given
+        if tool_radius and (tool_limit != ToolBoundaryMode.ALONG):
+            if tool_limit == ToolBoundaryMode.INSIDE:
+                offset = -tool_radius
+            else:
+                offset = tool_radius
+            # apply offset only for x and y
+            for index in range(2):
+                low[index] -= offset
+                high[index] += offset
+        return Box3D(Point3D(*low), Point3D(*high))
 
 
 class Task(BaseDataContainer):

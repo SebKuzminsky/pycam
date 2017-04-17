@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from enum import Enum
+
 from pycam.Geometry import Box3D, Point3D
 import pycam.Plugins
 # TODO: move Toolpath.Bounds here?
@@ -26,7 +28,13 @@ from pycam.Utils import get_non_conflicting_name
 
 
 _RELATIVE_UNIT = ("%", "mm")
-_BOUNDARY_MODES = ("inside", "along", "around")
+
+
+class ToolBoundaryMode(Enum):
+    INSIDE = "inside"
+    ALONG = "along"
+    AROUND = "around"
+
 
 
 class Bounds(pycam.Plugins.ListPluginBase):
@@ -421,53 +429,6 @@ class BoundsEntity(pycam.Plugins.ObjectWithAttributes):
             "TypeRelativeMargin": True,
             "TypeCustom": False,
             "RelativeUnit": _RELATIVE_UNIT.index("%"),
-            "ToolLimit": _BOUNDARY_MODES.index("along"),
+            "ToolLimit": ToolBoundaryMode.ALONG,
             "Models": [],
         })
-
-    def get_absolute_limits(self, tool_radius=None, models=None):
-        get_low_value = lambda axis: self["parameters"]["BoundaryLow%s" % "XYZ"[axis]]
-        get_high_value = lambda axis: self["parameters"]["BoundaryHigh%s" % "XYZ"[axis]]
-        if self["parameters"]["TypeRelativeMargin"]:
-            # choose the appropriate set of models
-            if self["parameters"]["Models"]:
-                # configured models always take precedence
-                models = self["parameters"]["Models"]
-            elif models:
-                # use the supplied models (e.g. for toolpath calculation)
-                pass
-            else:
-                # use all visible models -> for live visualization
-                models = self.core.get("models").get_visible()
-            model_box = pycam.Geometry.Model.get_combined_bounds([model.model for model in models])
-            if model_box is None:
-                # zero-sized models -> no action
-                return None
-            is_percent = _RELATIVE_UNIT[self["parameters"]["RelativeUnit"]] == "%"
-            low, high = [], []
-            if is_percent:
-                for axis in range(3):
-                    dim = model_box.upper[axis] - model_box.lower[axis]
-                    low.append(model_box.lower[axis] - (get_low_value(axis) / 100.0 * dim))
-                    high.append(model_box.upper[axis] + (get_high_value(axis) / 100.0 * dim))
-            else:
-                for axis in range(3):
-                    low.append(model_box.lower[axis] - get_low_value(axis))
-                    high.append(model_box.upper[axis] + get_high_value(axis))
-        else:
-            low, high = [], []
-            for axis in range(3):
-                low.append(get_low_value(axis))
-                high.append(get_high_value(axis))
-        tool_limit = _BOUNDARY_MODES[self["parameters"]["ToolLimit"]]
-        # apply inside/along/outside if a tool is given
-        if tool_radius and (tool_limit != "along"):
-            if tool_limit == "inside":
-                offset = -tool_radius
-            else:
-                offset = tool_radius
-            # apply offset only for x and y
-            for index in range(2):
-                low[index] -= offset
-                high[index] += offset
-        return Box3D(Point3D(*low), Point3D(*high))

@@ -13,36 +13,21 @@ _log = pycam.Utils.log.get_logger()
 
 def parse_yaml(event_manager, source):
     import pycam.Toolpath.MotionGrid
-    from pycam.Plugins.Bounds import BoundsEntity
     milling_style_map = {"ignore": pycam.Toolpath.MotionGrid.MillingStyle.IGNORE,
                          "conventional": pycam.Toolpath.MotionGrid.MillingStyle.CONVENTIONAL,
                          "climb": pycam.Toolpath.MotionGrid.MillingStyle.CLIMB}
     parsed = yaml.safe_load(source)
     for collection, parser_func in (("tools", pycam.Flow.data_models.Tool),
                                     ("processes", pycam.Flow.data_models.Process),
-                                    ("bounds", BoundsEntity),
+                                    ("bounds", pycam.Flow.data_models.Boundary),
                                     ("tasks", pycam.Flow.data_models.Task),
                                     ("models", import_model_by_attributes),
                                     ("toolpaths", generate_toolpath_by_specification)):
         for name, spec in parsed.get(collection, {}).items():
-            if collection in ("tools", "processes"):
+            if collection in ("tools", "processes", "bounds"):
                 data = dict(spec)
                 data["name"] = name
                 obj = parser_func(data)
-            elif collection == "bounds":
-                obj = parser_func(event_manager, name, **spec)
-                obj["parameters"]["BoundaryLowX"] = obj["lower"]["x"]
-                obj["parameters"]["BoundaryLowY"] = obj["lower"]["y"]
-                obj["parameters"]["BoundaryLowZ"] = obj["lower"]["z"]
-                obj["parameters"]["BoundaryHighX"] = obj["upper"]["x"]
-                obj["parameters"]["BoundaryHighY"] = obj["upper"]["y"]
-                obj["parameters"]["BoundaryHighZ"] = obj["upper"]["z"]
-                if obj["specification"] == "absolute":
-                    obj["parameters"]["TypeCustom"] = True
-                    obj["parameters"]["TypeRelativeMargin"] = False
-                else:
-                    obj["parameters"]["TypeCustom"] = False
-                    obj["parameters"]["TypeRelativeMargin"] = True
             elif collection == "toolpaths":
                 obj = parser_func(event_manager, spec)
             else:

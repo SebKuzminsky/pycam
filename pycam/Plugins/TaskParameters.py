@@ -127,5 +127,5 @@ class TaskParamBounds(pycam.Plugins.PluginBase):
         choices = []
         bounds = self.core.get("bounds")
         for bound in bounds:
-            choices.append((bound["name"], bound))
+            choices.append((bound.get_value("name"), bound))
         self.control.update_choices(choices)
