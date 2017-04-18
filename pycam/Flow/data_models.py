@@ -104,8 +104,12 @@ class TargetType(Enum):
     FILE = "file"
 
 
-class ExportType(Enum):
+class FormatType(Enum):
     GCODE = "gcode"
+
+
+class GCodeDialect(Enum):
+    LINUXCNC = "linuxcnc"
 
 
 def _get_enum_value(enum_class, value):
@@ -595,28 +599,32 @@ class Toolpath(BaseCollectionItemDataContainer):
         return task.generate_toolpath()
 
 
-class Export(BaseCollectionItemDataContainer):
 
-    collection_name = "export"
-    attribute_converters = {"export_type": _get_enum_resolver(ExportType),
-                            "source": _get_source_loader("export"),
-                            "target": _get_target}
+class Formatter(BaseDataContainer):
 
-    def run_export(self):
-        export_type = self.get_value("export_type")
-        source = self.get_value("source")
-        target = self.get_value("target")
-        if export_type == ExportType.GCODE:
+    attribute_converters = {"type": _get_enum_resolver(FormatType),
+                            "dialect": _get_enum_resolver(GCodeDialect)}
+    attribute_defaults = {"dialect": GCodeDialect.LINUXCNC,
+                          "comment": ""}
+
+    def write_data(self, source, target):
+        format_type = self.get_value("type")
+        if format_type == FormatType.GCODE:
+            comment = self.get_value("comment")
+            dialect = self.get_value("dialect")
             # we expect a tuple of toolpaths as input
             if not isinstance(source, tuple):
-                raise InvalidDataError("Invalid source data type for export type '{}': {} "
+                raise InvalidDataError("Invalid source data type for format type '{}': {} "
                                        "(expected: list of toolpaths)"
-                                       .format(export_type, type(source)))
+                                       .format(format_type, type(source)))
             if not all([isinstance(item, Toolpath) for item in source]):
-                raise InvalidDataError("Invalid source data type for export type '{}': {} "
+                raise InvalidDataError("Invalid source data type for format type '{}': {} "
                                        "(expected: list of toolpaths)"
-                                       .format(export_type, [type(item) for item in source]))
-            generator = pycam.Exporters.GCode.LinuxCNC.LinuxCNC(target)
+                                       .format(format_type, [type(item) for item in source]))
+            if dialect == GCodeDialect.LINUXCNC:
+                generator = pycam.Exporters.GCode.LinuxCNC.LinuxCNC(target, comment=comment)
+            else:
+                raise InvalidKeyError(dialect, GCodeDialect)
             # TODO: retrieve the filters from settings
 #           generator.add_filters(settings_filters)
 #           generator.add_filters(common_filters)
@@ -627,4 +635,18 @@ class Export(BaseCollectionItemDataContainer):
             generator.finish()
             target.close()
         else:
-            raise InvalidKeyError(export_type, ExportType)
+            raise InvalidKeyError(format_type, FormatType)
+
+
+class Export(BaseCollectionItemDataContainer):
+
+    collection_name = "export"
+    attribute_converters = {"format": Formatter,
+                            "source": _get_source_loader("export"),
+                            "target": _get_target}
+
+    def run_export(self):
+        formatter = self.get_value("format")
+        source = self.get_value("source")
+        target = self.get_value("target")
+        formatter.write_data(source, target)

@@ -55,7 +55,9 @@ toolpaths:
 
 exports:
         export1:
-                export_type: gcode
+                format:
+                        type: gcode
+                        comment: Some GCode export
                 source:
                         type: toolpath
                         toolpaths:

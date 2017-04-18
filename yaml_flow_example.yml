@@ -148,25 +148,27 @@ toolpaths:
                           count: 3
 
 exports:
-        - source:
-                type: toolpath
-                toolpaths:
-                        - toolpath1
-          format:
-                type: gcode
-                dialect: linuxcnc
-                comment: Complete grid of 5x3 toolpaths.
-                safety_height: 10
-          target:
-                type: file
-                location: grid_5x3.ngc
-        - source:
-                type: toolpath
-                toolpaths:
-                        - toolpath1
-                        - toolpath2
-          format:
-                type: preview_2d
-                filetype: png
-          target:
-                type: clipboard
+        export1:
+                source:
+                        type: toolpath
+                        toolpaths:
+                                - toolpath1
+                format:
+                        type: gcode
+                        dialect: linuxcnc
+                        comment: Complete grid of 5x3 toolpaths.
+                        safety_height: 10
+                target:
+                        type: file
+                        location: grid_5x3.ngc
+        export2:
+                source:
+                        type: toolpath
+                        toolpaths:
+                                - toolpath1
+                                - toolpath2
+                format:
+                        type: preview_2d
+                        filetype: png
+                target:
+                        type: clipboard
