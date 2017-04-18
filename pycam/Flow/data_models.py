@@ -275,14 +275,47 @@ def _get_collection_resolver(collection_name, many=False):
 
 class BaseDataContainer(object):
 
-    # the name of the collection should be overwritten in every subclass
-    collection_name = None
-    unique_attribute = "name"
     attribute_converters = {}
     attribute_defaults = {}
 
     def __init__(self, data):
         self._data = copy.deepcopy(data)
+
+    @classmethod
+    def parse_from_dict(cls, data):
+        return cls(data)
+
+    def get_value(self, key, default=None):
+        try:
+            raw = self._data[key]
+        except KeyError:
+            if default is not None:
+                raw = default
+            elif key in self.attribute_defaults:
+                raw = self.attribute_defaults[key]
+            else:
+                raise MissingAttributeError("The attribute '{}' is missing in '{}'"
+                                            .format(key, type(self)))
+        if key in self.attribute_converters:
+            return self.attribute_converters[key](raw)
+        else:
+            return raw
+
+    def set_value(self, key, value):
+        self._data[key] = value
+
+    def get_dict(self):
+        return copy.deepcopy(self._data)
+
+
+class BaseCollectionItemDataContainer(BaseDataContainer):
+
+    # the name of the collection should be overwritten in every subclass
+    collection_name = None
+    unique_attribute = "name"
+
+    def __init__(self, data):
+        super(BaseCollectionItemDataContainer, self).__init__(data)
         assert self.collection_name is not None
         item_id = data[self.unique_attribute]
         self.__get_collection()[item_id] = self
@@ -305,32 +338,8 @@ class BaseDataContainer(object):
             except KeyError:
                 pass
 
-    @classmethod
-    def parse_from_dict(cls, data):
-        return cls(data)
 
-    def get_value(self, key):
-        try:
-            raw = self._data[key]
-        except KeyError:
-            if key not in self.attribute_defaults:
-                raise MissingAttributeError("The attribute '{}' is missing in '{}'"
-                                            .format(key, type(self)))
-            else:
-                raw = self.attribute_defaults[key]
-        if key in self.attribute_converters:
-            return self.attribute_converters[key](raw)
-        else:
-            return raw
-
-    def set_value(self, key, value):
-        self._data[key] = value
-
-    def get_dict(self):
-        return copy.deepcopy(self._data)
-
-
-class Model(BaseDataContainer):
+class Model(BaseCollectionItemDataContainer):
 
     collection_name = "model"
     attribute_converters = {"source": _get_source_loader("model")}
@@ -339,7 +348,7 @@ class Model(BaseDataContainer):
         return self.get_value("source")
 
 
-class Tool(BaseDataContainer):
+class Tool(BaseCollectionItemDataContainer):
 
     collection_name = "tool"
     attribute_converters = {"shape": _get_enum_resolver(ToolShape)}
@@ -382,7 +391,7 @@ class Tool(BaseDataContainer):
         return [MachineSetting("feedrate", feed), MachineSetting("spindle_speed", speed)]
 
 
-class Process(BaseDataContainer):
+class Process(BaseCollectionItemDataContainer):
 
     collection_name = "process"
     attribute_converters = {"strategy": _get_enum_resolver(ProcessStrategy),
@@ -474,7 +483,7 @@ class Process(BaseDataContainer):
             raise InvalidKeyError(strategy, ProcessStrategy)
 
 
-class Boundary(BaseDataContainer):
+class Boundary(BaseCollectionItemDataContainer):
 
     collection_name = "bounds"
     attribute_converters = {"specification": _get_enum_resolver(BoundsSpecification),
@@ -540,7 +549,7 @@ class Boundary(BaseDataContainer):
         return Box3D(Point3D(*low), Point3D(*high))
 
 
-class Task(BaseDataContainer):
+class Task(BaseCollectionItemDataContainer):
 
     collection_name = "task"
     attribute_converters = {"process": _get_collection_resolver("process"),
@@ -580,7 +589,7 @@ class Task(BaseDataContainer):
             raise InvalidKeyError(task_type, TaskType)
 
 
-class Toolpath(BaseDataContainer):
+class Toolpath(BaseCollectionItemDataContainer):
 
     collection_name = "toolpath"
     attribute_converters = {"source": _get_source_loader("toolpath")}
@@ -590,7 +599,7 @@ class Toolpath(BaseDataContainer):
         return task.generate_toolpath()
 
 
-class Export(BaseDataContainer):
+class Export(BaseCollectionItemDataContainer):
 
     collection_name = "export"
     attribute_converters = {"export_type": _get_enum_resolver(ExportType),
