@@ -24,7 +24,6 @@ from pycam import GenericError
 from pycam.Flow.data_models import Task
 import pycam.Plugins
 import pycam.Utils
-from pycam.Utils import get_non_conflicting_name
 
 
 class Tasks(pycam.Plugins.ListPluginBase):

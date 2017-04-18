@@ -20,7 +20,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Flow.data_models
 import pycam.Plugins
-from pycam.Utils import get_non_conflicting_name
 
 
 class Processes(pycam.Plugins.ListPluginBase):

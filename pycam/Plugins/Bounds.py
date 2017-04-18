@@ -20,7 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 from enum import Enum
 
-from pycam.Geometry import Box3D, Point3D
+import pycam.Flow.data_models
 import pycam.Plugins
 # TODO: move Toolpath.Bounds here?
 import pycam.Toolpath
@@ -34,7 +34,6 @@ class ToolBoundaryMode(Enum):
     INSIDE = "inside"
     ALONG = "along"
     AROUND = "around"
-
 
 
 class Bounds(pycam.Plugins.ListPluginBase):
@@ -401,7 +400,8 @@ class Bounds(pycam.Plugins.ListPluginBase):
 
     def _bounds_new(self, *args):
         name = get_non_conflicting_name("Bounds #%d", [bounds["name"] for bounds in self])
-        new_bounds = BoundsEntity(self.core, name)
+        # TODO: migrate to new data_model
+        new_bounds = pycam.Flows.data_models.Boundary(self.core, name)
         self.append(new_bounds)
         self.select(new_bounds)
 
@@ -410,25 +410,3 @@ class Bounds(pycam.Plugins.ListPluginBase):
         if bounds and (new_text != bounds["name"]) and new_text:
             bounds["name"] = new_text
             self.core.emit_event("bounds-list-changed")
-
-
-class BoundsEntity(pycam.Plugins.ObjectWithAttributes):
-
-    def __init__(self, core, name, *args, **kwargs):
-        super(BoundsEntity, self).__init__("bounds", *args, **kwargs)
-        self["name"] = name
-        self["parameters"] = {}
-        self.core = core
-        self["parameters"].update({
-            "BoundaryLowX": 0,
-            "BoundaryLowY": 0,
-            "BoundaryLowZ": 0,
-            "BoundaryHighX": 0,
-            "BoundaryHighY": 0,
-            "BoundaryHighZ": 0,
-            "TypeRelativeMargin": True,
-            "TypeCustom": False,
-            "RelativeUnit": _RELATIVE_UNIT.index("%"),
-            "ToolLimit": ToolBoundaryMode.ALONG,
-            "Models": [],
-        })

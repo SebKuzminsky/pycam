@@ -4,7 +4,6 @@ import pycam.Exporters.GCode.LinuxCNC
 import pycam.Flow.data_models
 import pycam.Importers
 import pycam.Plugins
-from pycam.Utils.events import EventCore
 import pycam.Utils.log
 
 

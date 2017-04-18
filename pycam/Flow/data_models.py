@@ -282,8 +282,9 @@ class Source(BaseDataContainer):
             try:
                 source_name = self.get_value("original")
             except KeyError:
-                raise MissingAttributeError("Source for '{}' copy requires an 'original' attribute: {}"
-                                            .format(target_collection, self.get_dict()))
+                raise MissingAttributeError("Source for '{}' copy requires an 'original' "
+                                            "attribute: {}".format(target_collection,
+                                                                   self.get_dict()))
             return _get_from_collection(target_collection, source_name)
         elif source_type in (SourceType.FILE, SourceType.URL):
             try:
@@ -302,8 +303,9 @@ class Source(BaseDataContainer):
             try:
                 task_name = self.get_value("task")
             except KeyError:
-                raise MissingAttributeError("Sourcing a task for '{}' requires a 'task' attribute: {}"
-                                            .format(target_collection, self.get_dict()))
+                raise MissingAttributeError("Sourcing a task for '{}' requires a 'task' "
+                                            "attribute: {}".format(target_collection,
+                                                                   self.get_dict()))
             return _get_from_collection("task", task_name)
         elif source_type == SourceType.TOOLPATH:
             try:
@@ -419,19 +421,20 @@ class Process(BaseCollectionItemDataContainer):
                                              grid_direction=MotionGrid.GridDirection.X,
                                              milling_style=milling_style)
         elif strategy == ProcessStrategy.SURFACE:
+            path_pattern = self.get_value("path_pattern")
             if path_pattern == PathPattern.SPIRAL:
                 func = MotionGrid.get_spiral
-                kwarg_names = ("path_pattern", "grid_direction")
+                kwarg_names = ("grid_direction")
             elif path_pattern == PathPattern.GRID:
                 func = MotionGrid.get_fixed_grid
-                kwarg_names = ("path_pattern", "spiral_direction", "rounded_corners")
+                kwarg_names = ("spiral_direction", "rounded_corners")
             else:
                 raise InvalidKeyError(path_pattern, PathPattern)
             # surfacing requires a finer grid (arbitrary factor)
             step_width = tool_radius / 4.0
             kwargs = {key: self.get_value(key) for key in kwarg_names}
             return func(box, None, step_width=step_width, line_distance=line_distance,
-                        milling_style=milling_style, **kwargs)
+                        milling_style=milling_style, path_pattern=path_pattern, **kwargs)
         elif strategy == ProcessStrategy.ENGRAVE:
             models = [m.get_model() for m in self.get_value("trace_models")]
             if not models:
@@ -491,7 +494,6 @@ class Boundary(BaseCollectionItemDataContainer):
             if model_box is None:
                 # zero-sized models -> no action
                 return None
-            is_percent = _RELATIVE_UNIT[self["parameters"]["RelativeUnit"]] == "%"
             low, high = [], []
             for model_lower, model_upper, margin_lower, margin_upper in zip(
                     model_box.lower, model_box.upper, lower, upper):
@@ -535,7 +537,6 @@ class Task(BaseCollectionItemDataContainer):
                             "tool": _get_collection_resolver("tool"),
                             "type": _get_enum_resolver(TaskType),
                             "collision_models": _get_collection_resolver("model", many=True)}
-
 
     def generate_toolpath(self, callback=None):
         process = self.get_value("process")
