@@ -58,7 +58,7 @@ setup(
     author_email="devel@sumpfralle.de",
     provides=["pycam"],
     requires=["gtk", "gtk.gtkgl", "OpenGL"],
-    url="http://sourceforge.net/projects/pycam",
+    url="http://pycam.sourceforge.net/",
     download_url="http://sourceforge.net/projects/pycam/files",
     keywords=["3-axis", "cnc", "cam", "toolpath", "machining", "g-code"],
     long_description="""IMPORTANT NOTE: Please read the list of requirements:
