@@ -29,8 +29,8 @@ Older releases are still available on the
 
 ## Resources
 
-* [PyCAM GitHub project](https://github.com/SebKuzminsky/pycam)
+* [Development](https://github.com/SebKuzminsky/pycam)
 * [Getting started](getting-started.md) / [FAQ](faq.md)
-* [Video tutorials](http://vimeo.com/channels/pycam) / [Screenshots](screenshots.md) / [related videos](http://www.youtube.com/results?search_query=%2B%22pycam%22+-spy+-spycam+-hidden&aq=f)
-* [User Forum](https://sourceforge.net/p/pycam/discussion/) / [Mailing lists](https://sourceforge.net/p/pycam/mailman/)
+* [Video tutorials](http://vimeo.com/channels/pycam) / [Screenshots](screenshots.md)
+* [Mailing lists](https://sourceforge.net/p/pycam/mailman/)
 * [Issue Tracker](https://github.com/SebKuzminsky/pycam/issues)
