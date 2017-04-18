@@ -229,24 +229,6 @@ def _get_source_loader(collection_name):
     return functools.partial(_get_source, collection_name)
 
 
-def _get_target(target_params):
-    try:
-        target_type_name = target_params["type"]
-    except KeyError:
-        raise MissingAttributeError("Target for export requires a 'type' attribute: {}"
-                                    .format(target_params))
-    target_type = _get_enum_value(TargetType, target_type_name)
-    if target_type == TargetType.FILE:
-        try:
-            location = target_params["location"]
-        except KeyError:
-            raise MissingAttributeError("Target for export requires a 'location' attribute: {}"
-                                        .format(target_params))
-        return open(location, "w")
-    else:
-        raise InvalidKeyError(target_type, TargetType)
-
-
 def _get_from_collection(collection_name, wanted, many=False):
     default_result = [] if many else None
     try:
@@ -599,6 +581,18 @@ class Toolpath(BaseCollectionItemDataContainer):
         return task.generate_toolpath()
 
 
+class Target(BaseDataContainer):
+
+    attribute_converters = {"type": _get_enum_resolver(TargetType)}
+
+    def open(self):
+        target_type = self.get_value("type")
+        if target_type == TargetType.FILE:
+            location = self.get_value("location")
+            return open(location, "w")
+        else:
+            raise InvalidKeyError(target_type, TargetType)
+
 
 class Formatter(BaseDataContainer):
 
@@ -643,10 +637,10 @@ class Export(BaseCollectionItemDataContainer):
     collection_name = "export"
     attribute_converters = {"format": Formatter,
                             "source": _get_source_loader("export"),
-                            "target": _get_target}
+                            "target": Target}
 
     def run_export(self):
         formatter = self.get_value("format")
         source = self.get_value("source")
         target = self.get_value("target")
-        formatter.write_data(source, target)
+        formatter.write_data(source, target.open())
