@@ -225,26 +225,22 @@ def _get_source_loader(collection_name):
     return functools.partial(_get_source, collection_name)
 
 
-def _get_target(collection_name, target_params):
+def _get_target(target_params):
     try:
         target_type_name = target_params["type"]
     except KeyError:
-        raise MissingAttributeError("Target for '{}' requires a 'type' attribute: {}"
-                                    .format(collection_name, target_params))
+        raise MissingAttributeError("Target for export requires a 'type' attribute: {}"
+                                    .format(target_params))
     target_type = _get_enum_value(TargetType, target_type_name)
     if target_type == TargetType.FILE:
         try:
             location = target_params["location"]
         except KeyError:
-            raise MissingAttributeError("Target for '{}' requires a 'location' attribute: {}"
-                                        .format(collection_name, target_params))
+            raise MissingAttributeError("Target for export requires a 'location' attribute: {}"
+                                        .format(target_params))
         return open(location, "w")
     else:
         raise InvalidKeyError(target_type, TargetType)
-
-
-def _get_target_loader(collection_name):
-    return functools.partial(_get_target, collection_name)
 
 
 def _get_from_collection(collection_name, wanted, many=False):
@@ -604,7 +600,7 @@ class Export(BaseCollectionItemDataContainer):
     collection_name = "export"
     attribute_converters = {"export_type": _get_enum_resolver(ExportType),
                             "source": _get_source_loader("export"),
-                            "target": _get_target_loader("export")}
+                            "target": _get_target}
 
     def run_export(self):
         export_type = self.get_value("export_type")
