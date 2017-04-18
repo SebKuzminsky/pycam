@@ -180,55 +180,6 @@ def _limit3d_converter(point):
     return Limit3D(*result)
 
 
-def _get_source(collection_name, source_params):
-    try:
-        source_type_name = source_params["type"]
-    except KeyError:
-        raise MissingAttributeError("Source for '{}' requires a 'type' attribute: {}"
-                                    .format(collection_name, source_params))
-    source_type = _get_enum_value(SourceType, source_type_name)
-    if source_type == SourceType.COPY:
-        try:
-            source_name = source_params["original"]
-        except KeyError:
-            raise MissingAttributeError("Source for '{}' copy requires an 'original' attribute: {}"
-                                        .format(collection_name, source_params))
-        return _get_from_collection(collection_name, source_name)
-    elif source_type in (SourceType.FILE, SourceType.URL):
-        try:
-            location = source_params["location"]
-        except KeyError:
-            raise MissingAttributeError("Source for '{}' requires a 'location' attribute: {}"
-                                        .format(collection_name, source_params))
-        if source_type == SourceType.FILE:
-            location = "file://" + os.path.abspath(location)
-        detected_filetype = detect_file_type(location)
-        if detected_filetype:
-            return detected_filetype.importer(detected_filetype.uri)
-        else:
-            raise InvalidDataError("Failed to load model from '{}'".format(location))
-    elif source_type == SourceType.TASK:
-        try:
-            task_name = source_params["task"]
-        except KeyError:
-            raise MissingAttributeError("Sourcing a task for '{}' requires a 'task' attribute: {}"
-                                        .format(collection_name, source_params))
-        return _get_from_collection("task", task_name)
-    elif source_type == SourceType.TOOLPATH:
-        try:
-            toolpath_names = source_params["toolpaths"]
-        except KeyError:
-            raise MissingAttributeError("Sourcing a toolpath for '{}' requires a 'toolpaths' "
-                                        "attribute: {}".format(collection_name, source_params))
-        return _get_from_collection("toolpath", toolpath_names, many=True)
-    else:
-        raise InvalidKeyError(source_type, SourceType)
-
-
-def _get_source_loader(collection_name):
-    return functools.partial(_get_source, collection_name)
-
-
 def _get_from_collection(collection_name, wanted, many=False):
     default_result = [] if many else None
     try:
@@ -321,13 +272,58 @@ class BaseCollectionItemDataContainer(BaseDataContainer):
                 pass
 
 
+class Source(BaseDataContainer):
+
+    attribute_converters = {"type": _get_enum_resolver(SourceType)}
+
+    def get(self, target_collection):
+        source_type = self.get_value("type")
+        if source_type == SourceType.COPY:
+            try:
+                source_name = self.get_value("original")
+            except KeyError:
+                raise MissingAttributeError("Source for '{}' copy requires an 'original' attribute: {}"
+                                            .format(target_collection, self.get_dict()))
+            return _get_from_collection(target_collection, source_name)
+        elif source_type in (SourceType.FILE, SourceType.URL):
+            try:
+                location = self.get_value("location")
+            except KeyError:
+                raise MissingAttributeError("Source for '{}' requires a 'location' attribute: {}"
+                                            .format(target_collection, self.get_dict()))
+            if source_type == SourceType.FILE:
+                location = "file://" + os.path.abspath(location)
+            detected_filetype = detect_file_type(location)
+            if detected_filetype:
+                return detected_filetype.importer(detected_filetype.uri)
+            else:
+                raise InvalidDataError("Failed to load model from '{}'".format(location))
+        elif source_type == SourceType.TASK:
+            try:
+                task_name = self.get_value("task")
+            except KeyError:
+                raise MissingAttributeError("Sourcing a task for '{}' requires a 'task' attribute: {}"
+                                            .format(target_collection, self.get_dict()))
+            return _get_from_collection("task", task_name)
+        elif source_type == SourceType.TOOLPATH:
+            try:
+                toolpath_names = self.get_value("toolpaths")
+            except KeyError:
+                raise MissingAttributeError("Sourcing a toolpath for '{}' requires a 'toolpaths' "
+                                            "attribute: {}"
+                                            .format(target_collection, self.get_dict()))
+            return _get_from_collection("toolpath", toolpath_names, many=True)
+        else:
+            raise InvalidKeyError(source_type, SourceType)
+
+
 class Model(BaseCollectionItemDataContainer):
 
     collection_name = "model"
-    attribute_converters = {"source": _get_source_loader("model")}
+    attribute_converters = {"source": Source}
 
     def get_model(self):
-        return self.get_value("source")
+        return self.get_value("source").get("model")
 
 
 class Tool(BaseCollectionItemDataContainer):
@@ -574,10 +570,10 @@ class Task(BaseCollectionItemDataContainer):
 class Toolpath(BaseCollectionItemDataContainer):
 
     collection_name = "toolpath"
-    attribute_converters = {"source": _get_source_loader("toolpath")}
+    attribute_converters = {"source": Source}
 
     def generate_toolpath(self):
-        task = self.get_value("source")
+        task = self.get_value("source").get("toolpath")
         return task.generate_toolpath()
 
 
@@ -636,11 +632,11 @@ class Export(BaseCollectionItemDataContainer):
 
     collection_name = "export"
     attribute_converters = {"format": Formatter,
-                            "source": _get_source_loader("export"),
+                            "source": Source,
                             "target": Target}
 
     def run_export(self):
         formatter = self.get_value("format")
-        source = self.get_value("source")
+        source = self.get_value("source").get("export")
         target = self.get_value("target")
         formatter.write_data(source, target.open())
