@@ -1,14 +1,15 @@
-include LICENSE.TXT
-include technical_details.txt
-include INSTALL.TXT
-include COPYING.TXT
-include README.md
 include Changelog
+include COPYING.TXT
+include INSTALL.TXT
+include LICENSE.TXT
+include mkdocs.yml
+include README.md
 include release_info.txt
+include requirements.txt
+include technical_details.txt
 include pycam
-recursive-include desktop *
+recursive-include docs *
 recursive-include man *
-recursive-include src *.py
 recursive-include share *
 recursive-include samples *
 recursive-include Tests *
