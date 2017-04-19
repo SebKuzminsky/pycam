@@ -2,7 +2,8 @@
 # from the subversion repository.
 
 # use something like "VERSION=0.2 make" to override the VERSION on the command line
-VERSION ?= $(shell sed -n "s/^.*[\t ]*VERSION[\t ]*=[\t ]*[\"']\([^\"']*\)[\"'].*/\1/gp" pycam/__init__.py)
+VERSION = $(shell python -c 'import pycam; print(pycam.VERSION)')
+VERSION_FILE = pycam/Version.py
 REPO_TAGS ?= https://pycam.svn.sourceforge.net/svnroot/pycam/tags
 ARCHIVE_DIR_RELATIVE ?= release-archives
 PYTHON_EXE ?= python
@@ -29,7 +30,7 @@ ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
 RM = rm -f
 
 .PHONY: zip tgz win32 clean dist git_export create_archive_dir man check-style test \
-	pylint-relaxed pylint-strict docs upload-docs
+	pylint-relaxed pylint-strict docs upload-docs update-version
 
 dist: zip tgz win32
 	@# we can/should remove the version file in order to avoid a stale local version
@@ -38,6 +39,7 @@ dist: zip tgz win32
 clean:
 	@$(RM) -r build
 	@$(RM) -r "$(MKDOCS_EXPORT_DIR)"
+	@$(RM) "$(VERSION_FILE)"
 	$(MAKE) -C man clean
 
 man:
@@ -56,6 +58,9 @@ win32: create_archive_dir man
 	# this is a binary release
 	$(PYTHON_EXE) setup.py bdist_wininst --user-access-control force \
 		--dist-dir "$(ARCHIVE_DIR)" $(DISTUTILS_PLAT_NAME)
+
+update-version:
+	@echo 'VERSION = "$(VERSION)"' >| "$(VERSION_FILE)"
 
 test: check-style
 
