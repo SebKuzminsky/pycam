@@ -27,9 +27,11 @@ import urllib
 try:
     # Python3
     from urllib.parse import urlparse
+    from urllib.request import url2pathname
 except ImportError:
     # Python2
     from urlparse import urlparse
+    from urllib import url2pathname
 # this is imported below on demand
 # import win32com
 # import win32api
@@ -146,7 +148,7 @@ class URIHandler(object):
             # prepend "netloc" (the drive letter - e.g. "c:")
             encoded_path = self._uri.netloc + encoded_path
         # decode all special characters like "%20" and replace "/" with "\\" (Windows)
-        return urllib.url2pathname(encoded_path)
+        return url2pathname(encoded_path)
 
     def get_url(self):
         return self._uri.geturl()
