@@ -20,8 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import pycam.Exporters.GCode
-from pycam.Toolpath import CORNER_STYLE_EXACT_PATH, CORNER_STYLE_EXACT_STOP, \
-        CORNER_STYLE_OPTIMIZE_SPEED, CORNER_STYLE_OPTIMIZE_TOLERANCE
+from pycam.Toolpath import ToolpathPathMode
 
 
 DEFAULT_HEADER = (("G40", "disable tool radius compensation"),
@@ -106,13 +105,13 @@ class LinuxCNC(pycam.Exporters.GCode.BaseGenerator):
 
     def command_corner_style(self, extra_args):
         path_mode, motion_tolerance, naive_tolerance = extra_args
-        if path_mode == CORNER_STYLE_EXACT_PATH:
+        if path_mode == ToolpathPathMode.CORNER_STYLE_EXACT_PATH:
             self.add_command("G61", "exact path mode")
-        elif path_mode == CORNER_STYLE_EXACT_STOP:
+        elif path_mode == ToolpathPathMode.CORNER_STYLE_EXACT_STOP:
             self.add_command("G61.1", "exact stop mode")
-        elif path_mode == CORNER_STYLE_OPTIMIZE_SPEED:
+        elif path_mode == ToolpathPathMode.CORNER_STYLE_OPTIMIZE_SPEED:
             self.add_command("G64", "continuous mode with maximum speed")
-        elif path_mode == CORNER_STYLE_OPTIMIZE_TOLERANCE:
+        elif path_mode == ToolpathPathMode.CORNER_STYLE_OPTIMIZE_TOLERANCE:
             if not naive_tolerance:
                 self.add_command("G64 P%f" % motion_tolerance, "continuous mode with tolerance")
             else:

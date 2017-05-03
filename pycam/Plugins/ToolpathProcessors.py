@@ -21,7 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Gui.ControlsGTK
 import pycam.Plugins
-from pycam.Toolpath import CORNER_STYLE_EXACT_PATH
+from pycam.Toolpath import ToolpathPathMode
 import pycam.Utils.log
 
 
@@ -214,7 +214,8 @@ class ToolpathProcessorMilling(pycam.Plugins.PluginBase):
                       "step_width_x": 0.0001,
                       "step_width_y": 0.0001,
                       "step_width_z": 0.0001,
-                      "path_mode": CORNER_STYLE_EXACT_PATH,
+                      # pick the first path mode
+                      "path_mode": 0,
                       "motion_tolerance": 0.0,
                       "naive_tolerance": 0.0,
                       "spindle_enable": True,
@@ -242,7 +243,8 @@ class ToolpathProcessorLaser(pycam.Plugins.PluginBase):
                       "step_width_x": 0.0001,
                       "step_width_y": 0.0001,
                       "step_width_z": 0.0001,
-                      "path_mode": CORNER_STYLE_EXACT_PATH,
+                      # pick the first path mode
+                      "path_mode": 0,
                       "motion_tolerance": 0.0,
                       "naive_tolerance": 0.0}
         self.core.get("register_parameter_set")(

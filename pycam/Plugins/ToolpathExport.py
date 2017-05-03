@@ -142,16 +142,16 @@ class ToolpathExport(pycam.Plugins.PluginBase):
                     touch_off_pause_execution=self.core.get("touch_off_pause_execution"))
             path_mode = self.core.get("gcode_path_mode")
             if path_mode == 0:
-                generator.set_path_mode(CORNER_STYLE_EXACT_PATH)
+                generator.set_path_mode(ToolpathPathMode.CORNER_STYLE_EXACT_PATH)
             elif path_mode == 1:
-                generator.set_path_mode(CORNER_STYLE_EXACT_STOP)
+                generator.set_path_mode(ToolpathPathMode.CORNER_STYLE_EXACT_STOP)
             elif path_mode == 2:
-                generator.set_path_mode(CORNER_STYLE_OPTIMIZE_SPEED)
+                generator.set_path_mode(ToolpathPathMode.CORNER_STYLE_OPTIMIZE_SPEED)
             else:
                 naive_tolerance = self.core.get("gcode_naive_tolerance")
                 if naive_tolerance == 0:
                     naive_tolerance = None
-                generator.set_path_mode(CORNER_STYLE_OPTIMIZE_TOLERANCE,
+                generator.set_path_mode(ToolpathPathMode.CORNER_STYLE_OPTIMIZE_TOLERANCE,
                         self.core.get("gcode_motion_tolerance"),
                         naive_tolerance)
             """

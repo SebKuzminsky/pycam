@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from enum import Enum
 from itertools import groupby
 import math
 import os
@@ -39,8 +40,13 @@ _log = pycam.Utils.log.get_logger()
 
 MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC, MOVE_SAFETY, MACHINE_SETTING, COMMENT = range(6)
 MOVES_LIST = (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC)
-CORNER_STYLE_EXACT_PATH, CORNER_STYLE_EXACT_STOP, CORNER_STYLE_OPTIMIZE_SPEED, \
-    CORNER_STYLE_OPTIMIZE_TOLERANCE = range(4)
+
+
+class ToolpathPathMode(Enum):
+    CORNER_STYLE_EXACT_PATH = "exact_path"
+    CORNER_STYLE_EXACT_STOP = "exact stop"
+    CORNER_STYLE_OPTIMIZE_SPEED = "optimize_speed"
+    CORNER_STYLE_OPTIMIZE_TOLERANCE = "optimize_tolerance"
 
 
 def _check_colinearity(p1, p2, p3):

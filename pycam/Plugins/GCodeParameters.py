@@ -20,9 +20,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 import pycam.Gui.ControlsGTK
+from pycam.Toolpath import ToolpathPathMode
 import pycam.Toolpath.Filters as Filters
-from pycam.Toolpath import CORNER_STYLE_EXACT_PATH, CORNER_STYLE_EXACT_STOP, \
-        CORNER_STYLE_OPTIMIZE_SPEED, CORNER_STYLE_OPTIMIZE_TOLERANCE
 
 
 class GCodeSafetyHeight(pycam.Plugins.PluginBase):
@@ -198,10 +197,11 @@ class GCodeCornerStyle(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("toolpath_processor", "naive_tolerance",
                                             self.naive_tolerance)
         self.path_mode = pycam.Gui.ControlsGTK.InputChoice((
-            ("Exact path mode (G61)", CORNER_STYLE_EXACT_PATH),
-            ("Exact stop mode (G61.1)", CORNER_STYLE_EXACT_STOP),
-            ("Continuous with maximum speed (G64)", CORNER_STYLE_OPTIMIZE_SPEED),
-            ("Continuous with tolerance (G64 P/Q)", CORNER_STYLE_OPTIMIZE_TOLERANCE)))
+            ("Exact path mode (G61)", ToolpathPathMode.CORNER_STYLE_EXACT_PATH),
+            ("Exact stop mode (G61.1)", ToolpathPathMode.CORNER_STYLE_EXACT_STOP),
+            ("Continuous with maximum speed (G64)", ToolpathPathMode.CORNER_STYLE_OPTIMIZE_SPEED),
+            ("Continuous with tolerance (G64 P/Q)",
+             ToolpathPathMode.CORNER_STYLE_OPTIMIZE_TOLERANCE)))
         self.path_mode.get_widget().connect("changed", self.update_widgets)
         self.core.register_ui("gcode_corner_style", "Path mode", self.path_mode.get_widget(),
                               weight=10)
@@ -221,12 +221,13 @@ class GCodeCornerStyle(pycam.Plugins.PluginBase):
             self.core.get("unregister_parameter")("toolpath_processor", name)
 
     def update_widgets(self, widget=None):
-        enable_tolerances = (self.path_mode.get_value() == CORNER_STYLE_OPTIMIZE_TOLERANCE)
+        enable_tolerances = (self.path_mode.get_value()
+                             == ToolpathPathMode.CORNER_STYLE_OPTIMIZE_TOLERANCE)
         controls = (self.motion_tolerance, self.naive_tolerance)
         for control in controls:
             control.get_widget().set_sensitive(enable_tolerances)
 
     @Filters.toolpath_filter("settings", ("path_mode", "motion_tolerance", "naive_tolerance"))
-    def get_toolpath_filters(self, path_mode=CORNER_STYLE_EXACT_PATH, motion_tolerance=0,
-                             naive_tolerance=0):
+    def get_toolpath_filters(self, path_mode=ToolpathPathMode.CORNER_STYLE_EXACT_PATH,
+                             motion_tolerance=0, naive_tolerance=0):
         return [Filters.PathMode(path_mode, motion_tolerance, naive_tolerance)]
