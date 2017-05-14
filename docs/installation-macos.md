@@ -1,8 +1,16 @@
+Versions, dependencies and complications
+----------------------------------------
+
+Please note that the most recent successful usage of PyCAM on MacOS was
+reported around 2012. Thus you should stick with PyCAM v0.5.1 and be prepared
+to tackle weird dependency problems, if you really need to run PyCAM on MacOS.
+
+You should use Linux instead, if you want to use a more recent release of PyCAM.
+
 Install requirements via MacPorts
 ---------------------------------
 
-First you need to install
-[MacPorts](http://www.macports.org/install.php).
+First you need to install [MacPorts](http://www.macports.org/install.php).
 
 Afterwards you need to install the following packages:
 
