@@ -2,6 +2,7 @@ Version 0.6.2 - ???
  * Bounds: disable percent-based controls for zero-dimensions
  * fix toolpath grid operation (issue #45)
  * prevent negative bounding box dimensions
+ * additional dependency 'enum' (only relevant for Python2)
 
 Version 0.6.1 - 2017-03-11
  * GCode: limit vertical feedrate (maximum speed of plunge move)
