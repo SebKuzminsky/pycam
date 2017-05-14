@@ -19,7 +19,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import math
-from enum import Enum, IntEnum
+import enum
 
 from pycam.Geometry import epsilon, Point3D, Box3D
 from pycam.Geometry.Line import Line
@@ -33,31 +33,38 @@ import pycam.Utils.log
 _log = pycam.Utils.log.get_logger()
 
 
-class GridDirection(Enum):
+if not hasattr(enum, "IntEnum"):
+    # The following is only relevant for Python2 (Python3 includes a core library named 'enum').
+    # The pypi package 'enum' is not suitable since it lacks 'IntEnum' (as of v0.4.6).
+    # The pypi package 'enum34' is suitable.
+    _log.error("The installed 'enum' package lacks 'IntEnum'. Maybe you should install 'enum34' "
+               "instead?")
+
+class GridDirection(enum.Enum):
     X = "x"
     Y = "y"
     XY = "xy"
 
 
-class MillingStyle(Enum):
+class MillingStyle(enum.Enum):
     IGNORE = "ignore"
     CONVENTIONAL = "conventional"
     CLIMB = "climb"
 
 
-class StartPosition(IntEnum):
+class StartPosition(enum.IntEnum):
     NONE = 0x0
     X = 0x1
     Y = 0x2
     Z = 0x4
 
 
-class SpiralDirection(Enum):
+class SpiralDirection(enum.Enum):
     IN = "in"
     OUT = "out"
 
 
-class PocketingType(Enum):
+class PocketingType(enum.Enum):
     NONE = "none"
     HOLES = "holes"
     MATERIAL = "material"
