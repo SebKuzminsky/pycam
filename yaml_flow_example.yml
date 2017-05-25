@@ -68,7 +68,7 @@ tools:
                 shape: flat_bottom
                 diameter: 3
                 feed: 300
-                speed: 1000
+                spindle_speed: 1000
 
 processes:
         process1:

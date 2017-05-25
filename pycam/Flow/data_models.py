@@ -334,7 +334,8 @@ class Tool(BaseCollectionItemDataContainer):
     attribute_converters = {"shape": _get_enum_resolver(ToolShape)}
     attribute_defaults = {"height": 10,
                           "feed": 300,
-                          "speed": 1000}
+                          "spindle_speed": 1000,
+                          "spindle_delay": 0}
 
     def get_tool_geometry(self):
         height = self.get_value("height")
@@ -367,7 +368,7 @@ class Tool(BaseCollectionItemDataContainer):
 
     def get_toolpath_filters(self):
         feed = self.get_value("feed")
-        speed = self.get_value("speed")
+        speed = self.get_value("spindle_speed")
         return [MachineSetting("feedrate", feed), MachineSetting("spindle_speed", speed)]
 
 
