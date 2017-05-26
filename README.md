@@ -34,3 +34,4 @@ See the [documentation](http://pycam.sourceforge.net/introduction/) for a short 
 * Sebastian Kuzminsky: debian packaging
 * Nicholas Humfrey: documentation, recovery of old sourceforge-wiki
 * Piers Titus van der Torren: documentation
+* Reuben Rissler: gtk3 migration
