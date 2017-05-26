@@ -58,9 +58,9 @@ class Fonts(pycam.Plugins.PluginBase):
                 (self.gui.get_object("FontDialogInputBuffer"), "changed",
                  self.update_font_dialog_preview),
                 (self.gui.get_object("FontDialogPreview"), "configure_event",
-                 self.update_font_dialog_preview),
-                (self.gui.get_object("FontDialogPreview"), "expose_event",
                  self.update_font_dialog_preview)]
+                #(self.gui.get_object("FontDialogPreview"), "expose_event", FIXME
+                 #self.update_font_dialog_preview)]
             for objname in ("FontSideSkewValue", "FontCharacterSpacingValue",
                             "FontLineSpacingValue"):
                 obj = self.gui.get_object(objname)

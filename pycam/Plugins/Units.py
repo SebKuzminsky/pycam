@@ -40,9 +40,11 @@ class Units(pycam.Plugins.PluginBase):
                 unit_field.set_active(0 if text == "mm" else 1)
                 self._last_unit = text
 
-            self.core.add_item("unit", unit_field.get_active_text, set_unit)
+            #unit_model = unit_field.get_model()  FIXME
+            #unit_iter = unit_field.get_active_iter()
+            #self.core.add_item("unit", unit_field.get_active_text, set_unit)
             # other plugins should use "unit_string" for human readable output
-            self.core.add_item("unit_string", unit_field.get_active_text)
+            #self.core.add_item("unit_string", unit_field.get_active_text)  FIXME
             self.register_gtk_handlers(self._gtk_handlers)
         self.register_state_item("settings/unit", lambda: self.core.get("unit"),
                                  lambda value: self.core.set("unit", value))

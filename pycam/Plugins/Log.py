@@ -26,6 +26,8 @@ import re
 import pycam.Plugins
 import pycam.Utils
 
+# FIXME: move import up
+from gi.repository import Gdk as gdk
 
 class Log(pycam.Plugins.PluginBase):
 
@@ -37,6 +39,8 @@ class Log(pycam.Plugins.PluginBase):
         if not self._gtk:
             return False
         if self.gui:
+            from gi.repository import Gtk as gtk
+            self._gtk = gtk
             # menu item and shortcut
             log_action = self.gui.get_object("ToggleLogWindow")
             self._gtk_handlers = []
@@ -86,7 +90,7 @@ class Log(pycam.Plugins.PluginBase):
         message = message.encode("utf-8", "ignore")
         self.log_model.append((timestamp, title, message))
         # update the status bar (if the GTK interface is still active)
-        if self.status_bar.window is not None:
+        if self.status_bar.get_parent() is not None:
             # remove the last message from the stack (probably not necessary)
             self.status_bar.pop(0)
             # push the new message
@@ -119,7 +123,7 @@ class Log(pycam.Plugins.PluginBase):
         checkbox_state = toggle_log_checkbox.get_active()
         if value is None:
             new_state = checkbox_state
-        elif isinstance(value, self._gtk.gdk.Event):
+        elif isinstance(value, gdk.Event):
             # someone clicked at the status bar -> toggle the window state
             new_state = not checkbox_state
         else:

@@ -67,8 +67,8 @@ class FilenameDialog(pycam.Plugins.PluginBase):
     CATEGORIES = ["System"]
 
     def setup(self):
-        if not self._gtk:
-            return False
+        from gi.repository import Gtk as gtk
+        self._gtk = gtk
         self.last_dirname = None
         self.core.set("get_filename_func", self.get_filename_dialog)
         return True
@@ -84,14 +84,14 @@ class FilenameDialog(pycam.Plugins.PluginBase):
             parent = self.core.get("main_window")
         # we open a dialog
         if mode_load:
-            action = gtk.FILE_CHOOSER_ACTION_OPEN
+            action = gtk.FileChooserAction.OPEN
             stock_id_ok = gtk.STOCK_OPEN
         else:
-            action = gtk.FILE_CHOOSER_ACTION_SAVE
+            action = gtk.FileChooserAction.SAVE
             stock_id_ok = gtk.STOCK_SAVE
         dialog = gtk.FileChooserDialog(title=title, parent=parent, action=action,
-                                       buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, stock_id_ok,
-                                                gtk.RESPONSE_OK))
+                                       buttons=(gtk.STOCK_CANCEL, gtk.ResponseType.CANCEL, stock_id_ok,
+                                                gtk.ResponseType.OK))
         # set the initial directory to the last one used
         if self.last_dirname and os.path.isdir(self.last_dirname):
             dialog.set_current_folder(self.last_dirname)
@@ -148,7 +148,7 @@ class FilenameDialog(pycam.Plugins.PluginBase):
             filename = dialog.get_filename()
             uri = pycam.Utils.URIHandler(filename)
             dialog.hide()
-            if response != gtk.RESPONSE_OK:
+            if response != gtk.ResponseType.OK:
                 dialog.destroy()
                 return None
             if not mode_load and filename:
@@ -156,15 +156,15 @@ class FilenameDialog(pycam.Plugins.PluginBase):
                 filename = _get_filename_with_suffix(filename, type_filter)
             if not mode_load and os.path.exists(filename):
                 overwrite_window = gtk.MessageDialog(
-                    parent, type=gtk.MESSAGE_WARNING, buttons=gtk.BUTTONS_YES_NO,
+                    parent, type=gtk.MessageType.WARNING, buttons=gtk.ButtonsType.YES_NO,
                     message_format="This file exists. Do you want to overwrite it?")
                 overwrite_window.set_title("Confirm overwriting existing file")
                 response = overwrite_window.run()
                 overwrite_window.destroy()
-                done = (response == gtk.RESPONSE_YES)
+                done = (response == gtk.ResponseType.YES)
             elif mode_load and not uri.exists():
                 not_found_window = gtk.MessageDialog(
-                    parent, type=gtk.MESSAGE_ERROR, buttons=gtk.BUTTONS_OK,
+                    parent, type=gtk.MessageType.ERROR, buttons=gtk.ButtonsType.OK,
                     message_format="This file does not exist. Please choose a different filename.")
                 not_found_window.set_title("Invalid filename selected")
                 response = not_found_window.run()

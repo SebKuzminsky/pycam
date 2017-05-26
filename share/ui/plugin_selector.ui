@@ -1,7 +1,18 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.18.3 -->
 <interface>
-  <!-- interface-requires gtk+ 2.12 -->
-  <!-- interface-naming-policy project-wide -->
+  <requires lib="gtk+" version="3.12"/>
+  <object class="GtkListStore" id="CategoryList">
+    <columns>
+      <!-- column-name label -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Model</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkListStore" id="PluginsModel">
     <columns>
       <!-- column-name name -->
@@ -70,37 +81,57 @@
       </row>
     </data>
   </object>
-  <object class="GtkListStore" id="CategoryList">
-    <columns>
-      <!-- column-name label -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">Model</col>
-      </row>
-    </data>
-  </object>
   <object class="GtkDialog" id="PluginManagerWindow">
     <property name="width_request">640</property>
     <property name="height_request">500</property>
+    <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Plugins</property>
     <property name="role">pycam-plugins</property>
     <property name="window_position">center</property>
     <property name="type_hint">normal</property>
     <child internal-child="vbox">
-      <object class="GtkVBox" id="dialog-vbox1">
+      <object class="GtkBox" id="dialog-box1">
         <property name="visible">True</property>
+        <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">3</property>
-        <child>
-          <object class="GtkHButtonBox" id="hbuttonbox1">
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="dialog-action_area1">
             <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="ClosePluginManager">
+                <property name="label">gtk-close</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButtonBox" id="buttonbox1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
             <property name="layout_style">spread</property>
             <child>
               <object class="GtkComboBox" id="StatusFilter">
                 <property name="visible">True</property>
+                <property name="can_focus">False</property>
                 <property name="model">StatusList</property>
                 <child>
                   <object class="GtkCellRendererText" id="cellrenderertext1"/>
@@ -118,6 +149,7 @@
             <child>
               <object class="GtkComboBox" id="CategoryFilter">
                 <property name="visible">True</property>
+                <property name="can_focus">False</property>
                 <property name="model">CategoryList</property>
                 <child>
                   <object class="GtkCellRendererText" id="cellrenderertext2"/>
@@ -135,6 +167,7 @@
           </object>
           <packing>
             <property name="expand">False</property>
+            <property name="fill">True</property>
             <property name="position">1</property>
           </packing>
         </child>
@@ -142,8 +175,6 @@
           <object class="GtkScrolledWindow" id="scrolledwindow1">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="hscrollbar_policy">automatic</property>
-            <property name="vscrollbar_policy">automatic</property>
             <property name="shadow_type">etched-out</property>
             <child>
               <object class="GtkTreeView" id="PluginsTable">
@@ -154,6 +185,9 @@
                 <property name="rules_hint">True</property>
                 <property name="search_column">0</property>
                 <property name="tooltip_column">5</property>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="treeview-selection1"/>
+                </child>
                 <child>
                   <object class="GtkTreeViewColumn" id="PluginsEnabled">
                     <property name="title">Enabled</property>
@@ -214,32 +248,9 @@
             </child>
           </object>
           <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
             <property name="position">2</property>
-          </packing>
-        </child>
-        <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="dialog-action_area1">
-            <property name="visible">True</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="ClosePluginManager">
-                <property name="label">gtk-close</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
           </packing>
         </child>
       </object>

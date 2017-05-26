@@ -148,7 +148,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
             models = [m.model for m in self.core.get("models").get_visible()]
         return pycam.Geometry.Model.get_combined_bounds(models)
 
-    def _render_bounds_size(self, column, cell, model, m_iter):
+    def _render_bounds_size(self, column, cell, model, m_iter, data):
         bounds = self.get_by_path(model.get_path(m_iter))
         if not bounds:
             return
@@ -159,7 +159,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
             text = "%g x %g x %g" % tuple([box.upper[i] - box.lower[i] for i in range(3)])
         cell.set_property("text", text)
 
-    def _render_bounds_name(self, column, cell, model, m_iter):
+    def _render_bounds_name(self, column, cell, model, m_iter, data):
         bounds = self.get_by_path(model.get_path(m_iter))
         cell.set_property("text", bounds["name"])
 

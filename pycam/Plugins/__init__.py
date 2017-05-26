@@ -23,14 +23,10 @@ import inspect
 import os
 import uuid
 
-try:
-    import gtk
-except ImportError:
-    gtk = None
-try:
-    import gobject
-except ImportError:
-    gobject = None
+# TODO: load these modules only on demand
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
+from gi.repository import GObject as gobject
 
 import pycam.Utils.log
 import pycam.Utils.locations
@@ -81,13 +77,13 @@ class PluginBase(object):
             for key in self.ICONS:
                 icon_location = pycam.Utils.locations.get_ui_file_location(self.ICONS[key])
                 if icon_location:
-                    try:
-                        pixbuf = self._gtk.gdk.pixbuf_new_from_file_at_size(
-                            icon_location, self.ICON_SIZE, self.ICON_SIZE)
-                    except self._gobject.GError:
-                        self.ICONS[key] = None
-                    else:
-                        self.ICONS[key] = pixbuf
+                    #try:  FIXME
+                    #    pixbuf = gdk.pixbuf_new_from_file_at_size(icon_location, self.ICON_SIZE,
+                    #                                                  self.ICON_SIZE)
+                    #except gobject.GError:
+                    self.ICONS[key] = None
+                    #else:
+                    #    self.ICONS[key] = pixbuf
                 else:
                     self.log.debug("Failed to locate icon: %s", self.ICONS[key])
                     self.ICONS[key] = None
@@ -184,20 +180,22 @@ class PluginBase(object):
 
     def register_gtk_accelerator(self, groupname, action, accel_string, accel_name):
         # menu item and shortcut
-        if not self._gtk:
-            return
-        actiongroup = self._gtk.ActionGroup(groupname)
+        #try:  FIXME
+        #    import gtk
+        #except ImportError:
+         #   return
+        actiongroup = gtk.ActionGroup(groupname)
         accel_path = "<pycam>/%s" % accel_name
         action.set_accel_path(accel_path)
         # it is a bit pointless, but we allow an empty accel_string anyway ...
         if accel_string:
-            key, mod = self._gtk.accelerator_parse(accel_string)
-            self._gtk.accel_map_change_entry(accel_path, key, mod, True)
+            key, mod = gtk.accelerator_parse(accel_string)
+            gtk.AccelMap.change_entry(accel_path, key, mod, True)
         actiongroup.add_action(action)
         ui_manager = self.core.get("gtk-uimanager")
         # it can happen that there is no gtk ui manager available (in script mode)
         if ui_manager:
-            ui_manager.insert_action_group(actiongroup, pos=-1)
+            ui_manager.insert_action_group(actiongroup)
 
     def unregister_gtk_accelerator(self, groupname, action):
         actiongroup = self._gtk.ActionGroup(groupname)
@@ -398,7 +396,7 @@ class ListPluginBase(PluginBase, list):
             get_result = lambda path: path[0]
         else:
             get_result = self.get_by_path
-        if (selection_mode == self._gtk.SELECTION_MULTIPLE) or force_list:
+        if (selection_mode == gtk.SelectionMode.MULTIPLE) or force_list:
             result = []
             for path in paths:
                 result.append(get_result(path))

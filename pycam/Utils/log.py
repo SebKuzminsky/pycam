@@ -178,17 +178,17 @@ class GTKHandler(logging.Handler):
         # entities.
         message = re.sub("<", "&lt;", message)
         message = re.sub(">", "&gt;", message)
-        import gtk
+        from gi.repository import Gtk as gtk
         if record.levelno <= 20:
-            message_type = gtk.MESSAGE_INFO
+            message_type = gtk.MessageType.INFO
             message_title = "Information"
         elif record.levelno <= 30:
-            message_type = gtk.MESSAGE_WARNING
+            message_type = gtk.MessageType.WARNING
             message_title = "Warning"
         else:
-            message_type = gtk.MESSAGE_ERROR
+            message_type = gtk.MessageType.ERROR
             message_title = "Error"
-        window = gtk.MessageDialog(self.parent_window, type=message_type, buttons=gtk.BUTTONS_OK)
+        window = gtk.MessageDialog(self.parent_window, type=message_type, buttons=gtk.ButtonsType.OK)
         window.set_markup(str(message))
         message_title = message_title.encode("utf-8", "ignore")
         window.set_title(message_title)

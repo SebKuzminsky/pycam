@@ -74,7 +74,7 @@ class ModelSupport(pycam.Plugins.PluginBase):
             container = self.gui.get_object("SupportAddOnContainer")
             self.core.register_ui_section(
                 "support_model_settings",
-                lambda obj, name: container.pack_start(obj, expand=False),
+                lambda obj, name: container.pack_start(obj, expand=False, fill= False, padding= 0),
                 clear_support_model_settings)
             # TODO: remove public settings
             self.core.add_item("support_model_type", get_support_model_type,
