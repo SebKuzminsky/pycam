@@ -18,10 +18,11 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from gi.repository import Gdk as gdk
+
 import pycam.Plugins
 from pycam.Utils import get_non_conflicting_name
-# FIXME move import up
-from gi.repository import Gdk as gdk
+
 
 _GTK_COLOR_MAX = 65535.0
 

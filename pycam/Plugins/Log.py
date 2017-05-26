@@ -23,11 +23,11 @@ import datetime
 import os
 import re
 
+from gi.repository import Gdk as gdk
+
 import pycam.Plugins
 import pycam.Utils
 
-# FIXME: move import up
-from gi.repository import Gdk as gdk
 
 class Log(pycam.Plugins.PluginBase):
 

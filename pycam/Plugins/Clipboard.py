@@ -25,6 +25,8 @@ except ImportError:
     # Python3
     from io import StringIO
 
+from gi.repository import Gdk
+
 import pycam.Plugins
 from pycam.Utils.locations import get_all_program_locations
 
@@ -35,9 +37,6 @@ CLIPBOARD_TARGETS = {
     "stl": ("application/sla", ),
     "svg": ("image/x-inkscape-svg", "image/svg+xml"),
 }
-
-# FIXME: move import up
-from gi.repository import Gdk
 
 
 class Clipboard(pycam.Plugins.PluginBase):
