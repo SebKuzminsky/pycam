@@ -1,7 +1,7 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.18.3 -->
 <interface>
-  <requires lib="gtk+" version="2.16"/>
-  <!-- interface-naming-policy project-wide -->
+  <requires lib="gtk+" version="3.12"/>
   <object class="GtkListStore" id="MemoryAnalyzerModel">
     <columns>
       <!-- column-name name -->
@@ -15,25 +15,81 @@
     </columns>
   </object>
   <object class="GtkDialog" id="MemoryAnalyzerWindow">
+    <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Memory Analyzer</property>
     <property name="type_hint">normal</property>
     <child internal-child="vbox">
-      <object class="GtkVBox" id="dialog-vbox1">
+      <object class="GtkBox" id="dialog-box1">
         <property name="visible">True</property>
+        <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">4</property>
-        <child>
-          <object class="GtkVBox" id="MemoryAnalyzerDataBox">
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="dialog-action_area1">
             <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="MemoryAnalyzerCopyButton">
+                <property name="label">gtk-copy</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="MemoryAnalyzerRefreshButton">
+                <property name="label">gtk-refresh</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="MemoryAnalyzerCloseButton">
+                <property name="label">gtk-close</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="MemoryAnalyzerDataBox">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
             <property name="spacing">3</property>
             <child>
               <object class="GtkScrolledWindow" id="scrolledwindow1">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="hscrollbar_policy">automatic</property>
-                <property name="vscrollbar_policy">automatic</property>
                 <property name="shadow_type">etched-in</property>
                 <child>
                   <object class="GtkTreeView" id="MemoryAnalyzerTable">
@@ -42,6 +98,9 @@
                     <property name="model">MemoryAnalyzerModel</property>
                     <property name="reorderable">True</property>
                     <property name="search_column">0</property>
+                    <child internal-child="selection">
+                      <object class="GtkTreeSelection" id="treeview-selection1"/>
+                    </child>
                     <child>
                       <object class="GtkTreeViewColumn" id="treeviewcolumn3">
                         <property name="title">Size (all) [kB]</property>
@@ -99,12 +158,15 @@
                 </child>
               </object>
               <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
                 <property name="position">0</property>
               </packing>
             </child>
             <child>
               <object class="GtkLabel" id="MemoryAnalyzerLoadingLabel">
                 <property name="visible">True</property>
+                <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Updating memory usage data ...</property>
                 <attributes>
                   <attribute name="style" value="italic"/>
@@ -118,72 +180,24 @@
             </child>
           </object>
           <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
             <property name="position">1</property>
           </packing>
         </child>
         <child>
           <object class="GtkLabel" id="MemoryAnalyzerBrokenLabel">
             <property name="visible">True</property>
+            <property name="can_focus">False</property>
             <property name="label" translatable="yes">The memory analyzer requires the Python module &lt;i&gt;guppy&lt;/i&gt;, but it seems to be missing.</property>
             <property name="use_markup">True</property>
             <property name="justify">center</property>
             <property name="wrap">True</property>
           </object>
           <packing>
-            <property name="position">2</property>
-          </packing>
-        </child>
-        <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="dialog-action_area1">
-            <property name="visible">True</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="MemoryAnalyzerCopyButton">
-                <property name="label">gtk-copy</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="MemoryAnalyzerRefreshButton">
-                <property name="label">gtk-refresh</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="MemoryAnalyzerCloseButton">
-                <property name="label">gtk-close</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
             <property name="expand">False</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
           </packing>
         </child>
       </object>

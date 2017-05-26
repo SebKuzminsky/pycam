@@ -20,7 +20,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 from pycam.Utils import get_non_conflicting_name
-
+# FIXME move import up
+from gi.repository import Gdk as gdk
 
 _GTK_COLOR_MAX = 65535.0
 
@@ -33,7 +34,9 @@ class Models(pycam.Plugins.ListPluginBase):
     FALLBACK_COLOR = {"red": 0.5, "green": 0.5, "blue": 1.0, "alpha": 1.0}
 
     def setup(self):
-        if self.gui and self._gtk:
+        if self.gui:
+            from gi.repository import Gtk as gtk
+            self._gtk = gtk
             self.model_frame = self.gui.get_object("ModelBox")
             self.model_frame.unparent()
             self.core.register_ui("main", "Models", self.model_frame, weight=-50)
@@ -65,7 +68,7 @@ class Models(pycam.Plugins.ListPluginBase):
             self._treemodel = self.gui.get_object("ModelList")
             self._treemodel.clear()
             selection = self._modelview.get_selection()
-            selection.set_mode(self._gtk.SELECTION_MULTIPLE)
+            selection.set_mode(self._gtk.SelectionMode.MULTIPLE)
             self._gtk_handlers.append((selection, "changed", "model-selection-changed"))
             self._event_handlers = (
                 ("model-selection-changed", self._get_colors_of_selected_models),
@@ -101,7 +104,7 @@ class Models(pycam.Plugins.ListPluginBase):
         if models:
             # use the color of the first model
             col = models[0]["color"]
-            color_button.set_color(self._gtk.gdk.Color(
+            color_button.set_color(gdk.Color(
                 red=int(col["red"] * _GTK_COLOR_MAX),
                 green=int(col["green"] * _GTK_COLOR_MAX),
                 blue=int(col["blue"] * _GTK_COLOR_MAX)))
@@ -130,11 +133,11 @@ class Models(pycam.Plugins.ListPluginBase):
             model["name"] = new_text
             self.core.emit_event("model-list-changed")
 
-    def _visualize_model_name(self, column, cell, model, m_iter):
+    def _visualize_model_name(self, column, cell, model, m_iter, data):
         model_obj = self.get_by_path(model.get_path(m_iter))
         cell.set_property("text", model_obj["name"])
 
-    def _visualize_visible_state(self, column, cell, model, m_iter):
+    def _visualize_visible_state(self, column, cell, model, m_iter, data):
         model_dict = self.get_by_path(model.get_path(m_iter))
         visible = model_dict["visible"]
         if visible:
@@ -142,7 +145,7 @@ class Models(pycam.Plugins.ListPluginBase):
         else:
             cell.set_property("pixbuf", self.ICONS["hidden"])
         color = model_dict["color"]
-        cell.set_property("cell-background-gdk", self._gtk.gdk.Color(
+        cell.set_property("cell-background-gdk", gdk.Color(
             red=int(color["red"] * _GTK_COLOR_MAX),
             green=int(color["green"] * _GTK_COLOR_MAX),
             blue=int(color["blue"] * _GTK_COLOR_MAX)))

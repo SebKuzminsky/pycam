@@ -30,6 +30,8 @@ try:
 except (ImportError, RuntimeError):
     GL_ENABLED = False
 
+from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
 
 from pycam.Geometry import number, sqrt
 from pycam.Geometry.PointUtils import pcross, pmul, pnormalized
@@ -57,9 +59,9 @@ VIEWS = {
 }
 
 # buttons for rotating, moving and zooming the model view window
-BUTTON_ROTATE = gtk.gdk.BUTTON1_MASK
-BUTTON_MOVE = gtk.gdk.BUTTON2_MASK
-BUTTON_ZOOM = gtk.gdk.BUTTON3_MASK
+BUTTON_ROTATE = gdk.ModifierType.BUTTON1_MASK
+BUTTON_MOVE = gdk.ModifierType.BUTTON2_MASK
+BUTTON_ZOOM = gdk.ModifierType.BUTTON3_MASK
 BUTTON_RIGHT = 3
 
 # floating point color values are only available since gtk 2.16

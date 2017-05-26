@@ -31,7 +31,8 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
     CATEGORIES = ["Model", "Support bridges"]
 
     def setup(self):
-        if self.gui and self._gtk:
+        if self.gui:
+            from gi.repository import Gtk as gtk
             grid_box = self.gui.get_object("SupportModelGridBox")
             grid_box.unparent()
             self.core.register_ui("support_model_type_selector", "Grid", "grid", weight=-10)
@@ -86,7 +87,7 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
             self.grid_adjustment_value = self.gui.get_object("SupportGridPositionManualAdjustment")
             self.grid_adjustment_value_control = self.gui.get_object(
                 "SupportGridPositionManualShiftControl")
-            self.grid_adjustment_value_control.set_update_policy(self._gtk.UPDATE_DISCONTINUOUS)
+            #self.grid_adjustment_value_control.set_update_policy(gtk.UPDATE_DISCONTINUOUS) FIXME
             self._gtk_handlers.extend((
                 (self.grid_adjustment_value_control, "move-slider",
                  self.update_support_grid_manual_adjust),

@@ -61,7 +61,7 @@ class ProgressGTK(object):
 
     def __init__(self, core, gui, log):
         ProgressGTK._PROGRESS_STACK.append(self)
-        import gtk
+        from gi.repository import Gtk as gtk
         self._finished = False
         self._gtk = gtk
         self._gui = gui

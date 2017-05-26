@@ -30,7 +30,9 @@ class Processes(pycam.Plugins.ListPluginBase):
 
     def setup(self):
         self.core.set("processes", self)
-        if self.gui and self._gtk:
+        if self.gui:
+            from gi.repository import Gtk as gtk
+            self._gtk = gtk
             process_frame = self.gui.get_object("ProcessBox")
             process_frame.unparent()
             self._gtk_handlers = []
@@ -63,7 +65,7 @@ class Processes(pycam.Plugins.ListPluginBase):
                 align.set_padding(0, 3, 12, 3)
                 align.add(item)
                 frame.show_all()
-                parameters_box.pack_start(frame, expand=False)
+                parameters_box.pack_start(frame, expand=False, fill=True, padding=0)
 
             self.core.register_ui_section("process_parameters", add_parameter_widget,
                                           clear_parameter_widgets)
@@ -112,13 +114,13 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.pop()
         return True
 
-    def _render_process_description(self, column, cell, model, m_iter):
+    def _render_process_description(self, column, cell, model, m_iter, data):
         # TODO: describe the strategy
         text = "TODO"
 #       process = self.get_by_path(model.get_path(m_iter))
         cell.set_property("text", text)
 
-    def _render_process_name(self, column, cell, model, m_iter):
+    def _render_process_name(self, column, cell, model, m_iter, data):
         process = self.get_by_path(model.get_path(m_iter))
         cell.set_property("text", process["name"])
 

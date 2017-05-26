@@ -85,7 +85,7 @@ class PluginSelector(pycam.Plugins.PluginBase):
         # don't destroy the window with a "destroy" event
         return True
 
-    def _filter_set_visible(self, model, m_iter):
+    def _filter_set_visible(self, model, m_iter, data):
         manager = self.core.get("plugin-manager")
         status_filter = self.gui.get_object("StatusFilter")
         status_index = status_filter.get_active()

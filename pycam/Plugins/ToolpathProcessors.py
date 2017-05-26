@@ -32,7 +32,8 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
     UI_FILE = "toolpath_processors.ui"
 
     def setup(self):
-        if self._gtk and self._gtk:
+        if self.gui:
+            from gi.repository import Gtk as gtk
             notebook = self.gui.get_object("GCodePrefsNotebook")
             self._pref_items = []
 
@@ -80,10 +81,10 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
                 item.unparent()
                 if not isinstance(item, self._gtk.Frame):
                     # create a simple default frame if none was given
-                    frame = self._gtk.Frame(name)
+                    frame = gtk.Frame.new(name)
                     frame.get_label_widget().set_markup("<b>%s</b>" % name)
-                    frame.set_shadow_type(self._gtk.SHADOW_NONE)
-                    align = self._gtk.Alignment()
+                    frame.set_shadow_type(gtk.ShadowType.NONE)
+                    align = gtk.Alignment()
                     align.set_padding(3, 0, 12, 0)
                     frame.add(align)
                     frame.show()

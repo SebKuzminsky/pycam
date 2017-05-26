@@ -26,8 +26,8 @@ import os
 import sys
 import webbrowser
 
-import gobject
-import gtk
+from gi.repository import GObject as gobject
+from gi.repository import Gtk as gtk
 
 from pycam import VERSION, DOC_BASE_URL
 import pycam.Importers.CXFImporter
@@ -152,7 +152,7 @@ class ProjectGui(pycam.Gui.BaseUI):
                 key, mod = gtk.accelerator_parse(accel_key)
                 accel_path = "<pycam>/%s" % objname
                 item.set_accel_path(accel_path)
-                gtk.accel_map_change_entry(accel_path, key, mod, True)
+                #gtk.accel_map_change_entry(accel_path, key, mod, True) FIXME
         # LinkButton does not work on Windows: https://bugzilla.gnome.org/show_bug.cgi?id=617874
         if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
             def open_url(widget, data=None):
@@ -193,8 +193,7 @@ class ProjectGui(pycam.Gui.BaseUI):
         def handle_window_close(accel_group, window, *args):
             window.emit("delete-event", gtk.gdk.Event(gtk.gdk.DELETE))
 
-        self._accel_group.connect_group(ord('w'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_LOCKED,
-                                        handle_window_close)
+        #self._accel_group.connect_group(ord('w'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_LOCKED, handle_window_close)  FIXME
         self.settings.add_item("gtk-accel-group", lambda: self._accel_group)
         for obj in self.gui.get_objects():
             if isinstance(obj, gtk.Window):
@@ -224,7 +223,7 @@ class ProjectGui(pycam.Gui.BaseUI):
                 general_prefs.remove(item)
 
         def add_general_prefs_item(item, name):
-            general_prefs.pack_start(item, expand=False, padding=3)
+            general_prefs.pack_start(item, expand=False, fill=False, padding=3)
 
         self.settings.register_ui_section("preferences_general", add_general_prefs_item,
                                           clear_general_prefs)
@@ -251,7 +250,7 @@ class ProjectGui(pycam.Gui.BaseUI):
 
         def add_main_window_item(item, name, **extra_args):
             # some widgets may want to override the defaults
-            args = {"expand": False, "fill": False}
+            args = {"expand": False, "fill": False, "padding": 3}
             args.update(extra_args)
             main_window.pack_start(item, **args)
 
@@ -284,7 +283,7 @@ class ProjectGui(pycam.Gui.BaseUI):
             self.gui.get_object(browse_button).connect("clicked",
                                                        self._browse_external_program_location, key)
         # set the icons (in different sizes) for all windows
-        gtk.window_set_default_icon_list(*get_icons_pixbuffers())
+        #gtk.window_set_default_icon_list(*get_icons_pixbuffers()) FIXME
         # load menu data
         gtk_menu_file = get_ui_file_location(GTKMENU_FILE)
         if gtk_menu_file is None:
@@ -295,7 +294,7 @@ class ProjectGui(pycam.Gui.BaseUI):
         for action in [aobj for aobj in self.gui.get_objects() if isinstance(aobj, gtk.Action)]:
             actiongroup.add_action(action)
         # the "pos" parameter is optional since 2.12 - we can remove it later
-        uimanager.insert_action_group(actiongroup, pos=-1)
+        uimanager.insert_action_group(actiongroup)
         # the "recent files" sub-menu
         if self.recent_manager is not None:
             recent_files_menu = gtk.RecentChooserMenu(self.recent_manager)
@@ -340,10 +339,10 @@ class ProjectGui(pycam.Gui.BaseUI):
                 if action_group not in uimanager.get_action_groups():
                     uimanager.insert_action_group(action_group, -1)
                 widget_name = widget.get_name()
-                item_type = gtk.UI_MANAGER_MENUITEM
+                item_type = gtk.UIManagerItemType.MENU
             else:
                 widget_name = name
-                item_type = gtk.UI_MANAGER_SEPARATOR
+                item_type = gtk.UIManagerItemType.SEPARATOR
             uimanager.add_ui(merge_id, base_path, name, widget_name, item_type, False)
             if menu_key not in menu_merges:
                 menu_merges[menu_key] = []
@@ -478,7 +477,8 @@ class ProjectGui(pycam.Gui.BaseUI):
 
     def configure_drag_and_drop(self, obj):
         obj.connect("drag-data-received", self.handle_data_drop)
-        flags = gtk.DEST_DEFAULT_ALL
+        return #FIXME
+        flags = gtk.DestDefaults.ALL
         targets = [(key, gtk.TARGET_OTHER_APP, index)
                    for index, key in enumerate(FILENAME_DRAG_TARGETS)]
         actions = (gtk.gdk.ACTION_COPY | gtk.gdk.ACTION_LINK | gtk.gdk.ACTION_DEFAULT
@@ -584,10 +584,10 @@ class ProjectGui(pycam.Gui.BaseUI):
     def mainloop(self):
         # run the mainloop only if a GUI was requested
         if not self.no_dialog:
-            gtk_settings = gtk.settings_get_default()
+            #gtk_settings = gtk.settings_get_default() FIXME
             # force the icons to be displayed
-            gtk_settings.props.gtk_menu_images = True
-            gtk_settings.props.gtk_button_images = True
+            #gtk_settings.props.gtk_menu_images = True FIXME
+            #gtk_settings.props.gtk_button_images = True FIXME
             try:
                 gtk.main()
             except KeyboardInterrupt:

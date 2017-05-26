@@ -241,8 +241,10 @@ def execute(parser, opts, args, pycam):
     else:
         # silence gtk warnings
         try:
-            import gtk
-            warnings.filterwarnings("ignore", category=gtk.Warning)
+            import gi
+            gi.require_version("Gtk", "3.0")
+            from gi.repository import Gtk as gtk
+            #warnings.filterwarnings("ignore", category=gtk.Warning) FIXME
         except ImportError:
             pass
 

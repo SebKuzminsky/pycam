@@ -33,7 +33,9 @@ class Tasks(pycam.Plugins.ListPluginBase):
     DEPENDS = ["Models", "Tools", "Processes", "Bounds", "Toolpaths"]
 
     def setup(self):
-        if self.gui and self._gtk:
+        if self.gui:
+            from gi.repository import Gtk as gtk
+            self._gtk = gtk
             self._gtk_handlers = []
             task_frame = self.gui.get_object("TaskBox")
             task_frame.unparent()
@@ -65,7 +67,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
                 align.set_padding(0, 3, 12, 3)
                 align.add(item)
                 frame.show_all()
-                parameters_box.pack_start(frame, expand=False)
+                parameters_box.pack_start(frame, expand=False, fill=False, padding=0)
 
             self.core.register_ui_section("task_parameters", add_parameter_widget,
                                           clear_parameter_widgets)
@@ -88,7 +90,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
                                        self._edit_task_name))
             selection = self._taskview.get_selection()
             self._gtk_handlers.append((selection, "changed", "task-selection-changed"))
-            selection.set_mode(self._gtk.SELECTION_MULTIPLE)
+            selection.set_mode(self._gtk.SelectionMode.MULTIPLE)
             self._treemodel = self.gui.get_object("TaskList")
             self._treemodel.clear()
             # generate toolpaths
@@ -141,7 +143,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
         self.gui.get_object("NameColumn").set_cell_data_func(self.gui.get_object("NameCell"),
                                                              self._render_task_name)
 
-    def _render_task_name(self, column, cell, model, m_iter):
+    def _render_task_name(self, column, cell, model, m_iter, data):
         task = self.get_by_path(model.get_path(m_iter))
         cell.set_property("text", task["name"])
 

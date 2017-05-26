@@ -32,7 +32,8 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
 
     def setup(self):
         self.last_toolpath_file = None
-        if self.gui and self._gtk:
+        if self.gui:
+            from gi.repository import Gtk as gtk
             self.tp_box = self.gui.get_object("ToolpathsBox")
             self.tp_box.unparent()
             self.core.register_ui("main", "Toolpaths", self.tp_box, weight=50)
@@ -67,7 +68,7 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             # handle selection changes
             selection = self._modelview.get_selection()
             self._gtk_handlers.append((selection, "changed", "toolpath-selection-changed"))
-            selection.set_mode(self._gtk.SELECTION_MULTIPLE)
+            selection.set_mode(gtk.SelectionMode.MULTIPLE)
             self._event_handlers = (
                 ("toolpath-changed", self._update_widgets),
                 ("toolpath-list-changed", self._update_widgets),
@@ -119,18 +120,18 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
         if toolpath and (new_text != toolpath["name"]) and new_text:
             toolpath["name"] = new_text
 
-    def _visualize_toolpath_name(self, column, cell, model, m_iter):
+    def _visualize_toolpath_name(self, column, cell, model, m_iter, data):
         toolpath = self.get_by_path(model.get_path(m_iter))
         cell.set_property("text", toolpath["name"])
 
-    def _visualize_visible_state(self, column, cell, model, m_iter):
+    def _visualize_visible_state(self, column, cell, model, m_iter, data):
         toolpath = self.get_by_path(model.get_path(m_iter))
         if toolpath["visible"]:
             cell.set_property("pixbuf", self.ICONS["visible"])
         else:
             cell.set_property("pixbuf", self.ICONS["hidden"])
 
-    def _visualize_machine_time(self, column, cell, model, m_iter):
+    def _visualize_machine_time(self, column, cell, model, m_iter, data):
         def get_time_string(minutes):
             if minutes > 180:
                 return "%d hours" % int(round(minutes / 60))

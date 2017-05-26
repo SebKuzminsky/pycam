@@ -36,6 +36,9 @@ CLIPBOARD_TARGETS = {
     "svg": ("image/x-inkscape-svg", "image/svg+xml"),
 }
 
+# FIXME: move import up
+from gi.repository import Gdk
+
 
 class Clipboard(pycam.Plugins.PluginBase):
 
@@ -47,8 +50,10 @@ class Clipboard(pycam.Plugins.PluginBase):
         if not self._gtk:
             return False
         if self.gui:
+            from gi.repository import Gtk as gtk
+            self._gtk = gtk
             self._gtk_handlers = []
-            self.clipboard = self._gtk.clipboard_get()
+            self.clipboard = self._gtk.Clipboard.get(Gdk.SELECTION_PRIMARY)
             self.core.set("clipboard-set", self._copy_text_to_clipboard)
             self._gtk_handlers.append((self.clipboard, "owner-change",
                                        self._update_clipboard_widget))
@@ -151,7 +156,8 @@ class Clipboard(pycam.Plugins.PluginBase):
                                   (CLIPBOARD_TARGETS["ps"], "foo.ps"),
                                   (CLIPBOARD_TARGETS["dxf"], "foo.dxf")):
             for target in targets:
-                data = self.clipboard.wait_for_contents(target)
+                atom = Gdk.Atom.intern(target, False)
+                data = self.clipboard.wait_for_contents(atom)
                 if data is not None:
                     detected_filetype = pycam.Importers.detect_file_type(filename)
                     if detected_filetype:
