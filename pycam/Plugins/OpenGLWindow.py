@@ -75,8 +75,10 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
     def setup(self):
         if not GL_ENABLED:
-            self.log.error("Failed to initialize the interactive 3D model view.\nPlease install "
-                           "'python-gtkglext1' to enable it.")
+            self.log.error("Failed to initialize the interactive 3D model view.\nThe OpenGL "
+                           "widget for GTK3 is sadly not yet supported in pycam.\nYour code "
+                           "contributions for this support are very welcome, in order to revive "
+                           "the helpful 3D visualization (http://pycam.sf.net).")
             return False
         if self.gui:
             self.context_menu = self._gtk.Menu()
