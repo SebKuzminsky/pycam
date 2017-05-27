@@ -662,8 +662,6 @@ class Formatter(BaseDataContainer):
                 raise InvalidKeyError(dialect, GCodeDialect)
             export_settings = self.get_value("export_settings")
             generator.add_filters(export_settings.get_toolpath_filters())
-            # TODO: retrieve the filters from settings (units, ...)
-#           generator.add_filters(common_filters)
             for toolpath in source:
                 calculated = toolpath.generate_toolpath()
                 # TODO: implement toolpath.get_meta_data()
