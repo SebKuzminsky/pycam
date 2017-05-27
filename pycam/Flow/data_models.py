@@ -32,7 +32,7 @@ import pycam.PathGenerators.DropCutter
 import pycam.PathGenerators.EngraveCutter
 import pycam.PathGenerators.PushCutter
 from pycam.Plugins.Bounds import ToolBoundaryMode
-from pycam.Toolpath.Filters import MachineSetting, TriggerSpindle
+import pycam.Toolpath.Filters as tp_filters
 import pycam.Toolpath.MotionGrid as MotionGrid
 from pycam.Importers import detect_file_type
 import pycam.Utils.log
@@ -369,10 +369,11 @@ class Tool(BaseCollectionItemDataContainer):
 
     def get_toolpath_filters(self):
         result = []
-        result.append(MachineSetting("feedrate", self.get_value("feed")))
+        result.append(tp_filters.MachineSetting("feedrate", self.get_value("feed")))
         if self.get_value("spindle_enabled"):
-            result.append(MachineSetting("spindle_speed", self.get_value("spindle_speed")))
-            result.append(TriggerSpindle(delay=self.get_value("spindle_delay")))
+            result.append(tp_filters.MachineSetting("spindle_speed",
+                                                    self.get_value("spindle_speed")))
+            result.append(tp_filters.TriggerSpindle(delay=self.get_value("spindle_delay")))
         return result
 
 
