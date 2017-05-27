@@ -230,4 +230,4 @@ class GCodeCornerStyle(pycam.Plugins.PluginBase):
     @Filters.toolpath_filter("settings", ("path_mode", "motion_tolerance", "naive_tolerance"))
     def get_toolpath_filters(self, path_mode=ToolpathPathMode.CORNER_STYLE_EXACT_PATH,
                              motion_tolerance=0, naive_tolerance=0):
-        return [Filters.PathMode(path_mode, motion_tolerance, naive_tolerance)]
+        return [Filters.CornerStyle(path_mode, motion_tolerance, naive_tolerance)]
