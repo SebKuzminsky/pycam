@@ -149,6 +149,27 @@ toolpaths:
                                   y: 105%
                           count: 3
 
+export_settings:
+        tp_settings1:
+                gcode:
+                        - name: safety_height
+                          parameters: 25
+                          enabled: true
+                        - name: plunge_feedrate
+                          parameters: 20%
+                          enabled: true
+                        - name: step_width
+                          parameters:
+                                  x: 0.1
+                                  y: 0.1
+                                  z: 0.1
+                          enabled: true
+                        - name: corner_style
+                          parameters:
+                                  mode: optimize_tolerance
+                                  naive_tolerance: 0.1
+                                  motion_tolerance: 0.05
+
 exports:
         export1:
                 source:
@@ -159,7 +180,7 @@ exports:
                         type: gcode
                         dialect: linuxcnc
                         comment: Complete grid of 5x3 toolpaths.
-                        safety_height: 10
+                        export_settings: tp_settings1
                 target:
                         type: file
                         location: grid_5x3.ngc

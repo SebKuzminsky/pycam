@@ -32,6 +32,7 @@ import pycam.PathGenerators.DropCutter
 import pycam.PathGenerators.EngraveCutter
 import pycam.PathGenerators.PushCutter
 from pycam.Plugins.Bounds import ToolBoundaryMode
+from pycam.Toolpath import ToolpathPathMode
 import pycam.Toolpath.Filters as tp_filters
 import pycam.Toolpath.MotionGrid as MotionGrid
 from pycam.Importers import detect_file_type
@@ -110,6 +111,13 @@ class FormatType(Enum):
 
 class GCodeDialect(Enum):
     LINUXCNC = "linuxcnc"
+
+
+class ToolpathFilter(Enum):
+    SAFETY_HEIGHT = "safety_height"
+    PLUNGE_FEEDRATE = "plunge_feedrate"
+    STEP_WIDTH = "step_width"
+    CORNER_STYLE = "corner_style"
 
 
 def _get_enum_value(enum_class, value):
@@ -584,6 +592,35 @@ class Toolpath(BaseCollectionItemDataContainer):
         return task.generate_toolpath()
 
 
+class ExportSettings(BaseCollectionItemDataContainer):
+
+    collection_name = "export_settings"
+
+    def get_settings_by_type(self, export_type):
+        return self.get_value(export_type, {})
+
+    def get_toolpath_filters(self):
+        result = []
+        for text_name, parameters in self.get_settings_by_type("gcode").items():
+            filter_name = _get_enum_value(ToolpathFilter, text_name)
+            if filter_name == ToolpathFilter.SAFETY_HEIGHT:
+                result.append(tp_filters.SafetyHeight(float(parameters)))
+            elif filter_name == ToolpathFilter.PLUNGE_FEEDRATE:
+                result.append(tp_filters.PlungeFeedrate(float(parameters)))
+            elif filter_name == ToolpathFilter.STEP_WIDTH:
+                result.append(tp_filters.StepWidth(float(parameters["x"]),
+                                                   float(parameters["y"]),
+                                                   float(parameters["z"])))
+            elif filter_name == ToolpathFilter.CORNER_STYLE:
+                mode = _get_enum_value(ToolpathPathMode, parameters["mode"])
+                motion_tolerance = parameters.get("motion_tolerance", 0)
+                naive_tolerance = parameters.get("naive_tolerance", 0)
+                result.append(tp_filters.CornerStyle(mode, motion_tolerance, naive_tolerance))
+            else:
+                raise InvalidKeyError(filter_name, ToolpathFilter)
+        return result
+
+
 class Target(BaseDataContainer):
 
     attribute_converters = {"type": _get_enum_resolver(TargetType)}
@@ -600,7 +637,8 @@ class Target(BaseDataContainer):
 class Formatter(BaseDataContainer):
 
     attribute_converters = {"type": _get_enum_resolver(FormatType),
-                            "dialect": _get_enum_resolver(GCodeDialect)}
+                            "dialect": _get_enum_resolver(GCodeDialect),
+                            "export_settings": _get_collection_resolver("export_settings")}
     attribute_defaults = {"dialect": GCodeDialect.LINUXCNC,
                           "comment": ""}
 
@@ -622,8 +660,9 @@ class Formatter(BaseDataContainer):
                 generator = pycam.Exporters.GCode.LinuxCNC.LinuxCNC(target, comment=comment)
             else:
                 raise InvalidKeyError(dialect, GCodeDialect)
-            # TODO: retrieve the filters from settings
-#           generator.add_filters(settings_filters)
+            export_settings = self.get_value("export_settings")
+            generator.add_filters(export_settings.get_toolpath_filters())
+            # TODO: retrieve the filters from settings (units, ...)
 #           generator.add_filters(common_filters)
             for toolpath in source:
                 calculated = toolpath.generate_toolpath()
