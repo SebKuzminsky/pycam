@@ -73,6 +73,7 @@ exports:
         export1:
                 format:
                         type: gcode
+                        dialect: linuxcnc
                         comment: Some GCode export
                         export_settings: tp_settings1
                 source:
