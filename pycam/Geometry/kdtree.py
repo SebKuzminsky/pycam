@@ -91,7 +91,7 @@ class kdtree(IDGenerator):
                 self.bucket = False
                 self.cutdim = cutdim
                 nodes.sort(key=lambda item: item.bound[cutdim])
-                median = len(nodes) / 2
+                median = len(nodes) // 2
                 self.minval = nodes[0].bound[cutdim]
                 self.maxval = nodes[-1].bound[cutdim]
                 self.cutval = nodes[median].bound[cutdim]
@@ -219,7 +219,7 @@ class kdtree(IDGenerator):
                 (cutdim, spread) = find_max_spread(self.nodes)
                 self.cutdim = cutdim
                 self.nodes.sort(key=lambda node: node.bound[cutdim])
-                median = len(self.nodes) / 2
+                median = len(self.nodes) // 2
                 self.minval = self.nodes[0].bound[cutdim]
                 self.maxval = self.nodes[-1].bound[cutdim]
                 self.cutval = self.nodes[median].bound[cutdim]
