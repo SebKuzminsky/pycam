@@ -22,10 +22,10 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import re
 try:
     # Python2 (load first - due to incompatible interface)
-    from StringIO import StringIO
+    from StringIO import BufferedReader, BytesIO, TextIOWrapper
 except ImportError:
     # Python3
-    from io import StringIO
+    from io import BufferedReader, BytesIO, TextIOWrapper
 from struct import unpack
 
 from pycam.Geometry import epsilon
@@ -56,6 +56,31 @@ def UniqueVertex(x, y, z):
         return (x, y, z)
 
 
+def is_binary_input_format(source):
+    """ Read the first two lines of (potentially non-binary) input - they should contain "solid"
+    and "facet".
+
+    The below detection is quite simple: it looks for the strings "facet" and "solid" in the first
+    400 bytes.
+    An even better detection would check, if the following conditition is true:
+        numfacets = unpack("<I", raw_header_data[80:84])[0]
+        return source.len == (84 + 50 * numfacets)
+    But this check requires access to the length attribute of the input data. This is not easily
+    available for remote sources (e.g. via http). Thus we stick to the simple check.
+    """
+    # read data (without consuming it)
+    raw_header_data = source.peek(400)
+    try:
+        header_data = raw_header_data.decode("utf-8")
+    except UnicodeDecodeError:
+        # it does not look like text
+        return True
+    if ("solid" in header_data) and ("facet" in header_data):
+        return False
+    else:
+        return True
+
+
 def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
     global vertices, edges, kdtree
     vertices = 0
@@ -66,51 +91,21 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
 
     if hasattr(filename, "read"):
         # make sure that the input stream can seek and has ".len"
-        f = StringIO(filename.read())
+        f = BufferedReader(filename)
         # useful for later error messages
         filename = "input stream"
     else:
         try:
             url_file = pycam.Utils.URIHandler(filename).open()
-            # urllib.urlopen objects do not support "seek" - so we need to read
-            # the whole file at once. This is ugly - anyone with a better idea?
-            f = StringIO(url_file.read())
-            # TODO: the above ".read" may be incomplete - this is ugly
-            # see http://patrakov.blogspot.com/2011/03/case-of-non-raised-exception.html
-            # and http://stackoverflow.com/questions/1824069/
+            # urllib.urlopen objects do not support "seek" - so we need a buffered reader
+            # Is there a better approach than consuming the whole file at once?
+            f = BufferedReader(BytesIO(url_file.read()))
             url_file.close()
         except IOError as err_msg:
             log.error("STLImporter: Failed to read file (%s): %s", filename, err_msg)
             return None
-    # Read the first two lines of (potentially non-binary) input - they should
-    # contain "solid" and "facet".
-    header_lines = []
-    while len(header_lines) < 2:
-        line = f.readline(200)
-        if len(line) == 0:
-            # empty line (not even a line-feed) -> EOF
-            log.error("STLImporter: No valid lines found in '%s'", filename)
-            return None
-        # ignore comment lines
-        # note: partial comments (starting within a line) are not handled
-        if not line.startswith(";"):
-            header_lines.append(line)
-    header = "".join(header_lines)
-    # read byte 80 to 83 - they contain the "numfacets" value in binary format
-    f.seek(80)
-    numfacets = unpack("<I", f.read(4))[0]
-    binary = False
-    log.debug("STL import info: %s / %s / %s / %s",
-              f.len, numfacets, header.find("solid"), header.find("facet"))
 
-    if f.len == (84 + 50*numfacets):
-        binary = True
-    elif header.find("solid") >= 0 and header.find("facet") >= 0:
-        binary = False
-        f.seek(0)
-    else:
-        log.error("STLImporter: STL binary/ascii detection failed")
-        return None
+    binary = is_binary_input_format(f)
 
     if use_kdtree:
         kdtree = PointKdtree([], 3, 1, epsilon)
@@ -179,6 +174,8 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
 
             model.append(t)
     else:
+        # from here on we want to use a text based input stream (not bytes)
+        f = TextIOWrapper(f, encoding="utf-8")
         solid = re.compile(r"\s*solid\s+(\w+)\s+.*")
         endsolid = re.compile(r"\s*endsolid\s*")
         facet = re.compile(r"\s*facet\s*")
