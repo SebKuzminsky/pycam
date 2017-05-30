@@ -181,8 +181,11 @@ class ProjectGui(pycam.Gui.BaseUI):
         self.gui.get_object("About").connect("activate", self.toggle_about_window, True)
         # we assume, that the last child of the window is the "close" button
         # TODO: fix this ugly hack!
-        self.gui.get_object("AboutWindowButtons").get_children()[-1].connect(
-            "clicked", self.toggle_about_window, False)
+        about_window_children = self.gui.get_object("AboutWindowButtons").get_children()
+        if about_window_children:
+            # it seems to be possible that there are no children - weird :(
+            # see https://github.com/SebKuzminsky/pycam/issues/59
+            about_window_children[-1].connect("clicked", self.toggle_about_window, False)
         self.about_window.connect("delete-event", self.toggle_about_window, False)
         # menu bar
         uimanager = gtk.UIManager()
