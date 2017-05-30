@@ -163,21 +163,9 @@ class GTKHandler(logging.Handler):
         self.parent_window = parent_window
 
     def emit(self, record):
-        raw_message = self.format(record)
-        try:
-            message = raw_message.encode("utf-8")
-        except UnicodeDecodeError:
-            try:
-                # try to decode the string with the current locale
-                current_encoding = locale.getpreferredencoding()
-                message = raw_message.decode(current_encoding)
-            except (UnicodeDecodeError, LookupError):
-                # remove all critical characters
-                message = re.sub(r"[^\w\s]", "", raw_message)
-        # Replace all "<>" characters (invalid for markup styles) with html
-        # entities.
-        message = re.sub("<", "&lt;", message)
-        message = re.sub(">", "&gt;", message)
+        message = self.format(record)
+        # Replace all "<>" characters (invalid for markup styles) with html entities.
+        message = message.replace("<", "&lt;").replace(">", "&gt;")
         from gi.repository import Gtk as gtk
         if record.levelno <= 20:
             message_type = gtk.MessageType.INFO
@@ -190,7 +178,6 @@ class GTKHandler(logging.Handler):
             message_title = "Error"
         window = gtk.MessageDialog(self.parent_window, type=message_type, buttons=gtk.ButtonsType.OK)
         window.set_markup(str(message))
-        message_title = message_title.encode("utf-8", "ignore")
         window.set_title(message_title)
         # make sure that the window gets destroyed later
         for signal in ("close", "response"):

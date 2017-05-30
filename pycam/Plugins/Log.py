@@ -87,7 +87,6 @@ class Log(pycam.Plugins.PluginBase):
         timestamp = datetime.datetime.fromtimestamp(record.created).strftime("%H:%M")
         # avoid the ugly character for a linefeed
         message = " ".join(message.splitlines())
-        message = message.encode("utf-8", "ignore")
         self.log_model.append((timestamp, title, message))
         # update the status bar (if the GTK interface is still active)
         if self.status_bar.get_parent() is not None:
