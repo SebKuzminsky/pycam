@@ -63,7 +63,7 @@ class EventCore(pycam.Gui.Settings.Settings):
 
     def unblock_event(self, event):
         if event in self.event_handlers:
-            if self.event_handlers[event].blocker_tokens > 0:
+            if self.event_handlers[event].blocker_tokens:
                 self.event_handlers[event].blocker_tokens.pop()
             else:
                 log.debug("Trying to unblock non-blocked event '%s'", str(event))

@@ -200,7 +200,7 @@ class Tools(pycam.Plugins.ListPluginBase):
         selected = self._get_shape()
         model = self.gui.get_object("ToolShapeList")
         model.clear()
-        shapes = self.core.get("get_parameter_sets")("tool").values()
+        shapes = list(self.core.get("get_parameter_sets")("tool").values())
         shapes.sort(key=lambda item: item["weight"])
         for shape in shapes:
             model.append((shape["label"], shape["name"]))

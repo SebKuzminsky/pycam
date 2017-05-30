@@ -178,8 +178,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
         model = self.gui.get_object("TaskTypeList")
         model.clear()
         types = self.core.get("get_parameter_sets")("task").values()
-        types.sort(key=lambda item: item["weight"])
-        for one_type in types:
+        for one_type in sorted(types, key=lambda item: item["weight"]):
             model.append((one_type["label"], one_type["name"]))
         # check if any on the processes became obsolete due to a missing plugin
         removal = []
@@ -237,8 +236,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
 
     def _task_new(self, *args):
         types = self.core.get("get_parameter_sets")("task").values()
-        types.sort(key=lambda item: item["weight"])
-        one_type = types[0]
+        one_type = sorted(types, key=lambda item: item["weight"])[0]
         name = get_non_conflicting_name("Task #%d", [task["name"] for task in self])
         new_task = TaskEntity({"type": one_type["name"],
                                "parameters": one_type["parameters"].copy(),

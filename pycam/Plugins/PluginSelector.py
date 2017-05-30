@@ -148,7 +148,7 @@ class PluginSelector(pycam.Plugins.PluginBase):
         self.gui.get_object("PluginsDescriptionColumn").queue_resize()
         self.gui.get_object("PluginsTable").queue_resize()
         # update the category filter
-        categories = categories.keys()
+        categories = list(categories.keys())
         categories.sort()
         categories.insert(0, "All categories")
         model = self.gui.get_object("CategoryList")

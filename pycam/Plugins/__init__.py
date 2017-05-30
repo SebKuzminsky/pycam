@@ -319,8 +319,7 @@ class PluginManager(object):
 
     def get_plugin_names(self):
         names = self.modules.keys()
-        names.sort()
-        return names
+        return sorted(names)
 
     def is_plugin_required(self, name):
         long_name = "%s.%s." % (name, name)
