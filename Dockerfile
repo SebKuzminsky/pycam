@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM debian:9
 
 COPY . root
 WORKDIR root
