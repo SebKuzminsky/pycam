@@ -1,8 +1,8 @@
 [![Build Status](https://travis-ci.org/SebKuzminsky/pycam.svg?branch=master)](https://travis-ci.org/SebKuzminsky/pycam)
 
-# pycam: a toolpath generator
+# PyCAM: a toolpath generator
 
-pycam generates toolpaths (GCode) based on 2D or 3D models for 3-axis CNC machining.
+PyCAM generates toolpaths (GCode) based on 2D or 3D models for 3-axis CNC machining.
 
 
 ## Running
