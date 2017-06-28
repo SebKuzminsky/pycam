@@ -41,14 +41,14 @@ log = pycam.Utils.log.get_logger()
 vertices = 0
 edges = 0
 kdtree = None
-lastUniqueVertex = (None, None, None)
+last_unique_vertex = (None, None, None)
 
 
-def UniqueVertex(x, y, z):
-    global vertices, lastUniqueVertex
+def get_unique_vertex(x, y, z):
+    global vertices, last_unique_vertex
     if kdtree:
         p = kdtree.Point(x, y, z)
-        if p == lastUniqueVertex:
+        if p == last_unique_vertex:
             vertices += 1
         return p
     else:
@@ -136,19 +136,19 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
             v12 = unpack("<f", f.read(4))[0]
             v13 = unpack("<f", f.read(4))[0]
 
-            p1 = UniqueVertex(float(v11), float(v12), float(v13))
+            p1 = get_unique_vertex(float(v11), float(v12), float(v13))
 
             v21 = unpack("<f", f.read(4))[0]
             v22 = unpack("<f", f.read(4))[0]
             v23 = unpack("<f", f.read(4))[0]
 
-            p2 = UniqueVertex(float(v21), float(v22), float(v23))
+            p2 = get_unique_vertex(float(v21), float(v22), float(v23))
 
             v31 = unpack("<f", f.read(4))[0]
             v32 = unpack("<f", f.read(4))[0]
             v33 = unpack("<f", f.read(4))[0]
 
-            p3 = UniqueVertex(float(v31), float(v32), float(v33))
+            p3 = get_unique_vertex(float(v31), float(v32), float(v33))
 
             # not used (additional attributes)
             f.read(2)
@@ -221,7 +221,8 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
                 continue
             m = vertex.match(line)
             if m:
-                p = UniqueVertex(float(m.group('x')), float(m.group('y')), float(m.group('z')))
+                p = get_unique_vertex(float(m.group('x')), float(m.group('y')),
+                                      float(m.group('z')))
                 if p1 is None:
                     p1 = p
                 elif p2 is None:
