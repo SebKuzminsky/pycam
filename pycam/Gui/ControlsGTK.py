@@ -134,7 +134,7 @@ class InputChoice(InputBaseClass):
             self._values.append(value)
         renderer = gtk.CellRendererText()
         self.control = gtk.ComboBox.new_with_model(self.model)
-        self.control.pack_start(renderer, expand= False)
+        self.control.pack_start(renderer, expand=False)
         self.control.add_attribute(renderer, 'text', 0)
         if start is None:
             self.control.set_active(0)

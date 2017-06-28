@@ -22,7 +22,7 @@ import math
 
 # careful import
 try:
-    import gtk.gtkgl
+    # import gtk.gtkgl
     import OpenGL.GL as GL
     import OpenGL.GLU as GLU
     import OpenGL.GLUT as GLUT
@@ -30,7 +30,7 @@ try:
 except (ImportError, RuntimeError):
     GL_ENABLED = False
 
-from gi.repository import Gtk as gtk
+# from gi.repository import Gtk as gtk
 from gi.repository import Gdk as gdk
 
 from pycam.Geometry import number, sqrt

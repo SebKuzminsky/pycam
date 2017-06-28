@@ -40,6 +40,7 @@ if not hasattr(enum, "IntEnum"):
     _log.error("The installed 'enum' package lacks 'IntEnum'. Maybe you should install 'enum34' "
                "instead?")
 
+
 class GridDirection(enum.Enum):
     X = "x"
     Y = "y"

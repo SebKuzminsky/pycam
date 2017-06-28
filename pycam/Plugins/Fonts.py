@@ -20,6 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import re
+
 try:
     # Python2 (load first - due to incompatible interface)
     from StringIO import StringIO
@@ -34,7 +35,6 @@ from pycam.Utils.locations import get_font_dir
 
 
 class Fonts(pycam.Plugins.PluginBase):
-
     UI_FILE = "fonts.ui"
     DEPENDS = ["Clipboard"]
     CATEGORIES = ["Fonts"]
@@ -59,8 +59,8 @@ class Fonts(pycam.Plugins.PluginBase):
                  self.update_font_dialog_preview),
                 (self.gui.get_object("FontDialogPreview"), "configure_event",
                  self.update_font_dialog_preview)]
-                #(self.gui.get_object("FontDialogPreview"), "expose_event", FIXME
-                 #self.update_font_dialog_preview)]
+            # (self.gui.get_object("FontDialogPreview"), "expose_event",  FIXME
+            #  self.update_font_dialog_preview)]
             for objname in ("FontSideSkewValue", "FontCharacterSpacingValue",
                             "FontLineSpacingValue"):
                 obj = self.gui.get_object(objname)

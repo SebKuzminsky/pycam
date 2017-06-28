@@ -25,7 +25,7 @@ import uuid
 
 # TODO: load these modules only on demand
 from gi.repository import Gtk as gtk
-from gi.repository import Gdk as gdk
+# from gi.repository import Gdk as gdk
 from gi.repository import GObject as gobject
 
 import pycam.Utils.log
@@ -77,13 +77,13 @@ class PluginBase(object):
             for key in self.ICONS:
                 icon_location = pycam.Utils.locations.get_ui_file_location(self.ICONS[key])
                 if icon_location:
-                    #try:  FIXME
+                    # try:  FIXME
                     #    pixbuf = gdk.pixbuf_new_from_file_at_size(icon_location, self.ICON_SIZE,
                     #                                                  self.ICON_SIZE)
-                    #except gobject.GError:
+                    # except gobject.GError:
                     self.ICONS[key] = None
-                    #else:
-                    #    self.ICONS[key] = pixbuf
+                    # else:
+                    #     self.ICONS[key] = pixbuf
                 else:
                     self.log.debug("Failed to locate icon: %s", self.ICONS[key])
                     self.ICONS[key] = None
@@ -180,10 +180,10 @@ class PluginBase(object):
 
     def register_gtk_accelerator(self, groupname, action, accel_string, accel_name):
         # menu item and shortcut
-        #try:  FIXME
-        #    import gtk
-        #except ImportError:
-         #   return
+        # try:  FIXME
+        #     import gtk
+        # except ImportError:
+        #     return
         actiongroup = gtk.ActionGroup(groupname)
         accel_path = "<pycam>/%s" % accel_name
         action.set_accel_path(accel_path)
