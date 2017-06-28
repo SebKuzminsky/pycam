@@ -56,9 +56,10 @@ def UniqueVertex(x, y, z):
         return (x, y, z)
 
 
-def is_binary_input_format(source):
+def get_facet_count_if_binary_format(source):
     """ Read the first two lines of (potentially non-binary) input - they should contain "solid"
-    and "facet".
+    and "facet". The return value is a number representing the number of facets (binary format) or
+    None (text format).
 
     The below detection is quite simple: it looks for the strings "facet" and "solid" in the first
     400 bytes.
@@ -70,15 +71,17 @@ def is_binary_input_format(source):
     """
     # read data (without consuming it)
     raw_header_data = source.peek(400)
+    facet_count = unpack("<I", raw_header_data[80:84])[0]
     try:
         header_data = raw_header_data.decode("utf-8")
     except UnicodeDecodeError:
         # it does not look like text
-        return True
+        return facet_count
     if ("solid" in header_data) and ("facet" in header_data):
-        return False
+        # this looks like a text format
+        return None
     else:
-        return True
+        return facet_count
 
 
 def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
@@ -105,7 +108,9 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
             log.error("STLImporter: Failed to read file (%s): %s", filename, err_msg)
             return None
 
-    binary = is_binary_input_format(f)
+    # the facet count is only available for the binary format
+    facet_count = get_facet_count_if_binary_format(f)
+    is_binary = (facet_count is not None)
 
     if use_kdtree:
         kdtree = PointKdtree([], 3, 1, epsilon)
@@ -116,8 +121,8 @@ def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
     p2 = None
     p3 = None
 
-    if binary:
-        for i in range(1, numfacets + 1):
+    if is_binary:
+        for i in range(1, facet_count + 1):
             if callback and callback():
                 log.warn("STLImporter: load model operation cancelled")
                 return None
