@@ -4,8 +4,8 @@ sudo: required
 language: python
 
 python:
-  - "2.6"
   - "2.7"
+  - "3.5"
 
 before_install: ./scripts/travis-install-build-deps.sh
 
