@@ -31,7 +31,7 @@ class Tools(pycam.Plugins.ListPluginBase):
     def setup(self):
         self.core.set("tools", self)
         if self.gui:
-            from gi.repository import Gtk as gtk
+            # from gi.repository import Gtk as gtk
             tool_frame = self.gui.get_object("ToolBox")
             tool_frame.unparent()
             self.core.register_ui("main", "Tools", tool_frame, weight=10)
@@ -63,7 +63,7 @@ class Tools(pycam.Plugins.ListPluginBase):
                 align.set_padding(0, 3, 12, 3)
                 align.add(item)
                 frame.show_all()
-                parameters_box.pack_start(frame, expand=True, fill= True, padding= 0)
+                parameters_box.pack_start(frame, expand=True, fill=True, padding=0)
 
             self.core.register_ui_section("tool_parameters", add_parameter_widget,
                                           clear_parameter_widgets)

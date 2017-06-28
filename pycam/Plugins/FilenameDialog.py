@@ -90,8 +90,8 @@ class FilenameDialog(pycam.Plugins.PluginBase):
             action = gtk.FileChooserAction.SAVE
             stock_id_ok = gtk.STOCK_SAVE
         dialog = gtk.FileChooserDialog(title=title, parent=parent, action=action,
-                                       buttons=(gtk.STOCK_CANCEL, gtk.ResponseType.CANCEL, stock_id_ok,
-                                                gtk.ResponseType.OK))
+                                       buttons=(gtk.STOCK_CANCEL, gtk.ResponseType.CANCEL,
+                                                stock_id_ok, gtk.ResponseType.OK))
         # set the initial directory to the last one used
         if self.last_dirname and os.path.isdir(self.last_dirname):
             dialog.set_current_folder(self.last_dirname)

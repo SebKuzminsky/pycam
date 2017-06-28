@@ -152,7 +152,7 @@ class ProjectGui(pycam.Gui.BaseUI):
                 key, mod = gtk.accelerator_parse(accel_key)
                 accel_path = "<pycam>/%s" % objname
                 item.set_accel_path(accel_path)
-                #gtk.accel_map_change_entry(accel_path, key, mod, True) FIXME
+                # gtk.accel_map_change_entry(accel_path, key, mod, True) FIXME
         # LinkButton does not work on Windows: https://bugzilla.gnome.org/show_bug.cgi?id=617874
         if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
             def open_url(widget, data=None):
@@ -196,7 +196,8 @@ class ProjectGui(pycam.Gui.BaseUI):
         def handle_window_close(accel_group, window, *args):
             window.emit("delete-event", gtk.gdk.Event(gtk.gdk.DELETE))
 
-        #self._accel_group.connect_group(ord('w'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_LOCKED, handle_window_close)  FIXME
+        # self._accel_group.connect_group(ord('w'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_LOCKED,  FIXME
+        #                                 handle_window_close)
         self.settings.add_item("gtk-accel-group", lambda: self._accel_group)
         for obj in self.gui.get_objects():
             if isinstance(obj, gtk.Window):
@@ -286,7 +287,7 @@ class ProjectGui(pycam.Gui.BaseUI):
             self.gui.get_object(browse_button).connect("clicked",
                                                        self._browse_external_program_location, key)
         # set the icons (in different sizes) for all windows
-        #gtk.window_set_default_icon_list(*get_icons_pixbuffers()) FIXME
+        # gtk.window_set_default_icon_list(*get_icons_pixbuffers()) FIXME
         # load menu data
         gtk_menu_file = get_ui_file_location(GTKMENU_FILE)
         if gtk_menu_file is None:
@@ -480,7 +481,7 @@ class ProjectGui(pycam.Gui.BaseUI):
 
     def configure_drag_and_drop(self, obj):
         obj.connect("drag-data-received", self.handle_data_drop)
-        return #FIXME
+        return  # FIXME
         flags = gtk.DestDefaults.ALL
         targets = [(key, gtk.TARGET_OTHER_APP, index)
                    for index, key in enumerate(FILENAME_DRAG_TARGETS)]
@@ -587,10 +588,10 @@ class ProjectGui(pycam.Gui.BaseUI):
     def mainloop(self):
         # run the mainloop only if a GUI was requested
         if not self.no_dialog:
-            #gtk_settings = gtk.settings_get_default() FIXME
+            # gtk_settings = gtk.settings_get_default() FIXME
             # force the icons to be displayed
-            #gtk_settings.props.gtk_menu_images = True FIXME
-            #gtk_settings.props.gtk_button_images = True FIXME
+            # gtk_settings.props.gtk_menu_images = True FIXME
+            # gtk_settings.props.gtk_button_images = True FIXME
             try:
                 gtk.main()
             except KeyboardInterrupt:

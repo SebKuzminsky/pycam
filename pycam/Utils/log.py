@@ -18,9 +18,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import locale
 import logging
-import re
 import time
 
 
@@ -176,7 +174,8 @@ class GTKHandler(logging.Handler):
         else:
             message_type = gtk.MessageType.ERROR
             message_title = "Error"
-        window = gtk.MessageDialog(self.parent_window, type=message_type, buttons=gtk.ButtonsType.OK)
+        window = gtk.MessageDialog(self.parent_window, type=message_type,
+                                   buttons=gtk.ButtonsType.OK)
         window.set_markup(str(message))
         window.set_title(message_title)
         # make sure that the window gets destroyed later
