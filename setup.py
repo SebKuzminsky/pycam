@@ -86,7 +86,7 @@ Windows: select Python 2.5 in the following dialog.
     scripts=PLATFORM_SCRIPTS,
     data_files=[
         ("share/pycam/doc", ["COPYING.TXT",
-                             "INSTALL.TXT",
+                             "INSTALL.md",
                              "LICENSE.TXT",
                              "README.md",
                              "Changelog",
