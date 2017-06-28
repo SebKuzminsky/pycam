@@ -196,7 +196,8 @@ class ProjectGui(pycam.Gui.BaseUI):
         def handle_window_close(accel_group, window, *args):
             window.emit("delete-event", gtk.gdk.Event(gtk.gdk.DELETE))
 
-        # self._accel_group.connect_group(ord('w'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_LOCKED, handle_window_close)  FIXME
+        # self._accel_group.connect_group(ord('w'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_LOCKED,  FIXME
+        #                                 handle_window_close)
         self.settings.add_item("gtk-accel-group", lambda: self._accel_group)
         for obj in self.gui.get_objects():
             if isinstance(obj, gtk.Window):

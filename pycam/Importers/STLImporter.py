@@ -81,7 +81,7 @@ def is_binary_input_format(source):
         return True
 
 
-def ImportModel(filename, use_kdtree=True, callback=None, numfacets=None, **kwargs):
+def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
     global vertices, edges, kdtree
     vertices = 0
     edges = 0
