@@ -22,7 +22,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import math
 import uuid
 
-from pycam.Geometry import epsilon, INFINITE, TransformableContainer, IDGenerator, Box3D, Point3D
+from pycam.Geometry import (epsilon, INFINITE, TransformableContainer, IDGenerator, Box3D, Point3D,
+                            Vector3D)
 from pycam.Geometry.Matrix import TRANSFORMATIONS
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
@@ -195,6 +196,9 @@ class BaseModel(IDGenerator, TransformableContainer):
             scale_z = scale_x
         matrix = ((scale_x, 0, 0, 0), (0, scale_y, 0, 0), (0, 0, scale_z, 0))
         self.transform_by_matrix(matrix, callback=self._get_progress_callback(callback))
+
+    def get_dimensions(self):
+        return Vector3D(self.maxx - self.minx, self.maxy - self.miny, self.maxz - self.minz)
 
     def get_bounds(self):
         return Bounds(Bounds.TYPE_CUSTOM, Box3D(Point3D(self.minx, self.miny, self.minz),
