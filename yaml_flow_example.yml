@@ -7,10 +7,10 @@ models:
                         location: samples/Box0.stl
                 transformations:
                         - action: scale
-                          factors:
+                          factor:
                                   z: 1.25
                         - action: scale
-                          width:
+                          size:
                                   x: 120
                         - action: shift
                           distance:

@@ -57,6 +57,14 @@ class InvalidDataError(FlowDescriptionBaseException):
     pass
 
 
+class AmbiguousDataError(InvalidDataError):
+    pass
+
+
+class UnexpectedAttributeError(InvalidDataError):
+    pass
+
+
 class InvalidKeyError(InvalidDataError):
 
     def __init__(self, invalid_key, choice_enum):
@@ -101,6 +109,19 @@ class SourceType(Enum):
     TOOLPATH = "toolpath"
 
 
+class ModelTransformationAction(Enum):
+    SCALE = "scale"
+    SHIFT = "shift"
+    ROTATE = "rotate"
+    MIRROR = "mirror"
+    PROJECTION = "projection"
+
+
+class ModelScaleTarget(Enum):
+    FACTOR = "factor"
+    SIZE = "size"
+
+
 class TargetType(Enum):
     FILE = "file"
 
@@ -132,6 +153,14 @@ def _get_enum_resolver(enum_class):
     return functools.partial(_get_enum_value, enum_class)
 
 
+def _get_list_item_value(item_converter, values):
+    return [item_converter(value) for value in values]
+
+
+def _get_list_resolver(item_converter):
+    return functools.partial(_get_list_item_value, item_converter)
+
+
 def _bool_converter(value):
     if isinstance(value, int):
         if value == 1:
@@ -155,6 +184,7 @@ def _bool_converter(value):
 
 LimitSingle = collections.namedtuple("LimitSingle", ("value", "is_relative"))
 Limit3D = collections.namedtuple("Limit3D", ("x", "y", "z"))
+AxesValues = collections.namedtuple("AxesValues", ("x", "y", "z"))
 
 
 def _limit3d_converter(point):
@@ -186,6 +216,31 @@ def _limit3d_converter(point):
             raise InvalidDataError("Non-numeric data supplied for 3D limit: {}".format(value))
         result.append(LimitSingle(value, is_relative))
     return Limit3D(*result)
+
+
+def _axes_values_converter(data):
+    result = []
+    if isinstance(data, dict):
+        data = dict(data)
+        for key in "xyz":
+            result.append(data.pop(key, None))
+        if data:
+            raise InvalidDataError("Superfluous axes key(s) supplied: {} (expected: x / y / z)"
+                                   .format(" / ".join(data.keys())))
+        for index, value in enumerate(result):
+            if value is not None:
+                try:
+                    result[index] = float(value)
+                except ValueError:
+                    raise InvalidDataError("Axis value is not a float: {} ({})"
+                                           .format(value, type(value)))
+    else:
+        try:
+            factor = float(data)
+        except ValueError:
+            raise InvalidDataError("Axis value is not a float: {} ({})".format(data, type(data)))
+        result = [factor] * 3
+    return AxesValues(*result)
 
 
 def _get_from_collection(collection_name, wanted, many=False):
@@ -247,6 +302,12 @@ class BaseDataContainer(object):
 
     def get_dict(self):
         return copy.deepcopy(self._data)
+
+    def validate_allowed_attributes(self, allowed_attributes, description):
+        unexpected_attributes = set(self._data.keys()) - allowed_attributes
+        if unexpected_attributes:
+            raise UnexpectedAttributeError("Unexpected attributes were given for {}: {}"
+                                           .format(description, " / ".join(unexpected_attributes)))
 
 
 class BaseCollectionItemDataContainer(BaseDataContainer):
@@ -327,13 +388,61 @@ class Source(BaseDataContainer):
             raise InvalidKeyError(source_type, SourceType)
 
 
+class ModelTransformation(BaseDataContainer):
+
+    attribute_converters = {"action": _get_enum_resolver(ModelTransformationAction),
+                            "scale_target": _get_enum_resolver(ModelScaleTarget),
+                            "axes": _axes_values_converter}
+
+    def transform_model(self, model):
+        action = self.get_value("action")
+        if action == ModelTransformationAction.SCALE:
+            self._scale_model(model)
+        else:
+            raise InvalidKeyError(action, ModelTransformationAction)
+
+    def _scale_model(self, model):
+        self.validate_allowed_attributes({"action", "scale_target", "axes"},
+                                         "model transformation 'scale'")
+        try:
+            target = self.get_value("scale_target")
+        except MissingAttributeError:
+            raise MissingAttributeError("Model transformation 'scale' requires 'scale_target' "
+                                        "attribute.")
+        try:
+            axes = self.get_value("axes")
+        except MissingAttributeError:
+            raise MissingAttributeError("Model transformation 'scale' requires 'axes' attribute.")
+        kwargs = {}
+        if target == ModelScaleTarget.FACTOR:
+            for key, value in zip(("scale_x", "scale_y", "scale_z"), axes):
+                kwargs[key] = 1.0 if value is None else value
+        elif target == ModelScaleTarget.SIZE:
+            for key, current_size, target_size in zip(
+                    ("scale_x", "scale_y", "scale_z"), model.get_dimensions(), axes):
+                if current_size == 0:
+                    raise InvalidDataError("Model transformation 'scale' does not accept "
+                                           "zero as a target size ({}).".format(key))
+                elif target_size is None:
+                    kwargs[key] = 1.0
+                else:
+                    kwargs[key] = target_size / current_size
+        else:
+            assert False
+        model.scale(**kwargs)
+
+
 class Model(BaseCollectionItemDataContainer):
 
     collection_name = "model"
-    attribute_converters = {"source": Source}
+    attribute_converters = {"source": Source,
+                            "transformations": _get_list_resolver(ModelTransformation)}
 
     def get_model(self):
-        return self.get_value("source").get("model")
+        model = self.get_value("source").get("model")
+        for transformation in self.get_value("transformations"):
+            transformation.transform_model(model)
+        return model
 
 
 class Tool(BaseCollectionItemDataContainer):

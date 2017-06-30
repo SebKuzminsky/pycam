@@ -6,6 +6,18 @@ models:
                 source:
                         type: file
                         location: samples/Box0.stl
+                transformations:
+                        - action: scale
+                          scale_target: factor
+                          axes:
+                                  x: 1.25
+                        - action: scale
+                          scale_target: factor
+                          axes: 0.7
+                        - action: scale
+                          scale_target: size
+                          axes:
+                                  x: 10
 
 tools:
         tool1:
