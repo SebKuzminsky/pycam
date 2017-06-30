@@ -197,6 +197,11 @@ class BaseModel(IDGenerator, TransformableContainer):
         matrix = ((scale_x, 0, 0, 0), (0, scale_y, 0, 0), (0, 0, scale_z, 0))
         self.transform_by_matrix(matrix, callback=self._get_progress_callback(callback))
 
+    def get_center(self):
+        return Point3D((self.minx + self.maxx) / 2,
+                       (self.miny + self.maxy) / 2,
+                       (self.minz + self.maxz) / 2)
+
     def get_dimensions(self):
         return Vector3D(self.maxx - self.minx, self.maxy - self.miny, self.maxz - self.minz)
 
