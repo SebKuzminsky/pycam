@@ -6,24 +6,6 @@ models:
                         type: file
                         location: samples/Box0.stl
                 transformations:
-                        - action: scale
-                          factor:
-                                  z: 1.25
-                        - action: scale
-                          size:
-                                  x: 120
-                        - action: shift
-                          distance:
-                                  x: -20
-                        - action: shift
-                          max:
-                                  z: 0
-                        - action: shift
-                          min:
-                                  y: 0
-                        - action: shift
-                          center:
-                                  x: 50
                         - action: rotate
                           angle: 90
                           center:

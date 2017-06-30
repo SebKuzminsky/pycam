@@ -122,6 +122,13 @@ class ModelScaleTarget(Enum):
     SIZE = "size"
 
 
+class ModelShiftTarget(Enum):
+    DISTANCE = "distance"
+    ALIGN_MIN = "align_min"
+    ALIGN_MAX = "align_max"
+    CENTER = "center"
+
+
 class TargetType(Enum):
     FILE = "file"
 
@@ -392,12 +399,15 @@ class ModelTransformation(BaseDataContainer):
 
     attribute_converters = {"action": _get_enum_resolver(ModelTransformationAction),
                             "scale_target": _get_enum_resolver(ModelScaleTarget),
+                            "shift_target": _get_enum_resolver(ModelShiftTarget),
                             "axes": _axes_values_converter}
 
     def transform_model(self, model):
         action = self.get_value("action")
         if action == ModelTransformationAction.SCALE:
             self._scale_model(model)
+        elif action == ModelTransformationAction.SHIFT:
+            self._shift_model(model)
         else:
             raise InvalidKeyError(action, ModelTransformationAction)
 
@@ -430,6 +440,35 @@ class ModelTransformation(BaseDataContainer):
         else:
             assert False
         model.scale(**kwargs)
+
+    def _shift_model(self, model):
+        self.validate_allowed_attributes({"action", "shift_target", "axes"},
+                                         "model transformation 'shift'")
+        try:
+            target = self.get_value("shift_target")
+        except MissingAttributeError:
+            raise MissingAttributeError("Model transformation 'shift' requires 'shift_target' "
+                                        "attribute.")
+        try:
+            axes = self.get_value("axes")
+        except MissingAttributeError:
+            raise MissingAttributeError("Model transformation 'shift' requires 'axes' attribute.")
+        args = []
+        if target == ModelShiftTarget.DISTANCE:
+            for value in axes:
+                args.append(0.0 if value is None else value)
+        elif target == ModelShiftTarget.ALIGN_MIN:
+            for value, current_position in zip(axes, (model.minx, model.miny, model.minz)):
+                args.append(0.0 if value is None else (value - current_position))
+        elif target == ModelShiftTarget.ALIGN_MAX:
+            for value, current_position in zip(axes, (model.maxx, model.maxy, model.maxz)):
+                args.append(0.0 if value is None else (value - current_position))
+        elif target == ModelShiftTarget.CENTER:
+            for value, current_position in zip(axes, model.get_center()):
+                args.append(0.0 if value is None else (value - current_position))
+        else:
+            assert False
+        model.shift(*args)
 
 
 class Model(BaseCollectionItemDataContainer):

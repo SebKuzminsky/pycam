@@ -18,6 +18,22 @@ models:
                           scale_target: size
                           axes:
                                   x: 10
+                        - action: shift
+                          shift_target: distance
+                          axes:
+                                  x: -20
+                        - action: shift
+                          shift_target: align_max
+                          axes:
+                                  z: 0
+                        - action: shift
+                          shift_target: align_min
+                          axes:
+                                  y: 0
+                        - action: shift
+                          shift_target: center
+                          axes:
+                                  x: 50
 
 tools:
         tool1:
