@@ -28,8 +28,7 @@ models:
                                   z: 0
                         - action: shift
                           shift_target: align_min
-                          axes:
-                                  y: 0
+                          axes: [10, 20, 0]
                         - action: shift
                           shift_target: center
                           axes:
