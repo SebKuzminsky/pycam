@@ -183,11 +183,11 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # resize window
             self._gtk_handlers.append((self.area, 'configure-event', self._resize_window))
             # catch mouse events
-            self.area.set_events((self._gtk.gdk.MOUSE
-                                  | self._gtk.gdk.POINTER_MOTION_HINT_MASK
-                                  | self._gtk.gdk.BUTTON_PRESS_MASK
-                                  | self._gtk.gdk.BUTTON_RELEASE_MASK
-                                  | self._gtk.gdk.SCROLL_MASK))
+            self.area.set_events((self._gdk.InputSource.MOUSE
+                                  | self._gdk.EventMask.POINTER_MOTION_MASK
+                                  | self._gdk.EventMask.BUTTON_PRESS_MASK
+                                  | self._gdk.EventMask.BUTTON_RELEASE_MASK
+                                  | self._gdk.EventMask.SCROLL_MASK))
             self._gtk_handlers.extend((
                 (self.area, "button-press-event", self.mouse_press_handler),
                 (self.area, "motion-notify-event", self.mouse_handler),
@@ -317,7 +317,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
         def set_color_wrapper(obj):
             def set_gtk_color_by_dict(color):
-                obj.set_color(self._gtk.gdk.Color(int(color["red"] * GTK_COLOR_MAX),
+                obj.set_color(self._gdk.Color(int(color["red"] * GTK_COLOR_MAX),
                                                   int(color["green"] * GTK_COLOR_MAX),
                                                   int(color["blue"] * GTK_COLOR_MAX)))
                 obj.set_alpha(int(color["alpha"] * GTK_COLOR_MAX))
@@ -395,10 +395,10 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             return
         # define arrow keys and "vi"-like navigation keys
         move_keys_dict = {
-            self._gtk.keysyms.Left: (1, 0),
-            self._gtk.keysyms.Down: (0, -1),
-            self._gtk.keysyms.Up: (0, 1),
-            self._gtk.keysyms.Right: (-1, 0),
+            self._gdk.KEY_Left: (1, 0),
+            self._gdk.KEY_Down: (0, -1),
+            self._gdk.KEY_Up: (0, 1),
+            self._gdk.KEY_Right: (-1, 0),
             ord("h"): (1, 0),
             ord("j"): (0, -1),
             ord("k"): (0, 1),
@@ -440,7 +440,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         elif keyval in move_keys_dict.keys():
             self._last_view = None
             move_x, move_y = move_keys_dict[keyval]
-            if get_state() & self._gtk.gdk.SHIFT_MASK:
+            if get_state() & self._gdk.SHIFT_MASK:
                 # shift key pressed -> rotation
                 base = 0
                 factor = 10
@@ -451,7 +451,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 self.camera.shift_view(x_dist=move_x, y_dist=move_y)
             self.paint()
         else:
-            # see dir(gtk.keysyms)
             self.log.debug("Unhandled key pressed: %s (%s)", keyval, get_state())
 
     def check_busy(func):
@@ -636,26 +635,26 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         except AttributeError:
             # this should probably never happen
             return
-        control_pressed = modifier_state & self._gtk.gdk.CONTROL_MASK
-        shift_pressed = modifier_state & self._gtk.gdk.SHIFT_MASK
-        if ((event.direction == self._gtk.gdk.SCROLL_RIGHT)
-                or ((event.direction == self._gtk.gdk.SCROLL_UP) and shift_pressed)):
+        control_pressed = modifier_state & self._gdk.CONTROL_MASK
+        shift_pressed = modifier_state & self._gdk.SHIFT_MASK
+        if ((event.direction == self._gdk.SCROLL_RIGHT)
+                or ((event.direction == self._gdk.SCROLL_UP) and shift_pressed)):
             # horizontal move right
             self.camera.shift_view(x_dist=-1)
-        elif (event.direction == self._gtk.gdk.SCROLL_LEFT) \
-                or ((event.direction == self._gtk.gdk.SCROLL_DOWN) and shift_pressed):
+        elif (event.direction == self._gdk.SCROLL_LEFT) \
+                or ((event.direction == self._gdk.SCROLL_DOWN) and shift_pressed):
             # horizontal move left
             self.camera.shift_view(x_dist=1)
-        elif (event.direction == self._gtk.gdk.SCROLL_UP) and control_pressed:
+        elif (event.direction == self._gdk.SCROLL_UP) and control_pressed:
             # zoom in
             self.camera.zoom_in()
-        elif event.direction == self._gtk.gdk.SCROLL_UP:
+        elif event.direction == self._gdk.SCROLL_UP:
             # vertical move up
             self.camera.shift_view(y_dist=1)
-        elif (event.direction == self._gtk.gdk.SCROLL_DOWN) and control_pressed:
+        elif (event.direction == self._gdk.SCROLL_DOWN) and control_pressed:
             # zoom out
             self.camera.zoom_out()
-        elif event.direction == self._gtk.gdk.SCROLL_DOWN:
+        elif event.direction == self._gdk.SCROLL_DOWN:
             # vertical move down
             self.camera.shift_view(y_dist=-1)
         else:

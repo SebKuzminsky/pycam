@@ -25,7 +25,7 @@ import uuid
 
 # TODO: load these modules only on demand
 from gi.repository import Gtk as gtk
-# from gi.repository import Gdk as gdk
+from gi.repository import Gdk as gdk
 from gi.repository import GObject as gobject
 
 import pycam.Utils.log
@@ -50,6 +50,7 @@ class PluginBase(object):
         self.gui = None
         self.log = _log
         self._gtk = gtk
+        self._gdk = gdk
         self._gobject = gobject
         if self.UI_FILE and self._gtk:
             gtk_build_file = pycam.Utils.locations.get_ui_file_location(self.UI_FILE)

@@ -168,7 +168,7 @@ class GtkConsole(pycam.Plugins.PluginBase):
             # ignore, if any modifier is pressed
             return False
         input_control = self.gui.get_object("CommandInput")
-        if (keyval == self._gtk.keysyms.Up):
+        if (keyval == self._gdk.KEY_Up):
             if self._history_position is None:
                 # store the current (new) line for later
                 self._history_lastline_backup = input_control.get_text()
@@ -179,7 +179,7 @@ class GtkConsole(pycam.Plugins.PluginBase):
             else:
                 # invalid -> no change
                 return True
-        elif (keyval == self._gtk.keysyms.Down):
+        elif (keyval == self._gdk.KEY_Down):
             if self._history_position is None:
                 return True
             self._history_position += 1
