@@ -290,7 +290,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         for parent in pref_box, self.context_menu, toolbar:
             for child in parent.get_children():
                 parent.remove(child)
-        items = self._display_items.values()
+        items = list(self._display_items.values())
         items.sort(key=lambda item: item["weight"])
         for item in items:
             pref_box.pack_start(item["widgets"][0], expand=True, fill=True, padding=0)
@@ -346,7 +346,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         color_table = self.gui.get_object("ColorTable")
         for child in color_table.get_children():
             color_table.remove(child)
-        items = self._color_settings.values()
+        items = list(self._color_settings.values())
         items.sort(key=lambda item: item["weight"])
         for index, item in enumerate(items):
             label = self._gtk.Label("%s:" % item["label"])
@@ -790,7 +790,7 @@ class Camera(object):
     def auto_adjust_distance(self):
         v = self.view
         # adjust the distance to get a view of the whole object
-        low_high = zip(*self._get_low_high_dims())
+        low_high = list(zip(*self._get_low_high_dims()))
         if (None, None) in low_high:
             return
         max_dim = max([high - low for low, high in low_high])
