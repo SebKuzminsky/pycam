@@ -6,6 +6,32 @@ models:
                         type: file
                         location: samples/Box0.stl
                 transformations:
+                        - action: scale
+                          scale_target: factor
+                          axes:
+                                  x: 1.25
+                        - action: scale
+                          scale_target: factor
+                          axes: 0.7
+                        - action: scale
+                          scale_target: size
+                          axes:
+                                  x: 10
+                        - action: shift
+                          shift_target: distance
+                          axes:
+                                  x: -20
+                        - action: shift
+                          shift_target: align_max
+                          axes:
+                                  z: 0
+                        - action: shift
+                          shift_target: align_min
+                          axes: [10, 20, 0]
+                        - action: shift
+                          shift_target: center
+                          axes:
+                                  x: 50
                         - action: rotate
                           center: [10, 10, 0]
                           vector: [0, 0, 1]
