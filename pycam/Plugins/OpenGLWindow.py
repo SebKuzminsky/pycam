@@ -119,9 +119,9 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             def add_widget_to_window(item, name):
                 if len(detail_box.get_children()) > 0:
                     sep = self._gtk.HSeparator()
-                    detail_box.pack_start(sep)
+                    detail_box.pack_start(sep, fill=True, expand=True, padding=0)
                     sep.show()
-                detail_box.pack_start(item)
+                detail_box.pack_start(item, fill=True, expand=True, padding=0)
                 item.show()
 
             self.core.register_ui_section("opengl_window", add_widget_to_window, clear_window)
@@ -193,7 +193,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 (self.area, "motion-notify-event", self.mouse_handler),
                 (self.area, "button-release-event", self.context_menu_handler),
                 (self.area, "scroll-event", self.scroll_handler)))
-            self.gui.get_object("OpenGLBox").pack_end(self.area)
+            self.gui.get_object("OpenGLBox").pack_end(self.area, fill=True, expand=True, padding=0)
             self.camera = Camera(self.core, lambda: (self.area.allocation.width,
                                                      self.area.allocation.height))
             self._event_handlers = (("visual-item-updated", self.update_view),
@@ -263,7 +263,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         action = self._gtk.ToggleAction(name, label, "Show/hide %s" % label, None)
         action.connect("toggled", lambda widget: self.core.emit_event("visual-item-updated"))
         checkbox = self._gtk.CheckButton(label)
-        action.connect_proxy(checkbox)
+        # action.connect_proxy(checkbox)  FIXME
         tool_item = action.create_tool_item()
         menu_item = action.create_menu_item()
         widgets = (checkbox, tool_item, menu_item)
@@ -293,7 +293,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         items = self._display_items.values()
         items.sort(key=lambda item: item["weight"])
         for item in items:
-            pref_box.pack_start(item["widgets"][0], expand=False)
+            pref_box.pack_start(item["widgets"][0], expand=True, fill=True, padding=0)
             toolbar.add(item["widgets"][1])
             self.context_menu.add(item["widgets"][2])
         pref_box.show_all()
@@ -351,10 +351,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         for index, item in enumerate(items):
             label = self._gtk.Label("%s:" % item["label"])
             label.set_alignment(0.0, 0.5)
-            color_table.attach(label, 0, 1, index, index + 1, xoptions=self._gtk.FILL,
-                               yoptions=self._gtk.FILL)
-            color_table.attach(item["widget"], 1, 2, index, index + 1, xoptions=self._gtk.FILL,
-                               yoptions=self._gtk.FILL)
+            color_table.attach(label, 0, 1, index, index + 1)
+            color_table.attach(item["widget"], 1, 2, index, index + 1)
         color_table.show_all()
 
     def toggle_3d_view(self, widget=None, value=None):
@@ -618,7 +616,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 and (abs(event.y - self.mouse["pressed_pos"][1]) < 3):
             # A quick press/release cycle with the right mouse button
             # -> open the context menu.
-            self.context_menu.popup(None, None, None, event.button, int(event.get_time()))
+            self.context_menu.popup(None, None, None, None, event.button, int(event.get_time()))
 
     @check_busy
     @gtkgl_functionwrapper
