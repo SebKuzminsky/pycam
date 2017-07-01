@@ -7,13 +7,9 @@ models:
                         location: samples/Box0.stl
                 transformations:
                         - action: rotate
+                          center: [10, 10, 0]
+                          vector: [0, 0, 1]
                           angle: 90
-                          center:
-                                  x: 10
-                          axis:
-                                  x: 0
-                                  y: 0
-                                  z: 1
                         - action: mirror
                           center:
                                   y: 20

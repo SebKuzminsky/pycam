@@ -408,6 +408,9 @@ class ModelTransformation(BaseDataContainer):
     attribute_converters = {"action": _get_enum_resolver(ModelTransformationAction),
                             "scale_target": _get_enum_resolver(ModelScaleTarget),
                             "shift_target": _get_enum_resolver(ModelShiftTarget),
+                            "center": _axes_values_converter,
+                            "vector": _axes_values_converter,
+                            "angle": float,
                             "axes": _axes_values_converter}
 
     def transform_model(self, model):
@@ -416,6 +419,8 @@ class ModelTransformation(BaseDataContainer):
             self._scale_model(model)
         elif action == ModelTransformationAction.SHIFT:
             self._shift_model(model)
+        elif action == ModelTransformationAction.ROTATE:
+            self._rotate_model(model)
         else:
             raise InvalidKeyError(action, ModelTransformationAction)
 
@@ -477,6 +482,25 @@ class ModelTransformation(BaseDataContainer):
         else:
             assert False
         model.shift(*args)
+
+    def _rotate_model(self, model):
+        self.validate_allowed_attributes({"action", "center", "vector", "angle"},
+                                         "model transformation 'rotate'")
+        try:
+            center = self.get_value("center")
+        except MissingAttributeError:
+            raise MissingAttributeError("Model transformation 'shift' requires 'center' "
+                                        "attribute.")
+        try:
+            vector = self.get_value("vector")
+        except MissingAttributeError:
+            raise MissingAttributeError("Model transformation 'shift' requires 'vector' "
+                                        "attribute.")
+        try:
+            angle = self.get_value("angle")
+        except MissingAttributeError:
+            raise MissingAttributeError("Model transformation 'shift' requires 'angle' attribute.")
+        model.rotate(center, vector, angle)
 
 
 class Model(BaseCollectionItemDataContainer):

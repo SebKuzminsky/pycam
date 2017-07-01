@@ -33,6 +33,10 @@ models:
                           shift_target: center
                           axes:
                                   x: 50
+                        - action: rotate
+                          center: [10, 10, 0]
+                          vector: [0, 0, 1]
+                          angle: 90
 
 tools:
         tool1:
