@@ -20,7 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import pycam.Plugins
-import pycam.Geometry.Matrix
+from pycam.Geometry import Point3D
 
 
 class ModelRotation(pycam.Plugins.PluginBase):
@@ -71,14 +71,12 @@ class ModelRotation(pycam.Plugins.PluginBase):
                                 self.gui.get_object("RotationAngle").get_value())):
             if self.gui.get_object(control).get_active():
                 break
-        matrix = pycam.Geometry.Matrix.get_rotation_matrix_axis_angle(axis_vector, angle,
-                                                                      use_radians=False)
         progress = self.core.get("progress")
         progress.update(text="Rotating model")
         progress.disable_cancel()
         progress.set_multiple(len(models), "Model")
         for model in models:
-            model.model.transform_by_matrix(matrix, callback=progress.update)
+            model.model.rotate(Point3D(0, 0, 0), axis_vector, angle, callback=progress.update)
             progress.update_multiple()
         self.core.emit_event("model-change-after")
         progress.finish()
