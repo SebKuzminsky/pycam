@@ -674,10 +674,11 @@ class Boundary(BaseCollectionItemDataContainer):
                 else:
                     low.append(model_lower - margin_lower.value)
                 if margin_upper.is_relative:
-                    low.append(model_upper - margin_upper.value * dim)
+                    high.append(model_upper - margin_upper.value * dim)
                 else:
-                    low.append(model_upper - margin_upper.value)
+                    high.append(model_upper - margin_upper.value)
         else:
+            # absolute boundary
             low, high = [], []
             for abs_lower, abs_upper in zip(lower, upper):
                 if abs_lower.is_relative:
