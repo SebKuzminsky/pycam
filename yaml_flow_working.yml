@@ -65,13 +65,19 @@ bounds:
                         z: 1
                 reference_models:
                         - model1
+        bounds2:
+                specification: margins
+                lower: [2, 2, 2]
+                upper: [2, 2, 2]
+                reference_models:
+                        - model1
 
 tasks:
         task1:
                 type: milling
                 tool: tool1
                 process: process1
-                bounds: bounds1
+                bounds: bounds2
                 collision_models:
                         - model1
 
