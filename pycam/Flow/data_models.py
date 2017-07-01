@@ -227,13 +227,21 @@ def _limit3d_converter(point):
 
 def _axes_values_converter(data):
     result = []
-    if isinstance(data, dict):
-        data = dict(data)
-        for key in "xyz":
-            result.append(data.pop(key, None))
-        if data:
-            raise InvalidDataError("Superfluous axes key(s) supplied: {} (expected: x / y / z)"
-                                   .format(" / ".join(data.keys())))
+    if isinstance(data, (list, dict)):
+        if isinstance(data, dict):
+            data = dict(data)
+            for key in "xyz":
+                result.append(data.pop(key, None))
+            if data:
+                raise InvalidDataError("Superfluous axes key(s) supplied: {} (expected: x / y / z)"
+                                       .format(" / ".join(data.keys())))
+        else:
+            # a list
+            for value in data:
+                result.append(value)
+            if len(result) != 3:
+                raise InvalidDataError("Invalid number of axis components supplied: {:d} "
+                                       "(expected: 3)".format(len(result)))
         for index, value in enumerate(result):
             if value is not None:
                 try:
