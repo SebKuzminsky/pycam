@@ -660,7 +660,8 @@ class Boundary(BaseCollectionItemDataContainer):
                 # use all visible models -> for live visualization
                 # TODO: filter for visible models
                 models = self._get_full_collection("model")
-            model_box = pycam.Geometry.Model.get_combined_bounds([model.model for model in models])
+            model_box = pycam.Geometry.Model.get_combined_bounds([model.get_model()
+                                                                  for model in models])
             if model_box is None:
                 # zero-sized models -> no action
                 return None
