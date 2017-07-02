@@ -37,6 +37,7 @@ from pycam.Toolpath import ToolpathPathMode
 import pycam.Toolpath.Filters as tp_filters
 import pycam.Toolpath.MotionGrid as MotionGrid
 from pycam.Importers import detect_file_type
+from pycam.Utils import get_type_name
 import pycam.Utils.log
 
 _log = pycam.Utils.log.get_logger()
@@ -187,7 +188,8 @@ def _bool_converter(value):
     elif isinstance(value, bool):
         return value
     else:
-        raise InvalidDataError("Invalid boolean value type ({}): {}".format(type(value), value))
+        raise InvalidDataError("Invalid boolean value type ({}): {}"
+                               .format(get_type_name(value), value))
 
 
 LimitSingle = collections.namedtuple("LimitSingle", ("value", "is_relative"))
@@ -256,12 +258,13 @@ def _axes_values_converter(data, allow_none=False):
                     result[index] = float(value)
                 except ValueError:
                     raise InvalidDataError("Axis value is not a float: {} ({})"
-                                           .format(value, type(value)))
+                                           .format(value, get_type_name(value)))
     else:
         try:
             factor = float(data)
         except ValueError:
-            raise InvalidDataError("Axis value is not a float: {} ({})".format(data, type(data)))
+            raise InvalidDataError("Axis value is not a float: {} ({})"
+                                   .format(data, get_type_name(data)))
         result = [factor] * 3
     return AxesValues(*result)
 
@@ -349,7 +352,7 @@ class BaseDataContainer(object):
                 else:
                     # generate a suitable context based on the object itself
                     raise MissingAttributeError("{} -> missing attribute '{}'"
-                                                .format(type(self), key))
+                                                .format(get_type_name(self), key))
         if key in self.attribute_converters:
             return self.attribute_converters[key](raw)
         else:
@@ -377,7 +380,9 @@ class BaseCollectionItemDataContainer(BaseDataContainer):
 
     def __init__(self, data):
         super(BaseCollectionItemDataContainer, self).__init__(data)
-        assert self.collection_name is not None
+        assert self.collection_name is not None, (
+            "Missing unique attribute ({}) of '{}' class"
+            .format(self.unique_attribute, get_type_name(self)))
         item_id = data[self.unique_attribute]
         self.__get_collection()[item_id] = self
 
@@ -894,12 +899,12 @@ class Formatter(BaseDataContainer):
         comment = self.get_value("comment")
         dialect = self.get_value("dialect")
         # we expect a tuple of toolpaths as input
-        if not isinstance(source, tuple):
+        if not isinstance(source, (list, tuple)):
             raise InvalidDataError("Invalid source data type: {} (expected: list of toolpaths)"
-                                   .format(type(source)))
+                                   .format(get_type_name(source)))
         if not all([isinstance(item, Toolpath) for item in source]):
             raise InvalidDataError("Invalid source data type: {} (expected: list of toolpaths)"
-                                   .format(" / ".join([str(type(item)) for item in source])))
+                                   .format(" / ".join([get_type_name(item) for item in source])))
         if dialect == GCodeDialect.LINUXCNC:
             generator = pycam.Exporters.GCode.LinuxCNC.LinuxCNC(target, comment=comment)
         else:

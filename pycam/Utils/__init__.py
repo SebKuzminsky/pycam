@@ -64,6 +64,12 @@ def get_platform():
         return OSPlatform.UNKNOWN
 
 
+def get_type_name(instance):
+    # nicer (but only available for python2 new-style classes and python3) would be:
+    #    type(instance).__name__
+    return instance.__class__.__name__
+
+
 def get_case_insensitive_file_pattern(pattern):
     """ Convert something like "*.svg" into "*.[sS][vV][gG]" - as it is
         required for GTK's FileFilter.
