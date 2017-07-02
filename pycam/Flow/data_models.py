@@ -421,24 +421,24 @@ class ModelTransformation(BaseDataContainer):
                             "angle": float,
                             "axes": functools.partial(_axes_values_converter, allow_none=True)}
 
-    def transform_model(self, model):
+    def get_transformed_model(self, model):
         action = self.get_value("action")
         if action == ModelTransformationAction.SCALE:
-            self._scale_model(model)
+            return self._get_scaled_model(model)
         elif action == ModelTransformationAction.SHIFT:
-            self._shift_model(model)
+            return self._get_shifted_model(model)
         elif action == ModelTransformationAction.ROTATE:
-            self._rotate_model(model)
+            return self._get_rotated_model(model)
         elif action == ModelTransformationAction.MIRROR:
             # Sadly mirroring against an arbitrary plane (instead of simple XY, XZ or YZ planes) is
             # rather complicated.
             raise NotImplemented("The 'mirror' transformation is not implemented, yet.")
         elif action == ModelTransformationAction.PROJECTION:
-            self._project_model(model)
+            return self._get_projected_model(model)
         else:
             raise InvalidKeyError(action, ModelTransformationAction)
 
-    def _scale_model(self, model):
+    def _get_scaled_model(self, model):
         self.validate_allowed_attributes({"action", "scale_target", "axes"},
                                          "model transformation 'scale'")
         try:
@@ -466,9 +466,11 @@ class ModelTransformation(BaseDataContainer):
                     kwargs[key] = target_size / current_size
         else:
             assert False
-        model.scale(**kwargs)
+        new_model = model.copy()
+        new_model.scale(**kwargs)
+        return new_model
 
-    def _shift_model(self, model):
+    def _get_shifted_model(self, model):
         self.validate_allowed_attributes({"action", "shift_target", "axes"},
                                          "model transformation 'shift'")
         try:
@@ -495,9 +497,11 @@ class ModelTransformation(BaseDataContainer):
                 args.append(0.0 if value is None else (value - current_position))
         else:
             assert False
-        model.shift(*args)
+        new_model = model.copy()
+        new_model.shift(*args)
+        return new_model
 
-    def _rotate_model(self, model):
+    def _get_rotated_model(self, model):
         self.validate_allowed_attributes({"action", "center", "vector", "angle"},
                                          "model transformation 'rotate'")
         try:
@@ -514,9 +518,11 @@ class ModelTransformation(BaseDataContainer):
             angle = self.get_value("angle")
         except MissingAttributeError:
             raise MissingAttributeError("Model transformation 'shift' requires 'angle' attribute.")
-        model.rotate(center, vector, angle)
+        new_model = model.copy()
+        new_model.rotate(center, vector, angle)
+        return new_model
 
-    def _project_model(self, model):
+    def _get_projected_model(self, model):
         self.validate_allowed_attributes({"action", "center", "vector"},
                                          "model transformation 'projection'")
         try:
@@ -531,7 +537,7 @@ class ModelTransformation(BaseDataContainer):
                                         "attribute.")
         plane = Plane(center, vector)
         # TODO: this is not an in-place operation (since the model type changes)
-        model.get_waterline_contour(plane)
+        return model.get_waterline_contour(plane)
 
 
 class Model(BaseCollectionItemDataContainer):
@@ -543,7 +549,7 @@ class Model(BaseCollectionItemDataContainer):
     def get_model(self):
         model = self.get_value("source").get("model")
         for transformation in self.get_value("transformations"):
-            transformation.transform_model(model)
+            model = transformation.get_transformed_model(model)
         return model
 
 

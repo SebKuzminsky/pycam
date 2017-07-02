@@ -37,6 +37,11 @@ models:
                           center: [10, 10, 0]
                           vector: [0, 0, 1]
                           angle: 90
+        model2:
+                source:
+                        type: model
+                        location: model1
+                transformations:
                         - action: projection
                           center: [0, 0, 2]
                           vector:
