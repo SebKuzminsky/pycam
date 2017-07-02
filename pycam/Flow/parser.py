@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import yaml
 
 import pycam.Exporters.GCode.LinuxCNC
@@ -37,4 +39,8 @@ if __name__ == "__main__":
     import sys
     filename = sys.argv[1]
     with open(filename, "r") as config_file:
-        parse_yaml(config_file)
+        try:
+            parse_yaml(config_file)
+        except pycam.Flow.data_models.FlowDescriptionBaseException as exc:
+            print("Flow description parse failure: {}".format(exc), file=sys.stderr)
+            sys.exit(1)

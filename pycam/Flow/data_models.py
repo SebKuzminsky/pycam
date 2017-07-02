@@ -298,7 +298,12 @@ def _set_parser_context(description):
         def inner_function(self, *args, **kwargs):
             original_description = getattr(self, "_current_parser_context", None)
             self._current_parser_context = description
-            result = func(self, *args, **kwargs)
+            try:
+                result = func(self, *args, **kwargs)
+            except FlowDescriptionBaseException as exc:
+                # add a prefix to exceptions
+                exc.message = "{} -> {}".format(self._current_parser_context, exc)
+                raise exc
             if original_description is None:
                 delattr(self, "_current_parser_context")
             else:
@@ -329,9 +334,6 @@ class BaseDataContainer(object):
     def parse_from_dict(cls, data):
         return cls(data)
 
-    def _get_parser_context_description(self):
-        return getattr(self, "_current_parser_context", None)
-
     def get_value(self, key, default=None):
         try:
             raw = self._data[key]
@@ -341,13 +343,13 @@ class BaseDataContainer(object):
             elif key in self.attribute_defaults:
                 raw = self.attribute_defaults[key]
             else:
-                description = self._get_parser_context_description()
-                if description is None:
-                    raise MissingAttributeError("The attribute '{}' is missing in '{}'"
-                                                .format(key, type(self)))
+                if hasattr(self, "_current_parser_context"):
+                    # the context will be added automatically
+                    raise MissingAttributeError("missing attribute '{}'".format(key))
                 else:
-                    raise MissingAttributeError("{}: missing attribute '{}'"
-                                                .format(description, key))
+                    # generate a suitable context based on the object itself
+                    raise MissingAttributeError("{} -> missing attribute '{}'"
+                                                .format(type(self), key))
         if key in self.attribute_converters:
             return self.attribute_converters[key](raw)
         else:
@@ -362,14 +364,9 @@ class BaseDataContainer(object):
     def validate_allowed_attributes(self, allowed_attributes):
         unexpected_attributes = set(self._data.keys()) - allowed_attributes
         if unexpected_attributes:
-            description = self._get_parser_context_description()
             unexpected_attributes_string = " / ".join(unexpected_attributes)
-            if description is None:
-                raise UnexpectedAttributeError("Unexpected attributes were given: {}"
-                                               .format(unexpected_attributes_string))
-            else:
-                raise UnexpectedAttributeError("{}: unexpected attributes were given: {}"
-                                               .format(description, unexpected_attributes_string))
+            raise UnexpectedAttributeError("unexpected attributes were given: {}"
+                                           .format(unexpected_attributes_string))
 
 
 class BaseCollectionItemDataContainer(BaseDataContainer):
@@ -573,6 +570,7 @@ class Tool(BaseCollectionItemDataContainer):
                           "spindle_speed": 1000,
                           "spindle_delay": 0}
 
+    @_set_parser_context("Tool")
     def get_tool_geometry(self):
         height = self.get_value("height")
         shape = self.get_value("shape")
@@ -587,6 +585,7 @@ class Tool(BaseCollectionItemDataContainer):
             raise InvalidKeyError(shape, ToolShape)
 
     @property
+    @_set_parser_context("Tool radius")
     def radius(self):
         """ offer a uniform interface for retrieving the radius value from "radius" or "diameter"
 
@@ -632,6 +631,7 @@ class Process(BaseCollectionItemDataContainer):
                           "rounded_corners": True,
                           "radius_compensation": False}
 
+    @_set_parser_context("Process")
     def get_path_generator(self):
         strategy = _get_enum_value(ProcessStrategy, self.get_value("strategy"))
         if strategy == ProcessStrategy.SLICE:
@@ -645,6 +645,7 @@ class Process(BaseCollectionItemDataContainer):
         else:
             raise InvalidKeyError(strategy, ProcessStrategy)
 
+    @_set_parser_context("Process")
     def get_motion_grid(self, tool_radius, box):
         strategy = self.get_value("strategy")
         overlap = self.get_value("overlap")
@@ -715,6 +716,7 @@ class Boundary(BaseCollectionItemDataContainer):
                             "tool_boundary": _get_enum_resolver(ToolBoundaryMode)}
     attribute_defaults = {"tool_boundary": ToolBoundaryMode.ALONG}
 
+    @_set_parser_context("Boundary")
     def get_absolute_limits(self, tool_radius=None, models=None):
         lower = self.get_value("lower")
         upper = self.get_value("upper")
@@ -781,6 +783,7 @@ class Task(BaseCollectionItemDataContainer):
                             "type": _get_enum_resolver(TaskType),
                             "collision_models": _get_collection_resolver("model", many=True)}
 
+    @_set_parser_context("Task")
     def generate_toolpath(self, callback=None):
         process = self.get_value("process")
         bounds = self.get_value("bounds")
@@ -818,6 +821,7 @@ class Toolpath(BaseCollectionItemDataContainer):
                             "transformations": _get_list_resolver(ToolpathTransformation)}
     attribute_defaults = {"transformations": []}
 
+    @_set_parser_context("Toolpath")
     def get_toolpath(self):
         task = self.get_value("source").get("toolpath")
         toolpath = task.generate_toolpath()
@@ -833,6 +837,7 @@ class ExportSettings(BaseCollectionItemDataContainer):
     def get_settings_by_type(self, export_type):
         return self.get_value(export_type, {})
 
+    @_set_parser_context("Export settings")
     def get_toolpath_filters(self):
         result = []
         for text_name, parameters in self.get_settings_by_type("gcode").items():
@@ -859,6 +864,7 @@ class Target(BaseDataContainer):
 
     attribute_converters = {"type": _get_enum_resolver(TargetType)}
 
+    @_set_parser_context("Export target")
     def open(self):
         target_type = self.get_value("type")
         if target_type == TargetType.FILE:
@@ -879,31 +885,34 @@ class Formatter(BaseDataContainer):
     def write_data(self, source, target):
         format_type = self.get_value("type")
         if format_type == FormatType.GCODE:
-            comment = self.get_value("comment")
-            dialect = self.get_value("dialect")
-            # we expect a tuple of toolpaths as input
-            if not isinstance(source, tuple):
-                raise InvalidDataError("Invalid source data type for format type '{}': {} "
-                                       "(expected: list of toolpaths)"
-                                       .format(format_type, type(source)))
-            if not all([isinstance(item, Toolpath) for item in source]):
-                raise InvalidDataError("Invalid source data type for format type '{}': {} "
-                                       "(expected: list of toolpaths)"
-                                       .format(format_type, [type(item) for item in source]))
-            if dialect == GCodeDialect.LINUXCNC:
-                generator = pycam.Exporters.GCode.LinuxCNC.LinuxCNC(target, comment=comment)
-            else:
-                raise InvalidKeyError(dialect, GCodeDialect)
-            export_settings = self.get_value("export_settings")
-            generator.add_filters(export_settings.get_toolpath_filters())
-            for toolpath in source:
-                calculated = toolpath.get_toolpath()
-                # TODO: implement toolpath.get_meta_data()
-                generator.add_moves(calculated.path, calculated.filters)
-            generator.finish()
-            target.close()
+            return self._write_gcode(source, target)
         else:
             raise InvalidKeyError(format_type, FormatType)
+
+    @_set_parser_context("Export formatter 'GCode'")
+    def _write_gcode(self, source, target):
+        comment = self.get_value("comment")
+        dialect = self.get_value("dialect")
+        # we expect a tuple of toolpaths as input
+        if not isinstance(source, tuple):
+            raise InvalidDataError("Invalid source data type: {} (expected: list of toolpaths)"
+                                   .format(type(source)))
+        if not all([isinstance(item, Toolpath) for item in source]):
+            raise InvalidDataError("Invalid source data type: {} (expected: list of toolpaths)"
+                                   .format(" / ".join([str(type(item)) for item in source])))
+        if dialect == GCodeDialect.LINUXCNC:
+            generator = pycam.Exporters.GCode.LinuxCNC.LinuxCNC(target, comment=comment)
+        else:
+            raise InvalidKeyError(dialect, GCodeDialect)
+        export_settings = self.get_value("export_settings")
+        generator.add_filters(export_settings.get_toolpath_filters())
+        for toolpath in source:
+            calculated = toolpath.get_toolpath()
+            # TODO: implement toolpath.get_meta_data()
+            generator.add_moves(calculated.path, calculated.filters)
+        generator.finish()
+        target.close()
+        return True
 
 
 class Export(BaseCollectionItemDataContainer):
