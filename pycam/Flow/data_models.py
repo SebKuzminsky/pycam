@@ -129,11 +129,30 @@ class ModelScaleTarget(Enum):
     SIZE = "size"
 
 
-class ModelShiftTarget(Enum):
+class PositionShiftTarget(Enum):
     DISTANCE = "distance"
     ALIGN_MIN = "align_min"
     ALIGN_MAX = "align_max"
     CENTER = "center"
+
+    @classmethod
+    def _get_shift_offset(cls, shift_target, shift_axes, obj):
+        offset = []
+        if shift_target == cls.DISTANCE:
+            for value in shift_axes:
+                offset.append(0.0 if value is None else value)
+        elif shift_target == cls.ALIGN_MIN:
+            for value, current_position in zip(shift_axes, (obj.minx, obj.miny, obj.minz)):
+                offset.append(0.0 if value is None else (value - current_position))
+        elif shift_target == cls.ALIGN_MAX:
+            for value, current_position in zip(shift_axes, (obj.maxx, obj.maxy, obj.maxz)):
+                offset.append(0.0 if value is None else (value - current_position))
+        elif shift_target == cls.CENTER:
+            for value, current_position in zip(shift_axes, obj.get_center()):
+                offset.append(0.0 if value is None else (value - current_position))
+        else:
+            assert False
+        return offset
 
 
 class TargetType(Enum):
@@ -462,7 +481,7 @@ class ModelTransformation(BaseDataContainer):
 
     attribute_converters = {"action": _get_enum_resolver(ModelTransformationAction),
                             "scale_target": _get_enum_resolver(ModelScaleTarget),
-                            "shift_target": _get_enum_resolver(ModelShiftTarget),
+                            "shift_target": _get_enum_resolver(PositionShiftTarget),
                             "center": _axes_values_converter,
                             "vector": _axes_values_converter,
                             "angle": float,
@@ -515,23 +534,9 @@ class ModelTransformation(BaseDataContainer):
     def _get_shifted_model(self, model):
         target = self.get_value("shift_target")
         axes = self.get_value("axes")
-        args = []
-        if target == ModelShiftTarget.DISTANCE:
-            for value in axes:
-                args.append(0.0 if value is None else value)
-        elif target == ModelShiftTarget.ALIGN_MIN:
-            for value, current_position in zip(axes, (model.minx, model.miny, model.minz)):
-                args.append(0.0 if value is None else (value - current_position))
-        elif target == ModelShiftTarget.ALIGN_MAX:
-            for value, current_position in zip(axes, (model.maxx, model.maxy, model.maxz)):
-                args.append(0.0 if value is None else (value - current_position))
-        elif target == ModelShiftTarget.CENTER:
-            for value, current_position in zip(axes, model.get_center()):
-                args.append(0.0 if value is None else (value - current_position))
-        else:
-            assert False
+        offset = target._get_shift_offset(target, axes, model)
         new_model = model.copy()
-        new_model.shift(*args)
+        new_model.shift(*offset)
         return new_model
 
     @_set_parser_context("Model transformation 'rotate'")
