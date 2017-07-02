@@ -292,6 +292,31 @@ def _get_collection_resolver(collection_name, many=False):
     return functools.partial(_get_from_collection, collection_name, many=many)
 
 
+def _set_parser_context(description):
+    """ store a string describing the current parser context (useful for error messages) """
+    def wrap(func):
+        def inner_function(self, *args, **kwargs):
+            original_description = getattr(self, "_current_parser_context", None)
+            self._current_parser_context = description
+            result = func(self, *args, **kwargs)
+            if original_description is None:
+                delattr(self, "_current_parser_context")
+            else:
+                self._current_parser_context = original_description
+            return result
+        return inner_function
+    return wrap
+
+
+def _set_allowed_attributes(attr_set):
+    def wrap(func):
+        def inner_function(self, *args, **kwargs):
+            self.validate_allowed_attributes(attr_set)
+            return func(self, *args, **kwargs)
+        return inner_function
+    return wrap
+
+
 class BaseDataContainer(object):
 
     attribute_converters = {}
@@ -304,6 +329,9 @@ class BaseDataContainer(object):
     def parse_from_dict(cls, data):
         return cls(data)
 
+    def _get_parser_context_description(self):
+        return getattr(self, "_current_parser_context", None)
+
     def get_value(self, key, default=None):
         try:
             raw = self._data[key]
@@ -313,8 +341,13 @@ class BaseDataContainer(object):
             elif key in self.attribute_defaults:
                 raw = self.attribute_defaults[key]
             else:
-                raise MissingAttributeError("The attribute '{}' is missing in '{}'"
-                                            .format(key, type(self)))
+                description = self._get_parser_context_description()
+                if description is None:
+                    raise MissingAttributeError("The attribute '{}' is missing in '{}'"
+                                                .format(key, type(self)))
+                else:
+                    raise MissingAttributeError("{}: missing attribute '{}'"
+                                                .format(description, key))
         if key in self.attribute_converters:
             return self.attribute_converters[key](raw)
         else:
@@ -326,11 +359,17 @@ class BaseDataContainer(object):
     def get_dict(self):
         return copy.deepcopy(self._data)
 
-    def validate_allowed_attributes(self, allowed_attributes, description):
+    def validate_allowed_attributes(self, allowed_attributes):
         unexpected_attributes = set(self._data.keys()) - allowed_attributes
         if unexpected_attributes:
-            raise UnexpectedAttributeError("Unexpected attributes were given for {}: {}"
-                                           .format(description, " / ".join(unexpected_attributes)))
+            description = self._get_parser_context_description()
+            unexpected_attributes_string = " / ".join(unexpected_attributes)
+            if description is None:
+                raise UnexpectedAttributeError("Unexpected attributes were given: {}"
+                                               .format(unexpected_attributes_string))
+            else:
+                raise UnexpectedAttributeError("{}: unexpected attributes were given: {}"
+                                               .format(description, unexpected_attributes_string))
 
 
 class BaseCollectionItemDataContainer(BaseDataContainer):
@@ -371,44 +410,45 @@ class Source(BaseDataContainer):
     def get(self, target_collection):
         source_type = self.get_value("type")
         if source_type == SourceType.COPY:
-            try:
-                source_name = self.get_value("original")
-            except KeyError:
-                raise MissingAttributeError("Source for '{}' copy requires an 'original' "
-                                            "attribute: {}".format(target_collection,
-                                                                   self.get_dict()))
-            return _get_from_collection(target_collection, source_name).get_model()
+            return self._get_source_copy()
         elif source_type in (SourceType.FILE, SourceType.URL):
-            try:
-                location = self.get_value("location")
-            except KeyError:
-                raise MissingAttributeError("Source for '{}' requires a 'location' attribute: {}"
-                                            .format(target_collection, self.get_dict()))
-            if source_type == SourceType.FILE:
-                location = "file://" + os.path.abspath(location)
-            detected_filetype = detect_file_type(location)
-            if detected_filetype:
-                return detected_filetype.importer(detected_filetype.uri)
-            else:
-                raise InvalidDataError("Failed to load model from '{}'".format(location))
+            return self._get_source_location(source_type)
         elif source_type == SourceType.TASK:
-            try:
-                task_name = self.get_value("task")
-            except KeyError:
-                raise MissingAttributeError("Sourcing a task for '{}' requires a 'task' "
-                                            "attribute: {}".format(target_collection,
-                                                                   self.get_dict()))
-            return _get_from_collection("task", task_name)
+            return self._get_source_task()
         elif source_type == SourceType.TOOLPATH:
-            try:
-                toolpath_names = self.get_value("toolpaths")
-            except KeyError:
-                raise MissingAttributeError("Sourcing a toolpath for '{}' requires a 'toolpaths' "
-                                            "attribute: {}"
-                                            .format(target_collection, self.get_dict()))
-            return _get_from_collection("toolpath", toolpath_names, many=True)
+            return self._get_source_toolpath()
         else:
             raise InvalidKeyError(source_type, SourceType)
+
+    @_set_parser_context("Source 'copy'")
+    @_set_allowed_attributes({"type", "original"})
+    def _get_source_copy(self):
+        source_name = self.get_value("original")
+        return _get_from_collection(target_collection, source_name).get_model()
+
+    @_set_parser_context("Source 'file/url'")
+    @_set_allowed_attributes({"type", "location"})
+    def _get_source_location(self, source_type):
+        location = self.get_value("location")
+        if source_type == SourceType.FILE:
+            location = "file://" + os.path.abspath(location)
+        detected_filetype = detect_file_type(location)
+        if detected_filetype:
+            return detected_filetype.importer(detected_filetype.uri)
+        else:
+            raise InvalidDataError("Failed to load model from '{}'".format(location))
+
+    @_set_parser_context("Source 'task'")
+    @_set_allowed_attributes({"type", "task"})
+    def _get_source_task(self):
+        task_name = self.get_value("task")
+        return _get_from_collection("task", task_name)
+
+    @_set_parser_context("Source 'toolpath'")
+    @_set_allowed_attributes({"type", "toolpaths"})
+    def _get_source_toolpath(self):
+        toolpath_names = self.get_value("toolpaths")
+        return _get_from_collection("toolpath", toolpath_names, many=True)
 
 
 class ModelTransformation(BaseDataContainer):
@@ -438,18 +478,11 @@ class ModelTransformation(BaseDataContainer):
         else:
             raise InvalidKeyError(action, ModelTransformationAction)
 
+    @_set_parser_context("Model transformation 'scale'")
+    @_set_allowed_attributes({"action", "scale_target", "axes"})
     def _get_scaled_model(self, model):
-        self.validate_allowed_attributes({"action", "scale_target", "axes"},
-                                         "model transformation 'scale'")
-        try:
-            target = self.get_value("scale_target")
-        except MissingAttributeError:
-            raise MissingAttributeError("Model transformation 'scale' requires 'scale_target' "
-                                        "attribute.")
-        try:
-            axes = self.get_value("axes")
-        except MissingAttributeError:
-            raise MissingAttributeError("Model transformation 'scale' requires 'axes' attribute.")
+        target = self.get_value("scale_target")
+        axes = self.get_value("axes")
         kwargs = {}
         if target == ModelScaleTarget.FACTOR:
             for key, value in zip(("scale_x", "scale_y", "scale_z"), axes):
@@ -470,18 +503,11 @@ class ModelTransformation(BaseDataContainer):
         new_model.scale(**kwargs)
         return new_model
 
+    @_set_parser_context("Model transformation 'shift'")
+    @_set_allowed_attributes({"action", "shift_target", "axes"})
     def _get_shifted_model(self, model):
-        self.validate_allowed_attributes({"action", "shift_target", "axes"},
-                                         "model transformation 'shift'")
-        try:
-            target = self.get_value("shift_target")
-        except MissingAttributeError:
-            raise MissingAttributeError("Model transformation 'shift' requires 'shift_target' "
-                                        "attribute.")
-        try:
-            axes = self.get_value("axes")
-        except MissingAttributeError:
-            raise MissingAttributeError("Model transformation 'shift' requires 'axes' attribute.")
+        target = self.get_value("shift_target")
+        axes = self.get_value("axes")
         args = []
         if target == ModelShiftTarget.DISTANCE:
             for value in axes:
@@ -501,40 +527,23 @@ class ModelTransformation(BaseDataContainer):
         new_model.shift(*args)
         return new_model
 
+    @_set_parser_context("Model transformation 'rotate'")
+    @_set_allowed_attributes({"action", "center", "vector", "angle"})
     def _get_rotated_model(self, model):
-        self.validate_allowed_attributes({"action", "center", "vector", "angle"},
-                                         "model transformation 'rotate'")
-        try:
-            center = self.get_value("center")
-        except MissingAttributeError:
-            raise MissingAttributeError("Model transformation 'shift' requires 'center' "
-                                        "attribute.")
-        try:
-            vector = self.get_value("vector")
-        except MissingAttributeError:
-            raise MissingAttributeError("Model transformation 'shift' requires 'vector' "
-                                        "attribute.")
-        try:
-            angle = self.get_value("angle")
-        except MissingAttributeError:
-            raise MissingAttributeError("Model transformation 'shift' requires 'angle' attribute.")
+        self.validate_allowed_attributes({"action", "center", "vector", "angle"})
+        center = self.get_value("center")
+        vector = self.get_value("vector")
+        angle = self.get_value("angle")
         new_model = model.copy()
         new_model.rotate(center, vector, angle)
         return new_model
 
+    @_set_parser_context("Model transformation 'projection'")
+    @_set_allowed_attributes({"action", "center", "vector"})
     def _get_projected_model(self, model):
-        self.validate_allowed_attributes({"action", "center", "vector"},
-                                         "model transformation 'projection'")
-        try:
-            center = self.get_value("center")
-        except MissingAttributeError:
-            raise MissingAttributeError("Model transformation 'project' requires 'center' "
-                                        "attribute.")
-        try:
-            vector = self.get_value("vector")
-        except MissingAttributeError:
-            raise MissingAttributeError("Model transformation 'project' requires 'vector' "
-                                        "attribute.")
+        self.validate_allowed_attributes({"action", "center", "vector"})
+        center = self.get_value("center")
+        vector = self.get_value("vector")
         plane = Plane(center, vector)
         # TODO: this is not an in-place operation (since the model type changes)
         return model.get_waterline_contour(plane)
@@ -545,6 +554,7 @@ class Model(BaseCollectionItemDataContainer):
     collection_name = "model"
     attribute_converters = {"source": Source,
                             "transformations": _get_list_resolver(ModelTransformation)}
+    attribute_defaults = {"transformations": []}
 
     def get_model(self):
         model = self.get_value("source").get("model")
@@ -804,11 +814,16 @@ class Task(BaseCollectionItemDataContainer):
 class Toolpath(BaseCollectionItemDataContainer):
 
     collection_name = "toolpath"
-    attribute_converters = {"source": Source}
+    attribute_converters = {"source": Source,
+                            "transformations": _get_list_resolver(ToolpathTransformation)}
+    attribute_defaults = {"transformations": []}
 
-    def generate_toolpath(self):
+    def get_toolpath(self):
         task = self.get_value("source").get("toolpath")
-        return task.generate_toolpath()
+        toolpath = task.generate_toolpath()
+        for transformation in self.get_value("transformations"):
+            toolpath = transformation.get_transformed_toolpath(toolpath)
+        return toolpath
 
 
 class ExportSettings(BaseCollectionItemDataContainer):
@@ -882,7 +897,7 @@ class Formatter(BaseDataContainer):
             export_settings = self.get_value("export_settings")
             generator.add_filters(export_settings.get_toolpath_filters())
             for toolpath in source:
-                calculated = toolpath.generate_toolpath()
+                calculated = toolpath.get_toolpath()
                 # TODO: implement toolpath.get_meta_data()
                 generator.add_moves(calculated.path, calculated.filters)
             generator.finish()
