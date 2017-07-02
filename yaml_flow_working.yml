@@ -37,6 +37,12 @@ models:
                           center: [10, 10, 0]
                           vector: [0, 0, 1]
                           angle: 90
+                        - action: projection
+                          center: [0, 0, 2]
+                          vector:
+                                  x: 0
+                                  y: 0
+                                  z: 1
 
 tools:
         tool1:

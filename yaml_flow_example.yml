@@ -36,20 +36,20 @@ models:
                           center: [10, 10, 0]
                           vector: [0, 0, 1]
                           angle: 90
-                        - action: mirror
-                          center:
-                                  y: 20
-                          plane:
-                                  x: 1
-                                  y: 0
-                                  z: 0
                         - action: projection
                           center:
                                   z: 0
-                          plane:
+                          vector:
                                   x: 0
                                   y: 0
                                   z: 1
+                        - action: mirror
+                          center:
+                                  y: 20
+                          vector:
+                                  x: 1
+                                  y: 0
+                                  z: 0
         model2:
                 source:
                         type: copy

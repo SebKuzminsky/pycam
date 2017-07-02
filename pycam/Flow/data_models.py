@@ -28,6 +28,7 @@ from pycam.Cutters.CylindricalCutter import CylindricalCutter
 from pycam.Cutters.SphericalCutter import SphericalCutter
 from pycam.Cutters.ToroidalCutter import ToroidalCutter
 from pycam.Geometry import Box3D, Point3D
+from pycam.Geometry.Plane import Plane
 import pycam.PathGenerators.DropCutter
 import pycam.PathGenerators.EngraveCutter
 import pycam.PathGenerators.PushCutter
@@ -428,6 +429,12 @@ class ModelTransformation(BaseDataContainer):
             self._shift_model(model)
         elif action == ModelTransformationAction.ROTATE:
             self._rotate_model(model)
+        elif action == ModelTransformationAction.MIRROR:
+            # Sadly mirroring against an arbitrary plane (instead of simple XY, XZ or YZ planes) is
+            # rather complicated.
+            raise NotImplemented("The 'mirror' transformation is not implemented, yet.")
+        elif action == ModelTransformationAction.PROJECTION:
+            self._project_model(model)
         else:
             raise InvalidKeyError(action, ModelTransformationAction)
 
@@ -508,6 +515,23 @@ class ModelTransformation(BaseDataContainer):
         except MissingAttributeError:
             raise MissingAttributeError("Model transformation 'shift' requires 'angle' attribute.")
         model.rotate(center, vector, angle)
+
+    def _project_model(self, model):
+        self.validate_allowed_attributes({"action", "center", "vector"},
+                                         "model transformation 'projection'")
+        try:
+            center = self.get_value("center")
+        except MissingAttributeError:
+            raise MissingAttributeError("Model transformation 'project' requires 'center' "
+                                        "attribute.")
+        try:
+            vector = self.get_value("vector")
+        except MissingAttributeError:
+            raise MissingAttributeError("Model transformation 'project' requires 'vector' "
+                                        "attribute.")
+        plane = Plane(center, vector)
+        # TODO: this is not an in-place operation (since the model type changes)
+        model.get_waterline_contour(plane)
 
 
 class Model(BaseCollectionItemDataContainer):
