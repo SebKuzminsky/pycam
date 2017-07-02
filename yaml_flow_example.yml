@@ -159,23 +159,16 @@ toolpaths:
 export_settings:
         tp_settings1:
                 gcode:
-                        - name: safety_height
-                          parameters: 25
-                          enabled: true
-                        - name: plunge_feedrate
-                          parameters: 20%
-                          enabled: true
-                        - name: step_width
-                          parameters:
-                                  x: 0.1
-                                  y: 0.1
-                                  z: 0.1
-                          enabled: true
-                        - name: corner_style
-                          parameters:
-                                  mode: optimize_tolerance
-                                  naive_tolerance: 0.1
-                                  motion_tolerance: 0.05
+                        safety_height: 25
+                        plunge_feedrate: 50
+                        step_width:
+                                x: 0.1
+                                y: 0.1
+                                z: 0.1
+                        corner_style:
+                                mode: optimize_tolerance
+                                naive_tolerance: 0.1
+                                motion_tolerance: 0.05
 
 exports:
         export1:
