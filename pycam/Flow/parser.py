@@ -13,7 +13,15 @@ _log = pycam.Utils.log.get_logger()
 
 
 def parse_yaml(source):
+    """ read processing data from a file-like source """
     parsed = yaml.safe_load(source)
+    if parsed is None:
+        try:
+            fname = source.name
+        except AttributeError:
+            fname = str(source)
+        _log.warning("Ignoring empty parsed yaml source: %s", fname)
+        return
     for collection, parser_func in (("tools", pycam.Flow.data_models.Tool),
                                     ("processes", pycam.Flow.data_models.Process),
                                     ("bounds", pycam.Flow.data_models.Boundary),
@@ -28,16 +36,3 @@ def parse_yaml(source):
             obj = parser_func(data)
             if obj is None:
                 _log.error("Failed to import '%s' into '%s'.", name, collection)
-
-
-if __name__ == "__main__":
-    import sys
-    filename = sys.argv[1]
-    with open(filename, "r") as config_file:
-        try:
-            parse_yaml(config_file)
-        except pycam.Flow.data_models.FlowDescriptionBaseException as exc:
-            print("Flow description parse failure: {}".format(exc), file=sys.stderr)
-            sys.exit(1)
-    for export in pycam.Flow.data_models.Export.get_collection().values():
-        export.run_export()
