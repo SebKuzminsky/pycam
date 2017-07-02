@@ -39,8 +39,8 @@ models:
                           angle: 90
         model2:
                 source:
-                        type: model
-                        location: model1
+                        type: copy
+                        original: model1
                 transformations:
                         - action: projection
                           center: [0, 0, 2]
@@ -59,13 +59,18 @@ tools:
                 spindle_delay: 2
 
 processes:
-        process1:
+        process_slicing:
                 strategy: slice
                 path_pattern: grid
                 overlap: 0.10
                 step_down: 1.0
                 grid_direction: x
                 milling_style: ignore
+        process_engrave:
+                strategy: engrave
+                step_down: 1.0
+                trace_models:
+                        - model2
 
 bounds:
         bounds1:
@@ -91,10 +96,15 @@ tasks:
         task1:
                 type: milling
                 tool: tool1
-                process: process1
-                bounds: bounds2
+                process: process_slicing
+                bounds: bounds1
                 collision_models:
                         - model1
+        task2:
+                type: milling
+                tool: tool1
+                process: process_engrave
+                bounds: bounds2
 
 
 toolpaths:

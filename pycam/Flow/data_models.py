@@ -377,7 +377,7 @@ class Source(BaseDataContainer):
                 raise MissingAttributeError("Source for '{}' copy requires an 'original' "
                                             "attribute: {}".format(target_collection,
                                                                    self.get_dict()))
-            return _get_from_collection(target_collection, source_name)
+            return _get_from_collection(target_collection, source_name).get_model()
         elif source_type in (SourceType.FILE, SourceType.URL):
             try:
                 location = self.get_value("location")
