@@ -30,7 +30,7 @@ except ImportError:
     # both modules are required for visualization, only
     pass
 
-from pycam.Geometry import epsilon, number, Box3D, Point3D
+from pycam.Geometry import epsilon, number, Box3D, DimensionalObject, Point3D
 from pycam.Geometry.PointUtils import padd, pcross, pdist, pmul, pnorm, pnormalized, psub
 import pycam.Utils.log
 
@@ -78,7 +78,7 @@ def simplify_toolpath(path):
             index += 1
 
 
-class Toolpath(object):
+class Toolpath(DimensionalObject):
 
     def __init__(self, toolpath_path=None, toolpath_filters=None, tool=None, **kwargs):
         super(Toolpath, self).__init__(**kwargs)

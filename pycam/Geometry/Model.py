@@ -215,14 +215,6 @@ class BaseModel(IDGenerator, TransformableContainer):
         # shift the model back to its original position
         self._shift_origin_to(center, callback=callback)
 
-    def get_center(self):
-        return Point3D((self.minx + self.maxx) / 2,
-                       (self.miny + self.maxy) / 2,
-                       (self.minz + self.maxz) / 2)
-
-    def get_dimensions(self):
-        return Vector3D(self.maxx - self.minx, self.maxy - self.miny, self.maxz - self.minz)
-
     def get_bounds(self):
         return Bounds(Bounds.TYPE_CUSTOM, Box3D(Point3D(self.minx, self.miny, self.minz),
                                                 Point3D(self.maxx, self.maxy, self.maxz)))

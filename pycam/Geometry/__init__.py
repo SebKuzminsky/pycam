@@ -59,16 +59,53 @@ Point3D = collections.namedtuple("Point3D", ("x", "y", "z"))
 Vector3D = collections.namedtuple("Vector3D", ("x", "y", "z"))
 
 
-class Box3D(collections.namedtuple("Box3D", ("lower", "upper"))):
+class DimensionalObject(object):
+    """ mixin class for providing 3D objects with size information
+
+    At least the attributes min[xyz] and max[xyz] must be provided by the inheriting class.
+    """
+
+    __slots__ = ()
 
     def get_diagonal(self):
-        return Vector3D(*[high - low for low, high in zip(self.lower, self.upper)])
+        return Vector3D(self.maxx - self.minx, self.maxy - self.miny, self.maxz - self.minz)
 
     def get_center(self):
-        return Point3D(*[(low + high / 2) for low, high in zip(self.lower, self.upper)])
+        return Point3D((self.maxx + self.minx) / 2,
+                       (self.maxy + self.miny) / 2,
+                       (self.maxz + self.minz) / 2)
 
     def get_dimensions(self):
-        return Point3D(*[high - low for low, high in zip(self.lower, self.upper)])
+        return self.get_diagonal()
+
+
+class Box3D(collections.namedtuple("Box3D", ("lower", "upper")), DimensionalObject):
+
+    __slots__ = ()
+
+    @property
+    def minx(self):
+        return self.lower.x
+
+    @property
+    def miny(self):
+        return self.lower.y
+
+    @property
+    def minz(self):
+        return self.lower.z
+
+    @property
+    def maxx(self):
+        return self.upper.x
+
+    @property
+    def maxy(self):
+        return self.upper.y
+
+    @property
+    def maxz(self):
+        return self.upper.z
 
 
 def _id_generator():
@@ -86,7 +123,7 @@ class IDGenerator(object):
         self.id = next(self.__id_gen_func)
 
 
-class TransformableContainer(object):
+class TransformableContainer(DimensionalObject):
     """ a base class for geometrical objects containing other elements
 
     This class is mainly used for simplifying model transformations in a
