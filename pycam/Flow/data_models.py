@@ -409,21 +409,22 @@ class BaseCollectionItemDataContainer(BaseDataContainer):
             "Missing unique attribute ({}) of '{}' class"
             .format(self.unique_attribute, get_type_name(self)))
         item_id = data[self.unique_attribute]
-        self.__get_collection()[item_id] = self
+        self.get_collection()[item_id] = self
 
-    def __get_collection(self):
+    @classmethod
+    def get_collection(cls):
         try:
-            return _data_collections[self.collection_name]
+            return _data_collections[cls.collection_name]
         except KeyError:
             collection = {}
-            _data_collections[self.collection_name] = collection
+            _data_collections[cls.collection_name] = collection
             return collection
 
     def __del__(self):
         item_id = self._data[self.unique_attribute]
         # maybe the dict of collections is already gone (during shutdown)
         if _data_collections:
-            collection = self.__get_collection()
+            collection = self.get_collection()
             try:
                 del collection[item_id]
             except KeyError:
