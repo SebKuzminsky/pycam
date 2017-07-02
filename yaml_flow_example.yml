@@ -141,6 +141,8 @@ toolpaths:
                           upper:
                                   x: 30
                                   y: 40
+                        - action: clone
+                          offset: [0, 110%, 20]
 
         toolpath2:
                 source:

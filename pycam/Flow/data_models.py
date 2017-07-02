@@ -121,6 +121,7 @@ class ModelTransformationAction(Enum):
 
 class ToolpathTransformationAction(Enum):
     CROP = "crop"
+    CLONE = "clone"
 
 
 class ModelScaleTarget(Enum):
@@ -826,6 +827,9 @@ class Task(BaseCollectionItemDataContainer):
 class ToolpathTransformation(BaseDataContainer):
 
     attribute_converters = {"action": _get_enum_resolver(ToolpathTransformationAction),
+                            # TODO: we should add and implement 'allow_percent=True' here
+                            "offset": _axes_values_converter,
+                            "clone_count": int,
                             "lower": functools.partial(_axes_values_converter, allow_none=True),
                             "upper": functools.partial(_axes_values_converter, allow_none=True)}
 
@@ -833,6 +837,8 @@ class ToolpathTransformation(BaseDataContainer):
         action = self.get_value("action")
         if action == ToolpathTransformationAction.CROP:
             return self._get_cropped_toolpath(toolpath)
+        elif action == ToolpathTransformationAction.CLONE:
+            return self._get_cloned_toolpath(toolpath)
         else:
             raise InvalidKeyError(action, ToolpathTransformationAction)
 
@@ -840,6 +846,22 @@ class ToolpathTransformation(BaseDataContainer):
     @_set_allowed_attributes({"action", "lower", "upper"})
     def _get_cropped_toolpath(self, toolpath):
         raise NotImplemented("Toolpath cropping is not implemented, yet.")
+
+    @_set_parser_context("Toolpath transformation 'clone'")
+    @_set_allowed_attributes({"action", "offset", "clone_count"})
+    def _get_cloned_toolpath(self, toolpath):
+        offset = self.get_value("offset")
+        clone_count = self.get_value("clone_count")
+        new_moves = list(toolpath.path)
+        for index in range(1, (clone_count + 1)):
+            shift_matrix = ((1, 0, 0, index * offset[0]),
+                            (0, 1, 0, index * offset[1]),
+                            (0, 0, 1, index * offset[2]))
+            shifted = toolpath | tp_filters.TransformPosition(shift_matrix)
+            new_moves.extend(shifted)
+        new_toolpath = toolpath.copy()
+        new_toolpath.path = new_moves
+        return new_toolpath
 
 
 class Toolpath(BaseCollectionItemDataContainer):

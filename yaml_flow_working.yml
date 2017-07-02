@@ -112,6 +112,10 @@ toolpaths:
                 source:
                         type: task
                         task: task1
+                transformations:
+                        - action: clone
+                          offset: [20, 0, 0]
+                          clone_count: 1
 
 export_settings:
         tp_settings1:
