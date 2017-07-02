@@ -225,13 +225,20 @@ def _limit3d_converter(point):
     return Limit3D(*result)
 
 
-def _axes_values_converter(data):
+def _axes_values_converter(data, allow_none=False):
     result = []
     if isinstance(data, (list, dict)):
         if isinstance(data, dict):
             data = dict(data)
             for key in "xyz":
-                result.append(data.pop(key, None))
+                try:
+                    value = data.pop(key)
+                except KeyError:
+                    if allow_none:
+                        value = None
+                    else:
+                        raise InvalidDataError("Missing mandatory axis component ({})".format(key))
+                result.append(value)
             if data:
                 raise InvalidDataError("Superfluous axes key(s) supplied: {} (expected: x / y / z)"
                                        .format(" / ".join(data.keys())))
@@ -411,7 +418,7 @@ class ModelTransformation(BaseDataContainer):
                             "center": _axes_values_converter,
                             "vector": _axes_values_converter,
                             "angle": float,
-                            "axes": _axes_values_converter}
+                            "axes": functools.partial(_axes_values_converter, allow_none=True)}
 
     def transform_model(self, model):
         action = self.get_value("action")
