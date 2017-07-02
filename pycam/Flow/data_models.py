@@ -119,6 +119,10 @@ class ModelTransformationAction(Enum):
     PROJECTION = "projection"
 
 
+class ToolpathTransformationAction(Enum):
+    CROP = "crop"
+
+
 class ModelScaleTarget(Enum):
     FACTOR = "factor"
     SIZE = "size"
@@ -817,6 +821,25 @@ class Task(BaseCollectionItemDataContainer):
                                            toolpath_filters=tool.get_toolpath_filters())
         else:
             raise InvalidKeyError(task_type, TaskType)
+
+
+class ToolpathTransformation(BaseDataContainer):
+
+    attribute_converters = {"action": _get_enum_resolver(ToolpathTransformationAction),
+                            "lower": functools.partial(_axes_values_converter, allow_none=True),
+                            "upper": functools.partial(_axes_values_converter, allow_none=True)}
+
+    def get_transformed_toolpath(self, toolpath):
+        action = self.get_value("action")
+        if action == ToolpathTransformationAction.CROP:
+            return self._get_cropped_toolpath(toolpath)
+        else:
+            raise InvalidKeyError(action, ToolpathTransformationAction)
+
+    @_set_parser_context("Toolpath transformation 'crop'")
+    @_set_allowed_attributes({"action", "lower", "upper"})
+    def _get_cropped_toolpath(self, toolpath):
+        raise NotImplemented("Toolpath cropping is not implemented, yet.")
 
 
 class Toolpath(BaseCollectionItemDataContainer):
