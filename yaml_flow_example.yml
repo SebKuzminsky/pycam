@@ -142,7 +142,16 @@ toolpaths:
                                   x: 30
                                   y: 40
                         - action: clone
-                          offset: [0, 110%, 20]
+                          offset: [20, 110%, 0]
+                          clone_count: 1
+                        - action: shift
+                          shift_target: align_min
+                          axes:
+                                  x: 0
+                                  y: 0
+                        - action: shift
+                          shift_target: align_max
+                          axes: [null, null, 0]
 
         toolpath2:
                 source:

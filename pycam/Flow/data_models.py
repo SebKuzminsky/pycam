@@ -122,6 +122,7 @@ class ModelTransformationAction(Enum):
 class ToolpathTransformationAction(Enum):
     CROP = "crop"
     CLONE = "clone"
+    SHIFT = "shift"
 
 
 class ModelScaleTarget(Enum):
@@ -836,7 +837,9 @@ class ToolpathTransformation(BaseDataContainer):
                             "offset": _axes_values_converter,
                             "clone_count": int,
                             "lower": functools.partial(_axes_values_converter, allow_none=True),
-                            "upper": functools.partial(_axes_values_converter, allow_none=True)}
+                            "upper": functools.partial(_axes_values_converter, allow_none=True),
+                            "shift_target": _get_enum_resolver(PositionShiftTarget),
+                            "axes": functools.partial(_axes_values_converter, allow_none=True)}
 
     def get_transformed_toolpath(self, toolpath):
         action = self.get_value("action")
@@ -844,6 +847,8 @@ class ToolpathTransformation(BaseDataContainer):
             return self._get_cropped_toolpath(toolpath)
         elif action == ToolpathTransformationAction.CLONE:
             return self._get_cloned_toolpath(toolpath)
+        elif action == ToolpathTransformationAction.SHIFT:
+            return self._get_shifted_toolpath(toolpath)
         else:
             raise InvalidKeyError(action, ToolpathTransformationAction)
 
@@ -866,6 +871,19 @@ class ToolpathTransformation(BaseDataContainer):
             new_moves.extend(shifted)
         new_toolpath = toolpath.copy()
         new_toolpath.path = new_moves
+        return new_toolpath
+
+    @_set_parser_context("Model transformation 'shift'")
+    @_set_allowed_attributes({"action", "shift_target", "axes"})
+    def _get_shifted_toolpath(self, toolpath):
+        target = self.get_value("shift_target")
+        axes = self.get_value("axes")
+        offset = target._get_shift_offset(target, axes, toolpath)
+        shift_matrix = ((1, 0, 0, offset[0]),
+                        (0, 1, 0, offset[1]),
+                        (0, 0, 1, offset[2]))
+        new_toolpath = toolpath.copy()
+        new_toolpath.path = toolpath | tp_filters.TransformPosition(shift_matrix)
         return new_toolpath
 
 

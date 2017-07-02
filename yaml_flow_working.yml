@@ -116,6 +116,12 @@ toolpaths:
                         - action: clone
                           offset: [20, 0, 0]
                           clone_count: 1
+                        - action: shift
+                          shift_target: align_min
+                          axes: [0, 0, null]
+                        - action: shift
+                          shift_target: align_max
+                          axes: [null, null, 0]
 
 export_settings:
         tp_settings1:
