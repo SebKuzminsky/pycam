@@ -498,18 +498,6 @@ class ListPluginBase(PluginBase, list):
         else:
             return None
 
-    def get_by_attribute(self, key, value):
-        """ TODO: maybe remove this after the data migration - it is only used by pycam.Flow.parser
-        """
-        for item in self:
-            if hasattr(item, "get_value"):
-                item_value = item.get_value(key)
-            else:
-                item_value = item.get(key, None)
-            if item_value == value:
-                return item
-        return None
-
     def _update_model(self):
         self._update_gtk_treemodel()
         for update_func in self._update_model_funcs:
