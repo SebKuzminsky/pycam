@@ -37,7 +37,8 @@ class ProgressBar(pycam.Plugins.PluginBase):
             box = self.gui.get_object("ProgressBox")
             box.unparent()
             self.core.register_ui("main_window", "Progress", box, 50)
-            self.core.add_item("progress", lambda: ProgressGTK(self.core, self.gui, self.log))
+            self.core.add_item("progress",
+                               lambda: ProgressGTK(self.core, self.gui, self._gtk, self.log))
             show_progress_button = self.gui.get_object("ShowToolpathProgressButton")
             # TODO: move this setting somewhere else or rename it
             self.core.add_item("show_toolpath_progress", show_progress_button.get_active,
@@ -59,9 +60,8 @@ class ProgressGTK(object):
 
     _PROGRESS_STACK = []
 
-    def __init__(self, core, gui, log):
+    def __init__(self, core, gui, gtk, log):
         ProgressGTK._PROGRESS_STACK.append(self)
-        from gi.repository import Gtk as gtk
         self._finished = False
         self._gtk = gtk
         self._gui = gui

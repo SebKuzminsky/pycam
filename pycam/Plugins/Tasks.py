@@ -34,8 +34,6 @@ class Tasks(pycam.Plugins.ListPluginBase):
 
     def setup(self):
         if self.gui:
-            from gi.repository import Gtk as gtk
-            self._gtk = gtk
             self._gtk_handlers = []
             task_frame = self.gui.get_object("TaskBox")
             task_frame.unparent()

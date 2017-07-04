@@ -31,7 +31,6 @@ class Tools(pycam.Plugins.ListPluginBase):
     def setup(self):
         self.core.set("tools", self)
         if self.gui:
-            # from gi.repository import Gtk as gtk
             tool_frame = self.gui.get_object("ToolBox")
             tool_frame.unparent()
             self.core.register_ui("main", "Tools", tool_frame, weight=10)

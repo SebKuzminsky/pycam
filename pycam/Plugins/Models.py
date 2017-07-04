@@ -18,8 +18,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from gi.repository import Gdk as gdk
-
 import pycam.Plugins
 from pycam.Utils import get_non_conflicting_name
 
@@ -36,8 +34,6 @@ class Models(pycam.Plugins.ListPluginBase):
 
     def setup(self):
         if self.gui:
-            from gi.repository import Gtk as gtk
-            self._gtk = gtk
             self.model_frame = self.gui.get_object("ModelBox")
             self.model_frame.unparent()
             self.core.register_ui("main", "Models", self.model_frame, weight=-50)
@@ -105,7 +101,7 @@ class Models(pycam.Plugins.ListPluginBase):
         if models:
             # use the color of the first model
             col = models[0]["color"]
-            color_button.set_color(gdk.Color(
+            color_button.set_color(self._gdk.Color(
                 red=int(col["red"] * _GTK_COLOR_MAX),
                 green=int(col["green"] * _GTK_COLOR_MAX),
                 blue=int(col["blue"] * _GTK_COLOR_MAX)))
@@ -146,7 +142,7 @@ class Models(pycam.Plugins.ListPluginBase):
         else:
             cell.set_property("pixbuf", self.ICONS["hidden"])
         color = model_dict["color"]
-        cell.set_property("cell-background-gdk", gdk.Color(
+        cell.set_property("cell-background-gdk", self._gdk.Color(
             red=int(color["red"] * _GTK_COLOR_MAX),
             green=int(color["green"] * _GTK_COLOR_MAX),
             blue=int(color["blue"] * _GTK_COLOR_MAX)))

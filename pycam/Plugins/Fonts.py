@@ -200,7 +200,7 @@ class Fonts(pycam.Plugins.PluginBase):
         text_model = self.get_font_dialog_text_rendered()
         # always clean the background
         x, y, width, height = preview_widget.get_allocation()
-        drawing_area = self._gtk.gdk.Pixmap(final_drawing_area, width, height)
+        drawing_area = self._gdk.Pixmap(final_drawing_area, width, height)
         drawing_area.draw_rectangle(preview_widget.get_style().white_gc, True, 0, 0, width, height)
         # carefully check if there are lines in the rendered text
         if text_model and (text_model.maxx is not None) and (text_model.maxx > text_model.minx):

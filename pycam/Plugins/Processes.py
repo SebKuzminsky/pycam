@@ -30,9 +30,7 @@ class Processes(pycam.Plugins.ListPluginBase):
 
     def setup(self):
         self.core.set("processes", self)
-        if self.gui:
-            from gi.repository import Gtk as gtk
-            self._gtk = gtk
+        if self.gui and self._gtk:
             process_frame = self.gui.get_object("ProcessBox")
             process_frame.unparent()
             self._gtk_handlers = []

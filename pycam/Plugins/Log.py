@@ -23,8 +23,6 @@ import datetime
 import os
 import re
 
-from gi.repository import Gdk as gdk
-
 import pycam.Plugins
 import pycam.Utils
 
@@ -39,8 +37,6 @@ class Log(pycam.Plugins.PluginBase):
         if not self._gtk:
             return False
         if self.gui:
-            from gi.repository import Gtk as gtk
-            self._gtk = gtk
             # menu item and shortcut
             log_action = self.gui.get_object("ToggleLogWindow")
             self._gtk_handlers = []
@@ -122,7 +118,7 @@ class Log(pycam.Plugins.PluginBase):
         checkbox_state = toggle_log_checkbox.get_active()
         if value is None:
             new_state = checkbox_state
-        elif isinstance(value, gdk.Event):
+        elif isinstance(value, self._gdk.Event):
             # someone clicked at the status bar -> toggle the window state
             new_state = not checkbox_state
         else:

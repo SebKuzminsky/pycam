@@ -23,13 +23,6 @@ import inspect
 import os
 import uuid
 
-# TODO: load these modules only on demand
-import gi
-gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk as gtk
-from gi.repository import Gdk as gdk
-from gi.repository import GObject as gobject
-
 import pycam.Utils.log
 import pycam.Utils.locations
 
@@ -51,9 +44,19 @@ class PluginBase(object):
         self.core = core
         self.gui = None
         self.log = _log
-        self._gtk = gtk
-        self._gdk = gdk
-        self._gobject = gobject
+        try:
+            import gi
+            gi.require_version('Gtk', '3.0')
+            from gi.repository import Gtk
+            from gi.repository import Gdk
+            from gi.repository import GObject
+            self._gtk = Gtk
+            self._gdk = Gdk
+            self._gobject = GObject
+        except ImportError:
+            self._gtk = None
+            self._gdk = None
+            self._gobject = None
         if self.UI_FILE and self._gtk:
             gtk_build_file = pycam.Utils.locations.get_ui_file_location(self.UI_FILE)
             if gtk_build_file:
@@ -81,8 +84,9 @@ class PluginBase(object):
                 icon_location = pycam.Utils.locations.get_ui_file_location(self.ICONS[key])
                 if icon_location:
                     # try:  FIXME
-                    #    pixbuf = gdk.pixbuf_new_from_file_at_size(icon_location, self.ICON_SIZE,
-                    #                                                  self.ICON_SIZE)
+                    #    pixbuf = self._gdk.pixbuf_new_from_file_at_size(icon_location,
+                    #                                                    self.ICON_SIZE,
+                    #                                                    self.ICON_SIZE)
                     # except gobject.GError:
                     self.ICONS[key] = None
                     # else:
@@ -187,13 +191,13 @@ class PluginBase(object):
         #     import gtk
         # except ImportError:
         #     return
-        actiongroup = gtk.ActionGroup(groupname)
+        actiongroup = self._gtk.ActionGroup(groupname)
         accel_path = "<pycam>/%s" % accel_name
         action.set_accel_path(accel_path)
         # it is a bit pointless, but we allow an empty accel_string anyway ...
         if accel_string:
-            key, mod = gtk.accelerator_parse(accel_string)
-            gtk.AccelMap.change_entry(accel_path, key, mod, True)
+            key, mod = self._gtk.accelerator_parse(accel_string)
+            self._gtk.AccelMap.change_entry(accel_path, key, mod, True)
         actiongroup.add_action(action)
         ui_manager = self.core.get("gtk-uimanager")
         # it can happen that there is no gtk ui manager available (in script mode)
@@ -398,7 +402,7 @@ class ListPluginBase(PluginBase, list):
             get_result = lambda path: path[0]
         else:
             get_result = self.get_by_path
-        if (selection_mode == gtk.SelectionMode.MULTIPLE) or force_list:
+        if (selection_mode == self._gtk.SelectionMode.MULTIPLE) or force_list:
             result = []
             for path in paths:
                 result.append(get_result(path))

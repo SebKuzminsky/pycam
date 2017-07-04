@@ -33,7 +33,6 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
     def setup(self):
         self.last_toolpath_file = None
         if self.gui:
-            from gi.repository import Gtk as gtk
             self.tp_box = self.gui.get_object("ToolpathsBox")
             self.tp_box.unparent()
             self.core.register_ui("main", "Toolpaths", self.tp_box, weight=50)
@@ -68,7 +67,7 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             # handle selection changes
             selection = self._modelview.get_selection()
             self._gtk_handlers.append((selection, "changed", "toolpath-selection-changed"))
-            selection.set_mode(gtk.SelectionMode.MULTIPLE)
+            selection.set_mode(self._gtk.SelectionMode.MULTIPLE)
             self._event_handlers = (
                 ("toolpath-changed", self._update_widgets),
                 ("toolpath-list-changed", self._update_widgets),

@@ -25,8 +25,6 @@ except ImportError:
     # Python3
     from io import StringIO
 
-from gi.repository import Gdk
-
 import pycam.Plugins
 from pycam.Utils.locations import get_all_program_locations
 
@@ -49,10 +47,8 @@ class Clipboard(pycam.Plugins.PluginBase):
         if not self._gtk:
             return False
         if self.gui:
-            from gi.repository import Gtk as gtk
-            self._gtk = gtk
             self._gtk_handlers = []
-            self.clipboard = self._gtk.Clipboard.get(Gdk.SELECTION_PRIMARY)
+            self.clipboard = self._gtk.Clipboard.get(self._gdk.SELECTION_PRIMARY)
             self.core.set("clipboard-set", self._copy_text_to_clipboard)
             self._gtk_handlers.append((self.clipboard, "owner-change",
                                        self._update_clipboard_widget))
@@ -115,9 +111,9 @@ class Clipboard(pycam.Plugins.PluginBase):
 
             if "svg" in "".join(targets).lower():
                 # Inkscape for Windows strictly requires the BITMAP type
-                clip_type = self._gtk.gdk.SELECTION_TYPE_BITMAP
+                clip_type = self._gdk.SELECTION_TYPE_BITMAP
             else:
-                clip_type = self._gtk.gdk.SELECTION_TYPE_STRING
+                clip_type = self._gdk.SELECTION_TYPE_STRING
             self.clipboard.set_with_data(clip_targets, get_func, lambda *args: None,
                                          (text, clip_type))
             self.clipboard.store()
@@ -155,7 +151,7 @@ class Clipboard(pycam.Plugins.PluginBase):
                                   (CLIPBOARD_TARGETS["ps"], "foo.ps"),
                                   (CLIPBOARD_TARGETS["dxf"], "foo.dxf")):
             for target in targets:
-                atom = Gdk.Atom.intern(target, False)
+                atom = self._gdk.Atom.intern(target, False)
                 data = self.clipboard.wait_for_contents(atom)
                 if data is not None:
                     detected_filetype = pycam.Importers.detect_file_type(filename)

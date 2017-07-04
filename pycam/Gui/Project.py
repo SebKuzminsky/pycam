@@ -28,6 +28,7 @@ import webbrowser
 
 from gi.repository import GObject as gobject
 from gi.repository import Gtk as gtk
+from gi.repository import Gdk as gdk
 
 from pycam import VERSION, DOC_BASE_URL
 import pycam.Importers.CXFImporter
@@ -65,7 +66,7 @@ def get_icons_pixbuffers():
         abs_filename = get_ui_file_location(icon_filename, silent=True)
         if abs_filename:
             try:
-                result.append(gtk.gdk.pixbuf_new_from_file(abs_filename))
+                result.append(gdk.pixbuf_new_from_file(abs_filename))
             except gobject.GError as err_msg:
                 # ignore icons that are not found
                 log.debug("Failed to process window icon (%s): %s", abs_filename, err_msg)
@@ -194,9 +195,9 @@ class ProjectGui(pycam.Gui.BaseUI):
 
         # send a "delete" event on "CTRL-w" for every window
         def handle_window_close(accel_group, window, *args):
-            window.emit("delete-event", gtk.gdk.Event(gtk.gdk.DELETE))
+            window.emit("delete-event", gdk.Event(gdk.DELETE))
 
-        # self._accel_group.connect_group(ord('w'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_LOCKED,  FIXME
+        # self._accel_group.connect_group(ord('w'), gdk.CONTROL_MASK, gtk.ACCEL_LOCKED,  FIXME
         #                                 handle_window_close)
         self.settings.add_item("gtk-accel-group", lambda: self._accel_group)
         for obj in self.gui.get_objects():
@@ -485,8 +486,8 @@ class ProjectGui(pycam.Gui.BaseUI):
         flags = gtk.DestDefaults.ALL
         targets = [(key, gtk.TARGET_OTHER_APP, index)
                    for index, key in enumerate(FILENAME_DRAG_TARGETS)]
-        actions = (gtk.gdk.ACTION_COPY | gtk.gdk.ACTION_LINK | gtk.gdk.ACTION_DEFAULT
-                   | gtk.gdk.ACTION_PRIVATE | gtk.gdk.ACTION_ASK)
+        actions = (gdk.ACTION_COPY | gdk.ACTION_LINK | gdk.ACTION_DEFAULT
+                   | gdk.ACTION_PRIVATE | gdk.ACTION_ASK)
         obj.drag_dest_set(flags, targets, actions)
 
     def handle_data_drop(self, widget, drag_context, x, y, selection_data, info, timestamp):
