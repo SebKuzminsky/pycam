@@ -38,6 +38,7 @@ import pycam.Toolpath.Filters as tp_filters
 import pycam.Toolpath.MotionGrid as MotionGrid
 from pycam.Importers import detect_file_type
 from pycam.Utils import get_type_name
+from pycam.Utils.events import get_event_handler
 import pycam.Utils.log
 
 _log = pycam.Utils.log.get_logger()
@@ -397,10 +398,47 @@ class BaseDataContainer(object):
                                            .format(unexpected_attributes_string))
 
 
+class BaseCollection(object):
+
+    def __init__(self, name, list_changed_event=None):
+        self._name = name
+        self._list_changed_event = list_changed_event
+        self._data = {}
+
+    def __setitem__(self, key, value):
+        self._data[key] = value
+        self._notify_list_changed()
+
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __hasitem__(self, key):
+        return key in self._data
+
+    def __delitem__(self, key):
+        del self._data[key]
+        self._notify_list_changed()
+
+    def keys(self):
+        return self._data.keys()
+
+    def items(self):
+        return self._data.items()
+
+    def values(self):
+        return self._data.values()
+
+    def _notify_list_changed(self):
+        if self._list_changed_event:
+            get_event_handler().emit_event(self._list_changed_event)
+
+
+
 class BaseCollectionItemDataContainer(BaseDataContainer):
 
     # the name of the collection should be overwritten in every subclass
     collection_name = None
+    list_changed_event = None
     unique_attribute = "name"
 
     def __init__(self, data):
@@ -416,7 +454,8 @@ class BaseCollectionItemDataContainer(BaseDataContainer):
         try:
             return _data_collections[cls.collection_name]
         except KeyError:
-            collection = {}
+            collection = BaseCollection(cls.collection_name,
+                                        list_changed_event=cls.list_changed_event)
             _data_collections[cls.collection_name] = collection
             return collection
 
@@ -566,6 +605,7 @@ class ModelTransformation(BaseDataContainer):
 class Model(BaseCollectionItemDataContainer):
 
     collection_name = "model"
+    list_changed_event = "model-list-changed"
     attribute_converters = {"source": Source,
                             "transformations": _get_list_resolver(ModelTransformation)}
     attribute_defaults = {"transformations": []}
@@ -580,6 +620,7 @@ class Model(BaseCollectionItemDataContainer):
 class Tool(BaseCollectionItemDataContainer):
 
     collection_name = "tool"
+    list_changed_event = "tool-list-changed"
     attribute_converters = {"shape": _get_enum_resolver(ToolShape)}
     attribute_defaults = {"height": 10,
                           "feed": 300,
@@ -631,6 +672,7 @@ class Tool(BaseCollectionItemDataContainer):
 class Process(BaseCollectionItemDataContainer):
 
     collection_name = "process"
+    list_changed_event = "process-list-changed"
     attribute_converters = {"strategy": _get_enum_resolver(ProcessStrategy),
                             "milling_style": _get_enum_resolver(MotionGrid.MillingStyle),
                             "path_pattern": _get_enum_resolver(PathPattern),
@@ -726,6 +768,7 @@ class Process(BaseCollectionItemDataContainer):
 class Boundary(BaseCollectionItemDataContainer):
 
     collection_name = "bounds"
+    list_changed_event = "bounds-list-changed"
     attribute_converters = {"specification": _get_enum_resolver(BoundsSpecification),
                             "reference_models": _get_collection_resolver("model", many=True),
                             "lower": _limit3d_converter,
@@ -794,6 +837,7 @@ class Boundary(BaseCollectionItemDataContainer):
 class Task(BaseCollectionItemDataContainer):
 
     collection_name = "task"
+    list_changed_event = "task-list-changed"
     attribute_converters = {"process": _get_collection_resolver("process"),
                             "bounds": _get_collection_resolver("bounds"),
                             "tool": _get_collection_resolver("tool"),
@@ -891,6 +935,7 @@ class ToolpathTransformation(BaseDataContainer):
 class Toolpath(BaseCollectionItemDataContainer):
 
     collection_name = "toolpath"
+    list_changed_event = "toolpath-list-changed"
     attribute_converters = {"source": Source,
                             "transformations": _get_list_resolver(ToolpathTransformation)}
     attribute_defaults = {"transformations": []}
