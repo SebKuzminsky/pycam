@@ -14,6 +14,15 @@ UIEvent = collections.namedtuple("UIEvent", ("handlers", "blocker_tokens"))
 UIChain = collections.namedtuple("UIChain", ("func", "weight"))
 
 
+__event_handlers = []
+
+
+def get_event_handler():
+    if not __event_handlers:
+        __event_handlers.append(EventCore())
+    return __event_handlers[0]
+
+
 class EventCore(pycam.Gui.Settings.Settings):
 
     def __init__(self):
