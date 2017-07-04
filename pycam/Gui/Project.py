@@ -26,9 +26,9 @@ import os
 import sys
 import webbrowser
 
-from gi.repository import GObject as gobject
-from gi.repository import Gtk as gtk
-from gi.repository import Gdk as gdk
+from gi.repository import GObject
+from gi.repository import Gtk
+from gi.repository import Gdk
 
 from pycam import VERSION, DOC_BASE_URL
 import pycam.Importers.CXFImporter
@@ -66,8 +66,8 @@ def get_icons_pixbuffers():
         abs_filename = get_ui_file_location(icon_filename, silent=True)
         if abs_filename:
             try:
-                result.append(gdk.pixbuf_new_from_file(abs_filename))
-            except gobject.GError as err_msg:
+                result.append(Gdk.pixbuf_new_from_file(abs_filename))
+            except GObject.GError as err_msg:
                 # ignore icons that are not found
                 log.debug("Failed to process window icon (%s): %s", abs_filename, err_msg)
         else:
@@ -85,16 +85,16 @@ class ProjectGui(pycam.Gui.BaseUI):
         # during initialization any dialog (e.g. "Unit change") is not allowed
         # we set the final value later
         self.no_dialog = True
-        self.gui = gtk.Builder()
+        self.gui = Gtk.Builder()
         gtk_build_file = get_ui_file_location(GTKBUILD_FILE)
         if gtk_build_file is None:
-            gtk.main_quit()
+            Gtk.main_quit()
         self.gui.add_from_file(gtk_build_file)
         if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
             gtkrc_file = get_ui_file_location(GTKRC_FILE_WINDOWS)
             if gtkrc_file:
-                gtk.rc_add_default_file(gtkrc_file)
-                gtk.rc_reparse_all_for_settings(gtk.settings_get_default(), True)
+                Gtk.rc_add_default_file(gtkrc_file)
+                Gtk.rc_reparse_all_for_settings(Gtk.settings_get_default(), True)
         self.window = self.gui.get_object("ProjectWindow")
         self.settings.set("main_window", self.window)
         # show stock items on buttons
@@ -109,7 +109,7 @@ class ProjectGui(pycam.Gui.BaseUI):
             self.recent_manager = None
         else:
             try:
-                self.recent_manager = gtk.recent_manager_get_default()
+                self.recent_manager = Gtk.recent_manager_get_default()
             except AttributeError:
                 # GTK 2.12.1 seems to have problems with "RecentManager" on
                 # Windows. Sadly this is the version, that is shipped with the
@@ -150,15 +150,15 @@ class ProjectGui(pycam.Gui.BaseUI):
             else:
                 item.connect(action, callback, data)
             if accel_key:
-                key, mod = gtk.accelerator_parse(accel_key)
+                key, mod = Gtk.accelerator_parse(accel_key)
                 accel_path = "<pycam>/%s" % objname
                 item.set_accel_path(accel_path)
-                # gtk.accel_map_change_entry(accel_path, key, mod, True) FIXME
+                # Gtk.accel_map_change_entry(accel_path, key, mod, True) FIXME
         # LinkButton does not work on Windows: https://bugzilla.gnome.org/show_bug.cgi?id=617874
         if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
             def open_url(widget, data=None):
                 webbrowser.open(widget.get_uri())
-            gtk.link_button_set_uri_hook(open_url)
+            Gtk.link_button_set_uri_hook(open_url)
         self.settings.register_event("undo-states-changed", self._update_undo_button)
         self.settings.register_event("model-change-after",
                                      lambda: self.settings.emit_event("visual-item-updated"))
@@ -189,19 +189,19 @@ class ProjectGui(pycam.Gui.BaseUI):
             about_window_children[-1].connect("clicked", self.toggle_about_window, False)
         self.about_window.connect("delete-event", self.toggle_about_window, False)
         # menu bar
-        uimanager = gtk.UIManager()
+        uimanager = Gtk.UIManager()
         self.settings.set("gtk-uimanager", uimanager)
         self._accel_group = uimanager.get_accel_group()
 
         # send a "delete" event on "CTRL-w" for every window
         def handle_window_close(accel_group, window, *args):
-            window.emit("delete-event", gdk.Event(gdk.DELETE))
+            window.emit("delete-event", Gdk.Event(Gdk.DELETE))
 
-        # self._accel_group.connect_group(ord('w'), gdk.CONTROL_MASK, gtk.ACCEL_LOCKED,  FIXME
+        # self._accel_group.connect_group(ord('w'), Gdk.CONTROL_MASK, Gtk.ACCEL_LOCKED,  FIXME
         #                                 handle_window_close)
         self.settings.add_item("gtk-accel-group", lambda: self._accel_group)
         for obj in self.gui.get_objects():
-            if isinstance(obj, gtk.Window):
+            if isinstance(obj, Gtk.Window):
                 obj.add_accel_group(self._accel_group)
         # preferences tab
         preferences_book = self.gui.get_object("PreferencesNotebook")
@@ -211,7 +211,7 @@ class ProjectGui(pycam.Gui.BaseUI):
                 preferences_book.remove(child)
 
         def add_preferences_item(item, name):
-            preferences_book.append_page(item, gtk.Label(name))
+            preferences_book.append_page(item, Gtk.Label(name))
 
         self.settings.register_ui_section("preferences", add_preferences_item, clear_preferences)
         for obj_name, label, priority in (
@@ -244,7 +244,7 @@ class ProjectGui(pycam.Gui.BaseUI):
                 main_tab.remove_page(0)
 
         def add_main_tab_item(item, name):
-            main_tab.append_page(item, gtk.Label(name))
+            main_tab.append_page(item, Gtk.Label(name))
 
         # TODO: move these to plugins, as well
         self.settings.register_ui_section("main", add_main_tab_item, clear_main_tab)
@@ -288,23 +288,23 @@ class ProjectGui(pycam.Gui.BaseUI):
             self.gui.get_object(browse_button).connect("clicked",
                                                        self._browse_external_program_location, key)
         # set the icons (in different sizes) for all windows
-        # gtk.window_set_default_icon_list(*get_icons_pixbuffers()) FIXME
+        # Gtk.window_set_default_icon_list(*get_icons_pixbuffers()) FIXME
         # load menu data
         gtk_menu_file = get_ui_file_location(GTKMENU_FILE)
         if gtk_menu_file is None:
-            gtk.main_quit()
+            Gtk.main_quit()
         uimanager.add_ui_from_file(gtk_menu_file)
         # make the actions defined in the GTKBUILD file available in the menu
-        actiongroup = gtk.ActionGroup("menubar")
-        for action in [aobj for aobj in self.gui.get_objects() if isinstance(aobj, gtk.Action)]:
+        actiongroup = Gtk.ActionGroup("menubar")
+        for action in [aobj for aobj in self.gui.get_objects() if isinstance(aobj, Gtk.Action)]:
             actiongroup.add_action(action)
         # the "pos" parameter is optional since 2.12 - we can remove it later
         uimanager.insert_action_group(actiongroup)
         # the "recent files" sub-menu
         if self.recent_manager is not None:
-            recent_files_menu = gtk.RecentChooserMenu(self.recent_manager)
+            recent_files_menu = Gtk.RecentChooserMenu(self.recent_manager)
             recent_files_menu.set_name("RecentFilesMenu")
-            recent_menu_filter = gtk.RecentFilter()
+            recent_menu_filter = Gtk.RecentFilter()
             case_converter = pycam.Utils.get_case_insensitive_file_pattern
             for filter_name, patterns in FILTER_MODEL:
                 if not isinstance(patterns, (list, set, tuple)):
@@ -320,7 +320,7 @@ class ProjectGui(pycam.Gui.BaseUI):
             # non-local files (without "file://") are not supported. yet
             recent_files_menu.set_local_only(False)
             # most recent files to the top
-            recent_files_menu.set_sort_type(gtk.RECENT_SORT_MRU)
+            recent_files_menu.set_sort_type(Gtk.RECENT_SORT_MRU)
             # show only ten files
             recent_files_menu.set_limit(10)
             uimanager.get_widget("/MenuBar/FileMenu/OpenRecentModelMenu").set_submenu(
@@ -344,10 +344,10 @@ class ProjectGui(pycam.Gui.BaseUI):
                 if action_group not in uimanager.get_action_groups():
                     uimanager.insert_action_group(action_group, -1)
                 widget_name = widget.get_name()
-                item_type = gtk.UIManagerItemType.MENU
+                item_type = Gtk.UIManagerItemType.MENU
             else:
                 widget_name = name
-                item_type = gtk.UIManagerItemType.SEPARATOR
+                item_type = Gtk.UIManagerItemType.SEPARATOR
             uimanager.add_ui(merge_id, base_path, name, widget_name, item_type, False)
             if menu_key not in menu_merges:
                 menu_merges[menu_key] = []
@@ -373,8 +373,8 @@ class ProjectGui(pycam.Gui.BaseUI):
         self.settings.register_event("notify-file-opened", self.add_to_recent_file_list)
         # Without this "gkt.main_iteration" loop the task settings file
         # control would not be updated in time.
-        while gtk.events_pending():
-            gtk.main_iteration()
+        while Gtk.events_pending():
+            Gtk.main_iteration()
         self.no_dialog = no_dialog
         if not self.no_dialog:
             # register a logging handler for displaying error messages
@@ -472,7 +472,7 @@ class ProjectGui(pycam.Gui.BaseUI):
         self.gui.get_object("UndoButton").set_sensitive(len(self._undo_states) > 0)
 
     def destroy(self, widget=None, data=None):
-        gtk.main_quit()
+        Gtk.main_quit()
         self.quit()
 
     def quit(self):
@@ -483,11 +483,11 @@ class ProjectGui(pycam.Gui.BaseUI):
     def configure_drag_and_drop(self, obj):
         obj.connect("drag-data-received", self.handle_data_drop)
         return  # FIXME
-        flags = gtk.DestDefaults.ALL
-        targets = [(key, gtk.TARGET_OTHER_APP, index)
+        flags = Gtk.DestDefaults.ALL
+        targets = [(key, Gtk.TARGET_OTHER_APP, index)
                    for index, key in enumerate(FILENAME_DRAG_TARGETS)]
-        actions = (gdk.ACTION_COPY | gdk.ACTION_LINK | gdk.ACTION_DEFAULT
-                   | gdk.ACTION_PRIVATE | gdk.ACTION_ASK)
+        actions = (Gdk.ACTION_COPY | Gdk.ACTION_LINK | Gdk.ACTION_DEFAULT
+                   | Gdk.ACTION_PRIVATE | Gdk.ACTION_ASK)
         obj.drag_dest_set(flags, targets, actions)
 
     def handle_data_drop(self, widget, drag_context, x, y, selection_data, info, timestamp):
@@ -570,7 +570,7 @@ class ProjectGui(pycam.Gui.BaseUI):
                 if self.recent_manager.has_item(uri.get_url()):
                     try:
                         self.recent_manager.remove_item(uri.get_url())
-                    except gobject.GError:
+                    except GObject.GError:
                         pass
                 self.recent_manager.add_item(uri.get_url())
             # store the directory of the last loaded file
@@ -589,12 +589,12 @@ class ProjectGui(pycam.Gui.BaseUI):
     def mainloop(self):
         # run the mainloop only if a GUI was requested
         if not self.no_dialog:
-            # gtk_settings = gtk.settings_get_default() FIXME
+            # gtk_settings = Gtk.settings_get_default() FIXME
             # force the icons to be displayed
             # gtk_settings.props.gtk_menu_images = True FIXME
             # gtk_settings.props.gtk_button_images = True FIXME
             try:
-                gtk.main()
+                Gtk.main()
             except KeyboardInterrupt:
                 self.quit()
 
