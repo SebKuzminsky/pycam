@@ -46,6 +46,9 @@ except ImportError:
     setproctitle = lambda name: None
 
 
+__application_key = []
+
+
 class OSPlatform(enum.IntEnum):
     LINUX = 0
     WINDOWS = 1
@@ -68,6 +71,21 @@ def get_type_name(instance):
     # nicer (but only available for python2 new-style classes and python3) would be:
     #    type(instance).__name__
     return instance.__class__.__name__
+
+
+def set_application_key(key):
+    while __application_key:
+        __application_key.pop()
+    __application_key.append(key)
+
+
+def get_application_key():
+    """ get the somehow unique name of the running application
+
+    This application key can be used to distinguish application-specific namespaces in the data
+    storage (e.g. "pycam-gtk" or "pycam-cli").
+    """
+    return __application_key[0] if __application_key else None
 
 
 def get_case_insensitive_file_pattern(pattern):

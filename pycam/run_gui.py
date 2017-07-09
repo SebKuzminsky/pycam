@@ -120,6 +120,7 @@ log = pycam.Utils.log.get_logger()
 
 
 def show_gui():
+    pycam.Utils.set_application_key("pycam-gtk")
     deps_gtk = GuiCommon.requirements_details_gtk()
     report_gtk = GuiCommon.get_dependency_report(deps_gtk, prefix="\t")
     if GuiCommon.check_dependencies(deps_gtk):
