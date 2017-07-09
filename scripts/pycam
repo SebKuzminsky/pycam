@@ -70,10 +70,10 @@ if hasattr(sys, "frozen") and sys.frozen and "_MEIPASS2" in os.environ:
     windll[os.path.join(os.path.normpath(os.environ["_MEIPASS2"]), "glut32.dll")]
 
 # The installer for PyODE does not add the required PATH variable.
-if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
+if pycam.Utils.get_platform() == pycam.Utils.OSPlatform.WINDOWS:
     os.environ["PATH"] = os.environ.get("PATH", "") + os.path.pathsep + sys.exec_prefix
 # The GtkGLExt installer does not add the required PATH variable.
-if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
+if pycam.Utils.get_platform() == pycam.Utils.OSPlatform.WINDOWS:
     import _winreg
     path = None
     try:

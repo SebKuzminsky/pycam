@@ -95,7 +95,7 @@ def is_pool_available():
 
 
 def is_multiprocessing_available():
-    if (pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS) and \
+    if (pycam.Utils.get_platform() == pycam.Utils.OSPlatform.WINDOWS) and \
             hasattr(sys, "frozen") and sys.frozen:
         return False
     try:
@@ -268,7 +268,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None, r
         __task_source_uuid = str(uuid.uuid1())
         if remote is None:
             # try to guess an appropriate interface for binding
-            if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
+            if pycam.Utils.get_platform() == pycam.Utils.OSPlatform.WINDOWS:
                 # Windows does not support a wildcard interface listener
                 all_ips = pycam.Utils.get_all_ips()
                 if all_ips:

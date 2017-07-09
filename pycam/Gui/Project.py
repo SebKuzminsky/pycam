@@ -90,7 +90,7 @@ class ProjectGui(pycam.Gui.BaseUI):
         if gtk_build_file is None:
             Gtk.main_quit()
         self.gui.add_from_file(gtk_build_file)
-        if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
+        if pycam.Utils.get_platform() == pycam.Utils.OSPlatform.WINDOWS:
             gtkrc_file = get_ui_file_location(GTKRC_FILE_WINDOWS)
             if gtkrc_file:
                 Gtk.rc_add_default_file(gtkrc_file)
@@ -101,7 +101,7 @@ class ProjectGui(pycam.Gui.BaseUI):
         # increase the initial width of the window (due to hidden elements)
         self.window.set_default_size(400, -1)
         # initialize the RecentManager (TODO: check for Windows)
-        if False and pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
+        if False and pycam.Utils.get_platform() == pycam.Utils.OSPlatform.WINDOWS:
             # The pyinstaller binary for Windows fails mysteriously when trying
             # to display the stock item.
             # Error message: Gtk:ERROR:gtkrecentmanager.c:1942:get_icon_fallback:
@@ -155,7 +155,7 @@ class ProjectGui(pycam.Gui.BaseUI):
                 item.set_accel_path(accel_path)
                 # Gtk.accel_map_change_entry(accel_path, key, mod, True) FIXME
         # LinkButton does not work on Windows: https://bugzilla.gnome.org/show_bug.cgi?id=617874
-        if pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
+        if pycam.Utils.get_platform() == pycam.Utils.OSPlatform.WINDOWS:
             def open_url(widget, data=None):
                 webbrowser.open(widget.get_uri())
             Gtk.link_button_set_uri_hook(open_url)
@@ -493,7 +493,7 @@ class ProjectGui(pycam.Gui.BaseUI):
     def handle_data_drop(self, widget, drag_context, x, y, selection_data, info, timestamp):
         if info != 0:
             uris = [str(selection_data.data)]
-        elif pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS:
+        elif pycam.Utils.get_platform() == pycam.Utils.OSPlatform.WINDOWS:
             uris = selection_data.data.splitlines()
         else:
             uris = selection_data.get_uris()

@@ -218,7 +218,7 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
             enable_server_obj.set_active(False)
         elif enable_parallel:
             if enable_server and \
-                    (pycam.Utils.get_platform() == pycam.Utils.PLATFORM_WINDOWS):
+                    (pycam.Utils.get_platform() == pycam.Utils.OSPlatform.WINDOWS):
                 if self.number_of_processes.get_value() > 0:
                     self.log.warn("Mixed local and remote processes are currently not available "
                                   "on the Windows platform. Setting the number of local processes "

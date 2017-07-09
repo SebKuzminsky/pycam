@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import enum
 import os
 import re
 import socket
@@ -37,12 +38,6 @@ except ImportError:
 # import win32api
 
 
-PLATFORM_LINUX = 0
-PLATFORM_WINDOWS = 1
-PLATFORM_MACOS = 2
-PLATFORM_UNKNOWN = 3
-
-
 # setproctitle is (optionally) imported
 try:
     from setproctitle import setproctitle
@@ -51,15 +46,22 @@ except ImportError:
     setproctitle = lambda name: None
 
 
+class OSPlatform(enum.IntEnum):
+    LINUX = 0
+    WINDOWS = 1
+    MACOS = 2
+    UNKNOWN = 3
+
+
 def get_platform():
     if hasattr(sys, "getwindowsversion"):
-        return PLATFORM_WINDOWS
+        return OSPlatform.WINDOWS
     elif sys.platform == "darwin":
-        return PLATFORM_MACOS
+        return OSPlatform.MACOS
     elif sys.platform.startswith("linux"):
-        return PLATFORM_LINUX
+        return OSPlatform.LINUX
     else:
-        return PLATFORM_UNKNOWN
+        return OSPlatform.UNKNOWN
 
 
 def get_case_insensitive_file_pattern(pattern):
@@ -124,7 +126,7 @@ class URIHandler(object):
             self._uri = location._uri
         elif not location:
             self._uri = urlparse(self.DEFAULT_PREFIX)
-        elif (get_platform() == PLATFORM_WINDOWS) and (location[1:3] == ":\\"):
+        elif (get_platform() == OSPlatform.WINDOWS) and (location[1:3] == ":\\"):
             self._uri = urlparse(self.DEFAULT_PREFIX + location.replace("\\", "/"))
         else:
             self._uri = urlparse(location)
@@ -144,7 +146,7 @@ class URIHandler(object):
 
     def get_path(self):
         encoded_path = self._uri.path
-        if get_platform() == PLATFORM_WINDOWS:
+        if get_platform() == OSPlatform.WINDOWS:
             # prepend "netloc" (the drive letter - e.g. "c:")
             encoded_path = self._uri.netloc + encoded_path
         # decode all special characters like "%20" and replace "/" with "\\" (Windows)
