@@ -83,7 +83,7 @@ $(DIST_WIN32): $(DIST_DIR) build
 update-deb-changelog:
 	@# retrieve the log of all commits since the latest release and add it to the deb changelog
 	if ! grep -qFw "$(VERSION)" debian/changelog; then \
-		git log --pretty=format:%s v$(shell dpkg-parsechangelog -S version).. | \
+		git log --pretty=format:%s v$(shell dpkg-parsechangelog | sed --quiet -re 's/Version: (.*)/\1/ p').. | \
 			DEBFULLNAME="PyCAM Builder" DEBEMAIL="builder@pycam.org" \
 			xargs -r -d '\n' -n 1 -- debchange --newversion "$(subst -,.,$(VERSION))"; \
 	fi
