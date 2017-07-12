@@ -318,8 +318,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         def set_color_wrapper(obj):
             def set_gtk_color_by_dict(color):
                 obj.set_color(self._gdk.Color(int(color["red"] * GTK_COLOR_MAX),
-                                                  int(color["green"] * GTK_COLOR_MAX),
-                                                  int(color["blue"] * GTK_COLOR_MAX)))
+                                              int(color["green"] * GTK_COLOR_MAX),
+                                              int(color["blue"] * GTK_COLOR_MAX)))
                 obj.set_alpha(int(color["alpha"] * GTK_COLOR_MAX))
             return set_gtk_color_by_dict
 
