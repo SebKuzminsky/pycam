@@ -1005,6 +1005,7 @@ class Formatter(BaseDataContainer):
                             "dialect": _get_enum_resolver(GCodeDialect),
                             "export_settings": _get_collection_resolver("export_settings")}
     attribute_defaults = {"dialect": GCodeDialect.LINUXCNC,
+                          "export_settings": None,
                           "comment": ""}
 
     def write_data(self, source, target):
@@ -1030,7 +1031,8 @@ class Formatter(BaseDataContainer):
         else:
             raise InvalidKeyError(dialect, GCodeDialect)
         export_settings = self.get_value("export_settings")
-        generator.add_filters(export_settings.get_toolpath_filters())
+        if export_settings:
+            generator.add_filters(export_settings.get_toolpath_filters())
         for toolpath in source:
             calculated = toolpath.get_toolpath()
             # TODO: implement toolpath.get_meta_data()
