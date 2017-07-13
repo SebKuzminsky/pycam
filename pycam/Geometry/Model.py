@@ -98,7 +98,7 @@ class BaseModel(IDGenerator, TransformableContainer):
         """
         return sum([len(igroup) for igroup in self._item_groups])
 
-    def next(self):
+    def __next__(self):
         for item_group in self._item_groups:
             for item in item_group:
                 if isinstance(item, list):
@@ -941,7 +941,7 @@ class Rectangle(IDGenerator, TransformableContainer):
     def get_points(self):
         return (self.p1, self.p2, self.p3, self.p4)
 
-    def next(self):
+    def __next__(self):
         yield "p1"
         yield "p2"
         yield "p3"
