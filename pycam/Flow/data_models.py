@@ -621,7 +621,12 @@ class Tool(BaseCollectionItemDataContainer):
 
     collection_name = "tool"
     list_changed_event = "tool-list-changed"
-    attribute_converters = {"shape": _get_enum_resolver(ToolShape)}
+    attribute_converters = {"shape": _get_enum_resolver(ToolShape),
+                            "diameter": float,
+                            "feed": float,
+                            "spindle_enabled": _bool_converter,
+                            "spindle_speed": float,
+                            "spindle_delay": float}
     attribute_defaults = {"height": 10,
                           "feed": 300,
                           "spindle_enabled": True,
@@ -682,6 +687,7 @@ class Process(BaseCollectionItemDataContainer):
                             "trace_models": _get_collection_resolver("model", many=True),
                             "rounded_corners": _bool_converter,
                             "radius_compensation": _bool_converter,
+                            "overlap": float,
                             "step_down": float}
     attribute_defaults = {"overlap": 0,
                           "path_pattern": PathPattern.GRID,
