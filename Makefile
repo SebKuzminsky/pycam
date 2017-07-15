@@ -2,15 +2,13 @@
 # from the subversion repository.
 
 # use something like "VERSION=0.2 make" to override the VERSION on the command line
-VERSION ?= $(shell sed -n "s/^.*[\t ]*VERSION[\t ]*=[\t ]*[\"']\([^\"']*\)[\"'].*/\1/gp" pycam/__init__.py)
+VERSION = $(shell python -c 'import pycam; print(pycam.VERSION)')
+VERSION_FILE = pycam/Version.py
 REPO_TAGS ?= https://pycam.svn.sourceforge.net/svnroot/pycam/tags
-RELEASE_PREFIX ?= pycam-
-ARCHIVE_DIR_RELATIVE ?= release-archives
-EXPORT_DIR = $(RELEASE_PREFIX)$(VERSION)
-EXPORT_FILE_PREFIX = $(EXPORT_DIR)
-EXPORT_ZIP = $(EXPORT_FILE_PREFIX).zip
-EXPORT_TGZ = $(EXPORT_FILE_PREFIX).tar.gz
-EXPORT_WIN32 = $(EXPORT_FILE_PREFIX).win32.exe
+DIST_DIR = dist
+DIST_PREFIX = pycam-
+DIST_TGZ = $(DIST_DIR)/$(DIST_PREFIX)$(VERSION).tar.gz
+DIST_WIN32 = $(DIST_DIR)/$(DIST_PREFIX)$(VERSION).win32.exe
 PYTHON_EXE ?= python
 # check if the local version of python's distutils support "--plat-name"
 # (introduced in python 2.6)
@@ -30,56 +28,68 @@ WEBSITE_UPLOAD_PREFIX ?= $(SF_USER),pycam@
 endif
 WEBSITE_UPLOAD_LOCATION ?= web.sourceforge.net:/home/project-web/pycam/htdocs
 
-# turn the destination directory into an absolute path
-ARCHIVE_DIR := $(shell pwd)/$(ARCHIVE_DIR_RELATIVE)
 RM = rm -f
 
-.PHONY: zip tgz win32 clean dist git_export upload create_archive_dir man check-style test \
-	pylint-relaxed pylint-strict docs upload-docs
+.PHONY: build clean dist tgz win32 clean \
+	docs man upload-docs \
+	check-style pylint-relaxed pylint-strict test \
+	update-version update-deb-changelog
 
-dist: zip tgz win32
-	@# remove the tmp directory when everything is done
-	@$(RM) -r "$(EXPORT_DIR)"
+info:
+	@echo "Available targets:"
+	@echo "    build"
+	@echo "    clean"
+	@echo "    dist"
+	@echo "    docs"
+	@echo "    man"
+	@echo "    upload-docs"
+	@echo
+	@echo "Style checks:"
+	@echo "    check-style"
+	@echo "    pylint-relaxed"
+	@echo "    pylint-strict"
+
+build: man update-version
+	$(PYTHON_EXE) setup.py build
+
+archive: tgz win32
+	@# we can/should remove the version file in order to avoid a stale local version
+	@$(RM) "$(VERSION_FILE)"
 
 clean:
-	@$(RM) -r "$(EXPORT_DIR)"
+	@$(RM) -r build
 	@$(RM) -r "$(MKDOCS_EXPORT_DIR)"
+	@$(RM) "$(VERSION_FILE)"
 	$(MAKE) -C man clean
 
 man:
 	@$(MAKE) -C man man
 
-git_export: clean
-	@if git status 2>/dev/null >&2;\
-		then git clone . "$(EXPORT_DIR)";\
-		else echo "No git repo found."; exit 1;\
-	fi
-	# Windows needs a different name for the startup script - due to process creation
-	# (no fork/exec)
-	@cp "$(EXPORT_DIR)/scripts/pycam" "$(EXPORT_DIR)/scripts/pycam-loader.py"
+$(DIST_DIR):
+	@mkdir -p "$@"
 
-create_archive_dir:
-	@mkdir -p "$(ARCHIVE_DIR)"
+tgz: $(DIST_TGZ)
 
-zip: create_archive_dir man git_export
-	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py sdist --format zip --dist-dir "$(ARCHIVE_DIR)"
+$(DIST_TGZ): $(DIST_DIR) build
+	$(PYTHON_EXE) setup.py sdist --format gztar --dist-dir "$(DIST_DIR)"
 
-tgz: create_archive_dir man git_export
-	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py sdist --format gztar --dist-dir "$(ARCHIVE_DIR)"
+win32: $(DIST_WIN32)
 
-win32: create_archive_dir man git_export
+$(DIST_WIN32): $(DIST_DIR) build
 	# this is a binary release
-	cd "$(EXPORT_DIR)"; $(PYTHON_EXE) setup.py bdist_wininst --user-access-control force \
-		--dist-dir "$(ARCHIVE_DIR)" $(DISTUTILS_PLAT_NAME)
+	$(PYTHON_EXE) setup.py bdist_wininst --user-access-control force \
+		--dist-dir "$(DIST_DIR)" $(DISTUTILS_PLAT_NAME)
 
-upload:
-	svn cp "$(SVN_REPO_BASE)" "$(REPO_TAGS)/release-$(VERSION)" -m "tag release $(VERSION)"
-	svn import "$(ARCHIVE_DIR)/$(EXPORT_ZIP)" "$(REPO_TAGS)/archives/$(EXPORT_ZIP)" \
-		-m "added released zip file for version $(VERSION)"
-	svn import "$(ARCHIVE_DIR)/$(EXPORT_TGZ)" "$(REPO_TAGS)/archives/$(EXPORT_TGZ)" \
-		-m "added released tgz file for version $(VERSION)"
-	svn import "$(ARCHIVE_DIR)/$(EXPORT_WIN32)" "$(REPO_TAGS)/archives/$(EXPORT_WIN32)" \
-		-m "added released win32 installer for version $(VERSION)"
+update-deb-changelog:
+	@# retrieve the log of all commits since the latest release and add it to the deb changelog
+	if ! grep -qFw "$(VERSION)" debian/changelog; then \
+		git log --pretty=format:%s v$(shell dpkg-parsechangelog | sed --quiet -re 's/Version: (.*)/\1/ p').. | \
+			DEBFULLNAME="PyCAM Builder" DEBEMAIL="builder@pycam.org" \
+			xargs -r -d '\n' -n 1 -- debchange --newversion "$(subst -,.,$(VERSION))"; \
+	fi
+
+update-version:
+	@echo 'VERSION = "$(VERSION)"' >| "$(VERSION_FILE)"
 
 test: check-style
 
