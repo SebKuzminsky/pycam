@@ -622,12 +622,14 @@ class Tool(BaseCollectionItemDataContainer):
     collection_name = "tool"
     list_changed_event = "tool-list-changed"
     attribute_converters = {"shape": _get_enum_resolver(ToolShape),
+                            "tool_id": int,
                             "diameter": float,
                             "feed": float,
                             "spindle_enabled": _bool_converter,
                             "spindle_speed": float,
                             "spindle_delay": float}
-    attribute_defaults = {"height": 10,
+    attribute_defaults = {"tool_id": 1,
+                          "height": 10,
                           "feed": 300,
                           "spindle_enabled": True,
                           "spindle_speed": 1000,

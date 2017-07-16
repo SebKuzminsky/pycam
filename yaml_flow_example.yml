@@ -70,6 +70,7 @@ models:
 tools:
         tool1:
                 shape: flat_bottom
+                tool_id: 1
                 diameter: 3
                 feed: 300
                 spindle_enabled: true
