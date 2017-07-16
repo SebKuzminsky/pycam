@@ -207,7 +207,7 @@ def _get_xml(item, name=None):
     elif isinstance(item, dict):
         leaf = ET.Element(name)
         leaf.attrib["type"] = "dict"
-        for key, value in item.iteritems():
+        for key, value in item.items():
             leaf.append(_get_xml(value, name=key))
         return leaf
     else:

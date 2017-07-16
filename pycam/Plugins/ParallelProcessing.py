@@ -142,7 +142,7 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
         self.gui.get_object("ProcessPoolConnectedWorkersValue").set_text(str(len(stats)))
         details = pycam.Utils.threading.get_task_statistics()
         detail_text = os.linesep.join(["%s: %s" % (key, value)
-                                       for (key, value) in details.iteritems()])
+                                       for (key, value) in details.items()])
         self.gui.get_object("ProcessPoolDetails").set_text(detail_text)
         current_interval = int(max(1,
                                    self.gui.get_object("ProcessPoolRefreshInterval").get_value()))

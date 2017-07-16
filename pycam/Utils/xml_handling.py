@@ -35,7 +35,7 @@ def get_xml(item, name=None):
         return leaf
     elif isinstance(item, dict):
         leaf = ET.Element(name)
-        for key, value in item.iteritems():
+        for key, value in item.items():
             leaf.append(get_xml(value, name=key))
         return leaf
     else:
