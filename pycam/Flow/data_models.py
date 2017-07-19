@@ -32,7 +32,6 @@ from pycam.Geometry.Plane import Plane
 import pycam.PathGenerators.DropCutter
 import pycam.PathGenerators.EngraveCutter
 import pycam.PathGenerators.PushCutter
-from pycam.Plugins.Bounds import ToolBoundaryMode
 from pycam.Toolpath import ToolpathPathMode
 import pycam.Toolpath.Filters as tp_filters
 import pycam.Toolpath.MotionGrid as MotionGrid
@@ -174,6 +173,12 @@ class ToolpathFilter(Enum):
     PLUNGE_FEEDRATE = "plunge_feedrate"
     STEP_WIDTH = "step_width"
     CORNER_STYLE = "corner_style"
+
+
+class ToolBoundaryMode(Enum):
+    INSIDE = "inside"
+    ALONG = "along"
+    AROUND = "around"
 
 
 def _get_enum_value(enum_class, value):

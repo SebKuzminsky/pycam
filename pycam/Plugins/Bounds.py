@@ -18,9 +18,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from enum import Enum
-
-import pycam.Flow.data_models
+from pycam.Flow.data_models import Boundary, BoundsSpecification, Limit3D, LimitSingle
 import pycam.Plugins
 # TODO: move Toolpath.Bounds here?
 import pycam.Toolpath
@@ -28,12 +26,6 @@ from pycam.Utils import get_non_conflicting_name
 
 
 _RELATIVE_UNIT = ("%", "mm")
-
-
-class ToolBoundaryMode(Enum):
-    INSIDE = "inside"
-    ALONG = "along"
-    AROUND = "around"
 
 
 class Bounds(pycam.Plugins.ListPluginBase):
