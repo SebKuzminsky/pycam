@@ -173,6 +173,7 @@ def execute(parser, opts, args, pycam):
         # silence all warnings
         warnings.filterwarnings("ignore")
     else:
+        log.setLevel(logging.INFO)
         # silence gtk warnings
         try:
             import gi
