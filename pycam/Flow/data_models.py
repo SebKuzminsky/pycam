@@ -23,6 +23,7 @@ import copy
 from enum import Enum
 import functools
 import os.path
+import uuid
 
 from pycam.Cutters.CylindricalCutter import CylindricalCutter
 from pycam.Cutters.SphericalCutter import SphericalCutter
@@ -318,13 +319,6 @@ def _get_from_collection(collection_name, wanted, many=False):
         return default_result
 
 
-def _get_full_collection(collection_name):
-    try:
-        return _data_collections[collection_name].values()
-    except KeyError:
-        return None
-
-
 def _get_collection_resolver(collection_name, many=False):
     return functools.partial(_get_from_collection, collection_name, many=many)
 
@@ -427,36 +421,85 @@ class BaseDataContainer(object):
             raise UnexpectedAttributeError("unexpected attributes were given: {}"
                                            .format(unexpected_attributes_string))
 
+    def __str__(self):
+        attr_dict_string = ", ".join("{}={}".format(key, value)
+                                     for key, value in self.get_dict().items())
+        return "{}({})".format(get_type_name(self), attr_dict_string)
+
 
 class BaseCollection(object):
 
     def __init__(self, name, list_changed_event=None):
         self._name = name
         self._list_changed_event = list_changed_event
-        self._data = {}
+        self._data = []
 
-    def __setitem__(self, key, value):
-        self._data[key] = value
+    @property
+    def list_changed_event(self):
+        return self._list_changed_event
+
+    def clear(self):
+        while self._data:
+            self._data.pop()
         self._notify_list_changed()
 
-    def __getitem__(self, key):
-        return self._data[key]
-
-    def __hasitem__(self, key):
-        return key in self._data
-
-    def __delitem__(self, key):
-        del self._data[key]
+    def __setitem__(self, index, value):
+        self._data[index] = value
         self._notify_list_changed()
 
-    def keys(self):
-        return self._data.keys()
+    def append(self, value):
+        self._data.append(value)
+        self._notify_list_changed()
 
-    def items(self):
-        return self._data.items()
+    def __getitem__(self, index_or_key):
+        for item in self._data:
+            if index_or_key == item.get_id():
+                return item
+        else:
+            # Not found by ID? Interprete the value as an index.
+            if isinstance(index_or_key, int):
+                return self._data[index_or_key]
+            else:
+                _log.warning("Failed to find item in collection (%s): %s",
+                             self._name, index_or_key)
+                return None
 
-    def values(self):
-        return self._data.values()
+    def __delitem__(self, index):
+        item = self[index]
+        if item is not None:
+            try:
+                self.remove(item)
+            except ValueError:
+                pass
+
+    def remove(self, item):
+        _log.info("Removing '{}' from collection '{}'".format(item.get_id(), self._name))
+        try:
+            self._data.remove(item)
+        except ValueError:
+            raise KeyError("Failed to remove '{}' from collection '{}'"
+                           .format(item.get_id(), self._name))
+        self._notify_list_changed()
+
+    def __iter__(self):
+        return iter(self._data)
+
+    def __len__(self):
+        return len(self._data)
+
+    def __contains__(self, key):
+        return (key in self._data) or (key in [item.get_id() for item in self._data])
+
+    def __bool__(self):
+        return len(self._data) > 0
+
+    def swap_by_index(self, index1, index2):
+        smaller, bigger = min(index1, index2), max(index1, index2)
+        item1 = self._data.pop(bigger)
+        item2 = self._data.pop(smaller)
+        self._data.insert(smaller, item1)
+        self._data.insert(bigger, item2)
+        self._notify_list_changed()
 
     def _notify_list_changed(self):
         if self._list_changed_event:
@@ -469,15 +512,24 @@ class BaseCollectionItemDataContainer(BaseDataContainer):
     # the name of the collection should be overwritten in every subclass
     collection_name = None
     list_changed_event = None
-    unique_attribute = "name"
+    unique_attribute = "uuid"
 
-    def __init__(self, data):
+    def __init__(self, item_id, data):
         super(BaseCollectionItemDataContainer, self).__init__(data)
         assert self.collection_name is not None, (
             "Missing unique attribute ({}) of '{}' class"
             .format(self.unique_attribute, get_type_name(self)))
-        item_id = data[self.unique_attribute]
-        self.get_collection()[item_id] = self
+        if item_id is None:
+            item_id = uuid.uuid4().hex
+        try:
+            hash(item_id)
+        except TypeError:
+            raise InvalidDataError("Invalid item ID ({}): not hashable".format(item_id))
+        self._data[self.unique_attribute] = item_id
+        self.get_collection().append(self)
+
+    def get_id(self):
+        return self.get_dict()[self.unique_attribute]
 
     @classmethod
     def get_collection(cls):
@@ -490,12 +542,11 @@ class BaseCollectionItemDataContainer(BaseDataContainer):
             return collection
 
     def __del__(self):
-        item_id = self._data[self.unique_attribute]
         # maybe the dict of collections is already gone (during shutdown)
         if _data_collections:
             collection = self.get_collection()
             try:
-                del collection[item_id]
+                del collection[self.get_id()]
             except KeyError:
                 pass
 

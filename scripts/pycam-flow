@@ -64,7 +64,7 @@ def main():
             print("Flow description parse failure ({}): {}".format(fname, exc), file=sys.stderr)
             sys.exit(1)
     pycam.Utils.set_application_key("pycam-cli")
-    for export in pycam.Flow.data_models.Export.get_collection().values():
+    for export in pycam.Flow.data_models.Export.get_collection():
         export.run_export()
 
 
