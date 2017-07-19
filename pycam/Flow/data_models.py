@@ -599,10 +599,26 @@ class Source(BaseDataContainer):
 
     attribute_converters = {"type": _get_enum_resolver(SourceType)}
 
-    def get(self, target_collection):
+    def __hash__(self):
         source_type = self.get_value("type")
         if source_type == SourceType.COPY:
-            return self._get_source_copy()
+            return hash(self._get_source_copy())
+        elif source_type in (SourceType.FILE, SourceType.URL):
+            return hash(self.get_value("location"))
+        elif source_type == SourceType.TASK:
+            return hash(self._get_source_task())
+        elif source_type == SourceType.TOOLPATH:
+            return hash(self._get_source_toolpath())
+        elif source_type == SourceType.OBJECT:
+            return hash(self._get_source_object())
+        else:
+            raise InvalidKeyError(source_type, SourceType)
+
+    @CacheStorage(("type", ))
+    def get(self, related_collection_name):
+        source_type = self.get_value("type")
+        if source_type == SourceType.COPY:
+            return self._get_source_copy(related_collection_name)
         elif source_type in (SourceType.FILE, SourceType.URL):
             return self._get_source_location(source_type)
         elif source_type == SourceType.TASK:
@@ -616,9 +632,9 @@ class Source(BaseDataContainer):
 
     @_set_parser_context("Source 'copy'")
     @_set_allowed_attributes({"type", "original"})
-    def _get_source_copy(self):
+    def _get_source_copy(self, related_collection_name):
         source_name = self.get_value("original")
-        return _get_from_collection(target_collection, source_name).model
+        return _get_from_collection(related_collection_name, source_name).model
 
     @_set_parser_context("Source 'file/url'")
     @_set_allowed_attributes({"type", "location"})
