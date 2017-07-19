@@ -368,14 +368,14 @@ class BaseDataContainer(object):
     def parse_from_dict(cls, data):
         return cls(data)
 
-    def get_value(self, key, default=None):
+    def get_value(self, key, default=None, raw=False):
         try:
-            raw = self._data[key]
+            raw_value = self._data[key]
         except KeyError:
             if default is not None:
-                raw = default
+                raw_value = default
             elif key in self.attribute_defaults:
-                raw = self.attribute_defaults[key]
+                raw_value = copy.deepcopy(self.attribute_defaults[key])
             else:
                 if hasattr(self, "_current_parser_context"):
                     # the context will be added automatically
