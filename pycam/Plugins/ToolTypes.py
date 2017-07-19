@@ -48,12 +48,12 @@ class ToolTypeBallNose(pycam.Plugins.PluginBase):
         parameters = {"radius": 1.0,
                       "feedrate": 300,
                       "spindle_speed": 1000}
-        self.core.get("register_parameter_set")("tool", "ballnose", "Ball nose", self.get_tool,
+        self.core.get("register_parameter_set")("tool", "ball_nose", "Ball nose", self.get_tool,
                                                 parameters=parameters, weight=20)
         return True
 
     def teardown(self):
-        self.core.get("unregister_parameter_set")("tool", "ballnose")
+        self.core.get("unregister_parameter_set")("tool", "ball_nose")
 
     @tool_params_and_filters("radius")
     def get_tool(self, radius):
@@ -70,12 +70,12 @@ class ToolTypeBullNose(pycam.Plugins.PluginBase):
                       "torus_radius": 0.25,
                       "feedrate": 300,
                       "spindle_speed": 1000}
-        self.core.get("register_parameter_set")("tool", "bullnose", "Bull nose", self.get_tool,
+        self.core.get("register_parameter_set")("tool", "torus", "Bull nose", self.get_tool,
                                                 parameters=parameters, weight=30)
         return True
 
     def teardown(self):
-        self.core.get("unregister_parameter_set")("tool", "bullnose")
+        self.core.get("unregister_parameter_set")("tool", "torus")
 
     @tool_params_and_filters("radius", "torus_radius")
     def get_tool(self, radius, torus_radius):
@@ -91,12 +91,12 @@ class ToolTypeFlat(pycam.Plugins.PluginBase):
         parameters = {"radius": 1.0,
                       "feedrate": 300,
                       "spindle_speed": 1000}
-        self.core.get("register_parameter_set")("tool", "flat", "Flat bottom", self.get_tool,
-                                                parameters=parameters, weight=10)
+        self.core.get("register_parameter_set")("tool", "flat_bottom", "Flat bottom",
+                                                self.get_tool, parameters=parameters, weight=10)
         return True
 
     def teardown(self):
-        self.core.get("unregister_parameter_set")("tool", "flat")
+        self.core.get("unregister_parameter_set")("tool", "flat_bottom")
 
     @tool_params_and_filters("radius")
     def get_tool(self, radius):

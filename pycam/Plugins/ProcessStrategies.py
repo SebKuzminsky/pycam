@@ -34,12 +34,12 @@ class ProcessStrategySlicing(pycam.Plugins.PluginBase):
                       "step_down": 1.0,
                       "material_allowance": 0,
                       "path_pattern": None}
-        self.core.get("register_parameter_set")("process", "slicing", "Slice removal", None,
+        self.core.get("register_parameter_set")("process", "slice", "Slice removal", None,
                                                 parameters=parameters, weight=10)
         return True
 
     def teardown(self):
-        self.core.get("unregister_parameter_set")("process", "slicing")
+        self.core.get("unregister_parameter_set")("process", "slice")
 
 
 class ProcessStrategyContour(pycam.Plugins.PluginBase):
@@ -71,12 +71,12 @@ class ProcessStrategySurfacing(pycam.Plugins.PluginBase):
         parameters = {"overlap": 0.6,
                       "material_allowance": 0,
                       "path_pattern": None}
-        self.core.get("register_parameter_set")("process", "surfacing", "Surfacing", None,
+        self.core.get("register_parameter_set")("process", "surface", "Surfacing", None,
                                                 parameters=parameters, weight=50)
         return True
 
     def teardown(self):
-        self.core.get("unregister_parameter_set")("process", "surfacing")
+        self.core.get("unregister_parameter_set")("process", "surface")
 
 
 class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
@@ -91,9 +91,9 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
                       "radius_compensation": False,
                       "trace_models": [],
                       "pocketing_type": pycam.Toolpath.MotionGrid.PocketingType.NONE}
-        self.core.get("register_parameter_set")("process", "engraving", "Engraving", None,
+        self.core.get("register_parameter_set")("process", "engrave", "Engraving", None,
                                                 parameters=parameters, weight=80)
         return True
 
     def teardown(self):
-        self.core.get("unregister_parameter_set")("process", "engraving")
+        self.core.get("unregister_parameter_set")("process", "engrave")
