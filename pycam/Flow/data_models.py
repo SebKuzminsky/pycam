@@ -1054,6 +1054,14 @@ class Toolpath(BaseCollectionItemDataContainer):
             toolpath = transformation.get_transformed_toolpath(toolpath)
         return toolpath
 
+    def append_transformation(self, transform_dict):
+        current_transformations = self.get_value("transformations", raw=True)
+        current_transformations.append(copy.deepcopy(transform_dict))
+        # verify the result (bail out on error)
+        self.attribute_converters["transformations"](current_transformations)
+        # there was no problem - overwrite the previous transformations
+        self.set_value("transformations", current_transformations)
+
 
 class ExportSettings(BaseCollectionItemDataContainer):
 
