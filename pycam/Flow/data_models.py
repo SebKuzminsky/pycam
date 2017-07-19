@@ -872,7 +872,22 @@ class Boundary(BaseCollectionItemDataContainer):
                             "lower": _limit3d_converter,
                             "upper": _limit3d_converter,
                             "tool_boundary": _get_enum_resolver(ToolBoundaryMode)}
-    attribute_defaults = {"tool_boundary": ToolBoundaryMode.ALONG}
+    attribute_defaults = {"tool_boundary": ToolBoundaryMode.ALONG,
+                          "reference_models": []}
+
+    @_set_parser_context("Boundary")
+    def coerce_limits(self, models=None):
+        abs_boundary = self.get_absolute_limits(models=models)
+        if abs_boundary is None:
+            # nothing to be changed
+            return
+        for axis_name, lower, upper in (("X", abs_boundary.minx, abs_boundary.maxx),
+                                        ("Y", abs_boundary.miny, abs_boundary.maxy),
+                                        ("Z", abs_boundary.minz, abs_boundary.maxz)):
+            if upper < lower:
+                # TODO: implement boundary adjustment in case of conflicts
+                _log.warning("Negative Boundary encounterd for %s: %g < %g. "
+                             "Coercing is not implemented, yes.", axis_name, lower, upper)
 
     @_set_parser_context("Boundary")
     def get_absolute_limits(self, tool_radius=None, models=None):
