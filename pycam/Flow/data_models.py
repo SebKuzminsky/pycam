@@ -113,6 +113,7 @@ class SourceType(Enum):
     COPY = "copy"
     TASK = "task"
     TOOLPATH = "toolpath"
+    OBJECT = "object"
 
 
 class ModelTransformationAction(Enum):
@@ -565,6 +566,8 @@ class Source(BaseDataContainer):
             return self._get_source_task()
         elif source_type == SourceType.TOOLPATH:
             return self._get_source_toolpath()
+        elif source_type == SourceType.OBJECT:
+            return self._get_source_object()
         else:
             raise InvalidKeyError(source_type, SourceType)
 
@@ -597,6 +600,12 @@ class Source(BaseDataContainer):
     def _get_source_toolpath(self):
         toolpath_names = self.get_value("toolpaths")
         return _get_from_collection("toolpath", toolpath_names, many=True)
+
+    @_set_parser_context("Source 'object'")
+    @_set_allowed_attributes({"type", "data"})
+    def _get_source_object(self):
+        """ transfer method for intra-process transfer """
+        return self.get_value("data")
 
 
 class ModelTransformation(BaseDataContainer):
