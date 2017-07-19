@@ -23,6 +23,7 @@ import copy
 from enum import Enum
 import functools
 import os.path
+import time
 import uuid
 
 from pycam.Cutters.CylindricalCutter import CylindricalCutter
@@ -231,6 +232,7 @@ def _bool_converter(value):
 LimitSingle = collections.namedtuple("LimitSingle", ("value", "is_relative"))
 Limit3D = collections.namedtuple("Limit3D", ("x", "y", "z"))
 AxesValues = collections.namedtuple("AxesValues", ("x", "y", "z"))
+CacheItem = collections.namedtuple("CacheItem", ("timestamp", "content"))
 
 
 def _limit3d_converter(point):
@@ -352,6 +354,47 @@ def _set_allowed_attributes(attr_set):
             return func(self, *args, **kwargs)
         return inner_function
     return wrap
+
+
+class CacheStorage(object):
+
+    def __init__(self, relevant_dict_keys, max_cache_size=10):
+        self._relevant_dict_keys = tuple(relevant_dict_keys)
+        self._max_cache_size = max_cache_size
+
+    def __call__(self, calc_function):
+        self._calc_function = calc_function
+        for attr in ("__name__", "__doc__", "__module__"):
+            setattr(self, attr, getattr(calc_function, attr))
+        return self
+
+    def _get_cache_key(self, inst):
+        hashes = []
+        for key in self._relevant_dict_keys:
+            value = inst.get_value(key)
+            if isinstance(value, (list, tuple)):
+                hashed = tuple([hash(item) for item in value])
+            else:
+                hashed = hash(value)
+            hashes.append(hashed)
+        return tuple(hashes)
+
+    def __get__(self, inst, owner):
+        cache_key = self._get_cache_key(inst)
+        if not hasattr(self, "_cache_storage"):
+            self._cache_storage = {}
+        try:
+            return self._cache_storage[cache_key].content
+        except KeyError:
+            pass
+        cache_item = CacheItem(time.time(), self._calc_function(inst))
+        self._cache_storage[cache_key] = cache_item
+        if len(self._cache_storage) > self._max_cache_size:
+            # remove the oldest cache item
+            item_list = [(key, value.timestamp) for key, value in self._cache_storage.items()]
+            item_list.sort(key=lambda item: item[1])
+            self._cache_storage.pop(item_list[0][0])
+        return cache_item.content
 
 
 class BaseDataContainer(object):
