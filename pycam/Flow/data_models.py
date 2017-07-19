@@ -813,18 +813,18 @@ class Process(BaseCollectionItemDataContainer):
         elif strategy == ProcessStrategy.SURFACE:
             path_pattern = self.get_value("path_pattern")
             if path_pattern == PathPattern.SPIRAL:
-                func = MotionGrid.get_spiral
-                kwarg_names = ("grid_direction")
+                func = functools.partial(MotionGrid.get_spiral,
+                                         spiral_direction=self.get_value("spiral_direction"),
+                                         rounded_corners=self.get_value("rounded_corners"))
             elif path_pattern == PathPattern.GRID:
-                func = MotionGrid.get_fixed_grid
-                kwarg_names = ("spiral_direction", "rounded_corners")
+                func = functools.partial(MotionGrid.get_fixed_grid,
+                                         grid_direction=self.get_value("grid_direction"))
             else:
                 raise InvalidKeyError(path_pattern, PathPattern)
             # surfacing requires a finer grid (arbitrary factor)
             step_width = tool_radius / 4.0
-            kwargs = {key: self.get_value(key) for key in kwarg_names}
             return func(box, None, step_width=step_width, line_distance=line_distance,
-                        milling_style=milling_style, path_pattern=path_pattern, **kwargs)
+                        milling_style=milling_style)
         elif strategy == ProcessStrategy.ENGRAVE:
             models = [m.get_model() for m in self.get_value("trace_models")]
             if not models:
