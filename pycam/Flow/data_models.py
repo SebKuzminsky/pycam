@@ -973,7 +973,8 @@ class ToolpathTransformation(BaseDataContainer):
                             "lower": functools.partial(_axes_values_converter, allow_none=True),
                             "upper": functools.partial(_axes_values_converter, allow_none=True),
                             "shift_target": _get_enum_resolver(PositionShiftTarget),
-                            "axes": functools.partial(_axes_values_converter, allow_none=True)}
+                            "axes": functools.partial(_axes_values_converter, allow_none=True),
+                            "models": _get_collection_resolver("model", many=True)}
 
     def get_transformed_toolpath(self, toolpath):
         action = self.get_value("action")
@@ -985,11 +986,6 @@ class ToolpathTransformation(BaseDataContainer):
             return self._get_shifted_toolpath(toolpath)
         else:
             raise InvalidKeyError(action, ToolpathTransformationAction)
-
-    @_set_parser_context("Toolpath transformation 'crop'")
-    @_set_allowed_attributes({"action", "lower", "upper"})
-    def _get_cropped_toolpath(self, toolpath):
-        raise NotImplemented("Toolpath cropping is not implemented, yet.")
 
     @_set_parser_context("Toolpath transformation 'clone'")
     @_set_allowed_attributes({"action", "offset", "clone_count"})
@@ -1019,6 +1015,27 @@ class ToolpathTransformation(BaseDataContainer):
         new_toolpath = toolpath.copy()
         new_toolpath.path = toolpath | tp_filters.TransformPosition(shift_matrix)
         return new_toolpath
+
+    @_set_parser_context("Model transformation 'crop'")
+    @_set_allowed_attributes({"action", "models"})
+    def _get_cropped_toolpath(self, toolpath):
+        selected = self.core.get("toolpaths").get_selected()
+        polygons = []
+        for model in [m.model for m in self.get_value("models")]:
+            if hasattr(model, "get_polygons"):
+                polygons.extend(model.get_polygons())
+            else:
+                raise InvalidDataError("Toolpath Crop: 'models' may only contain 2D models")
+        # Store the new toolpath first separately - otherwise we can't
+        # revert the changes in case of an empty result.
+        new_moves = toolpath | Filters.Crop(polygons)
+        if new_moves | Filters.MovesOnly():
+            new_toolpath = toolpath.copy()
+            new_toolpath.path = new_moves
+            return new_toolpath
+        else:
+            _log.info("Toolpath cropping: the result is empty")
+            return None
 
 
 class Toolpath(BaseCollectionItemDataContainer):
