@@ -19,6 +19,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
+import pycam.Flow.data_models
 import pycam.Plugins
 import pycam.Toolpath
 from pycam.Utils import get_non_conflicting_name
@@ -29,6 +30,7 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
     UI_FILE = "toolpaths.ui"
     CATEGORIES = ["Toolpath"]
     ICONS = {"visible": "visible.svg", "hidden": "visible_off.svg"}
+    COLLECTION_ITEM_TYPE = pycam.Flow.data_models.Toolpath
 
     def setup(self):
         self.last_toolpath_file = None
@@ -90,7 +92,7 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
         self.core.set("toolpaths", None)
 
     def get_visible(self):
-        return [tp for tp in self if tp["visible"]]
+        return [tp for tp in self.get_all() if tp.get_application_value("visible")]
 
     def _update_widgets(self):
         toolpaths = self
@@ -111,21 +113,22 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
     def _toggle_visibility(self, treeview, path, column):
         toolpath = self.get_by_path(path)
         if toolpath:
-            toolpath["visible"] = not toolpath["visible"]
+            toolpath.set_application_value("visible",
+                                           not toolpath.get_application_value("visible"))
         self.core.emit_event("visual-item-updated")
 
     def _edit_toolpath_name(self, cell, path, new_text):
         toolpath = self.get_by_path(path)
-        if toolpath and (new_text != toolpath["name"]) and new_text:
-            toolpath["name"] = new_text
+        if toolpath and (new_text != toolpath.get_application_value("name")) and new_text:
+            toolpath.set_application_value("name", new_text)
 
     def _visualize_toolpath_name(self, column, cell, model, m_iter, data):
         toolpath = self.get_by_path(model.get_path(m_iter))
-        cell.set_property("text", toolpath["name"])
+        cell.set_property("text", toolpath.get_application_value("name"))
 
     def _visualize_visible_state(self, column, cell, model, m_iter, data):
         toolpath = self.get_by_path(model.get_path(m_iter))
-        if toolpath["visible"]:
+        if toolpath.get_application_value("visible"):
             cell.set_property("pixbuf", self.ICONS["visible"])
         else:
             cell.set_property("pixbuf", self.ICONS["hidden"])
@@ -140,19 +143,5 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
                 return "%d seconds" % int(round(minutes * 60))
 
         toolpath = self.get_by_path(model.get_path(m_iter))
-        text = get_time_string(toolpath.get_machine_time())
+        text = get_time_string(toolpath.toolpath.get_machine_time())
         cell.set_property("text", text)
-
-    def add_new(self, new_tp, name=None):
-        assert isinstance(new_tp, pycam.Toolpath.Toolpath), \
-                "Invalid type: %s (%s)" % (type(new_tp), new_tp)
-        moves = new_tp.path
-        tool = new_tp.tool
-        filters = new_tp.filters
-        if name is None:
-            name = get_non_conflicting_name("Toolpath #%d", [tp["name"] for tp in self])
-        attributes = {"visible": True, "name": name}
-        # TODO: move to the new data_model
-        new_tp = pycam.Flow.data_models.Toolpath(toolpath_path=moves, attributes=attributes,
-                                                 toolpath_filters=filters, tool=tool)
-        self.append(new_tp)

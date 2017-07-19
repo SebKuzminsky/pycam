@@ -33,6 +33,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
     UI_FILE = "bounds.ui"
     DEPENDS = ["Models"]
     CATEGORIES = ["Bounds"]
+    COLLECTION_ITEM_TYPE = Boundary
 
     # mapping of boundary types and GUI control elements
     CONTROL_BUTTONS = ("TypeRelativeMargin", "TypeCustom",
@@ -131,8 +132,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
             self.unregister_gtk_handlers(self._gtk_handlers)
         self.unregister_event_handlers(self._event_handlers)
         self.core.set("bounds", None)
-        while len(self) > 0:
-            self.pop()
+        self.clear()
 
     def get_selected_models(self, index=False):
         return self.models_control.get_value()
@@ -142,7 +142,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
 
     def _get_current_bounds_box(self):
         bounds = self.get_selected()
-        models = [m.model for m in bounds["parameters"]["Models"]]
+        models = [m.model for m in bounds.get_value("reference_models")]
         if not models:
             models = [m.model for m in self.core.get("models").get_visible()]
         return pycam.Geometry.Model.get_combined_bounds(models)
@@ -160,7 +160,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
 
     def _render_bounds_name(self, column, cell, model, m_iter, data):
         bounds = self.get_by_path(model.get_path(m_iter))
-        cell.set_property("text", bounds["name"])
+        cell.set_property("text", bounds.get_application_value("name"))
 
     def _trigger_table_update(self):
         self.gui.get_object("SizeColumn").set_cell_data_func(self.gui.get_object("SizeCell"),
@@ -169,29 +169,20 @@ class Bounds(pycam.Plugins.ListPluginBase):
                                                              self._render_bounds_name)
 
     def _update_model_list(self):
-        models = self.core.get("models")
         choices = []
-        for model in models:
-            choices.append((model["name"], model))
+        for model in self.core.get("models").get_all():
+            choices.append((model.get_id(), model))
         self.models_control.update_choices(choices)
         self._update_controls()
 
     def _store_bounds_settings(self, widget=None):
-        data = self.get_selected()
+        bounds = self.get_selected()
         control_box = self.gui.get_object("BoundsSettingsControlsBox")
-        if data is not None:
-            for obj_name in self.CONTROL_BUTTONS:
-                obj = self.gui.get_object(obj_name)
-                for get_func in self.CONTROL_GET:
-                    if hasattr(obj, get_func):
-                        value = getattr(obj, get_func)()
-                        data["parameters"][obj_name] = value
-                        break
-                else:
-                    self.log.info("Failed to update value of control %s", obj_name)
-            data["parameters"]["Models"] = self.get_selected_models()
+        if bounds is None:
+            control_box.hide()
+        else:
+            self._copy_from_controls_to_bounds(bounds)
             control_box.show()
-        self._update_controls()
 
     def _switch_relative_custom(self, widget=None):
         bounds = self.get_selected()
@@ -217,15 +208,51 @@ class Bounds(pycam.Plugins.ListPluginBase):
                 func_high = lambda value, axis: box.upper[axis] + value
             # absolute mode -> no models may be selected
             self.select_models([])
-        for axis in "XYZ":
-            for func, name in ((func_low, "BoundaryLow"), (func_high, "BoundaryHigh")):
+        for key, func in (("lower", func_low), ("upper", func_high)):
+            values = []
+            for item in bounds.get_value(key):
                 try:
-                    result = func(bounds["parameters"][name + axis], "XYZ".index(axis))
+                    new_value = func(item.value)
                 except ZeroDivisionError:
                     # this happens for flat models
-                    result = 0
-                self.gui.get_object(name + axis).set_value(result)
+                    new_value = 0
+                values.append(new_value)
+            bounds.set_value(key, tuple(values))
+        self._copy_from_bounds_to_controls(bounds)
         self._update_controls()
+
+    def _copy_from_controls_to_bounds(self, bounds):
+        bounds.set_value("reference_models", self.get_selected_models())
+        for name, obj_keys in (("lower", ("BoundaryLowX", "BoundaryLowY", "BoundaryLowZ")),
+                               ("upper", ("BoundaryHighX", "BoundaryHighY", "BoundaryHighZ"))):
+            values = [self.gui.get_object(name).get_value() for name in obj_keys]
+            bounds.set_value(name, tuple(values))
+        if self.gui.get_object("TypeRelativeMargin").get_active():
+            bounds.set_value("specification", BoundsSpecification.MARGINS.value)
+        else:
+            bounds.set_value("specification", BoundsSpecification.ABSOLUTE.value)
+        # TODO: handle inside / along / outside limits for tools
+
+    def _copy_from_bounds_to_controls(self, bounds):
+        self.select_models(bounds.get_value("reference_models"))
+        for name, value in (("BoundaryLowX", bounds.get_value("lower").x.value),
+                            ("BoundaryLowY", bounds.get_value("lower").y.value),
+                            ("BoundaryLowZ", bounds.get_value("lower").z.value),
+                            ("BoundaryHighX", bounds.get_value("upper").x.value),
+                            ("BoundaryHighY", bounds.get_value("upper").y.value),
+                            ("BoundaryHighZ", bounds.get_value("upper").z.value)):
+            self.gui.get_object(name).set_value(value)
+        is_absolute = (bounds.get_value("specification") == BoundsSpecification.ABSOLUTE)
+        if is_absolute:
+            self.gui.get_object("TypeRelativeMargin").set_active(True)
+        else:
+            self.gui.get_object("TypeCustom").set_active(True)
+        percent_values = any([item.is_relative
+                              for item in bounds.get_value("lower") + bounds.get_value("upper")])
+        self.gui.get_object("RelativeUnit").set_active({True: 1, False: 0}[percent_values])
+        # TODO: handle inside / along / outside limits for tools
+        border_limit = 1
+        self.gui.get_object("ToolLimit").set_active(border_limit)
 
     def _switch_percent_absolute(self, widget=None):
         """ re-calculate the values of the controls for the lower and upper
@@ -252,7 +279,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
             axis_index = "XYZ".index(axis)
             for name in ("BoundaryLow", "BoundaryHigh"):
                 try:
-                    result = func(bounds["parameters"][name + axis], axis_index)
+                    result = func(bounds.get_dict()[name + axis], axis_index)
                 except ZeroDivisionError:
                     # this happens for flat models
                     result = 0
@@ -266,22 +293,23 @@ class Bounds(pycam.Plugins.ListPluginBase):
         bounds = self.get_selected()
         if not bounds:
             return
+        bounds_dict = bounds.get_dict()
         axis_index = "XYZ".index(axis)
         key_low = "BoundaryLow%s" % axis
         key_high = "BoundaryHigh%s" % axis
         change_factor = {"0": 0, "+": 1, "-": -1}[change]
         if change == "0":
-            bounds["parameters"][key_low] = 0
-            bounds["parameters"][key_high] = 0
+            bounds_dict[key_low] = 0
+            bounds_dict[key_high] = 0
         elif self._is_percent():
             # % margin
             percent_change_per_side = 10
             # reduce the change value, if the boundary would turn negative afterwards
-            dim_percent = 100 + bounds["parameters"][key_low] + bounds["parameters"][key_high]
+            dim_percent = 100 + bounds_dict[key_low] + bounds_dict[key_high]
             if (change_factor < 0) and (dim_percent < 2 * percent_change_per_side):
                 percent_change_per_side = dim_percent / 2
-            bounds["parameters"][key_low] += change_factor * percent_change_per_side
-            bounds["parameters"][key_high] += change_factor * percent_change_per_side
+            bounds_dict[key_low] += change_factor * percent_change_per_side
+            bounds_dict[key_high] += change_factor * percent_change_per_side
         else:
             # absolute margin
             model_box = self._get_current_bounds_box()
@@ -289,11 +317,11 @@ class Bounds(pycam.Plugins.ListPluginBase):
                 return
             change_value = model_box.get_dimensions()[axis_index] * 0.1
             dim = (model_box.get_dimensions()[axis_index]
-                   + bounds["parameters"][key_low] + bounds["parameters"][key_high])
+                   + bounds_dict[key_low] + bounds_dict[key_high])
             if (change_factor < 0) and (dim < 2 * change_value):
                 change_value = dim / 2
-            bounds["parameters"][key_low] += change_value * change_factor
-            bounds["parameters"][key_high] += change_value * change_factor
+            bounds_dict[key_low] += change_value * change_factor
+            bounds_dict[key_high] += change_value * change_factor
         self._update_controls()
 
     def _is_percent(self):
@@ -304,53 +332,18 @@ class Bounds(pycam.Plugins.ListPluginBase):
         bounds = self.get_selected()
         if not bounds:
             return
-        margins = bounds["parameters"]
-        for axis_index, axis in enumerate("XYZ"):
-            key_low = "BoundaryLow%s" % axis
-            key_high = "BoundaryHigh%s" % axis
-            if self._is_percent():
-                # % margin
-                dim_percent = margins[key_low] + margins[key_high]
-                if dim_percent < -100:
-                    # this dimension went below zero -> reduce the relative margins
-                    margins[key_low] /= dim_percent / -100
-                    margins[key_high] = 100 - margins[key_low]
-            else:
-                # absolute margin
-                model_box = self._get_current_bounds_box()
-                if model_box is None:
-                    return
-                dim = margins[key_low] + margins[key_high]
-                if dim < -model_box.get_dimensions()[axis_index]:
-                    if model_box.get_dimensions()[axis_index] > 0:
-                        margins[key_low] /= dim / -model_box.get_dimensions()[axis_index]
-                    else:
-                        margins[key_low] += -dim / 2
-                    margins[key_high] = -model_box.get_dimensions()[axis_index] - margins[key_low]
+        bounds.coerce_limits()
 
     def _update_controls(self, widget=None):
         bounds = self.get_selected()
+        self.log.info("Update Bounds controls: %s", bounds)
         control_box = self.gui.get_object("BoundsSettingsControlsBox")
         if not bounds:
             control_box.hide()
         else:
             self._validate_bounds()
             self.unregister_gtk_handlers(self._gtk_handlers)
-            for obj_name, value in bounds["parameters"].items():
-                if obj_name == "Models":
-                    self.select_models(value)
-                    continue
-                obj = self.gui.get_object(obj_name)
-                for set_func in self.CONTROL_SET:
-                    if hasattr(obj, set_func):
-                        if (value is False) and hasattr(obj, "get_group"):
-                            # no "False" for radio buttons
-                            pass
-                        else:
-                            getattr(obj, set_func)(value)
-                        break
-                else:
-                    self.log.info("Failed to set value of control: %s", obj_name)
+            self._copy_from_bounds_to_controls(bounds)
             self.register_gtk_handlers(self._gtk_handlers)
             control_box.show()
             # enable/disable margin controls for percent-style changes and zero-dimensions
@@ -391,14 +384,16 @@ class Bounds(pycam.Plugins.ListPluginBase):
         self.core.emit_event("bounds-changed")
 
     def _bounds_new(self, *args):
-        name = get_non_conflicting_name("Bounds #%d", [bounds["name"] for bounds in self])
-        # TODO: migrate to new data_model
-        new_bounds = pycam.Flows.data_models.Boundary(self.core, name)
-        self.append(new_bounds)
+        name = get_non_conflicting_name(
+            "Bounds #%d", [bounds.get_application_value("name") for bounds in self.get_all()])
+        new_bounds = Boundary(None, {"specification": "margins",
+                                     "lower": (0, 0, 0), "upper": (0, 0, 0),
+                                     "reference_models": []})
+        new_bounds.set_application_value("name", name)
         self.select(new_bounds)
 
     def _edit_bounds_name(self, cell, path, new_text):
         bounds = self.get_by_path(path)
-        if bounds and (new_text != bounds["name"]) and new_text:
-            bounds["name"] = new_text
+        if bounds and (new_text != bounds.get_application_value("name")) and new_text:
+            bounds.set_application_value("name", new_text)
             self.core.emit_event("bounds-list-changed")

@@ -46,10 +46,9 @@ class TaskParamCollisionModels(pycam.Plugins.PluginBase):
 
     def _update_models(self):
         choices = []
-        models = self.core.get("models")
-        for model in models:
+        for model in self.core.get("models").get_all():
             if hasattr(model.model, "triangles"):
-                choices.append((model["name"], model))
+                choices.append((model.get_id(), model))
         self.control.update_choices(choices)
 
 
@@ -73,9 +72,8 @@ class TaskParamTool(pycam.Plugins.PluginBase):
 
     def _update_tools(self):
         choices = []
-        tools = self.core.get("tools")
-        for tool in tools:
-            choices.append((tool.get_value("name"), tool))
+        for tool in self.core.get("tools").get_all():
+            choices.append((tool.get_application_value("name"), tool))
         self.control.update_choices(choices)
 
 
@@ -99,9 +97,8 @@ class TaskParamProcess(pycam.Plugins.PluginBase):
 
     def _update_processes(self):
         choices = []
-        processes = self.core.get("processes")
-        for process in processes:
-            choices.append((process.get_value("name"), process))
+        for process in self.core.get("processes").get_all():
+            choices.append((process.get_application_value("name"), process))
         self.control.update_choices(choices)
 
 
@@ -126,6 +123,6 @@ class TaskParamBounds(pycam.Plugins.PluginBase):
     def _update_bounds(self):
         choices = []
         bounds = self.core.get("bounds")
-        for bound in bounds:
-            choices.append((bound.get_value("name"), bound))
+        for bound in bounds.get_all():
+            choices.append((bound.get_application_value("name"), bound))
         self.control.update_choices(choices)

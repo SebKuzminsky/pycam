@@ -28,6 +28,7 @@ class Tools(pycam.Plugins.ListPluginBase):
     DEPENDS = ["ParameterGroupManager"]
     CATEGORIES = ["Tool"]
     UI_FILE = "tools.ui"
+    COLLECTION_ITEM_TYPE = pycam.Flow.data_models.Tool
 
     def setup(self):
         self.core.set("tools", self)
@@ -127,8 +128,7 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
         self.core.set("tools", None)
-        while len(self) > 0:
-            self.pop()
+        self.clear()
         return True
 
     def _trigger_table_update(self):
@@ -140,24 +140,22 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.gui.get_object("ShapeCell"), self._render_tool_shape)
 
     def _render_tool_info(self, column, cell, model, m_iter, key):
-        path = model.get_path(m_iter)
-        tool = self[path[0]]
-        cell.set_property("text", str(tool.get_value(key)))
+        tool = self.get_by_path(model.get_path(m_iter))
+        if key in ("tool_id", ):
+            text = tool.get_value(key)
+        else:
+            text = tool.get_application_value(key)
+        cell.set_property("text", str(text))
 
     def _render_tool_shape(self, column, cell, model, m_iter, data):
         tool = self.get_by_path(model.get_path(m_iter))
-        if not tool:
-            return
-        if tool.diameter:
-            text = "%g%s" % (tool.diameter, self.core.get("unit"))
-        else:
-            text = ""
+        text = "%g%s" % (tool.diameter, self.core.get("unit"))
         cell.set_property("text", text)
 
     def _edit_tool_name(self, cell, path, new_text):
         tool = self.get_by_path(path)
-        if tool and (new_text != tool.get_value("name")) and new_text:
-            tool.set_value("name", new_text)
+        if tool and (new_text != tool.get_application_value("name")) and new_text:
+            tool.set_application_value("name", new_text)
             self.core.emit_event("tool-list-changed")
 
     def _edit_tool_id(self, cell, path, new_text):
@@ -206,7 +204,7 @@ class Tools(pycam.Plugins.ListPluginBase):
         # check if any on the processes became obsolete due to a missing plugin
         removal = []
         shape_names = [shape["name"] for shape in shapes]
-        for index, tool in enumerate(self):
+        for index, tool in enumerate(self.get_all()):
             if not tool.get_value("shape") in shape_names:
                 removal.append(index)
         removal.reverse()
@@ -220,7 +218,7 @@ class Tools(pycam.Plugins.ListPluginBase):
         else:
             selector_box.show()
         if selected:
-            self.select_shape(selected.get_value("name"))
+            self.select_shape(selected.get_application_value("name"))
 
     def _store_tool_settings(self):
         tool = self.get_selected()
@@ -252,20 +250,15 @@ class Tools(pycam.Plugins.ListPluginBase):
             # trigger a widget update
             self.core.emit_event("tool-shape-changed")
 
-    def _get_new_tool_id_and_name(self):
-        tools = self.core.get("tools")
-        tool_ids = [tool.get_value("tool_id") for tool in tools]
-        tool_id = 1
-        while tool_id in tool_ids:
-            tool_id += 1
-        return (tool_id, "Tool #%d" % tool_id)
-
     def _tool_new(self, *args):
-        new_tool = Tool({"shape": "flat", "radius": 1.0, "feed": 300})
-        tool_id, tool_name = self._get_new_tool_id_and_name()
-        new_tool.set_value("tool_id", tool_id)
-        new_tool.set_value("name", tool_name)
-        self.append(new_tool)
+        existing_tool_ids = [tool.get_value("tool_id") for tool in self.get_all()]
+        tool_id = 1
+        while tool_id in existing_tool_ids:
+            tool_id += 1
+        tool_name = "Tool #{:d}".format(tool_id)
+        new_tool = Tool(None,
+                        {"shape": "flat_bottom", "radius": 1.0, "feed": 300, "tool_id": tool_id})
+        new_tool.set_application_value("name", tool_name)
         self.select(new_tool)
 
     @toolpath_filter("tool", "tool_id")

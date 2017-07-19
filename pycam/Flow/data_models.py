@@ -618,7 +618,7 @@ class Source(BaseDataContainer):
     @_set_allowed_attributes({"type", "original"})
     def _get_source_copy(self):
         source_name = self.get_value("original")
-        return _get_from_collection(target_collection, source_name).get_model()
+        return _get_from_collection(target_collection, source_name).model
 
     @_set_parser_context("Source 'file/url'")
     @_set_allowed_attributes({"type", "location"})
@@ -743,7 +743,9 @@ class Model(BaseCollectionItemDataContainer):
                             "transformations": _get_list_resolver(ModelTransformation)}
     attribute_defaults = {"transformations": []}
 
-    def get_model(self):
+    @CacheStorage(("source", "transformations"))
+    @_set_parser_context("Model")
+    def model(self):
         model = self.get_value("source").get("model")
         for transformation in self.get_value("transformations"):
             model = transformation.get_transformed_model(model)
@@ -878,7 +880,7 @@ class Process(BaseCollectionItemDataContainer):
             return func(box, None, step_width=step_width, line_distance=line_distance,
                         milling_style=milling_style)
         elif strategy == ProcessStrategy.ENGRAVE:
-            models = [m.get_model() for m in self.get_value("trace_models")]
+            models = [m.model for m in self.get_value("trace_models")]
             if not models:
                 _log.error("No trace models given: you need to assign a 2D model to the engraving "
                            "process.")
@@ -948,9 +950,8 @@ class Boundary(BaseCollectionItemDataContainer):
             else:
                 # use all visible models -> for live visualization
                 # TODO: filter for visible models
-                models = self._get_full_collection("model")
-            model_box = pycam.Geometry.Model.get_combined_bounds([model.get_model()
-                                                                  for model in models])
+                models = Model.get_collection()
+            model_box = pycam.Geometry.Model.get_combined_bounds([model.model for model in models])
             if model_box is None:
                 # zero-sized models -> no action
                 return None
@@ -1014,7 +1015,7 @@ class Task(BaseCollectionItemDataContainer):
             if path_generator is None:
                 # we assume that an error message was given already
                 return
-            models = [m.get_model() for m in self.get_value("collision_models")]
+            models = [m.model for m in self.get_value("collision_models")]
             if not models:
                 # issue a warning - and go ahead ...
                 _log.warn("No collision model was selected. This can be intentional, but maybe "
@@ -1113,8 +1114,9 @@ class Toolpath(BaseCollectionItemDataContainer):
                             "transformations": _get_list_resolver(ToolpathTransformation)}
     attribute_defaults = {"transformations": []}
 
+    @CacheStorage(("source", "transformations"))
     @_set_parser_context("Toolpath")
-    def get_toolpath(self):
+    def toolpath(self):
         task = self.get_value("source").get("toolpath")
         toolpath = task.generate_toolpath()
         for transformation in self.get_value("transformations"):
@@ -1209,7 +1211,7 @@ class Formatter(BaseDataContainer):
         if export_settings:
             generator.add_filters(export_settings.get_toolpath_filters())
         for toolpath in source:
-            calculated = toolpath.get_toolpath()
+            calculated = toolpath.toolpath
             # TODO: implement toolpath.get_meta_data()
             generator.add_moves(calculated.path, calculated.filters)
         generator.finish()

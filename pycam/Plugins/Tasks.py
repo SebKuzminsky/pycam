@@ -21,7 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import time
 
 from pycam import GenericError
-from pycam.Flow.data_models import Task
+import pycam.Flow.data_models
 import pycam.Plugins
 import pycam.Utils
 
@@ -31,6 +31,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
     UI_FILE = "tasks.ui"
     CATEGORIES = ["Task"]
     DEPENDS = ["Models", "Tools", "Processes", "Bounds", "Toolpaths"]
+    COLLECTION_ITEM_TYPE = pycam.Flow.data_models.Task
 
     def setup(self):
         if self.gui:
@@ -129,13 +130,12 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self.core.unregister_ui_section("task_parameters")
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
-        while len(self) > 0:
-            self.pop()
+        self.clear()
 
     def _edit_task_name(self, cell, path, new_text):
         task = self.get_by_path(path)
-        if task and (new_text != task["name"]) and new_text:
-            task["name"] = new_text
+        if task and (new_text != task.get_application_value("name")) and new_text:
+            task.set_application_value("name", new_text)
 
     def _trigger_table_update(self):
         self.gui.get_object("NameColumn").set_cell_data_func(self.gui.get_object("NameCell"),
@@ -143,7 +143,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
 
     def _render_task_name(self, column, cell, model, m_iter, data):
         task = self.get_by_path(model.get_path(m_iter))
-        cell.set_property("text", task["name"])
+        cell.set_property("text", task.get_application_value("name"))
 
     def _get_type(self, name=None):
         types = self.core.get("get_parameter_sets")("task")
@@ -181,8 +181,8 @@ class Tasks(pycam.Plugins.ListPluginBase):
         # check if any on the processes became obsolete due to a missing plugin
         removal = []
         type_names = [one_type["name"] for one_type in types]
-        for index, task in enumerate(self):
-            if task["type"] not in type_names:
+        for index, task in enumerate(self.get_all()):
+            if task.get_value("type") not in type_names:
                 removal.append(index)
         removal.reverse()
         for index in removal:
@@ -199,7 +199,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
 
     def _update_widgets(self):
         self.gui.get_object("GenerateToolPathButton").set_sensitive(len(self.get_selected()) > 0)
-        self.gui.get_object("GenerateAllToolPathsButton").set_sensitive(len(self) > 0)
+        self.gui.get_object("GenerateAllToolPathsButton").set_sensitive(len(self.get_all()) > 0)
 
     def _task_switch(self):
         tasks = self.get_selected()
@@ -210,9 +210,9 @@ class Tasks(pycam.Plugins.ListPluginBase):
             task = tasks[0]
             self.core.block_event("task-changed")
             self.core.block_event("task-type-changed")
-            type_name = task["type"]
+            type_name = task.get_value("type")
             self.select_type(type_name)
-            self.core.get("set_parameter_values")("task", task["parameters"])
+            self.core.get("set_parameter_values")("task", task.get_dict())
             control_box.show()
             self.core.unblock_event("task-type-changed")
             self.core.unblock_event("task-changed")
@@ -220,21 +220,24 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self.core.emit_event("task-type-changed")
 
     def _store_task(self, widget=None):
-        tasks = self.get_selected()
         details_box = self.gui.get_object("TaskDetails")
         task_type = self._get_type()
-        if (len(tasks) != 1) or not task_type:
+        if (len(self.get_all()) != 1) or not task_type:
             details_box.hide()
         else:
             task = tasks[0]
-            task["type"] = task_type["name"]
-            parameters = task["parameters"]
-            parameters.update(self.core.get("get_parameter_values")("task"))
+            task.set_value("type", task_type["name"])
             details_box.show()
 
     def _task_new(self, *args):
-        new_task = Task({"type": "milling"})
-        self.append(new_task)
+        new_task = pycam.Flow.data_models.Task(None, {"type": "milling"})
+        # find and apply an unused name
+        existing_names = [task.get_application_value("name") for task in self.get_all()]
+        name_template = "Task #{:d}"
+        name_id = 1
+        while name_template.format(name_id) in existing_names:
+            name_id += 1
+        new_task.set_application_value("name", name_template.format(name_id))
         self.select(new_task)
 
     def generate_toolpaths(self, tasks):
@@ -252,9 +255,13 @@ class Tasks(pycam.Plugins.ListPluginBase):
         self.generate_toolpaths(tasks)
 
     def _generate_all_toolpaths(self, widget=None):
-        self.generate_toolpaths(self)
+        self.generate_toolpaths(self.get_all())
 
     def generate_toolpath(self, task, progress=None):
+        pycam.Flow.data_models.Toolpath(None, {"source": {"type": "task", "task": task.get_id()}})
+        return
+
+        # TODO: re-use this code?
         start_time = time.time()
         if progress:
             use_multi_progress = True
@@ -295,18 +302,14 @@ class Tasks(pycam.Plugins.ListPluginBase):
                 # break the loop if someone clicked the "cancel" button
                 return progress.update(text=text, percent=percent)
 
-        tool_shape = task["parameters"]["tool"].get_value("shape")
-        tool_parameters = task["parameters"]["tool"].get_dict()
-        tool = self.core.get("get_parameter_sets")("tool")[tool_shape]["func"](tool_parameters)[0]
-        self.core.set("current_tool", tool)
+        self.core.set("current_tool", task.get_value("tool").get_tool_geometry())
         draw_callback = UpdateView(self, lambda: self.core.emit_event("visual-item-updated"),
                                    max_fps=self.core.get("tool_progress_max_fps")).update
         progress.update(text="Generating collision model")
         # run the toolpath generation
         progress.update(text="Starting the toolpath generation")
         try:
-            task_resolver = self.core.get("get_parameter_sets")("task")[task["type"]]["func"]
-            toolpath = task_resolver(task, callback=draw_callback)
+            toolpath = task.generate_toolpath(callback=draw_callback)
         except GenericError as exc:
             # an error occoured - "toolpath" contains the error message
             self.log.error("Failed to generate toolpath: %s", exc)
@@ -329,7 +332,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             # return "False" if the action was cancelled
             result = not progress.update()
         else:
-            self.core.get("toolpaths").add_new(toolpath)
+            pycam.Flow.data_models.Toolpath(None, {"source": {"type": "object", "data": toolpath}})
             # return "False" if the action was cancelled
             result = not progress.update()
         return result

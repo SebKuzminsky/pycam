@@ -54,10 +54,10 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
 
     def _get_toolpaths_dim(self, toolpaths):
         if toolpaths:
-            maxx = max([tp.maxx for tp in toolpaths])
-            minx = min([tp.minx for tp in toolpaths])
-            maxy = max([tp.maxy for tp in toolpaths])
-            miny = min([tp.miny for tp in toolpaths])
+            maxx = max([tp.toolpath.maxx for tp in toolpaths])
+            minx = min([tp.toolpath.minx for tp in toolpaths])
+            maxy = max([tp.toolpath.maxy for tp in toolpaths])
+            miny = min([tp.toolpath.miny for tp in toolpaths])
             return (maxx - minx), (maxy - miny)
         else:
             return None, None
@@ -81,27 +81,12 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
             self._frame.hide()
 
     def create_toolpath_grid(self, widget=None):
-        toolpaths = self.core.get("toolpaths").get_selected()
         x_count = int(self.gui.get_object("GridXCount").get_value())
         y_count = int(self.gui.get_object("GridYCount").get_value())
         x_space = self.gui.get_object("GridXDistance").get_value()
         y_space = self.gui.get_object("GridYDistance").get_value()
-        x_dim, y_dim = self._get_toolpaths_dim(toolpaths)
-        for toolpath in toolpaths:
-            new_moves = []
-            for x in range(x_count):
-                for y in range(y_count):
-                    shift_matrix = (
-                        (1, 0, 0, x * (x_space + x_dim)),
-                        (0, 1, 0, y * (y_space + y_dim)),
-                        (0, 0, 1, 0))
-                    shifted = toolpath | Filters.TransformPosition(shift_matrix)
-                    new_moves.extend(shifted)
-            if not self.gui.get_object("KeepOriginal").get_active():
-                toolpath.path = new_moves
-                self.core.emit_event("toolpath-changed")
-            else:
-                new_toolpath = toolpath.copy()
-                new_toolpath.path = new_moves
-                self.core.get("toolpaths").add_new(new_toolpath)
-        self.core.get("toolpaths").select(toolpaths)
+        for toolpath in self.core.get("toolpaths").get_selected():
+            toolpath.append_transformation(
+                {"action": "clone", "offset": [x_space, 0, 0], "clone_count": x_count})
+            toolpath.append_transformation(
+                {"action": "clone", "offset": [0, y_space, 0], "clone_count": y_count})

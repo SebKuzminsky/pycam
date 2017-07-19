@@ -27,6 +27,7 @@ class Processes(pycam.Plugins.ListPluginBase):
     DEPENDS = ["ParameterGroupManager"]
     CATEGORIES = ["Process"]
     UI_FILE = "processes.ui"
+    COLLECTION_ITEM_TYPE = pycam.Flow.data_models.Process
 
     def setup(self):
         self.core.set("processes", self)
@@ -88,9 +89,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             self._event_handlers = (
                 ("process-strategy-list-changed", self._update_widgets),
                 ("process-list-changed", self._trigger_table_update),
-                ("process-selection-changed", self._process_switch),
-                ("process-changed", self._store_process_settings),
-                ("process-strategy-changed", self._store_process_settings))
+                ("process-selection-changed", self._process_switch))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
         self.register_state_item("processes", self)
@@ -108,8 +107,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
         self.core.set("processes", None)
-        while len(self) > 0:
-            self.pop()
+        self.clear()
         return True
 
     def _render_process_description(self, column, cell, model, m_iter, data):
@@ -120,12 +118,12 @@ class Processes(pycam.Plugins.ListPluginBase):
 
     def _render_process_name(self, column, cell, model, m_iter, data):
         process = self.get_by_path(model.get_path(m_iter))
-        cell.set_property("text", process["name"])
+        cell.set_property("text", process.get_application_value("name"))
 
     def _edit_process_name(self, cell, path, new_text):
         process = self.get_by_path(path)
-        if process and (new_text != process["name"]) and new_text:
-            process["name"] = new_text
+        if process and (new_text != process.get_application_value("name")) and new_text:
+            process.set_application_value("name", new_text)
             self.core.emit_event("process-list-changed")
 
     def _trigger_table_update(self):
@@ -145,12 +143,13 @@ class Processes(pycam.Plugins.ListPluginBase):
         # check if any on the processes became obsolete due to a missing plugin
         removal = []
         strat_names = [strat["name"] for strat in strategies]
-        for index, process in enumerate(self):
-            if not process["strategy"] in strat_names:
+        for index, process in enumerate(self.get_all()):
+            if not process.get_value("strategy").value in strat_names:
                 removal.append(index)
         removal.reverse()
+        collection = self.get_collection()
         for index in removal:
-            self.pop(index)
+            del collection[index]
         # show "new" only if a strategy is available
         self.gui.get_object("ProcessNew").set_sensitive(len(model) > 0)
         selector_box = self.gui.get_object("ProcessSelectorBox")
@@ -162,6 +161,8 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.select_strategy(selected["name"])
 
     def _get_strategy(self, name=None):
+        """ get a strategy object - either based on the given name or the currently selected one
+        """
         strategies = self.core.get("get_parameter_sets")("process")
         if name is None:
             # find the currently selected one
@@ -187,35 +188,6 @@ class Processes(pycam.Plugins.ListPluginBase):
         else:
             selector.set_active(-1)
 
-    def _store_process_settings(self):
-        process = self.get_selected()
-        control_box = self.gui.get_object("ProcessSettingsControlsBox")
-        strategy = self._get_strategy()
-        if process is None or strategy is None:
-            control_box.hide()
-        else:
-            # Check if any of the relevant controls are still at their default
-            # values for this process type. These values are overridden by the
-            # default value of the new (changed) process type.
-            # E.g. this changes the "overlap" value from 10 to 60 when
-            # switching from slicing to surfacing.
-            if process["strategy"] \
-                    and process["strategy"] in self.core.get("get_parameter_sets")("process"):
-                old_strategy = self.core.get("get_parameter_sets")("process")[process["strategy"]]
-                if process["strategy"] != strategy["name"]:
-                    changes = {}
-                    common_keys = [key for key in old_strategy["parameters"]
-                                   if key in strategy["parameters"]]
-                    for key in common_keys:
-                        if process["parameters"][key] == old_strategy["parameters"][key]:
-                            changes[key] = strategy["parameters"][key]
-                        self.core.get("set_parameter_values")("process", changes)
-            process["strategy"] = strategy["name"]
-            parameters = process["parameters"]
-            parameters.update(self.core.get("get_parameter_values")("process"))
-            control_box.show()
-            self._trigger_table_update()
-
     def _process_switch(self, widget=None, data=None):
         process = self.get_selected()
         control_box = self.gui.get_object("ProcessSettingsControlsBox")
@@ -224,16 +196,12 @@ class Processes(pycam.Plugins.ListPluginBase):
         else:
             self.core.block_event("process-changed")
             self.core.block_event("process-strategy-changed")
-            strategy_name = process["strategy"]
-            self.select_strategy(strategy_name)
-            self.core.get("set_parameter_values")("process", process["parameters"])
             control_box.show()
+            self._update_widgets()
             self.core.unblock_event("process-strategy-changed")
             self.core.unblock_event("process-changed")
             self.core.emit_event("process-strategy-changed")
             self.core.emit_event("process-changed")
 
     def _process_new(self, *args):
-        new_process = pycam.Flow.data_models.Process({"strategy": "slice"})
-        self.append(new_process)
-        self.select(new_process)
+        new_process = pycam.Flow.data_models.Process(None, {"strategy": "slice"})

@@ -23,6 +23,7 @@ import inspect
 import os
 import uuid
 
+from pycam.Utils.events import get_event_handler
 import pycam.Utils.log
 import pycam.Utils.locations
 
@@ -382,25 +383,30 @@ class PluginManager(object):
         return missing
 
 
-class ListPluginBase(PluginBase, list):
+class ListPluginBase(PluginBase):
 
     ACTION_UP, ACTION_DOWN, ACTION_DELETE, ACTION_CLEAR = range(4)
+    COLLECTION_ITEM_TYPE = None
 
     def __init__(self, *args, **kwargs):
         super(ListPluginBase, self).__init__(*args, **kwargs)
         self._update_model_funcs = []
         self._gtk_modelview = None
+        get_event_handler().register_event(self.COLLECTION_ITEM_TYPE.list_changed_event,
+                                           self._update_model)
 
-        def get_function(func_name):
-            return lambda *args, **kwargs: self._change_wrapper(func_name, *args, **kwargs)
+    def __del__(self):
+        try:
+            unregister = get_event_handler().unregister_event
+        except AttributeError:
+            pass
+        unregister(self.COLLECTION_ITEM_TYPE.list_changed_event, self._update_model)
 
-        for name in ("append", "extend", "insert", "pop", "reverse", "remove", "sort"):
-            setattr(self, name, get_function(name))
+    def get_all(self):
+        return tuple(self.get_collection())
 
-    def _change_wrapper(self, func_name, *args, **kwargs):
-        value = getattr(super(ListPluginBase, self), func_name)(*args, **kwargs)
-        self._update_model()
-        return value
+    def clear(self):
+        self.get_collection().clear()
 
     def get_selected(self, **kwargs):
         if self._gtk_modelview:
@@ -450,9 +456,9 @@ class ListPluginBase(PluginBase, list):
 
     def _select_gtk(self, selected_objs):
         selection = self._gtk_modelview.get_selection()
-        selected_uuids = [self._get_item_uuid(item) for item in selected_objs]
-        for index, item in enumerate(self):
-            if self._get_item_uuid(item) in selected_uuids:
+        selected_uuids = [item.get_id() for item in selected_objs]
+        for index, item in enumerate(self.get_collection()):
+            if item.get_id() in selected_uuids:
                 selection.select_path((index, ))
             else:
                 selection.unselect_path((index, ))
@@ -460,18 +466,11 @@ class ListPluginBase(PluginBase, list):
     def set_gtk_modelview(self, modelview):
         self._gtk_modelview = modelview
 
-    def _get_item_uuid(self, item):
-        try:
-            return item["uuid"]
-        except TypeError:
-            # use the new style instead of the old dict
-            return item.get_dict()["name"]
-
     def _update_gtk_treemodel(self):
         if not self._gtk_modelview:
             return
         treemodel = self._gtk_modelview.get_model()
-        current_uuids = [self._get_item_uuid(item) for item in self]
+        current_uuids = [item.get_id() for item in self.get_collection()]
         # remove all superfluous rows from "treemodel"
         removal_indices = [index for index, item in enumerate(treemodel)
                            if item[0] not in current_uuids]
@@ -492,11 +491,7 @@ class ListPluginBase(PluginBase, list):
         if not self._gtk_modelview:
             return None
         this_uuid = self._gtk_modelview.get_model()[int(path[0])][0]
-        objs = [t for t in self if this_uuid == self._get_item_uuid(t)]
-        if objs:
-            return objs[0]
-        else:
-            return None
+        return self.get_collection()[this_uuid]
 
     def _update_model(self):
         self._update_gtk_treemodel()
@@ -522,26 +517,24 @@ class ListPluginBase(PluginBase, list):
         selected_items.sort()
         if action in (self.ACTION_DOWN, self.ACTION_DELETE):
             selected_items.sort(reverse=True)
+        collection = self.get_collection()
         new_selection = []
         if action == self.ACTION_CLEAR:
-            while len(self) > 0:
-                self.pop(0)
+            collection.clear()
         else:
             for index in selected_items:
                 if action == self.ACTION_UP:
                     if index > 0:
-                        item = self.pop(index)
-                        self.insert(index - 1, item)
+                        collection.swap_by_index(index, index - 1)
                         new_selection.append(index - 1)
                 elif action == self.ACTION_DOWN:
-                    if index < len(self) - 1:
-                        item = self.pop(index)
-                        self.insert(index + 1, item)
+                    if index < len(self.get_collection()) - 1:
+                        collection.swap_by_index(index, index + 1)
                         new_selection.append(index + 1)
                 elif action == self.ACTION_DELETE:
-                    self.pop(index)
-                    if len(self) > 0:
-                        new_selection.append(min(index, len(self) - 1))
+                    del collection[index]
+                    if collection:
+                        new_selection.append(min(index, len(collection) - 1))
                 else:
                     pass
         self._update_model()
@@ -553,20 +546,23 @@ class ListPluginBase(PluginBase, list):
         for index in new_selection:
             selection.select_path((index,))
 
+    def get_collection(self):
+        return self.COLLECTION_ITEM_TYPE.get_collection()
+
     def _update_list_action_button_state(self, *args):
         modelview = args[-3]  # noqa F841 - maybe we need it later
         action = args[-2]
         button = args[-1]
         paths = self.get_selected(index=True, force_list=True)
         if action == self.ACTION_CLEAR:
-            button.set_sensitive(len(self) > 0)
+            button.set_sensitive(len(self.get_collection()) > 0)
         elif not paths:
             button.set_sensitive(False)
         else:
             if action == self.ACTION_UP:
                 button.set_sensitive(0 not in paths)
             elif action == self.ACTION_DOWN:
-                button.set_sensitive((len(self) - 1) not in paths)
+                button.set_sensitive((len(self.get_collection()) - 1) not in paths)
             else:
                 button.set_sensitive(True)
 

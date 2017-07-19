@@ -18,14 +18,13 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-
 import pycam.Gui.ControlsGTK
 import pycam.Plugins
 from pycam.Toolpath import ToolpathPathMode
 import pycam.Utils.log
 
 
-class ToolpathProcessors(pycam.Plugins.ListPluginBase):
+class ToolpathProcessors(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Toolpaths", "ParameterGroupManager"]
     CATEGORIES = ["Toolpath"]
