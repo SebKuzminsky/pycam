@@ -50,6 +50,7 @@ except ImportError:
 
 from pycam import InitializationError
 import pycam.Exporters.GCodeExporter
+from pycam.Flow.parser import parse_yaml
 import pycam.Gui.common as GuiCommon
 from pycam.Gui.common import EmergencyDialog
 import pycam.Gui.Settings
@@ -116,6 +117,67 @@ EXIT_CODES = {"ok": 0,
               "connection_error": 6,
               "toolpath_error": 7}
 
+DEFAULT_FLOW_SPECIFICATION = """
+models:
+        model:
+            source:
+                    type: file
+                    location: samples/Box0.stl
+            X-Application: { pycam-gtk: { name: Example 3D Model } }
+
+tools:
+        rough:
+            shape: flat_bottom
+            radius: 3
+            feed: 600
+            X-Application: { pycam-gtk: { name: Big Tool } }
+        fine:
+            shape: ball_nose
+            radius: 1
+            feed: 1200
+            X-Application: { pycam-gtk: { name: Small Tool } }
+
+processes:
+        process_slicing:
+            strategy: slice
+            path_pattern: grid
+            overlap: 0.10
+            step_down: 3.0
+            grid_direction: y
+            milling_style: ignore
+            X-Application: { pycam-gtk: { name: Slice (rough) } }
+        process_surfacing:
+            strategy: surface
+            overlap: 0.80
+            step_down: 1.0
+            grid_direction: x
+            milling_style: ignore
+            X-Application: { pycam-gtk: { name: Surface (fine) } }
+
+bounds:
+        minimal:
+            specification: margins
+            lower: [5, 5, 5]
+            upper: [5, 5, 5]
+            X-Application: { pycam-gtk: { name: minimal } }
+
+tasks:
+        rough:
+            type: milling
+            tool: rough
+            process: process_slicing
+            bounds: minimal
+            collision_models: [ model ]
+            X-Application: { pycam-gtk: { name: Quick Removal } }
+        fine:
+            type: milling
+            tool: fine
+            process: process_surfacing
+            bounds: minimal
+            collision_models: [ model ]
+            X-Application: { pycam-gtk: { name: Finishing } }
+"""
+
 log = pycam.Utils.log.get_logger()
 
 
@@ -151,6 +213,9 @@ def show_gui():
     gui.clear_undo_states()
 
     event_manager.emit_event("notify-initialization-finished")
+
+    # load default models, tools ...
+    parse_yaml(DEFAULT_FLOW_SPECIFICATION)
 
     # open the GUI
     get_mainloop(use_gtk=True).run()
