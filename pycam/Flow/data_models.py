@@ -36,7 +36,7 @@ from pycam.Toolpath import ToolpathPathMode
 import pycam.Toolpath.Filters as tp_filters
 import pycam.Toolpath.MotionGrid as MotionGrid
 from pycam.Importers import detect_file_type
-from pycam.Utils import get_type_name
+from pycam.Utils import get_type_name, get_application_key
 from pycam.Utils.events import get_event_handler
 import pycam.Utils.log
 
@@ -45,6 +45,9 @@ _log = pycam.Utils.log.get_logger()
 
 # dictionary of all collections by name
 _data_collections = {}
+
+
+APPLICATION_ATTRIBUTES_KEY = "X-Application"
 
 
 class FlowDescriptionBaseException(Exception):
@@ -362,7 +365,10 @@ class BaseDataContainer(object):
     attribute_defaults = {}
 
     def __init__(self, data):
-        self._data = copy.deepcopy(data)
+        data = copy.deepcopy(data)
+        # split the application-specific data (e.g. colors or visibility flags) from the model data
+        self._application_attributes = data.pop(APPLICATION_ATTRIBUTES_KEY, {})
+        self._data = data
 
     @classmethod
     def parse_from_dict(cls, data):
@@ -384,16 +390,35 @@ class BaseDataContainer(object):
                     # generate a suitable context based on the object itself
                     raise MissingAttributeError("{} -> missing attribute '{}'"
                                                 .format(get_type_name(self), key))
-        if key in self.attribute_converters:
-            return self.attribute_converters[key](raw)
+        if raw:
+            return raw_value
+        elif key in self.attribute_converters:
+            value = self.attribute_converters[key](raw_value)
+            if hasattr(value, "set_related_collection"):
+                # special case for Source: we need the original collection for "copy"
+                value.set_related_collection(self.collection_name)
+            return value
         else:
-            return raw
+            return raw_value
 
     def set_value(self, key, value):
-        self._data[key] = value
+        self._data[key] = copy.deepcopy(value)
 
     def get_dict(self):
         return copy.deepcopy(self._data)
+
+    def _get_current_application_dict(self):
+        try:
+            return self._application_attributes[get_application_key()]
+        except KeyError:
+            self._application_attributes[get_application_key()] = {}
+        return self._application_attributes[get_application_key()]
+
+    def set_application_value(self, key, value):
+        self._get_current_application_dict()[key] = value
+
+    def get_application_value(self, key, default=None):
+        return self._get_current_application_dict().get(key, default)
 
     def validate_allowed_attributes(self, allowed_attributes):
         unexpected_attributes = set(self._data.keys()) - allowed_attributes
