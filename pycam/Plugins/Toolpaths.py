@@ -143,5 +143,5 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
                 return "%d seconds" % int(round(minutes * 60))
 
         toolpath = self.get_by_path(model.get_path(m_iter))
-        text = get_time_string(toolpath.toolpath.get_machine_time())
+        text = get_time_string(toolpath.get_toolpath().get_machine_time())
         cell.set_property("text", text)

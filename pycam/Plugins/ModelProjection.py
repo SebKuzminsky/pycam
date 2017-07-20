@@ -54,7 +54,7 @@ class ModelProjection(pycam.Plugins.PluginBase):
         models = self.core.get("models").get_selected()
         projectables = []
         for model in models:
-            if (model is not None) and hasattr(model.model, "get_waterline_contour"):
+            if (model is not None) and hasattr(model.get_model(), "get_waterline_contour"):
                 projectables.append(model)
         return projectables
 
@@ -74,7 +74,7 @@ class ModelProjection(pycam.Plugins.PluginBase):
         progress.update(text="Calculating 2D projection")
         progress.set_multiple(len(models), "Model")
         for model_dict in models:
-            model = model_dict.model
+            model = model_dict.get_model()
             for objname, z_level in (("ProjectionModelTop", model.maxz),
                                      ("ProjectionModelMiddle", (model.minz + model.maxz) / 2.0),
                                      ("ProjectionModelBottom", model.minz),

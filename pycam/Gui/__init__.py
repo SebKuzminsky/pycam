@@ -149,7 +149,7 @@ class BaseUI(object):
         if not self.settings.get("models"):
             return
         # TODO: store all models
-        #self._undo_states.append(pickle.dumps(self.settings.get("models")[0].model,
+        #self._undo_states.append(pickle.dumps(self.settings.get("models")[0].get_model(),
         #                                      PICKLE_PROTOCOL))
         #log.debug("Stored the current state of the model for undo")
         while len(self._undo_states) > MAX_UNDO_STATES:

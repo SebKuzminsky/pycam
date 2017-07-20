@@ -357,18 +357,38 @@ def _set_allowed_attributes(attr_set):
 
 
 class CacheStorage(object):
+    """ cache result values of a method
+
+    The method's instance object may be a BaseDataContainer (or another non-trivial object).
+    Arguments for the method call are hashed.
+    Multiple data keys for a BaseDataContainer may be specified - a change of their value
+    invalidates cached values.
+    """
 
     def __init__(self, relevant_dict_keys, max_cache_size=10):
         self._relevant_dict_keys = tuple(relevant_dict_keys)
         self._max_cache_size = max_cache_size
+        self._cache = {}
 
     def __call__(self, calc_function):
-        self._calc_function = calc_function
-        for attr in ("__name__", "__doc__", "__module__"):
-            setattr(self, attr, getattr(calc_function, attr))
-        return self
+        class MethodCache(object):
 
-    def _get_cache_key(self, inst):
+            def __init__(self, calc_function, storage):
+                self.__doc__ = calc_function.__doc__
+                self.__module__ = calc_function.__module__
+                self.__name__ = calc_function.__name__
+                self.calc_function = calc_function
+                self.storage = storage
+
+            def __get__(self, obj, objtype):
+                """ support instance methods """
+                def wrapped(inst, *args, **kwargs):
+                    return self.storage.get_cached(inst, args, kwargs, self.calc_function)
+                return functools.partial(wrapped, obj)
+
+        return MethodCache(calc_function, self)
+
+    def _get_cache_key(self, inst, args, kwargs):
         hashes = []
         for key in self._relevant_dict_keys:
             value = inst.get_value(key)
@@ -377,23 +397,21 @@ class CacheStorage(object):
             else:
                 hashed = hash(value)
             hashes.append(hashed)
-        return tuple(hashes)
+        return tuple(hashes) + tuple(args) + tuple(sorted(kwargs.items()))
 
-    def __get__(self, inst, owner):
-        cache_key = self._get_cache_key(inst)
-        if not hasattr(self, "_cache_storage"):
-            self._cache_storage = {}
+    def get_cached(self, inst, args, kwargs, calc_function):
+        cache_key = self._get_cache_key(inst, args, kwargs)
         try:
-            return self._cache_storage[cache_key].content
+            return self._cache[cache_key].content
         except KeyError:
             pass
-        cache_item = CacheItem(time.time(), self._calc_function(inst))
-        self._cache_storage[cache_key] = cache_item
-        if len(self._cache_storage) > self._max_cache_size:
+        cache_item = CacheItem(time.time(), calc_function(inst, *args, **kwargs))
+        self._cache[cache_key] = cache_item
+        if len(self._cache) > self._max_cache_size:
             # remove the oldest cache item
-            item_list = [(key, value.timestamp) for key, value in self._cache_storage.items()]
+            item_list = [(key, value.timestamp) for key, value in self._cache.items()]
             item_list.sort(key=lambda item: item[1])
-            self._cache_storage.pop(item_list[0][0])
+            self._cache.pop(item_list[0][0])
         return cache_item.content
 
 
@@ -615,6 +633,7 @@ class Source(BaseDataContainer):
             raise InvalidKeyError(source_type, SourceType)
 
     @CacheStorage(("type", ))
+    @_set_parser_context("Source")
     def get(self, related_collection_name):
         source_type = self.get_value("type")
         if source_type == SourceType.COPY:
@@ -634,7 +653,7 @@ class Source(BaseDataContainer):
     @_set_allowed_attributes({"type", "original"})
     def _get_source_copy(self, related_collection_name):
         source_name = self.get_value("original")
-        return _get_from_collection(related_collection_name, source_name).model
+        return _get_from_collection(related_collection_name, source_name).get_model()
 
     @_set_parser_context("Source 'file/url'")
     @_set_allowed_attributes({"type", "location"})
@@ -761,7 +780,7 @@ class Model(BaseCollectionItemDataContainer):
 
     @CacheStorage(("source", "transformations"))
     @_set_parser_context("Model")
-    def model(self):
+    def get_model(self):
         model = self.get_value("source").get("model")
         for transformation in self.get_value("transformations"):
             model = transformation.get_transformed_model(model)
@@ -896,7 +915,7 @@ class Process(BaseCollectionItemDataContainer):
             return func(box, None, step_width=step_width, line_distance=line_distance,
                         milling_style=milling_style)
         elif strategy == ProcessStrategy.ENGRAVE:
-            models = [m.model for m in self.get_value("trace_models")]
+            models = [m.get_model() for m in self.get_value("trace_models")]
             if not models:
                 _log.error("No trace models given: you need to assign a 2D model to the engraving "
                            "process.")
@@ -967,7 +986,8 @@ class Boundary(BaseCollectionItemDataContainer):
                 # use all visible models -> for live visualization
                 # TODO: filter for visible models
                 models = Model.get_collection()
-            model_box = pycam.Geometry.Model.get_combined_bounds([model.model for model in models])
+            model_box = pycam.Geometry.Model.get_combined_bounds([model.get_model()
+                                                                  for model in models])
             if model_box is None:
                 # zero-sized models -> no action
                 return None
@@ -1031,7 +1051,7 @@ class Task(BaseCollectionItemDataContainer):
             if path_generator is None:
                 # we assume that an error message was given already
                 return
-            models = [m.model for m in self.get_value("collision_models")]
+            models = [m.get_model() for m in self.get_value("collision_models")]
             if not models:
                 # issue a warning - and go ahead ...
                 _log.warn("No collision model was selected. This can be intentional, but maybe "
@@ -1105,7 +1125,7 @@ class ToolpathTransformation(BaseDataContainer):
     def _get_cropped_toolpath(self, toolpath):
         selected = self.core.get("toolpaths").get_selected()
         polygons = []
-        for model in [m.model for m in self.get_value("models")]:
+        for model in [m.get_model() for m in self.get_value("models")]:
             if hasattr(model, "get_polygons"):
                 polygons.extend(model.get_polygons())
             else:
@@ -1132,7 +1152,7 @@ class Toolpath(BaseCollectionItemDataContainer):
 
     @CacheStorage(("source", "transformations"))
     @_set_parser_context("Toolpath")
-    def toolpath(self):
+    def get_toolpath(self):
         task = self.get_value("source").get("toolpath")
         toolpath = task.generate_toolpath()
         for transformation in self.get_value("transformations"):
@@ -1227,7 +1247,7 @@ class Formatter(BaseDataContainer):
         if export_settings:
             generator.add_filters(export_settings.get_toolpath_filters())
         for toolpath in source:
-            calculated = toolpath.toolpath
+            calculated = toolpath.get_toolpath()
             # TODO: implement toolpath.get_meta_data()
             generator.add_moves(calculated.path, calculated.filters)
         generator.finish()

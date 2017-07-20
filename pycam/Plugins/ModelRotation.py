@@ -76,7 +76,8 @@ class ModelRotation(pycam.Plugins.PluginBase):
         progress.disable_cancel()
         progress.set_multiple(len(models), "Model")
         for model in models:
-            model.model.rotate(Point3D(0, 0, 0), axis_vector, angle, callback=progress.update)
+            model.get_model().rotate(Point3D(0, 0, 0), axis_vector, angle,
+                                     callback=progress.update)
             progress.update_multiple()
         self.core.emit_event("model-change-after")
         progress.finish()

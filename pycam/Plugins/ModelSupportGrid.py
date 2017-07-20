@@ -276,7 +276,7 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
     def _get_bounds(self, models=None):
         if not models:
             models = self.core.get("models").get_selected()
-        models = [m.model for m in models]
+        models = [m.get_model() for m in models]
         box = pycam.Geometry.Model.get_combined_bounds(models)
         if box is None:
             return None

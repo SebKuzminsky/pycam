@@ -142,9 +142,9 @@ class Bounds(pycam.Plugins.ListPluginBase):
 
     def _get_current_bounds_box(self):
         bounds = self.get_selected()
-        models = [m.model for m in bounds.get_value("reference_models")]
+        models = [m.get_model() for m in bounds.get_value("reference_models")]
         if not models:
-            models = [m.model for m in self.core.get("models").get_visible()]
+            models = [m.get_model() for m in self.core.get("models").get_visible()]
         return pycam.Geometry.Model.get_combined_bounds(models)
 
     def _render_bounds_size(self, column, cell, model, m_iter, data):

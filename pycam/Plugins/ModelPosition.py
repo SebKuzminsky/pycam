@@ -83,7 +83,7 @@ class ModelPosition(pycam.Plugins.PluginBase):
         progress.set_multiple(len(models), "Model")
         shift = [self.gui.get_object("ShiftPosition%s" % axis).get_value() for axis in "XYZ"]
         for model in models:
-            model.model.shift(shift[0], shift[1], shift[2], callback=progress.update)
+            model.get_model().shift(shift[0], shift[1], shift[2], callback=progress.update)
             progress.update_multiple()
         progress.finish()
         self.core.emit_event("model-change-after")
@@ -99,7 +99,7 @@ class ModelPosition(pycam.Plugins.PluginBase):
         progress.disable_cancel()
         progress.set_multiple(len(models), "Model")
         for model_dict in models:
-            model = model_dict.model
+            model = model_dict.get_model()
             shift_values = []
             for axis in "XYZ":
                 dest = self.gui.get_object("AlignPosition%s" % axis).get_value()

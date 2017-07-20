@@ -47,7 +47,7 @@ class TaskParamCollisionModels(pycam.Plugins.PluginBase):
     def _update_models(self):
         choices = []
         for model in self.core.get("models").get_all():
-            if hasattr(model.model, "triangles"):
+            if hasattr(model.get_model(), "triangles"):
                 choices.append((model.get_id(), model))
         self.control.update_choices(choices)
 

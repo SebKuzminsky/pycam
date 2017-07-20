@@ -54,7 +54,7 @@ class ModelPolygons(pycam.Plugins.PluginBase):
     def _get_polygon_models(self):
         models = []
         for model in self.core.get("models").get_selected():
-            if model and hasattr(model.model, "reverse_directions"):
+            if model and hasattr(model.get_model(), "reverse_directions"):
                 models.append(model)
         return models
 
@@ -75,7 +75,7 @@ class ModelPolygons(pycam.Plugins.PluginBase):
         progress.update(text="Reversing directions of contour model")
         progress.set_multiple(len(models), "Model")
         for model in models:
-            model.model.reverse_directions(callback=progress.update)
+            model.get_model().reverse_directions(callback=progress.update)
             progress.update_multiple()
         progress.finish()
         self.core.emit_event("model-change-after")
@@ -89,7 +89,7 @@ class ModelPolygons(pycam.Plugins.PluginBase):
         progress.update(text="Analyzing directions of contour model")
         progress.set_multiple(len(models), "Model")
         for model in models:
-            model.model.revise_directions(callback=progress.update)
+            model.get_model().revise_directions(callback=progress.update)
             progress.update_multiple()
         progress.finish()
         self.core.emit_event("model-change-after")

@@ -87,7 +87,7 @@ class ModelScaling(pycam.Plugins.PluginBase):
             scale_value = self.gui.get_object("ScaleDimensionControl")
             index = axis_control.get_active()
             # TODO: get dimension of multiple models
-            model = models[0].model
+            model = models[0].get_model()
             dims = (model.maxx - model.minx, model.maxy - model.miny, model.maxz - model.minz)
             value = dims[index]
             non_zero_dimensions = [i for i, dim in enumerate(dims) if dim > 0]
@@ -111,7 +111,7 @@ class ModelScaling(pycam.Plugins.PluginBase):
         progress.disable_cancel()
         progress.set_multiple(len(models), "Model")
         for model in models:
-            model.model.scale(factor, callback=progress.update)
+            model.get_model().scale(factor, callback=progress.update)
             progress.update_multiple()
         progress.finish()
         self.core.emit_event("model-change-after")
@@ -125,7 +125,7 @@ class ModelScaling(pycam.Plugins.PluginBase):
         axes = "xyz"
         axis_suffix = axes[index]
         # TODO: use dimension of multiple models
-        model = models[0].model
+        model = models[0].get_model()
         factor = (value / (getattr(model, "max" + axis_suffix)
                            - getattr(model, "min" + axis_suffix)))
         self.core.emit_event("model-change-before")
@@ -136,7 +136,7 @@ class ModelScaling(pycam.Plugins.PluginBase):
         for model in models:
             # TODO: use different scaling for multiple models
             if proportionally:
-                model.model.scale(factor, callback=progress.update)
+                model.get_model().scale(factor, callback=progress.update)
             else:
                 factor_x, factor_y, factor_z = (1, 1, 1)
                 if index == 0:
@@ -147,7 +147,7 @@ class ModelScaling(pycam.Plugins.PluginBase):
                     factor_z = factor
                 else:
                     return
-                model.model.scale(factor_x, factor_y, factor_z, callback=progress.update)
+                model.get_model().scale(factor_x, factor_y, factor_z, callback=progress.update)
             progress.update_multiple()
         progress.finish()
         self.core.emit_event("model-change-after")

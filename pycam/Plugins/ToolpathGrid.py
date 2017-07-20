@@ -54,10 +54,10 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
 
     def _get_toolpaths_dim(self, toolpaths):
         if toolpaths:
-            maxx = max([tp.toolpath.maxx for tp in toolpaths])
-            minx = min([tp.toolpath.minx for tp in toolpaths])
-            maxy = max([tp.toolpath.maxy for tp in toolpaths])
-            miny = min([tp.toolpath.miny for tp in toolpaths])
+            maxx = max([tp.get_toolpath().maxx for tp in toolpaths])
+            minx = min([tp.get_toolpath().minx for tp in toolpaths])
+            maxy = max([tp.get_toolpath().maxy for tp in toolpaths])
+            miny = min([tp.get_toolpath().miny for tp in toolpaths])
             return (maxx - minx), (maxy - miny)
         else:
             return None, None

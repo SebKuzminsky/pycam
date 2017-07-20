@@ -75,7 +75,7 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
     def _update_models_list(self):
         choices = []
         for model in self.core.get("models").get_all():
-            if hasattr(model.model, "get_polygons"):
+            if hasattr(model.get_model(), "get_polygons"):
                 choices.append((model.get_id(), model))
         self.models_widget.update_choices(choices)
 
@@ -86,7 +86,7 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
             self._frame.hide()
 
     def _update_widgets(self, widget=None):
-        models = [m.model for m in self.models_widget.get_value()]
+        models = [m.get_model() for m in self.models_widget.get_value()]
         info_label = self.gui.get_object("ToolpathCropInfo")
         info_box = self.gui.get_object("ToolpathCropInfoBox")
         button = self.gui.get_object("CropButton")

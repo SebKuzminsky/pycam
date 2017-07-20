@@ -104,7 +104,7 @@ class ModelExportTrimesh(pycam.Plugins.PluginBase):
     def export_trimesh(self, models):
         removal_list = []
         for index, model in enumerate(models):
-            if not hasattr(model.model, "triangles"):
+            if not hasattr(model.get_model(), "triangles"):
                 continue
             # determine the file type
             # TODO: this needs to be decided by the exporter code
@@ -126,7 +126,7 @@ class ModelExportTrimesh(pycam.Plugins.PluginBase):
                 file_in = open(uri.get_local_path(), "w")
                 # TODO: fill in "comment" with "meta_data"
                 # TODO: call a specific exporter
-                model.model.export(unit=self.core.get("unit")).write(file_in)
+                model.get_model().export(unit=self.core.get("unit")).write(file_in)
                 file_in.close()
                 removal_list.append(index)
             except IOError as err_msg:
@@ -152,7 +152,7 @@ class ModelExportContour(pycam.Plugins.PluginBase):
     def export_contour(self, models):
         removal_list = []
         for index, model in enumerate(models):
-            if not hasattr(model.model, "get_polygons"):
+            if not hasattr(model.get_model(), "get_polygons"):
                 continue
             # determine the file type
             # TODO: this needs to be decided by the exporter code
@@ -173,7 +173,7 @@ class ModelExportContour(pycam.Plugins.PluginBase):
                 file_in = open(uri.get_local_path(), "w")
                 # TODO: fill in "comment" with "meta_data"
                 # TODO: call a specific exporter
-                model.model.export(unit=self.core.get("unit")).write(file_in)
+                model.get_model().export(unit=self.core.get("unit")).write(file_in)
                 file_in.close()
                 removal_list.append(index)
             except IOError as err_msg:

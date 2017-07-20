@@ -69,7 +69,7 @@ class ModelSwapAxes(pycam.Plugins.PluginBase):
         progress.disable_cancel()
         progress.set_multiple(len(models), "Model")
         for model in models:
-            model.model.transform_by_template(template, callback=progress.update)
+            model.get_model().transform_by_template(template, callback=progress.update)
             progress.update_multiple()
         progress.finish()
         self.core.emit_event("model-change-after")

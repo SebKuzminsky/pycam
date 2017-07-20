@@ -49,7 +49,7 @@ class OpenGLViewDimension(pycam.Plugins.PluginBase):
 
     def update_model_dimensions(self, widget=None):
         dimension_bar = self.gui.get_object("DimensionTable")
-        models = [m.model for m in self.core.get("models").get_visible()]
+        models = [m.get_model() for m in self.core.get("models").get_visible()]
         model_box = pycam.Geometry.Model.get_combined_bounds(models)
         if model_box is None:
             model_box = Box3D(Point3D(0, 0, 0), Point3D(0, 0, 0))
