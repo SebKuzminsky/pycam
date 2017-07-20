@@ -969,6 +969,7 @@ class Boundary(BaseCollectionItemDataContainer):
                 _log.warning("Negative Boundary encounterd for %s: %g < %g. "
                              "Coercing is not implemented, yes.", axis_name, lower, upper)
 
+    @CacheStorage(("specification", "reference_models", "lower", "upper", "tool_boundary"))
     @_set_parser_context("Boundary")
     def get_absolute_limits(self, tool_radius=None, models=None):
         lower = self.get_value("lower")
@@ -1037,6 +1038,7 @@ class Task(BaseCollectionItemDataContainer):
                             "type": _get_enum_resolver(TaskType),
                             "collision_models": _get_collection_resolver("model", many=True)}
 
+    @CacheStorage(("process", "bounds", "tool", "type", "collision_models"))
     @_set_parser_context("Task")
     def generate_toolpath(self, callback=None):
         process = self.get_value("process")
@@ -1091,6 +1093,7 @@ class ToolpathTransformation(BaseDataContainer):
         else:
             raise InvalidKeyError(action, ToolpathTransformationAction)
 
+    @CacheStorage(("action", "offset", "clone_count"))
     @_set_parser_context("Toolpath transformation 'clone'")
     @_set_allowed_attributes({"action", "offset", "clone_count"})
     def _get_cloned_toolpath(self, toolpath):
@@ -1107,6 +1110,7 @@ class ToolpathTransformation(BaseDataContainer):
         new_toolpath.path = new_moves
         return new_toolpath
 
+    @CacheStorage({"action", "shift_target", "axes"})
     @_set_parser_context("Model transformation 'shift'")
     @_set_allowed_attributes({"action", "shift_target", "axes"})
     def _get_shifted_toolpath(self, toolpath):
@@ -1120,6 +1124,7 @@ class ToolpathTransformation(BaseDataContainer):
         new_toolpath.path = toolpath | tp_filters.TransformPosition(shift_matrix)
         return new_toolpath
 
+    @CacheStorage({"action", "models"})
     @_set_parser_context("Model transformation 'crop'")
     @_set_allowed_attributes({"action", "models"})
     def _get_cropped_toolpath(self, toolpath):
@@ -1262,6 +1267,7 @@ class Export(BaseCollectionItemDataContainer):
                             "source": Source,
                             "target": Target}
 
+    @CacheStorage(("format", "source", "target"))
     def run_export(self):
         formatter = self.get_value("format")
         source = self.get_value("source").get("export")
