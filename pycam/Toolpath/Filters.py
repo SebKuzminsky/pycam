@@ -470,19 +470,34 @@ class StepWidth(BaseFilter):
         for step in toolpath:
             if step.action in MOVES_LIST:
                 if last_pos:
+                    real_target_position = []
                     diff = [(abs(a_conv(a_last_pos) - a_conv(a_pos)))
                             for a_conv, a_last_pos, a_pos in zip(conv, last_pos, step.position)]
-                    if all([d < lim for d, lim in zip(diff, minimum_steps)]):
-                        # too close: ignore this move
+                    position_changed = False
+                    # For every axis: if the new position is closer than the defined step width,
+                    # then stay at the previous position.
+                    # see https://sf.net/p/pycam/discussion/860184/thread/930b1c7f/
+                    for axis_distance, min_distance, axis_last, axis_wanted in zip(
+                            diff, minimum_steps, last_pos, step.position):
+                        if axis_distance >= min_distance:
+                            real_target_position.append(axis_wanted)
+                            position_changed = True
+                        else:
+                            real_target_position.append(axis_last)
+                    if not position_changed:
+                        # The limitiation was not exceeded for any axis.
                         continue
+                else:
+                    real_target_position = step.position
                 # TODO: this would also change the GCode output - we want
                 # this, but it sadly breaks other code pieces that rely on
                 # floats instead of decimals at this point. The output
                 # conversion needs to move into the GCode output hook.
 #               destination = [a_conv(a_pos) for a_conv, a_pos in zip(conv, step.position)]
-                destination = step.position
+                destination = real_target_position
                 path.append(ToolpathSteps.get_step_class_by_action(step.action)(destination))
-                last_pos = step.position
+                # We store the real machine position (instead of the "wanted" position).
+                last_pos = real_target_position
             else:
                 # forget "last_pos" - we don't know what happened in between
                 last_pos = None
