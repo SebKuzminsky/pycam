@@ -112,7 +112,7 @@ class ModelExtrusion(pycam.Plugins.PluginBase):
             progress.set_multiple(len(selected_models), "Model")
             for model in selected_models:
                 new_model = model.get_model().extrude(stepping=grid_size, func=func,
-                                                callback=progress.update)
+                                                      callback=progress.update)
                 if new_model:
                     self.core.get("models").add_model(new_model,
                                                       name_template="Extruded model #%d")

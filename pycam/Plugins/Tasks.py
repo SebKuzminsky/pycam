@@ -225,7 +225,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
         if (len(self.get_all()) != 1) or not task_type:
             details_box.hide()
         else:
-            task = tasks[0]
+            task = self.get_all()[0]
             task.set_value("type", task_type["name"])
             details_box.show()
 

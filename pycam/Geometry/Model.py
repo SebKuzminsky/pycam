@@ -22,8 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import math
 import uuid
 
-from pycam.Geometry import (epsilon, INFINITE, TransformableContainer, IDGenerator, Box3D, Point3D,
-                            Vector3D)
+from pycam.Geometry import epsilon, INFINITE, TransformableContainer, IDGenerator, Box3D, Point3D
 from pycam.Geometry.Matrix import TRANSFORMATIONS
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane

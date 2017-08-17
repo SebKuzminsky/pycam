@@ -22,7 +22,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import pycam.Flow.data_models
 import pycam.Plugins
 import pycam.Toolpath
-from pycam.Utils import get_non_conflicting_name
 
 
 class Toolpaths(pycam.Plugins.ListPluginBase):

@@ -19,10 +19,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-from pycam.Geometry.Plane import Plane
 import pycam.Gui.ControlsGTK
 import pycam.Plugins
-import pycam.Toolpath.Filters as Filters
 
 
 class ToolpathCrop(pycam.Plugins.PluginBase):

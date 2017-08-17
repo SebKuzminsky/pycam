@@ -20,9 +20,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import math
 
-# TODO: fix opengl visualization and remove this import-breaker
-import nonexistingmodule
-
 from pycam.Geometry import number, sqrt
 from pycam.Geometry.PointUtils import pcross, pmul, pnormalized
 import pycam.Geometry.Matrix as Matrix

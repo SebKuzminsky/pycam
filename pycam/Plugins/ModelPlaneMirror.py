@@ -69,7 +69,7 @@ class ModelPlaneMirror(pycam.Plugins.PluginBase):
             assert False, "No mirror plane selected"
         for model in models:
             model.get_model().transform_by_template("%s_mirror" % plane.lower(),
-                                              callback=progress.update)
+                                                    callback=progress.update)
             progress.update_multiple()
         progress.finish()
         self.core.emit_event("model-change-after")

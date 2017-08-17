@@ -111,6 +111,7 @@ class Models(pycam.Plugins.ListPluginBase):
             self._apply_model_color_to_button(models[0], color_button)
 
     def _store_colors_of_selected_models(self, widget=None):
+        color_button = self.gui.get_object("ModelColorButton")
         color = self.gui.get_object("ModelColorButton").get_color()
         for model in self.get_selected():
             model.set_application_value("color", {
