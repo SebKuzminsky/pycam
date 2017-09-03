@@ -52,14 +52,14 @@ except ImportError:
                                                   '--abbrev-ref',
                                                   'HEAD'],
                                                  cwd=repo_dir)
-        current_branch = current_branch.strip()
+        current_branch = current_branch.strip().decode("utf-8")
 
         git_describe = subprocess.check_output(["git", "describe",
                                                 "--always", "--dirty",
                                                 "--tags", "--match",
                                                 tag_glob], cwd=repo_dir)
         # remove the "v" prefix
-        git_describe = git_describe.strip().lstrip("v")
+        git_describe = git_describe.strip().decode("utf-8").lstrip("v")
 
         if current_branch == parent_branch:
             # We're on master or on a stable/release branch, so the
