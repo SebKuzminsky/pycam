@@ -792,6 +792,7 @@ class Tool(BaseCollectionItemDataContainer):
     list_changed_event = "tool-list-changed"
     attribute_converters = {"shape": _get_enum_resolver(ToolShape),
                             "tool_id": int,
+                            "radius": float,
                             "diameter": float,
                             "feed": float,
                             "spindle_enabled": _bool_converter,
@@ -829,7 +830,7 @@ class Tool(BaseCollectionItemDataContainer):
             return self.get_value("radius")
         except MissingAttributeError:
             pass
-        return self.get_value("diameter") / 2
+        return self.get_value("diameter") / 2.0
 
     @property
     def diameter(self):
