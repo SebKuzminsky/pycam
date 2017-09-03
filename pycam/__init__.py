@@ -48,16 +48,13 @@ except ImportError:
     repo_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
     try:
-        current_branch = subprocess.check_output(['git', 'rev-parse',
-                                                  '--abbrev-ref',
-                                                  'HEAD'],
-                                                 cwd=repo_dir)
+        current_branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                                                 cwd=repo_dir, stderr=subprocess.PIPE)
         current_branch = current_branch.strip().decode("utf-8")
 
-        git_describe = subprocess.check_output(["git", "describe",
-                                                "--always", "--dirty",
-                                                "--tags", "--match",
-                                                tag_glob], cwd=repo_dir)
+        git_describe = subprocess.check_output(["git", "describe", "--always", "--dirty", "--tags",
+                                                "--match", tag_glob],
+                                               cwd=repo_dir, stderr=subprocess.PIPE)
         # remove the "v" prefix
         git_describe = git_describe.strip().decode("utf-8").lstrip("v")
 
