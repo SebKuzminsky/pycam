@@ -289,7 +289,7 @@
   </object>
   <object class="GtkAdjustment" id="speed">
     <property name="lower">1</property>
-    <property name="upper">10000</property>
+    <property name="upper">100000</property>
     <property name="step_increment">1</property>
   </object>
 </interface>
