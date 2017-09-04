@@ -210,9 +210,9 @@ class Bounds(pycam.Plugins.ListPluginBase):
             self.select_models([])
         for key, func in (("lower", func_low), ("upper", func_high)):
             values = []
-            for item in bounds.get_value(key):
+            for axis, item in enumerate(bounds.get_value(key)):
                 try:
-                    new_value = func(item.value)
+                    new_value = func(item.value, axis)
                 except ZeroDivisionError:
                     # this happens for flat models
                     new_value = 0
