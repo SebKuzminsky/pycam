@@ -239,14 +239,6 @@ def execute(parser, opts, args, pycam):
         warnings.filterwarnings("ignore")
     else:
         log.setLevel(logging.INFO)
-        # silence gtk warnings
-        try:
-            import gi
-            gi.require_version("Gtk", "3.0")
-            # from gi.repository import Gtk as gtk
-            # warnings.filterwarnings("ignore", category=gtk.Warning) FIXME
-        except ImportError:
-            pass
 
     # show version and exit
     if opts.show_version:
