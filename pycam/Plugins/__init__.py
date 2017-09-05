@@ -185,13 +185,22 @@ class PluginBase(object):
         raise NotImplementedError("Module %s (%s) does not implement 'teardown'"
                                   % (self.name, __file__))
 
+    def _get_gtk_action_group_by_name(self, group_name, create_if_missing=False):
+        ui_manager = self.core.get("gtk-uimanager")
+        # find the action group of the given name or create a new one
+        for action_group in ui_manager.get_action_groups():
+            if action_group.get_name() == group_name:
+                return action_group
+        else:
+            if create_if_missing:
+                action_group = self._gtk.ActionGroup(name=group_name)
+                ui_manager.insert_action_group(action_group)
+                return action_group
+            else:
+                return None
+
     def register_gtk_accelerator(self, groupname, action, accel_string, accel_name):
-        # menu item and shortcut
-        # try:  FIXME
-        #     import gtk
-        # except ImportError:
-        #     return
-        actiongroup = self._gtk.ActionGroup(groupname)
+        actiongroup = self._get_gtk_action_group_by_name(groupname, create_if_missing=True)
         accel_path = "<pycam>/%s" % accel_name
         action.set_accel_path(accel_path)
         # it is a bit pointless, but we allow an empty accel_string anyway ...
@@ -199,17 +208,15 @@ class PluginBase(object):
             key, mod = self._gtk.accelerator_parse(accel_string)
             self._gtk.AccelMap.change_entry(accel_path, key, mod, True)
         actiongroup.add_action(action)
-        ui_manager = self.core.get("gtk-uimanager")
-        # it can happen that there is no gtk ui manager available (in script mode)
-        if ui_manager:
-            ui_manager.insert_action_group(actiongroup)
 
     def unregister_gtk_accelerator(self, groupname, action):
-        actiongroup = self._gtk.ActionGroup(groupname)
+        actiongroup = self._get_gtk_action_group_by_name(groupname)
+        if actiongroup is None:
+            self.log.warning("Failed to unregister unknown GTK Action Group: %s", groupname)
         actiongroup.remove_action(action)
+        # remove the connected action group, if it is empty (no more actions assigned)
         ui_manager = self.core.get("gtk-uimanager")
-        if ui_manager and (len(actiongroup.list_actions()) == 0) \
-                and (actiongroup in ui_manager.get_action_groups()):
+        if ui_manager and (len(actiongroup.list_actions()) == 0):
             ui_manager.remove_action_group(actiongroup)
 
 
