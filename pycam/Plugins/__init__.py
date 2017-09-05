@@ -458,10 +458,11 @@ class ListPluginBase(PluginBase):
         selection = self._gtk_modelview.get_selection()
         selected_uuids = [item.get_id() for item in selected_objs]
         for index, item in enumerate(self.get_collection()):
+            path = self._gtk.TreePath.new_from_indices((index, ))
             if item.get_id() in selected_uuids:
-                selection.select_path((index, ))
+                selection.select_path(path)
             else:
-                selection.unselect_path((index, ))
+                selection.unselect_path(path)
 
     def set_gtk_modelview(self, modelview):
         self._gtk_modelview = modelview
@@ -544,7 +545,8 @@ class ListPluginBase(PluginBase):
             selection = modelview
         selection.unselect_all()
         for index in new_selection:
-            selection.select_path((index,))
+            path = self._gtk.TreePath.new_from_indices((index, ))
+            selection.select_path(path)
 
     def get_collection(self):
         return self.COLLECTION_ITEM_TYPE.get_collection()

@@ -228,11 +228,11 @@ class InputTable(InputChoice):
         if items is None:
             items = []
         for index, value in enumerate(self._values):
-            path = gtk.TreePath.new_from_string(str(index))
+            path = gtk.TreePath.new_from_indices((index, ))
             if value in items:
-                selection.select_path((path))  # FIXME: tuple?
+                selection.select_path(path)
             else:
-                selection.unselect_path((path))  # FIXME: tuple?
+                selection.unselect_path(path)
 
 
 class InputCheckBox(InputBaseClass):
