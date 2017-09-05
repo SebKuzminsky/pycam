@@ -44,7 +44,7 @@ class ToolParamRadius(pycam.Plugins.PluginBase):
         self.core.unregister_ui("tool_size", self.control.get_widget())
 
 
-class ToolParamTorusRadius(pycam.Plugins.PluginBase):
+class ToolParamToroidRadius(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Tools"]
     CATEGORIES = ["Tool", "Parameter"]
@@ -53,13 +53,13 @@ class ToolParamTorusRadius(pycam.Plugins.PluginBase):
         self.control = pycam.Gui.ControlsGTK.InputNumber(
             lower=0.001, digits=4,
             change_handler=lambda widget=None: self.core.emit_event("tool-changed"))
-        self.core.get("register_parameter")("tool", "torus_radius", self.control)
-        self.core.register_ui("tool_size", "Torus Radius", self.control.get_widget(), weight=50)
+        self.core.get("register_parameter")("tool", "toroid_radius", self.control)
+        self.core.register_ui("tool_size", "Toroid Radius", self.control.get_widget(), weight=50)
         return True
 
     def teardown(self):
         self.core.unregister_ui("tool_size", self.control.get_widget())
-        self.core.get("unregister_parameter")("tool", "torus_radius")
+        self.core.get("unregister_parameter")("tool", "toroid_radius")
 
 
 class ToolParamFeedrate(pycam.Plugins.PluginBase):

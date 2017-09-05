@@ -794,6 +794,7 @@ class Tool(BaseCollectionItemDataContainer):
                             "tool_id": int,
                             "radius": float,
                             "diameter": float,
+                            "toroid_radius": float,
                             "height": float,
                             "feed": float,
                             "spindle_enabled": _bool_converter,

@@ -62,12 +62,12 @@ class ToolTypeBallNose(pycam.Plugins.PluginBase):
 
 class ToolTypeBullNose(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["Tools", "ToolParamRadius", "ToolParamTorusRadius", "ToolParamFeedrate"]
+    DEPENDS = ["Tools", "ToolParamRadius", "ToolParamToroidRadius", "ToolParamFeedrate"]
     CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
         parameters = {"radius": 1.0,
-                      "torus_radius": 0.25,
+                      "toroid_radius": 0.25,
                       "feedrate": 300,
                       "spindle_speed": 1000}
         self.core.get("register_parameter_set")("tool", "torus", "Bull nose", self.get_tool,
@@ -77,9 +77,9 @@ class ToolTypeBullNose(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter_set")("tool", "torus")
 
-    @tool_params_and_filters("radius", "torus_radius")
-    def get_tool(self, radius, torus_radius):
-        return pycam.Cutters.ToroidalCutter.ToroidalCutter(radius, torus_radius)
+    @tool_params_and_filters("radius", "toroid_radius")
+    def get_tool(self, radius, toroid_radius):
+        return pycam.Cutters.ToroidalCutter.ToroidalCutter(radius, toroid_radius)
 
 
 class ToolTypeFlat(pycam.Plugins.PluginBase):
