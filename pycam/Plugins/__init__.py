@@ -49,9 +49,11 @@ class PluginBase(object):
             gi.require_version('Gtk', '3.0')
             from gi.repository import Gtk
             from gi.repository import Gdk
+            from gi.repository import GdkPixbuf
             from gi.repository import GObject
             self._gtk = Gtk
             self._gdk = Gdk
+            self._gdkpixbuf = GdkPixbuf
             self._gobject = GObject
         except ImportError:
             self._gtk = None
@@ -83,14 +85,12 @@ class PluginBase(object):
             for key in self.ICONS:
                 icon_location = pycam.Utils.locations.get_ui_file_location(self.ICONS[key])
                 if icon_location:
-                    # try:  FIXME
-                    #    pixbuf = self._gdk.pixbuf_new_from_file_at_size(icon_location,
-                    #                                                    self.ICON_SIZE,
-                    #                                                    self.ICON_SIZE)
-                    # except gobject.GError:
-                    self.ICONS[key] = None
-                    # else:
-                    #     self.ICONS[key] = pixbuf
+                    try:
+                        self.ICONS[key] = self._gdkpixbuf.Pixbuf.new_from_file_at_size(
+                            icon_location, self.ICON_SIZE, self.ICON_SIZE)
+                    except self._gobject.GError:
+                        self.log.info("Failed to load icon: %s", self.ICONS[key])
+                        self.ICONS[key] = None
                 else:
                     self.log.debug("Failed to locate icon: %s", self.ICONS[key])
                     self.ICONS[key] = None
