@@ -20,8 +20,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
 
-import gobject
-
 import pycam.Gui.common
 import pycam.Plugins
 
@@ -100,7 +98,7 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
             self._running = True
             interval_ms = int(1000 / self.core.get("tool_progress_max_fps"))
             pycam.Gui.common.set_parent_controls_sensitivity(self._frame, False)
-            gobject.timeout_add(interval_ms, self._next_timestep)
+            self._gobject.timeout_add(interval_ms, self._next_timestep)
         else:
             self._running = True
         self._start_button.set_sensitive(False)

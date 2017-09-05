@@ -21,7 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import collections
 
 from gi.repository import Gtk as gtk
-from gi.repository import GObject as gobject
+from gi.repository import GObject
 
 import pycam.Utils.log
 
@@ -127,7 +127,7 @@ class InputString(InputBaseClass):
 class InputChoice(InputBaseClass):
 
     def __init__(self, choices, start=None, change_handler=None):
-        self.model = gtk.ListStore(gobject.TYPE_STRING)
+        self.model = gtk.ListStore(GObject.TYPE_STRING)
         self._values = []
         for label, value in choices:
             self.model.append((label, ))
@@ -194,7 +194,7 @@ class InputChoice(InputBaseClass):
 class InputTable(InputChoice):
 
     def __init__(self, choices, change_handler=None):
-        self.model = gtk.ListStore(gobject.TYPE_STRING)
+        self.model = gtk.ListStore(GObject.TYPE_STRING)
         self._values = []
         for label, value in choices:
             self.model.append((label,))
