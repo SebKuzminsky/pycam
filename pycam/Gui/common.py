@@ -63,10 +63,16 @@ def import_gtk_carefully():
         in_windows = True
     except ImportError:
         in_windows = False
+    try:
+        import gi
+        # avoid Gtk version warnings for later imports
+        gi.require_version("Gtk", "3.0")
+    except ImportError:
+        pass
     if not in_windows:
         # We are not in windows - thus we just try to import gtk without
         # the need for any more manual preparations.
-        import gtk  # noqa F401
+        import gi.repository.Gtk  # noqa F401
     else:
         # We try to retrive the GTK library directory from the registry before
         # trying any import. Otherwise the user will always see a warning
@@ -92,7 +98,7 @@ def import_gtk_carefully():
             else:
                 os.environ["PATH"] = gtk_dll_path
         # everything should be prepared - now we try to import it again
-        import gtk  # noqa F401
+        import gi.repository.Gtk  # noqa F401
 
 
 def requirements_details_gtk():
