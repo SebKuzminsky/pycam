@@ -231,7 +231,6 @@ class Tools(pycam.Plugins.ListPluginBase):
             for key, value in self.core.get("get_parameter_values")("tool").items():
                 tool.set_value(key, value)
             control_box.show()
-            self._trigger_table_update()
 
     def _tool_switch(self, widget=None, data=None):
         tool = self.get_selected()
