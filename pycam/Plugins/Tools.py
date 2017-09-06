@@ -201,11 +201,11 @@ class Tools(pycam.Plugins.ListPluginBase):
         shapes.sort(key=lambda item: item["weight"])
         for shape in shapes:
             model.append((shape["label"], shape["name"]))
-        # check if any on the processes became obsolete due to a missing plugin
+        # check if any on the tools became obsolete due to a missing plugin
         removal = []
         shape_names = [shape["name"] for shape in shapes]
         for index, tool in enumerate(self.get_all()):
-            if not tool.get_value("shape") in shape_names:
+            if not tool.get_value("shape").value in shape_names:
                 removal.append(index)
         removal.reverse()
         for index in removal:
@@ -218,7 +218,7 @@ class Tools(pycam.Plugins.ListPluginBase):
         else:
             selector_box.show()
         if selected:
-            self.select_shape(selected.get_application_value("name"))
+            self.select_shape(selected["name"])
 
     def _store_tool_settings(self):
         tool = self.get_selected()
@@ -241,7 +241,7 @@ class Tools(pycam.Plugins.ListPluginBase):
         else:
             self.core.block_event("tool-changed")
             self.core.block_event("tool-shape-changed")
-            shape_name = tool.get_value("shape")
+            shape_name = tool.get_value("shape").value
             self.select_shape(shape_name)
             self.core.get("set_parameter_values")("tool", tool.get_dict())
             control_box.show()
