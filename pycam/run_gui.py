@@ -127,14 +127,18 @@ models:
 
 tools:
         rough:
+            tool_id: 1
             shape: flat_bottom
             radius: 3
             feed: 600
+            spindle_speed: 1000
             X-Application: { pycam-gtk: { name: Big Tool } }
         fine:
+            tool_id: 2
             shape: ball_nose
             radius: 1
             feed: 1200
+            spindle_speed: 1000
             X-Application: { pycam-gtk: { name: Small Tool } }
 
 processes:
