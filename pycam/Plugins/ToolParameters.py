@@ -71,17 +71,17 @@ class ToolParamFeedrate(pycam.Plugins.PluginBase):
         self.control = pycam.Gui.ControlsGTK.InputNumber(
             lower=1, digits=0,
             change_handler=lambda widget=None: self.core.emit_event("tool-changed"))
-        self.core.get("register_parameter")("tool", "feedrate", self.control)
+        self.core.get("register_parameter")("tool", "feed", self.control)
         self.core.register_ui("tool_speed", "Feedrate", self.control.get_widget(), weight=10)
         self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         return True
 
     def teardown(self):
         self.core.unregister_ui("tool_speed", self.control.get_widget())
-        self.core.get("unregister_parameter")("tool", "feedrate")
+        self.core.get("unregister_parameter")("tool", "feed")
         self.core.unregister_chain("toolpath_filters", self.get_toolpath_filters)
 
-    @toolpath_filter("tool", "feedrate")
+    @toolpath_filter("tool", "feed")
     def get_toolpath_filters(self, feedrate):
         return [pycam.Toolpath.Filters.MachineSetting("feedrate", feedrate)]
 
