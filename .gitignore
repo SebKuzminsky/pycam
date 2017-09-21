@@ -21,7 +21,7 @@ Icon?
 Thumbs.db
 
 *~
-.*.swp
+.*.sw?
 
 man/pycam.1
 # windows build remainder
