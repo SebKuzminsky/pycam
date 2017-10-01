@@ -23,7 +23,7 @@ import math
 # careful import
 try:
     # disable opengl visualization
-    import disable_opengl_visualization_due_to_missing_opengl_support_for_gtk3
+    raise ImportError()
     # import gtk.gtkgl
     import OpenGL.GL as GL
     import OpenGL.GLU as GLU
