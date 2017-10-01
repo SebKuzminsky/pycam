@@ -1,3 +1,20 @@
+pycam (0.6.1) unstable; urgency=medium
+
+  * docs: lots of improvements
+  * remove support for psyco and ODE
+  * don't load the Tiny Pyramid model at startup
+  * limit the plunge feedrate
+  * lots of bug fixes and cleanups all over
+  * python3 compatibility
+  * added Code of Conduct
+  * toolpath simulation: increase default frame rate from 30
+
+  * add Continuous Integration testing via Travis
+  * lots of pylint fixes
+  * flake8 compliance
+
+ -- Sebastian Kuzminsky <seb@highlab.com>  Sun, 01 Oct 2017 13:56:09 -0600
+
 pycam (0.6) unstable; urgency=medium
 
   * First triumphant release after years of dormancy.
