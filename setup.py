@@ -20,11 +20,11 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from setuptools import setup
 import glob
 import os.path
-import sys
+from setuptools import setup
 import shutil
+import sys
 
 from pycam import VERSION
 
