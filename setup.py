@@ -22,7 +22,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import glob
 import os.path
-from setuptools import setup
+from setuptools import setup, find_packages
 import shutil
 import sys
 
@@ -78,22 +78,7 @@ Windows: select Python 2.5 in the following dialog.
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX",
     ],
-    packages=[
-        "pycam",
-        "pycam.Cutters",
-        "pycam.Exporters",
-        "pycam.Exporters.GCode",
-        "pycam.Geometry",
-        "pycam.Gui",
-        "pycam.Importers",
-        "pycam.PathGenerators",
-        "pycam.PathProcessors",
-        "pycam.Physics",
-        "pycam.Plugins",
-        "pycam.Simulation",
-        "pycam.Toolpath",
-        "pycam.Utils",
-    ],
+    packages=find_packages(exclude=["pycam.Test"]),
     scripts=PLATFORM_SCRIPTS,
     data_files=[
         ("share/pycam/doc", ["COPYING.TXT",
