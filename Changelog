@@ -1,4 +1,4 @@
-Version 0.6.2 - ???
+Version 0.6.2 - 2017-10-27
  * Bounds: disable percent-based controls for zero-dimensions
  * fix toolpath grid operation (issue #45)
  * prevent negative bounding box dimensions
