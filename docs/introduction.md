@@ -138,8 +138,8 @@ Generate the toolpath(s)
 You need to define a task for each toolpath to be generated.
 
 Each task can be marked as *enabled*. All *enabled* tasks are performed
-when clicking on *Generate all toolpaths*. Alternatively you can als
-click at *Generate Toolpath* to process only the currently selected
+when clicking on *Generate all toolpaths*. Alternatively you can
+click *Generate Toolpath* to process only the currently selected
 task.
 
 
