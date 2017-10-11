@@ -29,7 +29,6 @@ from optparse import OptionParser
 import os
 import socket
 import sys
-import time
 import warnings
 
 # we need the multiprocessing exception for remote connections
@@ -49,16 +48,13 @@ except ImportError:
                                                      os.pardir)))
     from pycam import VERSION
 
-from pycam import GenericError
 import pycam.Exporters.GCodeExporter
-from pycam.Geometry import Box3D, Point3D
 import pycam.Gui.common as GuiCommon
 import pycam.Gui.Settings
 import pycam.Gui.Console
 import pycam.Importers.TestModel
 import pycam.Importers
 import pycam.Plugins
-from pycam.Toolpath import Bounds, Toolpath
 import pycam.Utils
 from pycam.Utils.events import get_event_handler
 import pycam.Utils.log
@@ -226,13 +222,6 @@ There is NO WARRANTY, to the extent permitted by law.""".format(VERSION)
         log.error("The remote server rejected your authentication key: %s", err_msg)
         return EXIT_CODES["connection_error"]
 
-    # initialize the progress bar
-    progress_styles = {"none": pycam.Gui.Console.ConsoleProgressBar.STYLE_NONE,
-                       "text": pycam.Gui.Console.ConsoleProgressBar.STYLE_TEXT,
-                       "bar": pycam.Gui.Console.ConsoleProgressBar.STYLE_BAR,
-                       "dot": pycam.Gui.Console.ConsoleProgressBar.STYLE_DOT}
-    progress_bar = pycam.Gui.Console.ConsoleProgressBar(sys.stdout, progress_styles[opts.progress])
-
     show_gui()
 
 
@@ -250,11 +239,6 @@ def main_func():
                              "Most parameters are useful only for batch mode."),
         epilog="PyCAM website: https://github.com/SebKuzminsky/pycam")
     group_general = parser.add_option_group("General options")
-    group_export = parser.add_option_group(
-        "Export formats", ("Export the resulting toolpath or meta-data in various formats. These "
-                           "options trigger the non-interactive mode. Thus the GUI is disabled."))
-    group_external_programs = parser.add_option_group(
-        "External programs", "Some optional external programs are used for format conversions.")
     # general options
     group_general.add_option(
         "", "--unit", dest="unit_size", default="mm", action="store", type="choice",

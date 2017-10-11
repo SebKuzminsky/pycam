@@ -86,7 +86,8 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
             self.grid_adjustment_value = self.gui.get_object("SupportGridPositionManualAdjustment")
             self.grid_adjustment_value_control = self.gui.get_object(
                 "SupportGridPositionManualShiftControl")
-            # self.grid_adjustment_value_control.set_update_policy(self._gtk.UPDATE_DISCONTINUOUS) FIXME
+            # FIXME
+            # self.grid_adjustment_value_control.set_update_policy(self._gtk.UPDATE_DISCONTINUOUS)
             self._gtk_handlers.extend((
                 (self.grid_adjustment_value_control, "move-slider",
                  self.update_support_grid_manual_adjust),
