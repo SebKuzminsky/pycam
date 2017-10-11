@@ -131,6 +131,11 @@ class Line(IDGenerator, TransformableContainer):
     def point_with_length_multiply(self, l):
         return padd(self.p1, pmul(self.dir, l*self.len))
 
+    def get_length_line(self, length):
+        """ return a line with the same direction and the specified length
+        """
+        return Line(self.p1, padd(self.p1, pmul(self.dir, length)))
+
     def closest_point(self, p):
         v = self.dir
         if v is None:
