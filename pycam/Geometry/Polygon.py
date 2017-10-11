@@ -290,12 +290,13 @@ class Polygon(TransformableContainer):
     def is_connectable(self, line_or_point):
         if self.is_closed:
             return False
-        elif not self._points:
-            # empty polygons can be connected with any line
+        if not self._points:
+            # empty polygons can be connected with any line or point
             return True
-        if hasattr(line_or_point, "get_length_line"):
-            # it is a line
+        if isinstance(line_or_point, Line):
             line = line_or_point
+            # Test if the line can be connected to the start or the end of the polygon.
+            # The direction of the line is respected.
             if line.p1 == self._points[-1]:
                 return True
             elif line.p2 == self._points[0]:
@@ -303,8 +304,8 @@ class Polygon(TransformableContainer):
             else:
                 return False
         else:
-            # it is a point
             point = line_or_point
+            # Test if the point equals the first or the last point of the polygon.
             return (point == self._points[-1]) or (point == self._points[0])
 
     def next(self):
