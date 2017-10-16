@@ -82,4 +82,4 @@ def draw_direction_cone(p1, p2, position=0.5, precision=12, size=0.1):
     # center the cone
     GL.glTranslatef(0, 0, -cone_length * position)
     # draw the cone
-    GLUT.glutSolidCone(cone_radius, cone_length, precision, 1)
+    GLUT.glutWireCone(cone_radius, cone_length, precision, 1)
