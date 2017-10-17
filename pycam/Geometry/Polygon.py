@@ -569,18 +569,19 @@ class Polygon(TransformableContainer):
         p3 = self._points[(index + 1) % len(self._points)]
         return get_bisector(p1, p2, p3, self.plane.n)
 
+    def get_shifted_vertex(self, index, offset):
+        p1 = self._points[index]
+        p2 = self._points[(index + 1) % len(self._points)]
+        cross_offset = pnormalized(pcross(psub(p2, p1), self.plane.n))
+        bisector_normalized = self.get_bisector(index)
+        factor = pdot(cross_offset, bisector_normalized)
+        if factor != 0:
+            bisector_sized = pmul(bisector_normalized, offset / factor)
+            return padd(p1, bisector_sized)
+        else:
+            return p2
+
     def get_offset_polygons_validated(self, offset):
-        def get_shifted_vertex(index, offset):
-            p1 = self._points[index]
-            p2 = self._points[(index + 1) % len(self._points)]
-            cross_offset = pnormalized(pcross(psub(p2, p1), self.plane.n))
-            bisector_normalized = self.get_bisector(index)
-            factor = pdot(cross_offset, bisector_normalized)
-            if factor != 0:
-                bisector_sized = pmul(bisector_normalized, offset / factor)
-                return padd(p1, bisector_sized)
-            else:
-                return p2
         if self.is_outer():
             inside_shifting = max(0, -offset)
         else:
@@ -590,7 +591,7 @@ class Polygon(TransformableContainer):
             return []
         points = []
         for index in range(len(self._points)):
-            points.append(get_shifted_vertex(index, offset))
+            points.append(self.get_shifted_vertex(index, offset))
         max_dist = 1000 * epsilon
 
         def test_point_near(p, others):
@@ -826,18 +827,6 @@ class Polygon(TransformableContainer):
         return result_polygons
 
     def get_offset_polygons(self, offset, callback=None):
-        def get_shifted_vertex(index, offset):
-            p1 = self._points[index]
-            p2 = self._points[(index + 1) % len(self._points)]
-            cross_offset = pnormalized(pcross(psub(p2, p1), self.plane.n))
-            bisector_normalized = self.get_bisector(index)
-            factor = pdot(cross_offset, bisector_normalized)
-            if factor != 0:
-                bisector_sized = pmul(bisector_normalized, offset / factor)
-                return padd(p1, bisector_sized)
-            else:
-                return p2
-
         def simplify_polygon_intersections(lines):
             new_group = lines[:]
             # remove all non-adjacent intersecting lines (this splits the group)
@@ -942,7 +931,7 @@ class Polygon(TransformableContainer):
             return []
         points = []
         for index in range(len(self._points)):
-            points.append(get_shifted_vertex(index, offset))
+            points.append(self.get_shifted_vertex(index, offset))
         new_lines = []
         for index in range(len(points) - 1):
             p1 = points[index]
