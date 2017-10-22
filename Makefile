@@ -81,7 +81,12 @@ upload:
 	svn import "$(ARCHIVE_DIR)/$(EXPORT_WIN32)" "$(REPO_TAGS)/archives/$(EXPORT_WIN32)" \
 		-m "added released win32 installer for version $(VERSION)"
 
-test: check-style
+test: check-style pytest
+
+pytest:
+	for TEST in $$(find tests/ -name '*.py'); do \
+	    python -m pytest -v $$TEST; \
+	done
 
 check-style:
 	scripts/run_flake8 $(PYTHON_CHECK_STYLE_TARGETS)
