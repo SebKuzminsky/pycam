@@ -33,7 +33,7 @@ class CircleIntersections(pycam.Test.PycamTestCase):
     def setUp(self):
         self._circle = {"center": (2, 1, 10), "axis": (0, 0, 1), "radius": 3}
 
-    @pytest.mark.skip(reason="this test has never worked")
+    @pytest.mark.skipif(True, reason="this test has never worked")
     def test_line(self):
         """Circle->Line collisions"""
         func = pycam.Geometry.intersection.intersect_circle_line
@@ -89,7 +89,7 @@ class CircleIntersections(pycam.Test.PycamTestCase):
         coll = func(*(func_args + [(0, 0, -1)] + [triangle]))
         self.assertCollisionEqual((None, None, INFINITE), coll)
 
-    @pytest.mark.skip(reason="this test has never worked")
+    @pytest.mark.skipif(True, reason="this test has never worked")
     def test_point(self):
         """Circle->Point collisions"""
         func = pycam.Geometry.intersection.intersect_circle_point
