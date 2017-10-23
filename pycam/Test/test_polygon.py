@@ -1,5 +1,5 @@
-from pycam.Geometry.Polygon import *
-from pycam.Geometry.Line import *
+from pycam.Geometry.Polygon import Polygon
+from pycam.Geometry.Line import Line
 
 
 def assert_polygons_are_identical(polygon0, polygon1):
@@ -17,10 +17,10 @@ def assert_polygons_are_identical(polygon0, polygon1):
 
 # "square_p" is a polygon consisting of a simple square,
 # counter-clockwise.
-lines = (Line((0,0,0), (10,0,0)),
-         Line((10,0,0), (10,10,0)),
-         Line((10,10,0), (0,10,0)),
-         Line((0,10,0), (0,0,0)))
+lines = (Line((0, 0, 0), (10, 0, 0)),
+         Line((10, 0, 0), (10, 10, 0)),
+         Line((10, 10, 0), (0, 10, 0)),
+         Line((0, 10, 0), (0, 0, 0)))
 square_p = Polygon()
 for line in lines:
     square_p.append(line)
@@ -29,10 +29,10 @@ for line in lines:
 def test_get_offset_polygons_square_outside():
     # 'expected_outside_p' is the expected offset polygon with a
     # *positive* offset, so it's outside the input polygon.
-    lines = (Line((-1,-1,0), (11,-1,0)),
-             Line((11,-1,0), (11,11,0)),
-             Line((11,11,0), (-1,11,0)),
-             Line((-1,11,0), (-1,-1,0)))
+    lines = (Line((-1, -1, 0), (11, -1, 0)),
+             Line((11, -1, 0), (11, 11, 0)),
+             Line((11, 11, 0), (-1, 11, 0)),
+             Line((-1, 11, 0), (-1, -1, 0)))
     expected_outside_p = Polygon()
     for line in lines:
         expected_outside_p.append(line)
@@ -44,10 +44,10 @@ def test_get_offset_polygons_square_outside():
 def test_get_offset_polygons_square_inside():
     # 'expected_inside_p' is the expected offset polygon with a *negative*
     # offset, so it's inside the input polygon.
-    lines = (Line((1,1,0), (9,1,0)),
-             Line((9,1,0), (9,9,0)),
-             Line((9,9,0), (1,9,0)),
-             Line((1,9,0), (1,1,0)))
+    lines = (Line((1, 1, 0), (9, 1, 0)),
+             Line((9, 1, 0), (9, 9, 0)),
+             Line((9, 9, 0), (1, 9, 0)),
+             Line((1, 9, 0), (1, 1, 0)))
     expected_inside_p = Polygon()
     for line in lines:
         expected_inside_p.append(line)
