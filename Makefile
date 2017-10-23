@@ -84,9 +84,7 @@ upload:
 test: check-style pytest
 
 pytest:
-	for TEST in $$(find tests/ -name '*.py'); do \
-	    python -m pytest -v $$TEST; \
-	done
+	pytest -v .
 
 check-style:
 	scripts/run_flake8 $(PYTHON_CHECK_STYLE_TARGETS)
