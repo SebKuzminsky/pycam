@@ -83,6 +83,14 @@ upload:
 
 test: check-style
 
+# The "make pytest" target calls pytest via the obsolete `py.test` name,
+# instead of the modern `pytest` name.  This is in order to support
+# older versions of pytest, specifically version 2.5 on Ubuntu Trusty.
+# Once the oldest supported platform has pytest 3.0 or newer we can
+# switch to the new `pytest` name.
+pytest:
+	py.test -v .
+
 check-style:
 	scripts/run_flake8 $(PYTHON_CHECK_STYLE_TARGETS)
 
