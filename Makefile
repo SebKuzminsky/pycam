@@ -81,7 +81,7 @@ upload:
 	svn import "$(ARCHIVE_DIR)/$(EXPORT_WIN32)" "$(REPO_TAGS)/archives/$(EXPORT_WIN32)" \
 		-m "added released win32 installer for version $(VERSION)"
 
-test: check-style
+test: check-style pytest
 
 # The "make pytest" target calls pytest via the obsolete `py.test` name,
 # instead of the modern `pytest` name.  This is in order to support
