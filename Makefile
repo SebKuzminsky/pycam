@@ -14,7 +14,7 @@ PYTHON_EXE ?= python
 # (introduced in python 2.6)
 DISTUTILS_PLAT_NAME = $(shell $(PYTHON_EXE) setup.py --help build_ext \
 		      | grep -q -- "--plat-name" && echo "--plat-name win32")
-PYTHON_CHECK_STYLE_TARGETS = pycam Tests pyinstaller/hooks/hook-pycam.py scripts/pycam setup.py
+PYTHON_CHECK_STYLE_TARGETS = pycam pyinstaller/hooks/hook-pycam.py scripts/pycam setup.py
 
 # default location of mkdocs' build process
 MKDOCS_SOURCE_DIR = docs
@@ -91,7 +91,15 @@ update-deb-changelog:
 update-version:
 	@echo 'VERSION = "$(VERSION)"' >| "$(VERSION_FILE)"
 
-test: check-style
+test: check-style pytest
+
+# The "make pytest" target calls pytest via the obsolete `py.test` name,
+# instead of the modern `pytest` name.  This is in order to support
+# older versions of pytest, specifically version 2.5 on Ubuntu Trusty.
+# Once the oldest supported platform has pytest 3.0 or newer we can
+# switch to the new `pytest` name.
+pytest:
+	py.test -v .
 
 check-style:
 	scripts/run_flake8 $(PYTHON_CHECK_STYLE_TARGETS)

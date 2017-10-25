@@ -17,7 +17,7 @@ install: true
 script:
   - export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
   - debian/rules prep-source
-  - make check-style
+  - make test
   - python setup.py sdist
   - ./scripts/pycam --help
   - ./scripts/pycam --version
