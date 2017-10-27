@@ -12,6 +12,9 @@ before_install: ./scripts/travis-install-build-deps.sh
 install: true
 
 script:
+  - export BRANCH=$(if [ "${TRAVIS_PULL_REQUEST}" == "false" ]; then echo ${TRAVIS_BRANCH}; else echo ${TRAVIS_BRANCH}-${TRAVIS_PULL_REQUEST_BRANCH}-pr${TRAVIS_PULL_REQUEST}; fi)
+  - git branch -D ${BRANCH} || true
+  - git checkout -b ${BRANCH} ${TRAVIS_COMMIT}
   - export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
   - make test
   - python setup.py sdist
