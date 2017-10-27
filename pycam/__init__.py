@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import subprocess
+import re
 
 
 try:
@@ -57,6 +58,18 @@ except ImportError:
                                                cwd=repo_dir, stderr=subprocess.PIPE)
         # remove the "v" prefix
         git_describe = git_describe.strip().decode("utf-8").lstrip("v")
+
+        # Special case: a tag containing "-pre" followed by a number
+        # indicates a pre-release, so we want the version number to
+        # be *less* than the tag without the "-preX".  For example,
+        # "v0.7.0-pre2" is an earlier version than "v0.7.0".
+        #
+        # In Debian version numbers this is indicated by the
+        # tilde character "~", but git tags cannot contain tildes
+        # (https://git-scm.com/docs/git-check-ref-format, or see the
+        # "git-check-ref-format" manpage).  So we replace the first
+        # "-pre" in tag names with "~pre".
+        git_describe = re.sub('-pre([0-9])', r'~pre\1', git_describe, 1)
 
         if current_branch == parent_branch:
             # We're on master or on a stable/release branch, so the
