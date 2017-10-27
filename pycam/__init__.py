@@ -43,7 +43,7 @@ except ImportError:
     #     * 'tag_glob' stays set to the glob for release tags on this branch.
     #
     parent_branch = "master"
-    tag_glob = "v0.*"
+    tag_glob = "v0.7.*"
 
     repo_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
