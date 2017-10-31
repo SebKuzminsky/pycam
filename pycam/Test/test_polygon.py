@@ -37,8 +37,9 @@ def test_get_offset_polygons_square_outside():
     for line in lines:
         expected_outside_p.append(line)
 
-    output_p = square_p.get_offset_polygons(1)[0]
-    assert_polygons_are_identical(output_p, expected_outside_p)
+    output_p = square_p.get_offset_polygons(1)
+    assert(len(output_p) == 1)
+    assert_polygons_are_identical(output_p[0], expected_outside_p)
 
 
 def test_get_offset_polygons_square_inside():
@@ -52,5 +53,6 @@ def test_get_offset_polygons_square_inside():
     for line in lines:
         expected_inside_p.append(line)
 
-    output_p = square_p.get_offset_polygons(-1)[0]
-    assert_polygons_are_identical(output_p, expected_inside_p)
+    output_p = square_p.get_offset_polygons(-1)
+    assert(len(output_p) == 1)
+    assert_polygons_are_identical(output_p[0], expected_inside_p)
