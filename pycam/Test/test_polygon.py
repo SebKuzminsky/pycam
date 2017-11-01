@@ -106,3 +106,27 @@ def test_get_offset_polygons_truncated_square_inside_small_offset():
         print(str(p))
     assert(len(output_p) == 1)
     assert_polygons_are_identical(output_p[0], expected_inside_p)
+
+
+def test_get_offset_polygons_truncated_square_inside_big_offset():
+    """This tests a "truncated square", which is a square with the
+    corners shaved off, and an inside offset that's big compared to the
+    corner chamfers."""
+
+    # 'expected_inside_p' is the expected offset polygon with a *negative*
+    # offset, so it's inside the input polygon.
+    lines = (Line((3.0, 3.0, 0.0), (7.0, 3.0, 0.0)),
+             Line((7.0, 3.0, 0.0), (7.0, 7.0, 0.0)),
+             Line((7.0, 7.0, 0.0), (3.0, 7.0, 0.0)),
+             Line((3.0, 7.0, 0.0), (3.0, 3.0, 0.0)))
+
+    expected_inside_p = Polygon()
+    for line in lines:
+        expected_inside_p.append(line)
+
+    output_p = truncated_square_p.get_offset_polygons(-3)
+    print("get_offset_polygons returned:")
+    for p in output_p:
+        print(str(p))
+    assert(len(output_p) == 1)
+    assert_polygons_are_identical(output_p[0], expected_inside_p)
