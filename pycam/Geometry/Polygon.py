@@ -570,6 +570,15 @@ class Polygon(TransformableContainer):
         return get_bisector(p1, p2, p3, self.plane.n)
 
     def get_shifted_vertex(self, index, offset):
+        """ calculate the position of a point with the following properties:
+            - it is positioned on the angle bisector starting from the index'th point of the
+              polygon (in relation to the angle between the two adjacent lines of this point)
+            - both adjacent lines are tangents of a circle with radius "offset" around that point
+
+        Thus this points could be a suitable part of an offset polygon.
+        But it is possible, that the circle around this point would intersect with other lines of
+        the polygon (thus being too close to them).
+        """
         p1 = self._points[index]
         p2 = self._points[(index + 1) % len(self._points)]
         cross_offset = pnormalized(pcross(psub(p2, p1), self.plane.n))
@@ -941,10 +950,10 @@ class Polygon(TransformableContainer):
             new_lines.append(Line(points[-1], points[0]))
         if callback and callback():
             return None
+        # Split lines at intersections and group lines into separate polygons.
         cleaned_line_groups = simplify_polygon_intersections(new_lines)
         if cleaned_line_groups is None:
-            log.debug("Skipping offset polygon: intersections could not be "
-                      "simplified")
+            log.debug("Skipping offset polygon: intersections could not be simplified")
             return None
         else:
             if not cleaned_line_groups:
