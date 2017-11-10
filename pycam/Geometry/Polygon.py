@@ -971,9 +971,20 @@ class Polygon(TransformableContainer):
         if not polygons:
             log.debug("Skipping offset polygon: toggled polygon removed")
             return None
-        # remove all polygons that are within other polygons
         result = []
         for polygon in polygons:
+            # Remove polygons that are too close to one of the lines of the original polygon.
+            is_too_close = False
+            for point in polygon.get_points():
+                for line in self.get_lines():
+                    if line.line_distance_to_point(point) < abs(offset):
+                        is_too_close = True
+                        break
+                if is_too_close:
+                    break
+            if is_too_close:
+                continue
+            # Remove all polygons that are within other polygons.
             inside = False
             for polygon_test in polygons:
                 if callback and callback():

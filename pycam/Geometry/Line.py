@@ -147,6 +147,14 @@ class Line(IDGenerator, TransformableContainer):
         """ calculate the orthogonal distance between the line vector and the point """
         return pdist(p, self.closest_point(p))
 
+    def line_distance_to_point(self, p):
+        """ calculate the minimal distance between any of the line points with the given point """
+        closest_point = self.closest_point(p)
+        if self.is_point_inside(closest_point):
+            return pdist(p, closest_point)
+        else:
+            return min(pdist(p, self.p1), pdist(p, self.p2))
+
     def is_point_inside(self, p):
         if (p == self.p1) or (p == self.p2):
             # these conditions are not covered by the code below
