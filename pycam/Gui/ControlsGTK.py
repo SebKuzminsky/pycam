@@ -207,6 +207,9 @@ class InputTable(InputChoice):
         self.control.add(self._treeview)
         self.control.set_shadow_type(gtk.ShadowType.ETCHED_OUT)
         self.control.set_policy(gtk.PolicyType.AUTOMATIC, gtk.PolicyType.AUTOMATIC)
+        # Sadly there seems to be no way to adjust the size of the ScrolledWindow to its content.
+        # The default size of the ScrolledWindow is too small (making it hard to select the model).
+        self.control.set_size_request(200, -1)
         column = gtk.TreeViewColumn()
         column.pack_start(renderer, expand=False)
         column.set_attributes(renderer, text=0)
