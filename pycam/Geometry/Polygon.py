@@ -955,36 +955,38 @@ class Polygon(TransformableContainer):
         if cleaned_line_groups is None:
             log.debug("Skipping offset polygon: intersections could not be simplified")
             return None
-        else:
-            if not cleaned_line_groups:
-                log.debug("Skipping offset polygon: no polygons left after "
-                          "intersection simplification")
-            groups = []
-            for lines in cleaned_line_groups:
+        if not cleaned_line_groups:
+            log.debug("Skipping offset polygon: no polygons left after intersection "
+                      "simplification")
+            return None
+        # Convert groups of lines into polygons.
+        groups = []
+        for lines in cleaned_line_groups:
+            if callback and callback():
+                return None
+            group = Polygon(self.plane)
+            for line in lines:
+                group.append(line)
+            groups.append(group)
+        if not groups:
+            log.debug("Skipping offset polygon: toggled polygon removed")
+            return None
+        # remove all polygons that are within other polygons
+        result = []
+        for group in groups:
+            inside = False
+            for group_test in groups:
                 if callback and callback():
                     return None
-                group = Polygon(self.plane)
-                for line in lines:
-                    group.append(line)
-                groups.append(group)
-            if not groups:
-                log.debug("Skipping offset polygon: toggled polygon removed")
-            # remove all polygons that are within other polygons
-            result = []
-            for group in groups:
-                inside = False
-                for group_test in groups:
-                    if callback and callback():
-                        return None
-                    if group_test is group:
-                        continue
-                    if group_test.is_polygon_inside(group):
-                        inside = True
-                if not inside:
-                    result.append(group)
-            if not result:
-                log.debug("Skipping offset polygon: polygon is inside of another one")
-            return result
+                if group_test is group:
+                    continue
+                if group_test.is_polygon_inside(group):
+                    inside = True
+            if not inside:
+                result.append(group)
+        if not result:
+            log.debug("Skipping offset polygon: polygon is inside of another one")
+        return result
 
     def get_cropped_polygons(self, minx, maxx, miny, maxy, minz, maxz):
         """ crop a line group according to a 3d bounding box
