@@ -960,30 +960,30 @@ class Polygon(TransformableContainer):
                       "simplification")
             return None
         # Convert groups of lines into polygons.
-        groups = []
+        polygons = []
         for lines in cleaned_line_groups:
             if callback and callback():
                 return None
-            group = Polygon(self.plane)
+            polygon = Polygon(self.plane)
             for line in lines:
-                group.append(line)
-            groups.append(group)
-        if not groups:
+                polygon.append(line)
+            polygons.append(polygon)
+        if not polygons:
             log.debug("Skipping offset polygon: toggled polygon removed")
             return None
         # remove all polygons that are within other polygons
         result = []
-        for group in groups:
+        for polygon in polygons:
             inside = False
-            for group_test in groups:
+            for polygon_test in polygons:
                 if callback and callback():
                     return None
-                if group_test is group:
+                if polygon_test is polygon:
                     continue
-                if group_test.is_polygon_inside(group):
+                if polygon_test.is_polygon_inside(polygon):
                     inside = True
             if not inside:
-                result.append(group)
+                result.append(polygon)
         if not result:
             log.debug("Skipping offset polygon: polygon is inside of another one")
         return result
