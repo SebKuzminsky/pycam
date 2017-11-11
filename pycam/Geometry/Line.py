@@ -132,6 +132,10 @@ class Line(IDGenerator, TransformableContainer):
         return padd(self.p1, pmul(self.dir, l*self.len))
 
     def closest_point(self, p):
+        """ calculate the position along the line vector that is closest to the point
+
+        This point is not necessarily between the two points of the line.
+        """
         v = self.dir
         if v is None:
             # for zero-length lines
@@ -139,7 +143,8 @@ class Line(IDGenerator, TransformableContainer):
         l = pdot(self.p1, v) - pdot(p, v)
         return psub(self.p1, pmul(v, l))
 
-    def dist_to_point(self, p):
+    def vector_distance_to_point(self, p):
+        """ calculate the orthogonal distance between the line vector and the point """
         return pdist(p, self.closest_point(p))
 
     def is_point_inside(self, p):

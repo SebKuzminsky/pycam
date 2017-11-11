@@ -483,7 +483,7 @@ def get_shifted_waterline(up_vector, waterline, cutter_location):
     wl_proj = plane.get_line_projection(waterline)
     if wl_proj.len < epsilon:
         return None
-    offset = wl_proj.dist_to_point(cutter_location)
+    offset = wl_proj.vector_distance_to_point(cutter_location)
     if offset < epsilon:
         return wl_proj
     # shift both ends of the waterline towards the cutter location
