@@ -1,4 +1,4 @@
-RUN_SCRIPT = ../scripts/pycam
+RUN_SCRIPT = ../pycam/run_gui.py
 PYCAM_MAN_INCLUDE_FILE = pycam.1.inc
 MAN_FILES = pycam.1
 HTML_FILES = $(patsubst %,%.html,$(MAN_FILES))
