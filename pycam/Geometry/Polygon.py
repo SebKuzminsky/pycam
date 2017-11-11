@@ -985,16 +985,18 @@ class Polygon(TransformableContainer):
             if is_too_close:
                 continue
             # Remove all polygons that are within other polygons.
-            inside = False
+            is_inside = False
             for polygon_test in polygons:
                 if callback and callback():
                     return None
                 if polygon_test is polygon:
                     continue
                 if polygon_test.is_polygon_inside(polygon):
-                    inside = True
-            if not inside:
-                result.append(polygon)
+                    is_inside = True
+                    break
+            if is_inside:
+                continue
+            result.append(polygon)
         if not result:
             log.debug("Skipping offset polygon: polygon is inside of another one")
         return result
