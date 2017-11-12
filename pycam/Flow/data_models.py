@@ -419,6 +419,7 @@ class BaseDataContainer(object):
 
     attribute_converters = {}
     attribute_defaults = {}
+    changed_event = None
 
     def __init__(self, data):
         data = copy.deepcopy(data)
@@ -458,7 +459,10 @@ class BaseDataContainer(object):
             return raw_value
 
     def set_value(self, key, value):
-        self._data[key] = copy.deepcopy(value)
+        new_value = copy.deepcopy(value)
+        if self._data.get(key) != new_value:
+            self._data[key] = new_value
+            self.notify_changed()
 
     def get_dict(self):
         return copy.deepcopy(self._data)
@@ -471,7 +475,11 @@ class BaseDataContainer(object):
         return self._application_attributes[get_application_key()]
 
     def set_application_value(self, key, value):
-        self._get_current_application_dict()[key] = value
+        new_value = copy.deepcopy(value)
+        value_dict = self._get_current_application_dict()
+        if value_dict.get(key) != new_value:
+            value_dict[key] = new_value
+            self.notify_changed()
 
     def get_application_value(self, key, default=None):
         return self._get_current_application_dict().get(key, default)
@@ -482,6 +490,10 @@ class BaseDataContainer(object):
             unexpected_attributes_string = " / ".join(unexpected_attributes)
             raise UnexpectedAttributeError("unexpected attributes were given: {}"
                                            .format(unexpected_attributes_string))
+
+    def notify_changed(self):
+        if self.changed_event:
+            get_event_handler().emit_event(self.changed_event)
 
     def __str__(self):
         attr_dict_string = ", ".join("{}={}".format(key, value)
@@ -792,6 +804,7 @@ class Model(BaseCollectionItemDataContainer):
 class Tool(BaseCollectionItemDataContainer):
 
     collection_name = "tool"
+    changed_event = "tool-changed"
     list_changed_event = "tool-list-changed"
     attribute_converters = {"shape": _get_enum_resolver(ToolShape),
                             "tool_id": int,
@@ -854,6 +867,7 @@ class Tool(BaseCollectionItemDataContainer):
 class Process(BaseCollectionItemDataContainer):
 
     collection_name = "process"
+    changed_event = "process-changed"
     list_changed_event = "process-list-changed"
     attribute_converters = {"strategy": _get_enum_resolver(ProcessStrategy),
                             "milling_style": _get_enum_resolver(MotionGrid.MillingStyle),
@@ -951,6 +965,7 @@ class Process(BaseCollectionItemDataContainer):
 class Boundary(BaseCollectionItemDataContainer):
 
     collection_name = "bounds"
+    changed_event = "bounds-changed"
     list_changed_event = "bounds-list-changed"
     attribute_converters = {"specification": _get_enum_resolver(BoundsSpecification),
                             "reference_models": _get_collection_resolver("model", many=True),
@@ -1036,6 +1051,7 @@ class Boundary(BaseCollectionItemDataContainer):
 class Task(BaseCollectionItemDataContainer):
 
     collection_name = "task"
+    changed_event = "task-changed"
     list_changed_event = "task-list-changed"
     attribute_converters = {"process": _get_collection_resolver("process"),
                             "bounds": _get_collection_resolver("bounds"),
@@ -1154,6 +1170,7 @@ class ToolpathTransformation(BaseDataContainer):
 class Toolpath(BaseCollectionItemDataContainer):
 
     collection_name = "toolpath"
+    changed_event = "toolpath-changed"
     list_changed_event = "toolpath-list-changed"
     attribute_converters = {"source": Source,
                             "transformations": _get_list_resolver(ToolpathTransformation)}
