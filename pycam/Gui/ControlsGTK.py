@@ -163,7 +163,7 @@ class InputChoice(InputBaseClass):
                 self.control.set_active(self._values.index(value))
             else:
                 # this may occour, if plugins were removed
-                _log.debug2("Unknown value: %s" % str(value))
+                _log.debug2("Unknown value: %s (expected: %s)", value, self._values)
 
     def update_choices(self, choices):
         selected = self.get_value()
