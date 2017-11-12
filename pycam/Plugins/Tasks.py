@@ -105,18 +105,19 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self.gui.get_object("NameColumn").set_cell_data_func(self.gui.get_object("NameCell"),
                                                                  self._render_task_name)
             self._event_handlers = (
-                ("task-type-list-changed", self._update_table),
-                ("task-selection-changed", self._task_switch),
-                ("task-changed", self._store_task),
+                ("task-type-list-changed", self._update_task_type_widgets),
+                ("task-selection-changed", self._update_task_widgets),
+                ("task-selection-changed", self._update_toolpath_buttons),
+                ("task-changed", self._update_task_widgets),
                 ("task-changed", self.force_gtk_modelview_refresh),
-                ("task-type-changed", self._store_task),
-                ("task-selection-changed", self._update_widgets),
-                ("task-list-changed", self._update_widgets))
+                ("task-list-changed", self.force_gtk_modelview_refresh),
+                ("task-list-changed", self._update_toolpath_buttons),
+                ("task-control-changed", self._transfer_controls_to_task))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
-            self._update_widgets()
-            self._update_table()
-            self._task_switch()
+            self._update_toolpath_buttons()
+            self._update_task_type_widgets()
+            self._update_task_widgets()
         self.register_state_item("tasks", self)
         self.core.set("tasks", self)
         return True
@@ -169,8 +170,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
         else:
             selector.set_active(-1)
 
-    def _update_table(self):
-        selected = self._get_type()
+    def _update_task_type_widgets(self):
         model = self.gui.get_object("TaskTypeList")
         model.clear()
         types = list(self.core.get("get_parameter_sets")("task").values())
@@ -192,40 +192,35 @@ class Tasks(pycam.Plugins.ListPluginBase):
             selector_box.hide()
         else:
             selector_box.show()
-        if selected:
-            self.select_type(selected["name"])
 
-    def _update_widgets(self):
+    def _update_toolpath_buttons(self):
         self.gui.get_object("GenerateToolPathButton").set_sensitive(len(self.get_selected()) > 0)
         self.gui.get_object("GenerateAllToolPathsButton").set_sensitive(len(self.get_all()) > 0)
 
-    def _task_switch(self):
+    def _update_task_widgets(self):
         tasks = self.get_selected()
         control_box = self.gui.get_object("TaskDetails")
         if len(tasks) != 1:
             control_box.hide()
         else:
             task = tasks[0]
-            self.core.block_event("task-changed")
-            self.core.block_event("task-type-changed")
-            type_name = task.get_value("type")
-            self.select_type(type_name)
+            self.core.block_event("task-control-changed")
+            task_type = task.get_value("type").value
+            self.select_type(task_type)
             self.core.get("set_parameter_values")("task", task.get_dict())
             control_box.show()
-            self.core.unblock_event("task-type-changed")
-            self.core.unblock_event("task-changed")
-            # trigger a widget update
+            # trigger an update of the task parameter widgets based on the task type
             self.core.emit_event("task-type-changed")
+            self.core.unblock_event("task-control-changed")
 
-    def _store_task(self, widget=None):
-        details_box = self.gui.get_object("TaskDetails")
-        task_type = self._get_type()
-        if (len(self.get_all()) != 1) or not task_type:
-            details_box.hide()
-        else:
-            task = self.get_all()[0]
+    def _transfer_controls_to_task(self, widget=None):
+        tasks = self.get_selected()
+        if len(tasks) == 1:
+            task = tasks[0]
+            task_type = self._get_type()
             task.set_value("type", task_type["name"])
-            details_box.show()
+            for key, value in self.core.get("get_parameter_values")("task").items():
+                task.set_value(key, value)
 
     def _task_new(self, *args):
         new_task = pycam.Flow.data_models.Task(None, {"type": "milling"})
