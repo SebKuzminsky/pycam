@@ -1288,7 +1288,6 @@ class Export(BaseCollectionItemDataContainer):
                             "source": Source,
                             "target": Target}
 
-    @CacheStorage(("format", "source", "target"))
     def run_export(self):
         formatter = self.get_value("format")
         source = self.get_value("source").get("export")
