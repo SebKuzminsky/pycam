@@ -501,17 +501,19 @@ class BaseCollection(object):
         return self._list_changed_event
 
     def clear(self):
-        while self._data:
-            self._data.pop()
-        self._notify_list_changed()
+        if self._data:
+            while self._data:
+                self._data.pop()
+            self.notify_list_changed()
 
     def __setitem__(self, index, value):
-        self._data[index] = value
-        self._notify_list_changed()
+        if self._data[index] != value:
+            self._data[index] = value
+            self.notify_list_changed()
 
     def append(self, value):
         self._data.append(value)
-        self._notify_list_changed()
+        self.notify_list_changed()
 
     def __getitem__(self, index_or_key):
         for item in self._data:
@@ -541,7 +543,7 @@ class BaseCollection(object):
         except ValueError:
             raise KeyError("Failed to remove '{}' from collection '{}'"
                            .format(item.get_id(), self._name))
-        self._notify_list_changed()
+        self.notify_list_changed()
 
     def __iter__(self):
         return iter(self._data)
@@ -556,14 +558,15 @@ class BaseCollection(object):
         return len(self._data) > 0
 
     def swap_by_index(self, index1, index2):
+        assert index1 != index2
         smaller, bigger = min(index1, index2), max(index1, index2)
         item1 = self._data.pop(bigger)
         item2 = self._data.pop(smaller)
         self._data.insert(smaller, item1)
         self._data.insert(bigger, item2)
-        self._notify_list_changed()
+        self.notify_list_changed()
 
-    def _notify_list_changed(self):
+    def notify_list_changed(self):
         if self._list_changed_event:
             get_event_handler().emit_event(self._list_changed_event)
 
