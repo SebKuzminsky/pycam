@@ -69,14 +69,20 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             selection = self._modelview.get_selection()
             self._gtk_handlers.append((selection, "changed", "toolpath-selection-changed"))
             selection.set_mode(self._gtk.SelectionMode.MULTIPLE)
+            # define cell renderers
+            self.gui.get_object("ToolpathNameColumn").set_cell_data_func(
+                self.gui.get_object("ToolpathNameCell"), self._visualize_toolpath_name)
+            self.gui.get_object("ToolpathTimeColumn").set_cell_data_func(
+                self.gui.get_object("ToolpathTimeCell"), self._visualize_machine_time)
+            self.gui.get_object("ToolpathVisibleColumn").set_cell_data_func(
+                self.gui.get_object("ToolpathVisibleSymbol"), self._visualize_visible_state)
             self._event_handlers = (
                 ("toolpath-changed", self._update_widgets),
-                ("toolpath-list-changed", self._update_widgets),
+                ("toolpath-list-changed", self.force_gtk_modelview_refresh),
                 ("toolpath-changed", "visual-item-updated"),
                 ("toolpath-list-changed", "visual-item-updated"))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
-            self._trigger_table_update()
             self._update_widgets()
         self.core.set("toolpaths", self)
         self.core.register_namespace("toolpaths", pycam.Plugins.get_filter(self))
@@ -99,15 +105,6 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             self.tp_box.hide()
         else:
             self.tp_box.show()
-            self._trigger_table_update()
-
-    def _trigger_table_update(self):
-        self.gui.get_object("ToolpathNameColumn").set_cell_data_func(
-            self.gui.get_object("ToolpathNameCell"), self._visualize_toolpath_name)
-        self.gui.get_object("ToolpathTimeColumn").set_cell_data_func(
-            self.gui.get_object("ToolpathTimeCell"), self._visualize_machine_time)
-        self.gui.get_object("ToolpathVisibleColumn").set_cell_data_func(
-            self.gui.get_object("ToolpathVisibleSymbol"), self._visualize_visible_state)
 
     def _toggle_visibility(self, treeview, path, column):
         toolpath = self.get_by_path(path)

@@ -97,18 +97,24 @@ class Tools(pycam.Plugins.ListPluginBase):
             # shape selector
             self._gtk_handlers.append((self.gui.get_object("ToolShapeSelector"), "changed",
                                        "tool-control-changed"))
+            # define cell renderers
+            self.gui.get_object("IDColumn").set_cell_data_func(
+                self.gui.get_object("IDCell"), self._render_tool_info, "tool_id")
+            self.gui.get_object("NameColumn").set_cell_data_func(
+                self.gui.get_object("NameCell"), self._render_tool_info, "name")
+            self.gui.get_object("ShapeColumn").set_cell_data_func(
+                self.gui.get_object("ShapeCell"), self._render_tool_shape)
             self._event_handlers = (
                 ("tool-shape-list-changed", self._update_shape_widgets),
                 ("tool-selection-changed", self._update_tool_widgets),
                 ("tool-changed", self._update_tool_widgets),
-                ("tool-changed", self._trigger_table_update),
-                ("tool-list-changed", self._trigger_table_update),
+                ("tool-changed", self.force_gtk_modelview_refresh),
+                ("tool-list-changed", self.force_gtk_modelview_refresh),
                 ("tool-control-changed", self._transfer_controls_to_tool))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_shape_widgets()
             self._update_tool_widgets()
-            self._trigger_table_update()
         self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         self.core.register_namespace("tools", pycam.Plugins.get_filter(self))
         self.register_state_item("tools", self)
@@ -130,14 +136,6 @@ class Tools(pycam.Plugins.ListPluginBase):
         self.core.set("tools", None)
         self.clear()
         return True
-
-    def _trigger_table_update(self):
-        self.gui.get_object("IDColumn").set_cell_data_func(
-            self.gui.get_object("IDCell"), self._render_tool_info, "tool_id")
-        self.gui.get_object("NameColumn").set_cell_data_func(
-            self.gui.get_object("NameCell"), self._render_tool_info, "name")
-        self.gui.get_object("ShapeColumn").set_cell_data_func(
-            self.gui.get_object("ShapeCell"), self._render_tool_shape)
 
     def _render_tool_info(self, column, cell, model, m_iter, key):
         tool = self.get_by_path(model.get_path(m_iter))

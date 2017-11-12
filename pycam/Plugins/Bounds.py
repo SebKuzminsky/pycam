@@ -109,13 +109,17 @@ class Bounds(pycam.Plugins.ListPluginBase):
                         continue
             self._gtk_handlers.append((self.gui.get_object("NameCell"), "edited",
                                        self._edit_bounds_name))
+            # define cell renderers
+            self.gui.get_object("SizeColumn").set_cell_data_func(self.gui.get_object("SizeCell"),
+                                                                 self._render_bounds_size)
+            self.gui.get_object("NameColumn").set_cell_data_func(self.gui.get_object("NameCell"),
+                                                                 self._render_bounds_name)
             self._event_handlers.extend((
                 ("bounds-selection-changed", self._update_controls),
                 ("bounds-changed", self._store_bounds_settings),
-                ("bounds-changed", self._trigger_table_update),
+                ("bounds-changed", self.force_gtk_modelview_refresh),
                 ("model-list-changed", self._update_model_list)))
             self.register_gtk_handlers(self._gtk_handlers)
-            self._trigger_table_update()
             self._update_model_list()
             self._update_controls()
         self._event_handlers.append(("bounds-changed", "visual-item-updated"))
@@ -161,12 +165,6 @@ class Bounds(pycam.Plugins.ListPluginBase):
     def _render_bounds_name(self, column, cell, model, m_iter, data):
         bounds = self.get_by_path(model.get_path(m_iter))
         cell.set_property("text", bounds.get_application_value("name"))
-
-    def _trigger_table_update(self):
-        self.gui.get_object("SizeColumn").set_cell_data_func(self.gui.get_object("SizeCell"),
-                                                             self._render_bounds_size)
-        self.gui.get_object("NameColumn").set_cell_data_func(self.gui.get_object("NameCell"),
-                                                             self._render_bounds_name)
 
     def _update_model_list(self):
         choices = []

@@ -101,11 +101,14 @@ class Tasks(pycam.Plugins.ListPluginBase):
             # shape selector
             self._gtk_handlers.append((self.gui.get_object("TaskTypeSelector"), "changed",
                                        "task-type-changed"))
+            # define cell renderers
+            self.gui.get_object("NameColumn").set_cell_data_func(self.gui.get_object("NameCell"),
+                                                                 self._render_task_name)
             self._event_handlers = (
                 ("task-type-list-changed", self._update_table),
                 ("task-selection-changed", self._task_switch),
                 ("task-changed", self._store_task),
-                ("task-changed", self._trigger_table_update),
+                ("task-changed", self.force_gtk_modelview_refresh),
                 ("task-type-changed", self._store_task),
                 ("task-selection-changed", self._update_widgets),
                 ("task-list-changed", self._update_widgets))
@@ -114,7 +117,6 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self._update_widgets()
             self._update_table()
             self._task_switch()
-            self._trigger_table_update()
         self.register_state_item("tasks", self)
         self.core.set("tasks", self)
         return True
@@ -136,10 +138,6 @@ class Tasks(pycam.Plugins.ListPluginBase):
         task = self.get_by_path(path)
         if task and (new_text != task.get_application_value("name")) and new_text:
             task.set_application_value("name", new_text)
-
-    def _trigger_table_update(self):
-        self.gui.get_object("NameColumn").set_cell_data_func(self.gui.get_object("NameCell"),
-                                                             self._render_task_name)
 
     def _render_task_name(self, column, cell, model, m_iter, data):
         task = self.get_by_path(model.get_path(m_iter))

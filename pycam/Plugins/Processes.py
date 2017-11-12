@@ -86,12 +86,17 @@ class Processes(pycam.Plugins.ListPluginBase):
             self._treemodel.clear()
             self._gtk_handlers.append((self.gui.get_object("StrategySelector"), "changed",
                                        "process-strategy-changed"))
+            # define cell renderers
+            self.gui.get_object("NameColumn").set_cell_data_func(
+                self.gui.get_object("NameCell"), self._render_process_name)
+            self.gui.get_object("DescriptionColumn").set_cell_data_func(
+                self.gui.get_object("DescriptionCell"), self._render_process_description)
             self._event_handlers = (
                 ("process-strategy-list-changed", self._update_widgets),
                 ("process-selection-changed", self._process_switch),
                 ("process-changed", self._store_process_settings),
-                ("process-changed", self._trigger_table_update),
-                ("process-list-changed", self._trigger_table_update),
+                ("process-changed", self.force_gtk_modelview_refresh),
+                ("process-list-changed", self.force_gtk_modelview_refresh),
                 ("process-strategy-changed", self._store_process_settings))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
@@ -129,12 +134,6 @@ class Processes(pycam.Plugins.ListPluginBase):
         if process and (new_text != process.get_application_value("name")) and new_text:
             process.set_application_value("name", new_text)
             self.core.emit_event("process-list-changed")
-
-    def _trigger_table_update(self):
-        self.gui.get_object("NameColumn").set_cell_data_func(
-            self.gui.get_object("NameCell"), self._render_process_name)
-        self.gui.get_object("DescriptionColumn").set_cell_data_func(
-            self.gui.get_object("DescriptionCell"), self._render_process_description)
 
     def _update_widgets(self):
         selected = self._get_strategy()

@@ -68,9 +68,14 @@ class Models(pycam.Plugins.ListPluginBase):
             selection = self._modelview.get_selection()
             selection.set_mode(self._gtk.SelectionMode.MULTIPLE)
             self._gtk_handlers.append((selection, "changed", "model-selection-changed"))
+            # define cell renderers
+            self.gui.get_object("NameColumn").set_cell_data_func(
+                self.gui.get_object("NameCell"), self._visualize_model_name)
+            self.gui.get_object("VisibleColumn").set_cell_data_func(
+                self.gui.get_object("VisibleSymbol"), self._visualize_visible_state)
             self._event_handlers = (
                 ("model-selection-changed", self._apply_colors_of_selected_models),
-                ("model-list-changed", self._trigger_table_update))
+                ("model-list-changed", self.force_gtk_modelview_refresh))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._apply_colors_of_selected_models()
@@ -120,12 +125,6 @@ class Models(pycam.Plugins.ListPluginBase):
                 "blue": color.blue / _GTK_COLOR_MAX,
                 "alpha": color_button.get_alpha() / _GTK_COLOR_MAX})
         self.core.emit_event("visual-item-updated")
-
-    def _trigger_table_update(self):
-        self.gui.get_object("NameColumn").set_cell_data_func(
-            self.gui.get_object("NameCell"), self._visualize_model_name)
-        self.gui.get_object("VisibleColumn").set_cell_data_func(
-            self.gui.get_object("VisibleSymbol"), self._visualize_visible_state)
 
     def _edit_model_name(self, cell, path, new_text):
         model = self.get_by_path(path)
