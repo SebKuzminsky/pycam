@@ -71,7 +71,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.core.get("register_parameter_group")(
                 "process", changed_set_event="process-strategy-changed",
                 changed_set_list_event="process-strategy-list-changed",
-                get_current_set_func=self._get_strategy)
+                get_current_set_func=self._get_selected_strategy)
             self.parameter_widget = pycam.Gui.ControlsGTK.ParameterSection()
             self.core.register_ui_section("process_path_parameters",
                                           self.parameter_widget.add_widget,
@@ -85,22 +85,23 @@ class Processes(pycam.Plugins.ListPluginBase):
             self._treemodel = self.gui.get_object("ProcessList")
             self._treemodel.clear()
             self._gtk_handlers.append((self.gui.get_object("StrategySelector"), "changed",
-                                       "process-strategy-changed"))
+                                       "process-control-changed"))
             # define cell renderers
             self.gui.get_object("NameColumn").set_cell_data_func(
                 self.gui.get_object("NameCell"), self._render_process_name)
             self.gui.get_object("DescriptionColumn").set_cell_data_func(
                 self.gui.get_object("DescriptionCell"), self._render_process_description)
             self._event_handlers = (
-                ("process-strategy-list-changed", self._update_widgets),
-                ("process-selection-changed", self._process_switch),
-                ("process-changed", self._store_process_settings),
+                ("process-strategy-list-changed", self._update_strategy_widgets),
+                ("process-selection-changed", self._update_process_widgets),
+                ("process-changed", self._update_process_widgets),
                 ("process-changed", self.force_gtk_modelview_refresh),
                 ("process-list-changed", self.force_gtk_modelview_refresh),
-                ("process-strategy-changed", self._store_process_settings))
+                ("process-control-changed", self._transfer_controls_to_process))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
-            self._update_widgets()
+            self._update_strategy_widgets()
+            self._update_process_widgets()
         self.register_state_item("processes", self)
         self.core.register_namespace("processes", pycam.Plugins.get_filter(self))
         return True
@@ -135,8 +136,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             process.set_application_value("name", new_text)
             self.core.emit_event("process-list-changed")
 
-    def _update_widgets(self):
-        selected = self._get_strategy()
+    def _update_strategy_widgets(self):
         model = self.gui.get_object("StrategyModel")
         model.clear()
         strategies = list(self.core.get("get_parameter_sets")("process").values())
@@ -160,10 +160,8 @@ class Processes(pycam.Plugins.ListPluginBase):
             selector_box.hide()
         else:
             selector_box.show()
-        if selected:
-            self.select_strategy(selected["name"])
 
-    def _get_strategy(self, name=None):
+    def _get_selected_strategy(self, name=None):
         """ get a strategy object - either based on the given name or the currently selected one
         """
         strategies = self.core.get("get_parameter_sets")("process")
@@ -191,46 +189,29 @@ class Processes(pycam.Plugins.ListPluginBase):
         else:
             selector.set_active(-1)
 
-    def _store_process_settings(self):
+    def _transfer_controls_to_process(self):
         process = self.get_selected()
         control_box = self.gui.get_object("ProcessSettingsControlsBox")
-        strategy = self._get_strategy()
+        strategy = self._get_selected_strategy()
+        if process and strategy:
+            process.set_value("strategy", strategy["name"])
+            for key, value in self.core.get("get_parameter_values")("process").items():
+                process.set_value(key, value)
+
+    def _update_process_widgets(self, widget=None, data=None):
+        process = self.get_selected()
+        control_box = self.gui.get_object("ProcessSettingsControlsBox")
         if process is None:
             control_box.hide()
         else:
-            if strategy is None:
-                # pick the name of the first strategy
-                for row in self.gui.get_object("StrategySelector").get_model():
-                    strategy_name = row[1]
-                    break
-                else:
-                    strategy_name = None
-            else:
-                strategy_name = strategy["name"]
-            # there is no strategy available during startup
-            if strategy_name is not None:
-                process.set_value("strategy", strategy_name)
-            for key, value in self.core.get("get_parameter_values")("process").items():
-                process.set_value(key, value)
-            control_box.show()
-
-    def _process_switch(self, widget=None, data=None):
-        process = self.get_selected()
-        control_box = self.gui.get_object("ProcessSettingsControlsBox")
-        if not process:
-            control_box.hide()
-        else:
-            self.core.block_event("process-changed")
-            self.core.block_event("process-strategy-changed")
+            self.core.block_event("process-control-changed")
             strategy_name = process.get_value("strategy").value
             self.select_strategy(strategy_name)
             self.core.get("set_parameter_values")("process", process.get_dict())
             control_box.show()
-            self.core.unblock_event("process-strategy-changed")
-            self.core.unblock_event("process-changed")
+            # trigger an update of the process parameter widgets based on the strategy
             self.core.emit_event("process-strategy-changed")
-            self.core.emit_event("process-changed")
-            self._update_widgets()
+            self.core.unblock_event("process-control-changed")
 
     def _process_new(self, *args):
         existing_process_names = [process.get_application_value("name")
