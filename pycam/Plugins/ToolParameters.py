@@ -32,7 +32,7 @@ class ToolParamRadius(pycam.Plugins.PluginBase):
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputNumber(
             lower=0.001, digits=4,
-            change_handler=lambda widget=None: self.core.emit_event("tool-changed"))
+            change_handler=lambda widget=None: self.core.emit_event("tool-control-changed"))
         self.control.set_conversion(set_conv=lambda value: value * 2.0,
                                     get_conv=lambda value: value / 2.0)
         self.core.get("register_parameter")("tool", "radius", self.control)
@@ -52,7 +52,7 @@ class ToolParamToroidRadius(pycam.Plugins.PluginBase):
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputNumber(
             lower=0.001, digits=4,
-            change_handler=lambda widget=None: self.core.emit_event("tool-changed"))
+            change_handler=lambda widget=None: self.core.emit_event("tool-control-changed"))
         self.core.get("register_parameter")("tool", "toroid_radius", self.control)
         self.core.register_ui("tool_size", "Toroid Radius", self.control.get_widget(), weight=50)
         return True
@@ -70,7 +70,7 @@ class ToolParamFeedrate(pycam.Plugins.PluginBase):
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputNumber(
             lower=1, digits=0,
-            change_handler=lambda widget=None: self.core.emit_event("tool-changed"))
+            change_handler=lambda widget=None: self.core.emit_event("tool-control-changed"))
         self.core.get("register_parameter")("tool", "feed", self.control)
         self.core.register_ui("tool_speed", "Feedrate", self.control.get_widget(), weight=10)
         self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
@@ -94,7 +94,7 @@ class ToolParamSpindleSpeed(pycam.Plugins.PluginBase):
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputNumber(
             lower=1, digits=0,
-            change_handler=lambda widget=None: self.core.emit_event("tool-changed"))
+            change_handler=lambda widget=None: self.core.emit_event("tool-control-changed"))
         self.core.get("register_parameter")("tool", "spindle_speed", self.control)
         self.core.register_ui("tool_speed", "Spindle Speed", self.control.get_widget(), weight=50)
         self.core.register_chain("toolpath_filters", self.get_toolpath_filters)

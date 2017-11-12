@@ -71,7 +71,7 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.core.get("register_parameter_group")(
                 "tool", changed_set_event="tool-shape-changed",
                 changed_set_list_event="tool-shape-list-changed",
-                get_current_set_func=self._get_shape)
+                get_current_set_func=self._get_selected_shape)
             self.size_widget = pycam.Gui.ControlsGTK.ParameterSection()
             self.core.register_ui("tool_parameters", "Size", self.size_widget.get_widget(),
                                   weight=10)
@@ -96,19 +96,19 @@ class Tools(pycam.Plugins.ListPluginBase):
                                        "tool-selection-changed"))
             # shape selector
             self._gtk_handlers.append((self.gui.get_object("ToolShapeSelector"), "changed",
-                                       "tool-shape-changed"))
+                                       "tool-control-changed"))
             self._event_handlers = (
-                ("tool-shape-list-changed", self._update_widgets),
-                ("tool-selection-changed", self._tool_switch),
-                ("tool-changed", self._store_tool_settings),
+                ("tool-shape-list-changed", self._update_shape_widgets),
+                ("tool-selection-changed", self._update_tool_widgets),
+                ("tool-changed", self._update_tool_widgets),
                 ("tool-changed", self._trigger_table_update),
                 ("tool-list-changed", self._trigger_table_update),
-                ("tool-shape-changed", self._store_tool_settings))
+                ("tool-control-changed", self._transfer_controls_to_tool))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
-            self._update_widgets()
+            self._update_shape_widgets()
+            self._update_tool_widgets()
             self._trigger_table_update()
-            self._tool_switch()
         self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         self.core.register_namespace("tools", pycam.Plugins.get_filter(self))
         self.register_state_item("tools", self)
@@ -167,7 +167,7 @@ class Tools(pycam.Plugins.ListPluginBase):
         if tool and (new_value != tool.get_value("tool_id")):
             tool.set_value("tool_id", new_value)
 
-    def _get_shape(self, name=None):
+    def _get_selected_shape(self, name=None):
         shapes = self.core.get("get_parameter_sets")("tool")
         if name is None:
             # find the currently selected one
@@ -193,8 +193,8 @@ class Tools(pycam.Plugins.ListPluginBase):
         else:
             selector.set_active(-1)
 
-    def _update_widgets(self):
-        selected = self._get_shape()
+    def _update_shape_widgets(self):
+        """update controls that depend on the list of available shapes"""
         model = self.gui.get_object("ToolShapeList")
         model.clear()
         shapes = list(self.core.get("get_parameter_sets")("tool").values())
@@ -217,37 +217,35 @@ class Tools(pycam.Plugins.ListPluginBase):
             selector_box.hide()
         else:
             selector_box.show()
-        if selected:
-            self.select_shape(selected["name"])
 
-    def _store_tool_settings(self):
+    def _update_tool_widgets(self, widget=None, data=None):
+        """transfer the content of the currently selected tool to the related widgets
+        """
         tool = self.get_selected()
         control_box = self.gui.get_object("ToolSettingsControlsBox")
-        shape = self._get_shape()
-        if tool is None or shape is None:
+        if tool is None:
             control_box.hide()
         else:
-            tool.set_value("shape", shape["name"])
-            for key, value in self.core.get("get_parameter_values")("tool").items():
-                tool.set_value(key, value)
-            control_box.show()
-
-    def _tool_switch(self, widget=None, data=None):
-        tool = self.get_selected()
-        control_box = self.gui.get_object("ToolSettingsControlsBox")
-        if not tool:
-            control_box.hide()
-        else:
-            self.core.block_event("tool-changed")
-            self.core.block_event("tool-shape-changed")
+            self.core.block_event("tool-control-changed")
             shape_name = tool.get_value("shape").value
             self.select_shape(shape_name)
             self.core.get("set_parameter_values")("tool", tool.get_dict())
             control_box.show()
-            self.core.unblock_event("tool-shape-changed")
-            self.core.unblock_event("tool-changed")
-            # trigger a widget update
+            # trigger an update of the tool parameter widgets based on the shape
             self.core.emit_event("tool-shape-changed")
+            self.core.unblock_event("tool-control-changed")
+
+    def _transfer_controls_to_tool(self):
+        """the value of a tool-related control was changed by by the user
+
+        The changed value needs to be transferred to the currently selected tool.
+        """
+        tool = self.get_selected()
+        shape = self._get_selected_shape()
+        if tool and shape:
+            tool.set_value("shape", shape["name"])
+            for key, value in self.core.get("get_parameter_values")("tool").items():
+                tool.set_value(key, value)
 
     def _tool_new(self, *args):
         existing_tool_ids = [tool.get_value("tool_id") for tool in self.get_all()]
