@@ -248,7 +248,9 @@ def _limit3d_converter(point):
             raise InvalidDataError("All three axis are required for lower/upper limits")
     for value in point:
         is_relative = False
-        if isinstance(value, str):
+        if isinstance(value, LimitSingle):
+            value, is_relative = value
+        elif isinstance(value, str):
             try:
                 if value.endswith("%"):
                     is_relative = True
@@ -536,8 +538,8 @@ class BaseCollection(object):
             if isinstance(index_or_key, int):
                 return self._data[index_or_key]
             else:
-                _log.warning("Failed to find item in collection (%s): %s",
-                             self._name, index_or_key)
+                _log.warning("Failed to find item in collection (%s): %s (expected: %s)",
+                             self._name, index_or_key, [item.get_id() for item in self._data])
                 return None
 
     def __delitem__(self, index):
