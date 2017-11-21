@@ -24,8 +24,6 @@ Thumbs.db
 .*.sw?
 
 man/pycam.1
-# windows build remainder
-scripts/pycam-loader.py
 
 # Generated mkdocs files go into the site directory
 site/

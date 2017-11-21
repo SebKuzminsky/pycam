@@ -14,7 +14,7 @@ PYTHON_EXE ?= python
 # (introduced in python 2.6)
 DISTUTILS_PLAT_NAME = $(shell $(PYTHON_EXE) setup.py --help build_ext \
 		      | grep -q -- "--plat-name" && echo "--plat-name win32")
-PYTHON_CHECK_STYLE_TARGETS = pycam pyinstaller/hooks/hook-pycam.py scripts/pycam setup.py
+PYTHON_CHECK_STYLE_TARGETS = pycam pyinstaller/hooks/hook-pycam.py setup.py
 
 # default location of mkdocs' build process
 MKDOCS_SOURCE_DIR = docs

@@ -23,26 +23,10 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import glob
 import os.path
 from setuptools import setup, find_packages
-import shutil
-import sys
 
 from pycam import VERSION
 
 BASE_DIR = os.path.realpath(os.path.abspath(os.path.dirname(__file__)))
-
-WINDOWS_START_SCRIPT = os.path.join("scripts", "pycam-loader.py")
-DEFAULT_START_SCRIPT = os.path.join("scripts", "pycam")
-
-# we don't want to include the windows postinstall script in other installers
-is_windows_installer = "bdist_wininst" in sys.argv or "bdist_msi" in sys.argv
-
-if is_windows_installer:
-    shutil.copy2(os.path.join(BASE_DIR, DEFAULT_START_SCRIPT),
-                 os.path.join(BASE_DIR, WINDOWS_START_SCRIPT))
-    PLATFORM_SCRIPTS = [WINDOWS_START_SCRIPT,
-                        os.path.join("scripts", "pycam_win32_postinstall.py")]
-else:
-    PLATFORM_SCRIPTS = [DEFAULT_START_SCRIPT]
 
 
 setup(
@@ -79,7 +63,11 @@ Windows: select Python 2.5 in the following dialog.
         "Operating System :: POSIX",
     ],
     packages=find_packages(exclude=["pycam.Test"]),
-    scripts=PLATFORM_SCRIPTS,
+    entry_points={
+        "gui_scripts": [
+            "pycam = pycam.run_gui:main_func",
+        ],
+    },
     data_files=[
         ("share/pycam/doc", ["COPYING.TXT",
                              "INSTALL.md",
@@ -94,8 +82,5 @@ Windows: select Python 2.5 in the following dialog.
         ("share/pycam/samples", glob.glob(os.path.join("samples", "*"))),
     ],
 )
-
-if is_windows_installer:
-    os.remove(os.path.join(BASE_DIR, WINDOWS_START_SCRIPT))
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4

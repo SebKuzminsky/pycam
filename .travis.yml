@@ -22,6 +22,6 @@ script:
   - debian/rules prep-source
   - make test
   - python setup.py sdist
-  - ./scripts/pycam --help
-  - ./scripts/pycam --version
+  - pycam/run_gui.py --help
+  - pycam/run_gui.py --version
   - dpkg-buildpackage -us -uc
