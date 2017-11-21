@@ -24,8 +24,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 # for "print" to stderr
 from __future__ import print_function
 
+import argparse
 import logging
-from optparse import OptionParser
 import os
 import socket
 import sys
@@ -227,26 +227,26 @@ def show_gui():
     return None
 
 
-def execute(parser, opts, args, pycam):
+def execute(parser, args, pycam):
     # try to change the process name
     pycam.Utils.setproctitle("pycam")
 
-    if opts.trace:
+    if args.trace:
         log.setLevel(logging.DEBUG / 2)
-    elif opts.debug:
+    elif args.debug:
         log.setLevel(logging.DEBUG)
-    elif opts.quiet:
+    elif args.quiet:
         log.setLevel(logging.WARNING)
         # disable the progress bar
-        opts.progress = "none"
+        args.progress = "none"
         # silence all warnings
         warnings.filterwarnings("ignore")
     else:
         log.setLevel(logging.INFO)
 
     # show version and exit
-    if opts.show_version:
-        if opts.quiet:
+    if args.show_version:
+        if args.quiet:
             # print only the bare version number
             print(VERSION)
         else:
@@ -261,7 +261,7 @@ There is NO WARRANTY, to the extent permitted by law.""" % VERSION
         return EXIT_CODES["ok"]
 
     # check if server-auth-key is given -> this is mandatory for server mode
-    if (opts.enable_server or opts.start_server) and not opts.server_authkey:
+    if (args.enable_server or args.start_server) and not args.server_authkey:
         parser.error(
             "You need to supply a shared secret for server mode. This is supposed to prevent you "
             "from exposing your host to remote access without authentication.\nPlease add the "
@@ -270,16 +270,16 @@ There is NO WARRANTY, to the extent permitted by law.""" % VERSION
 
     # initialize multiprocessing
     try:
-        if opts.start_server:
+        if args.start_server:
             pycam.Utils.threading.init_threading(
-                opts.parallel_processes, remote=opts.remote_server, run_server=True,
-                server_credentials=opts.server_authkey)
+                args.parallel_processes, remote=args.remote_server, run_server=True,
+                server_credentials=args.server_authkey)
             pycam.Utils.threading.cleanup()
             return EXIT_CODES["ok"]
         else:
             pycam.Utils.threading.init_threading(
-                opts.parallel_processes, enable_server=opts.enable_server,
-                remote=opts.remote_server, server_credentials=opts.server_authkey)
+                args.parallel_processes, enable_server=args.enable_server,
+                remote=args.remote_server, server_credentials=args.server_authkey)
     except socket.error as err_msg:
         log.error("Failed to connect to remote server: %s", err_msg)
         return EXIT_CODES["connection_error"]
@@ -294,6 +294,56 @@ There is NO WARRANTY, to the extent permitted by law.""" % VERSION
         return EXIT_CODES["requirements"]
 
 
+def get_args_parser():
+    parser = argparse.ArgumentParser(prog="PyCAM", description="Toolpath generator",
+                                     epilog="PyCAM website: https://github.com/SebKuzminsky/pycam")
+    # general options
+    group_processing = parser.add_argument_group("Processing")
+    group_processing.add_argument(
+        "--number-of-processes", dest="parallel_processes", default=None, type=int,
+        action="store",
+        help=("override the default detection of multiple CPU cores. Parallel processing only "
+              "works with Python 2.6 (or later) or with the additional 'multiprocessing' module."))
+    group_processing.add_argument(
+        "--enable-server", dest="enable_server", default=False, action="store_true",
+        help="enable a local server and (optionally) remote worker servers.")
+    group_processing.add_argument(
+        "--remote-server", dest="remote_server", default=None, action="store",
+        help=("Connect to a remote task server to distribute the processing load. "
+              "The server is given as an IP or a hostname with an optional port (default: 1250) "
+              "separated by a colon."))
+    group_processing.add_argument(
+        "--start-server-only", dest="start_server", default=False, action="store_true",
+        help="Start only a local server for handling remote requests.")
+    group_processing.add_argument(
+        "--server-auth-key", dest="server_authkey", default="", action="store",
+        help=("Secret used for connecting to a remote server or for granting access to remote "
+              "clients."))
+    group_verbosity = parser.add_argument_group("Verbosity")
+    group_verbosity.add_argument(
+        "-q", "--quiet", dest="quiet", default=False, action="store_true",
+        help="output only warnings and errors.")
+    group_verbosity.add_argument(
+        "-d", "--debug", dest="debug", default=False, action="store_true",
+        help="enable output of debug messages.")
+    group_verbosity.add_argument(
+        "--trace", dest="trace", default=False, action="store_true",
+        help="enable more verbose debug messages.")
+    group_verbosity.add_argument(
+        "--progress", dest="progress", default="text", action="store",
+        choices=["none", "text", "bar", "dot"],
+        help=("specify the type of progress bar used in non-GUI mode. The following options are "
+              "available: text, none, bar, dot."))
+    group_introspection = parser.add_argument_group("Introspection")
+    group_introspection.add_argument(
+        "--profiling", dest="profile_destination", action="store",
+        help="store profiling statistics in a file (only for debugging)")
+    group_introspection.add_argument(
+        "-v", "--version", dest="show_version", default=False, action="store_true",
+        help="output the current version of PyCAM and exit")
+    return parser
+
+
 def main_func():
     # The PyInstaller standalone executable requires this "freeze_support" call. Otherwise we will
     # see a warning regarding an invalid argument called "--multiprocessing-fork". This problem can
@@ -301,64 +351,17 @@ def main_func():
     #    "--enable-server --server-auth-key foo".
     if hasattr(multiprocessing, "freeze_support"):
         multiprocessing.freeze_support()
-    parser = OptionParser(
-        prog="PyCAM", usage=("usage: pycam [options]\n\n"
-                             "Start the PyCAM toolpath generator. Supplying one of the "
-                             "'--export-?' parameters will cause PyCAM to start in batch mode. "
-                             "Most parameters are useful only for batch mode."),
-        epilog="PyCAM website: https://github.com/SebKuzminsky/pycam")
-    group_general = parser.add_option_group("General options")
-    # general options
-    group_general.add_option(
-        "", "--number-of-processes", dest="parallel_processes", default=None, type="int",
-        action="store",
-        help=("override the default detection of multiple CPU cores. Parallel processing only "
-              "works with Python 2.6 (or later) or with the additional 'multiprocessing' module."))
-    group_general.add_option(
-        "", "--enable-server", dest="enable_server", default=False, action="store_true",
-        help="enable a local server and (optionally) remote worker servers.")
-    group_general.add_option(
-        "", "--remote-server", dest="remote_server", default=None, action="store", type="string",
-        help=("Connect to a remote task server to distribute the processing load. "
-              "The server is given as an IP or a hostname with an optional port (default: 1250) "
-              "separated by a colon."))
-    group_general.add_option(
-        "", "--start-server-only", dest="start_server", default=False, action="store_true",
-        help="Start only a local server for handling remote requests.")
-    group_general.add_option(
-        "", "--server-auth-key", dest="server_authkey", default="", action="store", type="string",
-        help=("Secret used for connecting to a remote server or for granting access to remote "
-              "clients."))
-    group_general.add_option(
-        "-q", "--quiet", dest="quiet", default=False, action="store_true",
-        help="output only warnings and errors.")
-    group_general.add_option(
-        "-d", "--debug", dest="debug", default=False, action="store_true",
-        help="enable output of debug messages.")
-    group_general.add_option(
-        "", "--trace", dest="trace", default=False, action="store_true",
-        help="enable more verbose debug messages.")
-    group_general.add_option(
-        "", "--progress", dest="progress", default="text", action="store", type="choice",
-        choices=["none", "text", "bar", "dot"],
-        help=("specify the type of progress bar used in non-GUI mode. The following options are "
-              "available: text, none, bar, dot."))
-    group_general.add_option(
-        "", "--profiling", dest="profile_destination", action="store", type="string",
-        help="store profiling statistics in a file (only for debugging)")
-    group_general.add_option(
-        "-v", "--version", dest="show_version", default=False, action="store_true",
-        help="output the current version of PyCAM and exit")
-    (opts, args) = parser.parse_args()
+    parser = get_args_parser()
+    args = parser.parse_args()
     try:
-        if opts.profile_destination:
+        if args.profile_destination:
             import cProfile
-            exit_code = cProfile.run('execute(parser, opts, args, pycam)',
-                                     opts.profile_destination)
+            exit_code = cProfile.run('execute(parser, args, pycam)',
+                                     args.profile_destination)
         else:
             # We need to add the parameter "pycam" to avoid weeeeird namespace
             # issues. Any idea how to fix this?
-            exit_code = execute(parser, opts, args, pycam)
+            exit_code = execute(parser, args, pycam)
     except KeyboardInterrupt:
         log.info("Quit requested")
         exit_code = None
