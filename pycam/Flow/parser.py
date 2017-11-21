@@ -38,3 +38,10 @@ def parse_yaml(source):
             if item_class(name, data) is None:
                 _log.error("Failed to import '%s' into '%s'.", name, section)
         _log.info("Imported %d items into '%s'", len(item_class.get_collection()), section)
+
+
+def dump_yaml(target=None):
+    """return a yaml string or write the output to the target buffer"""
+    data = {section: item_class.get_collection().get_dict(with_application_attributes=True)
+            for section, item_class in DATA_MAP}
+    return yaml.dump(data, stream=target)

@@ -466,8 +466,15 @@ class BaseDataContainer(object):
             self._data[key] = new_value
             self.notify_changed()
 
-    def get_dict(self):
-        return copy.deepcopy(self._data)
+    def get_dict(self, with_application_attributes=False):
+        result = copy.deepcopy(self._data)
+        if with_application_attributes:
+            minimized_data = {key: value
+                              for key, value in copy.deepcopy(self._application_attributes).items()
+                              if value}
+            if minimized_data:
+                result[APPLICATION_ATTRIBUTES_KEY] = minimized_data
+        return result
 
     def _get_current_application_dict(self):
         try:
@@ -579,6 +586,13 @@ class BaseCollection(object):
         self._data.insert(smaller, item1)
         self._data.insert(bigger, item2)
         self.notify_list_changed()
+
+    def get_dict(self, with_application_attributes=False):
+        result = {}
+        for item in self._data:
+            result[item.get_id()] = item.get_dict(
+                with_application_attributes=with_application_attributes)
+        return result
 
     def notify_list_changed(self):
         if self._list_changed_event:
