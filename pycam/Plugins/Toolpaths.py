@@ -77,13 +77,13 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             self.gui.get_object("ToolpathVisibleColumn").set_cell_data_func(
                 self.gui.get_object("ToolpathVisibleSymbol"), self._visualize_visible_state)
             self._event_handlers = (
-                ("toolpath-changed", self._update_widgets),
+                ("toolpath-list-changed", self._update_toolpath_tab_visibility),
                 ("toolpath-list-changed", self.force_gtk_modelview_refresh),
                 ("toolpath-changed", "visual-item-updated"),
                 ("toolpath-list-changed", "visual-item-updated"))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
-            self._update_widgets()
+            self._update_toolpath_tab_visibility()
         self.core.set("toolpaths", self)
         self.core.register_namespace("toolpaths", pycam.Plugins.get_filter(self))
         return True
@@ -99,12 +99,12 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
     def get_visible(self):
         return [tp for tp in self.get_all() if tp.get_application_value("visible")]
 
-    def _update_widgets(self):
-        toolpaths = self
-        if not toolpaths:
-            self.tp_box.hide()
-        else:
+    def _update_toolpath_tab_visibility(self):
+        has_toolpaths = len(self.get_all()) > 0
+        if has_toolpaths:
             self.tp_box.show()
+        else:
+            self.tp_box.hide()
 
     def _toggle_visibility(self, treeview, path, column):
         toolpath = self.get_by_path(path)
