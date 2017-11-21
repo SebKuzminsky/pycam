@@ -989,7 +989,7 @@ class Boundary(BaseCollectionItemDataContainer):
             if upper < lower:
                 # TODO: implement boundary adjustment in case of conflicts
                 _log.warning("Negative Boundary encounterd for %s: %g < %g. "
-                             "Coercing is not implemented, yes.", axis_name, lower, upper)
+                             "Coercing is not implemented, yet.", axis_name, lower, upper)
 
     @CacheStorage(("specification", "reference_models", "lower", "upper", "tool_boundary"))
     @_set_parser_context("Boundary")
@@ -1023,9 +1023,9 @@ class Boundary(BaseCollectionItemDataContainer):
                 else:
                     low.append(model_lower - margin_lower.value)
                 if margin_upper.is_relative:
-                    high.append(model_upper - margin_upper.value * dim)
+                    high.append(model_upper + margin_upper.value * dim)
                 else:
-                    high.append(model_upper - margin_upper.value)
+                    high.append(model_upper + margin_upper.value)
         else:
             # absolute boundary
             low, high = [], []
