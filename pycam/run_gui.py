@@ -310,15 +310,6 @@ def main_func():
     group_general = parser.add_option_group("General options")
     # general options
     group_general.add_option(
-        "", "--unit", dest="unit_size", default="mm", action="store", type="choice",
-        choices=["mm", "inch"],
-        help="choose 'mm' or 'inch' for all numbers. By default 'mm' is assumed.")
-    group_general.add_option(
-        "", "--collision-engine", dest="collision_engine", default="triangles", action="store",
-        type="choice", choices=["triangles"],
-        help=("choose a specific collision detection engine. The default is 'triangles'. "
-              "Use 'help' to get a list of possible engines."))
-    group_general.add_option(
         "", "--number-of-processes", dest="parallel_processes", default=None, type="int",
         action="store",
         help=("override the default detection of multiple CPU cores. Parallel processing only "
