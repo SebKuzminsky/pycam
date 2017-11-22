@@ -466,6 +466,21 @@ class BaseDataContainer(object):
             self._data[key] = new_value
             self.notify_changed()
 
+    def extend_value(self, key, values):
+        """extend a value (which must be a list) with additional values
+
+        This is just a convenience wrapper for the combination of "get_value", "get_dict",
+        "extend" and "set_value".
+        """
+        if values:
+            try:
+                current_list = self._data[key]
+            except KeyError:
+                current_list = []
+                self._data[key] = current_list
+            current_list.extend(values)
+            self.notify_changed()
+
     def get_dict(self, with_application_attributes=False):
         result = copy.deepcopy(self._data)
         if with_application_attributes:
