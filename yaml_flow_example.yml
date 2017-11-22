@@ -43,13 +43,11 @@ models:
                                   x: 0
                                   y: 0
                                   z: 1
-                        - action: mirror
-                          center:
-                                  y: 20
-                          vector:
-                                  x: 1
-                                  y: 0
-                                  z: 0
+                        - action: multiply_matrix
+                          matrix:
+                                  - [1, 0, 0]
+                                  - [0, 1, 0]
+                                  - [0, 0, -1]
         model2:
                 source:
                         type: copy

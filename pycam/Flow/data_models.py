@@ -121,7 +121,7 @@ class ModelTransformationAction(Enum):
     SCALE = "scale"
     SHIFT = "shift"
     ROTATE = "rotate"
-    MIRROR = "mirror"
+    MULTIPLY_MATRIX = "multiply_matrix"
     PROJECTION = "projection"
 
 
@@ -734,10 +734,8 @@ class ModelTransformation(BaseDataContainer):
             return self._get_shifted_model(model)
         elif action == ModelTransformationAction.ROTATE:
             return self._get_rotated_model(model)
-        elif action == ModelTransformationAction.MIRROR:
-            # Sadly mirroring against an arbitrary plane (instead of simple XY, XZ or YZ planes) is
-            # rather complicated.
-            raise NotImplemented("The 'mirror' transformation is not implemented, yet.")
+        elif action == ModelTransformationAction.MULTIPLY_MATRIX:
+            return self._get_matrix_multiplied_model(model)
         elif action == ModelTransformationAction.PROJECTION:
             return self._get_projected_model(model)
         else:
@@ -786,6 +784,21 @@ class ModelTransformation(BaseDataContainer):
         angle = self.get_value("angle")
         new_model = model.copy()
         new_model.rotate(center, vector, angle)
+        return new_model
+
+    @_set_parser_context("Model transformation 'matrix multiplication'")
+    @_set_allowed_attributes({"action", "matrix"})
+    def _get_matrix_multiplied_model(self, model):
+        matrix = self.get_value("matrix")
+        lengths = [len(row) for row in matrix]
+        if not lengths == [3, 3, 3]:
+            raise InvalidDataError("Invalid Matrix row lengths ({}) - expected [3, 3, 3] instead."
+                                   .format(lengths))
+        # add zero shift offsets (the fourth column)
+        for row in matrix:
+            row.append(0)
+        new_model = model.copy()
+        new_model.transform_by_matrix(matrix)
         return new_model
 
     @_set_parser_context("Model transformation 'projection'")

@@ -37,6 +37,11 @@ models:
                           center: [10, 10, 0]
                           vector: [0, 0, 1]
                           angle: 90
+                        - action: multiply_matrix
+                          matrix:
+                                  - [1, 0, 0]
+                                  - [0, 1, 0]
+                                  - [0, 0, -1]
         model2:
                 source:
                         type: copy
