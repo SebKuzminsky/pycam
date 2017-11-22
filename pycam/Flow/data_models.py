@@ -781,7 +781,6 @@ class ModelTransformation(BaseDataContainer):
     @_set_parser_context("Model transformation 'rotate'")
     @_set_allowed_attributes({"action", "center", "vector", "angle"})
     def _get_rotated_model(self, model):
-        self.validate_allowed_attributes({"action", "center", "vector", "angle"})
         center = self.get_value("center")
         vector = self.get_value("vector")
         angle = self.get_value("angle")
@@ -792,7 +791,6 @@ class ModelTransformation(BaseDataContainer):
     @_set_parser_context("Model transformation 'projection'")
     @_set_allowed_attributes({"action", "center", "vector"})
     def _get_projected_model(self, model):
-        self.validate_allowed_attributes({"action", "center", "vector"})
         center = self.get_value("center")
         vector = self.get_value("vector")
         plane = Plane(center, vector)
