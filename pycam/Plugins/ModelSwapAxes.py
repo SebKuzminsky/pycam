@@ -59,17 +59,13 @@ class ModelSwapAxes(pycam.Plugins.PluginBase):
         if not models:
             return
         self.core.emit_event("model-change-before")
-        for axes, template in (("XY", "x_swap_y"), ("XZ", "x_swap_z"), ("YZ", "y_swap_z")):
+        for axes, matrix in (("XY", [[0, 1, 0], [1, 0, 0], [0, 0, 1]]),
+                               ("XZ", [[0, 0, 1], [0, 1, 0], [1, 0, 0]]),
+                               ("YZ", [[1, 0, 0], [0, 0, 1], [0, 1, 0]])):
             if self.gui.get_object("SwapAxes%s" % axes).get_active():
                 break
         else:
             assert False, "No axis selected"
-        progress = self.core.get("progress")
-        progress.update(text="Swap axes of model")
-        progress.disable_cancel()
-        progress.set_multiple(len(models), "Model")
         for model in models:
-            model.get_model().transform_by_template(template, callback=progress.update)
-            progress.update_multiple()
-        progress.finish()
-        self.core.emit_event("model-change-after")
+            model.extend_value("transformations",
+                               [{"action": "multiply_matrix", "matrix": matrix}])

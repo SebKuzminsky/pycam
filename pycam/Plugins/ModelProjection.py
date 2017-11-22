@@ -70,25 +70,15 @@ class ModelProjection(pycam.Plugins.PluginBase):
         models = self._get_projectable_models()
         if not models:
             return
-        progress = self.core.get("progress")
-        progress.update(text="Calculating 2D projection")
-        progress.set_multiple(len(models), "Model")
-        for model_dict in models:
-            model = model_dict.get_model()
-            for objname, z_level in (("ProjectionModelTop", model.maxz),
-                                     ("ProjectionModelMiddle", (model.minz + model.maxz) / 2.0),
-                                     ("ProjectionModelBottom", model.minz),
-                                     ("ProjectionModelCustom",
-                                      self.gui.get_object("ProjectionZLevel").get_value())):
+        for model_obj in models:
+            model = model_obj.get_model()
+            for objname, z_level in (
+                    ("ProjectionModelTop", model.maxz),
+                    ("ProjectionModelMiddle", (model.minz + model.maxz) / 2.0),
+                    ("ProjectionModelBottom", model.minz),
+                    ("ProjectionModelCustom", self.gui.get_object("ProjectionZLevel").get_value())):
                 if self.gui.get_object(objname).get_active():
-                    plane = Plane((0, 0, z_level), (0, 0, 1, 'v'))
-                    self.log.info("Projecting 3D model at level z=%g", plane.p[2])
-                    new_model = model.get_waterline_contour(plane, callback=progress.update)
-                    if new_model:
-                        self.core.get("models").add_model(new_model,
-                                                          name_template="Projected model #%d")
-                    else:
-                        self.log.warn("The 2D projection at z=%g is empty. Aborted.", plane.p[2])
-                    break
-            progress.update_multiple()
-        progress.finish()
+                    center = [0, 0, z_level]
+                    vector = [0, 0, 1]
+            model_obj.extend_value("transformations",
+                                   [{"action": "projection", "center": center, "vector": vector}])
