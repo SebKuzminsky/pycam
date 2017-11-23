@@ -9,9 +9,9 @@ PyCAM generates toolpaths (GCode) based on 2D or 3D models for 3-axis CNC machin
 
 Extract the archive or clone the repository.
 
-Graphical Interface: `scripts/pycam`
+Graphical Interface: `pycam/run_gui.py`
 
-Scripted Toolpath Processing: `scripts/pycam-flow FLOW_SPECIFICATION_FILE`
+Scripted Toolpath Processing: `pycam/run_cli.py FLOW_SPECIFICATION_FILE`
 
 
 ## Ressources

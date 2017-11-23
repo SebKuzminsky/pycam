@@ -29,7 +29,13 @@ import logging
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir))
+try:
+    from pycam import VERSION
+except ImportError:
+    # running locally (without a proper PYTHONPATH) requires manual intervention
+    sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                                     os.pardir)))
+    from pycam import VERSION
 
 import pycam.Flow.data_models
 from pycam.Flow.parser import parse_yaml
@@ -54,7 +60,7 @@ def get_args():
     return parser.parse_args()
 
 
-def main():
+def main_func():
     args = get_args()
     _log.setLevel(LOG_LEVELS[args.log_level])
     for fname in args.sources:
@@ -69,4 +75,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main_func()
