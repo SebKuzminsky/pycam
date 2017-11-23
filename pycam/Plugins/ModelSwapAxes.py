@@ -58,10 +58,9 @@ class ModelSwapAxes(pycam.Plugins.PluginBase):
         models = self.core.get("models").get_selected()
         if not models:
             return
-        self.core.emit_event("model-change-before")
         for axes, matrix in (("XY", [[0, 1, 0], [1, 0, 0], [0, 0, 1]]),
-                               ("XZ", [[0, 0, 1], [0, 1, 0], [1, 0, 0]]),
-                               ("YZ", [[1, 0, 0], [0, 0, 1], [0, 1, 0]])):
+                             ("XZ", [[0, 0, 1], [0, 1, 0], [1, 0, 0]]),
+                             ("YZ", [[1, 0, 0], [0, 0, 1], [0, 1, 0]])):
             if self.gui.get_object("SwapAxes%s" % axes).get_active():
                 break
         else:
