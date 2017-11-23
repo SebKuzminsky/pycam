@@ -123,6 +123,8 @@ class ModelTransformationAction(Enum):
     ROTATE = "rotate"
     MULTIPLY_MATRIX = "multiply_matrix"
     PROJECTION = "projection"
+    TOGGLE_POLYGON_DIRECTIONS = "toggle_polygon_directions"
+    REVISE_POLYGON_DIRECTIONS = "revise_polygon_directions"
 
 
 class ToolpathTransformationAction(Enum):
@@ -753,6 +755,9 @@ class ModelTransformation(BaseDataContainer):
             return self._get_matrix_multiplied_model(model)
         elif action == ModelTransformationAction.PROJECTION:
             return self._get_projected_model(model)
+        elif action in (ModelTransformationAction.TOGGLE_POLYGON_DIRECTIONS,
+                        ModelTransformationAction.REVISE_POLYGON_DIRECTIONS):
+            return self._get_polygon_transformed(model)
         else:
             raise InvalidKeyError(action, ModelTransformationAction)
 
@@ -822,8 +827,20 @@ class ModelTransformation(BaseDataContainer):
         center = self.get_value("center")
         vector = self.get_value("vector")
         plane = Plane(center, vector)
-        # TODO: this is not an in-place operation (since the model type changes)
         return model.get_waterline_contour(plane)
+
+    @_set_parser_context("Model transformation 'polygon directions'")
+    @_set_allowed_attributes({"action"})
+    def _get_polygon_transformed(self, model):
+        action = self.get_value("action")
+        new_model = model.copy()
+        if action == ModelTransformationAction.REVISE_POLYGON_DIRECTIONS:
+            new_model.revise_directions()
+        elif action == ModelTransformationAction.TOGGLE_POLYGON_DIRECTIONS:
+            new_model.reverse_directions()
+        else:
+            assert False
+        return new_model
 
 
 class Model(BaseCollectionItemDataContainer):

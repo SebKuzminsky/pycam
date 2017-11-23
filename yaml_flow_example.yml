@@ -53,8 +53,8 @@ models:
                         type: copy
                         original: model1
                 transformations:
-                        - action: toggle_polygon_direction
-                        - action: revise_polygon_direction
+                        - action: toggle_polygon_directions
+                        - action: revise_polygon_directions
                         - action: extrude
                           shape: bulge
                           height: 1.0

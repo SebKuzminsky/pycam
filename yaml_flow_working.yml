@@ -53,6 +53,8 @@ models:
                                   x: 0
                                   y: 0
                                   z: 1
+                        - action: toggle_polygon_directions
+                        - action: revise_polygon_directions
 
 tools:
         tool1:
