@@ -189,6 +189,11 @@ class ToolBoundaryMode(Enum):
     AROUND = "around"
 
 
+class ModelType(Enum):
+    TRIMESH = "trimesh"
+    POLYGON = "polygon"
+
+
 def _get_enum_value(enum_class, value):
     try:
         return enum_class(value)
@@ -356,6 +361,21 @@ def _set_allowed_attributes(attr_set):
         def inner_function(self, *args, **kwargs):
             self.validate_allowed_attributes(attr_set)
             return func(self, *args, **kwargs)
+        return inner_function
+    return wrap
+
+
+def _require_model_type(wanted_type):
+    def wrap(func):
+        def inner_function(self, model, *args, **kwargs):
+            if (wanted_type == ModelType.TRIMESH) and not hasattr(model, "triangles"):
+                raise InvalidDataError(
+                    "Expected 3D mesh model, but received '{}'".format(type(model)))
+            elif (wanted_type == ModelType.POLYGON) and not hasattr(model, "get_polygons"):
+                raise InvalidDataError(
+                    "Expected 2D polygon model, but received '{}'".format(type(model)))
+            else:
+                return func(self, model, *args, **kwargs)
         return inner_function
     return wrap
 
@@ -823,6 +843,7 @@ class ModelTransformation(BaseDataContainer):
 
     @_set_parser_context("Model transformation 'projection'")
     @_set_allowed_attributes({"action", "center", "vector"})
+    @_require_model_type(ModelType.TRIMESH)
     def _get_projected_model(self, model):
         center = self.get_value("center")
         vector = self.get_value("vector")
@@ -831,6 +852,7 @@ class ModelTransformation(BaseDataContainer):
 
     @_set_parser_context("Model transformation 'polygon directions'")
     @_set_allowed_attributes({"action"})
+    @_require_model_type(ModelType.POLYGON)
     def _get_polygon_transformed(self, model):
         action = self.get_value("action")
         new_model = model.copy()
