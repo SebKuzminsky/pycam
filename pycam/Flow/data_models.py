@@ -338,6 +338,7 @@ def _get_collection_resolver(collection_name, many=False):
 def _set_parser_context(description):
     """ store a string describing the current parser context (useful for error messages) """
     def wrap(func):
+        @functools.wraps(func)
         def inner_function(self, *args, **kwargs):
             original_description = getattr(self, "_current_parser_context", None)
             self._current_parser_context = description
@@ -358,6 +359,7 @@ def _set_parser_context(description):
 
 def _set_allowed_attributes(attr_set):
     def wrap(func):
+        @functools.wraps(func)
         def inner_function(self, *args, **kwargs):
             self.validate_allowed_attributes(attr_set)
             return func(self, *args, **kwargs)
@@ -367,6 +369,7 @@ def _set_allowed_attributes(attr_set):
 
 def _require_model_type(wanted_type):
     def wrap(func):
+        @functools.wraps(func)
         def inner_function(self, model, *args, **kwargs):
             if (wanted_type == ModelType.TRIMESH) and not hasattr(model, "triangles"):
                 raise InvalidDataError(
