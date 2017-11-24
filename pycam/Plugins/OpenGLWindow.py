@@ -470,7 +470,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.core.emit_event("visualize-items")
             GL.glMatrixMode(prev_mode)
             GL.glFlush()
-            #self.area.get_gl_drawable().swap_buffers()
             return result
         return gtkgl_refresh_wrapper
 
@@ -572,18 +571,10 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
     def gtkgl_functionwrapper(function):
         def gtkgl_functionwrapper_function(self, *args, **kwords):
-            gldrawable = self.area.get_gl_drawable()
-            if not gldrawable:
-                return
-            glcontext = self.area.get_gl_context()
-            if not gldrawable.gl_begin(glcontext):
-                return
             if not self.initialized:
                 self.glsetup()
                 self.initialized = True
-            result = function(self, *args, **kwords)
-            gldrawable.gl_end()
-            return result
+            return function(self, *args, **kwords)
         return gtkgl_functionwrapper_function
 
     def _restore_latest_view(self):
