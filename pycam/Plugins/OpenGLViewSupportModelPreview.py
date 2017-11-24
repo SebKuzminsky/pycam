@@ -27,9 +27,6 @@ class OpenGLViewSupportModelPreview(pycam.Plugins.PluginBase):
     CATEGORIES = ["Visualization", "OpenGL", "Support bridges"]
 
     def setup(self):
-        import OpenGL.GL
-        import OpenGL.GLUT
-        self._GL = OpenGL.GL
         self.core.register_event("visualize-items", self.draw_support_preview)
         self.core.get("register_display_item")("show_support_preview",
                                                "Show Support Model Preview", 30)

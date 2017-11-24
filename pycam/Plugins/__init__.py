@@ -59,6 +59,19 @@ class PluginBase(object):
             self._gtk = None
             self._gdk = None
             self._gobject = None
+        self._GL = None
+        self._GLU = None
+        self._GLUT = None
+        if self._gtk:
+            try:
+                import OpenGL.GL
+                import OpenGL.GLU
+                import OpenGL.GLUT
+                self._GL = OpenGL.GL
+                self._GLU = OpenGL.GLU
+                self._GLUT = OpenGL.GLUT
+            except ImportError:
+                pass
         if self.UI_FILE and self._gtk:
             gtk_build_file = pycam.Utils.locations.get_ui_file_location(self.UI_FILE)
             if gtk_build_file:

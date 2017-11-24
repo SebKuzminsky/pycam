@@ -27,8 +27,6 @@ class OpenGLViewTool(pycam.Plugins.PluginBase):
     CATEGORIES = ["Visualization", "OpenGL", "Tool"]
 
     def setup(self):
-        import OpenGL.GL
-        self._GL = OpenGL.GL
         self.core.register_event("visualize-items", self.draw_tool)
         self.core.get("register_display_item")("show_tool", "Show Tool", 70)
         self.core.get("register_color")("color_tool", "Tool", 50)

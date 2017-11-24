@@ -36,8 +36,6 @@ class OpenGLViewGrid(pycam.Plugins.PluginBase):
             self.box = self.gui.get_object("GridSizeBox")
             self.core.register_ui("opengl_window", "Grid", self.box, weight=30)
             self.core.register_event("visual-item-updated", self._update_widget_state)
-        import OpenGL.GL
-        self._GL = OpenGL.GL
         self.core.register_event("visualize-items", self.draw_grid)
         self.core.get("register_display_item")("show_grid", "Show Base Grid", 80)
         self.core.get("register_color")("color_grid", "Base Grid", 80)

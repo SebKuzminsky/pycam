@@ -20,18 +20,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import math
 
-# careful import
-try:
-    # disable opengl visualization
-    raise ImportError()
-    # import gtk.gtkgl
-    import OpenGL.GL as GL
-    import OpenGL.GLU as GLU
-    import OpenGL.GLUT as GLUT
-    GL_ENABLED = True
-except (ImportError, RuntimeError):
-    GL_ENABLED = False
-
 from pycam.Geometry import number, sqrt
 from pycam.Geometry.PointUtils import pcross, pmul, pnormalized
 import pycam.Geometry.Matrix as Matrix
@@ -67,7 +55,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
     CATEGORIES = ["Visualization", "OpenGL"]
 
     def setup(self):
-        if not GL_ENABLED:
+        if not self._GL:
             self.log.error("Failed to initialize the interactive 3D model view.\nThe OpenGL "
                            "widget for GTK3 is sadly not yet supported in pycam.\nYour code "
                            "contributions for this support are very welcome, in order to revive "
@@ -193,7 +181,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 (self.area, "scroll-event", self.scroll_handler)))
             self.gui.get_object("OpenGLBox").pack_end(self.area, fill=True, expand=True, padding=0)
             self.camera = Camera(self.core, lambda: (self.area.allocation.width,
-                                                     self.area.allocation.height))
+                                                     self.area.allocation.height), self._GL, self._GLU)
             self._event_handlers = (("visual-item-updated", self.update_view),
                                     ("visualization-state-changed", self._update_widgets),
                                     ("model-list-changed", self._restore_latest_view))
@@ -461,6 +449,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
     def gtkgl_refresh(func):
         def gtkgl_refresh_wrapper(self, *args, **kwargs):
+            GL = self._GL
             prev_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
             GL.glMatrixMode(GL.GL_MODELVIEW)
             # clear the background with the configured color
@@ -479,11 +468,13 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.core.emit_event("visualize-items")
             GL.glMatrixMode(prev_mode)
             GL.glFlush()
-            self.area.get_gl_drawable().swap_buffers()
+            #self.area.get_gl_drawable().swap_buffers()
             return result
         return gtkgl_refresh_wrapper
 
     def glsetup(self, widget=None):
+        GL = self._GL
+        GLUT = self._GLUT
         if not GLUT.glutInit:
             self.log.error("Failed to execute 'GLUT.glutInit': probably you need to install the"
                            "C library providing GLUT functions (e.g. 'freeglut3-dev' or "
@@ -758,11 +749,13 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
 class Camera(object):
 
-    def __init__(self, core, get_dim_func, view=None):
+    def __init__(self, core, get_dim_func, import_gl, import_glu):
+        self._GL = import_gl
+        self._GLU = import_glu
         self.view = None
         self.core = core
         self._get_dim_func = get_dim_func
-        self.set_view(view)
+        self.set_view(self.view)
 
     def set_view(self, view=None):
         if view is None:
@@ -881,6 +874,8 @@ class Camera(object):
         self.view["up"] = new_up
 
     def position_camera(self):
+        GL = self._GL
+        GLU = self._GLU
         width, height = self._get_screen_dimensions()
         prev_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
         GL.glMatrixMode(GL.GL_PROJECTION)

@@ -28,8 +28,6 @@ class OpenGLViewAxes(pycam.Plugins.PluginBase):
     CATEGORIES = ["Visualization", "OpenGL"]
 
     def setup(self):
-        import OpenGL.GL
-        self._GL = OpenGL.GL
         self.core.register_event("visualize-items", self.draw_axes)
         self.core.get("register_display_item")("show_axes", "Show Coordinate System", 50)
         self.core.emit_event("visual-item-updated")

@@ -31,8 +31,6 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
     CATEGORIES = ["Model", "Visualization", "OpenGL"]
 
     def setup(self):
-        import OpenGL.GL
-        self._GL = OpenGL.GL
         self._event_handlers = (("visualize-items", self.draw_model),
                                 ("model-changed", "visual-item-updated"),
                                 ("model-list-changed", "visual-item-updated"))
@@ -121,8 +119,6 @@ class OpenGLViewModelTriangle(pycam.Plugins.PluginBase):
     CATEGORIES = ["Model", "Visualization", "OpenGL"]
 
     def setup(self):
-        import OpenGL.GL
-        self._GL = OpenGL.GL
         self.core.register_chain("draw_models", self.draw_triangle_model, 10)
         return True
 

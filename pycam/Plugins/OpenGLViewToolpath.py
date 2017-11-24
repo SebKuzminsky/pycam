@@ -29,8 +29,6 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
     CATEGORIES = ["Toolpath", "Visualization", "OpenGL"]
 
     def setup(self):
-        import OpenGL.GL
-        self._GL = OpenGL.GL
         self.core.register_event("visualize-items", self.draw_toolpaths)
         self.core.get("register_color")("color_toolpath_cut", "Toolpath cut", 60)
         self.core.get("register_color")("color_toolpath_return", "Toolpath rapid", 70)

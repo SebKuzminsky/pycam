@@ -27,8 +27,6 @@ class OpenGLViewBounds(pycam.Plugins.PluginBase):
     CATEGORIES = ["Bounds", "Visualization", "OpenGL"]
 
     def setup(self):
-        import OpenGL.GL
-        self._GL = OpenGL.GL
         self.core.get("register_color")("color_bounding_box", "Bounding box", 40)
         self.core.get("register_display_item")("show_bounding_box", "Show Bounding Box", 40)
         self.core.register_chain("get_draw_dimension", self.get_draw_dimension)
