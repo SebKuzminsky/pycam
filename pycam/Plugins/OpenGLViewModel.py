@@ -75,9 +75,10 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
     def draw_model(self):
         GL = self._GL
         if self._is_visible():
+            fallback_color = self.core.get("models").FALLBACK_COLOR
             for model_dict in self.core.get("models").get_visible():
                 model = model_dict.get_model()
-                col = model_dict["color"]
+                col = model_dict.get_application_value("color", default=fallback_color)
                 color = (col["red"], col["green"], col["blue"], col["alpha"])
                 GL.glColor4f(*color)
                 # reset the material color
