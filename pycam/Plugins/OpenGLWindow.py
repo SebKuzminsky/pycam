@@ -157,17 +157,13 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # key binding
             self._gtk_handlers.append((self.window, "key-press-event", self.key_handler))
             # OpenGL stuff
-            glconfig = self._gtk.gdkgl.Config(mode=(self._gtk.gdkgl.MODE_RGBA
-                                                    | self._gtk.gdkgl.MODE_DEPTH
-                                                    | self._gtk.gdkgl.MODE_DOUBLE))
-            self.area = self._gtk.gtkgl.DrawingArea(glconfig)
+            self.area = self._gtk.GLArea(auto_render=False, has_alpha=True, has_depth_buffer=True)
+            self.area.show()
             # first run; might also be important when doing other fancy
-            # gtk/gdk stuff
-#           self.area.connect_after('realize', self.paint)
             # called when a part of the screen is uncovered
-            self._gtk_handlers.append((self.area, 'expose-event', self.paint))
+            self._gtk_handlers.append((self.area, "render", self.paint))
             # resize window
-            self._gtk_handlers.append((self.area, 'configure-event', self._resize_window))
+            self._gtk_handlers.append((self.area, "resize", self._resize_window))
             # catch mouse events
             self.area.set_events((self._gdk.InputSource.MOUSE
                                   | self._gdk.EventMask.POINTER_MOTION_MASK
@@ -724,16 +720,16 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
     @check_busy
     @gtkgl_functionwrapper
     @gtkgl_refresh
-    def _resize_window(self, widget, data=None):
-        allocation = self.area.get_allocation()
-        GL.glViewport(0, 0, allocation.width, allocation.height)
+    def _resize_window(self, widget, width, height, data=None):
+        self._GL.glViewport(0, 0, width, height)
 
     @check_busy
     @gtkgl_functionwrapper
     @gtkgl_refresh
     def paint(self, widget=None, data=None):
         # the decorators take care for redraw
-        pass
+        # Return "True" in order to propagate the "render" signal.
+        return True
 
     @gtkgl_functionwrapper
     @gtkgl_refresh
