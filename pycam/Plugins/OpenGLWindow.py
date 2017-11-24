@@ -349,8 +349,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         for index, item in enumerate(items):
             label = self._gtk.Label("%s:" % item["label"])
             label.set_alignment(0.0, 0.5)
-            color_table.attach(label, 0, 1, index, index + 1)
-            color_table.attach(item["widget"], 1, 2, index, index + 1)
+            color_table.attach(label, 0, index, 1, 1)
+            color_table.attach(item["widget"], 1, index, 1, 1)
         color_table.show_all()
 
     def toggle_3d_view(self, widget=None, value=None):
