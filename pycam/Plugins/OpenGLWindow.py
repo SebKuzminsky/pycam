@@ -180,8 +180,10 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 (self.area, "button-release-event", self.context_menu_handler),
                 (self.area, "scroll-event", self.scroll_handler)))
             self.gui.get_object("OpenGLBox").pack_end(self.area, fill=True, expand=True, padding=0)
-            self.camera = Camera(self.core, lambda: (self.area.allocation.width,
-                                                     self.area.allocation.height), self._GL, self._GLU)
+            def get_area_allocation(self=self):
+                allocation = self.area.get_allocation()
+                return allocation.width, allocation.height
+            self.camera = Camera(self.core, get_area_allocation, self._GL, self._GLU)
             self._event_handlers = (("visual-item-updated", self.update_view),
                                     ("visualization-state-changed", self._update_widgets),
                                     ("model-list-changed", self._restore_latest_view))
@@ -523,7 +525,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         GL.glLoadIdentity()
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadIdentity()
-        GL.glViewport(0, 0, self.area.allocation.width, self.area.allocation.height)
+        GL.glViewport(0, 0, self.area.get_allocation().width, self.area.get_allocation().height)
         # lighting
         GL.glLightModeli(GL.GL_LIGHT_MODEL_LOCAL_VIEWER, GL.GL_TRUE)
         # Light #1
@@ -732,7 +734,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
     @gtkgl_functionwrapper
     @gtkgl_refresh
     def _resize_window(self, widget, data=None):
-        GL.glViewport(0, 0, self.area.allocation.width, self.area.allocation.height)
+        allocation = self.area.get_allocation()
+        GL.glViewport(0, 0, allocation.width, allocation.height)
 
     @check_busy
     @gtkgl_functionwrapper
