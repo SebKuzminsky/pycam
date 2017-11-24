@@ -160,7 +160,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.area.show()
             # first run; might also be important when doing other fancy
             # called when a part of the screen is uncovered
-            self._gtk_handlers.append((self.area, "render", self.paint))
+            self._gtk_handlers.append((self.area, 'render', self.paint))
             # resize window
             self._gtk_handlers.append((self.area, "resize", self._resize_window))
             # catch mouse events
