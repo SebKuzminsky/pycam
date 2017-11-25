@@ -161,8 +161,8 @@ processes:
 bounds:
         minimal:
             specification: margins
-            lower: [5, 5, 5]
-            upper: [5, 5, 5]
+            lower: [5, 5, 0]
+            upper: [5, 5, 1]
             X-Application: { pycam-gtk: { name: minimal } }
 
 tasks:
