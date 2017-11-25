@@ -229,7 +229,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
     def update_view(self, widget=None, data=None):
         if self.is_visible:
-            self.paint()
+            self.trigger_rendering()
 
     def _update_widgets(self):
         self.unregister_gtk_handlers(self._gtk_handlers)
@@ -395,7 +395,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             names = ["reset", "front", "back", "left", "right", "top", "bottom"]
             index = '1234567'.index(key_string)
             self.rotate_view(view=VIEWS[names[index]])
-            self._paint_ignore_busy()
+            self.trigger_rendering()
         elif key_string in ('i', 'm', 's', 'p'):
             if key_string == 'i':
                 key = "view_light"
@@ -411,14 +411,14 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.core.set(key, not self.core.get(key))
             # re-init gl settings
             self.glsetup()
-            self.paint()
+            self.trigger_rendering()
         elif key_string in ("+", "-"):
             self._last_view = None
             if key_string == "+":
                 self.camera.zoom_in()
             else:
                 self.camera.zoom_out()
-            self.paint()
+            self.trigger_rendering()
         elif keyval in move_keys_dict.keys():
             self._last_view = None
             move_x, move_y = move_keys_dict[keyval]
@@ -431,7 +431,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             else:
                 # no shift key -> moving
                 self.camera.shift_view(x_dist=move_x, y_dist=move_y)
-            self.paint()
+            self.trigger_rendering()
         else:
             self.log.debug("Unhandled key pressed: %s (%s)", keyval, get_state())
 
@@ -637,7 +637,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # no interesting event -> no re-painting
             self._last_view = remember_last_view
             return
-        self._paint_ignore_busy()
+        self.trigger_rendering()
 
     def mouse_press_handler(self, widget, event):
         self.mouse["pressed_timestamp"] = event.get_time()
@@ -675,7 +675,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 elif scale > 100:
                     scale = 100
                 self.camera.scale_distance(scale)
-                self._paint_ignore_busy()
+                self.trigger_rendering()
             elif ((state & self.mouse["button"] & self.BUTTON_MOVE)
                     or (state & self.mouse["button"] & self.BUTTON_ROTATE)):
                 self._last_view = None
@@ -699,11 +699,11 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                     # BUTTON_ROTATE
                     # update the camera position according to the mouse movement
                     self.camera.rotate_camera_by_screen(start_x, start_y, x, y)
-                self._paint_ignore_busy()
+                self.trigger_rendering()
             else:
                 # button was released
                 self.mouse["button"] = None
-                self._paint_ignore_busy()
+                self.trigger_rendering()
         self.mouse["event_timestamp"] = event.get_time()
 
     @check_busy
@@ -713,15 +713,18 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         if view:
             self._last_view = view.copy()
         self.camera.set_view(view)
+        self.trigger_rendering()
 
     def reset_view(self):
         self.rotate_view(view=None)
+        self.trigger_rendering()
 
     @check_busy
     @gtkgl_functionwrapper
     @gtkgl_refresh
     def _resize_window(self, widget, width, height, data=None):
         self._GL.glViewport(0, 0, width, height)
+        self.trigger_rendering()
 
     @check_busy
     @gtkgl_functionwrapper
@@ -731,10 +734,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         # Return "True" in order to propagate the "render" signal.
         return True
 
-    @gtkgl_functionwrapper
-    @gtkgl_refresh
-    def _paint_ignore_busy(self, widget=None):
-        pass
+    def trigger_rendering(self):
+        self.area.queue_render()
 
 
 class Camera(object):
