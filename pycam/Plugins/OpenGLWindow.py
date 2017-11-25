@@ -422,7 +422,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         elif keyval in move_keys_dict.keys():
             self._last_view = None
             move_x, move_y = move_keys_dict[keyval]
-            if get_state() & self._gdk.SHIFT_MASK:
+            if get_state() & self._gdk.ModifierType.SHIFT_MASK:
                 # shift key pressed -> rotation
                 base = 0
                 factor = 10
@@ -611,26 +611,26 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         except AttributeError:
             # this should probably never happen
             return
-        control_pressed = modifier_state & self._gdk.CONTROL_MASK
-        shift_pressed = modifier_state & self._gdk.SHIFT_MASK
-        if ((event.direction == self._gdk.SCROLL_RIGHT)
-                or ((event.direction == self._gdk.SCROLL_UP) and shift_pressed)):
+        control_pressed = modifier_state & self._gdk.ModifierType.CONTROL_MASK
+        shift_pressed = modifier_state & self._gdk.ModifierType.SHIFT_MASK
+        if ((event.direction == self._gdk.ScrollDirection.RIGHT)
+                or ((event.direction == self._gdk.ScrollDirection.UP) and shift_pressed)):
             # horizontal move right
             self.camera.shift_view(x_dist=-1)
-        elif (event.direction == self._gdk.SCROLL_LEFT) \
-                or ((event.direction == self._gdk.SCROLL_DOWN) and shift_pressed):
+        elif ((event.direction == self._gdk.ScrollDirection.LEFT)
+                or ((event.direction == self._gdk.ScrollDirection.DOWN) and shift_pressed)):
             # horizontal move left
             self.camera.shift_view(x_dist=1)
-        elif (event.direction == self._gdk.SCROLL_UP) and control_pressed:
+        elif (event.direction == self._gdk.ScrollDirection.UP) and control_pressed:
             # zoom in
             self.camera.zoom_in()
-        elif event.direction == self._gdk.SCROLL_UP:
+        elif event.direction == self._gdk.ScrollDirection.UP:
             # vertical move up
             self.camera.shift_view(y_dist=1)
-        elif (event.direction == self._gdk.SCROLL_DOWN) and control_pressed:
+        elif (event.direction == self._gdk.ScrollDirection.DOWN) and control_pressed:
             # zoom out
             self.camera.zoom_out()
-        elif event.direction == self._gdk.SCROLL_DOWN:
+        elif event.direction == self._gdk.ScrollDirection.DOWN:
             # vertical move down
             self.camera.shift_view(y_dist=-1)
         else:
