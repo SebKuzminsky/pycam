@@ -435,40 +435,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         else:
             self.log.debug("Unhandled key pressed: %s (%s)", keyval, get_state())
 
-    def check_busy(func):
-        def check_busy_wrapper(self, *args, **kwargs):
-            if self.busy:
-                return
-            self.busy = True
-            result = func(self, *args, **kwargs)
-            self.busy = False
-            return result
-        return check_busy_wrapper
-
-    def gtkgl_refresh(func):
-        def gtkgl_refresh_wrapper(self, *args, **kwargs):
-            GL = self._GL
-            prev_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
-            GL.glMatrixMode(GL.GL_MODELVIEW)
-            # clear the background with the configured color
-            bg_col = self.core.get("color_background")
-            GL.glClearColor(bg_col["red"], bg_col["green"], bg_col["blue"], 0.0)
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-            result = func(self, *args, **kwargs)
-            self.camera.position_camera()
-            # adjust Light #2
-            v = self.camera.view
-            lightpos = (v["center"][0] + v["distance"][0],
-                        v["center"][1] + v["distance"][1],
-                        v["center"][2] + v["distance"][2])
-            GL.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, lightpos)
-            # trigger the visualization of all items
-            self.core.emit_event("visualize-items")
-            GL.glMatrixMode(prev_mode)
-            GL.glFlush()
-            return result
-        return gtkgl_refresh_wrapper
-
     def glsetup(self, widget=None):
         GL = self._GL
         GLUT = self._GLUT
@@ -565,14 +531,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         # don't close the window
         return True
 
-    def gtkgl_functionwrapper(function):
-        def gtkgl_functionwrapper_function(self, *args, **kwords):
-            if not self.initialized:
-                self.glsetup()
-                self.initialized = True
-            return function(self, *args, **kwords)
-        return gtkgl_functionwrapper_function
-
     def _restore_latest_view(self):
         """ this function is called whenever the model list changes
 
@@ -584,8 +542,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         if self._last_view:
             self.rotate_view(view=self._last_view)
 
-    @check_busy
-    @gtkgl_functionwrapper
     def context_menu_handler(self, widget, event):
         if (event.button == self.mouse["pressed_button"] == self.BUTTON_RIGHT) \
                 and self.context_menu \
@@ -596,8 +552,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # -> open the context menu.
             self.context_menu.popup(None, None, None, None, event.button, int(event.get_time()))
 
-    @check_busy
-    @gtkgl_functionwrapper
     def scroll_handler(self, widget, event):
         """ handle events of the scroll wheel
 
@@ -645,8 +599,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         self.mouse["pressed_pos"] = event.x, event.y
         self.mouse_handler(widget, event)
 
-    @check_busy
-    @gtkgl_functionwrapper
     def mouse_handler(self, widget, event):
         x, y, state = event.x, event.y, event.state
         if self.mouse["button"] is None:
@@ -706,9 +658,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 self.trigger_rendering()
         self.mouse["event_timestamp"] = event.get_time()
 
-    @check_busy
-    @gtkgl_functionwrapper
-    @gtkgl_refresh
     def rotate_view(self, widget=None, view=None):
         if view:
             self._last_view = view.copy()
@@ -719,18 +668,32 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         self.rotate_view(view=None)
         self.trigger_rendering()
 
-    @check_busy
-    @gtkgl_functionwrapper
-    @gtkgl_refresh
     def _resize_window(self, widget, width, height, data=None):
-        self._GL.glViewport(0, 0, width, height)
         self.trigger_rendering()
 
-    @check_busy
-    @gtkgl_functionwrapper
-    @gtkgl_refresh
     def paint(self, widget=None, data=None):
-        # the decorators take care for redraw
+        if not self.initialized:
+            self.glsetup()
+            self.initialized = True
+        # draw the items
+        GL = self._GL
+        prev_mode = GL.glGetIntegerv(GL.GL_MATRIX_MODE)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        # clear the background with the configured color
+        bg_col = self.core.get("color_background")
+        GL.glClearColor(bg_col["red"], bg_col["green"], bg_col["blue"], 0.0)
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+        self.camera.position_camera()
+        # adjust Light #2
+        v = self.camera.view
+        lightpos = (v["center"][0] + v["distance"][0],
+                    v["center"][1] + v["distance"][1],
+                    v["center"][2] + v["distance"][2])
+        GL.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, lightpos)
+        # trigger the visualization of all items
+        self.core.emit_event("visualize-items")
+        GL.glMatrixMode(prev_mode)
+        GL.glFlush()
         # Return "True" in order to propagate the "render" signal.
         return True
 
