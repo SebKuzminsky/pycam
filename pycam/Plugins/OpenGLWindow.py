@@ -640,13 +640,11 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                     obj_dim = []
                     low, high = [None, None, None], [None, None, None]
                     self.core.call_chain("get_draw_dimension", low, high)
-                    for index in range(3):
-                        if high[index] is None:
-                            high[index] = 10
-                        if low[index] is None:
-                            low[index] = 0
-                        obj_dim.append(high[index] - low[index])
-                    max_dim = max(obj_dim)
+                    # use zero as fallback for undefined axes (None)
+                    max_dim = max((v_high or 0) - (v_low or 0) for v_high, v_low in zip(high, low))
+                    if max_dim == 0:
+                        # some arbitrary value if there are no visible objects
+                        max_dim = 10
                     self.camera.move_camera_by_screen(x - start_x, y - start_y, max_dim)
                 else:
                     # BUTTON_ROTATE
