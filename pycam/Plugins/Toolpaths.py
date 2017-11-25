@@ -97,7 +97,7 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
         self.core.set("toolpaths", None)
 
     def get_visible(self):
-        return [tp for tp in self.get_all() if tp.get_application_value("visible")]
+        return [tp for tp in self.get_all() if tp.get_application_value("visible", True)]
 
     def _update_toolpath_tab_visibility(self):
         has_toolpaths = len(self.get_all()) > 0
@@ -124,7 +124,7 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
 
     def _visualize_visible_state(self, column, cell, model, m_iter, data):
         toolpath = self.get_by_path(model.get_path(m_iter))
-        if toolpath.get_application_value("visible"):
+        if toolpath.get_application_value("visible", True):
             cell.set_property("pixbuf", self.ICONS["visible"])
         else:
             cell.set_property("pixbuf", self.ICONS["hidden"])
