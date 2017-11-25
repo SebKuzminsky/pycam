@@ -227,7 +227,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
 
     def _update_bounds_widgets(self, widget=None):
         bounds = self.get_selected()
-        self.log.info("Update Bounds controls: %s", bounds)
+        self.log.debug("Update Bounds controls: %s", bounds)
         control_box = self.gui.get_object("BoundsSettingsControlsBox")
         if not bounds:
             control_box.hide()
@@ -266,7 +266,6 @@ class Bounds(pycam.Plugins.ListPluginBase):
             controls_z.hide()
 
     def _adjust_bounds(self, widget, axis, change_target):
-        self.log.info("WARNING: adjust")
         bounds = self.get_selected()
         if not bounds:
             return
