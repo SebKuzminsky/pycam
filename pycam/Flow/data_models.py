@@ -236,7 +236,17 @@ def _bool_converter(value):
                                .format(get_type_name(value), value))
 
 
-LimitSingle = collections.namedtuple("LimitSingle", ("value", "is_relative"))
+class LimitSingle(collections.namedtuple("LimitSingle", ("value", "is_relative"))):
+
+    @property
+    def export(self):
+        """return the storage string for later parsing"""
+        if self.is_relative:
+            return "{:f}%".format(self.value)
+        else:
+            return self.value
+
+
 Limit3D = collections.namedtuple("Limit3D", ("x", "y", "z"))
 AxesValues = collections.namedtuple("AxesValues", ("x", "y", "z"))
 CacheItem = collections.namedtuple("CacheItem", ("timestamp", "content"))

@@ -185,14 +185,14 @@ class Bounds(pycam.Plugins.ListPluginBase):
             # overwrite all limit values and set or remove their "relative" flags
             for name, obj_keys in (("lower", ("BoundaryLowX", "BoundaryLowY", "BoundaryLowZ")),
                                    ("upper", ("BoundaryHighX", "BoundaryHighY", "BoundaryHighZ"))):
-                limits = tuple(LimitSingle(self.gui.get_object(name).get_value(), is_percent)
-                               for name in obj_keys)
+                limits = [LimitSingle(self.gui.get_object(name).get_value(), is_percent).export
+                          for name in obj_keys]
                 bounds.set_value(name, limits)
             tool_limit_mode = {
                 0: ToolBoundaryMode.INSIDE,
                 1: ToolBoundaryMode.ALONG,
                 2: ToolBoundaryMode.AROUND}[self.gui.get_object("ToolLimit").get_active()]
-            bounds.set_value("tool_boundary", tool_limit_mode)
+            bounds.set_value("tool_boundary", tool_limit_mode.value)
 
     def _copy_from_bounds_to_controls(self, bounds):
         self.select_models(bounds.get_value("reference_models"))
@@ -283,19 +283,19 @@ class Bounds(pycam.Plugins.ListPluginBase):
         for key in ("lower", "upper"):
             orig_limits = bounds.get_value(key)
             if change_target == "0":
-                limits = tuple(LimitSingle(0 if (index == axis_index) else orig.value,
-                                           orig.is_relative)
-                               for index, orig in enumerate(bounds.get_value(key)))
+                limits = [LimitSingle(0 if (index == axis_index) else orig.value,
+                                      orig.is_relative).export
+                          for index, orig in enumerate(bounds.get_value(key))]
             else:
-                limits = tuple(LimitSingle(orig.value + change, orig.is_relative)
-                               for orig, change in zip(bounds.get_value(key), change_vector[key]))
+                limits = [LimitSingle(orig.value + change, orig.is_relative).export
+                          for orig, change in zip(bounds.get_value(key), change_vector[key])]
             bounds.set_value(key, limits)
 
     def _bounds_new(self, *args):
         name = get_non_conflicting_name(
             "Bounds #%d", [bounds.get_application_value("name") for bounds in self.get_all()])
         new_bounds = Boundary(None, {"specification": "margins",
-                                     "lower": (0, 0, 0), "upper": (0, 0, 0),
+                                     "lower": [0, 0, 0], "upper": [0, 0, 0],
                                      "reference_models": []})
         new_bounds.set_application_value("name", name)
         self.select(new_bounds)
