@@ -56,10 +56,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
     def setup(self):
         if not self._GL:
-            self.log.error("Failed to initialize the interactive 3D model view.\nThe OpenGL "
-                           "widget for GTK3 is sadly not yet supported in pycam.\nYour code "
-                           "contributions for this support are very welcome, in order to revive "
-                           "the helpful 3D visualization (http://pycam.sf.net).")
+            self.log.error("Failed to initialize the interactive 3D model view.")
             return False
         if self.gui:
             # buttons for rotating, moving and zooming the model view window
