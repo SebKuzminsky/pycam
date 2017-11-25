@@ -317,7 +317,7 @@
                             <property name="draw_indicator">True</property>
                           </object>
                           <packing>
-                            <property name="left_attach">3</property>
+                            <property name="left_attach">2</property>
                             <property name="top_attach">0</property>
                           </packing>
                         </child>
@@ -333,7 +333,7 @@
                             <property name="group">AlignPositionXMin</property>
                           </object>
                           <packing>
-                            <property name="left_attach">2</property>
+                            <property name="left_attach">3</property>
                             <property name="top_attach">0</property>
                           </packing>
                         </child>
