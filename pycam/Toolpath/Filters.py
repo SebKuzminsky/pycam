@@ -205,7 +205,7 @@ class CornerStyle(MachineSetting):
                   self.settings["naive_tolerance"]))]
 
     def _render_settings(self):
-        return "%d / %d / %d" % (self.settings["path_mode"],
+        return "%s / %d / %d" % (self.settings["path_mode"],
                                  self.settings["motion_tolerance"],
                                  self.settings["naive_tolerance"])
 

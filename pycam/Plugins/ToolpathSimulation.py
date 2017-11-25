@@ -87,14 +87,14 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
                 # this should not happen
                 return
             # we use only one toolpath
-            self._toolpath = toolpaths[0]
+            self._toolpath = toolpaths[0].get_toolpath()
             # calculate duration (in seconds)
             self._duration = 60 * self._toolpath.get_machine_move_distance_and_time()[1]
             self._progress.set_upper(self._duration)
             self._progress.set_value(0)
             self._toolpath_moves = None
             self.core.set("show_simulation", True)
-            self.core.set("current_tool", self._toolpath.tool)
+            self.core.set("current_tool", self._toolpath.tool.get_tool_geometry())
             self._running = True
             interval_ms = int(1000 / self.core.get("tool_progress_max_fps"))
             pycam.Gui.common.set_parent_controls_sensitivity(self._frame, False)
