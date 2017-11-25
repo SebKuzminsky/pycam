@@ -543,11 +543,11 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.rotate_view(view=self._last_view)
 
     def context_menu_handler(self, widget, event):
-        if (event.button == self.mouse["pressed_button"] == self.BUTTON_RIGHT) \
-                and self.context_menu \
-                and (event.get_time() - self.mouse["pressed_timestamp"] < 300) \
-                and (abs(event.x - self.mouse["pressed_pos"][0]) < 3) \
-                and (abs(event.y - self.mouse["pressed_pos"][1]) < 3):
+        if ((event.button == self.mouse["pressed_button"] == self.BUTTON_RIGHT)
+                and self.context_menu
+                and (event.get_time() - self.mouse["pressed_timestamp"] < 300)
+                and (abs(event.x - self.mouse["pressed_pos"][0]) < 3)
+                and (abs(event.y - self.mouse["pressed_pos"][1]) < 3)):
             # A quick press/release cycle with the right mouse button
             # -> open the context menu.
             self.context_menu.popup(None, None, None, None, event.button, int(event.get_time()))
