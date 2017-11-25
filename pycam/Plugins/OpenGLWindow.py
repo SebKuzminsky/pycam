@@ -449,7 +449,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         # use vertex normals for smooth rendering
         GL.glShadeModel(GL.GL_SMOOTH)
         bg_col = self.core.get("color_background")
-        GL.glClearColor(bg_col["red"], bg_col["green"], bg_col["blue"], 0.0)
+        GL.glClearColor(bg_col["red"], bg_col["green"], bg_col["blue"], 1.0)
         GL.glHint(GL.GL_PERSPECTIVE_CORRECTION_HINT, GL.GL_NICEST)
         GL.glMatrixMode(GL.GL_MODELVIEW)
         # enable blending/transparency (alpha) for colors
@@ -678,7 +678,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         GL.glMatrixMode(GL.GL_MODELVIEW)
         # clear the background with the configured color
         bg_col = self.core.get("color_background")
-        GL.glClearColor(bg_col["red"], bg_col["green"], bg_col["blue"], 0.0)
+        GL.glClearColor(bg_col["red"], bg_col["green"], bg_col["blue"], 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
         self.camera.position_camera()
         # adjust Light #2
