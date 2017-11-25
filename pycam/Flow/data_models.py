@@ -425,15 +425,30 @@ class CacheStorage(object):
 
         return MethodCache(calc_function, self)
 
+    @classmethod
+    def _get_stable_hashs_for_value(cls, value):
+        """calculate a hash value for simple values and complex objects"""
+        if isinstance(value, dict):
+            for key_value in sorted(value.items()):
+                yield from cls._get_stable_hashs_for_value(key_value)
+        elif isinstance(value, (list, tuple)):
+            for item in value:
+                yield from cls._get_stable_hashs_for_value(item)
+        elif isinstance(value, (float, int, str)):
+            yield hash(value)
+        elif isinstance(value, BaseDataContainer):
+            yield from cls._get_stable_hashs_for_value(value.get_dict())
+        elif isinstance(value, Enum):
+            yield hash(value.value)
+        else:
+            assert False, ("Non-hashable type needs hash conversion for cache key: {}"
+                           .format(type(value)))
+
     def _get_cache_key(self, inst, args, kwargs):
         hashes = []
         for key in self._relevant_dict_keys:
             value = inst.get_value(key)
-            if isinstance(value, (list, tuple)):
-                hashed = tuple([hash(item) for item in value])
-            else:
-                hashed = hash(value)
-            hashes.append(hashed)
+            hashes.extend(self._get_stable_hashs_for_value(value))
         return tuple(hashes) + tuple(args) + tuple(sorted(kwargs.items()))
 
     def get_cached(self, inst, args, kwargs, calc_function):
