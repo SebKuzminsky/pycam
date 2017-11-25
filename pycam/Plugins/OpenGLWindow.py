@@ -175,9 +175,11 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 (self.area, "button-release-event", self.context_menu_handler),
                 (self.area, "scroll-event", self.scroll_handler)))
             self.gui.get_object("OpenGLBox").pack_end(self.area, fill=True, expand=True, padding=0)
+
             def get_area_allocation(self=self):
                 allocation = self.area.get_allocation()
                 return allocation.width, allocation.height
+
             self.camera = Camera(self.core, get_area_allocation, self._GL, self._GLU)
             self._event_handlers = (("visual-item-updated", self.update_view),
                                     ("visualization-state-changed", self._update_widgets),
