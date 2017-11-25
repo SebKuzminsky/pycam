@@ -56,6 +56,8 @@ class PluginBase(object):
             self._gdkpixbuf = GdkPixbuf
             self._gobject = GObject
         except ImportError:
+            _log.warning("Failed to import GTK3 module.  Maybe you want to install 'python3-gi' "
+                         "for pycam's graphical user interface.")
             self._gtk = None
             self._gdk = None
             self._gobject = None
@@ -71,7 +73,9 @@ class PluginBase(object):
                 self._GLU = OpenGL.GLU
                 self._GLUT = OpenGL.GLUT
             except ImportError:
-                pass
+                # OpenGL-related plugins will complain later about the missing dependency
+                _log.warning("Failed to import OpenGL module.  Maybe you want to install "
+                             "'python3-opengl' for the 3D visualization.")
         if self.UI_FILE and self._gtk:
             gtk_build_file = pycam.Utils.locations.get_ui_file_location(self.UI_FILE)
             if gtk_build_file:
