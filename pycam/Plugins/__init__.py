@@ -34,17 +34,22 @@ _log = pycam.Utils.log.get_logger()
 def _get_plugin_imports():
     # We want to import all relevent GUI modules into the namespace of each plugin.
     # We do this once for all - in order to centralize and minimize error handling.
-    result = {key: None for key in ("gtk", "gdk", "gdkpixbuf", "gdkobject", "GL", "GLU", "GLUT")}
+    result = {key: None for key in ("gtk", "gdk", "gdkpixbuf", "gdkobject", "gio", "glib",
+                                    "GL", "GLU", "GLUT")}
     try:
         import gi
         gi.require_version('Gtk', '3.0')
         from gi.repository import Gtk
         from gi.repository import Gdk
         from gi.repository import GdkPixbuf
+        from gi.repository import Gio
+        from gi.repository import GLib
         from gi.repository import GObject
         result["gtk"] = Gtk
         result["gdk"] = Gdk
         result["gdkpixbuf"] = GdkPixbuf
+        result["gio"] = Gio
+        result["glib"] = GLib
         result["gobject"] = GObject
     except ImportError:
         _log.warning("Failed to import GTK3 module.  Maybe you want to install 'python3-gi' "
