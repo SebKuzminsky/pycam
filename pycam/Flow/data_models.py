@@ -448,8 +448,11 @@ class CacheStorage(object):
         hashes = []
         for key in self._relevant_dict_keys:
             value = inst.get_value(key)
+            hashes.append(hash(key))
             hashes.extend(self._get_stable_hashs_for_value(value))
-        return tuple(hashes) + tuple(args) + tuple(sorted(kwargs.items()))
+        return (tuple(hashes)
+                + tuple(self._get_stable_hashs_for_value(args))
+                + tuple(self._get_stable_hashs_for_value(kwargs)))
 
     def get_cached(self, inst, args, kwargs, calc_function):
         cache_key = self._get_cache_key(inst, args, kwargs)
