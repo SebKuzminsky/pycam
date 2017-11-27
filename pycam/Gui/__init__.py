@@ -27,6 +27,7 @@ PREFERENCES_DEFAULTS = {
     "show_toolpath": True,
     "show_tool": False,
     "show_directions": False,
+    "show_grid": False,
     "color_background": {"red": 0.0, "green": 0.0, "blue": 0.0, "alpha": 1.0},
     "color_model": {"red": 0.5, "green": 0.5, "blue": 1.0, "alpha": 1.0},
     "color_support_preview": {"red": 0.8, "green": 0.8, "blue": 0.3, "alpha": 1.0},
