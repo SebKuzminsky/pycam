@@ -68,6 +68,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.BUTTON_RIGHT = 3
             self.context_menu = self._gtk.Menu()
             self.window = self.gui.get_object("OpenGLWindow")
+            self.window.insert_action_group(self.core.get("gtk_action_group_prefix"),
+                                            self.core.get("gtk_action_group"))
             drag_n_drop_func = self.core.get("configure-drag-drop-func")
             if drag_n_drop_func:
                 drag_n_drop_func(self.window)
@@ -245,20 +247,59 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         #  - a checkbox for the preferences window
         #  - a tool item for the drop-down list in the 3D window
         #  - a menu item for the context menu in the 3D window
-        action = self._gtk.ToggleAction(name, label, "Show/hide %s" % label, None)
-        action.connect("toggled", lambda widget: self.core.emit_event("visual-item-updated"))
-        checkbox = self._gtk.CheckButton(label)
-        # action.connect_proxy(checkbox)  FIXME
-        tool_item = action.create_tool_item()
-        menu_item = action.create_menu_item()
-        widgets = (checkbox, tool_item, menu_item)
+        # the string value will be interpreted by the callback as the most recently updated widget
+        action_name = ".".join((self.core.get("gtk_action_group_prefix"), name))
+        action = self._gio.SimpleAction.new_stateful(name, self._glib.VariantType.new("s"),
+                                                     self._glib.Variant.new_string("0"))
+        widgets = []
+        for index, item in enumerate((self._gtk.CheckButton(),
+                                      self._gtk.ToggleToolButton(),
+                                      self._gtk.CheckMenuItem())):
+            item.insert_action_group(self.core.get("gtk_action_group_prefix"),
+                                     self.core.get("gtk_action_group"))
+            item.set_label(label)
+            item.set_action_target_value(self._glib.Variant.new_string(str(index)))
+            item.set_action_name(action_name)
+            # The "target value" (the stringified widget index) is used by GTK for guessing the
+            # sensitivity of a control.  This approach differs from ours - we ignore it.
+            item.set_sensitive(True)
+            widgets.append(item)
         self._display_items[name] = {"name": name, "label": label, "weight": weight,
                                      "widgets": widgets, "action": action}
-        self.core.add_item(name, action.get_active, action.set_active)
-        self._rebuild_display_items()
+
+        def synchronize_widgets(action, widget_index_variant, widgets=widgets, is_blocked=[]):
+            """ copy the state of the most recently changed ("activated") control to the others
+
+            widget_index_variant: GLib.Variant containing the stringified index of the changed
+                widget (0, 1 or 2) - based on the widgets list
+            widgets: the three associated widgets
+            is_blocked: we need to avoid pseudo-recursive calls of this function after every
+                programmatic change of a control
+            """
+            widget_index = int(widget_index_variant.get_string())
+            if not is_blocked:
+                is_blocked.append(True)
+                current_widget = widgets[widget_index]
+                current_value = current_widget.get_active()
+                for index, widget in enumerate(widgets):
+                    if widget_index != index:
+                        if hasattr(widget, "set_active"):
+                            widget.set_active(current_value)
+                        else:
+                            widget.set_state(current_value)
+                    widget.set_sensitive(True)
+                self.core.emit_event("visual-item-updated")
+                is_blocked.clear()
+
+        action.connect("activate", synchronize_widgets)
+        self.core.get("gtk_action_group").add_action(action)
+        self.core.add_item(name, widgets[0].get_active, widgets[0].set_active)
         # add this item to the state handler
-        self.register_state_item("settings/view/items/%s" % name, action.get_active,
-                                 action.set_active)
+        self.register_state_item("settings/view/items/%s" % name,
+                                 widgets[0].get_active, widgets[0].set_active)
+        # synchronize the widgets
+        synchronize_widgets(None, self._glib.Variant.new_string("0"))
+        self._rebuild_display_items()
 
     def unregister_display_item(self, name):
         if name not in self._display_items:
@@ -266,6 +307,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             return
         action = self._display_items[name]["action"]
         self.unregister_state_item(name, action.get_active, action.set_active)
+        action_name = ".".join((self.core.get("gtk_action_group_prefix"), name))
+        self.core.get("gtk_action_group").remove(action_name)
         del self._display_items[name]
         self._rebuild_display_items()
 
@@ -281,9 +324,10 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             pref_box.pack_start(item["widgets"][0], expand=True, fill=True, padding=0)
             toolbar.add(item["widgets"][1])
             self.context_menu.add(item["widgets"][2])
-        pref_box.show_all()
-        toolbar.show_all()
-        self.context_menu.show_all()
+        for parent in (pref_box, toolbar, self.context_menu):
+            parent.show_all()
+            parent.insert_action_group(self.core.get("gtk_action_group_prefix"),
+                                       self.core.get("gtk_action_group"))
 
     def register_color_setting(self, name, label, weight=100):
         if name in self._color_settings:

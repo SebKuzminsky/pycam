@@ -29,6 +29,7 @@ import webbrowser
 from gi.repository import GObject
 from gi.repository import Gtk
 from gi.repository import Gdk
+from gi.repository import Gio
 
 from pycam import DOC_BASE_URL, VERSION, InitializationError
 import pycam.Importers.CXFImporter
@@ -94,7 +95,12 @@ class ProjectGui(pycam.Gui.BaseUI):
             if gtkrc_file:
                 Gtk.rc_add_default_file(gtkrc_file)
                 Gtk.rc_reparse_all_for_settings(Gtk.settings_get_default(), True)
+        action_group = Gio.SimpleActionGroup()
+        self.settings.set("gtk_action_group_prefix", "pycam")
+        self.settings.set("gtk_action_group", action_group)
         self.window = self.gui.get_object("ProjectWindow")
+        self.window.insert_action_group(
+            self.settings.get("gtk_action_group_prefix"), self.settings.get("gtk_action_group"))
         self.settings.set("main_window", self.window)
         # show stock items on buttons
         # increase the initial width of the window (due to hidden elements)
@@ -173,11 +179,15 @@ class ProjectGui(pycam.Gui.BaseUI):
         self.gui.get_object("ResetPreferencesButton").connect("clicked", self.reset_preferences)
         self.preferences_window = self.gui.get_object("GeneralSettingsWindow")
         self.preferences_window.connect("delete-event", self.toggle_preferences_window, False)
+        self.preferences_window.insert_action_group(
+            self.settings.get("gtk_action_group_prefix"), self.settings.get("gtk_action_group"))
         self._preferences_window_position = None
         self._preferences_window_visible = False
         # "about" window
         self.about_window = self.gui.get_object("AboutWindow")
         self.about_window.set_version(VERSION)
+        self.about_window.insert_action_group(
+            self.settings.get("gtk_action_group_prefix"), self.settings.get("gtk_action_group"))
         self.gui.get_object("About").connect("activate", self.toggle_about_window, True)
         # we assume, that the last child of the window is the "close" button
         # TODO: fix this ugly hack!
