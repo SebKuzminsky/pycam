@@ -261,7 +261,7 @@ class Tools(pycam.Plugins.ListPluginBase):
         return (tool_id, "Tool #%d" % tool_id)
 
     def _tool_new(self, *args):
-        shapes = self.core.get("get_parameter_sets")("tool").values()
+        shapes = list(self.core.get("get_parameter_sets")("tool").values())
         shapes.sort(key=lambda item: item["weight"])
         shape = shapes[0]
         tool_id, tool_name = self._get_new_tool_id_and_name()

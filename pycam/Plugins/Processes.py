@@ -234,7 +234,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.core.emit_event("process-changed")
 
     def _process_new(self, *args):
-        strategies = self.core.get("get_parameter_sets")("process").values()
+        strategies = list(self.core.get("get_parameter_sets")("process").values())
         strategies.sort(key=lambda item: item["weight"])
         strategy = strategies[0]
         name = get_non_conflicting_name("Process #%d", [process["name"] for process in self])

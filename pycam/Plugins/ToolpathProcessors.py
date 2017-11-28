@@ -149,7 +149,7 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
 
     def _select_first_processor(self):
         # run this action as soon as all processors are registered
-        processors = self.core.get("get_parameter_sets")("toolpath_processor").values()
+        processors = list(self.core.get("get_parameter_sets")("toolpath_processor").values())
         if processors:
             first = sorted(processors, key=lambda item: item["weight"])[0]
             self.select(first)
@@ -173,7 +173,7 @@ class ToolpathProcessors(pycam.Plugins.ListPluginBase):
 
     def _update_processors(self):
         selected = self.get_selected()
-        processors = self.core.get("get_parameter_sets")("toolpath_processor").values()
+        processors = list(self.core.get("get_parameter_sets")("toolpath_processor").values())
         choices = []
         for processor in sorted(processors, key=lambda item: item["weight"]):
             choices.append((processor["label"], processor["name"]))
