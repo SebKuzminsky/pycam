@@ -38,7 +38,7 @@ import pycam.Gui
 from pycam.Utils.locations import get_ui_file_location, get_external_program_location, \
         get_all_program_locations
 import pycam.Utils
-from pycam.Utils.events import mainloop
+from pycam.Utils.events import get_mainloop
 import pycam.Utils.log
 
 
@@ -372,7 +372,7 @@ class ProjectGui(pycam.Gui.BaseUI):
         self.settings.register_event("notify-file-saved", self.add_to_recent_file_list)
         self.settings.register_event("notify-file-opened", self.add_to_recent_file_list)
         # allow the task settings control to be updated
-        mainloop.update()
+        get_mainloop().update()
         # register a logging handler for displaying error messages
         pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
         self.window.show()
@@ -468,7 +468,7 @@ class ProjectGui(pycam.Gui.BaseUI):
         self.gui.get_object("UndoButton").set_sensitive(len(self._undo_states) > 0)
 
     def destroy(self, widget=None, data=None):
-        mainloop.stop()
+        get_mainloop().stop()
 
     def configure_drag_and_drop(self, obj):
         obj.connect("drag-data-received", self.handle_data_drop)
@@ -581,4 +581,4 @@ if __name__ == "__main__":
     GUI = ProjectGui()
     if len(sys.argv) > 1:
         GUI.load_model_file(sys.argv[1])
-    mainloop.run()
+    get_mainloop().run()

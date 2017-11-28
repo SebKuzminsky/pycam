@@ -24,7 +24,7 @@ import random
 import string
 
 import pycam.Plugins
-from pycam.Utils.events import mainloop
+from pycam.Utils.events import get_mainloop
 import pycam.Utils.threading
 
 
@@ -201,7 +201,7 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
         # prevent any further actions while the connection is established
         complete_area.set_sensitive(False)
         # wait for the above "set_sensitive" to finish
-        mainloop.update()
+        get_mainloop().update()
         enable_parallel = self.enable_parallel_processes.get_active()
         enable_server_obj = self.gui.get_object("EnableServerMode")
         enable_server = enable_server_obj.get_active()

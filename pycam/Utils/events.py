@@ -21,6 +21,22 @@ UIChain = collections.namedtuple("UIChain", ("func", "weight"))
 
 
 __event_handlers = []
+__mainloop = []
+
+
+def get_mainloop(use_gtk=False):
+    """create new or return an existing mainloop
+
+    @param use_gtk: supply Gtk with timeslots for event handling (active if this parameter is True
+        at least once)
+    """
+    try:
+        mainloop = __mainloop[0]
+    except IndexError:
+        import asyncio
+        mainloop = GtkMainLoop()
+        __mainloop.append(mainloop)
+    return mainloop
 
 
 class GtkMainLoop:
@@ -37,9 +53,6 @@ class GtkMainLoop:
     def update(self):
         while Gtk.events_pending():
             Gtk.main_iteration()
-
-
-mainloop = GtkMainLoop()
 
 
 def get_event_handler():

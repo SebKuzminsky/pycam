@@ -58,7 +58,7 @@ import pycam.Importers.TestModel
 import pycam.Importers
 import pycam.Plugins
 import pycam.Utils
-from pycam.Utils.events import get_event_handler, mainloop
+from pycam.Utils.events import get_event_handler, get_mainloop
 import pycam.Utils.log
 import pycam.Utils.threading
 
@@ -152,7 +152,7 @@ def show_gui():
     event_manager.emit_event("notify-initialization-finished")
 
     # open the GUI
-    mainloop.run()
+    get_mainloop(use_gtk=True).run()
     # no error -> return no error code
     return None
 
