@@ -140,7 +140,8 @@ class SafetyHeight(BaseFilter):
                 safety_pending = True
             elif step.action in MOVES_LIST:
                 new_pos = tuple(step.position)
-                max_height = max(max_height, new_pos[2])
+                if (max_height is None) or (new_pos[2] > max_height):
+                    max_height = new_pos[2]
                 if not last_pos:
                     # there was a safety move (or no move at all) before
                     # -> move sideways
