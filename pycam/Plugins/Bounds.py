@@ -337,7 +337,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         else:
             self._validate_bounds()
             self.unregister_gtk_handlers(self._gtk_handlers)
-            for obj_name, value in bounds["parameters"].iteritems():
+            for obj_name, value in bounds["parameters"].items():
                 if obj_name == "Models":
                     self.select_models(value)
                     continue
