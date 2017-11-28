@@ -79,12 +79,9 @@ class ProjectGui(pycam.Gui.BaseUI):
 
     META_DATA_PREFIX = "PYCAM-META-DATA:"
 
-    def __init__(self, event_manager, no_dialog=False):
+    def __init__(self, event_manager):
         super(ProjectGui, self).__init__(event_manager)
         self.gui_is_active = False
-        # during initialization any dialog (e.g. "Unit change") is not allowed
-        # we set the final value later
-        self.no_dialog = True
         self.gui = Gtk.Builder()
         gtk_build_file = get_ui_file_location(GTKBUILD_FILE)
         if gtk_build_file is None:
@@ -375,11 +372,9 @@ class ProjectGui(pycam.Gui.BaseUI):
         # control would not be updated in time.
         while Gtk.events_pending():
             Gtk.main_iteration()
-        self.no_dialog = no_dialog
-        if not self.no_dialog:
-            # register a logging handler for displaying error messages
-            pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
-            self.window.show()
+        # register a logging handler for displaying error messages
+        pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
+        self.window.show()
 
     def gui_activity_guard(func):
         def gui_activity_guard_wrapper(self, *args, **kwargs):
@@ -587,16 +582,10 @@ class ProjectGui(pycam.Gui.BaseUI):
         return os.linesep.join(result)
 
     def mainloop(self):
-        # run the mainloop only if a GUI was requested
-        if not self.no_dialog:
-            # gtk_settings = Gtk.settings_get_default() FIXME
-            # force the icons to be displayed
-            # gtk_settings.props.gtk_menu_images = True FIXME
-            # gtk_settings.props.gtk_button_images = True FIXME
-            try:
-                Gtk.main()
-            except KeyboardInterrupt:
-                self.quit()
+        try:
+            Gtk.main()
+        except KeyboardInterrupt:
+            self.quit()
 
 
 if __name__ == "__main__":
