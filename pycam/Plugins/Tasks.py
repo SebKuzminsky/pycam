@@ -252,7 +252,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
 
     def generate_toolpath(self, task, progress=None):
         pycam.Flow.data_models.Toolpath(None, {"source": {"type": "task", "task": task.get_id()}})
-        return
+        return True
 
         # TODO: re-use this code?
         start_time = time.time()
