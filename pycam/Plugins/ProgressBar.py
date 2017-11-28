@@ -23,6 +23,7 @@ import os
 import time
 
 import pycam.Plugins
+from pycam.Utils.events import MainLoop
 
 
 class ProgressBar(pycam.Plugins.PluginBase):
@@ -213,8 +214,7 @@ class ProgressGTK(object):
             # TODO: move "in_progress" somewhere else
             if self.core.get("toolpath_in_progress"):
                 self._progress_button.show()
-            while self._gtk.events_pending():
-                self._gtk.main_iteration()
+            MainLoop.update()
             if not text or (self._start_time + 5 < current_time):
                 # We don't store the timining if the text was changed.
                 # This is especially nice for the snappines during font

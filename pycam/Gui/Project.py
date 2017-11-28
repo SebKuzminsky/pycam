@@ -30,7 +30,7 @@ from gi.repository import GObject
 from gi.repository import Gtk
 from gi.repository import Gdk
 
-from pycam import VERSION, DOC_BASE_URL
+from pycam import DOC_BASE_URL, VERSION, InitializationError
 import pycam.Importers.CXFImporter
 import pycam.Importers.TestModel
 import pycam.Importers
@@ -38,6 +38,7 @@ import pycam.Gui
 from pycam.Utils.locations import get_ui_file_location, get_external_program_location, \
         get_all_program_locations
 import pycam.Utils
+from pycam.Utils.events import MainLoop
 import pycam.Utils.log
 
 
@@ -85,7 +86,8 @@ class ProjectGui(pycam.Gui.BaseUI):
         self.gui = Gtk.Builder()
         gtk_build_file = get_ui_file_location(GTKBUILD_FILE)
         if gtk_build_file is None:
-            Gtk.main_quit()
+            raise InitializationError("Failed to load GTK layout specification file: {}"
+                                      .format(gtk_build_file))
         self.gui.add_from_file(gtk_build_file)
         if pycam.Utils.get_platform() == pycam.Utils.OSPlatform.WINDOWS:
             gtkrc_file = get_ui_file_location(GTKRC_FILE_WINDOWS)
@@ -289,7 +291,8 @@ class ProjectGui(pycam.Gui.BaseUI):
         # load menu data
         gtk_menu_file = get_ui_file_location(GTKMENU_FILE)
         if gtk_menu_file is None:
-            Gtk.main_quit()
+            raise InitializationError("Failed to load GTK menu specification file: {}"
+                                      .format(gtk_menu_file))
         uimanager.add_ui_from_file(gtk_menu_file)
         # make the actions defined in the GTKBUILD file available in the menu
         actiongroup = Gtk.ActionGroup("menubar")
@@ -368,10 +371,8 @@ class ProjectGui(pycam.Gui.BaseUI):
         self.settings.register_ui("main_window", "Main", self.menubar, -100)
         self.settings.register_event("notify-file-saved", self.add_to_recent_file_list)
         self.settings.register_event("notify-file-opened", self.add_to_recent_file_list)
-        # Without this "gkt.main_iteration" loop the task settings file
-        # control would not be updated in time.
-        while Gtk.events_pending():
-            Gtk.main_iteration()
+        # allow the task settings control to be updated
+        MainLoop.update()
         # register a logging handler for displaying error messages
         pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
         self.window.show()
@@ -467,13 +468,7 @@ class ProjectGui(pycam.Gui.BaseUI):
         self.gui.get_object("UndoButton").set_sensitive(len(self._undo_states) > 0)
 
     def destroy(self, widget=None, data=None):
-        Gtk.main_quit()
-        self.quit()
-
-    def quit(self):
-        pass
-        # TODO: disabled until the format is stable
-#       self.save_preferences()
+        MainLoop.stop()
 
     def configure_drag_and_drop(self, obj):
         obj.connect("drag-data-received", self.handle_data_drop)
@@ -581,15 +576,9 @@ class ProjectGui(pycam.Gui.BaseUI):
             result.append("%s %s" % (self.META_DATA_PREFIX, text))
         return os.linesep.join(result)
 
-    def mainloop(self):
-        try:
-            Gtk.main()
-        except KeyboardInterrupt:
-            self.quit()
-
 
 if __name__ == "__main__":
     GUI = ProjectGui()
     if len(sys.argv) > 1:
         GUI.load_model_file(sys.argv[1])
-    GUI.mainloop()
+    MainLoop.run()

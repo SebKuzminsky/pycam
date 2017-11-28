@@ -48,15 +48,17 @@ except ImportError:
                                                      os.pardir)))
     from pycam import VERSION
 
+from pycam import InitializationError
 import pycam.Exporters.GCodeExporter
 import pycam.Gui.common as GuiCommon
+from pycam.Gui.common import EmergencyDialog
 import pycam.Gui.Settings
 import pycam.Gui.Console
 import pycam.Importers.TestModel
 import pycam.Importers
 import pycam.Plugins
 import pycam.Utils
-from pycam.Utils.events import get_event_handler
+from pycam.Utils.events import get_event_handler, MainLoop
 import pycam.Utils.log
 import pycam.Utils.threading
 
@@ -150,7 +152,7 @@ def show_gui():
     event_manager.emit_event("notify-initialization-finished")
 
     # open the GUI
-    gui.mainloop()
+    MainLoop.run()
     # no error -> return no error code
     return None
 
@@ -222,7 +224,11 @@ There is NO WARRANTY, to the extent permitted by law.""" % VERSION
         log.error("The remote server rejected your authentication key: %s", err_msg)
         return EXIT_CODES["connection_error"]
 
-    show_gui()
+    try:
+        show_gui()
+    except InitializationError as exc:
+        EmergencyDialog("PyCAM startup failure", str(exc))
+        return EXIT_CODES["requirements"]
 
 
 def main_func():

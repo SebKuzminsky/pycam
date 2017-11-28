@@ -1,5 +1,11 @@
 import collections
 
+try:
+    from gi.repository import Gtk
+except ImportError:
+    # tolerate missing Gtk (even though this would make the MainLoop unusable)
+    Gtk = None
+
 import pycam.Gui.Settings
 import pycam.Utils.log
 
@@ -15,6 +21,27 @@ UIChain = collections.namedtuple("UIChain", ("func", "weight"))
 
 
 __event_handlers = []
+
+
+class MainLoop:
+
+    @staticmethod
+    def run():
+        try:
+            Gtk.main()
+        except KeyboardInterrupt:
+            pass
+
+    @staticmethod
+    def stop():
+        Gtk.main_quit()
+
+    @staticmethod
+    def update():
+        # Without this "gkt.main_iteration" loop the task settings file
+        # control would not be updated in time.
+        while Gtk.events_pending():
+            Gtk.main_iteration()
 
 
 def get_event_handler():

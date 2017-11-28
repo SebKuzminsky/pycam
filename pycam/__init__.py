@@ -107,3 +107,7 @@ class InvalidValueError(GenericError):
 
 class CommunicationError(GenericError):
     pass
+
+
+class InitializationError(GenericError):
+    pass
