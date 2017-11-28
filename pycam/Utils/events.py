@@ -23,25 +23,23 @@ UIChain = collections.namedtuple("UIChain", ("func", "weight"))
 __event_handlers = []
 
 
-class MainLoop:
+class GtkMainLoop:
 
-    @staticmethod
-    def run():
+    def run(self):
         try:
             Gtk.main()
         except KeyboardInterrupt:
             pass
 
-    @staticmethod
-    def stop():
+    def stop(self):
         Gtk.main_quit()
 
-    @staticmethod
-    def update():
-        # Without this "gkt.main_iteration" loop the task settings file
-        # control would not be updated in time.
+    def update(self):
         while Gtk.events_pending():
             Gtk.main_iteration()
+
+
+mainloop = GtkMainLoop()
 
 
 def get_event_handler():
