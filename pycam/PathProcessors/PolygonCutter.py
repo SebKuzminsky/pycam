@@ -58,7 +58,7 @@ class PolygonCutter(pycam.PathProcessors.BasePathProcessor):
             source_paths.extend(self.polygon_extractor.ver_path_list)
         for path in source_paths:
             points = path.points
-            for i in range(0, (len(points)+1)/2):
+            for i in range((len(points) + 1) // 2):
                 new_path = Path()
                 if i % 2 == 0:
                     new_path.append(points[i])

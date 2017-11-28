@@ -100,7 +100,7 @@ class PushCutter(object):
                     other_models = models[1:]
                     for p1, p2 in pairs:
                         free_points = get_free_paths_triangles(other_models, cutter, p1, p2)
-                        for index in range(len(free_points) / 2):
+                        for index in range(len(free_points) // 2):
                             result.append(MoveStraight(free_points[2 * index]))
                             result.append(MoveStraight(free_points[2 * index + 1]))
                             result.append(MoveSafety())
@@ -132,7 +132,7 @@ class PushCutter(object):
                     for point in points:
                         self.pa.append(point)
                 else:
-                    for index in range(len(points) / 2):
+                    for index in range(len(points) // 2):
                         path.append(MoveStraight(points[2 * index]))
                         path.append(MoveStraight(points[2 * index + 1]))
                         path.append(MoveSafety())
