@@ -423,6 +423,8 @@ class CacheStorage(object):
                 yield from cls._get_stable_hashs_for_value(item)
         elif isinstance(value, (float, int, str)):
             yield hash(value)
+        elif value is None:
+            yield hash(None)
         elif isinstance(value, BaseDataContainer):
             yield from cls._get_stable_hashs_for_value(value.get_dict())
         elif isinstance(value, Enum):
