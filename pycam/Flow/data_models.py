@@ -408,22 +408,9 @@ class CacheStorage(object):
         self._cache = {}
 
     def __call__(self, calc_function):
-        class MethodCache(object):
-
-            def __init__(self, calc_function, storage):
-                self.__doc__ = calc_function.__doc__
-                self.__module__ = calc_function.__module__
-                self.__name__ = calc_function.__name__
-                self.calc_function = calc_function
-                self.storage = storage
-
-            def __get__(self, obj, objtype):
-                """ support instance methods """
-                def wrapped(inst, *args, **kwargs):
-                    return self.storage.get_cached(inst, args, kwargs, self.calc_function)
-                return functools.partial(wrapped, obj)
-
-        return MethodCache(calc_function, self)
+        def wrapped(inst, *args, **kwargs):
+            return self.get_cached(inst, args, kwargs, calc_function)
+        return wrapped
 
     @classmethod
     def _get_stable_hashs_for_value(cls, value):
