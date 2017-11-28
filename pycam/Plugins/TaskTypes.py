@@ -58,6 +58,9 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
         tool, tool_filters = funcs["tool"](environment["tool"]["parameters"])
         box = environment["bounds"].get_absolute_limits(tool_radius=tool.radius,
                                                         models=environment["collision_models"])
+        if not box:
+            self.log.warning("A valid bounding box is required for toolpath generation.")
+            return None
         path_generator, motion_grid = funcs["process"](environment["process"], tool.radius, box)
         if path_generator is None:
             # we assume that an error message was given already
