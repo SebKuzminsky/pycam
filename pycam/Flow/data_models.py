@@ -47,6 +47,7 @@ _log = pycam.Utils.log.get_logger()
 
 # dictionary of all collections by name
 _data_collections = {}
+_cache = {}
 
 
 APPLICATION_ATTRIBUTES_KEY = "X-Application"
@@ -405,7 +406,6 @@ class CacheStorage(object):
     def __init__(self, relevant_dict_keys, max_cache_size=10):
         self._relevant_dict_keys = tuple(relevant_dict_keys)
         self._max_cache_size = max_cache_size
-        self._cache = {}
 
     def __call__(self, calc_function):
         def wrapped(inst, *args, **kwargs):
@@ -442,18 +442,24 @@ class CacheStorage(object):
                 + tuple(self._get_stable_hashs_for_value(kwargs)))
 
     def get_cached(self, inst, args, kwargs, calc_function):
+        # every instance manages its own cache
+        try:
+            my_cache = _cache[hash(inst)]
+        except KeyError:
+            my_cache = {}
+            _cache[hash(inst)] = my_cache
         cache_key = self._get_cache_key(inst, args, kwargs)
         try:
-            return self._cache[cache_key].content
+            return my_cache[cache_key].content
         except KeyError:
             pass
         cache_item = CacheItem(time.time(), calc_function(inst, *args, **kwargs))
-        self._cache[cache_key] = cache_item
-        if len(self._cache) > self._max_cache_size:
+        my_cache[cache_key] = cache_item
+        if len(my_cache) > self._max_cache_size:
             # remove the oldest cache item
-            item_list = [(key, value.timestamp) for key, value in self._cache.items()]
+            item_list = [(key, value.timestamp) for key, value in my_cache.items()]
             item_list.sort(key=lambda item: item[1])
-            self._cache.pop(item_list[0][0])
+            my_cache.pop(item_list[0][0])
         return cache_item.content
 
 
