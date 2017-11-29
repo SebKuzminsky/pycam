@@ -37,6 +37,7 @@ class TaskParamCollisionModels(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("task", "collision_models", self.control)
         self.core.register_ui("task_models", "", self.control.get_widget(), weight=5)
         self.core.register_event("model-list-changed", self._update_models)
+        self.core.register_event("model-changed", self._update_models)
         return True
 
     def teardown(self):

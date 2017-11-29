@@ -117,6 +117,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
                                                                  self._render_bounds_name)
             self._event_handlers.extend((
                 ("model-list-changed", self._update_model_list),
+                ("model-changed", self._update_model_list),
                 ("bounds-selection-changed", self._update_bounds_widgets),
                 ("bounds-changed", self._update_bounds_widgets),
                 ("bounds-changed", self.force_gtk_modelview_refresh),
