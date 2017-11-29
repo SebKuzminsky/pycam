@@ -40,6 +40,7 @@ import pycam.Toolpath.MotionGrid as MotionGrid
 from pycam.Importers import detect_file_type
 from pycam.Utils import get_type_name, get_application_key
 from pycam.Utils.events import get_event_handler
+from pycam.Utils.progress import ProgressContext
 import pycam.Utils.log
 
 _log = pycam.Utils.log.get_logger()
@@ -829,7 +830,8 @@ class ModelTransformation(BaseDataContainer):
         else:
             assert False
         new_model = model.copy()
-        new_model.scale(**kwargs)
+        with ProgressContext("Scaling model") as progress:
+            new_model.scale(callback=progress.update, **kwargs)
         return new_model
 
     @_set_parser_context("Model transformation 'shift'")
@@ -839,7 +841,8 @@ class ModelTransformation(BaseDataContainer):
         axes = self.get_value("axes")
         offset = target._get_shift_offset(target, axes, model)
         new_model = model.copy()
-        new_model.shift(*offset)
+        with ProgressContext("Shifting Model") as progress:
+            new_model.shift(*offset, callback=progress.update)
         return new_model
 
     @_set_parser_context("Model transformation 'rotate'")
@@ -849,7 +852,8 @@ class ModelTransformation(BaseDataContainer):
         vector = self.get_value("vector")
         angle = self.get_value("angle")
         new_model = model.copy()
-        new_model.rotate(center, vector, angle)
+        with ProgressContext("Rotating Model") as progress:
+            new_model.rotate(center, vector, angle, callback=progress.update)
         return new_model
 
     @_set_parser_context("Model transformation 'matrix multiplication'")
@@ -864,7 +868,8 @@ class ModelTransformation(BaseDataContainer):
         for row in matrix:
             row.append(0)
         new_model = model.copy()
-        new_model.transform_by_matrix(matrix)
+        with ProgressContext("Transform Model") as progress:
+            new_model.transform_by_matrix(matrix, callback=progress.update)
         return new_model
 
     @_set_parser_context("Model transformation 'projection'")
@@ -874,7 +879,8 @@ class ModelTransformation(BaseDataContainer):
         center = self.get_value("center")
         vector = self.get_value("vector")
         plane = Plane(center, vector)
-        return model.get_waterline_contour(plane)
+        with ProgressContext("Calculate waterline of model") as progress:
+            return model.get_waterline_contour(plane, callback=progress.update)
 
     @_set_parser_context("Model transformation 'polygon directions'")
     @_set_allowed_attributes({"action"})
@@ -883,9 +889,11 @@ class ModelTransformation(BaseDataContainer):
         action = self.get_value("action")
         new_model = model.copy()
         if action == ModelTransformationAction.REVISE_POLYGON_DIRECTIONS:
-            new_model.revise_directions()
+            with ProgressContext("Revise polygon directions") as progress:
+                new_model.revise_directions(callback=progress.update)
         elif action == ModelTransformationAction.TOGGLE_POLYGON_DIRECTIONS:
-            new_model.reverse_directions()
+            with ProgressContext("Reverse polygon directions") as progress:
+                new_model.reverse_directions(callback=progress.update)
         else:
             assert False
         return new_model
@@ -1047,24 +1055,23 @@ class Process(BaseCollectionItemDataContainer):
                 _log.error("No trace models given: you need to assign a 2D model to the engraving "
                            "process.")
                 return None
-            progress = self.core.get("progress")
+            progress = get_event_handler().get("progress")
             radius_compensation = self.get_value("radius_compensation")
             if radius_compensation:
-                progress.update(text="Offsetting models")
-                progress.set_multiple(len(models), "Model")
-                for index, model in enumerate(models):
-                    models[index] = model.get_offset_model(tool_radius, callback=progress.update)
-                    progress.update_multiple()
-                progress.finish()
-            progress.update(text="Calculating moves")
-            line_distance = 1.8 * tool_radius
-            step_width = tool_radius / 4.0
-            pocketing_type = self.get_value("pocketing_type")
-            motion_grid = MotionGrid.get_lines_grid(
-                models, box, self.get_value("step_down"), line_distance=line_distance,
-                step_width=step_width, milling_style=milling_style, pocketing_type=pocketing_type,
-                skip_first_layer=True, callback=progress.update)
-            progress.finish()
+                with ProgressContext("Offsetting models") as progress:
+                    progress.set_multiple(len(models), "Model")
+                    for index, model in enumerate(models):
+                        models[index] = model.get_offset_model(tool_radius,
+                                                               callback=progress.update)
+                        progress.update_multiple()
+            with ProgressContext("Calculating moves") as progress:
+                line_distance = 1.8 * tool_radius
+                step_width = tool_radius / 4.0
+                pocketing_type = self.get_value("pocketing_type")
+                motion_grid = MotionGrid.get_lines_grid(
+                    models, box, self.get_value("step_down"), line_distance=line_distance,
+                    step_width=step_width, milling_style=milling_style,
+                    pocketing_type=pocketing_type, skip_first_layer=True, callback=progress.update)
             return motion_grid
         else:
             raise InvalidKeyError(strategy, ProcessStrategy)
