@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import random
+
 import pycam.Plugins
 from pycam.Utils import get_non_conflicting_name
 
@@ -142,9 +144,20 @@ class Models(pycam.Plugins.ListPluginBase):
             cell.set_property("pixbuf", self.ICONS["visible"])
         else:
             cell.set_property("pixbuf", self.ICONS["hidden"])
-        color = model_obj.get_application_value("color")
+        color = self._get_or_create_model_application_color(model_obj)
         if color is not None:
             cell.set_property("cell-background-gdk", self._get_model_gdk_color(color))
+
+    def _get_or_create_model_application_color(self, model):
+        color = model.get_application_value("color")
+        if color is None:
+            # TODO: use a proper palette instead of random values
+            color = {"red": random.random(),
+                     "green": random.random(),
+                     "blue": random.random(),
+                     "alpha": 0.8}
+            model.set_application_value("color", color)
+        return color
 
     def _toggle_visibility(self, treeview, path, clicked_column):
         model_obj = self.get_by_path(path)
