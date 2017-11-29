@@ -123,7 +123,10 @@ models:
             source:
                     type: file
                     location: samples/Box0.stl
-            X-Application: { pycam-gtk: { name: Example 3D Model } }
+            X-Application:
+                pycam-gtk:
+                    name: Example 3D Model
+                    color: { red: 0.1, green: 0.4, blue: 1.0, alpha: 0.8 }
 
 tools:
         rough:
