@@ -165,7 +165,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
     def _update_model_list(self):
         choices = []
         for model in self.core.get("models").get_all():
-            choices.append((model.get_id(), model))
+            choices.append((model.get_application_value("name"), model))
         self.models_control.update_choices(choices)
 
     def _transfer_controls_to_bounds(self):
