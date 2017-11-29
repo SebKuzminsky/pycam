@@ -81,7 +81,6 @@ class ProgressGTK(object):
         self._progress_bar = self._gui.get_object("ProgressBar")
         self._progress_button = self._gui.get_object("ShowToolpathProgressButton")
         self._start_time = time.time()
-        self._progress_button.show()
         self._last_text = None
         self._last_percent = None
         self.update(text="", percent=0)
