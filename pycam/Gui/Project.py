@@ -32,12 +32,9 @@ from gi.repository import Gdk
 from gi.repository import Gio
 
 from pycam import DOC_BASE_URL, VERSION, InitializationError
-import pycam.Importers.CXFImporter
-import pycam.Importers.TestModel
 import pycam.Importers
 import pycam.Gui
-from pycam.Utils.locations import get_ui_file_location, get_external_program_location, \
-        get_all_program_locations
+from pycam.Utils.locations import get_ui_file_location, get_external_program_location
 import pycam.Utils
 from pycam.Utils.events import get_mainloop
 import pycam.Utils.log
@@ -525,38 +522,12 @@ class ProjectGui(pycam.Gui.BaseUI):
             filename = self.settings.get("get_filename_func")("Loading model ...", mode_load=True,
                                                               type_filter=FILTER_MODEL)
         if filename:
-            detected_filetype = pycam.Importers.detect_file_type(filename)
-            if detected_filetype:
-                progress = self.settings.get("progress")
-                progress.update(text="Loading model ...")
-                # "cancel" is not allowed
-                progress.disable_cancel()
-                model = detected_filetype.importer(
-                    detected_filetype.uri,
-                    program_locations=get_all_program_locations(self.settings),
-                    unit=self.settings.get("unit"), fonts_cache=self.settings.get("fonts"),
-                    callback=progress.update)
-                if self.load_model(model):
-                    if store_filename:
-                        self.set_model_filename(filename)
-                    self.add_to_recent_file_list(filename)
-                    result = True
-                else:
-                    result = False
-                progress.finish()
-                return result
-            else:
-                log.error("Failed to detect filetype!")
-                return False
-
-    def load_model(self, model):
-        # load the new model only if the import worked
-        if model:
-            self.settings.get("models").add_model(model)
-            self.last_model_uri = None
+            new_model = pycam.Flow.data_models.Model(
+                None, {"source": {"type": "file", "location": filename}})
+            name_suggestion = os.path.splitext(os.path.basename(filename))[0]
+            new_model.set_application_value("name", name_suggestion)
+            self.add_to_recent_file_list(filename)
             return True
-        else:
-            return False
 
     def add_to_recent_file_list(self, filename):
         # Add the item to the recent files list - if it already exists.

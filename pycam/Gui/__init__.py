@@ -160,7 +160,7 @@ class BaseUI(object):
         if len(self._undo_states) > 0:
             latest = StringIO(self._undo_states.pop(-1))
             model = pickle.Unpickler(latest).load()
-            self.load_model(model)
+            # TODO: add model to list
             self.gui.get_object("UndoButton").set_sensitive(len(self._undo_states) > 0)
             log.info("Restored the previous state of the model")
             self.settings.emit_event("model-change-after")
