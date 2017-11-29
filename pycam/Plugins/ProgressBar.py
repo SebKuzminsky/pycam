@@ -74,7 +74,7 @@ class ProgressGTK(object):
         self._multi_counter = 0
         self._multi_base_text = ""
         self._last_gtk_events_time = None
-        self._main_widget = self._gui.get_object("ProgressWidget")
+        self._main_widget = self._gui.get_object("ProgressBox")
         self._multi_widget = self._gui.get_object("MultipleProgressBar")
         self._cancel_button = self._gui.get_object("ProgressCancelButton")
         self._cancel_button.connect("clicked", self.cancel)
