@@ -24,6 +24,7 @@ from pycam import GenericError
 import pycam.Flow.data_models
 import pycam.Plugins
 import pycam.Utils
+from pycam.Utils.progress import ProgressContext
 
 
 class Tasks(pycam.Plugins.ListPluginBase):
@@ -234,14 +235,13 @@ class Tasks(pycam.Plugins.ListPluginBase):
         self.select(new_task)
 
     def generate_toolpaths(self, tasks):
-        progress = self.core.get("progress")
-        progress.set_multiple(len(tasks), "Toolpath")
-        for task in tasks:
-            if not self.generate_toolpath(task, progress=progress):
-                # break out of the loop, if cancel was requested
-                break
-            progress.update_multiple()
-        progress.finish()
+        with ProgressContext("Generate Toolpaths") as progress:
+            progress.set_multiple(len(tasks), "Toolpath")
+            for task in tasks:
+                if not self.generate_toolpath(task, callback=progress.update):
+                    # break out of the loop, if cancel was requested
+                    break
+                progress.update_multiple()
 
     def _generate_selected_toolpaths(self, widget=None):
         tasks = self.get_selected()
@@ -250,59 +250,18 @@ class Tasks(pycam.Plugins.ListPluginBase):
     def _generate_all_toolpaths(self, widget=None):
         self.generate_toolpaths(self.get_all())
 
-    def generate_toolpath(self, task, progress=None):
-        pycam.Flow.data_models.Toolpath(None, {"source": {"type": "task", "task": task.get_id()}})
-        return True
-
-        # TODO: re-use this code?
+    def generate_toolpath(self, task, callback=None):
         start_time = time.time()
-        if progress:
-            use_multi_progress = True
-        else:
-            use_multi_progress = False
-            progress = self.core.get("progress")
-        progress.update(text="Preparing toolpath generation")
-
-        class UpdateView(object):
-            def __init__(self, task_plugin, request_redraw_function, max_fps=1):
-                self.task_plugin = task_plugin
-                self.last_update_time = time.time()
-                self.max_fps = max_fps
-                self.request_redraw_function = request_redraw_function
-                self.last_tool_position = None
-                self.current_tool_position = None
-
-            def update(self, text=None, percent=None, tool_position=None, toolpath=None):
-                if toolpath is not None:
-                    self.task_plugin.core.set("toolpath_in_progress", toolpath)
-                # always store the most recently reported tool_position for the next visualization
-                if tool_position is not None:
-                    self.current_tool_position = tool_position
-                redraw_wanted = False
-                current_time = time.time()
-                if (current_time - self.last_update_time) > 1.0 / self.max_fps:
-                    if self.current_tool_position != self.last_tool_position:
-                        tool = self.task_plugin.core.get("current_tool")
-                        if tool:
-                            tool.moveto(self.current_tool_position)
-                        self.last_tool_position = self.current_tool_position
-                        redraw_wanted = True
-                    if self.task_plugin.core.get("show_toolpath_progress"):
-                        redraw_wanted = True
-                    self.last_update_time = current_time
-                    if redraw_wanted and self.request_redraw_function:
-                        self.request_redraw_function()
-                # break the loop if someone clicked the "cancel" button
-                return progress.update(text=text, percent=percent)
-
+        if callback:
+            callback(text="Preparing toolpath generation")
         self.core.set("current_tool", task.get_value("tool").get_tool_geometry())
-        draw_callback = UpdateView(self, lambda: self.core.emit_event("visual-item-updated"),
-                                   max_fps=self.core.get("tool_progress_max_fps")).update
-        progress.update(text="Generating collision model")
         # run the toolpath generation
-        progress.update(text="Starting the toolpath generation")
+        if callback:
+            callback(text="Calculating the toolpath")
+        new_toolpath = pycam.Flow.data_models.Toolpath(
+            None, {"source": {"type": "task", "task": task.get_id()}})
         try:
-            toolpath = task.generate_toolpath(callback=draw_callback)
+            path = new_toolpath.get_toolpath()
         except GenericError as exc:
             # an error occoured - "toolpath" contains the error message
             self.log.error("Failed to generate toolpath: %s", exc)
@@ -315,17 +274,9 @@ class Tasks(pycam.Plugins.ListPluginBase):
         finally:
             self.core.set("current_tool", None)
             self.core.set("toolpath_in_progress", None)
-            if not use_multi_progress:
-                progress.finish()
-
         self.log.info("Toolpath generation time: %f", time.time() - start_time)
-
-        if toolpath is None:
-            # user interruption
-            # return "False" if the action was cancelled
-            result = not progress.update()
+        # return "False" if the action was cancelled
+        if callback:
+            return not callback()
         else:
-            pycam.Flow.data_models.Toolpath(None, {"source": {"type": "object", "data": toolpath}})
-            # return "False" if the action was cancelled
-            result = not progress.update()
-        return result
+            return True
