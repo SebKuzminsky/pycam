@@ -31,6 +31,7 @@ from pycam.Cutters.SphericalCutter import SphericalCutter
 from pycam.Cutters.ToroidalCutter import ToroidalCutter
 from pycam.Geometry import Box3D, Point3D
 from pycam.Geometry.Plane import Plane
+from pycam.PathGenerators import UpdateToolView
 import pycam.PathGenerators.DropCutter
 import pycam.PathGenerators.EngraveCutter
 import pycam.PathGenerators.PushCutter
@@ -1176,7 +1177,7 @@ class Task(BaseCollectionItemDataContainer):
 
     @CacheStorage(("process", "bounds", "tool", "type", "collision_models"))
     @_set_parser_context("Task")
-    def generate_toolpath(self, callback=None):
+    def generate_toolpath(self):
         process = self.get_value("process")
         bounds = self.get_value("bounds")
         task_type = self.get_value("type")
@@ -1194,9 +1195,13 @@ class Task(BaseCollectionItemDataContainer):
                 # issue a warning - and go ahead ...
                 _log.warn("No collision model was selected. This can be intentional, but maybe "
                           "you simply forgot it.")
-            moves = path_generator.GenerateToolPath(tool.get_tool_geometry(), models, motion_grid,
-                                                    minz=box.lower.z, maxz=box.upper.z,
-                                                    draw_callback=callback)
+            with ProgressContext("Calculating toolpath") as progress:
+                draw_callback = UpdateToolView(
+                    progress.update,
+                    max_fps=get_event_handler().get("tool_progress_max_fps")).update
+                moves = path_generator.GenerateToolPath(
+                    tool.get_tool_geometry(), models, motion_grid, minz=box.lower.z,
+                    maxz=box.upper.z, draw_callback=draw_callback)
             if not moves:
                 _log.info("No valid moves found")
                 return None
