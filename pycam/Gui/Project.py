@@ -552,7 +552,6 @@ class ProjectGui(pycam.Gui.BaseUI):
     def load_model(self, model):
         # load the new model only if the import worked
         if model:
-            self.settings.emit_event("model-change-before")
             self.settings.get("models").add_model(model)
             self.last_model_uri = None
             return True

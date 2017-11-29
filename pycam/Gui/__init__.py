@@ -81,7 +81,6 @@ class BaseUI(object):
     def __init__(self, event_manager):
         self.settings = event_manager
         self._undo_states = []
-        self.settings.register_event("model-change-before", self.store_undo_state)
 
     def reset_preferences(self, widget=None):
         """ reset all preferences to their default values """
@@ -145,6 +144,7 @@ class BaseUI(object):
         self.settings.emit_event("undo-states-changed")
 
     def store_undo_state(self):
+        # TODO: make some use of the undo handling again
         # for now we only store the model
         if not self.settings.get("models"):
             return
