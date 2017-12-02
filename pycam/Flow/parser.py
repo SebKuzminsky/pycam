@@ -33,8 +33,8 @@ def parse_yaml(source):
         _log.warning("Ignoring empty parsed yaml source: %s", fname)
         return
     for section, item_class in DATA_MAP:
+        _log.debug("Importing items into '%s'", section)
         for name, data in parsed.get(section, {}).items():
-            _log.warning("Importing items into '%s'", section)
             if item_class(name, data) is None:
                 _log.error("Failed to import '%s' into '%s'.", name, section)
         _log.info("Imported %d items into '%s'", len(item_class.get_collection()), section)
