@@ -1198,7 +1198,7 @@ class Task(BaseCollectionItemDataContainer):
             with ProgressContext("Calculating toolpath") as progress:
                 draw_callback = UpdateToolView(
                     progress.update,
-                    max_fps=get_event_handler().get("tool_progress_max_fps")).update
+                    max_fps=get_event_handler().get("tool_progress_max_fps", 1)).update
                 moves = path_generator.GenerateToolPath(
                     tool.get_tool_geometry(), models, motion_grid, minz=box.lower.z,
                     maxz=box.upper.z, draw_callback=draw_callback)
