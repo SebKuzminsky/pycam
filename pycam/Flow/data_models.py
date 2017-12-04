@@ -729,7 +729,7 @@ class Source(BaseDataContainer):
         else:
             raise InvalidKeyError(source_type, SourceType)
 
-    @CacheStorage(("type", ))
+    @CacheStorage({"type"})
     @_set_parser_context("Source")
     def get(self, related_collection_name):
         source_type = self.get_value("type")
@@ -911,7 +911,7 @@ class Model(BaseCollectionItemDataContainer):
                             "transformations": _get_list_resolver(ModelTransformation)}
     attribute_defaults = {"transformations": []}
 
-    @CacheStorage(("source", "transformations"))
+    @CacheStorage({"source", "transformations"})
     @_set_parser_context("Model")
     def get_model(self):
         model = self.get_value("source").get("model")
@@ -1107,7 +1107,7 @@ class Boundary(BaseCollectionItemDataContainer):
                 _log.warning("Negative Boundary encounterd for %s: %g < %g. "
                              "Coercing is not implemented, yet.", axis_name, lower, upper)
 
-    @CacheStorage(("specification", "reference_models", "lower", "upper", "tool_boundary"))
+    @CacheStorage({"specification", "reference_models", "lower", "upper", "tool_boundary"})
     @_set_parser_context("Boundary")
     def get_absolute_limits(self, tool_radius=None, models=None):
         lower = self.get_value("lower")
@@ -1177,7 +1177,7 @@ class Task(BaseCollectionItemDataContainer):
                             "type": _get_enum_resolver(TaskType),
                             "collision_models": _get_collection_resolver("model", many=True)}
 
-    @CacheStorage(("process", "bounds", "tool", "type", "collision_models"))
+    @CacheStorage({"process", "bounds", "tool", "type", "collision_models"})
     @_set_parser_context("Task")
     def generate_toolpath(self):
         process = self.get_value("process")
@@ -1236,7 +1236,7 @@ class ToolpathTransformation(BaseDataContainer):
         else:
             raise InvalidKeyError(action, ToolpathTransformationAction)
 
-    @CacheStorage(("action", "offset", "clone_count"))
+    @CacheStorage({"action", "offset", "clone_count"})
     @_set_parser_context("Toolpath transformation 'clone'")
     @_set_allowed_attributes({"action", "offset", "clone_count"})
     def _get_cloned_toolpath(self, toolpath):
@@ -1298,7 +1298,7 @@ class Toolpath(BaseCollectionItemDataContainer):
                             "transformations": _get_list_resolver(ToolpathTransformation)}
     attribute_defaults = {"transformations": []}
 
-    @CacheStorage(("source", "transformations"))
+    @CacheStorage({"source", "transformations"})
     @_set_parser_context("Toolpath")
     def get_toolpath(self):
         task = self.get_value("source").get("toolpath")
