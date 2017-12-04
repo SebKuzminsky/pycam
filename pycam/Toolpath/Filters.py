@@ -19,6 +19,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
+import collections
 import decimal
 
 from pycam.Geometry import epsilon
@@ -78,7 +79,8 @@ class BaseFilter(object):
     WEIGHT = 50
 
     def __init__(self, *args, **kwargs):
-        self.settings = dict(kwargs)
+        # we want to achieve a stable order in order to be hashable
+        self.settings = collections.OrderedDict(kwargs)
         # fail if too many arguments (without names) are given
         if len(args) > len(self.PARAMS):
             raise ValueError("Too many parameters: %d (expected: %d)"
@@ -95,6 +97,9 @@ class BaseFilter(object):
 
     def clone(self):
         return self.__class__(**self.settings)
+
+    def __hash__(self):
+        return hash((str(self.__class__), tuple(self.settings.items())))
 
     def __ror__(self, toolpath):
         # allow to use pycam.Toolpath.Toolpath instances (instead of a list)

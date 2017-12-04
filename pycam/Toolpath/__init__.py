@@ -129,6 +129,9 @@ class Toolpath(DimensionalObject):
         self._minz = None
         self._maxz = None
 
+    def __hash__(self):
+        return hash((self.__path, self.__filters))
+
     def _get_limit_generic(self, idx, func):
         values = [step.position[idx] for step in self.path if step.action in MOVES_LIST]
         return func(values)

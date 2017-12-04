@@ -35,7 +35,7 @@ from pycam.PathGenerators import UpdateToolView
 import pycam.PathGenerators.DropCutter
 import pycam.PathGenerators.EngraveCutter
 import pycam.PathGenerators.PushCutter
-from pycam.Toolpath import ToolpathPathMode
+import pycam.Toolpath
 import pycam.Toolpath.Filters as tp_filters
 import pycam.Toolpath.MotionGrid as MotionGrid
 from pycam.Importers import detect_file_type
@@ -424,6 +424,8 @@ class CacheStorage(object):
             for item in value:
                 yield from cls._get_stable_hashs_for_value(item)
         elif isinstance(value, (float, int, str)):
+            yield hash(value)
+        elif isinstance(value, pycam.Toolpath.Toolpath):
             yield hash(value)
         elif value is None:
             yield hash(None)
@@ -1335,7 +1337,7 @@ class ExportSettings(BaseCollectionItemDataContainer):
                                                    float(parameters["y"]),
                                                    float(parameters["z"])))
             elif filter_name == ToolpathFilter.CORNER_STYLE:
-                mode = _get_enum_value(ToolpathPathMode, parameters["mode"])
+                mode = _get_enum_value(pycam.Toolpath.ToolpathPathMode, parameters["mode"])
                 motion_tolerance = parameters.get("motion_tolerance", 0)
                 naive_tolerance = parameters.get("naive_tolerance", 0)
                 result.append(tp_filters.CornerStyle(mode, motion_tolerance, naive_tolerance))
