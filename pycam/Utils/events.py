@@ -96,10 +96,9 @@ class EventCore(pycam.Gui.Settings.Settings):
                 log.debug2("Ignoring blocked event: %s", event)
                 return
             # prevent infinite recursion
-            self.block_event(event)
-            for handler in self.event_handlers[event].handlers:
-                handler.func(*(handler.args + args), **kwargs)
-            self.unblock_event(event)
+            with self.blocked_events({event}):
+                for handler in self.event_handlers[event].handlers:
+                    handler.func(*(handler.args + args), **kwargs)
         else:
             log.debug("No events registered for event '%s'", event)
 
