@@ -235,7 +235,7 @@ def execute(parser, args, pycam):
     pycam.Utils.setproctitle("pycam")
 
     if args.trace:
-        log.setLevel(logging.DEBUG / 2)
+        log.setLevel(logging.DEBUG // 2)
     elif args.debug:
         log.setLevel(logging.DEBUG)
     elif args.quiet:
