@@ -1,12 +1,6 @@
 import collections
 import contextlib
 
-try:
-    from gi.repository import Gtk
-except ImportError:
-    # tolerate missing Gtk (even though this would make the MainLoop unusable)
-    Gtk = None
-
 import pycam.Gui.Settings
 import pycam.Utils.log
 
@@ -34,7 +28,6 @@ def get_mainloop(use_gtk=False):
     try:
         mainloop = __mainloop[0]
     except IndexError:
-        import asyncio
         mainloop = GtkMainLoop()
         __mainloop.append(mainloop)
     return mainloop
@@ -42,18 +35,24 @@ def get_mainloop(use_gtk=False):
 
 class GtkMainLoop:
 
+    def __init__(self):
+        import gi
+        gi.require_version("Gtk", "3.0")
+        from gi.repository import Gtk
+        self._gtk = Gtk
+
     def run(self):
         try:
-            Gtk.main()
+            self._gtk.main()
         except KeyboardInterrupt:
             pass
 
     def stop(self):
-        Gtk.main_quit()
+        self._gtk.main_quit()
 
     def update(self):
-        while Gtk.events_pending():
-            Gtk.main_iteration()
+        while self._gtk.events_pending():
+            self._gtk.main_iteration()
 
 
 def get_event_handler():
