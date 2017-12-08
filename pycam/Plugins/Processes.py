@@ -204,14 +204,13 @@ class Processes(pycam.Plugins.ListPluginBase):
         if process is None:
             control_box.hide()
         else:
-            self.core.block_event("process-control-changed")
-            strategy_name = process.get_value("strategy").value
-            self.select_strategy(strategy_name)
-            self.core.get("set_parameter_values")("process", process.get_dict())
-            control_box.show()
-            # trigger an update of the process parameter widgets based on the strategy
-            self.core.emit_event("process-strategy-changed")
-            self.core.unblock_event("process-control-changed")
+            with self.core.blocked_events({"process-control-changed"}):
+                strategy_name = process.get_value("strategy").value
+                self.select_strategy(strategy_name)
+                self.core.get("set_parameter_values")("process", process.get_dict())
+                control_box.show()
+                # trigger an update of the process parameter widgets based on the strategy
+                self.core.emit_event("process-strategy-changed")
 
     def _process_new(self, *args):
         existing_process_names = [process.get_application_value("name")

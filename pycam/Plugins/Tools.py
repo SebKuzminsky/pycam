@@ -224,14 +224,13 @@ class Tools(pycam.Plugins.ListPluginBase):
         if tool is None:
             control_box.hide()
         else:
-            self.core.block_event("tool-control-changed")
-            shape_name = tool.get_value("shape").value
-            self.select_shape(shape_name)
-            self.core.get("set_parameter_values")("tool", tool.get_dict())
-            control_box.show()
-            # trigger an update of the tool parameter widgets based on the shape
-            self.core.emit_event("tool-shape-changed")
-            self.core.unblock_event("tool-control-changed")
+            with self.core.blocked_events({"tool-control-changed"}):
+                shape_name = tool.get_value("shape").value
+                self.select_shape(shape_name)
+                self.core.get("set_parameter_values")("tool", tool.get_dict())
+                control_box.show()
+                # trigger an update of the tool parameter widgets based on the shape
+                self.core.emit_event("tool-shape-changed")
 
     def _transfer_controls_to_tool(self):
         """the value of a tool-related control was changed by by the user

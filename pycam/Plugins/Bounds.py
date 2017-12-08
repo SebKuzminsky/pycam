@@ -234,11 +234,10 @@ class Bounds(pycam.Plugins.ListPluginBase):
             control_box.hide()
         else:
             self._validate_bounds()
-            self.core.block_event("bounds-control-changed")
-            self._copy_from_bounds_to_controls(bounds)
-            self._update_bounds_widgets_visibility()
-            control_box.show()
-            self.core.unblock_event("bounds-control-changed")
+            with self.core.blocked_events({"bounds-control-changed"}):
+                self._copy_from_bounds_to_controls(bounds)
+                self._update_bounds_widgets_visibility()
+                control_box.show()
 
     def _update_bounds_widgets_visibility(self):
         # show the proper descriptive label for the current margin type

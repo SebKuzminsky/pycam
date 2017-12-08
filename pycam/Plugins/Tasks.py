@@ -205,14 +205,13 @@ class Tasks(pycam.Plugins.ListPluginBase):
             control_box.hide()
         else:
             task = tasks[0]
-            self.core.block_event("task-control-changed")
-            task_type = task.get_value("type").value
-            self.select_type(task_type)
-            self.core.get("set_parameter_values")("task", task.get_dict())
-            control_box.show()
-            # trigger an update of the task parameter widgets based on the task type
-            self.core.emit_event("task-type-changed")
-            self.core.unblock_event("task-control-changed")
+            with self.core.blocked_events({"task-control-changed"}):
+                task_type = task.get_value("type").value
+                self.select_type(task_type)
+                self.core.get("set_parameter_values")("task", task.get_dict())
+                control_box.show()
+                # trigger an update of the task parameter widgets based on the task type
+                self.core.emit_event("task-type-changed")
 
     def _transfer_controls_to_task(self, widget=None):
         tasks = self.get_selected()
