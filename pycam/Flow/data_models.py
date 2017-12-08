@@ -700,15 +700,6 @@ class BaseCollectionItemDataContainer(BaseDataContainer):
             _data_collections[cls.collection_name] = collection
             return collection
 
-    def __del__(self):
-        # maybe the dict of collections is already gone (during shutdown)
-        if _data_collections:
-            collection = self.get_collection()
-            try:
-                del collection[self.get_id()]
-            except KeyError:
-                pass
-
 
 class Source(BaseDataContainer):
 
