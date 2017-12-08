@@ -161,7 +161,7 @@ class ProjectGui(pycam.Gui.BaseUI):
             def open_url(widget, data=None):
                 webbrowser.open(widget.get_uri())
             Gtk.link_button_set_uri_hook(open_url)
-        self.settings.register_event("undo-states-changed", self._update_undo_button)
+        self.settings.register_event("history-changed", self._update_undo_button)
         self.settings.register_event("model-change-after",
                                      lambda: self.settings.emit_event("visual-item-updated"))
         # configure drag-n-drop for config files and models
@@ -471,7 +471,9 @@ class ProjectGui(pycam.Gui.BaseUI):
         return True
 
     def _update_undo_button(self):
-        self.gui.get_object("UndoButton").set_sensitive(len(self._undo_states) > 0)
+        history = self.settings.get("history")
+        is_enabled = (history.get_undo_steps_count() > 0) if history else False
+        self.gui.get_object("UndoButton").set_sensitive(is_enabled)
 
     def destroy(self, widget=None, data=None):
         get_mainloop().stop()

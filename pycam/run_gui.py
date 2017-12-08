@@ -217,9 +217,6 @@ def show_gui():
     # TODO: preferences are not loaded until the new format is stable
 #   self.load_preferences()
 
-    # tell the GUI to empty the "undo" queue
-    gui.clear_undo_states()
-
     event_manager.emit_event("notify-initialization-finished")
 
     # load default models, tools ...
