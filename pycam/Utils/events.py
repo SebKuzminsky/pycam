@@ -1,4 +1,5 @@
 import collections
+import contextlib
 
 try:
     from gi.repository import Gtk
@@ -116,6 +117,25 @@ class EventCore(pycam.Gui.Settings.Settings):
                 log.debug("Trying to unblock non-blocked event '%s'", str(event))
         else:
             log.info("Trying to unblock an unknown event: %s", str(event))
+
+    @contextlib.contextmanager
+    def blocked_events(self, events, emit_after=False):
+        """ temporarily block a number of events for the duration of this context
+
+        @param events: iterable of events to be blocked temporarily
+        @param emit_after: emit all given events at the end of the context
+        """
+        unblock_list = []
+        for event in events:
+            self.block_event(event)
+            unblock_list.append(event)
+        unblock_list.reverse()
+        yield
+        for event in unblock_list:
+            self.unblock_event(event)
+        if emit_after:
+            for event in unblock_list:
+                self.emit_event(event)
 
     def register_ui_section(self, section, add_action, clear_action):
         if section not in self.ui_sections:
