@@ -52,11 +52,13 @@ LOG_LEVELS = {"debug": logging.DEBUG,
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description="scriptable PyCAM processing flow")
+    parser = argparse.ArgumentParser(prog="PyCAM", description="scriptable PyCAM processing flow",
+                                     epilog="PyCAM website: https://github.com/SebKuzminsky/pycam")
     parser.add_argument("--log-level", choices=LOG_LEVELS.keys(), default="warning",
                         help="choose the verbosity of log messages")
     parser.add_argument("sources", metavar="FLOW_SPEC", type=argparse.FileType('r'), nargs="+",
                         help="processing flow description files in yaml format")
+    parser.add_argument("--version", action="version", version="%(prog)s {}".format(VERSION))
     return parser.parse_args()
 
 

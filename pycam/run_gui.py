@@ -247,22 +247,6 @@ def execute(parser, args, pycam):
     else:
         log.setLevel(logging.INFO)
 
-    # show version and exit
-    if args.show_version:
-        if args.quiet:
-            # print only the bare version number
-            print(VERSION)
-        else:
-            text = """PyCAM %s
-Copyright (C) 2008-2010 Lode Leroy
-Copyright (C) 2010-2017 Lars Kruse and many other contributors
-
-License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
-This is free software: you are free to change and redistribute it.
-There is NO WARRANTY, to the extent permitted by law.""" % VERSION
-            print(text)
-        return EXIT_CODES["ok"]
-
     # check if server-auth-key is given -> this is mandatory for server mode
     if (args.enable_server or args.start_server) and not args.server_authkey:
         parser.error(
@@ -341,9 +325,8 @@ def get_args_parser():
     group_introspection.add_argument(
         "--profiling", dest="profile_destination", action="store",
         help="store profiling statistics in a file (only for debugging)")
-    group_introspection.add_argument(
-        "-v", "--version", dest="show_version", default=False, action="store_true",
-        help="output the current version of PyCAM and exit")
+    group_introspection.add_argument("--version", action="version",
+                                     version="%(prog)s {}".format(VERSION))
     return parser
 
 
