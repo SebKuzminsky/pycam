@@ -50,6 +50,7 @@ except ImportError:
 
 from pycam import InitializationError
 import pycam.Exporters.GCodeExporter
+from pycam.Flow.history import DataHistory
 from pycam.Flow.parser import parse_yaml
 import pycam.Gui.common as GuiCommon
 from pycam.Gui.common import EmergencyDialog
@@ -223,6 +224,8 @@ def show_gui():
 
     # load default models, tools ...
     parse_yaml(DEFAULT_FLOW_SPECIFICATION)
+
+    event_manager.set("history", DataHistory())
 
     # open the GUI
     get_mainloop(use_gtk=True).run()
