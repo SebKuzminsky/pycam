@@ -120,10 +120,7 @@ class ToolpathProcessors(pycam.Plugins.PluginBase):
             self._settings_section.get_widget().show()
             self.gui.get_object("SelectorsContainer").add(self._settings_section.get_widget())
             self._settings_section.add_widget(proc_widget, "Toolpath processor", weight=10)
-            # TODO: it is currently not possible to switch processors (invalid dict entries are
-            #       not removed)
-            proc_widget.hide()
-#           proc_widget.show()
+            proc_widget.show()
             self.core.get("register_parameter_group")(
                 "toolpath_processor", changed_set_event="toolpath-processor-selection-changed",
                 changed_set_list_event="toolpath-processor-list-changed",

@@ -100,6 +100,7 @@ class Processes(pycam.Plugins.ListPluginBase):
                 ("process-control-changed", self._transfer_controls_to_process))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
+            self.select_strategy(None)
             self._update_strategy_widgets()
             self._update_process_widgets()
         self.register_state_item("processes", self)
@@ -204,13 +205,15 @@ class Processes(pycam.Plugins.ListPluginBase):
         if process is None:
             control_box.hide()
         else:
-            with self.core.blocked_events({"process-control-changed"}):
+            with self.core.blocked_events({"process-control-changed",
+                                           "process-strategy-changed",
+                                           "process-path-pattern-changed"}):
                 strategy_name = process.get_value("strategy").value
                 self.select_strategy(strategy_name)
                 self.core.get("set_parameter_values")("process", process.get_dict())
                 control_box.show()
-                # trigger an update of the process parameter widgets based on the strategy
-                self.core.emit_event("process-strategy-changed")
+            self.core.emit_event("process-strategy-changed")
+            self.core.emit_event("process-changed")
 
     def _process_new(self, *args):
         existing_process_names = [process.get_application_value("name")
