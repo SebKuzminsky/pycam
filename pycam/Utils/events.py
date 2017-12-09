@@ -90,9 +90,10 @@ class EventCore(pycam.Gui.Settings.Settings):
             log.info("Trying to unregister an unknown event: %s", event)
 
     def emit_event(self, event, *args, **kwargs):
-        log.debug2("Event emitted: %s", str(event))
+        log.debug2("Event emitted: %s", event)
         if event in self.event_handlers:
             if self.event_handlers[event].blocker_tokens:
+                log.debug2("Ignoring blocked event: %s", event)
                 return
             # prevent infinite recursion
             self.block_event(event)
@@ -100,22 +101,24 @@ class EventCore(pycam.Gui.Settings.Settings):
                 handler.func(*(handler.args + args), **kwargs)
             self.unblock_event(event)
         else:
-            log.debug("No events registered for event '%s'", str(event))
+            log.debug("No events registered for event '%s'", event)
 
     def block_event(self, event):
         if event in self.event_handlers:
+            log.debug2("Blocking an event: %s", event)
             self.event_handlers[event].blocker_tokens.append(True)
         else:
-            log.info("Trying to block an unknown event: %s", str(event))
+            log.info("Trying to block an unknown event: %s", event)
 
     def unblock_event(self, event):
         if event in self.event_handlers:
             if self.event_handlers[event].blocker_tokens:
+                log.debug2("Unblocking an event: %s", event)
                 self.event_handlers[event].blocker_tokens.pop()
             else:
-                log.debug("Trying to unblock non-blocked event '%s'", str(event))
+                log.debug("Trying to unblock non-blocked event '%s'", event)
         else:
-            log.info("Trying to unblock an unknown event: %s", str(event))
+            log.info("Trying to unblock an unknown event: %s", event)
 
     @contextlib.contextmanager
     def blocked_events(self, events, emit_after=False):
@@ -152,7 +155,7 @@ class EventCore(pycam.Gui.Settings.Settings):
                 ui_section.widgets.pop()
             del self.ui_sections[section]
         else:
-            log.info("Trying to unregister a non-existent ui section: %s", str(section))
+            log.info("Trying to unregister a non-existent ui section: %s", section)
 
     def _rebuild_ui_section(self, section):
         if section in self.ui_sections:
@@ -163,7 +166,7 @@ class EventCore(pycam.Gui.Settings.Settings):
                 for item in ui_section.widgets:
                     ui_section.add_func(item.obj, item.name, **(item.args or {}))
         else:
-            log.info("Failed to rebuild unknown ui section: %s", str(section))
+            log.info("Failed to rebuild unknown ui section: %s", section)
 
     def register_ui(self, section, name, widget, weight=0, args_dict=None):
         if section not in self.ui_sections:
@@ -222,12 +225,12 @@ class EventCore(pycam.Gui.Settings.Settings):
 
     def register_namespace(self, name, value):
         if name in self.namespace:
-            log.info("Trying to register the same key in namespace twice: %s", str(name))
+            log.info("Trying to register the same key in namespace twice: %s", name)
         self.namespace[name] = value
 
     def unregister_namespace(self, name):
         if name not in self.namespace:
-            log.info("Tried to unregister an unknown name from namespace: %s", str(name))
+            log.info("Tried to unregister an unknown name from namespace: %s", name)
 
     def get_namespace(self):
         return self.namespace
