@@ -92,9 +92,9 @@ class PathParamMillingStyle(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputChoice(
-            (("ignore", pycam.Toolpath.MotionGrid.MillingStyle.IGNORE),
-             ("climb / down", pycam.Toolpath.MotionGrid.MillingStyle.CLIMB),
-             ("conventional / up", pycam.Toolpath.MotionGrid.MillingStyle.CONVENTIONAL)),
+            (("ignore", pycam.Toolpath.MotionGrid.MillingStyle.IGNORE.value),
+             ("climb / down", pycam.Toolpath.MotionGrid.MillingStyle.CLIMB.value),
+             ("conventional / up", pycam.Toolpath.MotionGrid.MillingStyle.CONVENTIONAL.value)),
             change_handler=lambda widget=None: self.core.emit_event("process-control-changed"))
         self.core.get("register_parameter")("path_pattern", "milling_style", self.control)
         self.core.get("register_parameter")("process", "milling_style", self.control)
@@ -115,9 +115,9 @@ class PathParamGridDirection(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputChoice(
-            (("x", pycam.Toolpath.MotionGrid.GridDirection.X),
-             ("y", pycam.Toolpath.MotionGrid.GridDirection.Y),
-             ("xy", pycam.Toolpath.MotionGrid.GridDirection.XY)),
+            (("x", pycam.Toolpath.MotionGrid.GridDirection.X.value),
+             ("y", pycam.Toolpath.MotionGrid.GridDirection.Y.value),
+             ("xy", pycam.Toolpath.MotionGrid.GridDirection.XY.value)),
             change_handler=lambda widget=None: self.core.emit_event("process-control-changed"))
         self.core.get("register_parameter")("path_pattern", "grid_direction", self.control)
         self.core.get("register_parameter")("process", "grid_direction", self.control)
@@ -282,9 +282,9 @@ class PathParamPocketingType(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputChoice(
-            (("none", pycam.Toolpath.MotionGrid.PocketingType.NONE),
-             ("holes", pycam.Toolpath.MotionGrid.PocketingType.HOLES),
-             ("material", pycam.Toolpath.MotionGrid.PocketingType.MATERIAL)),
+            (("none", pycam.Toolpath.MotionGrid.PocketingType.NONE.value),
+             ("holes", pycam.Toolpath.MotionGrid.PocketingType.HOLES.value),
+             ("material", pycam.Toolpath.MotionGrid.PocketingType.MATERIAL.value)),
             change_handler=lambda widget=None: self.core.emit_event("process-control-changed"))
         self.core.get("register_parameter")("process", "pocketing_type", self.control)
         self.core.register_ui("process_path_parameters", "Pocketing", self.control.get_widget(),

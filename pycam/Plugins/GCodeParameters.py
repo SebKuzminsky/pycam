@@ -197,11 +197,12 @@ class GCodeCornerStyle(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("toolpath_processor", "naive_tolerance",
                                             self.naive_tolerance)
         self.path_mode = pycam.Gui.ControlsGTK.InputChoice((
-            ("Exact path mode (G61)", ToolpathPathMode.CORNER_STYLE_EXACT_PATH),
-            ("Exact stop mode (G61.1)", ToolpathPathMode.CORNER_STYLE_EXACT_STOP),
-            ("Continuous with maximum speed (G64)", ToolpathPathMode.CORNER_STYLE_OPTIMIZE_SPEED),
+            ("Exact path mode (G61)", ToolpathPathMode.CORNER_STYLE_EXACT_PATH.value),
+            ("Exact stop mode (G61.1)", ToolpathPathMode.CORNER_STYLE_EXACT_STOP.value),
+            ("Continuous with maximum speed (G64)",
+             ToolpathPathMode.CORNER_STYLE_OPTIMIZE_SPEED.value),
             ("Continuous with tolerance (G64 P/Q)",
-             ToolpathPathMode.CORNER_STYLE_OPTIMIZE_TOLERANCE)))
+             ToolpathPathMode.CORNER_STYLE_OPTIMIZE_TOLERANCE.value)))
         self.path_mode.get_widget().connect("changed", self.update_widgets)
         self.core.register_ui("gcode_corner_style", "Path mode", self.path_mode.get_widget(),
                               weight=10)
