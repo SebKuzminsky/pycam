@@ -95,20 +95,7 @@ if pycam.Utils.get_platform() == pycam.Utils.OSPlatform.WINDOWS:
     if path:
         os.environ["PATH"] = os.environ.get("PATH", "") + os.path.pathsep + path
 
-BASE_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
-EXAMPLE_MODEL_LOCATIONS = [
-    os.path.join(BASE_DIR, "samples"),
-    os.path.join(sys.prefix, "share", "pycam", "samples"),
-    os.path.join(sys.prefix, "local", "share", "pycam", "samples"),
-    os.path.join("usr", "share", "pycam", "samples")]
-
-# for pyinstaller (windows distribution)
-if "_MEIPASS2" in os.environ:
-    EXAMPLE_MODEL_LOCATIONS.insert(0, os.path.join(os.path.normpath(os.environ["_MEIPASS2"]),
-                                                   "samples"))
-DEFAULT_MODEL_FILE = "pycam-textbox.stl"
-# DEFAULT_MODEL_FILE = "problem_1_triangle.stl"
 EXIT_CODES = {"ok": 0,
               "requirements": 1,
               "load_model_failed": 2,
