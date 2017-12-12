@@ -1,9 +1,4 @@
-try:
-    # Python3
-    from configparser import ConfigParser
-except ImportError:
-    # Python2
-    from ConfigParser import ConfigParser
+from configparser import ConfigParser
 
 import pycam.Gui.Settings
 import pycam.Utils.log
