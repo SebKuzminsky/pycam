@@ -48,8 +48,18 @@ def parse_yaml(source, reset=False):
         _log.info("Imported %d items into '%s'", len(collection) - count_before, section)
 
 
-def dump_yaml(target=None):
-    """return a yaml string or write the output to the target buffer"""
+def dump_yaml(target=None, sections=None):
+    """export the current data structure as a yaml representation
+
+    @param target: if a file-like object is given, then the output is written to this object.
+        Otherwise the resulting yaml string is returned.
+    @param sections: if specified, this parameter is interpreted as a list of names of sections
+        (e.g. "tools") that should be exported.
+    """
+    if sections is None:
+        wanted_section_map = DATA_MAP
+    else:
+        wanted_section_map = [(key, value) for key, value in DATA_MAP if key in sections]
     data = {section: item_class.get_collection().get_dict(with_application_attributes=True)
-            for section, item_class in DATA_MAP}
+            for section, item_class in wanted_section_map}
     return yaml.dump(data, stream=target)
