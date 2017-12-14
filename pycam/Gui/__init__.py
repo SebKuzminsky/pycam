@@ -1,5 +1,6 @@
 from configparser import ConfigParser
 import enum
+import json
 
 import pycam.Gui.Settings
 import pycam.Utils.log
@@ -37,7 +38,7 @@ PREFERENCES_DEFAULTS = {
     "view_shadow": True,
     "view_polygon": True,
     "view_perspective": True,
-    "tool_progress_max_fps": 30,
+    "tool_progress_max_fps": 30.0,
     "gcode_safety_height": 25.0,
     "gcode_plunge_feedrate": 100.0,
     "gcode_minimum_step_x": 0.0001,
@@ -170,14 +171,21 @@ class BaseUI(object):
             if not config.has_option("DEFAULT", item):
                 # a new preference setting is missing in the (old) file
                 continue
-            value_raw = config.get("DEFAULT", item)
-            value_type = type(PREFERENCES_DEFAULTS[item])
-            if hasattr(value_type(), "split"):
-                # keep strings as they are
-                value = str(value_raw)
-            else:
-                # parse tuples, integers, bools, ...
-                value = eval(value_raw)
+            value_json = config.get("DEFAULT", item)
+            try:
+                value = json.loads(value_json)
+            except ValueError as exc:
+                log.warning("Failed to parse configuration setting '%s': %s", item, exc)
+                value = PREFERENCES_DEFAULTS[item]
+            wanted_type = type(PREFERENCES_DEFAULTS[item])
+            if wanted_type is float:
+                # int is accepted for floats, too
+                wanted_type = (float, int)
+            if not isinstance(value, wanted_type):
+                log.warning("Falling back to default configuration setting for '%s' due to "
+                            "an invalid value type being parsed: %s != %s",
+                            item, type(value), wanted_type)
+                value = PREFERENCES_DEFAULTS[item]
             self.settings.set(item, value)
 
     def save_preferences(self):
@@ -190,7 +198,7 @@ class BaseUI(object):
             return
         config = ConfigParser()
         for item in PREFERENCES_DEFAULTS:
-            config.set("DEFAULT", item, self.settings.get(item))
+            config.set("DEFAULT", item, json.dumps(self.settings.get(item)))
         try:
             config_file = open(config_filename, "w")
             config.write(config_file)
