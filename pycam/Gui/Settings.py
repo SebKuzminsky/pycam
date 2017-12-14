@@ -18,7 +18,9 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import contextlib
 import os
+import tempfile
 
 import pycam.Cutters
 import pycam.Toolpath
@@ -56,6 +58,26 @@ def get_config_filename(filename=None):
         return None
     else:
         return os.path.join(config_dir, filename)
+
+
+def get_project_settings_filename(filename="project.yml"):
+    config_dir = get_config_dirname()
+    return None if config_dir is None else os.path.join(config_dir, filename)
+
+
+@contextlib.contextmanager
+def open_project_settings(mode="r", filename="project.yml"):
+    project_settings_filename = get_project_settings_filename(filename)
+    if mode == "w":
+        handle, filename = tempfile.mkstemp(
+            prefix=filename + ".", dir=os.path.dirname(project_settings_filename), text=True)
+        opened_file = os.fdopen(handle, mode=mode)
+    else:
+        opened_file = open(project_settings_filename, "r")
+    yield opened_file
+    opened_file.close()
+    if mode == "w":
+        os.rename(filename, project_settings_filename)
 
 
 class Settings(dict):

@@ -20,6 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
+import collections
 import datetime
 import logging
 import os
@@ -72,6 +73,9 @@ def get_icons_pixbuffers():
         else:
             log.debug("Failed to locate window icon: %s", icon_filename)
     return result
+
+
+QuestionResponse = collections.namedtuple("QuestionResponse", ("is_yes", "should_memorize"))
 
 
 class ProjectGui(pycam.Gui.BaseUI):
@@ -382,6 +386,27 @@ class ProjectGui(pycam.Gui.BaseUI):
         # register a logging handler for displaying error messages
         pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
         self.window.show()
+
+    def get_question_response(self, question, default_response, allow_memorize=False):
+        """display a dialog presenting a simple question and yes/no buttons
+
+        @param allow_memorize: optionally a "Do not ask again" checkbox can be included
+        @returns aa tuple of two booleans ("is yes", "should memorize")
+        """
+        dialog = Gtk.MessageDialog(self.window, Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                                   Gtk.MessageType.QUESTION, Gtk.ButtonsType.YES_NO, question)
+        if default_response:
+            dialog.set_default_response(Gtk.ResponseType.YES)
+        else:
+            dialog.set_default_response(Gtk.ResponseType.NO)
+        memorize_choice = Gtk.CheckButton("Do not ask again")
+        if allow_memorize:
+            dialog.get_content_area().add(memorize_choice)
+            memorize_choice.show()
+        is_yes = (dialog.run() == Gtk.ResponseType.YES)
+        should_memorize = memorize_choice.get_active()
+        dialog.destroy()
+        return QuestionResponse(is_yes, should_memorize)
 
     def gui_activity_guard(func):
         def gui_activity_guard_wrapper(self, *args, **kwargs):

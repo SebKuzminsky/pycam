@@ -1,12 +1,20 @@
 from configparser import ConfigParser
+import enum
 
 import pycam.Gui.Settings
 import pycam.Utils.log
 
 
+class QuestionStatus(enum.Enum):
+    YES = "yes"
+    NO = "no"
+    ASK = "ask"
+
+
 PREFERENCES_DEFAULTS = {
     "unit": "mm",
     "default_task_settings_file": "",
+    "save_project_settings_on_exit": QuestionStatus.ASK.value,
     "show_model": True,
     "show_support_preview": True,
     "show_axes": True,
@@ -57,6 +65,74 @@ PREFERENCES_DEFAULTS = {
 }
 """ the listed items will be loaded/saved via the preferences file in the
 user's home directory on startup/shutdown"""
+
+DEFAULT_PROJECT_SETTINGS = """
+models:
+        model:
+            source:
+                    type: file
+                    location: samples/Box0.stl
+            X-Application:
+                pycam-gtk:
+                    name: Example 3D Model
+                    color: { red: 0.1, green: 0.4, blue: 1.0, alpha: 0.8 }
+
+tools:
+        rough:
+            tool_id: 1
+            shape: flat_bottom
+            radius: 3
+            feed: 600
+            spindle_speed: 1000
+            X-Application: { pycam-gtk: { name: Big Tool } }
+        fine:
+            tool_id: 2
+            shape: ball_nose
+            radius: 1
+            feed: 1200
+            spindle_speed: 1000
+            X-Application: { pycam-gtk: { name: Small Tool } }
+
+processes:
+        process_slicing:
+            strategy: slice
+            path_pattern: grid
+            overlap: 0.10
+            step_down: 3.0
+            grid_direction: y
+            milling_style: ignore
+            X-Application: { pycam-gtk: { name: Slice (rough) } }
+        process_surfacing:
+            strategy: surface
+            overlap: 0.80
+            step_down: 1.0
+            grid_direction: x
+            milling_style: ignore
+            X-Application: { pycam-gtk: { name: Surface (fine) } }
+
+bounds:
+        minimal:
+            specification: margins
+            lower: [5, 5, 0]
+            upper: [5, 5, 1]
+            X-Application: { pycam-gtk: { name: minimal } }
+
+tasks:
+        rough:
+            type: milling
+            tool: rough
+            process: process_slicing
+            bounds: minimal
+            collision_models: [ model ]
+            X-Application: { pycam-gtk: { name: Quick Removal } }
+        fine:
+            type: milling
+            tool: fine
+            process: process_surfacing
+            bounds: minimal
+            collision_models: [ model ]
+            X-Application: { pycam-gtk: { name: Finishing } }
+"""
 
 PICKLE_PROTOCOL = 2
 
@@ -128,3 +204,24 @@ class BaseUI(object):
             history.restore_previous_state()
         else:
             log.info("No previous undo state available - request ignored")
+
+    def load_project_settings(self):
+        from pycam.Flow.parser import parse_yaml
+        try:
+            with pycam.Gui.Settings.open_project_settings() as in_file:
+                content = in_file.read()
+        except FileNotFoundError:
+            content = DEFAULT_PROJECT_SETTINGS
+        except OSError as exc:
+            log.error("Failed to read project settings: %s", exc)
+            return
+        parse_yaml(content, reset=True)
+
+    def save_project_settings(self):
+        from pycam.Flow.parser import dump_yaml
+        try:
+            with pycam.Gui.Settings.open_project_settings(mode="w") as out_file:
+                dump_yaml(target=out_file,
+                          sections={"models", "tools", "processes", "bounds", "tasks"})
+        except OSError as exc:
+            log.error("Failed to store project settings: %s", exc)

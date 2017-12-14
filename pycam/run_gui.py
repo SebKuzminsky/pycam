@@ -52,6 +52,7 @@ from pycam import InitializationError
 import pycam.Exporters.GCodeExporter
 from pycam.Flow.history import DataHistory
 from pycam.Flow.parser import parse_yaml
+from pycam.Gui import QuestionStatus
 import pycam.Gui.common as GuiCommon
 from pycam.Gui.common import EmergencyDialog
 import pycam.Gui.Settings
@@ -105,74 +106,6 @@ EXIT_CODES = {"ok": 0,
               "connection_error": 6,
               "toolpath_error": 7}
 
-DEFAULT_FLOW_SPECIFICATION = """
-models:
-        model:
-            source:
-                    type: file
-                    location: samples/Box0.stl
-            X-Application:
-                pycam-gtk:
-                    name: Example 3D Model
-                    color: { red: 0.1, green: 0.4, blue: 1.0, alpha: 0.8 }
-
-tools:
-        rough:
-            tool_id: 1
-            shape: flat_bottom
-            radius: 3
-            feed: 600
-            spindle_speed: 1000
-            X-Application: { pycam-gtk: { name: Big Tool } }
-        fine:
-            tool_id: 2
-            shape: ball_nose
-            radius: 1
-            feed: 1200
-            spindle_speed: 1000
-            X-Application: { pycam-gtk: { name: Small Tool } }
-
-processes:
-        process_slicing:
-            strategy: slice
-            path_pattern: grid
-            overlap: 0.10
-            step_down: 3.0
-            grid_direction: y
-            milling_style: ignore
-            X-Application: { pycam-gtk: { name: Slice (rough) } }
-        process_surfacing:
-            strategy: surface
-            overlap: 0.80
-            step_down: 1.0
-            grid_direction: x
-            milling_style: ignore
-            X-Application: { pycam-gtk: { name: Surface (fine) } }
-
-bounds:
-        minimal:
-            specification: margins
-            lower: [5, 5, 0]
-            upper: [5, 5, 1]
-            X-Application: { pycam-gtk: { name: minimal } }
-
-tasks:
-        rough:
-            type: milling
-            tool: rough
-            process: process_slicing
-            bounds: minimal
-            collision_models: [ model ]
-            X-Application: { pycam-gtk: { name: Quick Removal } }
-        fine:
-            type: milling
-            tool: fine
-            process: process_surfacing
-            bounds: minimal
-            collision_models: [ model ]
-            X-Application: { pycam-gtk: { name: Finishing } }
-"""
-
 log = pycam.Utils.log.get_logger()
 
 
@@ -203,16 +136,29 @@ def show_gui():
     gui.reset_preferences()
     # TODO: preferences are not loaded until the new format is stable
 #   self.load_preferences()
+    gui.load_project_settings()
 
     event_manager.emit_event("notify-initialization-finished")
-
-    # load default models, tools ...
-    parse_yaml(DEFAULT_FLOW_SPECIFICATION)
 
     event_manager.set("history", DataHistory())
 
     # open the GUI
     get_mainloop(use_gtk=True).run()
+
+    # optionally save project settings (based on configuration or dialog response)
+    if event_manager.get("save_project_settings_on_exit") == QuestionStatus.ASK.value:
+        response = gui.get_question_response("Save project settings?", True, allow_memorize=True)
+        if response.should_memorize:
+            event_manager.set("save_project_settings_on_exit",
+                              (QuestionStatus.YES if response.is_yes else QuestionStatus.NO).value)
+        should_store = response.is_yes
+    elif event_manager.get("save_project_settings_on_exit") == QuestionStatus.YES.value:
+        should_store = True
+    else:
+        should_store = False
+    if should_store:
+        gui.save_project_settings()
+
     # no error -> return no error code
     return None
 
