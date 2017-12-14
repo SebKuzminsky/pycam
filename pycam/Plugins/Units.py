@@ -27,6 +27,7 @@ class Units(pycam.Plugins.PluginBase):
     CATEGORIES = ["System"]
 
     def setup(self):
+        self._last_unit = "mm"
         if self.gui:
             self._gtk_handlers = []
             unit_pref_box = self.gui.get_object("UnitPrefBox")
@@ -41,7 +42,11 @@ class Units(pycam.Plugins.PluginBase):
                 self._last_unit = text
 
             def get_unit_text():
-                return unit_field.get_model()[unit_field.get_active()][0]
+                model = unit_field.get_model()
+                if model:
+                    return model[unit_field.get_active()][0]
+                else:
+                    return self._last_unit
 
             self.core.add_item("unit", get_unit_text, set_unit)
             # other plugins should use "unit_string" for human readable output
@@ -59,6 +64,8 @@ class Units(pycam.Plugins.PluginBase):
             # TODO: reset setting "unit" back to a default value?
 
     def change_unit_init(self, widget=None):
-        self.gui.get_object("unit_control").get_active_text()
+        # update the "_last_unit" attribute
+        model = widget.get_model()
+        self._last_unit = model[widget.get_active()][0]
         # redraw the model
         self.core.emit_event("model-change-after")
