@@ -134,8 +134,7 @@ def show_gui():
     plugin_manager.import_plugins()
     # some more initialization
     gui.reset_preferences()
-    # TODO: preferences are not loaded until the new format is stable
-#   self.load_preferences()
+    gui.load_preferences()
     gui.load_project_settings()
 
     event_manager.emit_event("notify-initialization-finished")
@@ -158,6 +157,8 @@ def show_gui():
         should_store = False
     if should_store:
         gui.save_project_settings()
+
+    gui.save_preferences()
 
     # no error -> return no error code
     return None
