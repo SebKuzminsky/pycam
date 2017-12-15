@@ -18,14 +18,14 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import contextlib
 import os
-import tempfile
 
 import pycam.Cutters
 import pycam.Toolpath
 import pycam.Utils
 import pycam.Utils.log
+from pycam.Utils.locations import open_file_context
+
 
 CONFIG_DIR = "pycam"
 
@@ -62,30 +62,12 @@ def get_project_settings_filename():
     return None if config_dir is None else os.path.join(config_dir, "project.yml")
 
 
-@contextlib.contextmanager
-def _open_file(filename, mode, is_text):
-    if filename is None:
-        raise OSError("missing filename")
-    if mode == "r":
-        opened_file = open(filename, "r")
-    elif mode == "w":
-        handle, temp_filename = tempfile.mkstemp(prefix=os.path.basename(filename) + ".",
-                                                 dir=os.path.dirname(filename), text=is_text)
-        opened_file = os.fdopen(handle, mode=mode)
-    else:
-        raise ValueError("Invalid 'mode' given: {}".format(mode))
-    yield opened_file
-    opened_file.close()
-    if mode == "w":
-        os.rename(temp_filename, filename)
-
-
 def open_preferences_file(mode="r"):
-    return _open_file(get_config_filename(), mode, True)
+    return open_file_context(get_config_filename(), mode, True)
 
 
 def open_project_settings_file(mode="r"):
-    return _open_file(get_project_settings_filename(), mode, True)
+    return open_file_context(get_project_settings_filename(), mode, True)
 
 
 class Settings(dict):

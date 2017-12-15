@@ -18,8 +18,10 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import contextlib
 import os
 import sys
+import tempfile
 
 import pycam.Utils.log
 
@@ -143,3 +145,21 @@ def get_all_program_locations(core):
         if key.startswith(prefix) and core[key]:
             program_locations[key[len(prefix):]] = core[key]
     return program_locations
+
+
+@contextlib.contextmanager
+def open_file_context(filename, mode, is_text):
+    if filename is None:
+        raise OSError("missing filename")
+    if mode == "r":
+        opened_file = open(filename, "r")
+    elif mode == "w":
+        handle, temp_filename = tempfile.mkstemp(prefix=os.path.basename(filename) + ".",
+                                                 dir=os.path.dirname(filename), text=is_text)
+        opened_file = os.fdopen(handle, mode=mode)
+    else:
+        raise ValueError("Invalid 'mode' given: {}".format(mode))
+    yield opened_file
+    opened_file.close()
+    if mode == "w":
+        os.rename(temp_filename, filename)
