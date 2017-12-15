@@ -241,9 +241,6 @@ class ProjectGui(pycam.Gui.BaseUI):
 
         self.settings.register_ui_section("preferences_general", add_general_prefs_item,
                                           clear_general_prefs)
-        # defaults settings file
-        obj = self.gui.get_object("TaskSettingsDefaultFileBox")
-        obj.unparent()
         self.settings.register_ui("preferences_general", None, obj, 30)
         # set defaults
         main_tab = self.gui.get_object("MainTabs")

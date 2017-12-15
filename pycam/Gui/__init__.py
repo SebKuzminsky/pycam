@@ -16,7 +16,6 @@ class QuestionStatus(enum.Enum):
 
 PREFERENCES_DEFAULTS = {
     "unit": "mm",
-    "default_task_settings_file": "",
     "save_project_settings_on_exit": QuestionStatus.ASK.value,
     "show_model": True,
     "show_support_preview": True,
