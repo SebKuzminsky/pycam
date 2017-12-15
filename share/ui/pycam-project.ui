@@ -378,7 +378,7 @@ You should have received a copy of the GNU General Public License along with thi
                             <property name="uri">http://www.pstoedit.net/pstoedit</property>
                           </object>
                           <packing>
-                            <property name="left_attach">1</property>
+                            <property name="left_attach">0</property>
                             <property name="top_attach">1</property>
                           </packing>
                         </child>
