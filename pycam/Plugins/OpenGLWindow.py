@@ -267,7 +267,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         self._display_items[name] = {"name": name, "label": label, "weight": weight,
                                      "widgets": widgets, "action": action}
 
-        def synchronize_widgets(action, widget_index_variant, widgets=widgets, is_blocked=[]):
+        def synchronize_widgets(action, widget_index_variant, widgets=widgets, is_blocked=[],
+                                name=name):
             """ copy the state of the most recently changed ("activated") control to the others
 
             widget_index_variant: GLib.Variant containing the stringified index of the changed
@@ -288,12 +289,13 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                         else:
                             widget.set_state(current_value)
                     widget.set_sensitive(True)
+                self.core.set(name, current_value)
                 self.core.emit_event("visual-item-updated")
                 is_blocked.clear()
 
         action.connect("activate", synchronize_widgets)
         self.core.get("gtk_action_group").add_action(action)
-        self.core.add_item(name, widgets[0].get_active, widgets[0].set_active)
+        self.core.add_item(name, set_func=widgets[0].set_active)
         # add this item to the state handler
         self.register_state_item("settings/view/items/%s" % name,
                                  widgets[0].get_active, widgets[0].set_active)
@@ -303,10 +305,11 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
     def unregister_display_item(self, name):
         if name not in self._display_items:
-            self.log.debug("Failed to unregister unknown display item: %s", name)
+            self.log.info("Failed to unregister unknown display item: %s", name)
             return
         action = self._display_items[name]["action"]
-        self.unregister_state_item(name, action.get_active, action.set_active)
+        first_widget = self._display_items[name]["widgets"][0]
+        self.unregister_state_item(name, first_widget.get_active, first_widget.set_active)
         action_name = ".".join((self.core.get("gtk_action_group_prefix"), name))
         self.core.get("gtk_action_group").remove(action_name)
         del self._display_items[name]
