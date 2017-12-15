@@ -46,6 +46,8 @@ def get_config_dirname():
         try:
             os.makedirs(config_dir)
         except OSError:
+            log.warn("Failed to create preferences directory in your user's home directory: %s",
+                     config_dir)
             config_dir = None
     return config_dir
 
@@ -62,6 +64,8 @@ def get_project_settings_filename():
 
 @contextlib.contextmanager
 def _open_file(filename, mode, is_text):
+    if filename is None:
+        raise OSError("missing filename")
     if mode == "r":
         opened_file = open(filename, "r")
     elif mode == "w":
