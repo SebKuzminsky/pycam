@@ -93,7 +93,6 @@ except ImportError:
         VERSION = "0.0-unknown"
 
 
-FILTER_CONFIG = (("Config files", "*.conf"),)
 DOC_BASE_URL = "http://pycam.sourceforge.net/%s/"
 
 

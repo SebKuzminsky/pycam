@@ -2,7 +2,6 @@ from configparser import ConfigParser
 import enum
 import json
 
-from pycam import FILTER_CONFIG
 import pycam.Gui.Settings
 from pycam.Utils.locations import open_file_context
 import pycam.Utils.log
@@ -13,6 +12,7 @@ class QuestionStatus(enum.Enum):
     NO = "no"
     ASK = "ask"
 
+FILE_FILTER_CONFIG = (("Config files", "*.yml"),)
 
 PREFERENCES_DEFAULTS = {
     "unit": "mm",
@@ -232,7 +232,7 @@ class BaseUI(object):
     def load_project_settings_dialog(self, filename=None):
         if not filename:
             filename = self.settings.get("get_filename_func")(
-                "Loading project settings ...", mode_load=True, type_filter=FILTER_CONFIG)
+                "Loading project settings ...", mode_load=True, type_filter=FILE_FILTER_CONFIG)
             remember_uri = True
         else:
             # we were called via "save" (instead of "save as ...") - no need to store the URI
@@ -258,7 +258,7 @@ class BaseUI(object):
         if not filename:
             # we open a dialog
             filename = self.settings.get("get_filename_func")(
-                "Save settings to ...", mode_load=False, type_filter=FILTER_CONFIG,
+                "Save settings to ...", mode_load=False, type_filter=FILE_FILTER_CONFIG,
                 filename_templates=(self.last_project_settings_uri, self.last_model_uri))
             if filename:
                 self.last_project_settings_uri = pycam.Utils.URIHandler(filename)
