@@ -18,13 +18,10 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os
-
 from pycam import FILTER_CONFIG
+from pycam.Flow.parser import dump_yaml, parse_yaml
 import pycam.Plugins
-import pycam.Utils.log
-
-_log = pycam.Utils.log.get_logger()
+from pycam.Utils.locations import open_file_context
 
 
 class StatusManager(pycam.Plugins.PluginBase):
@@ -70,12 +67,12 @@ class StatusManager(pycam.Plugins.PluginBase):
             autoload_task_filename = self.core.settings.get("default_task_settings_file")
             # TODO: use "startup" hook instead
             if autoload_task_filename:
-                self.open_task_settings_file(autoload_task_filename)
+                self.open_project_settings_file(autoload_task_filename, remember_uri=False)
             self._gtk_handlers = []
             for objname, callback, data, accel_key in (
-                    ("LoadProjectSettings", self.load_task_settings_file, None, "<Control>t"),
+                    ("LoadProjectSettings", self.load_project_settings_dialog, None, "<Control>t"),
                     ("SaveProjectSettings", self.save_task_settings_file,
-                     lambda: self.last_task_settings_uri, None),
+                     lambda: self.last_project_settings_uri, None),
                     ("SaveAsProjectSettings", self.save_task_settings_file, None, None)):
                 obj = self.gui.get_object(objname)
                 self.register_gtk_accelerator("status_manager", obj, accel_key, objname)
@@ -87,26 +84,31 @@ class StatusManager(pycam.Plugins.PluginBase):
         if self.gui:
             self.unregister_gtk_handlers(self._gtk_handlers)
 
-    def open_task_settings_file(self, filename):
-        """ This function is used by the commandline handler """
-        self.last_task_settings_uri = pycam.Utils.URIHandler(filename)
-        self.load_task_settings_file(filename=filename)
-
-    def load_task_settings_file(self, widget=None, filename=None):
+    def load_project_settings_dialog(self, widget=None, filename=None):
         if callable(filename):
             filename = filename()
         if not filename:
-            filename = self.core.settings.get("get_filename_func")("Loading settings ...",
+            filename = self.core.settings.get("get_filename_func")("Loading project settings ...",
                                                                    mode_load=True,
                                                                    type_filter=FILTER_CONFIG)
-            # Only update the last_task_settings attribute if the task file was
-            # loaded interactively. E.g. ignore the initial task file loading.
-            if filename:
-                self.last_task_settings_uri = pycam.Utils.URIHandler(filename)
+            remember_uri = True
+        else:
+            # we were called via "save" (instead of "save as ...") - no need to store the URI
+            remember_uri = False
         if filename:
-            _log.info("Loading task settings file: %s", str(filename))
-            self.load_task_settings(filename)
+            self.log.info("Loading task settings file: %s", filename)
+            self.load_project_setttings_from_file(filename, remember_uri=remember_uri)
             self.core.emit_event("notify-file-opened", filename)
+
+    def load_project_setttings_from_file(self, filename, remember_uri=True):
+        if remember_uri:
+            self.last_project_settings_uri = pycam.Utils.URIHandler(filename)
+        try:
+            with open(filename, "r") as in_file:
+                content = in_file.read()
+        except OSError as exc:
+            self.log.error("Failed to read project settings file (%s): %s", filename, exc)
+        parse_yaml(content, reset=True)
 
     def save_task_settings_file(self, widget=None, filename=None):
         if callable(filename):
@@ -115,29 +117,18 @@ class StatusManager(pycam.Plugins.PluginBase):
             # we open a dialog
             filename = self.core.settings.get("get_filename_func")(
                 "Save settings to ...", mode_load=False, type_filter=FILTER_CONFIG,
-                filename_templates=(self.last_task_settings_uri, self.core.last_model_uri))
+                filename_templates=(self.last_project_settings_uri, self.core.last_model_uri))
             if filename:
-                self.last_task_settings_uri = pycam.Utils.URIHandler(filename)
+                self.last_project_settings_uri = pycam.Utils.URIHandler(filename)
         # no filename given -> exit
         if not filename:
             return
-        settings = self.dump_state()
         try:
-            out_file = open(filename, "w")
-            out_file.write(settings)
+            with open_file_context(filename, "w", True) as out_file:
+                dump_yaml(target=out_file,
+                          sections={"models", "tools", "processes", "bounds", "tasks"})
+        except OSError as exc:
+            self.log.error("Failed to save project settings file: %s", exc)
             out_file.close()
-            _log.info("Project settings written to %s", filename)
+            self.log.info("Project settings written to %s", filename)
             self.core.emit_event("notify-file-opened", filename)
-        except IOError:
-            _log.error("Failed to save settings file")
-
-    def load_task_settings(self, filename=None):
-        settings = pycam.Gui.Settings.ProcessSettings()
-        if filename is not None:
-            settings.load_file(filename)
-        # flush all tables (without re-assigning new objects)
-        for one_list_name in ("tools", "processes", "bounds", "tasks"):
-            one_list = self.core.settings.get(one_list_name)
-            while one_list:
-                one_list.pop()
-        # TODO: load default tools/processes/bounds
