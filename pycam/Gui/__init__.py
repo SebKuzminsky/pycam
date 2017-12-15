@@ -2,7 +2,9 @@ from configparser import ConfigParser
 import enum
 import json
 
+from pycam import FILTER_CONFIG
 import pycam.Gui.Settings
+from pycam.Utils.locations import open_file_context
 import pycam.Utils.log
 
 
@@ -144,6 +146,7 @@ class BaseUI(object):
 
     def __init__(self, event_manager):
         self.settings = event_manager
+        self.last_project_settings_uri = None
 
     def reset_preferences(self, widget=None):
         """ reset all preferences to their default values """
@@ -226,3 +229,49 @@ class BaseUI(object):
                           sections={"models", "tools", "processes", "bounds", "tasks"})
         except OSError as exc:
             log.error("Failed to store project settings: %s", exc)
+
+    def load_project_settings_dialog(self, filename=None):
+        if not filename:
+            filename = self.settings.get("get_filename_func")(
+                "Loading project settings ...", mode_load=True, type_filter=FILTER_CONFIG)
+            remember_uri = True
+        else:
+            # we were called via "save" (instead of "save as ...") - no need to store the URI
+            remember_uri = False
+        if filename:
+            log.info("Loading task settings file: %s", filename)
+            self.load_project_setttings_from_file(filename, remember_uri=remember_uri)
+            self.settings.emit_event("notify-file-opened", filename)
+
+    def load_project_setttings_from_file(self, filename, remember_uri=True):
+        from pycam.Flow.parser import parse_yaml
+        if remember_uri:
+            self.last_project_settings_uri = pycam.Utils.URIHandler(filename)
+        try:
+            with open(filename, "r") as in_file:
+                content = in_file.read()
+        except OSError as exc:
+            log.error("Failed to read project settings file (%s): %s", filename, exc)
+        parse_yaml(content, reset=True)
+
+    def save_task_settings_file(self, filename=None):
+        from pycam.Flow.parser import dump_yaml
+        if not filename:
+            # we open a dialog
+            filename = self.settings.get("get_filename_func")(
+                "Save settings to ...", mode_load=False, type_filter=FILTER_CONFIG,
+                filename_templates=(self.last_project_settings_uri, self.last_model_uri))
+            if filename:
+                self.last_project_settings_uri = pycam.Utils.URIHandler(filename)
+        # no filename given -> exit
+        if not filename:
+            return
+        try:
+            with open_file_context(filename, "w", True) as out_file:
+                dump_yaml(target=out_file,
+                          sections={"models", "tools", "processes", "bounds", "tasks"})
+        except OSError as exc:
+            log.error("Failed to save project settings file: %s", exc)
+            out_file.close()
+            log.info("Project settings written to %s", filename)
+            self.core.emit_event("notify-file-opened", filename)

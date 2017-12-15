@@ -23,6 +23,7 @@ import os
 import sys
 import tempfile
 
+import pycam.Utils
 import pycam.Utils.log
 
 
@@ -149,6 +150,8 @@ def get_all_program_locations(core):
 
 @contextlib.contextmanager
 def open_file_context(filename, mode, is_text):
+    if isinstance(filename, pycam.Utils.URIHandler):
+        filename = filename.get_path()
     if filename is None:
         raise OSError("missing filename")
     if mode == "r":
