@@ -153,15 +153,15 @@ class BaseUI(object):
         self.settings.emit_event("model-change-after")
 
     def load_preferences(self):
-        """ load all settings that are available in the Preferences window from
-        a file in the user's home directory """
-        config_filename = pycam.Gui.Settings.get_config_filename()
-        if config_filename is None:
-            # failed to create the personal preferences directory
-            return
+        """ load all settings (see Preferences window) from a file in the user's home directory """
         config = ConfigParser()
-        if not config.read(config_filename):
-            # no config file was read
+        try:
+            with pycam.Gui.Settings.open_preferences_file() as in_file:
+                config.read_file(in_file)
+        except FileNotFoundError as exc:
+            log.info("No preferences file found (%s). Starting with default preferences.", exc)
+        except OSError as exc:
+            log.error("Failed to read preferences: %s", exc)
             return
         # report any ignored (obsolete) preference keys present in the file
         for item, value in config.items("DEFAULT"):
@@ -189,22 +189,15 @@ class BaseUI(object):
             self.settings.set(item, value)
 
     def save_preferences(self):
-        """ save all settings that are available in the Preferences window to
-        a file in the user's home directory """
-        config_filename = pycam.Gui.Settings.get_config_filename()
-        if config_filename is None:
-            # failed to create the personal preferences directory
-            log.warn("Failed to create a preferences directory in your user's home directory.")
-            return
+        """ save all settings (see Preferences window) to a file in the user's home directory """
         config = ConfigParser()
         for item in PREFERENCES_DEFAULTS:
             config.set("DEFAULT", item, json.dumps(self.settings.get(item)))
         try:
-            config_file = open(config_filename, "w")
-            config.write(config_file)
-            config_file.close()
-        except IOError as err_msg:
-            log.warn("Failed to write preferences file (%s): %s", config_filename, err_msg)
+            with pycam.Gui.Settings.open_preferences_file(mode="w") as out_file:
+                config.write(out_file)
+        except OSError as exc:
+            log.warn("Failed to write preferences file: %s", exc)
 
     def restore_undo_state(self, widget=None, event=None):
         history = self.settings.get("history")
