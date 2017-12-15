@@ -50,34 +50,38 @@ def get_config_dirname():
     return config_dir
 
 
-def get_config_filename(filename=None):
-    if filename is None:
-        filename = "preferences.conf"
+def get_config_filename():
     config_dir = get_config_dirname()
-    if config_dir is None:
-        return None
-    else:
-        return os.path.join(config_dir, filename)
+    return None if config_dir is None else os.path.join(config_dir, "preferences.conf")
 
 
-def get_project_settings_filename(filename="project.yml"):
+def get_project_settings_filename():
     config_dir = get_config_dirname()
-    return None if config_dir is None else os.path.join(config_dir, filename)
+    return None if config_dir is None else os.path.join(config_dir, "project.yml")
 
 
 @contextlib.contextmanager
-def open_project_settings(mode="r", filename="project.yml"):
-    project_settings_filename = get_project_settings_filename(filename)
-    if mode == "w":
-        handle, filename = tempfile.mkstemp(
-            prefix=filename + ".", dir=os.path.dirname(project_settings_filename), text=True)
+def _open_file(filename, mode, is_text):
+    if mode == "r":
+        opened_file = open(filename, "r")
+    elif mode == "w":
+        handle, temp_filename = tempfile.mkstemp(prefix=os.path.basename(filename) + ".",
+                                                 dir=os.path.dirname(filename), text=is_text)
         opened_file = os.fdopen(handle, mode=mode)
     else:
-        opened_file = open(project_settings_filename, "r")
+        raise ValueError("Invalid 'mode' given: {}".format(mode))
     yield opened_file
     opened_file.close()
     if mode == "w":
-        os.rename(filename, project_settings_filename)
+        os.rename(temp_filename, filename)
+
+
+def open_preferences_file(mode="r"):
+    return _open_file(get_config_filename(), mode, True)
+
+
+def open_project_settings_file(mode="r"):
+    return _open_file(get_project_settings_filename(), mode, True)
 
 
 class Settings(dict):

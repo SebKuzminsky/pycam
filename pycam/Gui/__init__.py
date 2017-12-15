@@ -216,7 +216,7 @@ class BaseUI(object):
     def load_project_settings(self):
         from pycam.Flow.parser import parse_yaml
         try:
-            with pycam.Gui.Settings.open_project_settings() as in_file:
+            with pycam.Gui.Settings.open_project_settings_file() as in_file:
                 content = in_file.read()
         except FileNotFoundError:
             content = DEFAULT_PROJECT_SETTINGS
@@ -228,7 +228,7 @@ class BaseUI(object):
     def save_project_settings(self):
         from pycam.Flow.parser import dump_yaml
         try:
-            with pycam.Gui.Settings.open_project_settings(mode="w") as out_file:
+            with pycam.Gui.Settings.open_project_settings_file(mode="w") as out_file:
                 dump_yaml(target=out_file,
                           sections={"models", "tools", "processes", "bounds", "tasks"})
         except OSError as exc:
