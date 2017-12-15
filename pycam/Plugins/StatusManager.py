@@ -76,10 +76,10 @@ class StatusManager(pycam.Plugins.PluginBase):
                 self.open_task_settings_file(autoload_task_filename)
             self._gtk_handlers = []
             for objname, callback, data, accel_key in (
-                    ("LoadTaskSettings", self.load_task_settings_file, None, "<Control>t"),
-                    ("SaveTaskSettings", self.save_task_settings_file,
+                    ("LoadProjectSettings", self.load_task_settings_file, None, "<Control>t"),
+                    ("SaveProjectSettings", self.save_task_settings_file,
                      lambda: self.last_task_settings_uri, None),
-                    ("SaveAsTaskSettings", self.save_task_settings_file, None, None)):
+                    ("SaveAsProjectSettings", self.save_task_settings_file, None, None)):
                 obj = self.gui.get_object(objname)
                 self.register_gtk_accelerator("status_manager", obj, accel_key, objname)
                 self._gtk_handlers.append((obj, "activate", callback))
@@ -152,7 +152,7 @@ class StatusManager(pycam.Plugins.PluginBase):
             out_file = open(filename, "w")
             out_file.write(settings)
             out_file.close()
-            _log.info("Task settings written to %s", filename)
+            _log.info("Project settings written to %s", filename)
             self.core.emit_event("notify-file-opened", filename)
         except IOError:
             _log.error("Failed to save settings file")

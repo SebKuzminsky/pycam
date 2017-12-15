@@ -75,8 +75,8 @@
   <object class="GtkAction" id="HelpSupportedFormats">
     <property name="label">Supported _Formats</property>
   </object>
-  <object class="GtkAction" id="HelpTaskSetup">
-    <property name="label">_Task Setup</property>
+  <object class="GtkAction" id="HelpProjectSetup">
+    <property name="label">_Project Setup</property>
   </object>
   <object class="GtkAction" id="HelpToolTypes">
     <property name="label">T_ool Types</property>
@@ -89,9 +89,9 @@
     <property name="label">User _Manual: Overview</property>
     <property name="stock_id">gtk-help</property>
   </object>
-  <object class="GtkAction" id="LoadTaskSettings">
-    <property name="label">_Load Task Settings ...</property>
-    <property name="tooltip">Load tool, process and task definitions from a file.</property>
+  <object class="GtkAction" id="LoadProjectSettings">
+    <property name="label">_Load Project Settings ...</property>
+    <property name="tooltip">Load model, tool, process, bound and task definitions from a file.</property>
   </object>
   <object class="GtkNotebook" id="MainTabs">
     <property name="visible">True</property>
@@ -537,13 +537,13 @@ You should have received a copy of the GNU General Public License along with thi
     <property name="tooltip">Exit PyCAM</property>
     <property name="stock_id">gtk-quit</property>
   </object>
-  <object class="GtkAction" id="SaveAsTaskSettings">
-    <property name="label">Save Task Settings _as ...</property>
-    <property name="tooltip">Save the tool, process and task definitions to a new file.</property>
+  <object class="GtkAction" id="SaveAsProjectSettings">
+    <property name="label">Save Project Settings _as ...</property>
+    <property name="tooltip">Save the models, tools, processes, bounds and tasks definitions to a new file.</property>
   </object>
-  <object class="GtkAction" id="SaveTaskSettings">
-    <property name="label">_Save Task Settings</property>
-    <property name="tooltip">Save the tool, process and task definitions.</property>
+  <object class="GtkAction" id="SaveProjectSettings">
+    <property name="label">_Save Project Settings</property>
+    <property name="tooltip">Save the models, tools, processes, bounds and tasks definitions.</property>
     <property name="stock_id">gtk-save-as</property>
   </object>
   <object class="GtkAction" id="SettingsMenu">
