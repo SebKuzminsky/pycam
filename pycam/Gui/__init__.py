@@ -226,8 +226,7 @@ class BaseUI(object):
         log.info("Storing project settings in file: %s", filename)
         try:
             with open_file_context(filename, "w", True) as out_file:
-                dump_yaml(target=out_file,
-                          sections={"models", "tools", "processes", "bounds", "tasks"})
+                dump_yaml(target=out_file)
         except OSError as exc:
             log.error("Failed to store project settings to file '%s': %s", filename, exc)
 
@@ -246,7 +245,7 @@ class BaseUI(object):
             else:
                 log.error("Failed to read project settings file (%s): %s", filename, exc)
                 return
-        parse_yaml(content, reset=True)
+        parse_yaml(content, excluded_sections={"toolpaths", "exports"}, reset=True)
 
     def load_project_settings_dialog(self, filename=None):
         if not filename:

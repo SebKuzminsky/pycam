@@ -22,10 +22,12 @@ COLLECTIONS = (pycam.Flow.data_models.Tool,
                pycam.Flow.data_models.Export)
 
 
-def parse_yaml(source, reset=False):
+def parse_yaml(source, excluded_sections=None, reset=False):
     """ read processing data from a file-like source and fill the object collections
 
     @param source: a file-like object (providing "read") referring to a yaml description
+    @param excluded_sections: if specified, this parameter is interpreted as a list of names of
+        sections (e.g. "tools") that should not be imported
     @param reset: remove all previously stored objects (tools, processes, bounds, tasks, ...)
     """
     parsed = yaml.safe_load(source)
@@ -38,6 +40,8 @@ def parse_yaml(source, reset=False):
         return
     for item_class in COLLECTIONS:
         section = item_class.collection_name
+        if excluded_sections and (section in excluded_sections):
+            continue
         collection = item_class.get_collection()
         if reset:
             collection.clear()
@@ -49,18 +53,18 @@ def parse_yaml(source, reset=False):
         _log.info("Imported %d items into '%s'", len(collection) - count_before, section)
 
 
-def dump_yaml(target=None, sections=None):
+def dump_yaml(target=None, excluded_sections=None):
     """export the current data structure as a yaml representation
 
     @param target: if a file-like object is given, then the output is written to this object.
         Otherwise the resulting yaml string is returned.
-    @param sections: if specified, this parameter is interpreted as a list of names of sections
-        (e.g. "tools") that should be exported.
+    @param excluded_sections: if specified, this parameter is interpreted as a list of names of
+        sections (e.g. "tools") that should not be exported
     """
     result = {}
     for item_class in COLLECTIONS:
         section = item_class.collection_name
-        if (sections is not None) and (section not in sections):
+        if excluded_sections and (section in excluded_sections):
             continue
         result[section] = item_class.get_collection().get_dict(with_application_attributes=True)
     return yaml.dump(result, stream=target)
