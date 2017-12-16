@@ -81,14 +81,14 @@ class Processes(pycam.Plugins.ListPluginBase):
             self._gtk_handlers.append((self._modelview.get_selection(), "changed",
                                        "process-selection-changed"))
             self._gtk_handlers.append((self.gui.get_object("NameCell"), "edited",
-                                       self._edit_process_name))
+                                       self.edit_item_name))
             self._treemodel = self.gui.get_object("ProcessList")
             self._treemodel.clear()
             self._gtk_handlers.append((self.gui.get_object("StrategySelector"), "changed",
                                        "process-control-changed"))
             # define cell renderers
             self.gui.get_object("NameColumn").set_cell_data_func(
-                self.gui.get_object("NameCell"), self._render_process_name)
+                self.gui.get_object("NameCell"), self.render_item_name)
             self.gui.get_object("DescriptionColumn").set_cell_data_func(
                 self.gui.get_object("DescriptionCell"), self._render_process_description)
             self._event_handlers = (
@@ -126,16 +126,6 @@ class Processes(pycam.Plugins.ListPluginBase):
         text = "TODO"
 #       process = self.get_by_path(model.get_path(m_iter))
         cell.set_property("text", text)
-
-    def _render_process_name(self, column, cell, model, m_iter, data):
-        process = self.get_by_path(model.get_path(m_iter))
-        cell.set_property("text", process.get_application_value("name"))
-
-    def _edit_process_name(self, cell, path, new_text):
-        process = self.get_by_path(path)
-        if process and (new_text != process.get_application_value("name")) and new_text:
-            process.set_application_value("name", new_text)
-            self.core.emit_event("process-list-changed")
 
     def _update_strategy_widgets(self):
         model = self.gui.get_object("StrategyModel")
@@ -215,12 +205,6 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.core.emit_event("process-changed")
 
     def _process_new(self, *args):
-        existing_process_names = [process.get_application_value("name")
-                                  for process in self.get_all()]
-        process_id = len(existing_process_names) + 1
-        process_name_template = "Process #{:d}"
-        while process_name_template.format(process_id) in existing_process_names:
-            process_id += 1
         new_process = pycam.Flow.data_models.Process(None, {"strategy": "slice"})
-        new_process.set_application_value("name", process_name_template.format(process_id))
+        new_process.set_application_value("name", self.get_non_conflicting_name("Process #%d"))
         self.select(new_process)

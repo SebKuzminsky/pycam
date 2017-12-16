@@ -22,7 +22,6 @@ from pycam.Flow.data_models import Boundary, BoundsSpecification, LimitSingle, T
 import pycam.Plugins
 # TODO: move Toolpath.Bounds here?
 import pycam.Toolpath
-from pycam.Utils import get_non_conflicting_name
 
 
 _RELATIVE_UNIT = ("%", "mm")
@@ -108,12 +107,12 @@ class Bounds(pycam.Plugins.ListPluginBase):
                         self.log.info("Failed to connect to widget '%s'", str(obj_name))
                         continue
             self._gtk_handlers.append((self.gui.get_object("NameCell"), "edited",
-                                       self._edit_bounds_name))
+                                       self.edit_item_name))
             # define cell renderers
             self.gui.get_object("SizeColumn").set_cell_data_func(self.gui.get_object("SizeCell"),
                                                                  self._render_bounds_size)
             self.gui.get_object("NameColumn").set_cell_data_func(self.gui.get_object("NameCell"),
-                                                                 self._render_bounds_name)
+                                                                 self.render_item_name)
             self._event_handlers.extend((
                 ("model-list-changed", self._update_model_list),
                 ("model-changed", self._update_model_list),
@@ -157,10 +156,6 @@ class Bounds(pycam.Plugins.ListPluginBase):
         else:
             text = "%g x %g x %g" % tuple([box.upper[i] - box.lower[i] for i in range(3)])
         cell.set_property("text", text)
-
-    def _render_bounds_name(self, column, cell, model, m_iter, data):
-        bounds = self.get_by_path(model.get_path(m_iter))
-        cell.set_property("text", bounds.get_application_value("name"))
 
     def _update_model_list(self):
         choices = []
@@ -287,16 +282,8 @@ class Bounds(pycam.Plugins.ListPluginBase):
             bounds.set_value(key, limits)
 
     def _bounds_new(self, *args):
-        name = get_non_conflicting_name(
-            "Bounds #%d", [bounds.get_application_value("name") for bounds in self.get_all()])
         new_bounds = Boundary(None, {"specification": "margins",
                                      "lower": [0, 0, 0], "upper": [0, 0, 0],
                                      "reference_models": []})
-        new_bounds.set_application_value("name", name)
+        new_bounds.set_application_value("name", self.get_non_conflicting_name("Bounds #%d"))
         self.select(new_bounds)
-
-    def _edit_bounds_name(self, cell, path, new_text):
-        bounds = self.get_by_path(path)
-        if bounds and (new_text != bounds.get_application_value("name")) and new_text:
-            bounds.set_application_value("name", new_text)
-            self.core.emit_event("bounds-list-changed")

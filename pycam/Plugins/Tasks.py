@@ -87,7 +87,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
                                   self.components_widget.get_widget(), weight=10)
             # table
             self._gtk_handlers.append((self.gui.get_object("NameCell"), "edited",
-                                       self._edit_task_name))
+                                       self.edit_item_name))
             selection = self._taskview.get_selection()
             self._gtk_handlers.append((selection, "changed", "task-selection-changed"))
             selection.set_mode(self._gtk.SelectionMode.MULTIPLE)
@@ -104,7 +104,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
                                        "task-type-changed"))
             # define cell renderers
             self.gui.get_object("NameColumn").set_cell_data_func(self.gui.get_object("NameCell"),
-                                                                 self._render_task_name)
+                                                                 self.render_item_name)
             self._event_handlers = (
                 ("task-type-list-changed", self._update_task_type_widgets),
                 ("task-selection-changed", self._update_task_widgets),
@@ -135,15 +135,6 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
         self.clear()
-
-    def _edit_task_name(self, cell, path, new_text):
-        task = self.get_by_path(path)
-        if task and (new_text != task.get_application_value("name")) and new_text:
-            task.set_application_value("name", new_text)
-
-    def _render_task_name(self, column, cell, model, m_iter, data):
-        task = self.get_by_path(model.get_path(m_iter))
-        cell.set_property("text", task.get_application_value("name"))
 
     def _get_type(self, name=None):
         types = self.core.get("get_parameter_sets")("task")
@@ -224,13 +215,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
 
     def _task_new(self, *args):
         new_task = pycam.Flow.data_models.Task(None, {"type": "milling"})
-        # find and apply an unused name
-        existing_names = [task.get_application_value("name") for task in self.get_all()]
-        name_template = "Task #{:d}"
-        name_id = 1
-        while name_template.format(name_id) in existing_names:
-            name_id += 1
-        new_task.set_application_value("name", name_template.format(name_id))
+        new_task.set_application_value("name", self.get_non_conflicting_name("Task #%d"))
         self.select(new_task)
 
     def generate_toolpaths(self, tasks):

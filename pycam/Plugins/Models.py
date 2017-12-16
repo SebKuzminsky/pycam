@@ -21,7 +21,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import random
 
 import pycam.Plugins
-from pycam.Utils import get_non_conflicting_name
 
 
 _GTK_COLOR_MAX = 65535.0
@@ -63,8 +62,8 @@ class Models(pycam.Plugins.ListPluginBase):
             self._gtk_handlers.extend((
                 (self.gui.get_object("ModelColorButton"), "color-set",
                  self._store_colors_of_selected_models),
-                (self._modelview, "row-activated", self._toggle_visibility),
-                (self.gui.get_object("NameCell"), "edited", self._edit_model_name)))
+                (self._modelview, "row-activated", self.toggle_item_visibility),
+                (self.gui.get_object("NameCell"), "edited", self.edit_item_name)))
             self._treemodel = self.gui.get_object("ModelList")
             self._treemodel.clear()
             selection = self._modelview.get_selection()
@@ -72,9 +71,9 @@ class Models(pycam.Plugins.ListPluginBase):
             self._gtk_handlers.append((selection, "changed", "model-selection-changed"))
             # define cell renderers
             self.gui.get_object("NameColumn").set_cell_data_func(
-                self.gui.get_object("NameCell"), self._visualize_model_name)
+                self.gui.get_object("NameCell"), self.render_item_name)
             self.gui.get_object("VisibleColumn").set_cell_data_func(
-                self.gui.get_object("VisibleSymbol"), self._visualize_visible_state)
+                self.gui.get_object("VisibleSymbol"), self.render_item_visible_state)
             self._event_handlers = (
                 ("model-selection-changed", self._apply_colors_of_selected_models),
                 ("model-list-changed", self.force_gtk_modelview_refresh))
@@ -128,23 +127,9 @@ class Models(pycam.Plugins.ListPluginBase):
                 "alpha": color_button.get_alpha() / _GTK_COLOR_MAX})
         self.core.emit_event("visual-item-updated")
 
-    def _edit_model_name(self, cell, path, new_text):
-        model = self.get_by_path(path)
-        if model and (new_text != model.get_application_value("name")) and new_text:
-            model.set_application_value("name", new_text)
-            self.core.emit_event("model-list-changed")
-
-    def _visualize_model_name(self, column, cell, model, m_iter, data):
-        model_obj = self.get_by_path(model.get_path(m_iter))
-        cell.set_property("text", model_obj.get_application_value("name", "No Name"))
-
-    def _visualize_visible_state(self, column, cell, model, m_iter, data):
-        model_obj = self.get_by_path(model.get_path(m_iter))
-        if model_obj.get_application_value("visible", True):
-            cell.set_property("pixbuf", self.ICONS["visible"])
-        else:
-            cell.set_property("pixbuf", self.ICONS["hidden"])
-        color = self._get_or_create_model_application_color(model_obj)
+    def render_visible_state(self, column, cell, model, m_iter, data):
+        item, cell = super().render_visible_state(column, cell, model, m_iter, data)
+        color = self._get_or_create_model_application_color(item)
         if color is not None:
             cell.set_property("cell-background-gdk", self._get_model_gdk_color(color))
 
@@ -159,18 +144,7 @@ class Models(pycam.Plugins.ListPluginBase):
             model.set_application_value("color", color)
         return color
 
-    def _toggle_visibility(self, treeview, path, clicked_column):
-        model_obj = self.get_by_path(path)
-        model_obj.set_application_value("visible", not model_obj.get_application_value("visible"))
-        self.core.emit_event("visual-item-updated")
-
-    def get_visible(self):
-        return [model for model in self.get_all() if model.get_application_value("visible", True)]
-
-    def add_model(self, model, name=None, name_template="Model #%d", color=None):
-        if not name:
-            name = get_non_conflicting_name(name_template, [m.get_application_value("name")
-                                                            for m in self.get_all()])
+    def add_model(self, model, name=None, color=None):
         self.log.info("Adding new model: %s", name)
         if not color:
             color = self.core.get("color_model")
@@ -178,6 +152,6 @@ class Models(pycam.Plugins.ListPluginBase):
             color = self.FALLBACK_COLOR.copy()
         new_model = pycam.Flow.data_models.Model(None,
                                                  {"source": {"type": "object", "data": model}})
-        new_model.set_application_value("name", name)
+        new_model.set_application_value("name", self.get_non_conflicting_name("Model #%d"))
         new_model.set_application_value("color", color)
         new_model.set_application_value("visible", True)

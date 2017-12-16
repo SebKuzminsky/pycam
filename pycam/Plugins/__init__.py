@@ -23,6 +23,7 @@ import inspect
 import os
 import uuid
 
+from pycam.Utils import get_non_conflicting_name
 from pycam.Utils.events import get_event_handler
 import pycam.Utils.log
 import pycam.Utils.locations
@@ -596,6 +597,37 @@ class ListPluginBase(PluginBase):
         button.connect("clicked", self._list_action, modelview, action)
         # initialize the state of the button
         self._update_list_action_button_state(modelview, action, button)
+
+    def get_visible(self):
+        return [item for item in self.get_all() if item.get_application_value("visible", True)]
+
+    def edit_item_name(self, cell, path, new_text):
+        item = self.get_by_path(path)
+        if item and (new_text != item.get_application_value("name")) and new_text:
+            item.set_application_value("name", new_text)
+
+    def render_item_name(self, column, cell, model, m_iter, data):
+        item = self.get_by_path(model.get_path(m_iter))
+        if item:
+            cell.set_property("text", item.get_application_value("name", "No Name"))
+
+    def render_item_visible_state(self, column, cell, model, m_iter, data):
+        item = self.get_by_path(model.get_path(m_iter))
+        if item.get_application_value("visible", True):
+            cell.set_property("pixbuf", self.ICONS["visible"])
+        else:
+            cell.set_property("pixbuf", self.ICONS["hidden"])
+        return item, cell
+
+    def toggle_item_visibility(self, treeview, path, column):
+        item = self.get_by_path(path)
+        if item:
+            item.set_application_value("visible", not item.get_application_value("visible"))
+        self.core.emit_event("visual-item-updated")
+
+    def get_non_conflicting_name(self, name_template):
+        return get_non_conflicting_name(
+            name_template, [item.get_application_value("name") for item in self.get_all()])
 
 
 class ObjectWithAttributes(dict):

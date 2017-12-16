@@ -88,7 +88,7 @@ class Tools(pycam.Plugins.ListPluginBase):
             self._gtk_handlers.append((self.gui.get_object("IDCell"), "edited",
                                        self._edit_tool_id))
             self._gtk_handlers.append((self.gui.get_object("NameCell"), "edited",
-                                       self._edit_tool_name))
+                                       self.edit_item_name))
             self._treemodel = self.gui.get_object("ToolList")
             self._treemodel.clear()
             # selector
@@ -149,12 +149,6 @@ class Tools(pycam.Plugins.ListPluginBase):
         tool = self.get_by_path(model.get_path(m_iter))
         text = "%g%s" % (tool.diameter, self.core.get("unit"))
         cell.set_property("text", text)
-
-    def _edit_tool_name(self, cell, path, new_text):
-        tool = self.get_by_path(path)
-        if tool and (new_text != tool.get_application_value("name")) and new_text:
-            tool.set_application_value("name", new_text)
-            self.core.emit_event("tool-list-changed")
 
     def _edit_tool_id(self, cell, path, new_text):
         tool = self.get_by_path(path)
@@ -244,15 +238,15 @@ class Tools(pycam.Plugins.ListPluginBase):
             for key, value in self.core.get("get_parameter_values")("tool").items():
                 tool.set_value(key, value)
 
-    def _tool_new(self, *args):
+    def _tool_new(self, widget=None):
+        # look for an unused tool ID
         existing_tool_ids = [tool.get_value("tool_id") for tool in self.get_all()]
         tool_id = 1
         while tool_id in existing_tool_ids:
             tool_id += 1
-        tool_name = "Tool #{:d}".format(tool_id)
         new_tool = Tool(None,
                         {"shape": "flat_bottom", "radius": 1.0, "feed": 300, "tool_id": tool_id})
-        new_tool.set_application_value("name", tool_name)
+        new_tool.set_application_value("name", self.get_non_conflicting_name("Tool #%d"))
         self.select(new_tool)
 
     @toolpath_filter("tool", "tool_id")
