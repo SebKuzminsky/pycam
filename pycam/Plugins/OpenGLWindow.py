@@ -307,7 +307,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         if name not in self._display_items:
             self.log.info("Failed to unregister unknown display item: %s", name)
             return
-        action = self._display_items[name]["action"]
         first_widget = self._display_items[name]["widgets"][0]
         self.unregister_state_item(name, first_widget.get_active, first_widget.set_active)
         action_name = ".".join((self.core.get("gtk_action_group_prefix"), name))
@@ -684,7 +683,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                 if (state & self.BUTTON_MOVE):
                     # Determine the biggest dimension (x/y/z) for moving the
                     # screen's center in relation to this value.
-                    obj_dim = []
                     low, high = [None, None, None], [None, None, None]
                     self.core.call_chain("get_draw_dimension", low, high)
                     # use zero as fallback for undefined axes (None)

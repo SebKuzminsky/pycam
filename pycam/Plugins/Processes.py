@@ -192,7 +192,6 @@ class Processes(pycam.Plugins.ListPluginBase):
 
     def _transfer_controls_to_process(self):
         process = self.get_selected()
-        control_box = self.gui.get_object("ProcessSettingsControlsBox")
         strategy = self._get_selected_strategy()
         if process and strategy:
             process.set_value("strategy", strategy["name"])

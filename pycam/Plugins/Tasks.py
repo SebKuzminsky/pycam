@@ -260,7 +260,8 @@ class Tasks(pycam.Plugins.ListPluginBase):
         new_toolpath = pycam.Flow.data_models.Toolpath(
             None, {"source": {"type": "task", "task": task.get_id()}})
         try:
-            path = new_toolpath.get_toolpath()
+            # generate the toolpath (filling the cache)
+            new_toolpath.get_toolpath()
         except GenericError as exc:
             # an error occoured - "toolpath" contains the error message
             self.log.error("Failed to generate toolpath: %s", exc)

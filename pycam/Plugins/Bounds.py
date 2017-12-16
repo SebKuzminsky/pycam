@@ -18,8 +18,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Flow.data_models import (Boundary, BoundsSpecification, Limit3D, LimitSingle,
-                                    ToolBoundaryMode)
+from pycam.Flow.data_models import Boundary, BoundsSpecification, LimitSingle, ToolBoundaryMode
 import pycam.Plugins
 # TODO: move Toolpath.Bounds here?
 import pycam.Toolpath
@@ -270,8 +269,6 @@ class Bounds(pycam.Plugins.ListPluginBase):
         if not bounds:
             return
         axis_index = "XYZ".index(axis)
-        key_low = "BoundaryLow%s" % axis
-        key_high = "BoundaryHigh%s" % axis
         change_factor = {"0": 0, "+": 1, "-": -1}[change_target]
         is_margin = self.gui.get_object("TypeRelativeMargin").get_active()
         is_percent = (self.gui.get_object("RelativeUnit").get_active() == 0)
@@ -279,9 +276,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         change_vector = {"lower": [0, 0, 0], "upper": [0, 0, 0]}
         change_vector["lower"][axis_index] = change_value if is_margin else -change_value
         change_vector["upper"][axis_index] = change_value
-        upper = bounds.get_value("upper")
         for key in ("lower", "upper"):
-            orig_limits = bounds.get_value(key)
             if change_target == "0":
                 limits = [LimitSingle(0 if (index == axis_index) else orig.value,
                                       orig.is_relative).export

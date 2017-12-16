@@ -51,7 +51,6 @@ except ImportError:
 from pycam import InitializationError
 import pycam.Exporters.GCodeExporter
 from pycam.Flow.history import DataHistory
-from pycam.Flow.parser import parse_yaml
 from pycam.Gui import QuestionStatus
 import pycam.Gui.common as GuiCommon
 from pycam.Gui.common import EmergencyDialog

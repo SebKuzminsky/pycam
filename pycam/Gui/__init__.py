@@ -7,16 +7,11 @@ from pycam.Utils.locations import open_file_context
 import pycam.Utils.log
 
 
-class QuestionStatus(enum.Enum):
-    YES = "yes"
-    NO = "no"
-    ASK = "ask"
-
 FILE_FILTER_CONFIG = (("Config files", "*.yml"),)
 
 PREFERENCES_DEFAULTS = {
     "unit": "mm",
-    "save_project_settings_on_exit": QuestionStatus.ASK.value,
+    "save_project_settings_on_exit": "ask",
     "show_model": True,
     "show_support_preview": True,
     "show_axes": True,
@@ -139,6 +134,12 @@ tasks:
 PICKLE_PROTOCOL = 2
 
 log = pycam.Utils.log.get_logger()
+
+
+class QuestionStatus(enum.Enum):
+    YES = "yes"
+    NO = "no"
+    ASK = "ask"
 
 
 class BaseUI(object):

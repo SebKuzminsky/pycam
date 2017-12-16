@@ -20,7 +20,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import pycam.Plugins
-from pycam.Geometry import Point3D
 
 
 class ModelRotation(pycam.Plugins.PluginBase):

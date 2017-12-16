@@ -20,7 +20,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import pycam.Plugins
-from pycam.Geometry.Plane import Plane
 
 
 class ModelProjection(pycam.Plugins.PluginBase):
@@ -76,7 +75,8 @@ class ModelProjection(pycam.Plugins.PluginBase):
                     ("ProjectionModelTop", model.maxz),
                     ("ProjectionModelMiddle", (model.minz + model.maxz) / 2.0),
                     ("ProjectionModelBottom", model.minz),
-                    ("ProjectionModelCustom", self.gui.get_object("ProjectionZLevel").get_value())):
+                    ("ProjectionModelCustom",
+                     self.gui.get_object("ProjectionZLevel").get_value())):
                 if self.gui.get_object(objname).get_active():
                     center = [0, 0, z_level]
                     vector = [0, 0, 1]
