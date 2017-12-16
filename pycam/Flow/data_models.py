@@ -655,11 +655,17 @@ class BaseCollection(object):
         self._data.insert(bigger, item2)
         self.notify_list_changed()
 
-    def get_dict(self, with_application_attributes=False):
+    def get_dict(self, with_application_attributes=False, without_uuids=False):
         result = {}
         for item in self._data:
-            result[item.get_id()] = item.get_dict(
-                with_application_attributes=with_application_attributes)
+            item_id = item.get_id()
+            data = item.get_dict(with_application_attributes=with_application_attributes)
+            if without_uuids:
+                try:
+                    data.pop(item.unique_attribute)
+                except KeyError:
+                    pass
+            result[item_id] = data
         return result
 
     def notify_list_changed(self):

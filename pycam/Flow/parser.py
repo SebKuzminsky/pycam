@@ -66,5 +66,6 @@ def dump_yaml(target=None, excluded_sections=None):
         section = item_class.collection_name
         if excluded_sections and (section in excluded_sections):
             continue
-        result[section] = item_class.get_collection().get_dict(with_application_attributes=True)
+        result[section] = item_class.get_collection().get_dict(with_application_attributes=True,
+                                                               without_uuids=True)
     return yaml.dump(result, stream=target)
