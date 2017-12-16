@@ -71,15 +71,18 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
     def draw_toolpaths(self):
         toolpath_in_progress = self.core.get("toolpath_in_progress")
         if toolpath_in_progress is None and self.core.get("show_toolpath"):
-            # TODO: this is ugly copy'n'paste from pycam.Plugins.ToolpathExport (_export_toolpaths)
+            # TODO: adjust somehow to the currently selected export settings
+            """
             # KEEP IN SYNC
-            processor = self.core.get("toolpath_processors").get_selected()
+            processor = self.core.get("toolpath_profile").get_selected()
             if not processor:
                 self.log.warn("No toolpath processor selected")
                 return
             filter_func = processor["func"]
-            filter_params = self.core.get("get_parameter_values")("toolpath_processor")
+            filter_params = self.core.get("get_parameter_values")("toolpath_profile")
             settings_filters = filter_func(filter_params)
+            """
+            settings_filters = []
             for toolpath_dict in self.core.get("toolpaths").get_visible():
                 toolpath = toolpath_dict.get_toolpath()
                 if toolpath:

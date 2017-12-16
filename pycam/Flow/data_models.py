@@ -1322,6 +1322,9 @@ class ExportSettings(BaseCollectionItemDataContainer):
     def get_settings_by_type(self, export_type):
         return self.get_value(export_type, {})
 
+    def set_settings_by_type(self, export_type, value):
+        return self.set_value(export_type, value)
+
     @_set_parser_context("Export settings")
     def get_toolpath_filters(self):
         result = []

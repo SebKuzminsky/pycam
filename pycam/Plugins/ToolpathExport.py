@@ -30,7 +30,7 @@ FILTER_GCODE = (("GCode files", ("*.ngc", "*.nc", "*.gc", "*.gcode")),)
 class ToolpathExport(pycam.Plugins.PluginBase):
 
     UI_FILE = "toolpath_export.ui"
-    DEPENDS = ["Toolpaths", "FilenameDialog", "ToolpathProcessors"]
+    DEPENDS = ["Toolpaths", "FilenameDialog", "ExportSettings"]
     CATEGORIES = ["Toolpath", "Export"]
 
     def setup(self):

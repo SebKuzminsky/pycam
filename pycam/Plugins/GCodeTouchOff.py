@@ -29,7 +29,7 @@ class GCodeTouchOff(pycam.Plugins.PluginBase):
     """ TODO: this plugin currently does not change the generated toolpath - it is just the UI part
     """
 
-    DEPENDS = ["ToolpathProcessors"]
+    DEPENDS = ["ExportSettings"]
     CATEGORIES = ["GCode"]
     CONTROL_MAP = {
         "on_startup": ("Touch off on startup (initializes coordinate system for Z)", False, 10,
@@ -49,7 +49,7 @@ class GCodeTouchOff(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.controls = {}
-        self.core.get("register_parameter")("toolpath_processor", "touch_off", None,
+        self.core.get("register_parameter")("toolpath_profile", "touch_off", None,
                                             get_func=self._get_control_values,
                                             set_func=self._set_control_values)
         self._table = pycam.Gui.ControlsGTK.ParameterSection()
@@ -72,7 +72,7 @@ class GCodeTouchOff(pycam.Plugins.PluginBase):
             self.core.unregister_ui("gcode_touch_off", control.get_widget())
         self.core.unregister_ui_section("gcode_touch_off")
         self.core.unregister_ui("gcode_preferences", self._table.get_widget())
-        self.core.get("unregister_parameter")("toolpath_processor", "touch_off", self.box)
+        self.core.get("unregister_parameter")("toolpath_profile", "touch_off", self.box)
 
     def _get_control_values(self):
         """ used by the parameter manager for retrieving the current state """
@@ -108,3 +108,4 @@ class GCodeTouchOff(pycam.Plugins.PluginBase):
         # disable/enable touch probe height
         for name in ("rapid_move_down", "slow_move_down", "slow_move_speed", "probe_level_z"):
             self.controls[name].set_visible(touch_off_enabled)
+        self.core.emit_event("export-settings-control-changed")
