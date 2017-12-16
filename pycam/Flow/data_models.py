@@ -1317,6 +1317,7 @@ class Toolpath(BaseCollectionItemDataContainer):
 class ExportSettings(BaseCollectionItemDataContainer):
 
     collection_name = "export_settings"
+    list_changed_event = "export-settings-list-changed"
 
     def get_settings_by_type(self, export_type):
         return self.get_value(export_type, {})

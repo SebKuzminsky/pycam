@@ -26,100 +26,24 @@ import pycam.Utils.log
 class ToolpathProcessors(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Toolpaths", "ParameterGroupManager"]
-    CATEGORIES = ["Toolpath"]
-    UI_FILE = "toolpath_processors.ui"
+    CATEGORIES = ["ExportSettings", "Toolpath"]
 
     def setup(self):
-        if self.gui:
-            notebook = self.gui.get_object("GCodePrefsNotebook")
-            self._pref_items = []
-
-            def clear_preferences():
-                for child in notebook.get_children():
-                    notebook.remove(child)
-                    # we need to clear the whole path down to the "real" item
-                    parent = notebook
-                    while child not in [entry[0] for entry in self._pref_items]:
-                        if child.get_parent():
-                            parent.remove(child)
-                        parent = child
-                        try:
-                            child = child.get_children()[0]
-                        except (AttributeError, IndexError):
-                            # We encountered an invalid item (e.g. a label
-                            # without children) or an empty item.
-                            break
-                    else:
-                        # we found a valid child -> remove it
-                        signals = [entry[1] for entry in self._pref_items if child is entry[0]][0]
-                        while signals:
-                            child.disconnect(signals.pop())
-                        parent.remove(child)
-
-            def update_preference_item_visibility(widget, *args):
-                """ This function takes care for hiding empty pages of the
-                    notebook.
-                """
-                parent = args[-1]
-                if parent is widget:
-                    return
-                if widget.get_property("visible"):
-                    parent.show()
-                else:
-                    parent.hide()
-
-            def add_preferences_item(item, name):
-                matching_entries = [obj for obj in self._pref_items if obj[0] is item]
-                if matching_entries:
-                    current_entry = matching_entries[0]
-                else:
-                    current_entry = (item, [])
-                    self._pref_items.append(current_entry)
-                item.unparent()
-                if not isinstance(item, self._gtk.Frame):
-                    # create a simple default frame if none was given
-                    frame = self._gtk.Frame.new(name)
-                    frame.get_label_widget().set_markup("<b>%s</b>" % name)
-                    frame.set_shadow_type(self._gtk.ShadowType.NONE)
-                    align = self._gtk.Alignment()
-                    align.set_padding(3, 0, 12, 0)
-                    frame.add(align)
-                    frame.show()
-                    align.add(item)
-                    align.show()
-                    parent = frame
-                else:
-                    parent = item
-                if not current_entry[1]:
-                    for signal in ("hide", "show"):
-                        current_entry[1].append(
-                            item.connect(signal, update_preference_item_visibility, parent))
-                notebook.append_page(parent, self._gtk.Label(name))
-                update_preference_item_visibility(item, parent)
-
-            self.core.register_ui_section("gcode_preferences", add_preferences_item,
-                                          clear_preferences)
+        if self._gtk:
+            self.core.register_ui_section(
+                "gcode_preferences",
+                lambda item, name: self.core.register_ui("export_settings_handling", name, item),
+                lambda: self.core.clear_ui_section("export_settings_handling"))
             general_widget = pycam.Gui.ControlsGTK.ParameterSection()
             general_widget.get_widget().show()
             self.core.register_ui_section("gcode_general_parameters", general_widget.add_widget,
                                           general_widget.clear_widgets)
             self.core.register_ui("gcode_preferences", "General", general_widget.get_widget())
-            self._frame = self.gui.get_object("SettingsFrame")
-            self.core.register_ui("toolpath_handling", "Settings", self._frame)
-            self.gui.get_object("PreferencesButton").connect("clicked",
-                                                             self._set_window_visibility, True)
-            self.gui.get_object("CloseButton").connect("clicked", self._set_window_visibility,
-                                                       False)
-            self.window = self.gui.get_object("GCodePreferencesWindow")
-            self.window.connect("delete-event", self._set_window_visibility, False)
             self._proc_selector = pycam.Gui.ControlsGTK.InputChoice(
                 [], change_handler=lambda widget=None: self.core.emit_event(
                     "toolpath-processor-selection-changed"))
             proc_widget = self._proc_selector.get_widget()
-            self._settings_section = pycam.Gui.ControlsGTK.ParameterSection()
-            self._settings_section.get_widget().show()
-            self.gui.get_object("SelectorsContainer").add(self._settings_section.get_widget())
-            self._settings_section.add_widget(proc_widget, "Toolpath processor", weight=10)
+            self.core.register_ui("gcode_general_parameters", "GCode Profile", proc_widget)
             proc_widget.show()
             self.core.get("register_parameter_group")(
                 "toolpath_processor", changed_set_event="toolpath-processor-selection-changed",
@@ -127,17 +51,13 @@ class ToolpathProcessors(pycam.Plugins.PluginBase):
                 get_current_set_func=self.get_selected)
             self._event_handlers = (
                 ("toolpath-processor-list-changed", self._update_processors),
-                ("toolpath-selection-changed", self._update_visibility),
                 ("notify-initialization-finished", self._select_first_processor))
             self.register_event_handlers(self._event_handlers)
             self._update_processors()
-            self._update_visibility()
         self.core.set("toolpath_processors", self)
         return True
 
     def teardown(self):
-        if self.gui and self._gtk:
-            self._set_window_visibility(False)
         self.core.set("toolpath_processors", None)
         self.unregister_event_handlers(self._event_handlers)
         self.core.get("unregister_parameter_group")("toolpath_processor")
@@ -159,13 +79,6 @@ class ToolpathProcessors(pycam.Plugins.PluginBase):
             item = item["name"]
         self._proc_selector.set_value(item)
 
-    def _update_visibility(self):
-        # TODO: the gcode settings are valid for _all_ toolpaths - thus it should always be visible
-        if True or self.core.get("toolpaths").get_selected():
-            self._frame.show()
-        else:
-            self._frame.hide()
-
     def _update_processors(self):
         selected = self.get_selected()
         processors = list(self.core.get("get_parameter_sets")("toolpath_processor").values())
@@ -179,15 +92,6 @@ class ToolpathProcessors(pycam.Plugins.PluginBase):
             self.select(None)
         else:
             pass
-
-    def _set_window_visibility(self, *args):
-        status = args[-1]
-        if status:
-            self.window.show()
-        else:
-            self.window.hide()
-        # don't destroy the window
-        return True
 
 
 def _get_processor_filters(core, parameters):
