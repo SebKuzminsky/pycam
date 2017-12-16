@@ -245,7 +245,15 @@ class BaseUI(object):
             else:
                 log.error("Failed to read project settings file (%s): %s", filename, exc)
                 return
-        parse_yaml(content, excluded_sections={"toolpaths", "exports"}, reset=True)
+        history = self.settings.get("history")
+        action = lambda: parse_yaml(content, excluded_sections={"toolpaths", "exports"},
+                                    reset=True)
+        if history:
+            with history.merge_changes():
+                with self.settings.blocked_events(history.subscribed_events, emit_after=True):
+                    action()
+        else:
+            action()
 
     def load_project_settings_dialog(self, filename=None):
         if not filename:
