@@ -32,7 +32,6 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
     COLLECTION_ITEM_TYPE = pycam.Flow.data_models.Toolpath
 
     def setup(self):
-        self.last_toolpath_file = None
         if self.gui:
             self.tp_box = self.gui.get_object("ToolpathsBox")
             self.tp_box.unparent()

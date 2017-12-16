@@ -89,8 +89,6 @@ class Tools(pycam.Plugins.ListPluginBase):
                                        self._edit_tool_id))
             self._gtk_handlers.append((self.gui.get_object("NameCell"), "edited",
                                        self.edit_item_name))
-            self._treemodel = self.gui.get_object("ToolList")
-            self._treemodel.clear()
             # selector
             self._gtk_handlers.append((self._modelview.get_selection(), "changed",
                                        "tool-selection-changed"))
@@ -210,9 +208,8 @@ class Tools(pycam.Plugins.ListPluginBase):
         else:
             selector_box.show()
 
-    def _update_tool_widgets(self, widget=None, data=None):
-        """transfer the content of the currently selected tool to the related widgets
-        """
+    def _update_tool_widgets(self, widget=None):
+        """transfer the content of the currently selected tool to the related widgets"""
         tool = self.get_selected()
         control_box = self.gui.get_object("ToolSettingsControlsBox")
         if tool is None:
