@@ -135,7 +135,7 @@ def show_gui():
     # some more initialization
     gui.reset_preferences()
     gui.load_preferences()
-    gui.load_project_settings()
+    gui.load_startup_project_settings()
 
     event_manager.emit_event("notify-initialization-finished")
 
@@ -156,7 +156,7 @@ def show_gui():
     else:
         should_store = False
     if should_store:
-        gui.save_project_settings()
+        gui.save_startup_project_settings()
 
     gui.save_preferences()
 

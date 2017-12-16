@@ -124,7 +124,6 @@ class ProjectGui(pycam.Gui.BaseUI):
                 self.recent_manager = None
         # file loading
         self.last_dirname = None
-        self.last_task_settings_uri = None
         self.last_model_uri = None
         # define callbacks and accelerator keys for the menu actions
         for objname, callback, data, accel_key in (
@@ -295,9 +294,9 @@ class ProjectGui(pycam.Gui.BaseUI):
                                                        self._browse_external_program_location, key)
         for objname, callback in (
                 ("LoadProjectSettings", lambda widget: self.load_project_settings_dialog()),
-                ("SaveProjectSettings",
-                 lambda widget: self.save_task_settings_file(self.last_project_settings_uri)),
-                ("SaveAsProjectSettings", lambda widget: self.save_task_settings_file())):
+                ("SaveProjectSettings", lambda widget: self.save_project_settings_dialog(
+                    self.last_project_settings_uri)),
+                ("SaveAsProjectSettings", lambda widget: self.save_project_settings_dialog())):
             self.gui.get_object(objname).connect("activate", callback)
         # set the icons (in different sizes) for all windows
         # Gtk.window_set_default_icon_list(*get_icons_pixbuffers()) FIXME
