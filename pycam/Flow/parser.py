@@ -12,14 +12,14 @@ import pycam.Utils.log
 _log = pycam.Utils.log.get_logger()
 
 
-DATA_MAP = (("tools", pycam.Flow.data_models.Tool),
-            ("processes", pycam.Flow.data_models.Process),
-            ("bounds", pycam.Flow.data_models.Boundary),
-            ("tasks", pycam.Flow.data_models.Task),
-            ("models", pycam.Flow.data_models.Model),
-            ("toolpaths", pycam.Flow.data_models.Toolpath),
-            ("export_settings", pycam.Flow.data_models.ExportSettings),
-            ("exports", pycam.Flow.data_models.Export))
+COLLECTIONS = (pycam.Flow.data_models.Tool,
+               pycam.Flow.data_models.Process,
+               pycam.Flow.data_models.Boundary,
+               pycam.Flow.data_models.Task,
+               pycam.Flow.data_models.Model,
+               pycam.Flow.data_models.Toolpath,
+               pycam.Flow.data_models.ExportSettings,
+               pycam.Flow.data_models.Export)
 
 
 def parse_yaml(source, reset=False):
@@ -36,7 +36,8 @@ def parse_yaml(source, reset=False):
             fname = str(source)
         _log.warning("Ignoring empty parsed yaml source: %s", fname)
         return
-    for section, item_class in DATA_MAP:
+    for item_class in COLLECTIONS:
+        section = item_class.collection_name
         collection = item_class.get_collection()
         if reset:
             collection.clear()
@@ -56,10 +57,10 @@ def dump_yaml(target=None, sections=None):
     @param sections: if specified, this parameter is interpreted as a list of names of sections
         (e.g. "tools") that should be exported.
     """
-    if sections is None:
-        wanted_section_map = DATA_MAP
-    else:
-        wanted_section_map = [(key, value) for key, value in DATA_MAP if key in sections]
-    data = {section: item_class.get_collection().get_dict(with_application_attributes=True)
-            for section, item_class in wanted_section_map}
-    return yaml.dump(data, stream=target)
+    result = {}
+    for item_class in COLLECTIONS:
+        section = item_class.collection_name
+        if (sections is not None) and (section not in sections):
+            continue
+        result[section] = item_class.get_collection().get_dict(with_application_attributes=True)
+    return yaml.dump(result, stream=target)
