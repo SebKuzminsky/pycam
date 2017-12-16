@@ -96,10 +96,7 @@ def get_non_conflicting_name(template, conflicts, start=None, get_next_func=None
         @returns: a usable name that was not found in "conflicts"
         @rtype: basestr
     """
-    if start is None:
-        index = len(conflicts) + 1
-    else:
-        index = start
+    index = 1 if start is None else start
     if get_next_func is None:
         get_next_func = lambda current: current + 1
     while (template % index) in conflicts:
