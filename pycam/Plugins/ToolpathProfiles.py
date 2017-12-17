@@ -39,13 +39,13 @@ class ToolpathProfileMilling(pycam.Plugins.PluginBase):
         parameters = {"safety_height": 25,
                       "plunge_feedrate": 100,
                       "filename_extension": "",
-                      "step_width_x": 0.0001,
-                      "step_width_y": 0.0001,
-                      "step_width_z": 0.0001,
+                      ("step_width", "x"): 0.0001,
+                      ("step_width", "y"): 0.0001,
+                      ("step_width", "z"): 0.0001,
                       # pick the first path mode
-                      "path_mode": 0,
-                      "motion_tolerance": 0.0,
-                      "naive_tolerance": 0.0,
+                      ("corner_style", "mode"): 0,
+                      ("corner_style", "motion_tolerance"): 0.0,
+                      ("corner_style", "naive_tolerance"): 0.0,
                       "spindle_enable": True,
                       "spindle_delay": 3,
                       "touch_off": None}
@@ -68,13 +68,13 @@ class ToolpathProfileLaser(pycam.Plugins.PluginBase):
 
     def setup(self):
         parameters = {"filename_extension": "",
-                      "step_width_x": 0.0001,
-                      "step_width_y": 0.0001,
-                      "step_width_z": 0.0001,
+                      ("step_width", "x"): 0.0001,
+                      ("step_width", "y"): 0.0001,
+                      ("step_width", "z"): 0.0001,
                       # pick the first path mode
-                      "path_mode": 0,
-                      "motion_tolerance": 0.0,
-                      "naive_tolerance": 0.0}
+                      ("corner_style", "mode"): 0,
+                      ("corner_style", "motion_tolerance"): 0.0,
+                      ("corner_style", "naive_tolerance"): 0.0}
         self.core.get("register_parameter_set")(
             "toolpath_profile", "laser", "Laser",
             lambda params: _get_profile_filters(self.core, params), parameters=parameters,

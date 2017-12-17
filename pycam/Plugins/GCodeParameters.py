@@ -201,15 +201,15 @@ class GCodeCornerStyle(pycam.Plugins.PluginBase):
             change_handler=lambda *args: self.core.emit_event("export-settings-control-changed"))
         self.core.register_ui("gcode_corner_style", "Motion blending tolerance",
                               self.motion_tolerance.get_widget(), weight=30)
-        self.core.get("register_parameter")("toolpath_profile", "motion_tolerance",
-                                            self.motion_tolerance)
+        self.core.get("register_parameter")(
+            "toolpath_profile", ("corner_style", "motion_tolerance"), self.motion_tolerance)
         self.naive_tolerance = pycam.Gui.ControlsGTK.InputNumber(
             digits=3, lower=0,
             change_handler=lambda *args: self.core.emit_event("export-settings-control-changed"))
         self.core.register_ui("gcode_corner_style", "Naive CAM tolerance",
                               self.naive_tolerance.get_widget(), weight=50)
-        self.core.get("register_parameter")("toolpath_profile", "naive_tolerance",
-                                            self.naive_tolerance)
+        self.core.get("register_parameter")(
+            "toolpath_profile", ("corner_style", "naive_tolerance"), self.naive_tolerance)
         self.path_mode = pycam.Gui.ControlsGTK.InputChoice(
             (("Exact path mode (G61)", ToolpathPathMode.CORNER_STYLE_EXACT_PATH.value),
              ("Exact stop mode (G61.1)", ToolpathPathMode.CORNER_STYLE_EXACT_STOP.value),
@@ -221,7 +221,8 @@ class GCodeCornerStyle(pycam.Plugins.PluginBase):
         self.path_mode.get_widget().connect("changed", self.update_widgets)
         self.core.register_ui("gcode_corner_style", "Path mode", self.path_mode.get_widget(),
                               weight=10)
-        self.core.get("register_parameter")("toolpath_profile", "path_mode", self.path_mode)
+        self.core.get("register_parameter")(
+            "toolpath_profile", ("corner_style", "mode"), self.path_mode)
         self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         self.update_widgets()
         return True
@@ -233,8 +234,8 @@ class GCodeCornerStyle(pycam.Plugins.PluginBase):
         self.core.unregister_ui("gcode_corner_style", self.path_mode.get_widget())
         self.core.unregister_ui_section("gcode_corner_style")
         self.core.unregister_ui("gcode_preferences", self._table.get_widget())
-        for name in ("motion_tolerance", "naive_tolerance", "path_mode"):
-            self.core.get("unregister_parameter")("toolpath_profile", name)
+        for name in ("motion_tolerance", "naive_tolerance", "mode"):
+            self.core.get("unregister_parameter")("toolpath_profile", ("corner_style", name))
 
     def update_widgets(self, widget=None):
         enable_tolerances = (self.path_mode.get_value()
