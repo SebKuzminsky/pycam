@@ -264,6 +264,53 @@ def print_stack_trace():
     traceback.print_stack()
 
 
+class MultiLevelDictionaryAccess:
+    """ translate a single- or multi-level dictionary access key into a target dict and key """
+
+    def __init__(self, base_dictionary):
+        self._data = base_dictionary
+
+    def get_value(self, key_or_keys):
+        source_dict, source_key = self._get_recursive_access(key_or_keys, create_if_missing=False)
+        return source_dict[source_key]
+
+    def set_value(self, key_or_keys, value):
+        target_dict, target_key = self._get_recursive_access(key_or_keys, create_if_missing=True)
+        target_dict[target_key] = value
+
+    def _get_recursive_access(self, key_or_keys, create_if_missing=False):
+        """
+        @param base_dictionary: the dictionary containing the data to be accessed
+        @param key: string (single level access) or tuple of strings (multi level access)
+        @param create_if_missing: create nested dictionaries if necessary
+        @returns: tuple of (dict, str) for accessing the dictionary containing the target item
+
+        @raises:
+            - KeyError: if one part of the access chain is missing and "create_if_missing" is False
+            - TypeError: if one part of the access chain is not a dictionary
+        """
+        if isinstance(key_or_keys, tuple):
+            # multi-level dictionary access
+            keys = key_or_keys
+        else:
+            # single-level dictionary access
+            keys = [key_or_keys]
+        # recursively access the single- or multi-level target dictionary
+        target_dict = self._data
+        for key in keys[:-1]:
+            if key not in target_dict:
+                if create_if_missing:
+                    target_dict[key] = {}
+                else:
+                    raise KeyError("Key in sub-dictionary is missing: {}".format(key))
+            # enter the next level
+            target_dict = target_dict[key]
+            if not isinstance(target_dict, dict):
+                raise TypeError("Invalid multi-level parameter set access key: {}"
+                                .format(key_or_keys))
+        return target_dict, keys[-1]
+
+
 class ProgressCounter(object):
 
     def __init__(self, max_value, update_callback):

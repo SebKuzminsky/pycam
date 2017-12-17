@@ -20,6 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import pycam.Plugins
+from pycam.Utils import MultiLevelDictionaryAccess
 
 
 class ParameterGroupManager(pycam.Plugins.PluginBase):
@@ -96,6 +97,8 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
             self.core.emit_event(event)
 
     def register_parameter(self, group_name, name, control, get_func=None, set_func=None):
+        if isinstance(name, (list, tuple)):
+            name = tuple(name)
         if group_name not in self._groups:
             self.log.info("Unknown parameter group: %s", group_name)
             return
@@ -109,14 +112,44 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         group["parameters"][name] = {"name": name, "control": control, "get_func": get_func,
                                      "set_func": set_func}
 
+    def get_default_parameter_values(self, group_name):
+        """ retrieve the default values of a given parameter group
+
+        @param group_name: name of the parameter group
+        """
+        result = {}
+        if group_name not in self._groups:
+            self.log.info("Default Parameter Values: unknown parameter group: %s", group_name)
+            return result
+        group = self._groups[group_name]
+        if not group["sets"]:
+            self.log.info("Default Parameter Values: missing parameter sets in group: %s",
+                          group_name)
+            return result
+        multi_level_access = MultiLevelDictionaryAccess(result)
+        first_set = sorted(group["sets"].values(), key=lambda item: item["weight"])[0]
+        for key, value in first_set["parameters"].items():
+            try:
+                multi_level_access.set_value(key, value)
+            except TypeError as exc:
+                self.log.error("Failed to get default parameter '%s' for group '%s': %s",
+                               key, group_name, exc)
+        return result
+
     def get_parameter_values(self, group_name):
         if group_name not in self._groups:
             self.log.info("Unknown parameter group: %s", group_name)
             return {}
         result = {}
         group = self._groups[group_name]
+        multi_level_access = MultiLevelDictionaryAccess(result)
         for parameter in group["parameters"].values():
-            result[parameter["name"]] = parameter["get_func"]()
+            value = parameter["get_func"]()
+            try:
+                multi_level_access.set_value(parameter["name"], value)
+            except TypeError as exc:
+                self.log.error("Failed to get parameter '%s' for group '%s': %s",
+                               parameter["name"], group_name, exc)
         return result
 
     def set_parameter_values(self, group_name, value_dict):
@@ -124,9 +157,19 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
             self.log.info("Unknown parameter group: %s", group_name)
             return
         group = self._groups[group_name]
+        multi_level_access = MultiLevelDictionaryAccess(value_dict)
         for parameter in group["parameters"].values():
-            if parameter["name"] in value_dict:
-                parameter["set_func"](value_dict[parameter["name"]])
+            try:
+                value = multi_level_access.get_value(parameter["name"])
+            except KeyError:
+                # the incoming value dictionary does not contain the key - we can skip it
+                pass
+            except TypeError as exc:
+                # this should not happen: the value dictionary is malformed
+                self.log.error("Failed to get parameter '%s' for group '%s': %s",
+                               parameter["name"], group_name, exc)
+            else:
+                parameter["set_func"](value)
 
     def get_parameter_sets(self, group_name):
         if group_name not in self._groups:
@@ -172,6 +215,8 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
             self.core.emit_event(event)
 
     def unregister_parameter(self, group_name, name):
+        if isinstance(name, (list, tuple)):
+            name = tuple(name)
         if group_name not in self._groups:
             self.log.debug("Tried to unregister parameter '%s' from a non-existing parameter "
                            "group: %s", name, group_name)
