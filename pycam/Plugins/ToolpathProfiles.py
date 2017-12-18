@@ -20,6 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Gui.ControlsGTK
 import pycam.Plugins
+from pycam.Toolpath import ToolpathPathMode
 import pycam.Utils.log
 
 
@@ -36,19 +37,19 @@ class ToolpathProfileMilling(pycam.Plugins.PluginBase):
     CATEGORIES = ["Toolpath"]
 
     def setup(self):
-        parameters = {"safety_height": 25,
-                      "plunge_feedrate": 100,
-                      "filename_extension": "",
-                      ("step_width", "x"): 0.0001,
-                      ("step_width", "y"): 0.0001,
-                      ("step_width", "z"): 0.0001,
-                      # pick the first path mode
-                      ("corner_style", "mode"): 0,
-                      ("corner_style", "motion_tolerance"): 0.0,
-                      ("corner_style", "naive_tolerance"): 0.0,
-                      "spindle_enable": True,
-                      "spindle_delay": 3,
-                      "touch_off": None}
+        parameters = {
+            "safety_height": 25,
+            "plunge_feedrate": 100,
+            "filename_extension": "",
+            ("step_width", "x"): 0.0001,
+            ("step_width", "y"): 0.0001,
+            ("step_width", "z"): 0.0001,
+            ("corner_style", "mode"): ToolpathPathMode.CORNER_STYLE_OPTIMIZE_TOLERANCE.value,
+            ("corner_style", "motion_tolerance"): 0.0,
+            ("corner_style", "naive_tolerance"): 0.0,
+            "spindle_enable": True,
+            "spindle_delay": 3,
+            "touch_off": None}
         self.core.get("register_parameter_set")(
             "toolpath_profile", "milling", "Milling",
             lambda params: _get_profile_filters(self.core, params), parameters=parameters,
@@ -67,14 +68,14 @@ class ToolpathProfileLaser(pycam.Plugins.PluginBase):
     CATEGORIES = ["Toolpath"]
 
     def setup(self):
-        parameters = {"filename_extension": "",
-                      ("step_width", "x"): 0.0001,
-                      ("step_width", "y"): 0.0001,
-                      ("step_width", "z"): 0.0001,
-                      # pick the first path mode
-                      ("corner_style", "mode"): 0,
-                      ("corner_style", "motion_tolerance"): 0.0,
-                      ("corner_style", "naive_tolerance"): 0.0}
+        parameters = {
+            "filename_extension": "",
+            ("step_width", "x"): 0.0001,
+            ("step_width", "y"): 0.0001,
+            ("step_width", "z"): 0.0001,
+            ("corner_style", "mode"): ToolpathPathMode.CORNER_STYLE_OPTIMIZE_TOLERANCE.value,
+            ("corner_style", "motion_tolerance"): 0.0,
+            ("corner_style", "naive_tolerance"): 0.0}
         self.core.get("register_parameter_set")(
             "toolpath_profile", "laser", "Laser",
             lambda params: _get_profile_filters(self.core, params), parameters=parameters,
