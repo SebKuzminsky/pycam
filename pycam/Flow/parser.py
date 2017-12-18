@@ -3,6 +3,7 @@ from __future__ import print_function
 import yaml
 
 import pycam.Exporters.GCode.LinuxCNC
+from pycam.Flow.data_models import CollectionName
 import pycam.Flow.data_models
 import pycam.Importers
 import pycam.Plugins
@@ -30,6 +31,10 @@ def parse_yaml(source, excluded_sections=None, reset=False):
         sections (e.g. "tools") that should not be imported
     @param reset: remove all previously stored objects (tools, processes, bounds, tasks, ...)
     """
+    assert (not excluded_sections
+            or all(isinstance(item, CollectionName) for item in excluded_sections)), \
+           ("Invalid 'excluded_sections' specified (should contain CollectionName enums): {}"
+            .format(excluded_sections))
     parsed = yaml.safe_load(source)
     if parsed is None:
         try:
@@ -47,10 +52,10 @@ def parse_yaml(source, excluded_sections=None, reset=False):
             collection.clear()
         count_before = len(collection)
         _log.debug("Importing items into '%s'", section)
-        for name, data in parsed.get(section, {}).items():
+        for name, data in parsed.get(section.value, {}).items():
             if item_class(name, data) is None:
-                _log.error("Failed to import '%s' into '%s'.", name, section)
-        _log.info("Imported %d items into '%s'", len(collection) - count_before, section)
+                _log.error("Failed to import '%s' into '%s'.", name, section.value)
+        _log.info("Imported %d items into '%s'", len(collection) - count_before, section.value)
 
 
 def dump_yaml(target=None, excluded_sections=None):
@@ -61,11 +66,15 @@ def dump_yaml(target=None, excluded_sections=None):
     @param excluded_sections: if specified, this parameter is interpreted as a list of names of
         sections (e.g. "tools") that should not be exported
     """
+    assert (not excluded_sections
+            or all(isinstance(item, CollectionName) for item in excluded_sections)), \
+           ("Invalid 'excluded_sections' specified (should contain CollectionName enums): {}"
+            .format(excluded_sections))
     result = {}
     for item_class in COLLECTIONS:
         section = item_class.collection_name
         if excluded_sections and (section in excluded_sections):
             continue
-        result[section] = item_class.get_collection().get_dict(with_application_attributes=True,
-                                                               without_uuids=True)
+        result[section.value] = item_class.get_collection().get_dict(
+            with_application_attributes=True, without_uuids=True)
     return yaml.dump(result, stream=target)

@@ -84,6 +84,17 @@ class InvalidKeyError(InvalidDataError):
             enum_name, invalid_key, ", ".join([item.value for item in choice_enum])))
 
 
+class CollectionName(Enum):
+    MODELS = "models"
+    TOOLS = "tools"
+    PROCESSES = "processes"
+    BOUNDS = "bounds"
+    TASKS = "tasks"
+    TOOLPATHS = "toolpaths"
+    EXPORT_SETTINGS = "export_settings"
+    EXPORTS = "exports"
+
+
 class ToolShape(Enum):
     FLAT_BOTTOM = "flat_bottom"
     BALL_NOSE = "ball_nose"
@@ -346,6 +357,7 @@ def _get_from_collection(collection_name, wanted, many=False):
 
 
 def _get_collection_resolver(collection_name, many=False):
+    assert isinstance(collection_name, CollectionName)
     return functools.partial(_get_from_collection, collection_name, many=many)
 
 
@@ -766,13 +778,13 @@ class Source(BaseDataContainer):
     @_set_allowed_attributes({"type", "task"})
     def _get_source_task(self):
         task_name = self.get_value("task")
-        return _get_from_collection("tasks", task_name)
+        return _get_from_collection(CollectionName.TASKS, task_name)
 
     @_set_parser_context("Source 'toolpath'")
     @_set_allowed_attributes({"type", "toolpaths"})
     def _get_source_toolpath(self):
         toolpath_names = self.get_value("toolpaths")
-        return _get_from_collection("toolpaths", toolpath_names, many=True)
+        return _get_from_collection(CollectionName.TOOLPATHS, toolpath_names, many=True)
 
     @_set_parser_context("Source 'object'")
     @_set_allowed_attributes({"type", "data"})
@@ -902,7 +914,7 @@ class ModelTransformation(BaseDataContainer):
 
 class Model(BaseCollectionItemDataContainer):
 
-    collection_name = "models"
+    collection_name = CollectionName.MODELS
     changed_event = "model-changed"
     list_changed_event = "model-list-changed"
     attribute_converters = {"source": Source,
@@ -912,7 +924,7 @@ class Model(BaseCollectionItemDataContainer):
     @CacheStorage({"source", "transformations"})
     @_set_parser_context("Model")
     def get_model(self):
-        model = self.get_value("source").get("models")
+        model = self.get_value("source").get(CollectionName.MODELS)
         for transformation in self.get_value("transformations"):
             model = transformation.get_transformed_model(model)
         return model
@@ -920,7 +932,7 @@ class Model(BaseCollectionItemDataContainer):
 
 class Tool(BaseCollectionItemDataContainer):
 
-    collection_name = "tools"
+    collection_name = CollectionName.TOOLS
     changed_event = "tool-changed"
     list_changed_event = "tool-list-changed"
     attribute_converters = {"shape": _get_enum_resolver(ToolShape),
@@ -983,7 +995,7 @@ class Tool(BaseCollectionItemDataContainer):
 
 class Process(BaseCollectionItemDataContainer):
 
-    collection_name = "processes"
+    collection_name = CollectionName.PROCESSES
     changed_event = "process-changed"
     list_changed_event = "process-list-changed"
     attribute_converters = {"strategy": _get_enum_resolver(ProcessStrategy),
@@ -992,7 +1004,8 @@ class Process(BaseCollectionItemDataContainer):
                             "grid_direction": _get_enum_resolver(MotionGrid.GridDirection),
                             "spiral_direction": _get_enum_resolver(MotionGrid.SpiralDirection),
                             "pocketing_type": _get_enum_resolver(MotionGrid.PocketingType),
-                            "trace_models": _get_collection_resolver("models", many=True),
+                            "trace_models": _get_collection_resolver(CollectionName.MODELS,
+                                                                     many=True),
                             "rounded_corners": _bool_converter,
                             "radius_compensation": _bool_converter,
                             "overlap": float,
@@ -1080,11 +1093,12 @@ class Process(BaseCollectionItemDataContainer):
 
 class Boundary(BaseCollectionItemDataContainer):
 
-    collection_name = "bounds"
+    collection_name = CollectionName.BOUNDS
     changed_event = "bounds-changed"
     list_changed_event = "bounds-list-changed"
     attribute_converters = {"specification": _get_enum_resolver(BoundsSpecification),
-                            "reference_models": _get_collection_resolver("models", many=True),
+                            "reference_models": _get_collection_resolver(CollectionName.MODELS,
+                                                                         many=True),
                             "lower": _limit3d_converter,
                             "upper": _limit3d_converter,
                             "tool_boundary": _get_enum_resolver(ToolBoundaryMode)}
@@ -1166,14 +1180,15 @@ class Boundary(BaseCollectionItemDataContainer):
 
 class Task(BaseCollectionItemDataContainer):
 
-    collection_name = "tasks"
+    collection_name = CollectionName.TASKS
     changed_event = "task-changed"
     list_changed_event = "task-list-changed"
-    attribute_converters = {"process": _get_collection_resolver("processes"),
-                            "bounds": _get_collection_resolver("bounds"),
-                            "tool": _get_collection_resolver("tools"),
+    attribute_converters = {"process": _get_collection_resolver(CollectionName.PROCESSES),
+                            "bounds": _get_collection_resolver(CollectionName.BOUNDS),
+                            "tool": _get_collection_resolver(CollectionName.TOOLS),
                             "type": _get_enum_resolver(TaskType),
-                            "collision_models": _get_collection_resolver("models", many=True)}
+                            "collision_models": _get_collection_resolver(CollectionName.MODELS,
+                                                                         many=True)}
 
     @CacheStorage({"process", "bounds", "tool", "type", "collision_models"})
     @_set_parser_context("Task")
@@ -1221,7 +1236,7 @@ class ToolpathTransformation(BaseDataContainer):
                             "upper": functools.partial(_axes_values_converter, allow_none=True),
                             "shift_target": _get_enum_resolver(PositionShiftTarget),
                             "axes": functools.partial(_axes_values_converter, allow_none=True),
-                            "models": _get_collection_resolver("models", many=True)}
+                            "models": _get_collection_resolver(CollectionName.MODELS, many=True)}
 
     def get_transformed_toolpath(self, toolpath):
         action = self.get_value("action")
@@ -1289,7 +1304,7 @@ class ToolpathTransformation(BaseDataContainer):
 
 class Toolpath(BaseCollectionItemDataContainer):
 
-    collection_name = "toolpaths"
+    collection_name = CollectionName.TOOLPATHS
     changed_event = "toolpath-changed"
     list_changed_event = "toolpath-list-changed"
     attribute_converters = {"source": Source,
@@ -1299,7 +1314,7 @@ class Toolpath(BaseCollectionItemDataContainer):
     @CacheStorage({"source", "transformations"})
     @_set_parser_context("Toolpath")
     def get_toolpath(self):
-        task = self.get_value("source").get("toolpaths")
+        task = self.get_value("source").get(CollectionName.TOOLPATHS)
         toolpath = task.generate_toolpath()
         for transformation in self.get_value("transformations"):
             toolpath = transformation.get_transformed_toolpath(toolpath)
@@ -1316,7 +1331,7 @@ class Toolpath(BaseCollectionItemDataContainer):
 
 class ExportSettings(BaseCollectionItemDataContainer):
 
-    collection_name = "export_settings"
+    collection_name = CollectionName.EXPORT_SETTINGS
     changed_event = "export-settings-changed"
     list_changed_event = "export-settings-list-changed"
 
@@ -1367,7 +1382,8 @@ class Formatter(BaseDataContainer):
 
     attribute_converters = {"type": _get_enum_resolver(FormatType),
                             "dialect": _get_enum_resolver(GCodeDialect),
-                            "export_settings": _get_collection_resolver("export_settings")}
+                            "export_settings": _get_collection_resolver(
+                                CollectionName.EXPORT_SETTINGS)}
     attribute_defaults = {"dialect": GCodeDialect.LINUXCNC,
                           "export_settings": None,
                           "comment": ""}
@@ -1408,13 +1424,13 @@ class Formatter(BaseDataContainer):
 
 class Export(BaseCollectionItemDataContainer):
 
-    collection_name = "exports"
+    collection_name = CollectionName.EXPORTS
     attribute_converters = {"format": Formatter,
                             "source": Source,
                             "target": Target}
 
     def run_export(self):
         formatter = self.get_value("format")
-        source = self.get_value("source").get("exports")
+        source = self.get_value("source").get(CollectionName.EXPORTS)
         target = self.get_value("target")
         formatter.write_data(source, target.open())
