@@ -92,8 +92,8 @@ class ExportSettings(pycam.Plugins.ListPluginBase):
                 self.gui.get_object("ExportSettingNameCell"), self.render_item_name)
             self._event_handlers = (
                 ("toolpath-profiles-list-changed", self._update_profiles),
-                ("export-settings-selection-changed", self._update_settings_widgets),
-                ("export-settings-changed", self._update_settings_widgets),
+                ("export-settings-selection-changed", self._transfer_settings_to_controls),
+                ("export-settings-changed", self._transfer_settings_to_controls),
                 ("export-settings-changed", self.force_gtk_modelview_refresh),
                 ("export-settings-changed", "visual-item-updated"),
                 ("export-settings-list-changed", self.force_gtk_modelview_refresh),
@@ -101,7 +101,7 @@ class ExportSettings(pycam.Plugins.ListPluginBase):
                 ("export-settings-control-changed", self._transfer_controls_to_settings))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
-            self._update_settings_widgets()
+            self._transfer_settings_to_controls()
         return True
 
     def teardown(self):
@@ -117,7 +117,7 @@ class ExportSettings(pycam.Plugins.ListPluginBase):
         self.select(new_item)
         self._reset_settings_to_default()
 
-    def _update_settings_widgets(self, widget=None):
+    def _transfer_settings_to_controls(self, widget=None):
         """transfer the content of the currently selected setting item to the related widgets"""
         settings = self.get_selected()
         if settings is None:
