@@ -19,6 +19,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Flow.data_models
+from pycam.Flow.history import merge_history_and_block_events
 import pycam.Plugins
 
 
@@ -204,7 +205,11 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.core.emit_event("process-strategy-changed")
             self.core.emit_event("process-changed")
 
-    def _process_new(self, *args):
-        new_process = pycam.Flow.data_models.Process(None, {"strategy": "slice"})
-        new_process.set_application_value("name", self.get_non_conflicting_name("Process #%d"))
+    def _process_new(self, widget=None, strategy="slice"):
+        with merge_history_and_block_events(self.core):
+            params = {"strategy": strategy}
+            params.update(self.core.get("get_default_parameter_values")("process",
+                                                                        set_name=strategy))
+            new_process = pycam.Flow.data_models.Process(None, data=params)
+            new_process.set_application_value("name", self.get_non_conflicting_name("Process #%d"))
         self.select(new_process)

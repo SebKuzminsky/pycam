@@ -19,6 +19,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Flow.data_models import Boundary, BoundsSpecification, LimitSingle, ToolBoundaryMode
+from pycam.Flow.history import merge_history_and_block_events
 import pycam.Plugins
 # TODO: move Toolpath.Bounds here?
 import pycam.Toolpath
@@ -281,9 +282,10 @@ class Bounds(pycam.Plugins.ListPluginBase):
                           for orig, change in zip(bounds.get_value(key), change_vector[key])]
             bounds.set_value(key, limits)
 
-    def _bounds_new(self, *args):
-        new_bounds = Boundary(None, {"specification": "margins",
-                                     "lower": [0, 0, 0], "upper": [0, 0, 0],
-                                     "reference_models": []})
-        new_bounds.set_application_value("name", self.get_non_conflicting_name("Bounds #%d"))
+    def _bounds_new(self, widget=None):
+        with merge_history_and_block_events(self.core):
+            params = {"specification": "margins", "lower": [0, 0, 0], "upper": [0, 0, 0],
+                      "reference_models": []}
+            new_bounds = Boundary(None, data=params)
+            new_bounds.set_application_value("name", self.get_non_conflicting_name("Bounds #%d"))
         self.select(new_bounds)

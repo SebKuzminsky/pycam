@@ -20,6 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 from pycam.Flow.data_models import Tool
+from pycam.Flow.history import merge_history_and_block_events
 from pycam.Toolpath.Filters import toolpath_filter
 
 
@@ -235,15 +236,17 @@ class Tools(pycam.Plugins.ListPluginBase):
             for key, value in self.core.get("get_parameter_values")("tool").items():
                 tool.set_value(key, value)
 
-    def _tool_new(self, widget=None):
+    def _tool_new(self, widget=None, shape="flat_bottom"):
         # look for an unused tool ID
         existing_tool_ids = [tool.get_value("tool_id") for tool in self.get_all()]
         tool_id = 1
         while tool_id in existing_tool_ids:
             tool_id += 1
-        new_tool = Tool(None,
-                        {"shape": "flat_bottom", "radius": 1.0, "feed": 300, "tool_id": tool_id})
-        new_tool.set_application_value("name", self.get_non_conflicting_name("Tool #%d"))
+        with merge_history_and_block_events(self.core):
+            params = {"shape": shape, "tool_id": tool_id}
+            params.update(self.core.get("get_default_parameter_values")("tool", set_name=shape))
+            new_tool = Tool(None, data=params)
+            new_tool.set_application_value("name", self.get_non_conflicting_name("Tool #%d"))
         self.select(new_tool)
 
     @toolpath_filter("tool", "tool_id")

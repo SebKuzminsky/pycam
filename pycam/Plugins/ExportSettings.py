@@ -21,6 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Flow.data_models
 from pycam.Flow.data_models import ToolpathFilter
+from pycam.Flow.history import merge_history_and_block_events
 import pycam.Plugins
 
 
@@ -111,11 +112,12 @@ class ExportSettings(pycam.Plugins.ListPluginBase):
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
 
-    def _export_setting_new(self, *args):
-        new_item = pycam.Flow.data_models.ExportSettings(None, data={})
-        new_item.set_application_value("name", self.get_non_conflicting_name("Settings #%d"))
+    def _export_setting_new(self, widget=None):
+        with merge_history_and_block_events(self.core):
+            params = {"gcode": self.core.get("get_default_parameter_values")("toolpath_profile")}
+            new_item = pycam.Flow.data_models.ExportSettings(None, data=params)
+            new_item.set_application_value("name", self.get_non_conflicting_name("Settings #%d"))
         self.select(new_item)
-        self._reset_settings_to_default()
 
     def _transfer_settings_to_controls(self, widget=None):
         """transfer the content of the currently selected setting item to the related widgets"""

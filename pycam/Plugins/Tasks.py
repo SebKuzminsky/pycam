@@ -22,6 +22,7 @@ import time
 
 from pycam import GenericError
 import pycam.Flow.data_models
+from pycam.Flow.history import merge_history_and_block_events
 import pycam.Plugins
 import pycam.Utils
 from pycam.Utils.progress import ProgressContext
@@ -213,9 +214,13 @@ class Tasks(pycam.Plugins.ListPluginBase):
             for key, value in self.core.get("get_parameter_values")("task").items():
                 task.set_value(key, value)
 
-    def _task_new(self, *args):
-        new_task = pycam.Flow.data_models.Task(None, {"type": "milling"})
-        new_task.set_application_value("name", self.get_non_conflicting_name("Task #%d"))
+    def _task_new(self, widget=None, task_type="milling"):
+        with merge_history_and_block_events(self.core):
+            params = {"type": task_type}
+            params.update(self.core.get("get_default_parameter_values")("task",
+                                                                        set_name=task_type))
+            new_task = pycam.Flow.data_models.Task(None, data=params)
+            new_task.set_application_value("name", self.get_non_conflicting_name("Task #%d"))
         self.select(new_task)
 
     def generate_toolpaths(self, tasks):
