@@ -115,6 +115,7 @@ class ExportSettings(pycam.Plugins.ListPluginBase):
         new_item = pycam.Flow.data_models.ExportSettings(None, data={})
         new_item.set_application_value("name", self.get_non_conflicting_name("Settings #%d"))
         self.select(new_item)
+        self._reset_settings_to_default()
 
     def _update_settings_widgets(self, widget=None):
         """transfer the content of the currently selected setting item to the related widgets"""
