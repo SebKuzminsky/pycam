@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import copy
 
 import pycam.Plugins
 from pycam.Utils import MultiLevelDictionaryAccess
@@ -31,6 +32,7 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         self._groups = {}
         self.core.set("get_parameter_values", self.get_parameter_values)
         self.core.set("set_parameter_values", self.set_parameter_values)
+        self.core.set("get_default_parameter_values", self.get_default_parameter_values)
         self.core.set("get_parameter_sets", self.get_parameter_sets)
         self.core.set("register_parameter_group", self.register_parameter_group)
         self.core.set("register_parameter_set", self.register_parameter_set)
@@ -89,9 +91,9 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         if name in group["sets"]:
             self.log.debug("Registering parameter set '%s' again", name)
         if parameters is None:
-            parameters = []
+            parameters = {}
         group["sets"][name] = {"name": name, "label": label, "func": func,
-                               "parameters": parameters, "weight": weight}
+                               "parameters": copy.deepcopy(parameters), "weight": weight}
         event = group["changed_set_list_event"]
         if event:
             self.core.emit_event(event)
@@ -112,7 +114,7 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         group["parameters"][name] = {"name": name, "control": control, "get_func": get_func,
                                      "set_func": set_func}
 
-    def get_default_parameter_values(self, group_name):
+    def get_default_parameter_values(self, group_name, set_name=None):
         """ retrieve the default values of a given parameter group
 
         @param group_name: name of the parameter group
@@ -127,8 +129,16 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
                           group_name)
             return result
         multi_level_access = MultiLevelDictionaryAccess(result)
-        first_set = sorted(group["sets"].values(), key=lambda item: item["weight"])[0]
-        for key, value in first_set["parameters"].items():
+        if set_name is None:
+            default_set = sorted(group["sets"].values(), key=lambda item: item["weight"])[0]
+        else:
+            try:
+                default_set = group["sets"][set_name]
+            except KeyError:
+                self.log.warning("Default Parameter Values: failed to find request set: %s",
+                                 set_name)
+                return result
+        for key, value in default_set["parameters"].items():
             try:
                 multi_level_access.set_value(key, value)
             except TypeError as exc:
