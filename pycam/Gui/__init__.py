@@ -231,6 +231,7 @@ class BaseUI(object):
             log.error("Failed to store project settings to file '%s': %s", filename, exc)
 
     def load_project_settings_from_file(self, filename, remember_uri=True, default_content=None):
+        from pycam.Flow.history import merge_history_and_block_events
         from pycam.Flow.parser import parse_yaml
         if remember_uri:
             self.last_project_settings_uri = pycam.Utils.URIHandler(filename)
@@ -245,15 +246,8 @@ class BaseUI(object):
             else:
                 log.error("Failed to read project settings file (%s): %s", filename, exc)
                 return
-        history = self.settings.get("history")
-        action = lambda: parse_yaml(content, excluded_sections={"toolpaths", "exports"},
-                                    reset=True)
-        if history:
-            with history.merge_changes():
-                with self.settings.blocked_events(history.subscribed_events, emit_after=True):
-                    action()
-        else:
-            action()
+        with merge_history_and_block_events(self.settings):
+            parse_yaml(content, excluded_sections={"toolpaths", "exports"}, reset=True)
 
     def load_project_settings_dialog(self, filename=None):
         if not filename:

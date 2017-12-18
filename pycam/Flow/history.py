@@ -103,3 +103,15 @@ class DataHistory(object):
                       len(self._revisions) + 1, self.max_revision_count)
             self._revisions.append(DataRevision())
             get_event_handler().emit_event("history-changed")
+
+
+@contextlib.contextmanager
+def merge_history_and_block_events(settings):
+    """merge all history changes to a single one and block all events (emitting them later)"""
+    history = settings.get("history")
+    if history:
+        with history.merge_changes():
+            with settings.blocked_events(history.subscribed_events, emit_after=True):
+                yield
+    else:
+        yield
