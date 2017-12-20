@@ -50,7 +50,7 @@ except ImportError:
 
 from pycam import InitializationError
 import pycam.Exporters.GCodeExporter
-from pycam.Flow.history import DataHistory
+from pycam.Flow.history import DataHistory, merge_history_and_block_events
 from pycam.Gui import QuestionStatus
 import pycam.Gui.common as GuiCommon
 from pycam.Gui.common import EmergencyDialog
@@ -127,18 +127,19 @@ def show_gui():
         return EXIT_CODES["requirements"]
 
     event_manager = get_event_handler()
-    gui = gui_class(event_manager)
-    # initialize plugins
-    plugin_manager = pycam.Plugins.PluginManager(core=event_manager)
-    plugin_manager.import_plugins()
-    # some more initialization
-    gui.reset_preferences()
-    gui.load_preferences()
-    gui.load_startup_project_settings()
+    event_manager.set("history", DataHistory())
+
+    with merge_history_and_block_events(event_manager):
+        gui = gui_class(event_manager)
+        # initialize plugins
+        plugin_manager = pycam.Plugins.PluginManager(core=event_manager)
+        plugin_manager.import_plugins()
+        # some more initialization
+        gui.reset_preferences()
+        gui.load_preferences()
+        gui.load_startup_project_settings()
 
     event_manager.emit_event("notify-initialization-finished")
-
-    event_manager.set("history", DataHistory())
 
     # open the GUI
     get_mainloop(use_gtk=True).run()
