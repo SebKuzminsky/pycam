@@ -211,9 +211,11 @@ class Bounds(pycam.Plugins.ListPluginBase):
                             ("BoundaryHighX", upper.x),
                             ("BoundaryHighY", upper.y),
                             ("BoundaryHighZ", upper.z)):
-            self.gui.get_object(name).set_value(limit.value)
+            # beware: the result is not perfect, if "is_relative" is not consistent for all axes
             if limit.is_relative:
                 is_percent = True
+            factor = 100 if is_percent else 1
+            self.gui.get_object(name).set_value(limit.value * factor)
         self.gui.get_object("RelativeUnit").set_active(0 if is_percent else 1)
         is_absolute = (bounds.get_value("specification") == BoundsSpecification.ABSOLUTE)
         if is_absolute:
@@ -278,7 +280,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         change_factor = {"0": 0, "+": 1, "-": -1}[change_target]
         is_margin = self.gui.get_object("TypeRelativeMargin").get_active()
         is_percent = (self.gui.get_object("RelativeUnit").get_active() == 0)
-        change_value = change_factor * (10 if is_percent else 1)
+        change_value = change_factor * (0.1 if is_percent else 1)
         change_vector = {"lower": [0, 0, 0], "upper": [0, 0, 0]}
         change_vector["lower"][axis_index] = change_value if is_margin else -change_value
         change_vector["upper"][axis_index] = change_value

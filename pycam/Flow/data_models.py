@@ -256,7 +256,7 @@ class LimitSingle(collections.namedtuple("LimitSingle", ("value", "is_relative")
     def export(self):
         """return the storage string for later parsing"""
         if self.is_relative:
-            return "{:f}%".format(self.value)
+            return "{:f}%".format(100.0 * self.value)
         else:
             return self.value
 
