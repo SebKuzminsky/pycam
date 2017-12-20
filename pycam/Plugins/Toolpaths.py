@@ -77,9 +77,7 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
                 self.gui.get_object("ToolpathVisibleSymbol"), self.render_item_visible_state)
             self._event_handlers = (
                 ("toolpath-list-changed", self._update_toolpath_tab_visibility),
-                ("toolpath-list-changed", self.force_gtk_modelview_refresh),
-                ("toolpath-changed", "visual-item-updated"),
-                ("toolpath-list-changed", "visual-item-updated"))
+                ("toolpath-list-changed", self.force_gtk_modelview_refresh))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_toolpath_tab_visibility()

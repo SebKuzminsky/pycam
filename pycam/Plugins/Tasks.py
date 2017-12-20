@@ -231,6 +231,10 @@ class Tasks(pycam.Plugins.ListPluginBase):
                     # break out of the loop, if cancel was requested
                     break
                 progress.update_multiple()
+        # This explicit event is necessary as the initial event hits the toolpath visualiation
+        # plugin while the path is being calculated (i.e.: it is not displayed without
+        # "show_progress").
+        self.core.emit_event("toolpath-list-changed")
 
     def _generate_selected_toolpaths(self, widget=None):
         tasks = self.get_selected()
