@@ -349,7 +349,8 @@ def _get_from_collection(collection_name, wanted, many=False):
         return default_result
     try:
         if many:
-            return tuple([collection[item_id] for item_id in wanted])
+            return tuple(collection[item_id] for item_id in wanted
+                         if collection[item_id] is not None)
         else:
             return collection[wanted]
     except KeyError:
