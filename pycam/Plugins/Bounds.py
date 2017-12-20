@@ -121,6 +121,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
                 ("bounds-changed", self._update_bounds_widgets),
                 ("bounds-changed", self.force_gtk_modelview_refresh),
                 ("bounds-list-changed", self.force_gtk_modelview_refresh),
+                ("bounds-list-changed", self._select_first_if_non_empty),
                 ("bounds-control-changed", self._transfer_controls_to_bounds)))
             self.register_gtk_handlers(self._gtk_handlers)
             self._update_model_list()
@@ -157,6 +158,15 @@ class Bounds(pycam.Plugins.ListPluginBase):
         else:
             text = "%g x %g x %g" % tuple([box.upper[i] - box.lower[i] for i in range(3)])
         cell.set_property("text", text)
+
+    def _select_first_if_non_empty(self):
+        """ automatically select a bounds item if none is selected and the list is not empty
+
+        Without this automatic selection the bounding box would not be visible directly after
+        startup.
+        """
+        if not self.get_selected() and (len(self.get_all()) > 0):
+            self.select(self.get_all()[0])
 
     def _update_model_list(self):
         choices = []
