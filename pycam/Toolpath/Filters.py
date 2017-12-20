@@ -460,7 +460,7 @@ def _get_num_converter(step_width):
 
 class StepWidth(BaseFilter):
 
-    PARAMS = ("step_width_x", "step_width_y", "step_width_z")
+    PARAMS = ("step_width", )
     NUM_OF_AXES = 3
     WEIGHT = 60
 
@@ -468,7 +468,7 @@ class StepWidth(BaseFilter):
         minimum_steps = []
         conv = []
         for key in "xyz":
-            minimum_steps.append(self.settings["step_width_%s" % key])
+            minimum_steps.append(self.settings["step_width"][key])
         for step_width in minimum_steps:
             conv.append(_get_num_converter(step_width)[0])
         last_pos = None

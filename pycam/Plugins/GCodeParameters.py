@@ -119,8 +119,7 @@ class GCodeStepWidth(pycam.Plugins.PluginBase):
                     "export-settings-control-changed"))
             self.core.register_ui("gcode_step_width", key.upper(), control.get_widget(),
                                   weight="xyz".index(key))
-            self.core.get("register_parameter")("toolpath_profile", "step_width_%s" % key,
-                                                control)
+            self.core.get("register_parameter")("toolpath_profile", ("step_width", key), control)
             self.controls.append((key, control))
         self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         return True
@@ -129,10 +128,10 @@ class GCodeStepWidth(pycam.Plugins.PluginBase):
         self.core.unregister_chain("toolpath_filters", self.get_toolpath_filters)
         for key, control in self.controls:
             self.core.unregister_ui("gcode_step_width", control)
-            self.core.get("unregister_parameter")("toolpath_profile", "step_width_%s" % key)
+            self.core.get("unregister_parameter")("toolpath_profile", ("step_width", key))
         self.core.unregister_ui("gcode_general_parameters", self._table.get_widget())
 
-    @Filters.toolpath_filter("settings", ("step_width_x", "step_width_y", "step_width_z"))
+    @Filters.toolpath_filter("settings", ("step_width", ))
     def get_toolpath_filters(self, **kwargs):
         return [Filters.StepWidth(**kwargs)]
 

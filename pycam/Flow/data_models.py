@@ -1351,9 +1351,7 @@ class ExportSettings(BaseCollectionItemDataContainer):
             elif filter_name == ToolpathFilter.PLUNGE_FEEDRATE:
                 result.append(tp_filters.PlungeFeedrate(float(parameters)))
             elif filter_name == ToolpathFilter.STEP_WIDTH:
-                result.append(tp_filters.StepWidth(float(parameters["x"]),
-                                                   float(parameters["y"]),
-                                                   float(parameters["z"])))
+                result.append(tp_filters.StepWidth({key: float(parameters[key]) for key in "xyz"}))
             elif filter_name == ToolpathFilter.CORNER_STYLE:
                 mode = _get_enum_value(pycam.Toolpath.ToolpathPathMode, parameters["mode"])
                 motion_tolerance = parameters.get("motion_tolerance", 0)
