@@ -20,7 +20,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import pycam.Plugins
 import pycam.Gui.ControlsGTK
 from pycam.Toolpath import ToolpathPathMode
-import pycam.Toolpath.Filters as Filters
 
 
 class GCodeSafetyHeight(pycam.Plugins.PluginBase):

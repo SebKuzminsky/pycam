@@ -265,7 +265,7 @@ class TriggerSpindle(BaseFilter):
             # add a single spin-up before the first move
             for index, step in enumerate(toolpath):
                 if step.action in MOVES_LIST:
-                    enable_spindle(toolpath, index)
+                    spin_up(toolpath, index)
                     break
         # add "stop spindle" just after the last move
         index = len(toolpath) - 1

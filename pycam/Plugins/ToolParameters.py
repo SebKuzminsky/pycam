@@ -20,7 +20,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Plugins
 from pycam.Gui.ControlsGTK import InputCheckBox, InputNumber
-from pycam.Toolpath.Filters import toolpath_filter
 
 
 class ToolParamRadius(pycam.Plugins.PluginBase):

@@ -20,7 +20,7 @@ script:
   - export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
   - debian/rules prep-source
   - make test
-  - python setup.py sdist
+  - ./setup.py sdist
   - pycam/run_gui.py --help
   - pycam/run_gui.py --version
   - dpkg-buildpackage -us -uc
