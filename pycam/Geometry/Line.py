@@ -135,8 +135,8 @@ class Line(IDGenerator, TransformableContainer):
         if v is None:
             # for zero-length lines
             return self.p1
-        l = pdot(self.p1, v) - pdot(p, v)
-        return psub(self.p1, pmul(v, l))
+        dist = pdot(self.p1, v) - pdot(p, v)
+        return psub(self.p1, pmul(v, dist))
 
     def dist_to_point(self, p):
         return pdist(p, self.closest_point(p))

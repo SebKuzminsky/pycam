@@ -69,9 +69,9 @@ class Plane(IDGenerator, TransformableContainer):
         denom = pdot(self.n, direction)
         if denom == 0:
             return (None, INFINITE)
-        l = -(pdot(self.n, point) - pdot(self.n, self.p)) / denom
-        cp = padd(point, pmul(direction, l))
-        return (cp, l)
+        l_len = -(pdot(self.n, point) - pdot(self.n, self.p)) / denom
+        cp = padd(point, pmul(direction, l_len))
+        return (cp, l_len)
 
     def intersect_triangle(self, triangle, counter_clockwise=False):
         """ Returns the line of intersection of a triangle with a plane.
@@ -86,11 +86,11 @@ class Plane(IDGenerator, TransformableContainer):
         for edge, point in ((triangle.e1, triangle.p1),
                             (triangle.e2, triangle.p2),
                             (triangle.e3, triangle.p3)):
-            cp, l = self.intersect_point(edge.dir, point)
+            cp, l_len = self.intersect_point(edge.dir, point)
             # filter all real collisions
             # We don't want to count vertices double -> thus we only accept
             # a distance that is lower than the length of the edge.
-            if (cp is not None) and (-epsilon < l < edge.len - epsilon):
+            if (cp is not None) and (-epsilon < l_len < edge.len - epsilon):
                 collisions.append(cp)
             elif (cp is None) and (pdot(self.n, edge.dir) == 0):
                 cp, dist = self.intersect_point(self.n, point)

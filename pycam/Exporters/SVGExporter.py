@@ -65,17 +65,17 @@ class SVGExporter(object):
         self._fill = fill
 
     def AddDot(self, x, y):
-        l = "<circle fill='%s' cx='%g' cy='%g' r='0.04'/>\n" % (self._fill, x, -y)
-        self.output.write(l)
+        item = "<circle fill='%s' cx='%g' cy='%g' r='0.04'/>\n" % (self._fill, x, -y)
+        self.output.write(item)
 
     def AddText(self, x, y, text):
-        l = "<text fill='%s' x='%g' y='%g' dx='0.07'>%s</text>\n" % (self._fill, x, -y, text)
-        self.output.write(l)
+        item = "<text fill='%s' x='%g' y='%g' dx='0.07'>%s</text>\n" % (self._fill, x, -y, text)
+        self.output.write(item)
 
     def AddLine(self, x1, y1, x2, y2):
-        l = ("<line fill='%s' stroke='%s' x1='%.8f' y1='%.8f' x2='%.8f' y2='%.8f' />\n"
-             % (self._fill, self._stroke, x1, -y1, x2, -y2))
-        self.output.write(l)
+        item = ("<line fill='%s' stroke='%s' x1='%.8f' y1='%.8f' x2='%.8f' y2='%.8f' />\n"
+                % (self._fill, self._stroke, x1, -y1, x2, -y2))
+        self.output.write(item)
 
     def AddPoint(self, p):
         self.AddDot(p[0], p[1])
@@ -84,15 +84,15 @@ class SVGExporter(object):
         self.AddLines(path.points)
 
     def AddLines(self, points):
-        l = "<path fill='%s' stroke='%s' d='" % (self._fill, self._stroke)
+        item = "<path fill='%s' stroke='%s' d='" % (self._fill, self._stroke)
         for i, p in enumerate(points):
             if i == 0:
-                l += "M "
+                item += "M "
             else:
-                l += " L "
-            l += "%.8f %.8f" % (p[0], -p[1])
-        l += "'/>\n"
-        self.output.write(l)
+                item += " L "
+            item += "%.8f %.8f" % (p[0], -p[1])
+        item += "'/>\n"
+        self.output.write(item)
 
     def AddPathList(self, pathlist):
         for path in pathlist:

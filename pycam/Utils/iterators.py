@@ -95,9 +95,9 @@ class CyclicIterator(object):
 
 
 if __name__ == "__main__":
-    l = [1, 2, 4, 6]
-    print("l=", l)
-    i = Iterator(l)
+    values = [1, 2, 4, 6]
+    print("l=", values)
+    i = Iterator(values)
     print(i.peek())
     while True:
         val = next(i)
@@ -107,8 +107,8 @@ if __name__ == "__main__":
             i.insertBefore(3)
             i.insert(5)
 
-    print("l=", l)
-    i = Iterator(l)
+    print("l=", values)
+    i = Iterator(values)
     print("peek(0)=", i.peek(0))
     print("peek(1)=", i.peek(1))
     print("i.next()=", next(i))
@@ -117,9 +117,9 @@ if __name__ == "__main__":
 
     print("remains=", i.remains())
 
-    print("l=", l)
+    print("l=", values)
     sum_value = 0
-    i = CyclicIterator(l)
+    i = CyclicIterator(values)
     print("cycle :"),
     while sum_value < 30:
         val = next(i)
@@ -127,8 +127,8 @@ if __name__ == "__main__":
         sum_value += val
     print("=", sum_value)
 
-    i = Iterator(l)
-    print("l=", l)
+    i = Iterator(values)
+    print("l=", values)
     next(i)
     next(i)
     print("next,next : ", i.peek())
@@ -136,4 +136,4 @@ if __name__ == "__main__":
     print("remove(2) : ", i.peek())
     i.remove(4)
     print("remove(4) : ", i.peek())
-    print("l=", l)
+    print("l=", values)

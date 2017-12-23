@@ -206,12 +206,12 @@ def intersect_sphere_point(center, radius, radiussq, direction, point):
     if d < 0:
         return (None, None, INFINITE)
     if a < 0:
-        l = (-b + sqrt(d)) / (2 * a)
+        dist = (-b + sqrt(d)) / (2 * a)
     else:
-        l = (-b - sqrt(d)) / (2 * a)
+        dist = (-b - sqrt(d)) / (2 * a)
     # cutter contact point
-    ccp = padd(point, pmul(direction, -l))
-    return (ccp, point, l)
+    ccp = padd(point, pmul(direction, -dist))
+    return (ccp, point, dist)
 
 
 def intersect_sphere_line(center, radius, radiussq, direction, edge):
@@ -279,8 +279,8 @@ def intersect_torus_point(center, axis, majorradius, minorradius, majorradiussq,
         l_sq = (point[0]-center[0]) ** 2 + (point[1] - center[1]) ** 2
         if (l_sq < minlsq + epsilon) or (l_sq > maxlsq - epsilon):
             return (None, None, INFINITE)
-        l = sqrt(l_sq)
-        z_sq = minorradiussq - (majorradius - l) ** 2
+        l_len = sqrt(l_sq)
+        z_sq = minorradiussq - (majorradius - l_len) ** 2
         if z_sq < 0:
             return (None, None, INFINITE)
         z = sqrt(z_sq)
@@ -291,12 +291,12 @@ def intersect_torus_point(center, axis, majorradius, minorradius, majorradiussq,
         z = point[2] - center[2]
         if abs(z) > minorradius - epsilon:
             return (None, None, INFINITE)
-        l = majorradius + sqrt(minorradiussq - z * z)
+        l_len = majorradius + sqrt(minorradiussq - z * z)
         n = pcross(axis, direction)
         d = pdot(n, point) - pdot(n, center)
-        if abs(d) > l - epsilon:
+        if abs(d) > l_len - epsilon:
             return (None, None, INFINITE)
-        a = sqrt(l * l - d * d)
+        a = sqrt(l_len * l_len - d * d)
         ccp = padd(padd(center, pmul(n, d)), pmul(direction, a))
         ccp = (ccp[0], ccp[1], point[2])
         dist = pdot(psub(point, ccp), direction)
@@ -322,7 +322,7 @@ def intersect_torus_point(center, axis, majorradius, minorradius, majorradiussq,
         if not r:
             return (None, None, INFINITE)
         else:
-            l = min(r)
-        ccp = padd(point, pmul(direction, -l))
-        dist = l
+            l_len = min(r)
+        ccp = padd(point, pmul(direction, -l_len))
+        dist = l_len
     return (ccp, point, dist)

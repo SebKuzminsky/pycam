@@ -201,31 +201,32 @@ class ToroidalCutter(BaseCutter):
     def intersect_circle_plane(self, direction, triangle, start=None):
         if start is None:
             start = self.location
-        ccp, cp, l = intersect_circle_plane(start, self.distance_majorradius, direction, triangle)
+        ccp, cp, l_len = intersect_circle_plane(start, self.distance_majorradius, direction,
+                                                triangle)
         # offset intersection
         if ccp:
             cl = psub(cp, psub(ccp, start))
-            return (cl, ccp, cp, l)
+            return (cl, ccp, cp, l_len)
         return (None, None, None, INFINITE)
 
     def intersect_circle_point(self, direction, point, start=None):
         if start is None:
             start = self.location
-        (ccp, cp, l) = intersect_circle_point(start, self.axis, self.distance_majorradius,
-                                              self.distance_majorradiussq, direction, point)
+        (ccp, cp, l_len) = intersect_circle_point(start, self.axis, self.distance_majorradius,
+                                                  self.distance_majorradiussq, direction, point)
         if ccp:
             cl = psub(cp, psub(ccp, start))
-            return (cl, ccp, point, l)
+            return (cl, ccp, point, l_len)
         return (None, None, None, INFINITE)
 
     def intersect_circle_line(self, direction, edge, start=None):
         if start is None:
             start = self.location
-        (ccp, cp, l) = intersect_circle_line(start, self.axis, self.distance_majorradius,
-                                             self.distance_majorradiussq, direction, edge)
+        (ccp, cp, l_len) = intersect_circle_line(start, self.axis, self.distance_majorradius,
+                                                 self.distance_majorradiussq, direction, edge)
         if ccp:
             cl = psub(cp, psub(ccp, start))
-            return (cl, ccp, cp, l)
+            return (cl, ccp, cp, l_len)
         return (None, None, None, INFINITE)
 
     def intersect(self, direction, triangle, start=None):
