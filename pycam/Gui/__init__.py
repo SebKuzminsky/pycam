@@ -220,9 +220,6 @@ class BaseUI(object):
             log.error("Failed to store workspace in file '%s': %s", filename, exc)
 
     def load_workspace_from_file(self, filename, remember_uri=True, default_content=None):
-        from pycam.Flow.data_models import CollectionName
-        from pycam.Flow.history import merge_history_and_block_events
-        from pycam.Flow.parser import parse_yaml
         if remember_uri:
             self.last_workspace_uri = pycam.Utils.URIHandler(filename)
             self.settings.emit_event("notify-file-opened", filename)
@@ -236,10 +233,7 @@ class BaseUI(object):
             else:
                 log.error("Failed to read workspace file (%s): %s", filename, exc)
                 return
-        with merge_history_and_block_events(self.settings):
-            parse_yaml(content,
-                       excluded_sections={CollectionName.TOOLPATHS, CollectionName.EXPORTS},
-                       reset=True)
+        self.load_workspace_from_description(content)
 
     def load_workspace_dialog(self, filename=None):
         if not filename:
@@ -266,3 +260,15 @@ class BaseUI(object):
         else:
             remember_uri = False
         self.save_workspace_to_file(filename, remember_uri=remember_uri)
+
+    def load_workspace_from_description(self, description):
+        from pycam.Flow.data_models import CollectionName
+        from pycam.Flow.history import merge_history_and_block_events
+        from pycam.Flow.parser import parse_yaml
+        with merge_history_and_block_events(self.settings):
+            parse_yaml(description,
+                       excluded_sections={CollectionName.TOOLPATHS, CollectionName.EXPORTS},
+                       reset=True)
+
+    def reset_workspace(self):
+        self.load_workspace_from_description(DEFAULT_WORKSPACE)

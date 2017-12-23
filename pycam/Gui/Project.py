@@ -293,6 +293,7 @@ class ProjectGui(pycam.Gui.BaseUI):
             self.gui.get_object(browse_button).connect("clicked",
                                                        self._browse_external_program_location, key)
         for objname, callback in (
+                ("ResetWorkspace", lambda widget: self.reset_workspace()),
                 ("LoadWorkspace", lambda widget: self.load_workspace_dialog()),
                 ("SaveWorkspace", lambda widget: self.save_workspace_dialog(
                     self.last_workspace_uri)),

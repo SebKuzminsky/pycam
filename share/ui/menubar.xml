@@ -12,6 +12,7 @@
       <separator />
     </menu>
     <menu action="SettingsMenu">
+      <menuitem action="ResetWorkspace"/>
       <menuitem action="LoadWorkspace"/>
       <menuitem action="SaveWorkspace"/>
       <menuitem action="SaveAsWorkspace"/>
