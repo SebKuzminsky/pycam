@@ -19,6 +19,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import pycam.Exporters.GCode
+from pycam.Flow.data_models import LengthUnit
 from pycam.Toolpath import ToolpathPathMode
 
 
@@ -43,11 +44,6 @@ class LinuxCNC(pycam.Exporters.GCode.BaseGenerator):
     def add_header(self):
         for command, comment in DEFAULT_HEADER:
             self.add_command(command, comment=comment)
-        # TODO: use a "unit" filter
-        if True:
-            self.add_command("G21", "metric")
-        else:
-            self.add_command("G20", "imperial")
 
     def add_footer(self):
         self.add_command("M2", "end program")
@@ -101,6 +97,14 @@ class LinuxCNC(pycam.Exporters.GCode.BaseGenerator):
     def command_delay(self, seconds):
         # "seconds" may be floats or integers
         self.add_command("G04 P{}".format(seconds), "wait for {} seconds".format(seconds))
+
+    def command_unit(self, unit):
+        if unit == LengthUnit.METRIC_MM:
+            self.add_command("G21", "metric")
+        elif unit == LengthUnit.IMPERIAL_INCH:
+            self.add_command("G20", "imperial")
+        else:
+            assert False, "Invalid unit requested: {}".format(unit)
 
     def command_corner_style(self, extra_args):
         path_mode, motion_tolerance, naive_tolerance = extra_args

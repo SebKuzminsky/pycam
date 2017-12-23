@@ -196,6 +196,7 @@ class ToolpathFilter(Enum):
     CORNER_STYLE = "corner_style"
     FILENAME_EXTENSION = "filename_extension"
     TOUCH_OFF = "touch_off"
+    UNIT = "unit"
 
 
 class ToolBoundaryMode(Enum):
@@ -207,6 +208,11 @@ class ToolBoundaryMode(Enum):
 class ModelType(Enum):
     TRIMESH = "trimesh"
     POLYGON = "polygon"
+
+
+class LengthUnit(Enum):
+    METRIC_MM = "metric_mm"
+    IMPERIAL_INCH = "imperial_inch"
 
 
 def _get_enum_value(enum_class, value):
@@ -1362,8 +1368,11 @@ class ExportSettings(BaseCollectionItemDataContainer):
     changed_event = "export-settings-changed"
     list_changed_event = "export-settings-list-changed"
 
+    attribute_converters = {("gcode", ToolpathFilter.UNIT.value): _get_enum_resolver(LengthUnit)}
+    attribute_defaults = {("gcode", ToolpathFilter.UNIT.value): LengthUnit.METRIC_MM}
+
     def get_settings_by_type(self, export_type):
-        return self.get_value(export_type, {})
+        return self.get_dict().get(export_type, {})
 
     def set_settings_by_type(self, export_type, value):
         return self.set_value(export_type, value)
@@ -1387,6 +1396,9 @@ class ExportSettings(BaseCollectionItemDataContainer):
             elif filter_name == ToolpathFilter.FILENAME_EXTENSION:
                 # this export setting is only used for filename dialogs
                 pass
+            elif filter_name == ToolpathFilter.UNIT:
+                unit = _get_enum_value(LengthUnit, parameters)
+                result.append(tp_filters.MachineSetting("unit", unit))
             elif filter_name == ToolpathFilter.TOUCH_OFF:
                 # TODO: implement this (see pycam/Exporters/GCodeExporter.py)
                 pass
