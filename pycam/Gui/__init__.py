@@ -130,8 +130,6 @@ export_settings:
             X-Application: { pycam-gtk: { name: Milling Settings } }
 """
 
-PICKLE_PROTOCOL = 2
-
 log = pycam.Utils.log.get_logger()
 
 

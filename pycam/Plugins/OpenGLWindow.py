@@ -73,7 +73,6 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             if drag_n_drop_func:
                 drag_n_drop_func(self.window)
             self.initialized = False
-            self.busy = False
             self.is_visible = False
             self._last_view = VIEWS["reset"]
             self._position = [200, 200]

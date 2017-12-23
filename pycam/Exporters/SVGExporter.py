@@ -77,12 +77,6 @@ class SVGExporter:
                 % (self._fill, self._stroke, x1, -y1, x2, -y2))
         self.output.write(item)
 
-    def AddPoint(self, p):
-        self.AddDot(p[0], p[1])
-
-    def AddPath(self, path):
-        self.AddLines(path.points)
-
     def AddLines(self, points):
         item = "<path fill='%s' stroke='%s' d='" % (self._fill, self._stroke)
         for i, p in enumerate(points):
@@ -93,10 +87,6 @@ class SVGExporter:
             item += "%.8f %.8f" % (p[0], -p[1])
         item += "'/>\n"
         self.output.write(item)
-
-    def AddPathList(self, pathlist):
-        for path in pathlist:
-            self.AddPath(path)
 
 
 # TODO: we need to create a unified "Exporter" interface and base class

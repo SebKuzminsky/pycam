@@ -40,8 +40,6 @@ class Bounds(pycam.Plugins.ListPluginBase):
                        "BoundaryLowY", "BoundaryLowZ", "BoundaryHighX",
                        "BoundaryHighY", "BoundaryHighZ")
     CONTROL_SIGNALS = ("toggled", "value-changed", "changed")
-    CONTROL_GET = ("get_active", "get_value")
-    CONTROL_SET = ("set_active", "set_value")
 
     def setup(self):
         self._event_handlers = []

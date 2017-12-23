@@ -327,16 +327,6 @@ class Toolpath(DimensionalObject):
         self.opengl_safety_height = safety_height
         self.opengl_lines = outpaths
 
-    def get_machine_setting(self, key, default=None):
-        """ look for the first appearance of a machine setting (e.g. feedrate,
-        safety height, metric/imperial, ...). Additional occourences of this
-        setting are ignored.
-        """
-        for step in self.path:
-            if (step.action == MACHINE_SETTING) and (step.key == key):
-                return step.value
-        return default
-
     def get_machine_time(self, safety_height=0.0):
         """ calculate an estimation of the time required for processing the
         toolpath with the machine
@@ -420,24 +410,6 @@ class Bounds:
         return "Bounds(%s, %s, %s)" % (bounds_type_labels[self.bounds_type],
                                        self.bounds_low, self.bounds_high)
 
-    def is_valid(self):
-        for index in range(3):
-            if self.bounds_low[index] > self.bounds_high[index]:
-                return False
-        return True
-
-    def set_reference(self, reference):
-        self.reference = reference
-
-    def set_name(self, name):
-        self.name = name
-
-    def get_name(self):
-        return self.name
-
-    def get_type(self):
-        return self.bounds_type
-
     def set_type(self, bounds_type):
         # complain if an unknown bounds_type value was given
         if bounds_type not in (Bounds.TYPE_RELATIVE_MARGIN, Bounds.TYPE_FIXED_MARGIN,
@@ -446,11 +418,6 @@ class Bounds:
                              "invalid value of 'bounds_type': %s" % repr(bounds_type))
         else:
             self.bounds_type = bounds_type
-
-    def get_referenced_bounds(self, reference):
-        return Bounds(self.bounds_type,
-                      Box3D(Point3D(*self.bounds_low), Point3D(*self.bounds_high)),
-                      reference=reference)
 
     def get_bounds(self):
         return Box3D(Point3D(*self.bounds_low), Point3D(*self.bounds_high))
@@ -503,61 +470,3 @@ class Bounds:
                                       "implemented for the bounds_type '%s'"
                                       % str(self.bounds_type))
         return Box3D(Point3D(low), Point3D(high))
-
-    def adjust_bounds_to_absolute_limits(self, box_limit, reference=None):
-        """ change the current bounds settings according to some absolute values
-
-        This does not change the type of this bounds instance (e.g. relative).
-        @value box_limit: the maximum allowed box
-        @type box_limit: Box3D
-        @value reference: a reference object described by a tuple (or list) of
-            three item. These three values describe only the lower boundary of
-            this object (for the x, y and z axes). Each item must be a float
-            value. This argument is ignored for the boundary type "TYPE_CUSTOM".
-        @type reference: (tuple|list) of float
-        """
-        # use the default reference if none was given
-        if reference is None:
-            reference = self.reference
-        # check if a reference is given (if necessary)
-        if self.bounds_type \
-                in (Bounds.TYPE_RELATIVE_MARGIN, Bounds.TYPE_FIXED_MARGIN):
-            if reference is None:
-                raise ValueError("any non-custom boundary definition requires an a reference "
-                                 "object for calculating absolute limits")
-            else:
-                ref_low, ref_high = reference.get_absolute_limits()
-        # calculate the new settings
-        if self.bounds_type == Bounds.TYPE_RELATIVE_MARGIN:
-            for index in range(3):
-                dim_width = ref_high[index] - ref_low[index]
-                if dim_width == 0:
-                    # We always loose relative margins if the specific dimension
-                    # is zero. There is no way to avoid this.
-                    message = ("Non-zero %s boundary lost during conversion to relative margins "
-                               "due to zero size dimension '%s'." % "xyz"[index])
-                    # Display warning messages, if we can't reach the requested
-                    # absolute dimension.
-                    if ref_low[index] != box_limit.lower[index]:
-                        _log.info(message, "lower")
-                    if ref_high[index] != box_limit.upper[index]:
-                        _log.info(message, "upper")
-                    self.bounds_low[index] = 0
-                    self.bounds_high[index] = 0
-                else:
-                    self.bounds_low[index] = (ref_low[index] - box_limit.lower[index]) / dim_width
-                    self.bounds_high[index] = ((box_limit.upper[index] - ref_high[index])
-                                               / dim_width)
-        elif self.bounds_type == Bounds.TYPE_FIXED_MARGIN:
-            for index in range(3):
-                self.bounds_low[index] = ref_low[index] - box_limit.lower[index]
-                self.bounds_high[index] = box_limit.upper[index] - ref_high[index]
-        elif self.bounds_type == Bounds.TYPE_CUSTOM:
-            for index in range(3):
-                self.bounds_low[index] = box_limit.lower[index]
-                self.bounds_high[index] = box_limit.upper[index]
-        else:
-            # this should not happen
-            raise NotImplementedError("the function 'adjust_bounds_to_absolute_limits' is "
-                                      "currently not implemented for the bounds_type '%s'"
-                                      % str(self.bounds_type))
