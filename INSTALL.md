@@ -11,14 +11,15 @@
 Install the following packages with your package manager:
 
 ```
-python
-python-gi
+python3
+python3-gi
+python3-opengl
 gir1.2-gtk-3.0
 ```
 
 On a Debian or Ubuntu system, you would just type the following:
 ```bash
-sudo apt install python-gi gir1.2-gtk-3.0
+sudo apt install python3-gi python3-opengl gir1.2-gtk-3.0
 ```
 Please note that you need to enable the `universe` repository in Ubuntu.
 
@@ -33,7 +34,7 @@ sudo docker run -it \
     -v ~/.Xauthority:/root/.Xauthority \
     -e DISPLAY \
     --net=host \
-    pycam/pycam
+    pycam/run_gui.py
 ```
 
 ## macOS
@@ -46,6 +47,7 @@ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/
 ```
 
 2\. Install the dependencies (currently only for Python2):
+TODO: adjust for Python3
 ```bash
 brew install gtk+3 pygobject3
 pip install pygobject enum34
@@ -85,7 +87,7 @@ docker run -it \
     -v ~/Documents:/root/Documents \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -e DISPLAY=$IP:0 \
-    pycam/pycam
+    pycam/run_gui.py
 ```
 
 # Minimal requirements for non-GUI mode
