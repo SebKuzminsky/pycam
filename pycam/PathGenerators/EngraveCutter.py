@@ -25,8 +25,8 @@ log = pycam.Utils.log.get_logger()
 
 class EngraveCutter:
 
-    def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None,
-                         draw_callback=None):
+    def generate_toolpath(self, cutter, models, motion_grid, minz=None, maxz=None,
+                          draw_callback=None):
         quit_requested = False
 
         model = pycam.Geometry.Model.get_combined_model(models)
@@ -50,7 +50,7 @@ class EngraveCutter:
                 quit_requested = True
                 break
             # no callback: otherwise the status text gets lost
-            push_moves.extend(push_generator.GenerateToolPath(cutter, [model], [push_layer]))
+            push_moves.extend(push_generator.generate_toolpath(cutter, [model], [push_layer]))
             if draw_callback and draw_callback():
                 # cancel requested
                 quit_requested = True
@@ -65,6 +65,6 @@ class EngraveCutter:
         if draw_callback:
             draw_callback(
                 text="Engrave: processing layer %d/%d" % (current_layer + 1, num_of_layers))
-        drop_moves = drop_generator.GenerateToolPath(cutter, [model], drop_layers, minz=minz,
-                                                     maxz=maxz, draw_callback=draw_callback)
+        drop_moves = drop_generator.generate_toolpath(cutter, [model], drop_layers, minz=minz,
+                                                      maxz=maxz, draw_callback=draw_callback)
         return push_moves + drop_moves

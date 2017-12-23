@@ -80,11 +80,11 @@ def poly3_roots(a, b, c, d):
     delta = b * b * INV_4 + delta * a * INV_27
     if delta > 0:
         r_delta = sqrt(delta)
-        A = -INV_2 * b + r_delta
-        B = -INV_2 * b - r_delta
-        A = cuberoot(A)
-        B = cuberoot(B)
-        return (A + B - c1_3, )
+        v_major_p3 = -INV_2 * b + r_delta
+        v_minor_p3 = -INV_2 * b - r_delta
+        v_major = cuberoot(v_major_p3)
+        v_minor = cuberoot(v_minor_p3)
+        return (v_major + v_minor - c1_3, )
     elif delta == 0:
         b_2 = -b * INV_2
         s = cuberoot(b_2)
@@ -128,12 +128,12 @@ def poly4_roots(a, b, c, d, e):
     if not roots3:
         return None
     if len(roots3) == 1:
-        U = roots3[0]
+        u = roots3[0]
     else:
-        U = max(roots3[0], roots3[1], roots3[2])
-    p = c1 * c1 * INV_4 + U - c2
-    U *= INV_2
-    q = U * U - c4
+        u = max(roots3[0], roots3[1], roots3[2])
+    p = c1 * c1 * INV_4 + u - c2
+    u *= INV_2
+    q = u * u - c4
     if p < 0:
         if p < -SMALL:
             return None
@@ -150,8 +150,8 @@ def poly4_roots(a, b, c, d, e):
     quad1 = [1.0, c1 * INV_2 - p, 0]
     quad2 = [1.0, c1 * INV_2 + p, 0]
 
-    q1 = U - q
-    q2 = U + q
+    q1 = u - q
+    q2 = u + q
     p = quad1[1] * q2 + quad2[1] * q1 - c3
     if near_zero(p):
         quad1[2] = q1

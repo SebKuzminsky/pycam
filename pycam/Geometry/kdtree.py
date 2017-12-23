@@ -63,13 +63,13 @@ def find_max_spread(nodes):
     return (maxspreaddim, maxspread)
 
 
-class kdtree(IDGenerator):
+class Kdtree(IDGenerator):
 
     __slots__ = ["bucket", "dim", "cutoff", "cutoff_distance", "nodes", "cutdim", "minval",
                  "maxval", "cutval", "hi", "lo"]
 
     def __init__(self, nodes, cutoff, cutoff_distance):
-        super(kdtree, self).__init__()
+        super(Kdtree, self).__init__()
         self.bucket = False
         if nodes and len(nodes) > 0:
             self.dim = len(nodes[0].bound)
@@ -94,8 +94,8 @@ class kdtree(IDGenerator):
                 self.minval = nodes[0].bound[cutdim]
                 self.maxval = nodes[-1].bound[cutdim]
                 self.cutval = nodes[median].bound[cutdim]
-                self.lo = kdtree(nodes[0:median], cutoff, cutoff_distance)
-                self.hi = kdtree(nodes[median:], cutoff, cutoff_distance)
+                self.lo = Kdtree(nodes[0:median], cutoff, cutoff_distance)
+                self.hi = Kdtree(nodes[median:], cutoff, cutoff_distance)
 
     def __repr__(self):
         if self.bucket:
@@ -110,7 +110,7 @@ class kdtree(IDGenerator):
         else:
             return "(%s,%d:%g,%s)" % (self.lo, self.cutdim, self.cutval, self.hi)
 
-    def to_OpenGL(self, minx, maxx, miny, maxy, minz, maxz):
+    def to_opengl(self, minx, maxx, miny, maxy, minz, maxz):
         if not GL_enabled:
             return
         if self.bucket:
@@ -144,31 +144,31 @@ class kdtree(IDGenerator):
             GL.glEnd()
         elif self.dim == 6:
             if self.cutdim == 0 or self.cutdim == 2:
-                self.lo.to_OpenGL(minx, self.cutval, miny, maxy, minz, maxz)
-                self.hi.to_OpenGL(self.cutval, maxx, miny, maxy, minz, maxz)
+                self.lo.to_opengl(minx, self.cutval, miny, maxy, minz, maxz)
+                self.hi.to_opengl(self.cutval, maxx, miny, maxy, minz, maxz)
             elif self.cutdim == 1 or self.cutdim == 3:
-                self.lo.to_OpenGL(minx, maxx, miny, self.cutval, minz, maxz)
-                self.hi.to_OpenGL(minx, maxx, self.cutval, maxy, minz, maxz)
+                self.lo.to_opengl(minx, maxx, miny, self.cutval, minz, maxz)
+                self.hi.to_opengl(minx, maxx, self.cutval, maxy, minz, maxz)
             elif self.cutdim == 4 or self.cutdim == 5:
-                self.lo.to_OpenGL(minx, maxx, miny, maxx, minz, self.cutval)
-                self.hi.to_OpenGL(minx, maxx, miny, maxy, self.cutval, maxz)
+                self.lo.to_opengl(minx, maxx, miny, maxx, minz, self.cutval)
+                self.hi.to_opengl(minx, maxx, miny, maxy, self.cutval, maxz)
         elif self.dim == 4:
             if self.cutdim == 0 or self.cutdim == 2:
-                self.lo.to_OpenGL(minx, self.cutval, miny, maxy, minz, maxz)
-                self.hi.to_OpenGL(self.cutval, maxx, miny, maxy, minz, maxz)
+                self.lo.to_opengl(minx, self.cutval, miny, maxy, minz, maxz)
+                self.hi.to_opengl(self.cutval, maxx, miny, maxy, minz, maxz)
             elif self.cutdim == 1 or self.cutdim == 3:
-                self.lo.to_OpenGL(minx, maxx, miny, self.cutval, minz, maxz)
-                self.hi.to_OpenGL(minx, maxx, self.cutval, maxy, minz, maxz)
+                self.lo.to_opengl(minx, maxx, miny, self.cutval, minz, maxz)
+                self.hi.to_opengl(minx, maxx, self.cutval, maxy, minz, maxz)
         elif self.dim == 3:
             if self.cutdim == 0:
-                self.lo.to_OpenGL(minx, self.cutval, miny, maxy, minz, maxz)
-                self.hi.to_OpenGL(self.cutval, maxx, miny, maxy, minz, maxz)
+                self.lo.to_opengl(minx, self.cutval, miny, maxy, minz, maxz)
+                self.hi.to_opengl(self.cutval, maxx, miny, maxy, minz, maxz)
             elif self.cutdim == 1:
-                self.lo.to_OpenGL(minx, maxx, miny, self.cutval, minz, maxz)
-                self.hi.to_OpenGL(minx, maxx, self.cutval, maxy, minz, maxz)
+                self.lo.to_opengl(minx, maxx, miny, self.cutval, minz, maxz)
+                self.hi.to_opengl(minx, maxx, self.cutval, maxy, minz, maxz)
             elif self.cutdim == 2:
-                self.lo.to_OpenGL(minx, maxx, miny, maxy, minz, self.cutval)
-                self.hi.to_OpenGL(minx, maxx, miny, maxy, self.cutval, maxz)
+                self.lo.to_opengl(minx, maxx, miny, maxy, minz, self.cutval)
+                self.hi.to_opengl(minx, maxx, miny, maxy, self.cutval, maxz)
 
     def dist(self, n1, n2):
         dist = 0
@@ -222,8 +222,8 @@ class kdtree(IDGenerator):
                 self.minval = self.nodes[0].bound[cutdim]
                 self.maxval = self.nodes[-1].bound[cutdim]
                 self.cutval = self.nodes[median].bound[cutdim]
-                self.lo = kdtree(self.nodes[0:median], self.cutoff, self.cutoff_distance)
-                self.hi = kdtree(self.nodes[median:], self.cutoff, self.cutoff_distance)
+                self.lo = Kdtree(self.nodes[0:median], self.cutoff, self.cutoff_distance)
+                self.hi = Kdtree(self.nodes[median:], self.cutoff, self.cutoff_distance)
         else:
             if node.bound[self.cutdim] <= self.cutval:
                 self.lo.insert(node)

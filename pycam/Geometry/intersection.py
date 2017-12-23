@@ -311,13 +311,14 @@ def intersect_torus_point(center, axis, majorradius, minorradius, majorradiussq,
         x1_x1 = pdot(x1, x1)
         x1_v1 = pdot(x1, v1)
         v1_v1 = pdot(v1, v1)
-        R2 = majorradiussq
-        r2 = minorradiussq
+        r2_major = majorradiussq
+        r2_minor = minorradiussq
         a = 1.0
         b = 4 * x_v
-        c = 2 * (x_x + 2 * x_v ** 2 + (R2 - r2) - 2 * R2 * v1_v1)
-        d = 4 * (x_x * x_v + x_v * (R2 - r2) - 2 * R2 * x1_v1)
-        e = (x_x) ** 2 + 2 * x_x * (R2 - r2) + (R2 - r2) ** 2 - 4 * R2 * x1_x1
+        c = 2 * (x_x + 2 * x_v ** 2 + (r2_major - r2_minor) - 2 * r2_major * v1_v1)
+        d = 4 * (x_x * x_v + x_v * (r2_major - r2_minor) - 2 * r2_major * x1_v1)
+        e = ((x_x) ** 2 + 2 * x_x * (r2_major - r2_minor) + (r2_major - r2_minor) ** 2
+             - 4 * r2_major * x1_x1)
         r = poly4_roots(a, b, c, d, e)
         if not r:
             return (None, None, INFINITE)

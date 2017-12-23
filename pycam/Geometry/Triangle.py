@@ -102,7 +102,7 @@ class Triangle(IDGenerator, TransformableContainer):
         # tree points per triangle
         return 7
 
-    def to_OpenGL(self, color=None, show_directions=False):
+    def to_opengl(self, color=None, show_directions=False):
         if not GL_enabled:
             return
         if color is not None:
@@ -199,12 +199,12 @@ class Triangle(IDGenerator, TransformableContainer):
         denom = dot00 * dot11 - dot01 * dot01
         if denom == 0:
             return False
-        invDenom = 1.0 / denom
+        inv_denom = 1.0 / denom
         # Originally, "u" and "v" are multiplied with "1/denom".
         # We don't do this to avoid division by zero (for triangles that are
         # "almost" invalid).
-        u = (dot11 * dot02 - dot01 * dot12) * invDenom
-        v = (dot00 * dot12 - dot01 * dot02) * invDenom
+        u = (dot11 * dot02 - dot01 * dot12) * inv_denom
+        v = (dot00 * dot12 - dot01 * dot02) * inv_denom
         # Check if point is in triangle
         return (u > 0) and (v > 0) and (u + v < 1)
 

@@ -42,7 +42,7 @@ class CylindricalCutter(BaseCutter):
     def __repr__(self):
         return "CylindricalCutter<%s,%s>" % (self.location, self.radius)
 
-    def to_OpenGL(self):
+    def to_opengl(self):
         if not GL_enabled:
             return
         GL.glPushMatrix()

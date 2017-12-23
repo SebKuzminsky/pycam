@@ -142,17 +142,15 @@ def check_dependencies(details):
 
 def get_dependency_report(details, prefix=""):
     result = []
-    DESC_COL = 0
+    columns = {"description": 0, "advice": 1}
     if sys.platform.startswith("win"):
-        ADVICE_COL = 2
-    else:
-        ADVICE_COL = 1
+        columns["advice"] = 2
     for key, state in details.items():
-        text = "%s%s: " % (prefix, DEPENDENCY_DESCRIPTION[key][DESC_COL])
+        text = "%s%s: " % (prefix, DEPENDENCY_DESCRIPTION[key][columns["description"]])
         if state:
             text += "OK"
         else:
-            text += "MISSING (%s)" % DEPENDENCY_DESCRIPTION[key][ADVICE_COL]
+            text += "MISSING (%s)" % DEPENDENCY_DESCRIPTION[key][columns["advice"]]
         result.append(text)
     return os.linesep.join(result)
 

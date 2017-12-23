@@ -152,13 +152,13 @@ class PolygonExtractor:
                         self.svg.fill("red")
                     else:
                         self.svg.fill("blue")
-                    self.svg.AddDot(p[0], p[1])
-                    self.svg.AddText(p[0], p[1], str(p.id))
+                    self.svg.add_dot(p[0], p[1])
+                    self.svg.add_text(p[0], p[1], str(p.id))
                     if prev:
-                        self.svg.AddLine(p[0], p[1], prev[0], prev[1])
+                        self.svg.add_line(p[0], p[1], prev[0], prev[1])
                     prev = p
                 p = path.points[0]
-                self.svg.AddLine(p[0], p[1], prev[0], prev[1])
+                self.svg.add_line(p[0], p[1], prev[0], prev[1])
 
             self.svg.close()
             self.cont.close()
@@ -172,8 +172,8 @@ class PolygonExtractor:
     def append(self, p):
         if DEBUG_POLYGONEXTRACTOR3:
             p.dir = self.current_dir
-            self.svg.AddDot(p[0], p[1])
-            self.svg.AddText(p[0], p[1], str(p.id))
+            self.svg.add_dot(p[0], p[1])
+            self.svg.add_text(p[0], p[1], str(p.id))
         self.curr_line.append(p)
 
     def end_scanline(self):
@@ -255,12 +255,12 @@ class PolygonExtractor:
 
             if (prev_point.remains() >= 2) and (curr_point.remains() == 0):
                 # old path ends
-                p0 = curr_path.takeNext()
+                p0 = curr_path.take_next()
                 if DEBUG_POLYGONEXTRACTOR:
                     print("end path %d" % p0.id)
                 self.all_path_list.append(p0)
                 next(prev_point)
-                p1 = curr_path.takeNext()
+                p1 = curr_path.take_next()
                 if DEBUG_POLYGONEXTRACTOR:
                     print("end path %d" % p1.id)
                 self.all_path_list.append(p1)
@@ -301,12 +301,12 @@ class PolygonExtractor:
                 elif c0[0] > p1[0]:
                     # new segment is completely to the right
                     # old path ends
-                    s0 = curr_path.takeNext()
+                    s0 = curr_path.take_next()
                     if DEBUG_POLYGONEXTRACTOR:
                         print("end path %d" % s0.id)
                     self.all_path_list.append(s0)
                     next(prev_point)
-                    s1 = curr_path.takeNext()
+                    s1 = curr_path.take_next()
                     if DEBUG_POLYGONEXTRACTOR:
                         print("end path %d" % s1.id)
                     self.all_path_list.append(s1)
@@ -338,8 +338,8 @@ class PolygonExtractor:
                             if p2[0] <= c1[0]:
                                 overlap_p = True
                                 if self.policy == PolygonExtractor.CONTOUR:
-                                    s0 = curr_path.takeNext()
-                                    s1 = curr_path.takeNext()
+                                    s0 = curr_path.take_next()
+                                    s1 = curr_path.take_next()
                                     if curr_path.remains() >= 1:
                                         right_path = curr_path.peek()
                                     self.all_path_list.append(s0)
@@ -349,7 +349,7 @@ class PolygonExtractor:
                                     s0.bot_join = s1
                                     s1.bot_join = s0
                                 elif self.policy == PolygonExtractor.MONOTONE:
-                                    s0 = curr_path.takeNext()
+                                    s0 = curr_path.take_next()
                                     left_path.bot_join = s0
                                     s0.bot_join = left_path
                                     if DEBUG_POLYGONEXTRACTOR:
@@ -396,8 +396,8 @@ class PolygonExtractor:
                                 elif self.policy == PolygonExtractor.MONOTONE:
                                     s0.append(left_point)
                                     s1.append(c1)
-                                    curr_path.insertBefore(s0)
-                                    curr_path.insertBefore(s1)
+                                    curr_path.insert_before(s0)
+                                    curr_path.insert_before(s1)
                                     left_point = c2
                                 if curr_point.remains() >= 1:
                                     c1 = curr_point.peek(0)
@@ -436,11 +436,11 @@ class PolygonExtractor:
                     self.cont.fill("red")
                 else:
                     self.cont.fill("blue")
-                self.cont.AddDot(p[0], p[1])
+                self.cont.add_dot(p[0], p[1])
                 self.cont.fill("black")
-                self.cont.AddText(p[0], p[1], str(p.id))
+                self.cont.add_text(p[0], p[1], str(p.id))
                 if prev:
-                    self.cont.AddLine(prev[0], prev[1], p[0], p[1])
+                    self.cont.add_line(prev[0], prev[1], p[0], p[1])
                 prev = p
 
         if DEBUG_POLYGONEXTRACTOR:
@@ -503,12 +503,12 @@ class PolygonExtractor:
 
             if (prev_point.remains() >= 2) and (curr_point.remains() == 0):
                 # old path ends
-                p0 = curr_path.takeNext()
+                p0 = curr_path.take_next()
                 if DEBUG_POLYGONEXTRACTOR:
                     print("end path %d" % p0.id)
                 self.all_path_list.append(p0)
                 next(prev_point)
-                p1 = curr_path.takeNext()
+                p1 = curr_path.take_next()
                 if DEBUG_POLYGONEXTRACTOR:
                     print("end path %d" % p1.id)
                 self.all_path_list.append(p1)
@@ -549,12 +549,12 @@ class PolygonExtractor:
                 elif c0[1] > p1[1]:
                     # new segment is completely to the right
                     # old path ends
-                    s0 = curr_path.takeNext()
+                    s0 = curr_path.take_next()
                     if DEBUG_POLYGONEXTRACTOR:
                         print("end path %d" % s0.id)
                     self.all_path_list.append(s0)
                     next(prev_point)
-                    s1 = curr_path.takeNext()
+                    s1 = curr_path.take_next()
                     if DEBUG_POLYGONEXTRACTOR:
                         print("end path %d" % s1.id)
                     self.all_path_list.append(s1)
@@ -586,8 +586,8 @@ class PolygonExtractor:
                             if p2[1] <= c1[1]:
                                 overlap_p = True
                                 if self.policy == PolygonExtractor.CONTOUR:
-                                    s0 = curr_path.takeNext()
-                                    s1 = curr_path.takeNext()
+                                    s0 = curr_path.take_next()
+                                    s1 = curr_path.take_next()
                                     if curr_path.remains() >= 1:
                                         right_path = curr_path.peek()
                                     self.all_path_list.append(s0)
@@ -597,7 +597,7 @@ class PolygonExtractor:
                                     s0.bot_join = s1
                                     s1.bot_join = s0
                                 elif self.policy == PolygonExtractor.MONOTONE:
-                                    s0 = curr_path.takeNext()
+                                    s0 = curr_path.take_next()
                                     left_path.bot_join = s0
                                     s0.bot_join = left_path
                                     if DEBUG_POLYGONEXTRACTOR:
@@ -644,8 +644,8 @@ class PolygonExtractor:
                                 elif self.policy == PolygonExtractor.MONOTONE:
                                     s0.append(left_point)
                                     s1.append(c1)
-                                    curr_path.insertBefore(s0)
-                                    curr_path.insertBefore(s1)
+                                    curr_path.insert_before(s0)
+                                    curr_path.insert_before(s1)
                                     left_point = c2
                                 if curr_point.remains() >= 1:
                                     c1 = curr_point.peek(0)

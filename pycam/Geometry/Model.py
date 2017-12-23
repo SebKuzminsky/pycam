@@ -278,7 +278,7 @@ class Model(BaseModel):
             # update the kdtree, if new triangles were added meanwhile
             if self._dirty:
                 self._update_caches()
-            return self._t_kdtree.Search(minx, maxx, miny, maxy)
+            return self._t_kdtree.search(minx, maxx, miny, maxy)
         return self._triangles
 
     def get_waterline_contour(self, plane, callback=None):

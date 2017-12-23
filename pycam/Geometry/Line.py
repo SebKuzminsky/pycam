@@ -151,7 +151,7 @@ class Line(IDGenerator, TransformableContainer):
         # point is self.p1 or self.p2.
         return (dir1 == dir2 == self.dir) or (dir1 is None) or (dir2 is None)
 
-    def to_OpenGL(self, color=None, show_directions=False):
+    def to_opengl(self, color=None, show_directions=False):
         if not GL_enabled:
             return
         if color is not None:

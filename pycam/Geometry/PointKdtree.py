@@ -18,10 +18,10 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pycam.Geometry import epsilon
-from pycam.Geometry.kdtree import Node, kdtree
+from pycam.Geometry.kdtree import Node, Kdtree
 
 
-class PointKdtree(kdtree):
+class PointKdtree(Kdtree):
 
     __slots__ = ["_n", "tolerance"]
 
@@ -34,7 +34,7 @@ class PointKdtree(kdtree):
         for p in points:
             n = Node(p, p)
             nodes.append(n)
-        kdtree.__init__(self, nodes, cutoff, cutoff_distance)
+        Kdtree.__init__(self, nodes, cutoff, cutoff_distance)
 
     def dist(self, n1, n2):
         dx = n1.bound[0]-n2.bound[0]
@@ -42,7 +42,7 @@ class PointKdtree(kdtree):
         dz = n1.bound[2]-n2.bound[2]
         return dx*dx+dy*dy+dz*dz
 
-    def Point(self, x, y, z):
+    def point(self, x, y, z):
         if self._n:
             n = self._n
             n.bound = (x, y, z)

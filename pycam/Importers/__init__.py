@@ -41,7 +41,7 @@ def detect_file_type(filename, quiet=False):
     # check all listed importers
     # TODO: this should be done by evaluating the header of the file
     if filename.lower().endswith(".stl"):
-        return DetectedFileType("stl", pycam.Importers.STLImporter.ImportModel, uri)
+        return DetectedFileType("stl", pycam.Importers.STLImporter.import_model, uri)
     elif filename.lower().endswith(".dxf"):
         return DetectedFileType("dxf", pycam.Importers.DXFImporter.import_model, uri)
     elif filename.lower().endswith(".svg"):

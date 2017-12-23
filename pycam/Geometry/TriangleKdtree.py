@@ -17,12 +17,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Geometry.kdtree import kdtree, Node
+from pycam.Geometry.kdtree import Kdtree, Node
 
 overlaptest = True
 
 
-def SearchKdtree2d(tree, minx, maxx, miny, maxy):
+def search_kdtree_2d(tree, minx, maxx, miny, maxy):
     if tree.bucket:
         triangles = []
         for n in tree.nodes:
@@ -40,37 +40,37 @@ def SearchKdtree2d(tree, minx, maxx, miny, maxy):
             if maxx < tree.minval:
                 return []
             elif maxx < tree.cutval:
-                return SearchKdtree2d(tree.lo, minx, maxx, miny, maxy)
+                return search_kdtree_2d(tree.lo, minx, maxx, miny, maxy)
             else:
-                return SearchKdtree2d(tree.lo, minx, maxx, miny, maxy) \
-                        + SearchKdtree2d(tree.hi, minx, maxx, miny, maxy)
+                return (search_kdtree_2d(tree.lo, minx, maxx, miny, maxy)
+                        + search_kdtree_2d(tree.hi, minx, maxx, miny, maxy))
         elif tree.cutdim == 1:
             if minx > tree.maxval:
                 return []
             elif minx > tree.cutval:
-                return SearchKdtree2d(tree.hi, minx, maxx, miny, maxy)
+                return search_kdtree_2d(tree.hi, minx, maxx, miny, maxy)
             else:
-                return SearchKdtree2d(tree.lo, minx, maxx, miny, maxy) \
-                        + SearchKdtree2d(tree.hi, minx, maxx, miny, maxy)
+                return (search_kdtree_2d(tree.lo, minx, maxx, miny, maxy)
+                        + search_kdtree_2d(tree.hi, minx, maxx, miny, maxy))
         elif tree.cutdim == 2:
             if maxy < tree.minval:
                 return []
             elif maxy < tree.cutval:
-                return SearchKdtree2d(tree.lo, minx, maxx, miny, maxy)
+                return search_kdtree_2d(tree.lo, minx, maxx, miny, maxy)
             else:
-                return SearchKdtree2d(tree.lo, minx, maxx, miny, maxy) \
-                        + SearchKdtree2d(tree.hi, minx, maxx, miny, maxy)
+                return (search_kdtree_2d(tree.lo, minx, maxx, miny, maxy)
+                        + search_kdtree_2d(tree.hi, minx, maxx, miny, maxy))
         elif tree.cutdim == 3:
             if miny > tree.maxval:
                 return []
             elif miny > tree.cutval:
-                return SearchKdtree2d(tree.hi, minx, maxx, miny, maxy)
+                return search_kdtree_2d(tree.hi, minx, maxx, miny, maxy)
             else:
-                return SearchKdtree2d(tree.lo, minx, maxx, miny, maxy) \
-                        + SearchKdtree2d(tree.hi, minx, maxx, miny, maxy)
+                return (search_kdtree_2d(tree.lo, minx, maxx, miny, maxy)
+                        + search_kdtree_2d(tree.hi, minx, maxx, miny, maxy))
 
 
-class TriangleKdtree(kdtree):
+class TriangleKdtree(Kdtree):
 
     __slots__ = []
 
@@ -84,5 +84,5 @@ class TriangleKdtree(kdtree):
             nodes.append(n)
         super(TriangleKdtree, self).__init__(nodes, cutoff, cutoff_distance)
 
-    def Search(self, minx, maxx, miny, maxy):
-        return SearchKdtree2d(self, minx, maxx, miny, maxy)
+    def search(self, minx, maxx, miny, maxy):
+        return search_kdtree_2d(self, minx, maxx, miny, maxy)

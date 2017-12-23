@@ -496,7 +496,7 @@ class Polygon(TransformableContainer):
 
     def get_lines(self):
         """ Caching is necessary to avoid constant recalculation due to
-        the "to_OpenGL" method.
+        the "to_opengl" method.
         """
         if self._lines_cache is None:
             # recalculate the line cache
@@ -510,7 +510,7 @@ class Polygon(TransformableContainer):
             self._lines_cache = lines
         return self._lines_cache[:]
 
-    def to_OpenGL(self, **kwords):
+    def to_opengl(self, **kwords):
         if not GL_enabled:
             return
         GL.glDisable(GL.GL_LIGHTING)
@@ -532,7 +532,7 @@ class Polygon(TransformableContainer):
             GL.glLineWidth(1.0)
         else:
             for line in self.get_lines():
-                line.to_OpenGL(**kwords)
+                line.to_opengl(**kwords)
 
     def _update_limits(self, point):
         if self.minx is None:

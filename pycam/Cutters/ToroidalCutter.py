@@ -69,7 +69,7 @@ class ToroidalCutter(BaseCutter):
         return ((self.radius, self.majorradius, self.minorradius)
                 < (other.radius, other.majorradius, other.minorradius))
 
-    def to_OpenGL(self):
+    def to_opengl(self):
         if not GL_enabled:
             return
         GL.glPushMatrix()

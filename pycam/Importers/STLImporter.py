@@ -41,7 +41,7 @@ last_unique_vertex = (None, None, None)
 def get_unique_vertex(x, y, z):
     global vertices, last_unique_vertex
     if kdtree:
-        p = kdtree.Point(x, y, z)
+        p = kdtree.point(x, y, z)
         if p == last_unique_vertex:
             vertices += 1
         return p
@@ -78,7 +78,7 @@ def get_facet_count_if_binary_format(source):
         return facet_count
 
 
-def ImportModel(filename, use_kdtree=True, callback=None, **kwargs):
+def import_model(filename, use_kdtree=True, callback=None, **kwargs):
     global vertices, edges, kdtree
     vertices = 0
     edges = 0

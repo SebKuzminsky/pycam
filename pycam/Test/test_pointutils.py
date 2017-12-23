@@ -62,7 +62,7 @@ class UnaryOperations(pycam.Test.PycamTestCase):
 
     def test_normalized(self):
         norm_test = lambda vector, result: \
-                self.assertVectorEqual(pu.pnormalized(vector), result)
+                self.assert_vector_equal(pu.pnormalized(vector), result)
         norm_test((1.0, 0.0, 0.0), (1, 0, 0))
         norm_test((1, 0, 0), (1, 0, 0))
         norm_test((0, 1, 0), (0, 1, 0))

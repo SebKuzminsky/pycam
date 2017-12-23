@@ -41,8 +41,8 @@ def _process_one_grid_line(extra_args):
 
 class DropCutter:
 
-    def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None,
-                         draw_callback=None):
+    def generate_toolpath(self, cutter, models, motion_grid, minz=None, maxz=None,
+                          draw_callback=None):
         path = []
         quit_requested = False
         model = pycam.Geometry.Model.get_combined_model(models)

@@ -7,7 +7,7 @@ from time import time
 from pycam.Cutters.CylindricalCutter import CylindricalCutter
 from pycam.Geometry import Box3D, Point3D
 from pycam.Gui.Console import ConsoleProgressBar
-from pycam.Importers.STLImporter import ImportModel
+from pycam.Importers.STLImporter import import_model
 from pycam.PathGenerators.DropCutter import DropCutter
 from pycam.PathProcessors.PathAccumulator import PathAccumulator
 from pycam.Toolpath import Bounds
@@ -22,7 +22,7 @@ threading.__multiprocessing = False
 (sorted by actual local runtime) methods.
 """
 
-model = ImportModel(get_data_file_location(join('samples', 'pycam-textbox.stl')))
+model = import_model(get_data_file_location(join('samples', 'pycam-textbox.stl')))
 
 
 def run_dropcutter():

@@ -46,4 +46,4 @@ class OpenGLViewTool(pycam.Plugins.PluginBase):
                 GL = self._GL
                 GL.glColor4f(color["red"], color["green"], color["blue"], color["alpha"])
                 GL.glFinish()
-                tool.to_OpenGL()
+                tool.to_opengl()

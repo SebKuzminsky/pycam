@@ -64,20 +64,20 @@ class SVGExporter:
     def fill(self, fill):
         self._fill = fill
 
-    def AddDot(self, x, y):
+    def add_dot(self, x, y):
         item = "<circle fill='%s' cx='%g' cy='%g' r='0.04'/>\n" % (self._fill, x, -y)
         self.output.write(item)
 
-    def AddText(self, x, y, text):
+    def add_text(self, x, y, text):
         item = "<text fill='%s' x='%g' y='%g' dx='0.07'>%s</text>\n" % (self._fill, x, -y, text)
         self.output.write(item)
 
-    def AddLine(self, x1, y1, x2, y2):
+    def add_line(self, x1, y1, x2, y2):
         item = ("<line fill='%s' stroke='%s' x1='%.8f' y1='%.8f' x2='%.8f' y2='%.8f' />\n"
                 % (self._fill, self._stroke, x1, -y1, x2, -y2))
         self.output.write(item)
 
-    def AddLines(self, points):
+    def add_lines(self, points):
         item = "<path fill='%s' stroke='%s' d='" % (self._fill, self._stroke)
         for i, p in enumerate(points):
             if i == 0:
@@ -102,5 +102,5 @@ class SVGExporterContourModel:
             points = polygon.get_points()
             if polygon.is_closed:
                 points.append(points[0])
-            writer.AddLines(points)
+            writer.add_lines(points)
         writer.close(close_stream=False)

@@ -42,7 +42,7 @@ class SphericalCutter(BaseCutter):
     def __repr__(self):
         return "SphericalCutter<%s,%s>" % (self.location, self.radius)
 
-    def to_OpenGL(self):
+    def to_opengl(self):
         if not GL_enabled:
             return
         GL.glPushMatrix()

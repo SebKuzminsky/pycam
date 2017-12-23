@@ -31,7 +31,7 @@ class Iterator:
             self.ind += 1
             return item
 
-    def insertBefore(self, item):
+    def insert_before(self, item):
         self.seq.insert(self.ind - 1, item)
         self.ind += 1
 
@@ -52,7 +52,7 @@ class Iterator:
                     self.ind -= 1
                 return
 
-    def takeNext(self):
+    def take_next(self):
         if self.ind >= len(self.seq):
             return None
         else:
@@ -104,7 +104,7 @@ if __name__ == "__main__":
         if val is None:
             break
         if val == 4:
-            i.insertBefore(3)
+            i.insert_before(3)
             i.insert(5)
 
     print("l=", values)

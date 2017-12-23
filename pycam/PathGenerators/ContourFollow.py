@@ -198,8 +198,8 @@ class ContourFollow:
     def _get_free_paths(self, cutter, models, p1, p2):
         return get_free_paths_triangles(models, cutter, p1, p2)
 
-    def GenerateToolPath(self, cutter, models, minx, maxx, miny, maxy, minz, maxz, dz,
-                         draw_callback=None):
+    def generate_toolpath(self, cutter, models, minx, maxx, miny, maxy, minz, maxz, dz,
+                          draw_callback=None):
         # reset the list of processed triangles
         self._processed_triangles = []
         # calculate the number of steps
@@ -230,15 +230,15 @@ class ContourFollow:
                     # cancel immediately
                     break
             self.pa.new_direction(0)
-            self.GenerateToolPathSlice(cutter, models[0], minx, maxx, miny, maxy, z, draw_callback,
-                                       progress_counter, num_of_triangles)
+            self.generate_toolpath_slice(cutter, models[0], minx, maxx, miny, maxy, z,
+                                         draw_callback, progress_counter, num_of_triangles)
             self.pa.end_direction()
             self.pa.finish()
             current_layer += 1
         return self.pa.paths
 
-    def GenerateToolPathSlice(self, cutter, model, minx, maxx, miny, maxy, z, draw_callback=None,
-                              progress_counter=None, num_of_triangles=None):
+    def generate_toolpath_slice(self, cutter, model, minx, maxx, miny, maxy, z, draw_callback=None,
+                                progress_counter=None, num_of_triangles=None):
         shifted_lines = self.get_potential_contour_lines(cutter, model, minx, maxx, miny, maxy, z,
                                                          progress_counter=progress_counter)
         if num_of_triangles is None:

@@ -35,15 +35,15 @@ class CylindricalCutterCollisions(pycam.Test.PycamTestCase):
         "Drop"
         # flat triangle
         flat_triangle = Triangle((-2, 2, 3), (2, 0, 3), (-2, -2, 3))
-        self.assertVectorEqual(self._drop(3, flat_triangle), (0, 0, 3))
+        self.assert_vector_equal(self._drop(3, flat_triangle), (0, 0, 3))
         # skewed triangle
         skewed_triangle = Triangle((-2, 2, 1), (2, 0, 3), (-2, -2, 1))
-        self.assertVectorEqual(self._drop(1, skewed_triangle), (0, 0, 2.5))
-        self.assertVectorEqual(self._drop(1.5, skewed_triangle), (0, 0, 2.75))
-        self.assertVectorEqual(self._drop(1.9, skewed_triangle), (0, 0, 2.95))
-#       self.assertVectorEqual(self._drop(2.0, skewed_triangle), (0, 0, 3))
-#       self.assertVectorEqual(self._drop(2.1, skewed_triangle), (0, 0, 3))
-#       self.assertVectorEqual(self._drop(3, skewed_triangle), (0, 0, 3))
+        self.assert_vector_equal(self._drop(1, skewed_triangle), (0, 0, 2.5))
+        self.assert_vector_equal(self._drop(1.5, skewed_triangle), (0, 0, 2.75))
+        self.assert_vector_equal(self._drop(1.9, skewed_triangle), (0, 0, 2.95))
+#       self.assert_vector_equal(self._drop(2.0, skewed_triangle), (0, 0, 3))
+#       self.assert_vector_equal(self._drop(2.1, skewed_triangle), (0, 0, 3))
+#       self.assert_vector_equal(self._drop(3, skewed_triangle), (0, 0, 3))
 
 
 class SphericalCutterCollisions(pycam.Test.PycamTestCase):
@@ -56,7 +56,7 @@ class SphericalCutterCollisions(pycam.Test.PycamTestCase):
         "Drop"
         # flat triangle
         flat_triangle = Triangle((-2, 2, 3), (2, 0, 3), (-2, -2, 3))
-        self.assertVectorEqual(self._drop(3, flat_triangle), (0, 0, 3))
+        self.assert_vector_equal(self._drop(3, flat_triangle), (0, 0, 3))
         """
         Vertical shifting based on angle of skewed triangle:
             radius * (1/math.cos(math.pi/4) - 1)
@@ -74,8 +74,8 @@ class SphericalCutterCollisions(pycam.Test.PycamTestCase):
         triangles[60] = Triangle((-2, 2, -1), (2, 0, 7), (-2, -2, -1))
 
         def test_skew(radius, degree):
-            return self.assertVectorEqual(self._drop(radius, triangles[degree]),
-                                          (0, 0, 3 + factors[degree] * radius))
+            return self.assert_vector_equal(self._drop(radius, triangles[degree]),
+                                            (0, 0, 3 + factors[degree] * radius))
         test_skew(0.1, 45)
 #       test_skew(0.1, 30)
 #       test_skew(0.1, 60)

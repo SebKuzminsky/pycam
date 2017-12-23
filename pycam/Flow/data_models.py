@@ -1232,7 +1232,7 @@ class Task(BaseCollectionItemDataContainer):
                 draw_callback = UpdateToolView(
                     progress.update,
                     max_fps=get_event_handler().get("tool_progress_max_fps", 1)).update
-                moves = path_generator.GenerateToolPath(
+                moves = path_generator.generate_toolpath(
                     tool.get_tool_geometry(), models, motion_grid, minz=box.lower.z,
                     maxz=box.upper.z, draw_callback=draw_callback)
             if not moves:

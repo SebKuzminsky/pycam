@@ -43,8 +43,8 @@ class PushCutter:
         log.debug("Starting PushCutter")
         self.waterlines = waterlines
 
-    def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None,
-                         draw_callback=None):
+    def generate_toolpath(self, cutter, models, motion_grid, minz=None, maxz=None,
+                          draw_callback=None):
         # Transfer the grid (a generator) into a list of lists and count the items.
         grid = []
         num_of_grid_positions = 0
@@ -74,8 +74,8 @@ class PushCutter:
 
             if self.waterlines:
                 self.pa.new_direction(0)
-            result = self.GenerateToolPathSlice(cutter, models, layer_grid, draw_callback,
-                                                progress_counter)
+            result = self.generate_toolpath_slice(cutter, models, layer_grid, draw_callback,
+                                                  progress_counter)
             if self.waterlines:
                 self.pa.end_direction()
                 self.pa.finish()
@@ -112,8 +112,8 @@ class PushCutter:
         else:
             return path
 
-    def GenerateToolPathSlice(self, cutter, models, layer_grid, draw_callback=None,
-                              progress_counter=None):
+    def generate_toolpath_slice(self, cutter, models, layer_grid, draw_callback=None,
+                                progress_counter=None):
         path = []
         # the ContourCutter pathprocessor does not work with combined models
         if self.waterlines:
