@@ -74,6 +74,23 @@ def get_icons_pixbuffers():
     return result
 
 
+def gui_activity_guard(func):
+    def gui_activity_guard_wrapper(self, *args, **kwargs):
+        if self.gui_is_active:
+            return
+        self.gui_is_active = True
+        try:
+            result = func(self, *args, **kwargs)
+        except Exception:
+            # Catch possible exceptions (except system-exit ones) and
+            # report them.
+            log.error(pycam.Utils.get_exception_report())
+            result = None
+        self.gui_is_active = False
+        return result
+    return gui_activity_guard_wrapper
+
+
 QuestionResponse = collections.namedtuple("QuestionResponse", ("is_yes", "should_memorize"))
 
 
@@ -409,22 +426,6 @@ class ProjectGui(pycam.Gui.BaseUI):
         should_memorize = memorize_choice.get_active()
         dialog.destroy()
         return QuestionResponse(is_yes, should_memorize)
-
-    def gui_activity_guard(func):
-        def gui_activity_guard_wrapper(self, *args, **kwargs):
-            if self.gui_is_active:
-                return
-            self.gui_is_active = True
-            try:
-                result = func(self, *args, **kwargs)
-            except Exception:
-                # Catch possible exceptions (except system-exit ones) and
-                # report them.
-                log.error(pycam.Utils.get_exception_report())
-                result = None
-            self.gui_is_active = False
-            return result
-        return gui_activity_guard_wrapper
 
     def show_help(self, widget=None, page="Main_Page"):
         if not page.startswith("http"):
