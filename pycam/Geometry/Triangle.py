@@ -90,7 +90,7 @@ class Triangle(IDGenerator, TransformableContainer):
     def copy(self):
         return self.__class__(self.p1, self.p2, self.p3, self.normal)
 
-    def next(self):
+    def __next__(self):
         yield "p1"
         yield "p2"
         yield "p3"

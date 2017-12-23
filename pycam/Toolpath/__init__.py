@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from enum import Enum
 from itertools import groupby
 import math
 import os
@@ -29,7 +30,7 @@ except ImportError:
     # both modules are required for visualization, only
     pass
 
-from pycam.Geometry import epsilon, number, Box3D, Point3D
+from pycam.Geometry import epsilon, number, Box3D, DimensionalObject, Point3D
 from pycam.Geometry.PointUtils import padd, pcross, pdist, pmul, pnorm, pnormalized, psub
 import pycam.Utils.log
 
@@ -39,8 +40,13 @@ _log = pycam.Utils.log.get_logger()
 
 MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC, MOVE_SAFETY, MACHINE_SETTING, COMMENT = range(6)
 MOVES_LIST = (MOVE_STRAIGHT, MOVE_STRAIGHT_RAPID, MOVE_ARC)
-CORNER_STYLE_EXACT_PATH, CORNER_STYLE_EXACT_STOP, CORNER_STYLE_OPTIMIZE_SPEED, \
-    CORNER_STYLE_OPTIMIZE_TOLERANCE = range(4)
+
+
+class ToolpathPathMode(Enum):
+    CORNER_STYLE_EXACT_PATH = "exact_path"
+    CORNER_STYLE_EXACT_STOP = "exact stop"
+    CORNER_STYLE_OPTIMIZE_SPEED = "optimize_speed"
+    CORNER_STYLE_OPTIMIZE_TOLERANCE = "optimize_tolerance"
 
 
 def _check_colinearity(p1, p2, p3):
@@ -72,7 +78,7 @@ def simplify_toolpath(path):
             index += 1
 
 
-class Toolpath(object):
+class Toolpath(DimensionalObject):
 
     def __init__(self, toolpath_path=None, toolpath_filters=None, tool=None, **kwargs):
         super(Toolpath, self).__init__(**kwargs)
@@ -122,6 +128,9 @@ class Toolpath(object):
         self._maxy = None
         self._minz = None
         self._maxz = None
+
+    def __hash__(self):
+        return hash((self.__path, self.__filters))
 
     def _get_limit_generic(self, idx, func):
         values = [step.position[idx] for step in self.path if step.action in MOVES_LIST]

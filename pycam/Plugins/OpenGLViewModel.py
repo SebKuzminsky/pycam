@@ -62,22 +62,21 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
 
     def get_draw_dimension(self, low, high):
         if self._is_visible():
-            model_box = pycam.Geometry.Model.get_combined_bounds(
-                [m.model for m in self.core.get("models").get_visible()])
-            if model_box is None:
-                return
-            for index, (mlow, mhigh) in enumerate(zip(model_box.lower, model_box.upper)):
-                if (low[index] is None) or (mlow < low[index]):
-                    low[index] = mlow
-                if (high[index] is None) or (mhigh > high[index]):
-                    high[index] = mhigh
+            for model_dict in self.core.get("models").get_visible():
+                model_box = model_dict.get_model().get_bounds().get_bounds()
+                for index, (mlow, mhigh) in enumerate(zip(model_box.lower, model_box.upper)):
+                    if (low[index] is None) or (mlow < low[index]):
+                        low[index] = mlow
+                    if (high[index] is None) or (mhigh > high[index]):
+                        high[index] = mhigh
 
     def draw_model(self):
         GL = self._GL
         if self._is_visible():
+            fallback_color = self.core.get("models").FALLBACK_COLOR
             for model_dict in self.core.get("models").get_visible():
-                model = model_dict.model
-                col = model_dict["color"]
+                model = model_dict.get_model()
+                col = model_dict.get_application_value("color", default=fallback_color)
                 color = (col["red"], col["green"], col["blue"], col["alpha"])
                 GL.glColor4f(*color)
                 # reset the material color

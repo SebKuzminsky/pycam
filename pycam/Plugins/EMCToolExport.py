@@ -19,6 +19,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
+import pycam.Flow.data_models
 import pycam.Plugins
 import pycam.Exporters.LinuxCNCToolExporter
 
@@ -54,7 +55,7 @@ class LinuxCNCToolExport(pycam.Plugins.PluginBase):
             self.unregister_event_handlers(self._event_handlers)
 
     def _update_emc_tool_button(self, widget=None):
-        exportable = len(self.core.get("tools")) > 0
+        exportable = len(pycam.Flow.data_models.Tool.get_collection()) > 0
         self.export_action.set_sensitive(exportable)
 
     def export_emc_tools(self, widget=None, filename=None):

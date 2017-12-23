@@ -19,8 +19,11 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import time
+
 from pycam.Geometry import epsilon, INFINITE
 from pycam.Geometry.PointUtils import pdist, pnorm, pnormalized, psub
+from pycam.Utils.events import get_event_handler
 
 
 class Hit(object):
@@ -209,3 +212,38 @@ def get_max_height_dynamic(model, cutter, positions, minz, maxz):
         else:
             index += 1
     return points
+
+
+class UpdateToolView(object):
+    """ visualize the position of the tool and the partial toolpath during toolpath generation """
+
+    def __init__(self, callback, max_fps=1):
+        self.callback = callback
+        self.core = get_event_handler()
+        self.last_update_time = time.time()
+        self.max_fps = max_fps
+        self.last_tool_position = None
+        self.current_tool_position = None
+
+    def update(self, text=None, percent=None, tool_position=None, toolpath=None):
+        if toolpath is not None:
+            self.core.set("toolpath_in_progress", toolpath)
+        # always store the most recently reported tool_position for the next visualization
+        if tool_position is not None:
+            self.current_tool_position = tool_position
+        redraw_wanted = False
+        current_time = time.time()
+        if (current_time - self.last_update_time) > 1.0 / self.max_fps:
+            if self.current_tool_position != self.last_tool_position:
+                tool = self.core.get("current_tool")
+                if tool:
+                    tool.moveto(self.current_tool_position)
+                self.last_tool_position = self.current_tool_position
+                redraw_wanted = True
+            if self.core.get("show_toolpath_progress"):
+                redraw_wanted = True
+            self.last_update_time = current_time
+            if redraw_wanted:
+                self.core.emit_event("visual-item-updated")
+        # break the loop if someone clicked the "cancel" button
+        return self.callback(text=text, percent=percent)

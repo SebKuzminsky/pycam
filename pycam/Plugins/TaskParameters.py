@@ -30,13 +30,14 @@ class TaskParamCollisionModels(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputTable(
-            [], change_handler=lambda widget=None: self.core.emit_event("task-changed"))
+            [], change_handler=lambda widget=None: self.core.emit_event("task-control-changed"))
         # The usual height of "-1" seems to hide this widget at least for the GTK version
         # shipped with 12.04 and 13.04 - see https://github.com/SebKuzminsky/pycam/issues/43.
         self.control.get_widget().set_size_request(240, 120)
         self.core.get("register_parameter")("task", "collision_models", self.control)
         self.core.register_ui("task_models", "", self.control.get_widget(), weight=5)
         self.core.register_event("model-list-changed", self._update_models)
+        self.core.register_event("model-changed", self._update_models)
         return True
 
     def teardown(self):
@@ -46,10 +47,9 @@ class TaskParamCollisionModels(pycam.Plugins.PluginBase):
 
     def _update_models(self):
         choices = []
-        models = self.core.get("models")
-        for model in models:
-            if hasattr(model.model, "triangles"):
-                choices.append((model["name"], model))
+        for model in self.core.get("models").get_all():
+            if hasattr(model.get_model(), "triangles"):
+                choices.append((model.get_application_value("name"), model.get_id()))
         self.control.update_choices(choices)
 
 
@@ -60,7 +60,7 @@ class TaskParamTool(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputChoice(
-            [], change_handler=lambda widget=None: self.core.emit_event("task-changed"))
+            [], change_handler=lambda widget=None: self.core.emit_event("task-control-changed"))
         self.core.get("register_parameter")("task", "tool", self.control)
         self.core.register_ui("task_components", "Tool", self.control.get_widget(), weight=10)
         self.core.register_event("tool-list-changed", self._update_tools)
@@ -73,9 +73,8 @@ class TaskParamTool(pycam.Plugins.PluginBase):
 
     def _update_tools(self):
         choices = []
-        tools = self.core.get("tools")
-        for tool in tools:
-            choices.append((tool["name"], tool))
+        for tool in self.core.get("tools").get_all():
+            choices.append((tool.get_application_value("name"), tool.get_id()))
         self.control.update_choices(choices)
 
 
@@ -86,7 +85,7 @@ class TaskParamProcess(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputChoice(
-            [], change_handler=lambda widget=None: self.core.emit_event("task-changed"))
+            [], change_handler=lambda widget=None: self.core.emit_event("task-control-changed"))
         self.core.get("register_parameter")("task", "process", self.control)
         self.core.register_ui("task_components", "Process", self.control.get_widget(), weight=20)
         self.core.register_event("process-list-changed", self._update_processes)
@@ -99,9 +98,8 @@ class TaskParamProcess(pycam.Plugins.PluginBase):
 
     def _update_processes(self):
         choices = []
-        processes = self.core.get("processes")
-        for process in processes:
-            choices.append((process["name"], process))
+        for process in self.core.get("processes").get_all():
+            choices.append((process.get_application_value("name"), process.get_id()))
         self.control.update_choices(choices)
 
 
@@ -112,7 +110,7 @@ class TaskParamBounds(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputChoice(
-            [], change_handler=lambda widget=None: self.core.emit_event("task-changed"))
+            [], change_handler=lambda widget=None: self.core.emit_event("task-control-changed"))
         self.core.get("register_parameter")("task", "bounds", self.control)
         self.core.register_ui("task_components", "Bounds", self.control.get_widget(), weight=30)
         self.core.register_event("bounds-list-changed", self._update_bounds)
@@ -126,6 +124,6 @@ class TaskParamBounds(pycam.Plugins.PluginBase):
     def _update_bounds(self):
         choices = []
         bounds = self.core.get("bounds")
-        for bound in bounds:
-            choices.append((bound["name"], bound))
+        for bound in bounds.get_all():
+            choices.append((bound.get_application_value("name"), bound.get_id()))
         self.control.update_choices(choices)

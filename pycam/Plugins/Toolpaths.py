@@ -19,9 +19,9 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
+import pycam.Flow.data_models
 import pycam.Plugins
 import pycam.Toolpath
-from pycam.Utils import get_non_conflicting_name
 
 
 class Toolpaths(pycam.Plugins.ListPluginBase):
@@ -29,9 +29,9 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
     UI_FILE = "toolpaths.ui"
     CATEGORIES = ["Toolpath"]
     ICONS = {"visible": "visible.svg", "hidden": "visible_off.svg"}
+    COLLECTION_ITEM_TYPE = pycam.Flow.data_models.Toolpath
 
     def setup(self):
-        self.last_toolpath_file = None
         if self.gui:
             self.tp_box = self.gui.get_object("ToolpathsBox")
             self.tp_box.unparent()
@@ -61,22 +61,26 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
                                           clear_toolpath_handling_obj)
             # handle table changes
             self._gtk_handlers.extend((
-                (self._modelview, "row-activated", self._toggle_visibility),
+                (self._modelview, "row-activated", self.toggle_item_visibility),
                 (self._modelview, "row-activated", "toolpath-changed"),
-                (self.gui.get_object("ToolpathNameCell"), "edited", self._edit_toolpath_name)))
+                (self.gui.get_object("ToolpathNameCell"), "edited", self.edit_item_name)))
             # handle selection changes
             selection = self._modelview.get_selection()
             self._gtk_handlers.append((selection, "changed", "toolpath-selection-changed"))
             selection.set_mode(self._gtk.SelectionMode.MULTIPLE)
+            # define cell renderers
+            self.gui.get_object("ToolpathNameColumn").set_cell_data_func(
+                self.gui.get_object("ToolpathNameCell"), self.render_item_name)
+            self.gui.get_object("ToolpathTimeColumn").set_cell_data_func(
+                self.gui.get_object("ToolpathTimeCell"), self._render_machine_time)
+            self.gui.get_object("ToolpathVisibleColumn").set_cell_data_func(
+                self.gui.get_object("ToolpathVisibleSymbol"), self.render_item_visible_state)
             self._event_handlers = (
-                ("toolpath-changed", self._update_widgets),
-                ("toolpath-list-changed", self._update_widgets),
-                ("toolpath-changed", "visual-item-updated"),
-                ("toolpath-list-changed", "visual-item-updated"))
+                ("toolpath-list-changed", self._update_toolpath_tab_visibility),
+                ("toolpath-list-changed", self.force_gtk_modelview_refresh))
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
-            self._trigger_table_update()
-            self._update_widgets()
+            self._update_toolpath_tab_visibility()
         self.core.set("toolpaths", self)
         self.core.register_namespace("toolpaths", pycam.Plugins.get_filter(self))
         return True
@@ -89,48 +93,14 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
             self.unregister_event_handlers(self._event_handlers)
         self.core.set("toolpaths", None)
 
-    def get_visible(self):
-        return [tp for tp in self if tp["visible"]]
-
-    def _update_widgets(self):
-        toolpaths = self
-        if not toolpaths:
-            self.tp_box.hide()
-        else:
+    def _update_toolpath_tab_visibility(self):
+        has_toolpaths = len(self.get_all()) > 0
+        if has_toolpaths:
             self.tp_box.show()
-            self._trigger_table_update()
-
-    def _trigger_table_update(self):
-        self.gui.get_object("ToolpathNameColumn").set_cell_data_func(
-            self.gui.get_object("ToolpathNameCell"), self._visualize_toolpath_name)
-        self.gui.get_object("ToolpathTimeColumn").set_cell_data_func(
-            self.gui.get_object("ToolpathTimeCell"), self._visualize_machine_time)
-        self.gui.get_object("ToolpathVisibleColumn").set_cell_data_func(
-            self.gui.get_object("ToolpathVisibleSymbol"), self._visualize_visible_state)
-
-    def _toggle_visibility(self, treeview, path, column):
-        toolpath = self.get_by_path(path)
-        if toolpath:
-            toolpath["visible"] = not toolpath["visible"]
-        self.core.emit_event("visual-item-updated")
-
-    def _edit_toolpath_name(self, cell, path, new_text):
-        toolpath = self.get_by_path(path)
-        if toolpath and (new_text != toolpath["name"]) and new_text:
-            toolpath["name"] = new_text
-
-    def _visualize_toolpath_name(self, column, cell, model, m_iter, data):
-        toolpath = self.get_by_path(model.get_path(m_iter))
-        cell.set_property("text", toolpath["name"])
-
-    def _visualize_visible_state(self, column, cell, model, m_iter, data):
-        toolpath = self.get_by_path(model.get_path(m_iter))
-        if toolpath["visible"]:
-            cell.set_property("pixbuf", self.ICONS["visible"])
         else:
-            cell.set_property("pixbuf", self.ICONS["hidden"])
+            self.tp_box.hide()
 
-    def _visualize_machine_time(self, column, cell, model, m_iter, data):
+    def _render_machine_time(self, column, cell, model, m_iter, data):
         def get_time_string(minutes):
             if minutes > 180:
                 return "%d hours" % int(round(minutes / 60))
@@ -140,24 +110,9 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
                 return "%d seconds" % int(round(minutes * 60))
 
         toolpath = self.get_by_path(model.get_path(m_iter))
-        text = get_time_string(toolpath.get_machine_time())
+        path = toolpath.get_toolpath()
+        if path:
+            text = get_time_string(path.get_machine_time())
+        else:
+            text = "empty"
         cell.set_property("text", text)
-
-    def add_new(self, new_tp, name=None):
-        assert isinstance(new_tp, pycam.Toolpath.Toolpath), \
-                "Invalid type: %s (%s)" % (type(new_tp), new_tp)
-        moves = new_tp.path
-        tool = new_tp.tool
-        filters = new_tp.filters
-        if name is None:
-            name = get_non_conflicting_name("Toolpath #%d", [tp["name"] for tp in self])
-        attributes = {"visible": True, "name": name}
-        new_tp = ToolpathEntity(toolpath_path=moves, attributes=attributes,
-                                toolpath_filters=filters, tool=tool)
-        self.append(new_tp)
-
-
-class ToolpathEntity(pycam.Toolpath.Toolpath, pycam.Plugins.ObjectWithAttributes):
-
-    def __init__(self, **kwargs):
-        super(ToolpathEntity, self).__init__(node_key="toolpath", **kwargs)

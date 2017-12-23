@@ -19,10 +19,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-from pycam.Geometry.Plane import Plane
 import pycam.Gui.ControlsGTK
 import pycam.Plugins
-import pycam.Toolpath.Filters as Filters
 
 
 class ToolpathCrop(pycam.Plugins.PluginBase):
@@ -36,10 +34,6 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
             self._frame = self.gui.get_object("ToolpathCropFrame")
             self.core.register_ui("toolpath_handling", "Crop", self._frame, 40)
             self._gtk_handlers = []
-            for objname in ("ToolpathCropZSlice", "ToolpathCropMargin"):
-                obj = self.gui.get_object(objname)
-                obj.set_value(0)
-                self._gtk_handlers.append((obj, "value-changed", self._update_widgets))
             self._gtk_handlers.append((self.gui.get_object("CropButton"), "clicked",
                                        self.crop_toolpath))
             # model selector
@@ -78,9 +72,9 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
 
     def _update_models_list(self):
         choices = []
-        models = self.core.get("models")
-        for model in models:
-            choices.append((model["name"], model))
+        for model in self.core.get("models").get_all():
+            if hasattr(model.get_model(), "get_polygons"):
+                choices.append((model.get_id(), model))
         self.models_widget.update_choices(choices)
 
     def _update_visibility(self):
@@ -90,83 +84,20 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
             self._frame.hide()
 
     def _update_widgets(self, widget=None):
-        models = [m.model for m in self.models_widget.get_value()]
+        models = [m.get_model() for m in self.models_widget.get_value()]
         info_label = self.gui.get_object("ToolpathCropInfo")
         info_box = self.gui.get_object("ToolpathCropInfoBox")
         button = self.gui.get_object("CropButton")
-        slicing_models = [model for model in models if hasattr(model, "get_waterline_contour")]
-        # show or hide z-slice controls
-        slice_controls = ("ToolpathCropZSliceLabel", "ToolpathCropZSlice")
-        if slicing_models:
-            # set lower and upper limit for z-slice
-            z_slice = self.gui.get_object("ToolpathCropZSlice")
-            minz = min([model.minz for model in slicing_models])
-            maxz = max([model.maxz for model in slicing_models])
-            z_slice.set_range(minz, maxz)
-            if z_slice.get_value() > maxz:
-                z_slice.set_value(maxz)
-            elif z_slice.get_value() < minz:
-                z_slice.set_value(minz)
-            else:
-                pass
-            for name in slice_controls:
-                self.gui.get_object(name).show()
-        else:
-            for name in slice_controls:
-                self.gui.get_object(name).hide()
         # update info
         if not models:
             info_box.show()
             info_label.set_label("Hint: select a model")
             button.set_sensitive(False)
         else:
-            polygons = self._get_waterlines()
-            if polygons:
-                info_box.hide()
-                button.set_sensitive(True)
-            else:
-                info_label.set_label("Hint: there is no usable contour at this splice level")
-                info_box.show()
-                button.set_sensitive(False)
-
-    def _get_waterlines(self):
-        models = [m.model for m in self.models_widget.get_value()]
-        polygons = []
-        # get all waterlines and polygons
-        for model in models:
-            if hasattr(model, "get_polygons"):
-                for poly in model.get_polygons():
-                    polygons.append(poly.copy())
-            elif hasattr(model, "get_waterline_contour"):
-                z_slice = self.gui.get_object("ToolpathCropZSlice").get_value()
-                plane = Plane((0, 0, z_slice))
-                for poly in model.get_waterline_contour(plane).get_polygons():
-                    polygons.append(poly.copy())
-        # add an offset if requested
-        margin = self.gui.get_object("ToolpathCropMargin").get_value()
-        if margin != 0:
-            shifted = []
-            for poly in polygons:
-                shifted.extend(poly.get_offset_polygons(margin))
-            polygons = shifted
-        return polygons
+            info_box.hide()
+            button.set_sensitive(True)
 
     def crop_toolpath(self, widget=None):
-        selected = self.core.get("toolpaths").get_selected()
-        polygons = self._get_waterlines()
-        keep_original = self.gui.get_object("ToolpathCropKeepOriginal").get_active()
+        model_ids = [model.get_id() for model in self.models_widget.get_value()]
         for toolpath in self.core.get("toolpaths").get_selected():
-            # Store the new toolpath first separately - otherwise we can't
-            # revert the changes in case of an empty result.
-            new_moves = toolpath | Filters.Crop(polygons)
-            if new_moves | Filters.MovesOnly():
-                if keep_original:
-                    new_toolpath = toolpath.copy()
-                    new_toolpath.path = new_moves
-                    self.core.get("toolpaths").add_new(new_toolpath)
-                else:
-                    toolpath.path = new_moves
-                    self.core.emit_event("toolpath-changed")
-            else:
-                self.log.info("Toolpath cropping: the result is empty")
-        self.core.get("toolpaths").select(selected)
+            toolpath.append_transformation({"action": "crop", "models": model_ids})

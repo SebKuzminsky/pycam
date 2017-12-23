@@ -308,7 +308,7 @@ class Polygon(TransformableContainer):
             # Test if the point equals the first or the last point of the polygon.
             return (point == self._points[-1]) or (point == self._points[0])
 
-    def next(self):
+    def __next__(self):
         yield "_points"
         yield self.plane
 

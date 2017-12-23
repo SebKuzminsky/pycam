@@ -84,7 +84,7 @@ class Clipboard(pycam.Plugins.PluginBase):
         models = self.core.get("models").get_selected()
         exportable = []
         for model in models:
-            if model.model.is_export_supported():
+            if model.get_model().is_export_supported():
                 exportable.append(model)
         return exportable
 
@@ -129,11 +129,12 @@ class Clipboard(pycam.Plugins.PluginBase):
             return isinstance(m1, pycam.Geometry.Model.ContourModel) == \
                     isinstance(m2, pycam.Geometry.Model.ContourModel)
 
-        merged_model = models.pop(0).model
+        merged_model = models.pop(0).get_model()
         for model in models:
             # merge only 3D _or_ 2D models (don't mix them)
-            if same_type(merged_model, model.model):
-                merged_model += model.model
+            other_model = model.get_model()
+            if same_type(merged_model, other_model):
+                merged_model += other_model
         # TODO: add "comment=get_meta_data()" here
         merged_model.export(unit=self.core.get("unit")).write(text_buffer)
         text_buffer.seek(0)

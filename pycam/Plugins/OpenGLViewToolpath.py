@@ -29,18 +29,22 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
     CATEGORIES = ["Toolpath", "Visualization", "OpenGL"]
 
     def setup(self):
-        self.core.register_event("visualize-items", self.draw_toolpaths)
         self.core.get("register_color")("color_toolpath_cut", "Toolpath cut", 60)
         self.core.get("register_color")("color_toolpath_return", "Toolpath rapid", 70)
         self.core.register_chain("get_draw_dimension", self.get_draw_dimension)
         self.core.get("register_display_item")("show_toolpath", "Show Toolpath", 30)
         self.core.set("draw_toolpath_moves_func", self._draw_toolpath_moves)
+        self._event_handlers = (
+            ("toolpath-list-changed", "visual-item-updated"),
+            ("toolpath-changed", "visual-item-updated"),
+            ("visualize-items", self.draw_toolpaths))
+        self.register_event_handlers(self._event_handlers)
         self.core.emit_event("visual-item-updated")
         return True
 
     def teardown(self):
         self.core.unregister_chain("get_draw_dimension", self.get_draw_dimension)
-        self.core.unregister_event("visualize-items", self.draw_toolpaths)
+        self.unregister_event_handlers(self._event_handlers)
         self.core.get("unregister_color")("color_toolpath_cut")
         self.core.get("unregister_color")("color_toolpath_return")
         self.core.get("unregister_display_item")("show_toolpath")
@@ -50,16 +54,18 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
     def get_draw_dimension(self, low, high):
         if self._is_visible():
             toolpaths = self.core.get("toolpaths").get_visible()
-            for tp in toolpaths:
-                mlow = tp.minx, tp.miny, tp.minz
-                mhigh = tp.maxx, tp.maxy, tp.maxz
-                if None in mlow or None in mhigh:
-                    continue
-                for index in range(3):
-                    if (low[index] is None) or (mlow[index] < low[index]):
-                        low[index] = mlow[index]
-                    if (high[index] is None) or (mhigh[index] > high[index]):
-                        high[index] = mhigh[index]
+            for toolpath_dict in toolpaths:
+                tp = toolpath_dict.get_toolpath()
+                if tp:
+                    mlow = tp.minx, tp.miny, tp.minz
+                    mhigh = tp.maxx, tp.maxy, tp.maxz
+                    if None in mlow or None in mhigh:
+                        continue
+                    for index in range(3):
+                        if (low[index] is None) or (mlow[index] < low[index]):
+                            low[index] = mlow[index]
+                        if (high[index] is None) or (mhigh[index] > high[index]):
+                            high[index] = mhigh[index]
 
     def _is_visible(self):
         return self.core.get("show_toolpath") \
@@ -69,21 +75,26 @@ class OpenGLViewToolpath(pycam.Plugins.PluginBase):
     def draw_toolpaths(self):
         toolpath_in_progress = self.core.get("toolpath_in_progress")
         if toolpath_in_progress is None and self.core.get("show_toolpath"):
-            # TODO: this is ugly copy'n'paste from pycam.Plugins.ToolpathExport (_export_toolpaths)
+            # TODO: adjust somehow to the currently selected export settings
+            """
             # KEEP IN SYNC
-            processor = self.core.get("toolpath_processors").get_selected()
+            processor = self.core.get("toolpath_profile").get_selected()
             if not processor:
                 self.log.warn("No toolpath processor selected")
                 return
             filter_func = processor["func"]
-            filter_params = self.core.get("get_parameter_values")("toolpath_processor")
+            filter_params = self.core.get("get_parameter_values")("toolpath_profile")
             settings_filters = filter_func(filter_params)
-            for toolpath in self.core.get("toolpaths").get_visible():
-                # TODO: enable the VBO code for speedup!
-                # moves = toolpath.get_moves_for_opengl(self.core.get("gcode_safety_height"))
-                # self._draw_toolpath_moves2(moves)
-                moves = toolpath.get_basic_moves(filters=settings_filters)
-                self._draw_toolpath_moves(moves)
+            """
+            settings_filters = []
+            for toolpath_dict in self.core.get("toolpaths").get_visible():
+                toolpath = toolpath_dict.get_toolpath()
+                if toolpath:
+                    # TODO: enable the VBO code for speedup!
+                    # moves = toolpath.get_moves_for_opengl(self.core.get("gcode_safety_height"))
+                    # self._draw_toolpath_moves2(moves)
+                    moves = toolpath.get_basic_moves(filters=settings_filters)
+                    self._draw_toolpath_moves(moves)
         elif toolpath_in_progress is not None:
             if self.core.get("show_simulation") or self.core.get("show_toolpath_progress"):
                 self._draw_toolpath_moves(toolpath_in_progress)

@@ -20,6 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
+import collections
 import datetime
 import logging
 import os
@@ -29,14 +30,12 @@ import webbrowser
 from gi.repository import GObject
 from gi.repository import Gtk
 from gi.repository import Gdk
+from gi.repository import Gio
 
 from pycam import DOC_BASE_URL, VERSION, InitializationError
-import pycam.Importers.CXFImporter
-import pycam.Importers.TestModel
 import pycam.Importers
 import pycam.Gui
-from pycam.Utils.locations import get_ui_file_location, get_external_program_location, \
-        get_all_program_locations
+from pycam.Utils.locations import get_ui_file_location, get_external_program_location
 import pycam.Utils
 from pycam.Utils.events import get_mainloop
 import pycam.Utils.log
@@ -76,6 +75,9 @@ def get_icons_pixbuffers():
     return result
 
 
+QuestionResponse = collections.namedtuple("QuestionResponse", ("is_yes", "should_memorize"))
+
+
 class ProjectGui(pycam.Gui.BaseUI):
 
     META_DATA_PREFIX = "PYCAM-META-DATA:"
@@ -94,7 +96,12 @@ class ProjectGui(pycam.Gui.BaseUI):
             if gtkrc_file:
                 Gtk.rc_add_default_file(gtkrc_file)
                 Gtk.rc_reparse_all_for_settings(Gtk.settings_get_default(), True)
+        action_group = Gio.SimpleActionGroup()
+        self.settings.set("gtk_action_group_prefix", "pycam")
+        self.settings.set("gtk_action_group", action_group)
         self.window = self.gui.get_object("ProjectWindow")
+        self.window.insert_action_group(
+            self.settings.get("gtk_action_group_prefix"), self.settings.get("gtk_action_group"))
         self.settings.set("main_window", self.window)
         # show stock items on buttons
         # increase the initial width of the window (due to hidden elements)
@@ -117,7 +124,6 @@ class ProjectGui(pycam.Gui.BaseUI):
                 self.recent_manager = None
         # file loading
         self.last_dirname = None
-        self.last_task_settings_uri = None
         self.last_model_uri = None
         # define callbacks and accelerator keys for the menu actions
         for objname, callback, data, accel_key in (
@@ -158,7 +164,7 @@ class ProjectGui(pycam.Gui.BaseUI):
             def open_url(widget, data=None):
                 webbrowser.open(widget.get_uri())
             Gtk.link_button_set_uri_hook(open_url)
-        self.settings.register_event("undo-states-changed", self._update_undo_button)
+        self.settings.register_event("history-changed", self._update_undo_button)
         self.settings.register_event("model-change-after",
                                      lambda: self.settings.emit_event("visual-item-updated"))
         # configure drag-n-drop for config files and models
@@ -173,11 +179,15 @@ class ProjectGui(pycam.Gui.BaseUI):
         self.gui.get_object("ResetPreferencesButton").connect("clicked", self.reset_preferences)
         self.preferences_window = self.gui.get_object("GeneralSettingsWindow")
         self.preferences_window.connect("delete-event", self.toggle_preferences_window, False)
+        self.preferences_window.insert_action_group(
+            self.settings.get("gtk_action_group_prefix"), self.settings.get("gtk_action_group"))
         self._preferences_window_position = None
         self._preferences_window_visible = False
         # "about" window
         self.about_window = self.gui.get_object("AboutWindow")
         self.about_window.set_version(VERSION)
+        self.about_window.insert_action_group(
+            self.settings.get("gtk_action_group_prefix"), self.settings.get("gtk_action_group"))
         self.gui.get_object("About").connect("activate", self.toggle_about_window, True)
         # we assume, that the last child of the window is the "close" button
         # TODO: fix this ugly hack!
@@ -195,7 +205,6 @@ class ProjectGui(pycam.Gui.BaseUI):
         # send a "delete" event on "CTRL-w" for every window
         def handle_window_close(accel_group, window, *args):
             window.emit("delete-event", Gdk.Event(Gdk.DELETE))
-
         # self._accel_group.connect_group(ord('w'), Gdk.CONTROL_MASK, Gtk.ACCEL_LOCKED,  FIXME
         #                                 handle_window_close)
         self.settings.add_item("gtk-accel-group", lambda: self._accel_group)
@@ -231,9 +240,6 @@ class ProjectGui(pycam.Gui.BaseUI):
 
         self.settings.register_ui_section("preferences_general", add_general_prefs_item,
                                           clear_general_prefs)
-        # defaults settings file
-        obj = self.gui.get_object("TaskSettingsDefaultFileBox")
-        obj.unparent()
         self.settings.register_ui("preferences_general", None, obj, 30)
         # set defaults
         main_tab = self.gui.get_object("MainTabs")
@@ -286,6 +292,13 @@ class ProjectGui(pycam.Gui.BaseUI):
                                    location_control.set_text)
             self.gui.get_object(browse_button).connect("clicked",
                                                        self._browse_external_program_location, key)
+        for objname, callback in (
+                ("ResetWorkspace", lambda widget: self.reset_workspace()),
+                ("LoadWorkspace", lambda widget: self.load_workspace_dialog()),
+                ("SaveWorkspace", lambda widget: self.save_workspace_dialog(
+                    self.last_workspace_uri)),
+                ("SaveAsWorkspace", lambda widget: self.save_workspace_dialog())):
+            self.gui.get_object(objname).connect("activate", callback)
         # set the icons (in different sizes) for all windows
         # Gtk.window_set_default_icon_list(*get_icons_pixbuffers()) FIXME
         # load menu data
@@ -377,6 +390,27 @@ class ProjectGui(pycam.Gui.BaseUI):
         pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
         self.window.show()
 
+    def get_question_response(self, question, default_response, allow_memorize=False):
+        """display a dialog presenting a simple question and yes/no buttons
+
+        @param allow_memorize: optionally a "Do not ask again" checkbox can be included
+        @returns aa tuple of two booleans ("is yes", "should memorize")
+        """
+        dialog = Gtk.MessageDialog(self.window, Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                                   Gtk.MessageType.QUESTION, Gtk.ButtonsType.YES_NO, question)
+        if default_response:
+            dialog.set_default_response(Gtk.ResponseType.YES)
+        else:
+            dialog.set_default_response(Gtk.ResponseType.NO)
+        memorize_choice = Gtk.CheckButton("Do not ask again")
+        if allow_memorize:
+            dialog.get_content_area().add(memorize_choice)
+            memorize_choice.show()
+        is_yes = (dialog.run() == Gtk.ResponseType.YES)
+        should_memorize = memorize_choice.get_active()
+        dialog.destroy()
+        return QuestionResponse(is_yes, should_memorize)
+
     def gui_activity_guard(func):
         def gui_activity_guard_wrapper(self, *args, **kwargs):
             if self.gui_is_active:
@@ -465,7 +499,9 @@ class ProjectGui(pycam.Gui.BaseUI):
         return True
 
     def _update_undo_button(self):
-        self.gui.get_object("UndoButton").set_sensitive(len(self._undo_states) > 0)
+        history = self.settings.get("history")
+        is_enabled = (history.get_undo_steps_count() > 0) if history else False
+        self.gui.get_object("UndoButton").set_sensitive(is_enabled)
 
     def destroy(self, widget=None, data=None):
         get_mainloop().stop()
@@ -516,39 +552,11 @@ class ProjectGui(pycam.Gui.BaseUI):
             filename = self.settings.get("get_filename_func")("Loading model ...", mode_load=True,
                                                               type_filter=FILTER_MODEL)
         if filename:
-            detected_filetype = pycam.Importers.detect_file_type(filename)
-            if detected_filetype:
-                progress = self.settings.get("progress")
-                progress.update(text="Loading model ...")
-                # "cancel" is not allowed
-                progress.disable_cancel()
-                model = detected_filetype.importer(
-                    detected_filetype.uri,
-                    program_locations=get_all_program_locations(self.settings),
-                    unit=self.settings.get("unit"), fonts_cache=self.settings.get("fonts"),
-                    callback=progress.update)
-                if self.load_model(model):
-                    if store_filename:
-                        self.set_model_filename(filename)
-                    self.add_to_recent_file_list(filename)
-                    result = True
-                else:
-                    result = False
-                progress.finish()
-                return result
-            else:
-                log.error("Failed to detect filetype!")
-                return False
-
-    def load_model(self, model):
-        # load the new model only if the import worked
-        if model:
-            self.settings.emit_event("model-change-before")
-            self.settings.get("models").add_model(model)
-            self.last_model_uri = None
+            name_suggestion = os.path.splitext(os.path.basename(filename))[0]
+            model_params = {"source": {"type": "file", "location": filename}}
+            self.settings.get("models").add_model(model_params, name=name_suggestion)
+            self.add_to_recent_file_list(filename)
             return True
-        else:
-            return False
 
     def add_to_recent_file_list(self, filename):
         # Add the item to the recent files list - if it already exists.

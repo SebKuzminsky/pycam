@@ -75,8 +75,8 @@
   <object class="GtkAction" id="HelpSupportedFormats">
     <property name="label">Supported _Formats</property>
   </object>
-  <object class="GtkAction" id="HelpTaskSetup">
-    <property name="label">_Task Setup</property>
+  <object class="GtkAction" id="HelpProjectSetup">
+    <property name="label">_Project Setup</property>
   </object>
   <object class="GtkAction" id="HelpToolTypes">
     <property name="label">T_ool Types</property>
@@ -89,9 +89,13 @@
     <property name="label">User _Manual: Overview</property>
     <property name="stock_id">gtk-help</property>
   </object>
-  <object class="GtkAction" id="LoadTaskSettings">
-    <property name="label">_Load Task Settings ...</property>
-    <property name="tooltip">Load tool, process and task definitions from a file.</property>
+  <object class="GtkAction" id="ResetWorkspace">
+    <property name="label">Reset Workspace to Defaults</property>
+    <property name="tooltip">Reset models, tools, processes, bounds and task definitions to their default values.</property>
+  </object>
+  <object class="GtkAction" id="LoadWorkspace">
+    <property name="label">_Load Workspace ...</property>
+    <property name="tooltip">Load model, tool, process, bound and task definitions from a file.</property>
   </object>
   <object class="GtkNotebook" id="MainTabs">
     <property name="visible">True</property>
@@ -264,52 +268,6 @@ You should have received a copy of the GNU General Public License along with thi
                         <property name="can_focus">False</property>
                         <property name="orientation">vertical</property>
                         <property name="spacing">2</property>
-                        <child>
-                          <object class="GtkBox" id="TaskSettingsDefaultFileBox">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="orientation">vertical</property>
-                            <child>
-                              <object class="GtkCheckButton" id="AutoLoadTaskFile">
-                                <property name="label" translatable="yes">Load custom task settings on startup</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="xalign">0.5</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkAlignment" id="StartupTaskFileBox">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="left_padding">20</property>
-                                <child>
-                                  <object class="GtkFileChooserButton" id="StartupTaskFile">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="title" translatable="yes">Choose custom task settings file loading on startup</property>
-                                  </object>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">1</property>
-                          </packing>
-                        </child>
                       </object>
                     </child>
                   </object>
@@ -537,20 +495,20 @@ You should have received a copy of the GNU General Public License along with thi
     <property name="tooltip">Exit PyCAM</property>
     <property name="stock_id">gtk-quit</property>
   </object>
-  <object class="GtkAction" id="SaveAsTaskSettings">
-    <property name="label">Save Task Settings _as ...</property>
-    <property name="tooltip">Save the tool, process and task definitions to a new file.</property>
+  <object class="GtkAction" id="SaveAsWorkspace">
+    <property name="label">Save Workspace _as ...</property>
+    <property name="tooltip">Save the models, tools, processes, bounds and tasks definitions to a new file.</property>
   </object>
-  <object class="GtkAction" id="SaveTaskSettings">
-    <property name="label">_Save Task Settings</property>
-    <property name="tooltip">Save the tool, process and task definitions.</property>
+  <object class="GtkAction" id="SaveWorkspace">
+    <property name="label">_Save Workspace</property>
+    <property name="tooltip">Save the models, tools, processes, bounds and tasks definitions.</property>
     <property name="stock_id">gtk-save-as</property>
   </object>
   <object class="GtkAction" id="SettingsMenu">
     <property name="label">_Settings</property>
   </object>
   <object class="GtkAction" id="UndoButton">
-    <property name="label">Undo latest model change</property>
+    <property name="label">Undo latest workspace change</property>
     <property name="stock_id">gtk-undo</property>
   </object>
   <object class="GtkAction" id="ViewMenu">

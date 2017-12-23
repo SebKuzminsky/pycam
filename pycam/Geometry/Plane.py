@@ -47,7 +47,7 @@ class Plane(IDGenerator, TransformableContainer):
     def copy(self):
         return self.__class__(self.p, self.n)
 
-    def next(self):
+    def __next__(self):
         yield "p"
         yield "n"
 

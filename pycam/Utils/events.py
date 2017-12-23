@@ -156,6 +156,11 @@ class EventCore(pycam.Gui.Settings.Settings):
         else:
             log.info("Trying to unregister a non-existent ui section: %s", section)
 
+    def clear_ui_section(self, section):
+        ui_section = self.ui_sections[section]
+        while ui_section.widgets:
+            ui_section.widgets.pop()
+
     def _rebuild_ui_section(self, section):
         if section in self.ui_sections:
             ui_section = self.ui_sections[section]

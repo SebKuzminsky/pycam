@@ -23,6 +23,8 @@ import inspect
 import os
 import uuid
 
+from pycam.Utils import get_non_conflicting_name
+from pycam.Utils.events import get_event_handler
 import pycam.Utils.log
 import pycam.Utils.locations
 
@@ -33,17 +35,22 @@ _log = pycam.Utils.log.get_logger()
 def _get_plugin_imports():
     # We want to import all relevent GUI modules into the namespace of each plugin.
     # We do this once for all - in order to centralize and minimize error handling.
-    result = {key: None for key in ("gtk", "gdk", "gdkpixbuf", "gdkobject", "GL", "GLU", "GLUT")}
+    result = {key: None for key in ("gtk", "gdk", "gdkpixbuf", "gdkobject", "gio", "glib",
+                                    "GL", "GLU", "GLUT")}
     try:
         import gi
         gi.require_version('Gtk', '3.0')
         from gi.repository import Gtk
         from gi.repository import Gdk
         from gi.repository import GdkPixbuf
+        from gi.repository import Gio
+        from gi.repository import GLib
         from gi.repository import GObject
         result["gtk"] = Gtk
         result["gdk"] = Gdk
         result["gdkpixbuf"] = GdkPixbuf
+        result["gio"] = Gio
+        result["glib"] = GLib
         result["gobject"] = GObject
     except ImportError:
         _log.warning("Failed to import GTK3 module.  Maybe you want to install 'python3-gi' "
@@ -382,25 +389,30 @@ class PluginManager(object):
         return missing
 
 
-class ListPluginBase(PluginBase, list):
+class ListPluginBase(PluginBase):
 
     ACTION_UP, ACTION_DOWN, ACTION_DELETE, ACTION_CLEAR = range(4)
+    COLLECTION_ITEM_TYPE = None
 
     def __init__(self, *args, **kwargs):
         super(ListPluginBase, self).__init__(*args, **kwargs)
         self._update_model_funcs = []
         self._gtk_modelview = None
+        get_event_handler().register_event(self.COLLECTION_ITEM_TYPE.list_changed_event,
+                                           self._update_model)
 
-        def get_function(func_name):
-            return lambda *args, **kwargs: self._change_wrapper(func_name, *args, **kwargs)
+    def __del__(self):
+        try:
+            unregister = get_event_handler().unregister_event
+        except AttributeError:
+            pass
+        unregister(self.COLLECTION_ITEM_TYPE.list_changed_event, self._update_model)
 
-        for name in ("append", "extend", "insert", "pop", "reverse", "remove", "sort"):
-            setattr(self, name, get_function(name))
+    def get_all(self):
+        return tuple(self.get_collection())
 
-    def _change_wrapper(self, func_name, *args, **kwargs):
-        value = getattr(super(ListPluginBase, self), func_name)(*args, **kwargs)
-        self._update_model()
-        return value
+    def clear(self):
+        self.get_collection().clear()
 
     def get_selected(self, **kwargs):
         if self._gtk_modelview:
@@ -450,21 +462,28 @@ class ListPluginBase(PluginBase, list):
 
     def _select_gtk(self, selected_objs):
         selection = self._gtk_modelview.get_selection()
-        selected_uuids = [item["uuid"] for item in selected_objs]
-        for index, item in enumerate(self):
-            if item["uuid"] in selected_uuids:
-                selection.select_path((index, ))
+        selected_uuids = [item.get_id() for item in selected_objs]
+        for index, item in enumerate(self.get_collection()):
+            path = self._gtk.TreePath.new_from_indices((index, ))
+            if item.get_id() in selected_uuids:
+                selection.select_path(path)
             else:
-                selection.unselect_path((index, ))
+                selection.unselect_path(path)
 
     def set_gtk_modelview(self, modelview):
         self._gtk_modelview = modelview
+
+    def force_gtk_modelview_refresh(self):
+        # force a table update by simulating a change of the list store
+        model = self._gtk_modelview.get_model()
+        model.prepend(None)
+        model.remove(model.get_iter_first())
 
     def _update_gtk_treemodel(self):
         if not self._gtk_modelview:
             return
         treemodel = self._gtk_modelview.get_model()
-        current_uuids = [item["uuid"] for item in self]
+        current_uuids = [item.get_id() for item in self.get_collection()]
         # remove all superfluous rows from "treemodel"
         removal_indices = [index for index, item in enumerate(treemodel)
                            if item[0] not in current_uuids]
@@ -480,23 +499,12 @@ class ListPluginBase(PluginBase, list):
         sorted_indices = [current_uuids.index(row[0]) for row in treemodel]
         if sorted_indices:
             treemodel.reorder(sorted_indices)
-        self.core.emit_event("tool-list-changed")
 
     def get_by_path(self, path):
         if not self._gtk_modelview:
             return None
         this_uuid = self._gtk_modelview.get_model()[int(path[0])][0]
-        objs = [t for t in self if this_uuid == t["uuid"]]
-        if objs:
-            return objs[0]
-        else:
-            return None
-
-    def get_by_attribute(self, key, value):
-        for item in self:
-            if item.get(key, None) == value:
-                return item
-        return None
+        return self.get_collection()[this_uuid]
 
     def _update_model(self):
         self._update_gtk_treemodel()
@@ -522,26 +530,24 @@ class ListPluginBase(PluginBase, list):
         selected_items.sort()
         if action in (self.ACTION_DOWN, self.ACTION_DELETE):
             selected_items.sort(reverse=True)
+        collection = self.get_collection()
         new_selection = []
         if action == self.ACTION_CLEAR:
-            while len(self) > 0:
-                self.pop(0)
+            collection.clear()
         else:
             for index in selected_items:
                 if action == self.ACTION_UP:
                     if index > 0:
-                        item = self.pop(index)
-                        self.insert(index - 1, item)
+                        collection.swap_by_index(index, index - 1)
                         new_selection.append(index - 1)
                 elif action == self.ACTION_DOWN:
-                    if index < len(self) - 1:
-                        item = self.pop(index)
-                        self.insert(index + 1, item)
+                    if index < len(self.get_collection()) - 1:
+                        collection.swap_by_index(index, index + 1)
                         new_selection.append(index + 1)
                 elif action == self.ACTION_DELETE:
-                    self.pop(index)
-                    if len(self) > 0:
-                        new_selection.append(min(index, len(self) - 1))
+                    del collection[index]
+                    if collection:
+                        new_selection.append(min(index, len(collection) - 1))
                 else:
                     pass
         self._update_model()
@@ -551,7 +557,11 @@ class ListPluginBase(PluginBase, list):
             selection = modelview
         selection.unselect_all()
         for index in new_selection:
-            selection.select_path((index,))
+            path = self._gtk.TreePath.new_from_indices((index, ))
+            selection.select_path(path)
+
+    def get_collection(self):
+        return self.COLLECTION_ITEM_TYPE.get_collection()
 
     def _update_list_action_button_state(self, *args):
         modelview = args[-3]  # noqa F841 - maybe we need it later
@@ -559,14 +569,14 @@ class ListPluginBase(PluginBase, list):
         button = args[-1]
         paths = self.get_selected(index=True, force_list=True)
         if action == self.ACTION_CLEAR:
-            button.set_sensitive(len(self) > 0)
+            button.set_sensitive(len(self.get_collection()) > 0)
         elif not paths:
             button.set_sensitive(False)
         else:
             if action == self.ACTION_UP:
                 button.set_sensitive(0 not in paths)
             elif action == self.ACTION_DOWN:
-                button.set_sensitive((len(self) - 1) not in paths)
+                button.set_sensitive((len(self.get_collection()) - 1) not in paths)
             else:
                 button.set_sensitive(True)
 
@@ -587,6 +597,37 @@ class ListPluginBase(PluginBase, list):
         button.connect("clicked", self._list_action, modelview, action)
         # initialize the state of the button
         self._update_list_action_button_state(modelview, action, button)
+
+    def get_visible(self):
+        return [item for item in self.get_all() if item.get_application_value("visible", True)]
+
+    def edit_item_name(self, cell, path, new_text):
+        item = self.get_by_path(path)
+        if item and (new_text != item.get_application_value("name")) and new_text:
+            item.set_application_value("name", new_text)
+
+    def render_item_name(self, column, cell, model, m_iter, data):
+        item = self.get_by_path(model.get_path(m_iter))
+        if item:
+            cell.set_property("text", item.get_application_value("name", "No Name"))
+
+    def render_item_visible_state(self, column, cell, model, m_iter, data):
+        item = self.get_by_path(model.get_path(m_iter))
+        if item.get_application_value("visible", True):
+            cell.set_property("pixbuf", self.ICONS["visible"])
+        else:
+            cell.set_property("pixbuf", self.ICONS["hidden"])
+        return item, cell
+
+    def toggle_item_visibility(self, treeview, path, column):
+        item = self.get_by_path(path)
+        if item:
+            item.set_application_value("visible", not item.get_application_value("visible"))
+        self.core.emit_event("visual-item-updated")
+
+    def get_non_conflicting_name(self, name_template):
+        return get_non_conflicting_name(
+            name_template, [item.get_application_value("name") for item in self.get_all()])
 
 
 class ObjectWithAttributes(dict):

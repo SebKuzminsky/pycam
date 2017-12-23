@@ -24,6 +24,8 @@ import pycam.Cutters
 import pycam.Toolpath
 import pycam.Utils
 import pycam.Utils.log
+from pycam.Utils.locations import open_file_context
+
 
 CONFIG_DIR = "pycam"
 
@@ -44,18 +46,28 @@ def get_config_dirname():
         try:
             os.makedirs(config_dir)
         except OSError:
+            log.warn("Failed to create preferences directory in your user's home directory: %s",
+                     config_dir)
             config_dir = None
     return config_dir
 
 
-def get_config_filename(filename=None):
-    if filename is None:
-        filename = "preferences.conf"
+def get_config_filename():
     config_dir = get_config_dirname()
-    if config_dir is None:
-        return None
-    else:
-        return os.path.join(config_dir, filename)
+    return None if config_dir is None else os.path.join(config_dir, "preferences.conf")
+
+
+def get_workspace_filename():
+    config_dir = get_config_dirname()
+    return None if config_dir is None else os.path.join(config_dir, "workspace.yml")
+
+
+def open_preferences_file(mode="r"):
+    return open_file_context(get_config_filename(), mode, True)
+
+
+def open_workspace_file(mode="r"):
+    return open_file_context(get_workspace_filename(), mode, True)
 
 
 class Settings(dict):

@@ -76,48 +76,28 @@ class ModelPosition(pycam.Plugins.PluginBase):
         models = self.core.get("models").get_selected()
         if not models:
             return
-        self.core.emit_event("model-change-before")
-        progress = self.core.get("progress")
-        progress.update(text="Aligning model")
-        progress.disable_cancel()
-        progress.set_multiple(len(models), "Model")
-        shift = [self.gui.get_object("ShiftPosition%s" % axis).get_value() for axis in "XYZ"]
+        axes = [self.gui.get_object("ShiftPosition%s" % axis).get_value() for axis in "XYZ"]
+        shift_operation = {"action": "shift", "shift_target": "distance", "axes": axes}
         for model in models:
-            model.model.shift(shift[0], shift[1], shift[2], callback=progress.update)
-            progress.update_multiple()
-        progress.finish()
-        self.core.emit_event("model-change-after")
+            model.extend_value("transformations", [shift_operation])
 
     def _align_model(self, widget=None):
         models = self.core.get("models").get_selected()
         if not models:
             return
-        self.core.emit_event("model-change-before")
-        dest = [self.gui.get_object("AlignPosition%s" % axis).get_value() for axis in "XYZ"]
-        progress = self.core.get("progress")
-        progress.update(text="Shifting model")
-        progress.disable_cancel()
-        progress.set_multiple(len(models), "Model")
-        for model_dict in models:
-            model = model_dict.model
-            shift_values = []
-            for axis in "XYZ":
-                dest = self.gui.get_object("AlignPosition%s" % axis).get_value()
-                alignments = ("Min", "Center", "Max")
-                for alignment in alignments:
-                    objname = "AlignPosition%s%s" % (axis, alignment)
-                    min_axis = getattr(model, "min%s" % axis.lower())
-                    max_axis = getattr(model, "max%s" % axis.lower())
-                    if self.gui.get_object(objname).get_active():
-                        if alignment == "Min":
-                            shift = dest - min_axis
-                        elif alignment == "Center":
-                            shift = dest - (min_axis + max_axis) / 2.0
-                        else:
-                            shift = dest - max_axis
-                        shift_values.append(shift)
-            model.shift(shift_values[0], shift_values[1], shift_values[2],
-                        callback=progress.update)
-            progress.update_multiple()
-        progress.finish()
-        self.core.emit_event("model-change-after")
+        transformations = []
+        # collect transformations for min/center/max alignments
+        # Each alignment transformation is only added, if it was selected for at least one axis.
+        for obj_name_suffix, shift_target in (("Min", "align_min"),
+                                              ("Center", "center"),
+                                              ("Max", "align_max")):
+            axes = [None, None, None]
+            for index, axis in enumerate("XYZ"):
+                objname = "AlignPosition%s%s" % (axis, obj_name_suffix)
+                if self.gui.get_object(objname).get_active():
+                    axes[index] = self.gui.get_object("AlignPosition%s" % axis).get_value()
+            if any(axis is not None for axis in axes):
+                transformations.append(
+                    {"action": "shift", "shift_target": shift_target, "axes": axes})
+        for model in models:
+            model.extend_value("transformations", transformations)

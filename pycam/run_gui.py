@@ -24,8 +24,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 # for "print" to stderr
 from __future__ import print_function
 
+import argparse
 import logging
-from optparse import OptionParser
 import os
 import socket
 import sys
@@ -49,7 +49,8 @@ except ImportError:
     from pycam import VERSION
 
 from pycam import InitializationError
-import pycam.Exporters.GCodeExporter
+from pycam.Flow.history import DataHistory, merge_history_and_block_events
+from pycam.Gui import QuestionStatus
 import pycam.Gui.common as GuiCommon
 from pycam.Gui.common import EmergencyDialog
 import pycam.Gui.Settings
@@ -93,20 +94,7 @@ if pycam.Utils.get_platform() == pycam.Utils.OSPlatform.WINDOWS:
     if path:
         os.environ["PATH"] = os.environ.get("PATH", "") + os.path.pathsep + path
 
-BASE_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
-EXAMPLE_MODEL_LOCATIONS = [
-    os.path.join(BASE_DIR, "samples"),
-    os.path.join(sys.prefix, "share", "pycam", "samples"),
-    os.path.join(sys.prefix, "local", "share", "pycam", "samples"),
-    os.path.join("usr", "share", "pycam", "samples")]
-
-# for pyinstaller (windows distribution)
-if "_MEIPASS2" in os.environ:
-    EXAMPLE_MODEL_LOCATIONS.insert(0, os.path.join(os.path.normpath(os.environ["_MEIPASS2"]),
-                                                   "samples"))
-DEFAULT_MODEL_FILE = "pycam-textbox.stl"
-# DEFAULT_MODEL_FILE = "problem_1_triangle.stl"
 EXIT_CODES = {"ok": 0,
               "requirements": 1,
               "load_model_failed": 2,
@@ -120,6 +108,7 @@ log = pycam.Utils.log.get_logger()
 
 
 def show_gui():
+    pycam.Utils.set_application_key("pycam-gtk")
     deps_gtk = GuiCommon.requirements_details_gtk()
     report_gtk = GuiCommon.get_dependency_report(deps_gtk, prefix="\t")
     if GuiCommon.check_dependencies(deps_gtk):
@@ -137,68 +126,62 @@ def show_gui():
         return EXIT_CODES["requirements"]
 
     event_manager = get_event_handler()
-    gui = gui_class(event_manager)
-    # initialize plugins
-    plugin_manager = pycam.Plugins.PluginManager(core=event_manager)
-    plugin_manager.import_plugins()
-    # some more initialization
-    gui.reset_preferences()
-    # TODO: preferences are not loaded until the new format is stable
-#   self.load_preferences()
+    event_manager.set("history", DataHistory())
 
-    # tell the GUI to empty the "undo" queue
-    gui.clear_undo_states()
+    with merge_history_and_block_events(event_manager):
+        gui = gui_class(event_manager)
+        # initialize plugins
+        plugin_manager = pycam.Plugins.PluginManager(core=event_manager)
+        plugin_manager.import_plugins()
+        # some more initialization
+        gui.reset_preferences()
+        gui.load_preferences()
+        gui.load_startup_workspace()
 
     event_manager.emit_event("notify-initialization-finished")
 
     # open the GUI
     get_mainloop(use_gtk=True).run()
+
+    # optionally save workspace (based on configuration or dialog response)
+    if event_manager.get("save_workspace_on_exit") == QuestionStatus.ASK.value:
+        response = gui.get_question_response("Save Workspace?", True, allow_memorize=True)
+        if response.should_memorize:
+            event_manager.set("save_workspace_on_exit",
+                              (QuestionStatus.YES if response.is_yes else QuestionStatus.NO).value)
+        should_store = response.is_yes
+    elif event_manager.get("save_workspace_on_exit") == QuestionStatus.YES.value:
+        should_store = True
+    else:
+        should_store = False
+    if should_store:
+        gui.save_startup_workspace()
+
+    gui.save_preferences()
+
     # no error -> return no error code
     return None
 
 
-def execute(parser, opts, args, pycam):
+def execute(parser, args, pycam):
     # try to change the process name
     pycam.Utils.setproctitle("pycam")
 
-    if opts.trace:
-        log.setLevel(logging.DEBUG / 2)
-    elif opts.debug:
+    if args.trace:
+        log.setLevel(logging.DEBUG // 2)
+    elif args.debug:
         log.setLevel(logging.DEBUG)
-    elif opts.quiet:
+    elif args.quiet:
         log.setLevel(logging.WARNING)
         # disable the progress bar
-        opts.progress = "none"
+        args.progress = "none"
         # silence all warnings
         warnings.filterwarnings("ignore")
     else:
-        # silence gtk warnings
-        try:
-            import gi
-            gi.require_version("Gtk", "3.0")
-            # from gi.repository import Gtk as gtk
-            # warnings.filterwarnings("ignore", category=gtk.Warning) FIXME
-        except ImportError:
-            pass
-
-    # show version and exit
-    if opts.show_version:
-        if opts.quiet:
-            # print only the bare version number
-            print(VERSION)
-        else:
-            text = """PyCAM %s
-Copyright (C) 2008-2010 Lode Leroy
-Copyright (C) 2010-2017 Lars Kruse and many other contributors
-
-License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
-This is free software: you are free to change and redistribute it.
-There is NO WARRANTY, to the extent permitted by law.""" % VERSION
-            print(text)
-        return EXIT_CODES["ok"]
+        log.setLevel(logging.INFO)
 
     # check if server-auth-key is given -> this is mandatory for server mode
-    if (opts.enable_server or opts.start_server) and not opts.server_authkey:
+    if (args.enable_server or args.start_server) and not args.server_authkey:
         parser.error(
             "You need to supply a shared secret for server mode. This is supposed to prevent you "
             "from exposing your host to remote access without authentication.\nPlease add the "
@@ -207,16 +190,16 @@ There is NO WARRANTY, to the extent permitted by law.""" % VERSION
 
     # initialize multiprocessing
     try:
-        if opts.start_server:
+        if args.start_server:
             pycam.Utils.threading.init_threading(
-                opts.parallel_processes, remote=opts.remote_server, run_server=True,
-                server_credentials=opts.server_authkey)
+                args.parallel_processes, remote=args.remote_server, run_server=True,
+                server_credentials=args.server_authkey)
             pycam.Utils.threading.cleanup()
             return EXIT_CODES["ok"]
         else:
             pycam.Utils.threading.init_threading(
-                opts.parallel_processes, enable_server=opts.enable_server,
-                remote=opts.remote_server, server_credentials=opts.server_authkey)
+                args.parallel_processes, enable_server=args.enable_server,
+                remote=args.remote_server, server_credentials=args.server_authkey)
     except socket.error as err_msg:
         log.error("Failed to connect to remote server: %s", err_msg)
         return EXIT_CODES["connection_error"]
@@ -231,6 +214,55 @@ There is NO WARRANTY, to the extent permitted by law.""" % VERSION
         return EXIT_CODES["requirements"]
 
 
+def get_args_parser():
+    parser = argparse.ArgumentParser(prog="PyCAM", description="Toolpath generator",
+                                     epilog="PyCAM website: https://github.com/SebKuzminsky/pycam")
+    # general options
+    group_processing = parser.add_argument_group("Processing")
+    group_processing.add_argument(
+        "--number-of-processes", dest="parallel_processes", default=None, type=int,
+        action="store",
+        help=("override the default detection of multiple CPU cores. Parallel processing only "
+              "works with Python 2.6 (or later) or with the additional 'multiprocessing' module."))
+    group_processing.add_argument(
+        "--enable-server", dest="enable_server", default=False, action="store_true",
+        help="enable a local server and (optionally) remote worker servers.")
+    group_processing.add_argument(
+        "--remote-server", dest="remote_server", default=None, action="store",
+        help=("Connect to a remote task server to distribute the processing load. "
+              "The server is given as an IP or a hostname with an optional port (default: 1250) "
+              "separated by a colon."))
+    group_processing.add_argument(
+        "--start-server-only", dest="start_server", default=False, action="store_true",
+        help="Start only a local server for handling remote requests.")
+    group_processing.add_argument(
+        "--server-auth-key", dest="server_authkey", default="", action="store",
+        help=("Secret used for connecting to a remote server or for granting access to remote "
+              "clients."))
+    group_verbosity = parser.add_argument_group("Verbosity")
+    group_verbosity.add_argument(
+        "-q", "--quiet", dest="quiet", default=False, action="store_true",
+        help="output only warnings and errors.")
+    group_verbosity.add_argument(
+        "-d", "--debug", dest="debug", default=False, action="store_true",
+        help="enable output of debug messages.")
+    group_verbosity.add_argument(
+        "--trace", dest="trace", default=False, action="store_true",
+        help="enable more verbose debug messages.")
+    group_verbosity.add_argument(
+        "--progress", dest="progress", default="text", action="store",
+        choices=["none", "text", "bar", "dot"],
+        help=("specify the type of progress bar used in non-GUI mode. The following options are "
+              "available: text, none, bar, dot."))
+    group_introspection = parser.add_argument_group("Introspection")
+    group_introspection.add_argument(
+        "--profiling", dest="profile_destination", action="store",
+        help="store profiling statistics in a file (only for debugging)")
+    group_introspection.add_argument("--version", action="version",
+                                     version="%(prog)s {}".format(VERSION))
+    return parser
+
+
 def main_func():
     # The PyInstaller standalone executable requires this "freeze_support" call. Otherwise we will
     # see a warning regarding an invalid argument called "--multiprocessing-fork". This problem can
@@ -238,73 +270,17 @@ def main_func():
     #    "--enable-server --server-auth-key foo".
     if hasattr(multiprocessing, "freeze_support"):
         multiprocessing.freeze_support()
-    parser = OptionParser(
-        prog="PyCAM", usage=("usage: pycam [options]\n\n"
-                             "Start the PyCAM toolpath generator. Supplying one of the "
-                             "'--export-?' parameters will cause PyCAM to start in batch mode. "
-                             "Most parameters are useful only for batch mode."),
-        epilog="PyCAM website: https://github.com/SebKuzminsky/pycam")
-    group_general = parser.add_option_group("General options")
-    # general options
-    group_general.add_option(
-        "", "--unit", dest="unit_size", default="mm", action="store", type="choice",
-        choices=["mm", "inch"],
-        help="choose 'mm' or 'inch' for all numbers. By default 'mm' is assumed.")
-    group_general.add_option(
-        "", "--collision-engine", dest="collision_engine", default="triangles", action="store",
-        type="choice", choices=["triangles"],
-        help=("choose a specific collision detection engine. The default is 'triangles'. "
-              "Use 'help' to get a list of possible engines."))
-    group_general.add_option(
-        "", "--number-of-processes", dest="parallel_processes", default=None, type="int",
-        action="store",
-        help=("override the default detection of multiple CPU cores. Parallel processing only "
-              "works with Python 2.6 (or later) or with the additional 'multiprocessing' module."))
-    group_general.add_option(
-        "", "--enable-server", dest="enable_server", default=False, action="store_true",
-        help="enable a local server and (optionally) remote worker servers.")
-    group_general.add_option(
-        "", "--remote-server", dest="remote_server", default=None, action="store", type="string",
-        help=("Connect to a remote task server to distribute the processing load. "
-              "The server is given as an IP or a hostname with an optional port (default: 1250) "
-              "separated by a colon."))
-    group_general.add_option(
-        "", "--start-server-only", dest="start_server", default=False, action="store_true",
-        help="Start only a local server for handling remote requests.")
-    group_general.add_option(
-        "", "--server-auth-key", dest="server_authkey", default="", action="store", type="string",
-        help=("Secret used for connecting to a remote server or for granting access to remote "
-              "clients."))
-    group_general.add_option(
-        "-q", "--quiet", dest="quiet", default=False, action="store_true",
-        help="output only warnings and errors.")
-    group_general.add_option(
-        "-d", "--debug", dest="debug", default=False, action="store_true",
-        help="enable output of debug messages.")
-    group_general.add_option(
-        "", "--trace", dest="trace", default=False, action="store_true",
-        help="enable more verbose debug messages.")
-    group_general.add_option(
-        "", "--progress", dest="progress", default="text", action="store", type="choice",
-        choices=["none", "text", "bar", "dot"],
-        help=("specify the type of progress bar used in non-GUI mode. The following options are "
-              "available: text, none, bar, dot."))
-    group_general.add_option(
-        "", "--profiling", dest="profile_destination", action="store", type="string",
-        help="store profiling statistics in a file (only for debugging)")
-    group_general.add_option(
-        "-v", "--version", dest="show_version", default=False, action="store_true",
-        help="output the current version of PyCAM and exit")
-    (opts, args) = parser.parse_args()
+    parser = get_args_parser()
+    args = parser.parse_args()
     try:
-        if opts.profile_destination:
+        if args.profile_destination:
             import cProfile
-            exit_code = cProfile.run('execute(parser, opts, args, pycam)',
-                                     opts.profile_destination)
+            exit_code = cProfile.run('execute(parser, args, pycam)',
+                                     args.profile_destination)
         else:
             # We need to add the parameter "pycam" to avoid weeeeird namespace
             # issues. Any idea how to fix this?
-            exit_code = execute(parser, opts, args, pycam)
+            exit_code = execute(parser, args, pycam)
     except KeyboardInterrupt:
         log.info("Quit requested")
         exit_code = None

@@ -27,7 +27,7 @@ from pycam.Geometry.Matrix import TRANSFORMATIONS
 from pycam.Geometry.Line import Line
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.Polygon import Polygon
-from pycam.Geometry.PointUtils import pcross, pdist, pnorm, pnormalized, psub
+from pycam.Geometry.PointUtils import pcross, pdist, pmul, pnorm, pnormalized, psub
 from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.TriangleKdtree import TriangleKdtree
 from pycam.Toolpath import Bounds
@@ -97,7 +97,7 @@ class BaseModel(IDGenerator, TransformableContainer):
         """
         return sum([len(igroup) for igroup in self._item_groups])
 
-    def next(self):
+    def __next__(self):
         for item_group in self._item_groups:
             for item in item_group:
                 if isinstance(item, list):
@@ -195,6 +195,24 @@ class BaseModel(IDGenerator, TransformableContainer):
             scale_z = scale_x
         matrix = ((scale_x, 0, 0, 0), (0, scale_y, 0, 0), (0, 0, scale_z, 0))
         self.transform_by_matrix(matrix, callback=self._get_progress_callback(callback))
+
+    def _shift_to_origin(self, position, callback=None):
+        if position != Point3D(0, 0, 0):
+            self.shift(*(pmul(position, -1)), callback=callback)
+
+    def _shift_origin_to(self, position, callback=None):
+        if position != Point3D(0, 0, 0):
+            self.shift(*position, callback=callback)
+
+    def rotate(self, center, axis_vector, angle, callback=None):
+        # shift the model to the rotation center
+        self._shift_to_origin(center, callback=callback)
+        # rotate the model
+        matrix = pycam.Geometry.Matrix.get_rotation_matrix_axis_angle(axis_vector, angle,
+                                                                      use_radians=False)
+        self.transform_by_matrix(matrix, callback=callback)
+        # shift the model back to its original position
+        self._shift_origin_to(center, callback=callback)
 
     def get_bounds(self):
         return Bounds(Bounds.TYPE_CUSTOM, Box3D(Point3D(self.minx, self.miny, self.minz),
@@ -922,7 +940,7 @@ class Rectangle(IDGenerator, TransformableContainer):
     def get_points(self):
         return (self.p1, self.p2, self.p3, self.p4)
 
-    def next(self):
+    def __next__(self):
         yield "p1"
         yield "p2"
         yield "p3"

@@ -1,24 +1,17 @@
-try:
-    # Python3
-    from configparser import ConfigParser
-except ImportError:
-    # Python2
-    from ConfigParser import ConfigParser
-import pickle
-try:
-    # Python2 (load first - due to incompatible interface)
-    from StringIO import StringIO
-except ImportError:
-    # Python3
-    from io import StringIO
+from configparser import ConfigParser
+import enum
+import json
 
 import pycam.Gui.Settings
+from pycam.Utils.locations import open_file_context
 import pycam.Utils.log
 
 
+FILE_FILTER_WORKSPACE = (("Workspace Files", "*.yml"),)
+
 PREFERENCES_DEFAULTS = {
     "unit": "mm",
-    "default_task_settings_file": "",
+    "save_workspace_on_exit": "ask",
     "show_model": True,
     "show_support_preview": True,
     "show_axes": True,
@@ -41,18 +34,8 @@ PREFERENCES_DEFAULTS = {
     "view_shadow": True,
     "view_polygon": True,
     "view_perspective": True,
-    "tool_progress_max_fps": 30,
-    "gcode_safety_height": 25.0,
-    "gcode_plunge_feedrate": 100.0,
-    "gcode_minimum_step_x": 0.0001,
-    "gcode_minimum_step_y": 0.0001,
-    "gcode_minimum_step_z": 0.0001,
-    "gcode_path_mode": 0,
-    "gcode_motion_tolerance": 0,
-    "gcode_naive_tolerance": 0,
-    "gcode_start_stop_spindle": True,
+    "tool_progress_max_fps": 30.0,
     "gcode_filename_extension": "",
-    "gcode_spindle_delay": 3,
     "external_program_inkscape": "",
     "external_program_pstoedit": "",
     "touch_off_on_startup": False,
@@ -70,18 +53,99 @@ PREFERENCES_DEFAULTS = {
 """ the listed items will be loaded/saved via the preferences file in the
 user's home directory on startup/shutdown"""
 
-MAX_UNDO_STATES = 10
+DEFAULT_WORKSPACE = """
+models:
+        model:
+            source:
+                    type: file
+                    location: samples/Box0.stl
+            X-Application:
+                pycam-gtk:
+                    name: Example 3D Model
+                    color: { red: 0.1, green: 0.4, blue: 1.0, alpha: 0.8 }
+
+tools:
+        rough:
+            tool_id: 1
+            shape: flat_bottom
+            radius: 3
+            feed: 600
+            spindle: {speed: 1000.0, spin_up_delay: 2.0, spin_up_enabled: true}
+            X-Application: { pycam-gtk: { name: Big Tool } }
+        fine:
+            tool_id: 2
+            shape: ball_nose
+            radius: 1
+            feed: 1200
+            spindle: {speed: 1000.0, spin_up_delay: 2.0, spin_up_enabled: true}
+            X-Application: { pycam-gtk: { name: Small Tool } }
+
+processes:
+        process_slicing:
+            strategy: slice
+            path_pattern: grid
+            overlap: 0.10
+            step_down: 3.0
+            grid_direction: y
+            milling_style: ignore
+            X-Application: { pycam-gtk: { name: Slice (rough) } }
+        process_surfacing:
+            strategy: surface
+            overlap: 0.80
+            step_down: 1.0
+            grid_direction: x
+            milling_style: ignore
+            X-Application: { pycam-gtk: { name: Surface (fine) } }
+
+bounds:
+        minimal:
+            specification: margins
+            lower: [5, 5, 0]
+            upper: [5, 5, 1]
+            X-Application: { pycam-gtk: { name: minimal } }
+
+tasks:
+        rough:
+            type: milling
+            tool: rough
+            process: process_slicing
+            bounds: minimal
+            collision_models: [ model ]
+            X-Application: { pycam-gtk: { name: Quick Removal } }
+        fine:
+            type: milling
+            tool: fine
+            process: process_surfacing
+            bounds: minimal
+            collision_models: [ model ]
+            X-Application: { pycam-gtk: { name: Finishing } }
+
+export_settings:
+        milling:
+            gcode:
+              corner_style: {mode: optimize_tolerance, motion_tolerance: 0.0, naive_tolerance: 0.0}
+              plunge_feedrate: 100
+              safety_height: 25
+              step_width: {x: 0.0001, y: 0.0001, z: 0.0001}
+            X-Application: { pycam-gtk: { name: Milling Settings } }
+"""
+
 PICKLE_PROTOCOL = 2
 
 log = pycam.Utils.log.get_logger()
+
+
+class QuestionStatus(enum.Enum):
+    YES = "yes"
+    NO = "no"
+    ASK = "ask"
 
 
 class BaseUI(object):
 
     def __init__(self, event_manager):
         self.settings = event_manager
-        self._undo_states = []
-        self.settings.register_event("model-change-before", self.store_undo_state)
+        self.last_workspace_uri = None
 
     def reset_preferences(self, widget=None):
         """ reset all preferences to their default values """
@@ -91,15 +155,15 @@ class BaseUI(object):
         self.settings.emit_event("model-change-after")
 
     def load_preferences(self):
-        """ load all settings that are available in the Preferences window from
-        a file in the user's home directory """
-        config_filename = pycam.Gui.Settings.get_config_filename()
-        if config_filename is None:
-            # failed to create the personal preferences directory
-            return
+        """ load all settings (see Preferences window) from a file in the user's home directory """
         config = ConfigParser()
-        if not config.read(config_filename):
-            # no config file was read
+        try:
+            with pycam.Gui.Settings.open_preferences_file() as in_file:
+                config.read_file(in_file)
+        except FileNotFoundError as exc:
+            log.info("No preferences file found (%s). Starting with default preferences.", exc)
+        except OSError as exc:
+            log.error("Failed to read preferences: %s", exc)
             return
         # report any ignored (obsolete) preference keys present in the file
         for item, value in config.items("DEFAULT"):
@@ -109,60 +173,111 @@ class BaseUI(object):
             if not config.has_option("DEFAULT", item):
                 # a new preference setting is missing in the (old) file
                 continue
-            value_raw = config.get("DEFAULT", item)
-            value_type = type(PREFERENCES_DEFAULTS[item])
-            if hasattr(value_type(), "split"):
-                # keep strings as they are
-                value = str(value_raw)
-            else:
-                # parse tuples, integers, bools, ...
-                value = eval(value_raw)
+            value_json = config.get("DEFAULT", item)
+            try:
+                value = json.loads(value_json)
+            except ValueError as exc:
+                log.warning("Failed to parse configuration setting '%s': %s", item, exc)
+                value = PREFERENCES_DEFAULTS[item]
+            wanted_type = type(PREFERENCES_DEFAULTS[item])
+            if wanted_type is float:
+                # int is accepted for floats, too
+                wanted_type = (float, int)
+            if not isinstance(value, wanted_type):
+                log.warning("Falling back to default configuration setting for '%s' due to "
+                            "an invalid value type being parsed: %s != %s",
+                            item, type(value), wanted_type)
+                value = PREFERENCES_DEFAULTS[item]
             self.settings.set(item, value)
 
     def save_preferences(self):
-        """ save all settings that are available in the Preferences window to
-        a file in the user's home directory """
-        config_filename = pycam.Gui.Settings.get_config_filename()
-        if config_filename is None:
-            # failed to create the personal preferences directory
-            log.warn("Failed to create a preferences directory in your user's home directory.")
-            return
+        """ save all settings (see Preferences window) to a file in the user's home directory """
         config = ConfigParser()
         for item in PREFERENCES_DEFAULTS:
-            config.set("DEFAULT", item, self.settings.get(item))
+            config.set("DEFAULT", item, json.dumps(self.settings.get(item)))
         try:
-            config_file = open(config_filename, "w")
-            config.write(config_file)
-            config_file.close()
-        except IOError as err_msg:
-            log.warn("Failed to write preferences file (%s): %s", config_filename, err_msg)
-
-    def clear_undo_states(self):
-        """ This function is called by the pycam script after everything is set up properly.  """
-        # empty the "undo" states (accumulated by loading the default model)
-        while self._undo_states:
-            self._undo_states.pop(0)
-        self.settings.emit_event("undo-states-changed")
-
-    def store_undo_state(self):
-        # for now we only store the model
-        if not self.settings.get("models"):
-            return
-        # TODO: store all models
-        self._undo_states.append(pickle.dumps(self.settings.get("models")[0].model,
-                                              PICKLE_PROTOCOL))
-        log.debug("Stored the current state of the model for undo")
-        while len(self._undo_states) > MAX_UNDO_STATES:
-            self._undo_states.pop(0)
-        self.settings.emit_event("undo-states-changed")
+            with pycam.Gui.Settings.open_preferences_file(mode="w") as out_file:
+                config.write(out_file)
+        except OSError as exc:
+            log.warn("Failed to write preferences file: %s", exc)
 
     def restore_undo_state(self, widget=None, event=None):
-        if len(self._undo_states) > 0:
-            latest = StringIO(self._undo_states.pop(-1))
-            model = pickle.Unpickler(latest).load()
-            self.load_model(model)
-            self.gui.get_object("UndoButton").set_sensitive(len(self._undo_states) > 0)
-            log.info("Restored the previous state of the model")
-            self.settings.emit_event("model-change-after")
+        history = self.settings.get("history")
+        if history and history.get_undo_steps_count() > 0:
+            history.restore_previous_state()
         else:
             log.info("No previous undo state available - request ignored")
+
+    def save_startup_workspace(self):
+        self.save_workspace_to_file(pycam.Gui.Settings.get_workspace_filename(),
+                                    remember_uri=False)
+
+    def load_startup_workspace(self):
+        self.load_workspace_from_file(pycam.Gui.Settings.get_workspace_filename(),
+                                      remember_uri=False, default_content=DEFAULT_WORKSPACE)
+
+    def save_workspace_to_file(self, filename, remember_uri=True):
+        from pycam.Flow.parser import dump_yaml
+        if remember_uri:
+            self.last_workspace_uri = pycam.Utils.URIHandler(filename)
+            self.settings.emit_event("notify-file-opened", filename)
+        log.info("Storing workspace in file: %s", filename)
+        try:
+            with open_file_context(filename, "w", True) as out_file:
+                dump_yaml(target=out_file)
+        except OSError as exc:
+            log.error("Failed to store workspace in file '%s': %s", filename, exc)
+
+    def load_workspace_from_file(self, filename, remember_uri=True, default_content=None):
+        if remember_uri:
+            self.last_workspace_uri = pycam.Utils.URIHandler(filename)
+            self.settings.emit_event("notify-file-opened", filename)
+        log.info("Loading workspace from file: %s", filename)
+        try:
+            with open_file_context(filename, "r", True) as in_file:
+                content = in_file.read()
+        except OSError as exc:
+            if default_content:
+                content = default_content
+            else:
+                log.error("Failed to read workspace file (%s): %s", filename, exc)
+                return
+        self.load_workspace_from_description(content)
+
+    def load_workspace_dialog(self, filename=None):
+        if not filename:
+            filename = self.settings.get("get_filename_func")(
+                "Loading workspace ...", mode_load=True, type_filter=FILE_FILTER_WORKSPACE)
+            # no filename selected -> no action
+            if not filename:
+                return
+            remember_uri = True
+        else:
+            remember_uri = False
+        self.load_workspace_from_file(filename, remember_uri=remember_uri)
+
+    def save_workspace_dialog(self, filename=None):
+        if not filename:
+            # we open a dialog
+            filename = self.settings.get("get_filename_func")(
+                "Save workspace to ...", mode_load=False, type_filter=FILE_FILTER_WORKSPACE,
+                filename_templates=(self.last_workspace_uri, self.last_model_uri))
+            # no filename selected -> no action
+            if not filename:
+                return
+            remember_uri = True
+        else:
+            remember_uri = False
+        self.save_workspace_to_file(filename, remember_uri=remember_uri)
+
+    def load_workspace_from_description(self, description):
+        from pycam.Flow.data_models import CollectionName
+        from pycam.Flow.history import merge_history_and_block_events
+        from pycam.Flow.parser import parse_yaml
+        with merge_history_and_block_events(self.settings):
+            parse_yaml(description,
+                       excluded_sections={CollectionName.TOOLPATHS, CollectionName.EXPORTS},
+                       reset=True)
+
+    def reset_workspace(self):
+        self.load_workspace_from_description(DEFAULT_WORKSPACE)

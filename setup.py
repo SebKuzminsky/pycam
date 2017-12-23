@@ -67,6 +67,9 @@ Windows: select Python 2.5 in the following dialog.
         "gui_scripts": [
             "pycam = pycam.run_gui:main_func",
         ],
+        "console_scripts": [
+            "pycam-cli = pycam.run_cli:main_func",
+        ],
     },
     data_files=[
         ("share/pycam/doc", ["COPYING.TXT",

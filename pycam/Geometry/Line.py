@@ -108,7 +108,7 @@ class Line(IDGenerator, TransformableContainer):
         """
         return (self.p1, self.p2) < (other.p1, other.p2)
 
-    def next(self):
+    def __next__(self):
         yield "p1"
         yield "p2"
 

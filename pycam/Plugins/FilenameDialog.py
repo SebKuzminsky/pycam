@@ -100,7 +100,7 @@ class FilenameDialog(pycam.Plugins.PluginBase):
         # add extra parts
         if extra_widget:
             extra_widget.show_all()
-            dialog.get_content_area().pack_start(extra_widget, expand=False)
+            dialog.get_content_area().pack_start(extra_widget, expand=False, fill=False, padding=0)
         # add filter for files
         if type_filter:
             for file_filter in _get_filters_from_list(self._gtk, type_filter):

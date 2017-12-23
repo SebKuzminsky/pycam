@@ -86,12 +86,13 @@ class ModelScaling(pycam.Plugins.PluginBase):
             scale_button = self.gui.get_object("ScaleSelectedAxisButton")
             scale_value = self.gui.get_object("ScaleDimensionControl")
             index = axis_control.get_active()
-            # TODO: get dimension of multiple models
-            model = models[0].model
-            dims = (model.maxx - model.minx, model.maxy - model.miny, model.maxz - model.minz)
-            value = dims[index]
-            non_zero_dimensions = [i for i, dim in enumerate(dims) if dim > 0]
-            enable_controls = index in non_zero_dimensions
+            enable_controls = False
+            for model_dict in models:
+                model = model_dict.get_model()
+                dims = (model.maxx - model.minx, model.maxy - model.miny, model.maxz - model.minz)
+                value = dims[index]
+                non_zero_dimensions = [i for i, dim in enumerate(dims) if dim > 0]
+                enable_controls = enable_controls or (index in non_zero_dimensions)
             scale_button.set_sensitive(enable_controls)
             scale_value.set_sensitive(enable_controls)
             scale_value.set_value(value)
@@ -105,16 +106,10 @@ class ModelScaling(pycam.Plugins.PluginBase):
         factor = percent / 100.0
         if (factor <= 0) or (factor == 1):
             return
-        self.core.emit_event("model-change-before")
-        progress = self.core.get("progress")
-        progress.update(text="Scaling model")
-        progress.disable_cancel()
-        progress.set_multiple(len(models), "Model")
+        axes = [factor] * 3
         for model in models:
-            model.model.scale(factor, callback=progress.update)
-            progress.update_multiple()
-        progress.finish()
-        self.core.emit_event("model-change-after")
+            model.extend_value("transformations",
+                               [{"action": "scale", "scale_target": "factor", "axes": axes}])
 
     def _scale_model_axis_fit(self, widget=None, proportionally=False):
         models = self.core.get("models").get_selected()
@@ -122,32 +117,11 @@ class ModelScaling(pycam.Plugins.PluginBase):
             return
         value = self.gui.get_object("ScaleDimensionValue").get_value()
         index = self.gui.get_object("ScaleDimensionAxis").get_active()
-        axes = "xyz"
-        axis_suffix = axes[index]
-        # TODO: use dimension of multiple models
-        model = models[0].model
-        factor = (value / (getattr(model, "max" + axis_suffix)
-                           - getattr(model, "min" + axis_suffix)))
-        self.core.emit_event("model-change-before")
-        progress = self.core.get("progress")
-        progress.update(text="Scaling model")
-        progress.disable_cancel()
-        progress.set_multiple(len(models), "Model")
+        if proportionally:
+            axes = [value] * 3
+        else:
+            axes = [None, None, None]
+            axes[index] = value
         for model in models:
-            # TODO: use different scaling for multiple models
-            if proportionally:
-                model.model.scale(factor, callback=progress.update)
-            else:
-                factor_x, factor_y, factor_z = (1, 1, 1)
-                if index == 0:
-                    factor_x = factor
-                elif index == 1:
-                    factor_y = factor
-                elif index == 2:
-                    factor_z = factor
-                else:
-                    return
-                model.model.scale(factor_x, factor_y, factor_z, callback=progress.update)
-            progress.update_multiple()
-        progress.finish()
-        self.core.emit_event("model-change-after")
+            model.extend_value("transformations",
+                               [{"action": "scale", "scale_target": "size", "axes": axes}])

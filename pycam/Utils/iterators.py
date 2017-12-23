@@ -24,7 +24,7 @@ class Iterator(object):
         self.seq = seq
         self.ind = start
 
-    def next(self):
+    def __next__(self):
         if self.ind >= len(self.seq):
             return None
         else:
@@ -78,7 +78,7 @@ class CyclicIterator(object):
         self.ind = start
         self.count = len(seq)
 
-    def next(self):
+    def __next__(self):
         item = self.seq[self.ind]
         self.ind += 1
         if self.ind == len(self.seq):

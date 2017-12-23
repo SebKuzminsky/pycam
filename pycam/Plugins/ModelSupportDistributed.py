@@ -83,16 +83,16 @@ class ModelSupportDistributed(pycam.Plugins.PluginBase):
             s = self.core
             while models:
                 model = models.pop(0)
-                if (model.model
+                if (model.get_model()
                         and (s.get("support_grid_thickness") > 0)
                         and (s.get("support_grid_height") > 0)
                         and (s.get("support_grid_average_distance") > 0)
                         and (s.get("support_grid_minimum_bridges") > 0)):
                     # get the minimum z value of the bounding box
-                    minz = model.model.minz
+                    minz = model.get_model().minz
                     corner_start = (grid_type == "distributed_corners")
                     support_model = pycam.Toolpath.SupportGrid.get_support_distributed(
-                        model.model, minz, s.get("support_grid_average_distance"),
+                        model.get_model(), minz, s.get("support_grid_average_distance"),
                         s.get("support_grid_minimum_bridges"), s.get("support_grid_thickness"),
                         s.get("support_grid_height"), s.get("support_grid_length"),
                         start_at_corners=corner_start)

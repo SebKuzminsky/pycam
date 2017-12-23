@@ -27,7 +27,7 @@ _log = pycam.Utils.log.get_logger()
 
 class BaseGenerator(object):
 
-    def __init__(self, destination):
+    def __init__(self, destination, comment=None):
         if hasattr(destination, "write"):
             # assume that "destination" is something like a StringIO instance or an open file
             self.destination = destination
@@ -39,6 +39,9 @@ class BaseGenerator(object):
             self._close_stream_on_exit = True
         self._filters = []
         self._cache = {}
+        # add a comment at the top of the file, if requested
+        if comment:
+            self.add_comment(comment)
         self.add_header()
 
     def _get_cache(self, key, default_value):

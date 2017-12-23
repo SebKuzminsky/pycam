@@ -12,12 +12,11 @@
       <separator />
     </menu>
     <menu action="SettingsMenu">
-      <!--
-      <menuitem action="LoadTaskSettings"/>
-      <menuitem action="SaveTaskSettings"/>
-      <menuitem action="SaveAsTaskSettings"/>
+      <menuitem action="ResetWorkspace"/>
+      <menuitem action="LoadWorkspace"/>
+      <menuitem action="SaveWorkspace"/>
+      <menuitem action="SaveAsWorkspace"/>
       <separator />
-      -->
       <menuitem action="GeneralSettings"/>
     </menu>
     <menu action="ViewMenu" />
@@ -38,7 +37,7 @@
         <menuitem action="HelpToolTypes"/>
         <menuitem action="HelpProcessSettings"/>
         <menuitem action="HelpBoundsSettings"/>
-        <menuitem action="HelpTaskSetup"/>
+        <menuitem action="HelpProjectSetup"/>
         <menuitem action="Help3DView"/>
       </menu>
       <separator />

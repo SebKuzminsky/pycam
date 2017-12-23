@@ -20,7 +20,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import pycam.Plugins
-import pycam.Geometry.Matrix
 
 
 class ModelRotation(pycam.Plugins.PluginBase):
@@ -59,11 +58,11 @@ class ModelRotation(pycam.Plugins.PluginBase):
         models = self.core.get("models").get_selected()
         if not models:
             return
-        self.core.emit_event("model-change-before")
+        center = [0, 0, 0]
         for axis in "XYZ":
             if self.gui.get_object("RotationAxis%s" % axis).get_active():
                 break
-        axis_vector = {"X": (1, 0, 0), "Y": (0, 1, 0), "Z": (0, 0, 1)}[axis]
+        axis_vector = {"X": [1, 0, 0], "Y": [0, 1, 0], "Z": [0, 0, 1]}[axis]
         for control, angle in (("RotationAngle90CCKW", -90),
                                ("RotationAngle90CKW", 90),
                                ("RotationAngle180", 180),
@@ -71,14 +70,6 @@ class ModelRotation(pycam.Plugins.PluginBase):
                                 self.gui.get_object("RotationAngle").get_value())):
             if self.gui.get_object(control).get_active():
                 break
-        matrix = pycam.Geometry.Matrix.get_rotation_matrix_axis_angle(axis_vector, angle,
-                                                                      use_radians=False)
-        progress = self.core.get("progress")
-        progress.update(text="Rotating model")
-        progress.disable_cancel()
-        progress.set_multiple(len(models), "Model")
         for model in models:
-            model.model.transform_by_matrix(matrix, callback=progress.update)
-            progress.update_multiple()
-        self.core.emit_event("model-change-after")
-        progress.finish()
+            model.extend_value("transformations", [{"action": "rotate", "center": center,
+                                                    "vector": axis_vector, "angle": angle}])
