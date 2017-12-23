@@ -195,6 +195,7 @@ class ToolpathFilter(Enum):
     PLUNGE_FEEDRATE = "plunge_feedrate"
     STEP_WIDTH = "step_width"
     CORNER_STYLE = "corner_style"
+    FILENAME_EXTENSION = "filename_extension"
 
 
 class ToolBoundaryMode(Enum):
@@ -1359,6 +1360,9 @@ class ExportSettings(BaseCollectionItemDataContainer):
                 motion_tolerance = parameters.get("motion_tolerance", 0)
                 naive_tolerance = parameters.get("naive_tolerance", 0)
                 result.append(tp_filters.CornerStyle(mode, motion_tolerance, naive_tolerance))
+            elif filter_name == ToolpathFilter.FILENAME_EXTENSION:
+                # this export setting is only used for filename dialogs
+                pass
             else:
                 raise InvalidKeyError(filter_name, ToolpathFilter)
         return result

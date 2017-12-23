@@ -37,17 +37,11 @@ class GCodeSafetyHeight(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("toolpath_profile", "safety_height", self.control)
         self.core.register_ui("gcode_general_parameters", "Safety Height",
                               self.control.get_widget(), weight=20)
-        self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         return True
 
     def teardown(self):
-        self.core.unregister_chain("toolpath_filters", self.get_toolpath_filters)
         self.core.unregister_ui("gcode_general_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("toolpath_profile", "safety_height")
-
-    @Filters.toolpath_filter("settings", "safety_height")
-    def get_toolpath_filters(self, safety_height):
-        return [Filters.SafetyHeight(safety_height)]
 
 
 class GCodePlungeFeedrate(pycam.Plugins.PluginBase):
@@ -62,17 +56,11 @@ class GCodePlungeFeedrate(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("toolpath_profile", "plunge_feedrate", self.control)
         self.core.register_ui("gcode_general_parameters", "Plunge feedrate limit",
                               self.control.get_widget(), weight=25)
-        self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         return True
 
     def teardown(self):
-        self.core.unregister_chain("toolpath_filters", self.get_toolpath_filters)
         self.core.unregister_ui("gcode_general_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("toolpath_profile", "plunge_feedrate")
-
-    @Filters.toolpath_filter("settings", "plunge_feedrate")
-    def get_toolpath_filters(self, plunge_feedrate):
-        return [Filters.PlungeFeedrate(plunge_feedrate)]
 
 
 # TODO: move to settings for ToolpathOutputDialects
@@ -95,11 +83,6 @@ class GCodeFilenameExtension(pycam.Plugins.PluginBase):
         self.core.unregister_ui("gcode_general_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("toolpath_profile", "filename_extension")
 
-    @Filters.toolpath_filter("settings", "filename_extension")
-    def get_toolpath_filters(self, filename_extension):
-        # TODO: see above - move to ToolpathOutputDialects
-        return []
-
 
 class GCodeStepWidth(pycam.Plugins.PluginBase):
 
@@ -121,19 +104,13 @@ class GCodeStepWidth(pycam.Plugins.PluginBase):
                                   weight="xyz".index(key))
             self.core.get("register_parameter")("toolpath_profile", ("step_width", key), control)
             self.controls.append((key, control))
-        self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         return True
 
     def teardown(self):
-        self.core.unregister_chain("toolpath_filters", self.get_toolpath_filters)
         for key, control in self.controls:
             self.core.unregister_ui("gcode_step_width", control)
             self.core.get("unregister_parameter")("toolpath_profile", ("step_width", key))
         self.core.unregister_ui("gcode_general_parameters", self._table.get_widget())
-
-    @Filters.toolpath_filter("settings", ("step_width", ))
-    def get_toolpath_filters(self, **kwargs):
-        return [Filters.StepWidth(**kwargs)]
 
 
 class GCodeSpindle(pycam.Plugins.PluginBase):
@@ -159,12 +136,10 @@ class GCodeSpindle(pycam.Plugins.PluginBase):
                               self.spindle_enable.get_widget(), weight=10)
         self.core.get("register_parameter")("toolpath_profile", "spindle_enable",
                                             self.spindle_enable)
-        self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         self.update_widgets()
         return True
 
     def teardown(self):
-        self.core.unregister_chain("toolpath_filters", self.get_toolpath_filters)
         self.core.unregister_ui("gcode_spindle", self.spindle_delay.get_widget())
         self.core.unregister_ui("gcode_spindle", self.spindle_enable.get_widget())
         self.core.unregister_ui_section("gcode_spindle")
@@ -176,13 +151,6 @@ class GCodeSpindle(pycam.Plugins.PluginBase):
         widget = self.spindle_delay.get_widget()
         widget.set_sensitive(self.spindle_enable.get_value())
         self.core.emit_event("export-settings-control-changed")
-
-    @Filters.toolpath_filter("settings", ("spindle_enable", "spindle_delay"))
-    def get_toolpath_filters(self, spindle_enable=False, spindle_delay=0):
-        if spindle_enable:
-            return [Filters.TriggerSpindle(spindle_delay)]
-        else:
-            return []
 
 
 class GCodeCornerStyle(pycam.Plugins.PluginBase):
@@ -222,12 +190,10 @@ class GCodeCornerStyle(pycam.Plugins.PluginBase):
                               weight=10)
         self.core.get("register_parameter")(
             "toolpath_profile", ("corner_style", "mode"), self.path_mode)
-        self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         self.update_widgets()
         return True
 
     def teardown(self):
-        self.core.unregister_chain("toolpath_filters", self.get_toolpath_filters)
         self.core.unregister_ui("gcode_corner_style", self.motion_tolerance.get_widget())
         self.core.unregister_ui("gcode_corner_style", self.naive_tolerance.get_widget())
         self.core.unregister_ui("gcode_corner_style", self.path_mode.get_widget())
@@ -242,8 +208,3 @@ class GCodeCornerStyle(pycam.Plugins.PluginBase):
         controls = (self.motion_tolerance, self.naive_tolerance)
         for control in controls:
             control.get_widget().set_sensitive(enable_tolerances)
-
-    @Filters.toolpath_filter("settings", ("path_mode", "motion_tolerance", "naive_tolerance"))
-    def get_toolpath_filters(self, path_mode=ToolpathPathMode.CORNER_STYLE_EXACT_PATH,
-                             motion_tolerance=0, naive_tolerance=0):
-        return [Filters.CornerStyle(path_mode, motion_tolerance, naive_tolerance)]
