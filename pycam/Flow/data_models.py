@@ -196,6 +196,7 @@ class ToolpathFilter(Enum):
     STEP_WIDTH = "step_width"
     CORNER_STYLE = "corner_style"
     FILENAME_EXTENSION = "filename_extension"
+    TOUCH_OFF = "touch_off"
 
 
 class ToolBoundaryMode(Enum):
@@ -1377,6 +1378,9 @@ class ExportSettings(BaseCollectionItemDataContainer):
                 result.append(tp_filters.CornerStyle(mode, motion_tolerance, naive_tolerance))
             elif filter_name == ToolpathFilter.FILENAME_EXTENSION:
                 # this export setting is only used for filename dialogs
+                pass
+            elif filter_name == ToolpathFilter.TOUCH_OFF:
+                # TODO: implement this (see pycam/Exporters/GCodeExporter.py)
                 pass
             else:
                 raise InvalidKeyError(filter_name, ToolpathFilter)
