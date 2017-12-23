@@ -80,14 +80,14 @@ tools:
             shape: flat_bottom
             radius: 3
             feed: 600
-            spindle_speed: 1000
+            spindle: {speed: 1000.0, spin_up_delay: 2.0, spin_up_enabled: true}
             X-Application: { pycam-gtk: { name: Big Tool } }
         fine:
             tool_id: 2
             shape: ball_nose
             radius: 1
             feed: 1200
-            spindle_speed: 1000
+            spindle: {speed: 1000.0, spin_up_delay: 2.0, spin_up_enabled: true}
             X-Application: { pycam-gtk: { name: Small Tool } }
 
 processes:

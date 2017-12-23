@@ -33,7 +33,7 @@ def _get_profile_filters(core, parameters):
 class ToolpathProfileMilling(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Toolpaths", "GCodeSafetyHeight", "GCodePlungeFeedrate", "GCodeFilenameExtension",
-               "GCodeStepWidth", "GCodeSpindle", "GCodeCornerStyle"]
+               "GCodeStepWidth", "GCodeCornerStyle"]
     CATEGORIES = ["Toolpath"]
 
     def setup(self):
@@ -47,8 +47,6 @@ class ToolpathProfileMilling(pycam.Plugins.PluginBase):
             ("corner_style", "mode"): ToolpathPathMode.CORNER_STYLE_OPTIMIZE_TOLERANCE.value,
             ("corner_style", "motion_tolerance"): 0.0,
             ("corner_style", "naive_tolerance"): 0.0,
-            "spindle_enable": True,
-            "spindle_delay": 3,
             "touch_off": None}
         self.core.get("register_parameter_set")(
             "toolpath_profile", "milling", "Milling",

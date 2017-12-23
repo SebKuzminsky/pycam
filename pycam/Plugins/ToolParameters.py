@@ -20,7 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import pycam.Plugins
-import pycam.Gui.ControlsGTK
+from pycam.Gui.ControlsGTK import InputCheckBox, InputNumber
 from pycam.Toolpath.Filters import toolpath_filter
 
 
@@ -30,7 +30,7 @@ class ToolParamRadius(pycam.Plugins.PluginBase):
     CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
-        self.control = pycam.Gui.ControlsGTK.InputNumber(
+        self.control = InputNumber(
             lower=0.001, digits=4,
             change_handler=lambda widget=None: self.core.emit_event("tool-control-changed"))
         self.control.set_conversion(set_conv=lambda value: value * 2.0,
@@ -50,7 +50,7 @@ class ToolParamToroidRadius(pycam.Plugins.PluginBase):
     CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
-        self.control = pycam.Gui.ControlsGTK.InputNumber(
+        self.control = InputNumber(
             lower=0.001, digits=4,
             change_handler=lambda widget=None: self.core.emit_event("tool-control-changed"))
         self.core.get("register_parameter")("tool", "toroid_radius", self.control)
@@ -68,43 +68,40 @@ class ToolParamFeedrate(pycam.Plugins.PluginBase):
     CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
-        self.control = pycam.Gui.ControlsGTK.InputNumber(
+        self.control = InputNumber(
             lower=1, digits=0,
             change_handler=lambda widget=None: self.core.emit_event("tool-control-changed"))
         self.core.get("register_parameter")("tool", "feed", self.control)
         self.core.register_ui("tool_speed", "Feedrate", self.control.get_widget(), weight=10)
-        self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         return True
 
     def teardown(self):
         self.core.unregister_ui("tool_speed", self.control.get_widget())
         self.core.get("unregister_parameter")("tool", "feed")
-        self.core.unregister_chain("toolpath_filters", self.get_toolpath_filters)
-
-    @toolpath_filter("tool", "feed")
-    def get_toolpath_filters(self, feedrate):
-        return [pycam.Toolpath.Filters.MachineSetting("feedrate", feedrate)]
 
 
-class ToolParamSpindleSpeed(pycam.Plugins.PluginBase):
+class ToolParamSpindle(pycam.Plugins.PluginBase):
 
     DEPENDS = ["Tools"]
     CATEGORIES = ["Tool", "Parameter"]
 
     def setup(self):
-        self.control = pycam.Gui.ControlsGTK.InputNumber(
-            lower=1, digits=0,
-            change_handler=lambda widget=None: self.core.emit_event("tool-control-changed"))
-        self.core.get("register_parameter")("tool", "spindle_speed", self.control)
-        self.core.register_ui("tool_speed", "Spindle Speed", self.control.get_widget(), weight=50)
-        self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
+        self.controls = []
+        for attribute, label, weight, control_class, extra in (
+                ("spin_up_enabled", "Spindle Spin-Up/Spin-Down", 30, InputCheckBox, {}),
+                ("speed", "Spindle Speed", 40, InputNumber, {"lower": 1, "digits": 0}),
+                ("spin_up_delay", "Spindle Spin-Up Delay", 50, InputNumber,
+                 {"lower": 0, "digits": 0})):
+            control = control_class(
+                change_handler=lambda widget=None: self.core.emit_event("tool-control-changed"),
+                **extra)
+            self.core.get("register_parameter")("tool", ("spindle", attribute), control)
+            self.core.register_ui("tool_spindle", label, control.get_widget(), weight=weight)
+            self.controls.append((control, attribute))
         return True
 
     def teardown(self):
         self.core.unregister_ui("tool_speed", self.control.get_widget())
-        self.core.get("unregister_parameter")("tool", "spindle_speed")
-        self.core.unregister_chain("toolpath_filters", self.get_toolpath_filters)
-
-    @toolpath_filter("tool", "spindle_speed")
-    def get_toolpath_filters(self, spindle_speed):
-        return [pycam.Toolpath.Filters.MachineSetting("spindle_speed", spindle_speed)]
+        for control, attribute in self.controls:
+            self.core.get("unregister_parameter")("tool", ("spindle", attribute))
+            self.core.unregister_ui("tool_spindle", control.get_widget())

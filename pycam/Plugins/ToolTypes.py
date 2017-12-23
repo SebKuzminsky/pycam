@@ -47,7 +47,9 @@ class ToolTypeBallNose(pycam.Plugins.PluginBase):
     def setup(self):
         parameters = {"radius": 1.0,
                       "feed": 300,
-                      "spindle_speed": 1000}
+                      ("spindle", "speed"): 1000,
+                      ("spindle", "spin_up_enabled"): True,
+                      ("spindle", "spin_up_delay"): 3}
         self.core.get("register_parameter_set")("tool", "ball_nose", "Ball nose", self.get_tool,
                                                 parameters=parameters, weight=20)
         return True
@@ -69,7 +71,9 @@ class ToolTypeBullNose(pycam.Plugins.PluginBase):
         parameters = {"radius": 1.0,
                       "toroid_radius": 0.25,
                       "feed": 300,
-                      "spindle_speed": 1000}
+                      ("spindle", "speed"): 1000,
+                      ("spindle", "spin_up_enabled"): True,
+                      ("spindle", "spin_up_delay"): 3}
         self.core.get("register_parameter_set")("tool", "torus", "Bull nose", self.get_tool,
                                                 parameters=parameters, weight=30)
         return True
@@ -90,7 +94,9 @@ class ToolTypeFlat(pycam.Plugins.PluginBase):
     def setup(self):
         parameters = {"radius": 1.0,
                       "feed": 300,
-                      "spindle_speed": 1000}
+                      ("spindle", "speed"): 1000,
+                      ("spindle", "spin_up_enabled"): True,
+                      ("spindle", "spin_up_delay"): 3}
         self.core.get("register_parameter_set")("tool", "flat_bottom", "Flat bottom",
                                                 self.get_tool, parameters=parameters, weight=10)
         return True

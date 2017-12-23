@@ -82,6 +82,11 @@ class Tools(pycam.Plugins.ListPluginBase):
                                   weight=20)
             self.core.register_ui_section("tool_speed", self.speed_widget.add_widget,
                                           self.speed_widget.clear_widgets)
+            self.spindle_widget = pycam.Gui.ControlsGTK.ParameterSection()
+            self.core.register_ui("tool_parameters", "Spindle", self.spindle_widget.get_widget(),
+                                  weight=30)
+            self.core.register_ui_section("tool_spindle", self.spindle_widget.add_widget,
+                                          self.spindle_widget.clear_widgets)
             # table updates
             cell = self.gui.get_object("ShapeCell")
             self.gui.get_object("ShapeColumn").set_cell_data_func(cell, self._render_tool_shape)
@@ -126,6 +131,7 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.core.unregister_ui_section("tool_size")
             self.core.unregister_ui("tool_parameters", self.size_widget.get_widget())
             self.core.unregister_ui("tool_parameters", self.speed_widget.get_widget())
+            self.core.unregister_ui("tool_parameters", self.spindle_widget.get_widget())
             self.core.unregister_ui_section("tool_parameters")
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)

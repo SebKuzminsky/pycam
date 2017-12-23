@@ -959,15 +959,15 @@ class Tool(BaseCollectionItemDataContainer):
                             "toroid_radius": float,
                             "height": float,
                             "feed": float,
-                            "spindle_enabled": _bool_converter,
-                            "spindle_speed": float,
-                            "spindle_delay": float}
+                            ("spindle", "speed"): float,
+                            ("spindle", "spin_up_delay"): float,
+                            ("spindle", "spin_up_enabled"): _bool_converter}
     attribute_defaults = {"tool_id": 1,
                           "height": 10,
                           "feed": 300,
-                          "spindle_enabled": True,
-                          "spindle_speed": 1000,
-                          "spindle_delay": 0}
+                          ("spindle", "speed"): 1000,
+                          ("spindle", "spin_up_delay"): 0,
+                          ("spindle", "spin_up_enabled"): True}
 
     @_set_parser_context("Tool")
     def get_tool_geometry(self):
@@ -1004,10 +1004,10 @@ class Tool(BaseCollectionItemDataContainer):
         result = []
         result.append(tp_filters.SelectTool(self.get_value("tool_id")))
         result.append(tp_filters.MachineSetting("feedrate", self.get_value("feed")))
-        if self.get_value("spindle_enabled"):
-            result.append(tp_filters.MachineSetting("spindle_speed",
-                                                    self.get_value("spindle_speed")))
-            result.append(tp_filters.TriggerSpindle(delay=self.get_value("spindle_delay")))
+        result.append(tp_filters.SpindleSpeed(self.get_value(("spindle", "speed"))))
+        if self.get_value(("spindle", "spin_up_enabled")):
+            result.append(tp_filters.TriggerSpindle(
+                delay=self.get_value(("spindle", "spin_up_delay"))))
         return result
 
 

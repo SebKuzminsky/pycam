@@ -61,9 +61,10 @@ tools:
                 shape: flat_bottom
                 diameter: 3
                 feed: 300
-                spindle_enabled: true
-                spindle_speed: 1000
-                spindle_delay: 2
+                spindle:
+                    spin_up_enabled: true
+                    spin_up_delay: 3
+                    speed: 1200
 
 processes:
         process_slicing:

@@ -49,7 +49,6 @@ except ImportError:
     from pycam import VERSION
 
 from pycam import InitializationError
-import pycam.Exporters.GCodeExporter
 from pycam.Flow.history import DataHistory, merge_history_and_block_events
 from pycam.Gui import QuestionStatus
 import pycam.Gui.common as GuiCommon

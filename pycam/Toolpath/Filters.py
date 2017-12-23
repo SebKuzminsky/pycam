@@ -231,18 +231,25 @@ class SelectTool(BaseFilter):
 
 
 class TriggerSpindle(BaseFilter):
+    """ control the spindle spin for each tool selection
+
+    A spin-up command is added after each tool selection.
+    A spin-down command is added before each tool selection and after the last move.
+    If no tool selection is found, then single spin-up and spin-down commands are added before the
+    first move and after the last move.
+    """
 
     PARAMS = ("delay", )
-    WEIGHT = 40
+    WEIGHT = 36
 
     def filter_toolpath(self, toolpath):
-        def enable_spindle(path, index):
+        def spin_up(path, index):
             path.insert(index, ToolpathSteps.MachineSetting("spindle_enabled", True))
             if self.settings["delay"]:
                 path.insert(index + 1, ToolpathSteps.MachineSetting("delay",
                                                                     self.settings["delay"]))
 
-        def disable_spindle(path, index):
+        def spin_down(path, index):
             path.insert(index, ToolpathSteps.MachineSetting("spindle_enabled", False))
 
         # find all positions of "select_tool"
@@ -251,9 +258,12 @@ class TriggerSpindle(BaseFilter):
         if tool_changes:
             tool_changes.reverse()
             for index in tool_changes:
-                enable_spindle(toolpath, index + 1)
+                spin_up(toolpath, index + 1)
+                if index > 0:
+                    # add a "disable"
+                    spin_down(toolpath, index)
         else:
-            # add a single tool selection before the first move
+            # add a single spin-up before the first move
             for index, step in enumerate(toolpath):
                 if step.action in MOVES_LIST:
                     enable_spindle(toolpath, index)
@@ -263,7 +273,38 @@ class TriggerSpindle(BaseFilter):
         while (toolpath[index].action not in MOVES_LIST) and (index > 0):
             index -= 1
         if toolpath[index].action in MOVES_LIST:
-            disable_spindle(toolpath, index + 1)
+            spin_down(toolpath, index + 1)
+        return toolpath
+
+
+class SpindleSpeed(BaseFilter):
+    """ add a spindle speed command after each tool selection
+
+    If no tool selection is found, then a single spindle speed command is inserted before the first
+    move.
+    """
+
+    PARAMS = ("speed", )
+    WEIGHT = 37
+
+    def filter_toolpath(self, toolpath):
+        def set_speed(path, index):
+            path.insert(index, ToolpathSteps.MachineSetting("spindle_speed",
+                                                            self.settings["speed"]))
+
+        # find all positions of "select_tool"
+        tool_changes = [index for index, step in enumerate(toolpath)
+                        if (step.action == MACHINE_SETTING) and (step.key == "select_tool")]
+        if tool_changes:
+            tool_changes.reverse()
+            for index in tool_changes:
+                set_speed(toolpath, index + 1)
+        else:
+            # no tool selections: add a single spindle speed command before the first move
+            for index, step in enumerate(toolpath):
+                if step.action in MOVES_LIST:
+                    set_speed(toolpath, index)
+                    break
         return toolpath
 
 

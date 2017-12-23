@@ -113,46 +113,6 @@ class GCodeStepWidth(pycam.Plugins.PluginBase):
         self.core.unregister_ui("gcode_general_parameters", self._table.get_widget())
 
 
-class GCodeSpindle(pycam.Plugins.PluginBase):
-
-    DEPENDS = ["ExportSettings"]
-    CATEGORIES = ["GCode"]
-
-    def setup(self):
-        self._table = pycam.Gui.ControlsGTK.ParameterSection()
-        self.core.register_ui("gcode_preferences", "Spindle control", self._table.get_widget())
-        self.core.register_ui_section("gcode_spindle", self._table.add_widget,
-                                      self._table.clear_widgets)
-        self.spindle_delay = pycam.Gui.ControlsGTK.InputNumber(
-            digits=1, lower=0,
-            change_handler=lambda *args: self.core.emit_event("export-settings-control-changed"))
-        self.core.register_ui("gcode_spindle", "Delay (in seconds) after start/stop",
-                              self.spindle_delay.get_widget(), weight=50)
-        self.core.get("register_parameter")("toolpath_profile", "spindle_delay",
-                                            self.spindle_delay)
-        self.spindle_enable = pycam.Gui.ControlsGTK.InputCheckBox(
-            change_handler=self.update_widgets)
-        self.core.register_ui("gcode_spindle", "Start / Stop Spindle (M3/M5)",
-                              self.spindle_enable.get_widget(), weight=10)
-        self.core.get("register_parameter")("toolpath_profile", "spindle_enable",
-                                            self.spindle_enable)
-        self.update_widgets()
-        return True
-
-    def teardown(self):
-        self.core.unregister_ui("gcode_spindle", self.spindle_delay.get_widget())
-        self.core.unregister_ui("gcode_spindle", self.spindle_enable.get_widget())
-        self.core.unregister_ui_section("gcode_spindle")
-        self.core.unregister_ui("gcode_preferences", self._table.get_widget())
-        self.core.get("unregister_parameter")("toolpath_profile", "spindle_enable")
-        self.core.get("unregister_parameter")("toolpath_profile", "spindle_delay")
-
-    def update_widgets(self, widget=None):
-        widget = self.spindle_delay.get_widget()
-        widget.set_sensitive(self.spindle_enable.get_value())
-        self.core.emit_event("export-settings-control-changed")
-
-
 class GCodeCornerStyle(pycam.Plugins.PluginBase):
 
     DEPENDS = ["ExportSettings"]
