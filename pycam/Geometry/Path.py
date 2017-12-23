@@ -38,7 +38,7 @@ def get_point_object(point):
 class Path(IDGenerator):
 
     def __init__(self):
-        super(Path, self).__init__()
+        super().__init__()
         self.top_join = None
         self.bot_join = None
         self.winding = 0

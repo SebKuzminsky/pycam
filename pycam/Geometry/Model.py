@@ -71,7 +71,7 @@ def get_combined_model(models):
 class BaseModel(IDGenerator, TransformableContainer):
 
     def __init__(self):
-        super(BaseModel, self).__init__()
+        super().__init__()
         self._item_groups = []
         self.name = "model%d" % self.id
         self.minx = None
@@ -222,7 +222,7 @@ class Model(BaseModel):
 
     def __init__(self, use_kdtree=True):
         import pycam.Exporters.STLExporter
-        super(Model, self).__init__()
+        super().__init__()
         self._triangles = []
         self._item_groups.append(self._triangles)
         self._export_function = pycam.Exporters.STLExporter.STLExporter
@@ -252,14 +252,14 @@ class Model(BaseModel):
         return self.__uuid
 
     def append(self, item):
-        super(Model, self).append(item)
+        super().append(item)
         if isinstance(item, Triangle):
             self._triangles.append(item)
             # we assume, that the kdtree needs to be rebuilt again
             self._dirty = True
 
     def reset_cache(self):
-        super(Model, self).reset_cache()
+        super().reset_cache()
         # the triangle kdtree needs to be reset after transforming the model
         self._update_caches()
 
@@ -310,7 +310,7 @@ class ContourModel(BaseModel):
 
     def __init__(self, plane=None):
         import pycam.Exporters.SVGExporter
-        super(ContourModel, self).__init__()
+        super().__init__()
         self.name = "contourmodel%d" % self.id
         if plane is None:
             # the default plane points upwards along the z axis
@@ -404,7 +404,7 @@ class ContourModel(BaseModel):
                 return
 
     def append(self, item, unify_overlaps=False, allow_reverse=False):
-        super(ContourModel, self).append(item)
+        super().append(item)
         if isinstance(item, Line):
             item_list = [item]
             if allow_reverse:
@@ -906,7 +906,7 @@ class TriangleOptimizer:
 class Rectangle(IDGenerator, TransformableContainer):
 
     def __init__(self, p1, p2, p3, p4, normal=None):
-        super(Rectangle, self).__init__()
+        super().__init__()
         if normal:
             orders = ((p1, p2, p3, p4), (p1, p2, p4, p3), (p1, p3, p2, p4), (p1, p3, p4, p2),
                       (p1, p4, p2, p3), (p1, p4, p3, p2))

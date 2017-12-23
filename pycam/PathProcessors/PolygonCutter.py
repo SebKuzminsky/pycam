@@ -26,7 +26,7 @@ from pycam.Toolpath import simplify_toolpath
 
 class PolygonCutter(pycam.PathProcessors.BasePathProcessor):
     def __init__(self, reverse=False):
-        super(PolygonCutter, self).__init__()
+        super().__init__()
         self.curr_path = None
         self.scanline = None
         self.polygon_extractor = PolygonExtractor(PolygonExtractor.MONOTONE)

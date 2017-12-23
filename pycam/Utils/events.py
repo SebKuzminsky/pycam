@@ -64,7 +64,7 @@ def get_event_handler():
 class EventCore(pycam.Gui.Settings.Settings):
 
     def __init__(self):
-        super(EventCore, self).__init__()
+        super().__init__()
         self.event_handlers = {}
         self.ui_sections = {}
         self.chains = {}

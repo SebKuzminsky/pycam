@@ -80,7 +80,7 @@ def simplify_toolpath(path):
 class Toolpath(DimensionalObject):
 
     def __init__(self, toolpath_path=None, toolpath_filters=None, tool=None, **kwargs):
-        super(Toolpath, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if toolpath_path is None:
             toolpath_path = []
         if toolpath_filters is None:

@@ -37,7 +37,7 @@ class Line(IDGenerator, TransformableContainer):
     __slots__ = ["id", "p1", "p2", "_vector", "_minx", "_maxx", "_miny", "_maxy", "_minz", "_maxz"]
 
     def __init__(self, p1, p2):
-        super(Line, self).__init__()
+        super().__init__()
         self.p1 = p1
         self.p2 = p2
         self.reset_cache()

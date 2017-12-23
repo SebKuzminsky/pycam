@@ -99,7 +99,7 @@ class ProjectGui(pycam.Gui.BaseUI):
     META_DATA_PREFIX = "PYCAM-META-DATA:"
 
     def __init__(self, event_manager):
-        super(ProjectGui, self).__init__(event_manager)
+        super().__init__(event_manager)
         self.gui_is_active = False
         self.gui = Gtk.Builder()
         gtk_build_file = get_ui_file_location(GTKBUILD_FILE)

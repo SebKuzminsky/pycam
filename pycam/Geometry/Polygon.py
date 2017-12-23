@@ -44,7 +44,7 @@ class PolygonInTree(IDGenerator):
     """
 
     def __init__(self, polygon):
-        super(PolygonInTree, self).__init__()
+        super().__init__()
         self.start = polygon.get_points()[0]
         self.end = polygon.get_points()[-1]
         self.polygon = polygon
@@ -205,7 +205,7 @@ class PolygonSorter:
 class Polygon(TransformableContainer):
 
     def __init__(self, plane=None):
-        super(Polygon, self).__init__()
+        super().__init__()
         if plane is None:
             # the default plane points upwards along the z axis
             plane = Plane((0, 0, 0), (0, 0, 1, 'v'))

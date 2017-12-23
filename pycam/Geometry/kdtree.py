@@ -69,7 +69,7 @@ class Kdtree(IDGenerator):
                  "maxval", "cutval", "hi", "lo"]
 
     def __init__(self, nodes, cutoff, cutoff_distance):
-        super(Kdtree, self).__init__()
+        super().__init__()
         self.bucket = False
         if nodes and len(nodes) > 0:
             self.dim = len(nodes[0].bound)

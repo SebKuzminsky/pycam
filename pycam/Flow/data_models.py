@@ -79,7 +79,7 @@ class InvalidKeyError(InvalidDataError):
     def __init__(self, invalid_key, choice_enum):
         # retrieve the pretty name of the enum
         enum_name = str(choice_enum).split("'")[1]
-        super(InvalidKeyError, self).__init__("Unknown {}: {} (should be one of: {})".format(
+        super().__init__("Unknown {}: {} (should be one of: {})".format(
             enum_name, invalid_key, ", ".join([item.value for item in choice_enum])))
 
 
@@ -710,7 +710,7 @@ class BaseCollectionItemDataContainer(BaseDataContainer):
     unique_attribute = "uuid"
 
     def __init__(self, item_id, data):
-        super(BaseCollectionItemDataContainer, self).__init__(data)
+        super().__init__(data)
         assert self.collection_name is not None, (
             "Missing unique attribute ({}) of '{}' class"
             .format(self.unique_attribute, get_type_name(self)))

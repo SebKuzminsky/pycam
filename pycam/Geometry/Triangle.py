@@ -43,7 +43,7 @@ class Triangle(IDGenerator, TransformableContainer):
 
     def __init__(self, p1=None, p2=None, p3=None, n=None):
         # points are expected to be in ClockWise order
-        super(Triangle, self).__init__()
+        super().__init__()
         self.p1 = p1
         self.p2 = p2
         self.p3 = p3

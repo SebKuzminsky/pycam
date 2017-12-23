@@ -394,7 +394,7 @@ class ListPluginBase(PluginBase):
     COLLECTION_ITEM_TYPE = None
 
     def __init__(self, *args, **kwargs):
-        super(ListPluginBase, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._update_model_funcs = []
         self._gtk_modelview = None
         get_event_handler().register_event(self.COLLECTION_ITEM_TYPE.list_changed_event,
@@ -632,7 +632,7 @@ class ListPluginBase(PluginBase):
 class ObjectWithAttributes(dict):
 
     def __init__(self, node_key=None, attributes=None, **kwargs):
-        super(ObjectWithAttributes, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if attributes is not None:
             self.update(attributes)
         self["uuid"] = str(uuid.uuid4())

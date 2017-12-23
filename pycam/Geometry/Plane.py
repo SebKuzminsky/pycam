@@ -29,7 +29,7 @@ class Plane(IDGenerator, TransformableContainer):
     __slots__ = ["id", "p", "n"]
 
     def __init__(self, point, normal=None):
-        super(Plane, self).__init__()
+        super().__init__()
         if normal is None:
             normal = (0, 0, 1, 'v')
         self.p = point

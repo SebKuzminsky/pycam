@@ -31,7 +31,7 @@ class BaseCutter(IDGenerator):
     vertical = (0, 0, -1)
 
     def __init__(self, radius, location=None, height=None):
-        super(BaseCutter, self).__init__()
+        super().__init__()
         if location is None:
             location = (0, 0, 0)
         if height is None:

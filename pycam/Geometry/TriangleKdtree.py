@@ -82,7 +82,7 @@ class TriangleKdtree(Kdtree):
                          min(t.p1[1], t.p2[1], t.p3[1]),
                          max(t.p1[1], t.p2[1], t.p3[1])))
             nodes.append(n)
-        super(TriangleKdtree, self).__init__(nodes, cutoff, cutoff_distance)
+        super().__init__(nodes, cutoff, cutoff_distance)
 
     def search(self, minx, maxx, miny, maxy):
         return search_kdtree_2d(self, minx, maxx, miny, maxy)

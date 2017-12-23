@@ -76,10 +76,10 @@ class Settings(dict):
     VALUE_INDEX = 2
 
     def __getitem_orig(self, key):
-        return super(Settings, self).__getitem__(key)
+        return super().__getitem__(key)
 
     def __setitem_orig(self, key, value):
-        super(Settings, self).__setitem__(key, value)
+        super().__setitem__(key, value)
 
     def add_item(self, key, get_func=None, set_func=None):
         self.__setitem_orig(key, [None, None, None])

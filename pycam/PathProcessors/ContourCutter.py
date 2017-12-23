@@ -25,7 +25,7 @@ from pycam.Toolpath import simplify_toolpath
 
 class ContourCutter(pycam.PathProcessors.BasePathProcessor):
     def __init__(self):
-        super(ContourCutter, self).__init__()
+        super().__init__()
         self.curr_path = None
         self.scanline = None
         self.polygon_extractor = None
