@@ -39,7 +39,7 @@ import pycam.Toolpath
 import pycam.Toolpath.Filters as tp_filters
 import pycam.Toolpath.MotionGrid as MotionGrid
 from pycam.Importers import detect_file_type
-from pycam.Utils import get_type_name, get_application_key
+from pycam.Utils import get_application_key, get_type_name, MultiLevelDictionaryAccess
 from pycam.Utils.events import get_event_handler
 from pycam.Utils.progress import ProgressContext
 import pycam.Utils.log
@@ -495,14 +495,19 @@ class BaseDataContainer(object):
         # split the application-specific data (e.g. colors or visibility flags) from the model data
         self._application_attributes = data.pop(APPLICATION_ATTRIBUTES_KEY, {})
         self._data = data
+        self._multi_level_dict = MultiLevelDictionaryAccess(self._data)
 
     @classmethod
     def parse_from_dict(cls, data):
         return cls(data)
 
     def get_value(self, key, default=None, raw=False):
+        """ get a value from the data dictionary
+
+        @param key may be a simple string or a tuple of strings (multi-level access)
+        """
         try:
-            raw_value = self._data[key]
+            raw_value = self._multi_level_dict.get_value(key)
         except KeyError:
             if default is not None:
                 raw_value = default
@@ -528,9 +533,18 @@ class BaseDataContainer(object):
             return raw_value
 
     def set_value(self, key, value):
+        """ set a value of the data dictionary and notify subscribes in case of changes
+
+        @param key may be a simple string or a tuple of strings (multi-level access)
+        """
         new_value = copy.deepcopy(value)
-        if self._data.get(key) != new_value:
-            self._data[key] = new_value
+        try:
+            is_different = (self._multi_level_dict.get_value(key) != new_value)
+        except KeyError:
+            # the key is missing
+            is_different = True
+        if is_different:
+            self._multi_level_dict.set_value(key, new_value)
             self.notify_changed()
 
     def extend_value(self, key, values):
@@ -538,13 +552,14 @@ class BaseDataContainer(object):
 
         This is just a convenience wrapper for the combination of "get_value", "get_dict",
         "extend" and "set_value".
+        @param key may be a simple string or a tuple of strings (multi-level access)
         """
         if values:
             try:
-                current_list = self._data[key]
+                current_list = self._multi_level_dict.get_value(key)
             except KeyError:
                 current_list = []
-                self._data[key] = current_list
+                self._multi_level_dict.set_value(key, current_list)
             current_list.extend(values)
             self.notify_changed()
 
