@@ -24,14 +24,8 @@ import socket
 import sys
 import traceback
 import urllib
-try:
-    # Python3
-    from urllib.parse import urlparse
-    from urllib.request import url2pathname
-except ImportError:
-    # Python2
-    from urlparse import urlparse
-    from urllib import url2pathname
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 # this is imported below on demand
 # import win32com
 # import win32api

@@ -20,9 +20,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# for "print" to stderr
-from __future__ import print_function
-
 import argparse
 import logging
 import os

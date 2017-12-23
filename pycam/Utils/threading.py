@@ -21,11 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 # import multiprocessing
 import os
 import platform
-try:
-    import queue
-except ImportError:
-    # fallback for python2
-    import Queue as queue
+import queue
 import random
 import signal
 import socket

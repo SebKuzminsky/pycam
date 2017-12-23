@@ -19,12 +19,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import csv
-try:
-    # Python2 (load first - due to incompatible interface)
-    from StringIO import StringIO
-except ImportError:
-    # Python3
-    from io import StringIO
+from io import StringIO
 
 import pycam.Plugins
 import pycam.Utils.log

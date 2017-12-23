@@ -1,9 +1,5 @@
 # -*- mode: python -*-
 
-# for "print" to stderr
-from __future__ import print_function
-
-
 BASE_DIR = os.path.realpath(os.path.join(os.path.dirname(locals()["spec"]),
         os.path.pardir))
 

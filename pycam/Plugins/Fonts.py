@@ -17,15 +17,10 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from io import StringIO
 import os
 import re
 
-try:
-    # Python2 (load first - due to incompatible interface)
-    from StringIO import StringIO
-except ImportError:
-    # Python3
-    from io import StringIO
 
 from pycam.Geometry.Letters import TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, TEXT_ALIGN_RIGHT
 import pycam.Plugins

@@ -17,12 +17,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-try:
-    # Python2 (load first - due to incompatible interface)
-    from StringIO import StringIO
-except ImportError:
-    # Python3
-    from io import StringIO
+from io import StringIO
 
 import pycam.Plugins
 from pycam.Utils.locations import get_all_program_locations

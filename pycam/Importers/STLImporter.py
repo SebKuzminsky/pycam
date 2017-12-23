@@ -18,13 +18,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from io import BufferedReader, BytesIO, TextIOWrapper
 import re
-try:
-    # Python2 (load first - due to incompatible interface)
-    from StringIO import BufferedReader, BytesIO, TextIOWrapper
-except ImportError:
-    # Python3
-    from io import BufferedReader, BytesIO, TextIOWrapper
 from struct import unpack
 
 from pycam.Geometry import epsilon
