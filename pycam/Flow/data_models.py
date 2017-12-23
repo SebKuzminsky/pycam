@@ -986,6 +986,7 @@ class Tool(BaseCollectionItemDataContainer):
 
     def get_toolpath_filters(self):
         result = []
+        result.append(tp_filters.SelectTool(self.get_value("tool_id")))
         result.append(tp_filters.MachineSetting("feedrate", self.get_value("feed")))
         if self.get_value("spindle_enabled"):
             result.append(tp_filters.MachineSetting("spindle_speed",

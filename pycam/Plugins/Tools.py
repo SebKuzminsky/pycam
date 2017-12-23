@@ -21,7 +21,6 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import pycam.Plugins
 from pycam.Flow.data_models import Tool
 from pycam.Flow.history import merge_history_and_block_events
-from pycam.Toolpath.Filters import toolpath_filter
 
 
 class Tools(pycam.Plugins.ListPluginBase):
@@ -114,7 +113,6 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.register_event_handlers(self._event_handlers)
             self._update_shape_widgets()
             self._update_tool_widgets()
-        self.core.register_chain("toolpath_filters", self.get_toolpath_filters)
         self.core.register_namespace("tools", pycam.Plugins.get_filter(self))
         self.register_state_item("tools", self)
         return True
@@ -122,7 +120,6 @@ class Tools(pycam.Plugins.ListPluginBase):
     def teardown(self):
         self.clear_state_items()
         self.core.unregister_namespace("tools")
-        self.core.unregister_chain("toolpath_filters", self.get_toolpath_filters)
         if self.gui and self._gtk:
             self.core.unregister_ui("main", self.gui.get_object("ToolBox"))
             self.core.unregister_ui_section("tool_speed")
@@ -248,7 +245,3 @@ class Tools(pycam.Plugins.ListPluginBase):
             new_tool = Tool(None, data=params)
             new_tool.set_application_value("name", self.get_non_conflicting_name("Tool #%d"))
         self.select(new_tool)
-
-    @toolpath_filter("tool", "tool_id")
-    def get_toolpath_filters(self, tool_id):
-        return [pycam.Toolpath.Filters.SelectTool(tool_id)]
