@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
