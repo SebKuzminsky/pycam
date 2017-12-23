@@ -23,4 +23,6 @@ script:
   - ./setup.py sdist
   - pycam/run_gui.py --help
   - pycam/run_gui.py --version
+  - pycam/run_cli.py --help
+  - pycam/run_cli.py --version
   - dpkg-buildpackage -us -uc
