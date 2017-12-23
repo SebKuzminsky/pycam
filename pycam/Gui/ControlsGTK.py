@@ -19,7 +19,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import collections
 
-from gi.repository import Gtk as gtk
+from gi.repository import Gtk
 from gi.repository import GObject
 
 import pycam.Utils.log
@@ -92,8 +92,8 @@ class InputNumber(InputBaseClass):
     def __init__(self, digits=0, start=0, lower=-999999, upper=999999, increment=1,
                  change_handler=None):
         # beware: the default values for lower/upper are both zero
-        adjustment = gtk.Adjustment(value=start, lower=lower, upper=upper, step_incr=increment)
-        self.control = gtk.SpinButton.new(adjustment, climb_rate=1, digits=digits)
+        adjustment = Gtk.Adjustment(value=start, lower=lower, upper=upper, step_incr=increment)
+        self.control = Gtk.SpinButton.new(adjustment, climb_rate=1, digits=digits)
         self.control.set_value(start)
         self.connect("value-changed", change_handler)
 
@@ -109,7 +109,7 @@ class InputNumber(InputBaseClass):
 class InputString(InputBaseClass):
 
     def __init__(self, start="", max_length=32, change_handler=None):
-        self.control = gtk.Entry.new()
+        self.control = Gtk.Entry.new()
         self.control.set_max_length(max_length)
         self.control.set_text(start)
         self.connect("changed", change_handler)
@@ -126,13 +126,13 @@ class InputString(InputBaseClass):
 class InputChoice(InputBaseClass):
 
     def __init__(self, choices, start=None, change_handler=None):
-        self.model = gtk.ListStore(GObject.TYPE_STRING)
+        self.model = Gtk.ListStore(GObject.TYPE_STRING)
         self._values = []
         for label, value in choices:
             self.model.append((label, ))
             self._values.append(value)
-        renderer = gtk.CellRendererText()
-        self.control = gtk.ComboBox.new_with_model(self.model)
+        renderer = Gtk.CellRendererText()
+        self.control = Gtk.ComboBox.new_with_model(self.model)
         self.control.pack_start(renderer, expand=False)
         self.control.add_attribute(renderer, 'text', 0)
         if start is None:
@@ -193,29 +193,29 @@ class InputChoice(InputBaseClass):
 class InputTable(InputChoice):
 
     def __init__(self, choices, change_handler=None):
-        self.model = gtk.ListStore(GObject.TYPE_STRING)
+        self.model = Gtk.ListStore(GObject.TYPE_STRING)
         self._values = []
         for label, value in choices:
             self.model.append((label,))
             self._values.append(value)
-        renderer = gtk.CellRendererText()
-        self.control = gtk.ScrolledWindow()
+        renderer = Gtk.CellRendererText()
+        self.control = Gtk.ScrolledWindow()
         self.control.show()
-        self._treeview = gtk.TreeView(self.model)
+        self._treeview = Gtk.TreeView(self.model)
         self._treeview.show()
         self.control.add(self._treeview)
-        self.control.set_shadow_type(gtk.ShadowType.ETCHED_OUT)
-        self.control.set_policy(gtk.PolicyType.AUTOMATIC, gtk.PolicyType.AUTOMATIC)
+        self.control.set_shadow_type(Gtk.ShadowType.ETCHED_OUT)
+        self.control.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         # Sadly there seems to be no way to adjust the size of the ScrolledWindow to its content.
         # The default size of the ScrolledWindow is too small (making it hard to select the model).
         self.control.set_size_request(200, -1)
-        column = gtk.TreeViewColumn()
+        column = Gtk.TreeViewColumn()
         column.pack_start(renderer, expand=False)
         column.set_attributes(renderer, text=0)
         self._treeview.append_column(column)
         self._treeview.set_headers_visible(False)
         self._selection = self._treeview.get_selection()
-        self._selection.set_mode(gtk.SelectionMode.MULTIPLE)
+        self._selection.set_mode(Gtk.SelectionMode.MULTIPLE)
         self.connect("changed", change_handler, self._selection)
 
     def get_value(self):
@@ -227,7 +227,7 @@ class InputTable(InputChoice):
         if items is None:
             items = []
         for index, value in enumerate(self._values):
-            path = gtk.TreePath.new_from_indices((index, ))
+            path = Gtk.TreePath.new_from_indices((index, ))
             if value in items:
                 selection.select_path(path)
             else:
@@ -237,7 +237,7 @@ class InputTable(InputChoice):
 class InputCheckBox(InputBaseClass):
 
     def __init__(self, start=False, change_handler=None):
-        self.control = gtk.CheckButton()
+        self.control = Gtk.CheckButton()
         self.control.set_active(start)
         self.connect("toggled", change_handler)
 
@@ -254,7 +254,7 @@ class ParameterSection(WidgetBaseClass):
 
     def __init__(self):
         self._widgets = []
-        self._table = gtk.Table(rows=1, columns=2)
+        self._table = Gtk.Table(rows=1, columns=2)
         self._table.set_col_spacings(3)
         self._table.set_row_spacings(3)
         self.update_widgets()
@@ -294,19 +294,19 @@ class ParameterSection(WidgetBaseClass):
             if hasattr(widget.widget, "get_label"):
                 # checkbox
                 widget.widget.set_label(widget.label)
-                self._table.attach(widget.widget, 0, 2, index, index + 1, xoptions=gtk.Align.FILL,
-                                   yoptions=gtk.Align.FILL)
+                self._table.attach(widget.widget, 0, 2, index, index + 1, xoptions=Gtk.Align.FILL,
+                                   yoptions=Gtk.Align.FILL)
             elif not widget.label:
-                self._table.attach(widget.widget, 0, 2, index, index + 1, xoptions=gtk.Align.FILL,
-                                   yoptions=gtk.Align.FILL)
+                self._table.attach(widget.widget, 0, 2, index, index + 1, xoptions=Gtk.Align.FILL,
+                                   yoptions=Gtk.Align.FILL)
             else:
                 # spinbutton, combobox, ...
-                label = gtk.Label("%s:" % widget.label)
+                label = Gtk.Label("%s:" % widget.label)
                 label.set_alignment(0.0, 0.5)
-                self._table.attach(label, 0, 1, index, index + 1, xoptions=gtk.Align.FILL,
-                                   yoptions=gtk.Align.FILL)
-                self._table.attach(widget.widget, 1, 2, index, index + 1, xoptions=gtk.Align.FILL,
-                                   yoptions=gtk.Align.FILL)
+                self._table.attach(label, 0, 1, index, index + 1, xoptions=Gtk.Align.FILL,
+                                   yoptions=Gtk.Align.FILL)
+                self._table.attach(widget.widget, 1, 2, index, index + 1, xoptions=Gtk.Align.FILL,
+                                   yoptions=Gtk.Align.FILL)
         self._update_widgets_visibility()
 
     def _get_table_row_of_widget(self, widget):
@@ -316,7 +316,7 @@ class ParameterSection(WidgetBaseClass):
         return -1
 
     def _get_child_row(self, widget):
-        return gtk.Container.child_get_property(self._table, widget, "top-attach")
+        return Gtk.Container.child_get_property(self._table, widget, "top-attach")
 
     def _update_widgets_visibility(self, widget=None):
         # Hide and show labels (or other items) that share a row with a

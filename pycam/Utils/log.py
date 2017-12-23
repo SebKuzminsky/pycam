@@ -163,18 +163,18 @@ class GTKHandler(logging.Handler):
         message = self.format(record)
         # Replace all "<>" characters (invalid for markup styles) with html entities.
         message = message.replace("<", "&lt;").replace(">", "&gt;")
-        from gi.repository import Gtk as gtk
+        from gi.repository import Gtk
         if record.levelno <= 20:
-            message_type = gtk.MessageType.INFO
+            message_type = Gtk.MessageType.INFO
             message_title = "Information"
         elif record.levelno <= 30:
-            message_type = gtk.MessageType.WARNING
+            message_type = Gtk.MessageType.WARNING
             message_title = "Warning"
         else:
-            message_type = gtk.MessageType.ERROR
+            message_type = Gtk.MessageType.ERROR
             message_title = "Error"
-        window = gtk.MessageDialog(self.parent_window, type=message_type,
-                                   buttons=gtk.ButtonsType.OK)
+        window = Gtk.MessageDialog(self.parent_window, type=message_type,
+                                   buttons=Gtk.ButtonsType.OK)
         window.set_markup(str(message))
         window.set_title(message_title)
         # make sure that the window gets destroyed later
