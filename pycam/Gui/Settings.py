@@ -57,17 +57,17 @@ def get_config_filename():
     return None if config_dir is None else os.path.join(config_dir, "preferences.conf")
 
 
-def get_project_settings_filename():
+def get_workspace_filename():
     config_dir = get_config_dirname()
-    return None if config_dir is None else os.path.join(config_dir, "project.yml")
+    return None if config_dir is None else os.path.join(config_dir, "workspace.yml")
 
 
 def open_preferences_file(mode="r"):
     return open_file_context(get_config_filename(), mode, True)
 
 
-def open_project_settings_file(mode="r"):
-    return open_file_context(get_project_settings_filename(), mode, True)
+def open_workspace_file(mode="r"):
+    return open_file_context(get_workspace_filename(), mode, True)
 
 
 class Settings(dict):

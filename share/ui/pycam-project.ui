@@ -89,8 +89,8 @@
     <property name="label">User _Manual: Overview</property>
     <property name="stock_id">gtk-help</property>
   </object>
-  <object class="GtkAction" id="LoadProjectSettings">
-    <property name="label">_Load Project Settings ...</property>
+  <object class="GtkAction" id="LoadWorkspace">
+    <property name="label">_Load Workspace ...</property>
     <property name="tooltip">Load model, tool, process, bound and task definitions from a file.</property>
   </object>
   <object class="GtkNotebook" id="MainTabs">
@@ -491,12 +491,12 @@ You should have received a copy of the GNU General Public License along with thi
     <property name="tooltip">Exit PyCAM</property>
     <property name="stock_id">gtk-quit</property>
   </object>
-  <object class="GtkAction" id="SaveAsProjectSettings">
-    <property name="label">Save Project Settings _as ...</property>
+  <object class="GtkAction" id="SaveAsWorkspace">
+    <property name="label">Save Workspace _as ...</property>
     <property name="tooltip">Save the models, tools, processes, bounds and tasks definitions to a new file.</property>
   </object>
-  <object class="GtkAction" id="SaveProjectSettings">
-    <property name="label">_Save Project Settings</property>
+  <object class="GtkAction" id="SaveWorkspace">
+    <property name="label">_Save Workspace</property>
     <property name="tooltip">Save the models, tools, processes, bounds and tasks definitions.</property>
     <property name="stock_id">gtk-save-as</property>
   </object>

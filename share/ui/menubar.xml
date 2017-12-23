@@ -12,9 +12,9 @@
       <separator />
     </menu>
     <menu action="SettingsMenu">
-      <menuitem action="LoadProjectSettings"/>
-      <menuitem action="SaveProjectSettings"/>
-      <menuitem action="SaveAsProjectSettings"/>
+      <menuitem action="LoadWorkspace"/>
+      <menuitem action="SaveWorkspace"/>
+      <menuitem action="SaveAsWorkspace"/>
       <separator />
       <menuitem action="GeneralSettings"/>
     </menu>

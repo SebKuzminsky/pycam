@@ -293,10 +293,10 @@ class ProjectGui(pycam.Gui.BaseUI):
             self.gui.get_object(browse_button).connect("clicked",
                                                        self._browse_external_program_location, key)
         for objname, callback in (
-                ("LoadProjectSettings", lambda widget: self.load_project_settings_dialog()),
-                ("SaveProjectSettings", lambda widget: self.save_project_settings_dialog(
-                    self.last_project_settings_uri)),
-                ("SaveAsProjectSettings", lambda widget: self.save_project_settings_dialog())):
+                ("LoadWorkspace", lambda widget: self.load_workspace_dialog()),
+                ("SaveWorkspace", lambda widget: self.save_workspace_dialog(
+                    self.last_workspace_uri)),
+                ("SaveAsWorkspace", lambda widget: self.save_workspace_dialog())):
             self.gui.get_object(objname).connect("activate", callback)
         # set the icons (in different sizes) for all windows
         # Gtk.window_set_default_icon_list(*get_icons_pixbuffers()) FIXME

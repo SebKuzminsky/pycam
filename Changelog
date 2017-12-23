@@ -3,7 +3,7 @@ Version 0.7.0 - 2017-12-??
  * switch to GTK3 (from GTK2)
  * switch OpenGL widget from GtkGLext to GLArea (part of GKT3)
  * switch to new internal data handling
- * enable loading and saving project settings (was disabled during v0.6.x)
+ * enable loading and saving the workspace state (was disabled during v0.6.x)
  * non-interactive batch processing allows scripted toolpath operations
 
 Version 0.6.2 - 2017-10-27

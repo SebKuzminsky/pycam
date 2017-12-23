@@ -7,11 +7,11 @@ from pycam.Utils.locations import open_file_context
 import pycam.Utils.log
 
 
-FILE_FILTER_CONFIG = (("Config files", "*.yml"),)
+FILE_FILTER_WORKSPACE = (("Workspace Files", "*.yml"),)
 
 PREFERENCES_DEFAULTS = {
     "unit": "mm",
-    "save_project_settings_on_exit": "ask",
+    "save_workspace_on_exit": "ask",
     "show_model": True,
     "show_support_preview": True,
     "show_axes": True,
@@ -53,7 +53,7 @@ PREFERENCES_DEFAULTS = {
 """ the listed items will be loaded/saved via the preferences file in the
 user's home directory on startup/shutdown"""
 
-DEFAULT_PROJECT_SETTINGS = """
+DEFAULT_WORKSPACE = """
 models:
         model:
             source:
@@ -136,7 +136,7 @@ class BaseUI(object):
 
     def __init__(self, event_manager):
         self.settings = event_manager
-        self.last_project_settings_uri = None
+        self.last_workspace_uri = None
 
     def reset_preferences(self, widget=None):
         """ reset all preferences to their default values """
@@ -199,35 +199,34 @@ class BaseUI(object):
         else:
             log.info("No previous undo state available - request ignored")
 
-    def save_startup_project_settings(self):
-        self.save_project_settings_to_file(pycam.Gui.Settings.get_project_settings_filename(),
-                                           remember_uri=False)
+    def save_startup_workspace(self):
+        self.save_workspace_to_file(pycam.Gui.Settings.get_workspace_filename(),
+                                    remember_uri=False)
 
-    def load_startup_project_settings(self):
-        self.load_project_settings_from_file(pycam.Gui.Settings.get_project_settings_filename(),
-                                             remember_uri=False,
-                                             default_content=DEFAULT_PROJECT_SETTINGS)
+    def load_startup_workspace(self):
+        self.load_workspace_from_file(pycam.Gui.Settings.get_workspace_filename(),
+                                      remember_uri=False, default_content=DEFAULT_WORKSPACE)
 
-    def save_project_settings_to_file(self, filename, remember_uri=True):
+    def save_workspace_to_file(self, filename, remember_uri=True):
         from pycam.Flow.parser import dump_yaml
         if remember_uri:
-            self.last_project_settings_uri = pycam.Utils.URIHandler(filename)
+            self.last_workspace_uri = pycam.Utils.URIHandler(filename)
             self.settings.emit_event("notify-file-opened", filename)
-        log.info("Storing project settings in file: %s", filename)
+        log.info("Storing workspace in file: %s", filename)
         try:
             with open_file_context(filename, "w", True) as out_file:
                 dump_yaml(target=out_file)
         except OSError as exc:
-            log.error("Failed to store project settings to file '%s': %s", filename, exc)
+            log.error("Failed to store workspace in file '%s': %s", filename, exc)
 
-    def load_project_settings_from_file(self, filename, remember_uri=True, default_content=None):
+    def load_workspace_from_file(self, filename, remember_uri=True, default_content=None):
         from pycam.Flow.data_models import CollectionName
         from pycam.Flow.history import merge_history_and_block_events
         from pycam.Flow.parser import parse_yaml
         if remember_uri:
-            self.last_project_settings_uri = pycam.Utils.URIHandler(filename)
+            self.last_workspace_uri = pycam.Utils.URIHandler(filename)
             self.settings.emit_event("notify-file-opened", filename)
-        log.info("Loading project settings from file: %s", filename)
+        log.info("Loading workspace from file: %s", filename)
         try:
             with open_file_context(filename, "r", True) as in_file:
                 content = in_file.read()
@@ -235,35 +234,35 @@ class BaseUI(object):
             if default_content:
                 content = default_content
             else:
-                log.error("Failed to read project settings file (%s): %s", filename, exc)
+                log.error("Failed to read workspace file (%s): %s", filename, exc)
                 return
         with merge_history_and_block_events(self.settings):
             parse_yaml(content,
                        excluded_sections={CollectionName.TOOLPATHS, CollectionName.EXPORTS},
                        reset=True)
 
-    def load_project_settings_dialog(self, filename=None):
+    def load_workspace_dialog(self, filename=None):
         if not filename:
             filename = self.settings.get("get_filename_func")(
-                "Loading project settings ...", mode_load=True, type_filter=FILE_FILTER_CONFIG)
+                "Loading workspace ...", mode_load=True, type_filter=FILE_FILTER_WORKSPACE)
             # no filename selected -> no action
             if not filename:
                 return
             remember_uri = True
         else:
             remember_uri = False
-        self.load_project_settings_from_file(filename, remember_uri=remember_uri)
+        self.load_workspace_from_file(filename, remember_uri=remember_uri)
 
-    def save_project_settings_dialog(self, filename=None):
+    def save_workspace_dialog(self, filename=None):
         if not filename:
             # we open a dialog
             filename = self.settings.get("get_filename_func")(
-                "Save project settings to ...", mode_load=False, type_filter=FILE_FILTER_CONFIG,
-                filename_templates=(self.last_project_settings_uri, self.last_model_uri))
+                "Save workspace to ...", mode_load=False, type_filter=FILE_FILTER_WORKSPACE,
+                filename_templates=(self.last_workspace_uri, self.last_model_uri))
             # no filename selected -> no action
             if not filename:
                 return
             remember_uri = True
         else:
             remember_uri = False
-        self.save_project_settings_to_file(filename, remember_uri=remember_uri)
+        self.save_workspace_to_file(filename, remember_uri=remember_uri)

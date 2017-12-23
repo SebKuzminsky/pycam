@@ -136,26 +136,26 @@ def show_gui():
         # some more initialization
         gui.reset_preferences()
         gui.load_preferences()
-        gui.load_startup_project_settings()
+        gui.load_startup_workspace()
 
     event_manager.emit_event("notify-initialization-finished")
 
     # open the GUI
     get_mainloop(use_gtk=True).run()
 
-    # optionally save project settings (based on configuration or dialog response)
-    if event_manager.get("save_project_settings_on_exit") == QuestionStatus.ASK.value:
-        response = gui.get_question_response("Save project settings?", True, allow_memorize=True)
+    # optionally save workspace (based on configuration or dialog response)
+    if event_manager.get("save_workspace_on_exit") == QuestionStatus.ASK.value:
+        response = gui.get_question_response("Save Workspace?", True, allow_memorize=True)
         if response.should_memorize:
-            event_manager.set("save_project_settings_on_exit",
+            event_manager.set("save_workspace_on_exit",
                               (QuestionStatus.YES if response.is_yes else QuestionStatus.NO).value)
         should_store = response.is_yes
-    elif event_manager.get("save_project_settings_on_exit") == QuestionStatus.YES.value:
+    elif event_manager.get("save_workspace_on_exit") == QuestionStatus.YES.value:
         should_store = True
     else:
         should_store = False
     if should_store:
-        gui.save_startup_project_settings()
+        gui.save_startup_workspace()
 
     gui.save_preferences()
 
