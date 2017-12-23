@@ -14,45 +14,30 @@ Linux
 
 Install the following packages with your package manager (see below):
 
--   **python**
--   **python-gtk2**
--   **python-opengl** (at least v3.0.1)
--   **python-gtkglext1** (for OpenSuSE: *python-gtkglext*)
--   **python-rsvg**
--   **python-guppy** (optional; required by the *Memory Analyzer*
-    plugin - only useful for development)
+-   **python3**
+-   **python3-gi**
+-   **python3-opengl**
 
-### Debian
+### Debian / Ubuntu
 
 Run the following command in a *root* terminal:
 
-    apt-get install python-gtk2 python-opengl python-gtkglext1 python-rsvg python-guppy
+    apt-get install python3-gi python3-opengl
 
 Please note, that the outdated Debian *Lenny* contains broken *python-opengl* packages.
 You need to temporarily add the *Squeeze* repository during the installation of these two packages.
-
-### Ubuntu
-
-Enable the *universe* repository. See detailed instructions
-[here](http://help.ubuntu.com/community/Repositories/Ubuntu).
-
-    sudo apt-get install python-gtk2 python-opengl python-gtkglext1 python-rsvg python-guppy
-
-Please note, that Ubuntu *Jaunty* (maybe also *Dapper/Hardy/Intrepid*) contains broken
-*python-opengl* packages. You need to temporarily add the *Karmic* repository during the
-installation of these two packages.
 
 ### OpenSuSE
 
 Run the following command in a *root* terminal:
 
-    zypper install python-gtk2 python-gtkglext python-opengl python-rsvg python-guppy
+    zypper install python3-gi python3-opengl
 
 ### Fedora
 
 Run the following command in a *root* terminal:
 
-    yum install pygtk2 pygtkglext python-opengl gnome-python2-rsvg python-guppy
+    yum install python3-gi python3-opengl
 
 Windows
 -------
@@ -84,7 +69,7 @@ SVG/PS/EPS import
 PyCAM supports only STL and DXF files natively. Thus you need to install
 external programs for conversions of other file formats.
 
-### Debian/Ubuntu
+### Debian / Ubuntu
 
     apt-get install inkscape pstoedit
 

@@ -10,10 +10,9 @@ Homepage: http://github.com/SebKuzminsky/pycam
 
 Package: pycam
 Architecture: all
-Depends: python-gtk2, python-opengl, python-gtkglext1, python-rsvg,
- python-gobject-2, python-numpy, python-setproctitle,
- inkscape, pstoedit, librecad-data, ${misc:Depends}, ${python:Depends}
-Recommends: python-guppy
+Depends: python3-gi, python3-opengl, python3-numpy,
+ python3-setproctitle, inkscape, pstoedit, librecad-data,
+ ${misc:Depends}, ${python3:Depends}
 Description: CAM program & Python library for generating toolpaths
  PyCAM is a toolpath generator for 3 axis machines. The generated
  GCode can be used with LinuxCNC and other machine controllers.
@@ -29,4 +28,3 @@ Description: CAM program & Python library for generating toolpaths
     * interactive 3D model view based on OpenGL
     * non-interactive generation of GCode via commandline
 	* render single-line fonts (provided by QCAD)
-

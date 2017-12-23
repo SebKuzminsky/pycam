@@ -36,21 +36,21 @@ setup(
     author="Lars Kruse",
     author_email="devel@sumpfralle.de",
     provides=["pycam"],
-    requires=["gtk", "gtk.gtkgl", "OpenGL", "enum34"],
+    requires=["PyOpenGL"],
     url="http://pycam.sourceforge.net/",
     download_url="http://sourceforge.net/projects/pycam/files",
     keywords=["3-axis", "cnc", "cam", "toolpath", "machining", "g-code"],
     long_description="""IMPORTANT NOTE: Please read the list of requirements:
 http://pycam.sourceforge.net/requirements
-Basically you will need Python, GTK and OpenGL.
+Basically you will need Python3, GTK and OpenGL.
 
-Windows: select Python 2.5 in the following dialog.
+Windows: select Python 3.X in the following dialog.
 """,
     # full list of classifiers at:
     #   http://pypi.python.org/pypi?:action=list_classifiers
     classifiers=[
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 3",
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: GNU General Public License (GPL)",
         "Topic :: Scientific/Engineering",
