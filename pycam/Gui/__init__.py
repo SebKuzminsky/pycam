@@ -119,6 +119,15 @@ tasks:
             bounds: minimal
             collision_models: [ model ]
             X-Application: { pycam-gtk: { name: Finishing } }
+
+export_settings:
+        milling:
+            gcode:
+              corner_style: {mode: optimize_tolerance, motion_tolerance: 0.0, naive_tolerance: 0.0}
+              plunge_feedrate: 100
+              safety_height: 25
+              step_width: {x: 0.0001, y: 0.0001, z: 0.0001}
+            X-Application: { pycam-gtk: { name: Milling Settings } }
 """
 
 PICKLE_PROTOCOL = 2
