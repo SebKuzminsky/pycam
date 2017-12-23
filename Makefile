@@ -1,15 +1,15 @@
 # export SVN_REPO_BASE=. if you want to use the local version instead of trunk
 # from the subversion repository.
 
+PYTHON_EXE ?= python3
 # use something like "VERSION=0.2 make" to override the VERSION on the command line
-VERSION = $(shell python -c 'import pycam; print(pycam.VERSION)')
+VERSION = $(shell $(PYTHON_EXE) -c 'import pycam; print(pycam.VERSION)')
 VERSION_FILE = pycam/Version.py
 REPO_TAGS ?= https://pycam.svn.sourceforge.net/svnroot/pycam/tags
 DIST_DIR = dist
 DIST_PREFIX = pycam-
 DIST_TGZ = $(DIST_DIR)/$(DIST_PREFIX)$(VERSION).tar.gz
 DIST_WIN32 = $(DIST_DIR)/$(DIST_PREFIX)$(VERSION).win32.exe
-PYTHON_EXE ?= python
 # check if the local version of python's distutils support "--plat-name"
 # (introduced in python 2.6)
 DISTUTILS_PLAT_NAME = $(shell $(PYTHON_EXE) setup.py --help build_ext \
@@ -106,7 +106,7 @@ check-style:
 
 check-yaml-flow:
 	$(RM) test.ngc
-	python pycam.Flow.parser yaml_flow_working.yml
+	pycam/run_cli.py yaml_flow_working.yml
 	grep -q "Z" test.ngc
 
 pylint-strict:
