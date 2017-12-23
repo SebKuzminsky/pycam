@@ -217,12 +217,13 @@ class ProjectGui(pycam.Gui.BaseUI):
         uimanager = Gtk.UIManager()
         self.settings.set("gtk-uimanager", uimanager)
         self._accel_group = uimanager.get_accel_group()
-
         # send a "delete" event on "CTRL-w" for every window
-        def handle_window_close(accel_group, window, *args):
-            window.emit("delete-event", Gdk.Event(Gdk.DELETE))
-        # self._accel_group.connect_group(ord('w'), Gdk.CONTROL_MASK, Gtk.ACCEL_LOCKED,  FIXME
-        #                                 handle_window_close)
+        self._accel_group.connect(
+            ord('w'), Gdk.ModifierType.CONTROL_MASK, Gtk.AccelFlags.LOCKED,
+            lambda accel_group, window, *args: window.emit("delete-event", Gdk.Event()))
+        self._accel_group.connect(
+            ord('q'), Gdk.ModifierType.CONTROL_MASK, Gtk.AccelFlags.LOCKED,
+            lambda *args: self.destroy())
         self.settings.add_item("gtk-accel-group", lambda: self._accel_group)
         for obj in self.gui.get_objects():
             if isinstance(obj, Gtk.Window):
