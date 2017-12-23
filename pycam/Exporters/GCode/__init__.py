@@ -24,7 +24,7 @@ from pycam.Toolpath import MOVE_STRAIGHT_RAPID, MACHINE_SETTING, COMMENT, MOVES_
 _log = pycam.Utils.log.get_logger()
 
 
-class BaseGenerator(object):
+class BaseGenerator:
 
     def __init__(self, destination, comment=None):
         if hasattr(destination, "write"):

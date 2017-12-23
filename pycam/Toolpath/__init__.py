@@ -386,7 +386,7 @@ class Toolpath(DimensionalObject):
         return self._cache_basic_moves
 
 
-class Bounds(object):
+class Bounds:
 
     TYPE_RELATIVE_MARGIN = 0
     TYPE_FIXED_MARGIN = 1

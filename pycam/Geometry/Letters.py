@@ -65,7 +65,7 @@ class Letter(TransformableContainer):
         return result
 
 
-class Charset(object):
+class Charset:
 
     def __init__(self, name=None, author=None, letterspacing=3.0, wordspacing=6.75,
                  linespacingfactor=1.0, encoding=None):

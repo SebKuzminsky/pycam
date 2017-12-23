@@ -37,7 +37,7 @@ def _process_one_line(extra_args):
     return points
 
 
-class PushCutter(object):
+class PushCutter:
 
     def __init__(self, waterlines=False):
         log.debug("Starting PushCutter")

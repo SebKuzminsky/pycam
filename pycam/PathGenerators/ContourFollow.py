@@ -69,7 +69,7 @@ def _process_one_triangle(extra_args):
         return result, None
 
 
-class CollisionPaths(object):
+class CollisionPaths:
 
     def __init__(self):
         self.waterlines = []
@@ -188,7 +188,7 @@ class CollisionPaths(object):
         return result
 
 
-class ContourFollow(object):
+class ContourFollow:
 
     def __init__(self, path_processor):
         self.pa = path_processor

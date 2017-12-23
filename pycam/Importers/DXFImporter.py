@@ -46,7 +46,7 @@ def _unescape_control_characters(text):
     return re.sub(r"\\U\+([0-9a-fA-F]{4})", lambda hex_in: chr(int(hex_in.groups()[0], 16)), text)
 
 
-class DXFParser(object):
+class DXFParser:
 
     # see http://www.autodesk.com/techpubs/autocad/acad2000/dxf/group_code_value_types_dxf_01.htm
     MAX_CHARS_PER_LINE = 2049

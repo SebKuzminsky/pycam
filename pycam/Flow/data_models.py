@@ -411,7 +411,7 @@ def _require_model_type(wanted_type):
     return wrap
 
 
-class CacheStorage(object):
+class CacheStorage:
     """ cache result values of a method
 
     The method's instance object may be a BaseDataContainer (or another non-trivial object).
@@ -484,7 +484,7 @@ class CacheStorage(object):
         return cache_item.content
 
 
-class BaseDataContainer(object):
+class BaseDataContainer:
 
     attribute_converters = {}
     attribute_defaults = {}
@@ -607,7 +607,7 @@ class BaseDataContainer(object):
         return "{}({})".format(get_type_name(self), attr_dict_string)
 
 
-class BaseCollection(object):
+class BaseCollection:
 
     def __init__(self, name, list_changed_event=None):
         self._name = name

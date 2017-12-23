@@ -159,7 +159,7 @@ def get_task_statistics():
     return result
 
 
-class ManagerInfo(object):
+class ManagerInfo:
     """ this separate class allows proper pickling for "multiprocesssing"
     """
 
@@ -659,7 +659,7 @@ def run_in_parallel_local(func, args, unordered=False, disable_multiprocessing=F
             yield func(arg)
 
 
-class OneProcess(object):
+class OneProcess:
     def __init__(self, name, is_queue=False):
         self.is_queue = is_queue
         self.name = name
@@ -686,7 +686,7 @@ class OneProcess(object):
                 return "Process %s: not ready" % str(self.name)
 
 
-class ProcessStatistics(object):
+class ProcessStatistics:
 
     def __init__(self, timeout=120):
         self.processes = {}
@@ -756,7 +756,7 @@ class ProcessStatistics(object):
         return result
 
 
-class PendingTasks(object):
+class PendingTasks:
 
     def __init__(self, stale_timeout=300):
         # we assume that multiprocessing was imported before
@@ -813,7 +813,7 @@ class PendingTasks(object):
         return len(self._jobs)
 
 
-class ProcessDataCache(object):
+class ProcessDataCache:
 
     def __init__(self, timeout=600):
         self.cache = {}
@@ -865,7 +865,7 @@ class ProcessDataCache(object):
         return len(self.cache)
 
 
-class ProcessDataCacheItemID(object):
+class ProcessDataCacheItemID:
 
     def __init__(self, value):
         self.value = value

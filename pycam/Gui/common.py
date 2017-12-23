@@ -180,7 +180,7 @@ def set_parent_controls_sensitivity(widget, new_state):
         parent = parent.get_parent()
 
 
-class EmergencyDialog(object):
+class EmergencyDialog:
     """ This graphical message window requires no external dependencies.
     The Tk interface package is part of the main python distribution.
     Use this class for displaying dependency errors (especially on Windows).

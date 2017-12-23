@@ -744,7 +744,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         self.area.queue_render()
 
 
-class Camera(object):
+class Camera:
 
     def __init__(self, core, get_dim_func, import_gl, import_glu):
         self._GL = import_gl

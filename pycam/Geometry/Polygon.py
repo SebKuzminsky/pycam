@@ -67,7 +67,7 @@ class PolygonInTree(IDGenerator):
         return pdist(other.start, self.end)
 
 
-class PolygonPositionSorter(object):
+class PolygonPositionSorter:
     """ sort PolygonInTree objects for a minimized way length.
     The sorter takes care that no polygons are processed before their children
     (inside polygons).
@@ -148,7 +148,7 @@ class PolygonPositionSorter(object):
         return result
 
 
-class PolygonSorter(object):
+class PolygonSorter:
     """ sort Plygon instances according to the following rules:
     * inner polygons first (with no inside polygons)
     * inner polygons with inside polygons that are already processed

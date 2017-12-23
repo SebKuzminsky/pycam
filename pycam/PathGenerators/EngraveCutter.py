@@ -23,7 +23,7 @@ import pycam.Utils.log
 log = pycam.Utils.log.get_logger()
 
 
-class EngraveCutter(object):
+class EngraveCutter:
 
     def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None,
                          draw_callback=None):

@@ -58,7 +58,7 @@ Point3D = collections.namedtuple("Point3D", ("x", "y", "z"))
 Vector3D = collections.namedtuple("Vector3D", ("x", "y", "z"))
 
 
-class DimensionalObject(object):
+class DimensionalObject:
     """ mixin class for providing 3D objects with size information
 
     At least the attributes min[xyz] and max[xyz] must be provided by the inheriting class.
@@ -114,7 +114,7 @@ def _id_generator():
         current_id += 1
 
 
-class IDGenerator(object):
+class IDGenerator:
 
     __id_gen_func = _id_generator()
 

@@ -141,7 +141,7 @@ class QuestionStatus(enum.Enum):
     ASK = "ask"
 
 
-class BaseUI(object):
+class BaseUI:
 
     def __init__(self, event_manager):
         self.settings = event_manager

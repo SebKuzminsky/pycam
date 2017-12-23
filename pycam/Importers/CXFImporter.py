@@ -30,7 +30,7 @@ class _CXFParseError(BaseException):
     pass
 
 
-class _LineFeeder(object):
+class _LineFeeder:
 
     def __init__(self, items):
         self.items = items
@@ -58,7 +58,7 @@ class _LineFeeder(object):
         return self.index + 1
 
 
-class CXFParser(object):
+class CXFParser:
 
     META_KEYWORDS = ("letterspacing", "wordspacing", "linespacingfactor", "encoding")
     META_KEYWORDS_MULTI = ("author", "name")

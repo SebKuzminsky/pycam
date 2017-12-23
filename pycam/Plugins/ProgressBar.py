@@ -56,7 +56,7 @@ class ProgressBar(pycam.Plugins.PluginBase):
         self.core.set("progress", None)
 
 
-class ProgressGTK(object):
+class ProgressGTK:
 
     _PROGRESS_STACK = []
 

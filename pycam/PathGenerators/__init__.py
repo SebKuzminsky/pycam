@@ -25,7 +25,7 @@ from pycam.Geometry.PointUtils import pdist, pnorm, pnormalized, psub
 from pycam.Utils.events import get_event_handler
 
 
-class Hit(object):
+class Hit:
     def __init__(self, cl, cp, t, d, direction):
         self.cl = cl
         self.cp = cp
@@ -213,7 +213,7 @@ def get_max_height_dynamic(model, cutter, positions, minz, maxz):
     return points
 
 
-class UpdateToolView(object):
+class UpdateToolView:
     """ visualize the position of the tool and the partial toolpath during toolpath generation """
 
     def __init__(self, callback, max_fps=1):

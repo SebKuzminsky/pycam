@@ -119,7 +119,7 @@ def get_non_conflicting_name(template, conflicts, start=None, get_next_func=None
     return template % index
 
 
-class URIHandler(object):
+class URIHandler:
 
     DEFAULT_PREFIX = "file://"
 
@@ -302,7 +302,7 @@ class MultiLevelDictionaryAccess:
         return target_dict, keys[-1]
 
 
-class ProgressCounter(object):
+class ProgressCounter:
 
     def __init__(self, max_value, update_callback):
         if max_value <= 0:

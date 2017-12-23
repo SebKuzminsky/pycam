@@ -69,7 +69,7 @@ def _get_plugin_imports():
     return result
 
 
-class PluginBase(object):
+class PluginBase:
 
     UI_FILE = None
     DEPENDS = []
@@ -248,7 +248,7 @@ class PluginBase(object):
             ui_manager.remove_action_group(actiongroup)
 
 
-class PluginManager(object):
+class PluginManager:
 
     def __init__(self, core):
         self.core = core

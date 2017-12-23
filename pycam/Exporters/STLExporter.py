@@ -24,7 +24,7 @@ from pycam import VERSION
 from pycam.Geometry.PointUtils import pnormalized
 
 
-class STLExporter(object):
+class STLExporter:
 
     def __init__(self, model, name="model", created_by="pycam", linesep=None, **kwargs):
         self.model = model

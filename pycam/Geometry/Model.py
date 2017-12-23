@@ -638,7 +638,7 @@ class ContourModel(BaseModel):
         return result or None
 
 
-class PolygonGroup(object):
+class PolygonGroup:
     """ A PolygonGroup consists of one outer and maybe multiple inner polygons.
     It is mainly used for 3D extrusion of polygons.
     """
@@ -847,7 +847,7 @@ class PolygonGroup(object):
         return self.z_level + func(line_distances[0])
 
 
-class TriangleOptimizer(object):
+class TriangleOptimizer:
 
     def __init__(self, callback=None):
         self.groups = {}

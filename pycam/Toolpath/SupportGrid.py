@@ -174,7 +174,7 @@ def get_support_distributed(model, z_plane, average_distance, min_bridges_per_po
     return result
 
 
-class _BridgeCorner(object):
+class _BridgeCorner:
 
     # currently we only use the xy plane
     up_vector = (0, 0, 1, 'v')

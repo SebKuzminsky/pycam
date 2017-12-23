@@ -60,7 +60,7 @@ def _get_num_converter(step_width):
     return conv_func, format_string
 
 
-class GCodeGenerator(object):
+class GCodeGenerator:
 
     NUM_OF_AXES = 3
 

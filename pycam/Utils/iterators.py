@@ -18,7 +18,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-class Iterator(object):
+class Iterator:
     def __init__(self, seq, start=0):
         self.seq = seq
         self.ind = start
@@ -71,7 +71,7 @@ class Iterator(object):
         return len(self.seq) - self.ind
 
 
-class CyclicIterator(object):
+class CyclicIterator:
     def __init__(self, seq, start=0):
         self.seq = seq
         self.ind = start

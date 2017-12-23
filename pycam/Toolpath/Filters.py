@@ -72,7 +72,7 @@ def get_filtered_moves(moves, filters):
     return moves
 
 
-class BaseFilter(object):
+class BaseFilter:
 
     PARAMS = []
     WEIGHT = 50

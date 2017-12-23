@@ -52,7 +52,7 @@ def _output_conversion(func):
     return _output_conversion_wrapper
 
 
-class WidgetBaseClass(object):
+class WidgetBaseClass:
 
     def get_widget(self):
         return self.control

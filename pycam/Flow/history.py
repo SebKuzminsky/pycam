@@ -10,7 +10,7 @@ import pycam.Utils.log
 _log = pycam.Utils.log.get_logger()
 
 
-class DataRevision(object):
+class DataRevision:
     """ create a representation of the current state of all collections """
 
     def __init__(self):
@@ -23,7 +23,7 @@ class DataRevision(object):
         return (self.timestamp, self.dump) < (other.timestamp, other.dump)
 
 
-class DataHistory(object):
+class DataHistory:
     """ manage the revisions of the data collections """
 
     max_revision_count = 20

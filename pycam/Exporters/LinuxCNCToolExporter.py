@@ -20,7 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import os
 
 
-class LinuxCNCToolExporter(object):
+class LinuxCNCToolExporter:
 
     def __init__(self, tools):
         """ tools are expected to be dictionaries containing the following keys:

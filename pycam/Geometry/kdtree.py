@@ -26,7 +26,7 @@ except ImportError:
 from pycam.Geometry import IDGenerator
 
 
-class Node(object):
+class Node:
 
     __slots__ = ["obj", "bound"]
 

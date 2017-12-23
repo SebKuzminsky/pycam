@@ -21,7 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 SVG_OUTPUT_DPI = 90
 
 
-class SVGExporter(object):
+class SVGExporter:
 
     def __init__(self, output, unit="mm", maxx=None, maxy=None):
         if hasattr(output, "write"):
@@ -100,7 +100,7 @@ class SVGExporter(object):
 
 
 # TODO: we need to create a unified "Exporter" interface and base class
-class SVGExporterContourModel(object):
+class SVGExporterContourModel:
 
     def __init__(self, model, unit="mm", **kwargs):
         self.model = model

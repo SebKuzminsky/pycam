@@ -199,7 +199,7 @@ def keyPressed(key, x, y):
         _KeyHandlerFunc(key, x, y)
 
 
-class mouseState(object):
+class mouseState:
     button = None
     state = None
     x = 0

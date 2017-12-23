@@ -39,7 +39,7 @@ def _process_one_grid_line(extra_args):
     return get_max_height_dynamic(model, cutter, positions, minz, maxz)
 
 
-class DropCutter(object):
+class DropCutter:
 
     def GenerateToolPath(self, cutter, models, motion_grid, minz=None, maxz=None,
                          draw_callback=None):
