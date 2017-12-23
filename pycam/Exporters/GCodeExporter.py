@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Copyright 2010-2011 Lars Kruse <devel@sumpfralle.de>
 Copyright 2008-2009 Lode Leroy

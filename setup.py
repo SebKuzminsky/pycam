@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 Copyright 2010 Arthur Magill

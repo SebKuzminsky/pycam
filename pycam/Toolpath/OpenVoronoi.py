@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module uses the openvoronoi library (https://github.com/aewallin/openvoronoi).
 This module is experimental and not well tested.
