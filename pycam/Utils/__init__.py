@@ -61,9 +61,7 @@ def get_platform():
 
 
 def get_type_name(instance):
-    # nicer (but only available for python2 new-style classes and python3) would be:
-    #    type(instance).__name__
-    return instance.__class__.__name__
+    return type(instance).__name__
 
 
 def set_application_key(key):

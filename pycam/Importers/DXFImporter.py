@@ -42,14 +42,8 @@ def _unescape_control_characters(text):
     for src, dest in (("%%d", u"\u00B0"), ("%%p", u"\u00B1"), ("%%c", u"\u2205"),
                       (r"\P", os.linesep), (r"\~", " ")):
         text = text.replace(src, dest)
-    # python2/3 compatibility
-    try:
-        unichr
-    except NameError:
-        unichr = chr
     # convert "\U+xxxx" to unicode characters
-    return re.sub(r"\\U\+([0-9a-fA-F]{4})",
-                  lambda hex_in: unichr(int(hex_in.groups()[0], 16)), text)
+    return re.sub(r"\\U\+([0-9a-fA-F]{4})", lambda hex_in: chr(int(hex_in.groups()[0], 16)), text)
 
 
 class DXFParser(object):

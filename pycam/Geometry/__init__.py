@@ -182,10 +182,6 @@ class TransformableContainer(DimensionalObject):
     def __iter__(self):
         return self
 
-    def next(self):
-        """ add iterability for python2 ('__next__' is used for python3) """
-        return self.__next__()
-
     def __next__(self):
         raise NotImplementedError(("'%s' is a subclass of 'TransformableContainer' but it fails "
                                    "to implement the 'next' generator") % str(type(self)))

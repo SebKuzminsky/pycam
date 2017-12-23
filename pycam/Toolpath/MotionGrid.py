@@ -32,14 +32,6 @@ import pycam.Utils.log
 _log = pycam.Utils.log.get_logger()
 
 
-if not hasattr(enum, "IntEnum"):
-    # The following is only relevant for Python2 (Python3 includes a core library named 'enum').
-    # The pypi package 'enum' is not suitable since it lacks 'IntEnum' (as of v0.4.6).
-    # The pypi package 'enum34' is suitable.
-    _log.error("The installed 'enum' package lacks 'IntEnum'. Maybe you should install 'enum34' "
-               "instead?")
-
-
 class GridDirection(enum.Enum):
     X = "x"
     Y = "y"
