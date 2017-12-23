@@ -99,7 +99,7 @@ test: check-style pytest check-yaml-flow
 # Once the oldest supported platform has pytest 3.0 or newer we can
 # switch to the new `pytest` name.
 pytest:
-	py.test -v .
+	python3 /usr/bin/pytest -v .
 
 check-style:
 	scripts/run_flake8 $(PYTHON_CHECK_STYLE_TARGETS)
