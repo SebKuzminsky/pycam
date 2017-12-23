@@ -565,6 +565,15 @@ class BaseDataContainer:
 
     def get_dict(self, with_application_attributes=False):
         result = copy.deepcopy(self._data)
+        # fill missing slots with their default values
+        result_multi_level = MultiLevelDictionaryAccess(result)
+        for key, value in self.attribute_defaults.items():
+            try:
+                # check if the value for this key exists
+                result_multi_level.get_value(key)
+            except KeyError:
+                # the value does not exist: set it with its default
+                result_multi_level.set_value(key, value)
         if with_application_attributes:
             minimized_data = {key: value
                               for key, value in copy.deepcopy(self._application_attributes).items()
