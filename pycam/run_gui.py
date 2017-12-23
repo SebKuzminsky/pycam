@@ -186,16 +186,20 @@ def execute(parser, args, pycam):
 
     # initialize multiprocessing
     try:
+        if args.server_authkey is None:
+            server_auth_key = None
+        else:
+            server_auth_key = args.server_authkey.encode("utf-8")
         if args.start_server:
             pycam.Utils.threading.init_threading(
                 args.parallel_processes, remote=args.remote_server, run_server=True,
-                server_credentials=args.server_authkey)
+                server_credentials=server_auth_key)
             pycam.Utils.threading.cleanup()
             return EXIT_CODES["ok"]
         else:
             pycam.Utils.threading.init_threading(
                 args.parallel_processes, enable_server=args.enable_server,
-                remote=args.remote_server, server_credentials=args.server_authkey)
+                remote=args.remote_server, server_credentials=server_auth_key)
     except socket.error as err_msg:
         log.error("Failed to connect to remote server: %s", err_msg)
         return EXIT_CODES["connection_error"]
