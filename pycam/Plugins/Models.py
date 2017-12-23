@@ -18,8 +18,10 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import copy
 import random
 
+from pycam.Flow.history import merge_history_and_block_events
 import pycam.Plugins
 
 
@@ -144,14 +146,21 @@ class Models(pycam.Plugins.ListPluginBase):
             model.set_application_value("color", color)
         return color
 
-    def add_model(self, model, name=None, color=None):
+    def add_model(self, model_params, name=None, color=None):
+        """
+
+        @param model_params: a dictionary describing the model, e.g.:
+            {"source": {"type": "object", "data": FOO}}
+        """
         self.log.info("Adding new model: %s", name)
         if not color:
             color = self.core.get("color_model")
         if not color:
             color = self.FALLBACK_COLOR.copy()
-        new_model = pycam.Flow.data_models.Model(None,
-                                                 {"source": {"type": "object", "data": model}})
-        new_model.set_application_value("name", self.get_non_conflicting_name("Model #%d"))
-        new_model.set_application_value("color", color)
-        new_model.set_application_value("visible", True)
+        if name is None:
+            name = self.get_non_conflicting_name("Model #%d")
+        with merge_history_and_block_events(self.core):
+            new_model = pycam.Flow.data_models.Model(None, copy.deepcopy(model_params))
+            new_model.set_application_value("name", name)
+            new_model.set_application_value("color", color)
+            new_model.set_application_value("visible", True)

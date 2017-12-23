@@ -167,7 +167,9 @@ class Fonts(pycam.Plugins.PluginBase):
     def import_from_font_dialog(self, widget=None):
         text_model = self.get_font_dialog_text_rendered()
         name = "Text " + re.sub(r"\W", "", self._get_text_from_input())[:10]
-        self.core.get("models").add_model(text_model, name=name)
+        # TODO: implement "get_dump" (or "serialize" or ...)
+        model_params = {"source": {"type": "object", "data": text_model.get_dump()}}
+        self.core.get("models").add_model(model_params, name=name)
         self.toggle_font_dialog_window()
 
     def export_from_font_dialog(self, widget=None):

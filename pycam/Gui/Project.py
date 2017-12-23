@@ -551,10 +551,9 @@ class ProjectGui(pycam.Gui.BaseUI):
             filename = self.settings.get("get_filename_func")("Loading model ...", mode_load=True,
                                                               type_filter=FILTER_MODEL)
         if filename:
-            new_model = pycam.Flow.data_models.Model(
-                None, {"source": {"type": "file", "location": filename}})
             name_suggestion = os.path.splitext(os.path.basename(filename))[0]
-            new_model.set_application_value("name", name_suggestion)
+            model_params = {"source": {"type": "file", "location": filename}}
+            self.settings.get("models").add_model(model_params, name=name_suggestion)
             self.add_to_recent_file_list(filename)
             return True
 
