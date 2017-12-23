@@ -434,20 +434,6 @@ class ProjectGui(pycam.Gui.BaseUI):
             url = page
         webbrowser.open(url)
 
-    def set_model_filename(self, filename):
-        """ Store the given filename for a possible later "save model" action.
-        Additionally the window's title is adjusted and the "save" buttons are
-        updated.
-        """
-        uri = pycam.Utils.URIHandler(filename)
-        self.last_model_uri = uri
-        if not self.last_model_uri:
-            self.window.set_title("PyCAM")
-        else:
-            short_name = os.path.basename(uri.get_path())
-            self.window.set_title("%s - PyCAM" % short_name)
-        self.settings.emit_event("model-change-after")
-
     def _browse_external_program_location(self, widget=None, key=None):
         title = "Select the executable for '%s'" % key
         location = self.settings.get("get_filename_func")(title=title, mode_load=True,
