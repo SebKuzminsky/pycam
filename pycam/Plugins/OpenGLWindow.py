@@ -61,7 +61,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             return False
         # test support for GLArea (since GTK v3.16)
         try:
-            self._gtk.GLAreax
+            self._gtk.GLArea
         except AttributeError:
             self.log.error("Failed to initialize the interactive 3D model view probably due to an "
                            "outdated version of GTK (required: v3.16).")
