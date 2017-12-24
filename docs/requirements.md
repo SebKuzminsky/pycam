@@ -17,15 +17,17 @@ Install the following packages with your package manager (see below):
 -   **python3**
 -   **python3-gi**
 -   **python3-opengl**
+-   **gir1.2-gtk-3.0** (GTK: at least v3.16)
+
+If your distribution does not ship GTK v3.16 or newer (e.g. Debian Jessie contains only v3.14),
+then you need to use an older release of PyCAM. The older releases (e.g. v0.6.x) depend on Python2
+and GTK2 - thus they should work well even with rather old distributions.
 
 ### Debian / Ubuntu
 
 Run the following command in a *root* terminal:
 
-    apt-get install python3-gi python3-opengl
-
-Please note, that the outdated Debian *Lenny* contains broken *python-opengl* packages.
-You need to temporarily add the *Squeeze* repository during the installation of these two packages.
+    apt-get install python3-gi python3-opengl gir1.2-gtk-3.0
 
 ### OpenSuSE
 
