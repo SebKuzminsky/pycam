@@ -59,6 +59,13 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                            "that all requirements (especially the Python package for 'OpenGL' - "
                            "e.g. 'python3-opengl') are installed.")
             return False
+        # test support for GLArea (since GTK v3.16)
+        try:
+            self._gtk.GLAreax
+        except AttributeError:
+            self.log.error("Failed to initialize the interactive 3D model view probably due to an "
+                           "outdated version of GTK (required: v3.16).")
+            return False
         if self.gui:
             # buttons for rotating, moving and zooming the model view window
             self.BUTTON_ROTATE = self._gdk.ModifierType.BUTTON1_MASK
