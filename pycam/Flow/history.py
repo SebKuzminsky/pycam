@@ -59,8 +59,10 @@ class DataHistory:
         """
         previous_count = self._skipped_revision_store_count
         self._ignore_change_depth += 1
-        yield
-        self._ignore_change_depth -= 1
+        try:
+            yield
+        finally:
+            self._ignore_change_depth -= 1
         # store a new revision if a change occoured in between
         if not no_store and (previous_count != self._skipped_revision_store_count):
             self._store_revision()

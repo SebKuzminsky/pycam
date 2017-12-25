@@ -161,7 +161,9 @@ def open_file_context(filename, mode, is_text):
         opened_file = os.fdopen(handle, mode=mode)
     else:
         raise ValueError("Invalid 'mode' given: {}".format(mode))
-    yield opened_file
-    opened_file.close()
+    try:
+        yield opened_file
+    finally:
+        opened_file.close()
     if mode == "w":
         os.rename(temp_filename, filename)

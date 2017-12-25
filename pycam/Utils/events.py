@@ -131,9 +131,11 @@ class EventCore(pycam.Gui.Settings.Settings):
             self.block_event(event)
             unblock_list.append(event)
         unblock_list.reverse()
-        yield
-        for event in unblock_list:
-            self.unblock_event(event)
+        try:
+            yield
+        finally:
+            for event in unblock_list:
+                self.unblock_event(event)
         if emit_after:
             for event in unblock_list:
                 self.emit_event(event)
