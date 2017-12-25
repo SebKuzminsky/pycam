@@ -167,3 +167,17 @@ def open_file_context(filename, mode, is_text):
         opened_file.close()
     if mode == "w":
         os.rename(temp_filename, filename)
+
+
+@contextlib.contextmanager
+def create_named_temporary_file(suffix=None):
+    file_handle, filename = tempfile.mkstemp(suffix=".dxf")
+    os.close(file_handle)
+    try:
+        yield filename
+    finally:
+        if os.path.isfile(filename):
+            try:
+                os.remove(filename)
+            except OSError as exc:
+                log.warn("Failed to remove temporary file (%s): %s", filename, exc)

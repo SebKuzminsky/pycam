@@ -23,6 +23,7 @@ import math
 import re
 import os
 
+from pycam.errors import AbortOperationException, LoadFileError
 from pycam.Geometry.Triangle import Triangle
 from pycam.Geometry.PointUtils import pdist
 from pycam.Geometry.Line import Line
@@ -866,9 +867,8 @@ def import_model(filename, color_as_height=False, fonts_cache=None, callback=Non
     else:
         try:
             infile = pycam.Utils.URIHandler(filename).open()
-        except IOError as err_msg:
-            log.error("DXFImporter: Failed to read file (%s): %s", filename, err_msg)
-            return None
+        except IOError as exc:
+            raise LoadFileError("DXFImporter: Failed to read file ({}): {}".format(filename, exc))
 
     result = DXFParser(infile, color_as_height=color_as_height, fonts_cache=fonts_cache,
                        callback=callback)
@@ -878,8 +878,7 @@ def import_model(filename, color_as_height=False, fonts_cache=None, callback=Non
     triangles = model_data["triangles"]
 
     if callback and callback():
-        log.warn("DXFImporter: load model operation was cancelled")
-        return None
+        raise AbortOperationException("DXFImporter: load model operation was cancelled")
 
     # 3D models are preferred over 2D models
     if triangles:
@@ -919,6 +918,5 @@ def import_model(filename, color_as_height=False, fonts_cache=None, callback=Non
         return model
     else:
         link = "http://pycam.sourceforge.net/supported-formats"
-        log.error('DXFImporter: No supported elements found in DXF file!\n'
-                  '<a href="%s">Read PyCAM\'s modeling hints.</a>', link)
-        return None
+        raise LoadFileError('DXFImporter: No supported elements found in DXF file!\n'
+                            '<a href="%s">Read PyCAM\'s modeling hints.</a>'.format(link))

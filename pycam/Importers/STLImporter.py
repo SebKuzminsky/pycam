@@ -22,6 +22,7 @@ from io import BufferedReader, BytesIO, TextIOWrapper
 import re
 from struct import unpack
 
+from pycam.errors import AbortOperationException, LoadFileError
 from pycam.Geometry import epsilon
 from pycam.Geometry.Model import Model
 from pycam.Geometry.PointKdtree import PointKdtree
@@ -98,9 +99,8 @@ def import_model(filename, use_kdtree=True, callback=None, **kwargs):
             # Is there a better approach than consuming the whole file at once?
             f = BufferedReader(BytesIO(url_file.read()))
             url_file.close()
-        except IOError as err_msg:
-            log.error("STLImporter: Failed to read file (%s): %s", filename, err_msg)
-            return None
+        except IOError as exc:
+            raise LoadFileError("STLImporter: Failed to read file ({}): {}".format(filename, exc))
 
     # the facet count is only available for the binary format
     facet_count = get_facet_count_if_binary_format(f)
@@ -118,8 +118,7 @@ def import_model(filename, use_kdtree=True, callback=None, **kwargs):
     if is_binary:
         for i in range(1, facet_count + 1):
             if callback and callback():
-                log.warn("STLImporter: load model operation cancelled")
-                return None
+                raise AbortOperationException("STLImporter: load model operation cancelled")
             a1 = unpack("<f", f.read(4))[0]
             a2 = unpack("<f", f.read(4))[0]
             a3 = unpack("<f", f.read(4))[0]
@@ -194,8 +193,7 @@ def import_model(filename, use_kdtree=True, callback=None, **kwargs):
 
         for line in f:
             if callback and callback():
-                log.warn("STLImporter: load model operation cancelled")
-                return None
+                raise AbortOperationException("STLImporter: load model operation cancelled")
             current_line += 1
             m = solid.match(line)
             if m:
@@ -282,6 +280,6 @@ def import_model(filename, use_kdtree=True, callback=None, **kwargs):
 
     if not model:
         # no valid items added to the model
-        return None
+        raise LoadFileError("Failed to load model from STL file: no elements found")
     else:
         return model

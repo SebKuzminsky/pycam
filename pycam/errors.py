@@ -2,6 +2,10 @@ class PycamBaseException(Exception):
     pass
 
 
+class AbortOperationException(PycamBaseException):
+    pass
+
+
 class CommunicationError(PycamBaseException):
     pass
 
