@@ -2,7 +2,6 @@ import yaml
 
 import pycam.Exporters.GCode.LinuxCNC
 from pycam.Flow.data_models import CollectionName
-import pycam.Flow.data_models
 import pycam.Importers
 import pycam.Plugins
 import pycam.Utils.log
@@ -76,3 +75,13 @@ def dump_yaml(target=None, excluded_sections=None):
         result[section.value] = item_class.get_collection().get_dict(
             with_application_attributes=True, without_uuids=True)
     return yaml.dump(result, stream=target)
+
+
+def validate_collections():
+    """ try to verify all items in all collections
+
+    throws FlowDescriptionBaseException in case of obvious errors
+    """
+    for item_class in COLLECTIONS:
+        collection = item_class.get_collection()
+        collection.validate()

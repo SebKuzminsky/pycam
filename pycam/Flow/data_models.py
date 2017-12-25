@@ -21,6 +21,7 @@ import collections
 import copy
 from enum import Enum
 import functools
+import io
 import os.path
 import time
 import uuid
@@ -29,6 +30,7 @@ from pycam.Cutters.CylindricalCutter import CylindricalCutter
 from pycam.Cutters.SphericalCutter import SphericalCutter
 from pycam.Cutters.ToroidalCutter import ToroidalCutter
 from pycam.Geometry import Box3D, Point3D
+import pycam.Geometry.Model
 from pycam.Geometry.Plane import Plane
 from pycam.PathGenerators import UpdateToolView
 import pycam.PathGenerators.DropCutter
@@ -81,6 +83,10 @@ class InvalidKeyError(InvalidDataError):
         enum_name = str(choice_enum).split("'")[1]
         super().__init__("Unknown {}: {} (should be one of: {})".format(
             enum_name, invalid_key, ", ".join([item.value for item in choice_enum])))
+
+
+class FileParserError(InvalidDataError):
+    pass
 
 
 class CollectionName(Enum):
@@ -620,6 +626,17 @@ class BaseDataContainer:
         if self.changed_event:
             get_event_handler().emit_event(self.changed_event)
 
+    def validate(self):
+        """ try to verify the validity of a data item
+
+        All operations of the items are executed (avoiding permanent side-effects).  Most problems
+        of the data structure should be discovered during this operation.  Non-trivial problems
+        (e.g. missing permissions for file operations) are not guaranteed to be detected.
+
+        throws FlowDescriptionBaseException in case of errors
+        """
+        raise NotImplementedError
+
     def __str__(self):
         attr_dict_string = ", ".join("{}={}".format(key, value)
                                      for key, value in self.get_dict().items())
@@ -720,6 +737,10 @@ class BaseCollection:
         if self._list_changed_event:
             get_event_handler().emit_event(self._list_changed_event)
 
+    def validate(self):
+        for item in self._data:
+            item.validate()
+
 
 class BaseCollectionItemDataContainer(BaseDataContainer):
 
@@ -780,7 +801,11 @@ class Source(BaseDataContainer):
     def get(self, related_collection_name):
         source_type = self.get_value("type")
         if source_type == SourceType.COPY:
-            return self._get_source_copy(related_collection_name)
+            if related_collection_name is None:
+                # handle "validate" check gracefully
+                raise ValueError("'related_collection_name' may not be None")
+            else:
+                return self._get_source_copy(related_collection_name)
         elif source_type in (SourceType.FILE, SourceType.URL):
             return self._get_source_location(source_type)
         elif source_type == SourceType.TASK:
@@ -827,6 +852,15 @@ class Source(BaseDataContainer):
     def _get_source_object(self):
         """ transfer method for intra-process transfer """
         return self.get_value("data")
+
+    def validate(self):
+        try:
+            # try it with a invalid "related_collection_name" - hopefully it works
+            self.get(None)
+        except ValueError:
+            # The "copy" source requires a suitable "related_collection_name" parameter. Thus we
+            # cannot fully check the validity.
+            pass
 
 
 class ModelTransformation(BaseDataContainer):
@@ -947,6 +981,10 @@ class ModelTransformation(BaseDataContainer):
             assert False
         return new_model
 
+    def validate(self):
+        model = pycam.Geometry.Model.Model()
+        self.get_transformed_model(model)
+
 
 class Model(BaseCollectionItemDataContainer):
 
@@ -964,6 +1002,9 @@ class Model(BaseCollectionItemDataContainer):
         for transformation in self.get_value("transformations"):
             model = transformation.get_transformed_model(model)
         return model
+
+    def validate(self):
+        self.get_model()
 
 
 class Tool(BaseCollectionItemDataContainer):
@@ -1028,6 +1069,10 @@ class Tool(BaseCollectionItemDataContainer):
             result.append(tp_filters.TriggerSpindle(
                 delay=self.get_value(("spindle", "spin_up_delay"))))
         return result
+
+    def validate(self):
+        self.get_tool_geometry()
+        self.get_toolpath_filters()
 
 
 class Process(BaseCollectionItemDataContainer):
@@ -1127,6 +1172,10 @@ class Process(BaseCollectionItemDataContainer):
         else:
             raise InvalidKeyError(strategy, ProcessStrategy)
 
+    def validate(self):
+        self.get_path_generator()
+        self.get_motion_grid(tool_radius=1, box=Box3D(Point3D(0, 0, 0), Point3D(1, 1, 1)))
+
 
 class Boundary(BaseCollectionItemDataContainer):
 
@@ -1214,6 +1263,9 @@ class Boundary(BaseCollectionItemDataContainer):
                 high[index] += offset
         return Box3D(Point3D(*low), Point3D(*high))
 
+    def validate(self):
+        self.get_absolute_limits()
+
 
 class Task(BaseCollectionItemDataContainer):
 
@@ -1261,6 +1313,9 @@ class Task(BaseCollectionItemDataContainer):
                                            toolpath_filters=tool.get_toolpath_filters())
         else:
             raise InvalidKeyError(task_type, TaskType)
+
+    def validate(self):
+        self.generate_toolpath()
 
 
 class ToolpathTransformation(BaseDataContainer):
@@ -1338,6 +1393,10 @@ class ToolpathTransformation(BaseDataContainer):
             _log.info("Toolpath cropping: the result is empty")
             return None
 
+    def validate(self):
+        toolpath = pycam.Toolpath.Toolpath()
+        self.get_transformed_toolpath(toolpath)
+
 
 class Toolpath(BaseCollectionItemDataContainer):
 
@@ -1364,6 +1423,9 @@ class Toolpath(BaseCollectionItemDataContainer):
         self.attribute_converters["transformations"](current_transformations)
         # there was no problem - overwrite the previous transformations
         self.set_value("transformations", current_transformations)
+
+    def validate(self):
+        self.get_toolpath()
 
 
 class ExportSettings(BaseCollectionItemDataContainer):
@@ -1410,19 +1472,34 @@ class ExportSettings(BaseCollectionItemDataContainer):
                 raise InvalidKeyError(filter_name, ToolpathFilter)
         return result
 
+    def validate(self):
+        self.get_toolpath_filters()
+
 
 class Target(BaseDataContainer):
 
     attribute_converters = {"type": _get_enum_resolver(TargetType)}
 
     @_set_parser_context("Export target")
-    def open(self):
+    def open(self, dry_run=False):
         target_type = self.get_value("type")
         if target_type == TargetType.FILE:
             location = self.get_value("location")
-            return open(location, "w")
+            if dry_run:
+                # run basic checks and raise errors in case of obvious problems
+                if not os.path.isdir(os.path.dirname(location)):
+                    raise FileParserError("Directory of target ({}) does not exist"
+                                          .format(location))
+            else:
+                try:
+                    return open(location, "w")
+                except OSError as exc:
+                    raise FileParserError(exc)
         else:
             raise InvalidKeyError(target_type, TargetType)
+
+    def validate(self):
+        self.open(dry_run=True)
 
 
 class Formatter(BaseDataContainer):
@@ -1468,6 +1545,9 @@ class Formatter(BaseDataContainer):
         target.close()
         return True
 
+    def validate(self):
+        self.write_data([], io.StringIO())
+
 
 class Export(BaseCollectionItemDataContainer):
 
@@ -1476,8 +1556,15 @@ class Export(BaseCollectionItemDataContainer):
                             "source": Source,
                             "target": Target}
 
-    def run_export(self):
+    def run_export(self, dry_run=False):
         formatter = self.get_value("format")
         source = self.get_value("source").get(CollectionName.EXPORTS)
         target = self.get_value("target")
-        formatter.write_data(source, target.open())
+        if dry_run:
+            open_target = io.StringIO()
+        else:
+            open_target = target.open()
+        formatter.write_data(source, open_target)
+
+    def validate(self):
+        self.run_export(dry_run=True)
