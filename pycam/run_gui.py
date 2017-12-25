@@ -44,7 +44,7 @@ except ImportError:
                                                      os.pardir)))
     from pycam import VERSION
 
-from pycam import InitializationError
+from pycam.errors import InitializationError
 from pycam.Flow.history import DataHistory, merge_history_and_block_events
 from pycam.Gui import QuestionStatus
 import pycam.Gui.common as GuiCommon

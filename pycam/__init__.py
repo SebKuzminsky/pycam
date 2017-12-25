@@ -93,19 +93,3 @@ except ImportError:
 
 
 DOC_BASE_URL = "http://pycam.sourceforge.net/%s/"
-
-
-class GenericError(Exception):
-    pass
-
-
-class InvalidValueError(GenericError):
-    pass
-
-
-class CommunicationError(GenericError):
-    pass
-
-
-class InitializationError(GenericError):
-    pass

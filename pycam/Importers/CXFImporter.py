@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from pycam.errors import LoadFileError
 from pycam.Geometry.Letters import Charset
 from pycam.Geometry.Line import Line
 from pycam.Geometry.utils import get_points_of_arc
@@ -26,7 +27,7 @@ import pycam.Utils
 log = pycam.Utils.log.get_logger()
 
 
-class _CXFParseError(BaseException):
+class _CXFParseError(LoadFileError):
     pass
 
 

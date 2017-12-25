@@ -2,11 +2,19 @@ class PycamBaseException(Exception):
     pass
 
 
-class MissingAttributeError(PycamBaseException):
+class CommunicationError(PycamBaseException):
+    pass
+
+
+class InitializationError(PycamBaseException):
     pass
 
 
 class InvalidDataError(PycamBaseException):
+    pass
+
+
+class MissingAttributeError(InvalidDataError):
     pass
 
 
@@ -27,5 +35,5 @@ class InvalidKeyError(InvalidDataError):
             enum_name, invalid_key, ", ".join([item.value for item in choice_enum])))
 
 
-class LoadFileError(InvalidDataError):
+class LoadFileError(PycamBaseException):
     pass

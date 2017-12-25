@@ -29,7 +29,7 @@ import sys
 import time
 import uuid
 
-from pycam import CommunicationError
+from pycam.errors import CommunicationError
 import pycam.Utils
 import pycam.Utils.log
 log = pycam.Utils.log.get_logger()

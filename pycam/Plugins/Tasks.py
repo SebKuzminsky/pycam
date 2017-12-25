@@ -19,7 +19,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import time
 
-from pycam import GenericError
+from pycam.errors import PycamBaseException
 from pycam.Flow.history import merge_history_and_block_events
 import pycam.Plugins
 import pycam.Utils
@@ -255,7 +255,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
         try:
             # generate the toolpath (filling the cache)
             new_toolpath.get_toolpath()
-        except GenericError as exc:
+        except PycamBaseException as exc:
             # an error occoured - "toolpath" contains the error message
             self.log.error("Failed to generate toolpath: %s", exc)
             # we were not successful (similar to a "cancel" request)

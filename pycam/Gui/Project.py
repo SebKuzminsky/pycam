@@ -31,7 +31,8 @@ from gi.repository import Gtk
 from gi.repository import Gdk
 from gi.repository import Gio
 
-from pycam import DOC_BASE_URL, VERSION, InitializationError
+from pycam import DOC_BASE_URL, VERSION
+from pycam.errors import InitializationError
 import pycam.Importers
 import pycam.Gui
 from pycam.Utils.locations import get_ui_file_location, get_external_program_location
