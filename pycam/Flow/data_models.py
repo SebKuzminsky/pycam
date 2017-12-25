@@ -574,6 +574,10 @@ class BaseDataContainer:
         # fill missing slots with their default values
         result_multi_level = MultiLevelDictionaryAccess(result)
         for key, value in self.attribute_defaults.items():
+            value = copy.deepcopy(value)
+            # resolve enums into their string representation
+            if isinstance(value, Enum):
+                value = value.value
             try:
                 # check if the value for this key exists
                 result_multi_level.get_value(key)
