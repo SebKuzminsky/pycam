@@ -211,8 +211,10 @@ class BaseUI:
                                     remember_uri=False)
 
     def load_startup_workspace(self):
-        self.load_workspace_from_file(pycam.Gui.Settings.get_workspace_filename(),
-                                      remember_uri=False, default_content=DEFAULT_WORKSPACE)
+        from pycam.Flow.data_models import FlowDescriptionBaseException
+        filename = pycam.Gui.Settings.get_workspace_filename()
+        self.load_workspace_from_file(filename, remember_uri=False,
+                                      default_content=DEFAULT_WORKSPACE)
 
     def save_workspace_to_file(self, filename, remember_uri=True):
         from pycam.Flow.parser import dump_yaml
@@ -227,6 +229,7 @@ class BaseUI:
             log.error("Failed to store workspace in file '%s': %s", filename, exc)
 
     def load_workspace_from_file(self, filename, remember_uri=True, default_content=None):
+        from pycam.Flow.data_models import FlowDescriptionBaseException
         if remember_uri:
             self.last_workspace_uri = pycam.Utils.URIHandler(filename)
             self.settings.emit_event("notify-file-opened", filename)
@@ -240,7 +243,13 @@ class BaseUI:
             else:
                 log.error("Failed to read workspace file (%s): %s", filename, exc)
                 return
-        self.load_workspace_from_description(content)
+        try:
+            self.load_workspace_from_description(content)
+        except FlowDescriptionBaseException as exc:
+            log.warning("Failed to load workspace description from file (%s): %s", filename, exc)
+            if default_content:
+                log.info("Falling back to default workspace due to load error")
+                self.load_workspace_from_description(default_content)
 
     def load_workspace_dialog(self, filename=None):
         if not filename:
@@ -271,11 +280,13 @@ class BaseUI:
     def load_workspace_from_description(self, description):
         from pycam.Flow.data_models import CollectionName
         from pycam.Flow.history import merge_history_and_block_events
-        from pycam.Flow.parser import parse_yaml
+        from pycam.Flow.parser import parse_yaml, validate_collections, RestoreCollectionsOnError
         with merge_history_and_block_events(self.settings):
-            parse_yaml(description,
-                       excluded_sections={CollectionName.TOOLPATHS, CollectionName.EXPORTS},
-                       reset=True)
+            with RestoreCollectionsOnError():
+                parse_yaml(description,
+                           excluded_sections={CollectionName.TOOLPATHS, CollectionName.EXPORTS},
+                           reset=True)
+                validate_collections()
 
     def reset_workspace(self):
         self.load_workspace_from_description(DEFAULT_WORKSPACE)

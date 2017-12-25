@@ -85,3 +85,18 @@ def validate_collections():
     for item_class in COLLECTIONS:
         collection = item_class.get_collection()
         collection.validate()
+
+
+class RestoreCollectionsOnError:
+    """ restore the collections to their original state, if an exception is thrown meanwhile """
+
+    def __enter__(self):
+        self._original_dump = dump_yaml()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type is not None:
+            _log.warning("Reverting collection changes due to error: %s", exc_value)
+            # a problem occoured during the operation
+            parse_yaml(self._original_dump, reset=True)
+        # do not suppress exceptions
+        return False
