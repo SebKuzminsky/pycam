@@ -49,8 +49,8 @@ from pycam.workspace import (
     ModelTransformationAction, ModelType, LengthUnit, PathPattern, PositionShiftTarget,
     ProcessStrategy, SourceType, TargetType, TaskType, ToolBoundaryMode, ToolpathFilter,
     ToolpathTransformationAction, ToolShape)
-from pycam.errors import (FileParserError, FlowDescriptionBaseException, InvalidDataError,
-                          InvalidKeyError, MissingAttributeError, UnexpectedAttributeError)
+from pycam.errors import (LoadFileError, PycamBaseException, InvalidDataError, InvalidKeyError,
+                          MissingAttributeError, UnexpectedAttributeError)
 
 _log = pycam.Utils.log.get_logger()
 
@@ -226,7 +226,7 @@ def _set_parser_context(description):
             self._current_parser_context = description
             try:
                 result = func(self, *args, **kwargs)
-            except FlowDescriptionBaseException as exc:
+            except PycamBaseException as exc:
                 # add a prefix to exceptions
                 exc.message = "{} -> {}".format(self._current_parser_context, exc)
                 raise exc
@@ -475,7 +475,7 @@ class BaseDataContainer:
         of the data structure should be discovered during this operation.  Non-trivial problems
         (e.g. missing permissions for file operations) are not guaranteed to be detected.
 
-        throws FlowDescriptionBaseException in case of errors
+        throws PycamBaseException in case of errors
         """
         raise NotImplementedError
 
@@ -1330,13 +1330,13 @@ class Target(BaseDataContainer):
             if dry_run:
                 # run basic checks and raise errors in case of obvious problems
                 if not os.path.isdir(os.path.dirname(location)):
-                    raise FileParserError("Directory of target ({}) does not exist"
-                                          .format(location))
+                    raise LoadFileError("Directory of target ({}) does not exist"
+                                        .format(location))
             else:
                 try:
                     return open(location, "w")
                 except OSError as exc:
-                    raise FileParserError(exc)
+                    raise LoadFileError(exc)
         else:
             raise InvalidKeyError(target_type, TargetType)
 

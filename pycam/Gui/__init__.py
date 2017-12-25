@@ -2,7 +2,7 @@ from configparser import ConfigParser
 import enum
 import json
 
-from pycam.errors import FlowDescriptionBaseException
+from pycam.errors import PycamBaseException
 import pycam.Gui.Settings
 from pycam.Utils.locations import open_file_context
 import pycam.Utils.log
@@ -245,7 +245,7 @@ class BaseUI:
                 return
         try:
             self.load_workspace_from_description(content)
-        except FlowDescriptionBaseException as exc:
+        except PycamBaseException as exc:
             log.warning("Failed to load workspace description from file (%s): %s", filename, exc)
             if default_content:
                 log.info("Falling back to default workspace due to load error")

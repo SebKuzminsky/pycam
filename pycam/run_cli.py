@@ -64,7 +64,7 @@ def main_func():
     for fname in args.sources:
         try:
             parse_yaml(fname)
-        except pycam.errors.FlowDescriptionBaseException as exc:
+        except pycam.errors.PycamBaseException as exc:
             print("Flow description parse failure ({}): {}".format(fname, exc), file=sys.stderr)
             sys.exit(1)
     pycam.Utils.set_application_key("pycam-cli")

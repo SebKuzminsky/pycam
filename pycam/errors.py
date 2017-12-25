@@ -1,12 +1,12 @@
-class FlowDescriptionBaseException(Exception):
+class PycamBaseException(Exception):
     pass
 
 
-class MissingAttributeError(FlowDescriptionBaseException):
+class MissingAttributeError(PycamBaseException):
     pass
 
 
-class InvalidDataError(FlowDescriptionBaseException):
+class InvalidDataError(PycamBaseException):
     pass
 
 
@@ -27,5 +27,5 @@ class InvalidKeyError(InvalidDataError):
             enum_name, invalid_key, ", ".join([item.value for item in choice_enum])))
 
 
-class FileParserError(InvalidDataError):
+class LoadFileError(InvalidDataError):
     pass

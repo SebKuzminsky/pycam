@@ -81,7 +81,7 @@ def dump_yaml(target=None, excluded_sections=None):
 def validate_collections():
     """ try to verify all items in all collections
 
-    throws FlowDescriptionBaseException in case of obvious errors
+    throws PycamBaseException in case of obvious errors
     """
     for item_class in COLLECTIONS:
         collection = item_class.get_collection()
