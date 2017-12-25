@@ -2,9 +2,11 @@ from configparser import ConfigParser
 import enum
 import json
 
+from pycam.errors import FlowDescriptionBaseException
 import pycam.Gui.Settings
 from pycam.Utils.locations import open_file_context
 import pycam.Utils.log
+from pycam.workspace import CollectionName
 
 
 FILE_FILTER_WORKSPACE = (("Workspace Files", "*.yml"),)
@@ -211,7 +213,6 @@ class BaseUI:
                                     remember_uri=False)
 
     def load_startup_workspace(self):
-        from pycam.Flow.data_models import FlowDescriptionBaseException
         filename = pycam.Gui.Settings.get_workspace_filename()
         self.load_workspace_from_file(filename, remember_uri=False,
                                       default_content=DEFAULT_WORKSPACE)
@@ -229,7 +230,6 @@ class BaseUI:
             log.error("Failed to store workspace in file '%s': %s", filename, exc)
 
     def load_workspace_from_file(self, filename, remember_uri=True, default_content=None):
-        from pycam.Flow.data_models import FlowDescriptionBaseException
         if remember_uri:
             self.last_workspace_uri = pycam.Utils.URIHandler(filename)
             self.settings.emit_event("notify-file-opened", filename)
@@ -278,7 +278,6 @@ class BaseUI:
         self.save_workspace_to_file(filename, remember_uri=remember_uri)
 
     def load_workspace_from_description(self, description):
-        from pycam.Flow.data_models import CollectionName
         from pycam.Flow.history import merge_history_and_block_events
         from pycam.Flow.parser import parse_yaml, validate_collections, RestoreCollectionsOnError
         with merge_history_and_block_events(self.settings):

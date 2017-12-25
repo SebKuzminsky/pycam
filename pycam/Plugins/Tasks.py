@@ -20,11 +20,11 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import time
 
 from pycam import GenericError
-import pycam.Flow.data_models
 from pycam.Flow.history import merge_history_and_block_events
 import pycam.Plugins
 import pycam.Utils
 from pycam.Utils.progress import ProgressContext
+import pycam.workspace.data_models
 
 
 class Tasks(pycam.Plugins.ListPluginBase):
@@ -32,7 +32,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
     UI_FILE = "tasks.ui"
     CATEGORIES = ["Task"]
     DEPENDS = ["Models", "Tools", "Processes", "Bounds", "Toolpaths"]
-    COLLECTION_ITEM_TYPE = pycam.Flow.data_models.Task
+    COLLECTION_ITEM_TYPE = pycam.workspace.data_models.Task
 
     def setup(self):
         if self.gui:
@@ -218,7 +218,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             params = {"type": task_type}
             params.update(self.core.get("get_default_parameter_values")("task",
                                                                         set_name=task_type))
-            new_task = pycam.Flow.data_models.Task(None, data=params)
+            new_task = pycam.workspace.data_models.Task(None, data=params)
             new_task.set_application_value("name", self.get_non_conflicting_name("Task #%d"))
         self.select(new_task)
 
@@ -250,7 +250,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
         # run the toolpath generation
         if callback:
             callback(text="Calculating the toolpath")
-        new_toolpath = pycam.Flow.data_models.Toolpath(
+        new_toolpath = pycam.workspace.data_models.Toolpath(
             None, {"source": {"type": "task", "task": task.get_id()}})
         try:
             # generate the toolpath (filling the cache)

@@ -19,8 +19,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import pycam.Exporters.GCode
-from pycam.Flow.data_models import LengthUnit
 from pycam.Toolpath import ToolpathPathMode
+from pycam.workspace import LengthUnit
 
 
 DEFAULT_HEADER = (("G40", "disable tool radius compensation"),

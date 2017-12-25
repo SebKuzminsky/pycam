@@ -18,8 +18,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Plugins
-from pycam.Flow.data_models import Tool
 from pycam.Flow.history import merge_history_and_block_events
+import pycam.workspace.data_models
 
 
 class Tools(pycam.Plugins.ListPluginBase):
@@ -27,7 +27,7 @@ class Tools(pycam.Plugins.ListPluginBase):
     DEPENDS = ["ParameterGroupManager"]
     CATEGORIES = ["Tool"]
     UI_FILE = "tools.ui"
-    COLLECTION_ITEM_TYPE = pycam.Flow.data_models.Tool
+    COLLECTION_ITEM_TYPE = pycam.workspace.data_models.Tool
 
     def setup(self):
         self.core.set("tools", self)
@@ -247,6 +247,6 @@ class Tools(pycam.Plugins.ListPluginBase):
         with merge_history_and_block_events(self.core):
             params = {"shape": shape, "tool_id": tool_id}
             params.update(self.core.get("get_default_parameter_values")("tool", set_name=shape))
-            new_tool = Tool(None, data=params)
+            new_tool = pycam.workspace.data_models.Tool(None, data=params)
             new_tool.set_application_value("name", self.get_non_conflicting_name("Tool #%d"))
         self.select(new_tool)

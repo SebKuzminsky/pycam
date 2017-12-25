@@ -17,11 +17,12 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pycam.Flow.data_models import Boundary, BoundsSpecification, LimitSingle, ToolBoundaryMode
 from pycam.Flow.history import merge_history_and_block_events
 import pycam.Plugins
 # TODO: move Toolpath.Bounds here?
 import pycam.Toolpath
+from pycam.workspace.data_models import (Boundary, BoundsSpecification, LimitSingle,
+                                         ToolBoundaryMode)
 
 
 _RELATIVE_UNIT = ("%", "mm")

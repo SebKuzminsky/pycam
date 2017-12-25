@@ -17,9 +17,9 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import pycam.Flow.data_models
 from pycam.Flow.history import merge_history_and_block_events
 import pycam.Plugins
+import pycam.workspace.data_models
 
 
 class Processes(pycam.Plugins.ListPluginBase):
@@ -27,7 +27,7 @@ class Processes(pycam.Plugins.ListPluginBase):
     DEPENDS = ["ParameterGroupManager"]
     CATEGORIES = ["Process"]
     UI_FILE = "processes.ui"
-    COLLECTION_ITEM_TYPE = pycam.Flow.data_models.Process
+    COLLECTION_ITEM_TYPE = pycam.workspace.data_models.Process
 
     def setup(self):
         self.core.set("processes", self)
@@ -209,6 +209,6 @@ class Processes(pycam.Plugins.ListPluginBase):
             params = {"strategy": strategy}
             params.update(self.core.get("get_default_parameter_values")("process",
                                                                         set_name=strategy))
-            new_process = pycam.Flow.data_models.Process(None, data=params)
+            new_process = pycam.workspace.data_models.Process(None, data=params)
             new_process.set_application_value("name", self.get_non_conflicting_name("Process #%d"))
         self.select(new_process)

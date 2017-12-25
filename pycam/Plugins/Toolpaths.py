@@ -18,9 +18,9 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import pycam.Flow.data_models
 import pycam.Plugins
 import pycam.Toolpath
+import pycam.workspace.data_models
 
 
 class Toolpaths(pycam.Plugins.ListPluginBase):
@@ -28,7 +28,7 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
     UI_FILE = "toolpaths.ui"
     CATEGORIES = ["Toolpath"]
     ICONS = {"visible": "visible.svg", "hidden": "visible_off.svg"}
-    COLLECTION_ITEM_TYPE = pycam.Flow.data_models.Toolpath
+    COLLECTION_ITEM_TYPE = pycam.workspace.data_models.Toolpath
 
     def setup(self):
         if self.gui:

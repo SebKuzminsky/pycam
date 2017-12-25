@@ -32,10 +32,11 @@ except ImportError:
                                                      os.pardir)))
     from pycam import VERSION
 
-import pycam.Flow.data_models
+import pycam.errors
 from pycam.Flow.parser import parse_yaml
 import pycam.Utils
 import pycam.Utils.log
+import pycam.workspace.data_models
 
 
 _log = pycam.Utils.log.get_logger()
@@ -63,11 +64,11 @@ def main_func():
     for fname in args.sources:
         try:
             parse_yaml(fname)
-        except pycam.Flow.data_models.FlowDescriptionBaseException as exc:
+        except pycam.errors.FlowDescriptionBaseException as exc:
             print("Flow description parse failure ({}): {}".format(fname, exc), file=sys.stderr)
             sys.exit(1)
     pycam.Utils.set_application_key("pycam-cli")
-    for export in pycam.Flow.data_models.Export.get_collection():
+    for export in pycam.workspace.data_models.Export.get_collection():
         export.run_export()
 
 

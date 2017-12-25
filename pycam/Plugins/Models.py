@@ -22,6 +22,7 @@ import random
 
 from pycam.Flow.history import merge_history_and_block_events
 import pycam.Plugins
+import pycam.workspace.data_models
 
 
 _GTK_COLOR_MAX = 65535.0
@@ -33,7 +34,7 @@ class Models(pycam.Plugins.ListPluginBase):
     CATEGORIES = ["Model"]
     ICONS = {"visible": "visible.svg", "hidden": "visible_off.svg"}
     FALLBACK_COLOR = {"red": 0.5, "green": 0.5, "blue": 1.0, "alpha": 1.0}
-    COLLECTION_ITEM_TYPE = pycam.Flow.data_models.Model
+    COLLECTION_ITEM_TYPE = pycam.workspace.data_models.Model
 
     def setup(self):
         if self.gui:
@@ -159,7 +160,7 @@ class Models(pycam.Plugins.ListPluginBase):
         if name is None:
             name = self.get_non_conflicting_name("Model #%d")
         with merge_history_and_block_events(self.core):
-            new_model = pycam.Flow.data_models.Model(None, copy.deepcopy(model_params))
+            new_model = pycam.workspace.data_models.Model(None, copy.deepcopy(model_params))
             new_model.set_application_value("name", name)
             new_model.set_application_value("color", color)
             new_model.set_application_value("visible", True)

@@ -1,23 +1,24 @@
 import yaml
 
 import pycam.Exporters.GCode.LinuxCNC
-from pycam.Flow.data_models import CollectionName
 import pycam.Importers
 import pycam.Plugins
 import pycam.Utils.log
+from pycam.workspace import CollectionName
+import pycam.workspace.data_models
 
 
 _log = pycam.Utils.log.get_logger()
 
 
-COLLECTIONS = (pycam.Flow.data_models.Tool,
-               pycam.Flow.data_models.Process,
-               pycam.Flow.data_models.Boundary,
-               pycam.Flow.data_models.Task,
-               pycam.Flow.data_models.Model,
-               pycam.Flow.data_models.Toolpath,
-               pycam.Flow.data_models.ExportSettings,
-               pycam.Flow.data_models.Export)
+COLLECTIONS = (pycam.workspace.data_models.Tool,
+               pycam.workspace.data_models.Process,
+               pycam.workspace.data_models.Boundary,
+               pycam.workspace.data_models.Task,
+               pycam.workspace.data_models.Model,
+               pycam.workspace.data_models.Toolpath,
+               pycam.workspace.data_models.ExportSettings,
+               pycam.workspace.data_models.Export)
 
 
 def parse_yaml(source, excluded_sections=None, reset=False):
