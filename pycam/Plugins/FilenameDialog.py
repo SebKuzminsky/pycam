@@ -132,11 +132,7 @@ class FilenameDialog(pycam.Plugins.PluginBase):
                         # finish the loop
                         break
             dialog.select_filename(default_filename)
-            try:
-                dialog.set_current_name(os.path.basename(default_filename).encode("utf-8"))
-            except UnicodeError:
-                # ignore
-                pass
+            dialog.set_current_name(os.path.basename(default_filename))
         # add filter for all files
         ext_filter = self._gtk.FileFilter()
         ext_filter.set_name("All files")
