@@ -313,7 +313,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.log.info("Failed to unregister unknown display item: %s", name)
             return
         first_widget = self._display_items[name]["widgets"][0]
-        self.unregister_state_item(name, first_widget.get_active, first_widget.set_active)
+        self.unregister_state_item("settings/view/items/%s" % name,
+                                   first_widget.get_active, first_widget.set_active)
         action_name = ".".join((self.core.get("gtk_action_group_prefix"), name))
         self.core.get("gtk_action_group").remove(action_name)
         del self._display_items[name]
@@ -374,7 +375,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             self.log.debug("Failed to unregister unknown color item: %s", name)
             return
         wrappers = self._color_settings[name]["wrappers"]
-        self.unregister_state_item(name, *wrappers)
+        self.unregister_state_item("settings/view/colors/%s" % name, *wrappers)
         del self._color_settings[name]
         self._rebuild_color_settings()
 
