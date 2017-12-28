@@ -343,14 +343,22 @@ class PluginManager:
         else:
             plugin.enabled = plugin.setup()
 
-    def disable_plugin(self, name):
+    def disable_plugin(self, name, recursively=False):
         plugin = self.get_plugin(name)
         if not plugin.enabled:
             _log.debug("Refused to disable an active plugin: %s" % name)
             return
         else:
-            plugin.teardown()
-            plugin.enabled = False
+            if self.is_plugin_required(name) and recursively:
+                for dep_name in self.get_dependent_plugins(name):
+                    self.disable_plugin(dep_name, recursively=True)
+            if self.is_plugin_required(name):
+                _log.warning("Refusing to disable plugin: %s (dependent plugins: %s)",
+                             name, " ".join(self.get_dependent_plugins(name)))
+            else:
+                _log.debug("Disabling plugin: %s", name)
+                plugin.teardown()
+                plugin.enabled = False
 
     def get_plugin_state(self, name):
         plugin = self.get_plugin(name)
@@ -363,16 +371,18 @@ class PluginManager:
         names = self.modules.keys()
         return sorted(names)
 
-    def is_plugin_required(self, name):
+    def get_dependent_plugins(self, name):
         long_name = "%s.%s." % (name, name)
+        result = []
         for plugin in self.modules.values():
             if not plugin.enabled:
                 continue
             if (name in plugin.DEPENDS) or (long_name in plugin.DEPENDS):
-                break
-        else:
-            return False
-        return True
+                result.append(name)
+        return result
+
+    def is_plugin_required(self, name):
+        return len(self.get_dependent_plugins(name)) > 0
 
     def get_plugin_missing_dependencies(self, name):
         plugin = self.get_plugin(name)
