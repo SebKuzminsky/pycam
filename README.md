@@ -14,7 +14,7 @@ Graphical Interface: `pycam/run_gui.py`
 Scripted Toolpath Processing: `pycam/run_cli.py FLOW_SPECIFICATION_FILE`
 
 
-## Ressources
+## Resources
 
 See the [documentation](http://pycam.sourceforge.net/introduction/) for a short introduction.
 

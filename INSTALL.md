@@ -14,12 +14,13 @@ Install the following packages with your package manager:
 python3
 python3-gi
 python3-opengl
+python3-yaml
 gir1.2-gtk-3.0
 ```
 
 On a Debian or Ubuntu system, you would just type the following:
 ```bash
-sudo apt install python3-gi python3-opengl gir1.2-gtk-3.0
+sudo apt install python3-gi python3-opengl python3-yaml gir1.2-gtk-3.0
 ```
 Please note that you need to enable the `universe` repository in Ubuntu.
 
@@ -27,14 +28,17 @@ Please note that you need to enable the `universe` repository in Ubuntu.
 
 If you have difficulty with the installation, you can run the application from Docker.
 
+The `docker run` command will mount your personal Documents folder to `/root/Documents` so that you
+can access your files.
+
 ```bash
-sudo docker pull pycam/pycam  # downloads the latest image
+sudo docker build -t pycam/pycam .
 sudo docker run -it \
     -v ~/Documents:/root/Documents \
     -v ~/.Xauthority:/root/.Xauthority \
     -e DISPLAY \
     --net=host \
-    pycam/run_gui.py
+    pycam/pycam
 ```
 
 ## macOS
@@ -46,7 +50,7 @@ sudo docker run -it \
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
-2\. Install the dependencies (currently only for Python2):
+2\. Install the dependencies (currently only for Python2):  
 TODO: adjust for Python3
 ```bash
 brew install gtk+3 pygobject3
@@ -58,7 +62,7 @@ pip install pygobject enum34
 If you have difficulty with the installation, you can run the application from Docker.
 
 1\. Make sure that Docker is installed, if not, you can install it with Homebrew.
-You will also be needing XQuartz and socat.
+You will also need XQuartz and socat.
 
 ```bash
 brew cask install docker xquartz
@@ -81,13 +85,13 @@ The `docker run` command will mount your personal Documents folder to `/root/Doc
 can access your files.
 
 ```bash
-docker pull pycam/pycam  # downloads the latest image
-IP='<your local ip address>'
+docker build -t pycam/pycam .
+export IP='<your local ip address>'
 docker run -it \
     -v ~/Documents:/root/Documents \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -e DISPLAY=$IP:0 \
-    pycam/run_gui.py
+    pycam/pycam
 ```
 
 # Minimal requirements for non-GUI mode
