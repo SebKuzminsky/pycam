@@ -42,7 +42,7 @@ class OpenGLViewSupportModelPreview(pycam.Plugins.PluginBase):
     def draw_support_preview(self):
         if not self.core.get("show_support_preview"):
             return
-        models = self.core.get("current_support_models")[:]
+        models = list(self.core.get("current_support_models") or [])
         if not models:
             return
         GL = self._GL
