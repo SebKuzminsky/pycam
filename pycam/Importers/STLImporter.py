@@ -32,6 +32,10 @@ import pycam.Utils.log
 import pycam.Utils
 log = pycam.Utils.log.get_logger()
 
+# The amount of bytes in the header field
+HEADER_SIZE = 80
+# The amount of bytes in the count field
+COUNT_SIZE = 4
 
 vertices = 0
 edges = 0
@@ -66,7 +70,11 @@ def get_facet_count_if_binary_format(source):
     """
     # read data (without consuming it)
     raw_header_data = source.peek(400)
-    facet_count = unpack("<I", raw_header_data[80:84])[0]
+
+    facet_count = unpack(
+        "<I", raw_header_data[HEADER_SIZE : HEADER_SIZE + COUNT_SIZE]
+    )[0]
+
     try:
         header_data = raw_header_data.decode("utf-8")
     except UnicodeDecodeError:
@@ -114,6 +122,9 @@ def import_model(filename, use_kdtree=True, callback=None, **kwargs):
     p1 = None
     p2 = None
     p3 = None
+
+    # Skip the header and count fields of binary stl file
+    f.seek(HEADER_SIZE + COUNT_SIZE)
 
     if is_binary:
         for i in range(1, facet_count + 1):
@@ -272,8 +283,8 @@ def import_model(filename, use_kdtree=True, callback=None, **kwargs):
             if m:
                 continue
 
-    log.info("Imported STL model: %d vertices, %d edges, %d triangles",
-             vertices, edges, len(model.triangles()))
+    # TODO display unique vertices and edges count - currently not counted
+    log.info("Imported STL model: %d triangles", len(model.triangles()))
     vertices = 0
     edges = 0
     kdtree = None
