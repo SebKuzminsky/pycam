@@ -27,7 +27,7 @@ cwd = os.path.dirname(os.path.abspath(__file__))
 ASSETS_DIR = 'assets'
 
 
-def path_to_asset(asset_name: str) -> str:
+def path_to_asset(asset_name):
     """
     Returns abs path for given `asset_name`
     :param asset_name: file name of the asset from 'Tests/assets'
