@@ -36,12 +36,7 @@ def path_to_asset(asset_name: str) -> str:
     return os.path.join(cwd, ASSETS_DIR, asset_name)
 
 
-# Placeholder
-class TestASCIILoader(pycam.Test.PycamTestCase):
-    pass
-
-
-class TestBinaryLoader(pycam.Test.PycamTestCase):
+class TestSTLLoader(pycam.Test.PycamTestCase):
     """
     Checks ability to load binary .stl files correctly
     """
