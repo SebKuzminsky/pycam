@@ -72,7 +72,7 @@ def get_facet_count_if_binary_format(source):
     raw_header_data = source.peek(400)
 
     facet_count = unpack(
-        "<I", raw_header_data[HEADER_SIZE : HEADER_SIZE + COUNT_SIZE]
+        "<I", raw_header_data[HEADER_SIZE:HEADER_SIZE + COUNT_SIZE]
     )[0]
 
     try:
