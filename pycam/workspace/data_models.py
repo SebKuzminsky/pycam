@@ -43,6 +43,7 @@ from pycam.Importers import detect_file_type
 from pycam.Utils import get_application_key, get_type_name, MultiLevelDictionaryAccess
 from pycam.Utils.events import get_event_handler
 from pycam.Utils.progress import ProgressContext
+from pycam.Utils.locations import get_data_file_location
 import pycam.Utils.log
 from pycam.workspace import (
     BoundsSpecification, CollectionName, FormatType, GCodeDialect, ModelScaleTarget,
@@ -670,6 +671,18 @@ class Source(BaseDataContainer):
     def _get_source_location(self, source_type):
         location = self.get_value("location")
         if source_type == SourceType.FILE:
+            if not os.path.isabs(location):
+                # try to guess the absolute location
+                # TODO: add the directory of the most recently loaded workspace file
+                # guess the git base directory
+                git_checkout_dir = os.path.join(os.path.dirname(__file__),
+                                                os.path.pardir, os.path.pardir)
+                search_directories = [os.getcwd(), git_checkout_dir]
+                abs_location = get_data_file_location(location, silent=True,
+                                                      priority_directories=search_directories)
+                # hopefully it worked - otherwise normal error handling will happen
+                if abs_location is not None:
+                    location = abs_location
             location = "file://" + os.path.abspath(location)
         detected_filetype = detect_file_type(location)
         if detected_filetype:

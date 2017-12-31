@@ -61,8 +61,12 @@ def get_ui_file_location(filename, silent=False):
     return get_data_file_location(os.path.join(UI_SUBDIR, filename), silent=silent)
 
 
-def get_data_file_location(filename, silent=False):
-    for base_dir in DATA_BASE_DIRS:
+def get_data_file_location(filename, silent=False, priority_directories=None):
+    if priority_directories is None:
+        scan_dirs = DATA_BASE_DIRS
+    else:
+        scan_dirs = tuple(priority_directories) + tuple(DATA_BASE_DIRS)
+    for base_dir in scan_dirs:
         test_path = os.path.join(base_dir, filename)
         if os.path.exists(test_path):
             return test_path
