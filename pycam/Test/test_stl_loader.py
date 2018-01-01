@@ -44,3 +44,7 @@ class TestSTLLoader(pycam.Test.PycamTestCase):
     def test_load_binary_file(self):
         model = import_model(path_to_asset('cube_binary.stl'))
         self.assertEqual(len(model), 12)
+
+    def test_load_binary_file(self):
+        model = import_model(path_to_asset('cube_ascii.stl'))
+        self.assertEqual(len(model), 12)

@@ -123,10 +123,10 @@ def import_model(filename, use_kdtree=True, callback=None, **kwargs):
     p2 = None
     p3 = None
 
-    # Skip the header and count fields of binary stl file
-    f.seek(HEADER_SIZE + COUNT_SIZE)
-
     if is_binary:
+        # Skip the header and count fields of binary stl file
+        f.seek(HEADER_SIZE + COUNT_SIZE)
+
         for i in range(1, facet_count + 1):
             if callback and callback():
                 raise AbortOperationException("STLImporter: load model operation cancelled")
