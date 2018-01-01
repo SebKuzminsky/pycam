@@ -41,10 +41,10 @@ class TestSTLLoader(pycam.Test.PycamTestCase):
     Checks ability to load binary .stl files correctly
     """
 
-    def test_load_binary_file(self):
-        model = import_model(path_to_asset('cube_binary.stl'))
+    def test_load_ascii_file(self):
+        model = import_model(path_to_asset('cube_ascii.stl'))
         self.assertEqual(len(model), 12)
 
     def test_load_binary_file(self):
-        model = import_model(path_to_asset('cube_ascii.stl'))
+        model = import_model(path_to_asset('cube_binary.stl'))
         self.assertEqual(len(model), 12)
