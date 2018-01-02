@@ -16,6 +16,7 @@ eggs
 .svn
 .coverage
 .idea
+.ropeproject/
 
 .DS_Store*
 ehthumbs.db
