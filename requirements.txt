@@ -1,4 +1,2 @@
-gtk
-gtk.gtkgl
-OpenGL
-enum34
+PyOpenGL
+PyYAML
