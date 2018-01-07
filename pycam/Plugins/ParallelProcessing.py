@@ -212,6 +212,7 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
             remote = None
         local_port = int(self.server_port_local_obj.get_value())
         auth_key = self.auth_key_obj.get_text()
+        auth_key = None if auth_key is None else auth_key.encode("utf-8")
         if not auth_key and enable_parallel and enable_server:
             self.log.error("You need to provide a password for this connection.")
             enable_server_obj.set_active(False)
