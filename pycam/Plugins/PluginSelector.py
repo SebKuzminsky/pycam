@@ -62,7 +62,7 @@ class PluginSelector(pycam.Plugins.PluginBase):
         if self.gui:
             self.plugin_window.hide()
             action = self.gui.get_object("TogglePluginWindow")
-            self.core.register_ui("view_menu", action)
+            self.core.unregister_ui("view_menu", action)
             self.core.unregister_event("plugin-list-changed", self._update_plugin_model)
             self.unregister_gtk_handlers(self._gtk_handlers)
 
