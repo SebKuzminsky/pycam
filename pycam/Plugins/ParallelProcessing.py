@@ -243,6 +243,6 @@ class ParallelProcessing(pycam.Plugins.PluginBase):
             info = self._gtk.stock_lookup(self._gtk.STOCK_DISCONNECT)
         else:
             info = self._gtk.stock_lookup(self._gtk.STOCK_CONNECT)
-        enable_server_obj.set_label(info[0])
+        enable_server_obj.set_label(info.label)
         complete_area.set_sensitive(True)
         self.update_parallel_processes_settings()
