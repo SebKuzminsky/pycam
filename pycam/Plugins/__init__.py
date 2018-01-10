@@ -277,9 +277,8 @@ class PluginManager:
                     mod_file, mod_filename, mod_desc = imp.find_module(mod_name, [directory])
                     full_mod_name = "pycam.Plugins.%s" % mod_name
                     mod = imp.load_module(full_mod_name, mod_file, mod_filename, mod_desc)
-                except ImportError:
-                    _log.info("Skipping plugin %s (broken or dependencies missing)",
-                              os.path.join(directory, filename))
+                except ImportError as exc:
+                    _log.info("Skipping plugin %s: %s", os.path.join(directory, filename), exc)
                     continue
                 for attr in dir(mod):
                     item = getattr(mod, attr)
