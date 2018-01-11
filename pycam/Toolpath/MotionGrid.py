@@ -389,7 +389,7 @@ def get_lines_layer(lines, z, last_z=None, step_width=None,
                 p2 = get_proj_point(line.p2)
             projected_lines.append(Line(p1, plane_point))
             yield Line(plane_point, p2)
-        elif line.minz < last_z < line.maxz:
+        elif (last_z is not None) and (line.minz < last_z < line.maxz):
             plane = Plane((0, 0, last_z), (0, 0, 1, 'v'))
             cp = plane.intersect_point(line.dir, line.p1)[0]
             # we can be sure that there is an intersection

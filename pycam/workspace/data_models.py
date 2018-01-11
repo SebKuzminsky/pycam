@@ -1149,7 +1149,7 @@ class Task(BaseCollectionItemDataContainer):
                                              models=self.get_value("collision_models"))
             path_generator = process.get_path_generator()
             motion_grid = process.get_motion_grid(tool.radius, box)
-            if path_generator is None:
+            if path_generator is None or motion_grid is None:
                 # we assume that an error message was given already
                 return
             models = [m.get_model() for m in self.get_value("collision_models")]
