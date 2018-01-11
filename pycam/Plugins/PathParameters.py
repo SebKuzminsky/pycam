@@ -240,25 +240,11 @@ class PathParamTraceModel(pycam.Plugins.PluginBase):
     def setup(self):
         self.control = pycam.Gui.ControlsGTK.InputTable(
             [], change_handler=lambda widget=None: self.core.emit_event("process-control-changed"))
-
-        def get_converter(model_refs):
-            models_dict = {}
-            for model in self.core.get("models"):
-                models_dict[id(model)] = model
-            models = []
-            for model_ref in model_refs:
-                if model_ref in models_dict:
-                    models.append(models_dict[model_ref])
-            return models
-
-        def set_converter(models):
-            return [id(model) for model in models]
-
-        self.control.set_conversion(set_conv=set_converter, get_conv=get_converter)
         self.core.get("register_parameter")("process", "trace_models", self.control)
         self.core.register_ui("process_path_parameters", "Trace models (2D)",
                               self.control.get_widget(), weight=5)
         self.core.register_event("model-list-changed", self._update_models)
+        self.core.register_event("model-changed", self._update_models)
         return True
 
     def teardown(self):
@@ -270,7 +256,7 @@ class PathParamTraceModel(pycam.Plugins.PluginBase):
         choices = []
         for model in self.core.get("models").get_all():
             if hasattr(model.get_model(), "get_polygons"):
-                choices.append((model.get_id(), model))
+                choices.append((model.get_application_value("name"), model.get_id()))
         self.control.update_choices(choices)
 
 
