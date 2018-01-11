@@ -514,7 +514,8 @@ def get_pocketing_polygons(polygons, offset, pocketing_type, callback=None):
         _log.debug("Using openvoronoi pocketing algorithm")
         poly = pycam.Toolpath.OpenVoronoi.pocket_model(polygons, offset)
     else:
-        _log.info("Failed to load openvoronoi library.")
+        _log.info("Failed to load openvoronoi library. Falling back to custom pocketing "
+                  "algorithm.")
         poly = get_pocketing_polygons_simple(polygons, offset, pocketing_type, callback)
     return poly
 
