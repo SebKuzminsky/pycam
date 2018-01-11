@@ -117,14 +117,15 @@ class Bounds(pycam.Plugins.ListPluginBase):
                 ("model-changed", self._update_model_list),
                 ("bounds-selection-changed", self._update_bounds_widgets),
                 ("bounds-changed", self._update_bounds_widgets),
-                ("bounds-changed", self.force_gtk_modelview_refresh),
-                ("bounds-list-changed", self.force_gtk_modelview_refresh),
                 ("bounds-list-changed", self._select_first_if_non_empty),
                 ("bounds-control-changed", self._transfer_controls_to_bounds)))
             self.register_gtk_handlers(self._gtk_handlers)
             self._update_model_list()
             self._update_bounds_widgets()
-        self._event_handlers.append(("bounds-changed", "visual-item-updated"))
+        # the models and the bounds itself may change the effective size of the boundary
+        for incoming_event in ("bounds-list-changed", "bounds-changed",
+                               "model-list-changed", "model-changed"):
+            self._event_handlers.append((incoming_event, self.force_gtk_modelview_refresh))
         self.register_event_handlers(self._event_handlers)
         self.register_state_item("bounds-list", self)
         self.core.register_namespace("bounds", pycam.Plugins.get_filter(self))
