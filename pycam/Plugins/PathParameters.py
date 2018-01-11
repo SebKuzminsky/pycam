@@ -256,7 +256,8 @@ class PathParamTraceModel(pycam.Plugins.PluginBase):
         choices = []
         for model in self.core.get("models").get_all():
             if hasattr(model.get_model(), "get_polygons"):
-                choices.append((model.get_application_value("name"), model.get_id()))
+                choices.append((model.get_application_value("name", model.get_id()),
+                                model.get_id()))
         self.control.update_choices(choices)
 
 
