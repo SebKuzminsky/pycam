@@ -3,6 +3,7 @@ import contextlib
 import datetime
 import io
 
+from pycam.errors import PycamBaseException
 from pycam.Flow.parser import dump_yaml, parse_yaml
 from pycam.Utils.events import get_event_handler
 import pycam.Utils.log
@@ -117,3 +118,16 @@ def merge_history_and_block_events(settings):
                 yield
     else:
         yield
+
+
+@contextlib.contextmanager
+def rollback_history_on_failure(settings):
+    history = settings.get("history")
+    if history:
+        start_count = history.get_undo_steps_count()
+        try:
+            yield
+        except PycamBaseException as exc:
+            _log.warning("Reverting changes due a failure: %s", exc)
+            if start_count != history.get_undo_steps_count():
+                history.restore_previous_state()

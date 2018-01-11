@@ -17,8 +17,9 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import pycam.Plugins
+from pycam.errors import InvalidDataError
 from pycam.Geometry.PointUtils import padd, pdot, pmul, pnormalized
+import pycam.Plugins
 
 
 GTK_COLOR_MAX = 65535.0
@@ -62,7 +63,11 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
     def get_draw_dimension(self, low, high):
         if self._is_visible():
             for model_dict in self.core.get("models").get_visible():
-                model_box = model_dict.get_model().get_bounds().get_bounds()
+                try:
+                    model_box = model_dict.get_model().get_bounds().get_bounds()
+                except InvalidDataError as exc:
+                    self.log.warning("Failed to visualize model: %s", exc)
+                    continue
                 for index, (mlow, mhigh) in enumerate(zip(model_box.lower, model_box.upper)):
                     if (low[index] is None) or (mlow < low[index]):
                         low[index] = mlow
@@ -74,7 +79,11 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
         if self._is_visible():
             fallback_color = self.core.get("models").FALLBACK_COLOR
             for model_dict in self.core.get("models").get_visible():
-                model = model_dict.get_model()
+                try:
+                    model = model_dict.get_model()
+                except InvalidDataError as exc:
+                    self.log.warning("Failed to visualize model: %s", exc)
+                    continue
                 col = model_dict.get_application_value("color", default=fallback_color)
                 color = (col["red"], col["green"], col["blue"], col["alpha"])
                 GL.glColor4f(*color)

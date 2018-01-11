@@ -686,9 +686,12 @@ class Source(BaseDataContainer):
             location = "file://" + os.path.abspath(location)
         detected_filetype = detect_file_type(location)
         if detected_filetype:
-            return detected_filetype.importer(detected_filetype.uri)
+            try:
+                return detected_filetype.importer(detected_filetype.uri)
+            except LoadFileError as exc:
+                raise InvalidDataError("Failed to detect file type ({}): {}".format(location, exc))
         else:
-            raise InvalidDataError("Failed to load model from '{}'".format(location))
+            raise InvalidDataError("Failed to load data from '{}'".format(location))
 
     @_set_parser_context("Source 'task'")
     @_set_allowed_attributes({"type", "task"})
