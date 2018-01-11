@@ -208,17 +208,18 @@ class DXFParser:
                 line1 = None
                 line2 = None
         elif line1 in [self.KEYS[key] for key in ("DEFAULT", "TEXT_MORE")]:
-            # check the string for invalid characters
-            try:
-                text = line2.decode("utf")
-            except UnicodeDecodeError:
-                log.warn("DXFImporter: Invalid character in string in line %d", self.line_number)
-                text = line2.decode("utf", errors="ignore")
-            line2 = _unescape_control_characters(text)
+            line2 = _unescape_control_characters(self._carefully_decode(line2))
         else:
-            line2 = line2.upper()
+            line2 = self._carefully_decode(line2).upper()
         self.line_number += 2
         return line1, line2
+
+    def _carefully_decode(self, text):
+        try:
+            return text.decode("utf-8")
+        except UnicodeDecodeError:
+            log.warn("DXFImporter: Invalid character in string in line %d", self.line_number)
+            return text.decode("utf-8", errors="ignore")
 
     def parse_content(self):
         key, value = self._read_key_value()
