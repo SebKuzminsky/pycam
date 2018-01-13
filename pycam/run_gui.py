@@ -134,8 +134,6 @@ def show_gui():
         gui.load_preferences()
         gui.load_startup_workspace()
 
-    event_manager.emit_event("notify-initialization-finished")
-
     # open the GUI
     get_mainloop(use_gtk=True).run()
 
