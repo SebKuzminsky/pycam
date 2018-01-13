@@ -642,6 +642,7 @@ class Source(BaseDataContainer):
     @CacheStorage({"type"})
     @_set_parser_context("Source")
     def get(self, related_collection_name):
+        _log.debug("Retrieving source {}".format(self))
         source_type = self.get_value("type")
         if source_type == SourceType.COPY:
             if related_collection_name is None:
@@ -856,6 +857,7 @@ class Model(BaseCollectionItemDataContainer):
     @CacheStorage({"source", "transformations"})
     @_set_parser_context("Model")
     def get_model(self):
+        _log.debug("Generating model {}".format(self.get_id()))
         model = self.get_value("source").get(CollectionName.MODELS)
         for transformation in self.get_value("transformations"):
             model = transformation.get_transformed_model(model)
@@ -959,6 +961,7 @@ class Process(BaseCollectionItemDataContainer):
 
     @_set_parser_context("Process")
     def get_path_generator(self):
+        _log.debug("Retrieving path generator for process {}".format(self.get_id()))
         strategy = _get_enum_value(ProcessStrategy, self.get_value("strategy"))
         if strategy == ProcessStrategy.SLICE:
             return pycam.PathGenerators.PushCutter.PushCutter(waterlines=False)
@@ -973,6 +976,7 @@ class Process(BaseCollectionItemDataContainer):
 
     @_set_parser_context("Process")
     def get_motion_grid(self, tool_radius, box):
+        _log.debug("Generating motion grid for process {}".format(self.get_id()))
         strategy = self.get_value("strategy")
         overlap = self.get_value("overlap")
         line_distance = 2 * tool_radius * (1 - overlap)
@@ -1140,6 +1144,7 @@ class Task(BaseCollectionItemDataContainer):
     @CacheStorage({"process", "bounds", "tool", "type", "collision_models"})
     @_set_parser_context("Task")
     def generate_toolpath(self):
+        _log.debug("Generating toolpath for task {}".format(self.get_id()))
         process = self.get_value("process")
         bounds = self.get_value("bounds")
         task_type = self.get_value("type")
@@ -1268,6 +1273,7 @@ class Toolpath(BaseCollectionItemDataContainer):
     @CacheStorage({"source", "transformations"})
     @_set_parser_context("Toolpath")
     def get_toolpath(self):
+        _log.debug("Generating toolpath {}".format(self.get_id()))
         task = self.get_value("source").get(CollectionName.TOOLPATHS)
         toolpath = task.generate_toolpath()
         for transformation in self.get_value("transformations"):
@@ -1340,6 +1346,7 @@ class Target(BaseDataContainer):
 
     @_set_parser_context("Export target")
     def open(self, dry_run=False):
+        _log.debug("Opening target {}".format(self))
         target_type = self.get_value("type")
         if target_type == TargetType.FILE:
             location = self.get_value("location")
@@ -1371,6 +1378,7 @@ class Formatter(BaseDataContainer):
                           "comment": ""}
 
     def write_data(self, source, target):
+        _log.debug("Writing formatter data {}".format(self))
         format_type = self.get_value("type")
         if format_type == FormatType.GCODE:
             return self._write_gcode(source, target)
@@ -1415,6 +1423,7 @@ class Export(BaseCollectionItemDataContainer):
                             "target": Target}
 
     def run_export(self, dry_run=False):
+        _log.debug("Running export {}".format(self.get_id()))
         formatter = self.get_value("format")
         source = self.get_value("source").get(CollectionName.EXPORTS)
         target = self.get_value("target")
