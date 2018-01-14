@@ -51,11 +51,14 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
             self.core.unregister_event("toolpath-selection-changed", self._update_widgets)
 
     def _get_toolpaths_dim(self, toolpaths):
-        if toolpaths:
-            maxx = max([tp.get_toolpath().maxx for tp in toolpaths])
-            minx = min([tp.get_toolpath().minx for tp in toolpaths])
-            maxy = max([tp.get_toolpath().maxy for tp in toolpaths])
-            miny = min([tp.get_toolpath().miny for tp in toolpaths])
+        """ calculate the maximum dimensions for x and y of all toolpaths """
+        # collect non-empty toolpaths
+        paths = [path for path in (tp.get_toolpath() for tp in toolpaths) if path]
+        if paths:
+            maxx = max([path.maxx for path in paths])
+            minx = min([path.minx for path in paths])
+            maxy = max([path.maxy for path in paths])
+            miny = min([path.miny for path in paths])
             return (maxx - minx), (maxy - miny)
         else:
             return None, None
@@ -64,6 +67,7 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
         toolpaths = self.core.get("toolpaths").get_selected()
         if toolpaths:
             x_dim, y_dim = self._get_toolpaths_dim(toolpaths)
+        if toolpaths and (x_dim is not None) and (y_dim is not None):
             x_count = self.gui.get_object("GridXCount").get_value()
             x_space = self.gui.get_object("GridXDistance").get_value()
             y_count = self.gui.get_object("GridYCount").get_value()

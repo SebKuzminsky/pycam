@@ -1283,7 +1283,9 @@ class Toolpath(BaseCollectionItemDataContainer):
         task = self.get_value("source").get(CollectionName.TOOLPATHS)
         toolpath = task.generate_toolpath()
         for transformation in self.get_value("transformations"):
-            toolpath = transformation.get_transformed_toolpath(toolpath)
+            # the toolpath may be empty or invalidated by a transformation
+            if toolpath is not None:
+                toolpath = transformation.get_transformed_toolpath(toolpath)
         return toolpath
 
     def append_transformation(self, transform_dict):
