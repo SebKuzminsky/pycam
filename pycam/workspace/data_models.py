@@ -1013,7 +1013,6 @@ class Process(BaseCollectionItemDataContainer):
                 _log.error("No trace models given: you need to assign a 2D model to the engraving "
                            "process.")
                 return None
-            progress = get_event_handler().get("progress")
             radius_compensation = self.get_value("radius_compensation")
             if radius_compensation:
                 with ProgressContext("Offsetting models") as progress:
