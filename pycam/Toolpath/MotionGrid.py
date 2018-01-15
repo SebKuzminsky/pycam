@@ -372,6 +372,7 @@ def get_lines_layer(lines, z, last_z=None, step_width=None,
                     milling_style=MillingStyle.CONVENTIONAL):
     get_proj_point = lambda proj_point: (proj_point[0], proj_point[1], z)
     projected_lines = []
+    _log.debug("Lines Layer: processing original lines")
     for line in lines:
         if (last_z is not None) and (last_z < line.minz):
             # the line was processed before
@@ -408,7 +409,10 @@ def get_lines_layer(lines, z, last_z=None, step_width=None,
                 _log.warn("Unexpected condition 'get_lines_layer': %s / %s / %s / %s",
                           line.p1, line.p2, z, last_z)
     # process all projected lines
-    for line in projected_lines:
+    _log.debug("Lines Layer: processing projected lines")
+    for index, line in enumerate(projected_lines):
+        _log.debug2("Lines Layer: processing projected line %d/%d",
+                    index + 1, len(projected_lines))
         points = []
         if step_width is None:
             points.append(line.p1)
@@ -482,9 +486,11 @@ def get_lines_grid(models, box, layer_distance, line_distance=None, step_width=N
     if skip_first_layer and (len(layers) > 1):
         layers = layers[1:]
     last_z = None
+    _log.debug("Pocketing Polygon Layers: %d", len(layers))
     if layers:
         # the upper layers are used for PushCutter operations
         for z in layers[:-1]:
+            _log.debug2("Pocketing Polygon Layers: calculating z=%g for PushCutter", z)
             if callback:
                 callback()
             yield get_lines_layer(lines, z, last_z=last_z, step_width=None,
@@ -493,6 +499,8 @@ def get_lines_grid(models, box, layer_distance, line_distance=None, step_width=N
         # the last layer is used for a DropCutter operation
         if callback:
             callback()
+        _log.debug2("Pocketing Polygon Layers: calculating z=%g (lowest layer) for DropCutter",
+                    layers[-1])
         yield get_lines_layer(lines, layers[-1], last_z=last_z, step_width=step_width,
                               milling_style=milling_style)
 
@@ -521,6 +529,8 @@ def get_pocketing_polygons(polygons, offset, pocketing_type, callback=None):
 
 
 def get_pocketing_polygons_simple(polygons, offset, pocketing_type, callback=None):
+    _log.debug("Calculating pocketing polygons: count=%d, offset=%d, pocketing=%s",
+               len(polygons), offset, pocketing_type)
     pocketing_limit = 1000
     base_polygons = []
     other_polygons = []
@@ -544,6 +554,8 @@ def get_pocketing_polygons_simple(polygons, offset, pocketing_type, callback=Non
     # For now we use only the polygons that do not surround any other
     # polygons. Sorry - the pocketing is currently very simple ...
     base_filtered_polygons = []
+    _log.debug("Pocketing Polygons: ignore polygons surrounding other polygons "
+               "(wrong, but simple)")
     for candidate in base_polygons:
         if callback and callback():
             # we were interrupted
@@ -555,7 +567,9 @@ def get_pocketing_polygons_simple(polygons, offset, pocketing_type, callback=Non
             base_filtered_polygons.append(candidate)
     # start the pocketing for all remaining polygons
     pocket_polygons = []
-    for base_polygon in base_filtered_polygons:
+    for index, base_polygon in enumerate(base_filtered_polygons):
+        _log.debug2("Pocketing Polygons: processing polygon %d/%d",
+                    index + 1, len(base_filtered_polygons))
         pocket_polygons.append(base_polygon)
         current_queue = [base_polygon]
         next_queue = []
@@ -570,4 +584,5 @@ def get_pocketing_polygons_simple(polygons, offset, pocketing_type, callback=Non
                 pocket_depth += 1
             current_queue = next_queue
             next_queue = []
+    _log.debug("Pocketing Polygons: calculated %d polygons", len(pocket_polygons))
     return pocket_polygons
