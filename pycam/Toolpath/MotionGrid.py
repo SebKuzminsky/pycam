@@ -574,15 +574,23 @@ def get_pocketing_polygons_simple(polygons, offset, pocketing_type, callback=Non
         current_queue = [base_polygon]
         next_queue = []
         pocket_depth = 0
+        this_pocket_polygons = []
         while current_queue and (pocket_depth < pocketing_limit):
             if callback and callback():
                 return polygons
             for poly in current_queue:
                 result = poly.get_offset_polygons(offset)
-                pocket_polygons.extend(result)
+                this_pocket_polygons.extend(result)
                 next_queue.extend(result)
                 pocket_depth += 1
             current_queue = next_queue
             next_queue = []
+        if pocket_depth < pocketing_limit:
+            # the result looks fine
+            pocket_polygons.extend(this_pocket_polygons)
+        else:
+            # probably there was a problem with the algorithm - throw away the result
+            _log.warning("Pocketing Polygons: exceeded nesting limit - probably something went "
+                         "wrong while processing a polygon. Skipping it.")
     _log.debug("Pocketing Polygons: calculated %d polygons", len(pocket_polygons))
     return pocket_polygons
