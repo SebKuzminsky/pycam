@@ -82,6 +82,9 @@ def get_angle_pi(p1, p2, p3, up_vector, pi_factor=False):
 def get_points_of_arc(center, radius, a1, a2, plane=None, cords=32):
     """ return the points for an approximated arc
 
+    The arc is interpreted as a full circle, if the difference between the start and end angle is
+    is a multiple of 360 degrees.
+
     @param center: center of the circle
     @type center: pycam.Geometry.Point.Point
     @param radius: radius of the arc
@@ -101,9 +104,12 @@ def get_points_of_arc(center, radius, a1, a2, plane=None, cords=32):
     a1 = math.pi * a1 / 180
     a2 = math.pi * a2 / 180
     angle_diff = a2 - a1
-    if angle_diff < 0:
+    while angle_diff < 0:
         angle_diff += 2 * math.pi
-    if angle_diff >= 2 * math.pi:
+        if angle_diff == 0:
+            # Do not get stuck at zero, if we started from a negative multiple of 2 * PI.
+            angle_diff = 2 * math.pi
+    while angle_diff > 2 * math.pi:
         angle_diff -= 2 * math.pi
     if angle_diff == 0:
         return []
