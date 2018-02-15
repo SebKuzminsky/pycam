@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.3 -->
+<!-- Generated with glade 3.20.2 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
   <object class="GtkAdjustment" id="ToolpathCropMarginValue">
@@ -29,6 +29,22 @@
             <property name="orientation">vertical</property>
             <property name="spacing">3</property>
             <child>
+              <object class="GtkLabel" id="ToolpathCropUsageHint">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Reduce the toolpath moves to the area enclosed by the outer limits of a selected model.
+BEWARE: currently only 2D models are supported. </property>
+                <property name="wrap">True</property>
+                <property name="width_chars">45</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkAlignment" id="ModelTableContainer">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -39,7 +55,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">0</property>
+                <property name="position">1</property>
               </packing>
             </child>
             <child>
@@ -52,8 +68,9 @@
                   <object class="GtkLabel" id="ToolpathCropInfo">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="ypad">1</property>
-                    <property name="label" translatable="yes">label</property>
+                    <property name="label" translatable="yes">/* to be overwritten with hints during runtime */</property>
+                    <property name="wrap">True</property>
+                    <property name="width_chars">45</property>
                     <property name="xalign">0</property>
                     <attributes>
                       <attribute name="weight" value="semibold"/>
@@ -65,7 +82,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">1</property>
+                <property name="position">2</property>
               </packing>
             </child>
             <child>
@@ -108,7 +125,7 @@
                     <property name="xalign">0</property>
                   </object>
                   <packing>
-                    <property name="left_attach">2</property>
+                    <property name="left_attach">0</property>
                     <property name="top_attach">0</property>
                   </packing>
                 </child>
@@ -126,17 +143,11 @@
                     <property name="top_attach">0</property>
                   </packing>
                 </child>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">2</property>
+                <property name="position">3</property>
               </packing>
             </child>
             <child>
@@ -152,7 +163,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">3</property>
+                <property name="position">4</property>
               </packing>
             </child>
             <child>
@@ -178,7 +189,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">4</property>
+                <property name="position">5</property>
               </packing>
             </child>
           </object>
