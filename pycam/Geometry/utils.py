@@ -78,7 +78,7 @@ def get_angle_pi(p1, p2, p3, up_vector, pi_factor=False):
         return angle
 
 
-def get_points_of_arc(center, radius, a1, a2, plane=None, cords=32):
+def get_points_of_arc(center, radius, start_degree, end_degree, plane=None, cords=32):
     """ return the points for an approximated arc
 
     The arc is interpreted as a full circle, if the difference between the start and end angle is
@@ -88,10 +88,10 @@ def get_points_of_arc(center, radius, a1, a2, plane=None, cords=32):
     @type center: pycam.Geometry.Point.Point
     @param radius: radius of the arc
     @type radius: float
-    @param a1: angle of the start (in degree)
-    @type a1: float
-    @param a2: angle of the end (in degree)
-    @type a2: float
+    @param start_degree: angle of the start (in degree)
+    @type start_degree: float
+    @param end_degree: angle of the end (in degree)
+    @type end_degree: float
     @param plane: the plane of the circle (default: xy-plane)
     @type plane: pycam.Geometry.Plane.Plane
     @param cords: number of lines for a full circle
@@ -100,9 +100,9 @@ def get_points_of_arc(center, radius, a1, a2, plane=None, cords=32):
     @rtype: list(pycam.Geometry.Point.Point)
     """
     # TODO: implement 3D arc and respect "plane"
-    a1 = math.pi * a1 / 180
-    a2 = math.pi * a2 / 180
-    angle_diff = a2 - a1
+    start_radians = math.pi * start_degree / 180
+    end_radians = math.pi * end_degree / 180
+    angle_diff = end_radians - start_radians
     while angle_diff < 0:
         angle_diff += 2 * math.pi
         if angle_diff == 0:
@@ -119,9 +119,9 @@ def get_points_of_arc(center, radius, a1, a2, plane=None, cords=32):
     def get_angle_point(angle):
         return (center[0] + radius * math.cos(angle), center[1] + radius * math.sin(angle), 0)
 
-    points.append(get_angle_point(a1))
+    points.append(get_angle_point(start_radians))
     for index in range(num_of_segments):
-        points.append(get_angle_point(a1 + angle_segment * (index + 1)))
+        points.append(get_angle_point(start_radians + angle_segment * (index + 1)))
     return points
 
 
