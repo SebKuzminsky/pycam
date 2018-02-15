@@ -433,8 +433,12 @@ class ListPluginBase(PluginBase):
         if hasattr(modelview, "get_selection"):
             # a treeview selection
             selection = modelview.get_selection()
-            selection_mode = selection.get_mode()
-            paths = selection.get_selected_rows()[1]
+            if selection is None:
+                # probably we are just shutting down right now
+                paths = []
+            else:
+                selection_mode = selection.get_mode()
+                paths = selection.get_selected_rows()[1]
         elif hasattr(modelview, "get_active"):
             # combobox
             selection_mode = self._gtk.SELECTION_SINGLE
