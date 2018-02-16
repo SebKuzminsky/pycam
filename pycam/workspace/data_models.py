@@ -1179,8 +1179,8 @@ class Task(BaseCollectionItemDataContainer):
     def validate(self):
         # We cannot call "get_toolpath" - this would be too expensive. Use its attribute accesses
         # directly instead.
-        process = self.get_value("process")
-        bounds = self.get_value("bounds")
+        self.get_value("process")
+        self.get_value("bounds")
         task_type = self.get_value("type")
         if task_type != TaskType.MILLING:
             raise InvalidKeyError(task_type, TaskType)
