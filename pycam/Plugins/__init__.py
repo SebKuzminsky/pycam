@@ -435,6 +435,7 @@ class ListPluginBase(PluginBase):
             selection = modelview.get_selection()
             if selection is None:
                 # probably we are just shutting down right now
+                selection_mode = None
                 paths = []
             else:
                 selection_mode = selection.get_mode()
