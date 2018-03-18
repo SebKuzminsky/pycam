@@ -75,11 +75,16 @@ class CXFParser:
         self.callback = callback
         feeder = _LineFeeder(stream.readlines())
         while not feeder.is_exhausted():
-            line = feeder.consume()
-            if not line:
+            line_data = feeder.consume()
+            if not line_data:
                 # ignore
                 pass
-            elif line.startswith("#"):
+            elif line_data.startswith(b"#"):
+                try:
+                    line = line_data.decode("utf-8")
+                except UnicodeDecodeError as exc:
+                    raise _CXFParseError("Failed to decode line {:d}"
+                                         .format(feeder.get_recent_line_number())) from exc
                 # comment or meta data
                 content = line[1:].split(":", 1)
                 if len(content) == 2:
@@ -102,33 +107,33 @@ class CXFParser:
                     else:
                         # unknown -> ignore
                         pass
-            elif line.startswith("["):
+            elif line_data.startswith(b"["):
                 # Update the GUI from time to time.
                 # This is useful for the big unicode font.
                 if self.callback and (len(self.letters) % 50 == 0):
                     self.callback()
-                if (len(line) >= 3) and (line[2] == "]"):
+                if (len(line_data) >= 3) and (line_data[2:3] == b"]"):
                     # single character
                     for encoding in ("utf-8", "iso8859-1", "iso8859-15"):
                         try:
-                            character = line[1].decode(encoding)
+                            character = line_data[1:2].decode(encoding)
                             break
                         except UnicodeDecodeError:
                             pass
                     else:
                         raise _CXFParseError("Failed to decode character at line {:d}"
                                              .format(feeder.get_recent_line_number()))
-                elif (len(line) >= 6) and (line[5] == "]"):
+                elif (len(line_data) >= 6) and (line_data[5:6] == b"]"):
                     # unicode character (e.g. "[1ae4]")
                     try:
-                        character = chr(int(line[1:5], 16))
+                        character = chr(int(line_data[1:5], 16))
                     except ValueError as exc:
                         raise _CXFParseError("Failed to parse unicode character at line {:d}"
                                              .format(feeder.get_recent_line_number())) from exc
-                elif (len(line) > 3) and (line.find("]") > 2):
+                elif (len(line_data) > 3) and (line_data.find(b"]") > 2):
                     # read UTF8 (qcad 1 compatibility)
-                    end_bracket = line.find("] ")
-                    text = line[1:end_bracket]
+                    end_bracket = line_data.find(b"] ")
+                    text = line_data[1:end_bracket]
                     character = text.decode("utf-8", errors="ignore")[0]
                 else:
                     # unknown format
@@ -137,7 +142,12 @@ class CXFParser:
                 # parse the following lines up to the next empty line
                 char_definition = []
                 while not feeder.is_exhausted() and feeder.get_next_line():
-                    line = feeder.consume()
+                    line_data = feeder.consume()
+                    try:
+                        line = line_data.decode("utf-8")
+                    except UnicodeDecodeError as exc:
+                        raise _CXFParseError("Failed to decode line {:d}"
+                                             .format(feeder.get_recent_line_number())) from exc
                     # split the line after the first whitespace
                     type_def, coord_string = line.split(None, 1)
                     coords = [float(value) for value in coord_string.split(",")]
