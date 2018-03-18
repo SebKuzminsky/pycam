@@ -401,16 +401,17 @@ class DXFParser(object):
             log.warn("DXFImporter: Empty LWPOLYLINE definition between line %d and %d",
                      start_line, end_line)
         else:
+            if extra_vertex_flag:
+                points.append(points[0])
             for index in range(len(points) - 1):
                 point, bulge = points[index]
-                next_point, next_bulge = points[index + 1]
+                # It seems like the "next_bulge" value is not relevant for the current set of
+                # vertices. At least the test DXF file "bezier_lines.dxf" indicates, that we can
+                # ignore it for the decision about a straight line or a bezier line.
+                next_point = points[index + 1][0]
                 if point != next_point:
-                    if bulge or next_bulge:
-                        self.lines.extend(
-                            get_bezier_lines(((point, bulge), (next_point, next_bulge))))
-                        if extra_vertex_flag:
-                            self.lines.extend(
-                                get_bezier_lines(((next_point, next_bulge), (point, bulge))))
+                    if bulge:
+                        self.lines.extend(get_bezier_lines(((point, bulge), (next_point, bulge))))
                     else:
                         # straight line
                         self.lines.append(Line(point, next_point))
