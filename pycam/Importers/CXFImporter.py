@@ -59,8 +59,9 @@ class _LineFeeder:
         """ did we already consume all lines? """
         return self.index >= self._len
 
-    def get_index(self):
-        return self.index + 1
+    def get_recent_line_number(self):
+        """ return the line number for the most recently consumed line """
+        return self.index
 
 
 class CXFParser:
@@ -92,7 +93,7 @@ class CXFParser:
                                 self.meta[key] = value
                         except ValueError:
                             raise _CXFParseError("Invalid meta information in line %d"
-                                                 % feeder.get_index())
+                                                 % feeder.get_recent_line_number())
                     elif key in self.META_KEYWORDS_MULTI:
                         if key in self.meta:
                             self.meta[key].append(value)
@@ -116,14 +117,14 @@ class CXFParser:
                             pass
                     else:
                         raise _CXFParseError("Failed to decode character at line %d"
-                                             % feeder.get_index())
+                                             % feeder.get_recent_line_number())
                 elif (len(line) >= 6) and (line[5] == "]"):
                     # unicode character (e.g. "[1ae4]")
                     try:
                         character = chr(int(line[1:5], 16))
                     except ValueError:
                         raise _CXFParseError("Failed to parse unicode character at line %d"
-                                             % feeder.get_index())
+                                             % feeder.get_recent_line_number())
                 elif (len(line) > 3) and (line.find("]") > 2):
                     # read UTF8 (qcad 1 compatibility)
                     end_bracket = line.find("] ")
@@ -132,7 +133,7 @@ class CXFParser:
                 else:
                     # unknown format
                     raise _CXFParseError("Failed to parse character at line %d"
-                                         % feeder.get_index())
+                                         % feeder.get_recent_line_number())
                 # parse the following lines up to the next empty line
                 char_definition = []
                 while not feeder.is_exhausted() and feeder.get_next_line():
@@ -161,12 +162,12 @@ class CXFParser:
                             previous = current
                     else:
                         raise _CXFParseError("Failed to read item coordinates in line %d"
-                                             % feeder.get_index())
+                                             % feeder.get_recent_line_number())
                 self.letters[character] = char_definition
             else:
                 # unknown line format
                 raise _CXFParseError("Failed to parse unknown content in line %d"
-                                     % feeder.get_index())
+                                     % feeder.get_recent_line_number())
 
 
 def import_font(filename, callback=None):
