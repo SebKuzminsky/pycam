@@ -29,8 +29,7 @@ from pycam.Geometry.PointUtils import pdist
 from pycam.Geometry.Line import Line
 import pycam.Geometry.Model
 import pycam.Geometry.Matrix
-from pycam.Geometry.utils import get_points_of_arc
-import pycam.Geometry
+from pycam.Geometry.utils import get_bezier_lines, get_points_of_arc
 import pycam.Utils.log
 import pycam.Utils
 
@@ -317,11 +316,11 @@ class DXFParser:
         else:
             # closing
             if ("CURVE_TYPE" in params) and (params["CURVE_TYPE"] == "BEZIER"):
-                self.lines.extend(pycam.Geometry.get_bezier_lines(self._open_sequence_items))
+                self.lines.extend(get_bezier_lines(self._open_sequence_items))
                 if ("VERTEX_FLAGS" in params) and (params["VERTEX_FLAGS"] == "EXTRA_VERTEX"):
                     # repeat the same polyline on the other side
                     self._open_sequence_items.reverse()
-                    self.lines.extend(pycam.Geometry.get_bezier_lines(self._open_sequence_items))
+                    self.lines.extend(get_bezier_lines(self._open_sequence_items))
             else:
                 points = [p for p, bulge in self._open_sequence_items]
                 for index in range(len(points) - 1):
@@ -402,11 +401,11 @@ class DXFParser:
                 next_point, next_bulge = points[index + 1]
                 if point != next_point:
                     if bulge or next_bulge:
-                        self.lines.extend(pycam.Geometry.get_bezier_lines(
-                            ((point, bulge), (next_point, next_bulge))))
+                        self.lines.extend(
+                            get_bezier_lines(((point, bulge), (next_point, next_bulge))))
                         if extra_vertex_flag:
-                            self.lines.extend(pycam.Geometry.get_bezier_lines(
-                                ((next_point, next_bulge), (point, bulge))))
+                            self.lines.extend(
+                                get_bezier_lines(((next_point, next_bulge), (point, bulge))))
                     else:
                         # straight line
                         self.lines.append(Line(point, next_point))
