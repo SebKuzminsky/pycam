@@ -121,12 +121,12 @@ class CXFParser(object):
                 elif (len(line) >= 6) and (line[5] == "]"):
                     # python2/3 compatibility
                     try:
-                        unichr
+                        char_conv = unichr
                     except NameError:
-                        unichr = chr
+                        char_conv = chr
                     # unicode character (e.g. "[1ae4]")
                     try:
-                        character = unichr(int(line[1:5], 16))
+                        character = char_conv(int(line[1:5], 16))
                     except ValueError:
                         raise _CXFParseError("Failed to parse unicode character at line %d"
                                              % feeder.get_recent_line_number())
