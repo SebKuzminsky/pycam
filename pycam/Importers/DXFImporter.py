@@ -77,7 +77,8 @@ class DXFParser:
         "ANGLE_END": 51,
         "TEXT_SKEW_ANGLE": 51,
         "COLOR": 62,
-        "VERTEX_FLAGS": 70,
+        # in the context of the current entity (e.g. VERTEX / POLYLINE / LWPOLYLINE)
+        "ENTITY_FLAGS": 70,
         "TEXT_MIRROR_FLAGS": 71,
         "MTEXT_ALIGNMENT": 71,
         "TEXT_ALIGN_HORIZONTAL": 72,
@@ -198,7 +199,7 @@ class DXFParser:
         elif line1 in [self.KEYS[key]
                        for key in ("COLOR", "TEXT_MIRROR_FLAGS", "TEXT_ALIGN_HORIZONTAL",
                                    "TEXT_ALIGN_VERTICAL", "MTEXT_ALIGNMENT", "CURVE_TYPE",
-                                   "VERTEX_FLAGS")]:
+                                   "ENTITY_FLAGS")]:
             try:
                 line2 = int(line2)
             except ValueError:
@@ -307,9 +308,11 @@ class DXFParser:
                 if key == self.KEYS["CURVE_TYPE"]:
                     if value == 8:
                         params["CURVE_TYPE"] = "BEZIER"
-                elif key == self.KEYS["VERTEX_FLAGS"]:
+                elif key == self.KEYS["ENTITY_FLAGS"]:
                     if value == 1:
-                        params["VERTEX_FLAGS"] = "EXTRA_VERTEX"
+                        if "ENTITY_FLAGS" not in params:
+                            params["ENTITY_FLAGS"] = set()
+                        params["ENTITY_FLAGS"].add("IS_CLOSED")
                 key, value = self._read_key_value()
             if key is not None:
                 self._push_on_stack(key, value)
@@ -317,7 +320,7 @@ class DXFParser:
             # closing
             if ("CURVE_TYPE" in params) and (params["CURVE_TYPE"] == "BEZIER"):
                 self.lines.extend(get_bezier_lines(self._open_sequence_items))
-                if ("VERTEX_FLAGS" in params) and (params["VERTEX_FLAGS"] == "EXTRA_VERTEX"):
+                if ("ENTITY_FLAGS" in params) and ("IS_CLOSED" in params["ENTITY_FLAGS"]):
                     # repeat the same polyline on the other side
                     self._open_sequence_items.reverse()
                     self.lines.extend(get_bezier_lines(self._open_sequence_items))
@@ -328,7 +331,8 @@ class DXFParser:
                     next_point = points[index + 1]
                     if point != next_point:
                         self.lines.append(Line(point, next_point))
-                if ("VERTEX_FLAGS" in params) and (params["VERTEX_FLAGS"] == "EXTRA_VERTEX"):
+                if ("ENTITY_FLAGS" in params) and ("IS_CLOSED" in params["ENTITY_FLAGS"]):
+                    # repeat the same polyline on the other side
                     self.lines.append(Line(points[-1], points[0]))
             self._open_sequence_items = []
             self._open_sequence_params = {}
@@ -350,7 +354,7 @@ class DXFParser:
 
         current_point = [None, None, None]
         bulge = None
-        extra_vertex_flag = False
+        is_closed = False
         key, value = self._read_key_value()
         while (key is not None) and (key != self.KEYS["MARKER"]):
             if key == self.KEYS["P1_X"]:
@@ -366,9 +370,9 @@ class DXFParser:
             elif key == self.KEYS["VERTEX_BULGE"]:
                 bulge = value
                 axis = None
-            elif key == self.KEYS["VERTEX_FLAGS"]:
+            elif key == self.KEYS["ENTITY_FLAGS"]:
                 if value == 1:
-                    extra_vertex_flag = True
+                    is_closed = True
                 axis = None
             else:
                 axis = None
@@ -396,7 +400,7 @@ class DXFParser:
             log.warn("DXFImporter: Empty LWPOLYLINE definition between line %d and %d",
                      start_line, end_line)
         else:
-            if extra_vertex_flag:
+            if is_closed:
                 points.append(points[0])
             for index in range(len(points) - 1):
                 point, bulge = points[index]
