@@ -863,8 +863,10 @@ class DXFParser:
 
 def import_model(filename, color_as_height=False, fonts_cache=None, callback=None, **kwargs):
     if hasattr(filename, "read"):
+        should_close = False
         infile = filename
     else:
+        should_close = True
         try:
             infile = pycam.Utils.URIHandler(filename).open()
         except IOError as exc:
@@ -872,6 +874,8 @@ def import_model(filename, color_as_height=False, fonts_cache=None, callback=Non
 
     result = DXFParser(infile, color_as_height=color_as_height, fonts_cache=fonts_cache,
                        callback=callback)
+    if should_close:
+        infile.close()
 
     model_data = result.get_model()
     lines = model_data["lines"]
