@@ -32,6 +32,7 @@ class _CXFParseError(BaseException):
 
 
 class _LineFeeder(object):
+    """ Simplify line-based retrieval of content (including lookahead) """
 
     def __init__(self, items):
         self.items = items
@@ -39,20 +40,23 @@ class _LineFeeder(object):
         self.index = 0
 
     def consume(self):
-        if not self.is_empty():
-            result = self.get()
+        """ retrieve and consume the next line """
+        if not self.is_exhausted():
+            result = self.get_next_line()
             self.index += 1
         else:
             result = None
         return result
 
-    def get(self):
-        if not self.is_empty():
+    def get_next_line(self):
+        """ retrieve the next line (without consuming it) """
+        if not self.is_exhausted():
             return self.items[self.index].strip()
         else:
             return None
 
-    def is_empty(self):
+    def is_exhausted(self):
+        """ did we already consume all lines? """
         return self.index >= self._len
 
     def get_index(self):
@@ -69,7 +73,7 @@ class CXFParser(object):
         self.meta = {}
         self.callback = callback
         feeder = _LineFeeder(stream.readlines())
-        while not feeder.is_empty():
+        while not feeder.is_exhausted():
             line = feeder.consume()
             if not line:
                 # ignore
@@ -136,7 +140,7 @@ class CXFParser(object):
                                          % feeder.get_index())
                 # parse the following lines up to the next empty line
                 char_definition = []
-                while not feeder.is_empty() and (len(feeder.get()) > 0):
+                while not feeder.is_exhausted() and feeder.get_next_line():
                     line = feeder.consume()
                     # split the line after the first whitespace
                     type_def, coord_string = line.split(None, 1)
