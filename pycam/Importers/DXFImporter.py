@@ -47,6 +47,10 @@ def _unescape_control_characters(text):
 
 
 class DXFParser:
+    """ parse most entities of an DXF file
+
+    Reference: http://images.autodesk.com/adsk/files/autocad_2012_pdf_dxf-reference_enu.pdf
+    """
 
     # see http://www.autodesk.com/techpubs/autocad/acad2000/dxf/group_code_value_types_dxf_01.htm
     MAX_CHARS_PER_LINE = 2049
