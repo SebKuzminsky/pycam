@@ -16,19 +16,18 @@ The PushCutter goes as follows:
 
 
 The PathAccumulator connects the cutter locations by cutting in between,
-it's usefull mainly for debugging
+it is useful mainly for debugging
 
 The SimpleCutter connects the cutter locations in an on-off (cut/don't cut) pattern,
-it's usefull only for debugging
+it is useful only for debugging
 
 The ZigZagCutter connects the cutter locations by cutting in between points,
 then come back along the next line in reverse direction.
-it's usefull mainly in combination with the DropCutter
+it is useful mainly in combination with the DropCutter
 
 The PolygonCutter extracts polygonial sections from the cutter scanlines,
 then cuts those in a zig-zag pattern
-it's usefull mainly in combination with the PushCutter
+it is useful mainly in combination with the PushCutter
 
 The ContourCutter extracts contours from the cutter scanlines,
-it's usefull only in combination with the PushCutter
-
+it is useful only in combination with the PushCutter
