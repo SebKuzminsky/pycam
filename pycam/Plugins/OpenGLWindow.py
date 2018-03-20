@@ -590,7 +590,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         The function will restore the latest selected view - including
         automatic distance adjustment. The latest view is always reset to
         None, if any manual change (e.g. panning via mouse or keyboard)
-        occoured.
+        occurred.
         """
         if self._last_view:
             self.rotate_view(view=self._last_view)

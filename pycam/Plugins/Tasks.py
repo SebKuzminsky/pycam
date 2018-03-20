@@ -257,7 +257,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             if new_toolpath.get_toolpath() is None:
                 self.log.warning("An empty toolpath was generated.")
         except PycamBaseException as exc:
-            # an error occoured - "toolpath" contains the error message
+            # an error occurred - "toolpath" contains the error message
             self.log.error("Failed to generate toolpath: %s", exc)
             # we were not successful (similar to a "cancel" request)
             return False

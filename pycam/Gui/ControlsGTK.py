@@ -161,7 +161,7 @@ class InputChoice(InputBaseClass):
             if value in self._values:
                 self.control.set_active(self._values.index(value))
             else:
-                # this may occour, if plugins were removed
+                # this may occur, if plugins were removed
                 _log.debug2("Unknown value: %s (expected: %s)", value, self._values)
 
     def update_choices(self, choices):

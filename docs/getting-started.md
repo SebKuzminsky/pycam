@@ -48,7 +48,7 @@ you just need to following a few final steps:
     PyCAM.
 
 The final result of this milling operation should be very similar to
-your original model. Increase overlap and experiement with other
+your original model. Increase overlap and experiment with other
 parameters if you need to improve its quality. At this moment will you
 understand the importance of the fixiation - especially if you isolated
 a part of the model form the fixiated part. You can always use *support
@@ -61,7 +61,7 @@ Let's go, start up pycam!
 
 **(Screenshots will folow)** After we start up PyCAM we see the
 pycam-textbox in the visualisation window. You can actually go and
-prepair to mill this if you want but we will open up our own file. All
+prepare to mill this if you want but we will open up our own file. All
 the work will be done in the other window which opens up in the “model”
 tab. In the “model” tab, click file&gt; open model and find and open the
 stl file you want to work on. In this guide we will use a file for a 2

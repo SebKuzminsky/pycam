@@ -189,7 +189,7 @@ def import_font(filename, callback=None):
     try:
         parsed_font = CXFParser(infile, callback=callback)
     except _CXFParseError as exc:
-        raise LoadFileError("CFXImporter: Skipped font defintion file '{}'. Reason: {}."
+        raise LoadFileError("CFXImporter: Skipped font definition file '{}'. Reason: {}."
                             .format(filename, exc)) from exc
     charset = Charset(**parsed_font.meta)
     for key, value in parsed_font.letters.items():

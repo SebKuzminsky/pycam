@@ -79,7 +79,7 @@ def get_rotation_matrix_from_to(v_orig, v_dest):
     @type v_dest: tuple(float) | list(float) | pycam.Geometry.Point
     @value v_dest: the destination 3d vector
     @rtype: tuple(tuple(float))
-    @return: the roation matrix (3x3)
+    @return: the rotation matrix (3x3)
     """
 
     v_orig_length = get_length(v_orig)
@@ -129,7 +129,7 @@ def get_rotation_matrix_axis_angle(rot_axis, rot_angle, use_radians=True):
     @type rot_angle: float
     @value rot_angle: rotation angle (radiant)
     @rtype: tuple(tuple(float))
-    @return: the roation matrix (3x3)
+    @return: the rotation matrix (3x3)
     """
     if not use_radians:
         rot_angle *= math.pi / 180

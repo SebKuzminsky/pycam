@@ -604,7 +604,7 @@ class ContourModel(BaseModel):
 
     def extrude(self, stepping=None, func=None, callback=None):
         """ do a spherical extrusion of a 2D model.
-        This is mainly useful for extruding text in a visually pleasent way ...
+        This is mainly useful for extruding text in a visually pleasant way ...
         """
         outer_polygons = [(poly, []) for poly in self._line_groups if poly.is_outer()]
         for poly in self._line_groups:

@@ -109,7 +109,7 @@ def get_external_program_location(key):
         if location:
             return location
     except Exception:
-        # Wildcard (non-system exiting) exeception to match "ImportError" and
+        # Wildcard (non-system exiting) exception to match "ImportError" and
         # "pywintypes.error" (for "not found").
         pass
     # go through the PATH environment variable

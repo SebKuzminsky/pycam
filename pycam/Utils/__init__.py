@@ -246,7 +246,7 @@ def get_all_ips():
 
 
 def get_exception_report():
-    return ("An unexpected exception occoured: please send the text below to the developers of "
+    return ("An unexpected exception occurred: please send the text below to the developers of "
             "PyCAM. Thanks a lot!" + os.linesep + traceback.format_exc())
 
 

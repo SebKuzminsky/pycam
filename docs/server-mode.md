@@ -18,8 +18,8 @@ Basically there are two different modes of operation:
 -   server mode: your computer creates (or joins) a pool of hosts. Each
     host can submit calculation requests to the pool. The calculation of
     these requests is distributed among all available hosts in the pool.
-    Thus every host in the pool offers computational ressources and - at
-    the same time - can use the ressources of all other hosts.
+    Thus every host in the pool offers computational resources and - at
+    the same time - can use the resources of all other hosts.
 
 Technical details
 -----------------

@@ -108,7 +108,7 @@ There are some OpenGL properties available for configuration:
 -   *Shadows*: enable the *shadow* effect (only useful with directed
     light)
 -   *Perspective View*: switch between orthogonal and perspective view
-    mode. The orthogonal view is useful for verifying the alignement of
+    mode. The orthogonal view is useful for verifying the alignment of
     model features, but rotation, zooming and panning don't work
     perfectly. The perspective view is recommended instead.
 

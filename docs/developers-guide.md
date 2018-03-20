@@ -23,7 +23,7 @@ Previous versions are stored in the *tags* path of the repository:
 Changing the GTK interface
 --------------------------
 
-The defintion of the complete GUI is stored in an XML file (GTKBuilder
+The definition of the complete GUI is stored in an XML file (GTKBuilder
 UI format).
 
 You can change this GUI with the program *glade* (available in a package
@@ -71,7 +71,7 @@ The default general PyCAM settings are defined at the top of
 ### Task settings
 
 The default task settings are defined in the file
-`src/pycam/Gui/Settings.py` in the dictionay `BASIC_DEFAULT_CONFIG`.
+`src/pycam/Gui/Settings.py` in the dictionary `BASIC_DEFAULT_CONFIG`.
 
 Preparing a tutorial video
 --------------------------

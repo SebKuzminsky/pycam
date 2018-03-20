@@ -51,7 +51,7 @@ Outlines and holes
 
 ![Combining polygons with proper directions](img/2d-modeling-polygon_directions.png)
 
-The following hints are only necesary, if you need an SVG with
+The following hints are only necessary, if you need an SVG with
 consistent winding states. Alternatively you can repair inconsistent
 winding states with the *Revise directions* button in the *Model* tab of
 PyCAM. This button is only visible if you are currently working with a
@@ -161,7 +161,7 @@ following procedure with care and check the result carefully.
     different colors picked from the current palette (don't create
     custom colors!).
 5.  The order of the colors taken from the color palette determines the
-    relative height of each object. You need to avoid colors that occour
+    relative height of each object. You need to avoid colors that occur
     multiple times in the palette (e.g. green).
 6.  Open the SVG file in PyCAM and scale the z axis of the model.
     Hopefully the relative vertical distances of your 2D shapes suit

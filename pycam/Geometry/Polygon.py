@@ -710,7 +710,7 @@ class Polygon(TransformableContainer):
                 split_here = True
             if split_here:
                 split_here = False
-                # check if any preceeding group fits to the point
+                # check if any preceding group fits to the point
                 for index, group in enumerate(groups):
                     if not group:
                         continue
@@ -807,7 +807,7 @@ class Polygon(TransformableContainer):
                         upper = middle
                     else:
                         if depth > 0:
-                            # the original polygon was splitted or modified
+                            # the original polygon was split or modified
                             print("Next level: %s" % str(middle))
                             shifted_sub_polygons = []
                             for sub_poly in result:

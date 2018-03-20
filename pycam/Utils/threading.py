@@ -216,7 +216,7 @@ def init_threading(number_of_processes=None, enable_server=False, remote=None, r
         server_credentials = ""
     if not is_multiprocessing_available():
         __multiprocessing = False
-        # Maybe a multiprocessing feature was explicitely requested?
+        # Maybe a multiprocessing feature was explicitly requested?
         # Issue some warnings if necessary.
         multiprocessing_missing_text = (
             "Failed to enable server mode due to a lack of 'multiprocessing' capabilities. Please "
@@ -738,7 +738,7 @@ class ProcessStatistics:
         now = time.time()
         result = []
         # Cache the key list instead of iterating it - otherwise a
-        # "RuntimeError: dictionary changed size during iteration" may occour.
+        # "RuntimeError: dictionary changed size during iteration" may occur.
         for key, worker_start_time in list(self.workers.items()):
             try:
                 one_process = self.processes[key]

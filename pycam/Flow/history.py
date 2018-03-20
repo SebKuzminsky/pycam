@@ -64,7 +64,7 @@ class DataHistory:
             yield
         finally:
             self._ignore_change_depth -= 1
-        # store a new revision if a change occoured in between
+        # store a new revision if a change occurred in between
         if not no_store and (previous_count != self._skipped_revision_store_count):
             self._store_revision()
 

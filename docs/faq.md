@@ -140,7 +140,7 @@ Rapid moves are placed below the model instead of above
 -------------------------------------------------------
 
 Probably you need to adjust the *safety height* (see *GCode settings*)
-accoding to the height of your model. Alternatively you could also shift
+according to the height of your model. Alternatively you could also shift
 the model down to z=0.
 
 Toolpaths with an offset are placed inside of the model instead of outside

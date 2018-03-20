@@ -32,7 +32,7 @@ _log = pycam.Utils.log.get_logger()
 
 
 def _get_plugin_imports():
-    # We want to import all relevent GUI modules into the namespace of each plugin.
+    # We want to import all relevant GUI modules into the namespace of each plugin.
     # We do this once for all - in order to centralize and minimize error handling.
     result = {key: None for key in ("gtk", "gdk", "gdkpixbuf", "gdkobject", "gio", "glib",
                                     "GL", "GLU", "GLUT")}
@@ -532,7 +532,7 @@ class ListPluginBase(PluginBase):
             self._update_model_funcs.remove(func)
 
     def _list_action(self, *args):
-        # the second-to-last paramater should be the model view
+        # the second-to-last parameter should be the model view
         modelview = args[-2]
         # the last parameter should be the action (ACTION_UP|DOWN|DELETE|CLEAR)
         action = args[-1]

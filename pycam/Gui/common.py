@@ -73,7 +73,7 @@ def import_gtk_carefully():
         # the need for any more manual preparations.
         import gi.repository.Gtk  # noqa F401
     else:
-        # We try to retrive the GTK library directory from the registry before
+        # We try to retrieve the GTK library directory from the registry before
         # trying any import. Otherwise the user will always see a warning
         # dialog regarding the missing libglib-2.0-0.dll file. This Windows
         # warning dialog can't be suppressed - thus we should try to avoid it.

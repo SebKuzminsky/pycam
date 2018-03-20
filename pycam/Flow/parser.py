@@ -97,7 +97,7 @@ class RestoreCollectionsOnError:
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type is not None:
             _log.warning("Reverting collection changes due to error: %s", exc_value)
-            # a problem occoured during the operation
+            # a problem occurred during the operation
             parse_yaml(self._original_dump, reset=True)
         # do not suppress exceptions
         return False

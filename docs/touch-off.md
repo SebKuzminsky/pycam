@@ -6,7 +6,7 @@ Overview
 Before milling an object you always need to adjust the coordinate system
 of your machine controller (e.g. [LinuxCNC](http://www.linuxcnc.org/)). This
 operation is quite easy for the planar axes x and y. Only z is a bit
-tricky, since it usually needs to be quite acurate. Otherwise you risk
+tricky, since it usually needs to be quite accurate. Otherwise you risk
 to mill slightly too deep (damaging the base of the milling machine) or
 slightly too high (the cut through the object is not complete).
 
@@ -60,7 +60,7 @@ The spindle will start after the touch off (via M3).
 Tool change
 -----------
 
-A tool change occours between two toolpaths using different tools.
+A tool change occurs between two toolpaths using different tools.
 
 The tool change operation follows these steps:
 

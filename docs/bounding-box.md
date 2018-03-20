@@ -1,7 +1,7 @@
 A bounding box is a 3D area where you want the mill to do its work or
 actually stay away.
 
-This is usefull for:
+This is useful for:
 
 -   Doing work in areas that require specific movements e.g. for more
     detailed finish ins small areas or higher speed of material removal

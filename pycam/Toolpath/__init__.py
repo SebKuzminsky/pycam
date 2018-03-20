@@ -434,7 +434,7 @@ class Bounds:
             this object (for the x, y and z axes). Each item must be a float
             value. This argument is ignored for the boundary type "TYPE_CUSTOM".
         @type reference: (tuple|list) of float
-        @returns: a tuple of two lists containg the low and high limits
+        @returns: a tuple of two lists containing the low and high limits
         @rvalue: tuple(list)
         """
         # use the default reference if none was given
