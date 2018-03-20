@@ -7,4 +7,5 @@ sudo apt-get install -y --no-install-recommends \
     gir1.2-gtk-3.0 \
     python3-gi \
     python3-yaml
-mk-build-deps -i -r -s sudo -t 'apt-get --yes --no-install-recommends --no-install-suggests'
+mk-build-deps -i -r -s sudo \
+	-t 'apt-get --yes --no-install-recommends --no-install-suggests'
