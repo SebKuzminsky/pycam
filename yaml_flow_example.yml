@@ -1,3 +1,4 @@
+---
 # example processing flow description (not implemented)
 
 models:
@@ -72,9 +73,9 @@ tools:
                 diameter: 3
                 feed: 300
                 spindle:
-                    spin_up_enabled: true
-                    spin_up_delay: 3
-                    speed: 1200
+                        spin_up_enabled: true
+                        spin_up_delay: 3
+                        speed: 1200
 
 processes:
         process_slicing:
