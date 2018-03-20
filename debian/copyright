@@ -1,7 +1,7 @@
-Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: PyCAM
 Upstream-Contact: Lars Kruse <devel@sumpfralle.de>
-Source: http://github.com/SebKuzminsky/pycam
+Source: https://github.com/SebKuzminsky/pycam
 
 Files: *
 Copyright: 2010-2011, Lars Kruse <devel@sumpfralle.de>
@@ -25,8 +25,7 @@ License: GPL-3+
  GNU General Public License for more details.
  .
  You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
  .
  On Debian systems, the full text of the GNU General Public License
  version 3 can be found in the file `/usr/share/common-licenses/GPL-3'.
-

@@ -6,7 +6,7 @@ Build-Depends: python, debhelper (>= 9), dh-python, help2man,
  python3-opengl, python3-numpy, python3-setuptools, python3-flake8,
  python3-pytest
 Standards-Version: 3.9.6
-Homepage: http://github.com/SebKuzminsky/pycam
+Homepage: https://github.com/SebKuzminsky/pycam
 
 Package: pycam
 Architecture: all
