@@ -1,5 +1,5 @@
 Source: pycam
-Section: python
+Section: science
 Priority: extra
 Maintainer: Lars Kruse <devel@sumpfralle.de>
 Build-Depends: python, debhelper (>= 9), dh-python, help2man,
