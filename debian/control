@@ -5,7 +5,7 @@ Maintainer: Lars Kruse <devel@sumpfralle.de>
 Build-Depends: python, debhelper (>= 9), dh-python, help2man,
  python-opengl, python-numpy, python-setuptools, python-flake8,
  python-pytest
-Standards-Version: 3.9.6
+Standards-Version: 3.9.8
 Homepage: https://github.com/SebKuzminsky/pycam
 
 Package: pycam
