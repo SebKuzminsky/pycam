@@ -1,4 +1,4 @@
-Version 0.6.3 - ???
+Version 0.6.3 - 2018-05-01
  * Fix import of DXF files with full-circle holes (github #112).
  * Fix import of DXF files with bezier curves (github #116).
  * Fix import of DXF with closed LWPOLYLINE.

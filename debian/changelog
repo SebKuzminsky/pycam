@@ -1,3 +1,28 @@
+pycam (0.6.3) unstable; urgency=medium
+
+  * DXFImporter: fix handling of closed LWPOLYLINE
+  * DXFImporter: fix bezier line handling and add a test case
+  * DXFImporter: fix import of "get_bezier_lines"
+
+  * CXFImporter: fix python2/3 compatibility detection
+  * CXFImporter: fix line count in error messages
+  * CXFImporter: add bit of documentation for line feeder
+
+  * FontCache: fix CXFImporter
+  * Style check: tolerate short variable names
+  * "get_points_of_arc": fix handling of full circles
+  * improve log message for plugin import failure
+
+  * test: add a "truncated square" offset-polygon test (small offset)
+  * test: use python2/python3-compatible print()
+  * test: add debug printing in get_offset_polygons() tests
+  * test: verify expected number of offset polygons
+  * test: add test for CXF file importer
+
+  * misc packaging updates
+
+ -- Sebastian Kuzminsky <seb@highlab.com>  Tue, 01 May 2018 22:02:32 -0600
+
 pycam (0.6.2) unstable; urgency=medium
 
   * avoid OpenGL problem with "glutSolidCone"
