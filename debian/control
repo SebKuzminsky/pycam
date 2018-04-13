@@ -1,6 +1,6 @@
 Source: pycam
 Section: science
-Priority: extra
+Priority: optional
 Maintainer: Lars Kruse <devel@sumpfralle.de>
 Build-Depends: python, debhelper (>= 9), dh-python, help2man,
  python-opengl, python-numpy, python-setuptools, python-flake8,
