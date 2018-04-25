@@ -11,7 +11,7 @@ Homepage: https://github.com/SebKuzminsky/pycam
 Package: pycam
 Architecture: all
 Depends: python-gtk2, python-opengl, python-gtkglext1, python-rsvg,
- python-gobject-2, python-numpy, python-setproctitle,
+ python-enum34, python-gobject-2, python-numpy, python-setproctitle,
  inkscape, pstoedit, librecad-data, ${misc:Depends}, ${python:Depends}
 Recommends: python-guppy
 Description: CAM program & Python library for generating toolpaths
@@ -29,4 +29,3 @@ Description: CAM program & Python library for generating toolpaths
     * interactive 3D model view based on OpenGL
     * non-interactive generation of GCode via commandline
 	* render single-line fonts (provided by QCAD)
-
