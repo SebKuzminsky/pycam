@@ -132,6 +132,7 @@ class ModelSupport(pycam.Plugins.PluginBase):
     def _add_support_model(self, widget=None):
         models = self.core.get("current_support_models")
         for model in models:
+            # TODO: use new model API (reference original model, add "support" transformation)
             self.core.get("models").add_model(model, name_template="Support model #%d",
                                               color=self.core.get("color_support_preview"))
         # Disable the support model type -> avoid confusing visualization.
