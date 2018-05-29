@@ -975,7 +975,7 @@ class Process(BaseCollectionItemDataContainer):
             raise InvalidKeyError(strategy, ProcessStrategy)
 
     @_set_parser_context("Process")
-    def get_motion_grid(self, tool_radius, box):
+    def get_motion_grid(self, tool_radius, box, recurse_immediately=False):
         """ create a generator for the moves to be tried (while respecting obstacles) for a process
         """
         _log.debug("Generating motion grid for process {}".format(self.get_id()))
@@ -1033,6 +1033,8 @@ class Process(BaseCollectionItemDataContainer):
                     pocketing_type=pocketing_type, skip_first_layer=True, callback=progress.update)
             else:
                 raise InvalidKeyError(strategy, ProcessStrategy)
+            if recurse_immediately:
+                motion_grid = MotionGrid.resolve_multi_level_generator(motion_grid, 2)
         return motion_grid
 
     def validate(self):
@@ -1162,7 +1164,7 @@ class Task(BaseCollectionItemDataContainer):
                 # issue a warning - and go ahead ...
                 _log.warn("No collision model was selected. This can be intentional, but maybe "
                           "you simply forgot it.")
-            motion_grid = process.get_motion_grid(tool.radius, box)
+            motion_grid = process.get_motion_grid(tool.radius, box, recurse_immediately=True)
             _log.debug("MotionGrid completed")
             if motion_grid is None:
                 # we assume that an error message was given already

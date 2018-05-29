@@ -92,6 +92,14 @@ def floatrange(start, end, inc=None, steps=None, reverse=False):
             yield start + inc * index
 
 
+def resolve_multi_level_generator(generator, levels):
+    assert isinstance(levels, int) and (levels >= 0)
+    if levels > 0:
+        return [resolve_multi_level_generator(item, levels - 1) for item in generator]
+    else:
+        return generator
+
+
 def get_fixed_grid_line(start, end, line_pos, z, step_width=None, grid_direction=GridDirection.X):
     if step_width is None:
         # useful for PushCutter operations
