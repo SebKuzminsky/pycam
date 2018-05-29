@@ -976,52 +976,54 @@ class Process(BaseCollectionItemDataContainer):
 
     @_set_parser_context("Process")
     def get_motion_grid(self, tool_radius, box):
+        """ create a generator for the moves to be tried (while respecting obstacles) for a process
+        """
         _log.debug("Generating motion grid for process {}".format(self.get_id()))
         strategy = self.get_value("strategy")
         overlap = self.get_value("overlap")
         line_distance = 2 * tool_radius * (1 - overlap)
         milling_style = self.get_value("milling_style")
-        if strategy == ProcessStrategy.SLICE:
-            return MotionGrid.get_fixed_grid(
-                box, self.get_value("step_down"), line_distance=line_distance,
-                grid_direction=MotionGrid.GridDirection.X,
-                milling_style=milling_style)
-        elif strategy == ProcessStrategy.CONTOUR:
-            # TODO: milling_style currently refers to the grid lines - not to the waterlines
-            return MotionGrid.get_fixed_grid(box, self.get_value("step_down"),
-                                             line_distance=line_distance,
-                                             grid_direction=MotionGrid.GridDirection.X,
-                                             milling_style=milling_style)
-        elif strategy == ProcessStrategy.SURFACE:
-            path_pattern = self.get_value("path_pattern")
-            if path_pattern == PathPattern.SPIRAL:
-                func = functools.partial(MotionGrid.get_spiral,
-                                         spiral_direction=self.get_value("spiral_direction"),
-                                         rounded_corners=self.get_value("rounded_corners"))
-            elif path_pattern == PathPattern.GRID:
-                func = functools.partial(MotionGrid.get_fixed_grid,
-                                         grid_direction=self.get_value("grid_direction"))
-            else:
-                raise InvalidKeyError(path_pattern, PathPattern)
-            # surfacing requires a finer grid (arbitrary factor)
-            step_width = tool_radius / 4.0
-            return func(box, None, step_width=step_width, line_distance=line_distance,
-                        milling_style=milling_style)
-        elif strategy == ProcessStrategy.ENGRAVE:
-            models = [m.get_model() for m in self.get_value("trace_models")]
-            if not models:
-                _log.error("No trace models given: you need to assign a 2D model to the engraving "
-                           "process.")
-                return None
-            radius_compensation = self.get_value("radius_compensation")
-            if radius_compensation:
-                with ProgressContext("Offsetting models") as progress:
-                    progress.set_multiple(len(models), "Model")
-                    for index, model in enumerate(models):
-                        models[index] = model.get_offset_model(tool_radius,
-                                                               callback=progress.update)
-                        progress.update_multiple()
-            with ProgressContext("Calculating moves") as progress:
+        with ProgressContext("Calculating moves") as progress:
+            if strategy == ProcessStrategy.SLICE:
+                motion_grid = MotionGrid.get_fixed_grid(
+                    box, self.get_value("step_down"), line_distance=line_distance,
+                    grid_direction=MotionGrid.GridDirection.X,
+                    milling_style=milling_style)
+            elif strategy == ProcessStrategy.CONTOUR:
+                # TODO: milling_style currently refers to the grid lines - not to the waterlines
+                motion_grid = MotionGrid.get_fixed_grid(box, self.get_value("step_down"),
+                                                        line_distance=line_distance,
+                                                        grid_direction=MotionGrid.GridDirection.X,
+                                                        milling_style=milling_style)
+            elif strategy == ProcessStrategy.SURFACE:
+                path_pattern = self.get_value("path_pattern")
+                if path_pattern == PathPattern.SPIRAL:
+                    func = functools.partial(MotionGrid.get_spiral,
+                                             spiral_direction=self.get_value("spiral_direction"),
+                                             rounded_corners=self.get_value("rounded_corners"))
+                elif path_pattern == PathPattern.GRID:
+                    func = functools.partial(MotionGrid.get_fixed_grid,
+                                             grid_direction=self.get_value("grid_direction"))
+                else:
+                    raise InvalidKeyError(path_pattern, PathPattern)
+                # surfacing requires a finer grid (arbitrary factor)
+                step_width = tool_radius / 4.0
+                motion_grid = func(box, None, step_width=step_width, line_distance=line_distance,
+                                   milling_style=milling_style)
+            elif strategy == ProcessStrategy.ENGRAVE:
+                models = [m.get_model() for m in self.get_value("trace_models")]
+                if not models:
+                    _log.error("No trace models given: you need to assign a 2D model to the "
+                               "engraving process.")
+                    return None
+                radius_compensation = self.get_value("radius_compensation")
+                if radius_compensation:
+                    with ProgressContext("Offsetting models") as offset_progress:
+                        offset_progress.set_multiple(len(models), "Model")
+                        for index, model in enumerate(models):
+                            models[index] = model.get_offset_model(tool_radius,
+                                                                   callback=offset_progress.update)
+                            offset_progress.update_multiple()
                 line_distance = 1.8 * tool_radius
                 step_width = tool_radius / 4.0
                 pocketing_type = self.get_value("pocketing_type")
@@ -1029,9 +1031,9 @@ class Process(BaseCollectionItemDataContainer):
                     models, box, self.get_value("step_down"), line_distance=line_distance,
                     step_width=step_width, milling_style=milling_style,
                     pocketing_type=pocketing_type, skip_first_layer=True, callback=progress.update)
-            return motion_grid
-        else:
-            raise InvalidKeyError(strategy, ProcessStrategy)
+            else:
+                raise InvalidKeyError(strategy, ProcessStrategy)
+        return motion_grid
 
     def validate(self):
         self.get_path_generator()
@@ -1160,7 +1162,7 @@ class Task(BaseCollectionItemDataContainer):
                 # issue a warning - and go ahead ...
                 _log.warn("No collision model was selected. This can be intentional, but maybe "
                           "you simply forgot it.")
-            motion_grid = process.get_motion_grid(tool.radius, box, recurse_immediately=True)
+            motion_grid = process.get_motion_grid(tool.radius, box)
             _log.debug("MotionGrid completed")
             if motion_grid is None:
                 # we assume that an error message was given already
