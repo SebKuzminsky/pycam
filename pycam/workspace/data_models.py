@@ -1152,8 +1152,7 @@ class Task(BaseCollectionItemDataContainer):
             box = bounds.get_absolute_limits(tool_radius=tool.radius,
                                              models=self.get_value("collision_models"))
             path_generator = process.get_path_generator()
-            motion_grid = process.get_motion_grid(tool.radius, box)
-            if path_generator is None or motion_grid is None:
+            if path_generator is None:
                 # we assume that an error message was given already
                 return
             models = [m.get_model() for m in self.get_value("collision_models")]
@@ -1161,6 +1160,11 @@ class Task(BaseCollectionItemDataContainer):
                 # issue a warning - and go ahead ...
                 _log.warn("No collision model was selected. This can be intentional, but maybe "
                           "you simply forgot it.")
+            motion_grid = process.get_motion_grid(tool.radius, box, recurse_immediately=True)
+            _log.debug("MotionGrid completed")
+            if motion_grid is None:
+                # we assume that an error message was given already
+                return
             with ProgressContext("Calculating toolpath") as progress:
                 draw_callback = UpdateToolView(
                     progress.update,
