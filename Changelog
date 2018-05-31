@@ -6,6 +6,14 @@ Version 0.7.0 - 2017-12-??
  * enable loading and saving the workspace state (was disabled during v0.6.x)
  * non-interactive batch processing allows scripted toolpath operations
 
+Version 0.6.3 - ???
+ * Fix import of DXF files with full-circle holes (github #112).
+ * Fix import of DXF files with bezier curves (github #116).
+ * Fix import of DXF with closed LWPOLYLINE.
+ * Fix line number reporting in CXFImporter.
+ * Fix python2/3 compatibility in CXFImporter.
+ * Better tests.
+
 Version 0.6.2 - 2017-10-27
  * Bounds: disable percent-based controls for zero-dimensions
  * fix toolpath grid operation (issue #45)
