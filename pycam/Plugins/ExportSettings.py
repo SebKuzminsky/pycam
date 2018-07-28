@@ -102,7 +102,7 @@ class ExportSettings(pycam.Plugins.ListPluginBase):
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._transfer_settings_to_controls()
-        self.core.set("export_settings", self.get_collection())
+        self.core.set("export_settings", self)
         return True
 
     def teardown(self):

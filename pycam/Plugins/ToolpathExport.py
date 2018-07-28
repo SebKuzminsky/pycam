@@ -85,7 +85,7 @@ class ToolpathExport(pycam.Plugins.PluginBase):
             filename_extension = None
         # TODO: separate this away from Gui/Project.py
         # TODO: implement "last_model_filename" in core
-        all_export_settings = self.core.get("export_settings")
+        all_export_settings = self.core.get("export_settings").get_all()
         export_options_control = pycam.Gui.ControlsGTK.InputChoice(
             (item.get_application_value("name", item.get_id()), item.get_id())
             for item in all_export_settings)
