@@ -93,6 +93,7 @@ class ExportSettings(pycam.Plugins.ListPluginBase):
             self._event_handlers = (
                 ("toolpath-profiles-list-changed", self._update_profiles),
                 ("export-settings-selection-changed", self._transfer_settings_to_controls),
+                ("export-settings-selection-changed", "visual-item-updated"),
                 ("export-settings-changed", self._transfer_settings_to_controls),
                 ("export-settings-changed", self.force_gtk_modelview_refresh),
                 ("export-settings-changed", "visual-item-updated"),
