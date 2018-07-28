@@ -496,6 +496,7 @@ class ListPluginBase(PluginBase):
         if not self._gtk_modelview:
             return
         treemodel = self._gtk_modelview.get_model()
+        previous_count = len(treemodel)
         current_uuids = [item.get_id() for item in self.get_collection()]
         # remove all superfluous rows from "treemodel"
         removal_indices = [index for index, item in enumerate(treemodel)
@@ -512,6 +513,11 @@ class ListPluginBase(PluginBase):
         sorted_indices = [current_uuids.index(row[0]) for row in treemodel]
         if sorted_indices:
             treemodel.reorder(sorted_indices)
+        # Explicitly select the first item - otherwise the pre-filled defaults do not cause a
+        # selection.  This would be annoying for the ExportSettings, since the Toolpath view uses
+        # the first selected set of settings (but would fail by default).
+        if (previous_count == 0) and current_uuids:
+            self.select(self.get_collection()[0])
 
     def get_by_path(self, path):
         if not self._gtk_modelview:
