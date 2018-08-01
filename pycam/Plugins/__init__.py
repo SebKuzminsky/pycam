@@ -496,6 +496,9 @@ class ListPluginBase(PluginBase):
         if not self._gtk_modelview:
             return
         treemodel = self._gtk_modelview.get_model()
+        if treemodel is None:
+            # this my happen during shutdown
+            return
         previous_count = len(treemodel)
         current_uuids = [item.get_id() for item in self.get_collection()]
         # remove all superfluous rows from "treemodel"
