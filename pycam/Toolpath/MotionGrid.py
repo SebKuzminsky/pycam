@@ -212,7 +212,7 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance, step_width=No
     return get_lines(start, end, end_position)
 
 
-def get_fixed_grid(box, layer_distance, line_distance=None, step_width=None,
+def get_fixed_grid(box, layer_distance, line_distance, step_width=None,
                    grid_direction=GridDirection.X, milling_style=MillingStyle.IGNORE,
                    start_position=StartPosition.Z):
     """ Calculate the grid positions for toolpath moves
