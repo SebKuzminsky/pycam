@@ -245,23 +245,18 @@ def get_fixed_grid(box, layer_distance, line_distance, step_width=None,
         yield result
 
 
-def _get_position(minx, maxx, miny, maxy, z, position):
-    if position & StartPosition.X > 0:
-        x = minx
-    else:
-        x = maxx
-    if position & StartPosition.Y > 0:
-        y = miny
-    else:
-        y = maxy
-    return (x, y, z)
+def _get_absolute_position(minx, maxx, miny, maxy, z, position):
+    """ calculate a point within a rectangle based on the relative position along the axes """
+    x = maxx if position & StartPosition.X > 0 else minx
+    y = maxy if position & StartPosition.Y > 0 else miny
+    return Point3D(x, y, z)
 
 
 def get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x, line_distance_y,
                            grid_direction, start_position, current_location):
     xor_map = {GridDirection.X: StartPosition.X, GridDirection.Y: StartPosition.Y}
     end_position = start_position ^ xor_map[grid_direction]
-    end_location = _get_position(minx, maxx, miny, maxy, z, end_position)
+    end_location = _get_absolute_position(minx, maxx, miny, maxy, z, end_position)
     lines = [(current_location, end_location)]
     if grid_direction == GridDirection.X:
         next_grid_direction = GridDirection.Y
@@ -285,7 +280,7 @@ def get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x, line_dist
 
 def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width, grid_direction,
                      start_position, rounded_corners, reverse):
-    current_location = _get_position(minx, maxx, miny, maxy, z, start_position)
+    current_location = _get_absolute_position(minx, maxx, miny, maxy, z, start_position)
     if line_distance > 0:
         line_steps_x = math.ceil((float(maxx - minx) / line_distance))
         line_steps_y = math.ceil((float(maxy - miny) / line_distance))
