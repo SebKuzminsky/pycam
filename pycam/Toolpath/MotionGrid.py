@@ -253,41 +253,50 @@ def _get_absolute_position(minx, maxx, miny, maxy, z, position):
 
 
 def get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x, line_distance_y,
-                           grid_direction, start_position, current_location):
+                           start_grid_direction, start_position):
+    """ calculate single lines concatenated together forming a spiral
+
+    The resulting corners are sharp (not rounded).  Rounding can be added later.
+    """
+    result_lines = []
     xor_map = {GridDirection.X: StartPosition.X, GridDirection.Y: StartPosition.Y}
-    end_position = start_position ^ xor_map[grid_direction]
-    end_location = _get_absolute_position(minx, maxx, miny, maxy, z, end_position)
-    lines = [(current_location, end_location)]
-    if grid_direction == GridDirection.X:
-        next_grid_direction = GridDirection.Y
-        if start_position & StartPosition.Y > 0:
-            miny += line_distance_y
+    current_grid_direction = start_grid_direction
+    current_position = start_position
+    current_absolute = _get_absolute_position(minx, maxx, miny, maxy, z, current_position)
+    while (minx - epsilon <= maxx) and (miny - epsilon <= maxy):
+        # calculate the next corner from the current position according to the current direction
+        next_position = current_position ^ xor_map[current_grid_direction]
+        # calculate absolute coordinates
+        next_absolute = _get_absolute_position(minx, maxx, miny, maxy, z, next_position)
+        result_lines.append((current_absolute, next_absolute))
+        # determine the next direction
+        if current_grid_direction == GridDirection.X:
+            next_grid_direction = GridDirection.Y
+            if current_position & StartPosition.Y > 0:
+                maxy -= line_distance_y
+            else:
+                miny += line_distance_y
         else:
-            maxy -= line_distance_y
-    else:
-        next_grid_direction = GridDirection.X
-        if start_position & StartPosition.X > 0:
-            minx += line_distance_x
-        else:
-            maxx -= line_distance_x
-    if (minx - epsilon <= maxx) and (miny - epsilon <= maxy):
-        # recursively compute the next lines
-        lines.extend(get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x,
-                                            line_distance_y, next_grid_direction, end_position,
-                                            end_location))
-    return lines
+            next_grid_direction = GridDirection.X
+            if current_position & StartPosition.X > 0:
+                maxx -= line_distance_x
+            else:
+                minx += line_distance_x
+        current_grid_direction, current_position, current_absolute = (
+            next_grid_direction, next_position, next_absolute)
+    return result_lines
 
 
 def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width, grid_direction,
                      start_position, rounded_corners, reverse):
-    current_location = _get_absolute_position(minx, maxx, miny, maxy, z, start_position)
     if line_distance > 0:
         line_steps_x = math.ceil((float(maxx - minx) / line_distance))
         line_steps_y = math.ceil((float(maxy - miny) / line_distance))
         line_distance_x = (maxx - minx) / line_steps_x
         line_distance_y = (maxy - miny) / line_steps_y
+        # calculate connected lines filling up the rectangle
         lines = get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x, line_distance_y,
-                                       grid_direction, start_position, current_location)
+                                       grid_direction, start_position)
         if reverse:
             lines.reverse()
         # turn the lines into steps
