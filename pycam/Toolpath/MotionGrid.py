@@ -298,13 +298,13 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width, grid_
         lines = get_spiral_layer_lines(minx, maxx, miny, maxy, z, line_distance_x, line_distance_y,
                                        grid_direction, start_position)
         if reverse:
-            lines.reverse()
+            lines = [(p2, p1) for p1, p2 in reversed(lines)]
         # turn the lines into steps
         if rounded_corners:
             rounded_lines = []
+            radius = 0.5 * min(line_distance_x, line_distance_y)
             previous = None
             for index, (start, end) in enumerate(lines):
-                radius = 0.5 * min(line_distance_x, line_distance_y)
                 edge_vector = psub(end, start)
                 # TODO: ellipse would be better than arc
                 offset = pmul(pnormalized(edge_vector), radius)
@@ -333,7 +333,8 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width, grid_
                 if index != len(lines) - 1:
                     end = psub(end, offset)
                 previous = end
-                rounded_lines.append((start, end))
+                if start != end:
+                    rounded_lines.append((start, end))
             lines = rounded_lines
         for start, end in lines:
             points = []
@@ -349,8 +350,6 @@ def get_spiral_layer(minx, maxx, miny, maxy, z, line_distance, step_width, grid_
                 for step in steps:
                     next_point = padd(line.p1, pmul(line.dir, step))
                     points.append(next_point)
-            if reverse:
-                points.reverse()
             yield points
 
 
