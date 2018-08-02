@@ -987,7 +987,6 @@ class Process(BaseCollectionItemDataContainer):
             if strategy == ProcessStrategy.SLICE:
                 path_pattern = self.get_value("path_pattern")
                 if path_pattern == PathPattern.SPIRAL:
-                    _log.error("DATA: %s", self.get_dict())
                     func = functools.partial(MotionGrid.get_spiral,
                                              spiral_direction=self.get_value("spiral_direction"),
                                              rounded_corners=self.get_value("rounded_corners"))
