@@ -22,7 +22,7 @@ import unittest
 from pycam.Geometry import Box3D, Point3D
 from pycam.Toolpath.MotionGrid import (
     GridDirection, MillingStyle, StartPosition, get_fixed_grid, get_fixed_grid_layer,
-    get_fixed_grid_line, get_spiral_layer_lines)
+    get_fixed_grid_line, get_spiral_layer, get_spiral_layer_lines)
 
 
 def _resolve_nested(level_count, source):
@@ -141,6 +141,26 @@ class TestMotionGrid(unittest.TestCase):
             self.assertAlmostEqualLines(spiral_lines, (
                 ((0, 0, z), (2, 0, z)), ((2, 0, z), (2, 2, z)), ((2, 2, z), (0, 2, z)),
                 ((0, 2, z), (0, 1, z)), ((0, 1, z), (1, 1, z))))
+
+    def test_spiral_layer(self):
+        for z in (-1, 0, 1):
+            # sharp corners
+            spiral_lines = _resolve_nested(1, get_spiral_layer(
+                0, 2, 0, 2, z, 1, None, GridDirection.X, StartPosition.NONE, False, False))
+            self.assertAlmostEqualLines(spiral_lines, (
+                ((0, 0, z), (2, 0, z)), ((2, 0, z), (2, 2, z)), ((2, 2, z), (0, 2, z)),
+                ((0, 2, z), (0, 1, z)), ((0, 1, z), (1, 1, z))))
+            # rounded corners
+            spiral_lines = _resolve_nested(1, get_spiral_layer(
+                0, 2, 0, 2, z, 2, None, GridDirection.X, StartPosition.NONE, True, False))
+            # verify a few interesting points along the arc
+            self.assertAlmostEqualLine(spiral_lines[0], ((0, 0, z), (1, 0, z)))
+            self.assertAlmostEqualPositions(
+                spiral_lines[5][0], (1.7071067811865475, 0.2928932188134523, z))
+            self.assertAlmostEqualPositions(spiral_lines[9][0], (2.0, 1.0, z))
+            self.assertAlmostEqualPositions(
+                spiral_lines[13][0], (1.7071067811865475, 1.7071067811865475, z))
+            self.assertAlmostEqualLine(spiral_lines[17], ((1, 2, z), (0, 2, z)))
 
     def xtest_fixed_grid(self):
         box = Box3D(Point3D(-1, -1, -1), Point3D(1, 1, 1))
