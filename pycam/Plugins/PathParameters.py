@@ -163,7 +163,7 @@ class PathParamPattern(pycam.Plugins.PluginBase):
         self.core.get("register_parameter_group")(
             "path_pattern", changed_set_event="process-path-pattern-changed",
             changed_set_list_event="process-path-pattern-list-changed",
-            get_current_set_func=self._get_pattern)
+            get_related_parameter_names=self._get_pattern_parameter_names)
         self.core.register_ui("process_path_parameters", "Pattern", self.control.get_widget(),
                               weight=5)
         self._event_handlers = (
@@ -188,12 +188,13 @@ class PathParamPattern(pycam.Plugins.PluginBase):
         if not self.control.get_value() and self.choices:
             self.control.set_value({"name": self.choices[0][1], "parameters": {}})
 
-    def _get_pattern(self):
-        pattern = self.control.get_value()
-        if pattern:
-            return self.core.get("get_parameter_sets")("path_pattern")[pattern]
+    def _get_pattern_parameter_names(self):
+        pattern_name = self.control.get_value()
+        if pattern_name:
+            pattern = self.core.get("get_parameter_sets")("path_pattern")[pattern_name]
+            return set(pattern["parameters"].keys())
         else:
-            return None
+            return set()
 
 
 class PathParamRoundedSpiralCorners(pycam.Plugins.PluginBase):

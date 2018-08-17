@@ -71,7 +71,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.core.get("register_parameter_group")(
                 "process", changed_set_event="process-strategy-changed",
                 changed_set_list_event="process-strategy-list-changed",
-                get_current_set_func=self._get_selected_strategy)
+                get_related_parameter_names=self._get_selected_strategy_parameter_names)
             self.parameter_widget = pycam.Gui.ControlsGTK.ParameterSection()
             self.core.register_ui_section("process_path_parameters",
                                           self.parameter_widget.add_widget,
@@ -151,6 +151,10 @@ class Processes(pycam.Plugins.ListPluginBase):
             selector_box.hide()
         else:
             selector_box.show()
+
+    def _get_selected_strategy_parameter_names(self):
+        strategy = self._get_selected_strategy()
+        return set() if strategy is None else set(strategy["parameters"].keys())
 
     def _get_selected_strategy(self, name=None):
         """ get a strategy object - either based on the given name or the currently selected one

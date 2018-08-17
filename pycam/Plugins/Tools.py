@@ -70,7 +70,7 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.core.get("register_parameter_group")(
                 "tool", changed_set_event="tool-shape-changed",
                 changed_set_list_event="tool-shape-list-changed",
-                get_current_set_func=self._get_selected_shape)
+                get_related_parameter_names=self._get_selected_shape_parameter_names)
             self.size_widget = pycam.Gui.ControlsGTK.ParameterSection()
             self.core.register_ui("tool_parameters", "Size", self.size_widget.get_widget(),
                                   weight=10)
@@ -159,6 +159,10 @@ class Tools(pycam.Plugins.ListPluginBase):
             return
         if tool and (new_value != tool.get_value("tool_id")):
             tool.set_value("tool_id", new_value)
+
+    def _get_selected_shape_parameter_names(self):
+        shape = self._get_selected_shape()
+        return set() if shape is None else set(shape["parameters"].keys())
 
     def _get_selected_shape(self, name=None):
         shapes = self.core.get("get_parameter_sets")("tool")

@@ -74,7 +74,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self.core.get("register_parameter_group")(
                 "task", changed_set_event="task-type-changed",
                 changed_set_list_event="task-type-list-changed",
-                get_current_set_func=self._get_type)
+                get_related_parameter_names=self._get_type_parameter_names)
             self.models_widget = pycam.Gui.ControlsGTK.ParameterSection()
             self.core.register_ui_section("task_models", self.models_widget.add_widget,
                                           self.models_widget.clear_widgets)
@@ -135,6 +135,10 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
         self.clear()
+
+    def _get_type_parameter_names(self):
+        the_type = self._get_type()
+        return set() if the_type is None else set(the_type["parameters"].keys())
 
     def _get_type(self, name=None):
         types = self.core.get("get_parameter_sets")("task")

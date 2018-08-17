@@ -79,7 +79,7 @@ class ExportSettings(pycam.Plugins.ListPluginBase):
             self.core.get("register_parameter_group")(
                 "toolpath_profile", changed_set_event="toolpath-profiles-selection-changed",
                 changed_set_list_event="toolpath-profiles-list-changed",
-                get_current_set_func=self.get_selected_profile)
+                get_related_parameter_names=self._get_selected_profile_parameter_names)
             # handle table changes
             self._gtk_handlers.extend((
                 (modelview, "row-activated", "export-settings-changed"),
@@ -164,6 +164,10 @@ class ExportSettings(pycam.Plugins.ListPluginBase):
             self.select_profile(None)
         else:
             pass
+
+    def _get_selected_profile_parameter_names(self):
+        profile = self.get_selected_profile()
+        return set() if profile is None else set(profile["parameters"].keys())
 
     def get_selected_profile(self):
         all_profiles = self.core.get("get_parameter_sets")("toolpath_profile")

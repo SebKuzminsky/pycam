@@ -49,12 +49,12 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
             self.core.set(name, None)
 
     def register_parameter_group(self, name, changed_set_event=None, changed_set_list_event=None,
-                                 get_current_set_func=None):
+                                 get_related_parameter_names=None):
         if name in self._groups:
             self.log.debug("Registering parameter group '%s' again", name)
         self._groups[name] = {"changed_set_event": changed_set_event,
                               "changed_set_list_event": changed_set_list_event,
-                              "get_current_set_func": get_current_set_func,
+                              "get_related_parameter_names": get_related_parameter_names,
                               "sets": {},
                               "parameters": {}}
         if changed_set_event:
@@ -62,16 +62,9 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
 
     def _update_widgets_visibility(self, group_name):
         group = self._groups[group_name]
-        current_set_func = group["get_current_set_func"]
-        if not current_set_func:
-            return
-        current_set = current_set_func()
-        if current_set:
-            active_parameters = current_set["parameters"]
-        else:
-            active_parameters = []
+        related_parameter_names = group["get_related_parameter_names"]()
         for param in group["parameters"].values():
-            is_visible = param["name"] in active_parameters
+            is_visible = param["name"] in related_parameter_names
             control = param["control"]
             if control is None:
                 pass
