@@ -143,15 +143,18 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
             self.log.info("Unknown parameter group: %s", group_name)
             return {}
         result = {}
-        group = self._groups[group_name]
         multi_level_access = MultiLevelDictionaryAccess(result)
+        group = self._groups[group_name]
+        related_parameter_names = group["get_related_parameter_names"]()
         for parameter in group["parameters"].values():
-            value = parameter["get_func"]()
-            try:
-                multi_level_access.set_value(parameter["name"], value)
-            except TypeError as exc:
-                self.log.error("Failed to get parameter '%s' for group '%s': %s",
-                               parameter["name"], group_name, exc)
+            key = parameter["name"]
+            if key in related_parameter_names:
+                value = parameter["get_func"]()
+                try:
+                    multi_level_access.set_value(key, value)
+                except TypeError as exc:
+                    self.log.error("Failed to get parameter '%s' for group '%s': %s",
+                                   key, group_name, exc)
         return result
 
     def set_parameter_values(self, group_name, value_dict):
