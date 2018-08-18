@@ -189,7 +189,10 @@ class Processes(pycam.Plugins.ListPluginBase):
         strategy = self._get_selected_strategy()
         if process and strategy:
             process.set_value("strategy", strategy["name"])
-            for key, value in self.core.get("get_parameter_values")("process").items():
+            value_set = self.core.get("get_parameter_values")("process")
+            if "path_pattern" in value_set:
+                value_set.update(self.core.get("get_parameter_values")("path_pattern"))
+            for key, value in value_set.items():
                 process.set_value(key, value)
 
     def _update_process_widgets(self, widget=None, data=None):
@@ -203,7 +206,10 @@ class Processes(pycam.Plugins.ListPluginBase):
                                            "process-path-pattern-changed"}):
                 strategy_name = process.get_value("strategy").value
                 self.select_strategy(strategy_name)
-                self.core.get("set_parameter_values")("process", process.get_dict())
+                data_dict = process.get_dict()
+                self.core.get("set_parameter_values")("process", data_dict)
+                if "path_pattern" in data_dict:
+                    self.core.get("set_parameter_values")("path_pattern", data_dict)
                 control_box.show()
             self.core.emit_event("process-strategy-changed")
             self.core.emit_event("process-changed")
