@@ -63,6 +63,9 @@ class WidgetBaseClass:
         else:
             self.get_widget().hide()
 
+    def is_visible(self):
+        return self.get_widget().props.visible
+
 
 class InputBaseClass(WidgetBaseClass):
 

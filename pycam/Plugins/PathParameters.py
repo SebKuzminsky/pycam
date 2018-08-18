@@ -190,7 +190,10 @@ class PathParamPattern(pycam.Plugins.PluginBase):
 
     def _get_pattern_parameter_names(self):
         pattern_name = self.control.get_value()
-        if pattern_name:
+        # The path pattern is not used for all process strategies. Thus we need to check, whether
+        # we are currently in use (i.e. visible).
+        is_visible = self.control.is_visible()
+        if pattern_name and is_visible:
             pattern = self.core.get("get_parameter_sets")("path_pattern")[pattern_name]
             return set(pattern["parameters"].keys())
         else:
