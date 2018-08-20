@@ -69,9 +69,9 @@ class OpenGLViewModel(pycam.Plugins.PluginBase):
                     self.log.warning("Failed to visualize model: %s", exc)
                     continue
                 for index, (mlow, mhigh) in enumerate(zip(model_box.lower, model_box.upper)):
-                    if (low[index] is None) or (mlow < low[index]):
+                    if (low[index] is None) or ((mlow is not None) and (mlow < low[index])):
                         low[index] = mlow
-                    if (high[index] is None) or (mhigh > high[index]):
+                    if (high[index] is None) or ((mhigh is not None) and (mhigh > high[index])):
                         high[index] = mhigh
 
     def draw_model(self):
