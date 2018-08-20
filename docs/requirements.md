@@ -68,8 +68,9 @@ Some features of PyCAM require additional external programs.
 SVG/PS/EPS import
 -----------------
 
-PyCAM supports only STL and DXF files natively. Thus you need to install
-external programs for conversions of other file formats.
+PyCAM supports only STL and DXF files natively. Native SVG support is available
+since PyCAM v0.7. For previous versions you need to install external programs
+for the conversions of other file formats.
 
 ### Debian / Ubuntu
 

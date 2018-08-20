@@ -34,7 +34,7 @@ def detect_file_type(filename, quiet=False):
     import pycam.Importers.DXFImporter
     import pycam.Importers.PSImporter
     import pycam.Importers.STLImporter
-    import pycam.Importers.SVGImporter
+    from pycam.Importers.SVGDirectImporter import import_model as import_model_from_svg
     # also accept URI input
     uri = pycam.Utils.URIHandler(filename)
     filename = uri.get_path()
@@ -45,7 +45,7 @@ def detect_file_type(filename, quiet=False):
     elif filename.lower().endswith(".dxf"):
         return DetectedFileType("dxf", pycam.Importers.DXFImporter.import_model, uri)
     elif filename.lower().endswith(".svg"):
-        return DetectedFileType("svg", pycam.Importers.SVGImporter.import_model, uri)
+        return DetectedFileType("svg", import_model_from_svg, uri)
     elif filename.lower().endswith(".eps") \
             or filename.lower().endswith(".ps"):
         return DetectedFileType("ps", pycam.Importers.PSImporter.import_model, uri)
