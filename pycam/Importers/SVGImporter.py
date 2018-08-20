@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 """
+TODO: remove this obsolete SVGImporter
+see https://github.com/SebKuzminsky/pycam/issues/118
+
 Copyright 2010 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.

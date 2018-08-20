@@ -92,6 +92,23 @@ supplied with PyCAM.
 Pseudo 3D support
 -----------------
 
+### Height by layer (since v0.7)
+
+You can create 2D shapes at different heights (z-levels) by using
+multiple layers in your SVG document (e.g. via inkscape).
+
+When loading an SVG file with multiple layers, the height gap between
+each two layers is one unit (e.g. mm). This distance can be easily
+scaled within PyCAM to an arbitrary height. This allows a precise
+height adjustment as long as only two layers are involved.
+
+If more than two layers with specific height requirements
+are required, then you need to add empty layers between these in
+order to achieve the wanted height gap between the objects.
+
+
+### Height derived from color (up to v0.6.x)
+
 ![A multi-colored SVG graphic.](img/2d-multilayer-engrave.png)
 
 You can create 2D shapes at different heights (z-levels) by using

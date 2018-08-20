@@ -12,15 +12,14 @@ Build-Depends:
  python-opengl,
  python-pytest,
  python-setuptools,
+ python-svg.path,
 Standards-Version: 3.9.8
 Homepage: https://github.com/SebKuzminsky/pycam
 
 Package: pycam
 Architecture: all
 Depends:
- inkscape,
  librecad-data,
- pstoedit,
  python-enum34,
  python-gobject-2,
  python-gtk2,

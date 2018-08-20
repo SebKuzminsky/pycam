@@ -35,10 +35,9 @@ SVG
 [Scalable vector files](http://en.wikipedia.org/wiki/Scalable_Vector_Graphics) can describe 2D
 models. They are supposed to be used as contour models for engravings.
 
-You need to install *Inkscape* and *pstoedit* if you want to import SVG
-files. Please take a look at the
-[requirements](requirements#Optional_external_programs) for
-more details.
+Before PyCAM v0.7 you needed to install *Inkscape* and *pstoedit* if you want
+to import SVG files. Please take a look at the
+[requirements](requirements#Optional_external_programs) for more details.
 
 Additionally you should read the [hints for Inkscape](modeling-inkscape-svg.md) to avoid 
 common pitfalls.

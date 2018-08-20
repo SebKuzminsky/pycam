@@ -2,3 +2,4 @@ gtk
 gtk.gtkgl
 OpenGL
 enum34
+svg.path
