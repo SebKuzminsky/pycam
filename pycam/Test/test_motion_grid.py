@@ -36,48 +36,48 @@ def _resolve_nested(level_count, source):
 
 class TestMotionGrid(unittest.TestCase):
 
-    def assertAlmostEqualLine(self, line1, line2):
+    def assert_almost_equal_line(self, line1, line2):
         self.assertEqual(len(line1), len(line2))
         for pos1, pos2 in zip(line1, line2):
-            self.assertAlmostEqualPositions(pos1, pos2)
+            self.assert_almost_equal_positions(pos1, pos2)
 
-    def assertAlmostEqualLines(self, lines1, lines2):
+    def assert_almost_equal_lines(self, lines1, lines2):
         self.assertEqual(len(lines1), len(lines2))
         for line1, line2 in zip(lines1, lines2):
-            self.assertAlmostEqualLine(line1, line2)
+            self.assert_almost_equal_line(line1, line2)
 
-    def assertAlmostEqualPositions(self, pos1, pos2):
+    def assert_almost_equal_positions(self, pos1, pos2):
         self.assertEqual(len(pos1), 3)
         self.assertEqual(len(pos2), 3)
         for v1, v2 in zip(pos1, pos2):
             self.assertAlmostEqual(v1, v2)
 
-    def assertAlmostEqualLayer(self, layer1, layer2):
+    def assert_almost_equal_layer(self, layer1, layer2):
         self.assertEqual(len(layer1), len(layer2))
         for line1, line2 in zip(layer1, layer2):
-            self.assertAlmostEqualLine(line1, line2)
+            self.assert_almost_equal_line(line1, line2)
 
-    def assertAlmostEqualGrid(self, grid1, grid2):
+    def assert_almost_equal_grid(self, grid1, grid2):
         self.assertEqual(len(grid1), len(grid2))
         for layer1, layer2 in zip(grid1, grid2):
-            self.assertAlmostEqualLayer(layer1, layer2)
+            self.assert_almost_equal_layer(layer1, layer2)
 
     def test_fixed_grid_line(self):
         for z in (-1, 0, 1):
             # simple line without steps
             line = _resolve_nested(
                 1, get_fixed_grid_line(-2, 2, 3, z, grid_direction=GridDirection.X))
-            self.assertAlmostEqualLine(line, [(-2, 3, z), (2, 3, z)])
+            self.assert_almost_equal_line(line, [(-2, 3, z), (2, 3, z)])
             # simple line with steps
             line = _resolve_nested(
                 1, get_fixed_grid_line(-2, 2, 3, z, step_width=0.9,
                                        grid_direction=GridDirection.X))
-            self.assertAlmostEqualLine(line, [(-2, 3, z), (-1.2, 3, z), (-0.4, 3, z),
-                                              (0.4, 3, z), (1.2, 3, z), (2.0, 3, z)])
+            self.assert_almost_equal_line(line, [(-2, 3, z), (-1.2, 3, z), (-0.4, 3, z),
+                                                 (0.4, 3, z), (1.2, 3, z), (2.0, 3, z)])
             # simple line in Y direction
             line = _resolve_nested(
                 1, get_fixed_grid_line(0, 2, 3, z, grid_direction=GridDirection.Y))
-            self.assertAlmostEqualLine(line, [(3, 0, z), (3, 2, z)])
+            self.assert_almost_equal_line(line, [(3, 0, z), (3, 2, z)])
 
     def test_fixed_grid_layer(self):
         for z in (-1, 0, 1):
@@ -86,7 +86,7 @@ class TestMotionGrid(unittest.TestCase):
                 0, 2, 0, 1, z, line_distance=1, grid_direction=GridDirection.X,
                 milling_style=MillingStyle.IGNORE, start_position=StartPosition.NONE)
             layer = _resolve_nested(2, layer)
-            self.assertAlmostEqualLayer(layer, (
+            self.assert_almost_equal_layer(layer, (
                 ((0, 0, z), (2, 0, z)), ((2, 0, z), (2, 1, z)), ((2, 1, z), (0, 1, z))))
             self.assertEqual(end_position, StartPosition.Y)
             # always move along X in positive direction
@@ -94,7 +94,7 @@ class TestMotionGrid(unittest.TestCase):
                 0, 2, 0, 1, z, line_distance=1, grid_direction=GridDirection.X,
                 milling_style=MillingStyle.CONVENTIONAL, start_position=StartPosition.NONE)
             layer = _resolve_nested(2, layer)
-            self.assertAlmostEqualLayer(layer, (
+            self.assert_almost_equal_layer(layer, (
                 ((0, 0, z), (2, 0, z)), ((0, 1, z), (2, 1, z))))
             self.assertEqual(end_position, StartPosition.X | StartPosition.Y)
             # always move along X in negative direction
@@ -102,7 +102,7 @@ class TestMotionGrid(unittest.TestCase):
                 0, 2, 0, 1, z, line_distance=1, grid_direction=GridDirection.X,
                 milling_style=MillingStyle.CLIMB, start_position=StartPosition.NONE)
             layer = _resolve_nested(2, layer)
-            self.assertAlmostEqualLayer(layer, (
+            self.assert_almost_equal_layer(layer, (
                 ((0, 1, z), (2, 1, z)), ((0, 0, z), (2, 0, z))))
             self.assertEqual(end_position, StartPosition.X)
             # always move along Y in negative direction
@@ -110,7 +110,7 @@ class TestMotionGrid(unittest.TestCase):
                 0, 2, 0, 1, z, line_distance=1, grid_direction=GridDirection.Y,
                 milling_style=MillingStyle.CONVENTIONAL, start_position=StartPosition.NONE)
             layer = _resolve_nested(2, layer)
-            self.assertAlmostEqualLayer(layer, (
+            self.assert_almost_equal_layer(layer, (
                 ((0, 1, z), (0, 0, z)), ((1, 1, z), (1, 0, z)), ((2, 1, z), (2, 0, z))))
             self.assertEqual(end_position, StartPosition.X)
             # always move along X in positive direction, starting from positive Y
@@ -118,7 +118,7 @@ class TestMotionGrid(unittest.TestCase):
                 0, 2, 0, 1, z, line_distance=1, grid_direction=GridDirection.X,
                 milling_style=MillingStyle.CLIMB, start_position=StartPosition.Y)
             layer = _resolve_nested(2, layer)
-            self.assertAlmostEqualLayer(layer, (
+            self.assert_almost_equal_layer(layer, (
                 ((0, 1, z), (2, 1, z)), ((0, 0, z), (2, 0, z))))
             self.assertEqual(end_position, StartPosition.X)
 
@@ -128,7 +128,7 @@ class TestMotionGrid(unittest.TestCase):
             box, 1.2, line_distance=2.0, step_width=None,
             grid_direction=GridDirection.X, milling_style=MillingStyle.CONVENTIONAL,
             start_position=StartPosition.Z))
-        self.assertAlmostEqualGrid(grid, (
+        self.assert_almost_equal_grid(grid, (
             (((-3, -2, 1), (3, -2, 1)), ((-3, 0, 1), (3, 0, 1)), ((-3, 2, 1), (3, 2, 1))),
             (((3, 2, 0), (-3, 2, 0)), ((3, 0, 0), (-3, 0, 0)), ((3, -2, 0), (-3, -2, 0))),
             (((-3, -2, -1), (3, -2, -1)), ((-3, 0, -1), (3, 0, -1)), ((-3, 2, -1), (3, 2, -1))),
@@ -138,7 +138,7 @@ class TestMotionGrid(unittest.TestCase):
         for z in (-1, 0, 1):
             spiral_lines = _resolve_nested(1, get_spiral_layer_lines(
                 0, 2, 0, 2, z, 1, 1, GridDirection.X, StartPosition.NONE))
-            self.assertAlmostEqualLines(spiral_lines, (
+            self.assert_almost_equal_lines(spiral_lines, (
                 ((0, 0, z), (2, 0, z)), ((2, 0, z), (2, 2, z)), ((2, 2, z), (0, 2, z)),
                 ((0, 2, z), (0, 1, z)), ((0, 1, z), (1, 1, z))))
 
@@ -147,20 +147,20 @@ class TestMotionGrid(unittest.TestCase):
             # sharp corners
             spiral_lines = _resolve_nested(1, get_spiral_layer(
                 0, 2, 0, 2, z, 1, None, GridDirection.X, StartPosition.NONE, False, False))
-            self.assertAlmostEqualLines(spiral_lines, (
+            self.assert_almost_equal_lines(spiral_lines, (
                 ((0, 0, z), (2, 0, z)), ((2, 0, z), (2, 2, z)), ((2, 2, z), (0, 2, z)),
                 ((0, 2, z), (0, 1, z)), ((0, 1, z), (1, 1, z))))
             # rounded corners
             spiral_lines = _resolve_nested(1, get_spiral_layer(
                 0, 2, 0, 2, z, 2, None, GridDirection.X, StartPosition.NONE, True, False))
             # verify a few interesting points along the arc
-            self.assertAlmostEqualLine(spiral_lines[0], ((0, 0, z), (1, 0, z)))
-            self.assertAlmostEqualPositions(
+            self.assert_almost_equal_line(spiral_lines[0], ((0, 0, z), (1, 0, z)))
+            self.assert_almost_equal_positions(
                 spiral_lines[5][0], (1.7071067811865475, 0.2928932188134523, z))
-            self.assertAlmostEqualPositions(spiral_lines[9][0], (2.0, 1.0, z))
-            self.assertAlmostEqualPositions(
+            self.assert_almost_equal_positions(spiral_lines[9][0], (2.0, 1.0, z))
+            self.assert_almost_equal_positions(
                 spiral_lines[13][0], (1.7071067811865475, 1.7071067811865475, z))
-            self.assertAlmostEqualLine(spiral_lines[17], ((1, 2, z), (0, 2, z)))
+            self.assert_almost_equal_line(spiral_lines[17], ((1, 2, z), (0, 2, z)))
 
     def xtest_fixed_grid(self):
         box = Box3D(Point3D(-1, -1, -1), Point3D(1, 1, 1))
