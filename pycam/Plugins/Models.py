@@ -146,7 +146,7 @@ class Models(pycam.Plugins.ListPluginBase):
             model.set_application_value("color", color)
         return color
 
-    def add_model(self, model_params, name=None, color=None):
+    def add_model(self, model_params, name=None, color=None, name_template="Model #%d"):
         """
 
         @param model_params: a dictionary describing the model, e.g.:
@@ -158,7 +158,7 @@ class Models(pycam.Plugins.ListPluginBase):
         if not color:
             color = self.FALLBACK_COLOR.copy()
         if name is None:
-            name = self.get_non_conflicting_name("Model #%d")
+            name = self.get_non_conflicting_name(name_template)
         with rollback_history_on_failure(self.core):
             with merge_history_and_block_events(self.core):
                 new_model = pycam.workspace.data_models.Model(None, copy.deepcopy(model_params))
