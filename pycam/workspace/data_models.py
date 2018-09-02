@@ -155,12 +155,12 @@ def _limit3d_converter(point):
     return Limit3D(*result)
 
 
-def _axes_values_converter(data, allow_none=False):
-    result = []
+def _axes_values_converter(data, allow_none=False, wanted_axes="xyz"):
+    result = {key: None for key in "xyz"}
     if isinstance(data, (list, dict)):
         if isinstance(data, dict):
             data = dict(data)
-            for key in "xyz":
+            for key in wanted_axes:
                 try:
                     value = data.pop(key)
                 except KeyError:
@@ -168,35 +168,42 @@ def _axes_values_converter(data, allow_none=False):
                         value = None
                     else:
                         raise InvalidDataError("Missing mandatory axis component ({})".format(key))
-                result.append(value)
+                result[key] = value
             if data:
                 raise InvalidDataError("Superfluous axes key(s) supplied: {} (expected: x / y / z)"
                                        .format(" / ".join(data.keys())))
         else:
             # a list
-            for value in data:
-                result.append(value)
-            if len(result) != 3:
+            data = list(data)
+            if len(data) != len(wanted_axes):
                 raise InvalidDataError("Invalid number of axis components supplied: {:d} "
-                                       "(expected: 3)".format(len(result)))
-        for index, value in enumerate(result):
-            if value is not None:
-                try:
-                    result[index] = float(value)
-                except ValueError:
-                    raise InvalidDataError("Axis value is not a float: {} ({})"
-                                           .format(value, get_type_name(value)))
+                                       "(expected: {:d})".format(len(result), len(wanted_axes)))
+            for key, value in zip(wanted_axes, data):
+                result[key] = value
+        for key, value in result.items():
+            try:
+                result[key] = None if value is None else float(value)
+            except ValueError:
+                raise InvalidDataError("Axis value is not a float: {} ({})"
+                                       .format(value, get_type_name(value)))
     else:
         try:
             factor = float(data)
         except ValueError:
             raise InvalidDataError("Axis value is not a float: {} ({})"
                                    .format(data, get_type_name(data)))
-        result = [factor] * 3
-    return AxesValues(*result)
+        for key in result:
+            result[key] = factor
+    return AxesValues(**result)
 
 
 def _get_from_collection(collection_name, wanted, many=False):
+    """ retrieve one or more items from a collection
+
+    @param collection_name: identifier of the relevant collection
+    @param wanted: ID (or list of IDs) to be used for filtering the collection items
+    @param many: expect "wanted" to be a list; return a tuple instead of a single value
+    """
     default_result = [] if many else None
     try:
         collection = _data_collections[collection_name]
