@@ -76,6 +76,17 @@ def _add_aligned_cuboid_to_model(minx, maxx, miny, maxy, minz, maxz):
 
 def get_support_grid_locations(minx, maxx, miny, maxy, dist_x, dist_y, offset_x=0.0, offset_y=0.0,
                                adjustments_x=None, adjustments_y=None):
+    """ calculate positions of a orthogonal grid of support bridges
+
+    @param minx: minimum x value of the target area
+    @param maxx: maximum x value of the target area
+    @param miny: minimum y value of the target area
+    @param maxy: maximum y value of the target area
+    @param dist_x: distance between two lines parallel to the y axis
+    @param dist_y: distance between two lines parallel to the x axis
+    @param adjustments_x: iterable of offsets to be added to each x position
+    @param adjustments_y: iterable of offsets to be added to each y position
+    """
     def get_lines(center, dist, min_value, max_value):
         """ generate a list of positions starting from the middle going up and
         and down
@@ -105,12 +116,11 @@ def get_support_grid_locations(minx, maxx, miny, maxy, dist_x, dist_y, offset_x=
     center_y = (maxy + miny) / 2 + offset_y
     lines_x = get_lines(center_x, dist_x, minx, maxx)
     lines_y = get_lines(center_y, dist_y, miny, maxy)
-    if adjustments_x:
-        for index in range(min(len(lines_x), len(adjustments_x))):
-            lines_x[index] += number(adjustments_x[index])
-    if adjustments_y:
-        for index in range(min(len(lines_y), len(adjustments_y))):
-            lines_y[index] += number(adjustments_y[index])
+    # apply as many offsets from adjustments_x and adjustments_y as available
+    for value_list, adjustments in ((lines_x, adjustments_x), (lines_y, adjustments_y)):
+        if adjustments:
+            for index, (current_value, adjustment) in enumerate(zip(value_list, adjustments)):
+                value_list[index] = current_value + number(adjustment)
     return lines_x, lines_y
 
 
