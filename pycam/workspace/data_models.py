@@ -353,6 +353,7 @@ class BaseDataContainer:
     changed_event = None
 
     def __init__(self, data):
+        assert isinstance(data, dict), "Expecting a dict, but received '{}'".format(type(data))
         data = copy.deepcopy(data)
         # split the application-specific data (e.g. colors or visibility flags) from the model data
         self._application_attributes = data.pop(APPLICATION_ATTRIBUTES_KEY, {})
@@ -465,10 +466,42 @@ class BaseDataContainer:
     def get_application_value(self, key, default=None):
         return self._get_current_application_dict().get(key, default)
 
+    @classmethod
+    def _get_not_matching_keys(cls, data_dict, allowed_keys):
+        """ retrieve hierarchical keys from a nested dictionary that are not part of 'allowed_keys'
+
+        The items of the dict are tested for being contained in "allowed_keys".
+        Nested keys are specified as tuples of the keys of the nesting levels.
+        Valid examples (returning an empty result):
+            {"foo": "bar"}, {"foo", "baz", "fu"}
+            {"foo": {"bar": "baz"}}, {("foo", "bar"), "fu"}
+            {}, {"foo"}
+            {"foo": 1, "bar": {"baz": 2, "fu": {"foobar": 3}}},
+                {"foo", ("bar", "baz"), ("bar, "fu", "foobar")}
+        """
+        non_matching = set()
+        for key, value in data_dict.items():
+            if key not in allowed_keys and (key, ) not in allowed_keys:
+                if isinstance(value, dict):
+                    # the key itself is not allowed - try to go down to the next level
+                    sub_keys = {tuple(allowed_key[1:])
+                                for allowed_key in allowed_keys
+                                if isinstance(allowed_key, tuple) and (key == allowed_key[0])}
+                    for sub_non_matching in cls._get_not_matching_keys(value, sub_keys):
+                        if isinstance(sub_non_matching, tuple):
+                            non_matching.add((key, *sub_non_matching))
+                        else:
+                            non_matching.add((key, sub_non_matching))
+                else:
+                    non_matching.add(key)
+        return non_matching
+
     def validate_allowed_attributes(self, allowed_attributes):
-        unexpected_attributes = set(self._data.keys()) - allowed_attributes
+        unexpected_attributes = self._get_not_matching_keys(self._data, allowed_attributes)
         if unexpected_attributes:
-            unexpected_attributes_string = " / ".join(unexpected_attributes)
+            unexpected_attributes_string = " / ".join(
+                "->".join(item) if isinstance(item, tuple) else item
+                for item in unexpected_attributes)
             raise UnexpectedAttributeError("unexpected attributes were given: {}"
                                            .format(unexpected_attributes_string))
 
