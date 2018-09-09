@@ -148,12 +148,14 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
                     and ((s.get("support_grid_distance_y") == 0)
                          or (s.get("support_grid_distance_y") > s.get("support_grid_thickness")))
                     and (s.get("support_grid_height") > 0)):
+                bridge_length = max(s.get("support_grid_thickness"), s.get("support_grid_height"))
                 support_grid = pycam.Toolpath.SupportGrid.get_support_grid(
                     box.lower.x, box.upper.x, box.lower.y, box.upper.y, box.lower.z,
                     s.get("support_grid_distance_x"),
                     s.get("support_grid_distance_y"),
                     s.get("support_grid_thickness"),
                     s.get("support_grid_height"),
+                    bridge_length,
                     offset_x=s.get("support_grid_offset_x"),
                     offset_y=s.get("support_grid_offset_y"),
                     adjustments_x=self.grid_adjustments_x,
