@@ -632,7 +632,7 @@ class BaseCollectionItemDataContainer(BaseDataContainer):
     list_changed_event = None
     unique_attribute = "uuid"
 
-    def __init__(self, item_id, data):
+    def __init__(self, item_id, data, add_to_collection=True):
         super().__init__(data)
         assert self.collection_name is not None, (
             "Missing unique attribute ({}) of '{}' class"
@@ -644,7 +644,8 @@ class BaseCollectionItemDataContainer(BaseDataContainer):
         except TypeError:
             raise InvalidDataError("Invalid item ID ({}): not hashable".format(item_id))
         self._data[self.unique_attribute] = item_id
-        self.get_collection().append(self)
+        if add_to_collection:
+            self.get_collection().append(self)
 
     def get_id(self):
         return self.get_dict()[self.unique_attribute]
