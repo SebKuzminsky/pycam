@@ -39,6 +39,7 @@ import pycam.PathGenerators.PushCutter
 import pycam.Toolpath
 import pycam.Toolpath.Filters as tp_filters
 import pycam.Toolpath.MotionGrid as MotionGrid
+import pycam.Toolpath.SupportGrid
 from pycam.Importers import detect_file_type
 from pycam.Utils import get_application_key, get_type_name, MultiLevelDictionaryAccess
 from pycam.Utils.events import get_event_handler
@@ -46,10 +47,10 @@ from pycam.Utils.progress import ProgressContext
 from pycam.Utils.locations import get_data_file_location
 import pycam.Utils.log
 from pycam.workspace import (
-    BoundsSpecification, CollectionName, FormatType, GCodeDialect, ModelScaleTarget,
-    ModelTransformationAction, ModelType, LengthUnit, PathPattern, PositionShiftTarget,
-    ProcessStrategy, SourceType, TargetType, TaskType, ToolBoundaryMode, ToolpathFilter,
-    ToolpathTransformationAction, ToolShape)
+    BoundsSpecification, CollectionName, DistributionStrategy, FormatType, GCodeDialect,
+    ModelScaleTarget, ModelTransformationAction, ModelType, LengthUnit, PathPattern,
+    PositionShiftTarget, ProcessStrategy, SourceType, SupportBridgesLayout, TargetType, TaskType,
+    ToolBoundaryMode, ToolpathFilter, ToolpathTransformationAction, ToolShape)
 from pycam.errors import (LoadFileError, PycamBaseException, InvalidDataError, InvalidKeyError,
                           MissingAttributeError, UnexpectedAttributeError)
 
@@ -663,7 +664,26 @@ class BaseCollectionItemDataContainer(BaseDataContainer):
 
 class Source(BaseDataContainer):
 
-    attribute_converters = {"type": _get_enum_resolver(SourceType)}
+    attribute_converters = {
+        "type": _get_enum_resolver(SourceType),
+        "models": _get_collection_resolver(CollectionName.MODELS, many=True),
+        "layout": _get_enum_resolver(SupportBridgesLayout),
+        "distribution": _get_enum_resolver(DistributionStrategy),
+        ("grid", "distances"): functools.partial(_axes_values_converter, wanted_axes="xy"),
+        ("grid", "offsets", "x"): _get_list_resolver(float),
+        ("grid", "offsets", "y"): _get_list_resolver(float),
+        ("shape", "height"): float,
+        ("shape", "thickness"): float,
+        ("shape", "length"): float,
+        "average_distance": float,
+        "minimum_count": int,
+    }
+    attribute_defaults = {
+        ("grid", "offsets", "x"): [],
+        ("grid", "offsets", "y"): [],
+        "minimum_count": 3,
+        "average_distance": None,
+    }
 
     def __hash__(self):
         source_type = self.get_value("type")
@@ -677,6 +697,8 @@ class Source(BaseDataContainer):
             return hash(self._get_source_toolpath())
         elif source_type == SourceType.OBJECT:
             return hash(self._get_source_object())
+        elif source_type == SourceType.SUPPORT_BRIDGES:
+            return hash(self._get_source_support_bridges())
         else:
             raise InvalidKeyError(source_type, SourceType)
 
@@ -699,6 +721,8 @@ class Source(BaseDataContainer):
             return self._get_source_toolpath()
         elif source_type == SourceType.OBJECT:
             return self._get_source_object()
+        elif source_type == SourceType.SUPPORT_BRIDGES:
+            return self._get_source_support_bridges()
         else:
             raise InvalidKeyError(source_type, SourceType)
 
@@ -752,6 +776,74 @@ class Source(BaseDataContainer):
     def _get_source_object(self):
         """ transfer method for intra-process transfer """
         return self.get_value("data")
+
+    @staticmethod
+    def _get_values_or_repeat_last(input_values, default=0):
+        """ pass through values taken from an input list
+
+        The last value is repeated forever, after the input list is exhausted.
+        In case of an empty list, the default value is returned again and again.
+        """
+        value = default
+        for value in input_values:
+            yield value
+        # continue yielding the last value forever
+        while True:
+            yield value
+
+    @_set_parser_context("Source 'support_bridges'")
+    @_set_allowed_attributes({
+        "type", "models", "layout", "distribution", ("grid", "distances"),
+        "average_distance", "minimum_count", ("grid", "offsets", "x"), ("grid", "offsets", "y"),
+        ("shape", "height"), ("shape", "width"), ("shape", "length")})
+    def _get_source_support_bridges(self):
+        layout = self.get_value("layout")
+        models = self.get_value("models")
+        height = self.get_value(("shape", "height"))
+        width = self.get_value(("shape", "width"))
+        bridge_length = self.get_value(("shape", "length"))
+        if layout == SupportBridgesLayout.GRID:
+            box = pycam.Geometry.Model.get_combined_bounds(model.get_model() for model in models)
+            if box is None:
+                return None
+            else:
+                grid_distances = self.get_value(("grid", "distances"))
+                grid_offsets_x = self.get_value(("grid", "offsets", "x"))
+                grid_offsets_y = self.get_value(("grid", "offsets", "y"))
+                return pycam.Toolpath.SupportGrid.get_support_grid(
+                    box.lower.x, box.upper.x, box.lower.y, box.upper.y, box.lower.z,
+                    grid_distances.x, grid_distances.y, height, width, bridge_length,
+                    adjustments_x=self._get_values_or_repeat_last(grid_offsets_x),
+                    adjustments_y=self._get_values_or_repeat_last(grid_offsets_y))
+        elif layout == SupportBridgesLayout.DISTRIBUTED:
+            if not models:
+                return None
+            else:
+                distribution = self.get_value("distribution")
+                minimum_count = self.get_value("minimum_count")
+                average_distance = self.get_value("average_distance")
+                box = pycam.Geometry.Model.get_combined_bounds(model.get_model()
+                                                               for model in models)
+                if box is None:
+                    return None
+                else:
+                    if distribution == DistributionStrategy.CORNERS:
+                        start_at_corners = True
+                    elif distribution == DistributionStrategy.EVENLY:
+                        start_at_corners = False
+                    else:
+                        assert False
+                    if average_distance is None:
+                        dim_x, dim_y = box.get_dimensions()[:2]
+                        # default distance: at least three pieces per side
+                        average_distance = (dim_x + dim_y) / 6
+                    combined_model = pycam.Geometry.Model.get_combined_model(model.get_model()
+                                                                             for model in models)
+                    return pycam.Toolpath.SupportGrid.get_support_distributed(
+                        combined_model, combined_model.minz, average_distance, minimum_count,
+                        width, height, bridge_length, start_at_corners=start_at_corners)
+        else:
+            assert False
 
     def validate(self):
         try:

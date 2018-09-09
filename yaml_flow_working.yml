@@ -43,6 +43,21 @@ models:
                                   - [1, 0, 0]
                                   - [0, 1, 0]
                                   - [0, 0, -1]
+        model1_support:
+                source:
+                        type: support_bridges
+                        models:
+                                -  model1
+                        layout: grid
+                        grid:
+                                distances: {x: 5, y: 7}
+                                offsets:
+                                        x: [1, 2, 0]
+                                        y: [-3]
+                        shape:
+                                height: 2
+                                width: 0.5
+                                length: 4
         model2:
                 source:
                         type: copy
@@ -109,6 +124,7 @@ tasks:
                 bounds: bounds1
                 collision_models:
                         - model1
+                        - model1_support
         task2:
                 type: milling
                 tool: tool1

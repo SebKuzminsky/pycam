@@ -18,6 +18,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import pycam.Plugins
+import pycam.workspace.data_models
 
 
 class OpenGLViewSupportModelPreview(pycam.Plugins.PluginBase):
@@ -42,7 +43,11 @@ class OpenGLViewSupportModelPreview(pycam.Plugins.PluginBase):
     def draw_support_preview(self):
         if not self.core.get("show_support_preview"):
             return
-        models = list(self.core.get("current_support_models") or [])
+        models = []
+        for model_object in (self.core.get("current_support_models") or []):
+            model = model_object.get_model()
+            if model:
+                models.append(model)
         if not models:
             return
         GL = self._GL

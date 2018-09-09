@@ -46,6 +46,7 @@ class SourceType(Enum):
     TASK = "task"
     TOOLPATH = "toolpath"
     OBJECT = "object"
+    SUPPORT_BRIDGES = "support_bridges"
 
 
 class ModelTransformationAction(Enum):
@@ -93,6 +94,16 @@ class PositionShiftTarget(Enum):
         else:
             assert False
         return offset
+
+
+class SupportBridgesLayout(Enum):
+    GRID = "grid"
+    DISTRIBUTED = "distributed"
+
+
+class DistributionStrategy(Enum):
+    CORNERS = "corners"
+    EVENLY = "evenly"
 
 
 class TargetType(Enum):

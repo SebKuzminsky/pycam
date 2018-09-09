@@ -19,6 +19,8 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import pycam.Plugins
+from pycam.workspace import DistributionStrategy, SupportBridgesLayout, SourceType
+import pycam.workspace.data_models
 
 
 class ModelSupportDistributed(pycam.Plugins.PluginBase):
@@ -80,20 +82,30 @@ class ModelSupportDistributed(pycam.Plugins.PluginBase):
         grid_type = self.core.get("support_model_type")
         if grid_type in ("distributed_edges", "distributed_corners"):
             s = self.core
-            while models:
-                model = models.pop(0)
+            for model in models:
                 if (model.get_model()
                         and (s.get("support_grid_thickness") > 0)
                         and (s.get("support_grid_height") > 0)
                         and (s.get("support_grid_average_distance") > 0)
                         and (s.get("support_grid_minimum_bridges") > 0)):
-                    # get the minimum z value of the bounding box
-                    minz = model.get_model().minz
-                    corner_start = (grid_type == "distributed_corners")
-                    support_model = pycam.Toolpath.SupportGrid.get_support_distributed(
-                        model.get_model(), minz, s.get("support_grid_average_distance"),
-                        s.get("support_grid_minimum_bridges"), s.get("support_grid_thickness"),
-                        s.get("support_grid_height"), s.get("support_grid_length"),
-                        start_at_corners=corner_start)
-                    if support_model:
-                        support_models.append(support_model)
+                    if grid_type == "distributed_corners":
+                        distribution = DistributionStrategy.CORNERS
+                    else:
+                        distribution = DistributionStrategy.EVENLY
+                    model_definition = {
+                        "source": {
+                            "type": SourceType.SUPPORT_BRIDGES,
+                            "layout": SupportBridgesLayout.DISTRIBUTED,
+                            "models": tuple(model.get_id() for model in models),
+                            "average_distance": s.get("support_grid_average_distance"),
+                            "shape": {"height": s.get("support_grid_height"),
+                                      "width": s.get("support_grid_thickness"),
+                                      "length": s.get("support_grid_length")},
+                            "minimum_count": s.get("support_grid_minimum_bridges"),
+                            "distribution": distribution,
+                        }
+                    }
+                    support_models.append(pycam.workspace.data_models.Model(
+                        "support", model_definition, add_to_collection=False))
+            # all models are processed -> wipe the input list
+            models.clear()

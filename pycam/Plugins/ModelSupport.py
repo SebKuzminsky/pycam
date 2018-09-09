@@ -20,6 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycam.Geometry.Model
 import pycam.Plugins
+import pycam.workspace.data_models
 
 
 class ModelSupport(pycam.Plugins.PluginBase):
@@ -27,6 +28,7 @@ class ModelSupport(pycam.Plugins.PluginBase):
     UI_FILE = "model_support.ui"
     DEPENDS = ["Models"]
     CATEGORIES = ["Model", "Support bridges"]
+    MODEL_NAME_TEMPLATE = "Support Model #%d"
 
     def setup(self):
         if self.gui:
@@ -130,10 +132,9 @@ class ModelSupport(pycam.Plugins.PluginBase):
             create_button.set_sensitive(True)
 
     def _add_support_model(self, widget=None):
-        models = self.core.get("current_support_models")
-        for model in models:
-            # TODO: use new model API (reference original model, add "support" transformation)
-            self.core.get("models").add_model(model, name_template="Support model #%d",
+        for model_object in self.core.get("current_support_models"):
+            self.core.get("models").add_model(model_object.get_dict(),
+                                              name_template=self.MODEL_NAME_TEMPLATE,
                                               color=self.core.get("color_support_preview"))
         # Disable the support model type -> avoid confusing visualization.
         # (this essentially removes the support grid from the 3D view)
@@ -142,9 +143,12 @@ class ModelSupport(pycam.Plugins.PluginBase):
     def get_draw_dimension(self, low, high):
         if not self.core.get("show_support_preview"):
             return
-        support_models = self.core.get("current_support_models")
-        if not support_models:
-            return
+        support_model_objects = self.core.get("current_support_models", [])
+        support_models = []
+        for model_object in support_model_objects:
+            support_model = model_object.get_model()
+            if support_model:
+                support_models.append(support_model)
         model_box = pycam.Geometry.Model.get_combined_bounds(support_models)
         if model_box is None:
             return
@@ -155,17 +159,17 @@ class ModelSupport(pycam.Plugins.PluginBase):
                 high[index] = mhigh
 
     def update_support_model(self, widget=None):
-        old_support_models = self.core.get("current_support_models")
+        old_support_model_objects = self.core.get("current_support_models")
         selected_models = self.core.get("models").get_selected()
         grid_type = self.core.get("support_model_type")
-        new_support_models = []
+        new_support_model_objects = []
         if (grid_type == "none") or (not selected_models):
-            new_support_models = []
+            new_support_model_objects = []
         else:
             # update the support model
-            self.core.call_chain("get_support_models", selected_models, new_support_models)
-        if old_support_models != new_support_models:
-            self.core.set("current_support_models", new_support_models)
+            self.core.call_chain("get_support_models", selected_models, new_support_model_objects)
+        if old_support_model_objects != new_support_model_objects:
+            self.core.set("current_support_models", new_support_model_objects)
             self.core.emit_event("visual-item-updated")
         # show/hide controls
         self._update_widgets()

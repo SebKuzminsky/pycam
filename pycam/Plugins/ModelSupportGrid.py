@@ -21,6 +21,8 @@ from pycam.Geometry import Box3D, Point3D
 import pycam.Geometry.Model
 import pycam.Plugins
 import pycam.Toolpath.SupportGrid
+from pycam.workspace import SupportBridgesLayout, SourceType
+import pycam.workspace.data_models
 
 
 class ModelSupportGrid(pycam.Plugins.PluginBase):
@@ -39,6 +41,7 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
                 self.core.emit_event("support-model-changed")
             self._gtk_handlers = []
             # support grid
+            # TODO: remove these adjustments
             self.grid_adjustments_x = []
             self.grid_adjustments_y = []
             self.grid_adjustment_axis_x_last = True
@@ -137,7 +140,6 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
         if (grid_type == "grid") and models:
             # we create exactly one support model for all input models
             s = self.core
-            support_grid = None
             box = self._get_bounds(models)
             if (box is not None
                     and (s.get("support_grid_thickness") > 0)
@@ -148,22 +150,26 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
                     and ((s.get("support_grid_distance_y") == 0)
                          or (s.get("support_grid_distance_y") > s.get("support_grid_thickness")))
                     and (s.get("support_grid_height") > 0)):
+                # TODO: allow explicit configuration of bridge length
                 bridge_length = max(s.get("support_grid_thickness"), s.get("support_grid_height"))
-                support_grid = pycam.Toolpath.SupportGrid.get_support_grid(
-                    box.lower.x, box.upper.x, box.lower.y, box.upper.y, box.lower.z,
-                    s.get("support_grid_distance_x"),
-                    s.get("support_grid_distance_y"),
-                    s.get("support_grid_thickness"),
-                    s.get("support_grid_height"),
-                    bridge_length,
-                    offset_x=s.get("support_grid_offset_x"),
-                    offset_y=s.get("support_grid_offset_y"),
-                    adjustments_x=self.grid_adjustments_x,
-                    adjustments_y=self.grid_adjustments_y)
+                model_definition = {
+                    "source": {
+                        "type": SourceType.SUPPORT_BRIDGES,
+                        "layout": SupportBridgesLayout.GRID,
+                        "models": tuple(model.get_id() for model in models),
+                        "grid": {"distances": {"x": s.get("support_grid_distance_x"),
+                                               "y": s.get("support_grid_distance_y")},
+                                 "offsets": {"x": [s.get("support_grid_offset_x")],
+                                             "y": [s.get("support_grid_offset_y")]}},
+                        "shape": {"height": s.get("support_grid_height"),
+                                  "width": s.get("support_grid_thickness"),
+                                  "length": bridge_length},
+                    }
+                }
+                support_models.append(pycam.workspace.data_models.Model(
+                    "support", model_definition, add_to_collection=False))
             # all models are processed -> wipe the input list
-            while models:
-                models.pop()
-            support_models.append(support_grid)
+            models.clear()
 
     def update_support_controls(self, widget=None):
         grid_type = self.core.get("support_model_type")

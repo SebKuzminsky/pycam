@@ -61,10 +61,38 @@ models:
                           height: 1.0
                           width: 2.3
                           accuracy: 0.2
+        model2_support_grid:
+                source:
+                        type: support_bridges
+                        models:
+                                -  model1
+                        layout: grid
+                        grid:
+                                distances: {x: 10, y: 20}
+                                offsets:
+                                        x: [5, 10, 0]
+                                        y: [-5]
+                        shape:
+                                height: 2
+                                width: 1
+                                length: 10
         model3:
                 source:
                         type: url
                         location: http://foo.example.org/baz.stl
+        model3_support_grid:
+                source:
+                        type: support_bridges
+                        models:
+                                -  model3
+                        layout: distributed
+                        distribution: corners
+                        minimum_count: 3
+                        average_distance: 4
+                        shape:
+                                height: 2
+                                width: 1
+                                length: 10
 
 tools:
         tool1:
