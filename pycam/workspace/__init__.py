@@ -43,6 +43,7 @@ class SourceType(Enum):
     FILE = "file"
     URL = "url"
     COPY = "copy"
+    MODEL = "model"
     TASK = "task"
     TOOLPATH = "toolpath"
     OBJECT = "object"
@@ -112,6 +113,11 @@ class TargetType(Enum):
 
 class FormatType(Enum):
     GCODE = "gcode"
+    MODEL = "model"
+
+
+class FileType(Enum):
+    STL = "stl"
 
 
 class GCodeDialect(Enum):

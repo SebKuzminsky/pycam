@@ -235,3 +235,14 @@ exports:
                         filetype: png
                 target:
                         type: clipboard
+        export_support_model:
+                source:
+                        type: model
+                        models:
+                                - model1_support
+                format:
+                        type: model
+                        filetype: stl
+                target:
+                        type: file
+                        location: model1_support.stl

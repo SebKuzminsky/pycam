@@ -47,7 +47,7 @@ from pycam.Utils.progress import ProgressContext
 from pycam.Utils.locations import get_data_file_location
 import pycam.Utils.log
 from pycam.workspace import (
-    BoundsSpecification, CollectionName, DistributionStrategy, FormatType, GCodeDialect,
+    BoundsSpecification, CollectionName, DistributionStrategy, FileType, FormatType, GCodeDialect,
     ModelScaleTarget, ModelTransformationAction, ModelType, LengthUnit, PathPattern,
     PositionShiftTarget, ProcessStrategy, SourceType, SupportBridgesLayout, TargetType, TaskType,
     ToolBoundaryMode, ToolpathFilter, ToolpathTransformationAction, ToolShape)
@@ -691,6 +691,8 @@ class Source(BaseDataContainer):
             return hash(self._get_source_copy())
         elif source_type in (SourceType.FILE, SourceType.URL):
             return hash(self.get_value("location"))
+        elif source_type == SourceType.MODEL:
+            return hash(self._get_source_model())
         elif source_type == SourceType.TASK:
             return hash(self._get_source_task())
         elif source_type == SourceType.TOOLPATH:
@@ -715,6 +717,8 @@ class Source(BaseDataContainer):
                 return self._get_source_copy(related_collection_name)
         elif source_type in (SourceType.FILE, SourceType.URL):
             return self._get_source_location(source_type)
+        elif source_type == SourceType.MODEL:
+            return self._get_source_model()
         elif source_type == SourceType.TASK:
             return self._get_source_task()
         elif source_type == SourceType.TOOLPATH:
@@ -758,6 +762,12 @@ class Source(BaseDataContainer):
                 raise InvalidDataError("Failed to detect file type ({}): {}".format(location, exc))
         else:
             raise InvalidDataError("Failed to load data from '{}'".format(location))
+
+    @_set_parser_context("Source 'model'")
+    @_set_allowed_attributes({"type", "items"})
+    def _get_source_model(self):
+        model_names = self.get_value("items")
+        return _get_from_collection(CollectionName.MODELS, model_names, many=True)
 
     @_set_parser_context("Source 'task'")
     @_set_allowed_attributes({"type", "task"})
@@ -1526,6 +1536,7 @@ class Target(BaseDataContainer):
 class Formatter(BaseDataContainer):
 
     attribute_converters = {"type": _get_enum_resolver(FormatType),
+                            "filetype": _get_enum_resolver(FileType),
                             "dialect": _get_enum_resolver(GCodeDialect),
                             "export_settings": _get_collection_resolver(
                                 CollectionName.EXPORT_SETTINGS)}
@@ -1533,25 +1544,39 @@ class Formatter(BaseDataContainer):
                           "export_settings": None,
                           "comment": ""}
 
+    @staticmethod
+    def _test_sources(items, test_function, message_template):
+        failing_items = [item for item in items if not test_function(item)]
+        if failing_items:
+            raise InvalidDataError(
+                message_template.format(" / ".join(get_type_name(item) for item in failing_items)))
+
+    @_set_parser_context("Export formatter: type selection")
     def write_data(self, source, target):
         _log.debug("Writing formatter data {}".format(self))
+        # we expect a tuple of items as input
+        if not isinstance(source, (list, tuple)):
+            raise InvalidDataError("Invalid source data type: {} (expected: list of items)"
+                                   .format(get_type_name(source)))
         format_type = self.get_value("type")
         if format_type == FormatType.GCODE:
+            self._test_sources(source, lambda item: isinstance(item, Toolpath),
+                               "Invalid source data type: {} (expected: list of toolpaths)")
             return self._write_gcode(source, target)
+        elif format_type == FormatType.MODEL:
+            self._test_sources(source, lambda item: isinstance(item, Model),
+                               "Invalid source data type: {} (expected: list of models)")
+            self._test_sources(source, lambda item: item.get_model().is_export_supported(),
+                               "Sources lacking 'export' support: {}")
+            return self._write_model(source, target)
         else:
             raise InvalidKeyError(format_type, FormatType)
 
     @_set_parser_context("Export formatter 'GCode'")
+    @_set_allowed_attributes({"type", "comment", "dialect", "export_settings"})
     def _write_gcode(self, source, target):
         comment = self.get_value("comment")
         dialect = self.get_value("dialect")
-        # we expect a tuple of toolpaths as input
-        if not isinstance(source, (list, tuple)):
-            raise InvalidDataError("Invalid source data type: {} (expected: list of toolpaths)"
-                                   .format(get_type_name(source)))
-        if not all([isinstance(item, Toolpath) for item in source]):
-            raise InvalidDataError("Invalid source data type: {} (expected: list of toolpaths)"
-                                   .format(" / ".join([get_type_name(item) for item in source])))
         if dialect == GCodeDialect.LINUXCNC:
             generator = pycam.Exporters.GCode.LinuxCNC.LinuxCNC(target, comment=comment)
         else:
@@ -1566,6 +1591,27 @@ class Formatter(BaseDataContainer):
         generator.finish()
         target.close()
         return True
+
+    @_set_parser_context("Export formatter 'Model'")
+    @_set_allowed_attributes({"type", "filetype"})
+    def _write_model(self, source, target):
+        source = tuple(source)
+        if source:
+            export_name = " / ".join(item.get_id() for item in source)
+        else:
+            export_name = "unknown"
+        combined_model = pycam.Geometry.Model.get_combined_model(item.get_model()
+                                                                 for item in source)
+        filetype = self.get_value("filetype")
+        if filetype == FileType.STL:
+            from pycam.Exporters.STLExporter import STLExporter
+            self._test_sources(source, lambda item: hasattr(item.get_model(), "triangles"),
+                               "Models without triangles: {}")
+            exporter = STLExporter(combined_model, name=export_name)
+            exporter.write(target)
+            target.close()
+        else:
+            raise InvalidKeyError(filetype, FileType)
 
     def validate(self):
         self.write_data([], io.StringIO())

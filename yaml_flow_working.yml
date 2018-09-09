@@ -176,3 +176,14 @@ exports:
                 target:
                         type: file
                         location: test.ngc
+        export_support_model:
+                source:
+                        type: model
+                        items:
+                                - model1_support
+                format:
+                        type: model
+                        filetype: stl
+                target:
+                        type: file
+                        location: model1_support.stl
