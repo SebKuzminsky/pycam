@@ -770,15 +770,15 @@ class Source(BaseDataContainer):
         return _get_from_collection(CollectionName.MODELS, model_names, many=True)
 
     @_set_parser_context("Source 'task'")
-    @_set_allowed_attributes({"type", "task"})
+    @_set_allowed_attributes({"type", "item"})
     def _get_source_task(self):
-        task_name = self.get_value("task")
+        task_name = self.get_value("item")
         return _get_from_collection(CollectionName.TASKS, task_name)
 
     @_set_parser_context("Source 'toolpath'")
-    @_set_allowed_attributes({"type", "toolpaths"})
+    @_set_allowed_attributes({"type", "items"})
     def _get_source_toolpath(self):
-        toolpath_names = self.get_value("toolpaths")
+        toolpath_names = self.get_value("items")
         return _get_from_collection(CollectionName.TOOLPATHS, toolpath_names, many=True)
 
     @_set_parser_context("Source 'object'")

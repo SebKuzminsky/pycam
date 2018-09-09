@@ -161,7 +161,7 @@ toolpaths:
         toolpath1:
                 source:
                         type: task
-                        task: task1
+                        item: task1
                 transformations:
                         - action: crop
                           lower:
@@ -214,7 +214,7 @@ exports:
         export1:
                 source:
                         type: toolpath
-                        toolpaths:
+                        items:
                                 - toolpath1
                 format:
                         type: gcode
@@ -227,7 +227,7 @@ exports:
         export2:
                 source:
                         type: toolpath
-                        toolpaths:
+                        items:
                                 - toolpath1
                                 - toolpath2
                 format:

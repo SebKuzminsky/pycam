@@ -255,7 +255,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
         if callback:
             callback(text="Calculating the toolpath")
         new_toolpath = pycam.workspace.data_models.Toolpath(
-            None, {"source": {"type": "task", "task": task.get_id()}})
+            None, {"source": {"type": "task", "item": task.get_id()}})
         try:
             # generate the toolpath (filling the cache) and check if it is empty
             if new_toolpath.get_toolpath() is None:

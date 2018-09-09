@@ -112,7 +112,7 @@ class ToolpathExport(pycam.Plugins.PluginBase):
                                    .format(VERSION, datetime.datetime.now().strftime("%Y-%m-%d"))),
                        "export_settings": selected_settings["active"]},
             "source": {"type": "toolpath",
-                       "toolpaths": [tp.get_id() for tp in toolpaths]},
+                       "items": [tp.get_id() for tp in toolpaths]},
             "target": {"type": "file", "location": filename}})
         try:
             export.run_export()
