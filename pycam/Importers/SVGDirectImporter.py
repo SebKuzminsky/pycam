@@ -238,7 +238,8 @@ def _get_polygons_from_svg_path(path, z, accuracy=0.1, min_interpolation_steps=5
                         raise
             previous_path_point = new_point
         previous_segment_end = current_segment_end
-    return polygons
+    # filter out all empty polygons
+    return [polygon for polygon in polygons if polygon]
 
 
 def get_polygons_from_path_groups(path_groups, z_level_map=None):
