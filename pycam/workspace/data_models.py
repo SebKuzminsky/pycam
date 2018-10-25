@@ -1125,9 +1125,9 @@ class Process(BaseCollectionItemDataContainer):
         strategy = self.get_value("strategy")
         overlap = self.get_value("overlap")
         line_distance = 2 * tool_radius * (1 - overlap)
-        milling_style = self.get_value("milling_style")
         with ProgressContext("Calculating moves") as progress:
             if strategy == ProcessStrategy.SLICE:
+                milling_style = self.get_value("milling_style")
                 path_pattern = self.get_value("path_pattern")
                 if path_pattern == PathPattern.SPIRAL:
                     func = functools.partial(MotionGrid.get_spiral,
@@ -1141,12 +1141,17 @@ class Process(BaseCollectionItemDataContainer):
                 motion_grid = func(box, self.get_value("step_down"), line_distance=line_distance,
                                    milling_style=milling_style)
             elif strategy == ProcessStrategy.CONTOUR:
-                # TODO: milling_style currently refers to the grid lines - not to the waterlines
-                motion_grid = MotionGrid.get_fixed_grid(box, self.get_value("step_down"),
-                                                        line_distance=line_distance,
-                                                        grid_direction=MotionGrid.GridDirection.X,
-                                                        milling_style=milling_style)
+                # The waterline only works with a millingstyle generating parallel lines in the
+                # same direction (not going backwards and forwards). Thus we just pick one of the
+                # "same direction" styles.
+                # TODO: probably the milling style should be configurable (but never "IGNORE").
+                motion_grid = MotionGrid.get_fixed_grid(
+                    box, self.get_value("step_down"), line_distance=line_distance,
+                    grid_direction=MotionGrid.GridDirection.X,
+                    milling_style=MotionGrid.MillingStyle.CONVENTIONAL,
+                    use_fixed_start_position=True)
             elif strategy == ProcessStrategy.SURFACE:
+                milling_style = self.get_value("milling_style")
                 path_pattern = self.get_value("path_pattern")
                 if path_pattern == PathPattern.SPIRAL:
                     func = functools.partial(MotionGrid.get_spiral,
@@ -1162,6 +1167,7 @@ class Process(BaseCollectionItemDataContainer):
                 motion_grid = func(box, None, step_width=step_width, line_distance=line_distance,
                                    milling_style=milling_style)
             elif strategy == ProcessStrategy.ENGRAVE:
+                milling_style = self.get_value("milling_style")
                 models = [m.get_model() for m in self.get_value("trace_models")]
                 if not models:
                     _log.error("No trace models given: you need to assign a 2D model to the "

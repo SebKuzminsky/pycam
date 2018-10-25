@@ -214,8 +214,10 @@ def get_fixed_grid_layer(minx, maxx, miny, maxy, z, line_distance, step_width=No
 
 def get_fixed_grid(box, layer_distance, line_distance, step_width=None,
                    grid_direction=GridDirection.X, milling_style=MillingStyle.IGNORE,
-                   start_position=StartPosition.Z):
+                   start_position=StartPosition.Z, use_fixed_start_position=False):
     """ Calculate the grid positions for toolpath moves
+
+    @param use_fixed_start_position: the moves for every layer start at the same position
     """
     assert isinstance(milling_style, MillingStyle)
     assert isinstance(grid_direction, GridDirection)
@@ -238,10 +240,12 @@ def get_fixed_grid(box, layer_distance, line_distance, step_width=None,
                 yield (layer, GridDirection.Y)
 
     for z, direction in get_layers_with_direction(layers):
-        result, start_position = get_fixed_grid_layer(
+        result, suggested_start_position = get_fixed_grid_layer(
             box.lower.x, box.upper.x, box.lower.y, box.upper.y, z, line_distance,
             step_width=step_width, grid_direction=direction, milling_style=milling_style,
             start_position=start_position)
+        if not use_fixed_start_position:
+            start_position = suggested_start_position
         yield result
 
 
