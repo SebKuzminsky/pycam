@@ -1,32 +1,35 @@
 ---
-dist: trusty
+dist: xenial
+# use the container-based infrastructure
 sudo: required
 
 language: python
-
 python:
-  - "3.5"
+  - "3.6"
 
-git:
-  depth: 10000
-
-before_install: ./scripts/travis-install-build-deps.sh
-
-install: true
+addons:
+  apt:
+    packages:
+      - build-essential
+      - devscripts
+      - equivs
+      - fakeroot
+      - gir1.2-gtk-3.0
+      - help2man
+      - python3-flake8
+      - python3-gi
+      - python3-numpy
+      - python3-pytest
+      - python3-setuptools
+      - python3-svg.path
+      - python3-yaml
 
 script:
-  - export BRANCH=$(if [ "${TRAVIS_PULL_REQUEST}" = "false" ];
-    then echo "${TRAVIS_BRANCH}";
-    else printf "%s-%s-pr%d" "$TRAVIS_BRANCH" "$TRAVIS_PULL_REQUEST_BRANCH"
-                "$TRAVIS_PULL_REQUEST"; fi)
-  - git branch -D "${BRANCH}" || true
-  - git checkout -b "${BRANCH}" "${TRAVIS_COMMIT}"
-  - export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-  - debian/rules prep-source
   - make test
   - ./setup.py sdist
   - pycam/run_gui.py --help
   - pycam/run_gui.py --version
   - pycam/run_cli.py --help
   - pycam/run_cli.py --version
+  - debian/rules prep-source
   - dpkg-buildpackage -us -uc
