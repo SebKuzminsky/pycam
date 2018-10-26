@@ -490,7 +490,7 @@ class BaseDataContainer:
                                 if isinstance(allowed_key, tuple) and (key == allowed_key[0])}
                     for sub_non_matching in cls._get_not_matching_keys(value, sub_keys):
                         if isinstance(sub_non_matching, tuple):
-                            non_matching.add((key, *sub_non_matching))
+                            non_matching.add((key, ) + sub_non_matching)
                         else:
                             non_matching.add((key, sub_non_matching))
                 else:
