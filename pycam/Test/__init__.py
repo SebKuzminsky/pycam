@@ -24,28 +24,34 @@ import unittest
 class PycamTestCase(unittest.TestCase):
 
     def _compare_vectors(self, v1, v2, max_deviance=0.000001):
+        """ compare two vectors and return 'None' in case of success or an error message """
         # provide readable error messages
         result_difference = "%s != %s" % (v1, v2)
         result_equal = None
         if v1 == v2:
             return result_equal
+        if v1 is None or v2 is None:
+            return False
         for index in range(3):
             if max_deviance < abs(v1[index] - v2[index]):
                 return result_difference
         return result_equal
 
-    def assert_vector_equal(self, v1, v2):
-        self.assertIsNone(self._compare_vectors(v1, v2))
+    def assert_vector_equal(self, v1, v2, msg=None):
+        self.assertIsNone(self._compare_vectors(v1, v2), msg=msg)
 
-    def assert_vector_not_equal(self, v1, v2):
-        self.assertIsNotNone(self._compare_vectors(v1, v2))
+    def assert_vector_not_equal(self, v1, v2, msg=None):
+        self.assertIsNotNone(self._compare_vectors(v1, v2), msg=msg)
 
-    def assert_collision_equal(self, collision1, collision2):
+    def assert_collision_equal(self, collision1, collision2, msg=None):
         ccp1, cp1, d1 = collision1
         ccp2, cp2, d2 = collision2
-        self.assert_vector_equal(ccp1, ccp2)
-        self.assert_vector_equal(cp1, cp2)
-        self.assertAlmostEqual(d1, d2)
+        self.assert_vector_equal(ccp1, ccp2, msg=("Collisions differ ({} != {}) due to ccp"
+                                                  .format(collision1, collision2)))
+        self.assert_vector_equal(cp1, cp2, msg=("Collisions differ ({} != {}) due to cp"
+                                                .format(collision1, collision2)))
+        self.assertAlmostEqual(d1, d2, msg=("Collisions differ ({} != {}) due to distance"
+                                            .format(collision1, collision2)))
 
 
 main = unittest.main
