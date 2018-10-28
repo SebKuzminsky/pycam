@@ -198,6 +198,8 @@ def _get_polygons_from_svg_path(path: svg.path.Path, z, interpolation_accuracy=0
     polygons = []
     previous_segment_end = None
     for segment in path:
+        if not segment:
+            continue
         current_segment_start = segment.point(0)
         current_segment_end = segment.point(1)
         if (previous_segment_end is None) or (previous_segment_end != current_segment_start):
