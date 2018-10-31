@@ -269,6 +269,28 @@ class MultiLevelDictionaryAccess:
         target_dict, target_key = self._get_recursive_access(key_or_keys, create_if_missing=True)
         target_dict[target_key] = value
 
+    def apply_recursive_item_modification(self, test_should_apply, func_get_modified,
+                                          current_keys=None):
+        """ modify every item in a multi-level dictionary
+
+        @param test_should_apply: callable expecting a single parameter (a value) and returning
+            True, if the value is supposed to be modified
+        @param func_get_modified: callable expecting a single parameter (a value) and returning the
+            modified value
+        """
+        if current_keys is None:
+            current_keys = ()
+            target_dict = self._data
+        else:
+            target_dict = self.get_value(current_keys)
+        for key, value in target_dict.items():
+            this_item_keys = current_keys + (key, )
+            if test_should_apply(value):
+                self.set_value(this_item_keys, func_get_modified(value))
+            if isinstance(value, dict):
+                self.apply_recursive_item_modification(test_should_apply, func_get_modified,
+                                                       current_keys=this_item_keys)
+
     def _get_recursive_access(self, key_or_keys, create_if_missing=False):
         """
         @param base_dictionary: the dictionary containing the data to be accessed

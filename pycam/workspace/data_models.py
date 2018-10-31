@@ -431,6 +431,9 @@ class BaseDataContainer:
         result = copy.deepcopy(self._data)
         # fill missing slots with their default values
         result_multi_level = MultiLevelDictionaryAccess(result)
+        # replace all enum variables with their value
+        result_multi_level.apply_recursive_item_modification(lambda value: isinstance(value, Enum),
+                                                             lambda value: value.value)
         for key, value in self.attribute_defaults.items():
             value = copy.deepcopy(value)
             # resolve enums into their string representation
