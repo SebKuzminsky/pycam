@@ -15,12 +15,13 @@ python3
 python3-gi
 python3-opengl
 python3-yaml
+python3-svg.path
 gir1.2-gtk-3.0
 ```
 
 On a Debian or Ubuntu system, you would just type the following:
 ```bash
-sudo apt install python3-gi python3-opengl python3-yaml gir1.2-gtk-3.0
+sudo apt install python3-gi python3-opengl python3-yaml python3-svg.path gir1.2-gtk-3.0
 ```
 Please note that you need to enable the `universe` repository in Ubuntu.
 
