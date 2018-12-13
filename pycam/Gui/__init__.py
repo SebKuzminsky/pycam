@@ -209,13 +209,13 @@ class BaseUI:
             log.info("No previous undo state available - request ignored")
 
     def save_startup_workspace(self):
-        self.save_workspace_to_file(pycam.Gui.Settings.get_workspace_filename(),
-                                    remember_uri=False)
+        return self.save_workspace_to_file(pycam.Gui.Settings.get_workspace_filename(),
+                                           remember_uri=False)
 
     def load_startup_workspace(self):
         filename = pycam.Gui.Settings.get_workspace_filename()
-        self.load_workspace_from_file(filename, remember_uri=False,
-                                      default_content=DEFAULT_WORKSPACE)
+        return self.load_workspace_from_file(filename, remember_uri=False,
+                                             default_content=DEFAULT_WORKSPACE)
 
     def save_workspace_to_file(self, filename, remember_uri=True):
         from pycam.Flow.parser import dump_yaml
@@ -226,8 +226,10 @@ class BaseUI:
         try:
             with open_file_context(filename, "w", True) as out_file:
                 dump_yaml(target=out_file)
+            return True
         except OSError as exc:
             log.error("Failed to store workspace in file '%s': %s", filename, exc)
+            return False
 
     def load_workspace_from_file(self, filename, remember_uri=True, default_content=None):
         if remember_uri:
@@ -242,14 +244,15 @@ class BaseUI:
                 content = default_content
             else:
                 log.error("Failed to read workspace file (%s): %s", filename, exc)
-                return
+                return False
         try:
-            self.load_workspace_from_description(content)
+            return self.load_workspace_from_description(content)
         except PycamBaseException as exc:
             log.warning("Failed to load workspace description from file (%s): %s", filename, exc)
             if default_content:
                 log.info("Falling back to default workspace due to load error")
                 self.load_workspace_from_description(default_content)
+            return False
 
     def load_workspace_dialog(self, filename=None):
         if not filename:
@@ -257,11 +260,11 @@ class BaseUI:
                 "Loading workspace ...", mode_load=True, type_filter=FILE_FILTER_WORKSPACE)
             # no filename selected -> no action
             if not filename:
-                return
+                return False
             remember_uri = True
         else:
             remember_uri = False
-        self.load_workspace_from_file(filename, remember_uri=remember_uri)
+        return self.load_workspace_from_file(filename, remember_uri=remember_uri)
 
     def save_workspace_dialog(self, filename=None):
         if not filename:
@@ -271,11 +274,11 @@ class BaseUI:
                 filename_templates=(self.last_workspace_uri, self.last_model_uri))
             # no filename selected -> no action
             if not filename:
-                return
+                return False
             remember_uri = True
         else:
             remember_uri = False
-        self.save_workspace_to_file(filename, remember_uri=remember_uri)
+        return self.save_workspace_to_file(filename, remember_uri=remember_uri)
 
     def load_workspace_from_description(self, description):
         from pycam.Flow.history import merge_history_and_block_events
@@ -286,6 +289,8 @@ class BaseUI:
                            excluded_sections={CollectionName.TOOLPATHS, CollectionName.EXPORTS},
                            reset=True)
                 validate_collections()
+                return True
+        return False
 
     def reset_workspace(self):
         self.load_workspace_from_description(DEFAULT_WORKSPACE)
