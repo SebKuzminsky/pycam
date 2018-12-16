@@ -22,9 +22,6 @@ from pycam.Geometry.PointUtils import padd, pdot, pmul, pnormalized
 import pycam.Plugins
 
 
-GTK_COLOR_MAX = 65535.0
-
-
 class OpenGLViewModel(pycam.Plugins.PluginBase):
 
     DEPENDS = ["OpenGLWindow", "Models"]

@@ -44,9 +44,6 @@ VIEWS = {
              "up": (0.0, 0.0, 1.0), "znear": 0.01, "zfar": 10000.0, "fovy": 30.0},
 }
 
-# floating point color values are only available since gtk 2.16
-GTK_COLOR_MAX = 65535.0
-
 
 class OpenGLWindow(pycam.Plugins.PluginBase):
 
@@ -344,20 +341,17 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
 
         def get_color_wrapper(obj):
             def gtk_color_to_dict():
-                gtk_color = obj.get_color()
-                alpha = obj.get_alpha()
-                return {"red": gtk_color.red / GTK_COLOR_MAX,
-                        "green": gtk_color.green / GTK_COLOR_MAX,
-                        "blue": gtk_color.blue / GTK_COLOR_MAX,
-                        "alpha": alpha / GTK_COLOR_MAX}
+                color_components = obj.get_rgba()
+                return {"red": color_components.red,
+                        "green": color_components.green,
+                        "blue": color_components.blue,
+                        "alpha": color_components.alpha}
             return gtk_color_to_dict
 
         def set_color_wrapper(obj):
             def set_gtk_color_by_dict(color):
-                obj.set_color(self._gdk.Color(int(color["red"] * GTK_COLOR_MAX),
-                                              int(color["green"] * GTK_COLOR_MAX),
-                                              int(color["blue"] * GTK_COLOR_MAX)))
-                obj.set_alpha(int(color["alpha"] * GTK_COLOR_MAX))
+                obj.set_rgba(
+                    self._gdk.RGBA(color["red"], color["green"], color["blue"], color["alpha"]))
             return set_gtk_color_by_dict
 
         widget = self._gtk.ColorButton()

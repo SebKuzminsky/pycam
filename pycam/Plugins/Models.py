@@ -25,9 +25,6 @@ import pycam.Plugins
 import pycam.workspace.data_models
 
 
-_GTK_COLOR_MAX = 65535.0
-
-
 class Models(pycam.Plugins.ListPluginBase):
 
     UI_FILE = "models.ui"
@@ -100,15 +97,15 @@ class Models(pycam.Plugins.ListPluginBase):
         return True
 
     def _get_model_gdk_color(self, color_dict):
-        return self._gdk.Color(red=int(color_dict["red"] * _GTK_COLOR_MAX),
-                               green=int(color_dict["green"] * _GTK_COLOR_MAX),
-                               blue=int(color_dict["blue"] * _GTK_COLOR_MAX))
+        return self._gdk.RGBA(red=color_dict["red"],
+                              green=color_dict["green"],
+                              blue=color_dict["blue"],
+                              alpha=color_dict["alpha"])
 
     def _apply_model_color_to_button(self, model, color_button):
         color = model.get_application_value("color")
         if color is not None:
-            color_button.set_color(self._get_model_gdk_color(color))
-            color_button.set_alpha(int(color["alpha"] * _GTK_COLOR_MAX))
+            color_button.set_rgba(self._get_model_gdk_color(color))
 
     def _apply_colors_of_selected_models(self, widget=None):
         color_button = self.gui.get_object("ModelColorButton")
@@ -119,14 +116,10 @@ class Models(pycam.Plugins.ListPluginBase):
             self._apply_model_color_to_button(models[0], color_button)
 
     def _store_colors_of_selected_models(self, widget=None):
-        color_button = self.gui.get_object("ModelColorButton")
-        color = self.gui.get_object("ModelColorButton").get_color()
+        color = self.gui.get_object("ModelColorButton").get_rgba()
         for model in self.get_selected():
             model.set_application_value("color", {
-                "red": color.red / _GTK_COLOR_MAX,
-                "green": color.green / _GTK_COLOR_MAX,
-                "blue": color.blue / _GTK_COLOR_MAX,
-                "alpha": color_button.get_alpha() / _GTK_COLOR_MAX})
+                "red": color.red, "green": color.green, "blue": color.blue, "alpha": color.alpha})
         self.core.emit_event("visual-item-updated")
 
     def render_visible_state(self, column, cell, model, m_iter, data):
