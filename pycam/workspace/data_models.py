@@ -328,6 +328,13 @@ class CacheStorage:
     def get_cached(self, inst, args, kwargs, calc_function):
         # every instance manages its own cache
         try:
+            hash(inst)
+        except TypeError:
+            # this item is not cacheable - deliver it directly
+            _log.info("Directly serving value due to non-hashable instance (skipping the cache): "
+                      "%s", inst)
+            return calc_function(inst, *args, **kwargs)
+        try:
             my_cache = _cache[hash(inst)]
         except KeyError:
             my_cache = {}
@@ -691,7 +698,7 @@ class Source(BaseDataContainer):
     def __hash__(self):
         source_type = self.get_value("type")
         if source_type == SourceType.COPY:
-            return hash(self._get_source_copy())
+            raise TypeError("unhashable generic source")
         elif source_type in (SourceType.FILE, SourceType.URL):
             return hash(self.get_value("location"))
         elif source_type == SourceType.MODEL:
