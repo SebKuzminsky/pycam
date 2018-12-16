@@ -103,7 +103,7 @@ EXIT_CODES = {"ok": 0,
 log = pycam.Utils.log.get_logger()
 
 
-def show_gui():
+def show_gui(workspace_filename=None):
     pycam.Utils.set_application_key("pycam-gtk")
     deps_gtk = GuiCommon.requirements_details_gtk()
     report_gtk = GuiCommon.get_dependency_report(deps_gtk, prefix="\t")
@@ -132,13 +132,26 @@ def show_gui():
         # some more initialization
         gui.reset_preferences()
         gui.load_preferences()
-        gui.load_startup_workspace()
+        has_loaded_custom_workspace = False
+        if workspace_filename is None:
+            gui.load_startup_workspace()
+        else:
+            if gui.load_workspace_from_file(workspace_filename):
+                has_loaded_custom_workspace = True
+            else:
+                gui.load_startup_workspace()
 
     # open the GUI
     get_mainloop(use_gtk=True).run()
 
     # optionally save workspace (based on configuration or dialog response)
-    if event_manager.get("save_workspace_on_exit") == QuestionStatus.ASK.value:
+    if has_loaded_custom_workspace:
+        # A custom workspace file was given via command line - we always want to ask before
+        # overwriting it.
+        response = gui.get_question_response(
+            "Save Workspace to '{}'?".format(workspace_filename), True)
+        should_store = response.is_yes
+    elif event_manager.get("save_workspace_on_exit") == QuestionStatus.ASK.value:
         response = gui.get_question_response("Save Workspace?", True, allow_memorize=True)
         if response.should_memorize:
             event_manager.set("save_workspace_on_exit",
@@ -206,7 +219,7 @@ def execute(parser, args, pycam):
         return EXIT_CODES["connection_error"]
 
     try:
-        show_gui()
+        show_gui(workspace_filename=args.workspace_filename)
     except InitializationError as exc:
         EmergencyDialog("PyCAM startup failure", str(exc))
         return EXIT_CODES["requirements"]
@@ -237,6 +250,10 @@ def get_args_parser():
         "--server-auth-key", dest="server_authkey", default="", action="store",
         help=("Secret used for connecting to a remote server or for granting access to remote "
               "clients."))
+    group_workspace = parser.add_argument_group("Workspace")
+    group_workspace.add_argument(
+        "--workspace-file", dest="workspace_filename",
+        help="Workspace file to be loaded during startup")
     group_verbosity = parser.add_argument_group("Verbosity")
     group_verbosity.add_argument(
         "-q", "--quiet", dest="quiet", default=False, action="store_true",
