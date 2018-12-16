@@ -38,12 +38,12 @@
         <col id="5" translatable="yes">/home/...</col>
       </row>
       <row>
-        <col id="0" translatable="yes">OpenGLWindow</col>
-        <col id="1" translatable="yes">Visualize the scene via OpenGL</col>
+        <col id="0" translatable="yes">VisualizationWindow</col>
+        <col id="1" translatable="yes">Visualize the 3D scene</col>
         <col id="2">False</col>
         <col id="3" translatable="yes">Many</col>
         <col id="4">False</col>
-        <col id="5" translatable="yes">http://somewher.org</col>
+        <col id="5" translatable="yes">http://somewhere.org</col>
       </row>
     </data>
   </object>

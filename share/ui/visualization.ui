@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.3 -->
+<!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
   <object class="GtkFrame" id="ColorPrefTab">
@@ -18,6 +18,27 @@
             <property name="can_focus">False</property>
             <property name="row_spacing">3</property>
             <property name="column_spacing">3</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
             <child>
               <placeholder/>
             </child>
@@ -75,7 +96,7 @@
     <property name="value">1</property>
     <property name="step_increment">1</property>
   </object>
-  <object class="GtkFrame" id="OpenGLPrefTab">
+  <object class="GtkFrame" id="VisualizationPrefTab">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="label_xalign">0</property>
@@ -91,82 +112,6 @@
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
             <property name="spacing">2</property>
-            <child>
-              <object class="GtkCheckButton" id="OpenGLPolygon">
-                <property name="label" translatable="yes">Polygon fill</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="xalign">0.5</property>
-                <property name="draw_indicator">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="OpenGLLight">
-                <property name="label" translatable="yes">Lighting</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="xalign">0.5</property>
-                <property name="draw_indicator">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="OpenGLShadow">
-                <property name="label" translatable="yes">Shadows</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="xalign">0.5</property>
-                <property name="draw_indicator">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="OpenGLPerspective">
-                <property name="label" translatable="yes">Perspective view</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="xalign">0.5</property>
-                <property name="draw_indicator">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkCheckButton" id="OpenGLCache">
-                <property name="label" translatable="yes">Use caching</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="tooltip_text" translatable="yes">OpenGL caching (via Display Lists) works without problems for most users. But if your 3D view is distorted or not usable at all, then you should consider to disable caching. The cache improves performance significantly.</property>
-                <property name="xalign">0.5</property>
-                <property name="draw_indicator">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">4</property>
-              </packing>
-            </child>
             <child>
               <object class="GtkBox" id="box7">
                 <property name="visible">True</property>
@@ -208,51 +153,8 @@
         </child>
       </object>
     </child>
-    <child type="label">
-      <object class="GtkLabel" id="OpenGLSettingsFrameLabel">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">&lt;b&gt;OpenGL Settings&lt;/b&gt;</property>
-        <property name="use_markup">True</property>
-      </object>
-    </child>
   </object>
-  <object class="GtkWindow" id="OpenGLWindow">
-    <property name="can_focus">False</property>
-    <property name="title" translatable="yes">PyCAM Visualization</property>
-    <property name="role">pycam-view</property>
-    <child>
-      <object class="GtkBox" id="OpenGLBox">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <child>
-          <object class="GtkAlignment" id="alignment1">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="left_padding">2</property>
-            <child>
-              <object class="GtkBox" id="InfoBox">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="orientation">vertical</property>
-                <property name="spacing">1</property>
-                <child>
-                  <placeholder/>
-                </child>
-              </object>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-  </object>
-  <object class="GtkToggleAction" id="Toggle3DView">
+  <object class="GtkToggleAction" id="ToggleVisualization">
     <property name="label">3D _View</property>
     <property name="short_label">3D _View</property>
     <property name="tooltip">Display the model in the 3D view window.</property>
@@ -388,7 +290,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkLinkButton" id="3DViewHelp">
+      <object class="GtkLinkButton" id="VisualizationViewHelp">
         <property name="label">gtk-help</property>
         <property name="visible">True</property>
         <property name="can_focus">True</property>
@@ -403,6 +305,56 @@
         <property name="fill">True</property>
         <property name="position">3</property>
       </packing>
+    </child>
+  </object>
+  <object class="GtkWindow" id="VisualizationWindow">
+    <property name="can_focus">False</property>
+    <property name="title" translatable="yes">PyCAM Visualization</property>
+    <property name="role">pycam-view</property>
+    <child>
+      <placeholder/>
+    </child>
+    <child>
+      <object class="GtkBox" id="VisualizationBox">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkAlignment" id="alignment1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="left_padding">2</property>
+            <child>
+              <object class="GtkBox" id="InfoBox">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <property name="spacing">1</property>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkImage" id="VisualizationArea">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="stock">gtk-missing-image</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
     </child>
   </object>
 </interface>
