@@ -183,7 +183,9 @@ def parse_path_groups_from_svg_file(filename, callback=None):
     return target.groups
 
 
-def _get_polygons_from_svg_path(path: svg.path.Path, z, accuracy=0.1, min_interpolation_steps=5):
+# TODO: remove the hard-coded accuracy
+def _get_polygons_from_svg_path(path: svg.path.Path, z, accuracy=0.1, min_interpolation_steps=5,
+                                max_interpolation_steps=100):
     """ convert an svg.path.Path object into a list of pycam.Geometry.Polygon.Polygon
 
     @param z: the wanted z value for all (flat by design) paths
@@ -201,7 +203,8 @@ def _get_polygons_from_svg_path(path: svg.path.Path, z, accuracy=0.1, min_interp
             step_count = 1
         else:
             # we need to add points on the (non-straight) way
-            step_count = max(min_interpolation_steps, math.ceil(segment.length() / accuracy))
+            step_count = max(min_interpolation_steps,
+                             min(math.ceil(segment.length() / accuracy), max_interpolation_steps))
         previous_path_point = None
         for step_index in range(0, step_count + 1):
             position = segment.point(step_index / step_count)
