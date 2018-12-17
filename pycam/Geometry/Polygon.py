@@ -268,7 +268,10 @@ class Polygon(TransformableContainer):
                 self.reset_cache()
 
     def __len__(self):
-        return len(self._points)
+        if self.is_closed:
+            return len(self._points) + 1
+        else:
+            return len(self._points)
 
     def __bool__(self):
         return len(self._points) > 0
