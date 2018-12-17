@@ -201,7 +201,7 @@ def _get_polygons_from_svg_path(path: svg.path.Path, z, accuracy=0.1, min_interp
             step_count = 1
         else:
             # we need to add points on the (non-straight) way
-            step_count = min(min_interpolation_steps, math.ceil(segment.length() / accuracy))
+            step_count = max(min_interpolation_steps, math.ceil(segment.length() / accuracy))
         previous_path_point = None
         for step_index in range(0, step_count + 1):
             position = segment.point(step_index / step_count)
