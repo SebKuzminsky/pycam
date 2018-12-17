@@ -276,6 +276,11 @@ class Polygon(TransformableContainer):
     def __bool__(self):
         return len(self._points) > 0
 
+    def __iter__(self):
+        yield from self._points
+        if self.is_closed:
+            yield self._points[0]
+
     def __str__(self):
         if self.is_closed:
             status = "closed"

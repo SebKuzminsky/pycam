@@ -239,6 +239,9 @@ class Model(BaseModel):
         """
         return len(self._triangles)
 
+    def __iter__(self):
+        yield from self._triangles
+
     def copy(self):
         result = self.__class__(use_kdtree=self._use_kdtree)
         for triangle in self.triangles():
@@ -328,6 +331,9 @@ class ContourModel(BaseModel):
         This is mainly useful for evaluating an empty model as False.
         """
         return len(self._line_groups)
+
+    def __iter__(self):
+        yield from self.get_polygons()
 
     def copy(self):
         result = self.__class__(plane=self._plane.copy())
