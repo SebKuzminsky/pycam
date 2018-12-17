@@ -308,6 +308,22 @@ class Model(BaseModel):
                   [len(p.get_lines()) for p in contour.get_polygons()])
         return contour
 
+    def to_x3d(self, color):
+        yield "<Shape>"
+        yield "<Appearance>"
+        yield ('<Material diffuseColor="{:f} {:f} {:f}" transparency="{:f}" />'
+               .format(color["red"], color["green"], color["blue"], 1 - color["alpha"]))
+        yield "</Appearance>"
+        yield "<TriangleSet>"
+        yield '<Coordinate point="'
+        for triangle in self:
+            p1, p2, p3 = triangle.get_points()
+            # use the proper direction in order to let normals point outwards
+            yield " ".join("{:f} {:f} {:f}".format(*point) for point in (p1, p3, p2))
+        yield '"/>'
+        yield "</TriangleSet>"
+        yield "</Shape>"
+
 
 class ContourModel(BaseModel):
 
@@ -642,6 +658,21 @@ class ContourModel(BaseModel):
             if new_polygon:
                 result.append(new_polygon)
         return result or None
+
+    def to_x3d(self, color):
+        for polygon in self:
+            yield "<Shape>"
+            yield "<Appearance>"
+            yield ('<Material emissiveColor="{:f} {:f} {:f}" transparency="{:f}" />'
+                   .format(color["red"], color["green"], color["blue"], 1 - color["alpha"]))
+            yield "</Appearance>"
+            yield '<LineSet vertexCount="{:d}">'.format(len(polygon))
+            yield '<Coordinate point="'
+            for point in polygon:
+                yield "{:f} {:f} {:f}".format(*point)
+            yield '"/>'
+            yield "</LineSet>"
+            yield "</Shape>"
 
 
 class PolygonGroup:
