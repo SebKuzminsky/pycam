@@ -1,6 +1,6 @@
 """
 Copyright 2008-2010 Lode Leroy
-Copyright 2010 Lars Kruse <devel@sumpfralle.de>
+Copyright 2010-2018 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
 
@@ -25,14 +25,6 @@ from pycam.Geometry.intersection import intersect_circle_plane, intersect_circle
 from pycam.Geometry.PointUtils import padd, psub
 
 
-try:
-    import OpenGL.GL as GL
-    import OpenGL.GLU as GLU
-    GL_enabled = True
-except ImportError:
-    GL_enabled = False
-
-
 class CylindricalCutter(BaseCutter):
 
     def __init__(self, radius, **kwargs):
@@ -42,18 +34,8 @@ class CylindricalCutter(BaseCutter):
     def __repr__(self):
         return "CylindricalCutter<%s,%s>" % (self.location, self.radius)
 
-    def to_opengl(self):
-        if not GL_enabled:
-            return
-        GL.glPushMatrix()
-        GL.glTranslate(self.center[0], self.center[1], self.center[2])
-        if not hasattr(self, "_cylinder"):
-            self._cylinder = GLU.gluNewQuadric()
-        GLU.gluCylinder(self._cylinder, self.radius, self.radius, self.height, 10, 10)
-        if not hasattr(self, "_disk"):
-            self._disk = GLU.gluNewQuadric()
-        GLU.gluDisk(self._disk, 0, self.radius, 10, 10)
-        GL.glPopMatrix()
+    def get_tool_x3d(self):
+        yield '<Cylinder radius="{:f}" height="{:f}" />'.format(self.radius, self.height)
 
     def moveto(self, location, **kwargs):
         BaseCutter.moveto(self, location, **kwargs)

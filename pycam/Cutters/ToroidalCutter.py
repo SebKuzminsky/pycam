@@ -1,6 +1,6 @@
 """
 Copyright 2008-2010 Lode Leroy
-Copyright 2010 Lars Kruse <devel@sumpfralle.de>
+Copyright 2010-2018 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
 
@@ -24,15 +24,6 @@ from pycam.Geometry.intersection import intersect_torus_plane, intersect_torus_p
         intersect_circle_plane, intersect_circle_point, intersect_cylinder_point, \
         intersect_cylinder_line, intersect_circle_line
 from pycam.Geometry.PointUtils import padd, pdot, pmul, psub
-
-
-try:
-    import OpenGL.GL as GL
-    import OpenGL.GLU as GLU
-    import OpenGL.GLUT as GLUT
-    GL_enabled = True
-except ImportError:
-    GL_enabled = False
 
 
 class ToroidalCutter(BaseCutter):
@@ -69,22 +60,13 @@ class ToroidalCutter(BaseCutter):
         return ((self.radius, self.majorradius, self.minorradius)
                 < (other.radius, other.majorradius, other.minorradius))
 
-    def to_opengl(self):
-        if not GL_enabled:
-            return
-        GL.glPushMatrix()
-        GL.glTranslate(self.center[0], self.center[1], self.center[2])
-        GLUT.glutSolidTorus(self.minorradius, self.majorradius, 10, 20)
-        if not hasattr(self, "_cylinder"):
-            self._cylinder = GLU.gluNewQuadric()
-        GLU.gluCylinder(self._cylinder, self.radius, self.radius, self.height, 10, 20)
-        GL.glPopMatrix()
-        GL.glPushMatrix()
-        GL.glTranslate(self.location[0], self.location[1], self.location[2])
-        if not hasattr(self, "_disk"):
-            self._disk = GLU.gluNewQuadric()
-        GLU.gluDisk(self._disk, 0, self.majorradius, 20, 10)
-        GL.glPopMatrix()
+    def get_tool_x3d(self):
+        yield '<Cylinder radius="{:f}" height="{:f}" />'.format(self.radius, self.height)
+        yield '<Torus innerRadius="{:f}" outerRadius="{:f}" />'.format(self.minorradius,
+                                                                       self.majorradius)
+        yield '<Transform center="{:f} {:f} {:f}">'.format(psub(self.location, self.center))
+        yield '<Disk2D innerRadius="{:f}" outerRadius="{:f}" />'.format(0, self.majorradius)
+        yield "</Transform>"
 
     def moveto(self, location, **kwargs):
         BaseCutter.moveto(self, location, **kwargs)

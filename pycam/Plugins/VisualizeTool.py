@@ -1,5 +1,5 @@
 """
-Copyright 2017 Lars Kruse <devel@sumpfralle.de>
+Copyright 2018 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
 
@@ -20,30 +20,27 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import pycam.Plugins
 
 
-class OpenGLViewTool(pycam.Plugins.PluginBase):
+class VisualizeTool(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["OpenGLWindow"]
-    CATEGORIES = ["Visualization", "OpenGL", "Tool"]
+    DEPENDS = {"Visualization"}
+    CATEGORIES = {"Visualization", "Tool"}
 
     def setup(self):
-        self.core.register_event("visualize-items", self.draw_tool)
+        self.core.register_chain("generate_x3d", self.generate_x3d)
         self.core.get("register_display_item")("show_tool", "Show Tool", 70)
         self.core.get("register_color")("color_tool", "Tool", 50)
         self.core.emit_event("visual-item-updated")
         return True
 
     def teardown(self):
-        self.core.unregister_event("visualize-items", self.draw_tool)
+        self.core.unregister_chain("generate_x3d", self.generate_x3d)
         self.core.get("unregister_display_item")("show_tool")
         self.core.get("unregister_color")("color_tool")
         self.core.emit_event("visual-item-updated")
 
-    def draw_tool(self):
+    def generate_x3d(self, tree):
         if self.core.get("show_tool"):
             tool = self.core.get("current_tool")
             if tool is not None:
                 color = self.core.get("color_tool")
-                GL = self._GL
-                GL.glColor4f(color["red"], color["green"], color["blue"], color["alpha"])
-                GL.glFinish()
-                tool.to_opengl()
+                tool.to_x3d(color)

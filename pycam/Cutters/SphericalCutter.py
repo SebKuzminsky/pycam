@@ -1,6 +1,6 @@
 """
 Copyright 2008-2010 Lode Leroy
-Copyright 2010 Lars Kruse <devel@sumpfralle.de>
+Copyright 2010-2018 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
 
@@ -25,14 +25,6 @@ from pycam.Geometry.intersection import intersect_sphere_plane, intersect_sphere
 from pycam.Geometry.PointUtils import padd, pdot, pmul, pnormsq, psub
 
 
-try:
-    import OpenGL.GL as GL
-    import OpenGL.GLU as GLU
-    GL_enabled = True
-except ImportError:
-    GL_enabled = False
-
-
 class SphericalCutter(BaseCutter):
 
     def __init__(self, radius, **kwargs):
@@ -42,18 +34,8 @@ class SphericalCutter(BaseCutter):
     def __repr__(self):
         return "SphericalCutter<%s,%s>" % (self.location, self.radius)
 
-    def to_opengl(self):
-        if not GL_enabled:
-            return
-        GL.glPushMatrix()
-        GL.glTranslate(self.center[0], self.center[1], self.center[2])
-        if not hasattr(self, "_sphere"):
-            self._sphere = GLU.gluNewQuadric()
-        GLU.gluSphere(self._sphere, self.radius, 10, 10)
-        if not hasattr(self, "_cylinder"):
-            self._cylinder = GLU.gluNewQuadric()
-        GLU.gluCylinder(self._cylinder, self.radius, self.radius, self.height, 10, 10)
-        GL.glPopMatrix()
+    def get_tool_x3d(self):
+        yield '<Sphere radius="{:f}" />'.format(self.radius)
 
     def moveto(self, location, **kwargs):
         BaseCutter.moveto(self, location, **kwargs)
