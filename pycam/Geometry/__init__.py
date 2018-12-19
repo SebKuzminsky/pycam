@@ -1,5 +1,5 @@
 """
-Copyright 2010 Lars Kruse <devel@sumpfralle.de>
+Copyright 2010-2018 Lars Kruse <devel@sumpfralle.de>
 Copyright 2008-2009 Lode Leroy
 
 This file is part of PyCAM.
@@ -23,6 +23,7 @@ import decimal
 import math
 
 import pycam.Utils.log
+
 _log = pycam.Utils.log.get_logger()
 
 
@@ -105,6 +106,33 @@ class Box3D(collections.namedtuple("Box3D", ("lower", "upper")), DimensionalObje
     @property
     def maxz(self):
         return self.upper.z
+
+    def to_x3d(self, color):
+        # avoid circular imports by importing late
+        from pycam.Utils.x3d import get_x3d_line
+        minx, miny, minz = self.lower
+        maxx, maxy, maxz = self.upper
+        p1 = (minx, miny, minz)
+        p2 = (minx, maxy, minz)
+        p3 = (maxx, maxy, minz)
+        p4 = (maxx, miny, minz)
+        p5 = (minx, miny, maxz)
+        p6 = (minx, maxy, maxz)
+        p7 = (maxx, maxy, maxz)
+        p8 = (maxx, miny, maxz)
+        # all combinations of neighbouring corners
+        line_sets = []
+        # lower rectangle
+        line_sets.append((p1, p2, p3, p4, p1))
+        # upper rectangle
+        line_sets.append((p5, p6, p7, p8, p5))
+        # vertical connections
+        line_sets.append((p1, p5))
+        line_sets.append((p2, p6))
+        line_sets.append((p3, p7))
+        line_sets.append((p4, p8))
+        for line_set in line_sets:
+            yield from get_x3d_line(line_set, color)
 
 
 def _id_generator():
