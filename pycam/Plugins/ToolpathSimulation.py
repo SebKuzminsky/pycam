@@ -26,8 +26,8 @@ import pycam.Plugins
 class ToolpathSimulation(pycam.Plugins.PluginBase):
 
     UI_FILE = "toolpath_simulation.ui"
-    DEPENDS = ["Toolpaths", "OpenGLViewToolpath"]
-    CATEGORIES = ["Toolpath"]
+    DEPENDS = {"Toolpaths", "VisualizeToolpath"}
+    CATEGORIES = {"Toolpath"}
 
     def setup(self):
         self._running = None
