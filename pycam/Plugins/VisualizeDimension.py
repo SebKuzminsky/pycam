@@ -22,15 +22,15 @@ from pycam.Geometry import Box3D, Point3D
 import pycam.Plugins
 
 
-class OpenGLViewDimension(pycam.Plugins.PluginBase):
+class VisualizeDimension(pycam.Plugins.PluginBase):
 
-    UI_FILE = "opengl_view_dimension.ui"
-    DEPENDS = ["Bounds", "Models", "OpenGLWindow"]
-    CATEGORIES = ["Model", "Visualization", "OpenGL"]
+    UI_FILE = "visualize_dimension.ui"
+    DEPENDS = {"Bounds", "Models", "Visualization"}
+    CATEGORIES = {"Model", "Visualization"}
 
     def setup(self):
         if self.gui:
-            self.core.register_ui("opengl_window", "Dimension",
+            self.core.register_ui("visualization_window", "Dimension",
                                   self.gui.get_object("DimensionTable"), weight=20)
             self.core.get("register_display_item")("show_dimensions", "Show Dimensions", 60)
             self._event_handlers = (
@@ -43,7 +43,7 @@ class OpenGLViewDimension(pycam.Plugins.PluginBase):
     def teardown(self):
         if self.gui:
             self.unregister_event_handlers(self._event_handlers)
-            self.core.unregister_ui("opengl_window", self.gui.get_object("DimensionTable"))
+            self.core.unregister_ui("visualization_window", self.gui.get_object("DimensionTable"))
             self.core.get("unregister_display_item")("show_dimensions")
 
     def update_model_dimensions(self, widget=None):
