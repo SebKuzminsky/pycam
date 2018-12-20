@@ -87,7 +87,7 @@ except ImportError:
         # https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Version
         VERSION = VERSION.replace('-', '.')
 
-    except (subprocess.CalledProcessError, OSError) as exc:
+    except (subprocess.CalledProcessError, OSError):
         # No pycam/Version.py and git failed to give us a version number, give up.
         VERSION = "0.0-unknown"
 
