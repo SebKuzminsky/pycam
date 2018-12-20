@@ -54,18 +54,6 @@ def _get_plugin_imports():
     except ImportError:
         _log.warning("Failed to import GTK3 module.  Maybe you want to install 'python3-gi' "
                      "for pycam's graphical user interface.")
-    if result["gtk"]:
-        try:
-            import OpenGL.GL
-            import OpenGL.GLU
-            import OpenGL.GLUT
-            result["GL"] = OpenGL.GL
-            result["GLU"] = OpenGL.GLU
-            result["GLUT"] = OpenGL.GLUT
-        except ImportError:
-            # OpenGL-related plugins will complain later about the missing dependency
-            _log.warning("Failed to import OpenGL module.  Maybe you want to install "
-                         "'python3-opengl' for the 3D visualization.")
     return result
 
 

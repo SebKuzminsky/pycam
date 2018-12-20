@@ -18,18 +18,10 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-try:
-    import OpenGL.GL as GL
-    GL_enabled = True
-except ImportError:
-    GL_enabled = False
-
 from pycam.Geometry import epsilon, TransformableContainer, IDGenerator
 from pycam.Geometry.Plane import Plane
 from pycam.Geometry.PointUtils import (padd, pcross, pdist, pdot, pmul, pnorm, pnormsq,
                                        pnormalized, psub)
-# OpenGLTools will be imported later, if necessary
-# import pycam.Gui.OpenGLTools
 
 
 class Line(IDGenerator, TransformableContainer):
@@ -150,22 +142,6 @@ class Line(IDGenerator, TransformableContainer):
         # True if the two parts of the line have the same direction or if the
         # point is self.p1 or self.p2.
         return (dir1 == dir2 == self.dir) or (dir1 is None) or (dir2 is None)
-
-    def to_opengl(self, color=None, show_directions=False):
-        if not GL_enabled:
-            return
-        if color is not None:
-            GL.glColor4f(*color)
-        GL.glBegin(GL.GL_LINES)
-        GL.glVertex3f(self.p1[0], self.p1[1], self.p1[2])
-        GL.glVertex3f(self.p2[0], self.p2[1], self.p2[2])
-        GL.glEnd()
-        # (optional) draw a cone for visualizing the direction of each line
-        if show_directions and (self.len > 0):
-            # We can't import OpenGLTools in the header - otherwise server
-            # mode without GTK will break.
-            import pycam.Gui.OpenGLTools
-            pycam.Gui.OpenGLTools.draw_direction_cone(self.p1, self.p2)
 
     def get_intersection(self, line, infinite_lines=False):
         """ Get the point of intersection between two lines. Intersections

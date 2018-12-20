@@ -17,12 +17,6 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-try:
-    import OpenGL.GL as GL
-    GL_enabled = True
-except ImportError:
-    GL_enabled = False
-
 from pycam.Geometry import IDGenerator
 
 
@@ -109,66 +103,6 @@ class Kdtree(IDGenerator):
                 return s
         else:
             return "(%s,%d:%g,%s)" % (self.lo, self.cutdim, self.cutval, self.hi)
-
-    def to_opengl(self, minx, maxx, miny, maxy, minz, maxz):
-        if not GL_enabled:
-            return
-        if self.bucket:
-            GL.glBegin(GL.GL_LINES)
-            GL.glVertex3d(minx, miny, minz)
-            GL.glVertex3d(minx, miny, maxz)
-            GL.glVertex3d(minx, maxy, minz)
-            GL.glVertex3d(minx, maxy, maxz)
-            GL.glVertex3d(maxx, miny, minz)
-            GL.glVertex3d(maxx, miny, maxz)
-            GL.glVertex3d(maxx, maxy, minz)
-            GL.glVertex3d(maxx, maxy, maxz)
-
-            GL.glVertex3d(minx, miny, minz)
-            GL.glVertex3d(maxx, miny, minz)
-            GL.glVertex3d(minx, maxy, minz)
-            GL.glVertex3d(maxx, maxy, minz)
-            GL.glVertex3d(minx, miny, maxz)
-            GL.glVertex3d(maxx, miny, maxz)
-            GL.glVertex3d(minx, maxy, maxz)
-            GL.glVertex3d(maxx, maxy, maxz)
-
-            GL.glVertex3d(minx, miny, minz)
-            GL.glVertex3d(minx, maxy, minz)
-            GL.glVertex3d(maxx, miny, minz)
-            GL.glVertex3d(maxx, maxy, minz)
-            GL.glVertex3d(minx, miny, maxz)
-            GL.glVertex3d(minx, maxy, maxz)
-            GL.glVertex3d(maxx, miny, maxz)
-            GL.glVertex3d(maxx, maxy, maxz)
-            GL.glEnd()
-        elif self.dim == 6:
-            if self.cutdim == 0 or self.cutdim == 2:
-                self.lo.to_opengl(minx, self.cutval, miny, maxy, minz, maxz)
-                self.hi.to_opengl(self.cutval, maxx, miny, maxy, minz, maxz)
-            elif self.cutdim == 1 or self.cutdim == 3:
-                self.lo.to_opengl(minx, maxx, miny, self.cutval, minz, maxz)
-                self.hi.to_opengl(minx, maxx, self.cutval, maxy, minz, maxz)
-            elif self.cutdim == 4 or self.cutdim == 5:
-                self.lo.to_opengl(minx, maxx, miny, maxx, minz, self.cutval)
-                self.hi.to_opengl(minx, maxx, miny, maxy, self.cutval, maxz)
-        elif self.dim == 4:
-            if self.cutdim == 0 or self.cutdim == 2:
-                self.lo.to_opengl(minx, self.cutval, miny, maxy, minz, maxz)
-                self.hi.to_opengl(self.cutval, maxx, miny, maxy, minz, maxz)
-            elif self.cutdim == 1 or self.cutdim == 3:
-                self.lo.to_opengl(minx, maxx, miny, self.cutval, minz, maxz)
-                self.hi.to_opengl(minx, maxx, self.cutval, maxy, minz, maxz)
-        elif self.dim == 3:
-            if self.cutdim == 0:
-                self.lo.to_opengl(minx, self.cutval, miny, maxy, minz, maxz)
-                self.hi.to_opengl(self.cutval, maxx, miny, maxy, minz, maxz)
-            elif self.cutdim == 1:
-                self.lo.to_opengl(minx, maxx, miny, self.cutval, minz, maxz)
-                self.hi.to_opengl(minx, maxx, self.cutval, maxy, minz, maxz)
-            elif self.cutdim == 2:
-                self.lo.to_opengl(minx, maxx, miny, maxy, minz, self.cutval)
-                self.hi.to_opengl(minx, maxx, miny, maxy, self.cutval, maxz)
 
     def dist(self, n1, n2):
         dist = 0

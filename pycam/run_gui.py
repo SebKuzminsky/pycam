@@ -67,28 +67,6 @@ if hasattr(sys, "frozen") and sys.frozen and "_MEIPASS2" in os.environ:
 # The installer for PyODE does not add the required PATH variable.
 if pycam.Utils.get_platform() == pycam.Utils.OSPlatform.WINDOWS:
     os.environ["PATH"] = os.environ.get("PATH", "") + os.path.pathsep + sys.exec_prefix
-# The GtkGLExt installer does not add the required PATH variable.
-if pycam.Utils.get_platform() == pycam.Utils.OSPlatform.WINDOWS:
-    import _winreg
-    path = None
-    try:
-        reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
-        regkey = _winreg.OpenKey(reg, r"SOFTWARE\GtkGLExt\1.0\Runtime")
-    except WindowsError:
-        regkey = None
-    index = 0
-    while regkey:
-        try:
-            key, value = _winreg.EnumValue(regkey, index)[:2]
-        except WindowsError:
-            # no more items left
-            break
-        if key == "Path":
-            path = os.path.join(str(value), "bin")
-            break
-        index += 1
-    if path:
-        os.environ["PATH"] = os.environ.get("PATH", "") + os.path.pathsep + path
 
 
 EXIT_CODES = {"ok": 0,

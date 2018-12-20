@@ -32,15 +32,9 @@ DEPENDENCY_DESCRIPTION = {
     "gtk": ("Python bindings for GTK+",
             "Install the package 'python-gtk2'",
             "see http://www.bonifazi.eu/appunti/pygtk_windows_installer.exe"),
-    "opengl": ("Python bindings for OpenGL",
-               "Install the package 'python-opengl'",
-               "see http://www.bonifazi.eu/appunti/pygtk_windows_installer.exe"),
-    "gtkgl": ("GTK extension for OpenGL",
-              "The OpenGL widget for GTK3 is not yet supported by pycam",
-              "code contributions are welcome - see http://pycam.sf.net/"),
-    "gl": ("OpenGL support of graphic driver",
-           "Your current graphic driver does not seem to support OpenGL.",
-           ""),
+    "webkitgtk": ("Python bindings for WebKitGTK",
+                  "Install the package 'libwebkit2gtk'",
+                  "The 3D preview can be used in a separate browser."),
 }
 
 REQUIREMENTS_LINK = "http://pycam.sourceforge.net/requirements"
@@ -114,21 +108,11 @@ def requirements_details_gtk():
 def recommends_details_gtk():
     result = {}
     try:
-        import gtk.gtkgl  # noqa F401
-        result["gtkgl"] = True
-        result["gl"] = True
+        import gi.repository.WebKit2  # noqa F401
+        result["webkitgtk"] = True
     except ImportError as err_msg:
-        log.warn("Failed to import OpenGL for GTK (ImportError): %s", str(err_msg))
-        result["gtkgl"] = False
-    except RuntimeError as err_msg:
-        log.warn("Failed to import OpenGL for GTK (RuntimeError): %s", str(err_msg))
-        result["gl"] = False
-    try:
-        import OpenGL  # noqa F401
-        result["opengl"] = True
-    except ImportError as err_msg:
-        log.warn("Failed to import OpenGL: %s", str(err_msg))
-        result["opengl"] = False
+        log.warn("Failed to import WebKitGTK: %s", str(err_msg))
+        result["webkitgtk"] = False
 
 
 def check_dependencies(details):
