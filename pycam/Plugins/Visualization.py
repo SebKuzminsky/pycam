@@ -103,18 +103,12 @@ class Visualization(pycam.Plugins.PluginBase):
                                    ("BottomView", "bottom")):
                 self._gtk_handlers.append((self.gui.get_object(obj_name), "clicked",
                                            self.rotate_view, self.VIEWS[view]))
-            self.area = self.gui.get_object("VisualizationArea")
-            # TODO: add a "resize" handler as soon as the final object type is selected
-            # self._gtk_handlers.append((self.area, "resize", self._resize_window))
-            self.gui.get_object("VisualizationBox").pack_end(self.area, fill=True, expand=True,
-                                                             padding=0)
             self._event_handlers = (("visual-item-updated", self.update_view),
-                                    ("visualization-state-changed", self._update_widgets))
+                                    ("visualization-state-changed", self._update_widgets),
+                                    ("visual-item-updated", "visualization-updated"))
             # handlers
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
-            # show the window - the handlers _must_ be registered before "show"
-            self.area.show()
             toggle_3d.set_active(True)
             # refresh display
             self.core.emit_event("visual-item-updated")
@@ -142,9 +136,6 @@ class Visualization(pycam.Plugins.PluginBase):
             self.core.get("unregister_display_item")("show_directions")
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
-            # the area will be created during setup again
-            self.gui.get_object("VisualizationBox").remove(self.area)
-            self.area = None
             self.core.unregister_ui("preferences", self.gui.get_object("DisplayItemsPrefTab"))
             self.core.unregister_ui("preferences", self.gui.get_object("VisualizationPrefTab"))
             self.core.unregister_ui("visualization_window", self.gui.get_object("ViewControls"))
@@ -354,5 +345,4 @@ class Visualization(pycam.Plugins.PluginBase):
 
     def trigger_rendering(self):
         # TODO: trigger a rendering as soon as final visualization object is selected
-        # self.area.queue_render()
         pass
