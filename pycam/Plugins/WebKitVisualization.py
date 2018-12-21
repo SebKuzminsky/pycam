@@ -42,7 +42,7 @@ class WebKitVisualization(pycam.Plugins.PluginBase):
         self.view_settings.set_allow_file_access_from_file_urls(True)
         self.view_settings.set_enable_write_console_messages_to_stdout(True)
         self.view_settings.set_enable_webgl(True)
-        self.core.register_ui("visualization_window", "3D Preview", self.view, weight=70)
+        self.core.register_ui("visualization_view", "3D Preview", self.view, weight=70)
         self.view.set_size_request(400, 400)
         # TODO: deliver the data via a port or socket
         self.view.load_uri("file://{}/pycam-preview.html".format(os.getcwd()))
@@ -52,7 +52,7 @@ class WebKitVisualization(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.unregister_event_handlers(self._event_handlers)
-        self.core.unregister_ui("visualization_window", self.view)
+        self.core.unregister_ui("visualization_view", self.view)
         self.view.hide()
         self.view.try_close()
         del self.view

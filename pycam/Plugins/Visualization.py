@@ -70,6 +70,11 @@ class Visualization(pycam.Plugins.PluginBase):
                 functools.partial(remove_container_children, detail_box))
             self.core.register_ui("visualization_details", "Views",
                                   self.gui.get_object("ViewControls"), weight=0)
+            view_box = self.gui.get_object("VisualizationBox")
+            self.core.register_ui_section(
+                "visualization_view",
+                functools.partial(add_container_widget, view_box, False, True),
+                functools.partial(remove_container_children, view_box))
             # color box
             color_frame = self.gui.get_object("ColorPrefTab")
             color_frame.unparent()
@@ -145,6 +150,7 @@ class Visualization(pycam.Plugins.PluginBase):
             self.core.unregister_ui("preferences", self.gui.get_object("VisualizationPrefTab"))
             self.core.unregister_ui("visualization_details", self.gui.get_object("ViewControls"))
             self.core.unregister_ui("preferences", self.gui.get_object("ColorPrefTab"))
+            self.core.unregister_ui_section("visualization_view")
             self.core.unregister_ui_section("visualization_details")
         self.clear_state_items()
 
