@@ -34,7 +34,7 @@ class VisualizeGrid(pycam.Plugins.PluginBase):
     def setup(self):
         if self.gui:
             self.box = self.gui.get_object("GridSizeBox")
-            self.core.register_ui("visualization_window", "Grid", self.box, weight=30)
+            self.core.register_ui("visualization_details", "Grid", self.box, weight=30)
             self.core.register_event("visual-item-updated", self._update_widget_state)
         self.core.register_chain("generate_x3d", self.generate_x3d)
         self.core.get("register_display_item")("show_grid", "Show Base Grid", 80)
@@ -45,7 +45,7 @@ class VisualizeGrid(pycam.Plugins.PluginBase):
     def teardown(self):
         if self.gui:
             self.core.unregister_event("visual-item-updated", self._update_widget_state)
-            self.core.unregister_ui("visualization_window", self.box)
+            self.core.unregister_ui("visualization_details", self.box)
         self.core.unregister_chain("generate_x3d", self.generate_x3d)
         self.core.get("unregister_color")("color_grid")
         self.core.get("unregister_display_item")("show_grid")

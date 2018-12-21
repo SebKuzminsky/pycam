@@ -1,5 +1,5 @@
 """
-Copyright 2011 Lars Kruse <devel@sumpfralle.de>
+Copyright 2011-2018 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
 
@@ -30,7 +30,7 @@ class VisualizeDimension(pycam.Plugins.PluginBase):
 
     def setup(self):
         if self.gui:
-            self.core.register_ui("visualization_window", "Dimension",
+            self.core.register_ui("visualization_details", "Dimension",
                                   self.gui.get_object("DimensionTable"), weight=20)
             self.core.get("register_display_item")("show_dimensions", "Show Dimensions", 60)
             self._event_handlers = (
@@ -43,7 +43,7 @@ class VisualizeDimension(pycam.Plugins.PluginBase):
     def teardown(self):
         if self.gui:
             self.unregister_event_handlers(self._event_handlers)
-            self.core.unregister_ui("visualization_window", self.gui.get_object("DimensionTable"))
+            self.core.unregister_ui("visualization_details", self.gui.get_object("DimensionTable"))
             self.core.get("unregister_display_item")("show_dimensions")
 
     def update_model_dimensions(self, widget=None):

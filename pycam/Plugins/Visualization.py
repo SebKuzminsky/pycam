@@ -61,9 +61,9 @@ class Visualization(pycam.Plugins.PluginBase):
                 detail_box.pack_start(item, fill=True, expand=True, padding=0)
                 item.show()
 
-            self.core.register_ui_section("visualization_window", add_widget_to_window,
+            self.core.register_ui_section("visualization_details", add_widget_to_window,
                                           clear_window)
-            self.core.register_ui("visualization_window", "Views",
+            self.core.register_ui("visualization_details", "Views",
                                   self.gui.get_object("ViewControls"), weight=0)
             # color box
             color_frame = self.gui.get_object("ColorPrefTab")
@@ -138,9 +138,9 @@ class Visualization(pycam.Plugins.PluginBase):
             self.unregister_event_handlers(self._event_handlers)
             self.core.unregister_ui("preferences", self.gui.get_object("DisplayItemsPrefTab"))
             self.core.unregister_ui("preferences", self.gui.get_object("VisualizationPrefTab"))
-            self.core.unregister_ui("visualization_window", self.gui.get_object("ViewControls"))
+            self.core.unregister_ui("visualization_details", self.gui.get_object("ViewControls"))
             self.core.unregister_ui("preferences", self.gui.get_object("ColorPrefTab"))
-            self.core.unregister_ui_section("visualization_window")
+            self.core.unregister_ui_section("visualization_details")
         self.clear_state_items()
 
     def update_view(self, widget=None, data=None):
