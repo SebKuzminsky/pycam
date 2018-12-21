@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import functools
+
 import pycam.Plugins
 
 
@@ -49,20 +51,23 @@ class Visualization(pycam.Plugins.PluginBase):
             # info bar above the model view
             detail_box = self.gui.get_object("InfoBox")
 
-            def clear_window():
-                for child in detail_box.get_children():
-                    detail_box.remove(child)
+            def remove_container_children(container):
+                for child in container.get_children():
+                    container.remove(child)
 
-            def add_widget_to_window(item, name):
-                if len(detail_box.get_children()) > 0:
-                    sep = self._gtk.HSeparator()
-                    detail_box.pack_start(sep, fill=True, expand=True, padding=0)
-                    sep.show()
-                detail_box.pack_start(item, fill=True, expand=True, padding=0)
+            def add_container_widget(container, with_separator, expand, item, name):
+                if with_separator:
+                    if len(container.get_children()) > 0:
+                        sep = self._gtk.HSeparator()
+                        container.pack_start(sep, fill=True, expand=False, padding=0)
+                        sep.show()
+                container.pack_start(item, fill=True, expand=expand, padding=0)
                 item.show()
 
-            self.core.register_ui_section("visualization_details", add_widget_to_window,
-                                          clear_window)
+            self.core.register_ui_section(
+                "visualization_details",
+                functools.partial(add_container_widget, detail_box, True, False),
+                functools.partial(remove_container_children, detail_box))
             self.core.register_ui("visualization_details", "Views",
                                   self.gui.get_object("ViewControls"), weight=0)
             # color box
