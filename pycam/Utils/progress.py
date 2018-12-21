@@ -21,7 +21,10 @@ class ProgressContext:
             self._progress.finish()
 
     def update(self, *args, **kwargs):
-        get_mainloop().update()
+        mainloop = get_mainloop()
+        if mainloop is None:
+            return False
+        mainloop.update()
         if self._progress:
             return self._progress.update(*args, **kwargs)
         else:

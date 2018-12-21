@@ -28,7 +28,11 @@ def get_mainloop(use_gtk=False):
     try:
         mainloop = __mainloop[0]
     except IndexError:
-        mainloop = GtkMainLoop()
+        try:
+            mainloop = GtkMainLoop()
+        except ImportError:
+            log.warning("No event loop is available")
+            mainloop = None
         __mainloop.append(mainloop)
     return mainloop
 
