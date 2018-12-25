@@ -282,7 +282,7 @@ class PluginManager:
                     continue
                 for attr in dir(mod):
                     item = getattr(mod, attr)
-                    if inspect.isclass(item) and hasattr(item, "setup"):
+                    if inspect.isclass(item) and issubclass(item, PluginBase):
                         plugins.append((item, mod_filename, attr))
         try_again = True
         while try_again:
