@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import io
 import os
 
 import pycam.Plugins
@@ -27,22 +28,35 @@ class ExportX3D(pycam.Plugins.PluginBase):
     CATEGORIES = {"Export", "Visualization"}
 
     def setup(self):
-        self._event_handlers = [("visual-item-updated", self.export_x3d)]
+        self._x3d_cache = None
+        self._event_handlers = [("visual-item-updated", self.invalidate_x3d_cache)]
         self.register_event_handlers(self._event_handlers)
+        self.core.set("get_x3d_export", self.get_x3d_export)
         self.core.emit_event("visual-item-updated")
         return True
 
     def teardown(self):
+        self.core.set("get_x3d_export", None)
         self.unregister_event_handlers(self._event_handlers)
 
-    def export_x3d(self):
-        tree = X3DTree()
-        self.core.call_chain("generate_x3d", tree)
-        # TODO: send the output to a better consumer
-        with open("pycam-preview.x3d", "w") as out_file:
+    def invalidate_x3d_cache(self):
+        self._x3d_cache = None
+
+    def get_x3d_export(self):
+        """ deliver a file-like bytes buffer containing the X3D data """
+        if self._x3d_cache is None:
+            # refresh the cache
+            tree = X3DTree()
+            self.core.call_chain("generate_x3d", tree)
+            target = io.BytesIO()
             for line in tree.to_string():
-                out_file.write(line)
-                out_file.write(os.linesep)
+                target.write((line + os.linesep).encode())
+            self._x3d_cache = target
+        # create a copy: consumers may want to override it
+        self._x3d_cache.seek(0)
+        result = io.BytesIO(self._x3d_cache.read())
+        result.seek(0)
+        return result
 
 
 class X3DTree:
