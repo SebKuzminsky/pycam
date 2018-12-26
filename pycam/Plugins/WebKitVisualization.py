@@ -54,9 +54,9 @@ class WebKitVisualization(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
-        self.http_server.shutdown()
         self.unregister_event_handlers(self._event_handlers)
         self.core.unregister_ui("visualization_view", self.view)
+        self.http_server.shutdown()
         self.view.hide()
         self.view.try_close()
         del self.view

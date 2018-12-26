@@ -136,6 +136,8 @@ class Visualization(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
+            self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
             toggle_3d = self.gui.get_object("ToggleVisualization")
             # hide the window
             toggle_3d.set_active(False)
@@ -144,8 +146,6 @@ class Visualization(pycam.Plugins.PluginBase):
             for name in ("color_background", "color_material"):
                 self.core.get("unregister_color")(name)
             self.core.get("unregister_display_item")("show_directions")
-            self.unregister_gtk_handlers(self._gtk_handlers)
-            self.unregister_event_handlers(self._event_handlers)
             self.core.unregister_ui("preferences", self.gui.get_object("DisplayItemsPrefTab"))
             self.core.unregister_ui("preferences", self.gui.get_object("VisualizationPrefTab"))
             self.core.unregister_ui("visualization_details", self.gui.get_object("ViewControls"))

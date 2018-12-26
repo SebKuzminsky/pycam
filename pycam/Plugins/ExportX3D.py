@@ -30,14 +30,14 @@ class ExportX3D(pycam.Plugins.PluginBase):
     def setup(self):
         self._x3d_cache = None
         self._event_handlers = [("visual-item-updated", self.invalidate_x3d_cache)]
-        self.register_event_handlers(self._event_handlers)
         self.core.set("get_x3d_export", self.get_x3d_export)
+        self.register_event_handlers(self._event_handlers)
         self.core.emit_event("visual-item-updated")
         return True
 
     def teardown(self):
-        self.core.set("get_x3d_export", None)
         self.unregister_event_handlers(self._event_handlers)
+        self.core.set("get_x3d_export", None)
 
     def invalidate_x3d_cache(self):
         self._x3d_cache = None

@@ -42,9 +42,9 @@ class VisualizeToolpath(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
+        self.unregister_event_handlers(self._event_handlers)
         self.core.unregister_chain("generate_x3d", self.generate_x3d)
         self.core.unregister_chain("get_draw_dimension", self.get_draw_dimension)
-        self.unregister_event_handlers(self._event_handlers)
         self.core.get("unregister_color")("color_toolpath_cut")
         self.core.get("unregister_color")("color_toolpath_return")
         self.core.get("unregister_display_item")("show_toolpath")
