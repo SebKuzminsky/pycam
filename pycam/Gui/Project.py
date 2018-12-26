@@ -103,6 +103,7 @@ class ProjectGui(pycam.Gui.BaseUI):
         super().__init__(event_manager)
         self.gui_is_active = False
         self.gui = Gtk.Builder()
+        self.mainloop = get_mainloop()
         gtk_build_file = get_ui_file_location(GTKBUILD_FILE)
         if gtk_build_file is None:
             raise InitializationError("Failed to load GTK layout specification file: {}"
@@ -402,7 +403,7 @@ class ProjectGui(pycam.Gui.BaseUI):
         self.settings.register_event("notify-file-saved", self.add_to_recent_file_list)
         self.settings.register_event("notify-file-opened", self.add_to_recent_file_list)
         # allow the task settings control to be updated
-        get_mainloop().update()
+        self.mainloop.update()
         # register a logging handler for displaying error messages
         pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
         self.window.show()
@@ -491,7 +492,10 @@ class ProjectGui(pycam.Gui.BaseUI):
         self.gui.get_object("UndoButton").set_sensitive(is_enabled)
 
     def destroy(self, widget=None, data=None):
-        get_mainloop().stop()
+        # the "destroy" handler can be called multiple times: prevent duplicate signals
+        if self.mainloop is not None:
+            self.mainloop.stop()
+            self.mainloop = None
 
     def configure_drag_and_drop(self, obj):
         obj.connect("drag-data-received", self.handle_data_drop)
