@@ -201,12 +201,9 @@ class Tools(pycam.Plugins.ListPluginBase):
         # check if any on the tools became obsolete due to a missing plugin
         removal = []
         shape_names = [shape["name"] for shape in shapes]
-        for index, tool in enumerate(self.get_all()):
+        for tool in self.get_all():
             if not tool.get_value("shape").value in shape_names:
-                removal.append(index)
-        removal.reverse()
-        for index in removal:
-            self.pop(index)
+                self.get_collection().remove(tool)
         # show "new" only if a strategy is available
         self.gui.get_object("ToolNew").set_sensitive(len(model) > 0)
         selector_box = self.gui.get_object("ToolSelectorBox")

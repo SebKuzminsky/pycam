@@ -175,12 +175,9 @@ class Tasks(pycam.Plugins.ListPluginBase):
         # check if any on the processes became obsolete due to a missing plugin
         removal = []
         type_names = [one_type["name"] for one_type in types]
-        for index, task in enumerate(self.get_all()):
+        for task in self.get_all():
             if task.get_value("type") not in type_names:
-                removal.append(index)
-        removal.reverse()
-        for index in removal:
-            self.pop(index)
+                self.get_collection().remove(task)
         # show "new" only if a strategy is available
         self.gui.get_object("TaskNew").set_sensitive(len(model) > 0)
         selector_box = self.gui.get_object("TaskChooserBox")
