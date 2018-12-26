@@ -18,6 +18,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import copy
+import functools
 
 import pycam.Plugins
 from pycam.Utils import MultiLevelDictionaryAccess
@@ -29,6 +30,7 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
 
     def setup(self):
         self._groups = {}
+        self._parameterized_function_cache = []
         self.core.set("get_parameter_values", self.get_parameter_values)
         self.core.set("set_parameter_values", self.set_parameter_values)
         self.core.set("get_default_parameter_values", self.get_default_parameter_values)
@@ -48,6 +50,16 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
                      "unregister_parameter"):
             self.core.set(name, None)
 
+    def _get_parameterized_function(self, func, *args):
+        wanted_key = (func, args)
+        for key, value in self._parameterized_function_cache:
+            if key == wanted_key:
+                return value
+        else:
+            partial_func = functools.partial(func, *args)
+            self._parameterized_function_cache.append((wanted_key, partial_func))
+            return partial_func
+
     def register_parameter_group(self, name, changed_set_event=None, changed_set_list_event=None,
                                  get_related_parameter_names=None):
         if name in self._groups:
@@ -58,7 +70,9 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
                               "sets": {},
                               "parameters": {}}
         if changed_set_event:
-            self.core.register_event(changed_set_event, self._update_widgets_visibility, name)
+            self.core.register_event(
+                changed_set_event,
+                self._get_parameterized_function(self._update_widgets_visibility, name))
 
     def _update_widgets_visibility(self, group_name):
         group = self._groups[group_name]
@@ -200,7 +214,9 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
                 self.unregister_parameter_set(group_name, set_name)
         changed_set_event = group["changed_set_event"]
         if changed_set_event:
-            self.core.unregister_event(changed_set_event, self._update_widgets_visibility)
+            self.core.unregister_event(
+                changed_set_event,
+                self._get_parameterized_function(self._update_widgets_visibility, group_name))
         del self._groups[group_name]
 
     def unregister_parameter_set(self, group_name, set_name):
