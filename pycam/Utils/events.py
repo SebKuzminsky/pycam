@@ -11,7 +11,7 @@ log = pycam.Utils.log.get_logger()
 UISection = collections.namedtuple("UISection", ("add_func", "clear_func", "widgets"))
 UIWidget = collections.namedtuple("UIWidget", ("name", "obj", "weight", "args"))
 UIHandler = collections.namedtuple("UIHandler", ("func", "args"))
-UIEvent = collections.namedtuple("UIEvent", ("handlers", "blocker_tokens"))
+UIEvent = collections.namedtuple("UIEvent", ("handlers", "blocker_tokens", "statistics"))
 UIChain = collections.namedtuple("UIChain", ("func", "weight"))
 
 
@@ -87,7 +87,8 @@ class EventCore(pycam.Gui.Settings.Settings):
 
     def register_event(self, event, func, *args):
         if event not in self.event_handlers:
-            self.event_handlers[event] = UIEvent([], [])
+            self.event_handlers[event] = UIEvent([], [],
+                                                 {"emitted": 0, "blocked": 0, "handled": 0})
         self.event_handlers[event].handlers.append(UIHandler(func, args))
 
     def unregister_event(self, event, func):
@@ -104,19 +105,31 @@ class EventCore(pycam.Gui.Settings.Settings):
             log.info("Trying to unregister an unknown event: %s", event)
 
     def get_events_summary(self):
-        return {key: len(event.handlers) for key, event in self.event_handlers.items()}
+        return {key: {"handlers": tuple(handler.func for handler in event.handlers),
+                      "emitted": event.statistics["emitted"],
+                      "handled": event.statistics["handled"],
+                      "blocked": event.statistics["blocked"]}
+                for key, event in self.event_handlers.items()}
+
+    def get_events_summary_lines(self):
+        return ["{} ({:d}, {:d}/{:d})".format(event, len(stats["handlers"]), stats["handled"],
+                                              stats["emitted"])
+                for event, stats in sorted(self.get_events_summary().items())]
 
     def emit_event(self, event, *args, **kwargs):
         log.debug2("Event emitted: %s", event)
         if event in self.event_handlers:
+            self.event_handlers[event].statistics["emitted"] += 1
             if self.event_handlers[event].blocker_tokens:
+                self.event_handlers[event].statistics["blocked"] += 1
                 log.debug2("Ignoring blocked event: %s", event)
-                return
-            # prevent infinite recursion
-            with self.blocked_events({event}, disable_log=True):
-                for handler in self.event_handlers[event].handlers:
-                    log.debug2("Calling event handler: %s", handler)
-                    handler.func(*(handler.args + args), **kwargs)
+            else:
+                # prevent infinite recursion
+                with self.blocked_events({event}, disable_log=True):
+                    self.event_handlers[event].statistics["handled"] += 1
+                    for handler in self.event_handlers[event].handlers:
+                        log.debug2("Calling event handler: %s", handler)
+                        handler.func(*(handler.args + args), **kwargs)
         else:
             log.debug("No events registered for event '%s'", event)
 

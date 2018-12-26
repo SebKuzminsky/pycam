@@ -147,9 +147,7 @@ def show_gui(workspace_filename=None):
                 gui.load_startup_workspace()
 
     log.debug("Finished initialization")
-    log.debug("Configured events: %s", ", ".join(
-        "{} ({:d})".format(event, handler_count)
-        for event, handler_count in sorted(event_manager.get_events_summary().items())))
+    log.debug("Configured events: %s", ", ".join(event_manager.get_events_summary_lines()))
     shutdown_calls = []
 
     def shutdown_handler():
@@ -189,6 +187,8 @@ def show_gui(workspace_filename=None):
     event_manager.register_event("mainloop-stop", shutdown_handler)
     # open the GUI - wait until the window is closed
     gui.run_forever()
+    # show final statistics
+    log.debug("Configured events: %s", ", ".join(event_manager.get_events_summary_lines()))
     # no error -> return no error code
     return None
 
