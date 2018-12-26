@@ -147,8 +147,13 @@ def show_gui(workspace_filename=None):
                 gui.load_startup_workspace()
 
     log.debug("Finished initialization")
+    shutdown_calls = []
 
     def shutdown_handler():
+        # prevent repeated calls
+        if shutdown_calls:
+            return
+        shutdown_calls.append(True)
         # optionally save workspace (based on configuration or dialog response)
         if has_loaded_custom_workspace:
             # A custom workspace file was given via command line - we always want to ask before
