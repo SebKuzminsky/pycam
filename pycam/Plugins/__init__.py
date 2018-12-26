@@ -368,14 +368,8 @@ class PluginManager:
         return sorted(names)
 
     def get_dependent_plugins(self, name):
-        long_name = "%s.%s." % (name, name)
-        result = []
-        for plugin in self.modules.values():
-            if not plugin.enabled:
-                continue
-            if (name in plugin.DEPENDS) or (long_name in plugin.DEPENDS):
-                result.append(name)
-        return result
+        return {plugin.name for plugin in self.modules.values()
+                if plugin.enabled and (name in plugin.DEPENDS)}
 
     def is_plugin_required(self, name):
         return len(self.get_dependent_plugins(name)) > 0
