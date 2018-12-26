@@ -342,12 +342,13 @@ class PluginManager:
     def disable_plugin(self, name, recursively=False):
         plugin = self.get_plugin(name)
         if not plugin.enabled:
-            _log.debug("Refused to disable an active plugin: %s" % name)
+            _log.debug("Refused to disable an disabled plugin: %s" % name)
             return
         else:
-            if self.is_plugin_required(name) and recursively:
+            if recursively and self.is_plugin_required(name):
                 for dep_name in self.get_dependent_plugins(name):
-                    self.disable_plugin(dep_name, recursively=True)
+                    if self.get_plugin_state(dep_name):
+                        self.disable_plugin(dep_name, recursively=True)
             if self.is_plugin_required(name):
                 _log.warning("Refusing to disable plugin: %s (dependent plugins: %s)",
                              name, " ".join(self.get_dependent_plugins(name)))
