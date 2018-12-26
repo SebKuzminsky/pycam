@@ -489,8 +489,9 @@ class ListPluginBase(PluginBase):
     def force_gtk_modelview_refresh(self):
         # force a table update by simulating a change of the list store
         model = self._gtk_modelview.get_model()
-        model.prepend(None)
-        model.remove(model.get_iter_first())
+        if model is not None:
+            model.prepend(None)
+            model.remove(model.get_iter_first())
 
     def _update_gtk_treemodel(self):
         if not self._gtk_modelview:

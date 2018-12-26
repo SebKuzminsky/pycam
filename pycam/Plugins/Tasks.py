@@ -187,7 +187,10 @@ class Tasks(pycam.Plugins.ListPluginBase):
             selector_box.show()
 
     def _update_toolpath_buttons(self):
-        self.gui.get_object("GenerateToolPathButton").set_sensitive(len(self.get_selected()) > 0)
+        selected_toolpaths = self.get_selected()
+        if selected_toolpaths is None:
+            selected_toolpaths = []
+        self.gui.get_object("GenerateToolPathButton").set_sensitive(len(selected_toolpaths) > 0)
         self.gui.get_object("GenerateAllToolPathsButton").set_sensitive(len(self.get_all()) > 0)
 
     def _update_task_widgets(self):
