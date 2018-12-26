@@ -408,6 +408,7 @@ class ProjectGui(pycam.Gui.BaseUI):
         # register a logging handler for displaying error messages
         pycam.Utils.log.add_gtk_gui(self.window, logging.ERROR)
         self.window.show()
+        self.mainloop.update()
 
     def get_question_response(self, question, default_response, allow_memorize=False):
         """display a dialog presenting a simple question and yes/no buttons
