@@ -325,6 +325,12 @@ class PluginManager:
         except NotImplementedError as err_msg:
             _log.info("Skipping incomplete plugin '%s': %s", plugin_name, err_msg)
 
+    def disable_all_plugins(self):
+        _log.info("Disabling all plugins")
+        for plugin_name in self.modules:
+            if self.get_plugin_state(plugin_name):
+                self.disable_plugin(plugin_name, recursively=True)
+
     def get_plugin(self, name):
         if name in self.modules:
             return self.modules[name]
