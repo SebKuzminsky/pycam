@@ -44,15 +44,25 @@ class GtkMainLoop:
         gi.require_version("Gtk", "3.0")
         from gi.repository import Gtk
         self._gtk = Gtk
+        self._is_running = False
 
     def run(self):
+        if self._is_running:
+            log.warning("Refusing to run main loop again, while we are running")
+            return
+        self._is_running = True
         try:
             self._gtk.main()
         except KeyboardInterrupt:
             pass
+        self._is_running = False
 
     def stop(self):
-        self._gtk.main_quit()
+        if self._is_running:
+            log.debug("Stopping main loop")
+            self._gtk.main_quit()
+        else:
+            log.info("Main loop was stopped before")
 
     def update(self):
         while self._gtk.events_pending():

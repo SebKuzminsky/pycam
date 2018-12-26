@@ -497,6 +497,8 @@ class ProjectGui(pycam.Gui.BaseUI):
         self._mainloop_is_running = True
         # the main loop returns as soon "stop" is called
         self.mainloop.run()
+        # in case we were interrupted: initiate a shutdown
+        self.settings.emit_event("mainloop-stop")
 
     def stop(self):
         if self._mainloop_is_running:
