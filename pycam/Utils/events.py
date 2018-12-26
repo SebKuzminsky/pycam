@@ -110,31 +110,39 @@ class EventCore(pycam.Gui.Settings.Settings):
                 log.debug2("Ignoring blocked event: %s", event)
                 return
             # prevent infinite recursion
-            with self.blocked_events({event}):
+            with self.blocked_events({event}, disable_log=True):
                 for handler in self.event_handlers[event].handlers:
+                    log.debug2("Calling event handler: %s", handler)
                     handler.func(*(handler.args + args), **kwargs)
         else:
             log.debug("No events registered for event '%s'", event)
 
-    def block_event(self, event):
+    def block_event(self, event, disable_log=False):
         if event in self.event_handlers:
-            log.debug2("Blocking an event: %s", event)
             self.event_handlers[event].blocker_tokens.append(True)
+            if not disable_log:
+                log.debug2("Blocking an event: %s (%d blockers reached)",
+                           event, len(self.event_handlers[event].blocker_tokens))
         else:
-            log.info("Trying to block an unknown event: %s", event)
+            if not disable_log:
+                log.info("Trying to block an unknown event: %s", event)
 
-    def unblock_event(self, event):
+    def unblock_event(self, event, disable_log=False):
         if event in self.event_handlers:
             if self.event_handlers[event].blocker_tokens:
-                log.debug2("Unblocking an event: %s", event)
                 self.event_handlers[event].blocker_tokens.pop()
+                if not disable_log:
+                    log.debug2("Unblocking an event: %s (%d blockers remaining)",
+                               event, len(self.event_handlers[event].blocker_tokens))
             else:
-                log.debug("Trying to unblock non-blocked event '%s'", event)
+                if not disable_log:
+                    log.debug("Trying to unblock non-blocked event '%s'", event)
         else:
+            # "disable_log" is only relevent for the debugging messages above
             log.info("Trying to unblock an unknown event: %s", event)
 
     @contextlib.contextmanager
-    def blocked_events(self, events, emit_after=False):
+    def blocked_events(self, events, emit_after=False, disable_log=False):
         """ temporarily block a number of events for the duration of this context
 
         @param events: iterable of events to be blocked temporarily
@@ -142,14 +150,14 @@ class EventCore(pycam.Gui.Settings.Settings):
         """
         unblock_list = []
         for event in events:
-            self.block_event(event)
+            self.block_event(event, disable_log=disable_log)
             unblock_list.append(event)
         unblock_list.reverse()
         try:
             yield
         finally:
             for event in unblock_list:
-                self.unblock_event(event)
+                self.unblock_event(event, disable_log=disable_log)
         if emit_after:
             for event in unblock_list:
                 self.emit_event(event)
