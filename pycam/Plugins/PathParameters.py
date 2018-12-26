@@ -202,7 +202,7 @@ class PathParamPattern(pycam.Plugins.PluginBase):
 
 class PathParamRoundedSpiralCorners(pycam.Plugins.PluginBase):
 
-    DEPENDS = ["Processes"]
+    DEPENDS = {"Processes", "PathParamPattern"}
     CATEGORIES = ["Process", "Parameter"]
 
     def setup(self):
@@ -252,6 +252,7 @@ class PathParamTraceModel(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
+        self.core.unregister_event("model-changed", self._update_models)
         self.core.unregister_event("model-list-changed", self._update_models)
         self.core.get("unregister_parameter")("process", "trace_models")
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
@@ -283,4 +284,4 @@ class PathParamPocketingType(pycam.Plugins.PluginBase):
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
-        self.core.get("unregister_parameter")("path_pattern", "pocketing_type")
+        self.core.get("unregister_parameter")("process", "pocketing_type")

@@ -99,7 +99,6 @@ class ToolParamSpindle(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
-        self.core.unregister_ui("tool_speed", self.control.get_widget())
         for control, attribute in self.controls:
             self.core.get("unregister_parameter")("tool", ("spindle", attribute))
             self.core.unregister_ui("tool_spindle", control.get_widget())
