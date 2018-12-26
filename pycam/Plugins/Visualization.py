@@ -141,7 +141,7 @@ class Visualization(pycam.Plugins.PluginBase):
             toggle_3d.set_active(False)
             self.core.unregister_ui("view_menu", toggle_3d)
             self.unregister_gtk_accelerator("visualization", toggle_3d)
-            for name in ("color_background", "color_tool", "color_material"):
+            for name in ("color_background", "color_material"):
                 self.core.get("unregister_color")(name)
             self.core.get("unregister_display_item")("show_directions")
             self.unregister_gtk_handlers(self._gtk_handlers)
