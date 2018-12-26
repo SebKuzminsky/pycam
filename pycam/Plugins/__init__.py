@@ -290,7 +290,7 @@ class PluginManager:
             postponed_plugins = []
             for plugin, filename, name in plugins:
                 for dep in plugin.DEPENDS:
-                    if (dep not in self.modules) and (("%s.%s" % (dep, dep)) not in self.modules):
+                    if dep not in self.modules:
                         # dependency not loaded, yet
                         postponed_plugins.append((plugin, filename, name))
                         break
@@ -326,11 +326,8 @@ class PluginManager:
             _log.info("Skipping incomplete plugin '%s': %s", plugin_name, err_msg)
 
     def get_plugin(self, name):
-        long_name = "%s.%s" % (name, name)
         if name in self.modules:
             return self.modules[name]
-        elif long_name in self.modules:
-            return self.modules[long_name]
         else:
             raise KeyError("Plugin '%s' is not available" % name)
 
@@ -387,10 +384,7 @@ class PluginManager:
         plugin = self.get_plugin(name)
         missing = []
         for depend in plugin.DEPENDS:
-            long_depend = "%s.%s" % (depend, depend)
             if (depend in self.modules) and self.modules[depend].enabled:
-                continue
-            elif (long_depend in self.modules) and (self.modules[long_depend].enabled):
                 continue
             else:
                 missing.append(depend)
