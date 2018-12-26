@@ -173,13 +173,8 @@ class PluginBase:
         return self._func_cache[key]
 
     def register_event_handlers(self, event_handlers):
-        for data in event_handlers:
-            name, func = data[:2]
-            if len(data) > 2:
-                params = data[2:]
-            else:
-                params = []
-            self.core.register_event(name, self.__get_handler_func(func, params))
+        for name, target in event_handlers:
+            self.core.register_event(name, self.__get_handler_func(target))
 
     def register_gtk_handlers(self, gtk_widget_handlers):
         for data in gtk_widget_handlers:
@@ -189,13 +184,8 @@ class PluginBase:
             self._gtk_handler_id_cache.append((obj, handler_id))
 
     def unregister_event_handlers(self, event_handlers):
-        for data in event_handlers:
-            name, func = data[:2]
-            if len(data) > 2:
-                params = data[2:]
-            else:
-                params = []
-            self.core.unregister_event(name, self.__get_handler_func(func, params))
+        for name, target in event_handlers:
+            self.core.unregister_event(name, self.__get_handler_func(target))
 
     def unregister_gtk_handlers(self, gtk_widget_handlers):
         while self._gtk_handler_id_cache:

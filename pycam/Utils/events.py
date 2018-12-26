@@ -10,7 +10,6 @@ log = pycam.Utils.log.get_logger()
 
 UISection = collections.namedtuple("UISection", ("add_func", "clear_func", "widgets"))
 UIWidget = collections.namedtuple("UIWidget", ("name", "obj", "weight", "args"))
-UIHandler = collections.namedtuple("UIHandler", ("func", "args"))
 UIEvent = collections.namedtuple("UIEvent", ("handlers", "blocker_tokens", "statistics"))
 UIChain = collections.namedtuple("UIChain", ("func", "weight"))
 
@@ -85,18 +84,19 @@ class EventCore(pycam.Gui.Settings.Settings):
         self.state_dumps = []
         self.namespace = {}
 
-    def register_event(self, event, func, *args):
+    def register_event(self, event, target):
+        assert callable(target) or isinstance(target, str)
         if event not in self.event_handlers:
             self.event_handlers[event] = UIEvent([], [],
                                                  {"emitted": 0, "blocked": 0, "handled": 0})
-        self.event_handlers[event].handlers.append(UIHandler(func, args))
+        self.event_handlers[event].handlers.append(target)
 
-    def unregister_event(self, event, func):
+    def unregister_event(self, event, target):
         if event in self.event_handlers:
             removal_list = []
             handlers = self.event_handlers[event]
             for index, item in enumerate(handlers.handlers):
-                if func == item.func:
+                if target == item:
                     removal_list.append(index)
             removal_list.reverse()
             for index in removal_list:
@@ -105,7 +105,7 @@ class EventCore(pycam.Gui.Settings.Settings):
             log.info("Trying to unregister an unknown event: %s", event)
 
     def get_events_summary(self):
-        return {key: {"handlers": tuple(handler.func for handler in event.handlers),
+        return {key: {"handlers": tuple(handler for handler in event.handlers),
                       "emitted": event.statistics["emitted"],
                       "handled": event.statistics["handled"],
                       "blocked": event.statistics["blocked"]}
@@ -116,7 +116,7 @@ class EventCore(pycam.Gui.Settings.Settings):
                                               stats["emitted"])
                 for event, stats in sorted(self.get_events_summary().items())]
 
-    def emit_event(self, event, *args, **kwargs):
+    def emit_event(self, event):
         log.debug2("Event emitted: %s", event)
         if event in self.event_handlers:
             self.event_handlers[event].statistics["emitted"] += 1
@@ -129,7 +129,11 @@ class EventCore(pycam.Gui.Settings.Settings):
                     self.event_handlers[event].statistics["handled"] += 1
                     for handler in self.event_handlers[event].handlers:
                         log.debug2("Calling event handler: %s", handler)
-                        handler.func(*(handler.args + args), **kwargs)
+                        if isinstance(handler, str):
+                            # event names are acceptable
+                            self.emit_event(handler)
+                        else:
+                            handler()
         else:
             log.debug("No events registered for event '%s'", event)
 
