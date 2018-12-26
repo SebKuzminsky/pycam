@@ -32,13 +32,14 @@ class VisualizeSupportModelPreview(pycam.Plugins.PluginBase):
         self.core.get("register_color")("color_support_preview", "Support model", 30)
         self.core.register_chain("generate_x3d", self.generate_x3d)
         self.core.emit_event("visual-item-updated")
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_chain("generate_x3d", self.generate_x3d)
         self.core.get("unregister_display_item")("show_support_preview")
         self.core.get("unregister_color")("color_support_preview")
         self.core.emit_event("visual-item-updated")
+        super().teardown()
 
     def generate_x3d(self, tree):
         if not self.core.get("show_support_preview"):

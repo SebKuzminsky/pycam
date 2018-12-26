@@ -52,13 +52,14 @@ class ToolpathExport(pycam.Plugins.PluginBase):
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui:
             self.unregister_event_handlers(self._event_handlers)
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.core.unregister_ui("toolpath_handling", self._frame)
+        super().teardown()
 
     def _update_widgets(self):
         toolpaths = self.core.get("toolpaths")

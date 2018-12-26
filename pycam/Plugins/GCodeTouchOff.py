@@ -64,7 +64,7 @@ class GCodeTouchOff(pycam.Plugins.PluginBase):
             self.controls[name] = control
         self.update_widgets()
         self._table.get_widget().show()
-        return True
+        return super().setup()
 
     def teardown(self):
         while self.controls:
@@ -74,6 +74,7 @@ class GCodeTouchOff(pycam.Plugins.PluginBase):
         self.core.unregister_ui_section("gcode_touch_off")
         self.core.unregister_ui("gcode_preferences", self._table.get_widget())
         self.core.get("unregister_parameter")("toolpath_profile", "touch_off")
+        super().teardown()
 
     def _get_control_values(self):
         """ used by the parameter manager for retrieving the current state """

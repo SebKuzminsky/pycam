@@ -56,13 +56,14 @@ class ModelPosition(pycam.Plugins.PluginBase):
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_position_widgets()
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui:
             self.unregister_event_handlers(self._event_handlers)
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.core.unregister_ui("model_handling", self.gui.get_object("ModelPositionBox"))
+        super().teardown()
 
     def _update_position_widgets(self):
         widget = self.gui.get_object("ModelPositionBox")

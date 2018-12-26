@@ -41,7 +41,7 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
         self.core.set("unregister_parameter_group", self.unregister_parameter_group)
         self.core.set("unregister_parameter_set", self.unregister_parameter_set)
         self.core.set("unregister_parameter", self.unregister_parameter)
-        return True
+        return super().setup()
 
     def teardown(self):
         for name in ("set_parameter_values", "get_parameter_values", "get_parameter_sets",
@@ -49,6 +49,7 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
                      "unregister_parameter_set", "unregister_parameter_group",
                      "unregister_parameter"):
             self.core.set(name, None)
+        super().teardown()
 
     def _get_parameterized_function(self, func, *args):
         wanted_key = (func, args)

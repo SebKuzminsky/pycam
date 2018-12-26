@@ -39,7 +39,7 @@ class VisualizeToolpath(pycam.Plugins.PluginBase):
             ("toolpath-changed", "visual-item-updated"))
         self.register_event_handlers(self._event_handlers)
         self.core.emit_event("visual-item-updated")
-        return True
+        return super().setup()
 
     def teardown(self):
         self.unregister_event_handlers(self._event_handlers)
@@ -49,6 +49,7 @@ class VisualizeToolpath(pycam.Plugins.PluginBase):
         self.core.get("unregister_color")("color_toolpath_return")
         self.core.get("unregister_display_item")("show_toolpath")
         self.core.emit_event("visual-item-updated")
+        super().teardown()
 
     def get_draw_dimension(self, low, high):
         if self._is_visible():

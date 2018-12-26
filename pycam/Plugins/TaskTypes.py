@@ -32,7 +32,8 @@ class TaskTypeMilling(pycam.Plugins.PluginBase):
         parameters = {"collision_models": [], "tool": None, "process": None, "bounds": None}
         self.core.get("register_parameter_set")("task", "milling", "Milling", None,
                                                 parameters=parameters, weight=10)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.get("unregister_parameter_set")("task", "milling")
+        super().teardown()

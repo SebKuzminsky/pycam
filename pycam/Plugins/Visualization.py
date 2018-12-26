@@ -132,7 +132,7 @@ class Visualization(pycam.Plugins.PluginBase):
                          "tool_progress_max_fps"):
                 self.register_state_item("settings/view/visualization/%s" % name,
                                          *get_get_set_functions(name))
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui:
@@ -153,6 +153,7 @@ class Visualization(pycam.Plugins.PluginBase):
             self.core.unregister_ui_section("visualization_view")
             self.core.unregister_ui_section("visualization_details")
         self.clear_state_items()
+        super().teardown()
 
     def update_view(self, widget=None, data=None):
         if self.is_visible:

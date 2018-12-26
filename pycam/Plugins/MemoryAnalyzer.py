@@ -70,7 +70,7 @@ class MemoryAnalyzer(pycam.Plugins.PluginBase):
                 self._guppy = guppy
                 self.gui.get_object("MemoryAnalyzerBrokenLabel").hide()
             self.register_gtk_handlers(self._gtk_handlers)
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui:
@@ -78,6 +78,7 @@ class MemoryAnalyzer(pycam.Plugins.PluginBase):
             self.window.hide()
             self.core.unregister_ui("view_menu", self.toggle_action)
             self.unregister_gtk_accelerator("memory_analyzer", self.toggle_action)
+        super().teardown()
 
     def toggle_window(self, widget=None, value=None, action=None):
         checkbox_state = self.toggle_action.get_active()

@@ -39,12 +39,13 @@ class PathParamOverlap(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("process", "overlap", self.control)
         self.core.register_ui("process_path_parameters", "Overlap [%]", self.control.get_widget(),
                               weight=10)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("process", "overlap")
         self.control.destroy()
+        super().teardown()
 
 
 class PathParamStepDown(pycam.Plugins.PluginBase):
@@ -59,12 +60,13 @@ class PathParamStepDown(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("process", "step_down", self.control)
         self.core.register_ui("process_path_parameters", "Step down", self.control.get_widget(),
                               weight=20)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("process", "step_down")
         self.control.destroy()
+        super().teardown()
 
 
 class PathParamMaterialAllowance(pycam.Plugins.PluginBase):
@@ -79,12 +81,13 @@ class PathParamMaterialAllowance(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("process", "material_allowance", self.control)
         self.core.register_ui("process_path_parameters", "Material allowance",
                               self.control.get_widget(), weight=30)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("process", "material_allowance")
         self.control.destroy()
+        super().teardown()
 
 
 class PathParamMillingStyle(pycam.Plugins.PluginBase):
@@ -102,13 +105,14 @@ class PathParamMillingStyle(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("process", "milling_style", self.control)
         self.core.register_ui("process_path_parameters", "Milling style",
                               self.control.get_widget(), weight=50)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("path_pattern", "milling_style")
         self.core.get("unregister_parameter")("process", "milling_style")
         self.control.destroy()
+        super().teardown()
 
 
 class PathParamGridDirection(pycam.Plugins.PluginBase):
@@ -126,13 +130,14 @@ class PathParamGridDirection(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("process", "grid_direction", self.control)
         self.core.register_ui("process_path_parameters", "Direction", self.control.get_widget(),
                               weight=40)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("path_pattern", "grid_direction")
         self.core.get("unregister_parameter")("process", "grid_direction")
         self.control.destroy()
+        super().teardown()
 
 
 class PathParamSpiralDirection(pycam.Plugins.PluginBase):
@@ -148,12 +153,13 @@ class PathParamSpiralDirection(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("path_pattern", "spiral_direction", self.control)
         self.core.register_ui("process_path_parameters", "Direction", self.control.get_widget(),
                               weight=40)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("path_pattern", "spiral_direction")
         self.control.destroy()
+        super().teardown()
 
 
 class PathParamPattern(pycam.Plugins.PluginBase):
@@ -176,7 +182,7 @@ class PathParamPattern(pycam.Plugins.PluginBase):
             ("process-path-pattern-list-changed", self._update_pattern_list_widget),
             ("process-changed", "process-path-pattern-changed"))
         self.register_event_handlers(self._event_handlers)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
@@ -184,6 +190,7 @@ class PathParamPattern(pycam.Plugins.PluginBase):
         self.core.get("unregister_parameter")("process", "path_pattern")
         self.core.get("unregister_parameter_group")("path_pattern")
         self.control.destroy()
+        super().teardown()
 
     def _update_pattern_list_widget(self):
         patterns = list(self.core.get("get_parameter_sets")("path_pattern").values())
@@ -218,12 +225,13 @@ class PathParamRoundedSpiralCorners(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("path_pattern", "rounded_corners", self.control)
         self.core.register_ui("process_path_parameters", "Rounded corners",
                               self.control.get_widget(), weight=80)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("path_pattern", "rounded_corners")
         self.control.destroy()
+        super().teardown()
 
 
 class PathParamRadiusCompensation(pycam.Plugins.PluginBase):
@@ -237,12 +245,13 @@ class PathParamRadiusCompensation(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("process", "radius_compensation", self.control)
         self.core.register_ui("process_path_parameters", "Radius compensation",
                               self.control.get_widget(), weight=80)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("process", "radius_compensation")
         self.control.destroy()
+        super().teardown()
 
 
 class PathParamTraceModel(pycam.Plugins.PluginBase):
@@ -258,7 +267,7 @@ class PathParamTraceModel(pycam.Plugins.PluginBase):
                               self.control.get_widget(), weight=5)
         self.core.register_event("model-list-changed", self._update_models)
         self.core.register_event("model-changed", self._update_models)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_event("model-changed", self._update_models)
@@ -266,6 +275,7 @@ class PathParamTraceModel(pycam.Plugins.PluginBase):
         self.core.get("unregister_parameter")("process", "trace_models")
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
         self.control.destroy()
+        super().teardown()
 
     def _update_models(self):
         choices = []
@@ -290,9 +300,10 @@ class PathParamPocketingType(pycam.Plugins.PluginBase):
         self.core.get("register_parameter")("process", "pocketing_type", self.control)
         self.core.register_ui("process_path_parameters", "Pocketing", self.control.get_widget(),
                               weight=60)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("process", "pocketing_type")
         self.control.destroy()
+        super().teardown()

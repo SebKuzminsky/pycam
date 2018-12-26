@@ -82,7 +82,7 @@ class Models(pycam.Plugins.ListPluginBase):
             # update the model list
             self.core.emit_event("model-list-changed")
         self.core.set("models", self)
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui and self._gtk:
@@ -94,7 +94,7 @@ class Models(pycam.Plugins.ListPluginBase):
         self.clear_state_items()
         self.core.set("models", None)
         self.clear()
-        return True
+        super().teardown()
 
     def _get_model_gdk_color(self, color_dict):
         return self._gdk.RGBA(red=color_dict["red"],

@@ -45,7 +45,7 @@ class LinuxCNCToolExport(pycam.Plugins.PluginBase):
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_emc_tool_button()
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui:
@@ -53,6 +53,7 @@ class LinuxCNCToolExport(pycam.Plugins.PluginBase):
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.core.unregister_ui("export_menu", self.export_action)
             self.unregister_gtk_accelerator("export", self.export_action)
+        super().teardown()
 
     def _update_emc_tool_button(self, widget=None):
         exportable = len(pycam.workspace.data_models.Tool.get_collection()) > 0

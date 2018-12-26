@@ -53,7 +53,7 @@ class Units(pycam.Plugins.PluginBase):
             self.register_gtk_handlers(self._gtk_handlers)
         self.register_state_item("settings/unit", lambda: self.core.get("unit"),
                                  lambda value: self.core.set("unit", value))
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui:
@@ -61,6 +61,7 @@ class Units(pycam.Plugins.PluginBase):
             self.core.unregister_ui("preferences_general", self.gui.get_object("UnitPrefBox"))
             # TODO: reset setting "unit" back to a default value?
         self.clear_state_items()
+        super().teardown()
 
     def change_unit_init(self, widget=None):
         # update the "_last_unit" attribute

@@ -119,7 +119,7 @@ class Tools(pycam.Plugins.ListPluginBase):
             self._update_tool_widgets()
         self.core.register_namespace("tools", pycam.Plugins.get_filter(self))
         self.register_state_item("tools", self)
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui and self._gtk:
@@ -137,7 +137,7 @@ class Tools(pycam.Plugins.ListPluginBase):
         self.core.unregister_namespace("tools")
         self.core.set("tools", None)
         self.clear()
-        return True
+        super().teardown()
 
     def _render_tool_info(self, column, cell, model, m_iter, key):
         tool = self.get_by_path(model.get_path(m_iter))

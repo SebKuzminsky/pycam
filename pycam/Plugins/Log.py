@@ -65,7 +65,7 @@ class Log(pycam.Plugins.PluginBase):
             # register a callback for the log window
             pycam.Utils.log.add_hook(self.add_log_message)
             self.register_gtk_handlers(self._gtk_handlers)
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui:
@@ -77,6 +77,7 @@ class Log(pycam.Plugins.PluginBase):
             self.core.unregister_ui("main_window", self.gui.get_object("StatusBarEventBox"))
             self.core.unregister_ui("view_menu", self.gui.get_object("ToggleLogWindow"))
             # TODO: disconnect the log handler
+        super().teardown()
 
     def add_log_message(self, title, message, record=None):
         timestamp = datetime.datetime.fromtimestamp(record.created).strftime("%H:%M")

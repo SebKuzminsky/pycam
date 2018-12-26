@@ -71,10 +71,11 @@ class FilenameDialog(pycam.Plugins.PluginBase):
         else:
             self.last_dirname = None
             self.core.set("get_filename_func", self.get_filename_dialog)
-            return True
+            return super().setup()
 
     def teardown(self):
         self.core.set("get_filename_func", None)
+        super().teardown()
 
     def get_filename_dialog(self, title="Choose file ...", mode_load=False, type_filter=None,
                             filename_templates=None, filename_extension=None, parent=None,

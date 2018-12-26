@@ -121,7 +121,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self._update_task_widgets()
         self.register_state_item("tasks", self)
         self.core.set("tasks", self)
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui and self._gtk:
@@ -136,6 +136,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self.core.get("unregister_parameter_group")("task")
         self.clear_state_items()
         self.clear()
+        super().teardown()
 
     def _get_type_parameter_names(self):
         the_type = self._get_type()

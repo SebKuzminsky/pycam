@@ -35,10 +35,11 @@ class ProcessStrategySlicing(pycam.Plugins.PluginBase):
                       "path_pattern": None}
         self.core.get("register_parameter_set")("process", "slice", "Slice removal", None,
                                                 parameters=parameters, weight=10)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.get("unregister_parameter_set")("process", "slice")
+        super().teardown()
 
 
 class ProcessStrategyContour(pycam.Plugins.PluginBase):
@@ -54,10 +55,11 @@ class ProcessStrategyContour(pycam.Plugins.PluginBase):
                       "milling_style": pycam.Toolpath.MotionGrid.MillingStyle.IGNORE}
         self.core.get("register_parameter_set")("process", "contour", "Waterline", None,
                                                 parameters=parameters, weight=20)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.get("unregister_parameter_set")("process", "contour")
+        super().teardown()
 
 
 class ProcessStrategySurfacing(pycam.Plugins.PluginBase):
@@ -72,10 +74,11 @@ class ProcessStrategySurfacing(pycam.Plugins.PluginBase):
                       "path_pattern": None}
         self.core.get("register_parameter_set")("process", "surface", "Surfacing", None,
                                                 parameters=parameters, weight=50)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.get("unregister_parameter_set")("process", "surface")
+        super().teardown()
 
 
 class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
@@ -92,7 +95,8 @@ class ProcessStrategyEngraving(pycam.Plugins.PluginBase):
                       "pocketing_type": pycam.Toolpath.MotionGrid.PocketingType.NONE}
         self.core.get("register_parameter_set")("process", "engrave", "Engraving", None,
                                                 parameters=parameters, weight=80)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.get("unregister_parameter_set")("process", "engrave")
+        super().teardown()

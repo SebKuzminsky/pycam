@@ -40,7 +40,7 @@ class VisualizeGrid(pycam.Plugins.PluginBase):
         self.core.get("register_display_item")("show_grid", "Show Base Grid", 80)
         self.core.get("register_color")("color_grid", "Base Grid", 80)
         self.core.emit_event("visual-item-updated")
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui:
@@ -50,6 +50,7 @@ class VisualizeGrid(pycam.Plugins.PluginBase):
         self.core.get("unregister_color")("color_grid")
         self.core.get("unregister_display_item")("show_grid")
         self.core.emit_event("visual-item-updated")
+        super().teardown()
 
     def _update_widget_state(self):
         if self.core.get("show_grid"):

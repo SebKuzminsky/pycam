@@ -181,12 +181,10 @@ class PluginBase:
             obj.disconnect(handler_id)
 
     def setup(self):
-        raise NotImplementedError("Module %s (%s) does not implement 'setup'"
-                                  % (self.name, __file__))
+        return True
 
     def teardown(self):
-        raise NotImplementedError("Module %s (%s) does not implement 'teardown'"
-                                  % (self.name, __file__))
+        pass
 
     def _get_gtk_action_group_by_name(self, group_name, create_if_missing=False):
         ui_manager = self.core.get("gtk-uimanager")
@@ -376,8 +374,16 @@ class ListPluginBase(PluginBase):
         super().__init__(*args, **kwargs)
         self._update_model_funcs = []
         self._gtk_modelview = None
+
+    def setup(self):
         get_event_handler().register_event(self.COLLECTION_ITEM_TYPE.list_changed_event,
                                            self._update_model)
+        return super().setup()
+
+    def teardown(self):
+        get_event_handler().unregister_event(self.COLLECTION_ITEM_TYPE.list_changed_event,
+                                             self._update_model)
+        super().teardown()
 
     def __del__(self):
         try:

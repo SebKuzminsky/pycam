@@ -35,7 +35,7 @@ class VisualizeBounds(pycam.Plugins.PluginBase):
                                      ("bounds-changed", "visual-item-updated")))
         self.register_event_handlers(self._event_handlers)
         self.core.emit_event("visual-item-updated")
-        return True
+        return super().setup()
 
     def teardown(self):
         self.unregister_event_handlers(self._event_handlers)
@@ -44,6 +44,7 @@ class VisualizeBounds(pycam.Plugins.PluginBase):
         self.core.get("unregister_color")("color_bounding_box")
         self.core.get("unregister_display_item")("show_bounding_box")
         self.core.emit_event("visual-item-updated")
+        super().teardown()
 
     def get_draw_dimension(self, low, high):
         if not self.core.get("show_bounding_box"):

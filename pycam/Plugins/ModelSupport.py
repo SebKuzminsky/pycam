@@ -111,7 +111,7 @@ class ModelSupport(pycam.Plugins.PluginBase):
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui:
@@ -122,6 +122,7 @@ class ModelSupport(pycam.Plugins.PluginBase):
             self.core.unregister_ui("support_model_type_selector", "none")
             self.core.unregister_ui_section("support_model_settings")
             self.core.unregister_ui_section("support_model_type_selector")
+        super().teardown()
 
     def _update_widgets(self):
         models = self.core.get("models").get_selected()

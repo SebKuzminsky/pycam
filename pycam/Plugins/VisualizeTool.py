@@ -30,13 +30,14 @@ class VisualizeTool(pycam.Plugins.PluginBase):
         self.core.get("register_display_item")("show_tool", "Show Tool", 70)
         self.core.get("register_color")("color_tool", "Tool", 50)
         self.core.emit_event("visual-item-updated")
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_chain("generate_x3d", self.generate_x3d)
         self.core.get("unregister_display_item")("show_tool")
         self.core.get("unregister_color")("color_tool")
         self.core.emit_event("visual-item-updated")
+        super().teardown()
 
     def generate_x3d(self, tree):
         if self.core.get("show_tool"):

@@ -51,7 +51,7 @@ class WebKitVisualization(pycam.Plugins.PluginBase):
         self.view.load_uri(self.http_server.get_url("/preview/x3d/scene.html"))
         self._event_handlers = [("visualization-updated", self.trigger_reload)]
         self.register_event_handlers(self._event_handlers)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.unregister_event_handlers(self._event_handlers)
@@ -60,6 +60,7 @@ class WebKitVisualization(pycam.Plugins.PluginBase):
         self.view.hide()
         self.view.try_close()
         del self.view
+        super().teardown()
 
     def trigger_reload(self):
         self.view.get_context().clear_cache()

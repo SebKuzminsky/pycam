@@ -60,7 +60,7 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
             self._update_visibility()
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui:
@@ -69,6 +69,7 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
             self.gui.get_object("ModelTableContainer").remove(self.models_widget.get_widget())
             self.core.unregister_ui("toolpath_handling", self._frame)
             self.models_widget.destroy()
+        super().teardown()
 
     def _update_models_list(self):
         choices = []

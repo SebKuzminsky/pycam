@@ -59,7 +59,7 @@ class ModelSupportDistributed(pycam.Plugins.PluginBase):
             self._event_handlers = (("support-model-changed", self.update_support_controls),)
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui:
@@ -70,6 +70,7 @@ class ModelSupportDistributed(pycam.Plugins.PluginBase):
             self.core.unregister_ui("support_model_type_selector", "distributed_corners")
             self.core.unregister_ui("support_model_settings",
                                     self.gui.get_object("DistributedSupportExpander"))
+        super().teardown()
 
     def update_support_controls(self):
         grid_type = self.core.get("support_model_type")

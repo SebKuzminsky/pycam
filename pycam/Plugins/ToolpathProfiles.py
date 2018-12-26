@@ -53,10 +53,11 @@ class ToolpathProfileMilling(pycam.Plugins.PluginBase):
             weight=10)
         # initialize all parameters
         self.core.get("set_parameter_values")("toolpath_profile", parameters)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.get("unregister_parameter_set")("toolpath_profile", "milling")
+        super().teardown()
 
 
 class ToolpathProfileLaser(pycam.Plugins.PluginBase):
@@ -79,7 +80,8 @@ class ToolpathProfileLaser(pycam.Plugins.PluginBase):
             weight=50)
         # initialize all parameters
         self.core.get("set_parameter_values")("toolpath_profile", parameters)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.get("unregister_parameter_set")("toolpath_profile", "laser")
+        super().teardown()

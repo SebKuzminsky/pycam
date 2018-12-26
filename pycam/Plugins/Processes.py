@@ -105,7 +105,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             self._update_process_widgets()
         self.register_state_item("processes", self)
         self.core.register_namespace("processes", pycam.Plugins.get_filter(self))
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui and self._gtk:
@@ -120,7 +120,7 @@ class Processes(pycam.Plugins.ListPluginBase):
         self.core.unregister_namespace("processes")
         self.core.set("processes", None)
         self.clear()
-        return True
+        super().teardown()
 
     def _render_process_description(self, column, cell, model, m_iter, data):
         # TODO: describe the strategy

@@ -129,7 +129,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         self.register_event_handlers(self._event_handlers)
         self.register_state_item("bounds-list", self)
         self.core.register_namespace("bounds", pycam.Plugins.get_filter(self))
-        return True
+        return super().setup()
 
     def teardown(self):
         self.unregister_event_handlers(self._event_handlers)
@@ -141,6 +141,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         self.core.set("bounds", None)
         self.clear()
         self.models_control.destroy()
+        super().teardown()
 
     def get_selected_models(self, index=False):
         return self.models_control.get_value()

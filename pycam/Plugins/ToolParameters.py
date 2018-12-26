@@ -35,12 +35,13 @@ class ToolParamRadius(pycam.Plugins.PluginBase):
                                     get_conv=lambda value: value / 2.0)
         self.core.get("register_parameter")("tool", "radius", self.control)
         self.core.register_ui("tool_size", "Tool Diameter", self.control.get_widget(), weight=10)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.get("unregister_parameter")("tool", "radius")
         self.core.unregister_ui("tool_size", self.control.get_widget())
         self.control.destroy()
+        super().teardown()
 
 
 class ToolParamToroidRadius(pycam.Plugins.PluginBase):
@@ -54,12 +55,13 @@ class ToolParamToroidRadius(pycam.Plugins.PluginBase):
             change_handler=lambda widget=None: self.core.emit_event("tool-control-changed"))
         self.core.get("register_parameter")("tool", "toroid_radius", self.control)
         self.core.register_ui("tool_size", "Toroid Radius", self.control.get_widget(), weight=50)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_ui("tool_size", self.control.get_widget())
         self.core.get("unregister_parameter")("tool", "toroid_radius")
         self.control.destroy()
+        super().teardown()
 
 
 class ToolParamFeedrate(pycam.Plugins.PluginBase):
@@ -73,12 +75,13 @@ class ToolParamFeedrate(pycam.Plugins.PluginBase):
             change_handler=lambda widget=None: self.core.emit_event("tool-control-changed"))
         self.core.get("register_parameter")("tool", "feed", self.control)
         self.core.register_ui("tool_speed", "Feedrate", self.control.get_widget(), weight=10)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_ui("tool_speed", self.control.get_widget())
         self.core.get("unregister_parameter")("tool", "feed")
         self.control.destroy()
+        super().teardown()
 
 
 class ToolParamSpindle(pycam.Plugins.PluginBase):
@@ -99,10 +102,11 @@ class ToolParamSpindle(pycam.Plugins.PluginBase):
             self.core.get("register_parameter")("tool", ("spindle", attribute), control)
             self.core.register_ui("tool_spindle", label, control.get_widget(), weight=weight)
             self.controls.append((control, attribute))
-        return True
+        return super().setup()
 
     def teardown(self):
         for control, attribute in self.controls:
             self.core.get("unregister_parameter")("tool", ("spindle", attribute))
             self.core.unregister_ui("tool_spindle", control.get_widget())
             control.destroy()
+        super().teardown()

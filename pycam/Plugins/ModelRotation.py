@@ -38,13 +38,14 @@ class ModelRotation(pycam.Plugins.PluginBase):
             self.register_gtk_handlers(self._gtk_handlers)
             self.register_event_handlers(self._event_handlers)
             self._update_controls()
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui:
             self.unregister_event_handlers(self._event_handlers)
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.core.unregister_ui("model_handling", self.gui.get_object("ModelRotationBox"))
+        super().teardown()
 
     def _update_controls(self):
         widget = self.gui.get_object("ModelRotationBox")

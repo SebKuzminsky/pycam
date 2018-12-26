@@ -80,7 +80,7 @@ class GtkConsole(pycam.Plugins.PluginBase):
                     ("ConsoleDialog", "destroy", hide_window)):
                 self._gtk_handlers.append((self.gui.get_object(objname), signal, func))
             self.register_gtk_handlers(self._gtk_handlers)
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui:
@@ -91,6 +91,7 @@ class GtkConsole(pycam.Plugins.PluginBase):
             console_action = self.gui.get_object("ToggleConsoleWindow")
             self.unregister_gtk_accelerator("console", console_action)
             self.core.unregister_ui("view_menu", console_action)
+        super().teardown()
 
     def _clear_console(self, widget=None):
         start, end = self._console_buffer.get_bounds()

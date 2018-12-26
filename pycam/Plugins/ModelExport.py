@@ -46,7 +46,7 @@ class ModelExport(pycam.Plugins.PluginBase):
             self.register_event_handlers(self._event_handlers)
             self._update_widgets()
         self.core.register_chain("model_export", self._fallback_model_export, weight=1000)
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui:
@@ -59,6 +59,7 @@ class ModelExport(pycam.Plugins.PluginBase):
             self.core.unregister_ui("file_menu", save_as_action)
             self.unregister_gtk_accelerator("model", save_as_action)
         self.core.unregister_chain("model_export", self._fallback_model_export)
+        super().teardown()
 
     def _fallback_model_export(self, models):
         if models:
@@ -95,10 +96,11 @@ class ModelExportTrimesh(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.core.register_chain("model_export", self.export_trimesh, weight=30)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_chain("model_export", self.export_trimesh)
+        super().teardown()
 
     def export_trimesh(self, models):
         removal_list = []
@@ -143,10 +145,11 @@ class ModelExportContour(pycam.Plugins.PluginBase):
 
     def setup(self):
         self.core.register_chain("model_export", self.export_contour, weight=40)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_chain("model_export", self.export_contour)
+        super().teardown()
 
     def export_contour(self, models):
         removal_list = []

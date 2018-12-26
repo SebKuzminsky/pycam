@@ -104,7 +104,7 @@ class ExportSettings(pycam.Plugins.ListPluginBase):
             self.register_event_handlers(self._event_handlers)
             self._transfer_settings_to_controls()
         self.core.set("export_settings", self)
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui and self._gtk:
@@ -114,6 +114,7 @@ class ExportSettings(pycam.Plugins.ListPluginBase):
             self.core.get("unregister_parameter_group")("toolpath_profile")
         self.core.set("export_settings", None)
         self._profile_selector.destroy()
+        super().teardown()
 
     def _export_setting_new(self, widget=None):
         with merge_history_and_block_events(self.core):

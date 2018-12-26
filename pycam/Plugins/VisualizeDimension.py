@@ -38,13 +38,14 @@ class VisualizeDimension(pycam.Plugins.PluginBase):
                 ("visual-item-updated", self.update_model_dimensions),
                 ("model-list-chaned", self.update_model_dimensions))
             self.register_event_handlers(self._event_handlers)
-        return True
+        return super().setup()
 
     def teardown(self):
         if self.gui:
             self.unregister_event_handlers(self._event_handlers)
             self.core.unregister_ui("visualization_details", self.gui.get_object("DimensionTable"))
             self.core.get("unregister_display_item")("show_dimensions")
+        super().teardown()
 
     def update_model_dimensions(self, widget=None):
         dimension_bar = self.gui.get_object("DimensionTable")

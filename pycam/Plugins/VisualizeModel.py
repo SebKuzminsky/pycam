@@ -37,7 +37,7 @@ class VisualizeModel(pycam.Plugins.PluginBase):
         self.core.register_chain("generate_x3d", self.generate_x3d)
         self.register_event_handlers(self._event_handlers)
         self.core.emit_event("visual-item-updated")
-        return True
+        return super().setup()
 
     def teardown(self):
         self.unregister_event_handlers(self._event_handlers)
@@ -46,6 +46,7 @@ class VisualizeModel(pycam.Plugins.PluginBase):
         self.core.get("unregister_display_item")("show_model")
         self.core.get("unregister_color")("color_model")
         self.core.emit_event("visual-item-updated")
+        super().teardown()
 
     def _get_cache_key(self, model, *args, **kwargs):
         if hasattr(model, "uuid"):

@@ -30,12 +30,13 @@ class VisualizeAxes(pycam.Plugins.PluginBase):
         self.core.register_chain("generate_x3d", self.generate_x3d)
         self.core.get("register_display_item")("show_axes", "Show Coordinate System", 50)
         self.core.emit_event("visual-item-updated")
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.unregister_chain("generate_x3d", self.generate_x3d)
         self.core.get("unregister_display_item")("show_axes")
         self.core.emit_event("visual-item-updated")
+        super().teardown()
 
     def generate_x3d(self, tree):
         if self.core.get("show_axes"):

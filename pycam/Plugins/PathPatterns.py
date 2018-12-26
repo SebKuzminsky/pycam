@@ -34,10 +34,11 @@ class PathPatternSpiral(pycam.Plugins.PluginBase):
                       "rounded_corners": False}
         self.core.get("register_parameter_set")("path_pattern", "spiral", "Spiral", None,
                                                 parameters=parameters, weight=30)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.get("unregister_parameter_set")("path_pattern", "spiral")
+        super().teardown()
 
 
 class PathPatternGrid(pycam.Plugins.PluginBase):
@@ -51,7 +52,8 @@ class PathPatternGrid(pycam.Plugins.PluginBase):
                       "grid_direction": pycam.Toolpath.MotionGrid.GridDirection.X}
         self.core.get("register_parameter_set")("path_pattern", "grid", "Grid",
                                                 None, parameters=parameters, weight=10)
-        return True
+        return super().setup()
 
     def teardown(self):
         self.core.get("unregister_parameter_set")("path_pattern", "grid")
+        super().teardown()
