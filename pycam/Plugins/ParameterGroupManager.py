@@ -200,8 +200,7 @@ class ParameterGroupManager(pycam.Plugins.PluginBase):
                 self.unregister_parameter_set(group_name, set_name)
         changed_set_event = group["changed_set_event"]
         if changed_set_event:
-            self.core.register_event(changed_set_event, self._update_widgets_visibility,
-                                     group_name)
+            self.core.unregister_event(changed_set_event, self._update_widgets_visibility)
         del self._groups[group_name]
 
     def unregister_parameter_set(self, group_name, set_name):
