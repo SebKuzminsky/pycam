@@ -82,11 +82,16 @@ class InputBaseClass(WidgetBaseClass):
         while hasattr(self, "_handler_ids") and self._handler_ids:
             control, handler_id = self._handler_ids.pop()
             control.disconnect(handler_id)
-        self.get_widget().destroy()
+        if getattr(self, "destroy_widget", True):
+            self.get_widget().destroy()
 
     def set_conversion(self, set_conv=None, get_conv=None):
         self._input_converter = set_conv
         self._output_converter = get_conv
+
+    def set_enable_destroy(self, do_destroy):
+        """ due to signal handler leakage we may want to disable "destroy" for some widgets """
+        self.destroy_widget = do_destroy
 
 
 class InputNumber(InputBaseClass):

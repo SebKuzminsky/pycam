@@ -98,6 +98,10 @@ class GCodeStepWidth(pycam.Plugins.PluginBase):
                 digits=8, start=0.0001, increment=0.00005, lower=0.00000001,
                 change_handler=lambda *args: self.core.emit_event(
                     "export-settings-control-changed"))
+            # Somehow "unknown signal" warnings are emitted during "destroy" of the last two
+            # widgets.  This feels like a namespace conflict, but there is no obvious cause.
+            if key != "x":
+                control.set_enable_destroy(False)
             self.core.register_ui("gcode_step_width", key.upper(), control.get_widget(),
                                   weight="xyz".index(key))
             self.core.get("register_parameter")("toolpath_profile", ("step_width", key), control)
