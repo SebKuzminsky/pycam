@@ -1,5 +1,5 @@
 """
-Copyright 2010 Lars Kruse <devel@sumpfralle.de>
+Copyright 2010-2018 Lars Kruse <devel@sumpfralle.de>
 
 This file is part of PyCAM.
 
@@ -26,6 +26,7 @@ import pycam.Utils
 import pycam.Utils.log
 
 
+APP_NAME = "pycam"
 DATA_DIR_ENVIRON_KEY = "PYCAM_DATA_DIR"
 FONT_DIR_ENVIRON_KEY = "PYCAM_FONT_DIR"
 
@@ -38,9 +39,9 @@ if "_MEIPASS2" in os.environ:
 
 # lookup list of directories for UI files, fonts, ...
 DATA_BASE_DIRS = [os.path.join(PROJECT_BASE_DIR, "share"),
-                  os.path.join(PROJECT_BASE_DIR, "share", "pycam"),
-                  os.path.join(sys.prefix, "local", "share", "pycam"),
-                  os.path.join(sys.prefix, "share", "pycam"), '.']
+                  os.path.join(PROJECT_BASE_DIR, "share", APP_NAME),
+                  os.path.join(sys.prefix, "local", "share", APP_NAME),
+                  os.path.join(sys.prefix, "share", APP_NAME), '.']
 FONTS_SUBDIR = "fonts"
 UI_SUBDIR = "ui"
 
