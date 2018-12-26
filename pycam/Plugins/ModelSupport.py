@@ -40,12 +40,20 @@ class ModelSupport(pycam.Plugins.PluginBase):
             self._gtk_handlers.append((support_model_type_selector, "changed",
                                        "support-model-changed"))
 
-            def add_support_type(obj, name):
+            def add_support_model_type(obj, name):
                 types_model = support_model_type_selector.get_model()
-                types_model.append((obj, name))
-                # enable the first item by default
-                if len(types_model) == 1:
-                    support_model_type_selector.set_active(0)
+                # the model is gone (for unknown reasons) when the GTK loop stops
+                if types_model is not None:
+                    types_model.append((obj, name))
+                    # enable the first item by default
+                    if len(types_model) == 1:
+                        support_model_type_selector.set_active(0)
+
+            def clear_support_model_type_selector():
+                model = support_model_type_selector.get_model()
+                # the model is gone (for unknown reasons) when the GTK loop stops
+                if model is not None:
+                    model.clear()
 
             def clear_support_model_settings():
                 children = container.get_children()
@@ -69,8 +77,8 @@ class ModelSupport(pycam.Plugins.PluginBase):
                 else:
                     support_model_type_selector.set_active(-1)
 
-            self.core.register_ui_section("support_model_type_selector", add_support_type,
-                                          lambda: support_model_type_selector.get_model().clear())
+            self.core.register_ui_section("support_model_type_selector", add_support_model_type,
+                                          clear_support_model_type_selector)
             self.core.register_ui("support_model_type_selector", "none", "none", weight=-100)
             container = self.gui.get_object("SupportAddOnContainer")
             self.core.register_ui_section(
@@ -112,6 +120,8 @@ class ModelSupport(pycam.Plugins.PluginBase):
             self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
             self.core.unregister_chain("get_draw_dimension", self.get_draw_dimension)
+            self.core.unregister_ui_section("support_model_settings")
+            self.core.unregister_ui_section("support_model_type_selector")
 
     def _update_widgets(self):
         models = self.core.get("models").get_selected()
