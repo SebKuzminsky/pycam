@@ -67,7 +67,9 @@ class PluginBase:
     _imports = _get_plugin_imports()
 
     def __init__(self, core, name):
-        self.enabled = True
+        self._setup_finished = False
+        self._teardown_finished = False
+        self.enabled = False
         self.name = name
         self.core = core
         self.gui = None
@@ -112,7 +114,6 @@ class PluginBase:
                     self.ICONS[key] = None
         self._func_cache = {}
         self._gtk_handler_id_cache = []
-        self.enabled = True
         self._state_items = []
 
     def register_state_item(self, path, get_func, set_func=None):
@@ -181,10 +182,11 @@ class PluginBase:
             obj.disconnect(handler_id)
 
     def setup(self):
+        self._setup_finished = True
         return True
 
     def teardown(self):
-        pass
+        self._teardown_finished = True
 
     def _get_gtk_action_group_by_name(self, group_name, create_if_missing=False):
         ui_manager = self.core.get("gtk-uimanager")
@@ -285,18 +287,13 @@ class PluginManager:
 
     def _load_plugin(self, obj, filename, plugin_name):
         if plugin_name in self.modules:
-            _log.debug("Cleaning up module %s", plugin_name)
+            _log.debug("Cleaning up plugin %s", plugin_name)
             self.modules[plugin_name].teardown()
-        _log.debug("Initializing module %s (%s)", plugin_name, filename)
+        _log.debug("Adding plugin %s (%s)", plugin_name, filename)
         new_plugin = obj(self.core, plugin_name)
-        try:
-            if not new_plugin.setup():
-                _log.info("Failed to setup plugin '%s'", str(plugin_name))
-            else:
-                self.modules[plugin_name] = new_plugin
-                self.core.emit_event("plugin-list-changed")
-        except NotImplementedError as err_msg:
-            _log.info("Skipping incomplete plugin '%s': %s", plugin_name, err_msg)
+        self.modules[plugin_name] = new_plugin
+        self.core.emit_event("plugin-list-changed")
+        self.enable_plugin(plugin_name)
 
     def disable_all_plugins(self):
         _log.info("Disabling all plugins")
@@ -316,7 +313,14 @@ class PluginManager:
             _log.debug("Refused to enable an active plugin: %s" % name)
             return
         else:
+            plugin._setup_finished = False
             plugin.enabled = plugin.setup()
+            if plugin.enabled:
+                _log.debug("Successfully enabled plugin '%s'", str(name))
+                if not plugin._setup_finished:
+                    _log.warning("The 'setup' method of plugin '%s' lacks a call to its parent")
+            else:
+                _log.info("Failed to setup plugin '%s'", str(name))
 
     def disable_plugin(self, name, recursively=False):
         plugin = self.get_plugin(name)
@@ -333,7 +337,10 @@ class PluginManager:
                              name, " ".join(self.get_dependent_plugins(name)))
             else:
                 _log.debug("Disabling plugin: %s", name)
+                plugin._teardown_finished = False
                 plugin.teardown()
+                if not plugin._teardown_finished:
+                    _log.warning("The 'teardown' method of plugin '%s' lacks a call to its parent")
                 plugin.enabled = False
 
     def get_plugin_state(self, name):
