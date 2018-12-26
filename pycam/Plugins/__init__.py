@@ -184,10 +184,7 @@ class PluginBase:
     def register_gtk_handlers(self, gtk_widget_handlers):
         for data in gtk_widget_handlers:
             obj, signal, func = data[:3]
-            if len(data) > 3:
-                params = data[3:]
-            else:
-                params = []
+            params = data[3:] if len(data) > 3 else []
             handler_id = obj.connect(signal, self.__get_handler_func(func, params))
             self._gtk_handler_id_cache.append((obj, handler_id))
 
