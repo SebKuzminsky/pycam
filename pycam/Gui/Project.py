@@ -494,6 +494,8 @@ class ProjectGui(pycam.Gui.BaseUI):
     def destroy(self, widget=None, data=None):
         # the "destroy" handler can be called multiple times: prevent duplicate signals
         if self.mainloop is not None:
+            # tell everyone that we are going down
+            self.settings.emit_event("mainloop-stop")
             self.mainloop.stop()
             self.mainloop = None
 

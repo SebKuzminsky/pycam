@@ -147,33 +147,38 @@ def show_gui(workspace_filename=None):
                 gui.load_startup_workspace()
 
     log.debug("Finished initialization")
-    # open the GUI
+
+    def shutdown_handler():
+        # optionally save workspace (based on configuration or dialog response)
+        if has_loaded_custom_workspace:
+            # A custom workspace file was given via command line - we always want to ask before
+            # overwriting it.
+            response = gui.get_question_response(
+                "Save Workspace to '{}'?".format(workspace_filename), True)
+            should_store = response.is_yes
+        elif event_manager.get("save_workspace_on_exit") == QuestionStatus.ASK.value:
+            response = gui.get_question_response("Save Workspace?", True, allow_memorize=True)
+            if response.should_memorize:
+                event_manager.set(
+                    "save_workspace_on_exit",
+                    (QuestionStatus.YES if response.is_yes else QuestionStatus.NO).value)
+            should_store = response.is_yes
+        elif event_manager.get("save_workspace_on_exit") == QuestionStatus.YES.value:
+            should_store = True
+        else:
+            should_store = False
+        if should_store:
+            gui.save_startup_workspace()
+
+        gui.save_preferences()
+        with merge_history_and_block_events(event_manager, emit_events_after=False):
+            plugin_manager.disable_all_plugins()
+
+    # Register our shutdown handler: it should be run _before_ the GTK main loop stops.
+    # Otherwise some references and signals are gone when the teardown actions are exeucted.
+    event_manager.register_event("mainloop-stop", shutdown_handler)
+    # open the GUI - wait until the window is closed
     get_mainloop(use_gtk=True).run()
-
-    # optionally save workspace (based on configuration or dialog response)
-    if has_loaded_custom_workspace:
-        # A custom workspace file was given via command line - we always want to ask before
-        # overwriting it.
-        response = gui.get_question_response(
-            "Save Workspace to '{}'?".format(workspace_filename), True)
-        should_store = response.is_yes
-    elif event_manager.get("save_workspace_on_exit") == QuestionStatus.ASK.value:
-        response = gui.get_question_response("Save Workspace?", True, allow_memorize=True)
-        if response.should_memorize:
-            event_manager.set("save_workspace_on_exit",
-                              (QuestionStatus.YES if response.is_yes else QuestionStatus.NO).value)
-        should_store = response.is_yes
-    elif event_manager.get("save_workspace_on_exit") == QuestionStatus.YES.value:
-        should_store = True
-    else:
-        should_store = False
-    if should_store:
-        gui.save_startup_workspace()
-
-    gui.save_preferences()
-    with merge_history_and_block_events(event_manager, emit_events_after=False):
-        plugin_manager.disable_all_plugins()
-
     # no error -> return no error code
     return None
 
