@@ -44,6 +44,9 @@ class DataHistory:
         self._store_revision()
 
     def __del__(self):
+        self.cleanup()
+
+    def cleanup(self):
         self._unregister_events()
 
     def clear(self):
@@ -95,7 +98,8 @@ class DataHistory:
 
     def _unregister_events(self):
         event_handler = get_event_handler()
-        for event in self.subscribed_events:
+        while self.subscribed_events:
+            event = self.subscribed_events.pop()
             event_handler.unregister_event(event, self._store_revision)
 
     def _store_revision(self):

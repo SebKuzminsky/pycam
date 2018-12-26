@@ -122,7 +122,8 @@ def show_gui(workspace_filename=None):
         return EXIT_CODES["requirements"]
 
     event_manager = get_event_handler()
-    event_manager.set("history", DataHistory())
+    history = DataHistory()
+    event_manager.set("history", history)
 
     with merge_history_and_block_events(event_manager):
         log.debug("Initializing user interface")
@@ -181,6 +182,7 @@ def show_gui(workspace_filename=None):
             plugin_manager.disable_all_plugins()
         # close the GUI
         gui.stop()
+        history.cleanup()
 
     # Register our shutdown handler: it should be run _before_ the GTK main loop stops.
     # Otherwise some references and signals are gone when the teardown actions are exeucted.
