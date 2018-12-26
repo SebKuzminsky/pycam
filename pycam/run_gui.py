@@ -147,6 +147,9 @@ def show_gui(workspace_filename=None):
                 gui.load_startup_workspace()
 
     log.debug("Finished initialization")
+    log.debug("Configured events: %s", ", ".join(
+        "{} ({:d})".format(event, handler_count)
+        for event, handler_count in sorted(event_manager.get_events_summary().items())))
     shutdown_calls = []
 
     def shutdown_handler():

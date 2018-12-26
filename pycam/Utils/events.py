@@ -103,6 +103,9 @@ class EventCore(pycam.Gui.Settings.Settings):
         else:
             log.info("Trying to unregister an unknown event: %s", event)
 
+    def get_events_summary(self):
+        return {key: len(event.handlers) for key, event in self.event_handlers.items()}
+
     def emit_event(self, event, *args, **kwargs):
         log.debug2("Event emitted: %s", event)
         if event in self.event_handlers:
