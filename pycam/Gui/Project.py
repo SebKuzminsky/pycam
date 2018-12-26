@@ -103,7 +103,8 @@ class ProjectGui(pycam.Gui.BaseUI):
         super().__init__(event_manager)
         self.gui_is_active = False
         self.gui = Gtk.Builder()
-        self.mainloop = get_mainloop()
+        self._mainloop_is_running = False
+        self.mainloop = get_mainloop(use_gtk=True)
         gtk_build_file = get_ui_file_location(GTKBUILD_FILE)
         if gtk_build_file is None:
             raise InitializationError("Failed to load GTK layout specification file: {}"
@@ -491,13 +492,21 @@ class ProjectGui(pycam.Gui.BaseUI):
         is_enabled = (history.get_undo_steps_count() > 0) if history else False
         self.gui.get_object("UndoButton").set_sensitive(is_enabled)
 
-    def destroy(self, widget=None, data=None):
-        # the "destroy" handler can be called multiple times: prevent duplicate signals
-        if self.mainloop is not None:
-            # tell everyone that we are going down
-            self.settings.emit_event("mainloop-stop")
+    def run_forever(self):
+        self._mainloop_is_running = True
+        # the main loop returns as soon "stop" is called
+        self.mainloop.run()
+
+    def stop(self):
+        if self._mainloop_is_running:
+            self.window.hide()
+            self._mainloop_is_running = False
             self.mainloop.stop()
-            self.mainloop = None
+
+    def destroy(self, widget=None, data=None):
+        # Our caller is supposed to call our "stop" method in this event handler, after everything
+        # is finished.
+        self.settings.emit_event("mainloop-stop")
 
     def configure_drag_and_drop(self, obj):
         obj.connect("drag-data-received", self.handle_data_drop)

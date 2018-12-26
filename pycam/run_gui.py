@@ -55,7 +55,7 @@ import pycam.Importers.TestModel
 import pycam.Importers
 import pycam.Plugins
 import pycam.Utils
-from pycam.Utils.events import get_event_handler, get_mainloop
+from pycam.Utils.events import get_event_handler
 import pycam.Utils.log
 import pycam.Utils.threading
 
@@ -178,12 +178,14 @@ def show_gui(workspace_filename=None):
         gui.save_preferences()
         with merge_history_and_block_events(event_manager, emit_events_after=False):
             plugin_manager.disable_all_plugins()
+        # close the GUI
+        gui.stop()
 
     # Register our shutdown handler: it should be run _before_ the GTK main loop stops.
     # Otherwise some references and signals are gone when the teardown actions are exeucted.
     event_manager.register_event("mainloop-stop", shutdown_handler)
     # open the GUI - wait until the window is closed
-    get_mainloop(use_gtk=True).run()
+    gui.run_forever()
     # no error -> return no error code
     return None
 
