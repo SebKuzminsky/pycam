@@ -21,6 +21,7 @@ import contextlib
 import os
 import sys
 import tempfile
+import urllib.request
 
 import pycam.Utils
 import pycam.Utils.log
@@ -186,3 +187,48 @@ def create_named_temporary_file(suffix=None):
                 os.remove(filename)
             except OSError as exc:
                 log.warn("Failed to remove temporary file (%s): %s", filename, exc)
+
+
+def get_cache_directory():
+    """ determine and create a directory for storing cached files
+
+    @throws OSError
+    """
+    try:
+        from win32com.shell import shellcon, shell
+        cache_base_dir = shell.SHGetFolderPath(0, shellcon.CSIDL_INTERNET_CACHE, 0, 0)
+    except ImportError:
+        # see https://specifications.freedesktop.org/basedir-spec/basedir-spec-0.7.html#variables
+        cache_base_dir = os.getenv("XDG_CACHE_HOME",
+                                   os.path.join(os.path.expanduser("~"), ".cache"))
+    cache_dir = os.path.join(cache_base_dir, APP_NAME)
+    if not os.path.exists(cache_dir):
+        # this may throw OSError
+        os.makedirs(cache_dir)
+    return cache_dir
+
+
+def retrieve_cached_download(storage_filename, download_url):
+    """ retrieve the full filename of a locally cached download
+
+    @throws OSError in case of any problems (download or data storage)
+    @returns absolute filename
+    """
+    # this may raise an OSError
+    cache_dir = get_cache_directory()
+    full_filename = os.path.join(cache_dir, storage_filename)
+    if os.path.exists(full_filename):
+        log.debug("Use cached file (%s) instead of downloading '%s'", full_filename, download_url)
+    else:
+        log.info("Downloading '%s' to '%s'", download_url, full_filename)
+        # download the file
+        temporary_filename = full_filename + ".part"
+        # remove the file if it was left there in a previous attempt
+        try:
+            os.remove(temporary_filename)
+        except OSError:
+            pass
+        # this may raise an HTTP-related error (inherited from OSError)
+        urllib.request.urlretrieve(download_url, temporary_filename)
+        os.rename(temporary_filename, full_filename)
+    return full_filename
