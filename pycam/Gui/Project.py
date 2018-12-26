@@ -101,6 +101,7 @@ class ProjectGui(pycam.Gui.BaseUI):
 
     def __init__(self, event_manager):
         super().__init__(event_manager)
+        self._event_handlers = []
         self.gui_is_active = False
         self.gui = Gtk.Builder()
         self._mainloop_is_running = False
@@ -183,9 +184,6 @@ class ProjectGui(pycam.Gui.BaseUI):
             def open_url(widget, data=None):
                 webbrowser.open(widget.get_uri())
             Gtk.link_button_set_uri_hook(open_url)
-        self.settings.register_event("history-changed", self._update_undo_button)
-        self.settings.register_event("model-change-after",
-                                     lambda: self.settings.emit_event("visual-item-updated"))
         # configure drag-n-drop for config files and models
         self.settings.set("configure-drag-drop-func", self.configure_drag_and_drop)
         self.settings.get("configure-drag-drop-func")(self.window)
@@ -296,8 +294,6 @@ class ProjectGui(pycam.Gui.BaseUI):
             self.menubar.set_sensitive(True)
             main_tab.set_sensitive(True)
 
-        self.settings.register_event("gui-disable", disable_gui)
-        self.settings.register_event("gui-enable", enable_gui)
         # configure locations of external programs
         for auto_control_name, location_control_name, browse_button, key in (
                 ("ExternalProgramInkscapeAuto", "ExternalProgramInkscapeControl",
@@ -402,6 +398,16 @@ class ProjectGui(pycam.Gui.BaseUI):
         self.settings.register_ui("file_menu", "QuitSeparator", None, 95)
         self.settings.register_ui("main_window", "Main", self.menubar, -100)
         self.settings.set("set_last_filename", self.add_to_recent_file_list)
+        self._event_handlers.extend((
+            ("history-changed", self._update_undo_button),
+            ("model-change-after", "visual-item-updated"),
+            ("gui-disable", disable_gui),
+            ("gui-enable", enable_gui),
+            ("notify-file-saved", self.add_to_recent_file_list),
+            ("notify-file-opened", self.add_to_recent_file_list),
+        ))
+        for name, target in self._event_handlers:
+            self.settings.register_event(name, target)
         # allow the task settings control to be updated
         self.mainloop.update()
         # register a logging handler for displaying error messages
@@ -504,6 +510,8 @@ class ProjectGui(pycam.Gui.BaseUI):
             self.window.hide()
             self._mainloop_is_running = False
             self.mainloop.stop()
+        for name, target in self._event_handlers:
+            self.settings.unregister_event(name, target)
 
     def destroy(self, widget=None, data=None):
         # Our caller is supposed to call our "stop" method in this event handler, after everything
