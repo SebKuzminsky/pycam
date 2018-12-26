@@ -105,7 +105,8 @@ class GCodeStepWidth(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
-        for key, control in self.controls:
+        while self.controls:
+            key, control = self.controls.pop()
             self.core.unregister_ui("gcode_step_width", control)
             self.core.get("unregister_parameter")("toolpath_profile", ("step_width", key))
         self.core.unregister_ui("gcode_general_parameters", self._table.get_widget())
