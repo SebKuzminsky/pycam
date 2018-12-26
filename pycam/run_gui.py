@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 
-Copyright 2010 Lars Kruse <devel@sumpfralle.de>
+Copyright 2010-2018 Lars Kruse <devel@sumpfralle.de>
 Copyright 2008-2009 Lode Leroy
 
 This file is part of PyCAM.
@@ -125,14 +125,19 @@ def show_gui(workspace_filename=None):
     event_manager.set("history", DataHistory())
 
     with merge_history_and_block_events(event_manager):
+        log.debug("Initializing user interface")
         gui = gui_class(event_manager)
         # initialize plugins
+        log.debug("Loading all available plugins")
         plugin_manager = pycam.Plugins.PluginManager(core=event_manager)
         plugin_manager.import_plugins()
         # some more initialization
+        log.debug("Resetting preferences")
         gui.reset_preferences()
+        log.debug("Loading preferences")
         gui.load_preferences()
         has_loaded_custom_workspace = False
+        log.debug("Loading workspace")
         if workspace_filename is None:
             gui.load_startup_workspace()
         else:
@@ -141,6 +146,7 @@ def show_gui(workspace_filename=None):
             else:
                 gui.load_startup_workspace()
 
+    log.debug("Finished initialization")
     # open the GUI
     get_mainloop(use_gtk=True).run()
 
