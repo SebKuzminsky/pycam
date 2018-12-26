@@ -46,9 +46,9 @@ class ToolpathGrid(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("toolpath_handling", self._frame)
-            self.unregister_gtk_handlers(self._gtk_handlers)
             self.core.unregister_event("toolpath-selection-changed", self._update_widgets)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.core.unregister_ui("toolpath_handling", self._frame)
 
     def _get_toolpaths_dim(self, toolpaths):
         """ calculate the maximum dimensions for x and y of all toolpaths """

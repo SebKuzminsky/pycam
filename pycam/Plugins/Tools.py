@@ -122,9 +122,9 @@ class Tools(pycam.Plugins.ListPluginBase):
         return True
 
     def teardown(self):
-        self.clear_state_items()
-        self.core.unregister_namespace("tools")
         if self.gui and self._gtk:
+            self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
             self.core.unregister_ui("main", self.gui.get_object("ToolBox"))
             self.core.unregister_ui_section("tool_speed")
             self.core.unregister_ui_section("tool_size")
@@ -132,8 +132,8 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.core.unregister_ui("tool_parameters", self.speed_widget.get_widget())
             self.core.unregister_ui("tool_parameters", self.spindle_widget.get_widget())
             self.core.unregister_ui_section("tool_parameters")
-            self.unregister_gtk_handlers(self._gtk_handlers)
-            self.unregister_event_handlers(self._event_handlers)
+        self.clear_state_items()
+        self.core.unregister_namespace("tools")
         self.core.set("tools", None)
         self.clear()
         return True

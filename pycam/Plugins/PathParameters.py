@@ -252,9 +252,9 @@ class PathParamTraceModel(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
+        self.core.unregister_event("model-list-changed", self._update_models)
         self.core.get("unregister_parameter")("process", "trace_models")
         self.core.unregister_ui("process_path_parameters", self.control.get_widget())
-        self.core.unregister_event("model-list-changed", self._update_models)
 
     def _update_models(self):
         choices = []

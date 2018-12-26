@@ -60,11 +60,10 @@ class ToolpathSimulation(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            del self.core["show_simulation"]
-            self.core.unregister_ui("toolpath_handling", self._frame)
-            self.core.unregister_event("visualize-items", self.show_simulation)
             self.unregister_event_handlers(self._event_handlers)
             self.unregister_gtk_handlers(self._gtk_handlers)
+            del self.core["show_simulation"]
+            self.core.unregister_ui("toolpath_handling", self._frame)
 
     def _update_visibility(self):
         toolpaths = self.core.get("toolpaths").get_selected()

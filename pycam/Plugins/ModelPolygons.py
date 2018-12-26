@@ -47,9 +47,9 @@ class ModelPolygons(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("model_handling", self.gui.get_object("ModelPolygonFrame"))
-            self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.core.unregister_ui("model_handling", self.gui.get_object("ModelPolygonFrame"))
 
     def _get_polygon_models(self):
         models = []

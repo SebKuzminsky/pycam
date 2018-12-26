@@ -60,11 +60,11 @@ class PluginSelector(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
+            self.unregister_gtk_handlers(self._gtk_handlers)
             self.plugin_window.hide()
             action = self.gui.get_object("TogglePluginWindow")
             self.core.unregister_ui("view_menu", action)
             self.core.unregister_event("plugin-list-changed", self._update_plugin_model)
-            self.unregister_gtk_handlers(self._gtk_handlers)
 
     def toggle_plugin_window(self, widget=None, value=None, action=None):
         toggle_plugin_button = self.gui.get_object("TogglePluginWindow")

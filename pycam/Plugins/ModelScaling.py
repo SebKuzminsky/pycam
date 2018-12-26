@@ -68,9 +68,9 @@ class ModelScaling(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("model_handling", self.gui.get_object("ModelScaleBox"))
-            self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.core.unregister_ui("model_handling", self.gui.get_object("ModelScaleBox"))
 
     def _update_scale_controls(self):
         models = self.core.get("models").get_selected()

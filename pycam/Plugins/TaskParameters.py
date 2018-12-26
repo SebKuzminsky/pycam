@@ -40,9 +40,9 @@ class TaskParamCollisionModels(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
+        self.core.unregister_event("model-list-changed", self._update_models)
         self.core.get("unregister_parameter")("task", "collision_models")
         self.core.unregister_ui("task_models", self.control.get_widget())
-        self.core.unregister_event("model-list-changed", self._update_models)
 
     def _update_models(self):
         choices = []
@@ -67,9 +67,9 @@ class TaskParamTool(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
+        self.core.unregister_event("tool-list-changed", self._update_tools)
         self.core.get("unregister_parameter")("task", "tool")
         self.core.unregister_ui("task_models", self.control.get_widget())
-        self.core.unregister_event("tool-list-changed", self._update_tools)
 
     def _update_tools(self):
         choices = []
@@ -92,9 +92,9 @@ class TaskParamProcess(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
+        self.core.unregister_event("process-list-changed", self._update_processes)
         self.core.get("unregister_parameter")("task", "process")
         self.core.unregister_ui("task_models", self.control.get_widget())
-        self.core.unregister_event("process-list-changed", self._update_processes)
 
     def _update_processes(self):
         choices = []
@@ -118,9 +118,9 @@ class TaskParamBounds(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
+        self.core.unregister_event("bounds-list-changed", self._update_bounds)
         self.core.get("unregister_parameter")("task", "bounds")
         self.core.unregister_ui("task_models", self.control.get_widget())
-        self.core.unregister_event("bounds-list-changed", self._update_bounds)
 
     def _update_bounds(self):
         choices = []

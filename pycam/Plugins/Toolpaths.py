@@ -85,11 +85,11 @@ class Toolpaths(pycam.Plugins.ListPluginBase):
         return True
 
     def teardown(self):
-        self.core.unregister_namespace("toolpaths")
         if self.gui and self._gtk:
-            self.core.unregister_ui("main", self.gui.get_object("ToolpathsBox"))
-            self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.core.unregister_ui("main", self.gui.get_object("ToolpathsBox"))
+        self.core.unregister_namespace("toolpaths")
         self.core.set("toolpaths", None)
 
     def _update_toolpath_tab_visibility(self):

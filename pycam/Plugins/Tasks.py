@@ -124,16 +124,16 @@ class Tasks(pycam.Plugins.ListPluginBase):
         return True
 
     def teardown(self):
-        self.clear_state_items()
         if self.gui and self._gtk:
+            self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
             self.core.unregister_ui("main", self.gui.get_object("TaskBox"))
             self.core.unregister_ui("task_parameters", self.models_widget)
             self.core.unregister_ui("task_parameters", self.components_widget)
             self.core.unregister_ui_section("task_models")
             self.core.unregister_ui_section("task_components")
             self.core.unregister_ui_section("task_parameters")
-            self.unregister_gtk_handlers(self._gtk_handlers)
-            self.unregister_event_handlers(self._event_handlers)
+        self.clear_state_items()
         self.clear()
 
     def _get_type_parameter_names(self):

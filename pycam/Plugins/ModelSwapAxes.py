@@ -42,9 +42,9 @@ class ModelSwapAxes(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("model_handling", self.gui.get_object("ModelSwapBox"))
-            self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.core.unregister_ui("model_handling", self.gui.get_object("ModelSwapBox"))
 
     def _update_controls(self):
         box = self.gui.get_object("ModelSwapBox")

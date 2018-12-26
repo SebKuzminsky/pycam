@@ -128,12 +128,12 @@ class ModelSupportGrid(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui and self._gtk:
+            self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
             self.core.unregister_chain("get_support_models", self._get_support_models)
             self.core.unregister_ui("support_model_type_selector", "grid")
             self.core.unregister_ui("support_model_settings",
                                     self.gui.get_object("SupportModelGridBox"))
-            self.unregister_gtk_handlers(self._gtk_handlers)
-            self.unregister_event_handlers(self._event_handlers)
 
     def _get_support_models(self, models, support_models):
         grid_type = self.core.get("support_model_type")

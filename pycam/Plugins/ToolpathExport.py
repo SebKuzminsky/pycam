@@ -56,9 +56,9 @@ class ToolpathExport(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("toolpath_handling", self._frame)
-            self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.core.unregister_ui("toolpath_handling", self._frame)
 
     def _update_widgets(self):
         toolpaths = self.core.get("toolpaths")

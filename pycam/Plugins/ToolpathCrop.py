@@ -64,10 +64,10 @@ class ToolpathCrop(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
+            self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
             self.gui.get_object("ModelTableContainer").remove(self.models_widget.get_widget())
             self.core.unregister_ui("toolpath_handling", self._frame)
-            self.unregister_gtk_handlers(self._gtk_handlers)
-            self.unregister_event_handlers(self._event_handlers)
 
     def _update_models_list(self):
         choices = []

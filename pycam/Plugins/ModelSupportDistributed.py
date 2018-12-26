@@ -63,8 +63,8 @@ class ModelSupportDistributed(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
             self.core.unregister_chain("get_support_models", self._get_support_models)
             self.core.unregister_ui("support_model_type_selector", "distributed_edges")
             self.core.unregister_ui("support_model_type_selector", "distributed_corners")

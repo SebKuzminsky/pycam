@@ -44,9 +44,9 @@ class ModelProjection(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.core.unregister_ui("model_handling", self.gui.get_object("ModelProjectionFrame"))
-            self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.core.unregister_ui("model_handling", self.gui.get_object("ModelProjectionFrame"))
 
     def _get_projectable_models(self):
         models = self.core.get("models").get_selected()

@@ -115,11 +115,11 @@ class ModelSupport(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
+            self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.core.unregister_chain("get_draw_dimension", self.get_draw_dimension)
             self.core.unregister_ui("model_handling", self.gui.get_object("ModelExtensionsFrame"))
             self.core.unregister_ui("support_model_type_selector", "none")
-            self.unregister_gtk_handlers(self._gtk_handlers)
-            self.unregister_event_handlers(self._event_handlers)
-            self.core.unregister_chain("get_draw_dimension", self.get_draw_dimension)
             self.core.unregister_ui_section("support_model_settings")
             self.core.unregister_ui_section("support_model_type_selector")
 

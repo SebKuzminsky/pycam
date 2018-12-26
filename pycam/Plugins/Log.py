@@ -69,13 +69,13 @@ class Log(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
+            self.unregister_gtk_handlers(self._gtk_handlers)
             self.log_window.hide()
             log_action = self.gui.get_object("ToggleLogWindow")
             self.core.unregister_ui("view_menu", log_action)
             self.unregister_gtk_accelerator("log", log_action)
             self.core.unregister_ui("main_window", self.gui.get_object("StatusBarEventBox"))
             self.core.unregister_ui("view_menu", self.gui.get_object("ToggleLogWindow"))
-            self.unregister_gtk_handlers(self._gtk_handlers)
             # TODO: disconnect the log handler
 
     def add_log_message(self, title, message, record=None):

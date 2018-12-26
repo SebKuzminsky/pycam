@@ -132,12 +132,12 @@ class Bounds(pycam.Plugins.ListPluginBase):
         return True
 
     def teardown(self):
+        self.unregister_event_handlers(self._event_handlers)
+        if self.gui:
+            self.unregister_gtk_handlers(self._gtk_handlers)
+            self.core.unregister_ui("main", self.gui.get_object("BoundsBox"))
         self.clear_state_items()
         self.core.unregister_namespace("bounds")
-        if self.gui:
-            self.core.unregister_ui("main", self.gui.get_object("BoundsBox"))
-            self.unregister_gtk_handlers(self._gtk_handlers)
-        self.unregister_event_handlers(self._event_handlers)
         self.core.set("bounds", None)
         self.clear()
 

@@ -74,11 +74,10 @@ class MemoryAnalyzer(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
+            self.unregister_gtk_handlers(self._gtk_handlers)
             self.window.hide()
             self.core.unregister_ui("view_menu", self.toggle_action)
             self.unregister_gtk_accelerator("memory_analyzer", self.toggle_action)
-            self.core.unregister_ui("view_menu", self.toggle_action)
-            self.unregister_gtk_handlers(self._gtk_handlers)
 
     def toggle_window(self, widget=None, value=None, action=None):
         checkbox_state = self.toggle_action.get_active()

@@ -42,8 +42,8 @@ class ModelPlaneMirror(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
-            self.unregister_gtk_handlers(self._gtk_handlers)
             self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
 
     def _update_plane_widgets(self):
         plane_widget = self.gui.get_object("ModelMirrorBox")

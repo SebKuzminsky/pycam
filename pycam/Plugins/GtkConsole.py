@@ -84,13 +84,13 @@ class GtkConsole(pycam.Plugins.PluginBase):
 
     def teardown(self):
         if self.gui:
+            self.unregister_gtk_handlers(self._gtk_handlers)
             self._set_window_visibility(value=False)
             sys.stdout = self._original_stdout
             sys.stdin = self._original_stdin
             console_action = self.gui.get_object("ToggleConsoleWindow")
             self.unregister_gtk_accelerator("console", console_action)
             self.core.unregister_ui("view_menu", console_action)
-            self.unregister_gtk_handlers(self._gtk_handlers)
 
     def _clear_console(self, widget=None):
         start, end = self._console_buffer.get_bounds()

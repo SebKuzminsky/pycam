@@ -108,10 +108,10 @@ class ExportSettings(pycam.Plugins.ListPluginBase):
 
     def teardown(self):
         if self.gui and self._gtk:
+            self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
             self.core.unregister_ui("main", self.gui.get_object("ExportSettingsBox"))
             self.core.get("unregister_parameter_group")("toolpath_profile")
-            self.unregister_gtk_handlers(self._gtk_handlers)
-            self.unregister_event_handlers(self._event_handlers)
         self.core.set("export_settings", None)
 
     def _export_setting_new(self, widget=None):

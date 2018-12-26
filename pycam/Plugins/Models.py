@@ -85,13 +85,13 @@ class Models(pycam.Plugins.ListPluginBase):
         return True
 
     def teardown(self):
-        self.clear_state_items()
         if self.gui and self._gtk:
+            self.unregister_event_handlers(self._event_handlers)
+            self.unregister_gtk_handlers(self._gtk_handlers)
             self.core.unregister_ui_section("model_handling")
             self.core.unregister_ui("main", self.gui.get_object("ModelBox"))
             self.core.unregister_ui("main", self.model_frame)
-            self.unregister_gtk_handlers(self._gtk_handlers)
-            self.unregister_event_handlers(self._event_handlers)
+        self.clear_state_items()
         self.core.set("models", None)
         self.clear()
         return True
