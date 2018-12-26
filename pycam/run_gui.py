@@ -191,6 +191,10 @@ def show_gui(workspace_filename=None):
     gui.run_forever()
     # show final statistics
     log.debug("Configured events: %s", ", ".join(event_manager.get_events_summary_lines()))
+    for event, stats in sorted(event_manager.get_events_summary().items()):
+        if len(stats["handlers"]) > 0:
+            log.info("Remaining listeners for event '%s': %s",
+                     event, ", ".join(str(func) for func in stats["handlers"]))
     # no error -> return no error code
     return None
 
