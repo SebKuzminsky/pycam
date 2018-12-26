@@ -71,7 +71,7 @@ class GCodeTouchOff(pycam.Plugins.PluginBase):
             self.core.unregister_ui("gcode_touch_off", control.get_widget())
         self.core.unregister_ui_section("gcode_touch_off")
         self.core.unregister_ui("gcode_preferences", self._table.get_widget())
-        self.core.get("unregister_parameter")("toolpath_profile", "touch_off", self.box)
+        self.core.get("unregister_parameter")("toolpath_profile", "touch_off")
 
     def _get_control_values(self):
         """ used by the parameter manager for retrieving the current state """
