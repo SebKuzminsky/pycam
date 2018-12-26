@@ -165,6 +165,8 @@ def show_gui(workspace_filename=None):
         gui.save_startup_workspace()
 
     gui.save_preferences()
+    with merge_history_and_block_events(event_manager, emit_events_after=False):
+        plugin_manager.disable_all_plugins()
 
     # no error -> return no error code
     return None

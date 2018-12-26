@@ -109,12 +109,12 @@ class DataHistory:
 
 
 @contextlib.contextmanager
-def merge_history_and_block_events(settings):
+def merge_history_and_block_events(settings, emit_events_after=True):
     """merge all history changes to a single one and block all events (emitting them later)"""
     history = settings.get("history")
     if history:
         with history.merge_changes():
-            with settings.blocked_events(history.subscribed_events, emit_after=True):
+            with settings.blocked_events(history.subscribed_events, emit_after=emit_events_after):
                 yield
     else:
         yield
