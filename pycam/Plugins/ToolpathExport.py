@@ -101,6 +101,7 @@ class ToolpathExport(pycam.Plugins.PluginBase):
             filename_templates=(self._last_toolpath_file, self.core.get("last_model_filename")),
             filename_extension=filename_extension,
             extra_widget=export_options_control.get_widget())
+        export_options_control.destroy()
         if filename:
             self._last_toolpath_file = filename
         # no filename given -> exit

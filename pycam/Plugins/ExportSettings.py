@@ -113,6 +113,7 @@ class ExportSettings(pycam.Plugins.ListPluginBase):
             self.core.unregister_ui("main", self.gui.get_object("ExportSettingsBox"))
             self.core.get("unregister_parameter_group")("toolpath_profile")
         self.core.set("export_settings", None)
+        self._profile_selector.destroy()
 
     def _export_setting_new(self, widget=None):
         with merge_history_and_block_events(self.core):

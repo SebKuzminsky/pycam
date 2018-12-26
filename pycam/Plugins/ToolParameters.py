@@ -40,6 +40,7 @@ class ToolParamRadius(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.get("unregister_parameter")("tool", "radius")
         self.core.unregister_ui("tool_size", self.control.get_widget())
+        self.control.destroy()
 
 
 class ToolParamToroidRadius(pycam.Plugins.PluginBase):
@@ -58,6 +59,7 @@ class ToolParamToroidRadius(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.unregister_ui("tool_size", self.control.get_widget())
         self.core.get("unregister_parameter")("tool", "toroid_radius")
+        self.control.destroy()
 
 
 class ToolParamFeedrate(pycam.Plugins.PluginBase):
@@ -76,6 +78,7 @@ class ToolParamFeedrate(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.unregister_ui("tool_speed", self.control.get_widget())
         self.core.get("unregister_parameter")("tool", "feed")
+        self.control.destroy()
 
 
 class ToolParamSpindle(pycam.Plugins.PluginBase):
@@ -102,3 +105,4 @@ class ToolParamSpindle(pycam.Plugins.PluginBase):
         for control, attribute in self.controls:
             self.core.get("unregister_parameter")("tool", ("spindle", attribute))
             self.core.unregister_ui("tool_spindle", control.get_widget())
+            control.destroy()

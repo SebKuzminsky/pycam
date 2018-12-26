@@ -140,6 +140,7 @@ class Bounds(pycam.Plugins.ListPluginBase):
         self.core.unregister_namespace("bounds")
         self.core.set("bounds", None)
         self.clear()
+        self.models_control.destroy()
 
     def get_selected_models(self, index=False):
         return self.models_control.get_value()

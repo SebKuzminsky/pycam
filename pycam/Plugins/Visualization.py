@@ -279,19 +279,24 @@ class Visualization(pycam.Plugins.PluginBase):
         widget = self._gtk.ColorButton()
         widget.set_use_alpha(True)
         wrappers = (get_color_wrapper(widget), set_color_wrapper(widget))
-        self._color_settings[name] = {"name": name, "label": label, "weight": weight,
-                                      "widget": widget, "wrappers": wrappers}
-        widget.connect("color-set", lambda widget: self.core.emit_event("visual-item-updated"))
+        widget_action = lambda widget: self.core.emit_event("visual-item-updated")
+        handler_id = widget.connect("color-set", widget_action)
+        self._color_settings[name] = {
+            "name": name, "label": label, "weight": weight, "widget": widget, "wrappers": wrappers,
+            "handler_id": handler_id}
         self.core.add_item(name, *wrappers)
         self.register_state_item("settings/view/colors/%s" % name, *wrappers)
         self._rebuild_color_settings()
 
     def unregister_color_setting(self, name):
-        if name not in self._color_settings:
+        try:
+            item = self._color_settings[name]
+        except KeyError:
             self.log.debug("Failed to unregister unknown color item: %s", name)
             return
-        wrappers = self._color_settings[name]["wrappers"]
+        wrappers = item["wrappers"]
         self.unregister_state_item("settings/view/colors/%s" % name, *wrappers)
+        item["widget"].disconnect(item["handler_id"])
         del self._color_settings[name]
         self._rebuild_color_settings()
 

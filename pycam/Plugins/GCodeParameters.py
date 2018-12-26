@@ -40,6 +40,7 @@ class GCodeSafetyHeight(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.unregister_ui("gcode_general_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("toolpath_profile", "safety_height")
+        self.control.destroy()
 
 
 class GCodePlungeFeedrate(pycam.Plugins.PluginBase):
@@ -59,6 +60,7 @@ class GCodePlungeFeedrate(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.unregister_ui("gcode_general_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("toolpath_profile", "plunge_feedrate")
+        self.control.destroy()
 
 
 # TODO: move to settings for ToolpathOutputDialects
@@ -80,6 +82,7 @@ class GCodeFilenameExtension(pycam.Plugins.PluginBase):
     def teardown(self):
         self.core.unregister_ui("gcode_general_parameters", self.control.get_widget())
         self.core.get("unregister_parameter")("toolpath_profile", "filename_extension")
+        self.control.destroy()
 
 
 class GCodeStepWidth(pycam.Plugins.PluginBase):
@@ -113,6 +116,7 @@ class GCodeStepWidth(pycam.Plugins.PluginBase):
             key, control = self.controls.pop()
             self.core.unregister_ui("gcode_step_width", control)
             self.core.get("unregister_parameter")("toolpath_profile", ("step_width", key))
+            control.destroy()
         self.core.unregister_ui("gcode_general_parameters", self._table.get_widget())
 
 
@@ -164,6 +168,9 @@ class GCodeCornerStyle(pycam.Plugins.PluginBase):
         self.core.unregister_ui("gcode_preferences", self._table.get_widget())
         for name in ("motion_tolerance", "naive_tolerance", "mode"):
             self.core.get("unregister_parameter")("toolpath_profile", ("corner_style", name))
+        self.motion_tolerance.destroy()
+        self.naive_tolerance.destroy()
+        self.path_mode.destroy()
 
     def update_widgets(self, widget=None):
         enable_tolerances = (self.path_mode.get_value()

@@ -67,8 +67,10 @@ class GCodeTouchOff(pycam.Plugins.PluginBase):
         return True
 
     def teardown(self):
-        for key, control in self.controls.items():
+        while self.controls:
+            control = self.controls.popitem()[1]
             self.core.unregister_ui("gcode_touch_off", control.get_widget())
+            control.destroy()
         self.core.unregister_ui_section("gcode_touch_off")
         self.core.unregister_ui("gcode_preferences", self._table.get_widget())
         self.core.get("unregister_parameter")("toolpath_profile", "touch_off")
