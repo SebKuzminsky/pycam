@@ -24,11 +24,13 @@ import os
 import random
 import threading
 
+from pycam.Utils.locations import retrieve_cached_download
 import pycam.Utils.log
 
 
 _log = pycam.Utils.log.get_logger()
 
+X3DOM_JS_URL = "http://x3dom.org/release/x3dom.js"
 HTML_DOCUMENTS = {
     "x3d_scene": b"""
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -89,19 +91,43 @@ class BasePycamHandler(http.server.SimpleHTTPRequestHandler):
         except (ConnectionResetError, BrokenPipeError):
             return None
 
+    def log_message(self, message, *args):
+        # out parent's implementation sends all messages to stderr - we redirect it
+        _log.debug("Internal HTTP server: {}".format(message), *args)
+
 
 def get_x3d_handler(get_scene_bytes):
 
     class X3DHandler(BasePycamHandler):
+
+        # class variable for tracking warning messages
+        emitted_download_warning = False
+
         def send_head(self):
-            if self.path == "/preview/x3d/scene.html":
-                return self._send_content_data(HTML_DOCUMENTS["x3d_scene"].strip())
-            elif self.path == "/preview/x3d/x3dom.js":
-                return self._send_content_file("x3dom.js")
-            elif self.path == "/preview/x3d/scene.x3d":
-                return self._send_content_data(get_scene_bytes(), content_type="model/x3d+xml")
-            else:
-                return super().send_head()
+            try:
+                if self.path == "/preview/x3d/scene.html":
+                    return self._send_content_data(HTML_DOCUMENTS["x3d_scene"].strip())
+                elif self.path == "/preview/x3d/x3dom.js":
+                    try:
+                        filename = retrieve_cached_download("x3dom.js", X3DOM_JS_URL)
+                    except OSError as exc:
+                        message = ("Failed to download or store X3DOM library (%s) for 3D "
+                                   "visualization: %s".format(X3DOM_JS_URL, exc))
+                        if not self.emitted_download_warning:
+                            # emit this warning only once
+                            self.emitted_download_warning = True
+                            _log.warning(message)
+                        self.send_error(HTTPStatus.BAD_GATEWAY, message=message)
+                        return
+                    else:
+                        return self._send_content_file(filename)
+                elif self.path == "/preview/x3d/scene.x3d":
+                    return self._send_content_data(get_scene_bytes(), content_type="model/x3d+xml")
+                else:
+                    return super().send_head()
+            except (ConnectionResetError, BrokenPipeError):
+                # the client disconnected before everything was transmitted
+                pass
 
     return X3DHandler
 
