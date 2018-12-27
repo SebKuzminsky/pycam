@@ -189,6 +189,7 @@ def show_gui(workspace_filename=None):
     event_manager.register_event("mainloop-stop", shutdown_handler)
     # open the GUI - wait until the window is closed
     gui.run_forever()
+    event_manager.unregister_event("mainloop-stop", shutdown_handler)
     # show final statistics
     log.debug("Configured events: %s", ", ".join(event_manager.get_events_summary_lines()))
     for event, stats in sorted(event_manager.get_events_summary().items()):

@@ -132,6 +132,7 @@ class Tools(pycam.Plugins.ListPluginBase):
             self.core.unregister_ui("tool_parameters", self.speed_widget.get_widget())
             self.core.unregister_ui("tool_parameters", self.spindle_widget.get_widget())
             self.core.unregister_ui_section("tool_parameters")
+            self.core.get("unregister_parameter_group")("tool")
         self.clear_state_items()
         self.core.unregister_namespace("tools")
         self.core.set("tools", None)

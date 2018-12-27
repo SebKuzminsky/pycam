@@ -115,6 +115,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             self.core.unregister_ui_section("process_path_parameters")
             self.core.unregister_ui("process_parameters", self.parameter_widget.get_widget())
             self.core.unregister_ui_section("process_parameters")
+            self.core.get("unregister_parameter_group")("process")
         self.clear_state_items()
         self.core.unregister_namespace("processes")
         self.core.set("processes", None)

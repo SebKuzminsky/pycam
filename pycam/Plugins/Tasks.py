@@ -133,6 +133,7 @@ class Tasks(pycam.Plugins.ListPluginBase):
             self.core.unregister_ui_section("task_models")
             self.core.unregister_ui_section("task_components")
             self.core.unregister_ui_section("task_parameters")
+            self.core.get("unregister_parameter_group")("task")
         self.clear_state_items()
         self.clear()
 
