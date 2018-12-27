@@ -43,6 +43,28 @@ HTML_DOCUMENTS = {
 <body>
 <x3d width='100%' height='100%'><scene><inline url="scene.x3d" /></scene></x3d>
 </body></html>""",
+    "x_ite": b"""
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+        <link rel="stylesheet" href="http://code.create3000.de/x_ite/latest/dist/x_ite.css" type="text/css" media="all"/>
+        <script type="text/javascript" src="http://code.create3000.de/x_ite/latest/dist/x_ite.min.js"></script>
+        <script type="text/javascript" src="https://cdn.rawgit.com/andreasplesch/x_ite_dom/v1.0/src/x_ite_dom.js"></script>
+        <style>
+            X3DCanvas {
+                width: 550px;
+                height: 350px;
+            }
+        </style>
+    </head>
+<body>
+<script>
+    setTimeout(function() { document.getElementById('view_center').setAttribute('set_bind','true'); }, 4000);
+</script>
+<X3DCanvas><x3d><scene><inline url='"/preview/x3d/scene.x3d"' /></scene></x3d></X3DCanvas>
+</body></html>""",
 }
 
 
@@ -100,19 +122,28 @@ def get_x3d_handler(get_scene_bytes):
 
     class X3DHandler(BasePycamHandler):
 
+        DOWNLOAD_MAP = {
+            "/preview/x3d/x3dom.js": X3DOM_JS_URL,
+            "/preview/x3d/x_ite.css": "http://code.create3000.de/x_ite/latest/dist/x_ite.css",
+            "/preview/x3d/x_ite.min.js": "http://code.create3000.de/x_ite/latest/dist/x_ite.min.js",
+            "/preview/x3d/x_ite_dom.js": "https://cdn.rawgit.com/andreasplesch/x_ite_dom/v1.0/src/x_ite_dom.js",
+        }
+
         # class variable for tracking warning messages
         emitted_download_warning = False
 
         def send_head(self):
             try:
                 if self.path == "/preview/x3d/scene.html":
-                    return self._send_content_data(HTML_DOCUMENTS["x3d_scene"].strip())
-                elif self.path == "/preview/x3d/x3dom.js":
+                    return self._send_content_data(HTML_DOCUMENTS["x_ite"].strip())
+                elif self.path in self.DOWNLOAD_MAP:
+                    download_url = self.DOWNLOAD_MAP[self.path]
+                    base_filename = os.path.basename(self.path)
                     try:
-                        filename = retrieve_cached_download("x3dom.js", X3DOM_JS_URL)
+                        filename = retrieve_cached_download(base_filename, download_url)
                     except OSError as exc:
-                        message = ("Failed to download or store X3DOM library (%s) for 3D "
-                                   "visualization: %s".format(X3DOM_JS_URL, exc))
+                        message = ("Failed to download or store external library (%s) for 3D "
+                                   "visualization: %s".format(download_url, exc))
                         if not self.emitted_download_warning:
                             # emit this warning only once
                             self.emitted_download_warning = True

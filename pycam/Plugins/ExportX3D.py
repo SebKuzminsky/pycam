@@ -17,7 +17,9 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import collections
 import io
+import math
 import os
 
 import pycam.Plugins
@@ -60,10 +62,52 @@ class ExportX3D(pycam.Plugins.PluginBase):
         return result
 
 
+SceneView = collections.namedtuple("SceneView", ("orientation", "angle", "direction"))
+
+angle = math.pi * 6 / 6
+
 class X3DTree:
 
-    def __init__(self):
+    VIEWS = {
+        "center": SceneView((-1, 1, 1), -math.pi / 2, (-1.0, -0.2, 0.4)),
+        "top": SceneView((0, 0, 1), 0, (0, 0, 1)),
+        "bottom": SceneView((0, 1, 0), math.pi, (0, 0, -1)),
+        "left": SceneView((1, -1, -1), math.pi * 2 / 3, (-1, 0, 0)),
+        "right": SceneView((1, 1, 1), math.pi * 2 / 3, (1, 0, 0)),
+        "front": SceneView((1, 0, 0), math.pi / 2, (0, -1, 0)),
+        "back": SceneView((0, 1, 1), math.pi, (0, 1, 0)),
+    }
+
+    def __init__(self, use_orthogonal=True):
         self.header = '<X3D version="3.0" profile="Immersive"><Scene>'
+        self.header += """<NavigationInfo isActive="true" type='"EXAMINE" "ANY"' />"""
+        if use_orthogonal:
+            view_type = "OrthoViewpoint"
+        else:
+            view_type = "Viewpoint"
+        dim_low = (0, 0, -10)
+        dim_high = (130, 50, 0)
+        dims = tuple(u - l for l, u in zip(dim_low, dim_high))
+        max_dims = max(dims)
+        center = tuple((l + u) / 2 for l, u in zip(dim_low, dim_high))
+        if use_orthogonal:
+            field_radius = max_dims * 0.3
+            extra_attributes = 'fieldOfView="{:f} {:f} {:f} {:f}"'.format(
+                -field_radius, -field_radius, field_radius, field_radius)
+            # the distance of the position is not used for orthogonal views (only the fieldOfView)
+            distance_factor = 1.0
+        else:
+            extra_attributes = 'zNear="{:f}"'.format(max_dims)
+            distance_factor = 1.1
+        for name, view in self.VIEWS.items():
+            position = tuple(c + distance_factor * o * max_dims
+                             for c, o in zip(center, view.direction))
+            self.header += (
+                '<{} DEF="{}" id="view_{}" isActive="true" description="{}" '
+                'centerOfRotation="{:f} {:f} {:f}" position="{:f} {:f} {:f}" '
+                'orientation="{:f} {:f} {:f} {:f}" {} />'
+                .format(view_type, name, name, name, *center, *position, *view.orientation,
+                        view.angle, extra_attributes))
         self.footer = "</Scene></X3D>"
         self.sources = []
 
