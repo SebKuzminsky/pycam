@@ -86,4 +86,4 @@ class LinuxCNCToolExport(pycam.Plugins.PluginBase):
             except IOError as err_msg:
                 self.log.error("Failed to save LinuxCNC tool file: %s", err_msg)
             else:
-                self.core.emit_event("notify-file-saved", filename)
+                self.core.get("set_last_filename")(filename)

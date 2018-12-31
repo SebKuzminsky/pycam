@@ -221,7 +221,7 @@ class BaseUI:
         from pycam.Flow.parser import dump_yaml
         if remember_uri:
             self.last_workspace_uri = pycam.Utils.URIHandler(filename)
-            self.settings.emit_event("notify-file-opened", filename)
+            self.settings.get("set_last_filename")(filename)
         log.info("Storing workspace in file: %s", filename)
         try:
             with open_file_context(filename, "w", True) as out_file:
@@ -234,7 +234,7 @@ class BaseUI:
     def load_workspace_from_file(self, filename, remember_uri=True, default_content=None):
         if remember_uri:
             self.last_workspace_uri = pycam.Utils.URIHandler(filename)
-            self.settings.emit_event("notify-file-opened", filename)
+            self.settings.get("set_last_filename")(filename)
         log.info("Loading workspace from file: %s", filename)
         try:
             with open_file_context(filename, "r", True) as in_file:

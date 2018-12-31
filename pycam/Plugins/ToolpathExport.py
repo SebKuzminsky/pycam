@@ -122,4 +122,4 @@ class ToolpathExport(pycam.Plugins.PluginBase):
             # remove the temporary export item
             del export
             self.log.info("GCode file successfully written: %s", str(filename))
-            self.core.emit_event("notify-file-saved", filename)
+            self.core.get("set_last_filename")(filename)

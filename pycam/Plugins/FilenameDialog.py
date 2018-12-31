@@ -175,8 +175,5 @@ class FilenameDialog(pycam.Plugins.PluginBase):
         dialog.destroy()
         # add the file to the list of recently used ones
         if filename:
-            if mode_load:
-                self.core.emit_event("notify-file-opened", filename)
-            else:
-                self.core.emit_event("notify-file-saved", filename)
+            self.core.get("set_last_filename")(filename)
         return filename

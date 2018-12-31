@@ -401,8 +401,7 @@ class ProjectGui(pycam.Gui.BaseUI):
         self.settings.register_ui("file_menu", "Quit", self.gui.get_object("Quit"), 100)
         self.settings.register_ui("file_menu", "QuitSeparator", None, 95)
         self.settings.register_ui("main_window", "Main", self.menubar, -100)
-        self.settings.register_event("notify-file-saved", self.add_to_recent_file_list)
-        self.settings.register_event("notify-file-opened", self.add_to_recent_file_list)
+        self.settings.set("set_last_filename", self.add_to_recent_file_list)
         # allow the task settings control to be updated
         self.mainloop.update()
         # register a logging handler for displaying error messages
