@@ -49,9 +49,12 @@ HTML_DOCUMENTS = {
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-        <link rel="stylesheet" href="http://code.create3000.de/x_ite/latest/dist/x_ite.css" type="text/css" media="all"/>
-        <script type="text/javascript" src="http://code.create3000.de/x_ite/latest/dist/x_ite.min.js"></script>
-        <script type="text/javascript" src="https://cdn.rawgit.com/andreasplesch/x_ite_dom/v1.0/src/x_ite_dom.js"></script>
+        <link rel="stylesheet" href="http://code.create3000.de/x_ite/latest/dist/x_ite.css"
+            type="text/css" media="all"/>
+        <script type="text/javascript"
+            src="http://code.create3000.de/x_ite/latest/dist/x_ite.min.js"></script>
+        <script type="text/javascript"
+            src="https://cdn.rawgit.com/andreasplesch/x_ite_dom/v1.0/src/x_ite_dom.js"></script>
         <style>
             X3DCanvas {
                 width: 550px;
@@ -61,7 +64,8 @@ HTML_DOCUMENTS = {
     </head>
 <body>
 <script>
-    setTimeout(function() { document.getElementById('view_center').setAttribute('set_bind','true'); }, 4000);
+    setTimeout(function() {
+        document.getElementById('view_center').setAttribute('set_bind','true'); }, 4000);
 </script>
 <X3DCanvas><x3d><scene><inline url='"/preview/x3d/scene.x3d"' /></scene></x3d></X3DCanvas>
 </body></html>""",
@@ -73,6 +77,7 @@ try:
 except AttributeError:
     # the "ThreadingHTTPServer" did not exist before Python 3.7
     import socketserver
+
     class ThreadingHTTPServer(http.server.HTTPServer, socketserver.ThreadingMixIn):
         pass
 
@@ -134,8 +139,10 @@ def get_x3d_handler(get_scene_bytes):
         DOWNLOAD_MAP = {
             "/preview/x3d/x3dom.js": X3DOM_JS_URL,
             "/preview/x3d/x_ite.css": "http://code.create3000.de/x_ite/latest/dist/x_ite.css",
-            "/preview/x3d/x_ite.min.js": "http://code.create3000.de/x_ite/latest/dist/x_ite.min.js",
-            "/preview/x3d/x_ite_dom.js": "https://cdn.rawgit.com/andreasplesch/x_ite_dom/v1.0/src/x_ite_dom.js",
+            "/preview/x3d/x_ite.min.js": (
+                "http://code.create3000.de/x_ite/latest/dist/x_ite.min.js"),
+            "/preview/x3d/x_ite_dom.js": (
+                "https://cdn.rawgit.com/andreasplesch/x_ite_dom/v1.0/src/x_ite_dom.js"),
         }
 
         # class variable for tracking warning messages

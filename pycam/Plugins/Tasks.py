@@ -175,7 +175,6 @@ class Tasks(pycam.Plugins.ListPluginBase):
         for one_type in sorted(types, key=lambda item: item["weight"]):
             model.append((one_type["label"], one_type["name"]))
         # check if any on the processes became obsolete due to a missing plugin
-        removal = []
         type_names = [one_type["name"] for one_type in types]
         for task in self.get_all():
             if task.get_value("type") not in type_names:

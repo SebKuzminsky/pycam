@@ -64,7 +64,6 @@ class ExportX3D(pycam.Plugins.PluginBase):
 
 SceneView = collections.namedtuple("SceneView", ("orientation", "angle", "direction"))
 
-angle = math.pi * 6 / 6
 
 class X3DTree:
 
