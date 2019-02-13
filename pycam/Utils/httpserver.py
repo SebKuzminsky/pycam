@@ -68,6 +68,15 @@ HTML_DOCUMENTS = {
 }
 
 
+try:
+    ThreadingHTTPServer = http.server.ThreadingHTTPServer
+except AttributeError:
+    # the "ThreadingHTTPServer" did not exist before Python 3.7
+    import socketserver
+    class ThreadingHTTPServer(http.server.HTTPServer, socketserver.ThreadingMixIn):
+        pass
+
+
 class BasePycamHandler(http.server.SimpleHTTPRequestHandler):
 
     def send_head(self):
@@ -169,7 +178,7 @@ class HTTPServer:
         self.address = address
         self.handler = handler
         # bind immediately - otherwise we do not receive errors
-        self.httpd = http.server.ThreadingHTTPServer(address, handler)
+        self.httpd = ThreadingHTTPServer(address, handler)
         _log.info("Bound local http server to %s:%d",
                   "[{}]".format(address[0]) if ":" in address[0] else address[0], address[1])
 
