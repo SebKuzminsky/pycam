@@ -34,8 +34,7 @@ _log = pycam.Utils.log.get_logger()
 def _get_plugin_imports():
     # We want to import all relevant GUI modules into the namespace of each plugin.
     # We do this once for all - in order to centralize and minimize error handling.
-    result = {key: None for key in ("gtk", "gdk", "gdkpixbuf", "gdkobject", "gio", "glib",
-                                    "GL", "GLU", "GLUT")}
+    result = {key: None for key in ("gtk", "gdk", "gdkpixbuf", "gio", "glib", "gobject")}
     try:
         import gi
         gi.require_version('Gtk', '3.0')
@@ -74,7 +73,7 @@ class PluginBase:
         self.core = core
         self.gui = None
         self.log = _log
-        # convenience imports for GUI modules (self._gtk, self._gdk, self._GL, ...)
+        # convenience imports for GUI modules (self._gtk, self._gdk, ...)
         for key, value in self._imports.items():
             setattr(self, "_" + key, value)
         if self.UI_FILE and self._gtk:
