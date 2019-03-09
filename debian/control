@@ -40,9 +40,9 @@ Description: CAM program & Python library for generating toolpaths
     * read and write STL model files (3D)
     * support for 2D models (DXF/SVG/PS)
     * generate toolpaths (GCode) for various strategies and drill
-	  definitions
+      definitions
     * manage and store processing templates
     * scale, move, rotate, flip and transform the model
     * interactive 3D model view based on OpenGL
     * non-interactive generation of GCode via commandline
-	* render single-line fonts (provided by QCAD)
+    * render single-line fonts (provided by QCAD)
