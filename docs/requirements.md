@@ -18,14 +18,12 @@ Install the following packages with your package manager (see below):
 -   **python-gtk2**
 -   **python-opengl** (at least v3.0.1)
 -   **python-gtkglext1** (for OpenSuSE: *python-gtkglext*)
--   **python-guppy** (optional; required by the *Memory Analyzer*
-    plugin - only useful for development)
 
 ### Debian
 
 Run the following command in a *root* terminal:
 
-    apt-get install python-gtk2 python-opengl python-gtkglext1 python-guppy
+    apt-get install python-gtk2 python-opengl python-gtkglext1
 
 Please note, that the outdated Debian *Lenny* contains broken *python-opengl* packages.
 You need to temporarily add the *Squeeze* repository during the installation of these two packages.
@@ -35,7 +33,7 @@ You need to temporarily add the *Squeeze* repository during the installation of 
 Enable the *universe* repository. See detailed instructions
 [here](http://help.ubuntu.com/community/Repositories/Ubuntu).
 
-    sudo apt-get install python-gtk2 python-opengl python-gtkglext1 python-guppy
+    sudo apt-get install python-gtk2 python-opengl python-gtkglext1
 
 Please note, that Ubuntu *Jaunty* (maybe also *Dapper/Hardy/Intrepid*) contains broken
 *python-opengl* packages. You need to temporarily add the *Karmic* repository during the
@@ -45,13 +43,13 @@ installation of these two packages.
 
 Run the following command in a *root* terminal:
 
-    zypper install python-gtk2 python-gtkglext python-opengl python-guppy
+    zypper install python-gtk2 python-gtkglext python-opengl
 
 ### Fedora
 
 Run the following command in a *root* terminal:
 
-    yum install pygtk2 pygtkglext python-opengl python-guppy
+    yum install pygtk2 pygtkglext python-opengl
 
 Windows
 -------
