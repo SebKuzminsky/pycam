@@ -27,7 +27,6 @@ Depends:
  python-gtkglext1,
  python-numpy,
  python-opengl,
- python-rsvg,
  python-setproctitle,
  ${misc:Depends},
  ${python:Depends},
