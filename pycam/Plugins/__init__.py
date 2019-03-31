@@ -36,6 +36,13 @@ def _get_plugin_imports():
     # We do this once for all - in order to centralize and minimize error handling.
     result = {key: None for key in ("gtk", "gdk", "gdkpixbuf", "gdkobject", "gio", "glib",
                                     "GL", "GLU", "GLUT")}
+
+    # By default, Gdk loads the OpenGL 3.2 Core profile. However, PyCAM's rendering
+    # code uses the fixed function pipeline, which was removed in the Core profile.
+    # So we have to resort to this semi-public API to ask Gdk to use a Compatibility
+    # profile instead.
+    os.environ['GDK_GL'] = 'legacy'
+
     try:
         import gi
         gi.require_version('Gtk', '3.0')
