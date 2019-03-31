@@ -200,7 +200,6 @@ class Tools(pycam.Plugins.ListPluginBase):
         for shape in shapes:
             model.append((shape["label"], shape["name"]))
         # check if any on the tools became obsolete due to a missing plugin
-        removal = []
         shape_names = [shape["name"] for shape in shapes]
         for tool in self.get_all():
             if not tool.get_value("shape").value in shape_names:
