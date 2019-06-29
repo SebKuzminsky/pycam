@@ -25,7 +25,7 @@ Simply run the following to install all dependencies:
 Run PyCAM
 ---------
 
--   extract the [PyCAM archive](http://pycam.sourceforge.net/download.html)
+-   extract the [PyCAM archive](https://sourceforge.net/projects/pycam/files/pycam/)
 -   run */opt/local/bin/python2.5 pycam* from within PyCAM's directory
     -   the above line refers to MacPorts' Python interpreter (instead
         of MacOS' native Python) - otherwise it will not find OpenGL and

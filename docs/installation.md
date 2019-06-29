@@ -14,14 +14,12 @@ See [Installation MacOS](installation-macos.md) for details.
 
 ### Windows
 
-Use the [standalone executable for
-Windows](http://pycam.sourceforge.net/download.html). There are no
-further requirements.
+Use the [standalone executable for Windows](https://sourceforge.net/projects/pycam/files/pycam/0.5.1/pycam-0.5.1.1_standalone.exe/download).
+There are no further requirements.
 
-If you want to use [multiple CPU cores or distributed
-processing](parallel-processing), then
-you will need to use the [dependency installer and the PyCAM installer
-package](http://pycam.sourceforge.net/download.html).
+If you want to use [multiple CPU cores or distributed processing](parallel-processing), then you will need to use the
+[dependency installer](https://sourceforge.net/projects/pycam/files/pycam/0.5.1/python2.5-gtk-opengl.exe/download)
+and the [PyCAM installer package](https://sourceforge.net/projects/pycam/files/pycam/0.5.1/pycam-0.5.1.win32.exe/download).
 
 Installing the development version
 ----------------------------------
