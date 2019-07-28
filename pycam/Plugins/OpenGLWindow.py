@@ -22,7 +22,7 @@ import math
 
 # careful import
 try:
-    import gtk.gtkgl
+    import gtk.gtkgl  # noqa: F401
     import OpenGL.GL as GL
     import OpenGL.GLU as GLU
     import OpenGL.GLUT as GLUT
@@ -56,12 +56,6 @@ VIEWS = {
              "up": (0.0, 0.0, 1.0), "znear": 0.01, "zfar": 10000.0, "fovy": 30.0},
 }
 
-# buttons for rotating, moving and zooming the model view window
-BUTTON_ROTATE = gtk.gdk.BUTTON1_MASK
-BUTTON_MOVE = gtk.gdk.BUTTON2_MASK
-BUTTON_ZOOM = gtk.gdk.BUTTON3_MASK
-BUTTON_RIGHT = 3
-
 # floating point color values are only available since gtk 2.16
 GTK_COLOR_MAX = 65535.0
 
@@ -77,6 +71,13 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                            "'python-gtkglext1' to enable it.")
             return False
         if self.gui:
+            # buttons for rotating, moving and zooming the model view window
+            # These definitions cannot be defined globally, since we may not rely on gtk being
+            # available.
+            self.BUTTON_ROTATE = self._gtk.gdk.BUTTON1_MASK
+            self.BUTTON_MOVE = self._gtk.gdk.BUTTON2_MASK
+            self.BUTTON_ZOOM = self._gtk.gdk.BUTTON3_MASK
+            self.BUTTON_RIGHT = 3
             self.context_menu = self._gtk.Menu()
             self.window = self.gui.get_object("OpenGLWindow")
             drag_n_drop_func = self.core.get("configure-drag-drop-func")
@@ -608,7 +609,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
     @check_busy
     @gtkgl_functionwrapper
     def context_menu_handler(self, widget, event):
-        if (event.button == self.mouse["pressed_button"] == BUTTON_RIGHT) \
+        if (event.button == self.mouse["pressed_button"] == self.BUTTON_RIGHT) \
                 and self.context_menu \
                 and (event.get_time() - self.mouse["pressed_timestamp"] < 300) \
                 and (abs(event.x - self.mouse["pressed_pos"][0]) < 3) \
@@ -671,7 +672,9 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
     def mouse_handler(self, widget, event):
         x, y, state = event.x, event.y, event.state
         if self.mouse["button"] is None:
-            if (state & BUTTON_ZOOM) or (state & BUTTON_ROTATE) or (state & BUTTON_MOVE):
+            if ((state & self.BUTTON_ZOOM)
+                    or (state & self.BUTTON_ROTATE)
+                    or (state & self.BUTTON_MOVE)):
                 self.mouse["button"] = state
                 self.mouse["start_pos"] = [x, y]
         else:
@@ -679,7 +682,7 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
             # a decent visualization).
             if event.get_time() - self.mouse["event_timestamp"] < 40:
                 return
-            elif state & self.mouse["button"] & BUTTON_ZOOM:
+            elif state & self.mouse["button"] & self.BUTTON_ZOOM:
                 self._last_view = None
                 # the start button is still active: update the view
                 start_x, start_y = self.mouse["start_pos"]
@@ -695,12 +698,12 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
                     scale = 100
                 self.camera.scale_distance(scale)
                 self._paint_ignore_busy()
-            elif (state & self.mouse["button"] & BUTTON_MOVE) \
-                    or (state & self.mouse["button"] & BUTTON_ROTATE):
+            elif (state & self.mouse["button"] & self.BUTTON_MOVE) \
+                    or (state & self.mouse["button"] & self.BUTTON_ROTATE):
                 self._last_view = None
                 start_x, start_y = self.mouse["start_pos"]
                 self.mouse["start_pos"] = [x, y]
-                if (state & BUTTON_MOVE):
+                if (state & self.BUTTON_MOVE):
                     # Determine the biggest dimension (x/y/z) for moving the
                     # screen's center in relation to this value.
                     obj_dim = []
