@@ -37,7 +37,7 @@ RM = rm -f
 .PHONY: zip tgz win32 clean dist git_export upload create_archive_dir man check-style test \
 	pylint-relaxed pylint-strict docs upload-docs
 
-dist: zip tgz win32
+dist: zip tgz
 	@# remove the tmp directory when everything is done
 	@$(RM) -r "$(EXPORT_DIR)"
 
