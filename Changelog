@@ -1,3 +1,8 @@
+Version 0.6.4 - 2019-07-28
+ * Allow direct import of SVG files (without inkscape/pstoedit)
+ * Improve accuracy when importing non-straight lines
+ * Fix handling of missing OpenGL support
+
 Version 0.6.3 - 2018-05-01
  * Fix import of DXF files with full-circle holes (github #112)
  * Fix import of DXF files with bezier curves (github #116)
