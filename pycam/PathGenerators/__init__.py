@@ -21,7 +21,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import time
 
 from pycam.Geometry import epsilon, INFINITE
-from pycam.Geometry.PointUtils import pdist, pnorm, pnormalized, psub
+from pycam.Geometry.PointUtils import pdist, pnormalized, points_in_line, psub
 from pycam.Utils.events import get_event_handler
 
 
@@ -131,6 +131,17 @@ def get_free_paths_triangles(models, cutter, p1, p2, return_triangles=False):
 
 
 def get_max_height_triangles(model, cutter, x, y, minz, maxz):
+    """ calculate the lowest position of a tool at a location without colliding with a model
+
+    @param model: a 3D model
+    @param cutter: the tool to be used
+    @param x: requested position along the x axis
+    @param y: requested position along the y axis
+    @param minz: the tool should never go lower
+        used as the resulting z level, if no collision was found or it was lower than minz
+    @param maxz: the highest allowed tool position
+    @result: a tuple (x/y/z) or None (if the height limit was exeeded)
+    """
     if model is None:
         return (x, y, minz)
     p = (x, y, maxz)
@@ -141,76 +152,138 @@ def get_max_height_triangles(model, cutter, x, y, minz, maxz):
     box_y_max = cutter.get_maxy(p)
     box_z_min = minz
     box_z_max = maxz
+    # reduce the set of triangles to be checked for collisions
     triangles = model.triangles(box_x_min, box_y_min, box_z_min, box_x_max, box_y_max, box_z_max)
     for t in triangles:
         cut = cutter.drop(t, start=p)
         if cut and ((height_max is None) or (cut[2] > height_max)):
             height_max = cut[2]
-    # don't do a complete boundary check for the height
-    # this avoids zero-cuts for models that exceed the bounding box height
     if (height_max is None) or (height_max < minz + epsilon):
-        height_max = minz
-    if height_max > maxz + epsilon:
+        # no collision occurred or the collision height is lower than the minimum
+        return (x, y, minz)
+    elif height_max > maxz + epsilon:
+        # there was a collision above the upper allowed z level -> no suitable tool location found
         return None
     else:
+        # a suitable tool location was found within the bounding box
         return (x, y, height_max)
 
 
-def _check_deviance_of_adjacent_points(p1, p2, p3, min_distance):
-    straight = psub(p3, p1)
-    added = pdist(p2, p1) + pdist(p3, p2)
-    # compare only the x/y distance of p1 and p3 with min_distance
-    if straight[0] ** 2 + straight[1] ** 2 < min_distance ** 2:
-        # the points are too close together
-        return True
-    else:
-        # allow 0.1% deviance - this is an angle of around 2 degrees
-        return (added / pnorm(straight)) < 1.001
+def _get_dynamic_fill_points(start, end, max_height_point_func, remaining_levels):
+    """ generator for adding points between two given points
+
+    Points are only added, if the point in their middle (especially its height) is not in line with
+    the outer points.
+    More points are added recursively (limited via "remaining_levels") between start/middle and
+    middle/end.
+    The start and end points are never emitted.  This should be done by the caller.
+    """
+    if remaining_levels <= 0:
+        return
+    middle = max_height_point_func((start[0] + end[0]) / 2, (start[1] + end[1]) / 2)
+    if middle is None:
+        return
+    if points_in_line(start, middle, end):
+        return
+    # the three points are not in line - thus we should add some interval points
+    for p in _get_dynamic_fill_points(start, middle, max_height_point_func, remaining_levels - 1):
+        yield p
+    yield middle
+    for p in _get_dynamic_fill_points(middle, end, max_height_point_func, remaining_levels - 1):
+        yield p
 
 
-def get_max_height_dynamic(model, cutter, positions, minz, maxz):
-    max_depth = 8
-    # the points don't need to get closer than 1/1000 of the cutter radius
-    min_distance = cutter.distance_radius / 1000
-    points = []
+def _dynamic_point_fill_generator(positions, max_height_point_func, max_level_count):
+    """ add more points between the given positions in order to detect minor bumps in the model
+
+    If the calculated height between two given positions (points) is not in line with its
+    neighbours, then additional points are added until the recursion limit ("max_level_count") is
+    reached or until the interpolated points are in line with their neighbours.
+    The input positions are returned unchanged, if less than three points are given.
+    """
+    # handle incoming lists/tuples as well as generators
+    positions = iter(positions)
+    if max_level_count <= 0:
+        # reached the maximum recursion limit - simply deliver the input values
+        for p in positions:
+            yield p
+        return
+    try:
+        p1 = next(positions)
+    except StopIteration:
+        # no items were provided - we do the same
+        return
+    try:
+        p2 = next(positions)
+    except StopIteration:
+        # only one item was provided - we just deliver it unchanged
+        yield p1
+        return
+    last_segment_wants_more_points = False
+    for p3 in positions:
+        yield p1
+        if (None not in (p1, p2, p3)) and not points_in_line(p1, p2, p3):
+            for p in _get_dynamic_fill_points(p1, p2, max_height_point_func, max_level_count - 1):
+                yield p
+            last_segment_wants_more_points = True
+        else:
+            last_segment_wants_more_points = False
+        p1, p2 = p2, p3
+    yield p1
+    if last_segment_wants_more_points:
+        for p in _get_dynamic_fill_points(p1, p2, max_height_point_func, max_level_count - 1):
+            yield p
+    yield p2
+
+
+def _filter_linear_points(positions):
+    """ reduce the input positions by removing all points which are in line with their neighbours
+
+    The input can be either a list or a generator.
+    """
+    # handle incoming lists/tuples as well as generators
+    positions = iter(positions)
+    try:
+        p1 = next(positions)
+    except StopIteration:
+        # no items were provided - we do the same
+        return
+    try:
+        p2 = next(positions)
+    except StopIteration:
+        # only one item was provided - we just deliver it unchanged
+        yield p1
+        return
+    for p3 in positions:
+        if (None not in (p1, p2, p3) and points_in_line(p1, p2, p3)):
+            # the three points are in line -> skip p2
+            p2 = p3
+        else:
+            # the three points are not in line -> emit them unchanged
+            yield p1
+            p1, p2 = p2, p3
+    # emit the backlog
+    yield p1
+    yield p2
+
+
+def get_max_height_dynamic(model, cutter, positions, minz, maxz, max_depth=5):
+    """ calculate the tool positions based on a given set of x/y locations
+
+    The given input locations should be suitable for the tool size in order to find all relevant
+    major features of the model.  Additional locations are recursively added, if the calculated
+    height between every set of two points is not in line with its neighbours.
+    The result is a list of points to be traveled by the tool.
+    """
+    # for now there is only a triangle-mesh based calculation
     get_max_height = lambda x, y: get_max_height_triangles(model, cutter, x, y, minz, maxz)
-    # add one point between all existing points
-    for index, p in enumerate(positions):
-        points.append(get_max_height(p[0], p[1]))
-    # Check if three consecutive points are "flat".
-    # Add additional points if necessary.
-    index = 0
-    depth_count = 0
-    while index < len(points) - 2:
-        p1 = points[index]
-        p2 = points[index + 1]
-        p3 = points[index + 2]
-        if ((None not in (p1, p2, p3))
-                and not _check_deviance_of_adjacent_points(p1, p2, p3, min_distance)
-                and (depth_count < max_depth)):
-            # distribute the new point two before the middle and one after
-            if depth_count % 3 != 2:
-                # insert between the 1st and 2nd point
-                middle = ((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2)
-                points.insert(index + 1, get_max_height(middle[0], middle[1]))
-            else:
-                # insert between the 2nd and 3rd point
-                middle = ((p2[0] + p3[0]) / 2, (p2[1] + p3[1]) / 2)
-                points.insert(index + 2, get_max_height(middle[0], middle[1]))
-            depth_count += 1
-        else:
-            index += 1
-            depth_count = 0
-    # remove all points that are in line
-    index = 1
-    while index + 1 < len(points):
-        p1, p2, p3 = points[index - 1:index + 2]
-        if _check_deviance_of_adjacent_points(p1, p2, p3, 0):
-            # remove superfluous point
-            points.pop(index)
-        else:
-            index += 1
-    return points
+    # calculate suitable tool locations (without collisions) for each given position
+    points_with_height = (get_max_height(x, y) for x, y in positions)
+    # Spread more positions between the existing ones.
+    dynamically_filled_points = _dynamic_point_fill_generator(points_with_height, get_max_height,
+                                                              max_depth)
+    # Remove all points that are in line between their neighbours.
+    return list(_filter_linear_points(dynamically_filled_points))
 
 
 class UpdateToolView:
