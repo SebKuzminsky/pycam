@@ -1,7 +1,9 @@
 dist: trusty
 sudo: required
 
-before_install: ./scripts/travis-install-build-deps.sh
+before_install:
+        - ./scripts/travis-install-build-deps.sh
+        - sudo apt-get install -y python-flake8 python-pytest
 
 install: true
 
