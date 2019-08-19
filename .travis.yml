@@ -12,4 +12,5 @@ script:
   - git checkout -b ${BRANCH} ${TRAVIS_COMMIT}
   - make test
   - python setup.py sdist
+  - dpkg-buildpackage -us -uc
   - ./scripts/pycam --help
