@@ -27,6 +27,7 @@ Depends:
  python-numpy,
  python-opengl,
  python-setproctitle,
+ python-svg.path,
  ${misc:Depends},
  ${python:Depends},
 Description: CAM program & Python library for generating toolpaths
