@@ -1,5 +1,4 @@
-dist: trusty
-sudo: required
+dist: xenial
 
 before_install:
         - ./scripts/travis-install-build-deps.sh
