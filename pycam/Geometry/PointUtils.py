@@ -115,3 +115,15 @@ def pis_inside(a, minx=None, maxx=None, miny=None, maxy=None, minz=None, maxz=No
             and ((maxy is None) or (a[1] <= maxy + epsilon)) \
             and ((minz is None) or (minz - epsilon <= a[2])) \
             and ((maxz is None) or (a[2] <= maxz + epsilon))
+
+
+def points_in_line(a, b, c):
+    """ test if three points are in line """
+    v1 = psub(a, b)
+    v2 = psub(a, c)
+    # The evaluation below is equivalent to the following test:
+    #     pcross(v1, v2) == (0, 0, 0)
+    # (but with efficient "early return" in case of failure)
+    return ((v1[1] * v2[2] == v1[2] * v2[1])
+            and (v1[0] * v2[2] == v1[2] * v2[0])
+            and (v1[0] * v2[1] == v1[1] * v2[0]))
