@@ -27,6 +27,6 @@ Installing the development version
 1.  install the [git](http://git-scm.com/) client (via your package
     manager or by [downloading](http://git-scm.com/downloads) it)
 2.  checkout the PyCAM repository:
-    `git clone `[`git://pycam.git.sourceforge.net/gitroot/pycam/pycam`](git://pycam.git.sourceforge.net/gitroot/pycam/pycam)
+    `git clone `[`git@github.com:SebKuzminsky/pycam.git`](git@github.com:SebKuzminsky/pycam.git)
 3.  install the [requirements](requirements.md) for your system
 4.  run `pycam/run_gui.py` in the PyCAM directory
