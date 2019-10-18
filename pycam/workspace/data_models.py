@@ -52,7 +52,7 @@ from pycam.workspace import (
     PositionShiftTarget, ProcessStrategy, SourceType, SupportBridgesLayout, TargetType, TaskType,
     ToolBoundaryMode, ToolpathFilter, ToolpathTransformationAction, ToolShape)
 from pycam.errors import (LoadFileError, PycamBaseException, InvalidDataError, InvalidKeyError,
-                          MissingAttributeError, UnexpectedAttributeError)
+                          MissingAttributeError, MissingDependencyError, UnexpectedAttributeError)
 
 _log = pycam.Utils.log.get_logger()
 
@@ -764,7 +764,11 @@ class Source(BaseDataContainer):
                 if abs_location is not None:
                     location = abs_location
             location = "file://" + os.path.abspath(location)
-        detected_filetype = detect_file_type(location)
+        try:
+            detected_filetype = detect_file_type(location)
+        except MissingDependencyError as exc:
+            _log.critical(exc)
+            raise LoadFileError(exc)
         if detected_filetype:
             try:
                 return detected_filetype.importer(detected_filetype.uri)

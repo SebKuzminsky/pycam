@@ -41,3 +41,7 @@ class InvalidKeyError(InvalidDataError):
 
 class LoadFileError(PycamBaseException):
     pass
+
+
+class MissingDependencyError(PycamBaseException):
+    """ a dependency (e.g. an external python module) is missing """

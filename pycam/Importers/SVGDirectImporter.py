@@ -30,15 +30,20 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 import collections
 import math
 
-import svg.path
 import xml.etree.ElementTree
 
-from pycam.errors import AbortOperationException
+from pycam.errors import AbortOperationException, MissingDependencyError
 import pycam.Geometry.Line
 import pycam.Geometry.Polygon
 import pycam.Geometry.Model
 import pycam.Utils
 from pycam.Utils.locations import open_file_context
+
+try:
+    import svg.path
+except ImportError:
+    raise MissingDependencyError("Failed to load python module 'svg.path'. On a Debian-based "
+                                 "system you may want to install 'python3-svg.path'.")
 
 log = pycam.Utils.log.get_logger()
 
