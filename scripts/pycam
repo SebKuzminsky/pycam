@@ -49,7 +49,7 @@ except ImportError:
                                                      os.pardir)))
     from pycam import VERSION
 
-from pycam import GenericError
+from pycam import GenericError, MissingDependencyError
 import pycam.Exporters.GCodeExporter
 from pycam.Geometry import Box3D, Point3D
 import pycam.Gui.common as GuiCommon
@@ -194,7 +194,11 @@ def load_model_file(filename, program_locations, unit=None):
     if not uri.exists():
         log.warn("The input file ('%s') was not found!", uri)
         return None
-    importer = pycam.Importers.detect_file_type(uri)[1]
+    try:
+        importer = pycam.Importers.detect_file_type(uri)[1]
+    except MissingDependencyError as exc:
+        log.critical(exc)
+        return None
     model = importer(uri, program_locations=program_locations, unit=unit)
     if not model:
         log.warn("Failed to load the model file (%s).", uri)

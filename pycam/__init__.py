@@ -34,3 +34,7 @@ class InvalidValueError(GenericError):
 
 class CommunicationError(GenericError):
     pass
+
+
+class MissingDependencyError(GenericError):
+    """ a dependency (e.g. an external python module) is missing """

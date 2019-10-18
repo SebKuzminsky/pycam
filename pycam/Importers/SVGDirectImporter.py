@@ -33,14 +33,19 @@ import math
 import os
 import tempfile
 
-import svg.path
 import xml.etree.ElementTree
 
-from pycam import GenericError
+from pycam import GenericError, MissingDependencyError
 import pycam.Geometry.Line
 import pycam.Geometry.Polygon
 import pycam.Geometry.Model
 import pycam.Utils
+
+try:
+    import svg.path
+except ImportError:
+    raise MissingDependencyError("Failed to load python module 'svg.path'. On a Debian-based "
+                                 "system you may want to install 'python3-svg.path'.")
 
 log = pycam.Utils.log.get_logger()
 

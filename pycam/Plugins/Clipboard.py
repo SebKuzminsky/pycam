@@ -25,6 +25,7 @@ except ImportError:
     # Python3
     from io import StringIO
 
+from pycam import MissingDependencyError
 import pycam.Plugins
 from pycam.Utils.locations import get_all_program_locations
 
@@ -153,7 +154,11 @@ class Clipboard(pycam.Plugins.PluginBase):
             for target in targets:
                 data = self.clipboard.wait_for_contents(target)
                 if data is not None:
-                    detected_filetype = pycam.Importers.detect_file_type(filename)
+                    try:
+                        detected_filetype = pycam.Importers.detect_file_type(filename)
+                    except MissingDependencyError as exc:
+                        self.log.critical(exc)
+                        return None
                     if detected_filetype:
                         return data, detected_filetype.importer
                     else:
