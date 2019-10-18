@@ -20,7 +20,7 @@ along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 
 import collections
 
-import pycam.Utils
+from pycam.Utils import URIHandler
 import pycam.Utils.log
 
 
@@ -31,23 +31,23 @@ DetectedFileType = collections.namedtuple("DetectedFileType", ("extension", "imp
 
 
 def detect_file_type(filename, quiet=False):
-    import pycam.Importers.DXFImporter
-    import pycam.Importers.PSImporter
-    import pycam.Importers.STLImporter
-    from pycam.Importers.SVGDirectImporter import import_model as import_model_from_svg
     # also accept URI input
-    uri = pycam.Utils.URIHandler(filename)
+    uri = URIHandler(filename)
     filename = uri.get_path()
     # check all listed importers
     # TODO: this should be done by evaluating the header of the file
     if filename.lower().endswith(".stl"):
+        import pycam.Importers.STLImporter
         return DetectedFileType("stl", pycam.Importers.STLImporter.import_model, uri)
     elif filename.lower().endswith(".dxf"):
+        import pycam.Importers.DXFImporter
         return DetectedFileType("dxf", pycam.Importers.DXFImporter.import_model, uri)
     elif filename.lower().endswith(".svg"):
-        return DetectedFileType("svg", import_model_from_svg, uri)
+        import pycam.Importers.SVGDirectImporter
+        return DetectedFileType("svg", pycam.Importers.SVGDirectImporter.import_model, uri)
     elif filename.lower().endswith(".eps") \
             or filename.lower().endswith(".ps"):
+        import pycam.Importers.PSImporter
         return DetectedFileType("ps", pycam.Importers.PSImporter.import_model, uri)
     else:
         if not quiet:
