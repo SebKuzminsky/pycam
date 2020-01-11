@@ -128,7 +128,7 @@ conversion works as follows:
 
 This complicated color-to-height conversion sadly makes it impossible to
 position objects precisely. Additionally the DXF color palette is not
-biunique, e.g. it contains multiple occourences of the color green
+biunique, e.g. it contains multiple occurrences of the color green
 (\#00FF00) - thus green will always be mapped to the height of its first
 occourence in the table.
 
