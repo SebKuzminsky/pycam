@@ -24,7 +24,7 @@ Prepare a GCode file with PyCAM
 
 7. Generate the toolpath for both tasks: This can take some minutes.
 
-8. Configure GCode details: The most important GCode setting is the safety height. This defines the z-level at which the machine (including the tool) is free to move without any obstacles. The default is slightly aboe zero. You absolutely need to make sure that the safety height is always clearly above the level of the top of your material. You will see all changes reflected in the 3D preview immediately.
+8. Configure GCode details: The most important GCode setting is the safety height. This defines the z-level at which the machine (including the tool) is free to move without any obstacles. The default is slightly above zero. You absolutely need to make sure that the safety height is always clearly above the level of the top of your material. You will see all changes reflected in the 3D preview immediately.
 
 9. Write GCode: Now you can export both toolpaths to a file. This GCode file can be imported by your machine controller software (e.g. [LinuxCNC](http://www.linuxcnc.org/)) - see below.
 
@@ -59,7 +59,7 @@ Let's go, start up pycam!
 
 *written by <User:svenhee> - incomplete*
 
-**(Screenshots will folow)** After we start up PyCAM we see the
+**(Screenshots will follow)** After we start up PyCAM we see the
 pycam-textbox in the visualisation window. You can actually go and
 prepare to mill this if you want but we will open up our own file. All
 the work will be done in the other window which opens up in the “model”
