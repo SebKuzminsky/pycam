@@ -11,6 +11,7 @@ addons:
   apt:
     packages:
       - build-essential
+      - codespell
       - devscripts
       - equivs
       - fakeroot

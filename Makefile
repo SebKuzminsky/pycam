@@ -15,6 +15,19 @@ DIST_WIN32 = $(DIST_DIR)/$(DIST_PREFIX)$(VERSION).win32.exe
 DISTUTILS_PLAT_NAME = $(shell $(PYTHON_EXE) setup.py --help build_ext \
 		      | grep -q -- "--plat-name" && echo "--plat-name win32")
 PYTHON_CHECK_STYLE_TARGETS = pycam pyinstaller/hooks/hook-pycam.py setup.py
+SPELLING_PATHS = \
+	Changelog \
+	docs \
+	INSTALL.md \
+	LICENSE.TXT \
+	Makefile \
+	man \
+	pycam \
+	README.md \
+	release_info.txt \
+	scripts \
+	setup.py \
+	technical_details.txt
 
 # default location of mkdocs' build process
 MKDOCS_SOURCE_DIR = docs
@@ -45,6 +58,7 @@ info:
 	@echo "    upload-docs"
 	@echo
 	@echo "Style checks:"
+	@echo "    check-spelling"
 	@echo "    check-style"
 	@echo "    pylint-relaxed"
 	@echo "    pylint-strict"
@@ -91,7 +105,7 @@ update-deb-changelog:
 update-version:
 	@echo 'VERSION = "$(VERSION)"' >| "$(VERSION_FILE)"
 
-test: check-style pytest check-yaml-flow
+test: check-spelling check-style pytest check-yaml-flow
 
 # The "make pytest" target calls pytest via the obsolete `py.test` name,
 # instead of the modern `pytest` name.  This is in order to support
@@ -122,6 +136,14 @@ pylint-relaxed:
 		-d too-many-boolean-expressions,too-many-public-methods \
 		$(PYTHON_CHECK_STYLE_TARGETS)
 
+PHONY: check-spelling
+check-spelling:
+	find $(SPELLING_PATHS) -type f \
+			-not -name "*.pyc" \
+			-not -name "*.png" \
+			-not -name "*.stl" \
+			-not -name "favicon.ico" \
+		-print0 | xargs -0 codespell --exclude .codespell.exclude
 
 ## Building the documentation/website
 docs: man $(MKDOCS_BUILD_STAMP)
