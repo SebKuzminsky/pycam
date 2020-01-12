@@ -568,7 +568,7 @@ class BaseCollection:
             if index_or_key == item.get_id():
                 return item
         else:
-            # Not found by ID? Interprete the value as an index.
+            # Not found by ID? Interpret the value as an index.
             if isinstance(index_or_key, int):
                 return self._data[index_or_key]
             else:
@@ -1238,7 +1238,7 @@ class Boundary(BaseCollectionItemDataContainer):
                                         ("Z", abs_boundary.minz, abs_boundary.maxz)):
             if upper < lower:
                 # TODO: implement boundary adjustment in case of conflicts
-                _log.warning("Negative Boundary encounterd for %s: %g < %g. "
+                _log.warning("Negative Boundary encountered for %s: %g < %g. "
                              "Coercing is not implemented, yet.", axis_name, lower, upper)
 
     @CacheStorage({"specification", "reference_models", "lower", "upper", "tool_boundary"})

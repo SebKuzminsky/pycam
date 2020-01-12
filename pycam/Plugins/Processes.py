@@ -137,7 +137,7 @@ class Processes(pycam.Plugins.ListPluginBase):
             model.append((strategy["label"], strategy["name"]))
         # check if any on the processes became obsolete due to a missing plugin
         removal = []
-        strat_names = [strat["name"] for strat in strategies]
+        strat_names = [strategy["name"] for strategy in strategies]
         for index, process in enumerate(self.get_all()):
             if not process.get_value("strategy").value in strat_names:
                 removal.append(index)

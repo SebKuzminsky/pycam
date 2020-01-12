@@ -61,7 +61,7 @@ Version numbers are determined like this:
 * The version number of a commit without a release tag is constructed in a
   "git describe"-like way: the most recent release tag, followed by the
   number of commits since then, followed by the SHA of the current commit,
-  followed by "dirty" if there are uncommited, non-ignored changes in
+  followed by "dirty" if there are uncommitted, non-ignored changes in
   the git working directory.
 
 However, there's a complication needed to handle multiple branches. The

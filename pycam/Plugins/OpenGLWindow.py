@@ -810,7 +810,7 @@ class Camera:
         self.view[key] = value
 
     def move_camera_by_screen(self, x_move, y_move, max_model_shift):
-        """ move the camera acoording to a mouse movement
+        """ move the camera according to a mouse movement
         @type x_move: int
         @value x_move: movement of the mouse along the x axis
         @type y_move: int

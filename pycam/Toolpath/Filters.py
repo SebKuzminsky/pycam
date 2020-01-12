@@ -531,7 +531,7 @@ class StepWidth(BaseFilter):
                         else:
                             real_target_position.append(axis_last)
                     if not position_changed:
-                        # The limitiation was not exceeded for any axis.
+                        # The limitation was not exceeded for any axis.
                         continue
                 else:
                     real_target_position = step.position

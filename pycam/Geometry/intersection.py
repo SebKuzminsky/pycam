@@ -45,7 +45,7 @@ def intersect_cylinder_point(center, axis, radius, radiussq, direction, point):
 
 def intersect_cylinder_line(center, axis, radius, radiussq, direction, edge):
     d = edge.dir
-    # take a plane throught the line and along the cylinder axis (1)
+    # take a plane through the line and along the cylinder axis (1)
     n = pcross(d, axis)
     if pnorm(n) == 0:
         # no contact point, but should check here if cylinder *always*

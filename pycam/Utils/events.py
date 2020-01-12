@@ -158,7 +158,7 @@ class EventCore(pycam.Gui.Settings.Settings):
                 if not disable_log:
                     log.debug("Trying to unblock non-blocked event '%s'", event)
         else:
-            # "disable_log" is only relevent for the debugging messages above
+            # "disable_log" is only relevant for the debugging messages above
             log.info("Trying to unblock an unknown event: %s", event)
 
     @contextlib.contextmanager

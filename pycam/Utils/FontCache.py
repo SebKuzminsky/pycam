@@ -31,7 +31,7 @@ log = pycam.Utils.log.get_logger()
 
 class FontCache:
     """ The FontCache gradually loads fonts. This is more efficient than an
-    immeadiate initialization of all fonts for the DXF importer.
+    immediate initialization of all fonts for the DXF importer.
     Use "get_font" for loading (incrementally) fonts until the requested font
     name was found.
     The functions "get_names" and "len()" trigger an immediate initialization

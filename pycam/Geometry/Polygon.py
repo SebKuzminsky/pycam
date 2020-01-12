@@ -386,7 +386,7 @@ class Polygon(TransformableContainer):
             area_xz = poly_xz.get_area()
             area_yz = poly_yz.get_area()
             if 0 in (area_xy, area_xz, area_yz):
-                log.info("Failed assumtion: zero-sized projected area - %s / %s / %s",
+                log.info("Failed assumption: zero-sized projected area - %s / %s / %s",
                          area_xy, area_xz, area_yz)
                 return None
             if abs(cxy / area_xy - cxz / area_xz) > epsilon:

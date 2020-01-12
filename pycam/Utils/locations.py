@@ -125,7 +125,7 @@ def get_external_program_location(key):
     program_dirs = ["C:\\Program Files", "C:\\Programme"]
     try:
         from win32com.shell import shellcon, shell
-        # The frozen application somehow dows not provide this setting.
+        # The frozen application somehow does not provide this setting.
         program_dirs.insert(0, shell.SHGetFolderPath(0, shellcon.CSIDL_PROGRAM_FILES, 0, 0))
     except ImportError:
         # no other options for non-windows systems

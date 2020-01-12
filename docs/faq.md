@@ -29,7 +29,7 @@ Installing PyCAM
 Requirement installer for Windows: “the NTVDM CPU has encountered an illegal instruction”
 -----------------------------------------------------------------------------------------
 
-The above erros seems to be triggered occasionally when installing the
+The above errors seems to be triggered occasionally when installing the
 *GtkGLext* component of the dependency installer in Windows XP SP3.
 
 The root cause seems to be the (quite outdated) installer script for
