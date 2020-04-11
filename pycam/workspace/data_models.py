@@ -921,7 +921,7 @@ class ModelTransformation(BaseDataContainer):
                     ("scale_x", "scale_y", "scale_z"), model.get_dimensions(), axes):
                 if current_size == 0:
                     kwargs[key] = 1.0
-                    _log.warning('Did not scale axis {} because it has no depth'.format(key))
+                    _log.warning("Did not scale axis because it has no depth ({})".format(key))
                 elif target_size is None:
                     kwargs[key] = 1.0
                 else:
