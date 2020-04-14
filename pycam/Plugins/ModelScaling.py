@@ -82,7 +82,8 @@ class ModelScaling(pycam.Plugins.PluginBase):
             scale_box.show()
             # scale controls
             axis_control = self.gui.get_object("ScaleDimensionAxis")
-            scale_button = self.gui.get_object("ScaleSelectedAxisButton")
+            scale_selected_button = self.gui.get_object("ScaleSelectedAxisButton")
+            scale_all_button = self.gui.get_object("ScaleAllAxesButton")
             scale_value = self.gui.get_object("ScaleDimensionControl")
             index = axis_control.get_active()
             enable_controls = False
@@ -92,7 +93,8 @@ class ModelScaling(pycam.Plugins.PluginBase):
                 value = dims[index]
                 non_zero_dimensions = [i for i, dim in enumerate(dims) if dim > 0]
                 enable_controls = enable_controls or (index in non_zero_dimensions)
-            scale_button.set_sensitive(enable_controls)
+            scale_selected_button.set_sensitive(enable_controls)
+            scale_all_button.set_sensitive(enable_controls)
             scale_value.set_sensitive(enable_controls)
             scale_value.set_value(value)
 
