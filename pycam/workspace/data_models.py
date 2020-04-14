@@ -919,11 +919,14 @@ class ModelTransformation(BaseDataContainer):
         elif target == ModelScaleTarget.SIZE:
             for key, current_size, target_size in zip(
                     ("scale_x", "scale_y", "scale_z"), model.get_dimensions(), axes):
-                if current_size == 0:
+                if target_size == 0:
                     raise InvalidDataError("Model transformation 'scale' does not accept "
                                            "zero as a target size ({}).".format(key))
                 elif target_size is None:
                     kwargs[key] = 1.0
+                elif current_size == 0:
+                    kwargs[key] = 1.0
+                    # don't scale axis if it's flat
                 else:
                     kwargs[key] = target_size / current_size
         else:
