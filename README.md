@@ -22,7 +22,7 @@ See the [documentation](http://pycam.sourceforge.net/introduction/) for a short 
 * [Getting started](http://pycam.sf.net/getting-started.md)
 * [FAQ](http://pycam.sf.net/faq.md)
 * [Video tutorials](http://vimeo.com/channels/pycam)
-* [Screenshots](http://pycam.sf.net/screenshots.md)
+* [Screenshots](http://pycam.sourceforge.net/screenshots/)
 * [Mailing lists](https://sourceforge.net/p/pycam/mailman/)
 
 
