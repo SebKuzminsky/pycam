@@ -189,9 +189,9 @@ class Line(IDGenerator, TransformableContainer):
                 return None, None
             # the lines are on one straight
             candidates = []
-            if self.is_point_inside(x3):
+            if self.is_point_inside(x3) and pnorm(a) != 0:
                 candidates.append((x3, pnorm(c) / pnorm(a)))
-            elif self.is_point_inside(x4):
+            elif self.is_point_inside(x4) and pnorm(a) != 0:
                 candidates.append((x4, pdist(line.p2, self.p1) / pnorm(a)))
             elif line.is_point_inside(x1):
                 candidates.append((x1, 0))
