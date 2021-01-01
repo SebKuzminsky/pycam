@@ -231,8 +231,8 @@ class Polygon(TransformableContainer):
     def append(self, line):
         if not self.is_connectable(line):
             raise ValueError("This line does not fit to the polygon")
-        elif line.len < epsilon:
-            raise ValueError("A line with zero length may not be part of a polygon")
+        # elif line.len < epsilon:
+        #     raise ValueError("A line with zero length may not be part of a polygon")
         else:
             if not self._points:
                 self._points.append(line.p1)
