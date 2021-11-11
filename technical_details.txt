@@ -1,5 +1,5 @@
 
-The DropCutter goes as folows:
+The DropCutter goes as follows:
 1) make lines along the X-axis (Lines)
 2) for each line, take a number of samples (Samples)
 3) at each sample, drop the cutter until it hits the model, this is a cutter location point

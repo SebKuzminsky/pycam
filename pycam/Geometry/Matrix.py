@@ -53,7 +53,7 @@ def get_dot_product(a, b):
 
 
 def get_length(vector):
-    """ calculate the lengt of a 3d vector
+    """ calculate the length of a 3d vector
 
     @type vector: tuple(float) | list(float)
     @value vector: the given 3d vector
