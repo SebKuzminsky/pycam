@@ -20,7 +20,7 @@ include /usr/share/dpkg/default.mk
 
 # main packaging script based on dh7 syntax
 %:
-	dh $@ --with python2
+	dh $@ --with python3
 
 # This target updates pycam/Version.py and debian/changelog with current
 # information from git.  It's intended to be run before generating the
@@ -36,9 +36,9 @@ override_dh_auto_clean:
 
 override_dh_auto_build:
 	$(MAKE) -C man
-	python setup.py build
+	python3 setup.py build
 
 override_dh_auto_install:
-	python setup.py install --root=$(CURDIR)/debian/pycam --prefix=/usr
+	python3 setup.py install --root=$(CURDIR)/debian/pycam --prefix=/usr
 	# remove redundant copy of docs
 	rm -rf $(CURDIR)/debian/pycam/usr/share/pycam/doc
