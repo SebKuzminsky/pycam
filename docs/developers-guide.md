@@ -107,7 +107,7 @@ Use the following example for cutting a small part of the video:
 
     mencoder -ovc raw -noskip -forceidx -vf harddup -ss START_TIME -endpos DURATION INPUT_FILE -o OUTPUT_FILE
 
-Combine multiple cutted video pieces:
+Combine multiple cut video pieces:
 
     mencode -idx -ovc raw INPUT_FILE1 INPUT_FILE2 -o OUTPUT_FILE
 

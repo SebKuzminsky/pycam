@@ -185,7 +185,7 @@ def show_gui(workspace_filename=None):
         history.cleanup()
 
     # Register our shutdown handler: it should be run _before_ the GTK main loop stops.
-    # Otherwise some references and signals are gone when the teardown actions are exeucted.
+    # Otherwise some references and signals are gone when the teardown actions are executed.
     event_manager.register_event("mainloop-stop", shutdown_handler)
     # open the GUI - wait until the window is closed
     gui.run_forever()

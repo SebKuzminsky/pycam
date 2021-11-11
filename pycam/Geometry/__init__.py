@@ -153,7 +153,7 @@ class TransformableContainer(DimensionalObject):
             transformed_list = []
         # Prevent any kind of loops or double transformations (e.g. Points in
         # multiple containers (Line, Triangle, ...).
-        # Use the 'id' builtin to prevent expensive object comparions.
+        # Use the 'id' builtin to prevent expensive object comparisons.
         for item in next(self):
             if isinstance(item, TransformableContainer):
                 item.transform_by_matrix(matrix, transformed_list, callback=callback)

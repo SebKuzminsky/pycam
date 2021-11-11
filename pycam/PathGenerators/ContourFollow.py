@@ -414,7 +414,7 @@ def get_collision_waterline_of_triangle(model, cutter, up_vector, triangle, z):
                     # pick the longest combination of two of these points
                     # part of case (2a)
                     # TODO: maybe we should use the waterline instead?
-                    # (otherweise the line could be too long and thus
+                    # (otherwise the line could be too long and thus
                     # connections to the adjacent waterlines are not discovered?
                     # Test this with an appropriate test model.)
                     points = [waterline.p1, waterline.p2] + points_above
