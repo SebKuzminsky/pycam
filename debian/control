@@ -27,6 +27,8 @@ Depends:
  ${misc:Depends},
  ${python3:Depends},
 Recommends:
+ inkscape,
+ pstoedit,
  python3-numpy,
  python3-opengl,
  python3-setproctitle,
