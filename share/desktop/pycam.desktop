@@ -8,6 +8,5 @@ TryExec=pycam
 Terminal=false
 Type=Application
 Categories=Development;Engineering;Robotics;Education;Science;2DGraphics;VectorGraphics;3DGraphics;X-CNC;
-MimeType=application/sla;image/svg+xml;application/postscript;image/vnd.dxf;
+MimeType=application/x-yaml;application/sla;image/svg+xml;application/postscript;image/vnd.dxf;
 Icon=pycam
-
