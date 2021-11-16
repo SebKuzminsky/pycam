@@ -30,6 +30,8 @@ from urllib.request import url2pathname
 # import win32com
 # import win32api
 
+if sys.version_info.major < 3:
+    raise RuntimeError("Only work with Python 3 or later")
 
 # setproctitle is (optionally) imported
 try:
