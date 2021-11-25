@@ -1,0 +1,36 @@
+name: Run tests
+on: [push, pull_request]
+jobs:
+  Run-tests:
+    runs-on: ubuntu-20.04
+    container: debian:bullseye
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # Install build dependencies
+      - run: apt-get update
+      - run: apt-get -V --yes --no-install-recommends --no-install-suggests install dpkg-dev devscripts equivs
+
+      - run: dpkg-checkbuilddeps || true
+      - run: mk-build-deps -i -r -t 'apt-get -V --yes --no-install-recommends --no-install-suggests'
+      - run: rm pycam-build-deps_*
+
+      - run: pycam/run_gui.py --help
+      - run: pycam/run_gui.py --version
+      - run: pycam/run_cli.py --help
+      - run: pycam/run_cli.py --version
+
+      - run: dpkg-buildpackage -us -uc
+
+      - run: apt-get -V --yes install ../pycam_*.deb
+
+      - run: cd .. ; pycam --help
+      - run: cd .. ; pycam --version
+      - run: cd .. ; pycam-cli --help
+      - run: cd .. ; pycam-cli --version
+
+      - run: ls -al
+      - run: ls -al ../
