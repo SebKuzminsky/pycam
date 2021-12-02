@@ -37,6 +37,7 @@ setup(
     author_email="devel@sumpfralle.de",
     provides=["pycam"],
     requires=["PyOpenGL", "PyYAML"],
+    python_requires='>=3.0',
     url="http://pycam.sourceforge.net/",
     download_url="http://sourceforge.net/projects/pycam/files",
     keywords=["3-axis", "cnc", "cam", "toolpath", "machining", "g-code"],
