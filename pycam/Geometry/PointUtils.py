@@ -76,6 +76,8 @@ def ptransform_by_matrix(a, matrix):
 
 def pmul(a, c):
     c = number(c)
+    if not a:
+        return (False, False, False)
     return (a[0] * c, a[1] * c, a[2] * c)
 
 
@@ -85,6 +87,13 @@ def pdiv(a, c):
 
 
 def padd(a, b):
+    if not (a and b):
+        if a:
+            return (a[0], a[1], a[2])
+        elif b:
+            return (b[0], b[1], b[2])
+        else:
+            return (None, None, None)
     return (a[0] + b[0], a[1] + b[1], a[2] + b[2])
 
 
