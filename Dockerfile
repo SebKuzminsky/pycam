@@ -1,10 +1,10 @@
-FROM debian:9
+FROM debian:12
 
 WORKDIR /root/pycam
 
 COPY . .
 
-RUN apt-get update && apt-get install -y python3 \
+RUN apt-get update && apt-get install -y python3.12 \
     python3-gi \
     python3-opengl \
     python3-yaml \

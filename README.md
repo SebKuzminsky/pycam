@@ -43,3 +43,14 @@ See the [documentation](http://pycam.sourceforge.net/introduction/) for a short 
 * Nicholas Humfrey: documentation, recovery of old sourceforge-wiki
 * Piers Titus van der Torren: documentation
 * Reuben Rissler: gtk3 migration
+
+## Steps to Run in python3.12
+```
+sudo apt-get install python3-gi python3-opengl gir1.2-gtk-3.0
+sudo apt-get install libgirepository1.0-dev
+sudo apt-get install libcairo2-dev
+sudo apt-get install python3-dev
+sudo apt-get install libcairo2-dev
+python3 -m venv .env
+pip install -r requirements.txt
+```

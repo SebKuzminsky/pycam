@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with PyCAM.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import imp
+import importlib
 import inspect
 import os
 import uuid
@@ -242,6 +242,13 @@ class PluginBase:
             ui_manager.remove_action_group(actiongroup)
 
 
+def find_module(mod_name, directory):
+    spec = importlib.machinery.PathFinder.find_spec(mod_name, [directory])
+    if spec is None:
+        raise ImportError(f"No module named {mod_name}")
+    return spec.loader, spec.origin, spec
+
+
 class PluginManager:
 
     def __init__(self, core):
@@ -268,12 +275,19 @@ class PluginManager:
                     _log.info("Skipping plugin %s (marked as 'ignore')", mod_name)
                     continue
                 try:
-                    mod_file, mod_filename, mod_desc = imp.find_module(mod_name, [directory])
+                    # mod_file, mod_filename, mod_desc
+                    # mod_file, mod_filename, mod_desc = find_module(mod_name, [directory])
                     full_mod_name = "pycam.Plugins.%s" % mod_name
-                    mod = imp.load_module(full_mod_name, mod_file, mod_filename, mod_desc)
+                    # mod = importlib.load_module(full_mod_name, mod_file, mod_filename, mod_desc)
+                    spec = importlib.util.spec_from_file_location(full_mod_name, os.path.join(directory, filename))
+                    if spec is None:
+                        raise ImportError(f"No module named {mod_name}")
+                    mod = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(mod)
                 except ImportError as exc:
                     _log.info("Skipping plugin %s: %s", os.path.join(directory, filename), exc)
                     continue
+                mod_filename = spec.origin
                 for attr in dir(mod):
                     item = getattr(mod, attr)
                     if inspect.isclass(item) and issubclass(item, PluginBase):
