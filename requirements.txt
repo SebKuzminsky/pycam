@@ -1,3 +1,10 @@
-PyOpenGL
-PyYAML
-svg.path
+iniconfig==2.0.0
+numpy==1.26.3
+packaging==23.2
+pluggy==1.4.0
+pycairo==1.25.1
+PyGObject==3.46.0
+PyOpenGL==3.1.7
+pytest==8.0.0
+PyYAML==6.0.1
+svg.path==6.3

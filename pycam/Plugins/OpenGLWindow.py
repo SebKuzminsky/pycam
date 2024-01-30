@@ -23,6 +23,7 @@ from pycam.Geometry import number, sqrt
 from pycam.Geometry.PointUtils import pcross, pmul, pnormalized
 import pycam.Geometry.Matrix as Matrix
 import pycam.Plugins
+import numpy as np
 
 
 # The length of the distance vector does not matter - it will be normalized and
@@ -524,7 +525,8 @@ class OpenGLWindow(pycam.Plugins.PluginBase):
         GL.glPolygonOffset(1.0, 1.0)
         # ambient and diffuse material lighting is defined in OpenGLViewModel
         GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR, (1.0, 1.0, 1.0, 1.0))
-        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, (100.0))
+        GL.glMaterial(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS, np.array([100.0], dtype='float32'))
+
         if self.core.get("view_polygon"):
             GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
         else:

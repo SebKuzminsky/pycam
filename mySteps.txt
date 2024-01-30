@@ -1,0 +1,26 @@
+sudo apt install python3.11-venv
+sudo apt-get install python3-gi python3-opengl gir1.2-gtk-3.0
+python3 -m venv .env
+pip install PyOpenGL PyYAML svg.path
+
+###
+add last part to sources.list
+deb http://deb.debian.org/debian/ bookworm main non-free-firmware
+deb-src http://deb.debian.org/debian/ bookworm main non-free-firmware
+deb [trusted=yes] file:/run/live/medium bookworm main non-free-firmware
+deb http://deb.debian.org/debian/ buster main
+
+sudo apt update
+sudo apt-get install python-gtk2
+sudo apt-get install libcairo2-dev
+pip install numpy
+
+### for installing pyobject need to install all 4 of them
+sudo apt-get install libgirepository1.0-dev
+sudo apt-get install libcairo2-dev
+sudo apt-get install python3-dev
+sudo apt-get install libcairo2-dev
+
+pip install pygobject
+
+
