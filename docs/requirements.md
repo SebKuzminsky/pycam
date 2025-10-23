@@ -9,6 +9,10 @@ MacPorts](http://sourceforge.net/projects/pycam/forums/forum/860183/topic/380009
 Please document your experiences here, if you successfully used PyCAM
 with other operating systems.
 
+**Note for Python 3.12+:** The deprecated `imp` module was removed in Python 3.12.
+If you're running Python 3.12 or newer, make sure you have the latest version of PyCAM
+with the updated plugin system that uses `importlib` instead.
+
 Linux
 -----
 
@@ -40,6 +44,26 @@ Run the following command in a *root* terminal:
 Run the following command in a *root* terminal:
 
     yum install python3-gi python3-opengl
+
+### Arch Linux
+
+Run the following command in a terminal:
+
+    sudo pacman -S python-gobject python-opengl gtk3
+
+### Using virtualenv
+
+If you want to run PyCAM in a Python virtualenv, you need to create the virtualenv with
+access to system site packages, since GTK and its Python bindings are typically installed
+at the system level:
+
+    python -m venv --system-site-packages venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    python pycam/run_gui.py
+
+Without the `--system-site-packages` flag, the virtualenv won't be able to access the
+system-installed `python3-gi` (PyGObject) package, and PyCAM will fail to start.
 
 Windows
 -------
