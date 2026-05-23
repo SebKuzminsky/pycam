@@ -30,7 +30,7 @@ BASE_DIR = os.path.realpath(os.path.abspath(os.path.dirname(__file__)))
 
 setup(
     name="pycam",
-    version=VERSION,
+    version="0.7.0",
     license="GPL v3",
     description="Open Source CAM - Toolpath Generation for 3-Axis CNC machining",
     author="Lars Kruse",
