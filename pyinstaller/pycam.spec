@@ -5,22 +5,22 @@ BASE_DIR = os.path.realpath(os.path.join(os.path.dirname(locals()["spec"]),
 
 # add the project's source directory to PYTHONPATH
 sys.path.insert(0, os.path.join(BASE_DIR, "src"))
-from pycam.Utils import get_platform, PLATFORM_LINUX, PLATFORM_WINDOWS, PLATFORM_MACOS
-from pycam import VERSION
+from camelot.Utils import get_platform, PLATFORM_LINUX, PLATFORM_WINDOWS, PLATFORM_MACOS
+from camelot import VERSION
 
 
 USE_DEBUG=False
 UI_DATA_RELATIVE = os.path.join("share", "ui")
 UI_DATA_DIR = os.path.join(BASE_DIR, UI_DATA_RELATIVE)
-ORIGINAL_STARTUP_SCRIPT = os.path.join(BASE_DIR, "pycam")
+ORIGINAL_STARTUP_SCRIPT = os.path.join(BASE_DIR, "camelot")
 
 # renaming the STARTUP_SCRIPTS seems to be necessary only for Windows
 rename_startup_script = (get_platform() == PLATFORM_WINDOWS)
 
 if rename_startup_script:
     # We need to use a startup file ending with ".py" to allow forking in
-    # multiprocessing mode. Copy "pycam" to this file and remove it at the end.
-    STARTUP_SCRIPT = os.path.join(BASE_DIR, "pycamGUI.py")
+    # multiprocessing mode. Copy "camelot" to this file and remove it at the end.
+    STARTUP_SCRIPT = os.path.join(BASE_DIR, "camelotGUI.py")
 else:
     STARTUP_SCRIPT = ORIGINAL_STARTUP_SCRIPT
 
@@ -32,7 +32,7 @@ data.extend(Tree(os.path.join(BASE_DIR, "samples"), prefix="samples"))
 # single-line fonts
 data.extend(Tree(os.path.join(BASE_DIR, "share", "fonts"), prefix=os.path.join("share", "fonts")))
 # icon file
-icon_file = os.path.join(BASE_DIR, "share", "pycam.ico")
+icon_file = os.path.join(BASE_DIR, "share", "camelot.ico")
 
 
 if get_platform() == PLATFORM_WINDOWS:
@@ -141,14 +141,14 @@ analyze_scripts = [STARTUP_SCRIPT]
 if get_platform() == PLATFORM_WINDOWS:
     analyze_scripts.insert(0, os.path.join(HOMEPATH,'support\\_mountzlib.py'))
     analyze_scripts.insert(1, os.path.join(HOMEPATH,'support\\useUnicode.py'))
-    output_name = os.path.join(BASE_DIR, "pycam-%s_standalone.exe" % VERSION)
+    output_name = os.path.join(BASE_DIR, "camelot-%s_standalone.exe" % VERSION)
 elif get_platform() == PLATFORM_LINUX:
     analyze_scripts.insert(0, os.path.join(HOMEPATH,'support/_mountzlib.py'))
     analyze_scripts.insert(1, os.path.join(HOMEPATH,'support/useUnicode.py'))
-    #output_name=os.path.join('build/pyi.linux2/pycam', 'pycam')
-    output_name = os.path.join(BASE_DIR, "pycam-%s_standalone.bin" % VERSION)
+    #output_name=os.path.join('build/pyi.linux2/camelot', 'camelot')
+    output_name = os.path.join(BASE_DIR, "camelot-%s_standalone.bin" % VERSION)
 elif get_platform() == PLATFORM_MACOS:
-    output_name = os.path.join(BASE_DIR, "pycam-%s_standalone.dmg" % VERSION)
+    output_name = os.path.join(BASE_DIR, "camelot-%s_standalone.dmg" % VERSION)
 
 
 a = Analysis(analyze_scripts,

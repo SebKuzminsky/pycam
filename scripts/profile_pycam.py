@@ -4,25 +4,25 @@ import pstats
 import sys
 from time import time
 
-from pycam.Cutters.CylindricalCutter import CylindricalCutter
-from pycam.Geometry import Box3D, Point3D
-from pycam.Gui.Console import ConsoleProgressBar
-from pycam.Importers.STLImporter import import_model
-from pycam.PathGenerators.DropCutter import DropCutter
-from pycam.PathProcessors.PathAccumulator import PathAccumulator
-from pycam.Toolpath import Bounds
-from pycam.Toolpath.MotionGrid import get_fixed_grid
-from pycam.Utils.locations import get_data_file_location
+from camelot.Cutters.CylindricalCutter import CylindricalCutter
+from camelot.Geometry import Box3D, Point3D
+from camelot.Gui.Console import ConsoleProgressBar
+from camelot.Importers.STLImporter import import_model
+from camelot.PathGenerators.DropCutter import DropCutter
+from camelot.PathProcessors.PathAccumulator import PathAccumulator
+from camelot.Toolpath import Bounds
+from camelot.Toolpath.MotionGrid import get_fixed_grid
+from camelot.Utils.locations import get_data_file_location
 
 # Disable multi processing
-from pycam.Utils import threading
+from camelot.Utils import threading
 threading.__multiprocessing = False
 
 """ Profile PyCAM doing several operations, print out the top 10
 (sorted by actual local runtime) methods.
 """
 
-model = import_model(get_data_file_location(join('samples', 'pycam-textbox.stl')))
+model = import_model(get_data_file_location(join('samples', 'camelot-textbox.stl')))
 
 
 def run_dropcutter():

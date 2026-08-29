@@ -1,8 +1,8 @@
 site_name: PyCAM
 site_description: Toolpath generator for 3-axis CNC machining
-site_url: http://pycam.sourceforge.net/
+site_url: http://camelot.sourceforge.net/
 
-repo_url: https://github.com/SebKuzminsky/pycam
+repo_url: https://github.com/SebKuzminsky/camelot
 repo_name: GitHub
 
 theme: readthedocs

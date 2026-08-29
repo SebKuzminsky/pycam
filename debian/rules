@@ -22,13 +22,13 @@ include /usr/share/dpkg/default.mk
 %:
 	dh $@ --with python3
 
-# This target updates pycam/Version.py and debian/changelog with current
+# This target updates camelot/Version.py and debian/changelog with current
 # information from git.  It's intended to be run before generating the
 # debian source package.
 prep-source:
 	$(MAKE) update-version
 	$(MAKE) update-deb-changelog
-	rm -f pycam/*.pyc
+	rm -f camelot/*.pyc
 
 override_dh_auto_clean:
 	$(MAKE) clean
@@ -39,6 +39,6 @@ override_dh_auto_build:
 	python3 setup.py build
 
 override_dh_auto_install:
-	python3 setup.py install --root=$(CURDIR)/debian/pycam --prefix=/usr
+	python3 setup.py install --root=$(CURDIR)/debian/camelot --prefix=/usr
 	# remove redundant copy of docs
-	rm -rf $(CURDIR)/debian/pycam/usr/share/pycam/doc
+	rm -rf $(CURDIR)/debian/camelot/usr/share/camelot/doc

@@ -34,7 +34,7 @@ The above errors seems to be triggered occasionally when installing the
 
 The root cause seems to be the (quite outdated) installer script for
 *GtkGLext*. Please take a look at this
-[filelist](http://sourceforge.net/projects/pycam/files/dependency-installer/win32/external_binaries/gtkglext/)
+[filelist](http://sourceforge.net/projects/camelot/files/dependency-installer/win32/external_binaries/gtkglext/)
 and download the two required DLL files manually. There you also find
 the preferred location of these two files.
 
@@ -60,7 +60,7 @@ discovered recently by jferrara. It will be fixed in release v0.6 of
 PyCAM.
 
 * Solution A: install Python 2.6 and use it for running PyCAM.
-* Solution B: apply this small patch for PyCAM: <http://sourceforge.net/projects/pycam/forums/forum/860184/topic/4753623?message=10917042>
+* Solution B: apply this small patch for PyCAM: <http://sourceforge.net/projects/camelot/forums/forum/860184/topic/4753623?message=10917042>
 
 SVG import: postoedit reports a missing MSVCR100.dll library \[only Windows\]
 -----------------------------------------------------------------------------
@@ -177,5 +177,5 @@ Just add your problem or question here - it will get collected and
 answered ...
 
 (Or use the
-[forum](http://sourceforge.net/projects/pycam/forums/forum/860184), if
+[forum](http://sourceforge.net/projects/camelot/forums/forum/860184), if
 you expect a longer discussion.)

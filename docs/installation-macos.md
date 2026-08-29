@@ -25,8 +25,8 @@ Simply run the following to install all dependencies:
 Run PyCAM
 ---------
 
--   extract the [PyCAM archive](https://sourceforge.net/projects/pycam/files/pycam/)
--   run */opt/local/bin/python2.5 pycam* from within PyCAM's directory
+-   extract the [PyCAM archive](https://sourceforge.net/projects/camelot/files/camelot/)
+-   run */opt/local/bin/python2.5 camelot* from within PyCAM's directory
     -   the above line refers to MacPorts' Python interpreter (instead
         of MacOS' native Python) - otherwise it will not find OpenGL and
         the other required modules
@@ -38,7 +38,7 @@ Below you will find a list of potential problems reported by PyCAM
 users.
 
 If these workarounds do not help: please ask a question in the
-[*Help* forum](http://sourceforge.net/projects/pycam/forums/forum/860184) and
+[*Help* forum](http://sourceforge.net/projects/camelot/forums/forum/860184) and
 provide the following relevant information about your setup.
 
 Get the list of installed python-related packages:
@@ -86,6 +86,6 @@ for you - thanks!
 ### OpenGL is too old
 
 According to a [forum post from
-lilalinux](http://sourceforge.net/projects/pycam/forums/forum/860183/topic/3800091)
+lilalinux](http://sourceforge.net/projects/camelot/forums/forum/860183/topic/3800091)
 you need at least OpenGL v3.0.1b2. Otherwise you will probably get a
 blank 3D visualization window.

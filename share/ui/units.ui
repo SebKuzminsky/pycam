@@ -6,7 +6,7 @@
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Unit change compensation</property>
-    <property name="role">pycam-units</property>
+    <property name="role">camelot-units</property>
     <property name="modal">True</property>
     <property name="icon_name">accessories-calculator</property>
     <property name="type_hint">normal</property>

@@ -1,4 +1,4 @@
-Source: pycam
+Source: camelot
 Section: science
 Priority: optional
 Maintainer: Lars Kruse <devel@sumpfralle.de>
@@ -15,9 +15,9 @@ Build-Depends:
  python3-svg.path,
  python3-yaml,
 Standards-Version: 3.9.8
-Homepage: https://github.com/SebKuzminsky/pycam
+Homepage: https://github.com/SebKuzminsky/camelot
 
-Package: pycam
+Package: camelot
 Architecture: all
 Depends:
  librecad-data,

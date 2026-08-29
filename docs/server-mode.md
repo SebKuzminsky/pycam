@@ -29,10 +29,10 @@ Technical details
 The following graph shows four hosts (A..D) belonging to one pool of PyCAM servers.
 Below you find the specific commands used for starting these hosts:
 
--   Host D: `pycam --enable-server --server-auth-key MY_SECRET_KEY`
--   Host B: `pycam --enable-server --server-auth-key MY_SECRET_KEY --remote-server HOST_D`
--   Host C: `pycam --enable-server --server-auth-key MY_SECRET_KEY --remote-server HOST_B`
--   Host A: `pycam --enable-server --server-auth-key MY_SECRET_KEY --remote-server HOST_B`
+-   Host D: `camelot --enable-server --server-auth-key MY_SECRET_KEY`
+-   Host B: `camelot --enable-server --server-auth-key MY_SECRET_KEY --remote-server HOST_D`
+-   Host C: `camelot --enable-server --server-auth-key MY_SECRET_KEY --remote-server HOST_B`
+-   Host A: `camelot --enable-server --server-auth-key MY_SECRET_KEY --remote-server HOST_B`
 
 As you can see above, there is no specific network topology required.
 Thus you can organize your connections according to your preference:

@@ -31,7 +31,7 @@
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">PyCAM pool of processes</property>
-    <property name="role">pycam-processes</property>
+    <property name="role">camelot-processes</property>
     <property name="type_hint">normal</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-box5">
@@ -317,7 +317,7 @@ Please read the description of the Server Mode (linked below) to understand the 
                     <property name="receives_default">True</property>
                     <property name="relief">none</property>
                     <property name="xalign">0</property>
-                    <property name="uri">http://pycam.sourceforge.net/server-mode</property>
+                    <property name="uri">http://camelot.sourceforge.net/server-mode</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -499,7 +499,7 @@ You will need remote workers.&lt;/span&gt;</property>
 You are probably using the Windows standalone executable.
 Instead you could use the PyCAM installer package along with the all-in-one installer of all dependencies.
 
-See the &lt;a href="http://pycam.sourceforge.net/parallel-processing"&gt;platform feature matrix&lt;/a&gt; for details.</property>
+See the &lt;a href="http://camelot.sourceforge.net/parallel-processing"&gt;platform feature matrix&lt;/a&gt; for details.</property>
                     <property name="use_markup">True</property>
                     <property name="wrap">True</property>
                     <property name="xalign">0</property>
@@ -699,7 +699,7 @@ See the &lt;a href="http://pycam.sourceforge.net/parallel-processing"&gt;platfor
                                     <property name="receives_default">True</property>
                                     <property name="relief">none</property>
                                     <property name="use_stock">True</property>
-                                    <property name="uri">http://pycam.sourceforge.net/server-mode</property>
+                                    <property name="uri">http://camelot.sourceforge.net/server-mode</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">2</property>

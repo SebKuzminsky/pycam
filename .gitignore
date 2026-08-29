@@ -5,8 +5,8 @@
 
 test.ngc
 
-man/pycam.1
-man/pycam.1.html
+man/camelot.1
+man/camelot.1.html
 docs/release-notes.md
 
 dist
@@ -26,7 +26,7 @@ Thumbs.db
 *~
 .*.sw?
 
-man/pycam.1
+man/camelot.1
 
 # Generated mkdocs files go into the site directory
 site/
@@ -34,7 +34,7 @@ site/
 # debian packaging
 debian/debhelper-build-stamp
 debian/files
-debian/pycam/
-debian/pycam.debhelper.log
-debian/pycam.*.debhelper
-debian/pycam.substvars
+debian/camelot/
+debian/camelot.debhelper.log
+debian/camelot.*.debhelper
+debian/camelot.substvars

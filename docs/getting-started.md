@@ -54,13 +54,13 @@ understand the importance of the fixiation - especially if you isolated
 a part of the model form the fixiated part. You can always use *support
 bridges* (in PyCAM) to overcome this problem.
 
-Let's go, start up pycam!
+Let's go, start up camelot!
 =========================
 
 *written by <User:svenhee> - incomplete*
 
 **(Screenshots will follow)** After we start up PyCAM we see the
-pycam-textbox in the visualisation window. You can actually go and
+camelot-textbox in the visualisation window. You can actually go and
 prepare to mill this if you want but we will open up our own file. All
 the work will be done in the other window which opens up in the “model”
 tab. In the “model” tab, click file&gt; open model and find and open the

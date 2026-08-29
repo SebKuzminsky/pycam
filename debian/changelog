@@ -1,4 +1,4 @@
-pycam (0.6.2) unstable; urgency=medium
+camelot (0.6.2) unstable; urgency=medium
 
   * avoid OpenGL problem with "glutSolidCone"
   * Polygon: one copy of get_shifted_vertex() is enough
@@ -47,12 +47,12 @@ pycam (0.6.2) unstable; urgency=medium
   * travis: run pytest on every Travis build
 
   * tests: add a "make pytest" target to run pytest
-  * tests: start adding unit tests of pycam.Geometry.Polygon
+  * tests: start adding unit tests of camelot.Geometry.Polygon
   * tests: remove old manual test scripts
 
  -- Sebastian Kuzminsky <seb@highlab.com>  Fri, 27 Oct 2017 10:30:09 -0600
 
-pycam (0.6.1) unstable; urgency=medium
+camelot (0.6.1) unstable; urgency=medium
 
   * docs: lots of improvements
   * remove support for psyco and ODE
@@ -69,7 +69,7 @@ pycam (0.6.1) unstable; urgency=medium
 
  -- Sebastian Kuzminsky <seb@highlab.com>  Sun, 01 Oct 2017 13:56:09 -0600
 
-pycam (0.6) unstable; urgency=medium
+camelot (0.6) unstable; urgency=medium
 
   * First triumphant release after years of dormancy.
   * Merge misc old branches.
@@ -77,7 +77,7 @@ pycam (0.6) unstable; urgency=medium
 
  -- Sebastian Kuzminsky <seb@highlab.com>  Sat, 18 Feb 2017 11:50:53 -0700
 
-pycam (0.5.1-1) unstable; urgency=low
+camelot (0.5.1-1) unstable; urgency=low
 
   * initial debian package
   * Closes: #600779

@@ -3,18 +3,18 @@
 
 PYTHON_EXE ?= python3
 # use something like "VERSION=0.2 make" to override the VERSION on the command line
-VERSION = $(shell $(PYTHON_EXE) -c 'import pycam; print(pycam.VERSION)')
-VERSION_FILE = pycam/Version.py
-REPO_TAGS ?= https://pycam.svn.sourceforge.net/svnroot/pycam/tags
+VERSION = $(shell $(PYTHON_EXE) -c 'import camelot; print(camelot.VERSION)')
+VERSION_FILE = camelot/Version.py
+REPO_TAGS ?= https://camelot.svn.sourceforge.net/svnroot/camelot/tags
 DIST_DIR = dist
-DIST_PREFIX = pycam-
+DIST_PREFIX = camelot-
 DIST_TGZ = $(DIST_DIR)/$(DIST_PREFIX)$(VERSION).tar.gz
 DIST_WIN32 = $(DIST_DIR)/$(DIST_PREFIX)$(VERSION).win32.exe
 # check if the local version of python's distutils support "--plat-name"
 # (introduced in python 2.6)
 DISTUTILS_PLAT_NAME = $(shell $(PYTHON_EXE) setup.py --help build_ext \
 		      | grep -q -- "--plat-name" && echo "--plat-name win32")
-PYTHON_CHECK_STYLE_TARGETS = pycam pyinstaller/hooks/hook-pycam.py setup.py
+PYTHON_CHECK_STYLE_TARGETS = camelot pyinstaller/hooks/hook-camelot.py setup.py
 SPELLING_PATHS = \
 	Changelog \
 	docs \
@@ -22,7 +22,7 @@ SPELLING_PATHS = \
 	LICENSE.TXT \
 	Makefile \
 	man \
-	pycam \
+	camelot \
 	README.md \
 	release_info.txt \
 	scripts \
@@ -37,9 +37,9 @@ MKDOCS_BUILD_STAMP = $(MKDOCS_EXPORT_DIR)/.build-stamp
 # specify the remote user (e.g. for sourceforge: user,project) via ssh_config or directly on the
 # commandline: "make upload-docs SF_USER=foobar"
 ifdef SF_USER
-WEBSITE_UPLOAD_PREFIX ?= $(SF_USER),pycam@
+WEBSITE_UPLOAD_PREFIX ?= $(SF_USER),camelot@
 endif
-WEBSITE_UPLOAD_LOCATION ?= web.sourceforge.net:/home/project-web/pycam/htdocs
+WEBSITE_UPLOAD_LOCATION ?= web.sourceforge.net:/home/project-web/camelot/htdocs
 
 RM = rm -f
 
@@ -98,7 +98,7 @@ update-deb-changelog:
 	@# retrieve the log of all commits since the latest release and add it to the deb changelog
 	if ! grep -qFw "$(VERSION)" debian/changelog; then \
 		git log --pretty=format:%s v$(shell dpkg-parsechangelog | sed --quiet -re 's/Version: (.*)/\1/ p').. | \
-			DEBFULLNAME="PyCAM Builder" DEBEMAIL="builder@pycam.org" \
+			DEBFULLNAME="PyCAM Builder" DEBEMAIL="builder@camelot.org" \
 			xargs -r -d '\n' -n 1 -- debchange --newversion "$(subst -,.,$(VERSION))"; \
 	fi
 
@@ -120,7 +120,7 @@ check-style:
 
 check-yaml-flow:
 	$(RM) test.ngc
-	pycam/run_cli.py yaml_flow_working.yml
+	camelot/run_cli.py yaml_flow_working.yml
 	grep -q "Z" test.ngc
 
 pylint-strict:

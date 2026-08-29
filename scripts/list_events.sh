@@ -4,7 +4,7 @@ set -eu
 
 BASE_DIR=$(cd "$(dirname "$0")"; pwd)
 
-grep -rh _event "$BASE_DIR/../pycam" | \
+grep -rh _event "$BASE_DIR/../camelot" | \
 	grep -v " def " | \
 	grep -v configure_event | \
 	grep -v expose_event | \

@@ -1,4 +1,4 @@
-// example scene for pycam
+// example scene for camelot
 
 module scene() {
     sphere(r=15, center=true);

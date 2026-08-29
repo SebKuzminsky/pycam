@@ -220,7 +220,7 @@
   <object class="GtkWindow" id="OpenGLWindow">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">PyCAM Visualization</property>
-    <property name="role">pycam-view</property>
+    <property name="role">camelot-view</property>
     <child>
       <object class="GtkBox" id="OpenGLBox">
         <property name="visible">True</property>
@@ -396,7 +396,7 @@
         <property name="relief">none</property>
         <property name="use_stock">True</property>
         <property name="xalign">1</property>
-        <property name="uri">http://pycam.sourceforge.net/3d-view</property>
+        <property name="uri">http://camelot.sourceforge.net/3d-view</property>
       </object>
       <packing>
         <property name="expand">False</property>

@@ -5,7 +5,7 @@
     how to set up a FabLab in seven days
 -   <http://wiki.protospace.nl/index.php/GeneratingGcodeWithPycam> --
     turn a puzzle-like shape into GCode
--   <http://popcon2.net/package/pycam.html> -- PyCAM installed by Ubuntu
+-   <http://popcon2.net/package/camelot.html> -- PyCAM installed by Ubuntu
     users (registered via popcon)
 -   <http://opensourceecology.org/wiki/Industrial_Robot_Mechanical_Design#Toolchain_for_Toolpaths_.28Mechanical.29>
     -- modeling chain description
@@ -24,7 +24,7 @@
     <http://replicat.org>
 -   <http://wiki.protospace.nl/index.php/Generating3DGcodeWithPycam> -
     very concise howto
--   <http://cncprinter.blogspot.com/2010/11/pycam-emc2.html> - very
+-   <http://cncprinter.blogspot.com/2010/11/camelot-emc2.html> - very
     short article
 -   <http://gpl.coulmann.de/cnc/cam_talk_1.0.pdf> -- presentation about
     CAM software and format converters (2009)

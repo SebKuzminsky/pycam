@@ -1,4 +1,4 @@
-  pycam - CNC Toolpath Generation in python
+  camelot - CNC Toolpath Generation in python
   =========================================
 
   Copyright (C) 2008 Lode Leroy

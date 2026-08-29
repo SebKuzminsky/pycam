@@ -1,6 +1,6 @@
 [EXAMPLES]
 .nf
-.B pycam \-\-export\-gcode=output.ngc \-\-bounds\-type=relative\-margin \-\-bounds-lower=0.1,0.05,-0.1 foo.stl
+.B camelot \-\-export\-gcode=output.ngc \-\-bounds\-type=relative\-margin \-\-bounds-lower=0.1,0.05,-0.1 foo.stl
 
 .fi
 Use the default settings to process the model \fBfoo.stl\fR with an adjusted
@@ -20,12 +20,12 @@ You may want to define this variable in case that you installed the
 See http://sourceforge.net/tracker/?group_id=237831&atid=1104176
 
 [SEE ALSO]
-Take a look at the output of \fBpycam \-\-help\fR to get a slightly better
+Take a look at the output of \fBcamelot \-\-help\fR to get a slightly better
 formatted list of options. The manual that you are reading right now is
 derived from this output.
 
 Take a look at the wiki for more information about PyCAM:
-http://sourceforge.net/apps/mediawiki/pycam/
+http://sourceforge.net/apps/mediawiki/camelot/
 
-The website of the PyCAM project: http://pycam.sourceforge.net
+The website of the PyCAM project: http://camelot.sourceforge.net
 

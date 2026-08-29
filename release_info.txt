@@ -1,6 +1,6 @@
 1) update the version and the changelog
  - in "Changelog" (version, release date, changes)
- - in "src/pycam/__init__.py" (version)
+ - in "src/camelot/__init__.py" (version)
  - commit the changes
 
 2) create the archives
@@ -42,13 +42,13 @@
 
 # Version numbers
 
-If the user runs pycam out of a git working directory without
+If the user runs camelot out of a git working directory without
 taking any special action with respect to versioning,
-pycam determines the version dynamically each time it's
-invoked. The algorithm is at the top of pycam/__init__.py.
+camelot determines the version dynamically each time it's
+invoked. The algorithm is at the top of camelot/__init__.py.
 
-When building Debian packages of pycam, the build system uses that code to
-produce pycam/Version.py, which just sets the VERSION variable according
+When building Debian packages of camelot, the build system uses that code to
+produce camelot/Version.py, which just sets the VERSION variable according
 to the git working directory that the package was built from.
 
 Version numbers are determined like this:

@@ -164,7 +164,7 @@ following procedure with care and check the result carefully.
 
 1.  Import the DXF color palette to Inkscape.
     1.  The DXF color palette file can be downloaded
-        [here](http://pycam.svn.sourceforge.net/viewvc/pycam/trunk/share/misc/DXF.gpl).
+        [here](http://camelot.svn.sourceforge.net/viewvc/camelot/trunk/share/misc/DXF.gpl).
         Save it as *DXF.gpl*.
     2.  Move this file to the *palettes* directory of your Inkscape
         installation. Read the

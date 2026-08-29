@@ -158,7 +158,7 @@
                 <property name="receives_default">True</property>
                 <property name="relief">none</property>
                 <property name="use_stock">True</property>
-                <property name="uri">http://pycam.sourceforge.net/process-settings</property>
+                <property name="uri">http://camelot.sourceforge.net/process-settings</property>
               </object>
               <packing>
                 <property name="expand">False</property>

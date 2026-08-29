@@ -22,7 +22,7 @@
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Engrave text</property>
-    <property name="role">pycam-fonts</property>
+    <property name="role">camelot-fonts</property>
     <property name="window_position">center</property>
     <property name="destroy_with_parent">True</property>
     <property name="icon_name">accessories-character-map</property>
@@ -335,7 +335,7 @@
                 <property name="receives_default">True</property>
                 <property name="relief">none</property>
                 <property name="use_stock">True</property>
-                <property name="uri">http://pycam.sourceforge.net/engrave-fonts</property>
+                <property name="uri">http://camelot.sourceforge.net/engrave-fonts</property>
               </object>
               <packing>
                 <property name="expand">False</property>

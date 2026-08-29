@@ -23,25 +23,25 @@ import glob
 import os.path
 from setuptools import setup, find_packages
 
-from pycam import VERSION
+from camelot import VERSION
 
 BASE_DIR = os.path.realpath(os.path.abspath(os.path.dirname(__file__)))
 
 
 setup(
-    name="pycam",
+    name="camelot",
     version=VERSION,
     license="GPL v3",
     description="Open Source CAM - Toolpath Generation for 3-Axis CNC machining",
     author="Lars Kruse",
     author_email="devel@sumpfralle.de",
-    provides=["pycam"],
+    provides=["camelot"],
     requires=["PyOpenGL", "PyYAML"],
-    url="http://pycam.sourceforge.net/",
-    download_url="http://sourceforge.net/projects/pycam/files",
+    url="http://camelot.sourceforge.net/",
+    download_url="http://sourceforge.net/projects/camelot/files",
     keywords=["3-axis", "cnc", "cam", "toolpath", "machining", "g-code"],
     long_description="""IMPORTANT NOTE: Please read the list of requirements:
-http://pycam.sourceforge.net/requirements
+http://camelot.sourceforge.net/requirements
 Basically you will need Python3, GTK and OpenGL.
 
 Windows: select Python 3.X in the following dialog.
@@ -61,27 +61,27 @@ Windows: select Python 3.X in the following dialog.
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX",
     ],
-    packages=find_packages(exclude=["pycam.Test"]),
+    packages=find_packages(exclude=["camelot.Test"]),
     entry_points={
         "gui_scripts": [
-            "pycam = pycam.run_gui:main_func",
+            "camelot = camelot.run_gui:main_func",
         ],
         "console_scripts": [
-            "pycam-cli = pycam.run_cli:main_func",
+            "camelot-cli = camelot.run_cli:main_func",
         ],
     },
     data_files=[
-        ("share/pycam/doc", ["COPYING.TXT",
+        ("share/camelot/doc", ["COPYING.TXT",
                              "INSTALL.md",
                              "LICENSE.TXT",
                              "README.md",
                              "Changelog",
                              "release_info.txt"]),
-        ("share/pycam/ui", glob.glob(os.path.join("share", "ui", "*"))),
-        ("share/pycam/fonts", glob.glob(os.path.join("share", "fonts", "*"))),
-        ("share/pycam", [os.path.join("share", "pycam.ico"),
+        ("share/camelot/ui", glob.glob(os.path.join("share", "ui", "*"))),
+        ("share/camelot/fonts", glob.glob(os.path.join("share", "fonts", "*"))),
+        ("share/camelot", [os.path.join("share", "camelot.ico"),
                          os.path.join("share", "misc", "DXF.gpl")]),
-        ("share/pycam/samples", glob.glob(os.path.join("samples", "*"))),
+        ("share/camelot/samples", glob.glob(os.path.join("samples", "*"))),
     ],
 )
 

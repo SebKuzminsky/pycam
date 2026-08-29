@@ -16,21 +16,21 @@ jobs:
 
       - run: dpkg-checkbuilddeps || true
       - run: mk-build-deps -i -r -t 'apt-get -V --yes --no-install-recommends --no-install-suggests'
-      - run: rm pycam-build-deps_*
+      - run: rm camelot-build-deps_*
 
-      - run: pycam/run_gui.py --help
-      - run: pycam/run_gui.py --version
-      - run: pycam/run_cli.py --help
-      - run: pycam/run_cli.py --version
+      - run: camelot/run_gui.py --help
+      - run: camelot/run_gui.py --version
+      - run: camelot/run_cli.py --help
+      - run: camelot/run_cli.py --version
 
       - run: dpkg-buildpackage -us -uc
 
-      - run: apt-get -V --yes install ../pycam_*.deb
+      - run: apt-get -V --yes install ../camelot_*.deb
 
-      - run: cd .. ; pycam --help
-      - run: cd .. ; pycam --version
-      - run: cd .. ; pycam-cli --help
-      - run: cd .. ; pycam-cli --version
+      - run: cd .. ; camelot --help
+      - run: cd .. ; camelot --version
+      - run: cd .. ; camelot-cli --help
+      - run: cd .. ; camelot-cli --version
 
       - run: ls -al
       - run: ls -al ../

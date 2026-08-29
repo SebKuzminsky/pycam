@@ -13,8 +13,8 @@ Available videos
 
   Video                                                                     Subtitle files                                                                                                    Languages
   ------------------------------------------------------------------------- ----------------------------------------------------------------------------------------------------------------- -----------
-  [Toolpaths for 2D models](http://vimeo.com/18254871) (incl. simulation)   [download](http://pycam.svn.sourceforge.net/viewvc/pycam/video-tutorials/20101227-2D_Toolpaths_and_Simulation/)   en, de
-  [Using multi-layered 2D models](http://vimeo.com/21502122)                [download](http://pycam.svn.sourceforge.net/viewvc/pycam/video-tutorials/20110324-Multi_Layered_2D_Model/)        en, de
+  [Toolpaths for 2D models](http://vimeo.com/18254871) (incl. simulation)   [download](http://camelot.svn.sourceforge.net/viewvc/camelot/video-tutorials/20101227-2D_Toolpaths_and_Simulation/)   en, de
+  [Using multi-layered 2D models](http://vimeo.com/21502122)                [download](http://camelot.svn.sourceforge.net/viewvc/camelot/video-tutorials/20110324-Multi_Layered_2D_Model/)        en, de
 
 How to translate
 ----------------
@@ -26,7 +26,7 @@ How to translate
 4.  replace the English strings with your translations
 5.  store the file - BEWARE: specify the UTF-8 encoding, please!
 6.  send the file to the developer's mailing list:
-    <pycam-devel@lists.sourceforge.net>
+    <camelot-devel@lists.sourceforge.net>
 
 Afterwards a PyCAM developer will transcode a new video with your
 subtitles and upload it to PyCAM's video channel.

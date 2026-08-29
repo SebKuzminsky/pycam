@@ -2,7 +2,7 @@ Mailing lists
 -------------
 
 Please join our development mailing list
-[pycam-devel@sourceforge.net](http://sourceforge.net/mailarchive/forum.php?forum_name=pycam-devel).
+[camelot-devel@sourceforge.net](http://sourceforge.net/mailarchive/forum.php?forum_name=camelot-devel).
 
 Introduction
 ------------
@@ -11,14 +11,14 @@ The code of PyCAM including all related files and previous releases is
 stored in a subversion repository. You need to checkout a local working
 copy to start working on PyCAM:
 
-    svn co https://pycam.svn.sourceforge.net/svnroot/pycam/trunk pycam
+    svn co https://camelot.svn.sourceforge.net/svnroot/camelot/trunk camelot
 
 Upload your changes with:
 
     svn commit
 
 Previous versions are stored in the *tags* path of the repository:
-<https://pycam.svn.sourceforge.net/svnroot/pycam/tags>
+<https://camelot.svn.sourceforge.net/svnroot/camelot/tags>
 
 Changing the GTK interface
 --------------------------
@@ -31,7 +31,7 @@ of the same name in Debian and Ubuntu).
 
 Whenever you change the name (this is not the label) of a control, you
 should also replace all occurrences of this string in the file
-`src/pycam/Gui/Project.py`.
+`src/camelot/Gui/Project.py`.
 
 Please add tooltips wherever it is suitable.
 
@@ -47,7 +47,7 @@ Three steps are required to add a new menu item:
         hotkey of this item
 2.  add the item with its name to the file
     `share/gtk-interface/menubar.xml`
-3.  add a handler for this action to `src/pycam/Gui/Project.py`
+3.  add a handler for this action to `src/camelot/Gui/Project.py`
     1.  search for `accel\_key` (around line 160)
 
 Changing default settings
@@ -57,7 +57,7 @@ PyCAM uses two types of settings.
 
 The general settings define the unit size (imperial or metric), colors,
 program locations and so on. They are stored automatically on exit in
-the file `\~/.pycam/preferences.conf`.
+the file `\~/.camelot/preferences.conf`.
 
 The task settings describe the tools, processes, bounding boxes and
 tasks. They are not stored automatically. Thus they are at their default
@@ -66,12 +66,12 @@ values on each start of PyCAM.
 ### General preferences
 
 The default general PyCAM settings are defined at the top of
-`src/pycam/Gui/Project.py` in the dictionary `PREFERENCES_DEFAULTS`.
+`src/camelot/Gui/Project.py` in the dictionary `PREFERENCES_DEFAULTS`.
 
 ### Task settings
 
 The default task settings are defined in the file
-`src/pycam/Gui/Settings.py` in the dictionary `BASIC_DEFAULT_CONFIG`.
+`src/camelot/Gui/Settings.py` in the dictionary `BASIC_DEFAULT_CONFIG`.
 
 Preparing a tutorial video
 --------------------------
@@ -126,12 +126,12 @@ Run the following to merge the subtitles permanently with the video:
 
 You should probably upload the video to one of the common video sharing
 websites. Currently all videos are available at
-[Vimeo](http://vimeo.com/channels/pycam).
+[Vimeo](http://vimeo.com/channels/camelot).
 
 ### Publishing
 
 Please announce your new tutorial via the [PyCAM's developer's
-blog](http://fab.senselab.org/pycam). Send a mail to the mailing list,
+blog](http://fab.senselab.org/camelot). Send a mail to the mailing list,
 if you need access to the blog.
 
 The original video file and the available subtitles should be later

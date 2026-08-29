@@ -33,13 +33,13 @@ The `docker run` command will mount your personal Documents folder to `/root/Doc
 can access your files.
 
 ```bash
-sudo docker build -t pycam/pycam .
+sudo docker build -t camelot/camelot .
 sudo docker run -it \
     -v ~/Documents:/root/Documents \
     -v ~/.Xauthority:/root/.Xauthority \
     -e DISPLAY \
     --net=host \
-    pycam/pycam
+    camelot/camelot
 ```
 
 ## macOS
@@ -86,13 +86,13 @@ The `docker run` command will mount your personal Documents folder to `/root/Doc
 can access your files.
 
 ```bash
-docker build -t pycam/pycam .
+docker build -t camelot/camelot .
 export IP='<your local ip address>'
 docker run -it \
     -v ~/Documents:/root/Documents \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -e DISPLAY=$IP:0 \
-    pycam/pycam
+    camelot/camelot
 ```
 
 # Minimal requirements for non-GUI mode
@@ -100,4 +100,4 @@ docker run -it \
 If you plan to use PyCAM only in batch mode (without a graphical user interface),
 then you just need to install Python.
 
-See the manpage ( `man pycam` ) or the output of `pycam --help` for further defails.
+See the manpage ( `man camelot` ) or the output of `camelot --help` for further defails.

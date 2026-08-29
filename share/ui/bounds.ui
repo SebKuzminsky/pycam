@@ -210,7 +210,7 @@
                     <property name="receives_default">True</property>
                     <property name="relief">none</property>
                     <property name="use_stock">True</property>
-                    <property name="uri">http://pycam.sourceforge.net/bounding-box</property>
+                    <property name="uri">http://camelot.sourceforge.net/bounding-box</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>

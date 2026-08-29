@@ -7,7 +7,7 @@ include README.md
 include release_info.txt
 include requirements.txt
 include technical_details.txt
-include pycam
+include camelot
 recursive-include docs *
 recursive-include man *
 recursive-include share *

@@ -1,6 +1,6 @@
 [run]
 branch = True
-source = pycam
+source = camelot
 
 [report]
 exclude_lines =

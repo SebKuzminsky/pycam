@@ -116,7 +116,7 @@
   <object class="GtkWindow" id="ProjectWindow">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">PyCAM</property>
-    <property name="role">pycam-main</property>
+    <property name="role">camelot-main</property>
     <property name="destroy_with_parent">True</property>
     <child>
       <object class="GtkBox" id="WindowBox">
@@ -131,7 +131,7 @@
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">About PyCAM</property>
-    <property name="role">pycam-about</property>
+    <property name="role">camelot-about</property>
     <property name="window_position">center-on-parent</property>
     <property name="type_hint">normal</property>
     <property name="gravity">center</property>
@@ -141,7 +141,7 @@
     <property name="copyright" translatable="yes">Copyright © 2008-2010 Lode Leroy
 Copyright © 2010-2011 Lars Kruse</property>
     <property name="comments" translatable="yes">Toolpath Generation for 3-Axis CNC machining</property>
-    <property name="website">http://pycam.sourceforge.net/</property>
+    <property name="website">http://camelot.sourceforge.net/</property>
     <property name="website_label" translatable="yes">Website of the PyCAM project</property>
     <property name="license" translatable="yes">This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -180,7 +180,7 @@ You should have received a copy of the GNU General Public License along with thi
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">PyCAM Preferences</property>
-    <property name="role">pycam-preferences</property>
+    <property name="role">camelot-preferences</property>
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
     <property name="icon_name">preferences-desktop</property>
@@ -420,7 +420,7 @@ You should have received a copy of the GNU General Public License along with thi
                             <property name="relief">none</property>
                             <property name="use_stock">True</property>
                             <property name="xalign">1</property>
-                            <property name="uri">http://pycam.sourceforge.net/requirements/#optional-external-programs</property>
+                            <property name="uri">http://camelot.sourceforge.net/requirements/#optional-external-programs</property>
                           </object>
                           <packing>
                             <property name="left_attach">4</property>

@@ -1,4 +1,4 @@
-![PyCAM Logo](img/pycam-logo-600.png)
+![PyCAM Logo](img/camelot-logo-600.png)
 
 PyCAM is a toolpath generator for 3-axis CNC machining.
 It loads 3D models in STL format or 2D contour models from DXF or SVG files.
@@ -18,19 +18,19 @@ Currently the code base is being modernized in order to make PyCAM run on recent
 and libraries.
 
 New releases are available from the GitHub releases page:
-<https://github.com/SebKuzminsky/pycam/releases>
+<https://github.com/SebKuzminsky/camelot/releases>
 
 The Debian package installs and runs on Debian Jessie and Stretch. The
 source code may work on other platforms, like Windows and Mac, but is untested.
 Before installing you might want to take a look at the [System requirements](requirements.md).
 
 Older releases are still available on the
-[SourceForge download page](https://sourceforge.net/projects/pycam/files/pycam/).
+[SourceForge download page](https://sourceforge.net/projects/camelot/files/camelot/).
 
 ## Resources
 
-* [Development](https://github.com/SebKuzminsky/pycam)
+* [Development](https://github.com/SebKuzminsky/camelot)
 * [Getting started](getting-started.md) / [FAQ](faq.md)
-* [Video tutorials](http://vimeo.com/channels/pycam) / [Screenshots](screenshots.md)
-* [Mailing lists](https://sourceforge.net/p/pycam/mailman/)
-* [Issue Tracker](https://github.com/SebKuzminsky/pycam/issues)
+* [Video tutorials](http://vimeo.com/channels/camelot) / [Screenshots](screenshots.md)
+* [Mailing lists](https://sourceforge.net/p/camelot/mailman/)
+* [Issue Tracker](https://github.com/SebKuzminsky/camelot/issues)

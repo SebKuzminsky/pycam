@@ -10,7 +10,7 @@ gives you more details.
 
 Read the [Installation](installation.md) instructions.
 
-Watch some [Videos Tutorials](http://vimeo.com/channels/pycam) in
+Watch some [Videos Tutorials](http://vimeo.com/channels/camelot) in
 multiple languages. You are welcome to
 [translate](video-translations.md) the subtitles to your native
 language!
@@ -18,7 +18,7 @@ language!
 Join the [mailing lists](http://sourceforge.net/mail/?group_id=237831)
 if you want to follow recent developments.
 
-Read our [development blog](http://fab.senselab.org/pycam) about
+Read our [development blog](http://fab.senselab.org/camelot) about
 interesting new features and plans.
 
 Check the [FAQ](faq.md) section if are looking for answers.

@@ -76,7 +76,7 @@ In the beginning of 2012 a download site went down that hosted one of the progra
 are downloaded during the installation process of the dependency installer.
 Older dependency installers are also affected - even the ones that were working before.
 
-Download the [updated dependency installer](http://sourceforge.net/projects/pycam/files/dependency-installer/win32/external_binaries/gtkglext/gtkglext-win32-1.2.0.exe/download) and run it again.
+Download the [updated dependency installer](http://sourceforge.net/projects/camelot/files/dependency-installer/win32/external_binaries/gtkglext/gtkglext-win32-1.2.0.exe/download) and run it again.
 
 ### missing DLL (name is known)
 

@@ -15,5 +15,5 @@ translate([0, 0, -10]) difference() {
 	block(130, 50, 10, 10);
 	translate([5, 5, 5]) block(120, 40, 6, 10);
 }
-translate([15, 17, -5.05]) linear_extrude(file="pycam-text.dxf", height=3);
+translate([15, 17, -5.05]) linear_extrude(file="camelot-text.dxf", height=3);
 
